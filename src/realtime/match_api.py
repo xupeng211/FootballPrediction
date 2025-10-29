@@ -9,12 +9,10 @@ Provides HTTP API endpoints for real-time match status functionality
 
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 
 from .match_service import get_realtime_match_service, MatchStatus
-from .events import EventType, create_system_alert_event
 from .manager import get_websocket_manager
 
 router = APIRouter(prefix="/matches", tags=["realtime-matches"])
@@ -88,9 +86,7 @@ class MatchStatsResponse(BaseModel):
 
 
 @router.post("/add", summary="添加比赛到监控")
-async def add_match_to_monitoring(
-    request: AddMatchRequest, background_tasks: BackgroundTasks
-):
+async def add_match_to_monitoring(request: AddMatchRequest, background_tasks: BackgroundTasks):
     """
     添加比赛到实时监控
 
@@ -120,9 +116,7 @@ async def add_match_to_monitoring(
         )
 
         if not success:
-            raise HTTPException(
-                status_code=400, detail="Failed to add match to monitoring"
-            )
+            raise HTTPException(status_code=400, detail="Failed to add match to monitoring")
 
         # 发送通知
         background_tasks.add_task(
@@ -178,9 +172,7 @@ async def update_match_score(
         )
 
         if not score_changed:
-            raise HTTPException(
-                status_code=404, detail="Match not found or score unchanged"
-            )
+            raise HTTPException(status_code=404, detail="Match not found or score unchanged")
 
         # 获取比赛信息
         match_info = await service.get_match_info(match_id)
@@ -245,9 +237,7 @@ async def update_match_status(
         )
 
         if not status_changed:
-            raise HTTPException(
-                status_code=404, detail="Match not found or status unchanged"
-            )
+            raise HTTPException(status_code=404, detail="Match not found or status unchanged")
 
         # 获取比赛信息
         match_info = await service.get_match_info(match_id)
@@ -259,9 +249,7 @@ async def update_match_status(
             "status_updated",
             {
                 "new_status": request.status,
-                "current_score": (
-                    match_info.get("display_score") if match_info else None
-                ),
+                "current_score": (match_info.get("display_score") if match_info else None),
                 "minute": match_info.get("minute") if match_info else None,
             },
         )
@@ -442,9 +430,7 @@ async def subscribe_to_match_updates(
         raise
     except Exception as e:
         logger.error(f"Failed to subscribe to match updates: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to subscribe to match updates"
-        )
+        raise HTTPException(status_code=500, detail="Failed to subscribe to match updates")
 
 
 @router.delete("/{match_id}/subscribe", summary="取消订阅比赛更新")
@@ -480,9 +466,7 @@ async def unsubscribe_from_match_updates(
         raise
     except Exception as e:
         logger.error(f"Failed to unsubscribe from match updates: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to unsubscribe from match updates"
-        )
+        raise HTTPException(status_code=500, detail="Failed to unsubscribe from match updates")
 
 
 @router.post("/broadcast/alert", summary="广播比赛告警")
@@ -538,9 +522,7 @@ async def broadcast_match_alert(
 # ============================================================================
 
 
-async def _send_match_notification(
-    match_id: int, action: str, data: Dict[str, Any]
-) -> None:
+async def _send_match_notification(match_id: int, action: str, data: Dict[str, Any]) -> None:
     """发送比赛通知"""
     try:
         websocket_manager = get_websocket_manager()

@@ -98,9 +98,7 @@ class TestAnomalyDetector:
 
     def test_detect_iqr_outliers(self, detector, sample_data):
         """测试IQR异常检测"""
-        anomalies = detector.detect_iqr_outliers(
-            sample_data, columns=["home_goals", "possession"]
-        )
+        anomalies = detector.detect_iqr_outliers(sample_data, columns=["home_goals", "possession"])
 
         assert isinstance(anomalies, dict)
         assert "home_goals" in anomalies
@@ -270,9 +268,7 @@ class TestAnomalyDetector:
 
     def test_calculate_anomaly_score(self, detector):
         """测试异常评分计算"""
-        score = detector.calculate_anomaly_score(
-            value=100, mean=50, std=10, method="statistical"
-        )
+        score = detector.calculate_anomaly_score(value=100, mean=50, std=10, method="statistical")
         assert score > 3  # Z-score > 3
 
         score = detector.calculate_anomaly_score(

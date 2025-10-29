@@ -7,8 +7,6 @@ P3阶段高级集成测试: CQRSApplication
 import asyncio
 import os
 import sys
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 
@@ -32,9 +30,6 @@ try:
         CreateUserCommand,
         UpdatePredictionCommand,
     )
-    from src.cqrs.dto import CommandResult, MatchDTO, PredictionDTO
-    from src.cqrs.handlers import PredictionCommandHandlers, PredictionQueryHandlers
-    from src.cqrs.queries import (
         GetMatchByIdQuery,
         GetPredictionByIdQuery,
         GetUserStatsQuery,

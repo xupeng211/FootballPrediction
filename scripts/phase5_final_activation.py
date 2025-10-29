@@ -41,9 +41,7 @@ def run_comprehensive_test():
     cmd = ["pytest", "--collect-only", "-p", "no:warnings", "-q", "tests"]
     start_time = time.time()
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, env=env
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
         elapsed = time.time() - start_time
 
         if "collected" in result.stdout.lower():
@@ -79,9 +77,7 @@ def run_comprehensive_test():
         if os.path.exists(test_file):
             test_files_found += 1
             cmd = ["pytest", test_file, "-v", "--disable-warnings", "--tb=no", "-x"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, env=env
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
 
             output = result.stdout + result.stderr
             skipped = len(re.findall(r"SKIPPED", output))
@@ -94,13 +90,9 @@ def run_comprehensive_test():
 
     if test_files_found > 0:
         skip_rate = (
-            total_skipped / (total_skipped + total_run)
-            if (total_skipped + total_run) > 0
-            else 0
+            total_skipped / (total_skipped + total_run) if (total_skipped + total_run) > 0 else 0
         )
-        print(
-            f"✅ 核心测试统计: 跳过={total_skipped}, 运行={total_run}, 跳过率={skip_rate:.1%}"
-        )
+        print(f"✅ 核心测试统计: 跳过={total_skipped}, 运行={total_run}, 跳过率={skip_rate:.1%}")
         if skip_rate < 0.3:  # 30%阈值
             results["phase2"] = True
 
@@ -147,9 +139,7 @@ print("All Mocks OK")
 """,
     ]
 
-    result = subprocess.run(
-        mock_test_cmd, env=env, capture_output=True, text=True, timeout=30
-    )
+    result = subprocess.run(mock_test_cmd, env=env, capture_output=True, text=True, timeout=30)
     if result.returncode == 0 and "All Mocks OK" in result.stdout:
         print("✅ 所有外部依赖 Mock 成功")
         results["phase3"] = True
@@ -170,9 +160,7 @@ print("All Mocks OK")
     ]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=60, env=env
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, env=env)
         output = result.stdout
 
         # 检查覆盖率报告

@@ -216,9 +216,7 @@ class DailyMaintainabilityChecker:
         # 评分趋势
         if history[-1]["maintainability_score"] > history[-2]["maintainability_score"]:
             trends["score"] = "📈 上升"
-        elif (
-            history[-1]["maintainability_score"] < history[-2]["maintainability_score"]
-        ):
+        elif history[-1]["maintainability_score"] < history[-2]["maintainability_score"]:
             trends["score"] = "📉 下降"
         else:
             trends["score"] = "➡️ 稳定"
@@ -255,15 +253,11 @@ class DailyMaintainabilityChecker:
 
         # 大文件
         large_status = "✅" if metrics["large_files"] <= 30 else "❌"
-        print(
-            f"  {large_status} 大文件数: {metrics['large_files']} (目标: {goals['large_files']})"
-        )
+        print(f"  {large_status} 大文件数: {metrics['large_files']} (目标: {goals['large_files']})")
 
         # MyPy错误
         mypy_status = "✅" if metrics["mypy_errors"] <= 100 else "❌"
-        print(
-            f"  {mypy_status} MyPy错误: {metrics['mypy_errors']} (目标: {goals['mypy_errors']})"
-        )
+        print(f"  {mypy_status} MyPy错误: {metrics['mypy_errors']} (目标: {goals['mypy_errors']})")
 
         print(f"\n🎯 可维护性评分: {report['maintainability_score']:.1f}/10.0")
 

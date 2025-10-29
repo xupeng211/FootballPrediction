@@ -13,11 +13,13 @@ from typing import Dict, List, Any, Optional
 # 导入我们的Mock策略库
 try:
     from issue83c_practical_mocks import MockContextManager, PracticalMockStrategies
+
     MOCKS_AVAILABLE = True
     print("✅ 成功导入Mock策略库")
 except ImportError as e:
     print(f"❌ Mock策略库导入失败: {e}")
     MOCKS_AVAILABLE = False
+
 
 class Issue83CAdvancedRefactor:
     """Issue #83-C 高级重构器"""
@@ -32,101 +34,98 @@ class Issue83CAdvancedRefactor:
         return [
             # 🔴 高优先级核心模块
             {
-                'source': 'src/core/config.py',
-                'test': 'tests/unit/core/config_test_issue83c.py',
-                'current_coverage': 36.5,
-                'target_coverage': 70,
-                'priority': 'HIGH',
-                'category': 'core',
-                'mock_categories': ['config', 'logging']
+                "source": "src/core/config.py",
+                "test": "tests/unit/core/config_test_issue83c.py",
+                "current_coverage": 36.5,
+                "target_coverage": 70,
+                "priority": "HIGH",
+                "category": "core",
+                "mock_categories": ["config", "logging"],
             },
             {
-                'source': 'src/core/di.py',
-                'test': 'tests/unit/core/di_test_issue83c.py',
-                'current_coverage': 21.8,
-                'target_coverage': 60,
-                'priority': 'HIGH',
-                'category': 'core',
-                'mock_categories': ['di', 'config']
+                "source": "src/core/di.py",
+                "test": "tests/unit/core/di_test_issue83c.py",
+                "current_coverage": 21.8,
+                "target_coverage": 60,
+                "priority": "HIGH",
+                "category": "core",
+                "mock_categories": ["di", "config"],
             },
             {
-                'source': 'src/core/logging.py',
-                'test': 'tests/unit/core/logging_test_issue83c.py',
-                'current_coverage': 61.9,
-                'target_coverage': 85,
-                'priority': 'HIGH',
-                'category': 'core',
-                'mock_categories': ['logging', 'config']
+                "source": "src/core/logging.py",
+                "test": "tests/unit/core/logging_test_issue83c.py",
+                "current_coverage": 61.9,
+                "target_coverage": 85,
+                "priority": "HIGH",
+                "category": "core",
+                "mock_categories": ["logging", "config"],
             },
-
             # 🟡 中优先级API模块
             {
-                'source': 'src/api/data_router.py',
-                'test': 'tests/unit/api/data_router_test_issue83c.py',
-                'current_coverage': 60.32,
-                'target_coverage': 80,
-                'priority': 'MEDIUM',
-                'category': 'api',
-                'mock_categories': ['api', 'config', 'database']
+                "source": "src/api/data_router.py",
+                "test": "tests/unit/api/data_router_test_issue83c.py",
+                "current_coverage": 60.32,
+                "target_coverage": 80,
+                "priority": "MEDIUM",
+                "category": "api",
+                "mock_categories": ["api", "config", "database"],
             },
             {
-                'source': 'src/api/cqrs.py',
-                'test': 'tests/unit/api/cqrs_test_issue83c.py',
-                'current_coverage': 56.7,
-                'target_coverage': 80,
-                'priority': 'MEDIUM',
-                'category': 'api',
-                'mock_categories': ['api', 'cqrs', 'di']
+                "source": "src/api/cqrs.py",
+                "test": "tests/unit/api/cqrs_test_issue83c.py",
+                "current_coverage": 56.7,
+                "target_coverage": 80,
+                "priority": "MEDIUM",
+                "category": "api",
+                "mock_categories": ["api", "cqrs", "di"],
             },
-
             # 🟡 中优先级数据库模块
             {
-                'source': 'src/database/config.py',
-                'test': 'tests/unit/database/config_test_issue83c.py',
-                'current_coverage': 38.1,
-                'target_coverage': 65,
-                'priority': 'MEDIUM',
-                'category': 'database',
-                'mock_categories': ['database', 'config']
+                "source": "src/database/config.py",
+                "test": "tests/unit/database/config_test_issue83c.py",
+                "current_coverage": 38.1,
+                "target_coverage": 65,
+                "priority": "MEDIUM",
+                "category": "database",
+                "mock_categories": ["database", "config"],
             },
             {
-                'source': 'src/database/definitions.py',
-                'test': 'tests/unit/database/definitions_test_issue83c.py',
-                'current_coverage': 50.0,
-                'target_coverage': 75,
-                'priority': 'MEDIUM',
-                'category': 'database',
-                'mock_categories': ['database', 'config']
+                "source": "src/database/definitions.py",
+                "test": "tests/unit/database/definitions_test_issue83c.py",
+                "current_coverage": 50.0,
+                "target_coverage": 75,
+                "priority": "MEDIUM",
+                "category": "database",
+                "mock_categories": ["database", "config"],
             },
             {
-                'source': 'src/database/dependencies.py',
-                'test': 'tests/unit/database/dependencies_test_issue83c.py',
-                'current_coverage': 42.86,
-                'target_coverage': 70,
-                'priority': 'MEDIUM',
-                'category': 'database',
-                'mock_categories': ['database', 'di', 'config']
+                "source": "src/database/dependencies.py",
+                "test": "tests/unit/database/dependencies_test_issue83c.py",
+                "current_coverage": 42.86,
+                "target_coverage": 70,
+                "priority": "MEDIUM",
+                "category": "database",
+                "mock_categories": ["database", "di", "config"],
             },
-
             # 🟢 低优先级CQRS模块
             {
-                'source': 'src/cqrs/base.py',
-                'test': 'tests/unit/cqrs/base_test_issue83c.py',
-                'current_coverage': 71.05,
-                'target_coverage': 85,
-                'priority': 'LOW',
-                'category': 'cqrs',
-                'mock_categories': ['cqrs', 'di']
+                "source": "src/cqrs/base.py",
+                "test": "tests/unit/cqrs/base_test_issue83c.py",
+                "current_coverage": 71.05,
+                "target_coverage": 85,
+                "priority": "LOW",
+                "category": "cqrs",
+                "mock_categories": ["cqrs", "di"],
             },
             {
-                'source': 'src/cqrs/application.py',
-                'test': 'tests/unit/cqrs/application_test_issue83c.py',
-                'current_coverage': 42.11,
-                'target_coverage': 70,
-                'priority': 'LOW',
-                'category': 'cqrs',
-                'mock_categories': ['cqrs', 'di', 'config']
-            }
+                "source": "src/cqrs/application.py",
+                "test": "tests/unit/cqrs/application_test_issue83c.py",
+                "current_coverage": 42.11,
+                "target_coverage": 70,
+                "priority": "LOW",
+                "category": "cqrs",
+                "mock_categories": ["cqrs", "di", "config"],
+            },
         ]
 
     def analyze_source_module(self, source_file: str) -> Dict[str, Any]:
@@ -135,7 +134,7 @@ class Issue83CAdvancedRefactor:
             return {"functions": [], "classes": [], "imports": [], "has_content": False}
 
         try:
-            with open(source_file, 'r', encoding='utf-8') as f:
+            with open(source_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -145,26 +144,24 @@ class Issue83CAdvancedRefactor:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    functions.append({
-                        "name": node.name,
-                        "args": [arg.arg for arg in node.args.args],
-                        "line": node.lineno
-                    })
+                    functions.append(
+                        {
+                            "name": node.name,
+                            "args": [arg.arg for arg in node.args.args],
+                            "line": node.lineno,
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
                     methods = []
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
                             methods.append(item.name)
-                    classes.append({
-                        "name": node.name,
-                        "methods": methods,
-                        "line": node.lineno
-                    })
+                    classes.append({"name": node.name, "methods": methods, "line": node.lineno})
 
             return {
                 "functions": functions,
                 "classes": classes,
-                "has_content": len(functions) > 0 or len(classes) > 0
+                "has_content": len(functions) > 0 or len(classes) > 0,
             }
 
         except Exception as e:
@@ -173,10 +170,10 @@ class Issue83CAdvancedRefactor:
 
     def create_advanced_test(self, source_file: str, test_file: str, module_info: Dict) -> bool:
         """创建高级测试文件"""
-        module_name = source_file.replace('src/', '').replace('.py', '').replace('/', '.')
+        module_name = source_file.replace("src/", "").replace(".py", "").replace("/", ".")
         class_name = module_name.title().replace(".", "").replace("_", "")
-        category = module_info.get('category', 'general')
-        mock_categories = module_info.get('mock_categories', ['config'])
+        category = module_info.get("category", "general")
+        mock_categories = module_info.get("mock_categories", ["config"])
 
         # 分析源模块
         self.analyze_source_module(source_file)
@@ -469,7 +466,7 @@ class Test{class_name}Issue83C:
             os.makedirs(os.path.dirname(test_file), exist_ok=True)
 
             # 写入测试文件
-            with open(test_file, 'w', encoding='utf-8') as f:
+            with open(test_file, "w", encoding="utf-8") as f:
                 f.write(test_content)
 
             return True
@@ -503,9 +500,9 @@ except ImportError:
         print(f"\n📋 目标模块: {len(self.target_modules)} 个")
 
         # 按优先级分组
-        high_priority = [m for m in self.target_modules if m['priority'] == 'HIGH']
-        medium_priority = [m for m in self.target_modules if m['priority'] == 'MEDIUM']
-        low_priority = [m for m in self.target_modules if m['priority'] == 'LOW']
+        high_priority = [m for m in self.target_modules if m["priority"] == "HIGH"]
+        medium_priority = [m for m in self.target_modules if m["priority"] == "MEDIUM"]
+        low_priority = [m for m in self.target_modules if m["priority"] == "LOW"]
 
         print(f"   高优先级: {len(high_priority)} 个")
         print(f"   中优先级: {len(medium_priority)} 个")
@@ -514,21 +511,23 @@ except ImportError:
         created_files = []
 
         # 按优先级处理
-        for priority_group, group_name in [(high_priority, "高优先级"),
-                                              (medium_priority, "中优先级"),
-                                              (low_priority, "低优先级")]:
+        for priority_group, group_name in [
+            (high_priority, "高优先级"),
+            (medium_priority, "中优先级"),
+            (low_priority, "低优先级"),
+        ]:
             if not priority_group:
                 continue
 
             print(f"\n🔧 处理{group_name}模块...")
 
             for module_info in priority_group:
-                source_file = module_info['source']
-                test_file = module_info['test']
-                current_coverage = module_info.get('current_coverage', 0)
-                target_coverage = module_info.get('target_coverage', 80)
+                source_file = module_info["source"]
+                test_file = module_info["test"]
+                current_coverage = module_info.get("current_coverage", 0)
+                target_coverage = module_info.get("target_coverage", 80)
                 improvement = target_coverage - current_coverage
-                category = module_info.get('category', 'general')
+                category = module_info.get("category", "general")
 
                 print(f"   📝 {source_file}")
                 print(f"      测试文件: {test_file}")
@@ -537,7 +536,9 @@ except ImportError:
 
                 # 分析源模块
                 source_analysis = self.analyze_source_module(source_file)
-                print(f"      分析: {len(source_analysis['functions'])} 函数, {len(source_analysis['classes'])} 类")
+                print(
+                    f"      分析: {len(source_analysis['functions'])} 函数, {len(source_analysis['classes'])} 类"
+                )
 
                 # 创建高级测试
                 if self.create_advanced_test(source_file, test_file, module_info):
@@ -553,11 +554,15 @@ except ImportError:
         print(f"❌ 创建失败: {self.failure_count} 个")
 
         if created_files:
-            total_improvement = sum([
-                m['target_coverage'] - m['current_coverage']
-                for m in self.target_modules[:self.success_count]
-            ])
-            avg_improvement = total_improvement / self.success_count if self.success_count > 0 else 0
+            total_improvement = sum(
+                [
+                    m["target_coverage"] - m["current_coverage"]
+                    for m in self.target_modules[: self.success_count]
+                ]
+            )
+            avg_improvement = (
+                total_improvement / self.success_count if self.success_count > 0 else 0
+            )
 
             print("📈 覆盖率提升预期:")
             print(f"   总提升潜力: +{total_improvement:.1f}%")
@@ -571,20 +576,26 @@ except ImportError:
             print("\n📋 建议测试命令:")
             print("   python3 -m pytest tests/unit/core/config_test_issue83c.py -v")
             print("   python3 -m pytest tests/unit/api/data_router_test_issue83c.py -v")
-            print("   python3 -m pytest tests/unit/database/config_test_issue83c.py --cov=src.database --cov-report=term")
+            print(
+                "   python3 -m pytest tests/unit/database/config_test_issue83c.py --cov=src.database --cov-report=term"
+            )
 
             print("\n📋 批量测试命令:")
-            print("   python3 -m pytest tests/unit/*/*_issue83c.py --cov=src --cov-report=term-missing")
+            print(
+                "   python3 -m pytest tests/unit/*/*_issue83c.py --cov=src --cov-report=term-missing"
+            )
 
             return True
         else:
             print("\n⚠️ 没有创建任何测试文件")
             return False
 
+
 def main():
     """主函数"""
     refactor = Issue83CAdvancedRefactor()
     return refactor.execute_refactoring()
+
 
 if __name__ == "__main__":
     success = main()

@@ -6,7 +6,6 @@
 
 import hashlib
 import uuid
-from typing import Any, Dict
 from unittest.mock import Mock, patch
 
 import pytest
@@ -171,9 +170,7 @@ class TestCryptoUtilsPasswordHashing:
         """✅ 成功用例：密码验证"""
         password = "my_secure_password"
 
-        if hasattr(CryptoUtils, "hash_password") and hasattr(
-            CryptoUtils, "verify_password"
-        ):
+        if hasattr(CryptoUtils, "hash_password") and hasattr(CryptoUtils, "verify_password"):
             hashed = CryptoUtils.hash_password(password)
             assert CryptoUtils.verify_password(password, hashed) is True
             assert CryptoUtils.verify_password("wrong_password", hashed) is False
@@ -338,7 +335,6 @@ class TestCryptoUtilsEdgeCases:
     def test_concurrent_id_generation(self) -> None:
         """✅ 并发用例：并发ID生成唯一性"""
         import threading
-        import time
 
         ids = []
         errors = []

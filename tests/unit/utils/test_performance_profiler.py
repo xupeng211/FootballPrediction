@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 性能分析器测试
@@ -10,11 +9,9 @@ Performance Profiler Tests
 """
 
 import time
-from typing import Any, Dict
 
 import pytest
 
-from src.performance.profiler import (
     APIEndpointProfiler,
     DatabaseQueryProfiler,
     FunctionProfile,

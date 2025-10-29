@@ -115,9 +115,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         if include_user_details:
             includes.append("user")
 
-        query_spec = QuerySpec(
-            filters=filters, include=includes, order_by=["created_at"]
-        )
+        query_spec = QuerySpec(filters=filters, include=includes, order_by=["created_at"])
 
         return await self.find_many(query_spec)
 
@@ -291,9 +289,7 @@ class PredictionRepository(PredictionRepositoryInterface):
         await self.session.refresh(prediction)
         return prediction
 
-    async def update_by_id(
-        self, id: int, update_data: Dict[str, Any]
-    ) -> Optional[Prediction]:
+    async def update_by_id(self, id: int, update_data: Dict[str, Any]) -> Optional[Prediction]:
         """根据ID更新预测"""
         query = update(Prediction).where(Prediction.id == id)
 
@@ -322,9 +318,7 @@ class PredictionRepository(PredictionRepositoryInterface):
         await self.session.commit()
         return result.rowcount > 0
 
-    async def bulk_create(
-        self, entities_data: List[Dict[str, Any]]
-    ) -> List[Prediction]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[Prediction]:
         """批量创建预测"""
         predictions = []
         for data in entities_data:

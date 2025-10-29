@@ -19,22 +19,14 @@ def fix_file(filepath: Path):
         original = content
 
         # 替换各种 _mod 引用
-        content = content.replace(
-            "src.services.data_processing", "src.services.data_processing"
-        )
-        content = content.replace(
-            "src.services.audit_service", "src.services.audit_service"
-        )
-        content = content.replace(
-            "src.monitoring.alert_manager", "src.monitoring.alert_manager"
-        )
+        content = content.replace("src.services.data_processing", "src.services.data_processing")
+        content = content.replace("src.services.audit_service", "src.services.audit_service")
+        content = content.replace("src.monitoring.alert_manager", "src.monitoring.alert_manager")
         content = content.replace(
             "src.monitoring.metrics_collector_enhanced",
             "src.monitoring.metrics_collector_enhanced",
         )
-        content = content.replace(
-            "src.database.models.features", "src.database.models.features"
-        )
+        content = content.replace("src.database.models.features", "src.database.models.features")
 
         # 处理相对导入
         content = re.sub(

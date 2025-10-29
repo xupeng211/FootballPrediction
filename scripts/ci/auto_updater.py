@@ -55,10 +55,7 @@ class MakefileUpdater:
                 insert_pos = content.find("\n\n", help_section_end)
                 if insert_pos != -1:
                     new_content = (
-                        content[:insert_pos]
-                        + "\n"
-                        + defense_targets
-                        + content[insert_pos:]
+                        content[:insert_pos] + "\n" + defense_targets + content[insert_pos:]
                     )
                 else:
                     new_content = content + "\n" + defense_targets
@@ -359,7 +356,9 @@ class RequirementsUpdater:
 
             if new_packages:
                 # 添加注释说明
-                comment = f"\n# CI Defense packages - auto-added {datetime.now().isoformat()[:10]}\n"
+                comment = (
+                    f"\n# CI Defense packages - auto-added {datetime.now().isoformat()[:10]}\n"
+                )
                 new_content = content + comment + "\n".join(new_packages) + "\n"
 
                 # 备份原文件
@@ -370,9 +369,7 @@ class RequirementsUpdater:
                 with open(self.req_dev_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
 
-                click.echo(
-                    f"✅ requirements-dev.txt已更新，添加了{len(new_packages)}个包"
-                )
+                click.echo(f"✅ requirements-dev.txt已更新，添加了{len(new_packages)}个包")
                 return True
             else:
                 click.echo("ℹ️ requirements-dev.txt无需更新")
@@ -517,22 +514,16 @@ fail_under = 80
                     "coverage.xml",
                     "*.cover",
                 ]
-                ignore_rules.extend(
-                    [rule for rule in test_ignores if rule not in content]
-                )
+                ignore_rules.extend([rule for rule in test_ignores if rule not in content])
 
             # 备份文件
             backup_ignores = ["# Backup files", "*.bak", "*.backup"]
-            ignore_rules.extend(
-                [rule for rule in backup_ignores if rule not in content]
-            )
+            ignore_rules.extend([rule for rule in backup_ignores if rule not in content])
 
             # pre-commit相关
             if defenses.get("pre_commit_hooks"):
                 precommit_ignores = ["# Pre-commit", ".pre-commit-cache/"]
-                ignore_rules.extend(
-                    [rule for rule in precommit_ignores if rule not in content]
-                )
+                ignore_rules.extend([rule for rule in precommit_ignores if rule not in content])
 
             if ignore_rules:
                 new_content = content + "\n\n" + "\n".join(ignore_rules) + "\n"
@@ -870,9 +861,7 @@ class AutoCIUpdater:
             self.update_results.append("❌ Documentation")
 
         success_rate = (success_count / total_updates) * 100
-        click.echo(
-            f"\n📊 集成结果: {success_count}/{total_updates} ({success_rate:.1f}%)"
-        )
+        click.echo(f"\n📊 集成结果: {success_count}/{total_updates} ({success_rate:.1f}%)")
 
         return success_count >= total_updates * 0.8  # 80%成功率认为集成成功
 

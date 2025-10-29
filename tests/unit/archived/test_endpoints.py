@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, Mock, patch
 
 # TODO: Consider creating a fixture for 9 repeated Mock creations
 
@@ -10,11 +9,6 @@ from unittest.mock import MagicMock, Mock, patch
 """API端点测试"""
 
 import pytest
-from fastapi import status
-from fastapi.testclient import TestClient
-
-from tests.factories import DataFactory, MockFactory
-from tests.factories.test_helpers import with_mocks, with_test_data
 
 
 @pytest.mark.unit
@@ -227,9 +221,7 @@ class TestPredictionEndpoints:
         """测试获取用户预测"""
         # 准备测试数据
         user_id = "user_123"
-        predictions = [
-            Mock(**DataFactory.prediction_data({"user_id": user_id})) for _ in range(5)
-        ]
+        predictions = [Mock(**DataFactory.prediction_data({"user_id": user_id})) for _ in range(5)]
 
         # 设置Mock返回值
         mocks["repository"].filter.return_value = predictions

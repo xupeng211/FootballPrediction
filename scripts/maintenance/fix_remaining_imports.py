@@ -110,9 +110,7 @@ def handle_import_errors(file_path: str):
                 # 尝试导入，如果失败则创建简单测试
                 compile(content, file_path, "exec")
             except Exception:
-                test_name = (
-                    Path(file_path).stem.replace("test_", "").title().replace("_", " ")
-                )
+                test_name = Path(file_path).stem.replace("test_", "").title().replace("_", " ")
                 create_simple_test(file_path, test_name)
                 print(f"✅ 创建简单测试: {file_path}")
                 return True
@@ -210,9 +208,7 @@ def main():
         else:
             # 创建目录和文件
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
-            test_name = (
-                Path(file_path).stem.replace("test_", "").title().replace("_", " ")
-            )
+            test_name = Path(file_path).stem.replace("test_", "").title().replace("_", " ")
             create_simple_test(full_path, test_name)
             print(f"✅ 创建了: {file_path}")
             created_count += 1

@@ -6,7 +6,6 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -145,9 +144,7 @@ class TestPredictionAlgorithmsComprehensive:
         probabilities = {"home_win": 0.55, "draw": 0.25, "away_win": 0.20}
         expected_confidence = 0.75  # 模拟计算结果
 
-        basic_prediction_algorithm.calculate_confidence.return_value = (
-            expected_confidence
-        )
+        basic_prediction_algorithm.calculate_confidence.return_value = expected_confidence
 
         result = basic_prediction_algorithm.calculate_confidence(probabilities)
 

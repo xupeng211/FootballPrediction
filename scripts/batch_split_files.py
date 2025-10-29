@@ -238,9 +238,7 @@ def split_file(file_path: str, config: Dict):
         print(f"  创建模块: {module_path}")
 
     # 创建向后兼容文件
-    compat_content = create_compatibility_file(
-        file_path, config["dir"], config["modules"]
-    )
+    compat_content = create_compatibility_file(file_path, config["dir"], config["modules"])
     Path(file_path).write_text(compat_content, encoding="utf-8")
     print(f"  更新兼容文件: {file_path}")
 

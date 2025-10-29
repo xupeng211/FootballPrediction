@@ -5,13 +5,10 @@ Service Layer Comprehensive Tests - Refactored
 基于真实业务逻辑的服务层测试，覆盖核心功能和边界情况。
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.services.audit_service import (
     AuditAction,
     AuditEvent,
     AuditService,

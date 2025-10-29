@@ -37,9 +37,7 @@ def fix_audit_service_imports():
 
         # 插入BaseService导入
         lines = content.split("\n")
-        lines.insert(
-            last_import + 1, "from src.services.base_service import BaseService"
-        )
+        lines.insert(last_import + 1, "from src.services.base_service import BaseService")
         content = "\n".join(lines)
 
         service_file.write_text(content, encoding="utf-8")
@@ -65,9 +63,7 @@ def fix_manager_imports():
             manager_dir.mkdir(exist_ok=True)
             target = manager_dir / "manager.py"
             if not target.exists():
-                target.write_text(
-                    original.read_text(encoding="utf-8"), encoding="utf-8"
-                )
+                target.write_text(original.read_text(encoding="utf-8"), encoding="utf-8")
                 print("✓ 复制了原始manager.py到manager目录")
 
 
@@ -92,9 +88,7 @@ def fix_data_processing_imports():
             if line.startswith("from ") or line.startswith("import "):
                 last_import = i
 
-        lines.insert(
-            last_import + 1, "from src.services.base_service import BaseService"
-        )
+        lines.insert(last_import + 1, "from src.services.base_service import BaseService")
         content = "\n".join(lines)
 
         service_file.write_text(content, encoding="utf-8")

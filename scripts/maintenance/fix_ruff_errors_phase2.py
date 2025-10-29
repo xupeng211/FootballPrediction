@@ -58,9 +58,7 @@ def fix_e731_errors():
                 lambda_assigns = []
 
             # 修复每个 lambda 赋值
-            for assign_info in sorted(
-                lambda_assigns, key=lambda x: x["line"], reverse=True
-            ):
+            for assign_info in sorted(lambda_assigns, key=lambda x: x["line"], reverse=True):
                 line_num = assign_info["line"] - 1  # 转换为0基索引
                 if line_num < len(lines):
                     line = lines[line_num]
@@ -214,9 +212,7 @@ def fix_e722_bare_except():
             content = re.sub(r"except Exception:\s*#", "except Exception:  #", content)
 
             # 避免已经有的 except Exception 重复
-            content = re.sub(
-                r"except Exception:\s*Exception:", "except Exception:", content
-            )
+            content = re.sub(r"except Exception:\s*Exception:", "except Exception:", content)
 
             # 如果内容有变化，写回文件
             if content != original_content:

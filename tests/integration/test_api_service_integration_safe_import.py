@@ -169,9 +169,7 @@ class TestServiceWithRepositoryIntegration:
         )
 
         # 执行 - 使用mock仓储创建服务实例
-        with patch(
-            "services.prediction_service.PredictionRepository"
-        ) as mock_repo_class:
+        with patch("services.prediction_service.PredictionRepository") as mock_repo_class:
             mock_repo_class.return_value = self.mock_prediction_repo
             service = PredictionService()
 
@@ -216,9 +214,7 @@ class TestServiceWithRepositoryIntegration:
         # 执行
         with patch("services.match_service.MatchRepository") as mock_repo_class:
             mock_repo = AsyncMock()
-            mock_repo.get_by_status.return_value = [
-                m for m in mock_matches if m.status == "live"
-            ]
+            mock_repo.get_by_status.return_value = [m for m in mock_matches if m.status == "live"]
             mock_repo_class.return_value = mock_repo
 
             service = MatchService()

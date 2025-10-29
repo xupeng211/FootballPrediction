@@ -63,14 +63,10 @@ class FailedTestAnalyzer:
                 status = parts[1]
 
                 if status == "FAILED":
-                    self.failed_tests.append(
-                        {"name": test_name, "type": "FAILED", "error": []}
-                    )
+                    self.failed_tests.append({"name": test_name, "type": "FAILED", "error": []})
                     current_test = self.failed_tests[-1]
                 elif status == "ERROR":
-                    self.error_tests.append(
-                        {"name": test_name, "type": "ERROR", "error": []}
-                    )
+                    self.error_tests.append({"name": test_name, "type": "ERROR", "error": []})
                     current_test = self.error_tests[-1]
 
             # 捕获错误信息
@@ -187,7 +183,9 @@ for module in missing_modules:
         parent[parts[-1]] = Mock()
 
 # 在 conftest.py 中添加这些 mock
-""" % str(list(modules_needed))
+""" % str(
+            list(modules_needed)
+        )
 
         with open("tests/conftest_import_fix.py", "w") as f:
             f.write(fix_script)
@@ -203,18 +201,14 @@ for module in missing_modules:
         for test in tests:
             error_text = " ".join(test["error"])
             if "has no attribute" in error_text:
-                match = re.search(
-                    r"\'([^\']+)\' has no attribute \'([^\']+)\'", error_text
-                )
+                match = re.search(r"\'([^\']+)\' has no attribute \'([^\']+)\'", error_text)
                 if match:
                     obj, attr = match.groups()
                     key = f"{obj}.{attr}"
                     common_errors[key] = common_errors.get(key, 0) + 1
 
         print("  常见属性错误:")
-        for error, count in sorted(
-            common_errors.items(), key=lambda x: x[1], reverse=True
-        )[:10]:
+        for error, count in sorted(common_errors.items(), key=lambda x: x[1], reverse=True)[:10]:
             print(f"    {error}: {count} 次")
 
         # 生成修复建议
@@ -301,9 +295,7 @@ assert 'key' in result_dict
             if "TypeError" in error_text:
                 # 提取类型错误信息
                 if "must be" in error_text:
-                    match = re.search(
-                        r"([^\s]+) must be ([^\s]+), got ([^\s]+)", error_text
-                    )
+                    match = re.search(r"([^\s]+) must be ([^\s]+), got ([^\s]+)", error_text)
                     if match:
                         param, expected, actual = match.groups()
                         type_errors[f"{param}: {expected} != {actual}"] = (
@@ -311,9 +303,7 @@ assert 'key' in result_dict
                         )
 
         print("  类型错误统计:")
-        for error, count in sorted(
-            type_errors.items(), key=lambda x: x[1], reverse=True
-        )[:5]:
+        for error, count in sorted(type_errors.items(), key=lambda x: x[1], reverse=True)[:5]:
             print(f"    {error}: {count} 次")
 
     def _fix_value_errors(self, tests: List[Dict]):

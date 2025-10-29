@@ -14,14 +14,10 @@ Comprehensive Service Integration Test Suite
 """
 
 import asyncio
-import json
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -86,11 +82,7 @@ class TestMetrics:
 
     @property
     def avg_response_time(self) -> float:
-        return (
-            sum(self.response_times) / len(self.response_times)
-            if self.response_times
-            else 0
-        )
+        return sum(self.response_times) / len(self.response_times) if self.response_times else 0
 
     @property
     def success_rate(self) -> float:
@@ -256,9 +248,7 @@ class TestServiceIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_data_processing_pipeline_integration(
-        self, mock_services, test_metrics
-    ):
+    async def test_data_processing_pipeline_integration(self, mock_services, test_metrics):
         """测试数据处理管道集成"""
         scenario = IntegrationTestScenario.DATA_PROCESSING_PIPELINE
         print(f"🧪 开始测试场景: {scenario.value}")
@@ -267,9 +257,7 @@ class TestServiceIntegration:
 
         # 1. 数据收集
         start_time = time.time()
-        with patch.object(
-            mock_services["database_service"], "execute_query"
-        ) as mock_query:
+        with patch.object(mock_services["database_service"], "execute_query") as mock_query:
             mock_query.return_value = {
                 "success": True,
                 "rows": [
@@ -278,9 +266,7 @@ class TestServiceIntegration:
                 ],
             }
 
-            result = await mock_services["database_service"].execute_query(
-                "SELECT * FROM matches"
-            )
+            result = await mock_services["database_service"].execute_query("SELECT * FROM matches")
             assert result["success"] is True
             assert len(result["rows"]) == 2
 
@@ -312,9 +298,7 @@ class TestServiceIntegration:
 
         # 3. 数据存储
         start_time = time.time()
-        with patch.object(
-            mock_services["database_service"], "execute_query"
-        ) as mock_insert:
+        with patch.object(mock_services["database_service"], "execute_query") as mock_insert:
             mock_insert.return_value = {
                 "success": True,
                 "rows_affected": len(processed_data),
@@ -369,9 +353,7 @@ class TestServiceIntegration:
         }
 
         # 1. 写入数据库
-        with patch.object(
-            mock_services["database_service"], "execute_query"
-        ) as mock_db:
+        with patch.object(mock_services["database_service"], "execute_query") as mock_db:
             mock_db.return_value = {"success": True, "rows_affected": 1}
 
             db_result = await mock_services["database_service"].execute_query(
@@ -394,9 +376,7 @@ class TestServiceIntegration:
             assert cached_data == test_data
 
         # 4. 验证数据库数据
-        with patch.object(
-            mock_services["database_service"], "execute_query"
-        ) as mock_select:
+        with patch.object(mock_services["database_service"], "execute_query") as mock_select:
             mock_select.return_value = {"success": True, "rows": [test_data]}
 
             db_data = await mock_services["database_service"].execute_query(
@@ -483,9 +463,7 @@ class TestServiceIntegration:
                 "imported_count": len(converted_data),
             }
 
-            response = await api_client.post(
-                "/api/v1/matches/import", json=converted_data
-            )
+            response = await api_client.post("/api/v1/matches/import", json=converted_data)
             assert response.status_code == 201
             assert response.json()["imported_count"] == len(converted_data)
 
@@ -514,9 +492,7 @@ class TestServiceIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_performance_monitoring_integration(
-        self, mock_services, test_metrics
-    ):
+    async def test_performance_monitoring_integration(self, mock_services, test_metrics):
         """测试性能监控集成"""
         scenario = IntegrationTestScenario.PERFORMANCE_MONITORING
         print(f"🧪 开始测试场景: {scenario.value}")
@@ -659,15 +635,11 @@ class TestServiceIntegration:
         async def mock_prediction_call(user_id, prediction_data):
             # 预测服务需要调用用户服务和数据库服务
             user_info = await mock_user_call()
-            db_data = await mock_db_call(
-                f"SELECT * FROM predictions WHERE user_id = {user_id}"
-            )
+            db_data = await mock_db_call(f"SELECT * FROM predictions WHERE user_id = {user_id}")
             return {"prediction_id": "456", "user": user_info, "data": db_data}
 
         # 模拟完整的调用链
-        result = await mock_prediction_call(
-            "123", {"match_id": 1, "prediction": "home_win"}
-        )
+        result = await mock_prediction_call("123", {"match_id": 1, "prediction": "home_win"})
 
         # 验证调用顺序和完整性
         expected_calls = ["user_service", "database_service", "user_service"]
@@ -699,9 +671,7 @@ class TestServiceIntegration:
         }
 
         # 1. 在数据库中创建预测
-        with patch.object(
-            mock_services["database_service"], "execute_query"
-        ) as mock_db:
+        with patch.object(mock_services["database_service"], "execute_query") as mock_db:
             mock_db.return_value = {"success": True, "id": "pred_456"}
 
             db_result = await mock_services["database_service"].execute_query(
@@ -730,9 +700,7 @@ class TestServiceIntegration:
             assert cached_data == test_prediction_data
 
         # 4. 从数据库读取数据
-        with patch.object(
-            mock_services["database_service"], "execute_query"
-        ) as mock_select:
+        with patch.object(mock_services["database_service"], "execute_query") as mock_select:
             mock_select.return_value = {"success": True, "rows": [test_prediction_data]}
 
             db_result = await mock_services["database_service"].execute_query(

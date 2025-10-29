@@ -47,9 +47,7 @@ class MatchRecord:
         }
 
 
-def collect_synthetic_matches(
-    seed: int = 42, samples: int = 64
-) -> List[Dict[str, float]]:
+def collect_synthetic_matches(seed: int = 42, samples: int = 64) -> List[Dict[str, float]]:
     random.seed(seed)
     matches: List[MatchRecord] = []
     for idx in range(samples):
@@ -153,9 +151,7 @@ def evaluate_model(
     }
 
 
-def run_predictions(
-    model: LogisticRegression, features: pd.DataFrame
-) -> List[Dict[str, float]]:
+def run_predictions(model: LogisticRegression, features: pd.DataFrame) -> List[Dict[str, float]]:
     proba = model.predict_proba(features.values)
     results = []
     for idx, probs in enumerate(proba):
@@ -176,9 +172,7 @@ def write_report(
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "pipeline_metrics.json").write_text(json.dumps(metrics, indent=2))
-    (output_dir / "predictions_sample.json").write_text(
-        json.dumps(predictions[:5], indent=2)
-    )
+    (output_dir / "predictions_sample.json").write_text(json.dumps(predictions[:5], indent=2))
     logger.info("Wrote pipeline artefacts to %s", output_dir)
 
 

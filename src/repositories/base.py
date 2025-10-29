@@ -144,9 +144,7 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
         conditions = []
         for field in fields:
             if hasattr(self.model_class, field):
-                conditions.append(
-                    getattr(self.model_class, field).ilike(f"%{keyword}%")
-                )
+                conditions.append(getattr(self.model_class, field).ilike(f"%{keyword}%"))
 
         if conditions:
             query = select(self.model_class).where(or_(*conditions))

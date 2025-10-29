@@ -128,9 +128,7 @@ def test_quality_module_structure():
         content = f.read()
 
     # 验证任务函数存在
-    assert (
-        "def run_quality_checks(" in content
-    ), "run_quality_checks 函数不在 quality.py 中"
+    assert "def run_quality_checks(" in content, "run_quality_checks 函数不在 quality.py 中"
 
 
 def test_predictions_module_structure():
@@ -140,9 +138,7 @@ def test_predictions_module_structure():
         content = f.read()
 
     # 验证任务函数存在
-    assert (
-        "def generate_predictions(" in content
-    ), "generate_predictions 函数不在 predictions.py 中"
+    assert "def generate_predictions(" in content, "generate_predictions 函数不在 predictions.py 中"
 
 
 def test_processing_module_structure():

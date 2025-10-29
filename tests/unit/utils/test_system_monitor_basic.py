@@ -117,7 +117,6 @@ def test_global_instance():
 
 def test_convenience_functions():
     """测试便捷函数"""
-    from src.monitoring.system_monitor_mod import (
         record_cache_op,
         record_db_query,
         record_http_request,

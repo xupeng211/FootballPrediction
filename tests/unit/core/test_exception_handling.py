@@ -3,10 +3,8 @@
 测试所有自定义异常和错误处理逻辑
 """
 
-import logging
 import traceback
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -121,9 +119,7 @@ class TestCustomExceptions:
 
     def test_authorization_error(self):
         """测试授权错误"""
-        exc = AuthorizationError(
-            "Access denied", required_role="admin", user_role="user"
-        )
+        exc = AuthorizationError("Access denied", required_role="admin", user_role="user")
 
         assert exc.details["required_role"] == "admin"
         assert exc.details["user_role"] == "user"
@@ -166,9 +162,7 @@ class TestCustomExceptions:
 
     def test_rate_limit_error(self):
         """测试速率限制错误"""
-        exc = RateLimitError(
-            "Too many requests", retry_after=60, limit=100, window=3600
-        )
+        exc = RateLimitError("Too many requests", retry_after=60, limit=100, window=3600)
 
         assert exc.retry_after == 60
         assert exc.details["limit"] == 100
@@ -220,9 +214,7 @@ class TestExceptionHandling:
                         {
                             "type": exc_type.__name__,
                             "message": str(exc_val),
-                            "traceback": traceback.format_exception(
-                                exc_type, exc_val, exc_tb
-                            ),
+                            "traceback": traceback.format_exception(exc_type, exc_val, exc_tb),
                         }
                     )
                     return True  # 抑制异常
@@ -325,9 +317,7 @@ class TestExceptionHandling:
             try:
                 return await asyncio.wait_for(operation(), timeout_sec)
             except asyncio.TimeoutError:
-                raise ExternalServiceError(
-                    "Operation timed out", timeout_seconds=timeout_sec
-                )
+                raise ExternalServiceError("Operation timed out", timeout_seconds=timeout_sec)
 
         async def test():
             # 这个应该成功
@@ -359,9 +349,7 @@ class TestErrorRecovery:
 
             def call(self, func, *args, **kwargs):
                 if self.state == "open":
-                    if datetime.now() - self.last_failure_time > timedelta(
-                        seconds=self.timeout
-                    ):
+                    if datetime.now() - self.last_failure_time > timedelta(seconds=self.timeout):
                         self.state = "half-open"
                     else:
                         raise ExternalServiceError("Circuit breaker is open")
@@ -476,9 +464,7 @@ class TestErrorRecovery:
             try:
                 return operation()
             except Exception as e:
-                NotificationService.send_error_notification(
-                    e, {"operation": operation.__name__}
-                )
+                NotificationService.send_error_notification(e, {"operation": operation.__name__})
                 raise
 
         # 执行会失败的操作

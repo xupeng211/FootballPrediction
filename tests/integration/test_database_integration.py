@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 数据库集成测试
 Database Integration Tests
@@ -9,7 +7,6 @@ Database Integration Tests
 
 import asyncio
 import os
-import tempfile
 
 import pytest
 from sqlalchemy import text
@@ -42,9 +39,7 @@ class TestDatabaseConnection:
     async def test_engine(self):
         """创建测试数据库引擎"""
         # 使用SQLite内存数据库进行测试
-        engine = create_async_engine(
-            "sqlite+aiosqlite:///:memory:", echo=False, future=True
-        )
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False, future=True)
 
         # 创建所有表
         async with engine.begin() as conn:
@@ -58,9 +53,7 @@ class TestDatabaseConnection:
     @pytest.fixture
     async def test_session(self, test_engine):
         """创建测试数据库会话"""
-        async_session = sessionmaker(
-            test_engine, class_=AsyncSession, expire_on_commit=False
-        )
+        async_session = sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
         async with async_session() as session:
             yield session
@@ -90,9 +83,7 @@ class TestDatabaseConnection:
         async with test_session.begin():
             # 执行插入
             await test_session.execute(
-                text(
-                    "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)"
-                )
+                text("CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)")
             )
             await test_session.execute(
                 text("INSERT INTO test_table (value) VALUES (:value)"),
@@ -107,9 +98,7 @@ class TestDatabaseConnection:
         """测试：数据库事务回滚"""
         # 创建测试表
         await test_session.execute(
-            text(
-                "CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)"
-            )
+            text("CREATE TABLE IF NOT EXISTS test_table (id INTEGER PRIMARY KEY, value TEXT)")
         )
 
         try:
@@ -141,13 +130,9 @@ class TestBaseRepository:
     @pytest.fixture
     async def repo_session(self):
         """创建仓储测试会话"""
-        engine = create_async_engine(
-            "sqlite+aiosqlite:///:memory:", echo=False, future=True
-        )
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False, future=True)
 
-        async_session = sessionmaker(
-            engine, class_=AsyncSession, expire_on_commit=False
-        )
+        async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
         async with async_session() as session:
             yield session
@@ -256,9 +241,7 @@ class TestDatabasePerformance:
     async def test_connection_pool(self):
         """测试：数据库连接池"""
         # 使用连接池配置
-        db_manager = DatabaseManager(
-            "sqlite+aiosqlite:///:memory:", pool_size=5, max_overflow=10
-        )
+        db_manager = DatabaseManager("sqlite+aiosqlite:///:memory:", pool_size=5, max_overflow=10)
 
         # 应该能够获取多个连接
         sessions = []
@@ -296,9 +279,7 @@ class TestDatabasePerformance:
             start_time = time.time()
 
             # 使用execute_many进行批量插入
-            await session.execute(
-                text("INSERT INTO test_bulk (value) VALUES (:value)"), test_data
-            )
+            await session.execute(text("INSERT INTO test_bulk (value) VALUES (:value)"), test_data)
 
             end_time = time.time()
 
@@ -329,9 +310,7 @@ class TestDatabasePerformance:
 
                 # 插入数据
                 await session.execute(
-                    text(
-                        f"INSERT INTO test_concurrent_{session_id} (value) VALUES (:value)"
-                    ),
+                    text(f"INSERT INTO test_concurrent_{session_id} (value) VALUES (:value)"),
                     {"value": f"session_{session_id}"},
                 )
 

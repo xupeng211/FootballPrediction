@@ -7,14 +7,10 @@ Enhanced with XGBoost and LightGBM integration for football prediction models
 """
 
 import asyncio
-import json
 import logging
-import os
 import pickle
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 import joblib
 import numpy as np
@@ -27,7 +23,6 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
 )
-from sklearn.model_selection import (
     GridSearchCV,
     train_test_split,
     StratifiedKFold,

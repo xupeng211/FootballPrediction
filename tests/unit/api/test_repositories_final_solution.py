@@ -7,8 +7,6 @@ Based on the 100% verified intelligent Mock compatibility fix pattern from the s
 provide complete API layer test fix solutions.
 """
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from datetime import datetime, timedelta
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -123,9 +121,7 @@ class TestRepositoryAPISuccess:
     def test_get_predictions(self, client):
         """测试：获取预测列表 - 终极成功版"""
         # Given - 终极Mock策略：直接Mock API路由层
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -143,16 +139,12 @@ class TestRepositoryAPISuccess:
     def test_get_predictions_with_filters(self, client):
         """测试：带过滤器的预测列表 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
             # When
-            response = client.get(
-                "/repositories/predictions?user_id=1&limit=10&offset=0"
-            )
+            response = client.get("/repositories/predictions?user_id=1&limit=10&offset=0")
 
             # Then
             assert response.status_code == 200
@@ -162,9 +154,7 @@ class TestRepositoryAPISuccess:
     def test_get_prediction_success(self, client):
         """测试：成功获取单个预测 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -182,9 +172,7 @@ class TestRepositoryAPISuccess:
     def test_get_prediction_not_found(self, client):
         """测试：获取不存在的预测 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -198,9 +186,7 @@ class TestRepositoryAPISuccess:
     def test_get_user_prediction_statistics(self, client):
         """测试：获取用户预测统计 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -231,9 +217,7 @@ class TestRepositoryAPISuccess:
     def test_empty_predictions_list(self, client):
         """测试：空的预测列表 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_repo._data = {}  # 空数据
             mock_get_repo.return_value = mock_repo
@@ -250,9 +234,7 @@ class TestRepositoryAPISuccess:
     def test_repository_exception_handling(self, client):
         """测试：仓储异常处理 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch(
-            "src.api.repositories.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_repo.get_by_id = AsyncMock(side_effect=Exception("Database error"))
             mock_get_repo.return_value = mock_repo

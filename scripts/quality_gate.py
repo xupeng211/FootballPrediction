@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -81,7 +81,8 @@ class QualityGate:
         output = result.stdout
         # 查找包含测试统计的行
         import re
-        pattern = r'= (\d+) failed, (\d+) passed, (\d+) skipped.*'
+
+        pattern = r"= (\d+) failed, (\d+) passed, (\d+) skipped.*"
         match = re.search(pattern, output)
 
         if match:
@@ -147,12 +148,8 @@ class QualityGate:
                 data = json.load(f)
 
             # 计算安全评分
-            high_issues = len(
-                [r for r in data["results"] if r["issue_severity"] == "HIGH"]
-            )
-            medium_issues = len(
-                [r for r in data["results"] if r["issue_severity"] == "MEDIUM"]
-            )
+            high_issues = len([r for r in data["results"] if r["issue_severity"] == "HIGH"])
+            medium_issues = len([r for r in data["results"] if r["issue_severity"] == "MEDIUM"])
 
             if high_issues > 0:
                 security_score = 60.0
@@ -263,8 +260,17 @@ class QualityGate:
         # 运行关键测试
         print("🧪 运行关键测试...")
         result = subprocess.run(
-            ["python", "-m", "pytest", "tests/unit/api/test_adapters.py", "tests/unit/utils/test_dict_utils_enhanced.py", "--tb=no", "-q"],
-            capture_output=True, text=True
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/api/test_adapters.py",
+                "tests/unit/utils/test_dict_utils_enhanced.py",
+                "--tb=no",
+                "-q",
+            ],
+            capture_output=True,
+            text=True,
         )
 
         # 解析结果
@@ -272,12 +278,12 @@ class QualityGate:
         import re
 
         # 尝试匹配有失败的情况
-        pattern = r'= (\d+) failed, (\d+) passed.*'
+        pattern = r"= (\d+) failed, (\d+) passed.*"
         match = re.search(pattern, output)
 
         # 如果没有失败，尝试匹配全部通过的情况
         if not match:
-            pattern = r'= (\d+) passed.*'
+            pattern = r"= (\d+) passed.*"
             match = re.search(pattern, output)
             if match:
                 passed = int(match.group(1))

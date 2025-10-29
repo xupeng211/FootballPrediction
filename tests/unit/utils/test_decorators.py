@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, patch
-
 """
 缓存装饰器测试
 Tests for cache decorators
@@ -8,7 +6,6 @@ Tests for cache decorators
 """
 
 import asyncio
-import json
 import time
 
 import pytest
@@ -92,9 +89,7 @@ def mock_redis():
 @pytest.fixture(autouse=True)
 def patch_redis_manager(mock_redis):
     """自动补丁Redis管理器"""
-    with patch(
-        "src.cache.decorators.RedisManager.get_instance", return_value=mock_redis
-    ):
+    with patch("src.cache.decorators.RedisManager.get_instance", return_value=mock_redis):
         yield
 
 

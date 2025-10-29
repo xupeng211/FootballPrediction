@@ -3,7 +3,6 @@
 专注于测试存在性而非复杂功能
 """
 
-import sys
 from pathlib import Path
 
 import pytest

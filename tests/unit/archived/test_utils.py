@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, patch
-
 """
 健康检查工具测试
 Health Check Utils Tests
@@ -23,9 +21,7 @@ except ImportError:
     HEALTH_UTILS_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not HEALTH_UTILS_AVAILABLE, reason="Health utils module not available"
-)
+@pytest.mark.skipif(not HEALTH_UTILS_AVAILABLE, reason="Health utils module not available")
 @pytest.mark.unit
 class TestHealthChecker:
     """HealthChecker类测试"""
@@ -179,9 +175,7 @@ class TestHealthChecker:
     async def test_check_database_with_exception(self):
         """测试数据库检查异常处理"""
         # 模拟数据库连接异常
-        with patch(
-            "asyncio.sleep", side_effect=Exception("Database connection failed")
-        ):
+        with patch("asyncio.sleep", side_effect=Exception("Database connection failed")):
             result = await self.checker.check_database()
 
             assert result["status"] == "unhealthy"
@@ -207,9 +201,7 @@ class TestHealthChecker:
     async def test_check_prediction_service_with_exception(self):
         """测试预测服务检查异常处理"""
         # 模拟预测服务异常
-        with patch(
-            "asyncio.sleep", side_effect=Exception("Prediction service unavailable")
-        ):
+        with patch("asyncio.sleep", side_effect=Exception("Prediction service unavailable")):
             result = await self.checker.check_prediction_service()
 
             assert result["status"] == "unhealthy"

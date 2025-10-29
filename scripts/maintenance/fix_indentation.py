@@ -10,6 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Tuple
 
+
 class IndentationFixer:
     """缩进错误修复器"""
 
@@ -22,21 +23,21 @@ class IndentationFixer:
         errors = []
 
         # 使用py_compile查找语法错误
-        for root, dirs, files in os.walk('src/'):
+        for root, dirs, files in os.walk("src/"):
             for file in files:
-                if file.endswith('.py'):
+                if file.endswith(".py"):
                     file_path = os.path.join(root, file)
                     try:
                         # 尝试编译文件
-                        with open(file_path, 'rb') as f:
-                            compile(f.read(), file_path, 'exec')
+                        with open(file_path, "rb") as f:
+                            compile(f.read(), file_path, "exec")
                     except IndentationError as e:
                         # 提取行号
-                        if hasattr(e, 'lineno'):
+                        if hasattr(e, "lineno"):
                             errors.append((file_path, e.lineno))
-                        elif 'line' in str(e):
+                        elif "line" in str(e):
                             # 尝试从错误消息中提取行号
-                            match = re.search(r'line (\d+)', str(e))
+                            match = re.search(r"line (\d+)", str(e))
                             if match:
                                 errors.append((file_path, int(match.group(1))))
                     except Exception:
@@ -48,28 +49,30 @@ class IndentationFixer:
     def fix_function_definition_indentation(self, file_path: str, line_num: int) -> bool:
         """修复函数定义的缩进问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
                 line = lines[line_num - 1]
 
                 # 检查是否是函数定义行且有缩进问题
-                if 'def ' in line and ':' in line and '"""' in line:
+                if "def " in line and ":" in line and '"""' in line:
                     # 修复模式: def name(param):    """docstring"""
                     match = re.match(r'^(\s*)(def\s+[^:]+):\s*)(.*?)\s*"""([^"]*)"""', line)
                     if match:
                         indent, func_def, middle, docstring = match.groups()
                         # 重新格式化行
-                        new_line = f"{indent}{func_def}\n{indent}    \"\"\"{docstring}\"\"\"\n"
+                        new_line = f'{indent}{func_def}\n{indent}    """{docstring}"""\n'
                         if middle.strip():
-                            new_line = f"{indent}{func_def} {middle}\n{indent}    \"\"\"{docstring}\"\"\"\n"
+                            new_line = (
+                                f'{indent}{func_def} {middle}\n{indent}    """{docstring}"""\n'
+                            )
 
                         # 替换原行
                         lines[line_num - 1] = new_line
 
                         # 写回文件
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, "w", encoding="utf-8") as f:
                             f.writelines(lines)
 
                         return True
@@ -83,10 +86,10 @@ class IndentationFixer:
     def fix_method_definition_indentation(self, file_path: str, line_num: int) -> bool:
         """修复方法定义的缩进问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             if line_num <= len(lines):
                 line = lines[line_num - 1]
@@ -95,7 +98,7 @@ class IndentationFixer:
                 if re.search(r'^\s*def\s+\w+\(.*\):\s*"""', line):
                     # 修复缩进问题
                     # 找到正确的缩进级别
-                    indent_match = re.match(r'^(\s*)', line)
+                    indent_match = re.match(r"^(\s*)", line)
                     if indent_match:
                         indent = indent_match.group(1)
 
@@ -107,22 +110,16 @@ class IndentationFixer:
 
                             # 重新格式化
                             if docstring_part.strip():
-                                new_lines = [
-                                    f"{func_def}",
-                                    f"{indent}    \"\"\"{docstring_part}"
-                                ]
+                                new_lines = [f"{func_def}", f'{indent}    """{docstring_part}']
                             else:
-                                new_lines = [
-                                    f"{func_def}",
-                                    f"{indent}    \"\"\"\"\""
-                                ]
+                                new_lines = [f"{func_def}", f'{indent}    """""']
 
                             # 替换原行
-                            lines[line_num - 1:line_num] = new_lines
+                            lines[line_num - 1 : line_num] = new_lines
 
                             # 写回文件
-                            with open(file_path, 'w', encoding='utf-8') as f:
-                                f.write('\n'.join(lines))
+                            with open(file_path, "w", encoding="utf-8") as f:
+                                f.write("\n".join(lines))
 
                             return True
 
@@ -135,7 +132,7 @@ class IndentationFixer:
     def fix_class_method_indentation(self, file_path: str, line_num: int) -> bool:
         """修复类方法缩进问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
@@ -144,19 +141,19 @@ class IndentationFixer:
                 # 检查类方法缩进问题
                 if re.search(r'^\s*def\s+\w+\(self.*\):\s*"""', line):
                     # 提取缩进级别
-                    indent_match = re.match(r'^(\s*)def\s+', line)
+                    indent_match = re.match(r"^(\s*)def\s+", line)
                     if indent_match:
                         indent = indent_match.group(1)
 
                         # 检查是否需要添加额外的缩进
                         if len(indent) < 4:  # 方法应该至少有4个空格缩进
                             # 添加正确的缩进
-                            new_indent = '    ' + indent
+                            new_indent = "    " + indent
                             new_line = line.replace(indent, new_indent, 1)
                             lines[line_num - 1] = new_line
 
                             # 写回文件
-                            with open(file_path, 'w', encoding='utf-8') as f:
+                            with open(file_path, "w", encoding="utf-8") as f:
                                 f.writelines(lines)
 
                             return True
@@ -172,10 +169,10 @@ class IndentationFixer:
         try:
             # 尝试使用autopep8修复
             result = subprocess.run(
-                ['python', '-m', 'autopep8', '--in-place', '--aggressive', file_path],
+                ["python", "-m", "autopep8", "--in-place", "--aggressive", file_path],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             return result.returncode == 0
         except Exception:
@@ -237,6 +234,7 @@ class IndentationFixer:
 
         return len(remaining_errors)
 
+
 def main():
     """主函数"""
     print("🔧 Python文件缩进错误修复工具")
@@ -261,6 +259,7 @@ def main():
         print("🎉 所有缩进错误已成功修复！")
     else:
         print(f"⚠️  还有 {remaining_errors} 个错误需要手动修复")
+
 
 if __name__ == "__main__":
     main()

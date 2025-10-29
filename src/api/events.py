@@ -1,11 +1,3 @@
-"""
-事件系统API端点
-Event System API Endpoints
-
-提供事件系统的管理和监控接口。
-Provides management and monitoring interfaces for the event system.
-"""
-
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -13,12 +5,49 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from requests.exceptions import HTTPError
 
-logger = logging.getLogger(__name__)
 
 from ..core.event_application import get_event_application
 from ..events import get_event_bus
 from ..events.handlers import AnalyticsEventHandler, MetricsEventHandler
 
+
+# 获取各处理器的指标
+
+# 添加指标收集器的数据
+
+# 添加分析处理器的数据
+
+
+# 获取特定事件的订阅者
+# 获取所有事件的订阅者信息
+
+
+# 获取指标收集器数据
+
+# 获取分析数据
+
+# 添加系统统计
+
+
+# 过滤指定天数的数据
+
+
+# 计算总计
+
+
+# 按预测数量排序
+
+# 返回前N个用户
+
+
+# 辅助函数
+"""
+事件系统API端点
+Event System API Endpoints
+提供事件系统的管理和监控接口。
+Provides management and monitoring interfaces for the event system.
+"""
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/events", tags=["事件系统"])
 
 
@@ -34,20 +63,13 @@ async def get_event_statistics() -> Dict[str, Any]:
     """获取事件系统统计信息"""
     bus = get_event_bus()
     stats = bus.get_stats()
-
-    # 获取各处理器的指标
     detailed_stats = stats.copy()
-
-    # 添加指标收集器的数据
     metrics_handler = _find_handler(MetricsEventHandler)
     if metrics_handler:
         detailed_stats["metrics"] = metrics_handler.get_metrics()
-
-    # 添加分析处理器的数据
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if analytics_handler:
         detailed_stats["analytics"] = analytics_handler.get_analytics_data()
-
     return detailed_stats
 
 
@@ -64,21 +86,17 @@ async def get_subscribers_info(
 ) -> Dict[str, Any]:
     """获取事件订阅者信息"""
     bus = get_event_bus()
-
     if event_type:
-        # 获取特定事件的订阅者
         count = bus.get_subscribers_count(event_type)
         return {
             "event_type": event_type,
             "subscribers_count": count,
         }
     else:
-        # 获取所有事件的订阅者信息
         all_types = bus.get_all_event_types()
         subscriber_info = {}
         for et in all_types:
             subscriber_info[et] = bus.get_subscribers_count(et)
-
         return {
             "total_event_types": len(all_types),
             "subscribers": subscriber_info,
@@ -101,30 +119,19 @@ async def restart_event_system() -> Dict[str, str]:
 async def get_detailed_metrics() -> Dict[str, Any]:
     """获取事件系统的详细指标"""
     metrics = {}
-
-    # 获取指标收集器数据
     metrics_handler = _find_handler(MetricsEventHandler)
     if metrics_handler:
         metrics["event_counts"] = metrics_handler.get_metrics().get("event_counts", {})
-        metrics["total_events"] = metrics_handler.get_metrics().get(
-            "events_processed", 0
-        )
-        metrics["last_event_time"] = metrics_handler.get_metrics().get(
-            "last_event_time"
-        )
-
-    # 获取分析数据
+        metrics["total_events"] = metrics_handler.get_metrics().get("events_processed", 0)
+        metrics["last_event_time"] = metrics_handler.get_metrics().get("last_event_time")
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if analytics_handler:
         analytics_data = analytics_handler.get_analytics_data()
         metrics["daily_predictions"] = analytics_data.get("daily_predictions", {})
         metrics["user_activity"] = analytics_data.get("user_activity", {})
         metrics["match_predictions"] = analytics_data.get("match_predictions", {})
-
-    # 添加系统统计
     bus = get_event_bus()
     metrics["system_stats"] = bus.get_stats()
-
     return metrics
 
 
@@ -136,14 +143,10 @@ async def get_recent_prediction_stats(
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if not analytics_handler:
         raise HTTPException(status_code=404, detail="分析处理器未找到")
-
     analytics_data = analytics_handler.get_analytics_data()
     daily_predictions = analytics_data.get("daily_predictions", {})
-
-    # 过滤指定天数的数据
     cutoff_date = (datetime.utcnow() - timedelta(days=days)).date()
     recent_stats = {}
-
     for date_str, count in daily_predictions.items():
         try:
             date = datetime.fromisoformat(date_str).date()
@@ -152,10 +155,7 @@ async def get_recent_prediction_stats(
         except (ValueError, KeyError, AttributeError, HTTPError) as e:
             logger.error(f"解析日期时出错: {e}")
             continue
-
-    # 计算总计
     total_predictions = sum(recent_stats.values())
-
     return {
         "days": days,
         "total_predictions": total_predictions,
@@ -172,20 +172,14 @@ async def get_user_activity_stats(
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if not analytics_handler:
         raise HTTPException(status_code=404, detail="分析处理器未找到")
-
     analytics_data = analytics_handler.get_analytics_data()
     user_activity = analytics_data.get("user_activity", {})
-
-    # 按预测数量排序
     sorted_users = sorted(
         user_activity.items(),
         key=lambda x: x[1].get("predictions_count", 0),
         reverse=True,
     )
-
-    # 返回前N个用户
     top_users = sorted_users[:limit]
-
     return {
         "total_active_users": len(user_activity),
         "top_users": [
@@ -199,7 +193,6 @@ async def get_user_activity_stats(
     }
 
 
-# 辅助函数
 def _find_handler(handler_type):
     """查找特定类型的处理器"""
     bus = get_event_bus()

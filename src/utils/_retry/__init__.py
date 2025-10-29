@@ -63,9 +63,7 @@ def retry_with_exponential_backoff(
                             delay *= 0.5 + random.random()  # noqa: B311
                         time.sleep(delay)
 
-            raise RetryError(
-                f"Max attempts ({max_attempts}) exceeded"
-            ) from last_exception
+            raise RetryError(f"Max attempts ({max_attempts}) exceeded") from last_exception
 
         return wrapper
 
@@ -96,9 +94,7 @@ async def async_retry_with_exponential_backoff(
                             delay *= 0.5 + random.random()  # noqa: B311
                         await asyncio.sleep(delay)
 
-            raise RetryError(
-                f"Max attempts ({max_attempts}) exceeded"
-            ) from last_exception
+            raise RetryError(f"Max attempts ({max_attempts}) exceeded") from last_exception
 
         return wrapper
 

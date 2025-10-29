@@ -126,9 +126,7 @@ class ResourceMonitor:
                     logger.warning(f"资源监控异常: {e}")
                     break
 
-        self.monitor_thread = threading.Thread(
-            target=_monitor, name=f"ResourceMonitor-{job_id}"
-        )
+        self.monitor_thread = threading.Thread(target=_monitor, name=f"ResourceMonitor-{job_id}")
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
 
@@ -456,9 +454,7 @@ class JobManager:
             else 0
         )
 
-        recent_executions = (
-            self.execution_history[-10:] if self.execution_history else []
-        )
+        recent_executions = self.execution_history[-10:] if self.execution_history else []
         avg_execution_time = (
             sum(r.execution_time for r in recent_executions) / len(recent_executions)
             if recent_executions
@@ -490,9 +486,7 @@ class JobManager:
         Returns:
             List[Dict[str, Any]]: 执行历史记录
         """
-        recent_history = (
-            self.execution_history[-limit:] if self.execution_history else []
-        )
+        recent_history = self.execution_history[-limit:] if self.execution_history else []
         return [result.to_dict() for result in reversed(recent_history)]
 
     def cleanup_resources(self) -> None:

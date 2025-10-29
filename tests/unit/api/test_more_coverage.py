@@ -1,12 +1,7 @@
-from unittest.mock import Mock, patch
-
 """
 更多覆盖率测试 - 针对低覆盖率模块
 More Coverage Tests - Target Low Coverage Modules
 """
-
-import json
-from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -246,9 +241,7 @@ class TestMonitoringModuleWorking:
         """测试指标点类"""
         from src.metrics.collector.enhanced import MetricPoint
 
-        point = MetricPoint(
-            name="test_metric", value=100.5, timestamp=datetime.utcnow()
-        )
+        point = MetricPoint(name="test_metric", value=100.5, timestamp=datetime.utcnow())
         assert point.name == "test_metric"
         assert point.value == 100.5
 
@@ -455,15 +448,10 @@ class TestPydanticModelsWorking:
             confidence=0.75,
             model_version="default",
         )
-        assert (
-            abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
-            < 0.001
-        )
+        assert abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0) < 0.001
 
         # 创建BatchPredictionRequest
-        batch_request = BatchPredictionRequest(
-            match_ids=[1, 2, 3], model_version="default"
-        )
+        batch_request = BatchPredictionRequest(match_ids=[1, 2, 3], model_version="default")
         assert len(batch_request.match_ids) == 3
 
         # 创建BatchPredictionResponse
@@ -473,9 +461,7 @@ class TestPydanticModelsWorking:
         assert batch_response.total == 1
 
         # 创建PredictionHistory
-        history = PredictionHistory(
-            match_id=123, predictions=[result], total_predictions=1
-        )
+        history = PredictionHistory(match_id=123, predictions=[result], total_predictions=1)
         assert history.total_predictions == 1
 
         # 创建RecentPrediction

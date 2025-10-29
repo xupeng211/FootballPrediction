@@ -80,15 +80,11 @@ def test_api_connection():
     ]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, env=env
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
 
         # 检查是否有超时错误
         output = result.stdout + result.stderr
-        has_timeout = any(
-            err in output.lower() for err in ["timeout", "time out", "超时"]
-        )
+        has_timeout = any(err in output.lower() for err in ["timeout", "time out", "超时"])
 
         if has_timeout:
             print("⚠️  检测到超时错误")

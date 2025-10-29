@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 39 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 事件驱动预测服务测试（工作版）
@@ -28,9 +27,7 @@ class TestEventDrivenPredictionService:
     @pytest.fixture
     def mock_strategy_service(self):
         """Mock策略预测服务"""
-        with patch(
-            "src.services.event_prediction_service.StrategyPredictionService"
-        ) as mock:
+        with patch("src.services.event_prediction_service.StrategyPredictionService") as mock:
             # 设置基类方法
             mock_instance = Mock()
             mock_instance.predict_match = AsyncMock()
@@ -81,9 +78,7 @@ class TestEventDrivenPredictionService:
             "src.services.event_prediction_service.get_event_bus",
             return_value=mock_event_bus,
         ):
-            with patch(
-                "src.services.event_prediction_service.StrategyPredictionService"
-            ):
+            with patch("src.services.event_prediction_service.StrategyPredictionService"):
                 service = EventDrivenPredictionService()
 
                 # Then
@@ -113,9 +108,7 @@ class TestEventDrivenPredictionService:
         mock_event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_predict_match_without_optional_params(
-        self, service, sample_prediction
-    ):
+    async def test_predict_match_without_optional_params(self, service, sample_prediction):
         """测试：预测比赛（不提供可选参数）"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -128,9 +121,7 @@ class TestEventDrivenPredictionService:
         service._event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_prediction_and_publish_event(
-        self, service, sample_prediction
-    ):
+    async def test_update_prediction_and_publish_event(self, service, sample_prediction):
         """测试：更新预测并发布事件"""
         # Given
         # Mock仓库返回原预测
@@ -260,9 +251,7 @@ class TestEventDrivenPredictionService:
         assert event.data.source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_prediction_made_event_data_structure(
-        self, service, sample_prediction
-    ):
+    async def test_prediction_made_event_data_structure(self, service, sample_prediction):
         """测试：预测创建事件数据结构"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -439,9 +428,7 @@ class TestConfigureEventDrivenServices:
         configure_event_driven_services(mock_container)
 
         # Then
-        mock_container.register_scoped.assert_called_once_with(
-            EventDrivenPredictionService
-        )
+        mock_container.register_scoped.assert_called_once_with(EventDrivenPredictionService)
 
     def test_configure_with_none_container(self):
         """测试：配置空容器"""

@@ -4,7 +4,6 @@
 测试 src.services.user_profile 模块的功能
 """
 
-from unittest.mock import Mock, patch
 
 import pytest
 

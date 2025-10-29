@@ -78,9 +78,7 @@ class BatchSyntaxErrorFixer:
     def fix_missing_quotes(self, content: str) -> str:
         """Fix missing quotes around string values"""
         # Fix missing quotes in dictionary values
-        content = re.sub(
-            r"(\w+):\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*([,}])", r'\1: "\2"\3', content
-        )
+        content = re.sub(r"(\w+):\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*([,}])", r'\1: "\2"\3', content)
         return content
 
     def fix_dictionary_syntax(self, content: str) -> str:

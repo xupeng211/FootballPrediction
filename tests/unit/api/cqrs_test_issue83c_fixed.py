@@ -9,10 +9,6 @@ Issue #83-C 高级重构测试: api.cqrs
 
 import inspect
 import os
-import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 
@@ -232,9 +228,7 @@ class TestApiCqrsIssue83CFixed:
                     # 尝试实例化
                     if hasattr(cls, "__init__"):
                         # 根据构造函数参数决定实例化策略
-                        init_args = (
-                            cls.__init__.__code__.co_argcount - 1
-                        )  # 减去self参数
+                        init_args = cls.__init__.__code__.co_argcount - 1  # 减去self参数
 
                         if init_args == 0:
                             instance = cls()
@@ -250,8 +244,7 @@ class TestApiCqrsIssue83CFixed:
                         methods = [
                             method
                             for method in dir(instance)
-                            if not method.startswith("_")
-                            and callable(getattr(instance, method))
+                            if not method.startswith("_") and callable(getattr(instance, method))
                         ]
 
                         for method_name in methods[:2]:
@@ -260,9 +253,7 @@ class TestApiCqrsIssue83CFixed:
                                 result = method()
                                 print(f"      方法 {method_name}: {type(result)}")
                             except Exception as me:
-                                print(
-                                    f"      方法 {method_name} 异常: {type(me).__name__}"
-                                )
+                                print(f"      方法 {method_name} 异常: {type(me).__name__}")
                     else:
                         print(f"   类 {class_name} 无构造函数")
 

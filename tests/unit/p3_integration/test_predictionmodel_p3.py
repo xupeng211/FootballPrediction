@@ -6,9 +6,6 @@ P3阶段预测模型测试: PredictionModel
 
 import os
 import sys
-from datetime import date, datetime
-from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -35,9 +32,7 @@ except ImportError as e:
 class TestPredictionModelAdvanced:
     """PredictionModel 高级测试套件"""
 
-    @pytest.mark.skipif(
-        not PREDICTION_MODEL_AVAILABLE, reason="PredictionModel模块不可用"
-    )
+    @pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="PredictionModel模块不可用")
     def test_prediction_model_import(self):
         """测试预测模型导入"""
         from src.models import prediction
@@ -269,7 +264,6 @@ class TestPredictionModelAdvanced:
         assert prediction_dict["notes"] is None
 
         # 测试JSON序列化
-        import json
 
         prediction_json = prediction.json()
         assert isinstance(prediction_json, str)

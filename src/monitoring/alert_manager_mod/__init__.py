@@ -86,21 +86,13 @@ class LogHandler:
     def log_alert(self, alert: Alert):
         """记录告警到日志"""
         if alert.level == AlertLevel.CRITICAL:
-            self.logger.critical(
-                f"[{alert.level.value.upper()}] {alert.name}: {alert.message}"
-            )
+            self.logger.critical(f"[{alert.level.value.upper()}] {alert.name}: {alert.message}")
         elif alert.level == AlertLevel.ERROR:
-            self.logger.error(
-                f"[{alert.level.value.upper()}] {alert.name}: {alert.message}"
-            )
+            self.logger.error(f"[{alert.level.value.upper()}] {alert.name}: {alert.message}")
         elif alert.level == AlertLevel.WARNING:
-            self.logger.warning(
-                f"[{alert.level.value.upper()}] {alert.name}: {alert.message}"
-            )
+            self.logger.warning(f"[{alert.level.value.upper()}] {alert.name}: {alert.message}")
         else:
-            self.logger.info(
-                f"[{alert.level.value.upper()}] {alert.name}: {alert.message}"
-            )
+            self.logger.info(f"[{alert.level.value.upper()}] {alert.name}: {alert.message}")
 
     def get_logs(self, level: AlertLevel = None, limit: int = 100) -> List[str]:
         """获取日志（简化版本）"""
@@ -302,9 +294,7 @@ class EmailHandler:
         # 简化的邮件发送逻辑
         logger.info(f"Email alert sent to {recipients}: {subject}")
 
-    def send_html_alert(
-        self, alert: Alert, recipients: List[str], template: str = None
-    ):
+    def send_html_alert(self, alert: Alert, recipients: List[str], template: str = None):
         """发送HTML格式的告警邮件"""
         # 简化的HTML邮件发送逻辑
         logger.info(f"HTML email alert sent to {recipients}")

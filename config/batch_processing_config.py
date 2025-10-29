@@ -7,18 +7,15 @@
 BATCH_PROCESSING_CONFIG = {
     "batch_size": 100,
     "max_memory_mb": 512,
-    "processing_timeout": 300,    # 5分钟
-    "error_handling": {
-        "retry_attempts": 3,
-        "retry_delay": 5.0,
-        "max_error_rate": 0.1
-    },
+    "processing_timeout": 300,  # 5分钟
+    "error_handling": {"retry_attempts": 3, "retry_delay": 5.0, "max_error_rate": 0.1},
     "performance_monitoring": {
         "enabled": True,
         "metrics_interval": 60,
-        "performance_logging": True
-    }
+        "performance_logging": True,
+    },
 }
+
 
 # 批量处理器基类
 class BatchProcessor:
@@ -61,6 +58,7 @@ class BatchProcessor:
         if self.current_batch:
             self.process_batch()
 
+
 # 预测结果批量处理器
 class PredictionBatchProcessor(BatchProcessor):
     def __init__(self):
@@ -71,6 +69,7 @@ class PredictionBatchProcessor(BatchProcessor):
         print(f"批量处理 {len(batch)} 个预测结果")
         # 这里应该是实际的批量处理实现
         pass
+
 
 # 数据收集批量处理器
 class DataCollectionBatchProcessor(BatchProcessor):
@@ -83,6 +82,7 @@ class DataCollectionBatchProcessor(BatchProcessor):
         # 这里应该是实际的批量处理实现
         pass
 
+
 # 用户活动批量处理器
 class UserActivityBatchProcessor(BatchProcessor):
     def __init__(self):
@@ -93,6 +93,7 @@ class UserActivityBatchProcessor(BatchProcessor):
         print(f"批量处理 {len(batch)} 个用户活动")
         # 这里应该是实际的批量处理实现
         pass
+
 
 # 全局批量处理器实例
 prediction_batch_processor = PredictionBatchProcessor()

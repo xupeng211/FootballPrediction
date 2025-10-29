@@ -4,7 +4,6 @@
 提供用户注册、登录、令牌管理等认证相关的API端点
 """
 
-from datetime import timedelta
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -203,9 +202,7 @@ async def update_current_user(
     # 更新允许的字段
     allowed_fields = {"first_name", "last_name", "avatar_url", "bio", "preferences"}
 
-    update_data = {
-        key: value for key, value in user_update.items() if key in allowed_fields
-    }
+    update_data = {key: value for key, value in user_update.items() if key in allowed_fields}
 
     if not update_data:
         raise HTTPException(
@@ -298,9 +295,7 @@ async def reset_password(
     - **token**: 重置令牌
     - **new_password**: 新密码
     """
-    success = await auth_service.reset_password(
-        reset_data.token, reset_data.new_password
-    )
+    success = await auth_service.reset_password(reset_data.token, reset_data.new_password)
 
     if not success:
         raise HTTPException(

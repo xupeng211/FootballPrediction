@@ -1,7 +1,5 @@
 """测试比赛领域事件模块"""
 
-from unittest.mock import Mock
-
 import pytest
 
 try:
@@ -173,7 +171,7 @@ class TestMatchEvents:
             match_id=MATCH_ID,
             home_team_id=HOME_TEAM_ID,
             away_team_id=AWAY_TEAM_ID,
-            **additional_data
+            **additional_data,
         )
 
         # 额外参数应该被接受（虽然可能不直接存储）
@@ -260,9 +258,7 @@ class TestEventIntegration:
         """测试事件序列化兼容性"""
         events = [
             MatchStartedEvent(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID),
-            MatchFinishedEvent(
-                MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, FINAL_SCORE, RESULT
-            ),
+            MatchFinishedEvent(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, FINAL_SCORE, RESULT),
             MatchCancelledEvent(MATCH_ID, CANCELLATION_REASON),
             MatchPostponedEvent(MATCH_ID, NEW_DATE, POSTPONEMENT_REASON),
         ]
@@ -292,9 +288,7 @@ class TestEventIntegration:
         assert cancelled.match_id == match_id
 
         # 4. 如果比赛正常结束
-        finished = MatchFinishedEvent(
-            match_id, home_team, away_team, FINAL_SCORE, RESULT
-        )
+        finished = MatchFinishedEvent(match_id, home_team, away_team, FINAL_SCORE, RESULT)
         assert finished.match_id == match_id
 
 

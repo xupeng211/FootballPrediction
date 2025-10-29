@@ -1,10 +1,8 @@
 """测试API路由扩展模块"""
 
 from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 try:
@@ -197,9 +195,7 @@ class TestAPIRouterExtended:
     def test_api_response_creation(self):
         """测试API响应创建"""
         # 成功响应
-        response = APIResponse(
-            success=True, message="Operation successful", data={"key": "value"}
-        )
+        response = APIResponse(success=True, message="Operation successful", data={"key": "value"})
         assert response.success is True
         assert response.message == "Operation successful"
         assert response.data == {"key": "value"}
@@ -296,9 +292,7 @@ class TestAPIRouterExtended:
                 else:
                     errors_list = []
 
-                response = APIResponse(
-                    success=False, message="Error occurred", errors=errors_list
-                )
+                response = APIResponse(success=False, message="Error occurred", errors=errors_list)
 
                 assert response.success is False
                 assert response.message == "Error occurred"
@@ -426,9 +420,7 @@ class TestAPIRouterExtended:
             request_times.append(current_time)
 
             # 检查速率限制
-            recent_requests = [
-                t for t in request_times if current_time - t < rate_limit_window
-            ]
+            recent_requests = [t for t in request_times if current_time - t < rate_limit_window]
 
             # 模拟速率限制逻辑
             if len(recent_requests) > max_requests:

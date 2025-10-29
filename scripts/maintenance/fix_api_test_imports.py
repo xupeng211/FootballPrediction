@@ -82,9 +82,7 @@ def fix_test_imports(filepath):
 
 """
             # 在 API_AVAILABLE = True 之前插入
-            content = re.sub(
-                r"(\s+API_AVAILABLE = True)", model_import + r"\1", content
-            )
+            content = re.sub(r"(\s+API_AVAILABLE = True)", model_import + r"\1", content)
 
         # 如果文件被修改了，保存它
         if content != original:

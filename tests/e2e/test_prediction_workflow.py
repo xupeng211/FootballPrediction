@@ -101,9 +101,7 @@ class TestPredictionWorkflow:
         assert "home_win" in pred
         assert "draw" in pred
         assert "away_win" in pred
-        assert pred["home_win"] + pred["draw"] + pred["away_win"] == pytest.approx(
-            1.0, rel=1e-2
-        )
+        assert pred["home_win"] + pred["draw"] + pred["away_win"] == pytest.approx(1.0, rel=1e-2)
 
         # 5. 获取预测历史
         history_response = client.get(f"/api/predictions/{predict_request['match_id']}")
@@ -137,7 +135,6 @@ class TestPredictionWorkflow:
     def test_concurrent_predictions(self, client):
         """测试：并发预测请求"""
         import threading
-        import time
 
         results = []
         errors = []
@@ -215,8 +212,7 @@ class TestDataCollectionWorkflow:
                 "status": "success",
                 "collected": 10,
                 "matches": [
-                    {"id": i, "home": f"Team {i}", "away": f"Team {i + 1}"}
-                    for i in range(10)
+                    {"id": i, "home": f"Team {i}", "away": f"Team {i + 1}"} for i in range(10)
                 ],
             }
 
@@ -226,8 +222,7 @@ class TestDataCollectionWorkflow:
                 "status": "success",
                 "collected": 5,
                 "odds": [
-                    {"match_id": i, "home_win": 2.0, "draw": 3.0, "away_win": 3.5}
-                    for i in range(5)
+                    {"match_id": i, "home_win": 2.0, "draw": 3.0, "away_win": 3.5} for i in range(5)
                 ],
             }
 

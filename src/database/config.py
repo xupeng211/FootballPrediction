@@ -86,9 +86,7 @@ def _parse_int(key: str, default: int) -> int:
 def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
     """根据环境返回数据库配置。"""
 
-    env = (
-        environment or os.getenv("ENVIRONMENT", "development") or "development"
-    ).lower()
+    env = (environment or os.getenv("ENVIRONMENT", "development") or "development").lower()
     prefix = _ENV_PREFIX.get(env, "")
 
     if env == "test":

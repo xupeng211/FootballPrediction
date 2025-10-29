@@ -1,12 +1,7 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 仓储API端点测试
 Repository API Endpoints Tests
 """
-
-import json
-from datetime import date, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -53,9 +48,7 @@ class TestRepositoryEndpoints:
         """测试获取用户预测统计"""
         user_id = "user_123"
 
-        response = client.get(
-            f"/api/v1/repositories/predictions/user/{user_id}/statistics"
-        )
+        response = client.get(f"/api/v1/repositories/predictions/user/{user_id}/statistics")
 
         if response.status_code == 404:
             pytest.skip("获取用户预测统计端点未实现")
@@ -68,9 +61,7 @@ class TestRepositoryEndpoints:
         """测试获取比赛预测统计"""
         match_id = 456
 
-        response = client.get(
-            f"/api/v1/repositories/predictions/match/{match_id}/statistics"
-        )
+        response = client.get(f"/api/v1/repositories/predictions/match/{match_id}/statistics")
 
         if response.status_code == 404:
             pytest.skip("获取比赛预测统计端点未实现")
@@ -79,9 +70,7 @@ class TestRepositoryEndpoints:
         _data = response.json()
         assert "statistics" in _data or "stats" in _data
 
-    @patch(
-        "src.database.repositories.prediction_repository.PredictionRepository.create"
-    )
+    @patch("src.database.repositories.prediction_repository.PredictionRepository.create")
     def test_create_prediction(self, mock_create, client):
         """测试创建预测"""
         mock_create.return_value = {
@@ -109,9 +98,7 @@ class TestRepositoryEndpoints:
         _data = response.json()
         assert "id" in _data or "prediction_id" in _data
 
-    @patch(
-        "src.database.repositories.prediction_repository.PredictionRepository.update"
-    )
+    @patch("src.database.repositories.prediction_repository.PredictionRepository.update")
     def test_update_prediction(self, mock_update, client):
         """测试更新预测"""
         prediction_id = "pred_123"
@@ -127,9 +114,7 @@ class TestRepositoryEndpoints:
             "confidence": 0.85,
         }
 
-        response = client.put(
-            f"/api/v1/repositories/predictions/{prediction_id}", json=update_data
-        )
+        response = client.put(f"/api/v1/repositories/predictions/{prediction_id}", json=update_data)
 
         if response.status_code == 404:
             pytest.skip("更新预测端点未实现")
@@ -339,9 +324,7 @@ class TestRepositoryEndpoints:
 
         finish_data = {"home_score": 2, "away_score": 1, "final_result": "home_win"}
 
-        response = client.post(
-            f"/api/v1/repositories/matches/{match_id}/finish", json=finish_data
-        )
+        response = client.post(f"/api/v1/repositories/matches/{match_id}/finish", json=finish_data)
 
         if response.status_code == 404:
             pytest.skip("结束比赛端点未实现")

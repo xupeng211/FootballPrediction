@@ -159,9 +159,7 @@ class ModelTrainer:
         y_train = y.iloc[train_indices]
         y_test = y.iloc[test_indices]
 
-        self.logger.info(
-            f"Data prepared: {len(X_train)} train samples, {len(X_test)} test samples"
-        )
+        self.logger.info(f"Data prepared: {len(X_train)} train samples, {len(X_test)} test samples")
         return X_train, X_test, y_train, y_test
 
     async def train(
@@ -192,9 +190,7 @@ class ModelTrainer:
             if self.config.model_type == ModelType.RANDOM_FOREST:
                 self.model = FootballPredictionModel("random_forest_model")
             else:
-                self.model = PredictionModel(
-                    "generic_model", self.config.model_type.value
-                )
+                self.model = PredictionModel("generic_model", self.config.model_type.value)
 
             # 模拟训练过程
             for epoch in range(min(10, self.config.epochs)):
@@ -247,9 +243,7 @@ class ModelTrainer:
                 "start_time": self.start_time.isoformat() if self.start_time else None,
             }
 
-    async def evaluate(
-        self, X_test: pd.DataFrame, y_test: pd.Series
-    ) -> Dict[str, float]:
+    async def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, float]:
         """
         评估模型
 
@@ -304,9 +298,7 @@ class ModelTrainer:
                 json.dump(
                     {
                         "training_history": self.training_history,
-                        "metrics_history": {
-                            str(k): v for k, v in self.metrics_history.items()
-                        },
+                        "metrics_history": {str(k): v for k, v in self.metrics_history.items()},
                         "feature_importance": self.feature_importance,
                         "config": self.config.__dict__,
                     },
@@ -340,8 +332,7 @@ class ModelTrainer:
                     history_data = json.load(f)
                     self.training_history = history_data.get("training_history", [])
                     self.metrics_history = {
-                        int(k): v
-                        for k, v in history_data.get("metrics_history", {}).items()
+                        int(k): v for k, v in history_data.get("metrics_history", {}).items()
                     }
                     self.feature_importance = history_data.get("feature_importance", {})
 
@@ -480,9 +471,7 @@ class ModelRegistry:
             version = model_info["version"]
 
             # 删除文件
-            registry_file = (
-                self.registry_dir / f"{name.replace('/', '_')}_{version}.json"
-            )
+            registry_file = self.registry_dir / f"{name.replace('/', '_')}_{version}.json"
             if registry_file.exists():
                 registry_file.unlink()
 

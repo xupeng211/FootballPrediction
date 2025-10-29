@@ -329,9 +329,7 @@ class ObserverManager:
 
         # 获取性能指标
         performance_observer = self._observers.get("performance")
-        if performance_observer and isinstance(
-            performance_observer, PerformanceObserver
-        ):
+        if performance_observer and isinstance(performance_observer, PerformanceObserver):
             result["performance"] = performance_observer.get_performance_metrics()
 
         return result

@@ -14,13 +14,14 @@ from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class KellyOptimizationResult:
     """Kelly准则优化结果"""
+
     optimal_fraction: float
     expected_growth: float
     risk_of_ruin: float
@@ -37,10 +38,7 @@ class EnhancedKellyCalculator:
         self.confidence_weighting = True
 
     def calculate_fractional_kelly(
-        self,
-        true_probability: float,
-        decimal_odds: float,
-        confidence: float = 1.0
+        self, true_probability: float, decimal_odds: float, confidence: float = 1.0
     ) -> KellyOptimizationResult:
         """计算优化的分数Kelly准则"""
 
@@ -50,7 +48,7 @@ class EnhancedKellyCalculator:
                 expected_growth=0.0,
                 risk_of_ruin=1.0,
                 confidence_interval=(0.0, 0.0),
-                recommendation="avoid"
+                recommendation="avoid",
             )
 
         # 基础Kelly计算
@@ -77,9 +75,7 @@ class EnhancedKellyCalculator:
         risk_of_ruin = self._calculate_risk_of_ruin(kelly_optimized, p, b)
 
         # 置信区间
-        confidence_interval = self._calculate_confidence_interval(
-            kelly_optimized, confidence
-        )
+        confidence_interval = self._calculate_confidence_interval(kelly_optimized, confidence)
 
         # 推荐
         recommendation = self._generate_recommendation(kelly_optimized, risk_of_ruin)
@@ -89,10 +85,12 @@ class EnhancedKellyCalculator:
             expected_growth=expected_growth,
             risk_of_ruin=risk_of_ruin,
             confidence_interval=confidence_interval,
-            recommendation=recommendation
+            recommendation=recommendation,
         )
 
-    def _calculate_expected_growth(self, kelly_fraction: float, probability: float, net_odds: float) -> float:
+    def _calculate_expected_growth(
+        self, kelly_fraction: float, probability: float, net_odds: float
+    ) -> float:
         """计算期望增长率"""
         if kelly_fraction <= 0:
             return 0.0
@@ -108,7 +106,9 @@ class EnhancedKellyCalculator:
         growth_rate = p * math.log(1 + f * b) + q * math.log(1 - f)
         return growth_rate
 
-    def _calculate_risk_of_ruin(self, kelly_fraction: float, probability: float, net_odds: float) -> float:
+    def _calculate_risk_of_ruin(
+        self, kelly_fraction: float, probability: float, net_odds: float
+    ) -> float:
         """计算破产风险"""
         if kelly_fraction <= 0:
             return 0.0
@@ -122,7 +122,9 @@ class EnhancedKellyCalculator:
         risk = min(kelly_ratio * 0.2, 0.3)
         return risk
 
-    def _calculate_confidence_interval(self, kelly_fraction: float, confidence: float) -> Tuple[float, float]:
+    def _calculate_confidence_interval(
+        self, kelly_fraction: float, confidence: float
+    ) -> Tuple[float, float]:
         """计算置信区间"""
         if kelly_fraction <= 0:
             return (0.0, 0.0)
@@ -152,14 +154,11 @@ class EnhancedValueCalculator:
             "ev_score": 0.3,
             "probability_score": 0.25,
             "odds_fairness": 0.25,
-            "risk_adjusted": 0.2
+            "risk_adjusted": 0.2,
         }
 
     def calculate_value_rating(
-        self,
-        probability: float,
-        odds: float,
-        confidence: float = 1.0
+        self, probability: float, odds: float, confidence: float = 1.0
     ) -> Dict[str, Any]:
         """计算价值评级"""
 
@@ -174,10 +173,10 @@ class EnhancedValueCalculator:
 
         # 综合评级
         overall_rating = (
-            ev_score * self.weights["ev_score"] +
-            probability_score * self.weights["probability_score"] +
-            odds_fairness_score * self.weights["odds_fairness"] +
-            risk_adjusted_score * self.weights["risk_adjusted"]
+            ev_score * self.weights["ev_score"]
+            + probability_score * self.weights["probability_score"]
+            + odds_fairness_score * self.weights["odds_fairness"]
+            + risk_adjusted_score * self.weights["risk_adjusted"]
         )
 
         return {
@@ -186,7 +185,7 @@ class EnhancedValueCalculator:
             "probability_score": probability_score,
             "odds_fairness_score": odds_fairness_score,
             "risk_adjusted_score": risk_adjusted_score,
-            "ev": ev
+            "ev": ev,
         }
 
     def _calculate_ev_score(self, ev: float) -> float:
@@ -209,7 +208,7 @@ class EnhancedValueCalculator:
 
     def _calculate_odds_fairness_score(self, probability: float, odds: float) -> float:
         """计算赔率公平性分数"""
-        fair_odds = 1 / probability if probability > 0 else float('inf')
+        fair_odds = 1 / probability if probability > 0 else float("inf")
         if fair_odds == 0:
             return 0.0
 
@@ -275,19 +274,23 @@ def test_kelly_optimization():
             case["prob"], case["odds"], case["confidence"]
         )
 
-        results.append({
-            "case": case["desc"],
-            "probability": case["prob"],
-            "odds": case["odds"],
-            "optimal_fraction": result.optimal_fraction,
-            "expected_growth": result.expected_growth,
-            "risk_of_ruin": result.risk_of_ruin,
-            "recommendation": result.recommendation
-        })
+        results.append(
+            {
+                "case": case["desc"],
+                "probability": case["prob"],
+                "odds": case["odds"],
+                "optimal_fraction": result.optimal_fraction,
+                "expected_growth": result.expected_growth,
+                "risk_of_ruin": result.risk_of_ruin,
+                "recommendation": result.recommendation,
+            }
+        )
 
-        logger.info(f"  {case['desc']}: Kelly={result.optimal_fraction:.3f}, "
-                   f"期望增长={result.expected_growth:.3f}, "
-                   f"破产风险={result.risk_of_ruin:.3f}")
+        logger.info(
+            f"  {case['desc']}: Kelly={result.optimal_fraction:.3f}, "
+            f"期望增长={result.expected_growth:.3f}, "
+            f"破产风险={result.risk_of_ruin:.3f}"
+        )
 
     return results
 
@@ -307,23 +310,25 @@ def test_value_rating():
 
     results = []
     for case in test_cases:
-        result = value_calc.calculate_value_rating(
-            case["prob"], case["odds"], case["confidence"]
+        result = value_calc.calculate_value_rating(case["prob"], case["odds"], case["confidence"])
+
+        results.append(
+            {
+                "case": case["desc"],
+                "overall_rating": result["overall_rating"],
+                "ev_score": result["ev_score"],
+                "probability_score": result["probability_score"],
+                "odds_fairness_score": result["odds_fairness_score"],
+                "risk_adjusted_score": result["risk_adjusted_score"],
+                "ev": result["ev"],
+            }
         )
 
-        results.append({
-            "case": case["desc"],
-            "overall_rating": result["overall_rating"],
-            "ev_score": result["ev_score"],
-            "probability_score": result["probability_score"],
-            "odds_fairness_score": result["odds_fairness_score"],
-            "risk_adjusted_score": result["risk_adjusted_score"],
-            "ev": result["ev"]
-        })
-
-        logger.info(f"  {case['desc']}: 总评级={result['overall_rating']:.1f}, "
-                   f"EV分数={result['ev_score']:.1f}, "
-                   f"风险调整={result['risk_adjusted_score']:.1f}")
+        logger.info(
+            f"  {case['desc']}: 总评级={result['overall_rating']:.1f}, "
+            f"EV分数={result['ev_score']:.1f}, "
+            f"风险调整={result['risk_adjusted_score']:.1f}"
+        )
 
     return results
 
@@ -338,7 +343,7 @@ def test_enhanced_ev_calculation():
     test_cases = [
         {"prob": 0.65, "odds": 1.85, "confidence": 0.8, "desc": "SRS策略测试"},
         {"prob": 0.35, "odds": 3.2, "confidence": 0.6, "desc": "保守策略测试"},
-        {"prob": 0.3, "odds": 3.4, "confidence": 0.7, "desc": "激进策略测试"}
+        {"prob": 0.3, "odds": 3.4, "confidence": 0.7, "desc": "激进策略测试"},
     ]
 
     results = []
@@ -367,18 +372,22 @@ def test_enhanced_ev_calculation():
         else:
             recommendation = "small_bet"
 
-        results.append({
-            "case": case["desc"],
-            "ev": ev,
-            "kelly_fraction": kelly_result.optimal_fraction,
-            "value_rating": value_result["overall_rating"],
-            "recommendation": recommendation,
-            "expected_roi": ev * kelly_result.optimal_fraction * 100,
-            "risk_of_ruin": kelly_result.risk_of_ruin
-        })
+        results.append(
+            {
+                "case": case["desc"],
+                "ev": ev,
+                "kelly_fraction": kelly_result.optimal_fraction,
+                "value_rating": value_result["overall_rating"],
+                "recommendation": recommendation,
+                "expected_roi": ev * kelly_result.optimal_fraction * 100,
+                "risk_of_ruin": kelly_result.risk_of_ruin,
+            }
+        )
 
-        logger.info(f"  {case['desc']}: EV={ev:.3f}, Kelly={kelly_result.optimal_fraction:.3f}, "
-                   f"评级={value_result['overall_rating']:.1f}, 建议={recommendation}")
+        logger.info(
+            f"  {case['desc']}: EV={ev:.3f}, Kelly={kelly_result.optimal_fraction:.3f}, "
+            f"评级={value_result['overall_rating']:.1f}, 建议={recommendation}"
+        )
 
     return results
 
@@ -395,7 +404,7 @@ def simulate_backtest():
         "winning_bets": 0,
         "losing_bets": 0,
         "total_stake": 0.0,
-        "total_return": 0.0
+        "total_return": 0.0,
     }
 
     kelly_calc = EnhancedKellyCalculator()
@@ -404,6 +413,7 @@ def simulate_backtest():
 
     # 简化的模拟数据
     import random
+
     random.seed(42)  # 固定种子以获得可重复结果
 
     for i in range(100):
@@ -421,7 +431,9 @@ def simulate_backtest():
         if ev < 0.05 or value_result["overall_rating"] < 6.0:
             continue
 
-        stake = min(kelly_result.optimal_fraction * current_bankroll * 0.01, current_bankroll * 0.02)
+        stake = min(
+            kelly_result.optimal_fraction * current_bankroll * 0.01, current_bankroll * 0.02
+        )
 
         if stake <= 0:
             continue
@@ -441,11 +453,17 @@ def simulate_backtest():
             current_bankroll -= stake
 
     results["final_bankroll"] = current_bankroll
-    results["roi"] = (current_bankroll - results["initial_bankroll"]) / results["initial_bankroll"] * 100
-    results["win_rate"] = results["winning_bets"] / results["total_bets"] if results["total_bets"] > 0 else 0
+    results["roi"] = (
+        (current_bankroll - results["initial_bankroll"]) / results["initial_bankroll"] * 100
+    )
+    results["win_rate"] = (
+        results["winning_bets"] / results["total_bets"] if results["total_bets"] > 0 else 0
+    )
 
-    logger.info(f"  回测结果: ROI={results['roi']:.2f}%, 胜率={results['win_rate']:.2f}, "
-               f"总投注={results['total_bets']}, 最终资金={results['final_bankroll']:.2f}")
+    logger.info(
+        f"  回测结果: ROI={results['roi']:.2f}%, 胜率={results['win_rate']:.2f}, "
+        f"总投注={results['total_bets']}, 最终资金={results['final_bankroll']:.2f}"
+    )
 
     return results
 
@@ -484,8 +502,8 @@ def main():
             "total_tests": len(kelly_results) + len(value_results) + len(ev_results),
             "backtest_roi": backtest_results["roi"],
             "backtest_win_rate": backtest_results["win_rate"],
-            "recommendation": "EV优化算法运行正常"
-        }
+            "recommendation": "EV优化算法运行正常",
+        },
     }
 
     try:

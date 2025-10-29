@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 12 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock
 
 """
 适配器基类测试
@@ -12,7 +11,6 @@ Tests for Adapter Base Classes
 """
 
 import asyncio
-from datetime import datetime
 
 import pytest
 

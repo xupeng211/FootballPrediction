@@ -43,9 +43,7 @@ async def test_quality_monitor():
         print("✅ DataFreshnessResult 创建成功")
 
         freshness_dict = freshness_result.to_dict()
-        print(
-            f"   Freshness 结果: {freshness_dict['table_name']} - {freshness_dict['is_fresh']}"
-        )
+        print(f"   Freshness 结果: {freshness_dict['table_name']} - {freshness_dict['is_fresh']}")
 
         # 测试 DataCompletenessResult
         completeness_result = DataCompletenessResult(

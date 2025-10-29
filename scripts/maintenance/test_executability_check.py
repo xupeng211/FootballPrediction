@@ -11,6 +11,7 @@ import sys
 import os
 from pathlib import Path
 
+
 def check_test_syntax(test_files):
     """检查测试文件的语法正确性"""
     syntax_errors = []
@@ -18,8 +19,8 @@ def check_test_syntax(test_files):
 
     for file_path in test_files:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                compile(f.read(), file_path, 'exec')
+            with open(file_path, "r", encoding="utf-8") as f:
+                compile(f.read(), file_path, "exec")
             syntax_correct.append(file_path)
         except SyntaxError as e:
             syntax_errors.append((file_path, f"语法错误: {e}"))
@@ -28,15 +29,15 @@ def check_test_syntax(test_files):
 
     return syntax_correct, syntax_errors
 
+
 def run_test_collection(test_files):
     """运行测试收集，检查pytest能否正常收集"""
     try:
-        result = subprocess.run([
-            sys.executable, '-m', 'pytest', '--collect-only', '-q'
-        ] + test_files,
-        capture_output=True,
-        text=True,
-        timeout=30
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q"] + test_files,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
 
         if result.returncode == 0:
@@ -49,22 +50,23 @@ def run_test_collection(test_files):
     except Exception as e:
         return False, f"测试收集异常: {e}"
 
+
 def main():
     """主函数"""
     print("🧪 开始测试可执行性检查...")
 
     # 检查关键的已修复测试文件
     key_test_files = [
-        'tests/unit/test_final_coverage_push.py',
-        'tests/unit/test_observers.py',
-        'tests/unit/test_checks.py',
-        'tests/unit/api/test_comprehensive.py',
-        'tests/unit/utils/test_config_loader_comprehensive.py',
-        'tests/unit/utils/test_low_coverage_boost.py',
-        'tests/unit/utils/test_final_coverage.py',
-        'tests/unit/api/test_events_simple.py',
-        'tests/unit/api/test_decorators_simple.py',
-        'tests/unit/api/test_core_modules.py'
+        "tests/unit/test_final_coverage_push.py",
+        "tests/unit/test_observers.py",
+        "tests/unit/test_checks.py",
+        "tests/unit/api/test_comprehensive.py",
+        "tests/unit/utils/test_config_loader_comprehensive.py",
+        "tests/unit/utils/test_low_coverage_boost.py",
+        "tests/unit/utils/test_final_coverage.py",
+        "tests/unit/api/test_events_simple.py",
+        "tests/unit/api/test_decorators_simple.py",
+        "tests/unit/api/test_core_modules.py",
     ]
 
     # 1. 语法检查
@@ -98,6 +100,7 @@ def main():
 
     print(f"\n🎯 状态: {'✅ 通过' if return_code == 0 else '❌ 失败'}")
     return return_code
+
 
 if __name__ == "__main__":
     sys.exit(main())

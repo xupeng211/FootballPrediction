@@ -53,9 +53,7 @@ class AdapterFactory:
 _global_factory = AdapterFactory()
 
 
-def get_adapter(
-    name: str, config: Optional[Dict] = None, singleton: bool = False
-) -> Any:
+def get_adapter(name: str, config: Optional[Dict] = None, singleton: bool = False) -> Any:
     """获取适配器实例（全局工厂）"""
     return _global_factory.create_adapter(name, config, singleton)
 
@@ -80,9 +78,7 @@ def get_global_factory() -> AdapterFactory:
     return _global_factory
 
 
-def get_adapter(
-    name: str, config: Optional[Dict] = None, singleton: bool = False
-) -> Any:
+def get_adapter(name: str, config: Optional[Dict] = None, singleton: bool = False) -> Any:
     """获取适配器实例（便捷函数）"""
     return _global_factory.create_adapter(name, config, singleton)
 

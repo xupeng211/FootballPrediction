@@ -14,14 +14,9 @@ Betting Service Integration Module
 Issue: #116 EV计算和投注策略
 """
 
-import asyncio
 import json
-import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import asdict
 
-from .ev_calculator import (
     EVCalculator,
     BettingRecommendationEngine,
     BettingOdds,
@@ -35,7 +30,6 @@ from .ev_calculator import (
 try:
     from src.core.logging_system import get_logger
     from src.core.config import get_config
-    from src.cache.redis_manager import get_redis_manager, RedisManager
     from src.database.repositories.prediction_repository import PredictionRepository
     from src.database.repositories.match_repository import MatchRepository
     from src.domain.services.prediction_service import PredictionService

@@ -5,11 +5,6 @@ Crypto Utils Complete Tests
 基于Issue #98成功模式，创建完整的加密工具测试
 """
 
-import base64
-import hashlib
-import uuid
-from unittest.mock import patch, MagicMock
-
 import pytest
 
 from src.utils.crypto_utils import CryptoUtils
@@ -439,9 +434,7 @@ class TestCryptoUtilsComplete:
             # 各种操作应该都能处理
             assert isinstance(CryptoUtils.hash_string(test_str), str)
             assert isinstance(CryptoUtils.encode_base64(test_str), str)
-            assert isinstance(
-                CryptoUtils.decode_base64(CryptoUtils.encode_base64(test_str)), str
-            )
+            assert isinstance(CryptoUtils.decode_base64(CryptoUtils.encode_base64(test_str)), str)
 
     def test_security_considerations(self):
         """测试安全考虑"""

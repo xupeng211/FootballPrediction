@@ -1,5 +1,3 @@
-from unittest.mock import Mock
-
 """
 验证器参数化测试
 Tests for Validators (Parametrized)
@@ -292,9 +290,7 @@ class TestValidatorsParametrized:
             assert _result == expected
 
 
-@pytest.mark.skipif(
-    VALIDATORS_AVAILABLE, reason="Validators module should be available"
-)
+@pytest.mark.skipif(VALIDATORS_AVAILABLE, reason="Validators module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -351,17 +347,9 @@ class TestValidatorsComplex:
                     return False
 
                 # 数值范围检查
-                if (
-                    "min" in rule
-                    and isinstance(value, (int, float))
-                    and value < rule["min"]
-                ):
+                if "min" in rule and isinstance(value, (int, float)) and value < rule["min"]:
                     return False
-                if (
-                    "max" in rule
-                    and isinstance(value, (int, float))
-                    and value > rule["max"]
-                ):
+                if "max" in rule and isinstance(value, (int, float)) and value > rule["max"]:
                     return False
 
                 # 正则表达式检查

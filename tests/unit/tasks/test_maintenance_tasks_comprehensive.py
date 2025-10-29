@@ -15,8 +15,6 @@ import os
 # 测试导入
 import sys
 import tempfile
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import pytest
 
@@ -121,9 +119,7 @@ class TestMaintenanceTasks:
             log_file = f.name
 
         try:
-            with patch(
-                "src.tasks.maintenance_tasks.LOG_DIR", os.path.dirname(log_file)
-            ):
+            with patch("src.tasks.maintenance_tasks.LOG_DIR", os.path.dirname(log_file)):
                 result = await task.execute()
 
             assert result is True
@@ -157,12 +153,8 @@ class TestMaintenanceTasks:
         task = SystemHealthCheckTask()
 
         with (
-            patch(
-                "src.tasks.maintenance_tasks.check_database_health"
-            ) as mock_db_health,
-            patch(
-                "src.tasks.maintenance_tasks.check_redis_health"
-            ) as mock_redis_health,
+            patch("src.tasks.maintenance_tasks.check_database_health") as mock_db_health,
+            patch("src.tasks.maintenance_tasks.check_redis_health") as mock_redis_health,
             patch("src.tasks.maintenance_tasks.check_disk_space") as mock_disk,
         ):
             mock_db_health.return_value = {"status": "healthy", "connections": 5}

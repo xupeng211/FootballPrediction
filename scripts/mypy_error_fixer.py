@@ -20,18 +20,15 @@ def run_mypy_check() -> List[str]:
 
     try:
         result = subprocess.run(
-            ['mypy', 'src/', '--show-error-codes'],
-            capture_output=True,
-            text=True,
-            timeout=60
+            ["mypy", "src/", "--show-error-codes"], capture_output=True, text=True, timeout=60
         )
 
         if result.returncode == 0:
             print("✅ 没有发现MyPy错误")
             return []
 
-        lines = result.stderr.split('\n')
-        errors = [line for line in lines if line.strip() and not line.startswith('Found')]
+        lines = result.stderr.split("\n")
+        errors = [line for line in lines if line.strip() and not line.startswith("Found")]
         return errors
 
     except subprocess.TimeoutExpired:
@@ -47,41 +44,41 @@ def analyze_errors(errors: List[str]) -> Dict[str, List[Dict]]:
     分析MyPy错误并分类
     """
     categories = {
-        'no-any-return': [],
-        'var-annotated': [],
-        'attr-defined': [],
-        'assignment': [],
-        'return-value': [],
-        'union-attr': [],
-        'operator': [],
-        'name-defined': [],
-        'dict-item': [],
-        'unreachable': [],
-        'no-redef': [],
-        'other': []
+        "no-any-return": [],
+        "var-annotated": [],
+        "attr-defined": [],
+        "assignment": [],
+        "return-value": [],
+        "union-attr": [],
+        "operator": [],
+        "name-defined": [],
+        "dict-item": [],
+        "unreachable": [],
+        "no-redef": [],
+        "other": [],
     }
 
     for error in errors:
         # 解析错误行
-        match = re.match(r'^(.*?):(\d+):\s*(error|warning):\s*(.*)\s*\[(.*)\]$', error)
+        match = re.match(r"^(.*?):(\d+):\s*(error|warning):\s*(.*)\s*\[(.*)\]$", error)
         if not match:
             continue
 
         file_path, line_num, level, message, error_codes = match.groups()
-        error_code = error_codes.split(',')[0].strip()
+        error_code = error_codes.split(",")[0].strip()
 
         error_info = {
-            'file': file_path,
-            'line': int(line_num),
-            'message': message,
-            'code': error_code
+            "file": file_path,
+            "line": int(line_num),
+            "message": message,
+            "code": error_code,
         }
 
         # 分类错误
         if error_code in categories:
             categories[error_code].append(error_info)
         else:
-            categories['other'].append(error_info)
+            categories["other"].append(error_info)
 
     return categories
 
@@ -90,21 +87,21 @@ def fix_no_any_return(error_info: Dict) -> str:
     """
     修复 no-any-return 错误
     """
-    file_path = error_info['file']
-    line_num = error_info['line']
+    file_path = error_info["file"]
+    line_num = error_info["line"]
 
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             lines = f.readlines()
 
         if line_num <= len(lines):
             line = lines[line_num - 1].strip()
 
             # 检查是否是函数返回语句
-            if line.startswith('return '):
+            if line.startswith("return "):
                 # 如果函数有明确的返回类型注解，可能需要添加类型注解
                 len(lines[line_num - 1]) - len(lines[line_num - 1].lstrip())
-                if '-> Any' in lines[max(0, line_num - 10):line_num - 1]:
+                if "-> Any" in lines[max(0, line_num - 10) : line_num - 1]:
                     return f"✅ {file_path}:{line_num} - 已经有Any类型注解"
                 else:
                     return f"⚠️ {file_path}:{line_num} - 需要添加类型注解"
@@ -119,12 +116,12 @@ def fix_var_annotated(error_info: Dict) -> str:
     """
     修复 var-annotated 错误
     """
-    file_path = error_info['file']
-    line_num = error_info['line']
-    message = error_info['message']
+    file_path = error_info["file"]
+    line_num = error_info["line"]
+    message = error_info["message"]
 
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             content = f.read()
 
         # 查找变量名
@@ -133,15 +130,17 @@ def fix_var_annotated(error_info: Dict) -> str:
             var_name = match.group(1)
 
             # 查找该变量的定义行
-            lines = content.split('\n')
+            lines = content.split("\n")
             for i, line in enumerate(lines):
                 if i == line_num - 1 and var_name in line:
                     # 尝试推断类型
-                    if '=' in line:
-                        value = line.split('=')[1].strip()
+                    if "=" in line:
+                        value = line.split("=")[1].strip()
                         inferred_type = infer_type_from_value(value)
                         if inferred_type:
-                            return f"💡 {file_path}:{line_num} - 建议添加: {var_name}: {inferred_type}"
+                            return (
+                                f"💡 {file_path}:{line_num} - 建议添加: {var_name}: {inferred_type}"
+                            )
 
     except Exception as e:
         return f"❌ {file_path}:{line_num} - 修复失败: {e}"
@@ -164,25 +163,25 @@ def infer_type_from_value(value: str) -> str:
     # 数字
     if value.isdigit():
         return "int"
-    if value.replace('.', '').isdigit():
+    if value.replace(".", "").isdigit():
         return "float"
 
     # 布尔值
-    if value in ('True', 'False'):
+    if value in ("True", "False"):
         return "bool"
-    if value in ('None', 'null'):
+    if value in ("None", "null"):
         return "None"
 
     # 列表
-    if value.startswith('[') and value.endswith(']'):
+    if value.startswith("[") and value.endswith("]"):
         return "list"
 
     # 字典
-    if value.startswith('{') and value.endswith('}'):
+    if value.startswith("{") and value.endswith("}"):
         return "dict"
 
     # 函数调用
-    if '(' in value and ')' in value:
+    if "(" in value and ")" in value:
         return "Any"
 
     return "Any"
@@ -302,12 +301,12 @@ def main():
     print(plan)
 
     # 保存修复计划
-    with open('mypy_fix_plan.md', 'w', encoding='utf-8') as f:
+    with open("mypy_fix_plan.md", "w", encoding="utf-8") as f:
         f.write(plan)
 
     # 创建类型注解配置
     config = create_type_hints_config()
-    with open('type_hints_guide.md', 'w', encoding='utf-8') as f:
+    with open("type_hints_guide.md", "w", encoding="utf-8") as f:
         f.write(config)
 
     print("📄 已生成文件:")

@@ -10,7 +10,7 @@ READ_WRITE_SEPARATION = {
         "port": 5432,
         "database": "football_prediction_master",
         "username": "postgres",
-        "password": "password"
+        "password": "password",
     },
     "slave_databases": [
         {
@@ -18,21 +18,19 @@ READ_WRITE_SEPARATION = {
             "port": 5433,
             "database": "football_prediction_slave1",
             "username": "postgres",
-            "password": "password"
+            "password": "password",
         },
         {
             "host": "localhost",
             "port": 5434,
             "database": "football_prediction_slave2",
             "username": "postgres",
-            "password": "password"
-        }
+            "password": "password",
+        },
     ],
-    "connection_pool": {
-        "master_pool_size": 10,
-        "slave_pool_size": 15
-    }
+    "connection_pool": {"master_pool_size": 10, "slave_pool_size": 15},
 }
+
 
 # 读写分离使用示例
 class ReadWriteSeparation:

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """健康检查API测试"""
 
 import pytest

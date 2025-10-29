@@ -7,7 +7,6 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -222,9 +221,7 @@ class TestConfig:
             config.config = {"test": "value"}
 
             # 模拟权限错误
-            with patch(
-                "builtins.open", side_effect=PermissionError("Permission denied")
-            ):
+            with patch("builtins.open", side_effect=PermissionError("Permission denied")):
                 # 应该不抛出异常，只是静默失败
                 config.save()
                 # 配置仍然在内存中

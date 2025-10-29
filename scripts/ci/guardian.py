@@ -129,9 +129,7 @@ class CIOutputAnalyzer:
             for issue_type, patterns in self.patterns.items():
                 for pattern in patterns:
                     if re.search(pattern, line, re.IGNORECASE):
-                        issue = self._parse_issue_line(
-                            line, issue_type, tool_name, line_num
-                        )
+                        issue = self._parse_issue_line(line, issue_type, tool_name, line_num)
                         if issue:
                             issues.append(issue)
                         break
@@ -262,9 +260,7 @@ class DefenseMechanismGenerator:
 
         return defenses
 
-    def _generate_security_defenses(
-        self, issues: List[CIIssue]
-    ) -> Dict[str, List[str]]:
+    def _generate_security_defenses(self, issues: List[CIIssue]) -> Dict[str, List[str]]:
         """生成安全问题的防御机制"""
         defenses = {"lint_rules": [], "ci_checks": []}
 

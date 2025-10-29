@@ -78,10 +78,7 @@ def refactor_service_test(file_path: Path) -> List[str]:
     # 4. 移除 legacy 标记
     content = re.sub(r"\s*@pytest\.mark\.legacy\s*\n", "\n", content)
     content = re.sub(r"\s*@pytest\.mark\.legacy\s*$", "", content)
-    if (
-        "@pytest.mark.legacy" in original_content
-        and "@pytest.mark.legacy" not in content
-    ):
+    if "@pytest.mark.legacy" in original_content and "@pytest.mark.legacy" not in content:
         changes.append("移除 legacy 标记")
 
     # 5. 添加数据库初始化 fixture（如果需要）

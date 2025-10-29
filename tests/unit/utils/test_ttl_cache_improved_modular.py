@@ -1,4 +1,3 @@
-from unittest.mock import MagicMock, patch
 
 """
 测试模块化TTL缓存
@@ -296,7 +295,6 @@ def test_cache_instances():
 
 def test_module_import():
     """测试模块导入"""
-    from src.cache.ttl_cache_improved_mod import (
         AsyncTTLCache,
         CacheEntry,
         CacheFactory,

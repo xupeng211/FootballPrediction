@@ -30,9 +30,7 @@ def find_duplicate_files(directory):
             file_hashes[hash_value].append(file_path)
 
     # 返回有重复的文件列表
-    duplicates = {
-        hash_val: files for hash_val, files in file_hashes.items() if len(files) > 1
-    }
+    duplicates = {hash_val: files for hash_val, files in file_hashes.items() if len(files) > 1}
     return duplicates
 
 
@@ -143,9 +141,9 @@ def clean_docs_directory():
 
     # 计算清理后的文件数和大小
     total_files = len(list(docs_path.rglob("*.md")))
-    total_size_mb = sum(
-        f.stat().st_size for f in docs_path.rglob("*") if f.is_file()
-    ) / (1024 * 1024)
+    total_size_mb = sum(f.stat().st_size for f in docs_path.rglob("*") if f.is_file()) / (
+        1024 * 1024
+    )
 
     print(f"   - 剩余Markdown文件数: {total_files}")
     print(f"   - 剩余目录大小: {total_size_mb:.2f}MB")

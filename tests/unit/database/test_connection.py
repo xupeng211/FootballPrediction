@@ -11,7 +11,6 @@ Tests for Database Connection
 测试src.database.connection模块的功能
 """
 
-import asyncio
 
 import pytest
 
@@ -71,16 +70,10 @@ class TestDatabaseManager:
         """测试：默认初始化"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
-            patch(
-                "src.database.connection.create_async_engine"
-            ) as mock_async_create_engine,
+            patch("src.database.connection.create_async_engine") as mock_async_create_engine,
             patch("src.database.connection.sessionmaker") as mock_sessionmaker,
-            patch(
-                "src.database.connection.async_sessionmaker"
-            ) as mock_async_sessionmaker,
-            patch.dict(
-                "os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True
-            ),
+            patch("src.database.connection.async_sessionmaker") as mock_async_sessionmaker,
+            patch.dict("os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True),
         ):
             manager = DatabaseManager()
             manager.initialize()
@@ -95,9 +88,7 @@ class TestDatabaseManager:
         """测试：使用自定义URL初始化"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
-            patch(
-                "src.database.connection.create_async_engine"
-            ) as mock_async_create_engine,
+            patch("src.database.connection.create_async_engine") as mock_async_create_engine,
         ):
             manager = DatabaseManager()
             custom_url = "postgresql://custom:pass@host:5432/db"
@@ -108,9 +99,7 @@ class TestDatabaseManager:
             sync_call_args = mock_create_engine.call_args
             async_call_args = mock_async_create_engine.call_args
             assert custom_url in str(sync_call_args)
-            assert "postgresql+asyncpg://custom:pass@host:5432/db" in str(
-                async_call_args
-            )
+            assert "postgresql+asyncpg://custom:pass@host:5432/db" in str(async_call_args)
 
     def test_initialization_no_url(self):
         """测试：没有URL时的初始化"""
@@ -166,9 +155,7 @@ class TestDatabaseManager:
                 "src.database.connection.sessionmaker",
                 return_value=mock_session_factory,
             ),
-            patch.dict(
-                "os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True
-            ),
+            patch.dict("os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True),
         ):
             manager = DatabaseManager()
             # 不手动初始化
@@ -209,9 +196,7 @@ class TestDatabaseManager:
                 "src.database.connection.async_sessionmaker",
                 return_value=mock_async_session_factory,
             ),
-            patch.dict(
-                "os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True
-            ),
+            patch.dict("os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True),
         ):
             manager = DatabaseManager()
             # 不手动初始化
@@ -270,9 +255,7 @@ class TestFactoryFunctions:
 
     def test_initialize_multi_user_database(self):
         """测试：初始化多用户数据库函数"""
-        with patch(
-            "src.database.connection.get_multi_user_database_manager"
-        ) as mock_get_manager:
+        with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_get_manager.return_value = mock_manager
 
@@ -295,9 +278,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             session = get_db_session()
             assert session == mock_session
             mock_manager.get_session.assert_called_once()
@@ -308,9 +289,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             async_session = get_async_session()
             assert async_session == mock_async_session
             mock_manager.get_async_session.assert_called_once()
@@ -321,9 +300,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             session = get_reader_session()
             assert session == mock_session
 
@@ -333,9 +310,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             session = get_writer_session()
             assert session == mock_session
 
@@ -345,9 +320,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             session = get_admin_session()
             assert session == mock_session
 
@@ -357,9 +330,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             session = get_session()
             assert session == mock_session
 
@@ -369,9 +340,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             async_session = get_async_reader_session()
             assert async_session == mock_async_session
 
@@ -381,9 +350,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             async_session = get_async_writer_session()
             assert async_session == mock_async_session
 
@@ -393,9 +360,7 @@ class TestSessionFunctions:
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
 
-        with patch(
-            "src.database.connection.get_database_manager", return_value=mock_manager
-        ):
+        with patch("src.database.connection.get_database_manager", return_value=mock_manager):
             async_session = get_async_admin_session()
             assert async_session == mock_async_session
 
@@ -407,12 +372,8 @@ class TestDatabaseManagerIntegration:
         """测试：引擎配置"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
-            patch(
-                "src.database.connection.create_async_engine"
-            ) as mock_async_create_engine,
-            patch.dict(
-                "os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True
-            ),
+            patch("src.database.connection.create_async_engine") as mock_async_create_engine,
+            patch.dict("os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True),
         ):
             manager = DatabaseManager()
             manager.initialize()
@@ -431,9 +392,7 @@ class TestDatabaseManagerIntegration:
         """测试：URL转换"""
         with (
             patch("src.database.connection.create_engine"),
-            patch(
-                "src.database.connection.create_async_engine"
-            ) as mock_async_create_engine,
+            patch("src.database.connection.create_async_engine") as mock_async_create_engine,
         ):
             manager = DatabaseManager()
             postgresql_url = "postgresql://user:pass@host:5432/db"
@@ -448,13 +407,9 @@ class TestDatabaseManagerIntegration:
         """测试：会话工厂配置"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
-            patch(
-                "src.database.connection.create_async_engine"
-            ) as mock_async_create_engine,
+            patch("src.database.connection.create_async_engine") as mock_async_create_engine,
             patch("src.database.connection.sessionmaker") as mock_sessionmaker,
-            patch(
-                "src.database.connection.async_sessionmaker"
-            ) as mock_async_sessionmaker,
+            patch("src.database.connection.async_sessionmaker") as mock_async_sessionmaker,
         ):
             mock_engine = Mock()
             mock_async_engine = Mock()
@@ -482,9 +437,7 @@ class TestDatabaseManagerIntegration:
             patch("src.database.connection.create_async_engine"),
             patch("src.database.connection.sessionmaker"),
             patch("src.database.connection.async_sessionmaker"),
-            patch.dict(
-                "os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True
-            ),
+            patch.dict("os.environ", {"DATABASE_URL": "postgresql://test/test"}, clear=True),
         ):
             manager1.initialize()
             assert manager1.initialized is True
@@ -511,17 +464,12 @@ class TestParameterizedInput:
             "types": [str, int, float, bool, list, dict, tuple, set],
         }
 
-    @pytest.mark.parametrize(
-        "input_value", ["", "test", 0, 1, -1, True, False, [], {}, None]
-    )
+    @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入
         assert (
-            input_value is not None
-            or input_value == ""
-            or input_value == []
-            or input_value == {}
+            input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )
 
     @pytest.mark.parametrize(
@@ -554,9 +502,7 @@ class TestParameterizedInput:
         assert isinstance(input_list, list)
         assert len(input_list) >= 0
 
-    @pytest.mark.parametrize(
-        "invalid_data", [None, "", "not-a-number", {}, [], True, False]
-    )
+    @pytest.mark.parametrize("invalid_data", [None, "", "not-a-number", {}, [], True, False])
     def test_error_handling(self, invalid_data):
         """测试错误处理"""
         try:
@@ -577,9 +523,7 @@ class TestParameterizedInput:
 class TestBoundaryConditions:
     """边界条件测试"""
 
-    @pytest.mark.parametrize(
-        "number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999]
-    )
+    @pytest.mark.parametrize("number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999])
     def test_number_boundaries(self, number):
         """测试数字边界值"""
         assert isinstance(number, (int, float))

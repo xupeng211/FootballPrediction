@@ -139,9 +139,7 @@ def count_remaining_skipped():
     for test_file in test_files:
         if os.path.exists(test_file):
             cmd = ["pytest", test_file, "-v", "--disable-warnings", "--tb=no"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=60, env=env
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, env=env)
             output = result.stdout + result.stderr
             skipped = output.count("SKIPPED")
             total_skipped += skipped

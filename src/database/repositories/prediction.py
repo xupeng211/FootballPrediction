@@ -276,9 +276,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         if points_earned is not None:
             update_data["points_earned"] = points_earned
 
-        return await self.update(
-            obj_id=prediction_id, obj_data=update_data, session=session
-        )
+        return await self.update(obj_id=prediction_id, obj_data=update_data, session=session)
 
     async def cancel_prediction(
         self,
@@ -305,9 +303,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         if reason:
             update_data["cancellation_reason"] = reason
 
-        return await self.update(
-            obj_id=prediction_id, obj_data=update_data, session=session
-        )
+        return await self.update(obj_id=prediction_id, obj_data=update_data, session=session)
 
     # ========================================
     # 统计方法
@@ -388,9 +384,7 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 计算准确率
             if stats["completed"] > 0 and (stats["correct"] + stats["wrong"]) > 0:
-                stats["accuracy"] = stats["correct"] / (
-                    stats["correct"] + stats["wrong"]
-                )
+                stats["accuracy"] = stats["correct"] / (stats["correct"] + stats["wrong"])
 
             # 计算平均置信度
             if confidence_count > 0:
@@ -465,12 +459,8 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 计算平均值
             if len(predictions) > 0:
-                summary["avg_predicted_home_score"] = total_home_score / len(
-                    predictions
-                )
-                summary["avg_predicted_away_score"] = total_away_score / len(
-                    predictions
-                )
+                summary["avg_predicted_home_score"] = total_home_score / len(predictions)
+                summary["avg_predicted_away_score"] = total_away_score / len(predictions)
 
             if confidence_count > 0:
                 summary["avg_confidence"] = total_confidence / confidence_count
@@ -502,9 +492,9 @@ class PredictionRepository(BaseRepository[Predictions]):
                 select(
                     Prediction.user_id,
                     func.count(Prediction.id).label("total_predictions"),
-                    func.sum(
-                        func.case([(Prediction.is_correct is True, 1)], else_=0)
-                    ).label("correct_predictions"),
+                    func.sum(func.case([(Prediction.is_correct is True, 1)], else_=0)).label(
+                        "correct_predictions"
+                    ),
                     func.sum(Prediction.points_earned).label("total_points"),
                     func.avg(Prediction.confidence).label("avg_confidence"),
                 )

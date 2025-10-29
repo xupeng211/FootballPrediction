@@ -43,11 +43,7 @@ class TestUtilsFunctionality:
             _result = format_duration(3661)  # 1小时1分钟1秒
             assert isinstance(result, str)
             # 结果应该包含时间信息
-            assert (
-                "hour" in result.lower()
-                or "min" in result.lower()
-                or "sec" in result.lower()
-            )
+            assert "hour" in result.lower() or "min" in result.lower() or "sec" in result.lower()
         except ImportError:
             pytest.skip("Format duration not available")
         except Exception:

@@ -2,14 +2,12 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 用户画像服务测试
 Tests for User Profile Service
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -99,8 +97,7 @@ class TestUserProfileService:
         assert info["name"] == "UserProfileService"
         assert info["type"] == "UserProfileService"
         assert (
-            info["description"]
-            == "User profile service for managing user preferences and behavior"
+            info["description"] == "User profile service for managing user preferences and behavior"
         )
         assert info["version"] == "1.0.0"
         assert info["profiles_count"] == 0
@@ -123,9 +120,7 @@ class TestUserProfileService:
         assert "language" in profile.preferences
 
     @pytest.mark.asyncio
-    async def test_generate_profile_with_user_profile(
-        self, service, sample_user_with_profile
-    ):
+    async def test_generate_profile_with_user_profile(self, service, sample_user_with_profile):
         """测试：生成用户画像（带profile属性）"""
         # Given
         await service.initialize()

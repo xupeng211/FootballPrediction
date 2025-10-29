@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List, Dict, Set, Tuple
 from collections import defaultdict
 
+
 class SmartMyPyFixer:
     """智能MyPy错误修复器"""
 
@@ -22,12 +23,12 @@ class SmartMyPyFixer:
         """获取MyPy错误列表"""
         try:
             result = subprocess.run(
-                ['mypy', 'src/', '--show-error-codes', '--no-error-summary'],
+                ["mypy", "src/", "--show-error-codes", "--no-error-summary"],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
-            return [line for line in result.stdout.strip().split('\n') if line and 'error:' in line]
+            return [line for line in result.stdout.strip().split("\n") if line and "error:" in line]
         except Exception:
             return []
 
@@ -37,13 +38,13 @@ class SmartMyPyFixer:
         for error in errors:
             if 'Unused "type: ignore" comment' in error:
                 # 解析文件路径和行号
-                match = re.search(r'([^:]+):(\d+):', error)
+                match = re.search(r"([^:]+):(\d+):", error)
                 if not match:
                     continue
 
                 file_path, line_num = match.groups()
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         lines = f.readlines()
 
                     line_idx = int(line_num) - 1
@@ -51,12 +52,12 @@ class SmartMyPyFixer:
                         # 移除 type: ignore 注释
                         line = lines[line_idx]
                         # 使用正则表达式移除 type: ignore 注释
-                        new_line = re.sub(r'\s*#\s*type:\s*ignore\[?[^\]]*\]?\s*$', '', line)
+                        new_line = re.sub(r"\s*#\s*type:\s*ignore\[?[^\]]*\]?\s*$", "", line)
                         if new_line != line:
                             lines[line_idx] = new_line
                             fixes += 1
 
-                            with open(file_path, 'w', encoding='utf-8') as f:
+                            with open(file_path, "w", encoding="utf-8") as f:
                                 f.writelines(lines)
 
                             print(f"✅ 移除未使用的type: ignore: {file_path}:{line_num}")
@@ -72,10 +73,10 @@ class SmartMyPyFixer:
 
         # 常见的变量名修复映射
         fix_mapping = {
-            'logger': 'import logging; logger = logging.getLogger(__name__)',
-            'teams': 'teams = []  # TODO: 实现teams逻辑',
-            'matches': 'matches = []  # TODO: 实现matches逻辑',
-            'prediction': 'prediction_result = None  # 修复变量名'
+            "logger": "import logging; logger = logging.getLogger(__name__)",
+            "teams": "teams = []  # TODO: 实现teams逻辑",
+            "matches": "matches = []  # TODO: 实现matches逻辑",
+            "prediction": "prediction_result = None  # 修复变量名",
         }
 
         for error in errors:
@@ -88,35 +89,37 @@ class SmartMyPyFixer:
                 var_name = match.group(1)
                 if var_name in fix_mapping:
                     # 解析文件路径和行号
-                    file_match = re.search(r'([^:]+):(\d+):', error)
+                    file_match = re.search(r"([^:]+):(\d+):", error)
                     if not file_match:
                         continue
 
                     file_path, line_num = file_match.groups()
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
+                        with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read()
 
                         # 在文件顶部添加导入或变量定义
-                        lines = content.split('\n')
+                        lines = content.split("\n")
                         import_line = -1
 
                         # 找到最后一个import语句
                         for i, line in enumerate(lines):
-                            if line.strip().startswith('import ') or line.strip().startswith('from '):
+                            if line.strip().startswith("import ") or line.strip().startswith(
+                                "from "
+                            ):
                                 import_line = i
 
                         if import_line >= 0:
                             # 在import语句后添加修复
-                            if 'logger' in var_name:
-                                fix_code = 'logger = logging.getLogger(__name__)'
+                            if "logger" in var_name:
+                                fix_code = "logger = logging.getLogger(__name__)"
                             else:
                                 fix_code = fix_mapping[var_name]
 
                             lines.insert(import_line + 1, fix_code)
 
-                            with open(file_path, 'w', encoding='utf-8') as f:
-                                f.write('\n'.join(lines))
+                            with open(file_path, "w", encoding="utf-8") as f:
+                                f.write("\n".join(lines))
 
                             fixes += 1
                             print(f"✅ 修复未定义变量: {file_path}:{line_num} - {var_name}")
@@ -131,26 +134,26 @@ class SmartMyPyFixer:
         fixes = 0
 
         for error in errors:
-            if 'Incompatible types in assignment' in error and '[assignment]' in error:
+            if "Incompatible types in assignment" in error and "[assignment]" in error:
                 # 解析文件路径和行号
-                match = re.search(r'([^:]+):(\d+):', error)
+                match = re.search(r"([^:]+):(\d+):", error)
                 if not match:
                     continue
 
                 file_path, line_num = match.groups()
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         lines = f.readlines()
 
                     line_idx = int(line_num) - 1
                     if line_idx < len(lines):
                         line = lines[line_idx].rstrip()
                         # 添加类型忽略注释
-                        if '# type: ignore' not in line and 'type: ignore' not in line:
-                            lines[line_idx] = line + '  # type: ignore[assignment]'
+                        if "# type: ignore" not in line and "type: ignore" not in line:
+                            lines[line_idx] = line + "  # type: ignore[assignment]"
                             fixes += 1
 
-                            with open(file_path, 'w', encoding='utf-8') as f:
+                            with open(file_path, "w", encoding="utf-8") as f:
                                 f.writelines(lines)
 
                             print(f"✅ 修复赋值类型错误: {file_path}:{line_num}")
@@ -165,26 +168,31 @@ class SmartMyPyFixer:
         fixes = 0
 
         for error in errors:
-            if 'Argument ' in error and ' to ' in error and 'has incompatible type' in error and '[arg-type]' in error:
+            if (
+                "Argument " in error
+                and " to " in error
+                and "has incompatible type" in error
+                and "[arg-type]" in error
+            ):
                 # 解析文件路径和行号
-                match = re.search(r'([^:]+):(\d+):', error)
+                match = re.search(r"([^:]+):(\d+):", error)
                 if not match:
                     continue
 
                 file_path, line_num = match.groups()
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         lines = f.readlines()
 
                     line_idx = int(line_num) - 1
                     if line_idx < len(lines):
                         line = lines[line_idx].rstrip()
                         # 添加类型忽略注释
-                        if '# type: ignore' not in line and 'type: ignore' not in line:
-                            lines[line_idx] = line + '  # type: ignore[arg-type]'
+                        if "# type: ignore" not in line and "type: ignore" not in line:
+                            lines[line_idx] = line + "  # type: ignore[arg-type]"
                             fixes += 1
 
-                            with open(file_path, 'w', encoding='utf-8') as f:
+                            with open(file_path, "w", encoding="utf-8") as f:
                                 f.writelines(lines)
 
                             print(f"✅ 修复参数类型错误: {file_path}:{line_num}")
@@ -200,31 +208,31 @@ class SmartMyPyFixer:
 
         for error in errors:
             error_code = None
-            if '[import-not-found]' in error:
-                error_code = 'import-not-found'
-            elif '[import-untyped]' in error:
-                error_code = 'import-untyped'
+            if "[import-not-found]" in error:
+                error_code = "import-not-found"
+            elif "[import-untyped]" in error:
+                error_code = "import-untyped"
 
             if error_code:
                 # 解析文件路径和行号
-                match = re.search(r'([^:]+):(\d+):', error)
+                match = re.search(r"([^:]+):(\d+):", error)
                 if not match:
                     continue
 
                 file_path, line_num = match.groups()
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         lines = f.readlines()
 
                     line_idx = int(line_num) - 1
                     if line_idx < len(lines):
                         line = lines[line_idx].rstrip()
                         # 添加类型忽略注释
-                        if '# type: ignore' not in line:
-                            lines[line_idx] = line + f'  # type: ignore[{error_code}]'
+                        if "# type: ignore" not in line:
+                            lines[line_idx] = line + f"  # type: ignore[{error_code}]"
                             fixes += 1
 
-                            with open(file_path, 'w', encoding='utf-8') as f:
+                            with open(file_path, "w", encoding="utf-8") as f:
                                 f.writelines(lines)
 
                             print(f"✅ 修复导入错误: {file_path}:{line_num} - {error_code}")
@@ -291,6 +299,7 @@ class SmartMyPyFixer:
 
         return dict(total_results)
 
+
 def main():
     """主函数"""
     print("🚀 智能MyPy错误修复工具")
@@ -342,6 +351,7 @@ def main():
             print(f"⚠️  距离目标还有 {final_count - 100} 个错误")
     else:
         print("⚠️  错误数量没有减少")
+
 
 if __name__ == "__main__":
     main()

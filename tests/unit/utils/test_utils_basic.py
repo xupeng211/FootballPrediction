@@ -2,7 +2,6 @@
 基础工具模块测试
 """
 
-import time
 from datetime import datetime
 
 import pytest
@@ -19,28 +18,20 @@ class TestStringUtils:
         """测试字符串截断"""
         text = "This is a long string"
         assert string_utils.StringUtils.truncate(text, 10) == "This is..."
-        assert (
-            string_utils.StringUtils.truncate(text, 20) == "This is a long st..."
-        )  # 调整预期值
+        assert string_utils.StringUtils.truncate(text, 20) == "This is a long st..."  # 调整预期值
         assert string_utils.StringUtils.truncate(text, 10, suffix="...") == "This is..."
 
     def test_slugify(self):
         """测试转换为URL友好格式"""
         assert string_utils.StringUtils.slugify("Hello World!") == "hello-world"
         assert string_utils.StringUtils.slugify("Python & Django") == "python-django"
-        assert (
-            string_utils.StringUtils.slugify("  Multiple   Spaces  ")
-            == "multiple-spaces"
-        )
+        assert string_utils.StringUtils.slugify("  Multiple   Spaces  ") == "multiple-spaces"
 
     def test_camel_to_snake(self):
         """测试驼峰命名转下划线命名"""
         assert string_utils.StringUtils.camel_to_snake("HelloWorld") == "hello_world"
         assert string_utils.StringUtils.camel_to_snake("helloWorld") == "hello_world"
-        assert (
-            string_utils.StringUtils.camel_to_snake("HTTPResponseCode")
-            == "http_response_code"
-        )
+        assert string_utils.StringUtils.camel_to_snake("HTTPResponseCode") == "http_response_code"
 
     def test_snake_to_camel(self):
         """测试下划线命名转驼峰命名"""

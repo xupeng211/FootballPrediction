@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 数据收集核心测试（修复版）
@@ -11,7 +10,6 @@ Tests for Data Collection Core (Fixed Version)
 测试src.tasks.data_collection_core模块的数据收集功能
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -67,12 +65,12 @@ class TestDataCollectionTask:
         assert task.db_manager is mock_db_manager
 
         # 验证数据库管理器传递给收集器
-        mock_orchestrator.collectors[
-            "collector1"
-        ].set_database_manager.assert_called_once_with(mock_db_manager)
-        mock_orchestrator.collectors[
-            "collector2"
-        ].set_database_manager.assert_called_once_with(mock_db_manager)
+        mock_orchestrator.collectors["collector1"].set_database_manager.assert_called_once_with(
+            mock_db_manager
+        )
+        mock_orchestrator.collectors["collector2"].set_database_manager.assert_called_once_with(
+            mock_db_manager
+        )
 
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     @patch("src.tasks.data_collection_core.logger")
@@ -104,9 +102,7 @@ class TestDataCollectionTask:
 
         task.on_success(retval, task_id, args, kwargs)
 
-        mock_logger.info.assert_called_once_with(
-            "Task test_task_456 completed successfully"
-        )
+        mock_logger.info.assert_called_once_with("Task test_task_456 completed successfully")
 
 
 @pytest.mark.skipif(

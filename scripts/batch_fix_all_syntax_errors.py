@@ -8,15 +8,16 @@ import os
 from pathlib import Path
 from typing import List, Tuple
 
+
 def fix_future_import_placement(file_path: Path) -> bool:
     """修复__future__ import放置位置"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 检查是否有__future__ import不在文件开头
-        if 'from __future__ import annotations' in content:
-            lines = content.split('\n')
+        if "from __future__ import annotations" in content:
+            lines = content.split("\n")
 
             # 找到__future__ import的位置
             future_import_line = -1
@@ -26,15 +27,15 @@ def fix_future_import_placement(file_path: Path) -> bool:
                 stripped = line.strip()
 
                 # 跳过空行和注释
-                if stripped == '' or stripped.startswith('#'):
+                if stripped == "" or stripped.startswith("#"):
                     continue
 
                 # 如果这是__future__ import，记录位置
-                if 'from __future__ import' in stripped and future_import_line == -1:
+                if "from __future__ import" in stripped and future_import_line == -1:
                     future_import_line = i
 
                 # 如果这是第一个非注释非__future__行
-                if first_non_comment_line == -1 and 'from __future__ import' not in stripped:
+                if first_non_comment_line == -1 and "from __future__ import" not in stripped:
                     first_non_comment_line = i
                     break
 
@@ -44,8 +45,8 @@ def fix_future_import_placement(file_path: Path) -> bool:
                 lines.pop(future_import_line)
                 lines.insert(first_non_comment_line, future_import)
 
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write('\n'.join(lines))
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write("\n".join(lines))
 
                 return True
 
@@ -53,17 +54,18 @@ def fix_future_import_placement(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_pytest_import_in_try(file_path: Path) -> bool:
     """修复try块中的pytest导入问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # 修复 "import pytest" 在try块中的问题
         # 查找模式：try: ... import pytest ... except:
-        lines = content.split('\n')
+        lines = content.split("\n")
         new_lines = []
         i = 0
 
@@ -71,7 +73,7 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
             line = lines[i]
 
             # 检查是否是try块内的import pytest
-            if 'import pytest' in line and i > 0:
+            if "import pytest" in line and i > 0:
                 # 检查是否在try块内
                 j = i - 1
                 in_try = False
@@ -79,11 +81,11 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
 
                 while j >= 0:
                     prev_line = lines[j].strip()
-                    if prev_line.startswith('try:'):
+                    if prev_line.startswith("try:"):
                         in_try = True
                         try_indent = len(lines[j]) - len(lines[j].lstrip())
                         break
-                    elif prev_line and not prev_line.startswith('#'):
+                    elif prev_line and not prev_line.startswith("#"):
                         # 遇到其他代码块，停止搜索
                         break
                     j -= 1
@@ -93,17 +95,17 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
                     len(line) - len(line.lstrip())
 
                     # 移除当前行的import
-                    new_lines.append(' ' * try_indent + 'import pytest')
+                    new_lines.append(" " * try_indent + "import pytest")
                     i += 1
                     continue
 
             new_lines.append(line)
             i += 1
 
-        fixed_content = '\n'.join(new_lines)
+        fixed_content = "\n".join(new_lines)
 
         if fixed_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(fixed_content)
             return True
 
@@ -111,30 +113,35 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_duplicate_function_args(file_path: Path) -> bool:
     """修复重复的函数参数"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # 修复重复的client参数
         patterns = [
-            (r'def test_db\(,\s*client,\s*client\):', 'def test_db(client):'),
-            (r'def test_client\(,\s*client,\s*client\):', 'def test_client(client):'),
-            (r'def test_env\(,\s*client,\s*client\):', 'def test_env(client):'),
-            (r'def test_intentional_failure\(client,\s*client,\s*client,\s*client,\s*client,\s*client\):',
-             'def test_intentional_failure(client):'),
-            (r'def test_db_session\(test_database_engine,\s*client,\s*client\):',
-             'def test_db_session(test_database_engine, client):')
+            (r"def test_db\(,\s*client,\s*client\):", "def test_db(client):"),
+            (r"def test_client\(,\s*client,\s*client\):", "def test_client(client):"),
+            (r"def test_env\(,\s*client,\s*client\):", "def test_env(client):"),
+            (
+                r"def test_intentional_failure\(client,\s*client,\s*client,\s*client,\s*client,\s*client\):",
+                "def test_intentional_failure(client):",
+            ),
+            (
+                r"def test_db_session\(test_database_engine,\s*client,\s*client\):",
+                "def test_db_session(test_database_engine, client):",
+            ),
         ]
 
         for pattern, replacement in patterns:
             content = re.sub(pattern, replacement, content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -142,14 +149,15 @@ def fix_duplicate_function_args(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_missing_except_block(file_path: Path) -> bool:
     """修复缺少except块的try语句"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
-        lines = content.split('\n')
+        lines = content.split("\n")
         new_lines = []
         i = 0
 
@@ -158,27 +166,32 @@ def fix_missing_except_block(file_path: Path) -> bool:
             new_lines.append(line)
 
             # 检查是否是没有except的try块
-            if 'try:' in line and i + 1 < len(lines):
+            if "try:" in line and i + 1 < len(lines):
                 next_line = lines[i + 1]
                 stripped_next = next_line.strip()
 
                 # 如果下一行是import语句或其他不是异常处理的代码
-                if (stripped_next.startswith('import ') or
-                    stripped_next.startswith('from ') or
-                    (stripped_next and not any(x in stripped_next for x in ['except', 'finally', 'pass', '#']))):
+                if (
+                    stripped_next.startswith("import ")
+                    or stripped_next.startswith("from ")
+                    or (
+                        stripped_next
+                        and not any(x in stripped_next for x in ["except", "finally", "pass", "#"])
+                    )
+                ):
 
                     # 添加except块
                     indent = len(line) - len(line.lstrip())
-                    new_lines.append(' ' * (indent + 4) + 'pass')
-                    new_lines.append(' ' * indent + 'except Exception:')
-                    new_lines.append(' ' * (indent + 4) + 'pass')
+                    new_lines.append(" " * (indent + 4) + "pass")
+                    new_lines.append(" " * indent + "except Exception:")
+                    new_lines.append(" " * (indent + 4) + "pass")
 
             i += 1
 
-        fixed_content = '\n'.join(new_lines)
+        fixed_content = "\n".join(new_lines)
 
         if fixed_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(fixed_content)
             return True
 
@@ -186,14 +199,15 @@ def fix_missing_except_block(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_async_function_error(file_path: Path) -> bool:
     """修复async/await在非异步函数中的错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
-        lines = content.split('\n')
+        lines = content.split("\n")
         new_lines = []
         i = 0
 
@@ -201,24 +215,24 @@ def fix_async_function_error(file_path: Path) -> bool:
             line = lines[i]
 
             # 检查是否有await在非async函数中
-            if 'await ' in line and 'async def' not in line:
+            if "await " in line and "async def" not in line:
                 # 找到函数定义
                 j = i - 1
                 while j >= 0:
-                    if 'def ' in lines[j]:
+                    if "def " in lines[j]:
                         # 如果函数定义没有async标记，添加它
-                        if not lines[j].strip().startswith('async def'):
-                            lines[j] = lines[j].replace('def ', 'async def ')
+                        if not lines[j].strip().startswith("async def"):
+                            lines[j] = lines[j].replace("def ", "async def ")
                         break
                     j -= 1
 
             new_lines.append(line)
             i += 1
 
-        fixed_content = '\n'.join(new_lines)
+        fixed_content = "\n".join(new_lines)
 
         if fixed_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(fixed_content)
             return True
 
@@ -226,25 +240,32 @@ def fix_async_function_error(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_missing_comma(file_path: Path) -> bool:
     """修复缺少逗号的语法错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # 修复常见的缺少逗号问题
         patterns = [
-            (r'return_value\{([^\}]+)\}', r'return_value{\1}'),  # return_value{...} -> return_value({...})
-            (r'AsyncMock\(return_value\{', r'AsyncMock(return_value={'),  # AsyncMock(return_value{ -> AsyncMock(return_value={
+            (
+                r"return_value\{([^\}]+)\}",
+                r"return_value{\1}",
+            ),  # return_value{...} -> return_value({...})
+            (
+                r"AsyncMock\(return_value\{",
+                r"AsyncMock(return_value={",
+            ),  # AsyncMock(return_value{ -> AsyncMock(return_value={
         ]
 
         for pattern, replacement in patterns:
             content = re.sub(pattern, replacement, content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -252,51 +273,55 @@ def fix_missing_comma(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_indentation_errors(file_path: Path) -> bool:
     """修复缩进错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
-        lines = content.split('\n')
+        lines = content.split("\n")
         new_lines = []
 
         for i, line in enumerate(lines):
             stripped = line.strip()
 
             # 如果是空行或注释，保持原样
-            if not stripped or stripped.startswith('#'):
+            if not stripped or stripped.startswith("#"):
                 new_lines.append(line)
                 continue
 
             # 检查是否需要缩进
             if i > 0:
-                prev_line = lines[i-1].strip()
+                prev_line = lines[i - 1].strip()
 
                 # 如果上一行以:结尾，当前行需要缩进
-                if (prev_line.endswith(':') and
-                    not line.startswith(' ') and
-                    not line.startswith('\t') and
-                    not stripped.startswith('except') and
-                    not stripped.startswith('finally')):
+                if (
+                    prev_line.endswith(":")
+                    and not line.startswith(" ")
+                    and not line.startswith("\t")
+                    and not stripped.startswith("except")
+                    and not stripped.startswith("finally")
+                ):
                     # 添加4个空格缩进
-                    new_lines.append('    ' + line)
+                    new_lines.append("    " + line)
                 else:
                     new_lines.append(line)
             else:
                 new_lines.append(line)
 
-        fixed_content = '\n'.join(new_lines)
+        fixed_content = "\n".join(new_lines)
 
         if fixed_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(fixed_content)
             return True
 
         return False
     except Exception:
         return False
+
 
 def fix_single_file(file_path: Path) -> Tuple[bool, List[str]]:
     """修复单个文件的语法错误"""
@@ -324,6 +349,7 @@ def fix_single_file(file_path: Path) -> Tuple[bool, List[str]]:
         fixes_applied.append("修复缩进错误")
 
     return len(fixes_applied) > 0, fixes_applied
+
 
 def main():
     print("🔧 批量修复所有语法错误文件...")
@@ -388,7 +414,7 @@ def main():
         "tests/unit/services/test_prediction_algorithms.py",
         "tests/unit/tasks/test_tasks_coverage_boost.py",
         "tests/unit/tasks/test_tasks_basic.py",
-        "tests/unit/security/test_key_manager.py"
+        "tests/unit/security/test_key_manager.py",
     ]
 
     fixed_files = 0
@@ -414,6 +440,7 @@ def main():
     print(f"- 成功率: {(fixed_files/total_files)*100:.1f}%")
 
     return fixed_files
+
 
 if __name__ == "__main__":
     exit(main())

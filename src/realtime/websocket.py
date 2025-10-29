@@ -129,9 +129,7 @@ class WebSocketManager:
 
         if room:
             connections_to_send = [
-                conn_id
-                for conn_id in self.rooms.get(room, set())
-                if conn_id in self.connections
+                conn_id for conn_id in self.rooms.get(room, set()) if conn_id in self.connections
             ]
         else:
             connections_to_send = list(self.connections.keys())
@@ -211,9 +209,7 @@ class WebSocketManager:
         return {
             "total_connections": len(self.connections),
             "total_rooms": len(self.rooms),
-            "connections_by_room": {
-                room: len(members) for room, members in self.rooms.items()
-            },
+            "connections_by_room": {room: len(members) for room, members in self.rooms.items()},
         }
 
 
@@ -224,9 +220,7 @@ class WebSocketConnection:
     WebSocket Connection Class (Stub Implementation)
     """
 
-    def __init__(
-        self, connection_id: str, websocket: Optional[Any], manager: WebSocketManager
-    ):
+    def __init__(self, connection_id: str, websocket: Optional[Any], manager: WebSocketManager):
         """
         初始化连接
 
@@ -259,9 +253,7 @@ class WebSocketConnection:
         elif isinstance(message, WebSocketMessage):
             message = message.to_json()
 
-        self.logger.debug(
-            f"Sending message to {self.connection_id}: {message[:100]}..."
-        )
+        self.logger.debug(f"Sending message to {self.connection_id}: {message[:100]}...")
         # 桩实现：只记录日志，不实际发送
         return True
 

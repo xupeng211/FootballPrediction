@@ -8,12 +8,9 @@ Real-time Quality Monitoring Dashboard API
 
 import asyncio
 import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 from pathlib import Path
 
 import uvicorn
-from fastapi import (
     FastAPI,
     WebSocket,
     WebSocketDisconnect,
@@ -25,7 +22,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from src.core.logging_system import get_logger
-from src.core.config import get_config
 from scripts.quality_guardian import QualityGuardian
 from scripts.improvement_monitor import ImprovementMonitor
 

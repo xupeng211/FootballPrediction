@@ -38,7 +38,7 @@ def monitor_improvements():
     print("\n📊 总体统计:")
     print(f"总改进周期: {len(history)}")
 
-    successful_cycles = [c for c in history if c.get('success', False)]
+    successful_cycles = [c for c in history if c.get("success", False)]
     print(f"成功周期: {len(successful_cycles)}")
     print(f"成功率: {len(successful_cycles)/len(history)*100:.1f}%")
 
@@ -46,14 +46,13 @@ def monitor_improvements():
     print("\n📅 最近7天改进情况:")
     recent_cutoff = datetime.now() - timedelta(days=7)
     recent_cycles = [
-        cycle for cycle in history
-        if datetime.fromisoformat(cycle['timestamp']) > recent_cutoff
+        cycle for cycle in history if datetime.fromisoformat(cycle["timestamp"]) > recent_cutoff
     ]
 
     if recent_cycles:
         print(f"最近周期数: {len(recent_cycles)}")
 
-        recent_successful = [c for c in recent_cycles if c.get('success', False)]
+        recent_successful = [c for c in recent_cycles if c.get("success", False)]
         print(f"成功周期: {len(recent_successful)}")
         print(f"成功率: {len(recent_successful)/len(recent_cycles)*100:.1f}%")
     else:
@@ -70,13 +69,13 @@ def monitor_improvements():
         score_changes = []
 
         for cycle in recent_successful:
-            verification = cycle.get('verification_results', {})
-            improvements = verification.get('improvements', {})
+            verification = cycle.get("verification_results", {})
+            improvements = verification.get("improvements", {})
 
-            if 'coverage' in improvements:
-                coverage_changes.append(improvements['coverage']['improvement'])
-            if 'overall_score' in improvements:
-                score_changes.append(improvements['overall_score']['improvement'])
+            if "coverage" in improvements:
+                coverage_changes.append(improvements["coverage"]["improvement"])
+            if "overall_score" in improvements:
+                score_changes.append(improvements["overall_score"]["improvement"])
 
         if coverage_changes:
             avg_coverage_change = sum(coverage_changes) / len(coverage_changes)
@@ -91,8 +90,8 @@ def monitor_improvements():
         latest_cycle = history[-1]
         print("\n📊 最新质量状态:")
 
-        verification = latest_cycle.get('verification_results', {})
-        new_status = verification.get('new_quality_status', {})
+        verification = latest_cycle.get("verification_results", {})
+        new_status = verification.get("new_quality_status", {})
 
         print(f"综合分数: {new_status.get('overall_score', 0):.1f}/10")
         print(f"覆盖率: {new_status.get('coverage', 0):.1f}%")
@@ -100,7 +99,7 @@ def monitor_improvements():
         print(f"安全性: {new_status.get('security', 0):.1f}/10")
 
         # 显示最新改进措施
-        improvements_made = latest_cycle.get('improvement_results', {}).get('improvements_made', [])
+        improvements_made = latest_cycle.get("improvement_results", {}).get("improvements_made", [])
         if improvements_made:
             print("\n✅ 最近执行的改进:")
             for improvement in improvements_made:
@@ -127,11 +126,11 @@ def monitor_improvements():
 
     # 建议和下一步
     print("\n💡 改进建议:")
-    if new_status.get('coverage', 0) < 20:
+    if new_status.get("coverage", 0) < 20:
         print("  - 🎯 优先提升测试覆盖率到20%以上")
-    if new_status.get('overall_score', 0) < 7:
+    if new_status.get("overall_score", 0) < 7:
         print("  - 🔧 继续优化代码质量指标")
-    if new_status.get('code_quality', 0) >= 10:
+    if new_status.get("code_quality", 0) >= 10:
         print("  - ✅ 代码质量已达优秀，保持即可")
 
     print("\n📋 报告文件:")

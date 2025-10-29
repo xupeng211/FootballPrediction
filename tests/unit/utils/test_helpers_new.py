@@ -39,9 +39,7 @@ class TestGenerateUUID:
         # 验证UUID格式
         assert isinstance(uuid1, str)
         assert len(uuid1) == 36
-        assert re.match(
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", uuid1
-        )
+        assert re.match(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", uuid1)
 
         # 验证每次生成不同的UUID
         assert uuid1 != uuid2
@@ -181,10 +179,7 @@ class TestFormatTimestamp:
         formatted = format_timestamp(dt)
 
         # ISO格式应该包含时区信息
-        assert (
-            "2023-01-01T12:30:45+00:00" in formatted
-            or "2023-01-01T12:30:45Z" in formatted
-        )
+        assert "2023-01-01T12:30:45+00:00" in formatted or "2023-01-01T12:30:45Z" in formatted
 
     def test_format_timestamp_none_input(self):
         """测试：输入为None"""

@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 12 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 策略预测服务测试（真实实现）
@@ -310,9 +309,7 @@ class TestStrategyPredictionServiceReal:
 
         # Then
         assert _result is new_strategy
-        service._strategy_factory.get_strategy.assert_called_once_with(
-            "new_test_strategy"
-        )
+        service._strategy_factory.get_strategy.assert_called_once_with("new_test_strategy")
         assert "new_test_strategy" in service._current_strategies
 
     @pytest.mark.asyncio

@@ -22,9 +22,7 @@ class UserFactory(BaseFactory):
     username = factory.Sequence(lambda n: f"user{n:03d}")
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
     full_name = factory.Faker("name")
-    password_hash = factory.LazyFunction(
-        lambda: hashlib.sha256(b"password123").hexdigest()
-    )
+    password_hash = factory.LazyFunction(lambda: hashlib.sha256(b"password123").hexdigest())
     is_active = True
     is_verified = True
     is_admin = False
@@ -79,9 +77,7 @@ class UserFactory(BaseFactory):
 
     @classmethod
     def create_user_with_password(cls, password: str, **kwargs) -> User:
-        return cls(
-            password_hash=hashlib.sha256(password.encode()).hexdigest(), **kwargs
-        )
+        return cls(password_hash=hashlib.sha256(password.encode()).hexdigest(), **kwargs)
 
     @classmethod
     def create_test_users(cls):
@@ -118,9 +114,7 @@ class BettorUserFactory(UserFactory):
 
     is_professional_bettor = True
     bankroll = factory.Faker("random_int", min=10_000, max=100_000)
-    risk_preference = factory.LazyFunction(
-        lambda: secrets.choice(["low", "medium", "high"])
-    )
+    risk_preference = factory.LazyFunction(lambda: secrets.choice(["low", "medium", "high"]))
 
 
 @pytest.mark.external_api
@@ -135,10 +129,6 @@ class TestUserFactory(UserFactory):
         return [
             cls.create(username="test_admin", email="admin@test.com", is_admin=True),
             cls.create(username="test_user", email="user@test.com"),
-            cls.create(
-                username="test_analyst", email="analyst@test.com", is_analyst=True
-            ),
-            cls.create(
-                username="test_premium", email="premium@test.com", is_premium=True
-            ),
+            cls.create(username="test_analyst", email="analyst@test.com", is_analyst=True),
+            cls.create(username="test_premium", email="premium@test.com", is_premium=True),
         ]

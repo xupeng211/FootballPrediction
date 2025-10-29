@@ -85,12 +85,8 @@ def test_feature_calculator_structure():
             modules_to_mock["src.features"] = parent_package
             modules_to_mock["src.database"] = parent_package.database
             modules_to_mock["src.database.models"] = parent_package.database.models
-            modules_to_mock[
-                "src.database.models.match"
-            ] = parent_package.database.models.match
-            modules_to_mock[
-                "src.database.models.odds"
-            ] = parent_package.database.models.odds
+            modules_to_mock["src.database.models.match"] = parent_package.database.models.match
+            modules_to_mock["src.database.models.odds"] = parent_package.database.models.odds
 
             # 直接导入模块文件，绕过包结构
             import importlib.util
@@ -265,9 +261,7 @@ def test_feature_calculator_structure():
             for type_name, method_suffix in feature_types:
                 method_name = f"calculate_{method_suffix}"
                 has_method = hasattr(calculator, method_name)
-                is_async = asyncio.iscoroutinefunction(
-                    getattr(calculator, method_name, Mock())
-                )
+                is_async = asyncio.iscoroutinefunction(getattr(calculator, method_name, Mock()))
                 print(f"  {'✅' if has_method and is_async else '❌'} {type_name}")
 
             # 测试数据处理功能
@@ -462,9 +456,7 @@ def test_feature_algorithms():
             if total_prob > 0:
                 home_prob_norm = home_prob / total_prob
                 away_prob_norm = away_prob / total_prob
-                print(
-                    f"  ✅ 赔率隐含概率: 主队{home_prob_norm:.2%}, 客队{away_prob_norm:.2%}"
-                )
+                print(f"  ✅ 赔率隐含概率: 主队{home_prob_norm:.2%}, 客队{away_prob_norm:.2%}")
 
         return True
 

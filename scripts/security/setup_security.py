@@ -102,9 +102,7 @@ class SecurityManager:
 
         return entropy
 
-    def generate_env_file(
-        self, keys: Dict[str, str], output_path: Optional[str] = None
-    ):
+    def generate_env_file(self, keys: Dict[str, str], output_path: Optional[str] = None):
         """生成环境配置文件"""
         print(f"\n📝 生成 .env.{self.environment} 文件...")
 
@@ -365,9 +363,7 @@ SECURITY_HEADERS={{
         print("2. 不要将密钥文件提交到版本控制系统")
         print("3. 定期轮换密钥")
         print("4. 监控密钥使用情况")
-        print(
-            f"\n📊 密钥清单已生成在: {self.keys_dir}/manifest_{self.environment}.json"
-        )
+        print(f"\n📊 密钥清单已生成在: {self.keys_dir}/manifest_{self.environment}.json")
 
         return keys, manifest
 

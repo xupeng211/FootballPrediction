@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 预测模型测试
 Tests for Prediction Model
@@ -30,9 +28,7 @@ except ImportError as e:
     PredictionType = None
 
 
-@pytest.mark.skipif(
-    not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available"
-)
+@pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available")
 @pytest.mark.unit
 class TestPredictionStatus:
     """预测状态测试"""
@@ -63,9 +59,7 @@ class TestPredictionStatus:
         assert hash(status1) == hash(status2)
 
 
-@pytest.mark.skipif(
-    not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available"
-)
+@pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available")
 class TestPredictionType:
     """预测类型测试"""
 
@@ -84,9 +78,7 @@ class TestPredictionType:
         assert PredictionType.OVER_UNDER in types
 
 
-@pytest.mark.skipif(
-    not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available"
-)
+@pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available")
 class TestPredictionModel:
     """预测模型测试"""
 
@@ -109,9 +101,7 @@ class TestPredictionModel:
         model = PredictionModel("train_test")
 
         # 准备训练数据
-        X = pd.DataFrame(
-            {"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]}
-        )
+        X = pd.DataFrame({"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]})
         y = pd.Series([0, 1, 0, 1, 1])
 
         # 训练模型
@@ -127,9 +117,7 @@ class TestPredictionModel:
         model = PredictionModel("predict_test")
 
         # 先训练模型
-        X_train = pd.DataFrame(
-            {"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]}
-        )
+        X_train = pd.DataFrame({"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]})
         y_train = pd.Series([0, 1, 0, 1, 1])
         model.train(X_train, y_train)
 
@@ -148,9 +136,7 @@ class TestPredictionModel:
         model = PredictionModel("proba_test", "classification")
 
         # 先训练模型
-        X_train = pd.DataFrame(
-            {"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]}
-        )
+        X_train = pd.DataFrame({"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]})
         y_train = pd.Series([0, 1, 0, 1, 1])
         model.train(X_train, y_train)
 
@@ -168,9 +154,7 @@ class TestPredictionModel:
         model1 = PredictionModel("save_test")
 
         # 训练模型
-        X = pd.DataFrame(
-            {"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]}
-        )
+        X = pd.DataFrame({"feature1": [1, 2, 3, 4, 5], "feature2": [0.1, 0.2, 0.3, 0.4, 0.5]})
         y = pd.Series([0, 1, 0, 1, 1])
         model1.train(X, y)
 
@@ -243,9 +227,7 @@ class TestPredictionModel:
         model = PredictionModel("cv_test")
 
         # 准备数据
-        X = pd.DataFrame(
-            {"feature1": range(10), "feature2": [i * 0.1 for i in range(10)]}
-        )
+        X = pd.DataFrame({"feature1": range(10), "feature2": [i * 0.1 for i in range(10)]})
         y = pd.Series([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
 
         if hasattr(model, "cross_validate"):
@@ -282,9 +264,7 @@ def test_module_imports():
         assert PredictionType is not None
 
 
-@pytest.mark.skipif(
-    not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available"
-)
+@pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available")
 class TestPredictionModelAdvanced:
     """预测模型高级测试"""
 
@@ -312,9 +292,7 @@ class TestPredictionModelAdvanced:
         model = PredictionModel("batch_test")
 
         # 训练模型
-        X_train = pd.DataFrame(
-            {"feature1": range(100), "feature2": [i * 0.01 for i in range(100)]}
-        )
+        X_train = pd.DataFrame({"feature1": range(100), "feature2": [i * 0.01 for i in range(100)]})
         y_train = pd.Series([i % 2 for i in range(100)])
         model.train(X_train, y_train)
 
@@ -352,9 +330,7 @@ class TestPredictionModelAdvanced:
         model = PredictionModel("perf_test")
 
         # 训练并跟踪性能
-        X_train = pd.DataFrame(
-            {"feature1": range(50), "feature2": [i * 0.1 for i in range(50)]}
-        )
+        X_train = pd.DataFrame({"feature1": range(50), "feature2": [i * 0.1 for i in range(50)]})
         y_train = pd.Series([i % 3 for i in range(50)])
 
         if hasattr(model, "performance_history"):
@@ -375,9 +351,7 @@ class TestPredictionModelAdvanced:
             models.append(model)
 
         # 训练每个模型
-        X = pd.DataFrame(
-            {"feature1": range(30), "feature2": [i * 0.1 for i in range(30)]}
-        )
+        X = pd.DataFrame({"feature1": range(30), "feature2": [i * 0.1 for i in range(30)]})
         y = pd.Series([i % 2 for i in range(30)])
 
         for model in models:
@@ -405,9 +379,7 @@ class TestPredictionModelAdvanced:
         model = PredictionModel("missing_data_test")
 
         # 带缺失值的数据
-        X = pd.DataFrame(
-            {"feature1": [1, 2, None, 4, 5], "feature2": [0.1, None, 0.3, 0.4, 0.5]}
-        )
+        X = pd.DataFrame({"feature1": [1, 2, None, 4, 5], "feature2": [0.1, None, 0.3, 0.4, 0.5]})
         y = pd.Series([0, 1, 0, 1, 1])
 
         # 模型应该能处理缺失值
@@ -444,9 +416,7 @@ class TestPredictionModelAdvanced:
         model = PredictionModel("explainable_test")
 
         # 训练模型
-        X = pd.DataFrame(
-            {"feature1": range(50), "feature2": [i * 0.1 for i in range(50)]}
-        )
+        X = pd.DataFrame({"feature1": range(50), "feature2": [i * 0.1 for i in range(50)]})
         y = pd.Series([i % 2 for i in range(50)])
         model.train(X, y)
 
@@ -465,9 +435,7 @@ class TestPredictionModelAdvanced:
         # 模拟预测监控
         if hasattr(model, "prediction_stats"):
             # 进行多次预测
-            X = pd.DataFrame(
-                {"feature1": range(10), "feature2": [i * 0.1 for i in range(10)]}
-            )
+            X = pd.DataFrame({"feature1": range(10), "feature2": [i * 0.1 for i in range(10)]})
 
             for _ in range(5):
                 model.predict(X)

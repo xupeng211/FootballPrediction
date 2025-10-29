@@ -142,9 +142,7 @@ class PasswordResetRequest(BaseModel):
 
     email: EmailStr = Field(..., description="邮箱地址")
 
-    model_config = ConfigDict(
-        json_schema_extra={"example": {"email": "test@example.com"}}
-    )
+    model_config = ConfigDict(json_schema_extra={"example": {"email": "test@example.com"}})
 
 
 class PasswordResetConfirm(BaseModel):

@@ -7,7 +7,6 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -27,9 +26,7 @@ class TestConfigSimple:
         """测试没有配置文件时的初始化"""
         with patch("src.core.config.Path.home", return_value=self.temp_dir):
             config = Config()
-            assert config.config_file == (
-                self.temp_dir / ".footballprediction" / "config.json"
-            )
+            assert config.config_file == (self.temp_dir / ".footballprediction" / "config.json")
             assert config.config == {}
 
     def test_config_initialization_with_valid_file(self):

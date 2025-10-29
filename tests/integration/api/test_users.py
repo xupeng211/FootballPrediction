@@ -39,9 +39,7 @@ class TestUserAPIIntegration:
         # 验证数据库中的用户
         from src.database.models import User
 
-        _user = await db_session.execute(
-            select(User).where(User.username == user_data["username"])
-        )
+        _user = await db_session.execute(select(User).where(User.username == user_data["username"]))
         _user = user.scalar_one_or_none()
         assert user is not None
         assert user.email == user_data["email"]
@@ -91,9 +89,7 @@ class TestUserAPIIntegration:
         assert "password" not in data
 
     @pytest.mark.asyncio
-    async def test_update_user_profile(
-        self, api_client: AsyncClient, auth_headers: dict
-    ):
+    async def test_update_user_profile(self, api_client: AsyncClient, auth_headers: dict):
         """测试更新用户资料"""
         update_data = {
             "email": "updated@example.com",
@@ -151,9 +147,7 @@ class TestUserAPIIntegration:
         _user = sample_prediction_data["user"]
 
         # 获取用户预测
-        response = await api_client.get(
-            "/api/v1/users/me/predictions", headers=auth_headers
-        )
+        response = await api_client.get("/api/v1/users/me/predictions", headers=auth_headers)
 
         # 验证响应
         assert response.status_code == 200
@@ -202,9 +196,7 @@ class TestUserAPIIntegration:
         await db_session.commit()
 
         # 获取统计
-        response = await api_client.get(
-            "/api/v1/users/me/statistics", headers=auth_headers
-        )
+        response = await api_client.get("/api/v1/users/me/statistics", headers=auth_headers)
 
         # 验证响应
         assert response.status_code == 200
@@ -218,9 +210,7 @@ class TestUserAPIIntegration:
         assert 0 <= stats["accuracy"] <= 1
 
     @pytest.mark.asyncio
-    async def test_admin_get_users(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_admin_get_users(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试管理员获取用户列表"""
         # 创建多个用户
         from src.database.models import User
@@ -257,9 +247,7 @@ class TestUserAPIIntegration:
         assert all(u["role"] == "user" for u in filtered_data["data"])
 
     @pytest.mark.asyncio
-    async def test_deactivate_user(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_deactivate_user(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试停用用户"""
         # 创建要停用的用户
         from src.database.models import User

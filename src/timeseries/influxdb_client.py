@@ -7,11 +7,8 @@ InfluxDB Time Series Database Client
 """
 
 import asyncio
-import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, asdict
-from pathlib import Path
 
 try:
     from influxdb_client import InfluxDBClient, Point
@@ -80,16 +77,10 @@ class InfluxDBManager:
         self.logger = get_logger(self.__class__.__name__)
 
         # InfluxDB连接配置
-        self.influx_url = self.config.get("influxdb", {}).get(
-            "url", "http://localhost:8086"
-        )
+        self.influx_url = self.config.get("influxdb", {}).get("url", "http://localhost:8086")
         self.influx_token = self.config.get("influxdb", {}).get("token", "")
-        self.influx_org = self.config.get("influxdb", {}).get(
-            "org", "football-prediction"
-        )
-        self.influx_bucket = self.config.get("influxdb", {}).get(
-            "bucket", "quality-metrics"
-        )
+        self.influx_org = self.config.get("influxdb", {}).get("org", "football-prediction")
+        self.influx_bucket = self.config.get("influxdb", {}).get("bucket", "quality-metrics")
 
         self.client: Optional[InfluxDBClient] = None
         self.write_api = None
@@ -161,9 +152,7 @@ class InfluxDBManager:
 
             self.write_api.write(bucket=self.influx_bucket, record=point)
 
-            self.logger.debug(
-                f"时序指标已写入: {metric.measurement} at {metric.timestamp}"
-            )
+            self.logger.debug(f"时序指标已写入: {metric.measurement} at {metric.timestamp}")
             return True
 
         except Exception as e:
@@ -353,9 +342,7 @@ class InfluxDBManager:
             flux_parts.append("|> range(start: -24h)")
 
         # 测量名称过滤
-        flux_parts.append(
-            f'|> filter(fn: (r) => r._measurement == "{query.measurement}")'
-        )
+        flux_parts.append(f'|> filter(fn: (r) => r._measurement == "{query.measurement}")')
 
         # 标签过滤
         if query.tags:
@@ -364,9 +351,7 @@ class InfluxDBManager:
 
         # 字段过滤
         if query.fields:
-            field_filter = " or ".join(
-                [f'r._field == "{field}"' for field in query.fields]
-            )
+            field_filter = " or ".join([f'r._field == "{field}"' for field in query.fields])
             flux_parts.append(f"|> filter(fn: (r) => {field_filter})")
 
         # 聚合操作
@@ -384,9 +369,7 @@ class InfluxDBManager:
 
         return " ".join(flux_parts)
 
-    async def get_quality_metrics_history(
-        self, hours: int = 24
-    ) -> List[Dict[str, Any]]:
+    async def get_quality_metrics_history(self, hours: int = 24) -> List[Dict[str, Any]]:
         """获取质量指标历史数据"""
         query = MetricQuery(
             measurement="quality_metrics",
@@ -433,9 +416,7 @@ class InfluxDBManager:
                 return {}
 
             values = [
-                point["value"]
-                for point in data_points
-                if isinstance(point["value"], (int, float))
+                point["value"] for point in data_points if isinstance(point["value"], (int, float))
             ]
 
             if not values:

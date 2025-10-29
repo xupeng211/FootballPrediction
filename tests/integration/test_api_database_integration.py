@@ -2,16 +2,13 @@
 
 # TODO: Consider creating a fixture for 13 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 API与数据库集成测试
 测试API端点与数据库的直接交互
 """
 
-import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,13 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # 导入需要测试的模块
 try:
     from api.app import app
-    from database.connection import engine, get_async_session
     from database.models.match import Match
     from database.models.prediction import Prediction
     from database.models.user import User
-    from database.repositories.match_repository import MatchRepository
-    from database.repositories.prediction_repository import PredictionRepository
-    from database.repositories.user_repository import UserRepository
 
     IMPORT_SUCCESS = True
 except ImportError as e:
@@ -79,9 +72,7 @@ class TestAPIDatabaseIntegration:
         mock_db_session.add.return_value = None
         mock_db_session.commit.return_value = None
         mock_db_session.refresh.return_value = None
-        mock_db_session.execute.return_value = Mock(
-            scalar_one_or_none=None
-        )  # 用户不存在
+        mock_db_session.execute.return_value = Mock(scalar_one_or_none=None)  # 用户不存在
 
         # 模拟数据库返回
         mock_db_session.refresh.side_effect = lambda obj: setattr(obj, "id", 1)
@@ -221,9 +212,7 @@ class TestAPIDatabaseIntegration:
         ]
 
         for params in query_params:
-            with patch(
-                "api.dependencies.get_async_session", return_value=mock_db_session
-            ):
+            with patch("api.dependencies.get_async_session", return_value=mock_db_session):
                 response = client.get("/api/v1/matches", params=params)
 
             # 验证响应
@@ -336,9 +325,7 @@ class TestAPIDatabaseIntegration:
             _data = response.json()
             assert isinstance(data, dict)
             # 验证统计字段存在
-            assert any(
-                key in data for key in ["total_predictions", "accuracy", "stats"]
-            )
+            assert any(key in data for key in ["total_predictions", "accuracy", "stats"])
 
     @pytest.mark.asyncio
     async def test_get_leaderboard(self, client, mock_db_session):
@@ -499,6 +486,4 @@ def test_database_connection_health(client):
         assert isinstance(response, dict)
         assert len(response) > 0
         # 至少有一个标准字段
-        assert any(
-            key in response for key in ["data", "id", "message", "error", "status"]
-        )
+        assert any(key in response for key in ["data", "id", "message", "error", "status"])

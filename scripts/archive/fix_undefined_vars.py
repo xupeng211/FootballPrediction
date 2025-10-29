@@ -79,9 +79,7 @@ class UndefinedVariableFixer:
                                     "column": col_num,
                                     "variable": var_name,
                                     "context": code_context,
-                                    "suggestion": self.generate_suggestion(
-                                        var_name, code_context
-                                    ),
+                                    "suggestion": self.generate_suggestion(var_name, code_context),
                                 }
                             )
 
@@ -90,9 +88,7 @@ class UndefinedVariableFixer:
             print(f"⚠️ 警告：无法检查 {file_path}: {e}")
             return []
 
-    def get_code_context(
-        self, file_path: str, line_num: int, context_lines: int = 3
-    ) -> List[str]:
+    def get_code_context(self, file_path: str, line_num: int, context_lines: int = 3) -> List[str]:
         """获取代码上下文"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -169,9 +165,7 @@ class UndefinedVariableFixer:
 
         return " | ".join(suggestions[:3])  # 返回前3个建议
 
-    def add_placeholder_definition(
-        self, file_path: Path, var_name: str, line_num: int
-    ) -> bool:
+    def add_placeholder_definition(self, file_path: Path, var_name: str, line_num: int) -> bool:
         """在适当位置添加占位符定义"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -222,9 +216,7 @@ class UndefinedVariableFixer:
         # 如果没找到合适位置，在错误行前插入
         return max(0, error_line - 1)
 
-    def generate_placeholder(
-        self, var_name: str, lines: List[str], line_num: int
-    ) -> str:
+    def generate_placeholder(self, var_name: str, lines: List[str], line_num: int) -> str:
         """生成占位符定义"""
         # 检查上下文以确定合适的占位符类型
         context_lines = lines[max(0, line_num - 5) : line_num + 5]
@@ -402,9 +394,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="检测和修复未定义变量 (F821)")
-    parser.add_argument(
-        "directory", nargs="?", default=".", help="要修复的目录 (默认: 当前目录)"
-    )
+    parser.add_argument("directory", nargs="?", default=".", help="要修复的目录 (默认: 当前目录)")
     parser.add_argument(
         "--report",
         default="docs/_reports/UNDEFINED_VARS_REPORT.md",

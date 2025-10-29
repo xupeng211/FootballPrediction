@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock
-
 """
 测试拆分后的数据API
 Test Split Data API

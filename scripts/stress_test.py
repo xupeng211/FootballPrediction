@@ -15,8 +15,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import sys
 
+
 class StressTestResults:
     """压力测试结果"""
+
     def __init__(self):
         self.requests: List[float] = []
         self.errors: List[str] = []
@@ -48,7 +50,7 @@ class StressTestResults:
                 "p95_response_time": 0.0,
                 "p99_response_time": 0.0,
                 "requests_per_second": 0.0,
-                "errors": []
+                "errors": [],
             }
 
         # 计算百分位数
@@ -69,11 +71,13 @@ class StressTestResults:
             "p95_response_time": p95,
             "p99_response_time": p99,
             "requests_per_second": self.total_requests / (sum(self.requests) or 1),
-            "errors": self.errors[:10]  # 只显示前10个错误
+            "errors": self.errors[:10],  # 只显示前10个错误
         }
 
-async def single_request(session: aiohttp.ClientSession, url: str, method: str = "GET",
-                        data: Dict = None) -> tuple[float, bool, str]:
+
+async def single_request(
+    session: aiohttp.ClientSession, url: str, method: str = "GET", data: Dict = None
+) -> tuple[float, bool, str]:
     """执行单个请求"""
     start_time = time.time()
     try:
@@ -97,8 +101,10 @@ async def single_request(session: aiohttp.ClientSession, url: str, method: str =
         duration = time.time() - start_time
         return duration, False, str(e)
 
-async def stress_test(url: str, concurrent_users: int, total_requests: int,
-                     method: str = "GET", data: Dict = None) -> StressTestResults:
+
+async def stress_test(
+    url: str, concurrent_users: int, total_requests: int, method: str = "GET", data: Dict = None
+) -> StressTestResults:
     """执行压力测试"""
     print("🚀 开始压力测试...")
     print(f"📊 URL: {url}")
@@ -148,6 +154,7 @@ async def stress_test(url: str, concurrent_users: int, total_requests: int,
 
     return results
 
+
 def print_results(results: StressTestResults, test_name: str):
     """打印测试结果"""
     stats = results.get_stats()
@@ -168,13 +175,14 @@ def print_results(results: StressTestResults, test_name: str):
     print("")
     print(f"🚀 吞吐量: {stats['requests_per_second']:.1f} RPS")
 
-    if stats['errors']:
+    if stats["errors"]:
         print("")
         print("🚨 错误详情 (前10个):")
-        for i, error in enumerate(stats['errors'], 1):
+        for i, error in enumerate(stats["errors"], 1):
             print(f"   {i}. {error}")
 
     print(f"{'='*60}")
+
 
 async def main():
     """主函数"""
@@ -187,22 +195,22 @@ async def main():
             "url": f"{base_url}/health/",
             "concurrent_users": 10,
             "total_requests": 100,
-            "method": "GET"
+            "method": "GET",
         },
         {
             "name": "存活检查端点",
             "url": f"{base_url}/health/liveness",
             "concurrent_users": 20,
             "total_requests": 200,
-            "method": "GET"
+            "method": "GET",
         },
         {
             "name": "预测端点",
             "url": f"{base_url}/api/v1/predictions/1",
             "concurrent_users": 5,
             "total_requests": 50,
-            "method": "GET"
-        }
+            "method": "GET",
+        },
     ]
 
     all_results = []
@@ -234,13 +242,17 @@ async def main():
         for test_name, results in all_results:
             stats = results.get_stats()
             print(f"🎯 {test_name}:")
-            print(f"   请求: {stats['total_requests']} | 成功率: {stats['success_rate']:.1f}% | "
-                  f"平均响应: {stats['avg_response_time']:.3f}s | RPS: {stats['requests_per_second']:.1f}")
+            print(
+                f"   请求: {stats['total_requests']} | 成功率: {stats['success_rate']:.1f}% | "
+                f"平均响应: {stats['avg_response_time']:.3f}s | RPS: {stats['requests_per_second']:.1f}"
+            )
 
         # 整体评估
         total_requests = sum(r.total_requests for _, r in all_results)
         total_successful = sum(r.successful_requests for _, r in all_results)
-        overall_success_rate = (total_successful / total_requests) * 100 if total_requests > 0 else 0
+        overall_success_rate = (
+            (total_successful / total_requests) * 100 if total_requests > 0 else 0
+        )
 
         print("\n🏆 整体表现:")
         print(f"   总请求数: {total_requests}")
@@ -252,6 +264,7 @@ async def main():
             print("   ⚠️ 系统性能良好")
         else:
             print("   ❌ 系统性能需要改进")
+
 
 if __name__ == "__main__":
     try:

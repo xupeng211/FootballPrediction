@@ -15,7 +15,6 @@ Phase 2 - 提升核心模块覆盖率至50%+
 
 import os
 import sys
-from typing import Any, Dict
 
 import pytest
 
@@ -36,9 +35,7 @@ except ImportError as e:
     DEPENDENCIES_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
-)
+@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
 @pytest.mark.unit
 class TestAPIDependenciesEnhanced:
     """API依赖模块增强测试类"""
@@ -112,9 +109,7 @@ class TestAPIDependenciesEnhanced:
     @pytest.mark.asyncio
     async def test_test_async_db_dependency(self):
         """测试异步数据库依赖注入"""
-        with patch(
-            "src.database.dependencies.get_async_reader_session"
-        ) as mock_get_session:
+        with patch("src.database.dependencies.get_async_reader_session") as mock_get_session:
             mock_session = AsyncMock()
             mock_get_session.return_value = mock_session
 
@@ -381,9 +376,7 @@ class TestAPIDependenciesEnhanced:
             execution_time = end_time - start_time
 
             # 性能应该在合理范围内（小于1秒）
-            assert (
-                execution_time < 1.0
-            ), f"Dependency resolution took too long: {execution_time}s"
+            assert execution_time < 1.0, f"Dependency resolution took too long: {execution_time}s"
 
     # === 配置测试 ===
 

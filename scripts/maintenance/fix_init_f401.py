@@ -29,10 +29,7 @@ def fix_init_file(file_path):
     skip_first = False
     if len(lines) > 1:
         first_line = lines[0].strip()
-        if (
-            first_line.startswith("from typing import")
-            and len(first_line.split(",")) > 2
-        ):
+        if first_line.startswith("from typing import") and len(first_line.split(",")) > 2:
             # 如果第一行只是导入typing的多个类型，跳过
             print(f"  - 跳过typing导入: {first_line}")
             skip_first = True
@@ -43,9 +40,7 @@ def fix_init_file(file_path):
             continue
 
         # 跳过空的typing导入
-        if line.strip().startswith("from typing import") and line.strip().endswith(
-            "Union"
-        ):
+        if line.strip().startswith("from typing import") and line.strip().endswith("Union"):
             continue
 
         new_lines.append(line)

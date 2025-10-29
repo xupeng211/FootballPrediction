@@ -1,5 +1,3 @@
-from unittest.mock import Mock, patch
-
 """
 健康检查API路由器测试
 Tests for health check API router
@@ -294,7 +292,6 @@ class TestHealthRouter:
     def test_concurrent_health_checks(self, client):
         """测试并发健康检查"""
         import threading
-        import time
 
         results = []
 

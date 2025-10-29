@@ -44,9 +44,7 @@ def add_import_to_file(filepath, import_statement):
             stripped = line.strip()
 
             # 处理文档字符串
-            if not in_docstring and (
-                stripped.startswith('"""') or stripped.startswith("'''")
-            ):
+            if not in_docstring and (stripped.startswith('"""') or stripped.startswith("'''")):
                 in_docstring = True
                 docstring_chars = stripped[:3]
                 continue
@@ -162,9 +160,9 @@ def main():
             remaining_stats[var_name] += 1
 
         print("\n📋 剩余错误Top 10:")
-        for var_name, count in sorted(
-            remaining_stats.items(), key=lambda x: x[1], reverse=True
-        )[:10]:
+        for var_name, count in sorted(remaining_stats.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]:
             print(f"  {var_name}: {count}个")
 
 

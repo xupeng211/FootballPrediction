@@ -7,9 +7,7 @@ import asyncio
 import logging
 import os
 import sys
-import tempfile
 from pathlib import Path
-from typing import Any, AsyncGenerator, Generator
 
 import pytest
 
@@ -162,9 +160,7 @@ async def test_redis():
 async def test_kafka():
     """Kafka fixture"""
     try:
-        import threading
 
-        from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer
         from kafka.errors import KafkaError
 
         # Kafka 配置
@@ -194,15 +190,12 @@ async def test_kafka():
             f"{topic_prefix}audit_logs",
         ]
 
-        admin_client = KafkaAdminClient(
-            bootstrap_servers=bootstrap_servers, client_id="test-admin"
-        )
+        admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers, client_id="test-admin")
 
         from kafka.admin import NewTopic
 
         new_topics = [
-            NewTopic(name=topic, num_partitions=3, replication_factor=1)
-            for topic in test_topics
+            NewTopic(name=topic, num_partitions=3, replication_factor=1) for topic in test_topics
         ]
 
         try:
@@ -235,9 +228,7 @@ async def test_kafka():
         from unittest.mock import MagicMock
 
         mock_producer = MagicMock()
-        mock_producer.send = MagicMock(
-            return_value=MagicMock(get=MagicMock(return_value=None))
-        )
+        mock_producer.send = MagicMock(return_value=MagicMock(get=MagicMock(return_value=None)))
         mock_producer.flush = MagicMock()
         mock_producer.close = MagicMock()
 
@@ -379,13 +370,10 @@ async def cleanup_data(db_session):
     yield
 
     # 清理数据（按依赖关系顺序）
-    from src.database.models import Prediction, Match, Team, User, AuditLog
     from sqlalchemy import text
 
     # 使用原始 SQL 清理更快
-    await db_session.execute(
-        text("TRUNCATE TABLE predictions RESTART IDENTITY CASCADE")
-    )
+    await db_session.execute(text("TRUNCATE TABLE predictions RESTART IDENTITY CASCADE"))
     await db_session.execute(text("TRUNCATE TABLE matches RESTART IDENTITY CASCADE"))
     await db_session.execute(text("TRUNCATE TABLE teams RESTART IDENTITY CASCADE"))
     await db_session.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE"))

@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, Mock, patch
 足球数据清洗器模块化测试
 """
 
-from datetime import datetime, timezone
 
 import pytest
 
@@ -267,9 +266,7 @@ async def test_football_data_cleaner_methods():
         cleaner.data_validator.validate_match_data = Mock(return_value=True)
         cleaner.id_mapper.map_league_id = AsyncMock(return_value=1)
         cleaner.id_mapper.map_team_id = AsyncMock(return_value=2)
-        cleaner.time_processor.to_utc_time = Mock(
-            return_value="2024-01-01T12:00:00+00:00"
-        )
+        cleaner.time_processor.to_utc_time = Mock(return_value="2024-01-01T12:00:00+00:00")
         cleaner.data_validator.standardize_match_status = Mock(return_value="scheduled")
         cleaner.data_validator.validate_score = Mock(side_effect=[1, 0, 0, 0])
         cleaner.time_processor.extract_season = Mock(return_value="2023-2024")
@@ -306,9 +303,7 @@ async def test_football_data_cleaner_methods():
         assert cleaned["season"] == "2023-2024"
 
         # 测试清洗赔率数据
-        cleaner.odds_processor.clean_odds_data = AsyncMock(
-            return_value=[{"test": "odds"}]
-        )
+        cleaner.odds_processor.clean_odds_data = AsyncMock(return_value=[{"test": "odds"}])
         raw_odds = [
             {
                 "match_id": "123",
@@ -357,8 +352,6 @@ async def test_error_handling():
         assert _result is None
 
         # 测试异常处理
-        cleaner.data_validator.validate_match_data = Mock(
-            side_effect=Exception("Test error")
-        )
+        cleaner.data_validator.validate_match_data = Mock(side_effect=Exception("Test error"))
         _result = await cleaner.clean_match_data({"id": "123"})
         assert _result is None

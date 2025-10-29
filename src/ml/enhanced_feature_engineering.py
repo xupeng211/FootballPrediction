@@ -15,13 +15,8 @@ Enhanced Feature Engineering for Football Prediction
 """
 
 import asyncio
-import logging
-import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass, field
-from collections import defaultdict, deque
 from enum import Enum
 
 from src.core.logging_system import get_logger
@@ -548,7 +543,8 @@ class EnhancedFeatureEngineer:
         """
         try:
             # 生成特征缓存键
-            cache_key = f"{match.get('home_team_id')}_{match.get('away_team_id')}_{match.get('match_date')}"
+            cache_key =
+    f"{match.get('home_team_id')}_{match.get('away_team_id')}_{match.get('match_date')}"
 
             # 检查缓存
             if cache_key in self.feature_cache:

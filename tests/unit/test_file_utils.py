@@ -151,9 +151,7 @@ class TestFileUtils:
 
     def test_is_text_file_text(self):
         """测试文本文件识别"""
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False, suffix=".txt"
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as temp_file:
             temp_file.write("This is a text file")
             temp_file_path = temp_file.name
 

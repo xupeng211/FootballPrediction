@@ -9,9 +9,7 @@ from pathlib import Path
 
 def create_minimal_test(file_path: Path):
     """创建最小化的测试文件"""
-    test_name = (
-        file_path.stem.replace("test_", "").title().replace("_", " ").replace(" ", "")
-    )
+    test_name = file_path.stem.replace("test_", "").title().replace("_", " ").replace(" ", "")
 
     content = f"""#!/usr/bin/env python3
 \"\"\"
@@ -45,9 +43,7 @@ def main():
     # 运行 pytest 收集错误
     import subprocess
 
-    result = subprocess.run(
-        ["pytest", "--collect-only", "-q"], capture_output=True, text=True
-    )
+    result = subprocess.run(["pytest", "--collect-only", "-q"], capture_output=True, text=True)
 
     # 解析错误输出
     for line in result.stderr.split("\n"):

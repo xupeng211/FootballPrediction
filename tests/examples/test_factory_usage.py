@@ -227,9 +227,7 @@ class TestFactoryUsage:
         manchester_united = TeamFactory.create(
             team_name="Manchester United", team_code="MUN", country="England"
         )
-        liverpool = TeamFactory.create(
-            team_name="Liverpool", team_code="LIV", country="England"
-        )
+        liverpool = TeamFactory.create(team_name="Liverpool", team_code="LIV", country="England")
         test_db_session.flush()
 
         # 3. 创建比赛

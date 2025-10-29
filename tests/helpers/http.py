@@ -5,7 +5,6 @@ HTTP客户端测试辅助工具
 
 import json
 from typing import Any, Dict, Optional
-from unittest.mock import AsyncMock, Mock
 
 
 class MockHTTPResponse:
@@ -107,16 +106,12 @@ def apply_http_mocks():
             mock_client = MockHTTPClient()
 
             # 设置常见响应
-            mock_client.set_response(
-                "GET", "/api/health", MockHTTPResponse({"status": "healthy"})
-            )
+            mock_client.set_response("GET", "/api/health", MockHTTPResponse({"status": "healthy"}))
 
             mock_client.set_response(
                 "POST",
                 "/api/predictions",
-                MockHTTPResponse(
-                    status_code=201, json_data={"id": 1, "prediction": "win"}
-                ),
+                MockHTTPResponse(status_code=201, json_data={"id": 1, "prediction": "win"}),
             )
 
             return func(mock_client, *args, **kwargs)

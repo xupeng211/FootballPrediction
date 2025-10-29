@@ -236,9 +236,7 @@ def main():
         "deleted": len(categories["delete"]),
         "resolved": len(categories["resolve"]),
         "deferred": len(categories["defer"]),
-        "remaining": len(todos)
-        - len(categories["delete"])
-        - len(categories["resolve"]),
+        "remaining": len(todos) - len(categories["delete"]) - len(categories["resolve"]),
     }
 
     print("\n✅ TODO清理完成！")

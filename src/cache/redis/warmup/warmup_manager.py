@@ -20,9 +20,7 @@ class WarmupManager:
         self.redis_manager = redis_manager
         self.is_warming_up = False
 
-    async def warmup_cache(
-        self, patterns: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+    async def warmup_cache(self, patterns: Optional[List[str]] = None) -> Dict[str, Any]:
         """Warm up cache with common data"""
         if self.is_warming_up:
             return {"status": "already_warming"}

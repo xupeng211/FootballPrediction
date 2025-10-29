@@ -21,6 +21,7 @@ from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
+
 class QualityDashboardLauncher:
     """质量监控面板启动器"""
 
@@ -52,7 +53,7 @@ class QualityDashboardLauncher:
                 env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
             )
 
             logger.info(f"API服务器已启动 (PID: {self.api_process.pid})")
@@ -98,10 +99,7 @@ class QualityDashboardLauncher:
             if not node_modules.exists():
                 logger.info("安装前端依赖...")
                 install_process = subprocess.run(
-                    ["npm", "install"],
-                    cwd=frontend_path,
-                    capture_output=True,
-                    text=True
+                    ["npm", "install"], cwd=frontend_path, capture_output=True, text=True
                 )
 
                 if install_process.returncode != 0:
@@ -116,7 +114,7 @@ class QualityDashboardLauncher:
                 cwd=frontend_path,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
             )
 
             logger.info(f"前端服务器已启动 (PID: {self.frontend_process.pid})")
@@ -152,16 +150,16 @@ class QualityDashboardLauncher:
 
     def print_access_info(self):
         """打印访问信息"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🚀 质量监控面板已启动")
-        print("="*60)
+        print("=" * 60)
         print("📊 API服务器: http://localhost:8001")
         print("🌐 前端界面: http://localhost:3000")
         print("📡 WebSocket: ws://localhost:8001/ws")
         print("🔗 API文档: http://localhost:8001/docs")
-        print("="*60)
+        print("=" * 60)
         print("按 Ctrl+C 停止服务")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
     def run(self):
         """运行质量监控面板"""

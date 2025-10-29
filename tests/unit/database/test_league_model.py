@@ -76,9 +76,7 @@ class TestLeagueModel:
             league_class = League
 
             # 应该有id字段（从BaseModel继承）
-            assert hasattr(league_class, "id") or hasattr(
-                league_class, "__annotations__"
-            )
+            assert hasattr(league_class, "id") or hasattr(league_class, "__annotations__")
 
         except Exception:
             pytest.skip("League类属性检查失败")

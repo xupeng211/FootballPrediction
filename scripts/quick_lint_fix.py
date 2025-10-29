@@ -10,9 +10,7 @@ from pathlib import Path
 def run_command(cmd, cwd=None):
     """运行命令并返回结果"""
     try:
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, cwd=cwd
-        )
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
         return result.returncode == 0, result.stdout, result.stderr
     except Exception as e:
         return False, "", str(e)

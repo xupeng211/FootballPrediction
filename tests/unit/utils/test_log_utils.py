@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """
 日志工具测试
 """
@@ -7,7 +5,6 @@ from unittest.mock import MagicMock, patch
 import json
 import logging
 import logging.config
-import os
 import tempfile
 from pathlib import Path
 
@@ -31,9 +28,7 @@ class TestLogUtils:
             # 创建文件处理器
             handler = logging.FileHandler(log_file)
             handler.setFormatter(
-                logging.Formatter(
-                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-                )
+                logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             )
             logger.addHandler(handler)
 
@@ -197,9 +192,7 @@ class TestLogUtils:
             logger.setLevel(logging.ERROR)
 
             handler = logging.FileHandler(log_file)
-            handler.setFormatter(
-                logging.Formatter("%(levelname)s: %(message)s\n%(exc_info)s")
-            )
+            handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s\n%(exc_info)s"))
             logger.addHandler(handler)
 
             try:
@@ -342,9 +335,7 @@ class TestLogUtils:
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {
-                "standard": {
-                    "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-                },
+                "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
             },
             "handlers": {
                 "default": {
@@ -353,9 +344,7 @@ class TestLogUtils:
                     "class": "logging.StreamHandler",
                 },
             },
-            "loggers": {
-                "": {"handlers": ["default"], "level": "INFO", "propagate": False}
-            },
+            "loggers": {"": {"handlers": ["default"], "level": "INFO", "propagate": False}},
         }
 
         # 应用配置
@@ -381,9 +370,7 @@ class TestLogUtils:
                 self.extra_data.update(kwargs)
                 return self
 
-            def _log(
-                self, level, msg, args, exc_info=None, extra=None, stack_info=False
-            ):
+            def _log(self, level, msg, args, exc_info=None, extra=None, stack_info=False):
                 # 合并额外数据
                 if self.extra_data:
                     extra = extra or {}
@@ -405,9 +392,7 @@ class TestLogUtils:
 
             handler = logging.FileHandler(log_file)
             handler.setFormatter(
-                logging.Formatter(
-                    "%(message)s - User: %(user_id)s - Request: %(request_id)s"
-                )
+                logging.Formatter("%(message)s - User: %(user_id)s - Request: %(request_id)s")
             )
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)

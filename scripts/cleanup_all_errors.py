@@ -36,9 +36,7 @@ def fix_file_if_possible(file_path):
 
     # 修复常见问题
     # 1. 删除空的 try 块
-    content = re.sub(
-        r"try:\s*\n\s{4,}pass\s*\n\s+except ImportError:\s*\n\s{4,}pass", "", content
-    )
+    content = re.sub(r"try:\s*\n\s{4,}pass\s*\n\s+except ImportError:\s*\n\s{4,}pass", "", content)
 
     # 2. 修复缩进问题
     lines = content.split("\n")

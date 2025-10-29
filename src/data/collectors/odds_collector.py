@@ -357,7 +357,8 @@ class OddsCollector(DataCollector):
             bool: 是否有变化
         """
         try:
-            odds_id = f"{odds_data.get('match_id')}:{odds_data.get('bookmaker')}:{odds_data.get('market_type')}"
+            odds_id =
+    f"{odds_data.get('match_id')}:{odds_data.get('bookmaker')}:{odds_data.get('market_type')}"
 
             # 提取当前赔率值
             current_odds = {}

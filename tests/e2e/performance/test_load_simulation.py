@@ -7,9 +7,7 @@ import asyncio
 import statistics
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List
 
-import aiohttp
 import pytest
 from httpx import AsyncClient
 
@@ -33,9 +31,7 @@ class TestLoadSimulation:
             match_data = {
                 "home_team_id": teams[i % len(teams)]["id"],
                 "away_team_id": teams[(i + 1) % len(teams)]["id"],
-                "match_date": (
-                    datetime.now(timezone.utc) + timedelta(hours=i + 1)
-                ).isoformat(),
+                "match_date": (datetime.now(timezone.utc) + timedelta(hours=i + 1)).isoformat(),
                 "competition": "Performance League",
                 "season": "2024/2025",
                 "status": "UPCOMING",
@@ -136,9 +132,7 @@ class TestLoadSimulation:
                 "user_id": session["user_id"],
                 "response_times": response_times,
                 "success_count": success_count,
-                "avg_response_time": (
-                    statistics.mean(response_times) if response_times else 0
-                ),
+                "avg_response_time": (statistics.mean(response_times) if response_times else 0),
             }
 
         # 执行并发任务
@@ -163,12 +157,8 @@ class TestLoadSimulation:
         duration = performance_metrics.end_timer("concurrent_predictions")
 
         # 性能指标
-        success_rate = (
-            total_successful / total_predictions if total_predictions > 0 else 0
-        )
-        avg_response_time = (
-            statistics.mean(all_response_times) if all_response_times else 0
-        )
+        success_rate = total_successful / total_predictions if total_predictions > 0 else 0
+        avg_response_time = statistics.mean(all_response_times) if all_response_times else 0
         p95_response_time = (
             statistics.quantiles(all_response_times, n=20)[18]
             if len(all_response_times) >= 20
@@ -494,9 +484,7 @@ class TestLoadSimulation:
                     {
                         "username": user_data["username"],
                         "token": response.json()["access_token"],
-                        "headers": {
-                            "Authorization": f"Bearer {response.json()['access_token']}"
-                        },
+                        "headers": {"Authorization": f"Bearer {response.json()['access_token']}"},
                     }
                 )
 
@@ -535,14 +523,10 @@ class TestLoadSimulation:
 
         # 分批执行以避免过载
         batch_size = 10
-        user_batches = [
-            user_pool[i : i + batch_size] for i in range(0, len(user_pool), batch_size)
-        ]
+        user_batches = [user_pool[i : i + batch_size] for i in range(0, len(user_pool), batch_size)]
 
         for batch_idx, batch in enumerate(user_batches):
-            print(
-                f"   执行批次 {batch_idx + 1}/{len(user_batches)} ({len(batch)} 用户)"
-            )
+            print(f"   执行批次 {batch_idx + 1}/{len(user_batches)} ({len(batch)} 用户)")
 
             batch_tasks = []
             for user in batch:
@@ -559,9 +543,7 @@ class TestLoadSimulation:
                     errors.append(str(result))
 
         duration = performance_metrics.end_timer("stress_test")
-        success_rate = (
-            successful_operations / total_operations if total_operations > 0 else 0
-        )
+        success_rate = successful_operations / total_operations if total_operations > 0 else 0
         throughput = successful_operations / duration if duration > 0 else 0
 
         print("\n📊 压力测试结果:")

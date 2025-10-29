@@ -79,9 +79,7 @@ class HealthChecker:
                 if pool.overflow > 0:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"][
-                        "warning"
-                    ] = f"Connection pool overflow: {pool.overflow}"
+                    health["details"]["warning"] = f"Connection pool overflow: {pool.overflow}"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -136,15 +134,11 @@ class HealthChecker:
 
                 if memory_percent > 90:
                     health["status"] = HealthStatus.UNHEALTHY
-                    health["details"][
-                        "error"
-                    ] = f"High memory usage: {memory_percent:.2f}%"
+                    health["details"]["error"] = f"High memory usage: {memory_percent:.2f}%"
                 elif memory_percent > 80:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"][
-                        "warning"
-                    ] = f"High memory usage: {memory_percent:.2f}%"
+                    health["details"]["warning"] = f"High memory usage: {memory_percent:.2f}%"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -183,14 +177,10 @@ class HealthChecker:
 
             if memory.percent > 90:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["memory"][
-                    "error"
-                ] = f"High memory usage: {memory.percent}%"
+                health["details"]["memory"]["error"] = f"High memory usage: {memory.percent}%"
             elif memory.percent > 80:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["memory"][
-                    "warning"
-                ] = f"High memory usage: {memory.percent}%"
+                health["details"]["memory"]["warning"] = f"High memory usage: {memory.percent}%"
 
             # 磁盘
             disk_issues = []
@@ -206,9 +196,7 @@ class HealthChecker:
                         }
 
                         if percent > 95:
-                            disk_issues.append(
-                                f"{partition.mountpoint}: {percent:.1f}%"
-                            )
+                            disk_issues.append(f"{partition.mountpoint}: {percent:.1f}%")
                         elif percent > 85:
                             health["status"] = HealthStatus.DEGRADED
                     except PermissionError:
@@ -216,9 +204,7 @@ class HealthChecker:
 
             if disk_issues:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["disk"][
-                    "error"
-                ] = f"Disk full: {', '.join(disk_issues)}"
+                health["details"]["disk"]["error"] = f"Disk full: {', '.join(disk_issues)}"
 
             # 负载
             load_avg = psutil.getloadavg()

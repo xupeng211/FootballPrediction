@@ -52,9 +52,7 @@ class LintFixer:
                 lines = f.readlines()
 
             # 获取该文件的F401错误
-            result = subprocess.run(
-                ["flake8", str(file_path)], capture_output=True, text=True
-            )
+            result = subprocess.run(["flake8", str(file_path)], capture_output=True, text=True)
 
             if not result.stdout:
                 return False
@@ -153,9 +151,7 @@ class LintFixer:
         """移除未使用的变量 (F841)"""
         try:
             # 获取该文件的F841错误
-            result = subprocess.run(
-                ["flake8", str(file_path)], capture_output=True, text=True
-            )
+            result = subprocess.run(["flake8", str(file_path)], capture_output=True, text=True)
 
             if "F841" not in result.stdout:
                 return False

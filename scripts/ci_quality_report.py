@@ -15,13 +15,13 @@ def generate_quality_summary():
     生成质量检查摘要
     """
     try:
-        with open('quality-report.json', 'r') as f:
+        with open("quality-report.json", "r") as f:
             data = json.load(f)
     except FileNotFoundError:
         print("❌ 质量报告文件未找到")
         return
 
-    metrics = data.get('metrics', {})
+    metrics = data.get("metrics", {})
 
     # 输出到GitHub Actions摘要
     print("| Metric | Status |")
@@ -53,7 +53,7 @@ def generate_quality_summary():
 {json.dumps(data, indent=2, ensure_ascii=False)}
 """
 
-    with open('ci_quality_report.md', 'w', encoding='utf-8') as f:
+    with open("ci_quality_report.md", "w", encoding="utf-8") as f:
         f.write(report)
 
     print("📄 CI质量报告已生成: ci_quality_report.md")
@@ -64,7 +64,7 @@ def generate_type_checking_report():
     生成类型检查报告
     """
     try:
-        with open('type-improvement.json', 'r') as f:
+        with open("type-improvement.json", "r") as f:
             data = json.load(f)
     except FileNotFoundError:
         print("❌ 类型改进文件未找到")
@@ -77,12 +77,12 @@ def generate_type_checking_report():
         f"- **Error Changes**: {data.get('error_improvement', 0):+d}",
         f"- **Warning Changes**: {data.get('warning_improvement', 0):+d}",
         f"- **Current Errors**: {data.get('total_errors', 0)}",
-        f"- **Current Warnings**: {data.get('total_warnings', 0)}"
+        f"- **Current Warnings**: {data.get('total_warnings', 0)}",
     ]
 
     report = "\n".join(report_lines)
 
-    with open('type_checking_report.md', 'w', encoding='utf-8') as f:
+    with open("type_checking_report.md", "w", encoding="utf-8") as f:
         f.write(report)
 
     print(report)
@@ -96,8 +96,8 @@ def generate_kanban_check_report(kanban_file: str = "docs/_reports/TEST_OPTIMIZA
     import os
 
     timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    run_id = os.getenv('GITHUB_RUN_ID', 'N/A')
-    commit_sha = os.getenv('GITHUB_SHA', 'N/A')
+    run_id = os.getenv("GITHUB_RUN_ID", "N/A")
+    commit_sha = os.getenv("GITHUB_SHA", "N/A")
 
     if not Path(kanban_file).exists():
         # 文件不存在的报告
@@ -138,7 +138,7 @@ Kanban 文件已正确同步，任务进度与代码保持一致。
 """
         status = "SUCCESS"
 
-    with open('kanban_check_report.md', 'w', encoding='utf-8') as f:
+    with open("kanban_check_report.md", "w", encoding="utf-8") as f:
         f.write(report)
 
     print(f"📄 Kanban检查报告已生成: kanban_check_report.md (状态: {status})")
@@ -150,19 +150,21 @@ def main():
     """
     import argparse
 
-    parser = argparse.ArgumentParser(description='CI报告生成工具')
-    parser.add_argument('--type', choices=['quality', 'type-checking', 'kanban'],
-                       required=True, help='报告类型')
-    parser.add_argument('--kanban-file', default='docs/_reports/TEST_OPTIMIZATION_KANBAN.md',
-                       help='Kanban文件路径')
+    parser = argparse.ArgumentParser(description="CI报告生成工具")
+    parser.add_argument(
+        "--type", choices=["quality", "type-checking", "kanban"], required=True, help="报告类型"
+    )
+    parser.add_argument(
+        "--kanban-file", default="docs/_reports/TEST_OPTIMIZATION_KANBAN.md", help="Kanban文件路径"
+    )
 
     args = parser.parse_args()
 
-    if args.type == 'quality':
+    if args.type == "quality":
         generate_quality_summary()
-    elif args.type == 'type-checking':
+    elif args.type == "type-checking":
         generate_type_checking_report()
-    elif args.type == 'kanban':
+    elif args.type == "kanban":
         generate_kanban_check_report(args.kanban_file)
 
 

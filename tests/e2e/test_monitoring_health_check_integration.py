@@ -14,28 +14,19 @@ Monitoring and Health Check Integration Tests
 """
 
 import asyncio
-import json
 import time
-import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 # FastAPI测试客户端
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
 
-from src.cache.redis.core.connection_manager import RedisConnectionManager
 
 # 数据库和缓存管理器
-from src.database.connection import DatabaseManager
-from src.monitoring.alert_manager import Alert, AlertManager, AlertSeverity, AlertType
 
 # 真实监控模块导入
 from src.monitoring.health_checker import HealthChecker, HealthStatus
-from src.monitoring.metrics_collector import MetricsCollector, get_metrics_collector
 from src.monitoring.router import router
 
 
@@ -104,9 +95,7 @@ class TestMonitoringAndHealthCheckIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_health_checker_database_integration(
-        self, health_checker, mock_db_manager
-    ):
+    async def test_health_checker_database_integration(self, health_checker, mock_db_manager):
         """测试健康检查器数据库集成"""
         print("🧪 测试健康检查器数据库集成")
 
@@ -135,9 +124,7 @@ class TestMonitoringAndHealthCheckIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_health_checker_redis_integration(
-        self, health_checker, mock_redis_manager
-    ):
+    async def test_health_checker_redis_integration(self, health_checker, mock_redis_manager):
         """测试健康检查器Redis集成"""
         print("🧪 测试健康检查器Redis集成")
 
@@ -406,9 +393,7 @@ class TestMonitoringAndHealthCheckIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_monitoring_performance_under_load(
-        self, health_checker, alert_manager
-    ):
+    async def test_monitoring_performance_under_load(self, health_checker, alert_manager):
         """测试监控系统在负载下的性能"""
         print("🧪 测试监控系统在负载下的性能")
 
@@ -428,9 +413,7 @@ class TestMonitoringAndHealthCheckIntegration:
         total_duration = end_time - start_time
 
         # 验证所有检查都完成
-        successful_checks = sum(
-            1 for result in results if not isinstance(result, Exception)
-        )
+        successful_checks = sum(1 for result in results if not isinstance(result, Exception))
         assert successful_checks >= len(tasks) * 0.8  # 至少80%成功
 
         # 验证性能要求

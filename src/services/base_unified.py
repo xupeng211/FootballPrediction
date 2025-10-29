@@ -23,9 +23,7 @@ class BaseService(ABC):
     - 操作追踪
     """
 
-    def __init__(
-        self, name: Optional[str] = None, db_manager: Optional[DatabaseManager] = None
-    ):
+    def __init__(self, name: Optional[str] = None, db_manager: Optional[DatabaseManager] = None):
         """
         初始化基础服务
 

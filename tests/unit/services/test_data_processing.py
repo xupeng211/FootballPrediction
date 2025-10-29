@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 数据处理服务测试
 Tests for Data Processing Service
@@ -28,9 +26,7 @@ except ImportError as e:
     PROCESSING_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not PROCESSING_AVAILABLE, reason="Data processing module not available"
-)
+@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
 @pytest.mark.unit
 class TestDataProcessor:
     """数据处理器基类测试"""
@@ -56,9 +52,7 @@ class TestDataProcessor:
         assert isinstance(processor, DataProcessor)
 
 
-@pytest.mark.skipif(
-    not PROCESSING_AVAILABLE, reason="Data processing module not available"
-)
+@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
 class TestMatchDataProcessor:
     """比赛数据处理器测试"""
 
@@ -135,9 +129,7 @@ class TestMatchDataProcessor:
             assert _result["id"] == 789
 
 
-@pytest.mark.skipif(
-    not PROCESSING_AVAILABLE, reason="Data processing module not available"
-)
+@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
 class TestOddsDataProcessor:
     """赔率数据处理器测试"""
 
@@ -205,9 +197,7 @@ class TestOddsDataProcessor:
             assert _result["match_id"] == 999
 
 
-@pytest.mark.skipif(
-    not PROCESSING_AVAILABLE, reason="Data processing module not available"
-)
+@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
 class TestScoresDataProcessor:
     """比分数据处理器测试"""
 
@@ -273,9 +263,7 @@ class TestScoresDataProcessor:
         assert "processed_at" in result
 
 
-@pytest.mark.skipif(
-    not PROCESSING_AVAILABLE, reason="Data processing module not available"
-)
+@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
 class TestFeaturesDataProcessor:
     """特征数据处理器测试"""
 
@@ -345,9 +333,7 @@ class TestFeaturesDataProcessor:
         assert "processed_at" in result
 
 
-@pytest.mark.skipif(
-    not PROCESSING_AVAILABLE, reason="Data processing module not available"
-)
+@pytest.mark.skipif(not PROCESSING_AVAILABLE, reason="Data processing module not available")
 class TestDataProcessingIntegration:
     """数据处理集成测试"""
 

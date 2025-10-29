@@ -12,13 +12,10 @@ Adapters API Coverage Improvement
 Created specifically to improve coverage for src/api/adapters.py module.
 """
 
-import asyncio
 import os
 import sys
-from datetime import date, datetime, timedelta
 
 import pytest
-from fastapi import HTTPException, Path, Query
 from fastapi.testclient import TestClient
 
 # 添加项目根目录到sys.path
@@ -386,7 +383,8 @@ class TestAdaptersAPI:
         mock_registry.get_adapter.return_value = mock_adapter
 
         response = client.get(
-            "/adapters/football/matches?demo=false&live=true&start_date=2024-01-01&end_date=2024-12-31&league=premier"
+            "/adapters/football/matches?demo =
+    false&live=true&start_date=2024-01-01&end_date=2024-12-31&league=premier"
         )
 
         assert response.status_code == 200

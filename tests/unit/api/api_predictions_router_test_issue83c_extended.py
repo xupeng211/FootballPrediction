@@ -8,10 +8,6 @@ Issue #83-C 扩展测试: api.predictions.router
 
 import inspect
 import os
-import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -137,9 +133,7 @@ class TestApipredictionsrouter:
         for mock_category in ["api", "services", "database"]:
             if mock_category in self.mocks:
                 mock_data = self.mocks[mock_category]
-                assert isinstance(
-                    mock_data, dict
-                ), f"{mock_category} Mock数据应该是字典"
+                assert isinstance(mock_data, dict), f"{mock_category} Mock数据应该是字典"
                 print(f"✅ {mock_category} Mock验证通过: {len(mock_data)} 个组件")
 
     @pytest.mark.unit
@@ -229,8 +223,7 @@ class TestApipredictionsrouter:
                         methods = [
                             method
                             for method in dir(instance)
-                            if not method.startswith("_")
-                            and callable(getattr(instance, method))
+                            if not method.startswith("_") and callable(getattr(instance, method))
                         ]
 
                         for method_name in methods[:2]:
@@ -239,9 +232,7 @@ class TestApipredictionsrouter:
                                 result = method()
                                 print(f"      方法 {method_name}: {type(result)}")
                             except Exception as me:
-                                print(
-                                    f"      方法 {method_name} 异常: {type(me).__name__}"
-                                )
+                                print(f"      方法 {method_name} 异常: {type(me).__name__}")
 
                 except Exception as e:
                     print(f"   类 {class_name} 测试异常: {type(e).__name__}")

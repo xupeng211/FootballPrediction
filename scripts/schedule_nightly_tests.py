@@ -192,8 +192,7 @@ class NightlyTestScheduler:
                 if file_path.is_file():
                     # 保留最近的文件
                     if (
-                        datetime.now()
-                        - datetime.fromtimestamp(file_path.stat().st_mtime)
+                        datetime.now() - datetime.fromtimestamp(file_path.stat().st_mtime)
                     ).days > 7:
                         file_path.unlink()
 
@@ -239,9 +238,7 @@ class NightlyTestScheduler:
 
         # 安装项目依赖
         try:
-            subprocess.run(
-                [sys.executable, "-m", "pip", "install", "-e", ".[dev]"], check=True
-            )
+            subprocess.run([sys.executable, "-m", "pip", "install", "-e", ".[dev]"], check=True)
             logger.info("依赖安装完成")
         except subprocess.CalledProcessError as e:
             logger.error(f"依赖安装失败: {e}")
@@ -257,9 +254,7 @@ class NightlyTestScheduler:
         test_order = ["unit", "integration", "e2e", "performance"]
 
         for test_type in test_order:
-            if test_type not in test_types or not test_types[test_type].get(
-                "enabled", True
-            ):
+            if test_type not in test_types or not test_types[test_type].get("enabled", True):
                 logger.info(f"跳过 {test_type} 测试")
                 continue
 
@@ -284,9 +279,7 @@ class NightlyTestScheduler:
 
         return results
 
-    async def _run_test_type(
-        self, test_type: str, config: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _run_test_type(self, test_type: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """运行特定类型的测试"""
         timeout = config.get("timeout", 600)
         marker = config.get("marker", test_type)
@@ -332,9 +325,7 @@ class NightlyTestScheduler:
 
             # 设置超时
             try:
-                stdout, stderr = await asyncio.wait_for(
-                    process.communicate(), timeout=timeout
-                )
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             except asyncio.TimeoutError:
                 process.kill()
                 await process.wait()

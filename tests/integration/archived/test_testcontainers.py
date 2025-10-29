@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import Mock, patch
 
 """
 TestContainers集成测试
@@ -43,9 +42,7 @@ class TestPostgreSQLIntegration:
     @pytest.fixture(scope="class")
     def postgres_container(self):
         """启动PostgreSQL容器"""
-        with DockerCompose(
-            ".", compose_file_name="docker-compose.test.yml", pull=True
-        ) as compose:
+        with DockerCompose(".", compose_file_name="docker-compose.test.yml", pull=True) as compose:
             # 等待数据库就绪
             db_port = compose.get_service_port("postgres", 5432)
             wait_for_logs(compose, "database system is ready to accept connections")
@@ -125,7 +122,6 @@ class TestPostgreSQLIntegration:
 
     async def test_repository_with_postgres(self, postgres_container):
         """测试：仓储模式与PostgreSQL"""
-        from sqlalchemy import Column, DateTime, Integer, String
         from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
         from sqlalchemy.ext.declarative import declarative_base
         from sqlalchemy.orm import sessionmaker
@@ -183,9 +179,7 @@ class TestRedisIntegration:
     @pytest.fixture(scope="class")
     def redis_container(self):
         """启动Redis容器"""
-        with DockerCompose(
-            ".", compose_file_name="docker-compose.test.yml", pull=True
-        ) as compose:
+        with DockerCompose(".", compose_file_name="docker-compose.test.yml", pull=True) as compose:
             # 等待Redis就绪
             redis_port = compose.get_service_port("redis", 6379)
             wait_for_logs(compose, "Ready to accept connections")
@@ -219,9 +213,7 @@ class TestRedisIntegration:
         from src.cache.redis_manager import RedisManager
 
         # 创建Redis管理器
-        redis_manager = RedisManager(
-            host=redis_container["host"], port=redis_container["port"]
-        )
+        redis_manager = RedisManager(host=redis_container["host"], port=redis_container["port"])
 
         # 测试缓存操作
         await redis_manager.set("cache_key", {"data": "test_value"}, ttl=60)
@@ -246,9 +238,7 @@ class TestWithMockContainers:
             # 设置模拟
             mock_instance = AsyncMock()
             mock_session = AsyncMock()
-            mock_instance.get_session.return_value.__aenter__.return_value = (
-                mock_session
-            )
+            mock_instance.get_session.return_value.__aenter__.return_value = mock_session
             mock_db.return_value = mock_instance
 
             # 测试连接
@@ -277,9 +267,7 @@ class TestWithMockContainers:
     async def test_full_workflow_mock(self):
         """测试：完整工作流（模拟）"""
         # 模拟数据收集
-        with patch(
-            "src.services.data_collection.DataCollectionService"
-        ) as mock_service:
+        with patch("src.services.data_collection.DataCollectionService") as mock_service:
             service = AsyncMock()
             service.collect_match_data.return_value = {"matches": 10}
             mock_service.return_value = service

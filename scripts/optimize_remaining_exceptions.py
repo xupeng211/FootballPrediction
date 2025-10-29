@@ -124,9 +124,7 @@ def optimize_all_exceptions():
 
     # 查找所有包含except Exception的文件
     result = (
-        os.popen(
-            "grep -r 'except Exception' --include='*.py' src/ | cut -d: -f1 | sort -u"
-        )
+        os.popen("grep -r 'except Exception' --include='*.py' src/ | cut -d: -f1 | sort -u")
         .read()
         .strip()
     )
@@ -146,11 +144,7 @@ def optimize_all_exceptions():
     print(f"\n  总共优化了 {fixed_count} 个文件")
 
     # 再次检查剩余数量
-    remaining = (
-        os.popen("grep -r 'except Exception' --include='*.py' src/ | wc -l")
-        .read()
-        .strip()
-    )
+    remaining = os.popen("grep -r 'except Exception' --include='*.py' src/ | wc -l").read().strip()
     print(f"\n  剩余 except Exception 数量: {remaining}")
 
 
@@ -206,11 +200,7 @@ def main():
     print("=" * 80)
 
     # 显示当前状态
-    current = (
-        os.popen("grep -r 'except Exception' --include='*.py' src/ | wc -l")
-        .read()
-        .strip()
-    )
+    current = os.popen("grep -r 'except Exception' --include='*.py' src/ | wc -l").read().strip()
     print(f"\n当前 except Exception 数量: {current}")
 
     # 执行优化
@@ -218,11 +208,7 @@ def main():
     add_exception_imports()
 
     # 最终统计
-    final = (
-        os.popen("grep -r 'except Exception' --include='*.py' src/ | wc -l")
-        .read()
-        .strip()
-    )
+    final = os.popen("grep -r 'except Exception' --include='*.py' src/ | wc -l").read().strip()
 
     print("\n" + "=" * 80)
     print("✅ 异常处理优化完成！")

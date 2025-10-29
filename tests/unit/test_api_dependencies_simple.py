@@ -5,7 +5,6 @@ API依赖注入简化测试
 """
 
 import os
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -48,18 +47,14 @@ class TestAPIDependenciesSimple:
         with patch("src.api.dependencies.SECRET_KEY", "your-secret-key-here"):
             with patch("src.api.dependencies.logger") as mock_logger:
                 validate_secret_key()
-                mock_logger.warning.assert_called_with(
-                    "⚠️ 使用默认JWT密钥，请立即更改！"
-                )
+                mock_logger.warning.assert_called_with("⚠️ 使用默认JWT密钥，请立即更改！")
 
     def test_validate_secret_key_short_warning(self):
         """测试短密钥警告"""
         with patch("src.api.dependencies.SECRET_KEY", "short"):
             with patch("src.api.dependencies.logger") as mock_logger:
                 validate_secret_key()
-                mock_logger.warning.assert_called_with(
-                    "⚠️ JWT密钥长度不足32位，建议使用更强的密钥"
-                )
+                mock_logger.warning.assert_called_with("⚠️ JWT密钥长度不足32位，建议使用更强的密钥")
 
     def test_validate_secret_key_valid(self):
         """测试有效密钥无警告"""
@@ -72,9 +67,7 @@ class TestAPIDependenciesSimple:
     def test_environment_variables_loading(self):
         """测试环境变量加载"""
         # 验证从环境变量加载配置
-        with patch.dict(
-            os.environ, {"SECRET_KEY": "env-secret-key", "ALGORITHM": "RS256"}
-        ):
+        with patch.dict(os.environ, {"SECRET_KEY": "env-secret-key", "ALGORITHM": "RS256"}):
             # 重新导入模块测试环境变量
             import importlib
 
@@ -140,7 +133,6 @@ class TestAPIDependenciesSimple:
     def test_import_fallback_mechanism(self):
         """测试导入回退机制"""
         # 验证模块即使缺少python-jose也能导入
-        from src.api.dependencies import JWTError, jwt
 
         # 如果python-jose不存在，jwt函数会抛出ImportError
         # 而JWTError应该是一个自定义异常类

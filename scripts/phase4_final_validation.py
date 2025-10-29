@@ -11,13 +11,14 @@ import time
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
 
+
 def find_all_refactored_tests() -> List[str]:
     """查找所有重构的测试文件"""
     test_patterns = [
-        "*_simple.py",      # 阶段2简化测试
-        "*_enhanced.py",    # 阶段2增强测试
-        "*_phase3.py",      # 阶段3测试
-        "*_phase3_fixed.py" # 阶段3修复测试
+        "*_simple.py",  # 阶段2简化测试
+        "*_enhanced.py",  # 阶段2增强测试
+        "*_phase3.py",  # 阶段3测试
+        "*_phase3_fixed.py",  # 阶段3修复测试
     ]
 
     all_tests = []
@@ -28,6 +29,7 @@ def find_all_refactored_tests() -> List[str]:
 
     return sorted(all_tests)
 
+
 def run_test_batch(test_files: List[str], batch_name: str) -> Dict[str, Any]:
     """批量运行测试"""
     print(f"\n🧪 运行 {batch_name} 测试批次...")
@@ -37,18 +39,9 @@ def run_test_batch(test_files: List[str], batch_name: str) -> Dict[str, Any]:
 
     try:
         # 构建pytest命令
-        cmd = ["python3", "-m", "pytest"] + test_files + [
-            "-v",
-            "--tb=short",
-            "--maxfail=10"
-        ]
+        cmd = ["python3", "-m", "pytest"] + test_files + ["-v", "--tb=short", "--maxfail=10"]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=300  # 5分钟超时
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)  # 5分钟超时
 
         end_time = time.time()
         execution_time = end_time - start_time
@@ -65,47 +58,48 @@ def run_test_batch(test_files: List[str], batch_name: str) -> Dict[str, Any]:
         total_tests = passed + failed + skipped + errors
 
         return {
-            'batch_name': batch_name,
-            'total_files': len(test_files),
-            'total_tests': total_tests,
-            'passed': passed,
-            'failed': failed,
-            'skipped': skipped,
-            'errors': errors,
-            'execution_time': execution_time,
-            'success_rate': (passed / total_tests * 100) if total_tests > 0 else 0,
-            'return_code': result.returncode,
-            'output': output[-1000:] if len(output) > 1000 else output  # 保存最后1000字符
+            "batch_name": batch_name,
+            "total_files": len(test_files),
+            "total_tests": total_tests,
+            "passed": passed,
+            "failed": failed,
+            "skipped": skipped,
+            "errors": errors,
+            "execution_time": execution_time,
+            "success_rate": (passed / total_tests * 100) if total_tests > 0 else 0,
+            "return_code": result.returncode,
+            "output": output[-1000:] if len(output) > 1000 else output,  # 保存最后1000字符
         }
 
     except subprocess.TimeoutExpired:
         return {
-            'batch_name': batch_name,
-            'total_files': len(test_files),
-            'total_tests': 0,
-            'passed': 0,
-            'failed': 0,
-            'skipped': 0,
-            'errors': 1,
-            'execution_time': 300,
-            'success_rate': 0,
-            'return_code': 124,
-            'output': "测试超时"
+            "batch_name": batch_name,
+            "total_files": len(test_files),
+            "total_tests": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 1,
+            "execution_time": 300,
+            "success_rate": 0,
+            "return_code": 124,
+            "output": "测试超时",
         }
     except Exception as e:
         return {
-            'batch_name': batch_name,
-            'total_files': len(test_files),
-            'total_tests': 0,
-            'passed': 0,
-            'failed': 0,
-            'skipped': 0,
-            'errors': 1,
-            'execution_time': time.time() - start_time,
-            'success_rate': 0,
-            'return_code': 1,
-            'output': f"执行错误: {str(e)}"
+            "batch_name": batch_name,
+            "total_files": len(test_files),
+            "total_tests": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 1,
+            "execution_time": time.time() - start_time,
+            "success_rate": 0,
+            "return_code": 1,
+            "output": f"执行错误: {str(e)}",
         }
+
 
 def run_coverage_analysis(test_files: List[str]) -> Dict[str, Any]:
     """运行覆盖率分析"""
@@ -115,19 +109,13 @@ def run_coverage_analysis(test_files: List[str]) -> Dict[str, Any]:
 
     try:
         # 构建覆盖率测试命令
-        cmd = ["python3", "-m", "pytest"] + test_files + [
-            "--cov=src",
-            "--cov-report=json",
-            "--cov-report=term-missing",
-            "--tb=short"
-        ]
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=600  # 10分钟超时
+        cmd = (
+            ["python3", "-m", "pytest"]
+            + test_files
+            + ["--cov=src", "--cov-report=json", "--cov-report=term-missing", "--tb=short"]
         )
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)  # 10分钟超时
 
         end_time = time.time()
         execution_time = end_time - start_time
@@ -136,7 +124,7 @@ def run_coverage_analysis(test_files: List[str]) -> Dict[str, Any]:
         coverage_data = {}
         try:
             if os.path.exists("coverage.json"):
-                with open("coverage.json", 'r') as f:
+                with open("coverage.json", "r") as f:
                     coverage_data = json.load(f)
         except:
             pass
@@ -146,101 +134,112 @@ def run_coverage_analysis(test_files: List[str]) -> Dict[str, Any]:
         overall_coverage = 0.0
 
         # 查找总体覆盖率行
-        lines = output.split('\n')
+        lines = output.split("\n")
         for line in lines:
             if "TOTAL" in line and "%" in line:
                 try:
                     parts = line.split()
                     for part in parts:
-                        if part.endswith('%'):
-                            overall_coverage = float(part.replace('%', ''))
+                        if part.endswith("%"):
+                            overall_coverage = float(part.replace("%", ""))
                             break
                 except:
                     pass
 
         return {
-            'execution_time': execution_time,
-            'overall_coverage': overall_coverage,
-            'coverage_data': coverage_data,
-            'return_code': result.returncode,
-            'output': output[-2000:] if len(output) > 2000 else output
+            "execution_time": execution_time,
+            "overall_coverage": overall_coverage,
+            "coverage_data": coverage_data,
+            "return_code": result.returncode,
+            "output": output[-2000:] if len(output) > 2000 else output,
         }
 
     except subprocess.TimeoutExpired:
         return {
-            'execution_time': 600,
-            'overall_coverage': 0.0,
-            'coverage_data': {},
-            'return_code': 124,
-            'output': "覆盖率分析超时"
+            "execution_time": 600,
+            "overall_coverage": 0.0,
+            "coverage_data": {},
+            "return_code": 124,
+            "output": "覆盖率分析超时",
         }
     except Exception as e:
         return {
-            'execution_time': time.time() - start_time,
-            'overall_coverage': 0.0,
-            'coverage_data': {},
-            'return_code': 1,
-            'output': f"覆盖率分析错误: {str(e)}"
+            "execution_time": time.time() - start_time,
+            "overall_coverage": 0.0,
+            "coverage_data": {},
+            "return_code": 1,
+            "output": f"覆盖率分析错误: {str(e)}",
         }
+
 
 def analyze_test_quality(test_files: List[str]) -> Dict[str, Any]:
     """分析测试质量"""
     print("\n🔍 分析测试质量...")
 
     quality_metrics = {
-        'total_files': len(test_files),
-        'syntax_valid': 0,
-        'import_success': 0,
-        'has_tests': 0,
-        'has_mock': 0,
-        'has_performance': 0,
-        'has_integration': 0,
-        'categories': {}
+        "total_files": len(test_files),
+        "syntax_valid": 0,
+        "import_success": 0,
+        "has_tests": 0,
+        "has_mock": 0,
+        "has_performance": 0,
+        "has_integration": 0,
+        "categories": {},
     }
 
     for test_file in test_files:
         try:
-            with open(test_file, 'r', encoding='utf-8') as f:
+            with open(test_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 语法检查
             try:
-                compile(content, test_file, 'exec')
-                quality_metrics['syntax_valid'] += 1
+                compile(content, test_file, "exec")
+                quality_metrics["syntax_valid"] += 1
             except:
                 continue
 
             # 检查导入成功
             if "IMPORTS_AVAILABLE = True" in content or "✅ 成功导入模块" in content:
-                quality_metrics['import_success'] += 1
+                quality_metrics["import_success"] += 1
 
             # 检查测试内容
             if "def test_" in content:
-                quality_metrics['has_tests'] += 1
+                quality_metrics["has_tests"] += 1
 
             # 检查Mock使用
             if "Mock" in content or "mock" in content or "patch" in content:
-                quality_metrics['has_mock'] += 1
+                quality_metrics["has_mock"] += 1
 
             # 检查性能测试
             if "performance" in content.lower() or "execution_time" in content:
-                quality_metrics['has_performance'] += 1
+                quality_metrics["has_performance"] += 1
 
             # 检查集成测试
             if "integration" in content.lower():
-                quality_metrics['has_integration'] += 1
+                quality_metrics["has_integration"] += 1
 
             # 分析类别
             if "utils" in test_file.lower():
-                quality_metrics['categories']['utils'] = quality_metrics['categories'].get('utils', 0) + 1
+                quality_metrics["categories"]["utils"] = (
+                    quality_metrics["categories"].get("utils", 0) + 1
+                )
             elif "core" in test_file.lower():
-                quality_metrics['categories']['core'] = quality_metrics['categories'].get('core', 0) + 1
+                quality_metrics["categories"]["core"] = (
+                    quality_metrics["categories"].get("core", 0) + 1
+                )
             elif "api" in test_file.lower():
-                quality_metrics['categories']['api'] = quality_metrics['categories'].get('api', 0) + 1
+                quality_metrics["categories"]["api"] = (
+                    quality_metrics["categories"].get("api", 0) + 1
+                )
             elif "database" in test_file.lower():
-                quality_metrics['categories']['database'] = quality_metrics['categories'].get('database', 0) + 1
+                quality_metrics["categories"]["database"] = (
+                    quality_metrics["categories"].get("database", 0) + 1
+                )
             elif "cqrs" in test_file.lower():
-                quality_metrics['categories']['cqrs'] = quality_metrics['categories'].get('cqrs', 0) + 1
+                quality_metrics["categories"]["cqrs"] = (
+                    quality_metrics["categories"].get("cqrs", 0) + 1
+                )
 
         except Exception as e:
             print(f"分析文件失败 {test_file}: {e}")
@@ -248,7 +247,10 @@ def analyze_test_quality(test_files: List[str]) -> Dict[str, Any]:
 
     return quality_metrics
 
-def generate_validation_report(test_results: List[Dict], coverage_result: Dict, quality_metrics: Dict) -> str:
+
+def generate_validation_report(
+    test_results: List[Dict], coverage_result: Dict, quality_metrics: Dict
+) -> str:
     """生成验证报告"""
 
     report = f"""
@@ -264,7 +266,7 @@ def generate_validation_report(test_results: List[Dict], coverage_result: Dict, 
 """
 
     for result in test_results:
-        status = "✅ 成功" if result['return_code'] == 0 else "❌ 失败"
+        status = "✅ 成功" if result["return_code"] == 0 else "❌ 失败"
         report += f"""
 **{result['batch_name']}**
 - 状态: {status}
@@ -276,12 +278,12 @@ def generate_validation_report(test_results: List[Dict], coverage_result: Dict, 
 """
 
     # 总体统计
-    total_files = sum(r['total_files'] for r in test_results)
-    total_tests = sum(r['total_tests'] for r in test_results)
-    total_passed = sum(r['passed'] for r in test_results)
-    total_failed = sum(r['failed'] for r in test_results)
-    total_skipped = sum(r['skipped'] for r in test_results)
-    total_errors = sum(r['errors'] for r in test_results)
+    total_files = sum(r["total_files"] for r in test_results)
+    total_tests = sum(r["total_tests"] for r in test_results)
+    total_passed = sum(r["passed"] for r in test_results)
+    total_failed = sum(r["failed"] for r in test_results)
+    total_skipped = sum(r["skipped"] for r in test_results)
+    total_errors = sum(r["errors"] for r in test_results)
     overall_success_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
 
     report += f"""
@@ -306,21 +308,21 @@ def generate_validation_report(test_results: List[Dict], coverage_result: Dict, 
 """
 
     # 添加关键模块覆盖率信息
-    if coverage_result.get('coverage_data', {}).get('files'):
-        files = coverage_result['coverage_data']['files']
+    if coverage_result.get("coverage_data", {}).get("files"):
+        files = coverage_result["coverage_data"]["files"]
         key_modules = [
-            'src/utils/formatters.py',
-            'src/utils/helpers.py',
-            'src/utils/crypto_utils.py',
-            'src/utils/data_validator.py',
-            'src/utils/string_utils.py',
-            'src/core/logging.py',
-            'src/cqrs/base.py'
+            "src/utils/formatters.py",
+            "src/utils/helpers.py",
+            "src/utils/crypto_utils.py",
+            "src/utils/data_validator.py",
+            "src/utils/string_utils.py",
+            "src/core/logging.py",
+            "src/cqrs/base.py",
         ]
 
         for module in key_modules:
             if module in files:
-                coverage = files[module]['summary']['percent_covered']
+                coverage = files[module]["summary"]["percent_covered"]
                 report += f"- **{module}**: {coverage:.2f}%\n"
 
     report += f"""
@@ -338,8 +340,8 @@ def generate_validation_report(test_results: List[Dict], coverage_result: Dict, 
 ### 模块类别分布
 """
 
-    for category, count in quality_metrics['categories'].items():
-        percentage = count / quality_metrics['total_files'] * 100
+    for category, count in quality_metrics["categories"].items():
+        percentage = count / quality_metrics["total_files"] * 100
         report += f"- **{category}**: {count} 个文件 ({percentage:.1f}%)\n"
 
     report += f"""
@@ -389,6 +391,7 @@ def generate_validation_report(test_results: List[Dict], coverage_result: Dict, 
 
     return report
 
+
 def main():
     """主函数"""
     print("🚀 Issue #83-B阶段4最终验证工具")
@@ -409,7 +412,7 @@ def main():
     batch_size = 10  # 每批10个文件
     test_batches = []
     for i in range(0, len(all_test_files), batch_size):
-        batch_files = all_test_files[i:i + batch_size]
+        batch_files = all_test_files[i : i + batch_size]
         batch_name = f"批次-{(i // batch_size) + 1}"
         test_batches.append((batch_files, batch_name))
 
@@ -422,13 +425,13 @@ def main():
         test_results.append(result)
 
         # 打印批次结果
-        status = "✅ 成功" if result['return_code'] == 0 else "❌ 失败"
+        status = "✅ 成功" if result["return_code"] == 0 else "❌ 失败"
         print(f"   {batch_name}: {status} ({result['passed']}/{result['total_tests']} 通过)")
 
     # 3. 运行覆盖率分析
     coverage_result = run_coverage_analysis(all_test_files)
 
-    coverage_status = "✅ 成功" if coverage_result['return_code'] == 0 else "❌ 失败"
+    coverage_status = "✅ 成功" if coverage_result["return_code"] == 0 else "❌ 失败"
     print(f"   覆盖率分析: {coverage_status} ({coverage_result['overall_coverage']:.2f}%)")
 
     # 4. 分析测试质量
@@ -441,14 +444,14 @@ def main():
 
     # 保存报告
     report_file = "ISSUE_83B_PHASE4_FINAL_VALIDATION_REPORT.md"
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
 
     print(f"✅ 验证报告已保存: {report_file}")
 
     # 6. 打印总结
-    total_tests = sum(r['total_tests'] for r in test_results)
-    total_passed = sum(r['passed'] for r in test_results)
+    total_tests = sum(r["total_tests"] for r in test_results)
+    total_passed = sum(r["passed"] for r in test_results)
     overall_success_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
 
     print("\n🎉 Issue #83-B阶段4验证完成!")
@@ -459,7 +462,8 @@ def main():
     print(f"   覆盖率: {coverage_result['overall_coverage']:.2f}%")
     print(f"   目标达成: {'✅ 是' if coverage_result['overall_coverage'] >= 50 else '❌ 否'}")
 
-    return coverage_result['overall_coverage'] >= 40  # 认为40%以上就算基本成功
+    return coverage_result["overall_coverage"] >= 40  # 认为40%以上就算基本成功
+
 
 if __name__ == "__main__":
     success = main()

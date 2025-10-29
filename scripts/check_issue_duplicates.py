@@ -9,6 +9,7 @@ import sys
 import subprocess
 from typing import List, Dict, Any
 
+
 class IssueValidator:
     def __init__(self):
         self.gh_cli = "gh"
@@ -17,29 +18,26 @@ class IssueValidator:
         """运行GitHub CLI命令"""
         try:
             result = subprocess.run(
-                [self.gh_cli] + args,
-                capture_output=True,
-                text=True,
-                check=True
+                [self.gh_cli] + args, capture_output=True, text=True, check=True
             )
 
             if result.returncode != 0:
                 return []
 
             # 解析输出为结构化数据
-            lines = result.stdout.strip().split('\n')
+            lines = result.stdout.strip().split("\n")
             issues = []
 
             for line in lines:
                 if line.strip():
                     # 解析 Issue 行格式
-                    parts = line.split('\t')
+                    parts = line.split("\t")
                     if len(parts) >= 2:
                         issue = {
-                            'number': parts[0].strip(),
-                            'title': parts[1].strip(),
-                            'state': parts[2].strip(),
-                            'author': parts[3].strip() if len(parts) > 3 else 'unknown'
+                            "number": parts[0].strip(),
+                            "title": parts[1].strip(),
+                            "state": parts[2].strip(),
+                            "author": parts[3].strip() if len(parts) > 3 else "unknown",
                         }
                         issues.append(issue)
 
@@ -50,7 +48,9 @@ class IssueValidator:
 
     def check_duplicates(self, search_term: str, max_results: int = 10) -> List[Dict[str, Any]]:
         """检查重复Issue"""
-        issues = self.run_gh_command(['issue', 'list', '--search', search_term, '--limit', str(max_results)])
+        issues = self.run_gh_command(
+            ["issue", "list", "--search", search_term, "--limit", str(max_results)]
+        )
         return issues
 
     def validate_title(self, title: str) -> Dict[str, Any]:
@@ -58,63 +58,57 @@ class IssueValidator:
         issues = []
 
         # 检查标准Phase X.Y格式
-        phase_pattern = r'^Phase\s+[0-9]+\.[0-9]+:\s*.+$'
+        phase_pattern = r"^Phase\s+[0-9]+\.[0-9]+:\s*.+$"
 
         try:
             phase_match = bool(re.match(phase_pattern, title))
         except re.error:
             phase_match = False
 
-        issues.append({
-            'check': 'format',
-            'valid': phase_match,
-            'message': 'Issue标题格式检查'
-        })
+        issues.append({"check": "format", "valid": phase_match, "message": "Issue标题格式检查"})
 
         # 检查长度
         if len(title) > 100:
-            issues.append({
-                'check': 'length',
-                'valid': False,
-                'message': 'Issue标题过长 (建议100字符以内)'
-            })
+            issues.append(
+                {"check": "length", "valid": False, "message": "Issue标题过长 (建议100字符以内)"}
+            )
 
         # 检查特殊字符
-        special_chars_pattern = r'[<>{}[\]|\\|&]'
+        special_chars_pattern = r"[<>{}[\]|\\|&]"
         if re.search(special_chars_pattern, title):
-            issues.append({
-                'check': 'special_chars',
-                'valid': False,
-                'message': 'Issue标题包含特殊字符 (<>{}[]\\&)'
-            })
+            issues.append(
+                {
+                    "check": "special_chars",
+                    "valid": False,
+                    "message": "Issue标题包含特殊字符 (<>{}[]\\&)",
+                }
+            )
 
         # 检查引用 (不应该有 #82)
-        if '#' in title and re.search(r'#\d+', title):
-            issues.append({
-                'check': 'reference',
-                'valid': False,
-                'message': 'Issue标题包含其他Issue引用 (如 #82)'
-            })
+        if "#" in title and re.search(r"#\d+", title):
+            issues.append(
+                {
+                    "check": "reference",
+                    "valid": False,
+                    "message": "Issue标题包含其他Issue引用 (如 #82)",
+                }
+            )
 
         # 检查末尾格式
-        if title.endswith(' ') or title.endswith('\t') or title.endswith('\n'):
-            issues.append({
-                'check': 'format',
-                'valid': False,
-                'message': 'Issue标题末尾格式不正确'
-            })
+        if title.endswith(" ") or title.endswith("\t") or title.endswith("\n"):
+            issues.append({"check": "format", "valid": False, "message": "Issue标题末尾格式不正确"})
 
         return issues
 
     def suggest_phase_number(self, search_term: str) -> str:
         """建议下一个Phase编号"""
-        issues = self.run_gh_command(['issue', 'list', '--search', search_term])
+        issues = self.run_gh_command(["issue", "list", "--search", search_term])
 
         phase_numbers = []
         for issue in issues:
-            title = issue['title']
+            title = issue["title"]
             # 提取Phase编号
-            match = re.search(r'Phase\s+([0-9]+)\.[0-9]+', title)
+            match = re.search(r"Phase\s+([0-9]+)\.[0-9]+", title)
             if match:
                 phase_numbers.append(int(match.group(1)))
 
@@ -142,14 +136,14 @@ class IssueValidator:
                 print(f"   - #{dup['number']}: {dup['title']}")
 
             return {
-                'valid': False,
-                'issues': duplicates,
-                'message': '发现重复Issue，建议先关闭重复或使用不同标题'
+                "valid": False,
+                "issues": duplicates,
+                "message": "发现重复Issue，建议先关闭重复或使用不同标题",
             }
 
         # 验证标题
         validation_issues = self.validate_title(title)
-        invalid_issues = [issue for issue in validation_issues if not issue['valid']]
+        invalid_issues = [issue for issue in validation_issues if not issue["valid"]]
 
         if invalid_issues:
             print("❌ Issue标题验证失败:")
@@ -157,9 +151,9 @@ class IssueValidator:
                 print(f"   - {issue['check']}: {issue['message']}")
 
             return {
-                'valid': False,
-                'validation_issues': validation_issues,
-                'message': 'Issue标题不符合规范'
+                "valid": False,
+                "validation_issues": validation_issues,
+                "message": "Issue标题不符合规范",
             }
 
         # 建议Phase编号
@@ -167,11 +161,7 @@ class IssueValidator:
         print(f"💡 建议Phase编号: {suggested_phase}")
 
         print("✅ 验证通过")
-        return {
-            'valid': True,
-            'title': title,
-            'suggested_phase': suggested_phase
-        }
+        return {"valid": True, "title": title, "suggested_phase": suggested_phase}
 
 
 def main():
@@ -179,8 +169,8 @@ def main():
         print("GitHub Issue 重复检查和验证工具")
         print("\n使用方法:")
         print("  python check_issue_duplicates.py <command> <title>")
-        print("  python check_issue.py full \"Phase 4A.2: 服务层深度测试\"")
-        print("  python check_issue.py suggest \"Phase 4A\"")
+        print('  python check_issue.py full "Phase 4A.2: 服务层深度测试"')
+        print('  python check_issue.py suggest "Phase 4A"')
         print("\n命令说明:")
         print("  full - 完整验证(检查重复+标题格式)")
         print("  suggest - 建议Phase编号")
@@ -190,11 +180,11 @@ def main():
     title = sys.argv[2]
 
     if command == "full":
-        search_term = title.split(':')[0] if ':' in title else title
+        search_term = title.split(":")[0] if ":" in title else title
         validator = IssueValidator()
         result = validator.full_validation(title, search_term)
 
-        if not result['valid']:
+        if not result["valid"]:
             sys.exit(1)
 
         print(f"\n✅ Issue验证通过，可以创建: {result['title']}")

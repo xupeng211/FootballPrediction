@@ -8,8 +8,12 @@ import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 from src.domain.models.prediction import (
-    Prediction, PredictionStatus, ConfidenceScore,
-    PredictionScore, PredictionPoints, DomainError
+    Prediction,
+    PredictionStatus,
+    ConfidenceScore,
+    PredictionScore,
+    PredictionPoints,
+    DomainError,
 )
 
 
@@ -175,7 +179,7 @@ class TestPredictionPointsComprehensive:
             total=Decimal("10.567"),
             score_bonus=Decimal("5.234"),
             result_bonus=Decimal("3.876"),
-            confidence_bonus=Decimal("1.456")
+            confidence_bonus=Decimal("1.456"),
         )
 
         assert points.total == Decimal("10.57")
@@ -189,7 +193,7 @@ class TestPredictionPointsComprehensive:
             total=Decimal("15.50"),
             score_bonus=Decimal("10.00"),
             result_bonus=Decimal("3.00"),
-            confidence_bonus=Decimal("2.50")
+            confidence_bonus=Decimal("2.50"),
         )
 
         breakdown = points.breakdown
@@ -246,10 +250,7 @@ class TestPredictionDomainComprehensive:
         prediction = Prediction(user_id=1, match_id=100)
 
         prediction.make_prediction(
-            predicted_home=2,
-            predicted_away=1,
-            confidence=0.85,
-            model_version="v1.0"
+            predicted_home=2, predicted_away=1, confidence=0.85, model_version="v1.0"
         )
 
         assert prediction.score.predicted_home == 2
@@ -264,9 +265,7 @@ class TestPredictionDomainComprehensive:
 
         with pytest.raises(DomainError):
             prediction.make_prediction(
-                predicted_home=2,
-                predicted_away=1,
-                confidence=1.5  # 超出范围
+                predicted_home=2, predicted_away=1, confidence=1.5  # 超出范围
             )
 
     def test_make_prediction_non_pending_status(self):
@@ -390,7 +389,7 @@ class TestPredictionDomainComprehensive:
         custom_rules = {
             "exact_score": Decimal("15"),
             "correct_result": Decimal("5"),
-            "confidence_multiplier": Decimal("2")
+            "confidence_multiplier": Decimal("2"),
         }
 
         prediction = Prediction(user_id=1, match_id=100)
@@ -482,12 +481,7 @@ class TestPredictionDomainComprehensive:
 
     def test_to_dict_serialization(self):
         """测试字典序列化"""
-        prediction = Prediction(
-            id=1,
-            user_id=100,
-            match_id=200,
-            model_version="v1.0"
-        )
+        prediction = Prediction(id=1, user_id=100, match_id=200, model_version="v1.0")
         prediction.make_prediction(2, 1, confidence=0.85)
         prediction.evaluate(2, 1)
 
@@ -514,22 +508,13 @@ class TestPredictionDomainComprehensive:
             "status": "evaluated",
             "model_version": "v1.0",
             "confidence": 0.85,
-            "score": {
-                "predicted_home": 2,
-                "predicted_away": 1,
-                "actual_home": 2,
-                "actual_away": 1
-            },
+            "score": {"predicted_home": 2, "predicted_away": 1, "actual_home": 2, "actual_away": 1},
             "points": {
                 "total": 12.50,
-                "breakdown": {
-                    "score_bonus": 10.00,
-                    "result_bonus": 0.00,
-                    "confidence_bonus": 2.50
-                }
+                "breakdown": {"score_bonus": 10.00, "result_bonus": 0.00, "confidence_bonus": 2.50},
             },
             "created_at": "2024-01-01T10:00:00",
-            "evaluated_at": "2024-01-01T12:00:00"
+            "evaluated_at": "2024-01-01T12:00:00",
         }
 
         prediction = Prediction.from_dict(data)
@@ -576,6 +561,7 @@ def test_prediction_domain_comprehensive_suite():
     assert prediction.points is not None
 
     print("✅ 预测领域模型综合测试套件通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

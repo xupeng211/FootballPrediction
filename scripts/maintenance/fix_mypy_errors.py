@@ -205,9 +205,7 @@ class MyPyErrorFixer:
                         # 找到最后一个 import 语句
                         last_import = 0
                         for i, line in enumerate(lines[:15]):
-                            if line.strip().startswith(
-                                "import"
-                            ) or line.strip().startswith("from"):
+                            if line.strip().startswith("import") or line.strip().startswith("from"):
                                 last_import = i + 1
 
                         # 在最后一个 import 后添加 typing 导入
@@ -329,9 +327,7 @@ class MyPyErrorFixer:
                                 with open(file_path, "w", encoding="utf-8") as f:
                                     f.writelines(lines)
 
-                            print(
-                                f"✅ 修复 {file_path}:{line_num} 添加类型注解: {inferred_type}"
-                            )
+                            print(f"✅ 修复 {file_path}:{line_num} 添加类型注解: {inferred_type}")
                             self.fixed_files.add(str(file_path))
                             return True
 
@@ -450,9 +446,7 @@ class MyPyErrorFixer:
                         with open(file_path, "w", encoding="utf-8") as f:
                             f.writelines(lines)
 
-                    print(
-                        f"✅ 修复 {file_path}:{line_num} 添加 type: ignore for no-any-return"
-                    )
+                    print(f"✅ 修复 {file_path}:{line_num} 添加 type: ignore for no-any-return")
                     self.fixed_files.add(str(file_path))
                     return True
 

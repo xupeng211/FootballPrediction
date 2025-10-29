@@ -6,6 +6,7 @@
 import os
 import re
 
+
 def fix_imports_in_test_files():
     """修复测试文件中的导入问题"""
 
@@ -13,11 +14,11 @@ def fix_imports_in_test_files():
 
     # 需要修复的测试文件
     test_files = [
-        'tests/unit/core/config_test.py',
-        'tests/unit/core/di_test.py',
-        'tests/unit/utils/data_validator_test.py',
-        'tests/unit/models/prediction_test.py',
-        'tests/unit/api/cqrs_test.py'
+        "tests/unit/core/config_test.py",
+        "tests/unit/core/di_test.py",
+        "tests/unit/utils/data_validator_test.py",
+        "tests/unit/models/prediction_test.py",
+        "tests/unit/api/cqrs_test.py",
     ]
 
     fixed_count = 0
@@ -25,39 +26,41 @@ def fix_imports_in_test_files():
     for test_file in test_files:
         if os.path.exists(test_file):
             try:
-                with open(test_file, 'r', encoding='utf-8') as f:
+                with open(test_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 检查是否需要添加导入检查
-                if 'from ' in content and 'IMPORTS_AVAILABLE' not in content:
+                if "from " in content and "IMPORTS_AVAILABLE" not in content:
                     # 提取导入语句
-                    import_match = re.search(r'from ([\w.]+) import \*', content)
+                    import_match = re.search(r"from ([\w.]+) import \*", content)
                     if import_match:
                         module_name = import_match.group(1)
 
                         # 替换简单导入为安全导入
-                        old_import = f'from {module_name} import *'
-                        new_import = f'''# 尝试导入目标模块
+                        old_import = f"from {module_name} import *"
+                        new_import = f"""# 尝试导入目标模块
 try:
     from {module_name} import *
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"导入警告: {{e}}")
-    IMPORTS_AVAILABLE = False'''
+    IMPORTS_AVAILABLE = False"""
 
                         content = content.replace(old_import, new_import)
 
                         # 添加导入检查到第一个测试方法
-                        if 'def test_' in content and 'if not IMPORTS_AVAILABLE:' not in content:
+                        if "def test_" in content and "if not IMPORTS_AVAILABLE:" not in content:
                             # 找到第一个测试方法
-                            first_test_match = re.search(r'(def test_\w+\([^)]*\):\s*"""[^"]*""")', content)
+                            first_test_match = re.search(
+                                r'(def test_\w+\([^)]*\):\s*"""[^"]*""")', content
+                            )
                             if first_test_match:
                                 test_def = first_test_match.group(1)
                                 new_test_def = f'{test_def}\n        if not IMPORTS_AVAILABLE:\n            pytest.skip("模块导入失败")'
                                 content = content.replace(test_def, new_test_def)
 
                         # 写回文件
-                        with open(test_file, 'w', encoding='utf-8') as f:
+                        with open(test_file, "w", encoding="utf-8") as f:
                             f.write(content)
 
                         fixed_count += 1
@@ -77,6 +80,7 @@ except ImportError as e:
 
     return fixed_count
 
+
 def main():
     """主函数"""
     print("🔧 重构后测试文件修复工具")
@@ -89,6 +93,7 @@ def main():
         print("📋 现在可以测试重构后的文件")
     else:
         print("\n✅ 所有文件都已正确")
+
 
 if __name__ == "__main__":
     main()

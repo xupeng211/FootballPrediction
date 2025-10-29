@@ -223,9 +223,7 @@ class CoverageImprover:
             if "![Coverage]" in content:
                 import re
 
-                content = re.sub(
-                    r"!\[Coverage\].*$", badge, content, flags=re.MULTILINE
-                )
+                content = re.sub(r"!\[Coverage\].*$", badge, content, flags=re.MULTILINE)
             else:
                 # 在标题后添加徽章
                 lines = content.split("\n")

@@ -101,6 +101,4 @@ class CacheEntry:
     def __repr__(self) -> str:
         """字符串表示"""
         ttl_str = f"TTL={self.get_remaining_ttl()}s" if self.expires_at else "TTL=∞"
-        return (
-            f"CacheEntry(key={self.key}, value={type(self.value).__name__}, {ttl_str})"
-        )
+        return f"CacheEntry(key={self.key}, value={type(self.value).__name__}, {ttl_str})"

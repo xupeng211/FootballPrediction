@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 流处理任务测试
 Tests for Streaming Tasks
@@ -7,7 +5,6 @@ Tests for Streaming Tasks
 测试src.tasks.streaming_tasks模块的流处理功能
 """
 
-import asyncio
 import json
 from datetime import datetime
 
@@ -37,9 +34,7 @@ except ImportError as e:
     StreamingTaskStatus = None
 
 
-@pytest.mark.skipif(
-    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
-)
+@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
 @pytest.mark.unit
 class TestStreamMessage:
     """流消息测试"""
@@ -76,9 +71,7 @@ class TestStreamMessage:
         assert msg.timestamp == timestamp
 
 
-@pytest.mark.skipif(
-    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
-)
+@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
 class TestKafkaProducer:
     """Kafka生产者测试"""
 
@@ -178,9 +171,7 @@ class TestKafkaProducer:
             assert health["connected"] is True
 
 
-@pytest.mark.skipif(
-    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
-)
+@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
 class TestKafkaConsumer:
     """Kafka消费者测试"""
 
@@ -279,9 +270,7 @@ class TestKafkaConsumer:
             mock_client.resume_partition.assert_called_once_with("test_topic", 0)
 
 
-@pytest.mark.skipif(
-    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
-)
+@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
 class TestStreamProcessor:
     """流处理器测试"""
 
@@ -387,9 +376,7 @@ class TestStreamProcessor:
         assert _result in [False, True]  # 取决于错误处理策略
 
 
-@pytest.mark.skipif(
-    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
-)
+@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
 class TestStreamMonitor:
     """流监控测试"""
 
@@ -469,9 +456,7 @@ class TestStreamMonitor:
             assert alert["lag"] == 1500
 
 
-@pytest.mark.skipif(
-    not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
-)
+@pytest.mark.skipif(not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available")
 class TestStreamingTasksIntegration:
     """流处理任务集成测试"""
 
@@ -524,9 +509,7 @@ class TestStreamingTasksIntegration:
                         "topic": "processed_topic",
                         "offset": 200,
                     }
-                    stream_msg = StreamMessage(
-                        "test_topic", b"key", consumed[0]["value"]
-                    )
+                    stream_msg = StreamMessage("test_topic", b"key", consumed[0]["value"])
                     await processor.process_message(stream_msg)
 
                     # 验证流程完成
@@ -629,9 +612,7 @@ class TestStreamingTasksIntegration:
     @pytest.mark.asyncio
     async def test_monitoring_dashboard_data(self):
         """测试：监控仪表板数据"""
-        monitor = StreamMonitor(
-            {"metrics_interval": 30, "topics": ["topic1", "topic2"]}
-        )
+        monitor = StreamMonitor({"metrics_interval": 30, "topics": ["topic1", "topic2"]})
 
         with patch.object(monitor, "metrics_store") as mock_store:
             mock_store.get_metrics.return_value = {
@@ -651,9 +632,7 @@ class TestStreamingTasksIntegration:
             assert dashboard_data["consumers"]["group1"]["active_members"] == 3
 
 
-@pytest.mark.skipif(
-    STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module should be available"
-)
+@pytest.mark.skipif(STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

@@ -96,17 +96,11 @@ class MockFileSource:
 
 
 # 实体定义
-match_entity = MockEntity(
-    name="match_id", description="比赛唯一标识符", join_keys=["match_id"]
-)
+match_entity = MockEntity(name="match_id", description="比赛唯一标识符", join_keys=["match_id"])
 
-team_entity = MockEntity(
-    name="team_id", description="球队唯一标识符", join_keys=["team_id"]
-)
+team_entity = MockEntity(name="team_id", description="球队唯一标识符", join_keys=["team_id"])
 
-league_entity = MockEntity(
-    name="league_id", description="联赛唯一标识符", join_keys=["league_id"]
-)
+league_entity = MockEntity(name="league_id", description="联赛唯一标识符", join_keys=["league_id"])
 
 # 数据源定义
 match_features_source = MockFileSource(

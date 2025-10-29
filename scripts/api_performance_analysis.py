@@ -9,16 +9,11 @@ import statistics
 from typing import List, Dict
 import json
 
+
 def analyze_api_endpoints():
     """分析API端点性能"""
     # 模拟API端点测试
-    endpoints = [
-        '/api/health',
-        '/api/predictions',
-        '/api/matches',
-        '/api/teams',
-        '/api/users'
-    ]
+    endpoints = ["/api/health", "/api/predictions", "/api/matches", "/api/teams", "/api/users"]
 
     results = []
 
@@ -43,13 +38,15 @@ def analyze_api_endpoints():
             max_time = max(response_times)
             min_time = min(response_times)
 
-            results.append({
-                'endpoint': endpoint,
-                'avg_response_time': avg_time,
-                'max_response_time': max_time,
-                'min_response_time': min_time,
-                'requests': len(response_times)
-            })
+            results.append(
+                {
+                    "endpoint": endpoint,
+                    "avg_response_time": avg_time,
+                    "max_response_time": max_time,
+                    "min_response_time": min_time,
+                    "requests": len(response_times),
+                }
+            )
 
             print(f"    📈 平均响应时间: {avg_time:.2f}ms")
             print(f"    📊 最大响应时间: {max_time:.2f}ms")
@@ -57,20 +54,25 @@ def analyze_api_endpoints():
 
     # 生成分析报告
     report = {
-        'analysis_time': time.strftime('%Y-%m-%d %H:%M:%S'),
-        'results': results,
-        'summary': {
-            'total_endpoints': len(results),
-            'avg_response_time': statistics.mean([r['avg_response_time'] for r in results]) if results else 0,
-            'slowest_endpoint': max(results, key=lambda x: x['avg_response_time']) if results else None
-        }
+        "analysis_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "results": results,
+        "summary": {
+            "total_endpoints": len(results),
+            "avg_response_time": (
+                statistics.mean([r["avg_response_time"] for r in results]) if results else 0
+            ),
+            "slowest_endpoint": (
+                max(results, key=lambda x: x["avg_response_time"]) if results else None
+            ),
+        },
     }
 
-    with open('api_performance_analysis.json', 'w') as f:
+    with open("api_performance_analysis.json", "w") as f:
         json.dump(report, f, indent=2)
 
     print("  📋 分析报告已保存: api_performance_analysis.json")
     return report
+
 
 if __name__ == "__main__":
     analyze_api_endpoints()

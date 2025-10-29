@@ -25,7 +25,7 @@ app = FastAPI(
     description="数据采集服务微服务",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # 添加CORS中间件
@@ -37,6 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # 健康检查端点
 @app.get("/health")
 async def health_check():
@@ -45,8 +46,9 @@ async def health_check():
         "status": "healthy",
         "service": "Data Collection Service",
         "port": 8002,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 # 服务信息端点
 @app.get("/info")
@@ -57,12 +59,9 @@ async def service_info():
         "description": "数据采集服务微服务",
         "version": "1.0.0",
         "port": 8002,
-        "endpoints": [
-            "/health",
-            "/info",
-            "/metrics"
-        ]
+        "endpoints": ["/health", "/info", "/metrics"],
     }
+
 
 # 指标端点
 @app.get("/metrics")
@@ -75,10 +74,11 @@ async def get_metrics():
             "requests_total": 1000,
             "requests_per_second": 10.5,
             "average_response_time": 0.1,
-            "error_rate": 0.01
+            "error_rate": 0.01,
         },
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 # 主要业务逻辑端点（示例）
 @app.post("/process")
@@ -92,13 +92,14 @@ async def process_request(request_data: Dict[str, Any]):
             "processed": True,
             "data": request_data,
             "result": "processed_successfully",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         return result
     except Exception as e:
         logger.error(f"处理请求失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # 批量处理端点
 @app.post("/batch-process")
@@ -110,28 +111,19 @@ async def batch_process(request_list: List[Dict[str, Any]]):
         results = []
         for i, request_data in enumerate(request_list):
             # TODO: 实现批量处理逻辑
-            result = {
-                "index": i,
-                "processed": True,
-                "result": f"processed_item_{i}"
-            }
+            result = {"index": i, "processed": True, "result": f"processed_item_{i}"}
             results.append(result)
 
         return {
             "batch_size": len(request_list),
             "processed_count": len(results),
             "results": results,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
         logger.error(f"批量处理失败: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8002,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=8002, reload=True, log_level="info")

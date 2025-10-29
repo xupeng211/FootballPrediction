@@ -7,7 +7,6 @@ Multi-channel Notification Manager
 """
 
 import json
-import asyncio
 import smtplib
 from datetime import datetime
 from email.mime.text import MIMEText
@@ -309,9 +308,7 @@ class SlackClient:
 
         # 添加详细信息
         if alert.details:
-            details_text = "\n".join(
-                [f"• {key}: {value}" for key, value in alert.details.items()]
-            )
+            details_text = "\n".join([f"• {key}: {value}" for key, value in alert.details.items()])
             message["attachments"][0]["fields"].append(
                 {"title": "详细信息", "value": details_text, "short": False}
             )
@@ -381,9 +378,7 @@ class WeChatClient:
 
         # 添加当前值和阈值信息
         if alert.current_value is not None and alert.threshold is not None:
-            content += (
-                f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
-            )
+            content += f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
 
         # 添加详细信息
         if alert.details:
@@ -464,9 +459,7 @@ class DingTalkClient:
 
         # 添加当前值和阈值信息
         if alert.current_value is not None and alert.threshold is not None:
-            text += (
-                f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
-            )
+            text += f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
 
         # 添加详细信息
         if alert.details:
@@ -500,9 +493,7 @@ class NotificationManager:
         try:
             # 默认通知渠道配置
             default_channels = [
-                NotificationChannel(
-                    id="log", name="日志记录", type="log", enabled=True, config={}
-                )
+                NotificationChannel(id="log", name="日志记录", type="log", enabled=True, config={})
             ]
 
             # 尝试从配置文件加载渠道
@@ -604,9 +595,7 @@ class NotificationManager:
             self.logger.error(f"检查告警过滤条件失败: {e}")
             return True  # 出错时默认发送
 
-    async def _send_to_channel(
-        self, alert: Alert, channel: NotificationChannel
-    ) -> bool:
+    async def _send_to_channel(self, alert: Alert, channel: NotificationChannel) -> bool:
         """发送告警到指定渠道"""
         try:
             if channel.type == "log":
@@ -619,9 +608,7 @@ class NotificationManager:
             elif channel.type == "email":
                 client = self.clients.get(channel.id)
                 if client and channel.config.get("recipients"):
-                    return await client.send_alert_email(
-                        alert, channel.config["recipients"]
-                    )
+                    return await client.send_alert_email(alert, channel.config["recipients"])
 
             elif channel.type == "slack":
                 client = self.clients.get(channel.id)

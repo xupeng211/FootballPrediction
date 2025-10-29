@@ -14,11 +14,9 @@ Betting API Module
 Issue: #116 EV计算和投注策略
 """
 
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
-import asyncio
 
 from ..services.betting.betting_service import create_betting_service, BettingService
 from ..core.logging_system import get_logger
@@ -47,9 +45,7 @@ class BettingOddsRequest(BaseModel):
 class PortfolioRequest(BaseModel):
     """组合投注请求模型"""
 
-    match_ids: List[str] = Field(
-        ..., min_items=1, max_items=10, description="比赛ID列表"
-    )
+    match_ids: List[str] = Field(..., min_items=1, max_items=10, description="比赛ID列表")
     strategy_name: str = Field("srs_compliant", description="策略名称")
     max_total_stake: float = Field(0.1, ge=0.01, le=0.5, description="最大总投注比例")
 
@@ -221,9 +217,7 @@ async def get_portfolio_recommendations(
             valid_matches=recommendations.get("valid_matches", []),
             portfolio_optimization=recommendations.get("portfolio_optimization", {}),
             risk_assessment=recommendations.get("risk_assessment", {}),
-            srs_portfolio_compliance=recommendations.get(
-                "srs_portfolio_compliance", {}
-            ),
+            srs_portfolio_compliance=recommendations.get("srs_portfolio_compliance", {}),
             summary=recommendations.get("summary", {}),
         )
 
@@ -446,9 +440,7 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         srs_status = "configured" if betting_service.srs_config else "not_configured"
 
         overall_status = (
-            "healthy"
-            if redis_status == "healthy" and srs_status == "configured"
-            else "degraded"
+            "healthy" if redis_status == "healthy" and srs_status == "configured" else "degraded"
         )
 
         return {
@@ -472,9 +464,7 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         }
 
 
-@router.get(
-    "/metrics", summary="获取投注服务指标", description="获取投注服务的性能和使用指标"
-)
+@router.get("/metrics", summary="获取投注服务指标", description="获取投注服务的性能和使用指标")
 async def get_metrics(betting_service: BettingService = Depends(get_betting_service)):
     """获取服务指标"""
     try:

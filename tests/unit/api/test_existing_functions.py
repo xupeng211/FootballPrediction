@@ -1,13 +1,9 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 现有功能测试 - 测试实际存在的功能
 Existing Functions Tests - Test Actually Existing Functions
 """
 
 import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -23,9 +19,7 @@ class TestCQRSExistingFunctions:
         """测试CommandResponse类"""
         from src.api.cqrs import CommandResponse
 
-        response = CommandResponse(
-            success=True, message="Command executed", _data={"id": 123}
-        )
+        response = CommandResponse(success=True, message="Command executed", _data={"id": 123})
         assert response.success is True
         assert response.message == "Command executed"
         assert response._data["id"] == 123
@@ -43,9 +37,7 @@ class TestCQRSExistingFunctions:
         """测试CreateCommand类"""
         from src.api.cqrs import CreateCommand
 
-        command = CreateCommand(
-            aggregate_id="test_123", _data={"name": "test", "value": 100}
-        )
+        command = CreateCommand(aggregate_id="test_123", _data={"name": "test", "value": 100})
         assert command.aggregate_id == "test_123"
         assert command._data["name"] == "test"
 
@@ -320,9 +312,7 @@ class TestMonitoringExistingFunctions:
         """测试指标点类"""
         from src.api.monitoring import MetricsPoint
 
-        point = MetricsPoint(
-            name="test_metric", value=100.5, timestamp=datetime.utcnow()
-        )
+        point = MetricsPoint(name="test_metric", value=100.5, timestamp=datetime.utcnow())
         assert point.name == "test_metric"
         assert point.value == 100.5
         assert point.timestamp is not None
@@ -483,9 +473,7 @@ class TestDataModels:
         """测试错误响应模型"""
         from src.api.schemas import ErrorResponse
 
-        error = ErrorResponse(
-            error="Validation Error", details={"field": "invalid value"}
-        )
+        error = ErrorResponse(error="Validation Error", details={"field": "invalid value"})
         assert error.error == "Validation Error"
         assert "field" in error.details
 

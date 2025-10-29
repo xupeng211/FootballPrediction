@@ -1,17 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 Tests for cache.ttl_cache
 Auto-generated test file
 """
 
-import asyncio
-
 import pytest
 
 # Test imports
 try:
-    from cache.ttl_cache import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

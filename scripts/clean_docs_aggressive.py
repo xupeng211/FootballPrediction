@@ -136,21 +136,17 @@ def clean_docs_aggressive():
 
     # 计算清理后的文件数和大小
     total_files = len(list(docs_path.rglob("*.md")))
-    total_size_mb = sum(
-        f.stat().st_size for f in docs_path.rglob("*") if f.is_file()
-    ) / (1024 * 1024)
+    total_size_mb = sum(f.stat().st_size for f in docs_path.rglob("*") if f.is_file()) / (
+        1024 * 1024
+    )
 
     print(f"   - 剩余Markdown文件数: {total_files}")
     print(f"   - 剩余目录大小: {total_size_mb:.2f}MB")
     print(f"   - 删除归档文件: {removed_archives}")
     print(f"   - 删除示例文件: {removed_examples}")
-    print(
-        f"   - 删除过时报告: {removed_reports if 'removed_reports' in locals() else 0}"
-    )
+    print(f"   - 删除过时报告: {removed_reports if 'removed_reports' in locals() else 0}")
     print(f"   - 删除索引文件: {removed_indices}")
-    print(
-        f"   - 压缩大文件: {compressed_files if 'compressed_files' in locals() else 0}"
-    )
+    print(f"   - 压缩大文件: {compressed_files if 'compressed_files' in locals() else 0}")
 
     # 8. 提供进一步优化建议
     print("\n💡 进一步优化建议：")

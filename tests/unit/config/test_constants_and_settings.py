@@ -3,12 +3,8 @@
 测试所有配置值、常量和设置
 """
 
-import json
 import os
-from datetime import datetime, timedelta, timezone
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -167,11 +163,7 @@ class TestAppConstants:
         assert AppConfig.REDIS_POOL_SIZE > 0
 
         # 验证TTL值递增
-        assert (
-            AppConfig.CACHE_TTL_SHORT
-            < AppConfig.CACHE_TTL_DEFAULT
-            < AppConfig.CACHE_TTL_LONG
-        )
+        assert AppConfig.CACHE_TTL_SHORT < AppConfig.CACHE_TTL_DEFAULT < AppConfig.CACHE_TTL_LONG
         assert all(
             t > 0
             for t in [
@@ -190,9 +182,7 @@ class TestAppConstants:
         assert AppConfig.TOKEN_EXPIRE_MINUTES > 0
 
         assert isinstance(AppConfig.REFRESH_TOKEN_EXPIRE_DAYS, int)
-        assert AppConfig.REFRESH_TOKEN_EXPIRE_DAYS > AppConfig.TOKEN_EXPIRE_MINUTES / (
-            24 * 60
-        )
+        assert AppConfig.REFRESH_TOKEN_EXPIRE_DAYS > AppConfig.TOKEN_EXPIRE_MINUTES / (24 * 60)
 
         assert isinstance(AppConfig.BCRYPT_ROUNDS, int)
         assert 10 <= AppConfig.BCRYPT_ROUNDS <= 15

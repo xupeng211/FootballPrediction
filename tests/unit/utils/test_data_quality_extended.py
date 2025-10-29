@@ -1,5 +1,4 @@
 # 数据质量扩展测试
-import pytest
 
 try:
     pass

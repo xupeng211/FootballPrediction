@@ -7,12 +7,9 @@ Provides API endpoints for adapter management, football data retrieval, and demo
 """
 
 from typing import Any, Dict, List, Optional
-from datetime import datetime, date
-from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
 from pydantic import BaseModel
 
 from src.adapters import AdapterRegistry, AdapterFactory
-from src.core.exceptions import AdapterError
 
 router = APIRouter(prefix="/adapters", tags=["adapters"])
 
@@ -378,9 +375,7 @@ async def get_adapter_configs():
                     "config": {"feed_url": "https://opta feeds"},
                 },
             },
-            "groups": {
-                "group1": {"primary": "adapter1", "fallback_strategy": "round_robin"}
-            },
+            "groups": {"group1": {"primary": "adapter1", "fallback_strategy": "round_robin"}},
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -586,9 +581,7 @@ async def get_football_teams(
 
 
 @router.get("/football/teams/{team_id}/players")
-async def get_team_players(
-    team_id: int, season: Optional[int] = Query(None, description="赛季")
-):
+async def get_team_players(team_id: int, season: Optional[int] = Query(None, description="赛季")):
     """获取球队球员列表"""
     try:
         # 模拟球员数据
@@ -654,9 +647,7 @@ async def demo_data_transformation():
     """演示数据转换功能"""
     try:
         return DemoTransformationResponse(
-            input_data={
-                "raw_match": {"home": "Man Utd", "away": "LFC", "score": "3-0"}
-            },
+            input_data={"raw_match": {"home": "Man Utd", "away": "LFC", "score": "3-0"}},
             transformed_data={
                 "match_id": 123,
                 "home_team": "Manchester United",

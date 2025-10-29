@@ -155,9 +155,7 @@ class MetricsObserver(Observer):
         stats = super().get_stats()
         stats.update(
             {
-                "metrics_count": len(self._metrics)
-                + len(self._counters)
-                + len(self._gauges),
+                "metrics_count": len(self._metrics) + len(self._counters) + len(self._gauges),
                 "total_data_points": sum(len(v) for v in self._metrics.values()),
             }
         )
@@ -433,9 +431,7 @@ class PerformanceObserver(Observer):
         self._window_size = window_size
         self._response_times: deque = deque(maxlen=window_size)
         self._throughput_data: deque = deque(maxlen=window_size)
-        self._error_rates: Dict[str, deque] = defaultdict(
-            lambda: deque(maxlen=window_size)
-        )
+        self._error_rates: Dict[str, deque] = defaultdict(lambda: deque(maxlen=window_size))
         self._last_throughput_calc = time.time()
         self._request_count = 0
 

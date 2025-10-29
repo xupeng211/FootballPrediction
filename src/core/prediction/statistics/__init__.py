@@ -28,9 +28,7 @@ class PredictionStatistics:
 
         # 更新准确率
         self.accuracy = (
-            self.correct_predictions / self.total_predictions
-            if self.total_predictions > 0
-            else 0.0
+            self.correct_predictions / self.total_predictions if self.total_predictions > 0 else 0.0
         )
 
         # 更新模型统计

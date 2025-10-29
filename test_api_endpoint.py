@@ -11,9 +11,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 from src.collectors.data_sources import data_source_manager
+
 
 async def test_data_sources_directly():
     """直接测试数据源管理器"""
@@ -31,6 +32,7 @@ async def test_data_sources_directly():
         try:
             # 测试获取少量数据
             from datetime import datetime, timedelta
+
             date_from = datetime.now()
             date_to = date_from + timedelta(days=3)
 
@@ -49,6 +51,7 @@ async def test_data_sources_directly():
             print(f"❌ 获取比赛失败: {e}")
     else:
         print("❌ Football-Data.org适配器不可用")
+
 
 if __name__ == "__main__":
     asyncio.run(test_data_sources_directly())

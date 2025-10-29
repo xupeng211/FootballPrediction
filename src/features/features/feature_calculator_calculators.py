@@ -2,13 +2,8 @@
 特征计算器
 """
 
-import logging
 import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
-from collections import defaultdict, deque
 
 from src.core.logging_system import get_logger
 
@@ -143,13 +138,9 @@ class FeatureCalculator:
             features["form_loss_rate"] = losses / total_matches
             features["form_avg_goals_scored"] = goals_scored / total_matches
             features["form_avg_goals_conceded"] = goals_conceded / total_matches
-            features["form_goal_difference"] = (
-                goals_scored - goals_conceded
-            ) / total_matches
+            features["form_goal_difference"] = (goals_scored - goals_conceded) / total_matches
             features["form_clean_sheet_rate"] = clean_sheets / total_matches
-            features["form_scoring_rate"] = (
-                total_matches - failed_to_score
-            ) / total_matches
+            features["form_scoring_rate"] = (total_matches - failed_to_score) / total_matches
 
             # 2. 计算近期状态趋势（最近3场 vs 之前3场）
             if len(recent_matches) >= 6:
@@ -159,9 +150,7 @@ class FeatureCalculator:
                 recent_points = self._calculate_points(recent_3, team)
                 previous_points = self._calculate_points(previous_3, team)
 
-                features["form_trend"] = (
-                    recent_points - previous_points
-                ) / 9.0  # 标准化到[-1,1]
+                features["form_trend"] = (recent_points - previous_points) / 9.0  # 标准化到[-1,1]
             else:
                 features["form_trend"] = 0.0
 
@@ -191,13 +180,9 @@ class FeatureCalculator:
                 features["form_consistency"] = 0.5
 
             # 4. 计算连续表现
-            features["form_current_streak"] = self._calculate_current_streak(
-                recent_matches, team
-            )
+            features["form_current_streak"] = self._calculate_current_streak(recent_matches, team)
 
-            self.logger.debug(
-                f"计算球队 {team} 的状态特征: {len(recent_matches)} 场比赛"
-            )
+            self.logger.debug(f"计算球队 {team} 的状态特征: {len(recent_matches)} 场比赛")
             return features
 
         except Exception as e:
@@ -283,9 +268,7 @@ class FeatureCalculator:
             home_venue_matches = [m for m in recent_h2h if m.home_team == home_team]
             if home_venue_matches:
                 home_venue_wins = sum(1 for m in home_venue_matches if m.home_win)
-                features["h2h_home_venue_advantage"] = home_venue_wins / len(
-                    home_venue_matches
-                )
+                features["h2h_home_venue_advantage"] = home_venue_wins / len(home_venue_matches)
             else:
                 features["h2h_home_venue_advantage"] = 0.5
 
@@ -359,9 +342,7 @@ class FeatureCalculator:
             features["stats_win_rate"] = team_stats.wins / team_stats.matches_played
             features["stats_draw_rate"] = team_stats.draws / team_stats.matches_played
             features["stats_loss_rate"] = team_stats.losses / team_stats.matches_played
-            features["stats_points_per_game"] = (
-                team_stats.points / team_stats.matches_played
-            )
+            features["stats_points_per_game"] = team_stats.points / team_stats.matches_played
             features["stats_avg_goals_scored"] = team_stats.avg_goals_scored
             features["stats_avg_goals_conceded"] = team_stats.avg_goals_conceded
             features["stats_goal_difference_per_game"] = (
@@ -369,18 +350,14 @@ class FeatureCalculator:
             )
 
             # 2. 防守和进攻能力
-            features["stats_clean_sheet_rate"] = (
-                team_stats.clean_sheets / team_stats.matches_played
-            )
+            features["stats_clean_sheet_rate"] = team_stats.clean_sheets / team_stats.matches_played
             features["stats_scoring_rate"] = (
                 team_stats.matches_played - team_stats.failed_to_score
             ) / team_stats.matches_played
 
             # 3. 进攻效率
             if team_stats.avg_goals_scored > 0:
-                features["stats_offensive_efficiency"] = min(
-                    team_stats.avg_goals_scored / 2.0, 1.0
-                )
+                features["stats_offensive_efficiency"] = min(team_stats.avg_goals_scored / 2.0, 1.0)
             else:
                 features["stats_offensive_efficiency"] = 0.0
 
@@ -421,18 +398,14 @@ class FeatureCalculator:
                 features["stats_relative_defense"] = 1.0
                 features["stats_relative_points"] = 1.0
 
-            self.logger.debug(
-                f"计算球队 {team} 统计特征: {team_stats.matches_played} 场比赛"
-            )
+            self.logger.debug(f"计算球队 {team} 统计特征: {team_stats.matches_played} 场比赛")
             return features
 
         except Exception as e:
             self.logger.error(f"计算球队统计特征失败: {e}")
             return self._get_default_stats_features()
 
-    def calculate_ranking_features(
-        self, team: str, league_table: List[Dict]
-    ) -> Dict[str, float]:
+    def calculate_ranking_features(self, team: str, league_table: List[Dict]) -> Dict[str, float]:
         """计算排名相关特征
 
         Args:
@@ -498,13 +471,9 @@ class FeatureCalculator:
             # 4. 排名趋势（如果有历史数据）
             features["ranking_promotion_contender"] = 1.0 if team_position <= 2 else 0.0
             features["ranking_europe_contender"] = 1.0 if team_position <= 6 else 0.0
-            features["ranking_relegation_risk"] = (
-                1.0 if team_position >= (total_teams - 3) else 0.0
-            )
+            features["ranking_relegation_risk"] = 1.0 if team_position >= (total_teams - 3) else 0.0
 
-            self.logger.debug(
-                f"计算球队 {team} 排名特征: 位置 {team_position}/{total_teams}"
-            )
+            self.logger.debug(f"计算球队 {team} 排名特征: 位置 {team_position}/{total_teams}")
             return features
 
         except Exception as e:
@@ -621,31 +590,21 @@ class FeatureCalculator:
             all_features.update({f"away_{k}": v for k, v in away_form.items()})
 
             # 3. 历史对战特征
-            h2h_features = self.calculate_head_to_head_features(
-                home_team, away_team, matches
-            )
+            h2h_features = self.calculate_head_to_head_features(home_team, away_team, matches)
             all_features.update(h2h_features)
 
             # 4. 主队统计特征
             home_matches = [
-                m
-                for m in matches
-                if m.home_team == home_team or m.away_team == home_team
+                m for m in matches if m.home_team == home_team or m.away_team == home_team
             ]
-            home_stats = self.calculate_team_stats_features(
-                home_team, home_matches, matches
-            )
+            home_stats = self.calculate_team_stats_features(home_team, home_matches, matches)
             all_features.update({f"home_{k}": v for k, v in home_stats.items()})
 
             # 5. 客队统计特征
             away_matches = [
-                m
-                for m in matches
-                if m.home_team == away_team or m.away_team == away_team
+                m for m in matches if m.home_team == away_team or m.away_team == away_team
             ]
-            away_stats = self.calculate_team_stats_features(
-                away_team, away_matches, matches
-            )
+            away_stats = self.calculate_team_stats_features(away_team, away_matches, matches)
             all_features.update({f"away_{k}": v for k, v in away_stats.items()})
 
             # 6. 排名特征
@@ -835,13 +794,13 @@ class FeatureCalculator:
         avg_goals_scored = goals_scored / total_matches
         avg_goals_conceded = goals_conceded / total_matches
 
-        clean_sheets = sum(
-            1 for m in matches if m.away_score == 0 if m.home_team == team
-        ) + sum(1 for m in matches if m.home_score == 0 if m.away_team == team)
+        clean_sheets = sum(1 for m in matches if m.away_score == 0 if m.home_team == team) + sum(
+            1 for m in matches if m.home_score == 0 if m.away_team == team
+        )
 
-        failed_to_score = sum(
-            1 for m in matches if m.home_score == 0 if m.home_team == team
-        ) + sum(1 for m in matches if m.away_score == 0 if m.away_team == team)
+        failed_to_score = sum(1 for m in matches if m.home_score == 0 if m.home_team == team) + sum(
+            1 for m in matches if m.away_score == 0 if m.away_team == team
+        )
 
         return TeamStats(
             team=team,
@@ -859,9 +818,7 @@ class FeatureCalculator:
             failed_to_score=failed_to_score,
         )
 
-    def _calculate_league_averages(
-        self, all_matches: List[MatchResult]
-    ) -> Dict[str, float]:
+    def _calculate_league_averages(self, all_matches: List[MatchResult]) -> Dict[str, float]:
         """计算联盟平均水平"""
         if not all_matches:
             return {}
@@ -899,9 +856,7 @@ class FeatureCalculator:
             "points_per_game": avg_points_per_game,
         }
 
-    def _calculate_comparison_features(
-        self, all_features: Dict[str, float]
-    ) -> Dict[str, float]:
+    def _calculate_comparison_features(self, all_features: Dict[str, float]) -> Dict[str, float]:
         """计算主客队对比特征"""
         comparison_features = {}
 
@@ -919,9 +874,7 @@ class FeatureCalculator:
             # 3. 防守对比
             home_defense = all_features.get("home_stats_avg_goals_conceded", 1.0)
             away_defense = all_features.get("away_stats_avg_goals_conceded", 1.0)
-            comparison_features["diff_defense"] = (
-                away_defense - home_defense
-            )  # 防守失球越少越好
+            comparison_features["diff_defense"] = away_defense - home_defense  # 防守失球越少越好
 
             # 4. 状态对比
             home_form = all_features.get("home_form_win_rate", 0.33)
@@ -935,9 +888,7 @@ class FeatureCalculator:
 
             # 6. 主场优势
             home_venue = all_features.get("h2h_home_venue_advantage", 0.5)
-            comparison_features["home_advantage"] = (
-                home_venue - 0.5
-            ) * 2  # 标准化到[-1,1]
+            comparison_features["home_advantage"] = (home_venue - 0.5) * 2  # 标准化到[-1,1]
 
         except Exception as e:
             self.logger.warning(f"计算对比特征失败: {e}")

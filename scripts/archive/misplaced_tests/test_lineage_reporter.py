@@ -49,27 +49,19 @@ def test_lineage_reporter_structure():
         mock_source_code_location_job = Mock()
         mock_sql_job = Mock()
 
-        modules_to_mock["openlineage.client"].OpenLineageClient = Mock(
-            return_value=mock_client
-        )
+        modules_to_mock["openlineage.client"].OpenLineageClient = Mock(return_value=mock_client)
         modules_to_mock["openlineage.client.event_v2"].RunEvent = mock_run_event
         modules_to_mock["openlineage.client.event_v2"].Run = mock_run
         modules_to_mock["openlineage.client.event_v2"].Job = mock_job
         modules_to_mock["openlineage.client.event_v2"].InputDataset = mock_input_dataset
-        modules_to_mock[
-            "openlineage.client.event_v2"
-        ].OutputDataset = mock_output_dataset
+        modules_to_mock["openlineage.client.event_v2"].OutputDataset = mock_output_dataset
 
-        modules_to_mock[
-            "openlineage.client.facet_v2"
-        ].error_message_run = mock_error_message_run
+        modules_to_mock["openlineage.client.facet_v2"].error_message_run = mock_error_message_run
         modules_to_mock["openlineage.client.facet_v2"].parent_run = mock_parent_run
-        modules_to_mock[
-            "openlineage.client.facet_v2"
-        ].schema_dataset = mock_schema_dataset
-        modules_to_mock[
-            "openlineage.client.facet_v2"
-        ].source_code_location_job = mock_source_code_location_job
+        modules_to_mock["openlineage.client.facet_v2"].schema_dataset = mock_schema_dataset
+        modules_to_mock["openlineage.client.facet_v2"].source_code_location_job = (
+            mock_source_code_location_job
+        )
         modules_to_mock["openlineage.client.facet_v2"].sql_job = mock_sql_job
 
         with patch.dict("sys.modules", modules_to_mock):
@@ -94,9 +86,7 @@ def test_lineage_reporter_structure():
 
             # 测试 LineageReporter 初始化
             print("\n📊 测试 LineageReporter:")
-            reporter = LineageReporter(
-                marquez_url="http://test:5000", namespace="test_namespace"
-            )
+            reporter = LineageReporter(marquez_url="http://test:5000", namespace="test_namespace")
             print("  ✅ 报告器创建成功")
             print(f"  ✅ 命名空间: {reporter.namespace}")
             print(f"  ✅ OpenLineage 客户端: {type(reporter.client).__name__}")
@@ -232,9 +222,7 @@ def test_lineage_reporter_structure():
                 # 开始多个作业
                 run_ids = []
                 for i in range(3):
-                    run_id = reporter.start_job_run(
-                        job_name=f"batch_job_{i}", job_type="BATCH"
-                    )
+                    run_id = reporter.start_job_run(job_name=f"batch_job_{i}", job_type="BATCH")
                     run_ids.append(run_id)
 
                 # 检查活跃运行
@@ -290,9 +278,7 @@ def test_lineage_reporter_structure():
                         result = reporter.complete_job_run(job_name=test_value)
                         print(f"  ✅ {scenario_name}: 返回 {result}")
                     elif scenario_name == "失败不存在的作业":
-                        result = reporter.fail_job_run(
-                            job_name=test_value, error_message="Test"
-                        )
+                        result = reporter.fail_job_run(job_name=test_value, error_message="Test")
                         print(f"  ✅ {scenario_name}: 返回 {result}")
                     elif scenario_name == "无效的输入数据格式":
                         # 测试 None 输入处理
@@ -321,9 +307,7 @@ def test_lineage_reporter_structure():
                     last_call = reporter.client.emit.call_args
                     if last_call:
                         event = last_call[0][0]  # 第一个位置参数
-                        print(
-                            f"  ✅ 事件类型: {getattr(event, 'eventType', 'unknown')}"
-                        )
+                        print(f"  ✅ 事件类型: {getattr(event, 'eventType', 'unknown')}")
                         print(f"  ✅ 生产者: {getattr(event, 'producer', 'unknown')}")
 
             except Exception as e:
@@ -461,9 +445,7 @@ def test_lineage_concepts():
 
         print("\n🔗 数据血缘关系:")
         for relation in lineage_relations:
-            print(
-                f"  ✅ {relation['source']} → {relation['target']} ({relation['relationship']})"
-            )
+            print(f"  ✅ {relation['source']} → {relation['target']} ({relation['relationship']})")
 
         # 作业依赖关系
         job_dependencies = [
@@ -587,9 +569,7 @@ async def test_async_functionality():
             return await asyncio.gather(*tasks, return_exceptions=True)
 
         concurrent_results = await run_concurrent_lineage_tracking()
-        successful_tasks = len(
-            [r for r in concurrent_results if not isinstance(r, Exception)]
-        )
+        successful_tasks = len([r for r in concurrent_results if not isinstance(r, Exception)])
         print(f"  ✅ 并发血缘跟踪: {successful_tasks}/{len(concurrent_results)} 成功")
 
         return True

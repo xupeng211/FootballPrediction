@@ -3,7 +3,6 @@
 提供预配置的高性能 Mock 对象，用于测试环境
 """
 
-import asyncio
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, Mock
 

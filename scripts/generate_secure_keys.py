@@ -12,27 +12,33 @@ from pathlib import Path
 import json
 from datetime import datetime
 
+
 def generate_secure_jwt_key(length: int = 64) -> str:
     """生成安全的JWT密钥"""
     return secrets.token_urlsafe(length)
+
 
 def generate_api_key(length: int = 32) -> str:
     """生成API密钥"""
     return secrets.token_urlsafe(length)
 
+
 def generate_database_password(length: int = 32) -> str:
     """生成数据库密码"""
     # 包含大小写字母、数字和特殊字符
     characters = string.ascii_letters + string.digits + "!@#$%^&*()_+-="
-    return ''.join(secrets.choice(characters) for _ in range(length))
+    return "".join(secrets.choice(characters) for _ in range(length))
+
 
 def generate_redis_password(length: int = 32) -> str:
     """生成Redis密码"""
     return secrets.token_urlsafe(length)
 
+
 def hash_password(password: str) -> str:
     """生成密码哈希（用于存储）"""
     return hashlib.sha256(password.encode()).hexdigest()
+
 
 def generate_cors_origins() -> list:
     """生成CORS允许的源"""
@@ -40,8 +46,9 @@ def generate_cors_origins() -> list:
         "http://localhost:3000",
         "http://localhost:8080",
         "https://your-domain.com",  # 生产环境中需要更改
-        "https://api.your-domain.com"  # 生产环境中需要更改
+        "https://api.your-domain.com",  # 生产环境中需要更改
     ]
+
 
 def generate_security_config() -> dict:
     """生成完整的安全配置"""
@@ -73,10 +80,11 @@ def generate_security_config() -> dict:
                 "3. 配置HTTPS证书",
                 "4. 设置防火墙规则",
                 "5. 启用审计日志",
-                "6. 配置备份策略"
-            ]
-        }
+                "6. 配置备份策略",
+            ],
+        },
     }
+
 
 def save_env_file(config: dict, output_path: str = ".env.production"):
     """保存生产环境配置文件"""
@@ -189,28 +197,30 @@ ENABLE_MLFLOW=true
 ENABLE_NGINX=true
 """
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(env_content)
 
     # 设置文件权限为仅所有者可读写
     Path(output_path).chmod(0o600)
     print(f"✅ 生产环境配置已保存到: {output_path}")
 
+
 def save_config_json(config: dict, output_path: str = "config/security_config.json"):
     """保存JSON格式的配置"""
     # 创建目录（如果不存在）
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
     print(f"✅ 安全配置已保存到: {output_path}")
 
+
 def print_security_summary(config: dict):
     """打印安全配置摘要"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🔐 安全配置生成完成")
-    print("="*80)
+    print("=" * 80)
     print(f"📅 生成时间: {config['timestamp']}")
     print(f"🔑 JWT密钥长度: {len(config['jwt_secret_key'])} 字符")
     print(f"🔐 JWT算法: {config['algorithm']}")
@@ -222,12 +232,13 @@ def print_security_summary(config: dict):
     print(f"📝 审计日志: {'启用' if config['audit_log_enabled'] else '禁用'}")
 
     print("\n🚨 重要安全提醒:")
-    for i, note in enumerate(config['notes']['deployment_checklist'], 1):
+    for i, note in enumerate(config["notes"]["deployment_checklist"], 1):
         print(f"   {note}")
 
     print("\n📁 生成的文件:")
     print("   - .env.production (生产环境配置)")
     print("   - config/security_config.json (详细配置)")
+
 
 def main():
     """主函数"""
@@ -245,6 +256,7 @@ def main():
 
     print("\n✅ 安全配置生成完成！")
     print("🔒 请确保将 .env.production 文件保存在安全的位置")
+
 
 if __name__ == "__main__":
     main()

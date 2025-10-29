@@ -9,7 +9,8 @@ import traceback
 from pathlib import Path
 
 # 添加项目根目录到路径
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def test_module_import(module_name, description=""):
     """测试模块导入"""
@@ -22,6 +23,7 @@ def test_module_import(module_name, description=""):
         if "import" not in str(e):
             print(f"   详细错误: {traceback.format_exc().splitlines()[-1]}")
         return False
+
 
 def main():
     """主验证函数"""
@@ -56,6 +58,7 @@ def main():
     else:
         print("⚠️ 部分模块需要进一步修复导入路径")
         return False
+
 
 if __name__ == "__main__":
     success = main()

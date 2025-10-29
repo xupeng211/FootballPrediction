@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock
 
 """
 测试依赖注入机制
@@ -30,9 +29,7 @@ class TestDependencyInjectionFixtures:
     def test_async_db_session_fixture_exists(self):
         """测试 async_db_session fixture 是否存在"""
         assert callable(get_async_db), "get_async_db 应该是可调用的"
-        assert (
-            async_db_session.dependency == get_async_db
-        ), "async_db_session 应该使用 get_async_db"
+        assert async_db_session.dependency == get_async_db, "async_db_session 应该使用 get_async_db"
 
     def test_dependency_override_mechanism(self):
         """测试依赖覆盖机制"""

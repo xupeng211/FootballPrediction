@@ -6,16 +6,12 @@ Unit tests for Scores Collector
 """
 
 import os
-from datetime import datetime, timedelta
-from unittest.mock import ANY, AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
 # 测试导入
 try:
-    from src.cache.redis_manager import RedisManager
     from src.collectors.scores_collector import ScoresCollector, ScoresCollectorFactory
-    from src.database.connection import DatabaseManager
     from src.database.models import Match, MatchStatus
 
     SCORES_COLLECTOR_AVAILABLE = True
@@ -27,9 +23,7 @@ except ImportError:
     MatchStatus = None
 
 
-@pytest.mark.skipif(
-    not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
-)
+@pytest.mark.skipif(not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available")
 @pytest.mark.unit
 class TestScoresCollector:
     """比分收集器测试类"""
@@ -58,17 +52,13 @@ class TestScoresCollector:
         assert "live_scores" in scores_collector.api_endpoints
         assert "X-Auth-Token" in scores_collector.headers
 
-    def test_collector_initialization_without_api_token(
-        self, mock_db_session, mock_redis_client
-    ):
+    def test_collector_initialization_without_api_token(self, mock_db_session, mock_redis_client):
         """测试没有API Token时的初始化"""
         with patch.dict(os.environ, {}, clear=True):
             with patch("src.collectors.scores_collector.logger") as mock_logger:
                 collector = ScoresCollector(mock_db_session, mock_redis_client)
                 assert collector.headers == {}
-                mock_logger.warning.assert_called_once_with(
-                    "未设置 FOOTBALL_API_TOKEN 环境变量"
-                )
+                mock_logger.warning.assert_called_once_with("未设置 FOOTBALL_API_TOKEN 环境变量")
 
     @pytest.mark.asyncio
     async def test_collect_live_scores_with_cache(self, scores_collector):
@@ -81,9 +71,7 @@ class TestScoresCollector:
 
         result = await scores_collector.collect_live_scores()
 
-        scores_collector.redis_client.get_cache_value.assert_called_once_with(
-            "scores:live"
-        )
+        scores_collector.redis_client.get_cache_value.assert_called_once_with("scores:live")
         assert result == cached_data
 
     @pytest.mark.asyncio
@@ -100,9 +88,7 @@ class TestScoresCollector:
         mock_match.away_score = 1
 
         # 模拟_get_live_matches_from_db方法返回结果
-        with patch.object(
-            scores_collector, "_get_live_matches_from_db", return_value=[mock_match]
-        ):
+        with patch.object(scores_collector, "_get_live_matches_from_db", return_value=[mock_match]):
             with patch.object(
                 scores_collector,
                 "_get_match_score",
@@ -177,10 +163,7 @@ class TestScoresCollector:
 
         expected_keys = ["scores:live", "events:match:123"]
         assert scores_collector.redis_client.delete_cache.call_count == 2
-        calls = [
-            call[0][0]
-            for call in scores_collector.redis_client.delete_cache.call_args_list
-        ]
+        calls = [call[0][0] for call in scores_collector.redis_client.delete_cache.call_args_list]
         assert calls == expected_keys
 
     @pytest.mark.asyncio
@@ -197,9 +180,7 @@ class TestScoresCollector:
         mock_match.home_score = 1
         mock_match.away_score = 0
 
-        with patch.object(
-            scores_collector, "_get_live_matches_from_db", return_value=[mock_match]
-        ):
+        with patch.object(scores_collector, "_get_live_matches_from_db", return_value=[mock_match]):
             with patch.object(
                 scores_collector,
                 "_get_match_score",
@@ -234,9 +215,7 @@ class TestScoresCollector:
     async def test_collect_live_scores_empty_result(self, scores_collector):
         """测试空结果处理"""
         # 模拟没有实时比赛
-        with patch.object(
-            scores_collector, "_get_live_matches_from_db", return_value=[]
-        ):
+        with patch.object(scores_collector, "_get_live_matches_from_db", return_value=[]):
             scores_collector.redis_client.get_cache_value.return_value = None
 
             result = await scores_collector.collect_live_scores(force_refresh=True)
@@ -246,9 +225,7 @@ class TestScoresCollector:
         scores_collector.redis_client.set_cache_value.assert_called_once()
 
 
-@pytest.mark.skipif(
-    not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
-)
+@pytest.mark.skipif(not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available")
 @pytest.mark.unit
 class TestScoresCollectorFactory:
     """比分收集器工厂类测试"""
@@ -265,9 +242,7 @@ class TestScoresCollectorFactory:
                     assert isinstance(collector, ScoresCollector)
 
 
-@pytest.mark.skipif(
-    not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
-)
+@pytest.mark.skipif(not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available")
 @pytest.mark.unit
 class TestScoresCollectorIntegration:
     """比分收集器集成测试"""

@@ -141,9 +141,9 @@ def clean_src_directory():
 
     total_py_files = len(list(src_path.rglob("*.py")))
     total_dirs = len([d for d in src_path.rglob("*") if d.is_dir()])
-    total_size_mb = sum(
-        f.stat().st_size for f in src_path.rglob("*") if f.is_file()
-    ) / (1024 * 1024)
+    total_size_mb = sum(f.stat().st_size for f in src_path.rglob("*") if f.is_file()) / (
+        1024 * 1024
+    )
 
     print(f"   - Python文件数: {total_py_files}")
     print(f"   - 目录数: {total_dirs}")

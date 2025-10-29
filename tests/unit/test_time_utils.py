@@ -4,7 +4,6 @@
 测试 src.utils.time_utils 模块的功能
 """
 
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -105,15 +104,9 @@ class TestTimeUtils:
     def test_parse_datetime_custom(self):
         """测试自定义格式的日期时间解析"""
         # 测试不同格式
-        assert TimeUtils.parse_datetime("2024/01/15", "%Y/%m/%d") == datetime(
-            2024, 1, 15
-        )
-        assert TimeUtils.parse_datetime("14:30:45", "%H:%M:%S") == datetime(
-            1900, 1, 1, 14, 30, 45
-        )
-        assert TimeUtils.parse_datetime("15-01-2024", "%d-%m-%Y") == datetime(
-            2024, 1, 15
-        )
+        assert TimeUtils.parse_datetime("2024/01/15", "%Y/%m/%d") == datetime(2024, 1, 15)
+        assert TimeUtils.parse_datetime("14:30:45", "%H:%M:%S") == datetime(1900, 1, 1, 14, 30, 45)
+        assert TimeUtils.parse_datetime("15-01-2024", "%d-%m-%Y") == datetime(2024, 1, 15)
 
     def test_format_parse_roundtrip(self):
         """测试格式化和解析的往返一致性"""

@@ -41,9 +41,7 @@ class MyPyFixer:
                 r'Returning Any from function declared to return "([^"]+)"'
             ),
             "incompatible_return": re.compile(r"Incompatible return value type"),
-            "arg_type": re.compile(
-                r'Argument "([^"]+)" to "([^"]+)" has incompatible type'
-            ),
+            "arg_type": re.compile(r'Argument "([^"]+)" to "([^"]+)" has incompatible type'),
             "attr_defined": re.compile(r'"([^"]+)" has no attribute "([^"]+)"'),
             "import_untyped": re.compile(r'Library stubs not installed for "([^"]+)"'),
             "unused_ignore": re.compile(r'Unused "type: ignore" comment'),
@@ -53,9 +51,7 @@ class MyPyFixer:
             ),
         }
 
-    def run_mypy_check(
-        self, targets: List[str] = None
-    ) -> Tuple[Dict[str, List[str]], str]:
+    def run_mypy_check(self, targets: List[str] = None) -> Tuple[Dict[str, List[str]], str]:
         """运行 MyPy 检查并返回错误信息"""
         if targets is None:
             targets = [str(self.root_dir)]
@@ -167,9 +163,8 @@ class MyPyFixer:
                 elif "metrics_collector_enhanced_mod" in module:
                     # 注释掉有问题的导入
                     for i, line in enumerate(modified_lines):
-                        if (
-                            "metrics_collector_enhanced_mod" in line
-                            and not line.strip().startswith("#")
+                        if "metrics_collector_enhanced_mod" in line and not line.strip().startswith(
+                            "#"
                         ):
                             modified_lines[i] = f"# {line}"
                             self.fixes_applied["comment_import"] += 1
@@ -180,9 +175,7 @@ class MyPyFixer:
 
         return "\n".join(modified_lines)
 
-    def _fix_type_annotations(
-        self, content: str, errors: List[str], tree: ast.AST
-    ) -> str:
+    def _fix_type_annotations(self, content: str, errors: List[str], tree: ast.AST) -> str:
         """修复类型注解问题"""
         lines = content.split("\n")
         modified_lines = lines.copy()
@@ -197,9 +190,9 @@ class MyPyFixer:
                     if f"{var_name} =" in line and ":" not in line.split("=")[0]:
                         # 添加简单的 Any 类型注解
                         indent = len(line) - len(line.lstrip())
-                        modified_lines[
-                            i
-                        ] = f"{' ' * indent}{var_name}: Any = {line.split('=', 1)[1].strip()}"
+                        modified_lines[i] = (
+                            f"{' ' * indent}{var_name}: Any = {line.split('=', 1)[1].strip()}"
+                        )
                         self.fixes_applied["add_type_annotation"] += 1
                         break
 
@@ -230,9 +223,7 @@ class MyPyFixer:
 
                 # 如果是 requests 相关的错误，添加导入
                 if name in ["HTTPError", "RequestException"]:
-                    if not any(
-                        "requests.exceptions" in line for line in modified_lines
-                    ):
+                    if not any("requests.exceptions" in line for line in modified_lines):
                         modified_lines = self._add_imports(
                             modified_lines, {f"from requests.exceptions import {name}"}
                         )
@@ -240,9 +231,7 @@ class MyPyFixer:
 
         return "\n".join(modified_lines)
 
-    def _fix_return_type_issues(
-        self, content: str, errors: List[str], tree: ast.AST
-    ) -> str:
+    def _fix_return_type_issues(self, content: str, errors: List[str], tree: ast.AST) -> str:
         """修复返回类型问题"""
         lines = content.split("\n")
         modified_lines = lines.copy()
@@ -267,18 +256,14 @@ class MyPyFixer:
             elif self.error_patterns["incompatible_return"].search(error):
                 # 找到 return 语句并添加类型忽略
                 for i, line in enumerate(modified_lines):
-                    if "return " in line and not line.strip().endswith(
-                        "# type: ignore"
-                    ):
+                    if "return " in line and not line.strip().endswith("# type: ignore"):
                         modified_lines[i] = f"{line}  # type: ignore[return-value]"
                         self.fixes_applied["ignore_return_value"] += 1
                         break
 
         return "\n".join(modified_lines)
 
-    def _fix_attribute_errors(
-        self, content: str, errors: List[str], tree: ast.AST
-    ) -> str:
+    def _fix_attribute_errors(self, content: str, errors: List[str], tree: ast.AST) -> str:
         """修复属性访问错误"""
         lines = content.split("\n")
         modified_lines = lines.copy()
@@ -290,9 +275,7 @@ class MyPyFixer:
 
                 # 找到属性访问处并添加类型忽略
                 for i, line in enumerate(modified_lines):
-                    if f".{attr_name}" in line and not line.strip().endswith(
-                        "# type: ignore"
-                    ):
+                    if f".{attr_name}" in line and not line.strip().endswith("# type: ignore"):
                         modified_lines[i] = f"{line}  # type: ignore[attr-defined]"
                         self.fixes_applied["ignore_attr_defined"] += 1
                         break
@@ -315,9 +298,7 @@ class MyPyFixer:
 
                 if not has_error:
                     # 移除 type: ignore
-                    cleaned_line = re.sub(
-                        r"\s*#\s*type:\s*ignore(?:\[[^\]]*\])?", "", line
-                    )
+                    cleaned_line = re.sub(r"\s*#\s*type:\s*ignore(?:\[[^\]]*\])?", "", line)
                     modified_lines.append(cleaned_line.rstrip())
                     self.fixes_applied["remove_unused_ignore"] += 1
                 else:
@@ -364,10 +345,7 @@ class MyPyFixer:
         # 找到最后一个导入语句的位置
         last_import_idx = -1
         for i, line in enumerate(modified_lines):
-            if (
-                line.strip().startswith(("import ", "from "))
-                or "# type: ignore" in line
-            ):
+            if line.strip().startswith(("import ", "from ")) or "# type: ignore" in line:
                 last_import_idx = i
 
         # 在最后一个导入后添加新导入
@@ -435,9 +413,7 @@ class MyPyFixer:
         print("📋 MyPy 修复报告")
         print("=" * 60)
 
-        print(
-            f"📁 处理文件数：{report['files_processed']}/{report['total_files_with_errors']}"
-        )
+        print(f"📁 处理文件数：{report['files_processed']}/{report['total_files_with_errors']}")
         print(f"🔧 初始错误数：{report['initial_errors']}")
         print(f"✅ 最终错误数：{report['final_errors']}")
         print(
@@ -451,9 +427,7 @@ class MyPyFixer:
 
         if report["remaining_errors"]:
             print(f"\n⚠️  剩余错误 ({len(report['remaining_errors'])} 个文件)：")
-            for file_path, errors in list(report["remaining_errors"].items())[
-                :5
-            ]:  # 只显示前5个
+            for file_path, errors in list(report["remaining_errors"].items())[:5]:  # 只显示前5个
                 print(f"  • {file_path}: {len(errors)} 个错误")
             if len(report["remaining_errors"]) > 5:
                 print(f"  • ... 还有 {len(report['remaining_errors']) - 5} 个文件")
@@ -478,9 +452,7 @@ def main():
         default=["src"],
         help="要检查和修复的目标目录或文件（默认：src）",
     )
-    parser.add_argument(
-        "--dry-run", "-d", action="store_true", help="仅检查错误，不进行修复"
-    )
+    parser.add_argument("--dry-run", "-d", action="store_true", help="仅检查错误，不进行修复")
     parser.add_argument("--verbose", "-v", action="store_true", help="显示详细输出")
 
     args = parser.parse_args()

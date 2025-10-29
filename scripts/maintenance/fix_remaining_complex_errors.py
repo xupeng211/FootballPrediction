@@ -8,6 +8,7 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_complex_errors():
     """修复复杂的语法错误"""
 
@@ -83,6 +84,7 @@ def fix_complex_errors():
 
     return fixed_count, failed_count
 
+
 def fix_complex_single_file(file_path):
     """修复单个文件的复杂语法错误"""
 
@@ -91,7 +93,7 @@ def fix_complex_single_file(file_path):
         return False
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -105,7 +107,7 @@ def fix_complex_single_file(file_path):
 
         # 如果内容有变化，写回文件
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         else:
@@ -116,50 +118,55 @@ def fix_complex_single_file(file_path):
         print(f"❌ 修复文件时出错 {file_path}: {str(e)}")
         return False
 
+
 def fix_complex_syntax_errors(content):
     """修复复杂的语法错误"""
 
     # 修复悬挂的 except 块
     content = re.sub(
-        r'\n\s*except ImportError as e:\s*\n',
+        r"\n\s*except ImportError as e:\s*\n",
         '\ntry:\n    import pytest\nexcept ImportError as e:\n    print(f"Import error: {e}")\n',
-        content
+        content,
     )
 
     # 修复悬挂的 except ImportError:
     content = re.sub(
-        r'\n\s*except ImportError:\s*\n',
-        '\ntry:\n    import pytest\nexcept ImportError:\n    pass\n',
-        content
+        r"\n\s*except ImportError:\s*\n",
+        "\ntry:\n    import pytest\nexcept ImportError:\n    pass\n",
+        content,
     )
 
     return content
 
+
 def fix_missing_function_bodies(content):
     """修复缺失的函数体"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
 
     for i, line in enumerate(lines):
         new_lines.append(line)
 
         # 检查是否是函数定义行
-        if re.match(r'\s*def\s+\w+.*:\s*$', line):
+        if re.match(r"\s*def\s+\w+.*:\s*$", line):
             # 检查下一行
             if i + 1 < len(lines):
                 next_line = lines[i + 1]
                 # 如果下一行不是缩进的内容，添加 pass 语句
-                if not next_line.strip() or not (len(next_line) - len(next_line.lstrip()) > len(line) - len(line.lstrip())):
+                if not next_line.strip() or not (
+                    len(next_line) - len(next_line.lstrip()) > len(line) - len(line.lstrip())
+                ):
                     indent = len(line) - len(line.lstrip()) + 4
-                    new_lines.append(' ' * indent + 'pass')
+                    new_lines.append(" " * indent + "pass")
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_hanging_except_blocks(content):
     """修复悬挂的 except 块"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
     i = 0
 
@@ -167,29 +174,30 @@ def fix_hanging_except_blocks(content):
         line = lines[i]
 
         # 如果发现悬挂的 except 块（前面没有对应的 try）
-        if re.match(r'\s*except\s+', line):
+        if re.match(r"\s*except\s+", line):
             # 查找前面的内容
             has_try = False
-            for j in range(i-1, max(0, i-10), -1):
-                if 'try:' in lines[j]:
+            for j in range(i - 1, max(0, i - 10), -1):
+                if "try:" in lines[j]:
                     has_try = True
                     break
 
             if not has_try:
                 # 添加对应的 try 块
                 indent = len(line) - len(line.lstrip())
-                new_lines.append(' ' * indent + 'try:')
-                new_lines.append(' ' * (indent + 4) + 'import pytest')
+                new_lines.append(" " * indent + "try:")
+                new_lines.append(" " * (indent + 4) + "import pytest")
 
         new_lines.append(line)
         i += 1
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_indentation_problems(content):
     """修复缩进问题"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
 
     in_function = False
@@ -207,18 +215,18 @@ def fix_indentation_problems(content):
         line_indent = len(line) - len(line.lstrip())
 
         # 检查是否是函数定义
-        if stripped.startswith('def '):
+        if stripped.startswith("def "):
             in_function = True
             function_indent = line_indent
             new_lines.append(line)
             continue
 
         # 如果在函数中且缩进不正确
-        if in_function and line_indent <= function_indent and not stripped.startswith('#'):
+        if in_function and line_indent <= function_indent and not stripped.startswith("#"):
             in_function = False
 
         # 修复 import 语句的缩进
-        if stripped.startswith('import ') or stripped.startswith('from '):
+        if stripped.startswith("import ") or stripped.startswith("from "):
             if line_indent > 0 and not in_function:
                 # import 语句应该在顶层
                 new_lines.append(stripped)
@@ -227,19 +235,20 @@ def fix_indentation_problems(content):
         else:
             new_lines.append(line)
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_import_statement_placement(content):
     """修复 import 语句的位置"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
     imports_at_top = []
 
     # 第一遍：提取所有 import 语句
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith('import ') or stripped.startswith('from '):
+        if stripped.startswith("import ") or stripped.startswith("from "):
             imports_at_top.append(stripped)
         else:
             new_lines.append(line)
@@ -250,14 +259,20 @@ def fix_import_statement_placement(content):
         insert_index = 0
         for i, line in enumerate(new_lines):
             stripped = line.strip()
-            if stripped and not stripped.startswith('#') and not stripped.startswith('"""') and not stripped.startswith("'''"):
+            if (
+                stripped
+                and not stripped.startswith("#")
+                and not stripped.startswith('"""')
+                and not stripped.startswith("'''")
+            ):
                 insert_index = i
                 break
 
         # 插入 import 语句
         new_lines = new_lines[:insert_index] + imports_at_top + new_lines[insert_index:]
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def create_minimal_working_file(file_path, content):
     """创建一个最小可用的文件"""
@@ -274,13 +289,14 @@ def test_minimal():
 '''
 
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(minimal_content)
         print(f"📝 创建最小可用文件: {file_path}")
         return True
     except Exception as e:
         print(f"❌ 创建最小文件失败: {file_path} - {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     print("🔧 Issue #84 复杂语法错误修复脚本")

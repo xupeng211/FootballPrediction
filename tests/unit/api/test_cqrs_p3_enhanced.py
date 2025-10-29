@@ -5,17 +5,11 @@ P3重点突破生成
 生成时间: 2025-10-26 19:51:47
 """
 
-import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 
 # 导入目标模块
 try:
-    from src.api.cqrs import *
 except ImportError as e:
     print(f"警告: 无法导入模块 api.cqrs: {e}")
     # 如果导入失败，跳过测试

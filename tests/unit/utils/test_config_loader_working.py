@@ -146,7 +146,6 @@ class TestConfigLoaderWorking:
     def test_load_config_yaml_error_handling(self):
         """测试YAML错误处理"""
         try:
-            import yaml
         except ImportError:
             pytest.skip("YAML library not available")
 

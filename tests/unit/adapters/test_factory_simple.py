@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 45 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 简化适配器工厂模块测试
@@ -12,13 +11,11 @@ Simple Adapter Factory Module Tests
 Tests simple adapter factory functionality defined in src/adapters/factory_simple.py, focused on achieving 100% coverage.
 """
 
-from typing import Any, Dict, Optional
 
 import pytest
 
 # 导入要测试的模块
 try:
-    from src.adapters.factory_simple import (
         AdapterFactory,
         _global_factory,
         get_adapter,

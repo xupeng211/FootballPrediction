@@ -53,9 +53,7 @@ class TestGetMatchPrediction:
         assert _data["data"]["prediction"]["model_version"] == "1.0"
 
     @pytest.mark.asyncio
-    async def test_get_match_prediction_real_time_success(
-        self, api_client_full, sample_match
-    ):
+    async def test_get_match_prediction_real_time_success(self, api_client_full, sample_match):
         """测试实时生成预测成功"""
         # 模拟数据库查询 - 没有缓存预测
         mock_match_result = MagicMock()
@@ -87,9 +85,7 @@ class TestGetMatchPrediction:
             mock_predict.return_value = mock_prediction_data
 
             # 发送请求
-            response = api_client_full.get(
-                "/api/v1/predictions/12345?force_predict=true"
-            )
+            response = api_client_full.get("/api/v1/predictions/12345?force_predict=true")
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
@@ -146,9 +142,7 @@ class TestGetMatchPrediction:
     async def test_get_match_prediction_server_error(self, api_client_full):
         """测试服务器内部错误"""
         # 模拟数据库异常
-        api_client_full.mock_session.execute.side_effect = Exception(
-            "Database connection failed"
-        )
+        api_client_full.mock_session.execute.side_effect = Exception("Database connection failed")
 
         # 发送请求
         response = api_client_full.get("/api/v1/predictions/12345")
@@ -189,9 +183,7 @@ class TestGetMatchPrediction:
             mock_predict.return_value = mock_prediction_data
 
             # 发送请求
-            response = api_client_full.get(
-                f"/api/v1/predictions/{match_id}?force_predict=true"
-            )
+            response = api_client_full.get(f"/api/v1/predictions/{match_id}?force_predict=true")
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
@@ -451,9 +443,7 @@ class TestGetMatchPredictionHistory:
         ]
 
         # 发送请求
-        response = api_client_full.get(
-            f"/api/v1/predictions/history/12345?limit={limit}"
-        )
+        response = api_client_full.get(f"/api/v1/predictions/history/12345?limit={limit}")
 
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
@@ -504,9 +494,7 @@ class TestGetRecentPredictions:
 
     @pytest.mark.parametrize("hours,limit", [(1, 10), (24, 50), (168, 100)])
     @pytest.mark.asyncio
-    async def test_get_recent_predictions_different_params(
-        self, api_client_full, hours, limit
-    ):
+    async def test_get_recent_predictions_different_params(self, api_client_full, hours, limit):
         """测试不同的时间范围和限制"""
         # 模拟数据库查询返回空结果
         mock_result = MagicMock()
@@ -514,9 +502,7 @@ class TestGetRecentPredictions:
         api_client_full.mock_session.execute.return_value = mock_result
 
         # 发送请求
-        response = api_client_full.get(
-            f"/api/v1/predictions/recent?hours={hours}&limit={limit}"
-        )
+        response = api_client_full.get(f"/api/v1/predictions/recent?hours={hours}&limit={limit}")
 
         # 验证响应
         assert response.status_code == status.HTTP_200_OK

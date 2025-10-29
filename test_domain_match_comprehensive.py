@@ -6,9 +6,7 @@ Phase 4.2 - Domain模块高价值深度优化
 
 import pytest
 from datetime import datetime, timedelta
-from src.domain.models.match import (
-    Match, MatchStatus, MatchResult, MatchScore, DomainError
-)
+from src.domain.models.match import Match, MatchStatus, MatchResult, MatchScore, DomainError
 
 
 class TestMatchScoreComprehensive:
@@ -103,7 +101,7 @@ class TestMatchDomainComprehensive:
             away_team_id=2,
             league_id=100,
             season="2023-2024",
-            match_date=future_date
+            match_date=future_date,
         )
 
         assert match.home_team_id == 1
@@ -324,22 +322,12 @@ class TestMatchDomainComprehensive:
         past_date = datetime.utcnow() - timedelta(days=5)
 
         # 未来比赛
-        future_match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=100,
-            match_date=future_date
-        )
+        future_match = Match(home_team_id=1, away_team_id=2, league_id=100, match_date=future_date)
         assert future_match.is_upcoming
         assert future_match.days_until_match >= 4  # 可能是4或5天，取决于精确时间
 
         # 过去比赛
-        past_match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=100,
-            match_date=past_date
-        )
+        past_match = Match(home_team_id=1, away_team_id=2, league_id=100, match_date=past_date)
         assert not past_match.is_upcoming
         assert past_match.days_until_match == 0
 
@@ -411,7 +399,7 @@ class TestMatchDomainComprehensive:
             venue="老特拉福德球场",
             referee="迈克尔·奥利弗",
             weather="晴朗",
-            attendance=75000
+            attendance=75000,
         )
         match.start_match()
         match.update_score(3, 1)
@@ -441,17 +429,13 @@ class TestMatchDomainComprehensive:
             "season": "2023-2024",
             "match_date": "2024-01-01T15:00:00",
             "status": "finished",
-            "score": {
-                "home_score": 2,
-                "away_score": 1,
-                "result": "home_win"
-            },
+            "score": {"home_score": 2, "away_score": 1, "result": "home_win"},
             "venue": "老特拉福德球场",
             "referee": "迈克尔·奥利弗",
             "weather": "晴朗",
             "attendance": 75000,
             "created_at": "2024-01-01T10:00:00",
-            "updated_at": "2024-01-01T17:00:00"
+            "updated_at": "2024-01-01T17:00:00",
         }
 
         match = Match.from_dict(data)
@@ -468,11 +452,7 @@ class TestMatchDomainComprehensive:
 
     def test_string_representation(self):
         """测试字符串表示"""
-        match = Match(
-            home_team_id=100,
-            away_team_id=200,
-            league_id=10
-        )
+        match = Match(home_team_id=100, away_team_id=200, league_id=10)
 
         # 无比分
         assert "Team100 vs Team200" in str(match)
@@ -494,7 +474,7 @@ class TestMatchDomainComprehensive:
             season="2023-2024",
             match_date=future_date,
             venue="体育场",
-            referee="裁判员"
+            referee="裁判员",
         )
 
         # 初始状态
@@ -548,6 +528,7 @@ def test_match_domain_comprehensive_suite():
     assert match.is_finished
 
     print("✅ 比赛领域模型综合测试套件通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

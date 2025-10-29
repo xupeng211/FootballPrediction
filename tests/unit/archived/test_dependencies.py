@@ -1,8 +1,5 @@
 """测试API依赖注入模块"""
 
-import asyncio
-from unittest.mock import AsyncMock, Mock, patch
-
 import pytest
 
 # Test imports
@@ -210,9 +207,7 @@ class TestParameterizedInput:
         assert isinstance(input_list, list)
         assert len(input_list) >= 0
 
-    @pytest.mark.parametrize(
-        "invalid_data", [None, "", "not-a-number", {}, [], True, False]
-    )
+    @pytest.mark.parametrize("invalid_data", [None, "", "not-a-number", {}, [], True, False])
     def test_error_handling(self, invalid_data):
         """测试错误处理"""
         try:
@@ -233,9 +228,7 @@ class TestParameterizedInput:
 class TestBoundaryConditions:
     """边界条件测试"""
 
-    @pytest.mark.parametrize(
-        "number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999]
-    )
+    @pytest.mark.parametrize("number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999])
     def test_number_boundaries(self, number):
         """测试数字边界值"""
         assert isinstance(number, (int, float))

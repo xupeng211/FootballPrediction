@@ -52,9 +52,7 @@ class StatisticsQueryException(Exception):
 class DataQualityException(Exception):
     """数据质量异常"""
 
-    def __init__(
-        self, message: str, error_code: str = None, context: Dict[str, Any] = None
-    ):
+    def __init__(self, message: str, error_code: str = None, context: Dict[str, Any] = None):
         super().__init__(message)
         self.error_code = error_code
         self.context = context or {}
@@ -115,9 +113,7 @@ class MissingValueHandler:
         """用均值填充缺失值"""
         if not data:
             return data
-        mean_val = sum(v for v in data if v is not None) / len(
-            [v for v in data if v is not None]
-        )
+        mean_val = sum(v for v in data if v is not None) / len([v for v in data if v is not None])
         return [v if v is not None else mean_val for v in data]
 
 
@@ -281,9 +277,7 @@ class SuspiciousOddsHandler:
 
         return suspicious
 
-    def validate_over_under(
-        self, line: float, over_odds: float, under_odds: float
-    ) -> bool:
+    def validate_over_under(self, line: float, over_odds: float, under_odds: float) -> bool:
         """验证大小球赔率"""
         # 基本验证：赔率应该合理
         if over_odds < 1.01 or under_odds < 1.01:

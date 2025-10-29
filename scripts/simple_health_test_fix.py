@@ -17,9 +17,7 @@ def fix_health_tests():
 
     # 移除所有的 pytest.skip 调用
     # 替换条件跳过
-    content = re.sub(
-        r"if not HEALTH_AVAILABLE:\s*pytest\.skip\([^)]+\)\s*\n", "", content
-    )
+    content = re.sub(r"if not HEALTH_AVAILABLE:\s*pytest\.skip\([^)]+\)\s*\n", "", content)
 
     # 保存文件
     with open(file_path, "w", encoding="utf-8") as f:

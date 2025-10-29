@@ -3,15 +3,11 @@
 提供测试数据库连接、清理和数据操作功能
 """
 
-import asyncio
-import sqlite3
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 
@@ -97,9 +93,7 @@ class TestDatabaseHelper:
         else:
             self._data_cache.clear()
 
-    def create_mock_result(
-        self, data: List[Dict[str, Any]], single: bool = False
-    ) -> Mock:
+    def create_mock_result(self, data: List[Dict[str, Any]], single: bool = False) -> Mock:
         """创建模拟查询结果"""
         result = Mock()
 

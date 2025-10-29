@@ -67,9 +67,7 @@ class TargetedSyntaxFixer:
         )
 
         # 8. 修复异常处理
-        content = re.sub(
-            r"except\s*\([^)]+\)\s*:\s*\n\s*([^\n])", r"except (\1):\n    \2", content
-        )
+        content = re.sub(r"except\s*\([^)]+\)\s*:\s*\n\s*([^\n])", r"except (\1):\n    \2", content)
 
         # 计算修复数
         if content != original:

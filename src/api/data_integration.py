@@ -171,14 +171,10 @@ async def get_data_source_status(
         match_count_query = select(Match).where(
             Match.match_date >= datetime.now() - timedelta(days=30)
         )
-        recent_matches_count = len(
-            await db_session.execute(match_count_query).scalars().all()
-        )
+        recent_matches_count = len(await db_session.execute(match_count_query).scalars().all())
 
         team_count_query = select(Team)
-        total_teams_count = len(
-            await db_session.execute(team_count_query).scalars().all()
-        )
+        total_teams_count = len(await db_session.execute(team_count_query).scalars().all())
 
         return DataSourceStatusResponse(
             available_sources=status["available_sources"],
@@ -214,8 +210,7 @@ async def get_matches(
             query = query.where(Match.league.ilike(f"%{league}%"))
         if team:
             query = query.where(
-                (Match.home_team.ilike(f"%{team}%"))
-                | (Match.away_team.ilike(f"%{team}%"))
+                (Match.home_team.ilike(f"%{team}%")) | (Match.away_team.ilike(f"%{team}%"))
             )
         if status:
             query = query.where(Match.status == status)
@@ -297,16 +292,12 @@ async def get_data_stats(
 
         # 比赛统计
         total_matches_query = select(Match)
-        total_matches = len(
-            await db_session.execute(total_matches_query).scalars().all()
-        )
+        total_matches = len(await db_session.execute(total_matches_query).scalars().all())
         stats["total_matches"] = total_matches
 
         # 按状态分组统计
         upcoming_matches_query = select(Match).where(Match.status == "upcoming")
-        upcoming_matches = len(
-            await db_session.execute(upcoming_matches_query).scalars().all()
-        )
+        upcoming_matches = len(await db_session.execute(upcoming_matches_query).scalars().all())
         stats["upcoming_matches"] = upcoming_matches
 
         live_matches_query = select(Match).where(Match.status == "live")
@@ -314,9 +305,7 @@ async def get_data_stats(
         stats["live_matches"] = live_matches
 
         finished_matches_query = select(Match).where(Match.status == "finished")
-        finished_matches = len(
-            await db_session.execute(finished_matches_query).scalars().all()
-        )
+        finished_matches = len(await db_session.execute(finished_matches_query).scalars().all())
         stats["finished_matches"] = finished_matches
 
         # 球队统计

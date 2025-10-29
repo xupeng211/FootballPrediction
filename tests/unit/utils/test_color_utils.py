@@ -2,8 +2,6 @@
 颜色工具测试
 """
 
-from typing import Dict, List, Optional, Tuple
-
 import pytest
 
 
@@ -50,11 +48,7 @@ class ColorUtils:
             s = 0
         else:
             # Saturation
-            s = (
-                delta / (2 - max_val - min_val)
-                if lightness > 0.5
-                else delta / (max_val + min_val)
-            )
+            s = delta / (2 - max_val - min_val) if lightness > 0.5 else delta / (max_val + min_val)
 
             # Hue
             if max_val == r:
@@ -91,11 +85,7 @@ class ColorUtils:
                     return p + (q - p) * (2 / 3 - t) * 6
                 return p
 
-            q = (
-                lightness * (1 + s)
-                if lightness < 0.5
-                else lightness + s - lightness * s
-            )
+            q = lightness * (1 + s) if lightness < 0.5 else lightness + s - lightness * s
             p = 2 * lightness - q
 
             r = hue_to_rgb(p, q, h + 1 / 3)
@@ -122,9 +112,7 @@ class ColorUtils:
         return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
     @staticmethod
-    def get_contrast_ratio(
-        rgb1: Tuple[int, int, int], rgb2: Tuple[int, int, int]
-    ) -> float:
+    def get_contrast_ratio(rgb1: Tuple[int, int, int], rgb2: Tuple[int, int, int]) -> float:
         """获取对比度比率"""
         l1 = ColorUtils.get_luminance(rgb1)
         l2 = ColorUtils.get_luminance(rgb2)
@@ -195,9 +183,7 @@ class ColorUtils:
             return "neutral"
 
     @staticmethod
-    def adjust_brightness(
-        rgb: Tuple[int, int, int], factor: float
-    ) -> Tuple[int, int, int]:
+    def adjust_brightness(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
         """调整颜色亮度"""
         r = min(255, max(0, int(rgb[0] * factor)))
         g = min(255, max(0, int(rgb[1] * factor)))
@@ -205,9 +191,7 @@ class ColorUtils:
         return (r, g, b)
 
     @staticmethod
-    def adjust_saturation(
-        rgb: Tuple[int, int, int], factor: float
-    ) -> Tuple[int, int, int]:
+    def adjust_saturation(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
         """调整颜色饱和度"""
         h, s, lightness = ColorUtils.rgb_to_hsl(*rgb)
         s = min(100, max(0, s * factor))
@@ -254,9 +238,7 @@ class ColorUtils:
             "brightness": round(ColorUtils.get_brightness(rgb), 1),
             "is_light": ColorUtils.is_light_color(rgb),
             "temperature": ColorUtils.get_color_temperature(rgb),
-            "complementary": ColorUtils.rgb_to_hex(
-                *ColorUtils.get_complementary_color(rgb)
-            ),
+            "complementary": ColorUtils.rgb_to_hex(*ColorUtils.get_complementary_color(rgb)),
         }
 
 

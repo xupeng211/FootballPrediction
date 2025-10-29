@@ -5,14 +5,11 @@ Issue #83-B阶段3简化测试: utils.helpers
 """
 
 import inspect
-from datetime import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 
 # 安全导入目标模块
 try:
-    from utils.helpers import *
 
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: utils.helpers")

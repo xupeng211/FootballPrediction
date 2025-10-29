@@ -49,9 +49,7 @@ class LoggingDecorator(BaseDecorator):
         """添加日志记录"""
         start_time = time.time()
 
-        self.logger.log(
-            self.log_level, f"Starting execution: {self._component.__class__.__name__}"
-        )
+        self.logger.log(self.log_level, f"Starting execution: {self._component.__class__.__name__}")
 
         try:
             result = await self._component.execute(*args, **kwargs)
@@ -59,8 +57,7 @@ class LoggingDecorator(BaseDecorator):
 
             self.logger.log(
                 self.log_level,
-                f"Completed execution: {self._component.__class__.__name__} "
-                f"in {duration:.3f}s",
+                f"Completed execution: {self._component.__class__.__name__} " f"in {duration:.3f}s",
             )
 
             return result

@@ -22,11 +22,7 @@ def find_used_types(content: str) -> Dict[str, Set[str]]:
             elif isinstance(node.annotation, ast.Subscript):
                 if isinstance(node.annotation.value, ast.Name):
                     base_type = node.annotation.value.id
-                    if (
-                        base_type == "Dict"
-                        or base_type == "List"
-                        or base_type == "Optional"
-                    ):
+                    if base_type == "Dict" or base_type == "List" or base_type == "Optional":
                         used_types.add(base_type)
                     elif isinstance(node.annotation.slice, ast.Name):
                         used_types.add(node.annotation.slice.id)
@@ -69,9 +65,7 @@ def find_used_types(content: str) -> Dict[str, Set[str]]:
             used_types.add(type_name)
 
     return {
-        "typing": {
-            t for t in used_types if t in ["Dict", "List", "Optional", "Any", "Union"]
-        },
+        "typing": {t for t in used_types if t in ["Dict", "List", "Optional", "Any", "Union"]},
         "datetime": {t for t in used_types if t in ["datetime", "timedelta"]},
         "decimal": {t for t in used_types if t == "Decimal"},
     }
@@ -93,9 +87,7 @@ def fix_file(file_path: Path):
     for line in lines:
         stripped = line.strip()
         if in_imports and (
-            stripped.startswith("from ")
-            or stripped.startswith("import ")
-            or stripped == ""
+            stripped.startswith("from ") or stripped.startswith("import ") or stripped == ""
         ):
             import_lines.append(line)
         else:
@@ -103,9 +95,7 @@ def fix_file(file_path: Path):
             other_lines.append(line)
 
     # 检查需要添加的导入
-    needs_typing = used_types["typing"] and not any(
-        "typing" in imp for imp in import_lines
-    )
+    needs_typing = used_types["typing"] and not any("typing" in imp for imp in import_lines)
     needs_datetime = used_types["datetime"] and not any(
         "datetime" in imp for imp in import_lines if "sqlalchemy" not in imp
     )
@@ -136,9 +126,7 @@ def fix_file(file_path: Path):
         # 找到插入位置
         insert_pos = 0
         for i, line in enumerate(import_lines):
-            if line.startswith("from enum import") or line.startswith(
-                "from datetime import"
-            ):
+            if line.startswith("from enum import") or line.startswith("from datetime import"):
                 insert_pos = i
                 break
 

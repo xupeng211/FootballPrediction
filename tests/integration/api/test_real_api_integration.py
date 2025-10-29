@@ -97,9 +97,7 @@ class TestRealAPIIntegration:
         assert len(data) >= 0  # 可能为空列表
 
     @patch("src.database.connection.get_async_session")
-    def test_features_endpoint_integration(
-        self, mock_get_session, mock_db_session, client
-    ):
+    def test_features_endpoint_integration(self, mock_get_session, mock_db_session, client):
         """测试特征端点的真实集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -109,9 +107,7 @@ class TestRealAPIIntegration:
         mock_match.id = 1
         mock_match.home_team_id = 100
         mock_match.away_team_id = 200
-        mock_db_session.execute.return_value.scalar_one_or_none.return_value = (
-            mock_match
-        )
+        mock_db_session.execute.return_value.scalar_one_or_none.return_value = mock_match
 
         response = client.get("/api/features/1")
         # 可能是404（特征不存在）或其他状态码
@@ -166,9 +162,7 @@ class TestRealAPIIntegration:
         assert "confidence" in data
 
     @patch("src.database.connection.get_async_session")
-    def test_models_endpoint_integration(
-        self, mock_get_session, mock_db_session, client
-    ):
+    def test_models_endpoint_integration(self, mock_get_session, mock_db_session, client):
         """测试模型端点的真实集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -188,9 +182,7 @@ class TestRealAPIIntegration:
         assert isinstance(data, list)
 
     @patch("src.database.connection.get_async_session")
-    def test_monitoring_endpoint_integration(
-        self, mock_get_session, mock_db_session, client
-    ):
+    def test_monitoring_endpoint_integration(self, mock_get_session, mock_db_session, client):
         """测试监控端点的真实集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -231,9 +223,7 @@ class TestRealAPIIntegration:
         assert "access-control-allow-origin" in response.headers.lower()
 
     @patch("src.database.connection.get_async_session")
-    def test_query_parameters_integration(
-        self, mock_get_session, mock_db_session, client
-    ):
+    def test_query_parameters_integration(self, mock_get_session, mock_db_session, client):
         """测试查询参数的集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session
@@ -276,9 +266,7 @@ class TestRealAPIIntegration:
                 assert match["status"] == "completed"
 
     @patch("src.database.connection.get_async_session")
-    def test_authentication_integration(
-        self, mock_get_session, mock_db_session, client
-    ):
+    def test_authentication_integration(self, mock_get_session, mock_db_session, client):
         """测试认证的集成"""
         # 测试需要认证的端点（如果有）
         response = client.get("/api/admin/users")
@@ -297,9 +285,7 @@ class TestRealAPIIntegration:
         assert all(r.status_code == 200 for r in responses)
 
     @patch("src.database.connection.get_async_session")
-    def test_batch_operations_integration(
-        self, mock_get_session, mock_db_session, client
-    ):
+    def test_batch_operations_integration(self, mock_get_session, mock_db_session, client):
         """测试批量操作的集成"""
         # 设置数据库mock
         mock_get_session.return_value = mock_db_session

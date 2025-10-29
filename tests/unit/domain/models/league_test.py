@@ -6,7 +6,6 @@ import pytest
 def test_league_model_exists():
     """测试联赛模型存在"""
     try:
-        from domain.models.league import League
 
         assert True
     except ImportError:

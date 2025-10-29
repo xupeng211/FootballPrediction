@@ -5,7 +5,6 @@
 import random
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
@@ -163,9 +162,7 @@ class Tournament:
 
         for i in range(num_groups):
             group_letter = chr(65 + i)  # A, B, C, ...
-            group_teams = shuffled_teams[
-                i * teams_per_group : (i + 1) * teams_per_group
-            ]
+            group_teams = shuffled_teams[i * teams_per_group : (i + 1) * teams_per_group]
             group = Group(f"{group_letter}", group_teams)
             group.generate_fixtures()
             self.groups[group.name] = group
@@ -231,9 +228,7 @@ class Tournament:
             else:
                 match.winner = match.away_team
 
-    def simulate_knockout_round(
-        self, round_name: str, matches: List[Match]
-    ) -> List[Match]:
+    def simulate_knockout_round(self, round_name: str, matches: List[Match]) -> List[Match]:
         """模拟淘汰赛轮次"""
         next_round_teams = []
 
@@ -283,9 +278,7 @@ class Tournament:
                 # 淘汰赛阶段
                 round16 = self.create_knockout_bracket(knockout_teams[:16])
                 quarter_finals = self.simulate_knockout_round("Quarter-finals", round16)
-                semi_finals = self.simulate_knockout_round(
-                    "Semi-finals", quarter_finals
-                )
+                semi_finals = self.simulate_knockout_round("Semi-finals", quarter_finals)
                 final = self.simulate_knockout_round("Final", semi_finals)
 
                 if final and final[0].winner:
@@ -340,15 +333,11 @@ class Tournament:
             "total_teams": total_teams,
             "total_matches": total_matches,
             "total_goals": total_goals,
-            "avg_goals_per_match": (
-                total_goals / total_matches if total_matches > 0 else 0
-            ),
+            "avg_goals_per_match": (total_goals / total_matches if total_matches > 0 else 0),
             "champion": self.champion.name if self.champion else None,
             "total_groups": len(self.groups),
             "group_stage_teams": sum(len(g.teams) for g in self.groups.values()),
-            "knockout_teams": (
-                len(self.get_knockout_teams()) if self.groups else total_teams
-            ),
+            "knockout_teams": (len(self.get_knockout_teams()) if self.groups else total_teams),
         }
 
 
@@ -426,9 +415,7 @@ class TestTournament:
         assert len(group.matches) == 6
         # 每队应该打3场比赛
         for team in teams:
-            team_matches = [
-                m for m in group.matches if m.home_team == team or m.away_team == team
-            ]
+            team_matches = [m for m in group.matches if m.home_team == team or m.away_team == team]
             assert len(team_matches) == 3
 
     def test_group_update_standings(self):

@@ -96,9 +96,7 @@ class PredictionStrategy(ABC):
         pass
 
     @abstractmethod
-    async def batch_predict(
-        self, inputs: List[PredictionInput]
-    ) -> List[PredictionOutput]:
+    async def batch_predict(self, inputs: List[PredictionInput]) -> List[PredictionOutput]:
         """批量预测
 
         Args:
@@ -110,9 +108,7 @@ class PredictionStrategy(ABC):
         pass
 
     @abstractmethod
-    async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
-    ) -> None:
+    async def update_metrics(self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]) -> None:
         """更新策略性能指标
 
         Args:

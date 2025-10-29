@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 业务逻辑深度覆盖率测试 - 第三阶段
 Business Logic Deep Coverage Tests - Phase 3
@@ -9,10 +7,7 @@ Business Logic Deep Coverage Tests - Phase 3
 """
 
 import asyncio
-import json
-import math
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
@@ -27,8 +22,6 @@ except ImportError as e:
     SERVICES_AVAILABLE = False
 
 try:
-    from src.models.common_models import ApiResponse, PaginatedResponse
-    from src.models.prediction import PredictionModel, PredictionResult
 
     MODELS_AVAILABLE = True
 except ImportError as e:
@@ -36,8 +29,6 @@ except ImportError as e:
     MODELS_AVAILABLE = False
 
 try:
-    from src.utils.data_validator import DataValidator
-    from src.utils.time_utils import format_datetime, parse_datetime
 
     UTILS_AVAILABLE = True
 except ImportError as e:
@@ -121,8 +112,7 @@ class TestDataProcessingServiceAdvanced:
         # 步骤2：特征提取
         features = {
             "match_id": cleaned_data["match_id"],
-            "team_length_diff": len(cleaned_data["home_team"])
-            - len(cleaned_data["away_team"]),
+            "team_length_diff": len(cleaned_data["home_team"]) - len(cleaned_data["away_team"]),
             "has_weather": "weather" in raw_data,
             "odds_available": "odds" in raw_data,
         }
@@ -504,25 +494,19 @@ class TestPredictionModelsAdvanced:
             def add_rule(self, rule_func, error_message: str):
                 self.validation_rules.append((rule_func, error_message))
 
-            def validate_probabilities(
-                self, probabilities: Dict[str, float]
-            ) -> List[str]:
+            def validate_probabilities(self, probabilities: Dict[str, float]) -> List[str]:
                 """验证概率分布"""
                 errors = []
 
                 # 检查概率和
                 total_prob = sum(probabilities.values())
                 if abs(total_prob - 1.0) > 0.01:
-                    errors.append(
-                        f"Probabilities sum to {total_prob:.3f}, should be 1.0"
-                    )
+                    errors.append(f"Probabilities sum to {total_prob:.3f}, should be 1.0")
 
                 # 检查概率范围
                 for outcome, prob in probabilities.items():
                     if not (0.0 <= prob <= 1.0):
-                        errors.append(
-                            f"Probability for {outcome} ({prob}) is out of range [0,1]"
-                        )
+                        errors.append(f"Probability for {outcome} ({prob}) is out of range [0,1]")
 
                 # 检查极端值
                 if any(prob < 0.01 for prob in probabilities.values()):
@@ -530,9 +514,7 @@ class TestPredictionModelsAdvanced:
 
                 return errors
 
-            def validate_prediction_result(
-                self, prediction: Dict[str, Any]
-            ) -> List[str]:
+            def validate_prediction_result(self, prediction: Dict[str, Any]) -> List[str]:
                 """验证预测结果"""
                 all_errors = []
 
@@ -543,18 +525,14 @@ class TestPredictionModelsAdvanced:
 
                 # 验证概率
                 if "probabilities" in prediction:
-                    prob_errors = self.validate_probabilities(
-                        prediction["probabilities"]
-                    )
+                    prob_errors = self.validate_probabilities(prediction["probabilities"])
                     all_errors.extend(prob_errors)
 
                 # 验证时间戳
                 if "timestamp" in prediction:
                     try:
                         if isinstance(prediction["timestamp"], str):
-                            datetime.fromisoformat(
-                                prediction["timestamp"].replace("Z", "+00:00")
-                            )
+                            datetime.fromisoformat(prediction["timestamp"].replace("Z", "+00:00"))
                         elif isinstance(prediction["timestamp"], datetime):
                             pass  # 有效的时间戳
                         else:
@@ -579,12 +557,8 @@ class TestPredictionModelsAdvanced:
             return len(prediction.get("probabilities", {})) >= 2
 
         validator.add_rule(has_required_fields, "Missing required fields")
-        validator.add_rule(
-            confidence_is_reasonable, "Confidence must be between 0 and 1"
-        )
-        validator.add_rule(
-            has_min_predictions, "Must have at least 2 outcome predictions"
-        )
+        validator.add_rule(confidence_is_reasonable, "Confidence must be between 0 and 1")
+        validator.add_rule(has_min_predictions, "Must have at least 2 outcome predictions")
 
         # 测试有效预测
         valid_prediction = {
@@ -631,9 +605,7 @@ class TestPredictionModelsAdvanced:
 
                 correct = 0
                 for pred, actual in zip(self.predictions, self.actual_results):
-                    predicted_outcome = max(
-                        pred["probabilities"].items(), key=lambda x: x[1]
-                    )[0]
+                    predicted_outcome = max(pred["probabilities"].items(), key=lambda x: x[1])[0]
                     if predicted_outcome == actual:
                         correct += 1
 
@@ -779,10 +751,7 @@ class TestUtilsAdvanced:
                 """转换赔率格式"""
                 if from_format == "decimal" and to_format == "probability":
                     # 十进制赔率转概率
-                    return {
-                        outcome: 1 / odds if odds > 0 else 0
-                        for outcome, odds in odds.items()
-                    }
+                    return {outcome: 1 / odds if odds > 0 else 0 for outcome, odds in odds.items()}
 
                 elif from_format == "probability" and to_format == "decimal":
                     # 概率转十进制赔率
@@ -805,12 +774,10 @@ class TestUtilsAdvanced:
                 metrics["form_score"] = team_data.get("recent_points", 0) / max(
                     team_data.get("recent_games", 1), 1
                 )
-                metrics["goal_difference"] = team_data.get(
-                    "goals_for", 0
-                ) - team_data.get("goals_against", 0)
-                metrics["home_advantage"] = (
-                    1.15 if team_data.get("is_home", False) else 1.0
+                metrics["goal_difference"] = team_data.get("goals_for", 0) - team_data.get(
+                    "goals_against", 0
                 )
+                metrics["home_advantage"] = 1.15 if team_data.get("is_home", False) else 1.0
 
                 # 计算综合实力分数
                 base_strength = metrics["form_score"] * 100
@@ -824,18 +791,14 @@ class TestUtilsAdvanced:
         # 测试队名标准化
         transformer = DataTransformer()
 
-        assert (
-            transformer.normalize_team_name("  manchester   united  ") == "Man United"
-        )
+        assert transformer.normalize_team_name("  manchester   united  ") == "Man United"
         assert transformer.normalize_team_name("TOTTENHAM HOTSPUR") == "Tottenham"
         assert transformer.normalize_team_name("west ham united") == "West Ham"
         assert transformer.normalize_team_name("Unknown Team") == "Unknown Team"
 
         # 测试赔率格式转换
         decimal_odds = {"home": 2.0, "draw": 3.2, "away": 4.5}
-        probability_odds = transformer.convert_odds_format(
-            decimal_odds, "decimal", "probability"
-        )
+        probability_odds = transformer.convert_odds_format(decimal_odds, "decimal", "probability")
 
         assert abs(probability_odds["home"] - 0.5) < 0.01
         assert abs(probability_odds["draw"] - 0.3125) < 0.01
@@ -899,9 +862,7 @@ class TestUtilsAdvanced:
                 """生成警告信息"""
                 # 检查数据完整性
                 if "odds" in data and "probabilities" not in data:
-                    result["warnings"].append(
-                        "Odds data available but no calculated probabilities"
-                    )
+                    result["warnings"].append("Odds data available but no calculated probabilities")
 
                 # 检查时间合理性
                 if "match_date" in data:
@@ -923,9 +884,7 @@ class TestUtilsAdvanced:
                 # 检查数据一致性
                 if "home_team" in data and "away_team" in data:
                     if data["home_team"] == data["away_team"]:
-                        result["warnings"].append(
-                            "Home team and away team are the same"
-                        )
+                        result["warnings"].append("Home team and away team are the same")
 
         # 创建验证器并添加规则
         validator = AdvancedDataValidator()
@@ -934,12 +893,8 @@ class TestUtilsAdvanced:
         def validate_team_name(name, data):
             return isinstance(name, str) and len(name.strip()) >= 2
 
-        validator.add_validation_rule(
-            "home_team", validate_team_name, "Home team name is invalid"
-        )
-        validator.add_validation_rule(
-            "away_team", validate_team_name, "Away team name is invalid"
-        )
+        validator.add_validation_rule("home_team", validate_team_name, "Home team name is invalid")
+        validator.add_validation_rule("away_team", validate_team_name, "Away team name is invalid")
 
         # 添加比分验证规则
         def validate_score(score, data):
@@ -948,9 +903,7 @@ class TestUtilsAdvanced:
         def validate_score_values(score, data):
             if not isinstance(score, dict):
                 return False
-            return all(
-                isinstance(score[k], int) and score[k] >= 0 for k in ["home", "away"]
-            )
+            return all(isinstance(score[k], int) and score[k] >= 0 for k in ["home", "away"])
 
         validator.add_validation_rule(
             "final_score", validate_score, "Final score format is invalid"
@@ -1035,9 +988,7 @@ class TestBusinessLogicIntegration:
 
             adjusted_prob = {}
             for outcome, prob in base_prob.items():
-                adjustment = sum(adjustments.values()) * (
-                    0.8 if outcome == "home" else 0.1
-                )
+                adjustment = sum(adjustments.values()) * (0.8 if outcome == "home" else 0.1)
                 adjusted_prob[outcome] = max(0.01, min(0.99, prob + adjustment))
 
             # 归一化
@@ -1066,8 +1017,7 @@ class TestBusinessLogicIntegration:
             confidence_valid = 0.0 <= prediction["confidence"] <= 1.0
 
             has_required_fields = all(
-                field in prediction
-                for field in ["match_id", "probabilities", "confidence"]
+                field in prediction for field in ["match_id", "probabilities", "confidence"]
             )
 
             return prob_valid and confidence_valid and has_required_fields

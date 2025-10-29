@@ -21,10 +21,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +40,7 @@ class DevCLI:
             "report": self.generate_report,
             "setup": self.setup_development,
             "status": self.check_status,
-            "improve": self.run_improvement_cycle
+            "improve": self.run_improvement_cycle,
         }
 
     def run_quality_check(self, args):
@@ -115,8 +112,14 @@ class DevCLI:
             cmd = ["make", "coverage"]
         else:
             # 快速覆盖率检查
-            cmd = ["python", "-m", "pytest", "tests/unit/utils/",
-                   "--cov=src/utils", "--cov-report=term-missing"]
+            cmd = [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/utils/",
+                "--cov=src/utils",
+                "--cov-report=term-missing",
+            ]
 
         self._run_command(cmd, "覆盖率分析")
 
@@ -126,8 +129,13 @@ class DevCLI:
 
         if args.continuous:
             # 持续改进引擎
-            cmd = [sys.executable, "scripts/continuous_improvement_engine.py",
-                   "--automated", "--interval", str(args.interval or 30)]
+            cmd = [
+                sys.executable,
+                "scripts/continuous_improvement_engine.py",
+                "--automated",
+                "--interval",
+                str(args.interval or 30),
+            ]
         else:
             # 改进监控
             cmd = [sys.executable, "scripts/improvement_monitor.py"]
@@ -161,7 +169,7 @@ class DevCLI:
                 ["make", "install"],
                 ["make", "up"],
                 ["make", "env-check"],
-                ["make", "test-quick"]
+                ["make", "test-quick"],
             ]
 
             for cmd in commands:
@@ -176,8 +184,9 @@ class DevCLI:
 
         # 检查Docker状态
         print("\n🐳 Docker服务状态:")
-        self._run_command(["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}"],
-                        "Docker状态", check=False)
+        self._run_command(
+            ["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}"], "Docker状态", check=False
+        )
 
         # 检查环境变量
         print("\n🔧 环境状态:")
@@ -209,9 +218,18 @@ class DevCLI:
             ("2️⃣ 智能修复", ["python3", "scripts/smart_quality_fixer.py"]),
             ("3️⃣ 代码审查", ["python3", "scripts/automated_code_reviewer.py"]),
             ("4️⃣ 测试验证", ["python", "-m", "pytest", "tests/unit/utils/", "-x", "--maxfail=10"]),
-            ("5️⃣ 覆盖率检查", ["python", "-m", "pytest", "tests/unit/utils/",
-                               "--cov=src/utils", "--cov-report=term-missing"]),
-            ("6️⃣ 报告生成", ["python3", "scripts/improvement_monitor.py"])
+            (
+                "5️⃣ 覆盖率检查",
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/unit/utils/",
+                    "--cov=src/utils",
+                    "--cov-report=term-missing",
+                ],
+            ),
+            ("6️⃣ 报告生成", ["python3", "scripts/improvement_monitor.py"]),
         ]
 
         print("🔄 开始Issue #98智能改进周期...")
@@ -234,11 +252,7 @@ class DevCLI:
             print(f"🔧 执行: {' '.join(cmd)}")
 
             result = subprocess.run(
-                cmd,
-                cwd=self.project_root,
-                capture_output=False,
-                check=check,
-                text=True
+                cmd, cwd=self.project_root, capture_output=False, check=check, text=True
             )
 
             if result.returncode == 0:
@@ -265,21 +279,21 @@ class DevCLI:
             "project_status": {},
             "quality_metrics": {},
             "recommendations": [],
-            "issue_98_methodology_applied": True
+            "issue_98_methodology_applied": True,
         }
 
         # 收集各种报告数据
         reports_to_collect = [
             ("quality", "smart_quality_fix_report.json"),
             ("review", "automated_code_review_report.json"),
-            ("improvement", "improvement_report.json")
+            ("improvement", "improvement_report.json"),
         ]
 
         for report_type, filename in reports_to_collect:
             report_path = self.project_root / filename
             if report_path.exists():
                 try:
-                    with open(report_path, 'r', encoding='utf-8') as f:
+                    with open(report_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
                         report[f"{report_type}_data"] = data
                 except Exception as e:
@@ -288,7 +302,7 @@ class DevCLI:
         # 保存综合报告
         report_file = self.project_root / "comprehensive_dev_report.json"
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
 
             print(f"📋 综合报告已保存: {report_file}")
@@ -309,59 +323,61 @@ class DevCLI:
   %(prog)s test --coverage            # 运行带覆盖率的测试
   %(prog)s improve                    # 运行完整改进周期
   %(prog)s status                     # 检查项目状态
-            """
+            """,
         )
 
-        subparsers = parser.add_subparsers(dest='command', help='可用命令')
+        subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
         # 质量检查命令
-        quality_parser = subparsers.add_parser('quality', help='运行代码质量检查')
-        quality_parser.add_argument('--verbose', '-v', action='store_true', help='详细输出')
+        quality_parser = subparsers.add_parser("quality", help="运行代码质量检查")
+        quality_parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
 
         # 自动修复命令
-        fix_parser = subparsers.add_parser('fix', help='运行智能自动修复')
-        fix_parser.add_argument('--syntax-only', action='store_true', help='仅修复语法错误')
-        fix_parser.add_argument('--dry-run', action='store_true', help='试运行模式')
+        fix_parser = subparsers.add_parser("fix", help="运行智能自动修复")
+        fix_parser.add_argument("--syntax-only", action="store_true", help="仅修复语法错误")
+        fix_parser.add_argument("--dry-run", action="store_true", help="试运行模式")
 
         # 代码审查命令
-        review_parser = subparsers.add_parser('review', help='运行AI代码审查')
-        review_parser.add_argument('--format', choices=['text', 'json'], default='text', help='输出格式')
-        review_parser.add_argument('--severity', help='过滤问题严重程度')
+        review_parser = subparsers.add_parser("review", help="运行AI代码审查")
+        review_parser.add_argument(
+            "--format", choices=["text", "json"], default="text", help="输出格式"
+        )
+        review_parser.add_argument("--severity", help="过滤问题严重程度")
 
         # 测试命令
-        test_parser = subparsers.add_parser('test', help='运行测试')
+        test_parser = subparsers.add_parser("test", help="运行测试")
         test_group = test_parser.add_mutually_exclusive_group()
-        test_group.add_argument('--quick', action='store_true', help='快速测试')
-        test_group.add_argument('--integration', action='store_true', help='集成测试')
-        test_group.add_argument('--module', help='测试特定模块')
-        test_parser.add_argument('--coverage', action='store_true', help='生成覆盖率报告')
+        test_group.add_argument("--quick", action="store_true", help="快速测试")
+        test_group.add_argument("--integration", action="store_true", help="集成测试")
+        test_group.add_argument("--module", help="测试特定模块")
+        test_parser.add_argument("--coverage", action="store_true", help="生成覆盖率报告")
 
         # 覆盖率命令
-        coverage_parser = subparsers.add_parser('coverage', help='运行覆盖率分析')
+        coverage_parser = subparsers.add_parser("coverage", help="运行覆盖率分析")
         coverage_group = coverage_parser.add_mutually_exclusive_group()
-        coverage_group.add_argument('--target', help='目标模块覆盖率')
-        coverage_group.add_argument('--report', action='store_true', help='生成完整报告')
+        coverage_group.add_argument("--target", help="目标模块覆盖率")
+        coverage_group.add_argument("--report", action="store_true", help="生成完整报告")
 
         # 监控命令
-        monitor_parser = subparsers.add_parser('monitor', help='启动监控系统')
-        monitor_parser.add_argument('--continuous', action='store_true', help='持续监控')
-        monitor_parser.add_argument('--interval', type=int, help='监控间隔(秒)')
+        monitor_parser = subparsers.add_parser("monitor", help="启动监控系统")
+        monitor_parser.add_argument("--continuous", action="store_true", help="持续监控")
+        monitor_parser.add_argument("--interval", type=int, help="监控间隔(秒)")
 
         # 报告命令
-        report_parser = subparsers.add_parser('report', help='生成报告')
+        report_parser = subparsers.add_parser("report", help="生成报告")
         report_group = report_parser.add_mutually_exclusive_group()
-        report_group.add_argument('--quality', action='store_true', help='质量报告')
-        report_group.add_argument('--improvement', action='store_true', help='改进报告')
+        report_group.add_argument("--quality", action="store_true", help="质量报告")
+        report_group.add_argument("--improvement", action="store_true", help="改进报告")
 
         # 设置命令
-        setup_parser = subparsers.add_parser('setup', help='设置开发环境')
-        setup_parser.add_argument('--full', action='store_true', help='完整环境设置')
+        setup_parser = subparsers.add_parser("setup", help="设置开发环境")
+        setup_parser.add_argument("--full", action="store_true", help="完整环境设置")
 
         # 状态命令
-        status_parser = subparsers.add_parser('status', help='检查项目状态')
+        status_parser = subparsers.add_parser("status", help="检查项目状态")
 
         # 改进命令
-        improve_parser = subparsers.add_parser('improve', help='运行改进周期')
+        improve_parser = subparsers.add_parser("improve", help="运行改进周期")
 
         return parser
 

@@ -2,8 +2,6 @@
 集合工具测试
 """
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
-
 import pytest
 
 T = TypeVar("T")
@@ -53,9 +51,7 @@ class CollectionUtils:
         return groups
 
     @staticmethod
-    def partition(
-        lst: List[T], predicate: Callable[[T], bool]
-    ) -> Tuple[List[T], List[T]]:
+    def partition(lst: List[T], predicate: Callable[[T], bool]) -> Tuple[List[T], List[T]]:
         """将列表分为满足和不满足条件的两部分"""
         true_items = []
         false_items = []
@@ -76,11 +72,7 @@ class CollectionUtils:
         """深度合并字典"""
         _result = dict1.copy()
         for key, value in dict2.items():
-            if (
-                key in result
-                and isinstance(_result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(_result[key], dict) and isinstance(value, dict):
                 _result[key] = CollectionUtils.deep_merge(_result[key], value)
             else:
                 _result[key] = value
@@ -177,9 +169,7 @@ class CollectionUtils:
         return result
 
     @staticmethod
-    def flatten_dict(
-        dictionary: Dict[str, Any], separator: str = "."
-    ) -> Dict[str, Any]:
+    def flatten_dict(dictionary: Dict[str, Any], separator: str = ".") -> Dict[str, Any]:
         """展平嵌套字典"""
         _result = {}
 
@@ -195,9 +185,7 @@ class CollectionUtils:
         return result
 
     @staticmethod
-    def unflatten_dict(
-        dictionary: Dict[str, Any], separator: str = "."
-    ) -> Dict[str, Any]:
+    def unflatten_dict(dictionary: Dict[str, Any], separator: str = ".") -> Dict[str, Any]:
         """恢复展平的字典"""
         _result = {}
 
@@ -233,16 +221,12 @@ class CollectionUtils:
         return result
 
     @staticmethod
-    def sort_by(
-        lst: List[T], key_func: Callable[[T], Any], reverse: bool = False
-    ) -> List[T]:
+    def sort_by(lst: List[T], key_func: Callable[[T], Any], reverse: bool = False) -> List[T]:
         """根据键函数排序"""
         return sorted(lst, key=key_func, reverse=reverse)
 
     @staticmethod
-    def group_consecutive(
-        lst: List[T], predicate: Callable[[T, T], bool]
-    ) -> List[List[T]]:
+    def group_consecutive(lst: List[T], predicate: Callable[[T, T], bool]) -> List[List[T]]:
         """将连续满足条件的元素分组"""
         if not lst:
             return []

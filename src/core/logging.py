@@ -75,9 +75,7 @@ class LoggerManager:
         return cls._instance
 
     @classmethod
-    def configure(
-        cls, level: int = logging.INFO, enable_json: bool = True, log_dir: str = "logs"
-    ):
+    def configure(cls, level: int = logging.INFO, enable_json: bool = True, log_dir: str = "logs"):
         """配置日志系统"""
         cls._configured = True
 

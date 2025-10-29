@@ -8,7 +8,9 @@ Core Business Functionality Critical Tests
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(__file__))
+
 
 def test_team_management_critical():
     """测试球队管理核心功能"""
@@ -48,6 +50,7 @@ def test_team_management_critical():
     except Exception as e:
         print(f"❌ 球队管理测试失败: {e}")
         return False
+
 
 def test_match_management_critical():
     """测试比赛管理核心功能"""
@@ -90,6 +93,7 @@ def test_match_management_critical():
     except Exception as e:
         print(f"❌ 比赛管理测试失败: {e}")
         return False
+
 
 def test_prediction_logic_critical():
     """测试预测逻辑核心功能"""
@@ -136,6 +140,7 @@ def test_prediction_logic_critical():
             print(f"❌ 预测基本功能也失败: {e2}")
             return False
 
+
 def test_league_management_critical():
     """测试联赛管理核心功能"""
     print("🧪 测试联赛管理核心功能...")
@@ -167,6 +172,7 @@ def test_league_management_critical():
         print(f"❌ 联赛管理测试失败: {e}")
         return False
 
+
 def test_api_data_flow_critical():
     """测试API数据流核心功能"""
     print("🧪 测试API数据流核心功能...")
@@ -179,36 +185,23 @@ def test_api_data_flow_critical():
 
         # 测试比赛创建请求
         match_create = MatchCreateRequest(
-            home_team_id=1,
-            away_team_id=2,
-            league_id=100,
-            match_time=datetime.now()
+            home_team_id=1, away_team_id=2, league_id=100, match_time=datetime.now()
         )
         assert match_create.home_team_id == 1
         assert match_create.away_team_id == 2
 
         # 测试比赛更新请求
-        match_update = MatchUpdateRequest(
-            home_score=2,
-            away_score=1,
-            status="completed"
-        )
+        match_update = MatchUpdateRequest(home_score=2, away_score=1, status="completed")
         assert match_update.home_score == 2
         assert match_update.away_score == 1
 
         # 测试球队创建请求
-        team_create = TeamCreateRequest(
-            name="Test Team",
-            short_name="TT",
-            code="TTC"
-        )
+        team_create = TeamCreateRequest(name="Test Team", short_name="TT", code="TTC")
         assert team_create.name == "Test Team"
 
         # 测试联赛创建请求
         league_create = LeagueCreateRequest(
-            name="Test League",
-            country="Test Country",
-            season="2024-25"
+            name="Test League", country="Test Country", season="2024-25"
         )
         assert league_create.name == "Test League"
 
@@ -218,6 +211,7 @@ def test_api_data_flow_critical():
     except Exception as e:
         print(f"❌ API数据流测试失败: {e}")
         return False
+
 
 def test_business_workflow_critical():
     """测试完整业务工作流"""
@@ -262,6 +256,7 @@ def test_business_workflow_critical():
         print(f"❌ 业务工作流测试失败: {e}")
         return False
 
+
 def main():
     """主测试函数"""
     print("🚀 开始核心业务功能关键测试...")
@@ -273,7 +268,7 @@ def main():
         test_prediction_logic_critical,
         test_league_management_critical,
         test_api_data_flow_critical,
-        test_business_workflow_critical
+        test_business_workflow_critical,
     ]
 
     passed = 0
@@ -294,6 +289,7 @@ def main():
     else:
         print("⚠️ 部分关键测试失败，需要修复后再部署")
         return False
+
 
 if __name__ == "__main__":
     success = main()

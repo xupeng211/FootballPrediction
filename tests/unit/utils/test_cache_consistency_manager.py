@@ -1,10 +1,6 @@
-from unittest.mock import AsyncMock, MagicMock, patch
-
 """
 缓存一致性管理器测试
 """
-
-from typing import List
 
 import pytest
 
@@ -57,18 +53,14 @@ class TestCacheConsistencyManager:
         # 没有实际操作，所以不需要断言
 
     @pytest.mark.asyncio
-    async def test_invalidate_cache_single_key(
-        self, consistency_manager, mock_redis_manager
-    ):
+    async def test_invalidate_cache_single_key(self, consistency_manager, mock_redis_manager):
         """测试使单个缓存键失效"""
         await consistency_manager.invalidate_cache(["cache:match:123"])
 
         mock_redis_manager.adelete.assert_called_once_with("cache:match:123")
 
     @pytest.mark.asyncio
-    async def test_invalidate_cache_multiple_keys(
-        self, consistency_manager, mock_redis_manager
-    ):
+    async def test_invalidate_cache_multiple_keys(self, consistency_manager, mock_redis_manager):
         """测试使多个缓存键失效"""
         keys = ["cache:match:123", "cache:match:456", "cache:prediction:789"]
         await consistency_manager.invalidate_cache(keys)
@@ -76,9 +68,7 @@ class TestCacheConsistencyManager:
         mock_redis_manager.adelete.assert_called_once_with(*keys)
 
     @pytest.mark.asyncio
-    async def test_invalidate_cache_empty_list(
-        self, consistency_manager, mock_redis_manager
-    ):
+    async def test_invalidate_cache_empty_list(self, consistency_manager, mock_redis_manager):
         """测试使空键列表失效"""
         await consistency_manager.invalidate_cache([])
 

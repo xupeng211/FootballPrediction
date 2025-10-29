@@ -6,8 +6,6 @@ Comprehensive Tests for Data Processing Service
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -718,8 +716,7 @@ class TestDataProcessingPerformance:
         service = DataProcessingService()
         batch_size = 50
         batch_data = [
-            {"type": "match", "id": f"match_{i}", "data": f"data_{i}"}
-            for i in range(batch_size)
+            {"type": "match", "id": f"match_{i}", "data": f"data_{i}"} for i in range(batch_size)
         ]
 
         import time

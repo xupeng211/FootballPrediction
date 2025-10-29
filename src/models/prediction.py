@@ -71,9 +71,7 @@ class PredictionService(SimpleService):
             model_version="v1.0.0",
         )
 
-    async def batch_predict_matches(
-        self, match_ids: List[int]
-    ) -> List[PredictionResult]:
+    async def batch_predict_matches(self, match_ids: List[int]) -> List[PredictionResult]:
         """批量预测比赛"""
         results = []
         for match_id in match_ids:

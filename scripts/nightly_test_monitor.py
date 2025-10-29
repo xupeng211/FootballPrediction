@@ -121,17 +121,13 @@ class NightlyTestMonitor:
                 result = await self._parse_test_report(test_type, report_path)
                 if result:
                     self.results[test_type] = result
-                    logger.info(
-                        f"收集到 {test_type} 测试结果: {result.passed}/{result.total} 通过"
-                    )
+                    logger.info(f"收集到 {test_type} 测试结果: {result.passed}/{result.total} 通过")
             except Exception as e:
                 logger.error(f"解析 {test_type} 测试报告失败: {e}")
 
         return self.results
 
-    async def _parse_test_report(
-        self, test_type: str, report_path: str
-    ) -> Optional[TestResult]:
+    async def _parse_test_report(self, test_type: str, report_path: str) -> Optional[TestResult]:
         """解析测试报告"""
         with open(report_path, "r") as f:
             data = json.load(f)
@@ -191,14 +187,10 @@ class NightlyTestMonitor:
         for test_type, result in self.results.items():
             if result.failed > self.quality_gate.max_failed_tests:
                 gate_results["passed"] = False
-                gate_results["issues"].append(
-                    f"{test_type} 测试有 {result.failed} 个失败"
-                )
+                gate_results["issues"].append(f"{test_type} 测试有 {result.failed} 个失败")
 
             if test_type == "unit" and result.success_rate < 98:
-                gate_results["warnings"].append(
-                    f"单元测试成功率 {result.success_rate:.1f}% 偏低"
-                )
+                gate_results["warnings"].append(f"单元测试成功率 {result.success_rate:.1f}% 偏低")
 
             if test_type == "e2e" and result.total == 0:
                 gate_results["warnings"].append("没有执行 E2E 测试")
@@ -206,9 +198,7 @@ class NightlyTestMonitor:
         # 检查测试执行时长
         total_duration = sum(r.duration for r in self.results.values())
         if total_duration > self.quality_gate.max_test_duration:
-            gate_results["warnings"].append(
-                f"测试总耗时 {total_duration/60:.1f} 分钟过长"
-            )
+            gate_results["warnings"].append(f"测试总耗时 {total_duration/60:.1f} 分钟过长")
 
         # 检查覆盖率（如果有）
         coverage_report = Path("reports/coverage.json")
@@ -413,9 +403,7 @@ class NightlyTestMonitor:
             payload["attachments"][0]["fields"].append(
                 {
                     "title": "质量门禁问题",
-                    "value": "\n".join(
-                        f"• {issue}" for issue in report["quality_gate"]["issues"]
-                    ),
+                    "value": "\n".join(f"• {issue}" for issue in report["quality_gate"]["issues"]),
                     "short": False,
                 }
             )
@@ -451,9 +439,9 @@ class NightlyTestMonitor:
         msg = MIMEMultipart()
         msg["From"] = email_config["smtp_user"]
         msg["To"] = ", ".join(email_config["to_emails"])
-        msg[
-            "Subject"
-        ] = f"Nightly Test Report - #{report['metadata']['run_id']} - {datetime.now().strftime('%Y-%m-%d')}"
+        msg["Subject"] = (
+            f"Nightly Test Report - #{report['metadata']['run_id']} - {datetime.now().strftime('%Y-%m-%d')}"
+        )
 
         # 添加 HTML 内容
         html_content = f"""
@@ -466,9 +454,7 @@ class NightlyTestMonitor:
         msg.attach(MIMEText(html_content, "html"))
 
         try:
-            with smtplib.SMTP(
-                email_config["smtp_host"], email_config["smtp_port"]
-            ) as server:
+            with smtplib.SMTP(email_config["smtp_host"], email_config["smtp_port"]) as server:
                 if email_config["smtp_pass"]:
                     server.starttls()
                     server.login(email_config["smtp_user"], email_config["smtp_pass"])
@@ -554,9 +540,7 @@ class NightlyTestMonitor:
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"https://api.github.com/repos/{github_config['repo']}/issues"
-                async with session.post(
-                    url, json=issue_data, headers=headers
-                ) as response:
+                async with session.post(url, json=issue_data, headers=headers) as response:
                     if response.status == 201:
                         logger.info("GitHub Issue 创建成功")
                     else:
@@ -619,9 +603,7 @@ class NightlyTestMonitor:
             await self.send_notifications(report)
 
             # 5. 返回质量门禁结果
-            logger.info(
-                f"监控完成，质量门禁: {'通过' if gate_results['passed'] else '失败'}"
-            )
+            logger.info(f"监控完成，质量门禁: {'通过' if gate_results['passed'] else '失败'}")
             return gate_results["passed"]
 
         except Exception as e:
@@ -643,9 +625,7 @@ class NightlyTestMonitor:
             try:
                 # 从文件名提取日期
                 date_str = report_file.stem.split("-")[-1]
-                file_date = datetime.strptime(date_str, "%Y%m%d").replace(
-                    tzinfo=timezone.utc
-                )
+                file_date = datetime.strptime(date_str, "%Y%m%d").replace(tzinfo=timezone.utc)
 
                 if file_date < cutoff_date:
                     report_file.unlink()
@@ -661,9 +641,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Nightly 测试监控器")
     parser.add_argument("--config", type=str, help="配置文件路径")
     parser.add_argument("--cleanup", action="store_true", help="清理旧报告")
-    parser.add_argument(
-        "--cleanup-days", type=int, default=30, help="清理多少天前的报告"
-    )
+    parser.add_argument("--cleanup-days", type=int, default=30, help="清理多少天前的报告")
     parser.add_argument("--dry-run", action="store_true", help="只生成报告，不发送通知")
 
     args = parser.parse_args()

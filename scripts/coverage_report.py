@@ -53,9 +53,7 @@ def calculate_summary(coverage_data):
     file_details.sort(key=lambda x: x["coverage"], reverse=True)
 
     total_covered = total_statements - total_missing
-    overall_coverage = (
-        (total_covered / total_statements * 100) if total_statements > 0 else 0
-    )
+    overall_coverage = (total_covered / total_statements * 100) if total_statements > 0 else 0
 
     return {
         "total_statements": total_statements,

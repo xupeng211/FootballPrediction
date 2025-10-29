@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 20 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, patch
 
 """
 服务层单元测试
@@ -144,9 +143,7 @@ class TestMatchService:
     async def test_get_upcoming_matches(self, match_service):
         """测试获取即将到来的比赛"""
         mock_matches = [MagicMock(), MagicMock()]
-        match_service.match_repo.get_upcoming_matches = AsyncMock(
-            return_value=mock_matches
-        )
+        match_service.match_repo.get_upcoming_matches = AsyncMock(return_value=mock_matches)
 
         _result = await match_service.get_upcoming_matches(days=7)
         assert len(result) == 2
@@ -215,9 +212,7 @@ class TestPredictionService:
             "confidence": 0.75,
         }
         mock_prediction = MagicMock(id=789)
-        prediction_service.prediction_repo.create = AsyncMock(
-            return_value=mock_prediction
-        )
+        prediction_service.prediction_repo.create = AsyncMock(return_value=mock_prediction)
 
         _result = await prediction_service.make_prediction(prediction_data)
         assert _result.id == 789
@@ -241,12 +236,8 @@ class TestPredictionService:
     async def test_settle_prediction(self, prediction_service):
         """测试结算预测"""
         mock_prediction = MagicMock(id=789, is_correct=None, settled_at=None)
-        prediction_service.prediction_repo.get_by_id = AsyncMock(
-            return_value=mock_prediction
-        )
-        prediction_service.prediction_repo.update = AsyncMock(
-            return_value=mock_prediction
-        )
+        prediction_service.prediction_repo.get_by_id = AsyncMock(return_value=mock_prediction)
+        prediction_service.prediction_repo.update = AsyncMock(return_value=mock_prediction)
 
         _result = await prediction_service.settle_prediction(789, "home_win", True)
         assert _result.is_correct is True
@@ -256,13 +247,9 @@ class TestPredictionService:
     async def test_get_prediction_statistics(self, prediction_service):
         """测试获取预测统计"""
         prediction_service.prediction_repo.count = AsyncMock(side_effect=[100, 65])
-        prediction_service.prediction_repo.get_prediction_accuracy = AsyncMock(
-            return_value=65.0
-        )
+        prediction_service.prediction_repo.get_prediction_accuracy = AsyncMock(return_value=65.0)
 
-        _result = await prediction_service.get_prediction_statistics(
-            user_id=456, days=30
-        )
+        _result = await prediction_service.get_prediction_statistics(user_id=456, days=30)
         assert _result["total_predictions"] == 100
         assert _result["accuracy"] == 65.0
 

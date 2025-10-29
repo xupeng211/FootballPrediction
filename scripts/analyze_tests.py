@@ -108,9 +108,7 @@ def check_test_file_structure(test_files):
     if len(api_test_files) > 0:
         unit_ratio = len(unit_api_files) / len(api_test_files)
         if unit_ratio < 0.7:
-            suggestions.append(
-                f"API模块单元测试比例较低 ({unit_ratio:.1%})，建议增加单元测试"
-            )
+            suggestions.append(f"API模块单元测试比例较低 ({unit_ratio:.1%})，建议增加单元测试")
 
     # 检查是否有缺失的测试
     src_dir = Path("src")
@@ -130,16 +128,12 @@ def check_test_file_structure(test_files):
                 # 尝试映射测试文件到源模块
                 parts = test_path.parts
                 if len(parts) >= 3 and parts[0] == "unit":
-                    module_path = (
-                        "/".join(parts[1:]).replace("test_", "").replace(".py", "")
-                    )
+                    module_path = "/".join(parts[1:]).replace("test_", "").replace(".py", "")
                     tested_modules.add(module_path)
 
         missing_tests = src_modules - tested_modules
         if missing_tests:
-            issues.append(
-                f"以下模块可能缺少单元测试: {', '.join(list(missing_tests)[:5])}..."
-            )
+            issues.append(f"以下模块可能缺少单元测试: {', '.join(list(missing_tests)[:5])}...")
 
     return issues, suggestions
 

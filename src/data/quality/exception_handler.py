@@ -86,9 +86,7 @@ class SuspiciousOddsHandler:
                 try:
                     odds_val = float(odds)
                     if odds_val < min_val or odds_val > max_val:
-                        logger.warning(
-                            f"Suspicious odds value: {odds_val} for {odds_type}"
-                        )
+                        logger.warning(f"Suspicious odds value: {odds_val} for {odds_type}")
                         data[f"{odds_type}_suspicious"] = True
                 except (ValueError, TypeError):
                     logger.error(f"Invalid odds format: {odds}")

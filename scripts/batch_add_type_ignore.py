@@ -58,9 +58,7 @@ def main():
             if len(parts) >= 4:
                 file_path = parts[0]
                 line_num = int(parts[1])
-                error_code = (
-                    parts[3].split("[")[1].split("]")[0] if "[" in parts[3] else ""
-                )
+                error_code = parts[3].split("[")[1].split("]")[0] if "[" in parts[3] else ""
 
                 # 只处理特定类型的错误
                 if error_code in [

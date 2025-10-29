@@ -2,14 +2,12 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 依赖注入系统测试
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Type, TypeVar
 
 import pytest
 
@@ -315,9 +313,7 @@ class TestAutoBinding:
         interfaces = [TestInterface]
         implementations = [TestImplementation]
 
-        bindings = auto_binding.bind_interfaces_to_implementations(
-            interfaces, implementations
-        )
+        bindings = auto_binding.bind_interfaces_to_implementations(interfaces, implementations)
 
         assert TestInterface in bindings
         assert bindings[TestInterface] == TestImplementation

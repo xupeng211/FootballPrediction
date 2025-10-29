@@ -12,6 +12,7 @@ import random
 from datetime import datetime, timedelta
 import httpx
 
+
 class SeedUserTester:
     """种子用户测试器"""
 
@@ -29,7 +30,7 @@ class SeedUserTester:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -49,25 +50,31 @@ class SeedUserTester:
         self.user_data = {
             "username": f"seed_user_{timestamp}",
             "email": f"seed_user_{timestamp}@example.com",
-            "password": "test_password_123"
+            "password": "test_password_123",
         }
 
         start_time = time.time()
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
-                    f"{self.api_base_url}/api/v1/auth/register",
-                    json=self.user_data
+                    f"{self.api_base_url}/api/v1/auth/register", json=self.user_data
                 )
                 duration = time.time() - start_time
 
                 if response.status_code in [200, 201]:
                     self.log_test("用户注册", True, f"HTTP {response.status_code}", duration)
                     register_result = response.json()
-                    print(f"   📝 注册结果: {json.dumps(register_result, indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📝 注册结果: {json.dumps(register_result, indent=2, ensure_ascii=False)}"
+                    )
                     return True
                 else:
-                    self.log_test("用户注册", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "用户注册",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -82,12 +89,11 @@ class SeedUserTester:
         try:
             login_data = {
                 "username": self.user_data["username"],
-                "password": self.user_data["password"]
+                "password": self.user_data["password"],
             }
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
-                    f"{self.api_base_url}/api/v1/auth/login",
-                    data=login_data
+                    f"{self.api_base_url}/api/v1/auth/login", data=login_data
                 )
                 duration = time.time() - start_time
 
@@ -95,10 +101,17 @@ class SeedUserTester:
                     self.log_test("用户登录", True, f"HTTP {response.status_code}", duration)
                     login_result = response.json()
                     self.auth_token = login_result.get("access_token", "")
-                    print(f"   📝 登录结果: {json.dumps(login_result, indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📝 登录结果: {json.dumps(login_result, indent=2, ensure_ascii=False)}"
+                    )
                     return True
                 else:
-                    self.log_test("用户登录", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "用户登录",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -113,7 +126,7 @@ class SeedUserTester:
             ("获取球队列表", "/api/v1/data/teams"),
             ("获取联赛列表", "/api/v1/data/leagues"),
             ("获取比赛列表", "/api/v1/data/matches"),
-            ("获取赔率信息", "/api/v1/data/odds")
+            ("获取赔率信息", "/api/v1/data/odds"),
         ]
 
         headers = {"Authorization": self.auth_token} if self.auth_token else {}
@@ -136,12 +149,19 @@ class SeedUserTester:
                             print(f"   📊 {name}: 获取到 {len(data)} 条记录")
                             if data and len(data) > 0:
                                 first_item = data[0]
-                                print(f"   📋 示例数据: {json.dumps(first_item, indent=2, ensure_ascii=False)}")
+                                print(
+                                    f"   📋 示例数据: {json.dumps(first_item, indent=2, ensure_ascii=False)}"
+                                )
                         elif isinstance(data, dict):
                             print(f"   📊 {name}: 获取到数据对象")
                             print(f"   📋 数据键: {list(data.keys())}")
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -175,7 +195,12 @@ class SeedUserTester:
                         data = response.json()
                         print(f"   📊 {name}: {json.dumps(data, indent=2, ensure_ascii=False)}")
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -187,22 +212,29 @@ class SeedUserTester:
                 "match_id": 1,
                 "predicted_home_score": 2,
                 "predicted_away_score": 1,
-                "confidence": 0.75
+                "confidence": 0.75,
             }
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
                     f"{self.api_base_url}/api/v1/predictions/1/predict",
                     json=prediction_data,
-                    headers=headers
+                    headers=headers,
                 )
                 duration = time.time() - start_time
 
                 if response.status_code in [200, 201]:
                     self.log_test("创建预测", True, f"HTTP {response.status_code}", duration)
                     success_count += 1
-                    print(f"   📊 预测创建结果: {json.dumps(response.json(), indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📊 预测创建结果: {json.dumps(response.json(), indent=2, ensure_ascii=False)}"
+                    )
                 else:
-                    self.log_test("创建预测", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "创建预测",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
         except Exception as e:
             self.log_test("创建预测", False, f"预测功能测试失败: {str(e)}")
 
@@ -242,7 +274,12 @@ class SeedUserTester:
                             data = response.json()
                             print(f"   📊 {name}: {json.dumps(data, indent=2, ensure_ascii=False)}")
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -277,9 +314,16 @@ class SeedUserTester:
 
                         if "me" in endpoint:
                             user_info = response.json()
-                            print(f"   👤 用户信息: {json.dumps(user_info, indent=2, ensure_ascii=False)}")
+                            print(
+                                f"   👤 用户信息: {json.dumps(user_info, indent=2, ensure_ascii=False)}"
+                            )
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -306,7 +350,12 @@ class SeedUserTester:
                     self.log_test("用户登出", True, f"HTTP {response.status_code}", duration)
                     return True
                 else:
-                    self.log_test("用户登出", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "用户登出",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -361,7 +410,7 @@ class SeedUserTester:
             ("预测功能", test_results["prediction_features"]),
             ("监控系统", test_results["monitoring_system"]),
             ("用户行为", test_results["user_behavior"]),
-            ("用户登出", test_results["logout"])
+            ("用户登出", test_results["logout"]),
         ]
 
         completed_steps = 0
@@ -372,7 +421,9 @@ class SeedUserTester:
                 completed_steps += 1
 
         journey_completion = (completed_steps / len(journey_steps)) * 100
-        print(f"\n   用户旅程完成率: {completed_steps}/{len(journey_steps)} ({journey_completion:.1f}%)")
+        print(
+            f"\n   用户旅程完成率: {completed_steps}/{len(journey_steps)} ({journey_completion:.1f}%)"
+        )
 
         # 失败的测试
         if failed_tests > 0:
@@ -382,7 +433,7 @@ class SeedUserTester:
                     print(f"   • {result['test_name']}: {result['details']}")
 
         # 性能统计
-        durations = [r['duration'] for r in self.test_results if r['duration'] > 0]
+        durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
             print(f"\n⏱️  性能统计:")
@@ -410,7 +461,7 @@ class SeedUserTester:
             deployment_ready = False
 
         # 用户体验评分
-        ux_score = (success_rate * 0.4 + journey_completion * 0.6)
+        ux_score = success_rate * 0.4 + journey_completion * 0.6
         print(f"\n🎨 用户体验评分: {ux_score:.1f}/100")
 
         # 最终建议
@@ -424,8 +475,12 @@ class SeedUserTester:
             print("      4. 监控系统性能和稳定性")
         else:
             print("   🔧 建议优先修复以下问题:")
-            failed_critical = [r for r in self.test_results if not r["success"] and
-                             any(keyword in r["test_name"] for keyword in ["注册", "登录", "数据"])]
+            failed_critical = [
+                r
+                for r in self.test_results
+                if not r["success"]
+                and any(keyword in r["test_name"] for keyword in ["注册", "登录", "数据"])
+            ]
             if failed_critical:
                 print("      关键功能问题:")
                 for result in failed_critical:
@@ -442,10 +497,12 @@ class SeedUserTester:
         print(f"   测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
 
+
 async def main():
     """主函数"""
     tester = SeedUserTester()
     await tester.run_complete_seed_user_test()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

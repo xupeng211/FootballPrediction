@@ -1,21 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
-
 """
 Comprehensive tests for security.middleware
 Auto-generated to maximize coverage
 """
 
-import asyncio
-import json
-import warnings
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
-
 import pytest
 
 # Import the module under test
 try:
-    from security.middleware import *
 
     IMPORT_SUCCESS = True
     IMPORT_ERROR = None

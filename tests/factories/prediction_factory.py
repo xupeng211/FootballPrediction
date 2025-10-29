@@ -3,9 +3,7 @@
 """
 
 import random
-import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 from .base import BaseFactory, DataFactoryMixin, TimestampMixin
 
@@ -96,32 +94,22 @@ class PredictionFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     @classmethod
     def create_high_confidence(cls, **kwargs) -> Dict[str, Any]:
         """创建高置信度预测"""
-        return cls.create(
-            confidence=random.uniform(0.8, 1.0), risk_level="low", **kwargs
-        )
+        return cls.create(confidence=random.uniform(0.8, 1.0), risk_level="low", **kwargs)
 
     @classmethod
     def create_low_confidence(cls, **kwargs) -> Dict[str, Any]:
         """创建低置信度预测"""
-        return cls.create(
-            confidence=random.uniform(0.5, 0.7), risk_level="high", **kwargs
-        )
+        return cls.create(confidence=random.uniform(0.5, 0.7), risk_level="high", **kwargs)
 
     @classmethod
-    def create_for_teams(
-        cls, home_team_id: int, away_team_id: int, **kwargs
-    ) -> Dict[str, Any]:
+    def create_for_teams(cls, home_team_id: int, away_team_id: int, **kwargs) -> Dict[str, Any]:
         """为特定球队创建预测"""
-        return cls.create(
-            home_team_id=home_team_id, away_team_id=away_team_id, **kwargs
-        )
+        return cls.create(home_team_id=home_team_id, away_team_id=away_team_id, **kwargs)
 
     @classmethod
     def create_correct_prediction(cls, **kwargs) -> Dict[str, Any]:
         """创建正确预测"""
-        predicted_result = kwargs.get(
-            "predicted_result", random.choice(cls.PREDICTION_RESULTS[:3])
-        )
+        predicted_result = kwargs.get("predicted_result", random.choice(cls.PREDICTION_RESULTS[:3]))
         return cls.create_with_result(
             actual_result=predicted_result, predicted_result=predicted_result, **kwargs
         )
@@ -129,9 +117,7 @@ class PredictionFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     @classmethod
     def create_incorrect_prediction(cls, **kwargs) -> Dict[str, Any]:
         """创建错误预测"""
-        predicted_result = kwargs.get(
-            "predicted_result", random.choice(cls.PREDICTION_RESULTS[:3])
-        )
+        predicted_result = kwargs.get("predicted_result", random.choice(cls.PREDICTION_RESULTS[:3]))
         actual_results = cls.PREDICTION_RESULTS[:3]
         actual_results = [r for r in actual_results if r != predicted_result]
         actual_result = random.choice(actual_results) if actual_results else "draw"
@@ -179,9 +165,7 @@ class PredictionFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     def _generate_match_date(cls) -> datetime:
         """生成比赛日期"""
         days_ahead = random.randint(0, 30)
-        return datetime.now(timezone.utc).replace(
-            day=datetime.now(timezone.utc).day + days_ahead
-        )
+        return datetime.now(timezone.utc).replace(day=datetime.now(timezone.utc).day + days_ahead)
 
 
 class MatchPredictionFactory(PredictionFactory):
@@ -203,9 +187,7 @@ class MatchPredictionFactory(PredictionFactory):
                 ),
                 "attendance": random.randint(1000, 100000),
                 "referee": f"裁判_{random.randint(1, 100)}",
-                "match_importance": random.choice(
-                    ["low", "medium", "high", "critical"]
-                ),
+                "match_importance": random.choice(["low", "medium", "high", "critical"]),
             }
         )
 
@@ -239,9 +221,7 @@ class TournamentPredictionFactory(PredictionFactory):
                         ]
                     ),
                 ),
-                "knockout_match": kwargs.get(
-                    "knockout_match", random.choice([True, False])
-                ),
+                "knockout_match": kwargs.get("knockout_match", random.choice([True, False])),
                 "extra_time_possible": kwargs.get("extra_time_possible", False),
                 "penalties_possible": kwargs.get("penalties_possible", False),
             }
@@ -279,9 +259,7 @@ class MLModelPredictionFactory(PredictionFactory):
                 "model_type": "machine_learning",
                 "model_framework": kwargs.get(
                     "model_framework",
-                    random.choice(
-                        ["tensorflow", "pytorch", "scikit_learn", "xgboost", "lightgbm"]
-                    ),
+                    random.choice(["tensorflow", "pytorch", "scikit_learn", "xgboost", "lightgbm"]),
                 ),
                 "model_version": f"ml_v{random.randint(1, 10)}.{random.randint(0, 9)}.{random.randint(0, 99)}",
                 "training_data_version": f"data_v{random.randint(1, 5)}",

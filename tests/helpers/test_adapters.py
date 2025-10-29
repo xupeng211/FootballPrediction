@@ -9,7 +9,6 @@ Test Interface Adapters for Testing
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
 
 from src.domain.models.match import Match
 from src.domain.models.team import Team

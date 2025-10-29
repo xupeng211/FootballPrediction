@@ -183,9 +183,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_get_async(self, redis_manager):
         """测试异步获取值"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.get = AsyncMock(return_value=b'"test_value"')
 
         _result = await redis_manager.aget("test_key")
@@ -196,9 +194,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_get_async_not_found(self, redis_manager):
         """测试异步获取不存在的值"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.get = AsyncMock(return_value=None)
 
         _result = await redis_manager.aget("test_key", default="default")
@@ -208,9 +204,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_set_async(self, redis_manager):
         """测试异步设置值"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.setex = AsyncMock(return_value=True)
 
         _result = await redis_manager.aset("test_key", "test_value")
@@ -224,9 +218,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_set_async_with_ttl(self, redis_manager):
         """测试异步设置带TTL的值"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.setex = AsyncMock(return_value=True)
 
         _result = await redis_manager.aset("test_key", "test_value", ttl=60)
@@ -238,9 +230,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_set_async_json_dict(self, redis_manager):
         """测试异步设置JSON字典"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.setex = AsyncMock(return_value=True)
         test_data = {"key": "value", "number": 123}
 
@@ -254,9 +244,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_delete_async(self, redis_manager):
         """测试异步删除"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.delete = AsyncMock(return_value=1)
 
         _result = await redis_manager.adelete("test_key")
@@ -267,9 +255,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_exists_async(self, redis_manager):
         """测试异步检查键存在"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.exists = AsyncMock(return_value=1)
 
         _result = await redis_manager.aexists("test_key")
@@ -280,9 +266,7 @@ class TestRedisManager:
     @pytest.mark.asyncio
     async def test_ttl_async(self, redis_manager):
         """测试异步获取TTL"""
-        redis_manager.get_async_client = AsyncMock(
-            return_value=redis_manager._async_client
-        )
+        redis_manager.get_async_client = AsyncMock(return_value=redis_manager._async_client)
         redis_manager._async_client.ttl = AsyncMock(return_value=60)
 
         _result = await redis_manager.attl("test_key")

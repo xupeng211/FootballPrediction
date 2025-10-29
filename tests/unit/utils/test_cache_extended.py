@@ -1,6 +1,5 @@
 import pytest
 
-from src.cache.redis_manager import RedisManager
 from src.cache.ttl_cache import TTLCache
 
 

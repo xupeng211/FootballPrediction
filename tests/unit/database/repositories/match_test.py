@@ -3,10 +3,6 @@ Issue #83 阶段2: database.repositories.match 综合测试
 优先级: MEDIUM - 比赛仓储，数据操作核心
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块 - 修复导入路径

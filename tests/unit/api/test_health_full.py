@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 测试 src/api/health.py 模块
 """

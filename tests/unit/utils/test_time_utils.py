@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 """
 时间工具测试
 Tests for Time Utils
@@ -323,9 +321,7 @@ class TestTimeUtilsPerformance:
         assert end_time - start_time < 1.0
 
 
-@pytest.mark.skipif(
-    TIME_UTILS_AVAILABLE, reason="Time utils module should be available"
-)
+@pytest.mark.skipif(TIME_UTILS_AVAILABLE, reason="Time utils module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

@@ -106,7 +106,6 @@ def test_import_collector():
 def test_import_prometheus_metrics():
     """测试导入Prometheus指标管理（可能因为prometheus依赖失败）"""
     try:
-        from src.monitoring.metrics_collector_enhanced.prometheus_metrics import (
             PROMETHEUS_AVAILABLE,
             PrometheusMetricsManager,
         )

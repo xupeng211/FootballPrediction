@@ -49,9 +49,7 @@ class TestTemplateGenerator:
             elif isinstance(node, ast.ImportFrom):
                 module = node.module or ""
                 for alias in node.names:
-                    analysis["imports"].append(
-                        f"{module}.{alias.name}" if module else alias.name
-                    )
+                    analysis["imports"].append(f"{module}.{alias.name}" if module else alias.name)
 
         return analysis
 
@@ -132,9 +130,7 @@ def test_{function_name}():
 
         # 计算测试文件路径
         relative_path = src_file.relative_to(self.src_dir)
-        test_file_path = self.test_dir / relative_path.with_name(
-            f"test_{relative_path.name}"
-        )
+        test_file_path = self.test_dir / relative_path.with_name(f"test_{relative_path.name}")
 
         # 生成测试文件内容
         module_name = self.get_module_path(src_file)
@@ -196,9 +192,7 @@ import pytest
         for src_file in source_files:
             # 计算对应的测试文件路径
             relative_path = src_file.relative_to(self.src_dir)
-            test_file = self.test_dir / relative_path.with_name(
-                f"test_{relative_path.name}"
-            )
+            test_file = self.test_dir / relative_path.with_name(f"test_{relative_path.name}")
 
             if not test_file.exists():
                 missing_tests.append(src_file)

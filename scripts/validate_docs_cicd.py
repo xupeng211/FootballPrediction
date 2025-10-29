@@ -10,6 +10,7 @@ import json
 import sys
 from pathlib import Path
 
+
 def run_command(cmd, capture=True, description=""):
     """运行命令并返回结果"""
     print(f"🔧 {description}")
@@ -25,6 +26,7 @@ def run_command(cmd, capture=True, description=""):
     except Exception as e:
         return False, "", str(e)
 
+
 def check_file_exists(file_path, description=""):
     """检查文件是否存在"""
     print(f"📋 {description}")
@@ -32,18 +34,21 @@ def check_file_exists(file_path, description=""):
     print(f"   {'✅' if exists else '❌'} {file_path}")
     return exists
 
+
 def validate_yaml_syntax(file_path):
     """验证YAML语法"""
     print(f"🔧 验证YAML语法: {file_path}")
     try:
         import yaml
-        with open(file_path, 'r', encoding='utf-8') as f:
+
+        with open(file_path, "r", encoding="utf-8") as f:
             yaml.safe_load(f)
         print("   ✅ YAML语法正确")
         return True
     except Exception as e:
         print(f"   ❌ YAML语法错误: {e}")
         return False
+
 
 def check_mkdocs_config():
     """检查MkDocs配置"""
@@ -57,10 +62,11 @@ def check_mkdocs_config():
 
     return True
 
+
 def check_dependencies():
     """检查必要的依赖"""
     print("📦 检查依赖包")
-    required_packages = ['mkdocs', 'mkdocs-material']
+    required_packages = ["mkdocs", "mkdocs-material"]
     all_installed = True
 
     for package in required_packages:
@@ -73,14 +79,12 @@ def check_dependencies():
 
     return all_installed
 
+
 def validate_github_actions():
     """验证GitHub Actions配置"""
     print("🚀 验证GitHub Actions配置")
 
-    workflows = [
-        ".github/workflows/docs.yml",
-        ".github/workflows/docs-preview.yml"
-    ]
+    workflows = [".github/workflows/docs.yml", ".github/workflows/docs-preview.yml"]
 
     all_valid = True
     for workflow in workflows:
@@ -90,6 +94,7 @@ def validate_github_actions():
             all_valid = all_valid and valid
 
     return all_valid
+
 
 def test_mkdocs_build():
     """测试MkDocs构建"""
@@ -106,7 +111,7 @@ def test_mkdocs_build():
         site_dir = Path("site")
         if site_dir.exists():
             html_files = len(list(site_dir.glob("**/*.html")))
-            site_size = sum(f.stat().st_size for f in site_dir.rglob('*') if f.is_file())
+            site_size = sum(f.stat().st_size for f in site_dir.rglob("*") if f.is_file())
             site_size_mb = site_size / (1024 * 1024)
 
             print("   ✅ 构建成功")
@@ -119,6 +124,7 @@ def test_mkdocs_build():
     else:
         print(f"   ❌ 构建失败: {stderr}")
         return False
+
 
 def validate_mkdocs_config_file():
     """验证MkDocs配置文件"""
@@ -133,10 +139,11 @@ def validate_mkdocs_config_file():
     # 验证关键配置项
     try:
         import yaml
-        with open("mkdocs.yml", 'r', encoding='utf-8') as f:
+
+        with open("mkdocs.yml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        required_keys = ['site_name', 'nav', 'docs_dir']
+        required_keys = ["site_name", "nav", "docs_dir"]
         missing_keys = []
 
         for key in required_keys:
@@ -153,6 +160,7 @@ def validate_mkdocs_config_file():
     except Exception as e:
         print(f"   ❌ 配置验证失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -203,6 +211,7 @@ def main():
     else:
         print("⚠️  存在失败项目，请检查并修复")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

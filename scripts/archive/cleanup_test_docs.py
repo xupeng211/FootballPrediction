@@ -26,7 +26,9 @@ def create_archive_directory():
 请参考：
 - `../TEST_GUIDE.md` - 完整的测试指南
 - `../README.md` - 快速入门
-""".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+""".format(
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
 
     with open(archive_dir / "README.md", "w") as f:
         f.write(readme)

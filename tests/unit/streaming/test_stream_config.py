@@ -1,17 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 Tests for streaming.stream_config
 Auto-generated test file
 """
 
-import asyncio
-
 import pytest
 
 # Test imports
 try:
-    from streaming.stream_config import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

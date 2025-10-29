@@ -231,9 +231,7 @@ def create_wrapper_content(original_file, module_dir, modules):
     base_path = ".".join([".."] * (len(parts) - idx - 1))
     relative_path = f"{base_path}.{module_dir.replace('/', '.')}"
 
-    imports = "\n".join(
-        [f"from {relative_path} import {name}" for name in module_names]
-    )
+    imports = "\n".join([f"from {relative_path} import {name}" for name in module_names])
 
     all_exports = ", ".join([f'"{name}"' for name in module_names])
 

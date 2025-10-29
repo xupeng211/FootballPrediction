@@ -89,9 +89,7 @@ def create_topics(topics: List[str]) -> bool:
 def test_connection() -> bool:
     """测试 Kafka 连接"""
     try:
-        producer = KafkaProducer(
-            bootstrap_servers=KAFKA_BROKER, client_id="test-connection"
-        )
+        producer = KafkaProducer(bootstrap_servers=KAFKA_BROKER, client_id="test-connection")
 
         # 发送测试消息
         future = producer.send(
@@ -160,9 +158,7 @@ def main():
 
         # 发送测试消息到每个主题
         logger.info("Sending test messages...")
-        producer = KafkaProducer(
-            bootstrap_servers=KAFKA_BROKER, client_id="test-message-sender"
-        )
+        producer = KafkaProducer(bootstrap_servers=KAFKA_BROKER, client_id="test-message-sender")
 
         for topic in TEST_TOPICS:
             full_topic = f"{TOPIC_PREFIX}{topic}"

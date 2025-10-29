@@ -194,9 +194,7 @@ class Subject(ABC):
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _notify_observer(
-        self, observer: Observer, event: ObservableEvent
-    ) -> None:
+    async def _notify_observer(self, observer: Observer, event: ObservableEvent) -> None:
         """通知单个观察者
 
         Args:
@@ -293,9 +291,7 @@ class Subject(ABC):
         """
         event_counts = {}
         for event in self._event_history:
-            event_counts[event.event_type.value] = (
-                event_counts.get(event.event_type.value, 0) + 1
-            )
+            event_counts[event.event_type.value] = event_counts.get(event.event_type.value, 0) + 1
 
         return {
             "name": self.name,

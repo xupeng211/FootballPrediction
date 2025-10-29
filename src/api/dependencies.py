@@ -45,9 +45,7 @@ load_dotenv()
 logger = get_logger(__name__)
 
 # JWT配置 - 从环境变量获取
-SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY", os.getenv("SECRET_KEY", "your-secret-key-here")
-)
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "your-secret-key-here"))
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 security = HTTPBearer()
 
@@ -88,9 +86,7 @@ async def get_current_user(
 
     try:
         # 解码JWT token
-        payload = jwt.decode(
-            credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM]
-        )
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         role: str = payload.get("role", "user")
 

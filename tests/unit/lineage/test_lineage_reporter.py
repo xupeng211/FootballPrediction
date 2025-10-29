@@ -1,16 +1,11 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 Tests for lineage.lineage_reporter
 """
-
-import asyncio
 
 import pytest
 
 # Import the module under test
 try:
-    from lineage.lineage_reporter import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

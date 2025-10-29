@@ -11,13 +11,11 @@ Tests for Facade Pattern API
 测试src.api.facades模块的功能
 """
 
-from datetime import datetime
 
 import pytest
 
 # 测试导入
 try:
-    from src.api.facades import (
         facade_factory,
         global_facades,
         initialize_facade,

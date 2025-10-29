@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, Mock, patch
 
 # TODO: Consider creating a fixture for 31 repeated Mock creations
 
@@ -12,9 +11,6 @@ from unittest.mock import MagicMock, Mock, patch
 from datetime import datetime, timedelta
 
 import pytest
-
-from tests.factories import DataFactory, MockFactory
-from tests.factories.test_helpers import with_mocks
 
 
 @pytest.mark.unit
@@ -279,9 +275,7 @@ class TestOddsModel:
             implied_prob_home = 1 / odds.home_win
             implied_prob_draw = 1 / odds.draw
             implied_prob_away = 1 / odds.away_win
-            total_implied_prob = (
-                implied_prob_home + implied_prob_draw + implied_prob_away
-            )
+            total_implied_prob = implied_prob_home + implied_prob_draw + implied_prob_away
             margin = (total_implied_prob - 1) * 100
             return round(margin, 2)
 
@@ -300,9 +294,7 @@ class TestOddsModel:
 
         # 模拟变动计算方法
         def calculate_movement():
-            movement = (
-                (odds.home_win - odds.previous_home_win) / odds.previous_home_win
-            ) * 100
+            movement = ((odds.home_win - odds.previous_home_win) / odds.previous_home_win) * 100
             return round(movement, 2)
 
         odds.calculate_movement = Mock(side_effect=calculate_movement)

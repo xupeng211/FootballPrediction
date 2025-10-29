@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """Tasks模块基础测试 - 提升整体覆盖率"""
 
 
 import asyncio
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -155,7 +153,6 @@ class TestMaintenanceTasks:
             pass
         except Exception:
             pass
-            from src.tasks.maintenance_tasks import cleanup_old_data
 
             # 使用mock模拟执行
             with patch("src.tasks.maintenance_tasks.cleanup_old_data") as mock_cleanup:
@@ -171,7 +168,6 @@ class TestMaintenanceTasks:
             pass
         except Exception:
             pass
-            from src.tasks.maintenance_tasks import backup_database
 
             with patch("src.tasks.maintenance_tasks.backup_database") as mock_backup:
                 mock_backup.return_value = {"backup_file": "backup_2025.sql"}
@@ -209,7 +205,6 @@ class TestMonitoringTasks:
             pass
         except Exception:
             pass
-            from src.tasks.monitoring import check_system_health
 
             with patch("src.tasks.monitoring.check_system_health") as mock_check:
                 mock_check.return_value = {
@@ -231,7 +226,6 @@ class TestMonitoringTasks:
             pass
         except Exception:
             pass
-            from src.tasks.monitoring import collect_metrics
 
             with patch("src.tasks.monitoring.collect_metrics") as mock_collect:
                 mock_collect.return_value = {
@@ -269,7 +263,6 @@ class TestErrorHandling:
             pass
         except Exception:
             pass
-            from src.tasks.error_logger import log_error
 
             with patch("src.tasks.error_logger.log_error") as mock_log:
                 mock_log.return_value = "logged"
@@ -308,11 +301,8 @@ class TestStreamingTasks:
             pass
         except Exception:
             pass
-            from src.tasks.streaming_tasks import process_kafka_message
 
-            with patch(
-                "src.tasks.streaming_tasks.process_kafka_message"
-            ) as mock_process:
+            with patch("src.tasks.streaming_tasks.process_kafka_message") as mock_process:
                 mock_process.return_value = {"status": "processed"}
                 _result = mock_process({"topic": "test", "message": "data"})
                 assert _result["status"] == "processed"
@@ -348,7 +338,6 @@ class TestBackupTasks:
             pass
         except Exception:
             pass
-            from src.tasks.backup_tasks import create_backup
 
             with patch("src.tasks.backup_tasks.create_backup") as mock_backup:
                 mock_backup.return_value = {
@@ -393,7 +382,6 @@ class TestTaskUtils:
             pass
         except Exception:
             pass
-            from src.tasks.utils import get_task_status
 
             with patch("src.tasks.utils.get_task_status") as mock_status:
                 mock_status.return_value = {
@@ -412,7 +400,6 @@ class TestTaskUtils:
             pass
         except Exception:
             pass
-            from src.tasks.utils import format_task_result
 
             with patch("src.tasks.utils.format_task_result") as mock_format:
                 mock_format.return_value = {
@@ -498,7 +485,6 @@ class TestTaskScheduler:
             pass
         except Exception:
             pass
-            from src.tasks.scheduler import schedule_task
 
             with patch("src.tasks.scheduler.schedule_task") as mock_schedule:
                 mock_schedule.return_value = {

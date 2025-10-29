@@ -3,13 +3,11 @@
 Tests simple adapter registry functionality defined in src/adapters/registry_simple.py
 """
 
-from unittest.mock import Mock, patch
 
 import pytest
 
 # 导入要测试的模块
 try:
-    from src.adapters.registry_simple import (
         AdapterRegistry,
         _global_registry,
         get_global_registry,

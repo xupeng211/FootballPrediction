@@ -1,8 +1,4 @@
-from unittest.mock import MagicMock, patch
-
 """API预测端点测试"""
-
-import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -49,9 +45,7 @@ class TestAPIPredictions:
         with patch("src.api.predictions.create_prediction") as mock_create:
             mock_create.return_value = {"id": 999, **prediction_data}
 
-            response = client.post(
-                "/api/predictions", json=prediction_data, headers=auth_headers
-            )
+            response = client.post("/api/predictions", json=prediction_data, headers=auth_headers)
             assert response.status_code == 201
             _data = response.json()
             assert _data["id"] == 999
@@ -87,9 +81,7 @@ class TestAPIPredictions:
             "confidence": 1.5,  # 超出0-1范围
         }
 
-        response = client.post(
-            "/api/predictions", json=invalid_data, headers=auth_headers
-        )
+        response = client.post("/api/predictions", json=invalid_data, headers=auth_headers)
         assert response.status_code == 422
 
     def test_unauthorized_access(self, client):

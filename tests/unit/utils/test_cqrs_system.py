@@ -12,8 +12,6 @@ CQRS System Unit Tests
 Tests core functionality of CQRS pattern.
 """
 
-import asyncio
-from datetime import date, datetime, timedelta
 
 import pytest
 
@@ -22,15 +20,12 @@ from src.cqrs.application import (
     PredictionCQRSService,
     initialize_cqrs,
 )
-from src.cqrs.base import Command, Query, ValidationResult
 from src.cqrs.bus import CommandBus, QueryBus
-from src.cqrs.commands import (
     CreatePredictionCommand,
     DeletePredictionCommand,
     UpdatePredictionCommand,
 )
 from src.cqrs.dto import CommandResult, PredictionDTO
-from src.cqrs.handlers import (
     CreatePredictionHandler,
     DeletePredictionHandler,
     GetPredictionByIdHandler,
@@ -38,7 +33,6 @@ from src.cqrs.handlers import (
     GetUserStatsHandler,
     UpdatePredictionHandler,
 )
-from src.cqrs.queries import (
     GetPredictionByIdQuery,
     GetPredictionsByUserQuery,
     GetUserStatsQuery,

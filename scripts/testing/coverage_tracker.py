@@ -87,9 +87,7 @@ class CoverageTracker:
             for file_path, file_data in coverage_data["files"].items():
                 # 将文件路径转换为模块名
                 module_name = (
-                    str(Path(file_path).relative_to("src"))
-                    .replace("/", ".")
-                    .replace(".py", "")
+                    str(Path(file_path).relative_to("src")).replace("/", ".").replace(".py", "")
                 )
                 module_coverage[module_name] = file_data["summary"]["percent_covered"]
 
@@ -131,9 +129,7 @@ class CoverageTracker:
                 "next_target": 60,
                 "final_target": 80,
             },
-            "module_status": self.analyze_module_status(
-                latest_record.get("modules", {})
-            ),
+            "module_status": self.analyze_module_status(latest_record.get("modules", {})),
         }
 
         # 保存报告
@@ -159,9 +155,7 @@ class CoverageTracker:
             "medium_coverage": len(medium_coverage),
             "low_coverage": len(low_coverage),
             "average_coverage": sum(modules.values()) / len(modules) if modules else 0,
-            "modules_needing_attention": list(low_coverage.keys())[
-                :10
-            ],  # 需要关注的前10个模块
+            "modules_needing_attention": list(low_coverage.keys())[:10],  # 需要关注的前10个模块
         }
 
     def print_summary(self, record: Dict, report: Dict):

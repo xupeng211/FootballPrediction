@@ -2,14 +2,12 @@
 
 # TODO: Consider creating a fixture for 23 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 性能监控集成模块测试
 Performance Integration Module Tests
 """
 
-from typing import Any, Dict
 
 import pytest
 from fastapi import FastAPI
@@ -98,9 +96,7 @@ class TestPerformanceMonitoringIntegration:
             )
 
             # 验证路由被包含
-            mock_app.include_router.assert_called_once_with(
-                mock_router, tags=["performance"]
-            )
+            mock_app.include_router.assert_called_once_with(mock_router, tags=["performance"])
 
     @patch("src.performance.integration.get_settings")
     def test_integrate_with_fastapi_disabled(self, mock_get_settings):
@@ -140,9 +136,7 @@ class TestPerformanceMonitoringIntegration:
 
         integration = PerformanceMonitoringIntegration()
 
-        with patch(
-            "src.performance.integration.DatabaseQueryProfiler"
-        ) as mock_db_profiler:
+        with patch("src.performance.integration.DatabaseQueryProfiler") as mock_db_profiler:
             integration.initialize_database_monitoring()
 
             # 应该不创建任何东西
@@ -170,9 +164,7 @@ class TestPerformanceMonitoringIntegration:
 
         integration = PerformanceMonitoringIntegration()
 
-        with patch(
-            "src.performance.integration.start_profiling"
-        ) as mock_start_profiling:
+        with patch("src.performance.integration.start_profiling") as mock_start_profiling:
             integration.start_profiling()
 
             mock_start_profiling.assert_not_called()
@@ -401,9 +393,7 @@ class TestErrorHandling:
             integration.integrate_with_fastapi(mock_app)
 
             mock_logger.error.assert_called_once()
-            assert "Failed to integrate performance monitoring" in str(
-                mock_logger.error.call_args
-            )
+            assert "Failed to integrate performance monitoring" in str(mock_logger.error.call_args)
 
     def test_start_profiling_error(self):
         """测试启动分析时的错误处理"""
@@ -433,6 +423,4 @@ class TestErrorHandling:
                 # 应该返回None
                 assert report is None
                 mock_logger.error.assert_called_once()
-                assert "Failed to create performance report" in str(
-                    mock_logger.error.call_args
-                )
+                assert "Failed to create performance report" in str(mock_logger.error.call_args)

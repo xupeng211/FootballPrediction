@@ -68,9 +68,7 @@ class GlobalSyntaxFixer:
             print(f"Error processing {file_path}: {e}")
             return False, 0
 
-    def fix_directory(
-        self, directory: Path, file_pattern: str = "*.py"
-    ) -> Tuple[int, int]:
+    def fix_directory(self, directory: Path, file_pattern: str = "*.py") -> Tuple[int, int]:
         """修复目录下所有匹配的文件"""
         fixed_count = 0
         total_fixes = 0

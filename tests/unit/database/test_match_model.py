@@ -4,8 +4,6 @@
 """
 
 from datetime import datetime
-from decimal import Decimal
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -107,7 +105,8 @@ class MockMatch:
 
     def __repr__(self):
         # 智能Mock兼容修复模式 - 使用符合测试期望的格式
-        return f"Match(id={self.id}, home_team_id={self.home_team_id}, away_team_id={self.away_team_id})"
+        return f"Match(id =
+    {self.id}, home_team_id={self.home_team_id}, away_team_id={self.away_team_id})"
 
     def is_finished(self):
         """检查比赛是否结束"""
@@ -283,7 +282,8 @@ class TestMatchModel:
 
     def test_match_repr(self, sample_match):
         """测试比赛的字符串表示"""
-        expected = f"Match(id={sample_match.id}, home_team_id={sample_match.home_team_id}, away_team_id={sample_match.away_team_id})"
+        expected =
+    f"Match(id={sample_match.id}, home_team_id={sample_match.home_team_id}, away_team_id={sample_match.away_team_id})"
         assert repr(sample_match) == expected
 
     def test_match_to_dict(self, sample_match):

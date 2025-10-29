@@ -3,10 +3,6 @@ TestContainers模拟模块
 为测试环境提供容器服务的Mock实现
 """
 
-import time
-from typing import Any, Dict, Optional
-from unittest.mock import Mock, patch
-
 
 class MockContainer:
     """模拟容器基类"""
@@ -125,9 +121,7 @@ class TestRedisContainer(RedisContainer):
     """扩展的Redis容器，配置了测试环境"""
 
     def __init__(self, port: Optional[int] = None, **kwargs):
-        super().__init__(
-            image="redis:6", port=port or 16379, **kwargs  # 避免与主Redis冲突
-        )
+        super().__init__(image="redis:6", port=port or 16379, **kwargs)  # 避免与主Redis冲突
 
     def setup_test_data(self) -> None:
         """设置测试数据"""
@@ -135,9 +129,7 @@ class TestRedisContainer(RedisContainer):
         pass
 
 
-def wait_for_logs(
-    container, predicate: str, timeout: int = 30, interval: float = 1.0
-) -> None:
+def wait_for_logs(container, predicate: str, timeout: int = 30, interval: float = 1.0) -> None:
     """等待容器日志中出现指定内容"""
     # Mock实现，直接返回
     pass

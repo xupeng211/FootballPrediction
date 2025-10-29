@@ -214,9 +214,7 @@ async def get_teams(
                 + (i * 5000),  # TODO: 将魔法数字 30000 提取为常量
                 website_url=f"https://team{i}.example.com",
                 team_color=(
-                    ["Red", "Blue", "Green", "Yellow", "Purple"][i - 1]
-                    if i <= 5
-                    else "Orange"
+                    ["Red", "Blue", "Green", "Yellow", "Purple"][i - 1] if i <= 5 else "Orange"
                 ),
             )
             for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
@@ -317,23 +315,17 @@ async def get_matches(
                 attendance=25000 + (i * 3000),  # TODO: 将魔法数字 25000 提取为常量
                 referee=f"Referee {i}",
                 weather=(
-                    ["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i - 1]
-                    if i <= 4
-                    else "Clear"
+                    ["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i - 1] if i <= 4 else "Clear"
                 ),
                 venue=f"Stadium {i * 2}",
                 match_week=i,
                 home_team_form=(
-                    ["W-D-W-L-D", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L", "L-D-D-W-W"][
-                        i - 1
-                    ]
+                    ["W-D-W-L-D", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L", "L-D-D-W-W"][i - 1]
                     if i <= 5
                     else "D-L-W-W-D"
                 ),
                 away_team_form=(
-                    ["D-L-W-W-D", "W-D-L-W-W", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L"][
-                        i - 1
-                    ]
+                    ["D-L-W-W-D", "W-D-L-W-W", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L"][i - 1]
                     if i <= 5
                     else "W-D-D-L-W"
                 ),

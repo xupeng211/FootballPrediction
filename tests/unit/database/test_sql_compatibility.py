@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 17 repeated Mock creations
 
-from unittest.mock import Mock, patch
 
 """
 SQL兼容性测试
@@ -20,7 +19,6 @@ import pytest
 def test_sql_compatibility_module_import():
     """测试：SQL兼容性模块导入"""
     try:
-        from src.database.sql_compatibility import (
             JSONB,
             cast_to_jsonb,
             get_jsonb_type,

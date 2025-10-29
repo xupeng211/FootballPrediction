@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 模型指标导出器模块测试
@@ -12,8 +11,6 @@ Model Metrics Exporter Module Tests
 Tests model metrics exporter functionality defined in src/models/metrics_exporter.py, focused on achieving 100% coverage.
 """
 
-import datetime
-from typing import Any, Dict
 
 import pytest
 
@@ -45,9 +42,7 @@ class MockPredictionResult:
         self.confidence_score = confidence_score
 
 
-@pytest.mark.skipif(
-    not METRICS_EXPORTER_AVAILABLE, reason="Metrics exporter module not available"
-)
+@pytest.mark.skipif(not METRICS_EXPORTER_AVAILABLE, reason="Metrics exporter module not available")
 @pytest.mark.unit
 class TestModelMetricsExporter:
     """ModelMetricsExporter测试"""
@@ -196,13 +191,9 @@ class TestModelMetricsExporter:
 
         for window in time_windows:
             try:
-                exporter.export_accuracy_metrics(
-                    "test_model", "v1.0.0", 0.80, time_window=window
-                )
+                exporter.export_accuracy_metrics("test_model", "v1.0.0", 0.80, time_window=window)
             except Exception as e:
-                pytest.fail(
-                    f"export_accuracy_metrics failed with time window {window}: {e}"
-                )
+                pytest.fail(f"export_accuracy_metrics failed with time window {window}: {e}")
 
     def test_export_accuracy_metrics_invalid_accuracy(self):
         """测试导出准确率指标 - 无效准确率"""
@@ -230,9 +221,7 @@ class TestModelMetricsExporter:
             try:
                 exporter.export_duration_metrics("test_model", "v1.0.0", duration)
             except Exception as e:
-                pytest.fail(
-                    f"export_duration_metrics failed with duration {duration}: {e}"
-                )
+                pytest.fail(f"export_duration_metrics failed with duration {duration}: {e}")
 
     def test_export_duration_metrics_invalid_duration(self):
         """测试导出响应时间指标 - 无效持续时间"""
@@ -260,9 +249,7 @@ class TestModelMetricsExporter:
             try:
                 exporter.export_coverage_metrics("test_model", "v1.0.0", coverage)
             except Exception as e:
-                pytest.fail(
-                    f"export_coverage_metrics failed with coverage {coverage}: {e}"
-                )
+                pytest.fail(f"export_coverage_metrics failed with coverage {coverage}: {e}")
 
     def test_export_coverage_metrics_invalid_coverage(self):
         """测试导出覆盖率指标 - 无效覆盖率"""
@@ -295,9 +282,7 @@ class TestModelMetricsExporter:
             try:
                 exporter.export_error_metrics("test_model", "v1.0.0", error_type)
             except Exception as e:
-                pytest.fail(
-                    f"export_error_metrics failed with error type {error_type}: {e}"
-                )
+                pytest.fail(f"export_error_metrics failed with error type {error_type}: {e}")
 
     def test_export_error_metrics_empty_error_type(self):
         """测试导出错误指标 - 空错误类型"""
@@ -307,9 +292,7 @@ class TestModelMetricsExporter:
             exporter.export_error_metrics("test_model", "v1.0.0", "")
             exporter.export_error_metrics("test_model", "v1.0.0", None)
         except Exception as e:
-            pytest.fail(
-                f"export_error_metrics should handle empty/error None types: {e}"
-            )
+            pytest.fail(f"export_error_metrics should handle empty/error None types: {e}")
 
     def test_export_model_load_duration_valid(self):
         """测试导出模型加载时间指标 - 有效参数"""
@@ -322,9 +305,7 @@ class TestModelMetricsExporter:
             try:
                 exporter.export_model_load_duration("test_model", "v1.0.0", load_time)
             except Exception as e:
-                pytest.fail(
-                    f"export_model_load_duration failed with load time {load_time}: {e}"
-                )
+                pytest.fail(f"export_model_load_duration failed with load time {load_time}: {e}")
 
     def test_export_model_load_duration_invalid_time(self):
         """测试导出模型加载时间指标 - 无效时间"""
@@ -337,9 +318,7 @@ class TestModelMetricsExporter:
             try:
                 exporter.export_model_load_duration("test_model", "v1.0.0", time)
             except Exception as e:
-                pytest.fail(
-                    f"export_model_load_duration should handle invalid time {time}: {e}"
-                )
+                pytest.fail(f"export_model_load_duration should handle invalid time {time}: {e}")
 
     def test_get_metrics_summary_valid(self):
         """测试获取指标摘要 - 正常情况"""
@@ -364,9 +343,7 @@ class TestModelMetricsExporter:
 
         for key in expected_keys:
             assert key in summary, f"Missing key in summary: {key}"
-            assert isinstance(
-                summary[key], str
-            ), f"Summary value for {key} should be a string"
+            assert isinstance(summary[key], str), f"Summary value for {key} should be a string"
 
     def test_get_metrics_summary_content(self):
         """测试获取指标摘要内容"""
@@ -430,9 +407,7 @@ class TestModelMetricsExporter:
             try:
                 method(*args)
             except Exception as e:
-                pytest.fail(
-                    f"{method_name} should handle invalid arguments gracefully: {e}"
-                )
+                pytest.fail(f"{method_name} should handle invalid arguments gracefully: {e}")
 
     def test_integration_workflow_complete(self):
         """测试完整的集成工作流"""
@@ -452,9 +427,7 @@ class TestModelMetricsExporter:
         exporter.export_prediction_metrics(result)
 
         # 2. 导出准确率指标
-        exporter.export_accuracy_metrics(
-            model_name, model_version, 0.85, time_window="7d"
-        )
+        exporter.export_accuracy_metrics(model_name, model_version, 0.85, time_window="7d")
 
         # 3. 导出响应时间
         exporter.export_duration_metrics(model_name, model_version, 1.2)

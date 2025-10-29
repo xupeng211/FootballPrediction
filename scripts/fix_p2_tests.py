@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def fix_databaseconfig_test():
     """修复DatabaseConfig业务逻辑测试"""
 
@@ -527,10 +528,11 @@ if __name__ == "__main__":
     test_filename = "tests/unit/business_logic/test_databaseconfig_business.py"
     os.makedirs(os.path.dirname(test_filename), exist_ok=True)
 
-    with open(test_filename, 'w', encoding='utf-8') as f:
+    with open(test_filename, "w", encoding="utf-8") as f:
         f.write(test_content)
 
     print(f"✅ DatabaseConfig测试文件已修复: {test_filename}")
+
 
 def main():
     """主函数"""
@@ -546,6 +548,7 @@ def main():
 
     print("\n🚀 建议执行命令:")
     print("   python3 -m pytest tests/unit/business_logic/test_databaseconfig_business.py -v")
+
 
 if __name__ == "__main__":
     main()

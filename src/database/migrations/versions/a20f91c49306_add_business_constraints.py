@@ -37,9 +37,7 @@ def upgrade() -> None:
     if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过业务约束和触发器创建")
         op.execute("-- SQLite environment: skipped business constraints and triggers")
-        op.execute(
-            "-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT"
-        )
+        op.execute("-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT")
         return
 
     # 1. 添加比分字段CHECK约束（0-99）
@@ -140,7 +138,8 @@ def upgrade() -> None:
         BEGIN
             -- 检查主队和客队不能相同
             IF NEW.home_team_id = NEW.away_team_id THEN
-                RAISE EXCEPTION 'Home team and away team cannot be the same: team_id = %', NEW.home_team_id;
+                RAISE EXCEPTION 'Home team and away team cannot be the same: team_id =
+    %', NEW.home_team_id;
             END IF;
 
             -- 检查主队和客队都必须存在于teams表中
@@ -210,9 +209,7 @@ def downgrade() -> None:
 
     if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过业务约束和触发器移除")
-        op.execute(
-            "-- SQLite environment: skipped business constraints and triggers removal"
-        )
+        op.execute("-- SQLite environment: skipped business constraints and triggers removal")
         op.execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
         return
 

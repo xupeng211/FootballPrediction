@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from typing import Dict, List, Any
 
+
 class MVPTester:
     """MVP功能测试器"""
 
@@ -25,17 +26,17 @@ class MVPTester:
             "API文档": 0,
             "错误处理": 0,
             "数据完整性": 0,
-            "系统基础功能": 0
+            "系统基础功能": 0,
         }
 
     def print_banner(self):
         """打印测试横幅"""
-        print("🧪" + "="*60)
+        print("🧪" + "=" * 60)
         print("🧪 MVP测试覆盖率验证")
-        print("="*62)
+        print("=" * 62)
         print(f"🎯 目标: 提升测试覆盖率至80%")
         print(f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("🧪" + "="*60)
+        print("🧪" + "=" * 60)
 
     async def test_health_check(self) -> bool:
         """测试系统健康检查"""
@@ -54,12 +55,14 @@ class MVPTester:
                         data = response.json()
                         print(f"✅ 系统状态: {data.get('status', 'unknown')}")
                         self.coverage_areas["系统基础功能"] = 1
-                        self.test_results.append({
-                            "test": "health_check",
-                            "status": "PASS",
-                            "response_time": "< 1s",
-                            "attempt": attempt + 1
-                        })
+                        self.test_results.append(
+                            {
+                                "test": "health_check",
+                                "status": "PASS",
+                                "response_time": "< 1s",
+                                "attempt": attempt + 1,
+                            }
+                        )
                         return True
                     else:
                         print(f"⚠️ 健康检查尝试 {attempt + 1}: HTTP {response.status_code}")
@@ -85,25 +88,26 @@ class MVPTester:
         test_user = {
             "username": f"mvp_test_{int(time.time())}",
             "email": f"mvp_test_{int(time.time())}@test.com",
-            "password": "test123456"
+            "password": "test123456",
         }
 
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
-                    f"{self.base_url}/api/v1/auth/register",
-                    json=test_user
+                    f"{self.base_url}/api/v1/auth/register", json=test_user
                 )
 
                 if response.status_code == 200:
                     data = response.json()
                     print(f"✅ 用户注册成功: {data.get('message', 'unknown')}")
                     self.coverage_areas["用户认证系统"] += 1
-                    self.test_results.append({
-                        "test": "user_registration",
-                        "status": "PASS",
-                        "user_id": data.get('user', {}).get('id')
-                    })
+                    self.test_results.append(
+                        {
+                            "test": "user_registration",
+                            "status": "PASS",
+                            "user_id": data.get("user", {}).get("id"),
+                        }
+                    )
                     return True
                 else:
                     print(f"❌ 用户注册失败: HTTP {response.status_code}")
@@ -116,27 +120,23 @@ class MVPTester:
         """测试用户登录功能"""
         print("\n🔑 测试3: 用户登录功能")
 
-        login_data = {
-            "username": f"mvp_test_{int(time.time())}",
-            "password": "test123456"
-        }
+        login_data = {"username": f"mvp_test_{int(time.time())}", "password": "test123456"}
 
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.post(
-                    f"{self.base_url}/api/v1/auth/login",
-                    data=login_data
-                )
+                response = await client.post(f"{self.base_url}/api/v1/auth/login", data=login_data)
 
                 if response.status_code == 200:
                     data = response.json()
                     print(f"✅ 用户登录成功")
                     self.coverage_areas["用户认证系统"] += 1
-                    self.test_results.append({
-                        "test": "user_login",
-                        "status": "PASS",
-                        "has_token": "access_token" in data
-                    })
+                    self.test_results.append(
+                        {
+                            "test": "user_login",
+                            "status": "PASS",
+                            "has_token": "access_token" in data,
+                        }
+                    )
                     return True
                 else:
                     print(f"❌ 用户登录失败: HTTP {response.status_code}")
@@ -160,24 +160,26 @@ class MVPTester:
                     # 检查数据结构
                     if team_count > 0:
                         sample_team = data[0]
-                        required_fields = ['id', 'name', 'country']
+                        required_fields = ["id", "name", "country"]
                         has_required_fields = all(field in sample_team for field in required_fields)
 
                         print(f"✅ 球队数据获取成功: {team_count}条记录")
                         print(f"✅ 数据结构完整: {has_required_fields}")
 
                         # 检查新增的丰富字段
-                        enhanced_fields = ['founded_year', 'stadium_name', 'stadium_capacity']
+                        enhanced_fields = ["founded_year", "stadium_name", "stadium_capacity"]
                         has_enhanced = any(field in sample_team for field in enhanced_fields)
                         print(f"✅ 数据丰富度: {'基础数据' if not has_enhanced else '增强数据'}")
 
                         self.coverage_areas["数据浏览功能"] += 2
-                        self.test_results.append({
-                            "test": "teams_data",
-                            "status": "PASS",
-                            "record_count": team_count,
-                            "data_quality": "enhanced" if has_enhanced else "basic"
-                        })
+                        self.test_results.append(
+                            {
+                                "test": "teams_data",
+                                "status": "PASS",
+                                "record_count": team_count,
+                                "data_quality": "enhanced" if has_enhanced else "basic",
+                            }
+                        )
                         return True
                     else:
                         print("❌ 球队数据为空")
@@ -203,24 +205,28 @@ class MVPTester:
 
                     if match_count > 0:
                         sample_match = data[0]
-                        required_fields = ['id', 'home_team_name', 'away_team_name', 'match_date']
-                        has_required_fields = all(field in sample_match for field in required_fields)
+                        required_fields = ["id", "home_team_name", "away_team_name", "match_date"]
+                        has_required_fields = all(
+                            field in sample_match for field in required_fields
+                        )
 
                         print(f"✅ 比赛数据获取成功: {match_count}条记录")
                         print(f"✅ 数据结构完整: {has_required_fields}")
 
                         # 检查新增的统计字段
-                        enhanced_fields = ['attendance', 'referee', 'weather', 'venue']
+                        enhanced_fields = ["attendance", "referee", "weather", "venue"]
                         has_enhanced = any(field in sample_match for field in enhanced_fields)
                         print(f"✅ 统计数据: {'基础数据' if not has_enhanced else '增强统计'}")
 
                         self.coverage_areas["数据浏览功能"] += 2
-                        self.test_results.append({
-                            "test": "matches_data",
-                            "status": "PASS",
-                            "record_count": match_count,
-                            "has_statistics": has_enhanced
-                        })
+                        self.test_results.append(
+                            {
+                                "test": "matches_data",
+                                "status": "PASS",
+                                "record_count": match_count,
+                                "has_statistics": has_enhanced,
+                            }
+                        )
                         return True
                     else:
                         print("❌ 比赛数据为空")
@@ -246,23 +252,28 @@ class MVPTester:
 
                     if prediction_count > 0:
                         sample_prediction = data[0]
-                        has_prediction_data = 'prediction' in sample_prediction
+                        has_prediction_data = "prediction" in sample_prediction
 
                         print(f"✅ 预测数据获取成功: {prediction_count}条记录")
                         print(f"✅ 预测算法数据: {'有' if has_prediction_data else '无'}")
 
                         if has_prediction_data:
-                            pred_data = sample_prediction['prediction']
-                            has_probabilities = all(key in pred_data for key in ['home_win_prob', 'draw_prob', 'away_win_prob'])
+                            pred_data = sample_prediction["prediction"]
+                            has_probabilities = all(
+                                key in pred_data
+                                for key in ["home_win_prob", "draw_prob", "away_win_prob"]
+                            )
                             print(f"✅ 概率分析: {'完整' if has_probabilities else '部分'}")
 
                         self.coverage_areas["预测功能"] += 2
-                        self.test_results.append({
-                            "test": "predictions_data",
-                            "status": "PASS",
-                            "record_count": prediction_count,
-                            "has_algorithm": has_prediction_data
-                        })
+                        self.test_results.append(
+                            {
+                                "test": "predictions_data",
+                                "status": "PASS",
+                                "record_count": prediction_count,
+                                "has_algorithm": has_prediction_data,
+                            }
+                        )
                         return True
                     else:
                         print("❌ 预测数据为空")
@@ -288,19 +299,21 @@ class MVPTester:
 
                     if odds_count > 0:
                         sample_odds = data[0]
-                        required_fields = ['match_id', 'bookmaker', 'home_win', 'draw', 'away_win']
+                        required_fields = ["match_id", "bookmaker", "home_win", "draw", "away_win"]
                         has_required_fields = all(field in sample_odds for field in required_fields)
 
                         print(f"✅ 赔率数据获取成功: {odds_count}条记录")
                         print(f"✅ 数据结构完整: {has_required_fields}")
 
                         self.coverage_areas["数据浏览功能"] += 1
-                        self.test_results.append({
-                            "test": "odds_data",
-                            "status": "PASS",
-                            "record_count": odds_count,
-                            "data_quality": "complete" if has_required_fields else "partial"
-                        })
+                        self.test_results.append(
+                            {
+                                "test": "odds_data",
+                                "status": "PASS",
+                                "record_count": odds_count,
+                                "data_quality": "complete" if has_required_fields else "partial",
+                            }
+                        )
                         return True
                     else:
                         print("❌ 赔率数据为空")
@@ -327,16 +340,18 @@ class MVPTester:
                     openapi_response = await client.get(f"{self.base_url}/openapi.json")
                     if openapi_response.status_code == 200:
                         openapi_data = openapi_response.json()
-                        endpoint_count = len(openapi_data.get('paths', {}))
+                        endpoint_count = len(openapi_data.get("paths", {}))
                         print(f"✅ API端点数量: {endpoint_count}")
 
                         self.coverage_areas["API文档"] += 2
-                        self.test_results.append({
-                            "test": "api_documentation",
-                            "status": "PASS",
-                            "endpoint_count": endpoint_count,
-                            "accessible": True
-                        })
+                        self.test_results.append(
+                            {
+                                "test": "api_documentation",
+                                "status": "PASS",
+                                "endpoint_count": endpoint_count,
+                                "accessible": True,
+                            }
+                        )
                         return True
                     else:
                         print("❌ OpenAPI规范不可访问")
@@ -369,8 +384,7 @@ class MVPTester:
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
-                    f"{self.base_url}/api/v1/auth/register",
-                    json={"invalid": "data"}
+                    f"{self.base_url}/api/v1/auth/register", json={"invalid": "data"}
                 )
                 if response.status_code >= 400:
                     print("✅ 数据验证错误处理正常")
@@ -383,7 +397,7 @@ class MVPTester:
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.get(
                     f"{self.base_url}/api/v1/auth/me",
-                    headers={"Authorization": "Bearer invalid_token"}
+                    headers={"Authorization": "Bearer invalid_token"},
                 )
                 if response.status_code == 401:
                     print("✅ 认证错误处理正常")
@@ -392,12 +406,14 @@ class MVPTester:
             pass
 
         self.coverage_areas["错误处理"] = error_tests_passed
-        self.test_results.append({
-            "test": "error_handling",
-            "status": "PASS" if error_tests_passed == total_error_tests else "PARTIAL",
-            "passed_tests": error_tests_passed,
-            "total_tests": total_error_tests
-        })
+        self.test_results.append(
+            {
+                "test": "error_handling",
+                "status": "PASS" if error_tests_passed == total_error_tests else "PARTIAL",
+                "passed_tests": error_tests_passed,
+                "total_tests": total_error_tests,
+            }
+        )
 
         return error_tests_passed >= 2
 
@@ -432,30 +448,32 @@ class MVPTester:
                     teams_data = teams_response.json()
                     if len(teams_data) > 0:
                         sample_team = teams_data[0]
-                        if 'id' in sample_team and 'name' in sample_team:
+                        if "id" in sample_team and "name" in sample_team:
                             print("✅ 数据结构一致性良好")
                             integrity_tests_passed += 1
         except:
             pass
 
         self.coverage_areas["数据完整性"] = integrity_tests_passed
-        self.test_results.append({
-            "test": "data_integrity",
-            "status": "PASS" if integrity_tests_passed == total_integrity_tests else "PARTIAL",
-            "passed_tests": integrity_tests_passed,
-            "total_tests": total_integrity_tests
-        })
+        self.test_results.append(
+            {
+                "test": "data_integrity",
+                "status": "PASS" if integrity_tests_passed == total_integrity_tests else "PARTIAL",
+                "passed_tests": integrity_tests_passed,
+                "total_tests": total_integrity_tests,
+            }
+        )
 
         return integrity_tests_passed >= 1
 
     def print_coverage_report(self):
         """打印覆盖率报告"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 MVP测试覆盖率报告")
-        print("="*62)
+        print("=" * 62)
 
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results if result['status'] == 'PASS')
+        passed_tests = sum(1 for result in self.test_results if result["status"] == "PASS")
         success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
 
         print(f"🎯 总测试数: {total_tests}")
@@ -468,7 +486,9 @@ class MVPTester:
             percentage = (score / max_score) * 100
             print(f"  {area}: {score}/{max_score} ({percentage:.0f}%)")
 
-        total_possible = sum(2 if area != "系统基础功能" else 1 for area in self.coverage_areas.keys())
+        total_possible = sum(
+            2 if area != "系统基础功能" else 1 for area in self.coverage_areas.keys()
+        )
         total_score = sum(self.coverage_areas.values())
         overall_coverage = (total_score / total_possible) * 100 if total_possible > 0 else 0
 
@@ -482,10 +502,11 @@ class MVPTester:
 
         print("\n📋 详细测试结果:")
         for result in self.test_results:
-            status_icon = "✅" if result['status'] == 'PASS' else "⚠️"
+            status_icon = "✅" if result["status"] == "PASS" else "⚠️"
             print(f"  {status_icon} {result['test']}: {result['status']}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
+
 
 async def main():
     """主测试函数"""
@@ -505,7 +526,7 @@ async def main():
         tester.test_odds_data,
         tester.test_api_documentation,
         tester.test_error_handling,
-        tester.test_data_integrity
+        tester.test_data_integrity,
     ]
 
     passed_tests = 0
@@ -516,6 +537,7 @@ async def main():
     tester.print_coverage_report()
 
     return passed_tests == len(tests)
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 工具类覆盖率测试
 快速提升覆盖率到30%

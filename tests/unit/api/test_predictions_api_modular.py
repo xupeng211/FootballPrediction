@@ -47,7 +47,6 @@ class TestPredictionsAPI:
 
     def test_prediction_models_import(self):
         """测试预测模型可以导入"""
-        from src.api.predictions.models import (
             BatchPredictionRequest,
             PredictionOverviewResponse,
             PredictionRequest,

@@ -6,8 +6,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.utils import crypto_utils, i18n, response
-
 
 @pytest.mark.unit
 class TestCryptoUtils:
@@ -50,10 +48,7 @@ class TestCryptoUtils:
         """测试SHA256哈希"""
         text = "hello world"
         hash_value = crypto_utils.CryptoUtils.hash_string(text, algorithm="sha256")
-        assert (
-            hash_value
-            == "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
-        )
+        assert hash_value == "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
         assert len(hash_value) == 64
 
     def test_hash_string_default(self):
@@ -93,9 +88,7 @@ class TestCryptoUtils:
         assert crypto_utils.CryptoUtils.verify_password(password, hashed) is True
 
         # 错误密码
-        assert (
-            crypto_utils.CryptoUtils.verify_password("wrongpassword", hashed) is False
-        )
+        assert crypto_utils.CryptoUtils.verify_password("wrongpassword", hashed) is False
 
         # 空密码和空哈希
         assert crypto_utils.CryptoUtils.verify_password("", "") is True
@@ -205,18 +198,14 @@ class TestResponseUtils:
     def test_api_response_model(self):
         """测试API响应模型"""
         # 测试成功响应模型
-        model = response.APIResponseModel(
-            success=True, message="Success", _data={"id": 1}
-        )
+        model = response.APIResponseModel(success=True, message="Success", _data={"id": 1})
         assert model.success is True
         assert model.message == "Success"
         assert model._data == {"id": 1}
         assert model.code is None
 
         # 测试错误响应模型
-        error_model = response.APIResponseModel(
-            success=False, message="Error", code="400"
-        )
+        error_model = response.APIResponseModel(success=False, message="Error", code="400")
         assert error_model.success is False
         assert error_model.code == "400"
 
@@ -289,7 +278,6 @@ class TestI18nUtils:
         """测试导入时自动初始化"""
         # 由于模块在导入时会自动调用init_i18n
         # 这里主要验证不会抛出异常
-        import importlib
 
         # 重新导入模块
         import sys
@@ -298,6 +286,5 @@ class TestI18nUtils:
             del sys.modules["src.utils.i18n"]
 
         # 应该能成功导入
-        import src.utils.i18n
 
         assert True  # 如果没有异常就算成功

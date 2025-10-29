@@ -253,12 +253,8 @@ class User:
             pref = data["preferences"]
             _user.preferences.favorite_teams = pref.get("favorite_teams", [])
             _user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
-            _user.preferences.notification_enabled = pref.get(
-                "notification_enabled", True
-            )
-            _user.preferences.email_notifications = pref.get(
-                "email_notifications", True
-            )
+            _user.preferences.notification_enabled = pref.get("notification_enabled", True)
+            _user.preferences.email_notifications = pref.get("email_notifications", True)
             _user.preferences.language = pref.get("language", "zh-CN")
             _user.preferences.timezone = pref.get("timezone", "UTC+8")
             _user.preferences.odds_format = pref.get("odds_format", "decimal")

@@ -274,9 +274,7 @@ class Team:
         self.stats.update(result, goals_for, goals_against)
 
         # 更新状态
-        self.form.add_result(
-            "W" if result == "win" else "D" if result == "draw" else "L"
-        )
+        self.form.add_result("W" if result == "win" else "D" if result == "draw" else "L")
 
         self.updated_at = datetime.utcnow()
 

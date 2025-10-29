@@ -11,94 +11,95 @@ import ast
 import re
 from typing import Dict, List, Tuple
 
+
 class AdvancedCoverageBooster:
     """高级覆盖率提升器"""
 
     def __init__(self):
         self.high_value_modules = [
             {
-                'path': 'src/core/config.py',
-                'name': 'ConfigManager',
-                'current_coverage': 36.50,
-                'target_coverage': 75,
-                'priority': 'P1',
-                'complexity': 'high'
+                "path": "src/core/config.py",
+                "name": "ConfigManager",
+                "current_coverage": 36.50,
+                "target_coverage": 75,
+                "priority": "P1",
+                "complexity": "high",
             },
             {
-                'path': 'src/core/di.py',
-                'name': 'DependencyInjection',
-                'current_coverage': 21.77,
-                'target_coverage': 65,
-                'priority': 'P1',
-                'complexity': 'high'
+                "path": "src/core/di.py",
+                "name": "DependencyInjection",
+                "current_coverage": 21.77,
+                "target_coverage": 65,
+                "priority": "P1",
+                "complexity": "high",
             },
             {
-                'path': 'src/api/data_router.py',
-                'name': 'DataRouter',
-                'current_coverage': 60.32,
-                'target_coverage': 85,
-                'priority': 'P1',
-                'complexity': 'high'
+                "path": "src/api/data_router.py",
+                "name": "DataRouter",
+                "current_coverage": 60.32,
+                "target_coverage": 85,
+                "priority": "P1",
+                "complexity": "high",
             },
             {
-                'path': 'src/api/cqrs.py',
-                'name': 'CQRS',
-                'current_coverage': 56.67,
-                'target_coverage': 80,
-                'priority': 'P1',
-                'complexity': 'high'
+                "path": "src/api/cqrs.py",
+                "name": "CQRS",
+                "current_coverage": 56.67,
+                "target_coverage": 80,
+                "priority": "P1",
+                "complexity": "high",
             },
             {
-                'path': 'src/database/config.py',
-                'name': 'DatabaseConfig',
-                'current_coverage': 38.10,
-                'target_coverage': 70,
-                'priority': 'P2',
-                'complexity': 'high'
+                "path": "src/database/config.py",
+                "name": "DatabaseConfig",
+                "current_coverage": 38.10,
+                "target_coverage": 70,
+                "priority": "P2",
+                "complexity": "high",
             },
             {
-                'path': 'src/database/definitions.py',
-                'name': 'DatabaseDefinitions',
-                'current_coverage': 50.00,
-                'target_coverage': 75,
-                'priority': 'P2',
-                'complexity': 'high'
+                "path": "src/database/definitions.py",
+                "name": "DatabaseDefinitions",
+                "current_coverage": 50.00,
+                "target_coverage": 75,
+                "priority": "P2",
+                "complexity": "high",
             },
             {
-                'path': 'src/cqrs/base.py',
-                'name': 'CQRSBase',
-                'current_coverage': 71.05,
-                'target_coverage': 85,
-                'priority': 'P2',
-                'complexity': 'medium'
+                "path": "src/cqrs/base.py",
+                "name": "CQRSBase",
+                "current_coverage": 71.05,
+                "target_coverage": 85,
+                "priority": "P2",
+                "complexity": "medium",
             },
             {
-                'path': 'src/cqrs/application.py',
-                'name': 'CQRSApplication',
-                'current_coverage': 42.11,
-                'target_coverage': 70,
-                'priority': 'P2',
-                'complexity': 'high'
+                "path": "src/cqrs/application.py",
+                "name": "CQRSApplication",
+                "current_coverage": 42.11,
+                "target_coverage": 70,
+                "priority": "P2",
+                "complexity": "high",
             },
             {
-                'path': 'src/models/prediction.py',
-                'name': 'PredictionModel',
-                'current_coverage': 64.94,
-                'target_coverage': 85,
-                'priority': 'P2',
-                'complexity': 'medium'
-            }
+                "path": "src/models/prediction.py",
+                "name": "PredictionModel",
+                "current_coverage": 64.94,
+                "target_coverage": 85,
+                "priority": "P2",
+                "complexity": "medium",
+            },
         ]
 
     def analyze_module(self, module_info: Dict) -> Dict:
         """分析模块结构"""
-        module_path = module_info['path']
+        module_path = module_info["path"]
 
         if not os.path.exists(module_path):
-            return {'error': f'文件不存在: {module_path}'}
+            return {"error": f"文件不存在: {module_path}"}
 
         try:
-            with open(module_path, 'r', encoding='utf-8') as f:
+            with open(module_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -110,20 +111,30 @@ class AdvancedCoverageBooster:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    functions.append({
-                        'name': node.name,
-                        'lineno': node.lineno,
-                        'args': [arg.arg for arg in node.args.args],
-                        'decorators': [d.id if isinstance(d, ast.Name) else str(d) for d in node.decorator_list]
-                    })
+                    functions.append(
+                        {
+                            "name": node.name,
+                            "lineno": node.lineno,
+                            "args": [arg.arg for arg in node.args.args],
+                            "decorators": [
+                                d.id if isinstance(d, ast.Name) else str(d)
+                                for d in node.decorator_list
+                            ],
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
                     methods = [n.name for n in node.body if isinstance(n, ast.FunctionDef)]
-                    classes.append({
-                        'name': node.name,
-                        'lineno': node.lineno,
-                        'methods': methods,
-                        'bases': [base.id if isinstance(base, ast.Name) else str(base) for base in node.bases]
-                    })
+                    classes.append(
+                        {
+                            "name": node.name,
+                            "lineno": node.lineno,
+                            "methods": methods,
+                            "bases": [
+                                base.id if isinstance(base, ast.Name) else str(base)
+                                for base in node.bases
+                            ],
+                        }
+                    )
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
                         imports.append(alias.name)
@@ -132,28 +143,28 @@ class AdvancedCoverageBooster:
                         imports.append(f"{node.module}.*")
 
             return {
-                'functions': functions,
-                'classes': classes,
-                'imports': imports,
-                'total_lines': len(content.split('\n')),
-                'content': content,
-                'ast_parsed': True
+                "functions": functions,
+                "classes": classes,
+                "imports": imports,
+                "total_lines": len(content.split("\n")),
+                "content": content,
+                "ast_parsed": True,
             }
 
         except Exception as e:
-            return {'error': f'分析失败: {str(e)}'}
+            return {"error": f"分析失败: {str(e)}"}
 
     def create_advanced_test(self, module_info: Dict) -> str:
         """创建高级测试文件"""
         analysis = self.analyze_module(module_info)
 
-        if 'error' in analysis:
+        if "error" in analysis:
             print(f"❌ 分析失败: {analysis['error']}")
             return ""
 
-        module_name = module_info['name']
+        module_name = module_info["name"]
         class_name = f"Test{module_name.replace(' ', '')}"
-        target_coverage = module_info['target_coverage']
+        target_coverage = module_info["target_coverage"]
 
         # 生成测试文件内容
         test_content = f'''"""
@@ -434,21 +445,21 @@ if __name__ == "__main__":
 
     def save_test_file(self, module_info: Dict, test_content: str) -> str:
         """保存测试文件"""
-        module_name = module_info['name'].replace(' ', '_').lower()
+        module_name = module_info["name"].replace(" ", "_").lower()
         test_filename = f"tests/unit/advanced/test_{module_name}_advanced.py"
 
         # 确保目录存在
         os.makedirs(os.path.dirname(test_filename), exist_ok=True)
 
         # 写入测试文件
-        with open(test_filename, 'w', encoding='utf-8') as f:
+        with open(test_filename, "w", encoding="utf-8") as f:
             f.write(test_content)
 
         return test_filename
 
     def create_p1_tests(self):
         """创建P1优先级模块测试"""
-        p1_modules = [m for m in self.high_value_modules if m['priority'] == 'P1']
+        p1_modules = [m for m in self.high_value_modules if m["priority"] == "P1"]
 
         print(f"🚀 创建P1高优先级模块测试 ({len(p1_modules)}个模块)")
         print("=" * 60)
@@ -459,7 +470,7 @@ if __name__ == "__main__":
 
             # 分析模块
             analysis = self.analyze_module(module_info)
-            if 'error' in analysis:
+            if "error" in analysis:
                 print(f"  ❌ {analysis['error']}")
                 continue
 
@@ -488,11 +499,13 @@ if __name__ == "__main__":
 
             try:
                 import subprocess
-                result = subprocess.run([
-                    'python3', '-m', 'pytest',
-                    test_file,
-                    '--collect-only', '-q'
-                ], capture_output=True, text=True, timeout=10)
+
+                result = subprocess.run(
+                    ["python3", "-m", "pytest", test_file, "--collect-only", "-q"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
 
                 if result.returncode == 0:
                     print("    ✅ 测试结构正确")
@@ -503,6 +516,7 @@ if __name__ == "__main__":
                 print(f"    ❌ 验证失败: {e}")
 
         print(f"\n📊 验证结果: {success_count}/{len(test_files)} 个测试文件结构正确")
+
 
 def main():
     """主函数"""
@@ -529,9 +543,12 @@ def main():
             print(f"   python3 -m pytest {test_file} --cov=src --cov-report=term")
 
         print("\n📈 批量测试命令:")
-        print("   python3 -m pytest tests/unit/advanced/test_*_advanced.py --cov=src --cov-report=term-missing")
+        print(
+            "   python3 -m pytest tests/unit/advanced/test_*_advanced.py --cov=src --cov-report=term-missing"
+        )
     else:
         print("❌ 没有成功创建任何测试文件")
+
 
 if __name__ == "__main__":
     main()

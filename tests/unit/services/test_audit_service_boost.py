@@ -1,12 +1,8 @@
-from unittest.mock import AsyncMock, Mock
-
 """
 测试审计服务 - 提升覆盖率
 """
 
 import pytest
-
-from src.services.audit_service import AuditService, AuditSeverity
 
 
 @pytest.mark.unit

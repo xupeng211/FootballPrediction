@@ -1,5 +1,3 @@
-from unittest.mock import Mock, patch
-
 """
 Mock Redis 优化测试
 Tests for Mock Redis (Optimized Version)
@@ -8,7 +6,6 @@ Tests for Mock Redis (Optimized Version)
 """
 
 import asyncio
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -44,9 +41,7 @@ def mock_redis_manager():
         yield redis_instance
 
 
-@pytest.mark.skipif(
-    not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available"
-)
+@pytest.mark.skipif(not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available")
 @pytest.mark.unit
 class TestMockRedisOptimized:
     """Mock Redis 优化测试"""
@@ -197,9 +192,7 @@ class TestMockRedisOptimized:
         assert _result == "async_value"
 
 
-@pytest.mark.skipif(
-    not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available"
-)
+@pytest.mark.skipif(not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available")
 class TestRedisManagerIntegration:
     """Redis Manager 集成测试"""
 

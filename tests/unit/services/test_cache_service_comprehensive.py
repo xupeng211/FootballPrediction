@@ -14,17 +14,9 @@ Cache Service Comprehensive Test Suite
 """
 
 import asyncio
-import hashlib
-import json
-import pickle
 import time
-import uuid
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -70,7 +62,6 @@ except ImportError:
     ProcessingCache = Mock()
 
 # 导入缓存相关的Mock类
-from tests.unit.mocks.mock_factory_phase4a import (
     MockCacheConfig,
     MockCacheService,
     MockRedisClient,

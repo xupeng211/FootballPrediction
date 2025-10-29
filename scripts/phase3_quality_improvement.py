@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from collections import defaultdict, Counter
 
+
 def analyze_ruff_errors():
     """分析Ruff错误分布"""
     print("🔍 分析Ruff错误分布")
@@ -18,12 +19,9 @@ def analyze_ruff_errors():
     # 运行ruff检查并获取详细输出
     try:
         result = subprocess.run(
-            ["ruff", "check", "--output-format=grouped"],
-            capture_output=True,
-            text=True,
-            timeout=60
+            ["ruff", "check", "--output-format=grouped"], capture_output=True, text=True, timeout=60
         )
-        errors = result.stdout.split('\n')
+        errors = result.stdout.split("\n")
     except Exception as e:
         print(f"❌ 分析失败: {e}")
         return {}
@@ -37,8 +35,8 @@ def analyze_ruff_errors():
             continue
 
         # 解析错误行格式: 文件路径:行号:列号: 错误代码 错误描述
-        if '->' in line or ':' in line:
-            parts = line.split(':', 3)
+        if "->" in line or ":" in line:
+            parts = line.split(":", 3)
             if len(parts) >= 4:
                 file_path = parts[0]
                 error_code = parts[3].split()[0] if parts[3].strip() else "UNKNOWN"
@@ -47,50 +45,51 @@ def analyze_ruff_errors():
                 file_errors[file_path].append(error_code)
 
     return {
-        'error_stats': dict(error_stats),
-        'file_errors': dict(file_errors),
-        'total_errors': sum(error_stats.values())
+        "error_stats": dict(error_stats),
+        "file_errors": dict(file_errors),
+        "total_errors": sum(error_stats.values()),
     }
+
 
 def categorize_errors_by_priority(error_stats):
     """按优先级分类错误"""
     high_priority = {
         # 语法错误 - 阻止运行
-        'invalid-syntax': 'critical',
-        'E722': 'high',  # bare-except
-        'E401': 'medium', # multiple-imports-on-one-line
-        'E713': 'medium', # not-in-test
-
+        "invalid-syntax": "critical",
+        "E722": "high",  # bare-except
+        "E401": "medium",  # multiple-imports-on-one-line
+        "E713": "medium",  # not-in-test
         # 逻辑错误
-        'F541': 'medium', # f-string-missing-placeholders
-        'F841': 'medium', # unused-variable
-        'F402': 'low',    # import-shadowed-by-loop-var
+        "F541": "medium",  # f-string-missing-placeholders
+        "F841": "medium",  # unused-variable
+        "F402": "low",  # import-shadowed-by-loop-var
     }
 
     categorized = defaultdict(list)
     for error_code, count in error_stats.items():
-        priority = high_priority.get(error_code, 'low')
+        priority = high_priority.get(error_code, "low")
         categorized[priority].append((error_code, count))
 
     return categorized
+
 
 def identify_critical_files(file_errors):
     """识别关键文件"""
     # 关键源码文件优先级更高
     critical_patterns = [
-        'src/',
-        'tests/unit/',
-        'tests/integration/',
+        "src/",
+        "tests/unit/",
+        "tests/integration/",
     ]
 
     # 低优先级文件
     low_priority_patterns = [
-        'scripts/',
-        'config/',
-        'docs/',
-        'tests/e2e/',  # 端到端测试优先级较低
-        '__pycache__',
-        '.pytest_cache',
+        "scripts/",
+        "config/",
+        "docs/",
+        "tests/e2e/",  # 端到端测试优先级较低
+        "__pycache__",
+        ".pytest_cache",
     ]
 
     critical_files = []
@@ -105,47 +104,44 @@ def identify_critical_files(file_errors):
             critical_files.append((file_path, len(errors)))  # 默认为关键文件
 
     return {
-        'critical': sorted(critical_files, key=lambda x: x[1], reverse=True),
-        'low_priority': sorted(low_priority_files, key=lambda x: x[1], reverse=True)
+        "critical": sorted(critical_files, key=lambda x: x[1], reverse=True),
+        "low_priority": sorted(low_priority_files, key=lambda x: x[1], reverse=True),
     }
+
 
 def create_smart_fix_strategy(error_stats, file_analysis):
     """创建智能修复策略"""
     print("🎯 制定智能修复策略")
     print("=" * 40)
 
-    strategy = {
-        'immediate_fixes': [],
-        'auto_fixable': [],
-        'manual_review': [],
-        'skip_files': []
-    }
+    strategy = {"immediate_fixes": [], "auto_fixable": [], "manual_review": [], "skip_files": []}
 
     # 1. 立即修复的关键语法错误
-    critical_files = file_analysis['critical'][:20]  # 前20个关键文件
+    critical_files = file_analysis["critical"][:20]  # 前20个关键文件
     for file_path, error_count in critical_files:
-        if 'src/' in file_path and error_count > 0:
-            strategy['immediate_fixes'].append(file_path)
+        if "src/" in file_path and error_count > 0:
+            strategy["immediate_fixes"].append(file_path)
 
     # 2. 可以自动修复的错误
-    auto_fixable_codes = ['F541', 'E401', 'F402']
+    auto_fixable_codes = ["F541", "E401", "F402"]
     for code in auto_fixable_codes:
         if code in error_stats:
-            strategy['auto_fixable'].append((code, error_stats[code]))
+            strategy["auto_fixable"].append((code, error_stats[code]))
 
     # 3. 需要手动检查的错误
-    manual_codes = ['invalid-syntax', 'E722', 'F841']
+    manual_codes = ["invalid-syntax", "E722", "F841"]
     for code in manual_codes:
         if code in error_stats:
-            strategy['manual_review'].append((code, error_stats[code]))
+            strategy["manual_review"].append((code, error_stats[code]))
 
     # 4. 跳过的低优先级文件
-    low_priority_files = file_analysis['low_priority']
+    low_priority_files = file_analysis["low_priority"]
     for file_path, error_count in low_priority_files[:50]:  # 跳过前50个低优先级文件
-        if 'scripts/' in file_path or 'config/' in file_path:
-            strategy['skip_files'].append(file_path)
+        if "scripts/" in file_path or "config/" in file_path:
+            strategy["skip_files"].append(file_path)
 
     return strategy
+
 
 def execute_phase3_strategy(strategy):
     """执行阶段3策略"""
@@ -161,7 +157,7 @@ def execute_phase3_strategy(strategy):
     # 1. 跳过低优先级文件
     print("\n第1步: 跳过低优先级文件")
     skip_count = 0
-    for file_path in strategy['skip_files']:
+    for file_path in strategy["skip_files"]:
         # 创建.gitignore风格的排除，或者用ruff配置忽略
         skip_count += 1
         if skip_count <= 10:  # 只显示前10个
@@ -172,7 +168,7 @@ def execute_phase3_strategy(strategy):
 
     # 2. 自动修复可修复的错误
     print("\n第2步: 自动修复可修复错误")
-    for error_code, count in strategy['auto_fixable']:
+    for error_code, count in strategy["auto_fixable"]:
         print(f"  🔧 自动修复 {error_code}: {count} 个错误")
         try:
             # 使用ruff自动修复
@@ -180,7 +176,7 @@ def execute_phase3_strategy(strategy):
                 ["ruff", "check", f"--select={error_code}", "--fix"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             if result.returncode == 0:
                 print(f"    ✅ {error_code} 修复成功")
@@ -192,8 +188,8 @@ def execute_phase3_strategy(strategy):
     # 3. 修复关键文件
     print("\n第3步: 修复关键源码文件")
     fixed_files = 0
-    for file_path in strategy['immediate_fixes'][:15]:  # 处理前15个关键文件
-        if file_path.endswith('.py'):
+    for file_path in strategy["immediate_fixes"][:15]:  # 处理前15个关键文件
+        if file_path.endswith(".py"):
             print(f"  🔧 处理关键文件: {file_path}")
             try:
                 # 尝试自动修复该文件的所有可修复错误
@@ -201,7 +197,7 @@ def execute_phase3_strategy(strategy):
                     ["ruff", "check", file_path, "--fix"],
                     capture_output=True,
                     text=True,
-                    timeout=20
+                    timeout=20,
                 )
 
                 if result.returncode == 0:
@@ -217,6 +213,7 @@ def execute_phase3_strategy(strategy):
 
     return True
 
+
 def generate_improvement_report():
     """生成改进报告"""
     print("\n📊 生成阶段3改进报告")
@@ -225,23 +222,23 @@ def generate_improvement_report():
     # 重新检查错误状态
     try:
         result = subprocess.run(
-            ["ruff", "check", "--statistics"],
-            capture_output=True,
-            text=True,
-            timeout=30
+            ["ruff", "check", "--statistics"], capture_output=True, text=True, timeout=30
         )
 
         print("当前错误状态:")
         print(result.stdout)
 
         # 提取总错误数
-        total_line = [line for line in result.stdout.split('\n') if 'Found' in line and 'errors' in line]
+        total_line = [
+            line for line in result.stdout.split("\n") if "Found" in line and "errors" in line
+        ]
         if total_line:
             print("\n🎯 阶段3改进效果:")
             print(f"  剩余错误数: {total_line[0]}")
 
     except Exception as e:
         print(f"❌ 生成报告失败: {e}")
+
 
 def main():
     """主函数"""
@@ -256,9 +253,9 @@ def main():
         print("❌ 无法获取错误分析，退出")
         return False
 
-    error_stats = analysis['error_stats']
-    file_errors = analysis['file_errors']
-    total_errors = analysis['total_errors']
+    error_stats = analysis["error_stats"]
+    file_errors = analysis["file_errors"]
+    total_errors = analysis["total_errors"]
 
     print(f"发现 {total_errors} 个错误，涉及 {len(file_errors)} 个文件")
     print(f"错误类型分布: {len(error_stats)} 种")
@@ -276,8 +273,8 @@ def main():
     print("\n📂 第3步: 识别关键文件")
     file_analysis = identify_critical_files(file_errors)
 
-    critical_count = len(file_analysis['critical'])
-    low_priority_count = len(file_analysis['low_priority'])
+    critical_count = len(file_analysis["critical"])
+    low_priority_count = len(file_analysis["low_priority"])
 
     print(f"关键文件: {critical_count} 个")
     print(f"低优先级文件: {low_priority_count} 个")
@@ -294,6 +291,7 @@ def main():
     generate_improvement_report()
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

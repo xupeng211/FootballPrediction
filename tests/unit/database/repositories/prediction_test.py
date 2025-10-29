@@ -3,10 +3,6 @@
 解决模块导入失败和函数调用问题
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 智能Mock兼容修复模式 - 创建完整的Mock实现
@@ -506,9 +502,7 @@ class TestDatabaseRepositoriesPrediction:
         assert all(pred.status == PredictionStatus.COMPLETED for pred in result)
 
         # 测试限制数量
-        result_limited = await prediction_repository.get_completed_predictions(
-            days=7, limit=1
-        )
+        result_limited = await prediction_repository.get_completed_predictions(days=7, limit=1)
         assert len(result_limited) <= 1
 
     @pytest.mark.asyncio
@@ -530,9 +524,7 @@ class TestDatabaseRepositoriesPrediction:
         assert created_pred.match_id == 1
 
         # 测试查找单个
-        found_pred = await prediction_repository.find_one_by(
-            {"user_id": 1, "match_id": 1}
-        )
+        found_pred = await prediction_repository.find_one_by({"user_id": 1, "match_id": 1})
         assert found_pred is not None
 
         # 测试更新
@@ -548,9 +540,7 @@ class TestDatabaseRepositoriesPrediction:
         user_id = 123
         match_id = 456
 
-        result = await prediction_repository.get_user_prediction_for_match(
-            user_id, match_id
-        )
+        result = await prediction_repository.get_user_prediction_for_match(user_id, match_id)
 
         assert result is not None
         assert result.user_id == user_id
@@ -597,9 +587,7 @@ class TestDatabaseRepositoriesPrediction:
     @pytest.mark.asyncio
     async def test_cancel_prediction(self, prediction_repository):
         """测试取消预测"""
-        result = await prediction_repository.cancel_prediction(
-            prediction_id=1, reason="用户取消"
-        )
+        result = await prediction_repository.cancel_prediction(prediction_id=1, reason="用户取消")
 
         assert result is not None
         assert result.status == PredictionStatus.CANCELLED
@@ -608,9 +596,7 @@ class TestDatabaseRepositoriesPrediction:
     @pytest.mark.asyncio
     async def test_user_prediction_stats(self, prediction_repository):
         """测试获取用户预测统计"""
-        stats = await prediction_repository.get_user_prediction_stats(
-            user_id=123, days=30
-        )
+        stats = await prediction_repository.get_user_prediction_stats(user_id=123, days=30)
 
         assert stats is not None
         assert "total" in stats

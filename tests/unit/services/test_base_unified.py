@@ -1,13 +1,9 @@
-from unittest.mock import AsyncMock, MagicMock
-
 """
 统一基础服务测试
 Base Unified Service Tests
 
 测试BaseService的核心功能。
 """
-
-from datetime import datetime
 
 import pytest
 
@@ -162,25 +158,19 @@ class TestBaseService:
         """测试记录错误日志"""
         with pytest.mock.patch.object(self.service.logger, "error") as mock_error:
             error = Exception("Test error")
-            self.service.log_error(
-                operation="test_op", error=error, details={"key": "value"}
-            )
+            self.service.log_error(operation="test_op", error=error, details={"key": "value"})
             mock_error.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_async_session(self):
         """测试获取异步会话"""
-        with pytest.mock.patch.object(
-            self.service.db_manager, "get_async_session"
-        ) as mock_session:
+        with pytest.mock.patch.object(self.service.db_manager, "get_async_session") as mock_session:
             await self.service.get_async_session()
             mock_session.assert_called_once()
 
     def test_get_sync_session(self):
         """测试获取同步会话"""
-        with pytest.mock.patch.object(
-            self.service.db_manager, "get_session"
-        ) as mock_session:
+        with pytest.mock.patch.object(self.service.db_manager, "get_session") as mock_session:
             self.service.get_sync_session()
             mock_session.assert_called_once()
 
@@ -215,17 +205,12 @@ class TestParameterizedInput:
             "types": [str, int, float, bool, list, dict, tuple, set],
         }
 
-    @pytest.mark.parametrize(
-        "input_value", ["", "test", 0, 1, -1, True, False, [], {}, None]
-    )
+    @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入
         assert (
-            input_value is not None
-            or input_value == ""
-            or input_value == []
-            or input_value == {}
+            input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )
 
     @pytest.mark.parametrize(
@@ -258,9 +243,7 @@ class TestParameterizedInput:
         assert isinstance(input_list, list)
         assert len(input_list) >= 0
 
-    @pytest.mark.parametrize(
-        "invalid_data", [None, "", "not-a-number", {}, [], True, False]
-    )
+    @pytest.mark.parametrize("invalid_data", [None, "", "not-a-number", {}, [], True, False])
     def test_error_handling(self, invalid_data):
         """测试错误处理"""
         try:
@@ -281,9 +264,7 @@ class TestParameterizedInput:
 class TestBoundaryConditions:
     """边界条件测试"""
 
-    @pytest.mark.parametrize(
-        "number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999]
-    )
+    @pytest.mark.parametrize("number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999])
     def test_number_boundaries(self, number):
         """测试数字边界值"""
         assert isinstance(number, (int, float))

@@ -4,10 +4,6 @@
 重构时间: 2025-10-25 13:28
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
@@ -35,9 +31,7 @@ class TestModelsPredictionReal:
         try:
             result = get("test_arg_0", "test_arg_1")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'get'} 测试跳过: {e}")
@@ -48,9 +42,7 @@ class TestModelsPredictionReal:
         try:
             result = set("test_arg_0", "test_arg_1", "test_arg_2", "test_arg_3")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'set'} 测试跳过: {e}")
@@ -61,9 +53,7 @@ class TestModelsPredictionReal:
         try:
             result = clear("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'clear'} 测试跳过: {e}")
@@ -74,9 +64,7 @@ class TestModelsPredictionReal:
         try:
             result = inc("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'inc'} 测试跳过: {e}")
@@ -87,9 +75,7 @@ class TestModelsPredictionReal:
         try:
             result = observe("test_arg_0", "test_arg_1")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'observe'} 测试跳过: {e}")
@@ -123,9 +109,7 @@ class TestModelsPredictionReal:
             instance = PredictionCache()
             if hasattr(instance, "get"):
                 result = instance.get()
-                assert result is not None or isinstance(
-                    result, (bool, int, float, str, list, dict)
-                )
+                assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
             else:
                 pytest.skip("方法 get 不存在")
         except Exception as e:

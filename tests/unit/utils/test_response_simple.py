@@ -1,10 +1,6 @@
 """API响应工具简单测试"""
 
-from datetime import datetime
-
 import pytest
-
-from src.utils.response import APIResponse, ResponseUtils
 
 
 @pytest.mark.unit

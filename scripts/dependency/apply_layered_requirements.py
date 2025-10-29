@@ -267,9 +267,7 @@ class LayeredDependencyManager:
         venv_path = self.project_root / f".venv-{target_env}"
         if not venv_path.exists():
             print(f"  - 创建虚拟环境 {venv_path}...")
-            subprocess.run(
-                [self.python_executable, "-m", "venv", str(venv_path)], check=True
-            )
+            subprocess.run([self.python_executable, "-m", "venv", str(venv_path)], check=True)
 
         # 激活虚拟环境并安装依赖
         if sys.platform == "win32":
@@ -281,9 +279,7 @@ class LayeredDependencyManager:
             print(f"  - 在 {venv_path} 中安装依赖...")
             req_file = self._get_requirements_file(target_env)
             if req_file and req_file.exists():
-                subprocess.run(
-                    [str(pip_executable), "install", "-r", str(req_file)], check=True
-                )
+                subprocess.run([str(pip_executable), "install", "-r", str(req_file)], check=True)
                 print(f"✅ {target_env} 环境准备完成")
                 print(f"  激活命令: source {venv_path}/bin/activate")
                 return True
@@ -325,9 +321,7 @@ class LayeredDependencyManager:
                 }
 
         # 保存报告
-        report_file = (
-            self.project_root / "docs/_reports" / "DEPENDENCY_ENVIRONMENTS_REPORT.json"
-        )
+        report_file = self.project_root / "docs/_reports" / "DEPENDENCY_ENVIRONMENTS_REPORT.json"
         report_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(report_file, "w") as f:
@@ -440,9 +434,7 @@ def main():
         print("\n📊 环境报告:")
         for env, info in report["environments"].items():
             status = "✅" if info["exists"] else "❌"
-            pkg_count = (
-                f" ({info['package_count']} 包)" if info["package_count"] else ""
-            )
+            pkg_count = f" ({info['package_count']} 包)" if info["package_count"] else ""
             print(f"  {status} {env}: {info['requirements_file']}{pkg_count}")
 
     elif args.action == "fix":

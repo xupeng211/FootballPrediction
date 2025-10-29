@@ -9,6 +9,7 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 
+
 def apply_ci_optimizations():
     """
     应用CI配置优化
@@ -21,7 +22,7 @@ def apply_ci_optimizations():
         return False
 
     # 读取优化报告
-    with open(optimization_report_file, 'r') as f:
+    with open(optimization_report_file, "r") as f:
         optimization_report = json.load(f)
 
     optimized_standards = optimization_report["optimized_standards"]
@@ -55,6 +56,7 @@ def apply_ci_optimizations():
 
     return True
 
+
 def update_ci_quality_gate(project_root, standards):
     """
     更新CI质量门禁配置
@@ -66,24 +68,24 @@ def update_ci_quality_gate(project_root, standards):
         return
 
     # 备份原文件
-    backup_file = ci_file.with_suffix('.yml.backup')
+    backup_file = ci_file.with_suffix(".yml.backup")
     shutil.copy2(ci_file, backup_file)
     print(f"📋 已备份原CI配置: {backup_file}")
 
     # 读取CI配置
-    with open(ci_file, 'r', encoding='utf-8') as f:
+    with open(ci_file, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 更新覆盖率阈值
-    coverage_minimum = standards['coverage']['minimum']
+    coverage_minimum = standards["coverage"]["minimum"]
 
     # 查找并替换覆盖率配置
     import re
 
     # 更新测试阶段的覆盖率阈值
-    coverage_pattern = r'--cov-fail-under=\d+'
+    coverage_pattern = r"--cov-fail-under=\d+"
     if re.search(coverage_pattern, content):
-        content = re.sub(coverage_pattern, f'--cov-fail-under={coverage_minimum}', content)
+        content = re.sub(coverage_pattern, f"--cov-fail-under={coverage_minimum}", content)
         print(f"✅ 已更新覆盖率阈值为 {coverage_minimum}%")
 
     # 更新质量门禁评估标准
@@ -144,20 +146,20 @@ def update_ci_quality_gate(project_root, standards):
     # 在quality-gate job的Evaluate quality gate步骤后添加新的评估
     if "## 质量门禁评估" in content:
         # 如果已经存在，替换
-        old_pattern = r'## 🎯 质量门禁评估.*?(?=\n\n|\n      - name:|\n$)'
+        old_pattern = r"## 🎯 质量门禁评估.*?(?=\n\n|\n      - name:|\n$)"
         content = re.sub(old_pattern, quality_check_script.strip(), content, flags=re.DOTALL)
     else:
         # 如果不存在，在quality-gate job的最后添加
         content = content.replace(
-            '            exit 1',
-            quality_check_script.strip() + '\n            fi'
+            "            exit 1", quality_check_script.strip() + "\n            fi"
         )
 
     # 保存更新后的配置
-    with open(ci_file, 'w', encoding='utf-8') as f:
+    with open(ci_file, "w", encoding="utf-8") as f:
         f.write(content)
 
     print("✅ 已更新CI质量门禁配置")
+
 
 def update_health_monitor_config(project_root, standards):
     """
@@ -170,24 +172,25 @@ def update_health_monitor_config(project_root, standards):
         return
 
     # 备份原文件
-    backup_file = health_file.with_suffix('.yml.backup')
+    backup_file = health_file.with_suffix(".yml.backup")
     shutil.copy2(health_file, backup_file)
     print(f"📋 已备份健康监控配置: {backup_file}")
 
     # 读取配置
-    with open(health_file, 'r', encoding='utf-8') as f:
+    with open(health_file, "r", encoding="utf-8") as f:
         content = f.read()
 
     # 更新覆盖率检查阈值
-    coverage_minimum = standards['coverage']['minimum']
-    coverage_pattern = r'--cov-fail-under=\d+'
+    coverage_minimum = standards["coverage"]["minimum"]
+    coverage_pattern = r"--cov-fail-under=\d+"
     if re.search(coverage_pattern, content):
-        content = re.sub(coverage_pattern, f'--cov-fail-under={coverage_minimum}', content)
+        content = re.sub(coverage_pattern, f"--cov-fail-under={coverage_minimum}", content)
         print(f"✅ 已更新健康监控覆盖率阈值为 {coverage_minimum}%")
 
     # 保存更新后的配置
-    with open(health_file, 'w', encoding='utf-8') as f:
+    with open(health_file, "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def create_quality_config_file(project_root, standards):
     """
@@ -206,15 +209,16 @@ def create_quality_config_file(project_root, standards):
             "ci_quality_gate": True,
             "health_monitor": True,
             "coverage_threshold_adjusted": True,
-            "error_thresholds_optimized": True
+            "error_thresholds_optimized": True,
         },
-        "next_review_date": datetime.fromordinal(datetime.now().toordinal() + 7).isoformat()
+        "next_review_date": datetime.fromordinal(datetime.now().toordinal() + 7).isoformat(),
     }
 
-    with open(quality_config_file, 'w', encoding='utf-8') as f:
+    with open(quality_config_file, "w", encoding="utf-8") as f:
         json.dump(quality_config, f, indent=2, ensure_ascii=False)
 
     print(f"✅ 已创建质量配置文件: {quality_config_file}")
+
 
 def generate_application_report(project_root, optimization_report):
     """
@@ -323,10 +327,11 @@ def generate_application_report(project_root, optimization_report):
 *下次优化评估: {datetime.fromordinal(datetime.now().toordinal() + 7).strftime('%Y-%m-%d')}*
 """
 
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report_content)
 
     print(f"✅ 已生成应用报告: {report_file}")
+
 
 def main():
     """
@@ -348,6 +353,8 @@ def main():
         print("\n❌ 质量标准优化配置应用失败")
         print("请检查错误信息并重试")
 
+
 if __name__ == "__main__":
     import re
+
     main()

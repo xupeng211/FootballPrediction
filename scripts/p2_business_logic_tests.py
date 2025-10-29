@@ -11,80 +11,79 @@ import re
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
+
 class P2BusinessLogicTestGenerator:
     """P2阶段业务逻辑测试生成器"""
 
     def __init__(self):
         self.p2_modules = [
             {
-                'path': 'src/database/config.py',
-                'name': 'DatabaseConfig',
-                'current_coverage': 38.10,
-                'target_coverage': 70,
-                'priority': 'P2',
-                'test_type': 'real_business_logic',
-                'complexity': 'high',
-                'functions': [
-                    'get_database_config',
-                    'get_test_database_config',
-                    'get_production_database_config',
-                    'get_database_url',
-                    'DatabaseConfig.sync_url',
-                    'DatabaseConfig.async_url',
-                    'DatabaseConfig.alembic_url',
-                    '_is_sqlite',
-                    '_get_env_bool',
-                    '_parse_int'
-                ]
-            },
-            {
-                'path': 'src/cqrs/application.py',
-                'name': 'CQRSApplication',
-                'current_coverage': 42.11,
-                'target_coverage': 70,
-                'priority': 'P2',
-                'test_type': 'real_business_logic',
-                'complexity': 'high',
-                'classes': [
-                    'PredictionCQRSService',
-                    'MatchCQRSService',
-                    'UserCQRSService',
-                    'AnalyticsCQRSService',
-                    'CQRSServiceFactory'
+                "path": "src/database/config.py",
+                "name": "DatabaseConfig",
+                "current_coverage": 38.10,
+                "target_coverage": 70,
+                "priority": "P2",
+                "test_type": "real_business_logic",
+                "complexity": "high",
+                "functions": [
+                    "get_database_config",
+                    "get_test_database_config",
+                    "get_production_database_config",
+                    "get_database_url",
+                    "DatabaseConfig.sync_url",
+                    "DatabaseConfig.async_url",
+                    "DatabaseConfig.alembic_url",
+                    "_is_sqlite",
+                    "_get_env_bool",
+                    "_parse_int",
                 ],
-                'functions': [
-                    'initialize_cqrs'
-                ]
             },
             {
-                'path': 'src/database/definitions.py',
-                'name': 'DatabaseDefinitions',
-                'current_coverage': 50.00,
-                'target_coverage': 75,
-                'priority': 'P2',
-                'test_type': 'real_business_logic',
-                'complexity': 'medium'
+                "path": "src/cqrs/application.py",
+                "name": "CQRSApplication",
+                "current_coverage": 42.11,
+                "target_coverage": 70,
+                "priority": "P2",
+                "test_type": "real_business_logic",
+                "complexity": "high",
+                "classes": [
+                    "PredictionCQRSService",
+                    "MatchCQRSService",
+                    "UserCQRSService",
+                    "AnalyticsCQRSService",
+                    "CQRSServiceFactory",
+                ],
+                "functions": ["initialize_cqrs"],
             },
             {
-                'path': 'src/models/prediction.py',
-                'name': 'PredictionModel',
-                'current_coverage': 64.94,
-                'target_coverage': 85,
-                'priority': 'P2',
-                'test_type': 'real_business_logic',
-                'complexity': 'medium'
-            }
+                "path": "src/database/definitions.py",
+                "name": "DatabaseDefinitions",
+                "current_coverage": 50.00,
+                "target_coverage": 75,
+                "priority": "P2",
+                "test_type": "real_business_logic",
+                "complexity": "medium",
+            },
+            {
+                "path": "src/models/prediction.py",
+                "name": "PredictionModel",
+                "current_coverage": 64.94,
+                "target_coverage": 85,
+                "priority": "P2",
+                "test_type": "real_business_logic",
+                "complexity": "medium",
+            },
         ]
 
     def analyze_real_code_paths(self, module_info: Dict) -> Dict:
         """分析真实代码路径"""
-        module_path = module_info['path']
+        module_path = module_info["path"]
 
         if not os.path.exists(module_path):
-            return {'error': f'文件不存在: {module_path}'}
+            return {"error": f"文件不存在: {module_path}"}
 
         try:
-            with open(module_path, 'r', encoding='utf-8') as f:
+            with open(module_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -98,50 +97,53 @@ class P2BusinessLogicTestGenerator:
                 if isinstance(node, ast.FunctionDef):
                     # 提取函数的实际逻辑
                     function_info = {
-                        'name': node.name,
-                        'lineno': node.lineno,
-                        'args': [arg.arg for arg in node.args.args],
-                        'has_return': self._has_return_statement(node),
-                        'complexity': self._calculate_complexity(node),
-                        'testable_paths': self._extract_testable_paths(node)
+                        "name": node.name,
+                        "lineno": node.lineno,
+                        "args": [arg.arg for arg in node.args.args],
+                        "has_return": self._has_return_statement(node),
+                        "complexity": self._calculate_complexity(node),
+                        "testable_paths": self._extract_testable_paths(node),
                     }
                     functions.append(function_info)
-                    code_paths.extend(function_info['testable_paths'])
+                    code_paths.extend(function_info["testable_paths"])
 
                 elif isinstance(node, ast.ClassDef):
                     methods = []
                     for n in node.body:
                         if isinstance(n, ast.FunctionDef):
                             method_info = {
-                                'name': n.name,
-                                'lineno': n.lineno,
-                                'args': [arg.arg for arg in n.args.args],
-                                'has_return': self._has_return_statement(n),
-                                'complexity': self._calculate_complexity(n),
-                                'testable_paths': self._extract_testable_paths(n)
+                                "name": n.name,
+                                "lineno": n.lineno,
+                                "args": [arg.arg for arg in n.args.args],
+                                "has_return": self._has_return_statement(n),
+                                "complexity": self._calculate_complexity(n),
+                                "testable_paths": self._extract_testable_paths(n),
                             }
                             methods.append(method_info)
-                            code_paths.extend(method_info['testable_paths'])
+                            code_paths.extend(method_info["testable_paths"])
 
                     class_info = {
-                        'name': node.name,
-                        'lineno': node.lineno,
-                        'methods': methods,
-                        'bases': [base.id if isinstance(base, ast.Name) else str(base) for base in node.bases]
+                        "name": node.name,
+                        "lineno": node.lineno,
+                        "methods": methods,
+                        "bases": [
+                            base.id if isinstance(base, ast.Name) else str(base)
+                            for base in node.bases
+                        ],
                     }
                     classes.append(class_info)
 
             return {
-                'functions': functions,
-                'classes': classes,
-                'code_paths': code_paths,
-                'total_lines': len(content.split('\n')),
-                'content': content,
-                'ast_parsed': True
+                "functions": functions,
+                "classes": classes,
+                "code_paths": code_paths,
+                "total_lines": len(content.split("\n")),
+                "content": content,
+                "ast_parsed": True,
             }
 
         except Exception as e:
-            return {'error': f'分析失败: {str(e)}'}
+            return {"error": f"分析失败: {str(e)}"}
 
     def _has_return_statement(self, node) -> bool:
         """检查函数是否有返回语句"""
@@ -167,22 +169,26 @@ class P2BusinessLogicTestGenerator:
         for child in ast.walk(node):
             if isinstance(child, ast.If):
                 # 提取if条件测试路径
-                condition = ast.unparse(child.test) if hasattr(ast, 'unparse') else str(child.test)
-                paths.append({
-                    'type': 'conditional',
-                    'condition': condition,
-                    'lineno': child.lineno,
-                    'test_type': 'branch_coverage'
-                })
+                condition = ast.unparse(child.test) if hasattr(ast, "unparse") else str(child.test)
+                paths.append(
+                    {
+                        "type": "conditional",
+                        "condition": condition,
+                        "lineno": child.lineno,
+                        "test_type": "branch_coverage",
+                    }
+                )
             elif isinstance(child, ast.Call):
                 # 提取函数调用测试路径
                 if isinstance(child.func, ast.Name):
-                    paths.append({
-                        'type': 'function_call',
-                        'function': child.func.id,
-                        'lineno': child.lineno,
-                        'test_type': 'integration'
-                    })
+                    paths.append(
+                        {
+                            "type": "function_call",
+                            "function": child.func.id,
+                            "lineno": child.lineno,
+                            "test_type": "integration",
+                        }
+                    )
 
         return paths
 
@@ -190,17 +196,17 @@ class P2BusinessLogicTestGenerator:
         """创建真实业务逻辑测试"""
         analysis = self.analyze_real_code_paths(module_info)
 
-        if 'error' in analysis:
+        if "error" in analysis:
             print(f"❌ 分析失败: {analysis['error']}")
             return ""
 
-        module_name = module_info['name']
+        module_name = module_info["name"]
         class_name = f"Test{module_name.replace(' ', '')}BusinessLogic"
-        target_coverage = module_info['target_coverage']
-        module_path = module_info['path']
+        target_coverage = module_info["target_coverage"]
+        module_path = module_info["path"]
 
         # 清理导入路径
-        import_path = module_path.replace('src/', '').replace('/', '.').replace('.py', '')
+        import_path = module_path.replace("src/", "").replace("/", ".").replace(".py", "")
 
         # 生成真实业务逻辑测试
         test_content = f'''"""
@@ -252,11 +258,15 @@ class {class_name}:
 '''
 
         # 根据模块分析结果生成具体测试
-        if analysis['functions']:
-            test_content += self._generate_function_tests(module_info, analysis['functions'], import_path)
+        if analysis["functions"]:
+            test_content += self._generate_function_tests(
+                module_info, analysis["functions"], import_path
+            )
 
-        if analysis['classes']:
-            test_content += self._generate_class_tests(module_info, analysis['classes'], import_path)
+        if analysis["classes"]:
+            test_content += self._generate_class_tests(
+                module_info, analysis["classes"], import_path
+            )
 
         # 添加业务逻辑集成测试
         test_content += self._generate_integration_tests(module_info, import_path)
@@ -299,13 +309,15 @@ if __name__ == "__main__":
 
         return test_content
 
-    def _generate_function_tests(self, module_info: Dict, functions: List[Dict], import_path: str) -> str:
+    def _generate_function_tests(
+        self, module_info: Dict, functions: List[Dict], import_path: str
+    ) -> str:
         """生成函数测试"""
         test_content = "\n    # 真实函数逻辑测试\n"
 
         for func in functions:
-            func_name = func['name']
-            if func_name.startswith('_') and not func_name.startswith('__'):
+            func_name = func["name"]
+            if func_name.startswith("_") and not func_name.startswith("__"):
                 continue  # 跳过私有函数
 
             test_content += f'''
@@ -347,7 +359,7 @@ if __name__ == "__main__":
 '''
 
             # 添加边界条件测试
-            if func['complexity'] > 3:
+            if func["complexity"] > 3:
                 test_content += f'''
     def test_{func_name}_edge_cases(self):
         """测试 {func_name} 的边界条件"""
@@ -371,13 +383,15 @@ if __name__ == "__main__":
 
         return test_content
 
-    def _generate_class_tests(self, module_info: Dict, classes: List[Dict], import_path: str) -> str:
+    def _generate_class_tests(
+        self, module_info: Dict, classes: List[Dict], import_path: str
+    ) -> str:
         """生成类测试"""
         test_content = "\n    # 真实类业务逻辑测试\n"
 
         for cls in classes:
-            cls_name = cls['name']
-            if cls_name.startswith('_'):
+            cls_name = cls["name"]
+            if cls_name.startswith("_"):
                 continue  # 跳过私有类
 
             test_content += f'''
@@ -410,9 +424,9 @@ if __name__ == "__main__":
 '''
 
             # 测试特定的业务方法
-            for method in cls['methods']:
-                method_name = method['name']
-                if method_name.startswith('_'):
+            for method in cls["methods"]:
+                method_name = method["name"]
+                if method_name.startswith("_"):
                     continue
 
                 test_content += f'''
@@ -605,24 +619,26 @@ if __name__ == "__main__":
 
             # 分析模块
             analysis = self.analyze_real_code_paths(module_info)
-            if 'error' in analysis:
+            if "error" in analysis:
                 print(f"  ❌ {analysis['error']}")
                 continue
 
-            print(f"  📊 分析结果: {len(analysis['functions'])}函数, {len(analysis['classes'])}类, {len(analysis['code_paths'])}代码路径")
+            print(
+                f"  📊 分析结果: {len(analysis['functions'])}函数, {len(analysis['classes'])}类, {len(analysis['code_paths'])}代码路径"
+            )
 
             # 创建业务逻辑测试
             test_content = self.create_real_business_logic_test(module_info)
             if test_content:
                 # 保存测试文件
-                clean_name = module_info['name'].replace(' ', '_').lower()
+                clean_name = module_info["name"].replace(" ", "_").lower()
                 test_filename = f"tests/unit/business_logic/test_{clean_name}_business.py"
 
                 # 确保目录存在
                 os.makedirs(os.path.dirname(test_filename), exist_ok=True)
 
                 # 写入测试文件
-                with open(test_filename, 'w', encoding='utf-8') as f:
+                with open(test_filename, "w", encoding="utf-8") as f:
                     f.write(test_content)
 
                 created_files.append(test_filename)
@@ -644,11 +660,13 @@ if __name__ == "__main__":
 
             try:
                 import subprocess
-                result = subprocess.run([
-                    'python3', '-m', 'pytest',
-                    test_file,
-                    '--collect-only', '-q'
-                ], capture_output=True, text=True, timeout=15)
+
+                result = subprocess.run(
+                    ["python3", "-m", "pytest", test_file, "--collect-only", "-q"],
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
 
                 if result.returncode == 0:
                     print("    ✅ 测试结构正确")
@@ -664,6 +682,7 @@ if __name__ == "__main__":
             print("🎉 P2阶段业务逻辑测试创建成功！")
         else:
             print("⚠️ 部分测试文件需要修复")
+
 
 def main():
     """主函数"""
@@ -690,18 +709,21 @@ def main():
             print(f"   python3 -m pytest {test_file} --cov=src --cov-report=term")
 
         print("\n📈 批量测试命令:")
-        print("   python3 -m pytest tests/unit/business_logic/test_*_business.py --cov=src --cov-report=term-missing")
+        print(
+            "   python3 -m pytest tests/unit/business_logic/test_*_business.py --cov=src --cov-report=term-missing"
+        )
 
         # 运行一个测试示例
         test_file = created_files[0]
         print(f"\n🔍 运行测试示例: {os.path.basename(test_file)}")
 
         try:
-            result = subprocess.run([
-                'python3', '-m', 'pytest',
-                test_file,
-                '-v', '--tb=short'
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["python3", "-m", "pytest", test_file, "-v", "--tb=short"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 print("  ✅ 示例测试运行成功")
@@ -712,6 +734,8 @@ def main():
     else:
         print("❌ 没有成功创建任何业务逻辑测试文件")
 
+
 if __name__ == "__main__":
     import subprocess
+
     main()

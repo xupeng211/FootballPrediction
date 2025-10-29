@@ -4,7 +4,6 @@
 完整覆盖src.utils.validators模块的所有功能，包含成功、异常和边界用例
 """
 
-import re
 from typing import Any, Dict, List
 from unittest.mock import Mock, patch
 

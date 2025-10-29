@@ -12,10 +12,6 @@ Service Lifecycle Management Tests
 Tests service lifecycle management functionality defined in src/core/service_lifecycle.py.
 """
 
-import asyncio
-import threading
-from datetime import datetime, timedelta
-from typing import Any, Optional
 
 import pytest
 

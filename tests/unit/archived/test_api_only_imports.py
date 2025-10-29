@@ -1,5 +1,4 @@
 # API模块导入测试
-from unittest.mock import Mock
 
 import pytest
 

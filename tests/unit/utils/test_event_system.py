@@ -1,4 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock
 
 """
 事件系统单元测试
@@ -9,19 +8,16 @@ Tests core functionality of the event system.
 """
 
 import asyncio
-from datetime import datetime, timedelta
 
 import pytest
 import pytest_asyncio
 
-from src.events import (
     Event,
     EventHandler,
     get_event_bus,
     start_event_bus,
     stop_event_bus,
 )
-from src.events.handlers import (
     AnalyticsEventHandler,
     LoggingEventHandler,
     MetricsEventHandler,

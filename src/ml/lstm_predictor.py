@@ -6,7 +6,6 @@ LSTM Time Series Prediction Model
 基于长短期记忆网络的质量指标时间序列预测和异常检测
 """
 
-import json
 import pickle
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
@@ -29,7 +28,6 @@ except ImportError:
     tf = None
 
 from src.core.logging_system import get_logger
-from src.core.config import get_config
 from src.timeseries.influxdb_client import influxdb_manager
 
 logger = get_logger(__name__)
@@ -129,9 +127,7 @@ class LSTMPredictor:
             # 创建序列数据
             X, y = self._create_sequences(features_scaled, target_scaled)
 
-            self.logger.info(
-                f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}"
-            )
+            self.logger.info(f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}")
             return X, y
 
         except Exception as e:
@@ -145,10 +141,7 @@ class LSTMPredictor:
         X, y = [], []
 
         for i in range(
-            len(features)
-            - self.config.sequence_length
-            - self.config.prediction_horizon
-            + 1
+            len(features) - self.config.sequence_length - self.config.prediction_horizon + 1
         ):
             # 输入序列
             X.append(features[i : i + self.config.sequence_length])
@@ -355,29 +348,15 @@ class LSTMPredictor:
             )
 
             if len(recent_data) < self.config.sequence_length:
-                raise ValueError(
-                    f"历史数据不足，需要至少 {self.config.sequence_length} 个数据点"
-                )
+                raise ValueError(f"历史数据不足，需要至少 {self.config.sequence_length} 个数据点")
 
             # 提取特征数据
             features_data = []
             for point in recent_data:
                 feature_vector = [
-                    (
-                        point.get("value", 0)
-                        if point.get("field") == "overall_score"
-                        else 0
-                    ),
-                    (
-                        point.get("cpu_usage", 0)
-                        if point.get("field") == "cpu_usage"
-                        else 0
-                    ),
-                    (
-                        point.get("memory_usage", 0)
-                        if point.get("field") == "memory_usage"
-                        else 0
-                    ),
+                    (point.get("value", 0) if point.get("field") == "overall_score" else 0),
+                    (point.get("cpu_usage", 0) if point.get("field") == "cpu_usage" else 0),
+                    (point.get("memory_usage", 0) if point.get("field") == "memory_usage" else 0),
                     (
                         point.get("active_connections", 0)
                         if point.get("field") == "active_connections"
@@ -403,9 +382,7 @@ class LSTMPredictor:
             self.logger.error(f"未来预测失败: {e}")
             raise
 
-    def evaluate_model(
-        self, test_X: np.ndarray, test_y: np.ndarray
-    ) -> Dict[str, float]:
+    def evaluate_model(self, test_X: np.ndarray, test_y: np.ndarray) -> Dict[str, float]:
         """评估模型性能"""
         try:
             # 预测
@@ -489,9 +466,7 @@ class LSTMPredictor:
             self.logger.info(f"开始使用历史数据训练模型 (过去{days}天)")
 
             # 获取历史数据
-            historical_data = await influxdb_manager.get_quality_metrics_history(
-                hours=days * 24
-            )
+            historical_data = await influxdb_manager.get_quality_metrics_history(hours=days * 24)
 
             if len(historical_data) < 100:
                 raise ValueError(f"历史数据不足，只有 {len(historical_data)} 个数据点")
@@ -545,9 +520,7 @@ if __name__ == "__main__":
         # 生成模拟历史数据
         np.random.seed(42)
         n_points = 200
-        timestamps = [
-            datetime.now() - timedelta(hours=i) for i in range(n_points, 0, -1)
-        ]
+        timestamps = [datetime.now() - timedelta(hours=i) for i in range(n_points, 0, -1)]
 
         mock_data = []
         for i, timestamp in enumerate(timestamps):
@@ -562,9 +535,7 @@ if __name__ == "__main__":
                     "field": "overall_score",
                     "cpu_usage": 40 + 20 * np.sin(i * 0.05) + np.random.normal(0, 5),
                     "memory_usage": 60 + 15 * np.cos(i * 0.08) + np.random.normal(0, 3),
-                    "active_connections": 10
-                    + 5 * np.sin(i * 0.03)
-                    + np.random.randint(-2, 3),
+                    "active_connections": 10 + 5 * np.sin(i * 0.03) + np.random.randint(-2, 3),
                 }
             )
 

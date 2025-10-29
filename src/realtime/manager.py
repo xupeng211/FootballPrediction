@@ -13,10 +13,8 @@ import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Union
-from dataclasses import dataclass, asdict
 import uuid
 from fastapi import WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
 
 from .events import EventType, RealtimeEvent
 from .subscriptions import SubscriptionManager
@@ -164,9 +162,7 @@ class WebSocketConnection:
 
             except asyncio.TimeoutError:
                 # 发送心跳
-                await self.send(
-                    {"type": "heartbeat", "timestamp": datetime.now().isoformat()}
-                )
+                await self.send({"type": "heartbeat", "timestamp": datetime.now().isoformat()})
             except WebSocketDisconnect:
                 break
             except Exception as e:
@@ -281,9 +277,7 @@ class WebSocketManager:
         connection = self.connections[connection_id]
         return await connection.send(message)
 
-    async def send_to_user(
-        self, user_id: str, message: Union[str, dict, RealtimeEvent]
-    ) -> int:
+    async def send_to_user(self, user_id: str, message: Union[str, dict, RealtimeEvent]) -> int:
         """发送消息到特定用户的所有连接"""
         if user_id not in self.user_connections:
             return 0
@@ -352,32 +346,24 @@ class WebSocketManager:
         """订阅事件"""
         return self.subscription_manager.subscribe(connection_id, event_type, filters)
 
-    async def unsubscribe_from_event(
-        self, connection_id: str, event_type: EventType
-    ) -> bool:
+    async def unsubscribe_from_event(self, connection_id: str, event_type: EventType) -> bool:
         """取消订阅事件"""
         return self.subscription_manager.unsubscribe(connection_id, event_type)
 
     async def publish_event(self, event: RealtimeEvent) -> int:
         """发布事件"""
         # 获取订阅者
-        subscribers = self.subscription_manager.get_subscribers(
-            event.event_type, event.data
-        )
+        subscribers = self.subscription_manager.get_subscribers(event.event_type, event.data)
 
         success_count = 0
         for connection_id in subscribers:
             if await self.send_to_connection(connection_id, event):
                 success_count += 1
 
-        self.logger.debug(
-            f"Event {event.event_type} sent to {success_count} subscribers"
-        )
+        self.logger.debug(f"Event {event.event_type} sent to {success_count} subscribers")
         return success_count
 
-    async def _handle_connection_event(
-        self, connection: WebSocketConnection, status: str
-    ) -> None:
+    async def _handle_connection_event(self, connection: WebSocketConnection, status: str) -> None:
         """处理连接事件"""
         event = RealtimeEvent(
             event_type=EventType.CONNECTION_STATUS,
@@ -402,18 +388,14 @@ class WebSocketManager:
                         dead_connections.append(connection_id)
                     elif connection.get_uptime() > timedelta(hours=1):
                         # 检查长时间无活动的连接
-                        if datetime.now() - connection.info.last_activity > timedelta(
-                            minutes=30
-                        ):
+                        if datetime.now() - connection.info.last_activity > timedelta(minutes=30):
                             dead_connections.append(connection_id)
 
                 for connection_id in dead_connections:
                     await self.disconnect(connection_id)
 
                 if dead_connections:
-                    self.logger.info(
-                        f"Cleaned up {len(dead_connections)} dead connections"
-                    )
+                    self.logger.info(f"Cleaned up {len(dead_connections)} dead connections")
 
             except Exception as e:
                 self.logger.error(f"Cleanup task error: {e}")
@@ -425,12 +407,9 @@ class WebSocketManager:
             "total_users": len(self.user_connections),
             "total_rooms": len(self.rooms),
             "total_subscriptions": self.subscription_manager.get_total_subscriptions(),
-            "connections_by_room": {
-                room: len(members) for room, members in self.rooms.items()
-            },
+            "connections_by_room": {room: len(members) for room, members in self.rooms.items()},
             "users_by_connection_count": {
-                user_id: len(connections)
-                for user_id, connections in self.user_connections.items()
+                user_id: len(connections) for user_id, connections in self.user_connections.items()
             },
         }
 

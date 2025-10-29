@@ -97,9 +97,7 @@ class TestDataQualityMonitor:
         with patch.object(monitor, "_find_missing_matches") as mock_missing:
             with patch.object(monitor, "_find_suspicious_odds") as mock_odds:
                 with patch.object(monitor, "_find_unusual_scores") as mock_scores:
-                    with patch.object(
-                        monitor, "_check_data_consistency"
-                    ) as mock_consistency:
+                    with patch.object(monitor, "_check_data_consistency") as mock_consistency:
                         mock_missing.return_value = {
                             "missing_matches": 2,
                             "details": ["Match 1", "Match 2"],
@@ -108,9 +106,7 @@ class TestDataQualityMonitor:
                             {"match_id": 123, "issue": "suspicious_odds"},
                             {"match_id": 456, "issue": "extreme_value"},
                         ]
-                        mock_scores.return_value = [
-                            {"match_id": 789, "issue": "high_scoring"}
-                        ]
+                        mock_scores.return_value = [{"match_id": 789, "issue": "high_scoring"}]
                         mock_consistency.return_value = [
                             {"match_id": 101, "issue": "inconsistent_data"}
                         ]
@@ -480,9 +476,7 @@ class TestDataQualityMonitor:
                         "odds": {"status": "warning"},
                         "overall_status": "warning",
                     }
-                    mock_anomalies.return_value = [
-                        {"type": "suspicious_odds", "count": 2}
-                    ]
+                    mock_anomalies.return_value = [{"type": "suspicious_odds", "count": 2}]
                     mock_report.return_value = {
                         "timestamp": datetime.now(),
                         "quality_score": 85.0,
@@ -535,9 +529,7 @@ class TestDataQualityMonitor:
         assert monitor.thresholds["data_freshness_hours"] > 0
         assert 0 < monitor.thresholds["missing_data_rate"] < 1
         assert monitor.thresholds["odds_min_value"] > 1.0
-        assert (
-            monitor.thresholds["odds_max_value"] > monitor.thresholds["odds_min_value"]
-        )
+        assert monitor.thresholds["odds_max_value"] > monitor.thresholds["odds_min_value"]
         assert monitor.thresholds["score_max_value"] > 0
         assert 0 < monitor.thresholds["suspicious_odds_change"] < 1
 
@@ -611,9 +603,7 @@ class TestDataQualityMonitorIntegration:
 
         for i in range(3):
             with patch.object(monitor, "check_data_freshness") as mock_check:
-                mock_check.return_value = {
-                    "overall_status": "good" if i % 2 == 0 else "warning"
-                }
+                mock_check.return_value = {"overall_status": "good" if i % 2 == 0 else "warning"}
                 _result = await monitor.check_data_freshness()
                 check_results.append(result)
 

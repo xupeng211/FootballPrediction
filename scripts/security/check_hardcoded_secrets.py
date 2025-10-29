@@ -30,9 +30,7 @@ SECRET_PATTERNS: List[Tuple[str, Pattern[str]]] = [
     ),
     (
         "Database URL",
-        re.compile(
-            r"(?:mysql|postgresql)://(?!{.*})([^:@\s]+):([^@]+)@", re.IGNORECASE
-        ),
+        re.compile(r"(?:mysql|postgresql)://(?!{.*})([^:@\s]+):([^@]+)@", re.IGNORECASE),
     ),
     # Secrets
     (

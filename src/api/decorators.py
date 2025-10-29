@@ -359,9 +359,7 @@ async def demo_decorator_context(
         return {
             "value": x * 2,
             "user_id": decorator_context.get("user_id") if decorator_context else None,
-            "request_id": (
-                decorator_context.get("request_id") if decorator_context else None
-            ),
+            "request_id": (decorator_context.get("request_id") if decorator_context else None),
         }
 
     # 应用装饰器

@@ -15,7 +15,9 @@ def fix_logger_in_class(file_path: Path, class_name: str) -> bool:
     original_content = content
 
     # 查找类的 __init__ 方法
-    class_pattern = rf"(class {class_name}[^:]*:.*?)(def __init__\(self[^)]*\):\s*\n(.*?)(?=def|class|$))"
+    class_pattern = (
+        rf"(class {class_name}[^:]*:.*?)(def __init__\(self[^)]*\):\s*\n(.*?)(?=def|class|$))"
+    )
     match = re.search(class_pattern, content, re.DOTALL)
 
     if match:
@@ -39,9 +41,7 @@ def fix_logger_in_class(file_path: Path, class_name: str) -> bool:
 
         # 重新构建内容
         new_init = "\n".join(lines)
-        content = content.replace(
-            match.group(0), match.group(1) + match.group(2) + "\n" + new_init
-        )
+        content = content.replace(match.group(0), match.group(1) + match.group(2) + "\n" + new_init)
 
         # 确保有 logging 导入
         if "import logging" not in content:
@@ -104,18 +104,14 @@ def main():
                             break
 
                     if insert_idx > 0:
-                        lines.insert(
-                            insert_idx, "\nlogger = logging.getLogger(__name__)\n"
-                        )
+                        lines.insert(insert_idx, "\nlogger = logging.getLogger(__name__)\n")
                         content = "\n".join(lines)
 
                         # 确保有 logging 导入
                         if "import logging" not in content:
                             import_idx = 0
                             for i, line in enumerate(lines):
-                                if line.startswith("import ") or line.startswith(
-                                    "from "
-                                ):
+                                if line.startswith("import ") or line.startswith("from "):
                                     import_idx = i + 1
                                 elif line.strip() == "" and import_idx > 0:
                                     break

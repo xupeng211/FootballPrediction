@@ -107,9 +107,7 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
     async def get_active_users(self, limit: int = 100) -> List[User]:
         """获取活跃用户"""
         filters = {"is_active": True}
-        query_spec = QuerySpec(
-            filters=filters, order_by=["-last_login_at"], limit=limit
-        )
+        query_spec = QuerySpec(filters=filters, order_by=["-last_login_at"], limit=limit)
         return await self.find_many(query_spec)
 
     async def get_users_created_in_range(
@@ -210,9 +208,7 @@ class UserRepository(UserRepositoryInterface):
         await self.session.refresh(user)
         return user
 
-    async def update_by_id(
-        self, id: int, update_data: Dict[str, Any]
-    ) -> Optional[User]:
+    async def update_by_id(self, id: int, update_data: Dict[str, Any]) -> Optional[User]:
         """根据ID更新用户"""
         query = update(User).where(User.id == id)
 
@@ -220,12 +216,8 @@ class UserRepository(UserRepositoryInterface):
         update_data["updated_at"] = datetime.utcnow()
 
         # 处理特殊字段
-        if "last_login_at" in update_data and isinstance(
-            update_data["last_login_at"], str
-        ):
-            update_data["last_login_at"] = datetime.fromisoformat(
-                update_data["last_login_at"]
-            )
+        if "last_login_at" in update_data and isinstance(update_data["last_login_at"], str):
+            update_data["last_login_at"] = datetime.fromisoformat(update_data["last_login_at"])
 
         # 构建更新语句
         for key, value in update_data.items():
@@ -305,19 +297,13 @@ class UserRepository(UserRepositoryInterface):
             "member_since": user.created_at,
             "active_days": active_days,
             "predictions_per_day": (
-                (prediction_stats.total_predictions or 0) / active_days
-                if active_days > 0
-                else 0
+                (prediction_stats.total_predictions or 0) / active_days if active_days > 0 else 0
             ),
         }
 
     async def update_last_login(self, user_id: int) -> bool:
         """更新用户最后登录时间"""
-        query = (
-            update(User)
-            .where(User.id == user_id)
-            .values(last_login_at=datetime.utcnow())
-        )
+        query = update(User).where(User.id == user_id).values(last_login_at=datetime.utcnow())
         result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0

@@ -5,7 +5,6 @@
 
 from datetime import datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -91,7 +90,8 @@ class MockPredictions:
 
     def __repr__(self):
         # 智能Mock兼容修复模式 - 添加repr方法
-        return f"MockPredictions(id={self.id}, match_id={self.match_id}, model={self.model_version})"
+        return f"MockPredictions(id =
+    {self.id}, match_id={self.match_id}, model={self.model_version})"
 
 
 class MockMatch:

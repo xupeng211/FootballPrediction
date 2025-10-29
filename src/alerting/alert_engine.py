@@ -8,9 +8,7 @@ Intelligent Alert Engine
 
 import json
 import asyncio
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
@@ -259,9 +257,7 @@ class TrendAnalyzer:
 
             # 计算变化率
             if len(values) >= 2:
-                change_rate = (
-                    (values[-1] - values[0]) / values[0] * 100 if values[0] != 0 else 0
-                )
+                change_rate = (values[-1] - values[0]) / values[0] * 100 if values[0] != 0 else 0
             else:
                 change_rate = 0
 
@@ -280,9 +276,7 @@ class TrendAnalyzer:
             self.logger.error(f"趋势分析失败: {e}")
             return {"trend": "error", "direction": 0, "slope": 0, "confidence": 0}
 
-    def _extract_metric_value(
-        self, data: Dict[str, Any], metric_path: str
-    ) -> Optional[float]:
+    def _extract_metric_value(self, data: Dict[str, Any], metric_path: str) -> Optional[float]:
         """从数据中提取指定指标的值"""
         try:
             keys = metric_path.split(".")
@@ -304,9 +298,7 @@ class AlertEngine:
 
     def __init__(self):
         self.config = get_config()
-        self.redis_client = redis.Redis(
-            host="localhost", port=6379, db=1, decode_responses=True
-        )
+        self.redis_client = redis.Redis(host="localhost", port=6379, db=1, decode_responses=True)
         self.rules: Dict[str, AlertRule] = {}
         self.active_alerts: Dict[str, Alert] = {}
         self.alert_history: List[Alert] = []
@@ -445,9 +437,7 @@ class AlertEngine:
                     continue
 
                 # 检查是否满足告警条件
-                if self._evaluate_condition(
-                    current_value, rule.operator, rule.threshold
-                ):
+                if self._evaluate_condition(current_value, rule.operator, rule.threshold):
                     # 检查是否在冷却期内
                     if not self._is_in_cooldown(rule.id, rule.cooldown):
                         # 创建告警
@@ -496,9 +486,7 @@ class AlertEngine:
 
         return triggered_alerts
 
-    def _extract_metric_value(
-        self, data: Dict[str, Any], metric_path: str
-    ) -> Optional[float]:
+    def _extract_metric_value(self, data: Dict[str, Any], metric_path: str) -> Optional[float]:
         """从数据中提取指标值"""
         try:
             keys = metric_path.split("_")
@@ -515,9 +503,7 @@ class AlertEngine:
         except Exception:
             return None
 
-    def _evaluate_condition(
-        self, current_value: float, operator: str, threshold: float
-    ) -> bool:
+    def _evaluate_condition(self, current_value: float, operator: str, threshold: float) -> bool:
         """评估告警条件"""
         try:
             if operator == "<":
@@ -570,9 +556,7 @@ class AlertEngine:
                     self.anomaly_detector.train(historical_data)
 
                 # 检测异常
-                is_anomaly, anomaly_score = self.anomaly_detector.detect_anomaly(
-                    metrics
-                )
+                is_anomaly, anomaly_score = self.anomaly_detector.detect_anomaly(metrics)
 
                 if is_anomaly:
                     alert = Alert(
@@ -612,9 +596,7 @@ class AlertEngine:
                 ]
 
                 for metric in key_metrics:
-                    trend_result = self.trend_analyzer.analyze_trend(
-                        historical_data, metric
-                    )
+                    trend_result = self.trend_analyzer.analyze_trend(historical_data, metric)
 
                     # 如果趋势恶化且置信度较高
                     if (
@@ -672,9 +654,7 @@ class AlertEngine:
 
         for alert in alerts:
             # 创建告警签名（基于类型、严重程度、消息）
-            signature = (
-                f"{alert.type.value}_{alert.severity.value}_{hash(alert.message)}"
-            )
+            signature = f"{alert.type.value}_{alert.severity.value}_{hash(alert.message)}"
 
             if signature not in seen_signatures:
                 unique_alerts.append(alert)
@@ -686,9 +666,7 @@ class AlertEngine:
         """保存告警到Redis"""
         try:
             alert_key = f"alert:{alert.id}"
-            self.redis_client.setex(
-                alert_key, 86400, json.dumps(alert.to_dict())  # 24小时过期
-            )
+            self.redis_client.setex(alert_key, 86400, json.dumps(alert.to_dict()))  # 24小时过期
 
             # 设置冷却期
             if "rule_id" in alert.details:
@@ -748,9 +726,7 @@ class AlertEngine:
 
     def get_alert_history(self, limit: int = 100) -> List[Alert]:
         """获取告警历史"""
-        return sorted(self.alert_history, key=lambda x: x.timestamp, reverse=True)[
-            :limit
-        ]
+        return sorted(self.alert_history, key=lambda x: x.timestamp, reverse=True)[:limit]
 
     def start_background_monitoring(self):
         """启动后台监控任务"""

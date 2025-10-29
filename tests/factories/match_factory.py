@@ -4,7 +4,6 @@
 
 import random
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 from .base import BaseFactory, DataFactoryMixin, TimestampMixin
 
@@ -56,9 +55,7 @@ class MatchFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
         }
 
         # 确保控球率总和为100
-        total_possession = (
-            default_data["home_possession"] + default_data["away_possession"]
-        )
+        total_possession = default_data["home_possession"] + default_data["away_possession"]
         if total_possession != 100:
             default_data["home_possession"] = round(
                 default_data["home_possession"] / total_possession * 100, 1
@@ -116,19 +113,14 @@ class MatchFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
         """创建进行中的比赛"""
         return cls.create(
             status="live",
-            match_date=datetime.now(timezone.utc)
-            - timedelta(minutes=random.randint(1, 89)),
+            match_date=datetime.now(timezone.utc) - timedelta(minutes=random.randint(1, 89)),
             **kwargs,
         )
 
     @classmethod
-    def create_for_teams(
-        cls, home_team_id: int, away_team_id: int, **kwargs
-    ) -> Dict[str, Any]:
+    def create_for_teams(cls, home_team_id: int, away_team_id: int, **kwargs) -> Dict[str, Any]:
         """为特定球队创建比赛"""
-        return cls.create(
-            home_team_id=home_team_id, away_team_id=away_team_id, **kwargs
-        )
+        return cls.create(home_team_id=home_team_id, away_team_id=away_team_id, **kwargs)
 
     @classmethod
     def create_high_scoring(cls, **kwargs) -> Dict[str, Any]:
@@ -161,18 +153,14 @@ class MatchFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
         """创建主队获胜比赛"""
         home_score = random.randint(1, 5)
         away_score = random.randint(0, home_score - 1)
-        return cls.create_completed(
-            home_score=home_score, away_score=away_score, **kwargs
-        )
+        return cls.create_completed(home_score=home_score, away_score=away_score, **kwargs)
 
     @classmethod
     def create_away_win(cls, **kwargs) -> Dict[str, Any]:
         """创建客队获胜比赛"""
         away_score = random.randint(1, 5)
         home_score = random.randint(0, away_score - 1)
-        return cls.create_completed(
-            home_score=home_score, away_score=away_score, **kwargs
-        )
+        return cls.create_completed(home_score=home_score, away_score=away_score, **kwargs)
 
     @classmethod
     def _generate_match_date(cls) -> datetime:
@@ -251,9 +239,7 @@ class CupMatchFactory(MatchFactory):
                         ]
                     ),
                 ),
-                "two_legged_tie": kwargs.get(
-                    "two_legged_tie", random.choice([True, False])
-                ),
+                "two_legged_tie": kwargs.get("two_legged_tie", random.choice([True, False])),
                 "away_goals_rule": kwargs.get("away_goals_rule", True),
                 "extra_time_possible": kwargs.get("extra_goals_rule", True),
                 "penalties_possible": kwargs.get("penalties_possible", True),

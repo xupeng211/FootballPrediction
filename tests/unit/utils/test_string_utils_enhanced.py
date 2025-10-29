@@ -9,10 +9,7 @@
 """
 
 import re
-import unicodedata
-from functools import lru_cache
 from typing import List
-from unittest.mock import MagicMock, patch
 import pytest
 
 # 智能Mock兼容修复模式 - 基于Issue #98成功实践
@@ -111,9 +108,7 @@ class MockStringUtils:
         return [int(num) for num in re.findall(r"\d+", text)]
 
     @staticmethod
-    def mask_sensitive_data(
-        text: str, mask_char: str = "*", visible_chars: int = 4
-    ) -> str:
+    def mask_sensitive_data(text: str, mask_char: str = "*", visible_chars: int = 4) -> str:
         """遮蔽敏感数据 - Mock实现"""
         if not isinstance(text, str):
             return ""
@@ -248,9 +243,7 @@ class TestStringUtilsEnhanced:
         ]
 
         for email in invalid_emails:
-            assert not string_utils.is_valid_email(
-                email
-            ), f"Should not validate: {email}"
+            assert not string_utils.is_valid_email(email), f"Should not validate: {email}"
 
     def test_slugify_basic(self, string_utils):
         """测试基本slug生成"""
@@ -346,9 +339,7 @@ class TestStringUtilsEnhanced:
         ]
 
         for phone in invalid_phones:
-            assert not string_utils.is_valid_phone(
-                phone
-            ), f"Should not validate: {phone}"
+            assert not string_utils.is_valid_phone(phone), f"Should not validate: {phone}"
 
     # 集成测试 - 基于Issue #98集成测试模式
     def test_string_processing_workflow(self, string_utils):
@@ -416,9 +407,7 @@ class TestStringUtilsModule:
         """测试正则表达式模式 - 基于Issue #98常量测试模式"""
         # 验证邮箱正则表达式
         email_pattern = MockStringUtils._EMAIL_REGEX
-        assert (
-            email_pattern.pattern == r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-        )
+        assert email_pattern.pattern == r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
         # 验证手机号正则表达式
         phone_pattern = MockStringUtils._PHONE_REGEX

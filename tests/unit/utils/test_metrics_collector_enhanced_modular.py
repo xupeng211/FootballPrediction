@@ -2,13 +2,11 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 增强指标收集器模块化测试
 """
 
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -54,9 +52,7 @@ def test_metric_types():
     from src.metrics.collector.enhanced import AlertInfo, MetricPoint, MetricSummary
 
     # 测试MetricPoint
-    point = MetricPoint(
-        name="test_metric", value=100.5, labels={"env": "test"}, unit="ms"
-    )
+    point = MetricPoint(name="test_metric", value=100.5, labels={"env": "test"}, unit="ms")
     assert point.name == "test_metric"
     assert point.value == 100.5
     assert point.labels["env"] == "test"
@@ -64,9 +60,7 @@ def test_metric_types():
     assert isinstance(point.timestamp, datetime)
 
     # 测试MetricSummary
-    summary = MetricSummary(
-        count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0
-    )
+    summary = MetricSummary(count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0)
     assert summary.count == 10
     assert summary.avg == 100.0
     assert summary.min == 50.0
@@ -165,9 +159,7 @@ def test_system_metrics_collector():
     assert collector.error_counts[error_key] == 1
 
     # 记录缓存操作
-    collector.record_cache_operation(
-        cache_type="redis", operation="get", hit=True, size=1000
-    )
+    collector.record_cache_operation(cache_type="redis", operation="get", hit=True, size=1000)
     assert "redis" in collector.cache_stats
     assert collector.cache_stats["redis"]["hits"] == 1
     assert collector.cache_stats["redis"]["last_size"] == 1000

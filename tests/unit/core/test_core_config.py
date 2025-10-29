@@ -2,7 +2,6 @@
 
 import os
 import tempfile
-from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -208,9 +207,7 @@ class TestCoreConfig:
         """测试从文件加载配置"""
         try:
             # 创建临时配置文件
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".json", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 f.write('{"debug": true, "environment": "test"}')
                 temp_file = f.name
 

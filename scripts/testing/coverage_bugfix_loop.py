@@ -9,9 +9,7 @@ STATE_FILE = pathlib.Path("docs/_meta/last_processed_run.json")
 
 
 def run(cmd):
-    return subprocess.run(
-        cmd, shell=True, capture_output=True, text=True
-    ).stdout.strip()
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout.strip()
 
 
 def get_latest_run_id():

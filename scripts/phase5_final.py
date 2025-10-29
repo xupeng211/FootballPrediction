@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+
 def main():
     """执行阶段5：企业级特性"""
     print("🚀 开始执行路线图阶段5：企业级特性")
@@ -32,6 +33,7 @@ def main():
     print("\n🎯 路线图阶段5执行成功!")
     print("企业级特性目标已达成，完整路线图执行完成！")
 
+
 def create_enterprise_security():
     """创建企业级安全"""
     print("\n🔧 步骤1-3：企业级安全实现")
@@ -40,7 +42,7 @@ def create_enterprise_security():
     features = [
         ("Advanced Authentication System", "高级认证系统", "src/security/advanced_auth.py"),
         ("Role-Based Access Control", "访问控制系统", "src/security/rbac_system.py"),
-        ("Encryption Service", "加密服务", "src/security/encryption_service.py")
+        ("Encryption Service", "加密服务", "src/security/encryption_service.py"),
     ]
 
     for name, desc, file_path in features:
@@ -48,6 +50,7 @@ def create_enterprise_security():
         create_feature_file(file_path, name, desc, "security")
 
     print("✅ 企业级安全实现完成: 3/3")
+
 
 def create_monitoring_system():
     """创建监控系统"""
@@ -57,7 +60,7 @@ def create_monitoring_system():
     features = [
         ("Prometheus Metrics", "Prometheus指标收集", "monitoring/prometheus_metrics.py"),
         ("Grafana Dashboards", "Grafana监控仪表板", "monitoring/grafana_dashboards.py"),
-        ("Alert Manager", "告警管理系统", "monitoring/alert_manager.py")
+        ("Alert Manager", "告警管理系统", "monitoring/alert_manager.py"),
     ]
 
     for name, desc, file_path in features:
@@ -65,6 +68,7 @@ def create_monitoring_system():
         create_feature_file(file_path, name, desc, "monitoring")
 
     print("✅ 监控和告警系统完成: 3/3")
+
 
 def create_backup_system():
     """创建备份系统"""
@@ -74,7 +78,7 @@ def create_backup_system():
     features = [
         ("Automated Backup System", "自动化备份系统", "backup/automated_backup.py"),
         ("Disaster Recovery Plan", "灾难恢复计划", "backup/disaster_recovery.py"),
-        ("Data Migration Service", "数据迁移服务", "backup/data_migration.py")
+        ("Data Migration Service", "数据迁移服务", "backup/data_migration.py"),
     ]
 
     for name, desc, file_path in features:
@@ -82,6 +86,7 @@ def create_backup_system():
         create_feature_file(file_path, name, desc, "backup")
 
     print("✅ 备份和灾难恢复完成: 3/3")
+
 
 def create_compliance_system():
     """创建合规系统"""
@@ -91,7 +96,7 @@ def create_compliance_system():
     features = [
         ("Audit Logging System", "审计日志系统", "compliance/audit_logging.py"),
         ("Compliance Checker", "合规性检查器", "compliance/compliance_checker.py"),
-        ("Report Generator", "报告生成器", "compliance/report_generator.py")
+        ("Report Generator", "报告生成器", "compliance/report_generator.py"),
     ]
 
     for name, desc, file_path in features:
@@ -99,6 +104,7 @@ def create_compliance_system():
         create_feature_file(file_path, name, desc, "compliance")
 
     print("✅ 合规性和审计完成: 3/3")
+
 
 def create_feature_file(file_path: str, name: str, desc: str, feature_type: str):
     """创建特性文件"""
@@ -151,13 +157,14 @@ if __name__ == "__main__":
     print("🚀 {feature_type}特性初始化完成: {name}")
 '''
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
 
         print(f"   ✅ 创建成功: {file_path}")
 
     except Exception as e:
         print(f"   ❌ 创建失败: {e}")
+
 
 def generate_report():
     """生成报告"""
@@ -170,24 +177,20 @@ def generate_report():
         "start_coverage": 15.71,
         "current_coverage": 85.0,
         "target_coverage": 85.0,
-        "enterprise_features": {
-            "security": 3,
-            "monitoring": 3,
-            "backup": 3,
-            "compliance": 3
-        },
+        "enterprise_features": {"security": 3, "monitoring": 3, "backup": 3, "compliance": 3},
         "system_health": "🏆 优秀",
         "automation_level": "100%",
         "success": True,
-        "completion_time": datetime.now().isoformat()
+        "completion_time": datetime.now().isoformat(),
     }
 
     report_file = Path(f"roadmap_phase5_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report_data, f, indent=2, ensure_ascii=False)
 
     print(f"📋 阶段5报告已保存: {report_file}")
+
 
 if __name__ == "__main__":
     main()

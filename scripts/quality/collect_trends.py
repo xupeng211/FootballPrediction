@@ -22,9 +22,7 @@ class QualityTrendsCollector:
         self.reports_dir = self.project_root / "docs" / "_reports"
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
-    def run_command(
-        self, cmd: list, capture_output: bool = True
-    ) -> subprocess.CompletedProcess:
+    def run_command(self, cmd: list, capture_output: bool = True) -> subprocess.CompletedProcess:
         """Run a command and return the result."""
         try:
             result = subprocess.run(
@@ -82,15 +80,11 @@ class QualityTrendsCollector:
         ]
         for module in modules:
             if (self.project_root / module).exists():
-                module_result = self.run_command(
-                    ["ruff", "check", module, "--output-format=json"]
-                )
+                module_result = self.run_command(["ruff", "check", module, "--output-format=json"])
                 if module_result and module_result.returncode == 0:
                     try:
                         module_errors = json.loads(module_result.stdout)
-                        stats["files"].append(
-                            {"module": module, "error_count": len(module_errors)}
-                        )
+                        stats["files"].append({"module": module, "error_count": len(module_errors)})
                     except json.JSONDecodeError:
                         stats["files"].append(
                             {
@@ -137,9 +131,7 @@ class QualityTrendsCollector:
                     else:
                         error_type = "other"
 
-                    stats["error_types"][error_type] = (
-                        stats["error_types"].get(error_type, 0) + 1
-                    )
+                    stats["error_types"][error_type] = stats["error_types"].get(error_type, 0) + 1
 
         return stats
 
@@ -201,16 +193,12 @@ class QualityTrendsCollector:
 
                         stats["total_tests"] = stats["passed"] + stats["failed"]
                         if stats["total_tests"] > 0:
-                            stats["pass_rate"] = (
-                                stats["passed"] / stats["total_tests"]
-                            ) * 100
+                            stats["pass_rate"] = (stats["passed"] / stats["total_tests"]) * 100
                         break
 
         return stats
 
-    def generate_trend_report(
-        self, ruff_stats: dict, mypy_stats: dict, pytest_stats: dict
-    ) -> str:
+    def generate_trend_report(self, ruff_stats: dict, mypy_stats: dict, pytest_stats: dict) -> str:
         """Generate a comprehensive trend report."""
         date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         filename_date = datetime.now().strftime("%Y%m%d")
@@ -293,9 +281,7 @@ class QualityTrendsCollector:
 """
 
         # Evaluate quality gates
-        ruff_status = (
-            "PASS" if ruff_stats.get("total_errors", 999999) < 1000 else "FAIL"
-        )
+        ruff_status = "PASS" if ruff_stats.get("total_errors", 999999) < 1000 else "FAIL"
         mypy_status = "PASS" if mypy_stats.get("status") == "passed" else "FAIL"
         pytest_status = "PASS" if pytest_stats.get("pass_rate", 0) >= 95 else "FAIL"
 
@@ -328,9 +314,7 @@ class QualityTrendsCollector:
                 "🔴 **High Priority**: Test pass rate below 95%. Fix failing tests."
             )
         elif pytest_stats.get("pass_rate", 100) < 80:
-            recommendations.append(
-                "🟡 **Medium Priority**: Test coverage could be improved."
-            )
+            recommendations.append("🟡 **Medium Priority**: Test coverage could be improved.")
 
         if not recommendations:
             recommendations.append(
@@ -401,9 +385,7 @@ This report is part of the Phase 6 Long-term Optimization initiative.
 
         if match:
             # Add trend entry before the section end
-            updated_content = (
-                content[: match.end(1)] + trend_entry + content[match.end(1) :]
-            )
+            updated_content = content[: match.end(1)] + trend_entry + content[match.end(1) :]
 
             with open(kanban_path, "w", encoding="utf-8") as f:
                 f.write(updated_content)

@@ -7,9 +7,6 @@ High-quality business logic tests based on real available base classes.
 """
 
 import asyncio
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -22,7 +19,6 @@ from src.adapters.base import (
     CompositeAdapter,
     DataTransformer,
 )
-from src.core.exceptions import AdapterError
 
 
 class TestAdapterStatus:
@@ -66,11 +62,7 @@ class MockFootballAdaptee(Adaptee):
                 ]
             }
         elif endpoint == "teams":
-            return {
-                "response": [
-                    {"team": {"id": 1, "name": "Team A", "country": "Country"}}
-                ]
-            }
+            return {"response": [{"team": {"id": 1, "name": "Team A", "country": "Country"}}]}
         elif endpoint == "players":
             return {"response": [{"player": {"id": 1, "name": "Player A"}}]}
         return {"response": []}
@@ -240,9 +232,7 @@ class TestMockFootballDataTransformer:
     async def test_transform_team_data(self):
         """测试队伍数据转换"""
         transformer = MockFootballDataTransformer()
-        api_data = {
-            "response": [{"team": {"id": 1, "name": "Team A", "country": "Country"}}]
-        }
+        api_data = {"response": [{"team": {"id": 1, "name": "Team A", "country": "Country"}}]}
 
         team = await transformer.transform(api_data, "team")
 
@@ -526,9 +516,7 @@ class TestCompositeFootballAdapter:
         good_adapter = FootballAdapter(good_adaptee)
         failing_adapter = FailingAdapter("FailingAdapter")
 
-        composite = CompositeFootballAdapter(
-            "TestComposite", [good_adapter, failing_adapter]
-        )
+        composite = CompositeFootballAdapter("TestComposite", [good_adapter, failing_adapter])
         await good_adapter.initialize()
 
         # 请求应该处理错误并返回成功的结果

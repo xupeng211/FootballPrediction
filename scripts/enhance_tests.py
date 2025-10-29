@@ -94,12 +94,8 @@ class TestEnhancer:
             # 查找占位符
             lines = content.split("\n")
             for i, line in enumerate(lines):
-                if any(
-                    pattern in line for pattern in ["assert True", "TODO:", "pass  #"]
-                ):
-                    analysis["placeholders"].append(
-                        {"line": i + 1, "content": line.strip()}
-                    )
+                if any(pattern in line for pattern in ["assert True", "TODO:", "pass  #"]):
+                    analysis["placeholders"].append({"line": i + 1, "content": line.strip()})
 
             # 查找测试类和方法
             for node in ast.walk(tree):
@@ -107,15 +103,11 @@ class TestEnhancer:
                     if "Test" in node.name:
                         class_info = {"name": node.name, "methods": []}
                         for item in node.body:
-                            if isinstance(
-                                item, ast.FunctionDef
-                            ) and item.name.startswith("test_"):
+                            if isinstance(item, ast.FunctionDef) and item.name.startswith("test_"):
                                 class_info["methods"].append(item.name)
                         analysis["classes"].append(class_info)
 
-                elif isinstance(node, ast.FunctionDef) and node.name.startswith(
-                    "test_"
-                ):
+                elif isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     # 不在类中的测试函数
                     if not any(
                         isinstance(parent, ast.ClassDef)
@@ -232,9 +224,7 @@ class TestEnhancer:
         if "import" in method_name:
             return f"{' ' * indent}module = sys.modules.get('{method_name.split('_')[1]}', None)"
         elif "create" in method_name or "instantiate" in method_name:
-            return (
-                f"{' ' * indent}instance = cls() if hasattr(cls, '__call__') else None"
-            )
+            return f"{' ' * indent}instance = cls() if hasattr(cls, '__call__') else None"
         elif "call" in method_name:
             return f"{' ' * indent}result = 'test_result'"
         else:

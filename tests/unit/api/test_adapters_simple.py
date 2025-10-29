@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 适配器API端点简化测试
@@ -11,7 +10,6 @@ Tests for Adapter API Endpoints (Simple Version)
 专注于测试API端点的核心功能，使用简化的Mock避免序列化问题。
 """
 
-from datetime import date, datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -167,9 +165,7 @@ class TestAdaptersAPI:
         mock_registry.get_adapter.return_value = None
 
         # When
-        response = client.get(
-            "/adapters/football/matches?league_id=39&team_id=111&live=true"
-        )
+        response = client.get("/adapters/football/matches?league_id=39&team_id=111&live=true")
 
         # Then
         assert response.status_code == 200

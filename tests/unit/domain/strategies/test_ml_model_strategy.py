@@ -47,24 +47,12 @@ def test_ml_model_strategy_mock_predictions_are_deterministic():
     single_prediction = asyncio.run(strategy.predict(input_data))
     repeat_prediction = asyncio.run(strategy.predict(input_data))
 
-    assert (
-        single_prediction.predicted_home_score == repeat_prediction.predicted_home_score
-    )
-    assert (
-        single_prediction.predicted_away_score == repeat_prediction.predicted_away_score
-    )
-    assert (
-        single_prediction.probability_distribution
-        == repeat_prediction.probability_distribution
-    )
+    assert single_prediction.predicted_home_score == repeat_prediction.predicted_home_score
+    assert single_prediction.predicted_away_score == repeat_prediction.predicted_away_score
+    assert single_prediction.probability_distribution == repeat_prediction.probability_distribution
     assert single_prediction.confidence == repeat_prediction.confidence
 
     batch_outputs = asyncio.run(strategy.batch_predict([input_data, input_data]))
     assert len(batch_outputs) == 2
-    assert (
-        batch_outputs[0].predicted_home_score == single_prediction.predicted_home_score
-    )
-    assert (
-        batch_outputs[0].probability_distribution
-        == single_prediction.probability_distribution
-    )
+    assert batch_outputs[0].predicted_home_score == single_prediction.predicted_home_score
+    assert batch_outputs[0].probability_distribution == single_prediction.probability_distribution

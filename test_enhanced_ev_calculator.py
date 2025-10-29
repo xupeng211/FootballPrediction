@@ -24,11 +24,11 @@ sys.path.append(str(Path(__file__).parent))
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('logs/enhanced_ev_test.log', encoding='utf-8')
-    ]
+        logging.FileHandler("logs/enhanced_ev_test.log", encoding="utf-8"),
+    ],
 )
 
 logger = logging.getLogger(__name__)
@@ -49,13 +49,9 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "accuracy": 0.68,
                 "roi": 0.12,
                 "consistency": 0.75,
-                "max_drawdown": 0.08
+                "max_drawdown": 0.08,
             },
-            "market_data": {
-                "market_odds": 1.87,
-                "liquidity_score": 0.8,
-                "spread_percentage": 0.02
-            }
+            "market_data": {"market_odds": 1.87, "liquidity_score": 0.8, "spread_percentage": 0.02},
         },
         {
             "bet_type": "draw",
@@ -67,8 +63,8 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "accuracy": 0.62,
                 "roi": -0.05,
                 "consistency": 0.70,
-                "max_drawdown": 0.12
-            }
+                "max_drawdown": 0.12,
+            },
         },
         {
             "bet_type": "away_win",
@@ -80,8 +76,8 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "accuracy": 0.70,
                 "roi": 0.08,
                 "consistency": 0.80,
-                "max_drawdown": 0.06
-            }
+                "max_drawdown": 0.06,
+            },
         },
         {
             "bet_type": "over_2_5",
@@ -93,8 +89,8 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "accuracy": 0.72,
                 "roi": 0.15,
                 "consistency": 0.78,
-                "max_drawdown": 0.05
-            }
+                "max_drawdown": 0.05,
+            },
         },
         {
             "bet_type": "home_win",
@@ -106,8 +102,8 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "accuracy": 0.55,
                 "roi": -0.12,
                 "consistency": 0.60,
-                "max_drawdown": 0.18
-            }
+                "max_drawdown": 0.18,
+            },
         },
         {
             "bet_type": "btts",
@@ -119,9 +115,9 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "accuracy": 0.75,
                 "roi": 0.18,
                 "consistency": 0.82,
-                "max_drawdown": 0.04
-            }
-        }
+                "max_drawdown": 0.04,
+            },
+        },
     ]
 
     # 扩展数据以获得更可靠的回测结果
@@ -168,19 +164,23 @@ def test_kelly_optimization():
                 case["prob"], case["odds"], case["confidence"]
             )
 
-            results.append({
-                "case": case["description"],
-                "probability": case["prob"],
-                "odds": case["odds"],
-                "optimal_fraction": result.optimal_fraction,
-                "expected_growth": result.expected_growth,
-                "risk_of_ruin": result.risk_of_ruin,
-                "recommendation": result.recommended_adjustment
-            })
+            results.append(
+                {
+                    "case": case["description"],
+                    "probability": case["prob"],
+                    "odds": case["odds"],
+                    "optimal_fraction": result.optimal_fraction,
+                    "expected_growth": result.expected_growth,
+                    "risk_of_ruin": result.risk_of_ruin,
+                    "recommendation": result.recommended_adjustment,
+                }
+            )
 
-            logger.info(f"  {case['description']}: Kelly={result.optimal_fraction:.3f}, "
-                       f"期望增长={result.expected_growth:.3f}, "
-                       f"破产风险={result.risk_of_ruin:.3f}")
+            logger.info(
+                f"  {case['description']}: Kelly={result.optimal_fraction:.3f}, "
+                f"期望增长={result.expected_growth:.3f}, "
+                f"破产风险={result.risk_of_ruin:.3f}"
+            )
 
         return {"status": "success", "results": results}
 
@@ -213,18 +213,22 @@ def test_value_rating_enhancement():
                 case["prob"], case["odds"], case["confidence"]
             )
 
-            results.append({
-                "case": case["description"],
-                "overall_rating": result.overall_rating,
-                "ev_score": result.ev_score,
-                "probability_score": result.probability_score,
-                "odds_fairness_score": result.odds_fairness_score,
-                "risk_adjusted_score": result.risk_adjusted_score,
-            })
+            results.append(
+                {
+                    "case": case["description"],
+                    "overall_rating": result.overall_rating,
+                    "ev_score": result.ev_score,
+                    "probability_score": result.probability_score,
+                    "odds_fairness_score": result.odds_fairness_score,
+                    "risk_adjusted_score": result.risk_adjusted_score,
+                }
+            )
 
-            logger.info(f"  {case['description']}: 总评级={result.overall_rating:.1f}, "
-                       f"EV分数={result.ev_score:.1f}, "
-                       f"风险调整={result.risk_adjusted_score:.1f}")
+            logger.info(
+                f"  {case['description']}: 总评级={result.overall_rating:.1f}, "
+                f"EV分数={result.ev_score:.1f}, "
+                f"风险调整={result.risk_adjusted_score:.1f}"
+            )
 
         return {"status": "success", "results": results}
 
@@ -251,7 +255,7 @@ async def test_enhanced_ev_calculation():
                 "odds": 1.85,
                 "confidence": 0.8,
                 "strategy": "srs_premium",
-                "description": "SRS策略测试"
+                "description": "SRS策略测试",
             },
             {
                 "bet_type": "away_win",
@@ -259,7 +263,7 @@ async def test_enhanced_ev_calculation():
                 "odds": 3.20,
                 "confidence": 0.6,
                 "strategy": "conservative_optimized",
-                "description": "保守策略测试"
+                "description": "保守策略测试",
             },
             {
                 "bet_type": "draw",
@@ -267,8 +271,8 @@ async def test_enhanced_ev_calculation():
                 "odds": 3.40,
                 "confidence": 0.7,
                 "strategy": "aggressive_smart",
-                "description": "激进策略测试"
-            }
+                "description": "激进策略测试",
+            },
         ]
 
         results = []
@@ -278,23 +282,27 @@ async def test_enhanced_ev_calculation():
                 probability=case["prob"],
                 odds=case["odds"],
                 confidence=case["confidence"],
-                strategy_name=case["strategy"]
+                strategy_name=case["strategy"],
             )
 
-            results.append({
-                "case": case["description"],
-                "strategy": case["strategy"],
-                "ev": result.ev,
-                "kelly_fraction": result.kelly_fraction,
-                "value_rating": result.value_rating,
-                "recommendation": result.recommendation,
-                "expected_roi": result.expected_roi,
-                "risk_level": result.risk_level.value,
-            })
+            results.append(
+                {
+                    "case": case["description"],
+                    "strategy": case["strategy"],
+                    "ev": result.ev,
+                    "kelly_fraction": result.kelly_fraction,
+                    "value_rating": result.value_rating,
+                    "recommendation": result.recommendation,
+                    "expected_roi": result.expected_roi,
+                    "risk_level": result.risk_level.value,
+                }
+            )
 
-            logger.info(f"  {case['description']} ({case['strategy']}): "
-                       f"EV={result.ev:.3f}, Kelly={result.kelly_fraction:.3f}, "
-                       f"评级={result.value_rating:.1f}, 建议={result.recommendation}")
+            logger.info(
+                f"  {case['description']} ({case['strategy']}): "
+                f"EV={result.ev:.3f}, Kelly={result.kelly_fraction:.3f}, "
+                f"评级={result.value_rating:.1f}, 建议={result.recommendation}"
+            )
 
         return {"status": "success", "results": results}
 
@@ -333,10 +341,12 @@ async def test_strategy_backtesting():
                 "winning_bets": result["winning_bets"],
             }
 
-            logger.info(f"    ROI: {result['roi']:.2f}%, "
-                       f"胜率: {result['win_rate']:.2f}, "
-                       f"最大回撤: {result['max_drawdown']:.2f}, "
-                       f"Sharpe: {result['sharpe_ratio']:.3f}")
+            logger.info(
+                f"    ROI: {result['roi']:.2f}%, "
+                f"胜率: {result['win_rate']:.2f}, "
+                f"最大回撤: {result['max_drawdown']:.2f}, "
+                f"Sharpe: {result['sharpe_ratio']:.3f}"
+            )
 
         return {"status": "success", "results": backtest_results}
 
@@ -391,13 +401,15 @@ def compare_with_original():
                     "kelly_fraction": enhanced_result.kelly_fraction,
                     "value_rating": enhanced_result.value_rating,
                     "recommendation": enhanced_result.recommendation,
-                }
+                },
             }
 
             comparison_results.append(comparison)
 
-            logger.info(f"  案例{i+1}: 原始EV={original_ev:.3f}, 增强EV={enhanced_result.ev:.3f}, "
-                       f"原始Kelly={original_kelly:.3f}, 增强Kelly={enhanced_result.kelly_fraction:.3f}")
+            logger.info(
+                f"  案例{i+1}: 原始EV={original_ev:.3f}, 增强EV={enhanced_result.ev:.3f}, "
+                f"原始Kelly={original_kelly:.3f}, 增强Kelly={enhanced_result.kelly_fraction:.3f}"
+            )
 
         return {"status": "success", "results": comparison_results}
 

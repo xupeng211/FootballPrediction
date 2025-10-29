@@ -1,15 +1,10 @@
-from unittest.mock import MagicMock, mock_open, patch
-
 """
 流处理配置测试
 """
 
 import json
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import pytest
-import yaml
 
 from src.streaming.stream_config_simple import (
     ConsumerConfig,
@@ -39,16 +34,12 @@ class TestStreamConfig:
     def test_stream_config_validation(self):
         """测试配置验证"""
         # 有效配置
-        _config = StreamConfig(
-            name="test", bootstrap_servers=["localhost:9092"], topics=["topic"]
-        )
+        _config = StreamConfig(name="test", bootstrap_servers=["localhost:9092"], topics=["topic"])
         assert _config.is_valid() is True
 
         # 无效配置（缺少名称）
         with pytest.raises(ValueError, match="Name is required"):
-            StreamConfig(
-                name="", bootstrap_servers=["localhost:9092"], topics=["topic"]
-            )
+            StreamConfig(name="", bootstrap_servers=["localhost:9092"], topics=["topic"])
 
     def test_stream_config_to_dict(self):
         """测试配置转字典"""
@@ -262,17 +253,13 @@ class TestProducerConfig:
 
     def test_producer_config_with_compression(self):
         """测试压缩配置"""
-        _config = ProducerConfig(
-            bootstrap_servers=["localhost:9092"], compression_type="gzip"
-        )
+        _config = ProducerConfig(bootstrap_servers=["localhost:9092"], compression_type="gzip")
 
         assert _config.compression_type == "gzip"
 
     def test_producer_config_with_idempotence(self):
         """测试幂等性配置"""
-        _config = ProducerConfig(
-            bootstrap_servers=["localhost:9092"], enable_idempotence=True
-        )
+        _config = ProducerConfig(bootstrap_servers=["localhost:9092"], enable_idempotence=True)
 
         assert _config.enable_idempotence is True
 
@@ -302,9 +289,7 @@ class TestProducerConfig:
 
         # 无效的压缩类型
         with pytest.raises(ValueError, match="Invalid compression type"):
-            ProducerConfig(
-                bootstrap_servers=["localhost:9092"], compression_type="invalid"
-            )
+            ProducerConfig(bootstrap_servers=["localhost:9092"], compression_type="invalid")
 
 
 class TestConfigLoading:

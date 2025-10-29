@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 12 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 服务模块测试覆盖率提升
@@ -12,10 +11,8 @@ Services Module Coverage Improvement
 Created specifically to improve coverage for low-coverage modules in src/services/.
 """
 
-import asyncio
 import os
 import sys
-from datetime import datetime
 
 import pytest
 
@@ -48,9 +45,7 @@ class TestDatabaseService:
         """创建数据库服务实例"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
-        with patch(
-            "src.services.database.database_service.MatchRepository"
-        ) as mock_match_class:
+        with patch("src.services.database.database_service.MatchRepository") as mock_match_class:
             with patch(
                 "src.services.database.database_service.PredictionRepository"
             ) as mock_pred_class:
@@ -70,9 +65,7 @@ class TestDatabaseService:
         """测试数据库服务初始化"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
-        with patch(
-            "src.services.database.database_service.MatchRepository"
-        ) as mock_match_class:
+        with patch("src.services.database.database_service.MatchRepository") as mock_match_class:
             with patch(
                 "src.services.database.database_service.PredictionRepository"
             ) as mock_pred_class:
@@ -92,9 +85,7 @@ class TestDatabaseService:
                     assert service.prediction_repo == prediction_repo
                     assert service.user_repo == user_repo
 
-    async def test_get_match_with_predictions_exists(
-        self, database_service, mock_repositories
-    ):
+    async def test_get_match_with_predictions_exists(self, database_service, mock_repositories):
         """测试获取存在比赛的预测数据"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
@@ -113,9 +104,7 @@ class TestDatabaseService:
         match_repo.get_by_id.assert_called_once_with(123)
         prediction_repo.get_by_match.assert_called_once_with(123)
 
-    async def test_get_match_with_predictions_not_exists(
-        self, database_service, mock_repositories
-    ):
+    async def test_get_match_with_predictions_not_exists(self, database_service, mock_repositories):
         """测试获取不存在比赛的预测数据"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
@@ -439,16 +428,12 @@ class TestErrorHandling:
             mock_session = Mock()
 
             with patch("src.services.database.database_service.MatchRepository"):
-                with patch(
-                    "src.services.database.database_service.PredictionRepository"
-                ):
+                with patch("src.services.database.database_service.PredictionRepository"):
                     with patch("src.services.database.database_service.UserRepository"):
                         service = DatabaseService(mock_session)
 
                         # 测试健康检查异常处理
-                        mock_session.execute = AsyncMock(
-                            side_effect=Exception("Database error")
-                        )
+                        mock_session.execute = AsyncMock(side_effect=Exception("Database error"))
                         result = await service.health_check()
 
                         assert result["status"] == "unhealthy"

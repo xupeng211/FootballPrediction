@@ -18,9 +18,7 @@ class DataFactory:
     @staticmethod
     def random_string(length: int = 10) -> str:
         """生成随机字符串"""
-        return "".join(
-            secrets.choice(string.ascii_letters + string.digits) for _ in range(length)
-        )
+        return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(length))
 
     @staticmethod
     def random_email() -> str:

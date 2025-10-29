@@ -70,9 +70,7 @@ class ModelPerformanceMonitor:
 
             # 超参数调优
             if hyperparameter_tuning:
-                grid_search = GridSearchCV(
-                    model, param_grid, cv=3, scoring="accuracy", n_jobs=-1
-                )
+                grid_search = GridSearchCV(model, param_grid, cv=3, scoring="accuracy", n_jobs=-1)
                 grid_search.fit(X_train, y_train)
                 self.model = grid_search.best_estimator_
                 best_params = grid_search.best_params_
@@ -138,9 +136,7 @@ class ModelPerformanceMonitor:
             return {
                 "success": True,
                 "predictions": predictions.tolist(),
-                "probabilities": (
-                    probabilities.tolist() if probabilities is not None else None
-                ),
+                "probabilities": (probabilities.tolist() if probabilities is not None else None),
                 "timestamp": datetime.now(),
             }
 
@@ -192,9 +188,7 @@ class ModelPerformanceMonitor:
                 "baseline_performance": self.performance_metrics.get(metric_name),
                 "performance_drop": performance_drop,
                 "needs_retraining": performance_drop > 0.1,
-                "recommendation": (
-                    "重新训练模型" if performance_drop > 0.1 else "继续监控"
-                ),
+                "recommendation": ("重新训练模型" if performance_drop > 0.1 else "继续监控"),
             }
 
         except Exception as e:
@@ -247,9 +241,7 @@ async def main():
     """主函数示例"""
     # 示例数据
     np.random.seed(42)
-    X = pd.DataFrame(
-        np.random.randn(100, 5), columns=[f"feature_{i}" for i in range(5)]
-    )
+    X = pd.DataFrame(np.random.randn(100, 5), columns=[f"feature_{i}" for i in range(5)])
     y = pd.Series(np.random.choice([0, 1], 100))
 
     trainer = ModelPerformanceMonitor()
@@ -259,9 +251,7 @@ async def main():
     print("训练结果:", training_result)
 
     # 预测
-    test_features = pd.DataFrame(
-        np.random.randn(5, 5), columns=[f"feature_{i}" for i in range(5)]
-    )
+    test_features = pd.DataFrame(np.random.randn(5, 5), columns=[f"feature_{i}" for i in range(5)])
     prediction_result = await trainer.predict(test_features)
     print("预测结果:", prediction_result)
 

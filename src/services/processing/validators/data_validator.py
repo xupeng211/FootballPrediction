@@ -134,9 +134,7 @@ class DataValidator:
                 "statistics": {},
             }
 
-    async def _validate_structure(
-        self, df: pd.DataFrame, data_type: str
-    ) -> Dict[str, Any]:
+    async def _validate_structure(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
         """
         验证数据结构
 
@@ -190,9 +188,7 @@ class DataValidator:
 
         return result
 
-    async def _validate_content(
-        self, df: pd.DataFrame, data_type: str
-    ) -> Dict[str, Any]:
+    async def _validate_content(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
         """
         验证数据内容
 
@@ -214,13 +210,9 @@ class DataValidator:
         # missing_report = self.missing_handler.analyze_missing_data(df)
         missing_report = {"missing_percentage": 0}
         if missing_report["missing_percentage"] > 50:
-            result["errors"].append(
-                f"数据缺失率过高: {missing_report['missing_percentage']:.1%}"
-            )
+            result["errors"].append(f"数据缺失率过高: {missing_report['missing_percentage']:.1%}")
         elif missing_report["missing_percentage"] > 20:
-            result["warnings"].append(
-                f"数据缺失率较高: {missing_report['missing_percentage']:.1%}"
-            )
+            result["warnings"].append(f"数据缺失率较高: {missing_report['missing_percentage']:.1%}")
 
         # 检查异常值
         numeric_cols = df.select_dtypes(include=["number"]).columns
@@ -243,9 +235,7 @@ class DataValidator:
 
         return result
 
-    async def _validate_business_rules(
-        self, df: pd.DataFrame, data_type: str
-    ) -> Dict[str, Any]:
+    async def _validate_business_rules(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
         """
         验证业务规则
 
@@ -272,11 +262,7 @@ class DataValidator:
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
         # 检查同一日期的重复比赛
-        if (
-            "match_date" in df.columns
-            and "home_team" in df.columns
-            and "away_team" in df.columns
-        ):
+        if "match_date" in df.columns and "home_team" in df.columns and "away_team" in df.columns:
             date_team_pairs = df.groupby("match_date").apply(
                 lambda x: x.duplicated(subset=["home_team", "away_team"]).any()
             )
@@ -340,9 +326,7 @@ class DataValidator:
 
         return result
 
-    async def _validate_features_business_rules(
-        self, df: pd.DataFrame
-    ) -> Dict[str, Any]:
+    async def _validate_features_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证特征数据业务规则"""
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
@@ -403,30 +387,22 @@ class DataValidator:
 
         return stats
 
-    async def _log_validation_results(
-        self, results: Dict[str, Any], data_type: str
-    ) -> None:
+    async def _log_validation_results(self, results: Dict[str, Any], data_type: str) -> None:
         """记录验证结果"""
         if results["valid"]:
             self.logger.info(f"{data_type} 数据验证通过")
         else:
-            self.logger.error(
-                f"{data_type} 数据验证失败，错误数: {len(results['errors'])}"
-            )
+            self.logger.error(f"{data_type} 数据验证失败，错误数: {len(results['errors'])}")
 
         if results["warnings"]:
-            self.logger.warning(
-                f"{data_type} 数据验证警告数: {len(results['warnings'])}"
-            )
+            self.logger.warning(f"{data_type} 数据验证警告数: {len(results['warnings'])}")
 
         # 记录统计信息
         stats = results.get("statistics", {})
         if "total_records" in stats:
             self.logger.info(f"验证记录数: {stats['total_records']}")
 
-    async def validate_batch_consistency(
-        self, batches: List[pd.DataFrame]
-    ) -> Dict[str, Any]:
+    async def validate_batch_consistency(self, batches: List[pd.DataFrame]) -> Dict[str, Any]:
         """
         验证批次数据的一致性
 
@@ -466,8 +442,6 @@ class DataValidator:
                     col_types.append(str(batch[col].dtype))
 
             if len(set(col_types)) > 1:
-                result["issues"].append(
-                    f"列 {col} 在不同批次中有不同的数据类型: {set(col_types)}"
-                )
+                result["issues"].append(f"列 {col} 在不同批次中有不同的数据类型: {set(col_types)}")
 
         return result

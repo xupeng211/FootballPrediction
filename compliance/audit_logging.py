@@ -12,6 +12,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class AuditLoggingSystem:
     """Audit Logging System"""
 
@@ -22,21 +23,22 @@ class AuditLoggingSystem:
     def process(self, data: Dict) -> Dict:
         """处理数据"""
         result = {
-            'status': 'success',
-            'feature': 'Audit Logging System',
-            'timestamp': datetime.now().isoformat(),
-            'data': data
+            "status": "success",
+            "feature": "Audit Logging System",
+            "timestamp": datetime.now().isoformat(),
+            "data": data,
         }
         return result
 
     def get_status(self) -> Dict:
         """获取状态"""
         return {
-            'feature': 'Audit Logging System',
-            'type': 'compliance',
-            'status': 'active',
-            'health': 'healthy'
+            "feature": "Audit Logging System",
+            "type": "compliance",
+            "status": "active",
+            "health": "healthy",
         }
+
 
 if __name__ == "__main__":
     service = AuditLoggingSystem()

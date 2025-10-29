@@ -1,5 +1,4 @@
 # 元数据管理器测试
-import pytest
 
 try:
     pass

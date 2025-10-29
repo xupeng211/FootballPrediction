@@ -112,9 +112,7 @@ class DIContainer:
             implementation = interface
 
         if implementation is None and factory is None:
-            raise DependencyInjectionError(
-                f"必须提供 implementation 或 factory for {interface}"
-            )
+            raise DependencyInjectionError(f"必须提供 implementation 或 factory for {interface}")
 
         # 分析依赖
         dependencies = []
@@ -201,9 +199,7 @@ class DIContainer:
             self._building.append(descriptor.interface)
             try:
                 # 解析构造函数参数
-                constructor_params = self._get_constructor_params(
-                    descriptor.implementation
-                )
+                constructor_params = self._get_constructor_params(descriptor.implementation)
                 instance = descriptor.implementation(**constructor_params)
                 return instance
             finally:
@@ -242,9 +238,7 @@ class DIContainer:
 
             if param_type == inspect.Parameter.empty:
                 if param.default == inspect.Parameter.empty:
-                    raise DependencyInjectionError(
-                        f"参数 {param_name} 没有类型注解且没有默认值"
-                    )
+                    raise DependencyInjectionError(f"参数 {param_name} 没有类型注解且没有默认值")
                 continue
 
             # 解析依赖
@@ -272,9 +266,7 @@ class DIContainer:
             scope_instances = self._scoped_instances[scope_name]
             for instance in scope_instances.values():
                 # 如果实例有 cleanup 方法
-                if hasattr(instance, "cleanup") and callable(
-                    getattr(instance, "cleanup")
-                ):
+                if hasattr(instance, "cleanup") and callable(getattr(instance, "cleanup")):
                     try:
                         instance.cleanup()
                     except (ValueError, TypeError, AttributeError, KeyError) as e:
@@ -348,9 +340,7 @@ class ServiceCollection:
     ) -> "ServiceCollection":
         """添加作用域服务"""
         self._registrations.append(
-            lambda container: container.register_scoped(
-                interface, implementation, factory
-            )
+            lambda container: container.register_scoped(interface, implementation, factory)
         )
         return self
 
@@ -362,9 +352,7 @@ class ServiceCollection:
     ) -> "ServiceCollection":
         """添加瞬时服务"""
         self._registrations.append(
-            lambda container: container.register_transient(
-                interface, implementation, factory
-            )
+            lambda container: container.register_transient(interface, implementation, factory)
         )
         return self
 

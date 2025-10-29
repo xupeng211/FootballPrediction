@@ -55,9 +55,7 @@ class PrometheusMetrics:
         # 按严重程度和来源分组
         for alert in alerts:
             if alert.status.value == "active":
-                self.active_alerts.labels(
-                    severity=alert.severity.value, source=alert.source
-                ).set(1)
+                self.active_alerts.labels(severity=alert.severity.value, source=alert.source).set(1)
 
     def observe_resolution_time(self, alert: Alert, duration: float) -> None:
         """记录告警解决时间"""
@@ -100,9 +98,7 @@ class LogHandler(AlertHandler):
             log_level = level_map.get(alert.severity.value, logging.INFO)
 
             # 格式化日志消息
-            message = (
-                f"[{alert.severity.value.upper()}] {alert.title} - {alert.message}"
-            )
+            message = f"[{alert.severity.value.upper()}] {alert.title} - {alert.message}"
             if alert.context:
                 message += f" | Context: {alert.context}"
 
@@ -203,15 +199,11 @@ class EmailHandler(AlertHandler):
             msg.attach(MIMEText(body, "plain"))
 
             # 发送邮件
-            with smtplib.SMTP(
-                self.smtp_config["host"], self.smtp_config["port"]
-            ) as server:
+            with smtplib.SMTP(self.smtp_config["host"], self.smtp_config["port"]) as server:
                 if self.smtp_config.get("use_tls"):
                     server.starttls()
                 if self.smtp_config.get("username"):
-                    server.login(
-                        self.smtp_config["username"], self.smtp_config["password"]
-                    )
+                    server.login(self.smtp_config["username"], self.smtp_config["password"])
                 server.send_message(msg)
 
             return True

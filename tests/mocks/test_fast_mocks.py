@@ -2,15 +2,11 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, PropertyMock
 
 """
 高性能 Mock 对象
 优化的 mock 实现，提升测试执行速度
 """
-
-import asyncio
-from typing import Any, Dict, List, Optional
 
 
 class FastDatabaseManager:

@@ -5,8 +5,6 @@ Tests for API Response Utils
 测试src.utils.response模块的响应格式化功能
 """
 
-from datetime import datetime
-
 import pytest
 
 from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
@@ -240,9 +238,7 @@ class TestAPIResponseEdgeCases:
 
     def test_nesteddata_response(self):
         """测试：嵌套数据响应"""
-        nesteddata = {
-            "user": {"profile": {"settings": {"theme": "dark", "notifications": True}}}
-        }
+        nesteddata = {"user": {"profile": {"settings": {"theme": "dark", "notifications": True}}}}
         response = APIResponse.success(data=nesteddata)
 
         assert response["success"] is True
@@ -326,9 +322,7 @@ class TestAPIResponsePerformance:
         import json
 
         largedata = {
-            "users": [
-                {"id": i, "name": f"user_{i}", "data": "x" * 100} for i in range(100)
-            ]
+            "users": [{"id": i, "name": f"user_{i}", "data": "x" * 100} for i in range(100)]
         }
 
         response = APIResponse.success(data=largedata)
@@ -391,10 +385,7 @@ class TestParameterizedInput:
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入
         assert (
-            input_value is not None
-            or input_value == ""
-            or input_value == []
-            or input_value == {}
+            input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )
 
     @pytest.mark.parametrize(
@@ -427,9 +418,7 @@ class TestParameterizedInput:
         assert isinstance(input_list, list)
         assert len(input_list) >= 0
 
-    @pytest.mark.parametrize(
-        "invaliddata", [None, "", "not-a-number", {}, [], True, False]
-    )
+    @pytest.mark.parametrize("invaliddata", [None, "", "not-a-number", {}, [], True, False])
     def test_error_handling(self, invaliddata):
         """测试错误处理"""
         try:
@@ -450,9 +439,7 @@ class TestParameterizedInput:
 class TestBoundaryConditions:
     """边界条件测试"""
 
-    @pytest.mark.parametrize(
-        "number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999]
-    )
+    @pytest.mark.parametrize("number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999])
     def test_number_boundaries(self, number):
         """测试数字边界值"""
         assert isinstance(number, (int, float))

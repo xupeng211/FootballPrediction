@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 API监控测试
@@ -192,9 +191,7 @@ class TestBusinessMetrics:
         # 导入并测试函数（如果可访问）
         if hasattr(monitoring_module, "_get_business_metrics"):
             with patch("src.api.monitoring.datetime") as mock_datetime:
-                mock_datetime.utcnow.return_value.isoformat.return_value = (
-                    "2023-01-01T12:00:00"
-                )
+                mock_datetime.utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
 
                 metrics = await monitoring_module._get_business_metrics(mock_db)
 
@@ -220,9 +217,7 @@ class TestBusinessMetrics:
         # 导入并测试函数（如果可访问）
         if hasattr(monitoring_module, "_get_business_metrics"):
             with patch("src.api.monitoring.datetime") as mock_datetime:
-                mock_datetime.utcnow.return_value.isoformat.return_value = (
-                    "2023-01-01T12:00:00"
-                )
+                mock_datetime.utcnow.return_value.isoformat.return_value = "2023-01-01T12:00:00"
 
                 metrics = await monitoring_module._get_business_metrics(mock_db)
 
@@ -248,9 +243,7 @@ class TestMonitoringEndpoints:
     @patch("src.api.monitoring.get_db_session")
     @patch("src.api.monitoring._get_database_metrics")
     @patch("src.api.monitoring._get_business_metrics")
-    def test_get_metrics_endpoint_structure(
-        self, mock_business, mock_db_metrics, mock_db_session
-    ):
+    def test_get_metrics_endpoint_structure(self, mock_business, mock_db_metrics, mock_db_session):
         """测试：指标端点结构"""
         # 由于端点可能依赖数据库，我们只测试基本结构
         import src.api.monitoring as monitoring_module
@@ -260,9 +253,7 @@ class TestMonitoringEndpoints:
             assert callable(monitoring_module.get_metrics)
 
 
-@pytest.mark.skipif(
-    MONITORING_AVAILABLE, reason="Monitoring module should be available"
-)
+@pytest.mark.skipif(MONITORING_AVAILABLE, reason="Monitoring module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -309,9 +300,7 @@ async def test_monitoring_integration():
         app.include_router(router, prefix="/api/v1/monitoring")
 
         # 验证应用包含监控路由
-        monitoring_routes = [
-            route for route in app.routes if "/api/v1/monitoring" in route.path
-        ]
+        monitoring_routes = [route for route in app.routes if "/api/v1/monitoring" in route.path]
 
         # 应该至少有一个监控路由
         assert len(monitoring_routes) > 0

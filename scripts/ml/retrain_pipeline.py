@@ -148,9 +148,7 @@ class AutoRetrainPipeline:
             "total_predictions": stats.total_predictions,
             "correct_predictions": stats.correct_predictions,
             "accuracy": round(accuracy, 4),
-            "avg_confidence": (
-                float(stats.avg_confidence) if stats.avg_confidence else None
-            ),
+            "avg_confidence": (float(stats.avg_confidence) if stats.avg_confidence else None),
             "earliest_prediction": stats.earliest_prediction,
             "latest_prediction": stats.latest_prediction,
             "needs_retrain": needs_retrain,
@@ -160,13 +158,13 @@ class AutoRetrainPipeline:
         }
 
         if needs_retrain:
-            evaluation[
-                "reason"
-            ] = f"Accuracy {accuracy:.2%} below threshold {self.accuracy_threshold:.2%}"
+            evaluation["reason"] = (
+                f"Accuracy {accuracy:.2%} below threshold {self.accuracy_threshold:.2%}"
+            )
         elif stats.total_predictions < self.min_predictions_required:
-            evaluation[
-                "reason"
-            ] = f"Insufficient predictions ({stats.total_predictions} < {self.min_predictions_required})"
+            evaluation["reason"] = (
+                f"Insufficient predictions ({stats.total_predictions} < {self.min_predictions_required})"
+            )
         else:
             evaluation["reason"] = "Performance satisfactory"
 
@@ -208,9 +206,9 @@ class AutoRetrainPipeline:
             select(
                 func.date(Predictions.verified_at).label("prediction_date"),
                 func.count().label("daily_predictions"),
-                func.sum(
-                    func.case((Predictions.is_correct.is_(True), 1), else_=0)
-                ).label("daily_correct"),
+                func.sum(func.case((Predictions.is_correct.is_(True), 1), else_=0)).label(
+                    "daily_correct"
+                ),
             )
             .where(and_(*query_conditions))
             .group_by(func.date(Predictions.verified_at))
@@ -228,9 +226,7 @@ class AutoRetrainPipeline:
                 "date": str(stat.prediction_date),
                 "predictions": stat.daily_predictions,
                 "accuracy": (
-                    stat.daily_correct / stat.daily_predictions
-                    if stat.daily_predictions > 0
-                    else 0
+                    stat.daily_correct / stat.daily_predictions if stat.daily_predictions > 0 else 0
                 ),
             }
             for stat in daily_stats
@@ -361,9 +357,7 @@ class AutoRetrainPipeline:
 
                 # 这里应该调用实际的模型训练逻辑
                 # 为了演示，我们创建一个模拟的训练过程
-                training_result = await self._execute_model_training(
-                    model_name, performance_data
-                )
+                training_result = await self._execute_model_training(model_name, performance_data)
 
                 # 记录训练结果
                 mlflow.log_metrics(training_result["metrics"])
@@ -437,9 +431,7 @@ class AutoRetrainPipeline:
             "learning_rate": 0.001,
         }
 
-        logger.info(
-            f"模型训练完成，验证准确率: {training_metrics['validation_accuracy']:.2%}"
-        )
+        logger.info(f"模型训练完成，验证准确率: {training_metrics['validation_accuracy']:.2%}")
 
         return {
             "success": True,
@@ -567,9 +559,7 @@ class AutoRetrainPipeline:
 """
 
         if new_metrics.get("validation_accuracy"):
-            improvement = (
-                new_metrics["validation_accuracy"] - old_performance["accuracy"]
-            )
+            improvement = new_metrics["validation_accuracy"] - old_performance["accuracy"]
             improvement_pct = (
                 (improvement / old_performance["accuracy"]) * 100
                 if old_performance["accuracy"] > 0
@@ -684,9 +674,7 @@ class AutoRetrainPipeline:
                     logger.info(f"评估模型: {model_name} v{model_version}")
 
                     # 评估性能
-                    performance = await self.evaluate_model_performance(
-                        model_name, model_version
-                    )
+                    performance = await self.evaluate_model_performance(model_name, model_version)
 
                     model_result = {
                         "model_name": model_name,
@@ -813,9 +801,7 @@ def main(
                 click.echo("\n📊 模型性能评估:")
                 click.echo(f"   准确率: {performance['accuracy']:.2%}")
                 click.echo(f"   预测数量: {performance['total_predictions']}")
-                click.echo(
-                    f"   需要重训练: {'是' if performance['needs_retrain'] else '否'}"
-                )
+                click.echo(f"   需要重训练: {'是' if performance['needs_retrain'] else '否'}")
                 click.echo(f"   原因: {performance['reason']}")
 
                 if performance["needs_retrain"] and not dry_run:
@@ -825,9 +811,7 @@ def main(
                     )
 
                     if retrain_result["success"]:
-                        click.echo(
-                            f"✅ 重训练成功! 新版本: v{retrain_result['new_version']}"
-                        )
+                        click.echo(f"✅ 重训练成功! 新版本: v{retrain_result['new_version']}")
 
                         # 生成对比报告
                         report_path = await pipeline.generate_comparison_report(
@@ -867,9 +851,7 @@ def main(
                         click.echo(
                             f"   🤖 {model_result['model_name']} v{model_result['model_version']}:"
                         )
-                        click.echo(
-                            f"      准确率: {model_result['performance']['accuracy']:.2%}"
-                        )
+                        click.echo(f"      准确率: {model_result['performance']['accuracy']:.2%}")
                         click.echo(
                             f"      重训练: {'是' if model_result['retrain_triggered'] else '否'}"
                         )

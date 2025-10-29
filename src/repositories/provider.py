@@ -92,9 +92,7 @@ class RepositoryProvider:
         """获取预测仓储实例"""
         key = f"prediction_{id(session)}_{read_only}"
         if key not in self._repositories:
-            self._repositories[key] = self._factory.create_prediction_repository(
-                session, read_only
-            )
+            self._repositories[key] = self._factory.create_prediction_repository(session, read_only)
         return self._repositories[key]
 
     def get_user_repository(
@@ -103,9 +101,7 @@ class RepositoryProvider:
         """获取用户仓储实例"""
         key = f"user_{id(session)}_{read_only}"
         if key not in self._repositories:
-            self._repositories[key] = self._factory.create_user_repository(
-                session, read_only
-            )
+            self._repositories[key] = self._factory.create_user_repository(session, read_only)
         return self._repositories[key]
 
     def get_match_repository(
@@ -114,9 +110,7 @@ class RepositoryProvider:
         """获取比赛仓储实例"""
         key = f"match_{id(session)}_{read_only}"
         if key not in self._repositories:
-            self._repositories[key] = self._factory.create_match_repository(
-                session, read_only
-            )
+            self._repositories[key] = self._factory.create_match_repository(session, read_only)
         return self._repositories[key]
 
     def clear_cache(self):
@@ -170,15 +164,11 @@ def get_prediction_repository(
     return get_repository_provider().get_prediction_repository(session, read_only)
 
 
-def get_user_repository(
-    session: AsyncSession, read_only: bool = False
-) -> Repository[User, int]:
+def get_user_repository(session: AsyncSession, read_only: bool = False) -> Repository[User, int]:
     """便捷函数：获取用户仓储"""
     return get_repository_provider().get_user_repository(session, read_only)
 
 
-def get_match_repository(
-    session: AsyncSession, read_only: bool = False
-) -> Repository[Match, int]:
+def get_match_repository(session: AsyncSession, read_only: bool = False) -> Repository[Match, int]:
     """便捷函数：获取比赛仓储"""
     return get_repository_provider().get_match_repository(session, read_only)

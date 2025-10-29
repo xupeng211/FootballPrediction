@@ -132,9 +132,7 @@ class ImprovementTracker:
                 text=True,
                 check=False,
             )
-            metrics["legacy_dirs"] = len(
-                [line for line in result.stdout.split("\n") if line]
-            )
+            metrics["legacy_dirs"] = len([line for line in result.stdout.split("\n") if line])
 
             # 备份文件
             result = subprocess.run(
@@ -143,9 +141,7 @@ class ImprovementTracker:
                 text=True,
                 check=False,
             )
-            metrics["backup_files"] = len(
-                [line for line in result.stdout.split("\n") if line]
-            )
+            metrics["backup_files"] = len([line for line in result.stdout.split("\n") if line])
 
             # type: ignore
             result = subprocess.run(
@@ -165,11 +161,7 @@ class ImprovementTracker:
             )
             print_lines = result.stdout.split("\n")
             metrics["print_statements"] = len(
-                [
-                    line
-                    for line in print_lines
-                    if l and "pprint" not in l and "logger" not in l
-                ]
+                [line for line in print_lines if l and "pprint" not in l and "logger" not in l]
             )
 
             # 测试覆盖率 - 需要运行pytest
@@ -211,9 +203,7 @@ class ImprovementTracker:
             else:
                 progress = 100 if current == 0 else 0
 
-            status_icon = (
-                "✅" if current <= target else "🔄" if current < start else "❌"
-            )
+            status_icon = "✅" if current <= target else "🔄" if current < start else "❌"
             print(
                 f"  {status_icon} {key}: {current} (起始: {start}, 目标: {target}) - {progress:.1f}%"
             )
@@ -269,9 +259,7 @@ class ImprovementTracker:
         )
         overall_progress = (completed_hours / total_hours) * 100
 
-        print(
-            f"📊 总体进度: {overall_progress:.1f}% ({completed_hours}/{total_hours}小时)"
-        )
+        print(f"📊 总体进度: {overall_progress:.1f}% ({completed_hours}/{total_hours}小时)")
 
         # 下一步建议
         print("\n💡 下一步建议:")

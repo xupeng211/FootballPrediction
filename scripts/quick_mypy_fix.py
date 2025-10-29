@@ -43,10 +43,7 @@ def fix_file(file_path: str):
         # 检查 typing
         typing_needed = []
         for typ in ["Dict", "List", "Optional", "Any", "Union"]:
-            if (
-                re.search(rf"\b{typ}\b", content)
-                and f"from typing import {typ}" not in content
-            ):
+            if re.search(rf"\b{typ}\b", content) and f"from typing import {typ}" not in content:
                 typing_needed.append(typ)
 
         if typing_needed:
@@ -79,16 +76,12 @@ def fix_file(file_path: str):
             # result = {"error": []} -> result: Dict[str, List] = {"error": []}
             if re.match(r"^(\s+)(\w+) = \{", line) and ":" not in line.split("=")[0]:
                 if "Dict" in content or "Any" in content:
-                    lines[i] = re.sub(
-                        r"^(\s+)(\w+) = \{", r"\1\2: Dict[str, Any] = {", line
-                    )
+                    lines[i] = re.sub(r"^(\s+)(\w+) = \{", r"\1\2: Dict[str, Any] = {", line)
 
             # result = [] -> result: List[Any] = []
             if re.match(r"^(\s+)(\w+) = \[\]$", line) and ":" not in line.split("=")[0]:
                 if "List" in content or "Any" in content:
-                    lines[i] = re.sub(
-                        r"^(\s+)(\w+) = \[\]$", r"\1\2: List[Any] = []", line
-                    )
+                    lines[i] = re.sub(r"^(\s+)(\w+) = \[\]$", r"\1\2: List[Any] = []", line)
 
         content = "\n".join(lines)
 
@@ -132,9 +125,7 @@ def main():
     print("\n🔍 验证修复结果...")
     for file_path in files_to_fix[:3]:  # 验证前3个
         if Path(file_path).exists():
-            result = subprocess.run(
-                ["python", "-m", "py_compile", file_path], capture_output=True
-            )
+            result = subprocess.run(["python", "-m", "py_compile", file_path], capture_output=True)
             if result.returncode == 0:
                 print(f"✅ {file_path} 编译成功")
             else:

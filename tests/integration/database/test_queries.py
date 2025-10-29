@@ -7,7 +7,6 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.orm import joinedload, selectinload
 
 
@@ -23,9 +22,7 @@ class TestDatabaseQueries:
         # 创建测试数据
         _teams = []
         for i in range(10):
-            team = Team(
-                name=f"Query Team {i}", city=f"Query City {i}", founded=2000 + i
-            )
+            team = Team(name=f"Query Team {i}", city=f"Query City {i}", founded=2000 + i)
             teams.append(team)
         db_session.add_all(teams)
         await db_session.commit()
@@ -416,9 +413,7 @@ class TestDatabaseQueries:
 
         # 使用 selectinload 预加载
         start_time = time.time()
-        _result = await db_session.execute(
-            select(User).options(selectinload(User.predictions))
-        )
+        _result = await db_session.execute(select(User).options(selectinload(User.predictions)))
         users_with_predictions = result.scalars().unique().all()
         selectinload_time = time.time() - start_time
 
@@ -428,9 +423,7 @@ class TestDatabaseQueries:
 
         # 使用 joinedload 预加载
         start_time = time.time()
-        _result = await db_session.execute(
-            select(User).options(joinedload(User.predictions))
-        )
+        _result = await db_session.execute(select(User).options(joinedload(User.predictions)))
         users_with_predictions_joined = result.scalars().unique().all()
         joinedload_time = time.time() - start_time
 
@@ -449,9 +442,7 @@ class TestDatabaseQueries:
         # 创建测试数据
         _teams = []
         for i in range(25):
-            team = Team(
-                name=f"Page Team {i:02d}", city=f"Page City {i}", founded=2000 + i
-            )
+            team = Team(name=f"Page Team {i:02d}", city=f"Page City {i}", founded=2000 + i)
             teams.append(team)
         db_session.add_all(teams)
         await db_session.commit()

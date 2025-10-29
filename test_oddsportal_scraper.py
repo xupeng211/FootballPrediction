@@ -28,7 +28,7 @@ async def test_scraper_initialization():
         # 测试基本属性
         assert scraper.base_url == "https://www.oddsportal.com"
         assert scraper.min_request_interval == 1.0  # 默认速率限制
-        assert hasattr(scraper, 'session')
+        assert hasattr(scraper, "session")
         assert scraper.robots_parser is not None
 
         logger.info("✅ Scraper initialization test passed")
@@ -46,7 +46,7 @@ async def test_robots_txt():
         scraper = OddsPortalScraper()
 
         # 验证robots_parser已初始化
-        assert hasattr(scraper, 'robots_parser')
+        assert hasattr(scraper, "robots_parser")
         assert scraper.robots_parser is not None
 
         logger.info("✅ robots.txt compliance test passed")
@@ -82,10 +82,11 @@ async def test_data_parsing():
 
         # 测试解析功能
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(sample_html, 'html.parser')
+
+        soup = BeautifulSoup(sample_html, "html.parser")
 
         # 验证基本解析
-        table = soup.find('table', class_='table-main')
+        table = soup.find("table", class_="table-main")
         assert table is not None
 
         logger.info("✅ Data parsing test passed")
@@ -126,11 +127,11 @@ async def test_rate_limiting():
         scraper = OddsPortalScraper()
 
         # 测试速率限制属性
-        assert hasattr(scraper, 'min_request_interval')
+        assert hasattr(scraper, "min_request_interval")
         assert scraper.min_request_interval == 1.0
-        assert hasattr(scraper, 'rate_limit_requests_per_minute')
+        assert hasattr(scraper, "rate_limit_requests_per_minute")
         assert scraper.rate_limit_requests_per_minute == 60
-        assert hasattr(scraper, 'request_times')
+        assert hasattr(scraper, "request_times")
         assert isinstance(scraper.request_times, list)
 
         logger.info("✅ Rate limiting test passed")
@@ -158,7 +159,7 @@ async def test_data_structure():
             status="upcoming",
             odds_home_win=2.45,
             odds_draw=3.20,
-            odds_away_win=2.80
+            odds_away_win=2.80,
         )
 
         # 验证数据结构
@@ -189,9 +190,9 @@ async def test_error_handling():
         scraper = OddsPortalScraper()
 
         # 测试错误处理属性
-        assert hasattr(scraper, 'max_retries')
+        assert hasattr(scraper, "max_retries")
         assert scraper.max_retries == 3
-        assert hasattr(scraper, 'retry_delay')
+        assert hasattr(scraper, "retry_delay")
         assert scraper.retry_delay == 2
 
         logger.info("✅ Error handling test passed")
@@ -211,10 +212,10 @@ async def test_adapter_interface():
         scraper = OddsPortalScraper()
 
         # 测试基本方法是否存在
-        assert hasattr(scraper, 'base_url')
+        assert hasattr(scraper, "base_url")
         assert scraper.base_url == "https://www.oddsportal.com"
-        assert hasattr(scraper, 'user_agent')
-        assert 'Mozilla' in scraper.user_agent
+        assert hasattr(scraper, "user_agent")
+        assert "Mozilla" in scraper.user_agent
 
         logger.info("✅ Adapter interface test passed")
         return True
@@ -235,7 +236,7 @@ async def run_all_tests():
         ("Rate Limiting", test_rate_limiting),
         ("Data Structure", test_data_structure),
         ("Error Handling", test_error_handling),
-        ("Adapter Interface", test_adapter_interface)
+        ("Adapter Interface", test_adapter_interface),
     ]
 
     results = {}

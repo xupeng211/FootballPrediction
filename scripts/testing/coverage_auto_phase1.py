@@ -72,9 +72,7 @@ def loop_until_target(target=40.0):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--once", action="store_true", help="Run only one iteration and exit"
-    )
+    parser.add_argument("--once", action="store_true", help="Run only one iteration and exit")
     args = parser.parse_args()
 
     if args.once:

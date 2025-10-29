@@ -23,13 +23,8 @@
 目标：验证模块间集成的正确性和性能
 """
 
-import asyncio
 import os
 import tempfile
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -97,9 +92,7 @@ class TestUtilsConfigIntegration:
             json.dump(config_data, f, indent=2)
             return f.name
 
-    async def test_config_string_utils_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_string_utils_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置与字符串工具集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -114,12 +107,8 @@ class TestUtilsConfigIntegration:
 
         # 验证字符串工具集成
         max_length = config.get("string_processing", {}).get("max_length", 50)
-        remove_special = config.get("string_processing", {}).get(
-            "remove_special_chars", False
-        )
-        default_suffix = config.get("string_processing", {}).get(
-            "default_suffix", "..."
-        )
+        remove_special = config.get("string_processing", {}).get("remove_special_chars", False)
+        default_suffix = config.get("string_processing", {}).get("default_suffix", "...")
 
         # 测试字符串处理功能
         test_text = "This is a very long text with special characters!@#$%"
@@ -135,9 +124,7 @@ class TestUtilsConfigIntegration:
                 assert "@" not in cleaned
                 assert "#" not in cleaned
 
-    async def test_config_date_utils_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_date_utils_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置与日期工具集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -149,9 +136,7 @@ class TestUtilsConfigIntegration:
         config = await manager.load_all()
 
         # 验证日期工具集成
-        date_format = config.get("date_formatting", {}).get(
-            "default_format", "%Y-%m-%d"
-        )
+        date_format = config.get("date_formatting", {}).get("default_format", "%Y-%m-%d")
         config.get("date_formatting", {}).get("timezone", "UTC")
 
         # 测试日期格式化功能
@@ -162,9 +147,7 @@ class TestUtilsConfigIntegration:
             assert formatted is not None
             assert len(formatted) > 0
 
-    async def test_config_crypto_utils_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_crypto_utils_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置与加密工具集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -188,9 +171,7 @@ class TestUtilsConfigIntegration:
                 assert hashed is not None
                 assert hashed != test_data  # 应该被哈希化
 
-    async def test_config_data_validator_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_data_validator_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置与数据验证器集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -247,16 +228,12 @@ class TestUtilsConfigIntegration:
         assert prod_config is not None
 
         # 验证配置差异
-        if hasattr(dev_config, "allow_origins") and hasattr(
-            prod_config, "allow_origins"
-        ):
+        if hasattr(dev_config, "allow_origins") and hasattr(prod_config, "allow_origins"):
             # 开发环境通常允许更多origins
             assert isinstance(dev_config.allow_origins, list)
             assert isinstance(prod_config.allow_origins, list)
 
-    async def test_config_validation_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_validation_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置验证集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -287,9 +264,7 @@ class TestUtilsConfigIntegration:
             max_length_errors = [e for e in errors if "max_length" in e]
             assert len(max_length_errors) == 0
 
-    async def test_config_change_notification_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_change_notification_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置变更通知集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -362,9 +337,7 @@ class TestUtilsConfigIntegration:
             except OSError:
                 pass
 
-    async def test_config_encryption_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_encryption_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置加密集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -411,9 +384,7 @@ class TestUtilsConfigIntegration:
         # 验证性能要求（每次加载应该在合理时间内完成）
         assert avg_load_time < 0.1  # 100毫秒内
 
-    async def test_config_error_recovery_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_error_recovery_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置错误恢复集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
@@ -447,9 +418,7 @@ class TestUtilsConfigIntegration:
             except OSError:
                 pass
 
-    async def test_config_hot_reload_integration_success(
-        self, temp_config_file
-    ) -> None:
+    async def test_config_hot_reload_integration_success(self, temp_config_file) -> None:
         """✅ 成功用例：配置热重载集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")

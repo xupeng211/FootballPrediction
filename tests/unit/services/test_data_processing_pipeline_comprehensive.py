@@ -12,17 +12,11 @@
 - 批量处理和异步操作
 """
 
-import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 # 导入目标模块
 try:
-    from src.services.data_processing import (
         AnomalyDetector,
         BronzeToSilverProcessor,
         DataProcessingService,

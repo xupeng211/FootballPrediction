@@ -102,9 +102,7 @@ class FormattingFixer:
         if len(line) > max_length:
             first_line = line[:max_length]
             second_line = " " * 8 + line[max_length:]
-            return [first_line, second_line] + self._break_long_line(
-                second_line, max_length
-            )[1:]
+            return [first_line, second_line] + self._break_long_line(second_line, max_length)[1:]
 
         return [line]
 
@@ -180,9 +178,7 @@ class FormattingFixer:
         python_files = list(self.tests_dir.rglob("*.py"))
 
         for file_path in python_files:
-            if file_path.name.startswith("test_") or file_path.name.endswith(
-                "_test.py"
-            ):
+            if file_path.name.startswith("test_") or file_path.name.endswith("_test.py"):
                 fixes = self.fix_file(file_path)
                 if fixes > 0:
                     self.files_fixed += 1

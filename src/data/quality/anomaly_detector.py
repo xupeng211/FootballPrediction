@@ -31,9 +31,7 @@ class AnomalyDetector:
         outlier_indices = z_scores[z_scores > threshold].index.tolist()
         return outlier_indices
 
-    def detect_missing_values(
-        self, df: pd.DataFrame, threshold: float = 0.1
-    ) -> Dict[str, float]:
+    def detect_missing_values(self, df: pd.DataFrame, threshold: float = 0.1) -> Dict[str, float]:
         """Detect columns with missing values above threshold"""
         missing_ratios = df.isnull().sum() / len(df)
         problematic_cols = missing_ratios[missing_ratios > threshold]
@@ -58,9 +56,7 @@ class AdvancedAnomalyDetector(AnomalyDetector):
     def detect_all(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Detect all types of anomalies"""
         return {
-            "outliers": self.detect_statistical_outliers(
-                df.select_dtypes(include=[np.number])
-            ),
+            "outliers": self.detect_statistical_outliers(df.select_dtypes(include=[np.number])),
             "missing_values": self.detect_missing_values(df),
             "duplicates": self.detect_duplicates(df),
         }

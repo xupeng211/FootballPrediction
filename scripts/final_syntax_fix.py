@@ -64,9 +64,7 @@ def fix_docstring_issues(content: str) -> str:
                     next_line = lines[i + 1]
                     if next_line.strip() and not next_line.strip().startswith("#"):
                         # 这可能是未闭合的文档字符串，添加闭合引号
-                        if not line.rstrip().endswith(
-                            '"""'
-                        ) and not line.rstrip().endswith("'''"):
+                        if not line.rstrip().endswith('"""') and not line.rstrip().endswith("'''"):
                             line = line.rstrip() + ('"""' if '"""' in line else "'''")
 
         fixed_lines.append(line)
@@ -104,9 +102,7 @@ def fix_import_placement(content: str) -> str:
                     docstring_char = None
 
         # 收集导入语句（不在文档字符串内）
-        if not in_docstring and (
-            stripped.startswith("import ") or stripped.startswith("from ")
-        ):
+        if not in_docstring and (stripped.startswith("import ") or stripped.startswith("from ")):
             imports.append(line)
         elif (
             not in_docstring

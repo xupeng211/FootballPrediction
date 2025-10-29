@@ -1,8 +1,6 @@
 """测试赔率收集器模块"""
 
 import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -74,9 +72,7 @@ class TestOddsCollector:
             }
             mock_results.append(mock_odds)
 
-        with patch.object(
-            collector, "collect_odds_multiple", return_value=mock_results
-        ):
+        with patch.object(collector, "collect_odds_multiple", return_value=mock_results):
             results = await collector.collect_odds_multiple(match_ids)
             assert len(results) == 3
             for i, result in enumerate(results):
@@ -164,9 +160,7 @@ class TestOddsCollector:
         """测试网络故障错误处理"""
         collector = OddsCollector()
 
-        with patch.object(
-            collector, "collect_odds", side_effect=Exception("Network error")
-        ):
+        with patch.object(collector, "collect_odds", side_effect=Exception("Network error")):
             with pytest.raises(Exception, match="Network error"):
                 await collector.collect_odds(123)
 

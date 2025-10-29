@@ -4,10 +4,6 @@
 提供基本的用户认证功能，避免复杂依赖问题
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -96,9 +92,7 @@ class SimpleAuthService:
             raise ValueError("用户名已存在")
 
         # 简单的用户ID生成
-        new_id = (
-            max(user["id"] for user in self.users.values()) + 1 if self.users else 1
-        )
+        new_id = max(user["id"] for user in self.users.values()) + 1 if self.users else 1
 
         self.users[username] = {
             "id": new_id,
@@ -238,9 +232,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
 async def register_user(user_data: SimpleUserRegister):
     """用户注册"""
     try:
-        user = auth_service.create_user(
-            user_data.username, user_data.email, user_data.password
-        )
+        user = auth_service.create_user(user_data.username, user_data.email, user_data.password)
         return {"message": "用户注册成功", "user": user.dict()}
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

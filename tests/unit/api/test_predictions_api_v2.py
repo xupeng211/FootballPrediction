@@ -1,12 +1,7 @@
-from unittest.mock import Mock, patch
-
 """
 预测API v2测试 - 针对新实现的端点
 Predictions API v2 Tests - For Newly Implemented Endpoints
 """
-
-import json
-from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -67,9 +62,7 @@ class TestPredictionsAPIV2:
     def test_get_prediction_with_params(self, client):
         """测试带参数的预测获取"""
         match_id = 12345
-        response = client.get(
-            f"/predictions/{match_id}?model_version=v2.0&include_details=true"
-        )
+        response = client.get(f"/predictions/{match_id}?model_version=v2.0&include_details=true")
 
         assert response.status_code == 200
         _data = response.json()
@@ -276,10 +269,7 @@ class TestPredictionsAPIIntegration:
 
         # 验证数据一致性
         assert verification["prediction"]["match_id"] == retrieved["match_id"]
-        assert (
-            verification["prediction"]["predicted_outcome"]
-            == retrieved["predicted_outcome"]
-        )
+        assert verification["prediction"]["predicted_outcome"] == retrieved["predicted_outcome"]
 
     def test_batch_prediction_workflow(self, client):
         """测试批量预测工作流"""

@@ -1,13 +1,9 @@
-from unittest.mock import patch
-
 """
 时间工具测试（修复版）
 Tests for Time Utils (Fixed Version)
 
 测试src.utils.time_utils模块的实际功能
 """
-
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -283,9 +279,7 @@ class TestTimeUtilsPerformance:
         assert end_time - start_time < 0.5
 
 
-@pytest.mark.skipif(
-    TIME_UTILS_AVAILABLE, reason="Time utils module should be available"
-)
+@pytest.mark.skipif(TIME_UTILS_AVAILABLE, reason="Time utils module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -309,7 +303,6 @@ def test_module_imports():
 def test_class_method_signature():
     """测试：类方法签名"""
     if TIME_UTILS_AVAILABLE:
-        import inspect
 
         # 检查方法签名
         assert callable(TimeUtils.now_utc)

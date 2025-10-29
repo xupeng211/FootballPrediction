@@ -25,8 +25,8 @@ class DeploymentStatusChecker:
                     {"name": "Docker环境启动", "status": "pending"},
                     {"name": "数据库初始化", "status": "pending"},
                     {"name": "API服务部署", "status": "pending"},
-                    {"name": "基础功能验证", "status": "pending"}
-                ]
+                    {"name": "基础功能验证", "status": "pending"},
+                ],
             },
             "phase_2": {
                 "name": "监控系统建立",
@@ -34,8 +34,8 @@ class DeploymentStatusChecker:
                     {"name": "Prometheus配置", "status": "pending"},
                     {"name": "Grafana仪表板", "status": "pending"},
                     {"name": "健康检查端点", "status": "pending"},
-                    {"name": "告警规则配置", "status": "pending"}
-                ]
+                    {"name": "告警规则配置", "status": "pending"},
+                ],
             },
             "phase_3": {
                 "name": "种子用户测试",
@@ -43,8 +43,8 @@ class DeploymentStatusChecker:
                     {"name": "测试用户邀请", "status": "pending"},
                     {"name": "用户反馈收集", "status": "pending"},
                     {"name": "性能监控", "status": "pending"},
-                    {"name": "问题修复", "status": "pending"}
-                ]
+                    {"name": "问题修复", "status": "pending"},
+                ],
             },
             "phase_4": {
                 "name": "优化和扩展",
@@ -52,77 +52,62 @@ class DeploymentStatusChecker:
                     {"name": "性能优化", "status": "pending"},
                     {"name": "功能扩展", "status": "pending"},
                     {"name": "安全加固", "status": "pending"},
-                    {"name": "生产环境准备", "status": "pending"}
-                ]
-            }
+                    {"name": "生产环境准备", "status": "pending"},
+                ],
+            },
         }
 
     def check_docker_status(self) -> Dict:
         """检查Docker服务状态"""
         try:
             result = subprocess.run(
-                ["docker", "ps", "--format", "json"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["docker", "ps", "--format", "json"], capture_output=True, text=True, timeout=10
             )
 
             if result.returncode == 0:
                 containers = []
-                for line in result.stdout.strip().split('\n'):
+                for line in result.stdout.strip().split("\n"):
                     if line:
                         try:
                             container = json.loads(line)
-                            containers.append({
-                                "name": container.get("Names", ""),
-                                "status": container.get("State", ""),
-                                "ports": container.get("Ports", ""),
-                                "image": container.get("Image", "")
-                            })
+                            containers.append(
+                                {
+                                    "name": container.get("Names", ""),
+                                    "status": container.get("State", ""),
+                                    "ports": container.get("Ports", ""),
+                                    "image": container.get("Image", ""),
+                                }
+                            )
                         except json.JSONDecodeError:
                             continue
 
-                return {
-                    "status": "running",
-                    "containers": containers,
-                    "count": len(containers)
-                }
+                return {"status": "running", "containers": containers, "count": len(containers)}
             else:
-                return {
-                    "status": "error",
-                    "error": result.stderr,
-                    "count": 0
-                }
+                return {"status": "error", "error": result.stderr, "count": 0}
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "count": 0
-            }
+            return {"status": "error", "error": str(e), "count": 0}
 
     def check_api_health(self) -> Dict:
         """检查API健康状态"""
         try:
             import requests
+
             response = requests.get("http://localhost:8000/health", timeout=5)
 
             if response.status_code == 200:
                 return {
                     "status": "healthy",
                     "response_time": response.elapsed.total_seconds(),
-                    "data": response.json() if response.content else {}
+                    "data": response.json() if response.content else {},
                 }
             else:
                 return {
                     "status": "unhealthy",
                     "status_code": response.status_code,
-                    "response": response.text
+                    "response": response.text,
                 }
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     def check_database_status(self) -> Dict:
         """检查数据库状态"""
@@ -132,24 +117,15 @@ class DeploymentStatusChecker:
                 ["docker", "ps", "--filter", "name=db", "--format", "{{.Names}}:{{.Status}}"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0 and result.stdout.strip():
-                return {
-                    "status": "running",
-                    "info": result.stdout.strip()
-                }
+                return {"status": "running", "info": result.stdout.strip()}
             else:
-                return {
-                    "status": "stopped",
-                    "error": "Database container not found"
-                }
+                return {"status": "stopped", "error": "Database container not found"}
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     def update_task_status(self, phase_key: str, task_name: str, status: str):
         """更新任务状态"""
@@ -203,7 +179,7 @@ class DeploymentStatusChecker:
                     "completed": "✅",
                     "pending": "⏳",
                     "in_progress": "🔄",
-                    "failed": "❌"
+                    "failed": "❌",
                 }.get(task["status"], "❓")
 
                 report.append(f"   {status_icon} {task['name']}")
@@ -216,9 +192,15 @@ class DeploymentStatusChecker:
         db_status = self.check_database_status()
 
         report.append("🔍 系统状态")
-        report.append(f"   Docker: {'✅ 运行中' if docker_status['status'] == 'running' else '❌ 停止'} ({docker_status.get('count', 0)} 个容器)")
-        report.append(f"   API服务: {'✅ 健康' if api_health['status'] == 'healthy' else '❌ 异常'}")
-        report.append(f"   数据库: {'✅ 运行中' if db_status['status'] == 'running' else '❌ 停止'}")
+        report.append(
+            f"   Docker: {'✅ 运行中' if docker_status['status'] == 'running' else '❌ 停止'} ({docker_status.get('count', 0)} 个容器)"
+        )
+        report.append(
+            f"   API服务: {'✅ 健康' if api_health['status'] == 'healthy' else '❌ 异常'}"
+        )
+        report.append(
+            f"   数据库: {'✅ 运行中' if db_status['status'] == 'running' else '❌ 停止'}"
+        )
 
         return "\n".join(report)
 
@@ -232,10 +214,10 @@ class DeploymentStatusChecker:
             "phases": self.phases,
             "docker_status": self.check_docker_status(),
             "api_health": self.check_api_health(),
-            "database_status": self.check_database_status()
+            "database_status": self.check_database_status(),
         }
 
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, "w", encoding="utf-8") as f:
             json.dump(status_data, f, indent=2, ensure_ascii=False)
 
         return filename
@@ -252,7 +234,8 @@ class DeploymentStatusChecker:
 
                 # 清屏并显示状态
                 import os
-                os.system('clear' if os.name == 'posix' else 'cls')
+
+                os.system("clear" if os.name == "posix" else "cls")
 
                 print(self.generate_status_report())
                 print(f"\n⏰ 下次检查: {datetime.now().strftime('%H:%M:%S')} (+{interval}s)")

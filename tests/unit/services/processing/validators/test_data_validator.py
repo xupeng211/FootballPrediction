@@ -1,15 +1,9 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
-
 """
 Comprehensive tests for services.processing.validators.data_validator
 Auto-generated to maximize coverage
 """
 
 import asyncio
-import json
-import warnings
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 
