@@ -25,8 +25,10 @@ logger = logging.getLogger(__name__)
 # Pydantic Models
 # ============================================================================
 
+
 class PredictionRequest(BaseModel):
     """预测请求模型"""
+
     match_id: int = Field(..., description="比赛ID")
     user_id: Optional[str] = Field(None, description="用户ID")
     model_version: str = Field("default", description="模型版本")
@@ -36,7 +38,10 @@ class PredictionRequest(BaseModel):
 
 class BatchPredictionRequest(BaseModel):
     """批量预测请求"""
-    match_ids: List[int] = Field(..., description="比赛ID列表", min_items=1, max_items=50)
+
+    match_ids: List[int] = Field(
+        ..., description="比赛ID列表", min_items=1, max_items=50
+    )
     user_id: Optional[str] = Field(None, description="用户ID")
     model_version: str = Field("default", description="模型版本")
     priority: bool = Field(False, description="是否优先处理")
@@ -44,6 +49,7 @@ class BatchPredictionRequest(BaseModel):
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
+
     task_id: str = Field(..., description="任务ID")
     match_id: int = Field(..., description="比赛ID")
     status: str = Field(..., description="任务状态")
@@ -53,6 +59,7 @@ class PredictionResponse(BaseModel):
 
 class PredictionStatusResponse(BaseModel):
     """预测状态响应模型"""
+
     task_id: str
     match_id: int
     user_id: Optional[str]
@@ -67,6 +74,7 @@ class PredictionStatusResponse(BaseModel):
 
 class ServiceStatsResponse(BaseModel):
     """服务统计响应模型"""
+
     service_name: str
     total_tasks: int
     pending_tasks: int
@@ -84,10 +92,10 @@ class ServiceStatsResponse(BaseModel):
 # API Endpoints
 # ============================================================================
 
+
 @router.post("/request", response_model=PredictionResponse, summary="提交预测请求")
 async def request_prediction(
-    request: PredictionRequest,
-    background_tasks: BackgroundTasks
+    request: PredictionRequest, background_tasks: BackgroundTasks
 ):
     """
     提交实时预测请求
@@ -107,7 +115,7 @@ async def request_prediction(
             match_id=request.match_id,
             user_id=request.user_id,
             model_version=request.model_version,
-            priority=request.priority
+            priority=request.priority,
         )
 
         # 发送系统通知
@@ -115,7 +123,7 @@ async def request_prediction(
             _send_prediction_notification,
             request.match_id,
             request.user_id,
-            "prediction_requested"
+            "prediction_requested",
         )
 
         return PredictionResponse(
@@ -123,18 +131,19 @@ async def request_prediction(
             match_id=request.match_id,
             status="pending",
             created_at=datetime.now().isoformat(),
-            estimated_completion=(datetime.now().timestamp() + 30).__str__()
+            estimated_completion=(datetime.now().timestamp() + 30).__str__(),
         )
 
     except Exception as e:
         logger.error(f"Failed to submit prediction request: {e}")
-        raise HTTPException(status_code=500, detail="Failed to submit prediction request")
+        raise HTTPException(
+            status_code=500, detail="Failed to submit prediction request"
+        )
 
 
 @router.post("/batch", summary="批量提交预测请求")
 async def request_batch_predictions(
-    request: BatchPredictionRequest,
-    background_tasks: BackgroundTasks
+    request: BatchPredictionRequest, background_tasks: BackgroundTasks
 ):
     """
     批量提交预测请求
@@ -156,7 +165,7 @@ async def request_batch_predictions(
                 match_id=match_id,
                 user_id=request.user_id,
                 model_version=request.model_version,
-                priority=request.priority
+                priority=request.priority,
             )
             task_ids.append(task_id)
 
@@ -165,7 +174,7 @@ async def request_batch_predictions(
             _send_batch_notification,
             request.match_ids,
             request.user_id,
-            "batch_prediction_requested"
+            "batch_prediction_requested",
         )
 
         return {
@@ -173,15 +182,19 @@ async def request_batch_predictions(
             "message": f"Submitted {len(task_ids)} prediction requests",
             "task_ids": task_ids,
             "match_count": len(request.match_ids),
-            "submitted_at": datetime.now().isoformat()
+            "submitted_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
         logger.error(f"Failed to submit batch prediction request: {e}")
-        raise HTTPException(status_code=500, detail="Failed to submit batch prediction request")
+        raise HTTPException(
+            status_code=500, detail="Failed to submit batch prediction request"
+        )
 
 
-@router.get("/status/{task_id}", response_model=PredictionStatusResponse, summary="获取预测状态")
+@router.get(
+    "/status/{task_id}", response_model=PredictionStatusResponse, summary="获取预测状态"
+)
 async def get_prediction_status(task_id: str):
     """
     获取预测任务状态
@@ -216,7 +229,7 @@ async def get_prediction_status(task_id: str):
             completed_at=status["completed_at"],
             result=status["result"],
             error=status["error"],
-            processing_time=processing_time
+            processing_time=processing_time,
         )
 
     except HTTPException:
@@ -230,7 +243,7 @@ async def get_prediction_status(task_id: str):
 async def get_match_predictions(
     match_id: int,
     limit: int = Query(10, ge=1, le=100, description="返回数量限制"),
-    user_id: Optional[str] = Query(None, description="用户ID过滤")
+    user_id: Optional[str] = Query(None, description="用户ID过滤"),
 ):
     """
     获取指定比赛的所有预测
@@ -259,7 +272,7 @@ async def get_match_predictions(
             "predictions": predictions,
             "total_count": len(predictions),
             "filtered_by_user": user_id is not None,
-            "limit": limit
+            "limit": limit,
         }
 
     except Exception as e:
@@ -307,7 +320,7 @@ async def cleanup_old_tasks(
             "success": True,
             "cleaned_tasks": cleaned_count,
             "max_age_hours": max_age_hours,
-            "cleaned_at": datetime.now().isoformat()
+            "cleaned_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -320,7 +333,7 @@ async def broadcast_system_alert(
     message: str,
     alert_type: str = "info",
     severity: str = "low",
-    component: str = "prediction_api"
+    component: str = "prediction_api",
 ):
     """
     广播系统告警消息
@@ -344,7 +357,7 @@ async def broadcast_system_alert(
             "alert_type": alert_type,
             "severity": severity,
             "component": component,
-            "broadcasted_at": datetime.now().isoformat()
+            "broadcasted_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -356,10 +369,9 @@ async def broadcast_system_alert(
 # Helper Functions
 # ============================================================================
 
+
 async def _send_prediction_notification(
-    match_id: int,
-    user_id: Optional[str],
-    action: str
+    match_id: int, user_id: Optional[str], action: str
 ) -> None:
     """发送预测通知"""
     try:
@@ -371,8 +383,8 @@ async def _send_prediction_notification(
                 "match_id": match_id,
                 "user_id": user_id,
                 "action": action,
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         }
 
         if user_id:
@@ -385,9 +397,7 @@ async def _send_prediction_notification(
 
 
 async def _send_batch_notification(
-    match_ids: List[int],
-    user_id: Optional[str],
-    action: str
+    match_ids: List[int], user_id: Optional[str], action: str
 ) -> None:
     """发送批量通知"""
     try:
@@ -400,8 +410,8 @@ async def _send_batch_notification(
                 "user_id": user_id,
                 "action": action,
                 "match_count": len(match_ids),
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         }
 
         if user_id:

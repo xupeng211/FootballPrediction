@@ -31,11 +31,16 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
     from src.services.betting.ev_calculator import (
-        BetType, RiskLevel, BettingOdds, PredictionProbabilities,
-        EVCalculation, BettingStrategy
+        BetType,
+        RiskLevel,
+        BettingOdds,
+        PredictionProbabilities,
+        EVCalculation,
+        BettingStrategy,
     )
 except ImportError as e:
     print(f"基础EV计算器导入错误: {e}")
+
     # 如果导入失败，使用备用定义
     # 定义基础类型以防导入失败
     class BetType(Enum):
@@ -146,7 +151,7 @@ class EnhancedKellyCalculator:
         decimal_odds: float,
         confidence: float = 1.0,
         bankroll: float = 1000.0,
-        historical_performance: Optional[Dict[str, float]] = None
+        historical_performance: Optional[Dict[str, float]] = None,
     ) -> KellyOptimizationResult:
         """
         计算优化的分数Kelly准则
@@ -171,7 +176,7 @@ class EnhancedKellyCalculator:
                 risk_of_ruin=1.0,
                 confidence_interval=(0.0, 0.0),
                 sensitivity_analysis={},
-                recommended_adjustment="avoid"
+                recommended_adjustment="avoid",
             )
 
         # 标准Kelly公式
@@ -205,7 +210,7 @@ class EnhancedKellyCalculator:
             risk_of_ruin=risk_of_ruin,
             confidence_interval=confidence_interval,
             sensitivity_analysis=sensitivity,
-            recommended_adjustment=recommendation
+            recommended_adjustment=recommendation,
         )
 
     def _apply_kelly_optimizations(
@@ -214,7 +219,7 @@ class EnhancedKellyCalculator:
         probability: float,
         net_odds: float,
         confidence: float,
-        historical_performance: Optional[Dict[str, float]]
+        historical_performance: Optional[Dict[str, float]],
     ) -> float:
         """应用Kelly准则优化"""
 
@@ -228,12 +233,16 @@ class EnhancedKellyCalculator:
 
         # 3. 波动率调整
         if self.volatility_adjustment:
-            volatility_penalty = self._calculate_volatility_penalty(probability, net_odds)
-            kelly_fractional *= (1 - volatility_penalty)
+            volatility_penalty = self._calculate_volatility_penalty(
+                probability, net_odds
+            )
+            kelly_fractional *= 1 - volatility_penalty
 
         # 4. 历史表现调整
         if historical_performance:
-            performance_factor = self._calculate_performance_factor(historical_performance)
+            performance_factor = self._calculate_performance_factor(
+                historical_performance
+            )
             kelly_fractional *= performance_factor
 
         # 5. 安全边界
@@ -241,10 +250,12 @@ class EnhancedKellyCalculator:
 
         return kelly_fractional
 
-    def _calculate_volatility_penalty(self, probability: float, net_odds: float) -> float:
+    def _calculate_volatility_penalty(
+        self, probability: float, net_odds: float
+    ) -> float:
         """计算波动率惩罚"""
         # 基于概率和赔率的方差计算波动率
-        variance = probability * (net_odds ** 2) * (1 - probability)
+        variance = probability * (net_odds**2) * (1 - probability)
         volatility = math.sqrt(variance)
 
         # 将波动率转换为惩罚因子 (0-0.5范围)
@@ -257,12 +268,7 @@ class EnhancedKellyCalculator:
             return 1.0
 
         # 关键指标权重
-        weights = {
-            "accuracy": 0.4,
-            "roi": 0.3,
-            "consistency": 0.2,
-            "max_drawdown": 0.1
-        }
+        weights = {"accuracy": 0.4, "roi": 0.3, "consistency": 0.2, "max_drawdown": 0.1}
 
         factors = []
         for metric, weight in weights.items():
@@ -287,7 +293,9 @@ class EnhancedKellyCalculator:
         performance_factor = sum(f * w for f, w in zip(factors, weights.values()))
         return max(0.5, min(performance_factor, 1.5))
 
-    def _calculate_expected_growth(self, kelly_fraction: float, probability: float, net_odds: float) -> float:
+    def _calculate_expected_growth(
+        self, kelly_fraction: float, probability: float, net_odds: float
+    ) -> float:
         """计算期望增长率"""
         if kelly_fraction <= 0:
             return 0.0
@@ -304,7 +312,9 @@ class EnhancedKellyCalculator:
         growth_rate = p * math.log(1 + f * b) + q * math.log(1 - f)
         return growth_rate
 
-    def _calculate_risk_of_ruin(self, kelly_fraction: float, probability: float, net_odds: float) -> float:
+    def _calculate_risk_of_ruin(
+        self, kelly_fraction: float, probability: float, net_odds: float
+    ) -> float:
         """计算破产风险"""
         if kelly_fraction <= 0:
             return 0.0
@@ -316,7 +326,9 @@ class EnhancedKellyCalculator:
             return 1.0  # 没有优势时破产风险为100%
 
         # 基于Kelly比例和优势的风险评估
-        kelly_ratio = kelly_fraction / ((probability * net_odds - (1 - probability)) / net_odds)
+        kelly_ratio = kelly_fraction / (
+            (probability * net_odds - (1 - probability)) / net_odds
+        )
 
         if kelly_ratio > 1:
             return 0.5  # 超过Kelly标准时风险较高
@@ -326,7 +338,11 @@ class EnhancedKellyCalculator:
         return risk
 
     def _calculate_kelly_confidence_interval(
-        self, kelly_fraction: float, probability: float, net_odds: float, confidence: float
+        self,
+        kelly_fraction: float,
+        probability: float,
+        net_odds: float,
+        confidence: float,
     ) -> Tuple[float, float]:
         """计算Kelly分数的置信区间"""
         if kelly_fraction <= 0:
@@ -340,23 +356,44 @@ class EnhancedKellyCalculator:
 
         return (lower, upper)
 
-    def _perform_sensitivity_analysis(self, kelly_fraction: float, probability: float, net_odds: float) -> Dict[str, float]:
+    def _perform_sensitivity_analysis(
+        self, kelly_fraction: float, probability: float, net_odds: float
+    ) -> Dict[str, float]:
         """执行敏感性分析"""
         sensitivity = {}
 
         # 概率敏感性
         prob_delta = 0.01  # 1%变化
-        kelly_plus = ((net_odds * (probability + prob_delta) - (1 - probability - prob_delta)) / net_odds) * self.fractional_kelly_multiplier
-        kelly_minus = ((net_odds * (probability - prob_delta) - (1 - probability + prob_delta)) / net_odds) * self.fractional_kelly_multiplier
+        kelly_plus = (
+            (net_odds * (probability + prob_delta) - (1 - probability - prob_delta))
+            / net_odds
+        ) * self.fractional_kelly_multiplier
+        kelly_minus = (
+            (net_odds * (probability - prob_delta) - (1 - probability + prob_delta))
+            / net_odds
+        ) * self.fractional_kelly_multiplier
 
-        sensitivity["probability_sensitivity"] = abs(kelly_plus - kelly_minus) / (2 * prob_delta)
+        sensitivity["probability_sensitivity"] = abs(kelly_plus - kelly_minus) / (
+            2 * prob_delta
+        )
 
         # 赔率敏感性
         odds_delta = 0.1  # 10%变化
-        kelly_odds_plus = ((net_odds + odds_delta) * probability - (1 - probability)) / (net_odds + odds_delta) * self.fractional_kelly_multiplier
-        kelly_odds_minus = max(0, ((net_odds - odds_delta) * probability - (1 - probability)) / max(net_odds - odds_delta, 0.01) * self.fractional_kelly_multiplier)
+        kelly_odds_plus = (
+            ((net_odds + odds_delta) * probability - (1 - probability))
+            / (net_odds + odds_delta)
+            * self.fractional_kelly_multiplier
+        )
+        kelly_odds_minus = max(
+            0,
+            ((net_odds - odds_delta) * probability - (1 - probability))
+            / max(net_odds - odds_delta, 0.01)
+            * self.fractional_kelly_multiplier,
+        )
 
-        sensitivity["odds_sensitivity"] = abs(kelly_odds_plus - kelly_odds_minus) / (2 * odds_delta)
+        sensitivity["odds_sensitivity"] = abs(kelly_odds_plus - kelly_odds_minus) / (
+            2 * odds_delta
+        )
 
         return sensitivity
 
@@ -383,12 +420,12 @@ class EnhancedValueRatingCalculator:
         self.logger = logger
         # 评级权重配置
         self.weights = {
-            "ev_score": 0.25,        # EV分数权重
+            "ev_score": 0.25,  # EV分数权重
             "probability_score": 0.20,  # 概率分数权重
-            "odds_fairness": 0.20,      # 赔率公平性权重
+            "odds_fairness": 0.20,  # 赔率公平性权重
             "market_efficiency": 0.15,  # 市场效率权重
-            "risk_adjusted": 0.15,      # 风险调整权重
-            "historical_performance": 0.05  # 历史表现权重
+            "risk_adjusted": 0.15,  # 风险调整权重
+            "historical_performance": 0.05,  # 历史表现权重
         }
 
     def calculate_enhanced_value_rating(
@@ -397,7 +434,7 @@ class EnhancedValueRatingCalculator:
         odds: float,
         confidence: float,
         market_data: Optional[Dict[str, Any]] = None,
-        historical_data: Optional[Dict[str, Any]] = None
+        historical_data: Optional[Dict[str, Any]] = None,
     ) -> EnhancedValueRating:
         """
         计算增强价值评级
@@ -430,12 +467,12 @@ class EnhancedValueRatingCalculator:
 
         # 计算综合评级
         overall_rating = (
-            ev_score * self.weights["ev_score"] +
-            probability_score * self.weights["probability_score"] +
-            odds_fairness_score * self.weights["odds_fairness"] +
-            market_efficiency_score * self.weights["market_efficiency"] +
-            risk_adjusted_score * self.weights["risk_adjusted"] +
-            historical_performance_score * self.weights["historical_performance"]
+            ev_score * self.weights["ev_score"]
+            + probability_score * self.weights["probability_score"]
+            + odds_fairness_score * self.weights["odds_fairness"]
+            + market_efficiency_score * self.weights["market_efficiency"]
+            + risk_adjusted_score * self.weights["risk_adjusted"]
+            + historical_performance_score * self.weights["historical_performance"]
         )
 
         # 创建详细分解
@@ -445,7 +482,7 @@ class EnhancedValueRatingCalculator:
             "odds_fairness_score": odds_fairness_score,
             "market_efficiency_score": market_efficiency_score,
             "risk_adjusted_score": risk_adjusted_score,
-            "historical_performance_score": historical_performance_score
+            "historical_performance_score": historical_performance_score,
         }
 
         return EnhancedValueRating(
@@ -456,7 +493,7 @@ class EnhancedValueRatingCalculator:
             market_efficiency_score=market_efficiency_score,
             risk_adjusted_score=risk_adjusted_score,
             historical_performance_score=historical_performance_score,
-            rating_breakdown=rating_breakdown
+            rating_breakdown=rating_breakdown,
         )
 
     def _calculate_ev_score(self, ev: float) -> float:
@@ -473,7 +510,9 @@ class EnhancedValueRatingCalculator:
 
         return min(score, 10.0)
 
-    def _calculate_probability_score(self, probability: float, confidence: float) -> float:
+    def _calculate_probability_score(
+        self, probability: float, confidence: float
+    ) -> float:
         """计算概率分数 (0-10)"""
         # 基于概率置信度的分数
         base_score = probability * 8  # 0-8分
@@ -486,7 +525,7 @@ class EnhancedValueRatingCalculator:
 
     def _calculate_odds_fairness_score(self, probability: float, odds: float) -> float:
         """计算赔率公平性分数 (0-10)"""
-        fair_odds = 1 / probability if probability > 0 else float('inf')
+        fair_odds = 1 / probability if probability > 0 else float("inf")
         actual_odds = odds
 
         if fair_odds == 0:
@@ -531,7 +570,9 @@ class EnhancedValueRatingCalculator:
 
         # 3. 市场深度
         if "market_depth" in market_data:
-            depth_score = min(market_data["market_depth"] / 1000000, 1.0)  # 假设100万为满分
+            depth_score = min(
+                market_data["market_depth"] / 1000000, 1.0
+            )  # 假设100万为满分
             efficiency_factors.append(depth_score * 10)
 
         # 4. 价差分析
@@ -558,7 +599,9 @@ class EnhancedValueRatingCalculator:
         # 风险调整因子
         risk_factors = []
         # 用于记录和调试各种风险因素
-        logger.debug(f"Risk factors initialized for EV calculation: {len(risk_factors)} factors")
+        logger.debug(
+            f"Risk factors initialized for EV calculation: {len(risk_factors)} factors"
+        )
 
         # 1. 概率风险
         if probability < 0.3:
@@ -588,7 +631,9 @@ class EnhancedValueRatingCalculator:
 
         return max(0.0, min(risk_adjusted_score, 10.0))
 
-    def _calculate_historical_performance_score(self, historical_data: Optional[Dict[str, Any]]) -> float:
+    def _calculate_historical_performance_score(
+        self, historical_data: Optional[Dict[str, Any]]
+    ) -> float:
         """计算历史表现分数 (0-10)"""
         if not historical_data:
             return 5.0  # 默认中等分数
@@ -702,13 +747,15 @@ class EnhancedEVCalculator:
         confidence: float = 1.0,
         strategy_name: str = "srs_premium",
         market_data: Optional[Dict[str, Any]] = None,
-        historical_data: Optional[Dict[str, Any]] = None
+        historical_data: Optional[Dict[str, Any]] = None,
     ) -> EVCalculation:
         """
         计算增强EV
         """
 
-        strategy = self.optimized_strategies.get(strategy_name, self.optimized_strategies["srs_premium"])
+        strategy = self.optimized_strategies.get(
+            strategy_name, self.optimized_strategies["srs_premium"]
+        )
 
         # 1. 基础EV计算
         ev = (probability * odds) - 1
@@ -771,7 +818,7 @@ class EnhancedEVCalculator:
         value_rating: float,
         kelly_result: KellyOptimizationResult,
         risk_level: RiskLevel,
-        strategy: BettingStrategy
+        strategy: BettingStrategy,
     ) -> str:
         """生成增强投注建议"""
 
@@ -786,7 +833,9 @@ class EnhancedEVCalculator:
             return "avoid"
 
         # 综合评估
-        combined_score = (value_rating / 10) * 0.6 + (1 - kelly_result.risk_of_ruin) * 0.4
+        combined_score = (value_rating / 10) * 0.6 + (
+            1 - kelly_result.risk_of_ruin
+        ) * 0.4
 
         if combined_score >= 0.85 and kelly_result.expected_growth > 0.05:
             return "strong_bet"
@@ -801,7 +850,7 @@ class EnhancedEVCalculator:
         self,
         strategy_name: str,
         historical_bets: List[Dict[str, Any]],
-        initial_bankroll: float = 1000.0
+        initial_bankroll: float = 1000.0,
     ) -> Dict[str, Any]:
         """
         回测策略效果
@@ -825,7 +874,7 @@ class EnhancedEVCalculator:
             "max_drawdown": 0.0,
             "sharpe_ratio": 0.0,
             "daily_returns": [],
-            "bankroll_history": [initial_bankroll]
+            "bankroll_history": [initial_bankroll],
         }
 
         current_bankroll = initial_bankroll
@@ -839,7 +888,7 @@ class EnhancedEVCalculator:
                 odds=bet_data["odds"],
                 confidence=bet_data.get("confidence", 1.0),
                 strategy_name=strategy_name,
-                historical_data=bet_data.get("historical_data")
+                historical_data=bet_data.get("historical_data"),
             )
 
             # 检查是否投注
@@ -849,7 +898,7 @@ class EnhancedEVCalculator:
             # 计算投注金额
             stake = min(
                 ev_calc.suggested_stake * current_bankroll,
-                current_bankroll * 0.05  # 单次最大5%
+                current_bankroll * 0.05,  # 单次最大5%
             )
 
             if stake <= 0:
@@ -882,13 +931,21 @@ class EnhancedEVCalculator:
         # 计算最终指标
         results["final_bankroll"] = current_bankroll
         results["roi"] = (current_bankroll - initial_bankroll) / initial_bankroll * 100
-        results["win_rate"] = results["winning_bets"] / results["total_bets"] if results["total_bets"] > 0 else 0
+        results["win_rate"] = (
+            results["winning_bets"] / results["total_bets"]
+            if results["total_bets"] > 0
+            else 0
+        )
 
         # 计算Sharpe比率
         if results["bankroll_history"]:
-            returns = np.diff(results["bankroll_history"]) / results["bankroll_history"][:-1]
+            returns = (
+                np.diff(results["bankroll_history"]) / results["bankroll_history"][:-1]
+            )
             if len(returns) > 1:
-                results["sharpe_ratio"] = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
+                results["sharpe_ratio"] = (
+                    np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
+                )
 
         return results
 

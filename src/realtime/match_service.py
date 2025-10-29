@@ -19,7 +19,7 @@ from .events import (
     RealtimeEvent,
     create_match_score_changed_event,
     create_match_score_changed_event,
-    create_system_alert_event
+    create_system_alert_event,
 )
 from .manager import get_websocket_manager
 from .subscriptions import get_subscription_manager
@@ -27,17 +27,19 @@ from .subscriptions import get_subscription_manager
 
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
-    UPCOMING = "upcoming"       # 即将开始
-    LIVE = "live"              # 进行中
-    HALFTIME = "halftime"      # 中场休息
-    FULLTIME = "fulltime"      # 已结束
-    POSTPONED = "postponed"    # 推迟
-    CANCELLED = "cancelled"    # 取消
+
+    UPCOMING = "upcoming"  # 即将开始
+    LIVE = "live"  # 进行中
+    HALFTIME = "halftime"  # 中场休息
+    FULLTIME = "fulltime"  # 已结束
+    POSTPONED = "postponed"  # 推迟
+    CANCELLED = "cancelled"  # 取消
 
 
 @dataclass
 class MatchInfo:
     """比赛信息"""
+
     match_id: int
     home_team: str
     away_team: str
@@ -55,12 +57,11 @@ class MatchInfo:
         if self.last_update is None:
             self.last_update = datetime.now()
 
-    def update_score(self, home_score: int, away_score: int, minute: Optional[int] = None) -> bool:
+    def update_score(
+        self, home_score: int, away_score: int, minute: Optional[int] = None
+    ) -> bool:
         """更新比分，返回是否有变化"""
-        score_changed = (
-            self.home_score != home_score or
-            self.away_score != away_score
-        )
+        score_changed = self.home_score != home_score or self.away_score != away_score
 
         self.home_score = home_score
         self.away_score = away_score
@@ -149,7 +150,7 @@ class RealtimeMatchService:
         away_team: str,
         league: str,
         status: MatchStatus = MatchStatus.UPCOMING,
-        start_time: Optional[datetime] = None
+        start_time: Optional[datetime] = None,
     ) -> bool:
         """
         添加比赛到监控列表
@@ -174,7 +175,7 @@ class RealtimeMatchService:
             away_team=away_team,
             league=league,
             status=status,
-            start_time=start_time
+            start_time=start_time,
         )
 
         self.matches[match_id] = match
@@ -194,13 +195,15 @@ class RealtimeMatchService:
                 "league": league,
                 "status": status.value,
                 "start_time": start_time.isoformat() if start_time else None,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             },
-            source="match_service"
+            source="match_service",
         )
         await self.websocket_manager.publish_event(event)
 
-        self.logger.info(f"Added match to monitoring: {match_id} - {home_team} vs {away_team}")
+        self.logger.info(
+            f"Added match to monitoring: {match_id} - {home_team} vs {away_team}"
+        )
         return True
 
     async def update_match_score(
@@ -208,7 +211,7 @@ class RealtimeMatchService:
         match_id: int,
         home_score: int,
         away_score: int,
-        minute: Optional[int] = None
+        minute: Optional[int] = None,
     ) -> bool:
         """
         更新比赛比分
@@ -237,11 +240,13 @@ class RealtimeMatchService:
                 league=match.league,
                 home_score=home_score,
                 away_score=away_score,
-                minute=minute
+                minute=minute,
             )
             await self.websocket_manager.publish_event(event)
 
-            self.logger.info(f"Score updated for match {match_id}: {home_score}-{away_score}")
+            self.logger.info(
+                f"Score updated for match {match_id}: {home_score}-{away_score}"
+            )
 
         return score_changed
 
@@ -249,7 +254,7 @@ class RealtimeMatchService:
         self,
         match_id: int,
         status: MatchStatus,
-        current_time: Optional[datetime] = None
+        current_time: Optional[datetime] = None,
     ) -> bool:
         """
         更新比赛状态
@@ -284,9 +289,9 @@ class RealtimeMatchService:
                     "new_status": status.value,
                     "current_score": match.get_display_score(),
                     "minute": match.minute,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 },
-                source="match_service"
+                source="match_service",
             )
             await self.websocket_manager.publish_event(event)
 
@@ -313,7 +318,7 @@ class RealtimeMatchService:
             "is_live": match.is_live(),
             "start_time": match.start_time.isoformat() if match.start_time else None,
             "last_update": match.last_update.isoformat() if match.last_update else None,
-            "subscribers": len(match.subscribers)
+            "subscribers": len(match.subscribers),
         }
 
     async def get_league_matches(self, league: str) -> List[Dict[str, Any]]:
@@ -363,8 +368,12 @@ class RealtimeMatchService:
         """获取服务统计信息"""
         total_matches = len(self.matches)
         live_matches = sum(1 for match in self.matches.values() if match.is_live())
-        upcoming_matches = sum(1 for match in self.matches.values() if match.status == MatchStatus.UPCOMING)
-        completed_matches = sum(1 for match in self.matches.values() if match.status == MatchStatus.FULLTIME)
+        upcoming_matches = sum(
+            1 for match in self.matches.values() if match.status == MatchStatus.UPCOMING
+        )
+        completed_matches = sum(
+            1 for match in self.matches.values() if match.status == MatchStatus.FULLTIME
+        )
 
         return {
             "service_name": "realtime_match_service",
@@ -373,10 +382,12 @@ class RealtimeMatchService:
             "upcoming_matches": upcoming_matches,
             "completed_matches": completed_matches,
             "tracked_leagues": len(self.league_matches),
-            "total_subscribers": sum(len(match.subscribers) for match in self.matches.values()),
+            "total_subscribers": sum(
+                len(match.subscribers) for match in self.matches.values()
+            ),
             "is_monitoring": self.is_monitoring,
             "monitoring_interval": self.monitoring_interval,
-            "live_update_interval": self.live_update_interval
+            "live_update_interval": self.live_update_interval,
         }
 
     async def _monitoring_loop(self) -> None:
@@ -411,7 +422,9 @@ class RealtimeMatchService:
             if match.status == MatchStatus.UPCOMING:
                 # 检查是否应该开始
                 if match.start_time and current_time >= match.start_time:
-                    await self.update_match_status(match.match_id, MatchStatus.LIVE, current_time)
+                    await self.update_match_status(
+                        match.match_id, MatchStatus.LIVE, current_time
+                    )
 
             elif match.status == MatchStatus.LIVE:
                 # 模拟比赛进行中的更新
@@ -423,6 +436,7 @@ class RealtimeMatchService:
                 # 随机模拟进球
                 if match.minute % 15 == 0 and match.home_score is not None:
                     import random
+
                     if random.random() < 0.3:  # 30%概率进球
                         if random.random() < 0.5:
                             new_home_score = match.home_score + 1
@@ -432,19 +446,22 @@ class RealtimeMatchService:
                             new_away_score = (match.away_score or 0) + 1
 
                         await self.update_match_score(
-                            match.match_id,
-                            new_home_score,
-                            new_away_score,
-                            match.minute
+                            match.match_id, new_home_score, new_away_score, match.minute
                         )
 
                 # 模拟中场休息和结束
                 if match.minute == 45:
-                    await self.update_match_status(match.match_id, MatchStatus.HALFTIME, current_time)
+                    await self.update_match_status(
+                        match.match_id, MatchStatus.HALFTIME, current_time
+                    )
                 elif match.minute == 46:
-                    await self.update_match_status(match.match_id, MatchStatus.LIVE, current_time)
+                    await self.update_match_status(
+                        match.match_id, MatchStatus.LIVE, current_time
+                    )
                 elif match.minute >= 90:
-                    await self.update_match_status(match.match_id, MatchStatus.FULLTIME, current_time)
+                    await self.update_match_status(
+                        match.match_id, MatchStatus.FULLTIME, current_time
+                    )
 
     async def _update_live_matches(self) -> None:
         """更新直播比赛信息"""
@@ -459,9 +476,9 @@ class RealtimeMatchService:
                     "value": len(live_matches),
                     "previous_value": None,
                     "match_ids": [match.match_id for match in live_matches],
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 },
-                source="match_service"
+                source="match_service",
             )
             await self.websocket_manager.publish_event(event)
 
@@ -469,7 +486,8 @@ class RealtimeMatchService:
         """清理旧比赛"""
         cutoff_time = datetime.now() - timedelta(hours=24)
         old_matches = [
-            match_id for match_id, match in self.matches.items()
+            match_id
+            for match_id, match in self.matches.items()
             if match.last_update and match.last_update < cutoff_time
         ]
 
@@ -492,14 +510,14 @@ class RealtimeMatchService:
         message: str,
         alert_type: str = "info",
         severity: str = "low",
-        component: str = "match_service"
+        component: str = "match_service",
     ) -> None:
         """广播系统告警"""
         alert_event = create_system_alert_event(
             alert_type=alert_type,
             message=message,
             component=component,
-            severity=severity
+            severity=severity,
         )
 
         await self.websocket_manager.publish_event(alert_event)
@@ -519,11 +537,7 @@ def get_realtime_match_service() -> RealtimeMatchService:
 
 # 便捷函数
 async def add_match_to_monitoring(
-    match_id: int,
-    home_team: str,
-    away_team: str,
-    league: str,
-    status: str = "upcoming"
+    match_id: int, home_team: str, away_team: str, league: str, status: str = "upcoming"
 ) -> bool:
     """添加比赛到监控"""
     service = get_realtime_match_service()
@@ -533,10 +547,7 @@ async def add_match_to_monitoring(
 
 
 async def update_match_score(
-    match_id: int,
-    home_score: int,
-    away_score: int,
-    minute: Optional[int] = None
+    match_id: int, home_score: int, away_score: int, minute: Optional[int] = None
 ) -> bool:
     """更新比赛比分"""
     service = get_realtime_match_service()

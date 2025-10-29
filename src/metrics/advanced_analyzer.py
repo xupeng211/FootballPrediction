@@ -31,20 +31,30 @@ class CodeComplexityAnalyzer:
     def analyze_file_complexity(self, file_path: Path) -> Dict[str, Any]:
         """分析单个文件的复杂度"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
 
             complexity_metrics = {
-                'file_path': str(file_path),
-                'lines_of_code': len(content.splitlines()),
-                'cyclomatic_complexity': self._calculate_cyclomatic_complexity(tree),
-                'cognitive_complexity': self._calculate_cognitive_complexity(tree),
-                'maintainability_index': self._calculate_maintainability_index(content, tree),
-                'nesting_depth': self._calculate_max_nesting_depth(tree),
-                'function_count': len([node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]),
-                'class_count': len([node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)])
+                "file_path": str(file_path),
+                "lines_of_code": len(content.splitlines()),
+                "cyclomatic_complexity": self._calculate_cyclomatic_complexity(tree),
+                "cognitive_complexity": self._calculate_cognitive_complexity(tree),
+                "maintainability_index": self._calculate_maintainability_index(
+                    content, tree
+                ),
+                "nesting_depth": self._calculate_max_nesting_depth(tree),
+                "function_count": len(
+                    [
+                        node
+                        for node in ast.walk(tree)
+                        if isinstance(node, ast.FunctionDef)
+                    ]
+                ),
+                "class_count": len(
+                    [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+                ),
             }
 
             return complexity_metrics
@@ -66,7 +76,9 @@ class CodeComplexityAnalyzer:
                 complexity += 1
             elif isinstance(node, ast.BoolOp):
                 complexity += len(node.values) - 1
-            elif isinstance(node, ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp):
+            elif isinstance(
+                node, ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp
+            ):
                 complexity += 1
 
         return complexity
@@ -99,7 +111,9 @@ class CodeComplexityAnalyzer:
             return 100.0
 
         # 简化的可维护性指数计算
-        maintainability = max(0, 171 - 5.2 * (cyclomatic_complexity ** 0.23) - 0.23 * (volume ** 0.5))
+        maintainability = max(
+            0, 171 - 5.2 * (cyclomatic_complexity**0.23) - 0.23 * (volume**0.5)
+        )
         return round(maintainability, 2)
 
     def _calculate_max_nesting_depth(self, tree: ast.AST) -> int:
@@ -110,7 +124,18 @@ class CodeComplexityAnalyzer:
             nonlocal max_depth
             max_depth = max(max_depth, current_depth)
 
-            if isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor, ast.With, ast.AsyncWith, ast.Try)):
+            if isinstance(
+                node,
+                (
+                    ast.If,
+                    ast.While,
+                    ast.For,
+                    ast.AsyncFor,
+                    ast.With,
+                    ast.AsyncWith,
+                    ast.Try,
+                ),
+            ):
                 for child in ast.iter_child_nodes(node):
                     calculate_depth(child, current_depth + 1)
             else:
@@ -128,17 +153,17 @@ class CodeComplexityAnalyzer:
             return {}
 
         total_metrics = {
-            'total_files': len(python_files),
-            'file_metrics': [],
-            'summary': {
-                'total_lines': 0,
-                'avg_cyclomatic_complexity': 0,
-                'avg_cognitive_complexity': 0,
-                'avg_maintainability_index': 0,
-                'max_nesting_depth': 0,
-                'total_functions': 0,
-                'total_classes': 0
-            }
+            "total_files": len(python_files),
+            "file_metrics": [],
+            "summary": {
+                "total_lines": 0,
+                "avg_cyclomatic_complexity": 0,
+                "avg_cognitive_complexity": 0,
+                "avg_maintainability_index": 0,
+                "max_nesting_depth": 0,
+                "total_functions": 0,
+                "total_classes": 0,
+            },
         }
 
         cyclomatic_complexities = []
@@ -146,31 +171,37 @@ class CodeComplexityAnalyzer:
         maintainability_indices = []
 
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             metrics = self.analyze_file_complexity(file_path)
             if metrics:
-                total_metrics['file_metrics'].append(metrics)
+                total_metrics["file_metrics"].append(metrics)
 
                 # 累加统计数据
-                total_metrics['summary']['total_lines'] += metrics['lines_of_code']
-                total_metrics['summary']['total_functions'] += metrics['function_count']
-                total_metrics['summary']['total_classes'] += metrics['class_count']
-                total_metrics['summary']['max_nesting_depth'] = max(
-                    total_metrics['summary']['max_nesting_depth'],
-                    metrics['nesting_depth']
+                total_metrics["summary"]["total_lines"] += metrics["lines_of_code"]
+                total_metrics["summary"]["total_functions"] += metrics["function_count"]
+                total_metrics["summary"]["total_classes"] += metrics["class_count"]
+                total_metrics["summary"]["max_nesting_depth"] = max(
+                    total_metrics["summary"]["max_nesting_depth"],
+                    metrics["nesting_depth"],
                 )
 
-                cyclomatic_complexities.append(metrics['cyclomatic_complexity'])
-                cognitive_complexities.append(metrics['cognitive_complexity'])
-                maintainability_indices.append(metrics['maintainability_index'])
+                cyclomatic_complexities.append(metrics["cyclomatic_complexity"])
+                cognitive_complexities.append(metrics["cognitive_complexity"])
+                maintainability_indices.append(metrics["maintainability_index"])
 
         # 计算平均值
         if cyclomatic_complexities:
-            total_metrics['summary']['avg_cyclomatic_complexity'] = sum(cyclomatic_complexities) / len(cyclomatic_complexities)
-            total_metrics['summary']['avg_cognitive_complexity'] = sum(cognitive_complexities) / len(cognitive_complexities)
-            total_metrics['summary']['avg_maintainability_index'] = sum(maintainability_indices) / len(maintainability_indices)
+            total_metrics["summary"]["avg_cyclomatic_complexity"] = sum(
+                cyclomatic_complexities
+            ) / len(cyclomatic_complexities)
+            total_metrics["summary"]["avg_cognitive_complexity"] = sum(
+                cognitive_complexities
+            ) / len(cognitive_complexities)
+            total_metrics["summary"]["avg_maintainability_index"] = sum(
+                maintainability_indices
+            ) / len(maintainability_indices)
 
         return total_metrics
 
@@ -184,17 +215,17 @@ class TechnicalDebtAnalyzer:
     def analyze_technical_debt(self, directory: Path) -> Dict[str, Any]:
         """分析技术债务"""
         debt_metrics = {
-            'code_smells': self._detect_code_smells(directory),
-            'duplicate_code': self._detect_duplicate_code(directory),
-            'long_methods': self._detect_long_methods(directory),
-            'large_classes': self._detect_large_classes(directory),
-            'dead_code': self._detect_dead_code(directory),
-            'security_issues': self._detect_security_issues(directory)
+            "code_smells": self._detect_code_smells(directory),
+            "duplicate_code": self._detect_duplicate_code(directory),
+            "long_methods": self._detect_long_methods(directory),
+            "large_classes": self._detect_large_classes(directory),
+            "dead_code": self._detect_dead_code(directory),
+            "security_issues": self._detect_security_issues(directory),
         }
 
         # 计算技术债务分数
         debt_score = self._calculate_debt_score(debt_metrics)
-        debt_metrics['debt_score'] = debt_score
+        debt_metrics["debt_score"] = debt_score
 
         return debt_metrics
 
@@ -204,26 +235,28 @@ class TechnicalDebtAnalyzer:
         python_files = list(directory.rglob("*.py"))
 
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
                 # 检测长行
                 for i, line in enumerate(lines, 1):
                     if len(line.strip()) > 88:  # PEP 8 行长度限制
-                        smells.append({
-                            'type': 'long_line',
-                            'file': str(file_path),
-                            'line': i,
-                            'message': f'行长度超过88字符: {len(line.strip())}字符',
-                            'severity': 'medium'
-                        })
+                        smells.append(
+                            {
+                                "type": "long_line",
+                                "file": str(file_path),
+                                "line": i,
+                                "message": f"行长度超过88字符: {len(line.strip())}字符",
+                                "severity": "medium",
+                            }
+                        )
 
                 # 检测未使用的导入
-                content = ''.join(lines)
+                content = "".join(lines)
                 tree = ast.parse(content)
                 imports = set()
                 used_names = set()
@@ -231,22 +264,24 @@ class TechnicalDebtAnalyzer:
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
                         for alias in node.names:
-                            imports.add(alias.name.split('.')[0])
+                            imports.add(alias.name.split(".")[0])
                     elif isinstance(node, ast.ImportFrom):
                         if node.module:
-                            imports.add(node.module.split('.')[0])
+                            imports.add(node.module.split(".")[0])
                     elif isinstance(node, ast.Name):
                         used_names.add(node.id)
 
                 unused_imports = imports - used_names
                 for import_name in unused_imports:
-                    smells.append({
-                        'type': 'unused_import',
-                        'file': str(file_path),
-                        'line': 1,
-                        'message': f'未使用的导入: {import_name}',
-                        'severity': 'low'
-                    })
+                    smells.append(
+                        {
+                            "type": "unused_import",
+                            "file": str(file_path),
+                            "line": 1,
+                            "message": f"未使用的导入: {import_name}",
+                            "severity": "low",
+                        }
+                    )
 
             except Exception as e:
                 self.logger.error(f"检测代码异味失败 {file_path}: {e}")
@@ -260,27 +295,29 @@ class TechnicalDebtAnalyzer:
 
         python_files = list(directory.rglob("*.py"))
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 简单的代码块相似度检测
-                lines = content.split('\n')
+                lines = content.split("\n")
                 for i in range(0, len(lines) - 4):
-                    block = '\n'.join(lines[i:i+5])
+                    block = "\n".join(lines[i : i + 5])
                     block_hash = hash(block)
 
                     if block_hash in code_blocks:
-                        duplicates.append({
-                            'type': 'duplicate_block',
-                            'files': [code_blocks[block_hash], str(file_path)],
-                            'line_start': i + 1,
-                            'message': '发现重复代码块',
-                            'severity': 'medium'
-                        })
+                        duplicates.append(
+                            {
+                                "type": "duplicate_block",
+                                "files": [code_blocks[block_hash], str(file_path)],
+                                "line_start": i + 1,
+                                "message": "发现重复代码块",
+                                "severity": "medium",
+                            }
+                        )
                     else:
                         code_blocks[block_hash] = str(file_path)
 
@@ -295,30 +332,36 @@ class TechnicalDebtAnalyzer:
 
         python_files = list(directory.rglob("*.py"))
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
-                tree = ast.parse(''.join(lines))
+                tree = ast.parse("".join(lines))
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
                         start_line = node.lineno
-                        end_line = node.end_lineno if hasattr(node, 'end_lineno') else start_line
+                        end_line = (
+                            node.end_lineno
+                            if hasattr(node, "end_lineno")
+                            else start_line
+                        )
                         method_length = end_line - start_line + 1
 
                         if method_length > 50:  # 长方法阈值
-                            long_methods.append({
-                                'type': 'long_method',
-                                'file': str(file_path),
-                                'line': start_line,
-                                'method_name': node.name,
-                                'length': method_length,
-                                'message': f'方法过长: {method_length}行',
-                                'severity': 'medium'
-                            })
+                            long_methods.append(
+                                {
+                                    "type": "long_method",
+                                    "file": str(file_path),
+                                    "line": start_line,
+                                    "method_name": node.name,
+                                    "length": method_length,
+                                    "message": f"方法过长: {method_length}行",
+                                    "severity": "medium",
+                                }
+                            )
 
             except Exception as e:
                 self.logger.error(f"检测长方法失败 {file_path}: {e}")
@@ -331,33 +374,41 @@ class TechnicalDebtAnalyzer:
 
         python_files = list(directory.rglob("*.py"))
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
-                tree = ast.parse(''.join(lines))
+                tree = ast.parse("".join(lines))
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ClassDef):
                         start_line = node.lineno
-                        end_line = node.end_lineno if hasattr(node, 'end_lineno') else start_line
+                        end_line = (
+                            node.end_lineno
+                            if hasattr(node, "end_lineno")
+                            else start_line
+                        )
                         class_length = end_line - start_line + 1
 
-                        method_count = len([n for n in node.body if isinstance(n, ast.FunctionDef)])
+                        method_count = len(
+                            [n for n in node.body if isinstance(n, ast.FunctionDef)]
+                        )
 
                         if class_length > 200 or method_count > 20:  # 大类阈值
-                            large_classes.append({
-                                'type': 'large_class',
-                                'file': str(file_path),
-                                'line': start_line,
-                                'class_name': node.name,
-                                'length': class_length,
-                                'method_count': method_count,
-                                'message': f'类过大: {class_length}行, {method_count}个方法',
-                                'severity': 'high'
-                            })
+                            large_classes.append(
+                                {
+                                    "type": "large_class",
+                                    "file": str(file_path),
+                                    "line": start_line,
+                                    "class_name": node.name,
+                                    "length": class_length,
+                                    "method_count": method_count,
+                                    "message": f"类过大: {class_length}行, {method_count}个方法",
+                                    "severity": "high",
+                                }
+                            )
 
             except Exception as e:
                 self.logger.error(f"检测大类失败 {file_path}: {e}")
@@ -370,11 +421,11 @@ class TechnicalDebtAnalyzer:
 
         python_files = list(directory.rglob("*.py"))
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -395,13 +446,17 @@ class TechnicalDebtAnalyzer:
                 # 找出未调用的函数（排除特殊方法）
                 unused_functions = defined_functions - called_functions
                 for func_name in unused_functions:
-                    if not func_name.startswith('_') and not func_name.startswith('test_'):
-                        dead_code.append({
-                            'type': 'dead_function',
-                            'file': str(file_path),
-                            'message': f'未使用的函数: {func_name}',
-                            'severity': 'low'
-                        })
+                    if not func_name.startswith("_") and not func_name.startswith(
+                        "test_"
+                    ):
+                        dead_code.append(
+                            {
+                                "type": "dead_function",
+                                "file": str(file_path),
+                                "message": f"未使用的函数: {func_name}",
+                                "severity": "low",
+                            }
+                        )
 
             except Exception as e:
                 self.logger.error(f"检测死代码失败 {file_path}: {e}")
@@ -414,11 +469,11 @@ class TechnicalDebtAnalyzer:
 
         python_files = list(directory.rglob("*.py"))
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
                 for i, line in enumerate(lines, 1):
@@ -426,23 +481,25 @@ class TechnicalDebtAnalyzer:
 
                     # 检测潜在的安全问题
                     security_patterns = {
-                        'eval(': '使用了危险的eval()函数',
-                        'exec(': '使用了危险的exec()函数',
-                        'subprocess.call': '使用了subprocess.call',
-                        'os.system': '使用了os.system',
-                        'pickle.loads': '使用了不安全的pickle.loads',
-                        'input()': '使用了input()（可能存在注入风险）'
+                        "eval(": "使用了危险的eval()函数",
+                        "exec(": "使用了危险的exec()函数",
+                        "subprocess.call": "使用了subprocess.call",
+                        "os.system": "使用了os.system",
+                        "pickle.loads": "使用了不安全的pickle.loads",
+                        "input()": "使用了input()（可能存在注入风险）",
                     }
 
                     for pattern, message in security_patterns.items():
                         if pattern in line_content:
-                            security_issues.append({
-                                'type': 'security_issue',
-                                'file': str(file_path),
-                                'line': i,
-                                'message': message,
-                                'severity': 'high'
-                            })
+                            security_issues.append(
+                                {
+                                    "type": "security_issue",
+                                    "file": str(file_path),
+                                    "line": i,
+                                    "message": message,
+                                    "severity": "high",
+                                }
+                            )
 
             except Exception as e:
                 self.logger.error(f"检测安全问题失败 {file_path}: {e}")
@@ -454,16 +511,12 @@ class TechnicalDebtAnalyzer:
         total_issues = 0
         weighted_sum = 0
 
-        severity_weights = {
-            'low': 1,
-            'medium': 5,
-            'high': 10
-        }
+        severity_weights = {"low": 1, "medium": 5, "high": 10}
 
         for category, issues in debt_metrics.items():
             if isinstance(issues, list):
                 for issue in issues:
-                    severity = issue.get('severity', 'medium')
+                    severity = issue.get("severity", "medium")
                     weight = severity_weights.get(severity, 5)
                     total_issues += 1
                     weighted_sum += weight
@@ -493,41 +546,41 @@ class PerformanceMetricsCollector:
             # 内存使用情况
             memory = psutil.virtual_memory()
             memory_info = {
-                'total': memory.total,
-                'available': memory.available,
-                'percent': memory.percent,
-                'used': memory.used,
-                'free': memory.free
+                "total": memory.total,
+                "available": memory.available,
+                "percent": memory.percent,
+                "used": memory.used,
+                "free": memory.free,
             }
 
             # 磁盘使用情况
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_info = {
-                'total': disk.total,
-                'used': disk.used,
-                'free': disk.free,
-                'percent': (disk.used / disk.total) * 100
+                "total": disk.total,
+                "used": disk.used,
+                "free": disk.free,
+                "percent": (disk.used / disk.total) * 100,
             }
 
             # 网络IO
             network = psutil.net_io_counters()
             network_info = {
-                'bytes_sent': network.bytes_sent,
-                'bytes_recv': network.bytes_recv,
-                'packets_sent': network.packets_sent,
-                'packets_recv': network.packets_recv
+                "bytes_sent": network.bytes_sent,
+                "bytes_recv": network.bytes_recv,
+                "packets_sent": network.packets_sent,
+                "packets_recv": network.packets_recv,
             }
 
             # 进程信息
             process_count = len(psutil.pids())
 
             return {
-                'timestamp': datetime.now().isoformat(),
-                'cpu_percent': cpu_percent,
-                'memory': memory_info,
-                'disk': disk_info,
-                'network': network_info,
-                'process_count': process_count
+                "timestamp": datetime.now().isoformat(),
+                "cpu_percent": cpu_percent,
+                "memory": memory_info,
+                "disk": disk_info,
+                "network": network_info,
+                "process_count": process_count,
             }
 
         except Exception as e:
@@ -540,19 +593,16 @@ class PerformanceMetricsCollector:
             current_process = psutil.Process()
 
             process_info = {
-                'pid': current_process.pid,
-                'memory_info': current_process.memory_info()._asdict(),
-                'memory_percent': current_process.memory_percent(),
-                'cpu_percent': current_process.cpu_percent(),
-                'num_threads': current_process.num_threads(),
-                'create_time': current_process.create_time(),
-                'status': current_process.status()
+                "pid": current_process.pid,
+                "memory_info": current_process.memory_info()._asdict(),
+                "memory_percent": current_process.memory_percent(),
+                "cpu_percent": current_process.cpu_percent(),
+                "num_threads": current_process.num_threads(),
+                "create_time": current_process.create_time(),
+                "status": current_process.status(),
             }
 
-            return {
-                'timestamp': datetime.now().isoformat(),
-                'process': process_info
-            }
+            return {"timestamp": datetime.now().isoformat(), "process": process_info}
 
         except Exception as e:
             self.logger.error(f"收集应用指标失败: {e}")
@@ -579,19 +629,21 @@ class AdvancedMetricsAnalyzer:
             return {}
 
         analysis_results = {
-            'timestamp': datetime.now().isoformat(),
-            'project_root': str(project_root),
-            'complexity_metrics': self.complexity_analyzer.analyze_directory_complexity(src_directory),
-            'technical_debt': self.debt_analyzer.analyze_technical_debt(src_directory),
-            'performance_metrics': {
-                'system': self.performance_collector.collect_system_metrics(),
-                'application': self.performance_collector.collect_application_metrics()
-            }
+            "timestamp": datetime.now().isoformat(),
+            "project_root": str(project_root),
+            "complexity_metrics": self.complexity_analyzer.analyze_directory_complexity(
+                src_directory
+            ),
+            "technical_debt": self.debt_analyzer.analyze_technical_debt(src_directory),
+            "performance_metrics": {
+                "system": self.performance_collector.collect_system_metrics(),
+                "application": self.performance_collector.collect_application_metrics(),
+            },
         }
 
         # 计算综合分数
         overall_score = self._calculate_overall_score(analysis_results)
-        analysis_results['overall_advanced_score'] = overall_score
+        analysis_results["overall_advanced_score"] = overall_score
 
         self.logger.info("高级度量分析完成")
         return analysis_results
@@ -601,18 +653,18 @@ class AdvancedMetricsAnalyzer:
         scores = []
 
         # 复杂度分数 (可维护性指数)
-        complexity = results.get('complexity_metrics', {}).get('summary', {})
-        maintainability_index = complexity.get('avg_maintainability_index', 50)
+        complexity = results.get("complexity_metrics", {}).get("summary", {})
+        maintainability_index = complexity.get("avg_maintainability_index", 50)
         scores.append(maintainability_index)
 
         # 技术债务分数
-        debt_score = results.get('technical_debt', {}).get('debt_score', 50)
+        debt_score = results.get("technical_debt", {}).get("debt_score", 50)
         scores.append(debt_score)
 
         # 性能分数 (基于系统资源使用)
-        system_metrics = results.get('performance_metrics', {}).get('system', {})
-        cpu_usage = system_metrics.get('cpu_percent', 50)
-        memory_usage = system_metrics.get('memory', {}).get('percent', 50)
+        system_metrics = results.get("performance_metrics", {}).get("system", {})
+        cpu_usage = system_metrics.get("cpu_percent", 50)
+        memory_usage = system_metrics.get("memory", {}).get("percent", 50)
         performance_score = max(0, 100 - ((cpu_usage + memory_usage) / 2))
         scores.append(performance_score)
 
@@ -632,15 +684,15 @@ def main():
     print("🔍 高级度量分析结果:")
     print(f"📊 综合分数: {results.get('overall_advanced_score', 0):.2f}")
 
-    complexity = results.get('complexity_metrics', {}).get('summary', {})
+    complexity = results.get("complexity_metrics", {}).get("summary", {})
     print(f"🧮 平均圈复杂度: {complexity.get('avg_cyclomatic_complexity', 0):.1f}")
     print(f"🧠 平均认知复杂度: {complexity.get('avg_cognitive_complexity', 0):.1f}")
     print(f"🛠️ 平均可维护性指数: {complexity.get('avg_maintainability_index', 0):.1f}")
 
-    debt = results.get('technical_debt', {})
+    debt = results.get("technical_debt", {})
     print(f"⚠️ 技术债务分数: {debt.get('debt_score', 0):.1f}")
 
-    system = results.get('performance_metrics', {}).get('system', {})
+    system = results.get("performance_metrics", {}).get("system", {})
     print(f"💻 CPU使用率: {system.get('cpu_percent', 0):.1f}%")
     print(f"🧠 内存使用率: {system.get('memory', {}).get('percent', 0):.1f}%")
 

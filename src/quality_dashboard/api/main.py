@@ -13,7 +13,13 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
+from fastapi import (
+    FastAPI,
+    WebSocket,
+    WebSocketDisconnect,
+    HTTPException,
+    BackgroundTasks,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -26,9 +32,7 @@ from scripts.improvement_monitor import ImprovementMonitor
 logger = get_logger(__name__)
 
 app = FastAPI(
-    title="质量监控面板API",
-    description="实时质量监控和改进分析系统",
-    version="1.0.0"
+    title="质量监控面板API", description="实时质量监控和改进分析系统", version="1.0.0"
 )
 
 # CORS配置
@@ -49,6 +53,7 @@ latest_quality_data: Dict[str, Any] = {}
 
 class QualityMetrics(BaseModel):
     """质量指标数据模型"""
+
     timestamp: datetime
     overall_score: float
     coverage_percentage: float
@@ -63,6 +68,7 @@ class QualityMetrics(BaseModel):
 
 class TrendData(BaseModel):
     """趋势数据模型"""
+
     timestamp: datetime
     metric_name: str
     value: float
@@ -71,6 +77,7 @@ class TrendData(BaseModel):
 
 class AlertData(BaseModel):
     """告警数据模型"""
+
     timestamp: datetime
     level: str  # info, warning, error, critical
     message: str
@@ -82,7 +89,9 @@ def setup_static_files():
     """设置静态文件服务"""
     frontend_path = Path(__file__).parent / "frontend" / "build"
     if frontend_path.exists():
-        app.mount("/static", StaticFiles(directory=frontend_path / "static"), name="static")
+        app.mount(
+            "/static", StaticFiles(directory=frontend_path / "static"), name="static"
+        )
         app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
 
@@ -141,7 +150,7 @@ async def get_current_quality_metrics() -> Dict[str, Any]:
             "tests_run": improvement_data.get("total_tests", 0),
             "tests_passed": improvement_data.get("passed_tests", 0),
             "improvement_cycles": improvement_data.get("total_cycles", 0),
-            "success_rate": improvement_data.get("success_rate", 0.0)
+            "success_rate": improvement_data.get("success_rate", 0.0),
         }
 
     except Exception as e:
@@ -158,7 +167,7 @@ async def get_current_quality_metrics() -> Dict[str, Any]:
             "tests_run": 0,
             "tests_passed": 0,
             "improvement_cycles": 0,
-            "success_rate": 0.0
+            "success_rate": 0.0,
         }
 
 
@@ -212,7 +221,7 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "connected_clients": len(connected_clients),
-        "latest_data": bool(latest_quality_data)
+        "latest_data": bool(latest_quality_data),
     }
 
 
@@ -238,8 +247,8 @@ async def get_quality_trends(hours: int = 24):
         "trends": {
             "overall_score": "stable",
             "coverage": "improving",
-            "code_quality": "stable"
-        }
+            "code_quality": "stable",
+        },
     }
 
 
@@ -253,13 +262,15 @@ async def get_quality_alerts(limit: int = 10):
     if latest_quality_data:
         overall_score = latest_quality_data.get("overall_score", 0)
         if overall_score < 8.0:
-            alerts.append({
-                "timestamp": datetime.now().isoformat(),
-                "level": "warning",
-                "message": f"质量分数较低: {overall_score:.2f}",
-                "source": "quality_monitor",
-                "details": {"score": overall_score}
-            })
+            alerts.append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "level": "warning",
+                    "message": f"质量分数较低: {overall_score:.2f}",
+                    "source": "quality_monitor",
+                    "details": {"score": overall_score},
+                }
+            )
 
     return {"alerts": alerts[:limit], "total": len(alerts)}
 
@@ -269,10 +280,7 @@ async def trigger_quality_check(background_tasks: BackgroundTasks):
     """手动触发质量检查"""
     background_tasks.add_task(run_quality_check_and_broadcast)
 
-    return {
-        "message": "质量检查已启动",
-        "timestamp": datetime.now().isoformat()
-    }
+    return {"message": "质量检查已启动", "timestamp": datetime.now().isoformat()}
 
 
 async def run_quality_check_and_broadcast():
@@ -300,10 +308,12 @@ async def get_system_status():
             "quality_guardian": "running",
             "improvement_monitor": "running",
             "websocket_server": "running",
-            "continuous_improvement": "running"
+            "continuous_improvement": "running",
         },
         "connected_clients": len(connected_clients),
-        "latest_update": latest_quality_data.get("timestamp") if latest_quality_data else None
+        "latest_update": (
+            latest_quality_data.get("timestamp") if latest_quality_data else None
+        ),
     }
 
 
@@ -322,5 +332,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8001,
         reload=True,
-        log_level="info"
+        log_level="info",
     )
