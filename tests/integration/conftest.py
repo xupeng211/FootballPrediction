@@ -1,3 +1,4 @@
+from typing import Any
 """
 集成测试配置文件
 提供数据库、Redis、Kafka 等集成测试的共享 fixtures

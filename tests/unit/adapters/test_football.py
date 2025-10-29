@@ -1,3 +1,6 @@
+from typing import List
+from typing import Dict
+from typing import Any
 """
 足球适配器模块测试
 Football Adapters Module Tests

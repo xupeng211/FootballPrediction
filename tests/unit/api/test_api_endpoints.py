@@ -1,3 +1,4 @@
+from typing import Dict
 """
 智能Mock兼容修复模式 - API端点测试修复
 解决API导入失败和端点不存在问题

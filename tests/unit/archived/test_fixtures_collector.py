@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 比赛赛程收集器测试
 Tests for Fixtures Collector

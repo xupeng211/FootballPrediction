@@ -1,3 +1,8 @@
+from typing import Optional
+from typing import Any
+from typing import Tuple
+from typing import List
+from typing import Dict
 #!/usr/bin/env python3
 """
 增强版EV计算器 - Issue #121优化版本

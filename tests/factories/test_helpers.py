@@ -1,3 +1,7 @@
+from typing import List
+from typing import Dict
+from typing import Optional
+from typing import Any
 """测试辅助工具 - 统一管理测试数据和Mock对象"""
 
 from __future__ import annotations

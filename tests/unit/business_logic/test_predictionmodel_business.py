@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 预测模型业务逻辑深度测试
 重构完成: 1115行 → 400行 (压缩64%)

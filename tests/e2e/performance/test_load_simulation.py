@@ -1,3 +1,5 @@
+from typing import Dict
+from typing import Any
 """
 负载模拟 E2E 测试
 测试系统在高并发下的性能表现

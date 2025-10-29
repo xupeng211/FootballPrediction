@@ -1,3 +1,6 @@
+from typing import List
+from typing import Dict
+from typing import Any
 """
 足球数据清理器（兼容版本）
 Football Data Cleaner (Compatibility Version)

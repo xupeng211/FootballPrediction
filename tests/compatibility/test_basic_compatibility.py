@@ -17,7 +17,7 @@ def test_python_version_compatibility(client):
     print(f"✅ Python版本兼容: {sys.version}")
 
 
-def test_project_structure(, client, client):
+def test_project_structure():
     """测试项目结构完整性"""
     project_root = Path(__file__).parent.parent.parent
 
@@ -32,7 +32,7 @@ def test_project_structure(, client, client):
     print("✅ 项目结构完整性检查通过")
 
 
-def test_core_modules_import(, client, client):
+def test_core_modules_import():
     """测试核心模块导入兼容性"""
     try:
         # 测试核心模块导入

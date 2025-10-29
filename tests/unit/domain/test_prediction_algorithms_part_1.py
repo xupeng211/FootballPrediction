@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 预测算法测试 - 第1部分
 从原文件 test_prediction_algorithms_comprehensive.py 拆分

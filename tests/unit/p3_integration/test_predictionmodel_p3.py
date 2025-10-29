@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 P3阶段预测模型测试: PredictionModel
 目标覆盖率: 64.94% → 90%
