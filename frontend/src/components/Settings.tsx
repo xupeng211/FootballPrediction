@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Form,
@@ -26,7 +26,6 @@ import {
   BulbOutlined,
   SecurityScanOutlined,
   ApiOutlined,
-  DatabaseOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,7 +33,6 @@ import { RootState, AppDispatch } from '../store';
 import { setTheme, updatePreferences } from '../store/slices/uiSlice';
 
 const { Option } = Select;
-const { TextArea } = Input;
 const { TabPane } = Tabs;
 
 interface SettingsState {
@@ -94,11 +92,7 @@ const Settings: React.FC = () => {
   });
 
   // 加载设置
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = () => {
+  const loadSettings = useCallback(() => {
     try {
       const savedSettings = localStorage.getItem('userSettings');
       if (savedSettings) {
@@ -109,7 +103,12 @@ const Settings: React.FC = () => {
     } catch (error) {
       console.error('加载设置失败:', error);
     }
-  };
+  }, [form, settings]);
+
+  useEffect(() => {
+    loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 保存设置
   const saveSettings = async (values: Partial<SettingsState>) => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import {
   Card,
   Row,
@@ -18,18 +18,23 @@ import {
   TrophyOutlined,
   BarChartOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   RiseOutlined,
   ReloadOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../store';
+import { AppDispatch } from '../store';
 import { fetchMatches, selectFilteredMatches } from '../store/slices/matchesSlice';
 import { apiService } from '../services/api';
-import { MatchData, PredictionResponse } from '../services/api';
+import { PredictionResponse } from '../services/api';
 import PerformanceOptimizer from './PerformanceOptimizer';
+import RealtimeDashboard from './RealtimeDashboard';
+import RealtimePredictionPanel from './RealtimePredictionPanel';
+import SubscriptionManager from './SubscriptionManager';
+import RealtimeStatsPanel from './RealtimeStatsPanel';
+
+// 懒加载ECharts组件
+const ReactECharts = lazy(() => import('echarts-for-react').then(module => ({ default: module.default })));
 
 interface DashboardStats {
   total_matches: number;
@@ -55,21 +60,18 @@ const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const matches = useSelector(selectFilteredMatches);
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentPredictions, setRecentPredictions] = useState<RecentPrediction[]>([]);
+  const [recentPredictions] = useState<RecentPrediction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // 加载仪表板数据
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // 并行加载数据
-      const [statsData, predictionsData] = await Promise.all([
-        apiService.getStats(),
-        loadRecentPredictions(),
-      ]);
+      // 加载数据
+      const statsData = await apiService.getStats();
 
       setStats({
         ...statsData,
@@ -83,71 +85,63 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [matches]);
 
-  // 加载最近预测
-  const loadRecentPredictions = async (): Promise<RecentPrediction[]> => {
-    try {
-      // 模拟最近预测数据（实际应该从API获取）
-      const mockPredictions: RecentPrediction[] = [
-        {
-          home_win_prob: 0.65,
-          draw_prob: 0.25,
-          away_win_prob: 0.10,
-          confidence: 0.75,
-          prediction: 'home_win',
-          match_id: 1,
-          ev: 0.12,
-          suggestion: '投注主胜',
-          match_info: {
-            home_team: '曼联',
-            away_team: '切尔西',
-            league: '英超',
-            match_date: '2025-10-29T20:00:00Z',
-          },
-          created_at: '2025-10-29T10:30:00Z',
-        },
-        {
-          home_win_prob: 0.35,
-          draw_prob: 0.30,
-          away_win_prob: 0.35,
-          confidence: 0.45,
-          prediction: 'draw',
-          match_id: 2,
-          ev: -0.05,
-          suggestion: '不建议投注',
-          match_info: {
-            home_team: '曼城',
-            away_team: '利物浦',
-            league: '英超',
-            match_date: '2025-10-29T22:00:00Z',
-          },
-          created_at: '2025-10-29T09:15:00Z',
-        },
-        {
-          home_win_prob: 0.55,
-          draw_prob: 0.28,
-          away_win_prob: 0.17,
-          confidence: 0.68,
-          prediction: 'home_win',
-          match_id: 3,
-          ev: 0.08,
-          suggestion: '小注主胜',
-          match_info: {
-            home_team: '拜仁慕尼黑',
-            away_team: '多特蒙德',
-            league: '德甲',
-            match_date: '2025-10-30T18:30:00Z',
-          },
-          created_at: '2025-10-29T08:45:00Z',
-        },
-      ];
-      return mockPredictions;
-    } catch (err) {
-      console.error('加载最近预测失败:', err);
-      return [];
-    }
-  };
+  // 模拟最近预测数据
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const mockPredictions: RecentPrediction[] = [
+    {
+      home_win_prob: 0.65,
+      draw_prob: 0.25,
+      away_win_prob: 0.10,
+      confidence: 0.75,
+      prediction: 'home_win',
+      match_id: 1,
+      ev: 0.12,
+      suggestion: '投注主胜',
+      match_info: {
+        home_team: '曼联',
+        away_team: '切尔西',
+        league: '英超',
+        match_date: '2025-10-29T20:00:00Z',
+      },
+      created_at: '2025-10-29T10:30:00Z',
+    },
+    {
+      home_win_prob: 0.35,
+      draw_prob: 0.30,
+      away_win_prob: 0.35,
+      confidence: 0.45,
+      prediction: 'draw',
+      match_id: 2,
+      ev: -0.05,
+      suggestion: '不建议投注',
+      match_info: {
+        home_team: '曼城',
+        away_team: '利物浦',
+        league: '英超',
+        match_date: '2025-10-29T22:00:00Z',
+      },
+      created_at: '2025-10-29T09:15:00Z',
+    },
+    {
+      home_win_prob: 0.55,
+      draw_prob: 0.28,
+      away_win_prob: 0.17,
+      confidence: 0.68,
+      prediction: 'home_win',
+      match_id: 3,
+      ev: 0.08,
+      suggestion: '小注主胜',
+      match_info: {
+        home_team: '拜仁慕尼黑',
+        away_team: '多特蒙德',
+        league: '德甲',
+        match_date: '2025-10-30T18:30:00Z',
+      },
+      created_at: '2025-10-29T08:45:00Z',
+    },
+  ];
 
   // 计算比赛统计
   const getMatchStats = () => {
@@ -193,7 +187,7 @@ const Dashboard: React.FC = () => {
   };
 
   // 预测分布图表配置
-  const getPredictionDistributionOption = () => {
+  const predictionDistributionOption = useMemo(() => {
     const predictionCounts = recentPredictions.reduce((acc, pred) => {
       acc[pred.prediction] = (acc[pred.prediction] || 0) + 1;
       return acc;
@@ -237,10 +231,10 @@ const Dashboard: React.FC = () => {
         },
       ],
     };
-  };
+  }, [recentPredictions]);
 
   // 置信度分布图表配置
-  const getConfidenceDistributionOption = () => {
+  const confidenceDistributionOption = useMemo(() => {
     const confidenceRanges = {
       high: recentPredictions.filter(p => p.confidence >= 0.8).length,
       medium: recentPredictions.filter(p => p.confidence >= 0.6 && p.confidence < 0.8).length,
@@ -282,11 +276,12 @@ const Dashboard: React.FC = () => {
         },
       ],
     };
-  };
+  }, [recentPredictions]);
 
   useEffect(() => {
     dispatch(fetchMatches());
     loadDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
   const matchStats = getMatchStats();
@@ -474,12 +469,14 @@ const Dashboard: React.FC = () => {
         <Col xs={24} lg={12}>
           <Card title="预测分布图">
             {recentPredictions.length > 0 ? (
-              <ReactECharts
-                option={getPredictionDistributionOption()}
-                style={{ height: 300 }}
-                notMerge={true}
-                lazyUpdate={true}
-              />
+              <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}>加载图表...</div>}>
+                <ReactECharts
+                  option={predictionDistributionOption}
+                  style={{ height: 300 }}
+                  notMerge={true}
+                  lazyUpdate={true}
+                />
+              </Suspense>
             ) : (
               <Empty description="暂无预测数据" />
             )}
@@ -488,12 +485,14 @@ const Dashboard: React.FC = () => {
         <Col xs={24} lg={12}>
           <Card title="置信度分布">
             {recentPredictions.length > 0 ? (
-              <ReactECharts
-                option={getConfidenceDistributionOption()}
-                style={{ height: 300 }}
-                notMerge={true}
-                lazyUpdate={true}
-              />
+              <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}>加载图表...</div>}>
+                <ReactECharts
+                  option={confidenceDistributionOption}
+                  style={{ height: 300 }}
+                  notMerge={true}
+                  lazyUpdate={true}
+                />
+              </Suspense>
             ) : (
               <Empty description="暂无预测数据" />
             )}
@@ -576,6 +575,34 @@ const Dashboard: React.FC = () => {
           <Empty description="暂无预测记录" />
         )}
       </Card>
+
+      {/* 实时功能面板 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} lg={8}>
+          <Card title="🔗 实时连接状态" size="small">
+            <RealtimeDashboard userId="demo_user" height={300} />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="⚡ 实时预测请求" size="small">
+            <RealtimePredictionPanel userId="demo_user" />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="📢 订阅管理" size="small">
+            <SubscriptionManager userId="demo_user" />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 实时统计面板 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card title="📊 实时系统统计" size="small">
+            <RealtimeStatsPanel userId="demo_user" />
+          </Card>
+        </Col>
+      </Row>
 
       {/* 性能监控 */}
       <PerformanceOptimizer

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { RangePickerProps } from 'antd/es/date-picker';
 import {
   Table,
   Tag,
@@ -12,11 +13,17 @@ import {
   message,
   Spin,
   Pagination,
+  DatePicker,
+  Row,
+  Col,
+  Statistic,
 } from 'antd';
 import {
   EyeOutlined,
   ThunderboltOutlined,
   ReloadOutlined,
+  FilterOutlined,
+  ClearOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
@@ -41,6 +48,7 @@ import BettingRecommendation from './BettingRecommendation';
 
 const { Option } = Select;
 const { Search } = Input;
+const { RangePicker } = DatePicker;
 
 interface MatchListProps {
   onPredictionSelect?: (matchId: number) => void;
@@ -78,6 +86,38 @@ const MatchList: React.FC<MatchListProps> = ({ onPredictionSelect }) => {
   // 处理分页变化
   const handlePaginationChange = (page: number, pageSize?: number) => {
     dispatch(setPagination({ currentPage: page, pageSize: pageSize || 20 }));
+  };
+
+  // 处理日期范围筛选 - 暂时禁用
+  const handleDateRangeFilter = (dates: any) => {
+    console.log('日期范围筛选功能暂未实现');
+    // TODO: 实现日期范围筛选功能
+  };
+
+  // 处理概率范围筛选 - 暂时禁用
+  const handleProbabilityFilter = (value: string) => {
+    console.log('概率范围筛选功能暂未实现:', value);
+    // TODO: 实现概率范围筛选功能
+  };
+
+  // 清除所有筛选
+  const handleClearFilters = () => {
+    dispatch(setFilters({
+      search: undefined,
+      league: undefined,
+      status: undefined,
+      // TODO: 添加dateRange和probabilityRange支持
+    }));
+  };
+
+  // 计算统计信息
+  const getStatistics = () => {
+    const total = matches.length;
+    const upcoming = matches.filter(m => m.status === 'upcoming').length;
+    const live = matches.filter(m => m.status === 'live').length;
+    const finished = matches.filter(m => m.status === 'finished').length;
+
+    return { total, upcoming, live, finished };
   };
 
   // 生成预测
@@ -186,8 +226,89 @@ const MatchList: React.FC<MatchListProps> = ({ onPredictionSelect }) => {
               刷新
             </Button>
           }>
-      {/* 过滤器 */}
-      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center' }}>
+
+      {/* 统计信息 */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={6} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="总比赛数"
+              value={getStatistics().total}
+              prefix={<FilterOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={6} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="即将开始"
+              value={getStatistics().upcoming}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={6} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="进行中"
+              value={getStatistics().live}
+              valueStyle={{ color: '#fa8c16' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={6} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="已结束"
+              value={getStatistics().finished}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 高级过滤器 */}
+      <Card size="small" style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 12 }}>
+          <Space size="large" wrap>
+            <Space>
+              <span>🔍 基础筛选:</span>
+            </Space>
+            <Space wrap>
+              {/* 高级筛选 */}
+              <span>📅 高级筛选:</span>
+              <RangePicker
+                placeholder={['开始日期', '结束日期']}
+                onChange={handleDateRangeFilter}
+                style={{ width: 240 }}
+              />
+
+              <Select
+                placeholder="预测概率"
+                allowClear
+                style={{ width: 120 }}
+                onChange={handleProbabilityFilter}
+              >
+                <Option value="all">所有概率</Option>
+                <Option value="high">高概率 (60%以上)</Option>
+                <Option value="medium">中概率 (40-60%)</Option>
+                <Option value="low">低概率 (40%以下)</Option>
+              </Select>
+
+              <Button
+                icon={<ClearOutlined />}
+                onClick={handleClearFilters}
+                size="small"
+              >
+                清除筛选
+              </Button>
+            </Space>
+          </Space>
+        </div>
+      </Card>
+
+      {/* 基础过滤器 */}
+      <div style={{ marginBottom: 16, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <Search
           placeholder="搜索球队或联赛"
           allowClear

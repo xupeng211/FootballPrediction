@@ -12,8 +12,6 @@ import {
 } from 'antd';
 import {
   LineChartOutlined,
-  BarChartOutlined,
-  CalendarOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';

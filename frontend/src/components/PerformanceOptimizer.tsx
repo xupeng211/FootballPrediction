@@ -37,8 +37,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
 }) => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-
+  
   // 测量性能指标
   const measurePerformance = useCallback(() => {
     if (!window.performance) {
@@ -86,7 +85,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
   };
 
   // 刷新性能指标
-  const refreshMetrics = () => {
+  const refreshMetrics = useCallback(() => {
     setLoading(true);
 
     // 稍微延迟以获得更准确的测量
@@ -98,7 +97,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
       }
       setLoading(false);
     }, 500);
-  };
+  }, [measurePerformance, onMetricsUpdate]);
 
   // 组件挂载时测量性能
   useEffect(() => {
@@ -109,7 +108,7 @@ const PerformanceOptimizer: React.FC<PerformanceOptimizerProps> = ({
       window.addEventListener('load', refreshMetrics);
       return () => window.removeEventListener('load', refreshMetrics);
     }
-  }, [measurePerformance]);
+  }, [refreshMetrics]);
 
   // 计算总体性能分数
   const getOverallScore = () => {

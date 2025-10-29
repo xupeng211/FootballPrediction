@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import {
   Typography,
   Spin,
   ConfigProvider,
-  theme as antdTheme,
+  theme as antdTheme
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -12,13 +12,15 @@ import { setGlobalLoading, addNotification } from './store/slices/uiSlice';
 import { fetchMatches } from './store/slices/matchesSlice';
 import { apiService } from './services/api';
 import ResponsiveLayout from './components/ResponsiveLayout';
-import MatchList from './components/MatchList';
-import Dashboard from './components/Dashboard';
-import Analytics from './components/Analytics';
-import Settings from './components/Settings';
-import HelpCenter from './components/HelpCenter';
 
-const { Title, Text } = Typography;
+// 代码分割 - 懒加载组件
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const MatchList = lazy(() => import('./components/MatchList'));
+const Analytics = lazy(() => import('./components/Analytics'));
+const Settings = lazy(() => import('./components/Settings'));
+const HelpCenter = lazy(() => import('./components/HelpCenter'));
+
+const { Text } = Typography;
 
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -40,14 +42,14 @@ const App: React.FC = () => {
         dispatch(addNotification({
           type: 'success',
           title: '系统初始化成功',
-          message: 'API连接正常，数据加载完成',
+          message: 'API连接正常，数据加载完成'
         }));
       } catch (error) {
         console.error('应用初始化失败:', error);
         dispatch(addNotification({
           type: 'error',
           title: '系统初始化失败',
-          message: '无法连接到后端API，请检查网络连接',
+          message: '无法连接到后端API，请检查网络连接'
         }));
       } finally {
         dispatch(setGlobalLoading(false));
@@ -62,7 +64,7 @@ const App: React.FC = () => {
     return (
       <ConfigProvider
         theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : undefined,
+          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : undefined
         }}
       >
         <div style={{
@@ -83,7 +85,7 @@ const App: React.FC = () => {
   return (
     <ConfigProvider
       theme={{
-        algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : undefined,
+        algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : undefined
       }}
     >
       <Router>
@@ -92,7 +94,9 @@ const App: React.FC = () => {
             path="/"
             element={
               <ResponsiveLayout pageTitle="仪表板">
-                <Dashboard />
+                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
+                  <Dashboard />
+                </Suspense>
               </ResponsiveLayout>
             }
           />
@@ -100,7 +104,9 @@ const App: React.FC = () => {
             path="/dashboard"
             element={
               <ResponsiveLayout pageTitle="仪表板">
-                <Dashboard />
+                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
+                  <Dashboard />
+                </Suspense>
               </ResponsiveLayout>
             }
           />
@@ -108,7 +114,9 @@ const App: React.FC = () => {
             path="/matches"
             element={
               <ResponsiveLayout pageTitle="比赛预测">
-                <MatchList />
+                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载比赛预测..." /></div>}>
+                  <MatchList />
+                </Suspense>
               </ResponsiveLayout>
             }
           />
@@ -116,7 +124,9 @@ const App: React.FC = () => {
             path="/analytics"
             element={
               <ResponsiveLayout pageTitle="数据分析">
-                <Analytics />
+                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载数据分析..." /></div>}>
+                  <Analytics />
+                </Suspense>
               </ResponsiveLayout>
             }
           />
@@ -124,7 +134,9 @@ const App: React.FC = () => {
             path="/settings"
             element={
               <ResponsiveLayout pageTitle="系统设置">
-                <Settings />
+                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载系统设置..." /></div>}>
+                  <Settings />
+                </Suspense>
               </ResponsiveLayout>
             }
           />
@@ -132,7 +144,9 @@ const App: React.FC = () => {
             path="/help"
             element={
               <ResponsiveLayout pageTitle="帮助中心">
-                <HelpCenter />
+                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载帮助中心..." /></div>}>
+                  <HelpCenter />
+                </Suspense>
               </ResponsiveLayout>
             }
           />
