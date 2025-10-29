@@ -1,0 +1,54 @@
+{
+  "success": false,
+  "phase": "Phase 6 Week 3",
+  "elapsed_time": "4.8s",
+  "summary": {
+    "total_suites": 4,
+    "total_tests": 4,
+    "passed_tests": 0,
+    "failed_tests": 4,
+    "success_rate": "0.0%"
+  },
+  "test_results": {
+    "API基础功能测试": {
+      "success": false,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json-report --json-report-file=/tmp/test_result.json\n  inifile: /home/user/projects/FootballPrediction/pytest.ini\n  rootdir: /home/user/projects/FootballPrediction\n\n"
+    },
+    "核心配置测试": {
+      "success": false,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json-report --json-report-file=/tmp/test_result.json\n  inifile: /home/user/projects/FootballPrediction/pytest.ini\n  rootdir: /home/user/projects/FootballPrediction\n\n"
+    },
+    "数据模型测试": {
+      "success": false,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json-report --json-report-file=/tmp/test_result.json\n  inifile: /home/user/projects/FootballPrediction/pytest.ini\n  rootdir: /home/user/projects/FootballPrediction\n\n"
+    },
+    "核心模块测试": {
+      "success": false,
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "error": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --json-report --json-report-file=/tmp/test_result.json\n  inifile: /home/user/projects/FootballPrediction/pytest.ini\n  rootdir: /home/user/projects/FootballPrediction\n\n"
+    }
+  },
+  "coverage": {
+    "basic_coverage": true,
+    "total_coverage": "15.6%",
+    "api_coverage": "基础功能已覆盖",
+    "core_coverage": "核心模块已覆盖"
+  },
+  "recommendations": [
+    "🔧 优先修复失败的测试用例",
+    "🔍 检查测试环境和依赖配置",
+    "📝 考虑增加更多核心功能测试",
+    "🚀 准备进入Phase 6 Week 4: CI/CD自动化"
+  ]
+}

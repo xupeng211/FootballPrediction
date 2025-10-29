@@ -1,0 +1,82 @@
+name: Quality Checks
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 每天凌晨2点运行
+  workflow_dispatch:
+
+jobs:
+  comprehensive-quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff mypy bandit safety pytest pytest-cov
+        pip install pandas numpy aiohttp psutil scikit-learn redis
+        pip install -r requirements/requirements.lock
+
+    - name: Run comprehensive code analysis
+      run: |
+        echo "=== Ruff Analysis ==="
+        ruff check . --output-format=json > ruff-report.json || true
+
+        echo "=== MyPy Analysis ==="
+        mypy src/ --json-report mypy-report --ignore-missing-imports || true
+
+        echo "=== Bandit Security Analysis ==="
+        bandit -r src/ -f json > bandit-report.json || true
+
+        echo "=== Safety Dependency Check ==="
+        safety check --json > safety-report.json || true
+
+    - name: Generate quality report
+      run: |
+        python3 -c "
+import json
+from datetime import datetime
+
+# 尝试读取报告文件
+def load_json_report(filename):
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+report = {
+    'timestamp': datetime.now().isoformat(),
+    'ruff_issues': len(load_json_report('ruff-report.json')),
+    'mypy_errors': len(load_json_report('mypy-report')),
+    'bandit_issues': len(load_json_report('bandit-report.json')),
+    'safety_issues': len(load_json_report('safety-report.json'))
+}
+
+with open('quality-report.json', 'w') as f:
+    json.dump(report, f, indent=2)
+
+print(f'Quality Report Generated:')
+print(f'  Ruff Issues: {report[\"ruff_issues\"]}')
+print(f'  MyPy Errors: {report[\"mypy_errors\"]}')
+print(f'  Bandit Issues: {report[\"bandit_issues\"]}')
+print(f'  Safety Issues: {report[\"safety_issues\"]}')
+        "
+
+    - name: Upload quality artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-reports
+        path: |
+          ruff-report.json
+          mypy-report.json
+          bandit-report.json
+          safety-report.json
+          quality-report.json
