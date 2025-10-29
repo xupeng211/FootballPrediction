@@ -1,0 +1,29 @@
+# Prometheus 监控目标配置
+scrape_configs:
+  - job_name: 'football-prediction-app'
+    static_configs:
+      - targets: ['nginx:80']
+    metrics_path: /lb-status
+    scrape_interval: 30s
+
+  - job_name: 'football-prediction-api'
+    static_configs:
+      - targets: ['app:80']
+    metrics_path: /health
+    scrape_interval: 30s
+
+  - job_name: 'football-prediction-nginx'
+    static_configs:
+      - targets: ['nginx:80']
+    metrics_path: /nginx-status
+    scrape_interval: 30s
+
+  - job_name: 'football-prediction-db'
+    static_configs:
+      - targets: ['db:5432']
+    scrape_interval: 30s
+
+  - job_name: 'football-prediction-redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s

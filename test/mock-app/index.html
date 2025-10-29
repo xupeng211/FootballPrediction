@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>足球预测系统 - 模拟应用</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .status {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+        .status-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            min-width: 150px;
+        }
+        .status-item h3 {
+            margin: 0 0 10px 0;
+            color: #ffd700;
+        }
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 0 auto;
+            background: #4CAF50;
+        }
+        .endpoints {
+            margin-top: 30px;
+        }
+        .endpoint {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .endpoint code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚽ 足球预测系统 API</h1>
+        <p style="text-align: center; font-size: 1.2em; opacity: 0.9;">
+            模拟应用服务 - 完整服务栈集成测试
+        </p>
+
+        <div class="status">
+            <div class="status-item">
+                <h3>应用状态</h3>
+                <div class="status-indicator"></div>
+                <p>运行中</p>
+            </div>
+            <div class="status-item">
+                <h3>数据库</h3>
+                <div class="status-indicator"></div>
+                <p>已连接</p>
+            </div>
+            <div class="status-item">
+                <h3>缓存</h3>
+                <div class="status-indicator"></div>
+                <p>已连接</p>
+            </div>
+            <div class="status-item">
+                <h3>监控</h3>
+                <div class="status-indicator"></div>
+                <p>已启用</p>
+            </div>
+        </div>
+
+        <div class="endpoints">
+            <h2>🔗 API 端点</h2>
+            <div class="endpoint">
+                <strong>健康检查:</strong> <code>/health</code>
+                <br><em>返回应用健康状态</em>
+            </div>
+            <div class="endpoint">
+                <strong>API 健康检查:</strong> <code>/api/v1/health</code>
+                <br><em>返回 API 服务状态</em>
+            </div>
+            <div class="endpoint">
+                <strong>系统信息:</strong> <code>/api/v1/info</code>
+                <br><em>返回系统版本和配置信息</em>
+            </div>
+            <div class="endpoint">
+                <strong>指标:</strong> <code>/metrics</code>
+                <br><em>Prometheus 格式的指标数据</em>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🚀 足球预测系统 - 完整服务栈集成测试环境</p>
+            <p>构建时间: <span id="build-time"></span> | 版本: v1.0.0-test</p>
+        </div>
+    </div>
+
+    <script>
+        // 设置构建时间
+        document.getElementById('build-time').textContent = new Date().toLocaleString('zh-CN');
+
+        // 模拟实时状态更新
+        setInterval(() => {
+            const indicators = document.querySelectorAll('.status-indicator');
+            indicators.forEach(indicator => {
+                // 随机闪烁效果，模拟真实的状态监控
+                if (Math.random() > 0.95) {
+                    indicator.style.background = '#ff9800';
+                    setTimeout(() => {
+                        indicator.style.background = '#4CAF50';
+                    }, 500);
+                }
+            });
+        }, 3000);
+
+        // 模拟心跳
+        console.log('🏈 Football Prediction System Mock API Started');
+        console.log('📊 All services are connected and monitored');
+        console.log('🔍 Health checks are running');
+    </script>
+</body>
+</html>
