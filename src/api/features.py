@@ -140,8 +140,7 @@ def build_response_data(
     features_error: str,
     include_raw: bool,
 ) -> Dict[str, Any]:
-    """TODO: 添加函数文档
-    构造响应数据"""
+    """构造响应数据"""
     response_data = {
         "match_id": match.id,
         "home_team_id": match.home_team_id,
