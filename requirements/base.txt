@@ -32,3 +32,15 @@ structlog==24.4.0
 celery==5.4.0
 kombu==5.4.2
 requests==2.31.0
+
+# 数据科学和机器学习
+pandas==2.3.3
+numpy==2.3.4
+scikit-learn==1.7.2
+
+# 性能监控和异步HTTP
+psutil==7.1.2
+aiohttp==3.13.1
+
+# API速率限制
+slowapi==0.1.9
