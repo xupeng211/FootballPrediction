@@ -200,6 +200,7 @@ else:
     from src.api.observers import router as observers_router
     from src.api.predictions import router as predictions_router
     from src.api.repositories import router as repositories_router
+    from src.realtime.router import router as realtime_router
 
     app.include_router(auth_router, prefix="/api/v1")  # 重新启用简化的认证系统
     app.include_router(monitoring_router, prefix="/api/v1")
@@ -213,6 +214,9 @@ else:
     app.include_router(decorators_router, prefix="/api/v1")
     app.include_router(adapters_router, prefix="/api/v1")
     app.include_router(facades_router, prefix="/api/v1")
+    app.include_router(realtime_router, prefix="/api/v1")  # 添加WebSocket实时通信路由
+
+    logger.info("✅ WebSocket实时通信服务已启用")
 
 
 @app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)

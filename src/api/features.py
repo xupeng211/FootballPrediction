@@ -135,7 +135,6 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
 
 def build_response_data(
-    """TODO: 添加函数文档"""
     match: Match,
     features: Dict[str, Any],
     features_error: str,

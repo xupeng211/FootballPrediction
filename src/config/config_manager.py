@@ -16,6 +16,7 @@ import base64
 import json
 import logging
 import os
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
@@ -192,9 +193,95 @@ class ConfigManager:
 
 
 # 全局配置管理器实例
+_global_config_manager = None
+
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
     global _global_config_manager
     if _global_config_manager is None:
         _global_config_manager = ConfigManager()
     return _global_config_manager
+
+
+def get_default_config_manager() -> ConfigManager:
+    """获取默认配置管理器实例（别名）"""
+    return get_config_manager()
+
+
+def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
+    """根据环境获取配置"""
+    if env is None:
+        env = os.getenv("ENV", "development")
+
+    config_manager = get_config_manager()
+
+    # 根据环境返回不同的配置
+    if env == "production":
+        return {
+            "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/football_prediction_prod"),
+            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+            "log_level": "INFO",
+            "debug": False,
+        }
+    elif env == "test":
+        return {
+            "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/football_prediction_test"),
+            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379/1"),
+            "log_level": "DEBUG",
+            "debug": True,
+        }
+    else:  # development
+        return {
+            "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/football_prediction"),
+            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+            "log_level": "DEBUG",
+            "debug": True,
+        }
+
+
+class ConfigCache:
+    """配置缓存类"""
+
+    def __init__(self, ttl: int = 300):
+        self._cache = {}
+        self._timestamps = {}
+        self._ttl = ttl
+
+    def get(self, key: str) -> Optional[Any]:
+        """获取缓存值"""
+        if key in self._cache:
+            if time.time() - self._timestamps[key] < self._ttl:
+                return self._cache[key]
+            else:
+                del self._cache[key]
+                del self._timestamps[key]
+        return None
+
+    def set(self, key: str, value: Any) -> None:
+        """设置缓存值"""
+        self._cache[key] = value
+        self._timestamps[key] = time.time()
+
+    def clear(self) -> None:
+        """清空缓存"""
+        self._cache.clear()
+        self._timestamps.clear()
+
+
+class ConfigValidator:
+    """配置验证器"""
+
+    def __init__(self):
+        self._rules = {}
+
+    def add_rule(self, key: str, validator: Callable[[Any], bool]) -> None:
+        """添加验证规则"""
+        self._rules[key] = validator
+
+    def validate(self, config: Dict[str, Any]) -> List[str]:
+        """验证配置"""
+        errors = []
+        for key, validator in self._rules.items():
+            if key in config and not validator(config[key]):
+                errors.append(f"Invalid value for {key}")
+        return errors
