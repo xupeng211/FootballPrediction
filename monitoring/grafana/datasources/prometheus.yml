@@ -1,9 +1,132 @@
+# =================================================================
+# 足球预测系统 - Grafana Prometheus 数据源配置
+# =================================================================
+
 apiVersion: 1
 
+# 数据源列表
 datasources:
+  # 主 Prometheus 数据源
   - name: Prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
     isDefault: true
     editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: "POST"
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "2.40.0"
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: 10m
+      resultFormat: "time_series"
+      exemplarTraceIdDestinations:
+        - datasourceUid: jaeger
+          name: traceID
+          url: "$${__value.raw}"
+    secureJsonData:
+      # 如果需要认证，在此添加密码
+      # password: ${PROMETHEUS_PASSWORD}
+    version: 1
+
+  # Loki 日志数据源
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: jaeger
+          matcherRegex: "traceID=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
+          urlDisplayLabel: "View Trace"
+    version: 1
+
+  # Jaeger 链路追踪数据源
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    editable: true
+    jsonData:
+      tracesToLogs:
+        datasourceUid: 'loki'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        mappedTags: [
+          { key: 'service.name', value: 'service' }
+        ]
+        mapTagNamesEnabled: false
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: true
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: 'prometheus'
+        tags: [{ key: 'service.name', value: 'service' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+      serviceMap:
+        datasourceUid: 'prometheus'
+      nodeGraph:
+        enabled: true
+    version: 1
+
+  # PostgreSQL 数据源 (用于直接数据库查询)
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: db:5432
+    database: football_prediction_prod
+    user: ${POSTGRES_USER}
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: 'require'
+      postgresVersion: 1500
+      timescaledb: false
+    editable: true
+    version: 1
+
+  # Redis 数据源 (用于缓存分析)
+  - name: Redis
+    type: redis
+    access: proxy
+    url: redis:6379
+    secureJsonData:
+      password: ${REDIS_PASSWORD}
+    jsonData:
+      poolSize: 10
+      timeout: 10
+      pingInterval: 30
+      tlsSkipVerify: true
+    editable: true
+    version: 1
+
+  # AlertManager 数据源
+  - name: AlertManager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    jsonData:
+      implementation: 'prometheus'
+    editable: true
+    version: 1
+
+  # 性能测试数据源
+  - name: Performance-Tests
+    type: prometheus
+    access: proxy
+    url: http://prometheus-performance:9090
+    editable: true
+    jsonData:
+      timeInterval: "5s"
+      httpMethod: "POST"
+    version: 1

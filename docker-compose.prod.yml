@@ -1,28 +1,93 @@
-# 生产环境Docker Compose配置
-# Production Docker Compose Configuration
-
 version: '3.8'
 
 services:
   app:
-    extends:
-      file: docker-compose.yml
-      service: app
-    env_file:
-      - ./docker/environments/.env.production
-    volumes:
-      - ./src:/app/src:ro  # 生产环境只读挂载
+    image: football-prediction:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - SENTRY_DSN=${SENTRY_DSN}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
     deploy:
-      replicas: 2
+      replicas: 3
       resources:
         limits:
-          memory: 2G
-          cpus: '2.0'
-        reservations:
-          memory: 1G
           cpus: '1.0'
-    restart: unless-stopped
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - football-prediction-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backups:/backups
+      - ./scripts/init_db_prod.sql:/docker-entrypoint-initdb.d/init_db.sql
+    restart: always
+    networks:
+      - football-prediction-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+    networks:
+      - football-prediction-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   nginx:
     image: nginx:alpine
@@ -30,47 +95,20 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./nginx/logs:/var/log/nginx
+      - static_files:/var/www/static:ro
+      - ./logs/nginx:/var/log/nginx
     depends_on:
       - app
-    restart: unless-stopped
-
-  db:
-    extends:
-      file: docker-compose.yml
-      service: db
-    env_file:
-      - ./docker/environments/.env.production
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: '2.0'
-        reservations:
-          memory: 2G
-          cpus: '1.0'
-    restart: unless-stopped
-
-  redis:
-    extends:
-      file: docker-compose.yml
-      service: redis
-    env_file:
-      - ./docker/environments/.env.production
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-        reservations:
-          memory: 512M
-          cpus: '0.25'
-    restart: unless-stopped
+    restart: always
+    networks:
+      - football-prediction-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   prometheus:
     image: prom/prometheus:latest
@@ -84,34 +122,71 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    restart: unless-stopped
+    restart: always
+    networks:
+      - football-prediction-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "3000:3000"
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${PROD_GRAFANA_PASSWORD}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    restart: unless-stopped
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - football-prediction-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
+  # 日志收集 - Loki
   loki:
     image: grafana/loki:latest
     ports:
       - "3100:3100"
     volumes:
-      - ./monitoring/loki.yml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
-    restart: unless-stopped
+    restart: always
+    networks:
+      - football-prediction-network
+
+  # 日志聚合 - Promtail
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    restart: always
+    networks:
+      - football-prediction-network
 
 volumes:
   postgres_data:
+    driver: local
+  postgres_backups:
+    driver: local
+  redis_data:
+    driver: local
+  static_files:
     driver: local
   prometheus_data:
     driver: local
@@ -121,7 +196,7 @@ volumes:
     driver: local
 
 networks:
-  default:
+  football-prediction-network:
     driver: bridge
     ipam:
       config:
