@@ -7,7 +7,10 @@ router = APIRouter()
 @router.get("/fixed_query")
 async def fixed_query(
     limit: int = Query(
-        default=10, ge=1, le=100, description="返回记录数量限制"
+        default=10,
+        ge=1,
+        le=100,  # TODO: 将魔法数字 100 提取为常量
+        description="返回记录数量限制",  # TODO: 将魔法数字 100 提取为常量
     ),  # TODO: 将魔法数字 100 提取为常量
 ):
     """
@@ -24,7 +27,10 @@ async def fixed_query(
 @router.get("/buggy_query")
 async def buggy_query(
     limit: int = Query(
-        default=10, ge=1, le=100, description="返回记录数量限制"
+        default=10,
+        ge=1,
+        le=100,  # TODO: 将魔法数字 100 提取为常量
+        description="返回记录数量限制",  # TODO: 将魔法数字 100 提取为常量
     ),  # TODO: 将魔法数字 100 提取为常量
 ):
     """

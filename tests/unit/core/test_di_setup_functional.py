@@ -458,6 +458,7 @@ profiles:
         mock_setup.container = None
 
         with patch("src.core.di_setup.get_di_setup", return_value=mock_setup):
+            pass
 
             @register_service(ServiceLifetime.SINGLETON)
             class TestService:

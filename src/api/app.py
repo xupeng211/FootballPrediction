@@ -150,6 +150,25 @@ app.include_router(predictions_router)
 app.include_router(data_router)
 app.include_router(adapters_router)
 
+# 导入并注册数据集成路由
+from src.api.data_integration import router as data_integration_router
+
+app.include_router(data_integration_router, prefix="/api/v1", tags=["data-integration"])
+
+# 导入并注册SRS规范增强预测路由
+from src.api.predictions_enhanced import router as predictions_enhanced_router
+
+app.include_router(
+    predictions_enhanced_router, prefix="/api/v1", tags=["predictions-srs"]
+)
+
+# 导入并注册SRS规范简化预测路由（不依赖数据库）
+from src.api.predictions_srs_simple import router as predictions_srs_simple_router
+
+app.include_router(
+    predictions_srs_simple_router, prefix="/api/v1", tags=["predictions-srs-simple"]
+)
+
 
 # 全局异常处理
 @app.exception_handler(StarletteHTTPException)

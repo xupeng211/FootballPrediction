@@ -125,7 +125,7 @@ async def get_leagues(
     country: Optional[str] = Query(None, description="国家筛选"),
     season: Optional[str] = Query(None, description="赛季"),
     limit: int = Query(
-        20, ge=1, le=100, description="返回数量"
+        20, ge=1, le=100, description="返回数量"  # TODO: 将魔法数字 20 提取为常量
     ),  # TODO: 将魔法数字 20 提取为常量
 ):
     """
@@ -153,7 +153,8 @@ async def get_leagues(
     except Exception as e:
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(
-            status_code=500, detail=f"获取联赛失败: {str(e)}"
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
+            detail=f"获取联赛失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -174,7 +175,7 @@ async def get_league(league_id: int):
     except Exception as e:
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(
-            status_code=404, detail="联赛不存在"
+            status_code=404, detail="联赛不存在"  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
 
@@ -207,11 +208,16 @@ async def get_teams(
                 country=country or "Country",
                 league_id=league_id,
                 # 用户建议的新增字段
-                founded_year=1980 + i,
+                founded_year=1980 + i,  # TODO: 将魔法数字 1980 提取为常量
                 stadium_name=f"Stadium {i}",
-                stadium_capacity=30000 + (i * 5000),
+                stadium_capacity=30000  # TODO: 将魔法数字 30000 提取为常量
+                + (i * 5000),  # TODO: 将魔法数字 30000 提取为常量
                 website_url=f"https://team{i}.example.com",
-                team_color=["Red", "Blue", "Green", "Yellow", "Purple"][i-1] if i <= 5 else "Orange",
+                team_color=(
+                    ["Red", "Blue", "Green", "Yellow", "Purple"][i - 1]
+                    if i <= 5
+                    else "Orange"
+                ),
             )
             for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
         ]
@@ -222,7 +228,8 @@ async def get_teams(
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(
-            status_code=500, detail=f"获取球队失败: {str(e)}"
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
+            detail=f"获取球队失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -242,7 +249,7 @@ async def get_team(team_id: int):
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(
-            status_code=404, detail="球队不存在"
+            status_code=404, detail="球队不存在"  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
 
@@ -268,7 +275,7 @@ async def get_team_statistics(
     except Exception as e:
         logger.error(f"获取球队统计失败: {e}")
         raise HTTPException(
-            status_code=500, detail="获取统计失败"
+            status_code=500, detail="获取统计失败"  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -307,13 +314,29 @@ async def get_matches(
                 match_date=datetime.utcnow() + timedelta(days=i),
                 status="pending",
                 # 用户建议的新增比赛统计字段
-                attendance=25000 + (i * 3000),
+                attendance=25000 + (i * 3000),  # TODO: 将魔法数字 25000 提取为常量
                 referee=f"Referee {i}",
-                weather=["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i-1] if i <= 4 else "Clear",
+                weather=(
+                    ["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i - 1]
+                    if i <= 4
+                    else "Clear"
+                ),
                 venue=f"Stadium {i * 2}",
                 match_week=i,
-                home_team_form=["W-D-W-L-D", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L", "L-D-D-W-W"][i-1] if i <= 5 else "D-L-W-W-D",
-                away_team_form=["D-L-W-W-D", "W-D-L-W-W", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L"][i-1] if i <= 5 else "W-D-D-L-W",
+                home_team_form=(
+                    ["W-D-W-L-D", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L", "L-D-D-W-W"][
+                        i - 1
+                    ]
+                    if i <= 5
+                    else "D-L-W-W-D"
+                ),
+                away_team_form=(
+                    ["D-L-W-W-D", "W-D-L-W-W", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L"][
+                        i - 1
+                    ]
+                    if i <= 5
+                    else "W-D-D-L-W"
+                ),
             )
             for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
         ]
@@ -324,7 +347,8 @@ async def get_matches(
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(
-            status_code=500, detail=f"获取比赛失败: {str(e)}"
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
+            detail=f"获取比赛失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -349,7 +373,7 @@ async def get_match(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(
-            status_code=404, detail="比赛不存在"
+            status_code=404, detail="比赛不存在"  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
 
@@ -374,7 +398,7 @@ async def get_match_statistics(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛统计失败: {e}")
         raise HTTPException(
-            status_code=500, detail="获取统计失败"
+            status_code=500, detail="获取统计失败"  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -416,7 +440,8 @@ async def get_odds(
     except Exception as e:
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(
-            status_code=500, detail=f"获取赔率失败: {str(e)}"
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
+            detail=f"获取赔率失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -442,7 +467,7 @@ async def get_match_odds(match_id: int):
     except Exception as e:
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(
-            status_code=500, detail="获取赔率失败"
+            status_code=500, detail="获取赔率失败"  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 

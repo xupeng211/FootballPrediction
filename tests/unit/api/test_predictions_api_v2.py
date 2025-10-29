@@ -39,7 +39,7 @@ class TestPredictionsAPIV2:
         # 现在这个端点应该工作了
         assert response.status_code == 200
         _data = response.json()
-                # 验证响应结构
+        # 验证响应结构
         assert "match_id" in _data
 
         assert "home_win_prob" in _data
@@ -83,7 +83,7 @@ class TestPredictionsAPIV2:
         response = client.post(f"/predictions/{match_id}/predict")
         assert response.status_code == 201
         _data = response.json()
-                # 验证响应结构
+        # 验证响应结构
         assert "match_id" in _data
 
         assert "predicted_outcome" in _data
@@ -108,7 +108,7 @@ class TestPredictionsAPIV2:
         response = client.post("/predictions/batch", json=request_data)
         assert response.status_code == 200
         _data = response.json()
-                # 验证批量响应结构
+        # 验证批量响应结构
         assert "predictions" in _data
 
         assert "total" in _data
@@ -140,7 +140,7 @@ class TestPredictionsAPIV2:
         response = client.get(f"/predictions/history/{match_id}")
         assert response.status_code == 200
         _data = response.json()
-                # 验证历史响应结构
+        # 验证历史响应结构
         assert "match_id" in _data
 
         assert "predictions" in _data
@@ -178,7 +178,7 @@ class TestPredictionsAPIV2:
         response = client.post(f"/predictions/{match_id}/verify?actual_result=home")
         assert response.status_code == 200
         _data = response.json()
-                # 验证验证响应结构
+        # 验证验证响应结构
         assert "match_id" in _data
 
         assert "prediction" in _data
@@ -216,7 +216,7 @@ class TestPredictionsAPIV2:
 
         response = client.get(f"/predictions/{match_id}")
         _data = response.json()
-                # 概率之和应该接近1.0（允许小的浮点误差）
+        # 概率之和应该接近1.0（允许小的浮点误差）
         prob_sum = _data["home_win_prob"] + _data["draw_prob"] + _data["away_win_prob"]
         assert abs(prob_sum - 1.0) < 0.001
 

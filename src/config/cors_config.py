@@ -13,7 +13,7 @@ def get_cors_origins() -> List[str]:
     elif env == "staging":
         return [
             "https://staging.yourdomain.com",
-            "http://localhost:3000",
+            "http://localhost:3000",  # TODO: 将魔法数字 3000 提取为常量
         ]  # TODO: 将魔法数字 3000 提取为常量
     else:
         return [

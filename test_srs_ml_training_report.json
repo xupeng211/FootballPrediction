@@ -1,0 +1,50 @@
+{
+  "test_name": "SRS ML Training Compliance Test",
+  "issue_number": 115,
+  "test_date": "2025-10-29T08:24:06.913089",
+  "test_status": "partially_passed",
+  "srs_targets": {
+    "min_accuracy": 0.65,
+    "min_auc": 0.7,
+    "min_f1_score": 0.6
+  },
+  "test_results": {
+    "data_quality": true,
+    "accuracy_target_met": false,
+    "auc_target_met": false,
+    "f1_target_met": false,
+    "model_support": false,
+    "model_saved": false,
+    "overall_compliance": false
+  },
+  "best_model": {
+    "name": null,
+    "accuracy": 0.0,
+    "auc": 0,
+    "f1_score": 0,
+    "srs_compliance": null
+  },
+  "data_summary": {
+    "total_matches": 1500,
+    "feature_count": 45,
+    "target_distribution": {
+      "draw": 794,
+      "home_win": 456,
+      "away_win": 250
+    }
+  },
+  "model_results": {},
+  "recommendations": [
+    "⚠️ 模型未完全达到SRS要求",
+    "📈 增加训练数据量和质量",
+    "🔧 优化特征工程算法",
+    "🧪 尝试集成学习方法",
+    "⚙️ 调整超参数优化策略"
+  ],
+  "next_steps": [
+    "收集更多历史比赛数据",
+    "优化特征选择算法",
+    "尝试模型集成技术",
+    "重新训练和评估"
+  ]
+}
