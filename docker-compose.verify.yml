@@ -1,0 +1,172 @@
+# =================================================================
+# 足球预测系统 - 本地验证环境配置
+# =================================================================
+
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库 (轻量级配置)
+  db:
+    image: postgres:15-alpine
+    container_name: football-db-verify
+    environment:
+      POSTGRES_DB: football_prediction_verify
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: verify_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C"
+    volumes:
+      - postgres_verify_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - football-verify-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d football_prediction_verify"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis 缓存 (轻量级配置)
+  redis:
+    image: redis:7-alpine
+    container_name: football-redis-verify
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_verify_data:/data
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+    networks:
+      - football-verify-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 简化的 Web 服务 (用于验证配置)
+  web-test:
+    image: nginx:alpine
+    container_name: football-web-verify
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./docs:/var/www/docs:ro
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - football-verify-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus 监控 (轻量级配置)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: football-prometheus-verify
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=1d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_verify_data:/prometheus
+    ports:
+      - "9091:9090"
+    restart: unless-stopped
+    networks:
+      - football-verify-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana 可视化 (轻量级配置)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: football-grafana-verify
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=verify123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - grafana_verify_data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3002:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - football-verify-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 简单的健康检查服务
+  health-check:
+    image: alpine:latest
+    container_name: football-health-verify
+    command: >
+      sh -c "
+      apk add --no-cache curl postgresql-client redis &&
+      while true; do
+        echo '=== Health Check Report $(date) ===' &&
+        echo 'Database:' &&
+        pg_isready -h db -p 5432 -U postgres -d football_prediction_verify &&
+        echo 'Redis:' &&
+        redis-cli -h redis -p 6379 ping &&
+        echo 'Nginx:' &&
+        curl -f http://web-test/health || echo 'Nginx not responding' &&
+        echo 'Prometheus:' &&
+        curl -f http://prometheus:9090/-/healthy || echo 'Prometheus not responding' &&
+        echo 'Grafana:' &&
+        curl -f http://grafana:3000/api/health || echo 'Grafana not responding' &&
+        echo '================================' &&
+        sleep 60;
+      done"
+    depends_on:
+      - db
+      - redis
+      - web-test
+      - prometheus
+      - grafana
+    networks:
+      - football-verify-network
+    restart: unless-stopped
+
+volumes:
+  postgres_verify_data:
+    driver: local
+  redis_verify_data:
+    driver: local
+  prometheus_verify_data:
+    driver: local
+  grafana_verify_data:
+    driver: local
+
+networks:
+  football-verify-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16

@@ -1,0 +1,32 @@
+# 最小化测试应用镜像
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 安装基本依赖
+RUN pip install fastapi uvicorn
+
+# 创建一个简单的 FastAPI 应用
+RUN echo 'from fastapi import FastAPI\n\
+import uvicorn\n\
+app = FastAPI()\n\
+\n\
+@app.get("/")\n\
+async def root():\n\
+    return {"message": "Football Prediction System API", "status": "running"}\n\
+\n\
+@app.get("/health")\n\
+async def health():\n\
+    return {"status": "healthy", "service": "football-prediction"}\n\
+\n\
+@app.get("/api/v1/health")\n\
+async def api_health():\n\
+    return {"status": "healthy", "version": "1.0.0", "service": "api"}\n\
+\n\
+if __name__ == "__main__":\n\
+    uvicorn.run(app, host="0.0.0.0", port=8000)\n\
+' > /app/main.py
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
