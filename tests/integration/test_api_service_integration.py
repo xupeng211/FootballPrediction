@@ -497,7 +497,7 @@ class TestDatabaseTransactionIntegration:
     ],
 )
 def test_api_endpoint_availability(
-    endpoint, method, expected_status, client, client, client
+    endpoint, method, expected_status, client
 ):
     """测试API端点可用性"""
     try:
@@ -533,7 +533,7 @@ def test_api_endpoint_availability(
         ("invalid_method", {"invalid": "data"}, False),
     ],
 )
-def test_service_method_integration(service_method, input_data, should_pass, client, client):
+def test_service_method_integration(service_method, input_data, should_pass, client):
     """测试服务方法集成"""
     # 验证方法名和输入数据的基本格式
     assert isinstance(service_method, str)

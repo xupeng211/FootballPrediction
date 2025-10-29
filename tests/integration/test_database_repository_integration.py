@@ -472,7 +472,7 @@ def test_crud_operation_integration(
 
 
 @pytest.mark.integration
-def test_migration_integration(client, client):
+def test_migration_integration(client):
     """测试数据库迁移集成"""
     # 模拟迁移状态
     migrations = [
@@ -499,7 +499,7 @@ def test_migration_integration(client, client):
 
 
 @pytest.mark.integration
-def test_index_integration(client, client):
+def test_index_integration(client):
     """测试数据库索引集成"""
     # 模拟索引信息
     indexes = [
@@ -533,7 +533,7 @@ def test_index_integration(client, client):
 
 
 @pytest.mark.integration
-def test_query_performance_integration(client, client):
+def test_query_performance_integration(client):
     """测试查询性能集成"""
     # 模拟查询性能指标
     query_performance = {
