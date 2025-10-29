@@ -1,0 +1,132 @@
+{
+  "timestamp": "2025-10-29T13:00:17.265502",
+  "environment": {
+    "xgboost_available": true,
+    "lightgbm_available": true
+  },
+  "data_info": {
+    "total_samples": 1000,
+    "training_samples": 800,
+    "test_samples": 200,
+    "features": 53,
+    "distribution": {
+      "draw": 529,
+      "home_win": 320,
+      "away_win": 151
+    }
+  },
+  "srs_baseline": {
+    "accuracy": 0.68,
+    "data_points": 1500,
+    "features": 45,
+    "distribution": {
+      "draw": 791,
+      "home_win": 480,
+      "away_win": 229
+    }
+  },
+  "results": [
+    {
+      "model": "XGBoost",
+      "accuracy": 0.49,
+      "training_time": 148.8147270679474,
+      "feature_importance": [
+        [
+          "weather_impact",
+          "0.02663085"
+        ],
+        [
+          "away_goals_scored",
+          "0.023280827"
+        ],
+        [
+          "away_possession",
+          "0.022677317"
+        ],
+        [
+          "avg_total_goals",
+          "0.022457395"
+        ],
+        [
+          "away_form",
+          "0.021799183"
+        ],
+        [
+          "referee_tendency",
+          "0.021587979"
+        ],
+        [
+          "away_failed_to_score",
+          "0.02151674"
+        ],
+        [
+          "xga_away",
+          "0.021413555"
+        ],
+        [
+          "avg_home_goals",
+          "0.02132586"
+        ],
+        [
+          "injury_impact",
+          "0.0211196"
+        ]
+      ],
+      "improvement_over_srs": -27.941176470588243
+    },
+    {
+      "model": "LightGBM",
+      "accuracy": 0.485,
+      "training_time": 1.988114595413208,
+      "feature_importance": [
+        [
+          "away_goals_scored",
+          "103"
+        ],
+        [
+          "injury_impact",
+          "93"
+        ],
+        [
+          "away_fouls",
+          "89"
+        ],
+        [
+          "away_corners",
+          "83"
+        ],
+        [
+          "away_draw_rate",
+          "81"
+        ],
+        [
+          "home_yellow_cards",
+          "81"
+        ],
+        [
+          "avg_home_goals",
+          "79"
+        ],
+        [
+          "away_possession",
+          "79"
+        ],
+        [
+          "home_loss_rate",
+          "78"
+        ],
+        [
+          "weather_impact",
+          "78"
+        ]
+      ],
+      "improvement_over_srs": -28.676470588235304
+    }
+  ],
+  "summary": {
+    "best_model": "XGBoost",
+    "best_accuracy": 0.49,
+    "improvement_over_srs": -27.941176470588243,
+    "models_tested": 2
+  }
+}

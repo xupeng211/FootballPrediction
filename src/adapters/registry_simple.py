@@ -11,6 +11,7 @@ class AdapterRegistry:
     """适配器注册表"""
 
     def __init__(self):
+        """初始化适配器注册表"""
         self._registry: Dict[str, Dict] = {}
         self._instances: Dict[str, Any] = {}
 
@@ -54,6 +55,9 @@ class AdapterRegistry:
 
 
 # 全局注册表实例
+_global_registry: Optional[AdapterRegistry] = None
+
+
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     global _global_registry
@@ -62,13 +66,12 @@ def get_global_registry() -> AdapterRegistry:
     return _global_registry
 
 
-def register_adapter(name: str = None, **kwargs):  # TODO: 添加返回类型注解
+def register_adapter(name: str = None, **kwargs):
     """装饰器注册适配器"""
-    registry = get_global_registry()
-
     def decorator(cls):
-        """TODO: 添加函数文档"""
+        """装饰器函数"""
         adapter_name = name or cls.__name__
+        registry = get_global_registry()
         registry.register(adapter_name, cls, **kwargs)
         return cls
 

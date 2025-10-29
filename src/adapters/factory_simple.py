@@ -10,6 +10,9 @@ from src.core.exceptions import AdapterError
 class AdapterFactory:
     """适配器工厂"""
 
+# 全局工厂实例
+# 全局工厂实例
+# 全局工厂实例
     def __init__(self):
         self._adapters: Dict[str, Type] = {}
         self._instances: Dict[str, Any] = {}
@@ -18,6 +21,7 @@ class AdapterFactory:
         """注册适配器类"""
         self._adapters[name] = adapter_class
 
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
     def create_adapter(
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
     ) -> Any:
