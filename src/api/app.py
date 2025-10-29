@@ -105,12 +105,10 @@ from src.api.predictions_srs_simple import router as predictions_srs_simple_rout
 
 # 测试端点
 
+from datetime import datetime
+import uvicorn
 
-    from datetime import datetime
-
-    import uvicorn
-
-    # 开发环境配置
+# 开发环境配置
 """
 FastAPI主应用
 FastAPI Main Application

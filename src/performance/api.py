@@ -258,14 +258,13 @@ async def get_performance_report(
             f"Performance report generated with {report['summary']['total_insights']} insights",
         )
 
-        from fastapi.responses import Response
+                from fastapi.responses import Response
 
         return Response(
             content=report_content,
             media_type=media_type,
             headers={
-                "Content-Disposition": f"attachment; filename =
-    performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
+                "Content-Disposition": f"attachment; filename=performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
             },
         )
 
@@ -387,7 +386,7 @@ async def get_performance_trends(
         # Note: 从数据库或时序数据库获取历史数据
         # 当前返回模拟数据，生产环境应连接到时序数据库
 
-        from datetime import datetime, timedelta
+                from datetime import datetime, timedelta
 
         import numpy as np
 
