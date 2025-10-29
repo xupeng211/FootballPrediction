@@ -1,0 +1,31 @@
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run Code Quality Checks
+      run: "\n                           make lint\n                           make\
+        \ type-check\n                           echo \"✅ Code quality checks passed\"\
+        \n                         "
+    - name: Security Scan
+      run: "\n                           make security-check\n                   \
+        \        echo \"✅ Security scan passed\"\n                         "
+    - name: Test Coverage Gate
+      run: "\n                           make coverage\n                         \
+        \  COVERAGE=$(python3 -c \"import json; print(json.load(open('coverage.json'))['totals']['percent_covered'])\"\
+        )\n                           if (( $(echo \"$COVERAGE < 80\" | bc -l) ));\
+        \ then\n                             echo \"❌ Coverage $COVERAGE% is below\
+        \ 80% threshold\"\n                             exit 1\n                 \
+        \          fi\n                           echo \"✅ Coverage $COVERAGE% meets\
+        \ quality gate\"\n                         "
+    - name: Performance Tests
+      run: "\n                           make test-performance\n                 \
+        \          echo \"✅ Performance tests passed\"\n                         "
+name: Quality Gate
+'on':
+  pull_request:
+    branches:
+    - main
+  push:
+    branches:
+    - main

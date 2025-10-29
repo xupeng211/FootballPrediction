@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: football-prediction
+  namespace: football-prediction
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: football-prediction
+  template:
+    metadata:
+      labels:
+        app: football-prediction
+    spec:
+      containers:
+      - env:
+        - name: ENV
+          value: production
+        - name: DB_HOST
+          value: postgres-service
+        - name: REDIS_HOST
+          value: redis-service
+        image: ghcr.io/xupeng211/football-prediction:latest
+        name: app
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
