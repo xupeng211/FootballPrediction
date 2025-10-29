@@ -67,7 +67,7 @@ class QualityDashboardLauncher:
                 return True
             else:
                 stdout, stderr = self.api_process.communicate()
-                logger.error(f"API服务器启动失败:")
+                logger.error("API服务器启动失败:")
                 logger.error(f"stdout: {stdout}")
                 logger.error(f"stderr: {stderr}")
                 return False

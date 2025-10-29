@@ -404,7 +404,7 @@ class Test{class_name}Phase3:
                     if callable(item):
                         try:
                             item()
-                        except:
+except Exception:
                             pass
 
             end_time = time.time()
@@ -551,7 +551,7 @@ import sys""",
                     result = func("test_config")
                 else:
                     result = func({{"debug": True, "port": 8000}})
-            except:
+except Exception:
                 result = None""",
             "class_testing_logic": """
             # 核心模块类测试策略
@@ -566,7 +566,7 @@ import sys""",
                         method = getattr(instance, method_name)
                         method()
                         test_results["methods_tested"] += 1
-                    except:
+except Exception:
                         pass  # 忽略方法调用错误
 
             except Exception as e:
@@ -606,7 +606,7 @@ import os""",
                     result = func("/tmp/test_file.txt")
                 else:
                     result = func()
-            except:
+except Exception:
                 result = None""",
             "class_testing_logic": """
             # 工具模块类测试策略
@@ -627,7 +627,7 @@ import os""",
                         else:
                             method()
                         test_results["utility_methods"] += 1
-                    except:
+except Exception:
                         pass
 
             except Exception as e:
@@ -671,7 +671,7 @@ from sqlalchemy.ext.asyncio import AsyncSession""",
                     result = func()
                 else:
                     result = func()
-            except:
+except Exception:
                 result = None""",
             "class_testing_logic": """
             # 数据库模块类测试策略
@@ -688,7 +688,7 @@ from sqlalchemy.ext.asyncio import AsyncSession""",
                             method = getattr(instance, method_name)
                             method()
                             test_results["db_methods"] += 1
-                        except:
+except Exception:
                             pass
             except Exception as e:
                 test_results["mock_error"] = str(e)
@@ -729,7 +729,7 @@ from fastapi.testclient import TestClient""",
                     result = func()
                 else:
                     result = func()
-            except:
+except Exception:
                 result = None""",
             "class_testing_logic": """
             # API模块类测试策略
@@ -745,7 +745,7 @@ from fastapi.testclient import TestClient""",
                             method = getattr(instance, method_name)
                             method()
                             test_results["api_methods"] += 1
-                        except:
+except Exception:
                             pass
             except Exception as e:
                 test_results["api_error"] = str(e)
@@ -780,7 +780,7 @@ import asyncio""",
                     result = func(Mock())
                 else:
                     result = func()
-            except:
+except Exception:
                 result = None""",
             "class_testing_logic": """
             # CQRS模块类测试策略
@@ -799,7 +799,7 @@ import asyncio""",
                         else:
                             method(Mock())
                         test_results["cqrs_methods"] += 1
-                    except:
+except Exception:
                         pass
             except Exception as e:
                 test_results["cqrs_error"] = str(e)
@@ -831,7 +831,7 @@ from unittest.mock import Mock, patch""",
                     result = func()
                 else:
                     result = func("test_param")
-            except:
+except Exception:
                 result = None""",
             "class_testing_logic": """
             # 通用类测试策略
@@ -846,7 +846,7 @@ from unittest.mock import Mock, patch""",
                         method = getattr(instance, method_name)
                         method()
                         test_results["methods_tested"] += 1
-                    except:
+except Exception:
                         pass
             except Exception as e:
                 test_results["error"] = str(e)

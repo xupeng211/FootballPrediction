@@ -1,0 +1,33 @@
+{
+  "report_timestamp": "2025-10-30T02:10:56.431399",
+  "current_metrics": {
+    "timestamp": "2025-10-30T02:10:56.431366",
+    "total_errors": -1,
+    "error_types": {},
+    "file_count": 0,
+    "quality_score": 0,
+    "status": "error"
+  },
+  "trend_analysis": {
+    "error_trend": 0,
+    "quality_trend": 0,
+    "trend_direction": "no_data"
+  },
+  "recommendations": [
+    "✅ 代码质量良好，继续保持",
+    "📈 建议建立持续质量监控流程",
+    "🚨 建议暂停新功能开发，专注质量改进"
+  ],
+  "monitoring_summary": {
+    "total_checkpoints": 1,
+    "monitoring_duration": "0m",
+    "alerts_count": 0
+  },
+  "quality_gate_status": {
+    "status": "failed",
+    "color": "red",
+    "message": "质量门禁失败，不建议发布",
+    "error_threshold": -1,
+    "quality_threshold": 0
+  }
+}

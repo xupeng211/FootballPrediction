@@ -201,7 +201,7 @@ class QualityDecisionEngine:
 
     def recommend_next_actions(self) -> List[Dict[str, Any]]:
         """推荐下一步行动"""
-        action_plan = self.generate_action_plan()
+        self.generate_action_plan()
 
         recommendations = []
 
@@ -382,7 +382,7 @@ def main():
         return
 
     # 生成决策报告
-    report_file = engine.save_decision_report()
+    engine.save_decision_report()
     engine.display_decision_summary()
 
 

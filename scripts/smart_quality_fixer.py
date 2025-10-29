@@ -117,7 +117,7 @@ class SmartQualityFixer:
         print("\n✅ Issue #98智能修复完成！")
         print(f"📊 总修复数: {total_fixes}")
         print(f"📁 处理文件数: {self.fix_results['files_processed']}")
-        print(f"🤖 应用AI策略: 8项智能修复模式")
+        print("🤖 应用AI策略: 8项智能修复模式")
 
         return self.fix_results
 
@@ -704,7 +704,7 @@ class SmartQualityFixer:
 
         # 分析重复代码并添加重构建议
         for method_name, method_content in method_blocks.items():
-            method_str = "\n".join(method_content)
+            "\n".join(method_content)
 
             # 检测长方法
             if len(method_content) > 20:
