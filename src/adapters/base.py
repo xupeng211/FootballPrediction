@@ -8,7 +8,6 @@ Define core interfaces and abstract classes for the adapter pattern.
 
 import asyncio
 from abc import ABC, abstractmethod
-from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -47,16 +46,12 @@ class Target(ABC):
 
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
-
     pass
 
 
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
-
-
-class CompositeAdapter(Adapter):
-    """组合适配器，可以管理多个子适配器"""
+    pass
 
 
 class DataTransformer(ABC):
@@ -67,12 +62,19 @@ class DataTransformer(ABC):
         """转换数据格式"""
         pass
 
-class CompositeAdapter(Adapter):
-    # TODO: 方法 def get_adapter 过长(27行)，建议拆分
-    def __init__(self, name: str = "CompositeAdapter"):
+    def get_source_schema(self) -> Dict[str, Any]:
+        """获取源数据结构"""
+        return {}
+
+    @abstractmethod
+    def get_target_schema(self) -> Dict[str, Any]:
+        """获取目标数据结构"""
         pass
 
-class DataTransformer(ABC):
+
+class CompositeAdapter(Adapter):
+    """组合适配器，可以管理多个子适配器"""
+
     def __init__(self, name: str = "CompositeAdapter"):
         self.name = name
         self.adapters: List[Adapter] = []
@@ -84,6 +86,8 @@ class DataTransformer(ABC):
             "total_response_time": 0.0,
             "average_response_time": 0.0,
         }
+        self.status = AdapterStatus.ACTIVE
+        self.last_error = None
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取适配器指标"""
@@ -101,8 +105,6 @@ class DataTransformer(ABC):
             ),
         }
 
-
-class CompositeAdapter(Adapter):
     def add_adapter(self, adapter: Adapter) -> None:
         """添加子适配器"""
         self.adapters.append(adapter)
@@ -117,9 +119,6 @@ class CompositeAdapter(Adapter):
             return True
         return False
 
-    # TODO: 方法 def get_adapter 过长(27行)，建议拆分
-# TODO: 方法 def get_adapter 过长(27行)，建议拆分
-# TODO: 方法 def get_adapter 过长(27行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
@@ -144,14 +143,3 @@ class CompositeAdapter(Adapter):
             "total_adapters": len(self.adapters),
             "successful_adapters": len(successful_results),
         }
-
-
-class DataTransformer(ABC):
-    def get_source_schema(self) -> Dict[str, Any]:
-        """获取源数据结构"""
-        return {}
-
-    @abstractmethod
-    def get_target_schema(self) -> Dict[str, Any]:
-        """获取目标数据结构"""
-        pass
