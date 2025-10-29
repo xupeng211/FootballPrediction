@@ -1,13 +1,117 @@
-# 📑 INDEX
+# 📚 足球预测系统文档中心
 
-## AI Development Rules
+## 🎯 欢迎使用足球预测系统文档
 
-- [🤖 AI开发文档维护规则](AI_DEVELOPMENT_DOCUMENTATION_RULES.md) - **重要！AI开发必须遵守**
+本系统提供完整的足球预测分析解决方案，基于先进的机器学习算法和实时数据流处理，为用户提供准确的比赛预测和专业的投注建议。
 
-## Architecture
+## 📖 文档导航
 
-- [数据架构优化改进说明](architecture/ARCHITECTURE_IMPROVEMENTS.md)
-- [Caching Implementation Design](architecture/CACHING_IMPLEMENTATION_DESIGN.md)
+### 🚀 快速开始
+- **[⚡ 快速开始指南](how-to/QUICKSTART_TOOLS.md)** - 5分钟快速部署和上手
+- **[🛠️ 开发环境设置](reference/DEVELOPMENT_SETUP.md)** - 开发环境配置指南
+- **[📋 系统要求](reference/REQUIREMENTS.md)** - 硬件和软件要求
+
+### 🏗️ 系统架构
+- **[📐 系统架构总览](architecture/SYSTEM_ARCHITECTURE.md)** - 完整的系统架构说明 ⭐
+- **[🔌 WebSocket实时通信](architecture/WEBSOCKET_REALTIME_COMMUNICATION.md)** - 实时通信系统详解 ⭐
+- **[🤖 机器学习架构](ml/ML_ARCHITECTURE.md)** - ML模型和算法架构
+- **[🗄️ 数据库设计](database/DATABASE_SCHEMA.md)** - 数据库结构和关系
+
+### 🔧 API文档
+- **[📡 完整API参考](api/API_REFERENCE_COMPLETE.md)** - RESTful和WebSocket API文档 ⭐
+- **[🔗 API快速参考](api/API_QUICK_REFERENCE.md)** - 常用API快速查询
+- **[🔐 认证授权指南](api/AUTHENTICATION_GUIDE.md)** - JWT认证和权限管理
+
+### 📊 用户指南
+- **[📖 用户手册](user/USER_MANUAL.md)** - 完整的用户操作指南 ⭐
+- **[🎯 功能使用教程](user/FEATURE_TUTORIALS.md)** - 各功能模块详细教程
+- **[💡 最佳实践](user/BEST_PRACTICES.md)** - 使用技巧和建议
+
+### 🚀 部署运维
+- **[🐳 部署指南](ops/DEPLOYMENT_GUIDE.md)** - Docker和生产环境部署 ⭐
+- **[🔧 配置管理](ops/CONFIGURATION_MANAGEMENT.md)** - 环境配置和变量管理
+- **[📊 监控告警](ops/MONITORING_GUIDE.md)** - 系统监控和告警设置
+- **[🔒 安全配置](ops/SECURITY_GUIDE.md)** - 安全配置和最佳实践
+
+### 🧪 测试文档
+- **[✅ 测试策略](testing/TESTING_STRATEGY.md)** - 测试方法和策略
+- **[🧪 测试执行指南](testing/TEST_EXECUTION_GUIDE.md)** - 测试执行和结果分析
+- **[📊 测试覆盖率](testing/TEST_COVERAGE_GUIDE.md)** - 覆盖率管理和提升
+
+### 🤖 质量保障
+- **[🛡️ 质量守护系统](QUALITY_GUARDIAN_SYSTEM_GUIDE.md)** - Claude Code质量守护系统
+- **[📊 质量标准](quality/QUALITY_STANDARDS.md)** - 代码质量和文档标准
+- **[🔄 持续改进](quality/CONTINUOUS_IMPROVEMENT.md)** - 持续改进流程
+
+### 🗂️ 项目管理
+- **[📋 项目总览](project/PROJECT_OVERVIEW.md)** - 项目概述和进展
+- **[📈 里程碑](project/MILESTONES.md)** - 项目里程碑和目标
+- **[🚧 路线图](ROADMAP_IMPLEMENTATION_PLAN.md)** - 系统发展路线图
+- **[❓ 问题解答](project/FAQ.md)** - 常见问题解答
+
+## 🎯 文档使用指南
+
+### 📖 阅读顺序建议
+
+#### 🔰 新手入门
+1. [快速开始指南](how-to/QUICKSTART_TOOLS.md)
+2. [用户手册](user/USER_MANUAL.md)
+3. [功能使用教程](user/FEATURE_TUTORIALS.md)
+
+#### 👨‍💻 开发人员
+1. [开发环境设置](reference/DEVELOPMENT_SETUP.md)
+2. [系统架构总览](architecture/SYSTEM_ARCHITECTURE.md)
+3. [API参考文档](api/API_REFERENCE_COMPLETE.md)
+4. [部署指南](ops/DEPLOYMENT_GUIDE.md)
+
+#### 🔧 运维人员
+1. [部署指南](ops/DEPLOYMENT_GUIDE.md)
+2. [监控告警](ops/MONITORING_GUIDE.md)
+3. [安全配置](ops/SECURITY_GUIDE.md)
+4. [故障排除](project/TROUBLESHOOTING.md)
+
+#### 👔 项目管理者
+1. [项目总览](project/PROJECT_OVERVIEW.md)
+2. [里程碑](project/MILESTONES.md)
+3. [质量标准](quality/QUALITY_STANDARDS.md)
+4. [路线图](ROADMAP_IMPLEMENTATION_PLAN.md)
+
+## 🔄 最新更新 (2025-10-29)
+
+### ✅ 新增文档
+- **[📐 系统架构总览](architecture/SYSTEM_ARCHITECTURE.md)** - 完整的系统架构说明
+- **[🔌 WebSocket实时通信](architecture/WEBSOCKET_REALTIME_COMMUNICATION.md)** - 实时通信系统详解
+- **[📡 完整API参考](api/API_REFERENCE_COMPLETE.md)** - RESTful和WebSocket API文档
+- **[🐳 部署指南](ops/DEPLOYMENT_GUIDE.md)** - Docker和生产环境部署
+- **[📖 用户手册](user/USER_MANUAL.md)** - 完整的用户操作指南
+
+## 🎯 核心特性概览
+
+### 🏗️ 技术架构
+- **现代Python技术栈**: FastAPI + PostgreSQL + Redis
+- **微服务架构**: 模块化、可扩展的服务设计
+- **实时通信**: WebSocket双向数据流
+- **机器学习**: 集成学习算法和自动化特征工程
+- **容器化部署**: Docker + Kubernetes支持
+
+### 📊 功能特性
+- **智能预测**: 基于ML的准确比赛预测
+- **实时数据**: 比赛进度和比分实时更新
+- **投注建议**: 专业的投注策略和价值评估
+- **数据分析**: 深度数据可视化和趋势分析
+- **个性化**: 用户偏好定制和智能推荐
+
+## 📞 获取帮助
+
+### 🆘 技术支持
+- **GitHub Issues**: [提交问题和建议](https://github.com/xupeng211/FootballPrediction/issues)
+- **邮箱支持**: support@football-prediction.com
+
+---
+
+**最后更新**: 2025-10-29
+**文档版本**: v1.0
+**维护团队**: Football Prediction Development Team
 - [数据层设计文档](architecture/DATA_DESIGN.md)
 - [Retry Mechanism Design](architecture/RETRY_MECHANISM_DESIGN.md)
 - [足球比赛结果预测系统 - 系统架构文档](architecture/architecture.md)
