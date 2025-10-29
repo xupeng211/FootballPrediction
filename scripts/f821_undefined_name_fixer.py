@@ -60,7 +60,7 @@ class F821NameFixer:
 
         try:
             result = subprocess.run(
-                ['ruff', 'check', '--select=F821', '--format=json'],
+                ['python3', '-m', 'ruff', 'check', '--select=F821', '--output-format=json'],
                 capture_output=True,
                 text=True,
                 timeout=120
@@ -375,6 +375,7 @@ class F821NameFixer:
             logger.info("✅ 没有发现F821错误")
             return {
                 'success': True,
+                'total_errors': 0,
                 'errors_fixed': 0,
                 'files_processed': 0,
                 'files_fixed': 0,
@@ -470,8 +471,8 @@ def main():
 
     fixer = F821NameFixer()
 
-    # 运行批量修复（先处理50个测试）
-    result = fixer.run_batch_f821_fix(batch_size=50)
+    # 运行批量修复（目标减少322个错误）
+    result = fixer.run_batch_f821_fix(batch_size=350)
 
     # 生成报告
     report = fixer.generate_progress_report()

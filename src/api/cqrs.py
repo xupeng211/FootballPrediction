@@ -13,6 +13,16 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..cqrs.application import CQRSServiceFactory
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
+from src.core.config import 
 
 router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 
