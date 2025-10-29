@@ -383,7 +383,7 @@ def main():
     final_status = fixer.get_final_status()
 
     print("-" * 60)
-    print(f"🎯 最终状态:")
+    print("🎯 最终状态:")
     print(f"   原始错误数: {final_status['original_errors']:,}")
     print(f"   当前错误数: {final_status['total_errors']:,}")
     print(f"   修复错误数: {final_status['errors_fixed']:,}")

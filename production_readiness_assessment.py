@@ -124,7 +124,7 @@ class ProductionReadinessAssessor:
                         else:
                             response = await client.post(f"{self.api_base_url}{endpoint}")
 
-                        duration = time.time() - start_time
+                        time.time() - start_time
 
                         if response.status_code in [200, 201]:
                             category_success += 1
@@ -190,7 +190,7 @@ class ProductionReadinessAssessor:
                     response = await client.get(f"{self.api_base_url}{endpoint}")
                     if response.status_code == 200:
                         response_times.append(time.time() - start_time)
-            except:
+except Exception:
                 pass
 
         if response_times:
@@ -214,7 +214,7 @@ class ProductionReadinessAssessor:
                 async with httpx.AsyncClient(timeout=5) as client:
                     response = await client.get(f"{self.api_base_url}/api/health/")
                     return response.status_code == 200
-            except:
+except Exception:
                 return False
 
         # 并发10个请求
@@ -303,7 +303,7 @@ class ProductionReadinessAssessor:
                 ]
                 header_count = sum(1 for header in cors_headers if header in response.headers)
                 return (header_count / len(cors_headers)) * 100
-        except:
+except Exception:
             return 0
 
     async def check_error_handling(self):
@@ -322,11 +322,11 @@ class ProductionReadinessAssessor:
                         )
                         security_score = max(0, 100 - (exposed_count * 20))
                         return security_score
-                    except:
+except Exception:
                         return 80  # JSON解析失败也算安全
                 else:
                     return 60
-        except:
+except Exception:
             return 0
 
     async def check_auth_security(self):
@@ -341,7 +341,7 @@ class ProductionReadinessAssessor:
                     return 50  # 允许未授权访问，安全性较低
                 else:
                     return 80
-        except:
+except Exception:
             return 0
 
     async def check_https_support(self):
@@ -368,7 +368,7 @@ class ProductionReadinessAssessor:
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
                     response = await client.get(f"{self.api_base_url}{endpoint}")
-                    duration = time.time() - start_time
+                    time.time() - start_time
 
                     if response.status_code == 200:
                         data = response.json()
@@ -413,7 +413,7 @@ class ProductionReadinessAssessor:
         print("=" * 60)
 
         # 各项评分
-        print(f"📊 详细评分:")
+        print("📊 详细评分:")
         print(f"   🏥 系统健康: {scores['system_health']:.1f}/100")
         print(f"   🔧 API功能: {scores['api_functionality']:.1f}/100")
         print(f"   ⚡ 性能指标: {scores['performance']:.1f}/100")
@@ -451,17 +451,17 @@ class ProductionReadinessAssessor:
 
         # 系统资源信息
         if self.system_metrics:
-            print(f"\n💻 系统资源:")
+            print("\n💻 系统资源:")
             print(f"   CPU使用率: {self.system_metrics['cpu_percent']:.1f}%")
             print(f"   内存使用率: {self.system_metrics['memory_percent']:.1f}%")
             print(f"   磁盘使用率: {self.system_metrics['disk_percent']:.1f}%")
 
         # 改进建议
-        print(f"\n🚀 改进建议:")
+        print("\n🚀 改进建议:")
 
         low_score_areas = [(name, score) for name, score in scores.items() if score < 70]
         if low_score_areas:
-            print(f"   🔴 优先改进项:")
+            print("   🔴 优先改进项:")
             for area, score in low_score_areas:
                 area_names = {
                     "system_health": "系统健康",
@@ -473,46 +473,46 @@ class ProductionReadinessAssessor:
                 print(f"      • {area_names.get(area, area)}: {score:.1f}/100")
 
         if overall_score < 90:
-            print(f"\n   📋 具体改进措施:")
+            print("\n   📋 具体改进措施:")
             if scores["security"] < 80:
-                print(f"      🔒 安全性:")
-                print(f"         - 配置HTTPS证书")
-                print(f"         - 强化CORS策略")
-                print(f"         - 完善错误处理")
+                print("      🔒 安全性:")
+                print("         - 配置HTTPS证书")
+                print("         - 强化CORS策略")
+                print("         - 完善错误处理")
 
             if scores["performance"] < 80:
-                print(f"      ⚡ 性能:")
-                print(f"         - 优化数据库查询")
-                print(f"         - 添加缓存策略")
-                print(f"         - 配置负载均衡")
+                print("      ⚡ 性能:")
+                print("         - 优化数据库查询")
+                print("         - 添加缓存策略")
+                print("         - 配置负载均衡")
 
             if scores["data_quality"] < 80:
-                print(f"      📊 数据:")
-                print(f"         - 完善数据验证")
-                print(f"         - 建立数据备份")
-                print(f"         - 增加数据监控")
+                print("      📊 数据:")
+                print("         - 完善数据验证")
+                print("         - 建立数据备份")
+                print("         - 增加数据监控")
 
         # 部署建议
-        print(f"\n🌐 部署建议:")
+        print("\n🌐 部署建议:")
         if deployment_ready:
-            print(f"   ✨ 系统已准备好进行生产部署")
-            print(f"   📋 部署检查清单:")
-            print(f"      ✅ 所有核心功能正常")
-            print(f"      ✅ 性能指标满足要求")
-            print(f"      ✅ 安全措施基本到位")
-            print(f"      ✅ 数据质量良好")
+            print("   ✨ 系统已准备好进行生产部署")
+            print("   📋 部署检查清单:")
+            print("      ✅ 所有核心功能正常")
+            print("      ✅ 性能指标满足要求")
+            print("      ✅ 安全措施基本到位")
+            print("      ✅ 数据质量良好")
 
-            print(f"\n   🚀 生产部署步骤:")
-            print(f"      1. 配置生产环境变量")
-            print(f"      2. 设置数据库连接池")
-            print(f"      3. 配置日志收集")
-            print(f"      4. 设置监控告警")
-            print(f"      5. 执行渐进式部署")
+            print("\n   🚀 生产部署步骤:")
+            print("      1. 配置生产环境变量")
+            print("      2. 设置数据库连接池")
+            print("      3. 配置日志收集")
+            print("      4. 设置监控告警")
+            print("      5. 执行渐进式部署")
         else:
-            print(f"   🔧 建议优先完成改进措施后再进行生产部署")
-            print(f"   📋 改进完成后重新评估")
+            print("   🔧 建议优先完成改进措施后再进行生产部署")
+            print("   📋 改进完成后重新评估")
 
-        print(f"\n🎊 生产就绪度评估完成!")
+        print("\n🎊 生产就绪度评估完成!")
         print(f"   评估时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"   总体评分: {overall_score:.1f}/100 ({grade})")
         print("=" * 60)
