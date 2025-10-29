@@ -1,3 +1,4 @@
+from typing import List
 """
 观察者模式单元测试
 Unit Tests for Observer Pattern

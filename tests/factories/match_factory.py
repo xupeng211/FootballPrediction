@@ -1,3 +1,6 @@
+from typing import List
+from typing import Dict
+from typing import Any
 """
 比赛工厂 - 用于测试数据创建
 """

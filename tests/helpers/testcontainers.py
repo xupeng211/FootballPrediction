@@ -1,3 +1,5 @@
+from typing import Optional
+from typing import Dict
 """
 TestContainers模拟模块
 为测试环境提供容器服务的Mock实现

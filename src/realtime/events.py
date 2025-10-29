@@ -1,3 +1,7 @@
+from typing import Optional
+from typing import Dict
+from typing import Union
+from typing import Any
 """
 实时事件定义 - 足球预测系统
 

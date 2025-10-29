@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 缓存与服务层集成测试
 测试缓存系统与服务层的正确交互

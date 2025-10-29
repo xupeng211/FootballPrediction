@@ -1,8 +1,9 @@
-# TODO: Consider creating a fixture for 7 repeated Mock creations
+from typing import Type
+
+
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
-
-
+# TODO: Consider creating a fixture for 7 repeated Mock creations
 """
 依赖注入系统测试
 """

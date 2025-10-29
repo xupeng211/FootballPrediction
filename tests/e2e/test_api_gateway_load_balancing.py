@@ -1,3 +1,6 @@
+from typing import List
+from typing import Optional
+from typing import Any
 """
 Phase 4A Week 3 - API网关和负载均衡测试
 
@@ -19,6 +22,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Dict
 
 import pytest
 

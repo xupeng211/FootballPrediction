@@ -1,3 +1,9 @@
+from typing import Optional
+from typing import Union
+from typing import Callable
+from typing import Any
+from typing import List
+from typing import Dict
 """
 配置管理器模块 - Phase 4B实现
 

@@ -1,3 +1,4 @@
+import asyncio
 """
 TTL缓存增强版测试
 Tests for Enhanced TTL Cache

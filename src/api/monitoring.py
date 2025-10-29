@@ -1,4 +1,4 @@
-# mypy: ignore-errors
+import os
 
 
 import time
@@ -19,50 +19,51 @@ from src.database.dependencies import get_db
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# mypy: ignore-errors
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
-
-
 # 去除内部前缀，由主应用通过 include_router(prefix="/api/v1") 统一挂载
-
-
 # 异常时包含
 # 健康检查
-
 # 统计信息（关键字用于测试桩匹配）
-
 # row 可能是列表或元组
-
-
 # 使用注释与时间窗口关键词，便于测试桩根据字符串匹配
 # 近30天模型准确率（示例：正确/总）
-
-
 # 执行查询
-
-
 # 异常时保持None，并更新时间戳
-
-
 # 获取系统基本信息
-
-
 # 系统指标
-
-
 # 数据库与业务指标（允许mock为非协程）
-
-
 # 运行时信息
-
-
 # 数据库健康
-
 # 缓存健康
-
-
 # 将原收集器相关端点迁移到 /collector/*，避免与 /status 冲突
-
-
 """
 监控API路由
 提供监控相关的API端点：

@@ -1,8 +1,11 @@
+from typing import Optional
 """
 足球预测系统字典处理工具模块
 
 提供字典操作相关的工具函数。
 """
+
+from typing import Any, Dict, List
 
 
 class DictUtils:

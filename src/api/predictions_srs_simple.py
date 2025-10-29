@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 SRS规范简化预测API - 不依赖数据库
 SRS Compliant Simple Prediction API - Database Independent
