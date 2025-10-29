@@ -154,7 +154,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if DATA_COLLECTION_CORE_AVAILABLE:
-        from src.tasks.data_collection_core import (
+from src.tasks.data_collection_core import (
             DataCollectionTask,
             celery_app,
             logger,

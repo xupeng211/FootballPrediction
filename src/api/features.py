@@ -76,7 +76,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         if not match:
             logger.warning(f"比赛 {match_id} 不存在")
             raise HTTPException(
-                status_code=404,
+                status_code=404,  # TODO: 将魔法数字 404 提取为常量
                 detail=f"比赛 {match_id} 不存在",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
@@ -87,7 +87,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     except SQLAlchemyError as db_error:
         logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="数据库查询失败，请稍后重试",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
     except (
@@ -100,7 +100,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     ) as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="查询比赛信息失败",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -138,6 +138,7 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
 
 def build_response_data(
+    """TODO: 添加函数文档"""
     match: Match,
     features: Dict[str, Any],
     features_error: str,

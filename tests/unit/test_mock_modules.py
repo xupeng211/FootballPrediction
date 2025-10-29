@@ -89,14 +89,14 @@ class TestMockModules:
     def test_core_modules_mock(self):
         """测试核心模块Mock"""
         # 测试main模块的app创建
-        from src.main import app
+from src.main import app
 
         assert app is not None
         app.get = Mock(return_value={"status": "ok"})
 
     def test_adapters_mock(self):
         """测试适配器模块Mock"""
-        from src.adapters.registry import Registry
+from src.adapters.registry import Registry
 
         registry = Registry()
         registry.register = Mock(return_value=True)
@@ -107,7 +107,7 @@ class TestMockModules:
 
     def test_database_models_mock(self):
         """测试数据库模型Mock"""
-        from src.database.models.team import Team
+from src.database.models.team import Team
 
         team = Team()
         team.id = 1
@@ -117,7 +117,7 @@ class TestMockModules:
 
     def test_cache_modules_mock(self):
         """测试缓存模块Mock"""
-        from src.cache.redis_manager import CacheManager
+from src.cache.redis_manager import CacheManager
 
         cache = CacheManager()
         cache.get = Mock(return_value="cached_value")
@@ -215,7 +215,7 @@ class TestMockModules:
 
     def test_service_layer_mock(self):
         """测试服务层Mock"""
-        from src.services.base_unified import BaseService
+from src.services.base_unified import BaseService
 
         # 创建一个具体的实现类
         class TestService(BaseService):
@@ -242,8 +242,8 @@ class TestMockModules:
         """测试领域模型Mock"""
         # 暂时跳过，因为team.py有语法错误
         # from src.domain.models.team import Team
-        from src.domain.models.match import Match
-        from src.domain.models.prediction import Prediction
+from src.domain.models.match import Match
+from src.domain.models.prediction import Prediction
 
         # team = Team(name="Test Team")  # 暂时禁用
         match = Match()

@@ -227,7 +227,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if MONITORING_AVAILABLE:
-        from src.tasks.monitoring import TaskMonitor, logger
+from src.tasks.monitoring import TaskMonitor, logger
 
         assert TaskMonitor is not None
         assert logger is not None

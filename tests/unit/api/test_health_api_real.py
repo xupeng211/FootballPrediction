@@ -35,7 +35,7 @@ from src.api.health import router as health_router
 
             # 验证router被正确导入
 
-        from src.api.health import __all__
+from src.api.health import __all__
 
 
     # ========================================
@@ -222,7 +222,7 @@ from src.api.health import router as health_router
 
         # 验证数据类型
 
-        from src.api.health import router
+from src.api.health import router
 
 
         # 验证路由标签

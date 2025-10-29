@@ -25,7 +25,7 @@ class TestUtilsEdgeCases:
 
     def test_dict_utils_deep_merge_complex_cases(self):
         """测试DictUtils深度合并的复杂情况"""
-        from src.utils.dict_utils import DictUtils
+from src.utils.dict_utils import DictUtils
 
         # 测试深度嵌套合并
         dict1 = {
@@ -71,7 +71,7 @@ class TestUtilsEdgeCases:
 
     def test_dict_utils_flatten_dict_edge_cases(self):
         """测试DictUtils扁平化的边界情况"""
-        from src.utils.dict_utils import DictUtils
+from src.utils.dict_utils import DictUtils
 
         # 测试复杂嵌套结构
         nested_data = {
@@ -114,7 +114,7 @@ class TestUtilsEdgeCases:
 
     def test_dict_utils_filter_none_values(self):
         """测试过滤None值的边界情况"""
-        from src.utils.dict_utils import DictUtils
+from src.utils.dict_utils import DictUtils
 
         # 测试混合数据类型
         data = {
@@ -152,7 +152,7 @@ class TestUtilsEdgeCases:
 
     def test_data_validator_complex_scenarios(self):
         """测试DataValidator复杂验证场景"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -223,7 +223,7 @@ class TestUtilsEdgeCases:
 
     def test_data_validator_email_phone_validation(self):
         """测试邮箱和手机号验证的边界情况"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -279,7 +279,7 @@ class TestUtilsEdgeCases:
 
     def test_data_validator_sanitize_functions(self):
         """测试数据清理函数"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -331,7 +331,7 @@ class TestUtilsEdgeCases:
 
     def test_data_validator_json_and_date_validation(self):
         """测试JSON和日期验证"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -378,7 +378,7 @@ class TestUtilsEdgeCases:
 
     def test_helpers_utility_functions(self):
         """测试helpers工具函数"""
-        from src.utils.helpers import (
+from src.utils.helpers import (
             format_timestamp,
             generate_hash,
             generate_uuid,
@@ -462,7 +462,7 @@ class TestUtilsEdgeCases:
 
     def test_validators_module_functions(self):
         """测试validators模块函数"""
-        from src.utils.validators import (
+from src.utils.validators import (
             is_valid_email,
             is_valid_phone,
             is_valid_url,

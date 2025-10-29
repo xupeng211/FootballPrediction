@@ -94,7 +94,7 @@ class TestServicesDataService:
         # 测试删除不存在的数据
         service = data_service_class()
         result = await service.delete_data("non_existent_id")
-        assert result == False
+        assert not result
 
     @pytest.mark.asyncio
     async def test_edge_cases(self):

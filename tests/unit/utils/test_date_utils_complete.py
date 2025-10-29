@@ -441,8 +441,8 @@ class TestDateUtilsComplete:
     def test_edge_cases_and_error_handling(self):
         """测试边界情况和错误处理"""
         # 测试边界日期
-        year_end = datetime(2025, 12, 31, 23, 59, 59)
-        year_start = datetime(2025, 1, 1, 0, 0, 0)
+        datetime(2025, 12, 31, 23, 59, 59)
+        datetime(2025, 1, 1, 0, 0, 0)
 
         # 年度边界测试
         year_start_actual, year_end_actual = DateUtils.get_year_range(2025)
@@ -514,7 +514,7 @@ class TestDateUtilsComplete:
         # 测试缓存格式化函数
         dt = datetime(2025, 1, 28, 15, 30, 45)
 
-        from src.utils.date_utils import cached_format_datetime, cached_time_ago
+from src.utils.date_utils import cached_format_datetime, cached_time_ago
 
         result1 = cached_format_datetime(dt, "%Y-%m-%d")
         result2 = cached_format_datetime(dt, "%Y-%m-%d")
@@ -528,7 +528,7 @@ class TestDateUtilsComplete:
 
     def test_business_day_calculations(self):
         """测试工作日计算"""
-        from src.utils.date_utils import get_business_days_range, get_date_range_summary
+from src.utils.date_utils import get_business_days_range, get_date_range_summary
 
         start_date = datetime(2025, 1, 27, 12, 0, 0)  # 周一
         end_date = datetime(2025, 1, 31, 12, 0, 0)  # 周五
@@ -577,6 +577,6 @@ class TestDateUtilsComplete:
                     parsed = DateUtils.parse_date(formatted, format_str)
                     if format_name == "date":
                         assert parsed.date() == dt.date()
-                except:
+except Exception:
                     # 某些格式可能不适合解析，这是正常的
                     pass

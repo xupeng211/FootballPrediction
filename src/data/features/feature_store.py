@@ -14,7 +14,7 @@ import pandas as pd
 
 
 
-  from feast import FeatureStore
+from feast import FeatureStore
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
 from feast.repo_config import RepoConfig
 

@@ -243,7 +243,7 @@ class DataSourceTester:
             if empty_leagues > 0:
                 quality_issues.append(f"发现 {empty_leagues} 个空联赛名称")
 
-            print(f"📊 数据质量报告:")
+            print("📊 数据质量报告:")
             print(f"   • 检查比赛数量: {len(matches)}")
             print(f"   • 发现问题数量: {len(quality_issues)}")
 

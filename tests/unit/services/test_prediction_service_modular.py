@@ -20,13 +20,13 @@ class TestPredictionModels:
 
     def test_prediction_result_import(self):
         """测试预测结果类导入"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         assert PredictionResult is not None
 
     def test_prediction_result_creation(self):
         """测试预测结果创建"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         _result = PredictionResult(
             match_id=12345,
@@ -48,7 +48,7 @@ class TestPredictionModels:
 
     def test_prediction_result_to_dict(self):
         """测试预测结果转字典"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         _result = PredictionResult(
             match_id=12345,
@@ -70,7 +70,7 @@ class TestPredictionModels:
 
     def test_prediction_result_from_dict(self):
         """测试从字典创建预测结果"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         _data = {
             "match_id": 12345,
@@ -91,7 +91,7 @@ class TestPredictionModels:
 
     def test_prediction_result_validation(self):
         """测试预测结果验证"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         _result = PredictionResult(
             match_id=12345,
@@ -113,7 +113,7 @@ class TestPredictionModels:
 
     def test_get_highest_probability(self):
         """测试获取最高概率"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         _result = PredictionResult(
             match_id=12345,
@@ -131,7 +131,7 @@ class TestPredictionModels:
 
     def test_update_actual_result(self):
         """测试更新实际结果"""
-        from src.models.prediction.models import PredictionResult
+from src.models.prediction.models import PredictionResult
 
         _result = PredictionResult(
             match_id=12345,
@@ -151,7 +151,7 @@ class TestPredictionMetrics:
 
     def test_metrics_import(self):
         """测试指标导入"""
-        from src.models.prediction.metrics import (
+from src.models.prediction.metrics import (
             cache_hit_ratio,
             model_load_duration_seconds,
             prediction_accuracy,
@@ -167,7 +167,7 @@ class TestPredictionMetrics:
 
     def test_metrics_are_callable(self):
         """测试指标可调用"""
-        from src.models.prediction.metrics import prediction_accuracy, predictions_total
+from src.models.prediction.metrics import prediction_accuracy, predictions_total
 
         # 测试指标有labels方法
         assert hasattr(predictions_total, "labels")
@@ -179,13 +179,13 @@ class TestPredictionCache:
 
     def test_cache_import(self):
         """测试缓存导入"""
-        from src.models.prediction.cache import PredictionCache
+from src.models.prediction.cache import PredictionCache
 
         assert PredictionCache is not None
 
     def test_cache_init(self):
         """测试缓存初始化"""
-        from src.models.prediction.cache import PredictionCache
+from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache(
             model_cache_ttl_hours=2, prediction_cache_ttl_minutes=15
@@ -197,7 +197,7 @@ class TestPredictionCache:
     @pytest.mark.asyncio
     async def test_cache_set_get_model(self):
         """测试缓存模型存取"""
-        from src.models.prediction.cache import PredictionCache
+from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache()
         mock_model = MagicMock()
@@ -212,7 +212,7 @@ class TestPredictionCache:
     @pytest.mark.asyncio
     async def test_cache_set_get_prediction(self):
         """测试缓存预测结果存取"""
-        from src.models.prediction.cache import PredictionCache
+from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache()
         _prediction = {"match_id": 12345, "result": "home"}
@@ -227,7 +227,7 @@ class TestPredictionCache:
     @pytest.mark.asyncio
     async def test_cache_invalidate(self):
         """测试缓存失效"""
-        from src.models.prediction.cache import PredictionCache
+from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache()
         _prediction = {"match_id": 12345, "result": "home"}
@@ -246,13 +246,13 @@ class TestMLflowClient:
 
     def test_mlflow_client_import(self):
         """测试MLflow客户端导入"""
-        from src.models.prediction.mlflow_client import MLflowModelClient
+from src.models.prediction.mlflow_client import MLflowModelClient
 
         assert MLflowModelClient is not None
 
     def test_mlflow_client_init(self):
         """测试MLflow客户端初始化"""
-        from src.models.prediction.mlflow_client import MLflowModelClient
+from src.models.prediction.mlflow_client import MLflowModelClient
 
         client = MLflowModelClient("http://localhost:5002")
         assert client.tracking_uri == "http://localhost:5002"
@@ -261,7 +261,7 @@ class TestMLflowClient:
     @pytest.mark.asyncio
     async def test_get_latest_model_version(self):
         """测试获取最新模型版本"""
-        from src.models.prediction.mlflow_client import MLflowModelClient
+from src.models.prediction.mlflow_client import MLflowModelClient
 
         client = MLflowModelClient()
 
@@ -276,7 +276,7 @@ class TestMLflowClient:
     @pytest.mark.asyncio
     async def test_get_production_model(self):
         """测试获取生产模型"""
-        from src.models.prediction.mlflow_client import MLflowModelClient
+from src.models.prediction.mlflow_client import MLflowModelClient
 
         client = MLflowModelClient()
         mock_model = MagicMock()
@@ -293,7 +293,7 @@ class TestMLflowClient:
     @pytest.mark.asyncio
     async def test_get_model_info(self):
         """测试获取模型信息"""
-        from src.models.prediction.mlflow_client import MLflowModelClient
+from src.models.prediction.mlflow_client import MLflowModelClient
 
         client = MLflowModelClient()
 
@@ -319,13 +319,13 @@ class TestFeatureProcessor:
 
     def test_feature_processor_import(self):
         """测试特征处理器导入"""
-        from src.models.prediction.feature_processor import FeatureProcessor
+from src.models.prediction.feature_processor import FeatureProcessor
 
         assert FeatureProcessor is not None
 
     def test_feature_processor_init(self):
         """测试特征处理器初始化"""
-        from src.models.prediction.feature_processor import FeatureProcessor
+from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
         assert hasattr(processor, "feature_names")
@@ -333,7 +333,7 @@ class TestFeatureProcessor:
 
     def test_get_default_features(self):
         """测试获取默认特征"""
-        from src.models.prediction.feature_processor import FeatureProcessor
+from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
         features = processor.get_default_features()
@@ -347,7 +347,7 @@ class TestFeatureProcessor:
         """测试准备预测特征"""
         import numpy as np
 
-        from src.models.prediction.feature_processor import FeatureProcessor
+from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
         features = processor.get_default_features()
@@ -359,7 +359,7 @@ class TestFeatureProcessor:
 
     def test_extract_features_from_match_data(self):
         """测试从比赛数据提取特征"""
-        from src.models.prediction.feature_processor import FeatureProcessor
+from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
         match_data = {
@@ -387,7 +387,7 @@ class TestFeatureProcessor:
 
     def test_validate_features(self):
         """测试验证特征"""
-        from src.models.prediction.feature_processor import FeatureProcessor
+from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
         features = processor.get_default_features()
@@ -404,13 +404,13 @@ class TestPredictionService:
 
     def test_prediction_service_import(self):
         """测试预测服务导入"""
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.service import PredictionService
 
         assert PredictionService is not None
 
     def test_prediction_service_init(self):
         """测试预测服务初始化"""
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.service import PredictionService
 
         service = PredictionService("http://localhost:5002")
         assert service.mlflow_client is not None
@@ -420,7 +420,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_get_production_model(self):
         """测试获取生产模型"""
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.service import PredictionService
 
         service = PredictionService()
         mock_model = MagicMock()
@@ -437,8 +437,8 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_predict_match(self):
         """测试预测比赛"""
-        from src.models.prediction.models import PredictionResult
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.models import PredictionResult
+from src.models.prediction.service import PredictionService
 
         service = PredictionService()
         mock_model = MagicMock()
@@ -469,7 +469,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_batch_predict_matches(self):
         """测试批量预测比赛"""
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.service import PredictionService
 
         service = PredictionService()
         mock_result = MagicMock()
@@ -484,7 +484,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_verify_prediction(self):
         """测试验证预测"""
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.service import PredictionService
 
         service = PredictionService()
 
@@ -502,7 +502,7 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_get_prediction_statistics(self):
         """测试获取预测统计"""
-        from src.models.prediction.service import PredictionService
+from src.models.prediction.service import PredictionService
 
         service = PredictionService()
 
@@ -527,7 +527,7 @@ class TestModularStructure:
 
     def test_import_from_main_module(self):
         """测试从主模块导入"""
-        from src.models.prediction import (
+from src.models.prediction import (
             PredictionCache,
             PredictionResult,
             PredictionService,
@@ -542,15 +542,15 @@ class TestModularStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
-        from src.models.prediction_service import PredictionResult as old_result
-        from src.models.prediction_service import PredictionService as old_service
+from src.models.prediction_service import PredictionResult as old_result
+from src.models.prediction_service import PredictionService as old_service
 
         assert old_result is not None
         assert old_service is not None
 
     def test_all_classes_are_exported(self):
         """测试所有类都被导出"""
-        from src.models.prediction import __all__
+from src.models.prediction import __all__
 
         expected_exports = [
             "PredictionResult",

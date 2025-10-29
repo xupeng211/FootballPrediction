@@ -80,7 +80,7 @@ class CorrectedRouteTester:
                         error_info = response.json()
                         if isinstance(error_info, dict) and "detail" in error_info:
                             details += f" - {error_info['detail']}"
-                    except:
+except Exception:
                         pass
 
                     self.log_test(name, False, details, duration)
@@ -170,19 +170,19 @@ class CorrectedRouteTester:
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 路由测试统计:")
+        print("📈 路由测试统计:")
         print(f"   总路由数: {total_tests}")
         print(f"   正常工作: {successful_tests}")
         print(f"   有问题: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
-        print(f"\n✅ 正常工作的路由:")
+        print("\n✅ 正常工作的路由:")
         for result in self.test_results:
             if result["success"]:
                 print(f"   • {result['test_name']}")
 
         if failed_tests > 0:
-            print(f"\n❌ 有问题的路由:")
+            print("\n❌ 有问题的路由:")
             for result in self.test_results:
                 if not result["success"]:
                     print(f"   • {result['test_name']}: {result['details']}")
@@ -202,7 +202,7 @@ class CorrectedRouteTester:
             "装饰器模式": ["装饰器统计"],
         }
 
-        print(f"\n📊 功能模块成功率:")
+        print("\n📊 功能模块成功率:")
         for category, features in categories.items():
             category_tests = [r for r in self.test_results if r["test_name"] in features]
             if category_tests:
@@ -217,7 +217,7 @@ class CorrectedRouteTester:
                 )
 
         # 系统评估
-        print(f"\n🎯 系统完整性评估:")
+        print("\n🎯 系统完整性评估:")
         if success_rate >= 90:
             print("   🟢 优秀: 系统API功能完善，可以支持种子用户测试")
             system_status = "优秀"
@@ -232,7 +232,7 @@ class CorrectedRouteTester:
             system_status = "需要改进"
 
         # 更新种子用户测试就绪度
-        print(f"\n🚀 种子用户测试就绪度:")
+        print("\n🚀 种子用户测试就绪度:")
         print(f"   当前状态: {system_status}")
 
         # 基于成功率计算就绪度
@@ -260,7 +260,7 @@ class CorrectedRouteTester:
         core_total = len(core_functions)
         core_rate = (core_success / core_total * 100) if core_total > 0 else 0
 
-        print(f"\n🎯 核心功能检查:")
+        print("\n🎯 核心功能检查:")
         print(f"   核心功能成功率: {core_success}/{core_total} ({core_rate:.0f}%)")
         if core_rate == 100:
             print("   🟢 所有关键功能正常，可以支持种子用户测试")

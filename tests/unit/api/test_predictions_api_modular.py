@@ -60,7 +60,7 @@ class TestPredictionsAPI:
 
     def test_batch_prediction_request(self):
         """测试批量预测请求模型"""
-        from src.api.predictions.models import BatchPredictionRequest
+from src.api.predictions.models import BatchPredictionRequest
 
         request = BatchPredictionRequest(match_ids=[1, 2, 3], model_name="test_model")
         assert len(request.match_ids) == 3
@@ -68,7 +68,7 @@ class TestPredictionsAPI:
 
     def test_prediction_response(self):
         """测试预测响应模型"""
-        from src.api.predictions.models import PredictionResponse
+from src.api.predictions.models import PredictionResponse
 
         response = PredictionResponse(
             match_id=1,

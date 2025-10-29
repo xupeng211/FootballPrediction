@@ -265,7 +265,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if HEALTH_AVAILABLE:
-        from src.api.health import _check_database, router
+from src.api.health import _check_database, router
 
         assert router is not None
         assert _check_database is not None
@@ -287,7 +287,7 @@ async def test_async_endpoints():
     """测试：异步端点"""
     if HEALTH_AVAILABLE:
         # 直接调用端点函数
-        from src.api.health import (
+from src.api.health import (
             detailed_health,
             health_check,
             liveness_check,

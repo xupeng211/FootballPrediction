@@ -20,14 +20,14 @@ def test_services_import():
         pytest.skip(f"Cannot import AuditService: {e}")
 
     try:
-        from src.services.data_processing import DataProcessingService
+from src.services.data_processing import DataProcessingService
 
         assert DataProcessingService is not None
     except ImportError as e:
         pytest.skip(f"Cannot import DataProcessingService: {e}")
 
     try:
-        from src.services.manager_mod import ServiceManager
+from src.services.manager_mod import ServiceManager
 
         assert ServiceManager is not None
     except ImportError as e:
@@ -59,13 +59,13 @@ class TestDataProcessingServiceSimple:
 
     def test_data_processing_service_class_exists(self):
         """测试数据处理服务类存在"""
-        from src.services.data_processing import DataProcessingService
+from src.services.data_processing import DataProcessingService
 
         assert DataProcessingService is not None
 
     def test_data_processing_service_methods(self):
         """测试数据处理服务方法存在"""
-        from src.services.data_processing import DataProcessingService
+from src.services.data_processing import DataProcessingService
 
         # 检查是否有基本方法
         if hasattr(DataProcessingService, "process"):
@@ -79,13 +79,13 @@ class TestServiceManagerSimple:
 
     def test_service_manager_class_exists(self):
         """测试服务管理器类存在"""
-        from src.services.manager_mod import ServiceManager
+from src.services.manager_mod import ServiceManager
 
         assert ServiceManager is not None
 
     def test_service_manager_methods(self):
         """测试服务管理器方法存在"""
-        from src.services.manager_mod import ServiceManager
+from src.services.manager_mod import ServiceManager
 
         # 检查是否有基本方法
         if hasattr(ServiceManager, "register_service"):
@@ -125,13 +125,13 @@ class TestEnhancedCoreSimple:
 
     def test_enhanced_core_import(self):
         """测试增强核心模块可以导入"""
-        from src.services.enhanced_core import EnhancedBaseService
+from src.services.enhanced_core import EnhancedBaseService
 
         assert EnhancedBaseService is not None
 
     def test_enhanced_core_methods(self):
         """测试增强核心服务方法"""
-        from src.services.enhanced_core import EnhancedBaseService
+from src.services.enhanced_core import EnhancedBaseService
 
         # 检查是否有基本方法
         if hasattr(EnhancedBaseService, "validate_input"):

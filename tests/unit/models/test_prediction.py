@@ -344,7 +344,7 @@ class TestPredictionService:
 
     def test_service_inheritance(self):
         """测试服务继承关系"""
-        from src.services.base_unified import SimpleService
+from src.services.base_unified import SimpleService
 
         assert issubclass(PredictionService, SimpleService)
 

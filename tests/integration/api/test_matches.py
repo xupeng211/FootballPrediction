@@ -51,7 +51,7 @@ class TestMatchAPIIntegration:
         assert "id" in data
 
         # 验证数据库中的数据
-        from src.database.models import Match
+from src.database.models import Match
 
         match = await db_session.get(Match, data["id"])
         assert match is not None
@@ -62,7 +62,7 @@ class TestMatchAPIIntegration:
     async def test_get_matches(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试获取比赛列表"""
         # 创建测试数据
-        from src.database.models import Match, Team
+from src.database.models import Match, Team
 
         _teams = []
         for i in range(4):
@@ -152,7 +152,7 @@ class TestMatchAPIIntegration:
         assert data["away_score"] == 1
 
         # 验证数据库
-        from src.database.models import Match
+from src.database.models import Match
 
         updated_match = await db_session.get(Match, match.id)
         assert updated_match.status == "COMPLETED"
@@ -165,7 +165,7 @@ class TestMatchAPIIntegration:
     ):
         """测试获取即将到来的比赛"""
         # 创建测试数据
-        from src.database.models import Match, Team
+from src.database.models import Match, Team
 
         now = datetime.now(timezone.utc)
 
@@ -200,7 +200,7 @@ class TestMatchAPIIntegration:
     async def test_get_live_matches(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试获取正在进行中的比赛"""
         # 创建测试数据
-        from src.database.models import Match, Team
+from src.database.models import Match, Team
 
         home_team = Team(name="Live Home", city="Live City", founded=2020)
         away_team = Team(name="Live Away", city="Live City", founded=2020)
@@ -236,7 +236,7 @@ class TestMatchAPIIntegration:
     async def test_match_search(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试搜索比赛"""
         # 创建测试数据
-        from src.database.models import Match, Team
+from src.database.models import Match, Team
 
         team1 = Team(name="Search Team A", city="Search City", founded=2020)
         team2 = Team(name="Search Team B", city="Search City", founded=2020)
@@ -278,7 +278,7 @@ class TestMatchAPIIntegration:
     async def test_match_statistics(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试比赛统计"""
         # 创建不同状态的比赛
-        from src.database.models import Match, Team
+from src.database.models import Match, Team
 
         _teams = []
         for i in range(6):

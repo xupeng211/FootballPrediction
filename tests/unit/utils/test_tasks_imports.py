@@ -22,7 +22,7 @@ def test_task_module_import(task_module):
 
 def test_celery_app():
     try:
-        from src.tasks.celery_app import celery_app
+from src.tasks.celery_app import celery_app
 
         assert celery_app is not None
     except ImportError:

@@ -18,7 +18,7 @@ class TestCQRSExistingFunctions:
 
     def test_command_response_class(self):
         """测试CommandResponse类"""
-        from src.api.cqrs import CommandResponse
+from src.api.cqrs import CommandResponse
 
         response = CommandResponse(success=True, message="Command executed", _data={"id": 123})
         assert response.success is True
@@ -27,7 +27,7 @@ class TestCQRSExistingFunctions:
 
     def test_query_response_class(self):
         """测试QueryResponse类"""
-        from src.api.cqrs import QueryResponse
+from src.api.cqrs import QueryResponse
 
         response = QueryResponse(_data=[{"id": 1, "name": "test"}], total=1, page=1)
         assert len(response.data) == 1
@@ -36,7 +36,7 @@ class TestCQRSExistingFunctions:
 
     def test_create_command_class(self):
         """测试CreateCommand类"""
-        from src.api.cqrs import CreateCommand
+from src.api.cqrs import CreateCommand
 
         command = CreateCommand(aggregate_id="test_123", _data={"name": "test", "value": 100})
         assert command.aggregate_id == "test_123"
@@ -44,7 +44,7 @@ class TestCQRSExistingFunctions:
 
     def test_update_command_class(self):
         """测试UpdateCommand类"""
-        from src.api.cqrs import UpdateCommand
+from src.api.cqrs import UpdateCommand
 
         command = UpdateCommand(aggregate_id="test_123", _data={"name": "updated"})
         assert command.aggregate_id == "test_123"
@@ -52,14 +52,14 @@ class TestCQRSExistingFunctions:
 
     def test_delete_command_class(self):
         """测试DeleteCommand类"""
-        from src.api.cqrs import DeleteCommand
+from src.api.cqrs import DeleteCommand
 
         command = DeleteCommand(aggregate_id="test_123")
         assert command.aggregate_id == "test_123"
 
     def test_command_bus_class_methods(self):
         """测试CommandBus类方法"""
-        from src.api.cqrs import CommandBus
+from src.api.cqrs import CommandBus
 
         bus = CommandBus()
         assert hasattr(bus, "register")
@@ -68,7 +68,7 @@ class TestCQRSExistingFunctions:
 
     def test_query_bus_class_methods(self):
         """测试QueryBus类方法"""
-        from src.api.cqrs import QueryBus
+from src.api.cqrs import QueryBus
 
         bus = QueryBus()
         assert hasattr(bus, "register")
@@ -82,7 +82,7 @@ class TestEventsExistingFunctions:
 
     def test_event_class(self):
         """测试Event类"""
-        from src.api.events import Event
+from src.api.events import Event
 
         event = Event(
             event_type="test_event",
@@ -95,7 +95,7 @@ class TestEventsExistingFunctions:
 
     def test_event_handler_class(self):
         """测试EventHandler类"""
-        from src.api.events import EventHandler
+from src.api.events import EventHandler
 
         class TestHandler(EventHandler):
             def handle(self, event):
@@ -106,7 +106,7 @@ class TestEventsExistingFunctions:
 
     def test_event_manager_class_attributes(self):
         """测试EventManager类属性"""
-        from src.api.events import EventManager
+from src.api.events import EventManager
 
         manager = EventManager()
         assert hasattr(manager, "_handlers")
@@ -116,7 +116,7 @@ class TestEventsExistingFunctions:
 
     def test_event_types(self):
         """测试事件类型定义"""
-        from src.api.events import EventTypes
+from src.api.events import EventTypes
 
         # 检查是否有事件类型常量
         if hasattr(EventTypes, "PREDICTION_CREATED"):
@@ -124,7 +124,7 @@ class TestEventsExistingFunctions:
 
     def test_observer_interface(self):
         """测试观察者接口"""
-        from src.api.events import Observer
+from src.api.events import Observer
 
         class TestObserver(Observer):
             def update(self, data):
@@ -140,7 +140,7 @@ class TestDecoratorsExistingFunctions:
 
     def test_cache_result_decorator_exists(self):
         """测试缓存结果装饰器存在"""
-        from src.api.decorators import cache_result
+from src.api.decorators import cache_result
 
         @cache_result(ttl=60)
         def test_function(x):
@@ -151,7 +151,7 @@ class TestDecoratorsExistingFunctions:
 
     def test_log_requests_decorator_exists(self):
         """测试请求日志装饰器存在"""
-        from src.api.decorators import log_requests
+from src.api.decorators import log_requests
 
         @log_requests
         def test_function():
@@ -162,7 +162,7 @@ class TestDecoratorsExistingFunctions:
 
     def test_validate_input_decorator_exists(self):
         """测试输入验证装饰器存在"""
-        from src.api.decorators import validate_input
+from src.api.decorators import validate_input
 
         @validate_input
         def test_function(data):
@@ -173,7 +173,7 @@ class TestDecoratorsExistingFunctions:
 
     def test_rate_limit_check_function(self):
         """测试速率限制检查函数"""
-        from src.api.decorators import rate_limit_check
+from src.api.decorators import rate_limit_check
 
         # 模拟请求对象
         request = Mock()
@@ -195,7 +195,7 @@ class TestObsersersExistingFunctions:
 
     def test_observer_base_class_exists(self):
         """测试观察者基类存在"""
-        from src.api.observers import Observer
+from src.api.observers import Observer
 
         class TestObserver(Observer):
             def update(self, data):
@@ -206,7 +206,7 @@ class TestObsersersExistingFunctions:
 
     def test_subject_class_exists(self):
         """测试主题类存在"""
-        from src.api.observers import Subject
+from src.api.observers import Subject
 
         subject = Subject()
         assert hasattr(subject, "_observers")
@@ -216,14 +216,14 @@ class TestObsersersExistingFunctions:
 
     def test_observers_manager_exists(self):
         """测试观察者管理器存在"""
-        from src.api.observers import ObserverManager
+from src.api.observers import ObserverManager
 
         manager = ObserverManager()
         assert manager is not None
 
     def test_prediction_observer_class(self):
         """测试预测观察者类"""
-        from src.api.observers import PredictionObserver
+from src.api.observers import PredictionObserver
 
         observer = PredictionObserver()
         assert observer is not None
@@ -231,14 +231,14 @@ class TestObsersersExistingFunctions:
 
     def test_metrics_observer_class(self):
         """测试指标观察者类"""
-        from src.api.observers import MetricsObserver
+from src.api.observers import MetricsObserver
 
         observer = MetricsObserver()
         assert observer is not None
 
     def test_cache_observer_class(self):
         """测试缓存观察者类"""
-        from src.api.observers import CacheObserver
+from src.api.observers import CacheObserver
 
         observer = CacheObserver()
         assert observer is not None
@@ -250,7 +250,7 @@ class TestRepositoriesExistingFunctions:
 
     def test_query_spec_class(self):
         """测试查询规范类"""
-        from src.api.repositories import QuerySpec
+from src.api.repositories import QuerySpec
 
         spec = QuerySpec(
             filters={"status": "active"},
@@ -265,7 +265,7 @@ class TestRepositoriesExistingFunctions:
 
     def test_repository_base_methods(self):
         """测试仓储基础方法"""
-        from src.api.repositories import BaseRepository
+from src.api.repositories import BaseRepository
 
         repo = BaseRepository()
         assert hasattr(repo, "create")
@@ -276,7 +276,7 @@ class TestRepositoriesExistingFunctions:
 
     def test_prediction_repository_methods(self):
         """测试预测仓储方法"""
-        from src.api.repositories import PredictionRepository
+from src.api.repositories import PredictionRepository
 
         repo = PredictionRepository()
         assert hasattr(repo, "create")
@@ -286,7 +286,7 @@ class TestRepositoriesExistingFunctions:
 
     def test_user_repository_methods(self):
         """测试用户仓储方法"""
-        from src.api.repositories import UserRepository
+from src.api.repositories import UserRepository
 
         repo = UserRepository()
         assert hasattr(repo, "create")
@@ -296,7 +296,7 @@ class TestRepositoriesExistingFunctions:
 
     def test_match_repository_methods(self):
         """测试比赛仓储方法"""
-        from src.api.repositories import MatchRepository
+from src.api.repositories import MatchRepository
 
         repo = MatchRepository()
         assert hasattr(repo, "create")
@@ -311,7 +311,7 @@ class TestMonitoringExistingFunctions:
 
     def test_metrics_point_class(self):
         """测试指标点类"""
-        from src.api.monitoring import MetricsPoint
+from src.api.monitoring import MetricsPoint
 
         point = MetricsPoint(name="test_metric", value=100.5, timestamp=datetime.utcnow())
         assert point.name == "test_metric"
@@ -320,7 +320,7 @@ class TestMonitoringExistingFunctions:
 
     def test_metrics_aggregator(self):
         """测试指标聚合器"""
-        from src.api.monitoring import MetricsAggregator
+from src.api.monitoring import MetricsAggregator
 
         aggregator = MetricsAggregator()
         assert hasattr(aggregator, "add_metric")
@@ -330,7 +330,7 @@ class TestMonitoringExistingFunctions:
 
     def test_health_checker_methods(self):
         """测试健康检查方法"""
-        from src.api.monitoring import HealthChecker
+from src.api.monitoring import HealthChecker
 
         checker = HealthChecker()
         assert hasattr(checker, "check_database")
@@ -339,7 +339,7 @@ class TestMonitoringExistingFunctions:
 
     def test_alert_manager_methods(self):
         """测试告警管理方法"""
-        from src.api.monitoring import AlertManager
+from src.api.monitoring import AlertManager
 
         manager = AlertManager()
         assert hasattr(manager, "create_alert")
@@ -348,7 +348,7 @@ class TestMonitoringExistingFunctions:
 
     def test_system_monitor_methods(self):
         """测试系统监控方法"""
-        from src.api.monitoring import SystemMonitor
+from src.api.monitoring import SystemMonitor
 
         monitor = SystemMonitor()
         assert hasattr(monitor, "get_cpu_usage")
@@ -362,7 +362,7 @@ class TestFeaturesExistingFunctions:
 
     def test_feature_calculator_methods(self):
         """测试特征计算方法"""
-        from src.api.features import FeatureCalculator
+from src.api.features import FeatureCalculator
 
         calculator = FeatureCalculator()
         assert hasattr(calculator, "calculate_team_form")
@@ -371,7 +371,7 @@ class TestFeaturesExistingFunctions:
 
     def test_feature_extractor_methods(self):
         """测试特征提取方法"""
-        from src.api.features import FeatureExtractor
+from src.api.features import FeatureExtractor
 
         extractor = FeatureExtractor()
         assert hasattr(extractor, "extract_match_features")
@@ -380,7 +380,7 @@ class TestFeaturesExistingFunctions:
 
     def test_feature_store_methods(self):
         """测试特征存储方法"""
-        from src.api.features import FeatureStore
+from src.api.features import FeatureStore
 
         store = FeatureStore()
         assert hasattr(store, "store_features")
@@ -427,14 +427,14 @@ class TestConfiguration:
 
     def test_app_settings_exist(self):
         """测试应用设置存在"""
-        from src.api.app import get_settings
+from src.api.app import get_settings
 
         settings = get_settings()
         assert settings is not None
 
     def test_cors_configuration(self):
         """测试CORS配置"""
-        from src.api.app import get_cors_config
+from src.api.app import get_cors_config
 
         _config = get_cors_config()
         assert isinstance(config, dict)
@@ -454,7 +454,7 @@ class TestDataModels:
 
     def test_base_response_model(self):
         """测试基础响应模型"""
-        from src.api.schemas import BaseResponse
+from src.api.schemas import BaseResponse
 
         response = BaseResponse(success=True, message="Success", _data={"test": True})
         assert response.success is True
@@ -462,7 +462,7 @@ class TestDataModels:
 
     def test_paginated_response_model(self):
         """测试分页响应模型"""
-        from src.api.schemas import PaginatedResponse
+from src.api.schemas import PaginatedResponse
 
         response = PaginatedResponse(
             success=True, _data=[{"id": 1}, {"id": 2}], total=100, page=1, per_page=10
@@ -472,7 +472,7 @@ class TestDataModels:
 
     def test_error_response_model(self):
         """测试错误响应模型"""
-        from src.api.schemas import ErrorResponse
+from src.api.schemas import ErrorResponse
 
         error = ErrorResponse(error="Validation Error", details={"field": "invalid value"})
         assert error.error == "Validation Error"

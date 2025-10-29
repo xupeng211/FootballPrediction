@@ -35,7 +35,7 @@ class TestDatabaseConnection:
     @pytest.mark.asyncio
     async def test_transaction_rollback(self, db_session):
         """测试事务回滚"""
-        from src.database.models import Team
+from src.database.models import Team
 
         # 开始事务
         async with db_session.begin():
@@ -58,7 +58,7 @@ class TestDatabaseConnection:
     @pytest.mark.asyncio
     async def test_transaction_commit(self, db_session):
         """测试事务提交"""
-        from src.database.models import Team
+from src.database.models import Team
 
         # 插入数据并提交
         async with db_session.begin():
@@ -74,7 +74,7 @@ class TestDatabaseConnection:
     @pytest.mark.asyncio
     async def test_nested_transactions(self, db_session):
         """测试嵌套事务（savepoints）"""
-        from src.database.models import Team
+from src.database.models import Team
 
         # 外层事务
         async with db_session.begin():
@@ -124,7 +124,7 @@ class TestDatabaseConnection:
     @pytest.mark.asyncio
     async def test_batch_operations(self, db_session):
         """测试批量操作"""
-        from src.database.models import Team
+from src.database.models import Team
 
         # 批量插入
         _teams = []
@@ -171,7 +171,7 @@ class TestDatabaseConnection:
         """测试查询性能"""
         import time
 
-        from src.database.models import Match, Team
+from src.database.models import Match, Team
 
         # 创建测试数据
         _teams = []
@@ -229,7 +229,7 @@ class TestDatabaseConnection:
         """测试索引使用"""
         import time
 
-        from src.database.models import Prediction, User
+from src.database.models import Prediction, User
 
         # 创建用户和预测数据
         users = []
@@ -296,7 +296,7 @@ class TestDatabaseConnection:
     @pytest.mark.asyncio
     async def test_concurrent_transactions(self, test_db):
         """测试并发事务"""
-        from src.database.models import Team
+from src.database.models import Team
 
         async def create_team(team_id):
             async with test_db() as session:
@@ -328,7 +328,7 @@ class TestDatabaseConnection:
     @pytest.mark.asyncio
     async def test_error_handling(self, db_session):
         """测试错误处理"""
-        from src.database.models import Team
+from src.database.models import Team
 
         # 测试唯一约束违反
         team1 = Team(name="Unique Team", city="City 1", founded=2020)

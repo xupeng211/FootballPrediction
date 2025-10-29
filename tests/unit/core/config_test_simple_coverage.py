@@ -101,7 +101,7 @@ class TestCoreConfigCoverage:
                     )
                     try:
                         config.load_from_file("test.yml")
-                    except:
+except Exception:
                         pass  # 可能失败，但方法被调用了
 
             if hasattr(config, "load_from_env"):
@@ -109,7 +109,7 @@ class TestCoreConfigCoverage:
                 with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
                     try:
                         config.load_from_env()
-                    except:
+except Exception:
                         pass  # 可能失败，但方法被调用了
 
         except ImportError:
@@ -127,14 +127,14 @@ class TestCoreConfigCoverage:
                 try:
                     is_valid = config.validate()
                     assert isinstance(is_valid, bool)
-                except:
+except Exception:
                     assert True  # 验证方法存在
 
             if hasattr(config, "is_valid"):
                 try:
                     is_valid = config.is_valid()
                     assert isinstance(is_valid, bool)
-                except:
+except Exception:
                     assert True  # 验证方法存在
 
         except ImportError:
@@ -153,7 +153,7 @@ class TestCoreConfigCoverage:
             try:
                 invalid_config = ConfigManager(config_file="nonexistent.yml")
                 assert invalid_config is not None
-            except:
+except Exception:
                 assert True  # 应该能处理无效文件
 
         except ImportError:
@@ -180,7 +180,7 @@ class TestCoreConfigCoverage:
                 try:
                     value = config.get("DATABASE_URL")
                     assert value is not None
-                except:
+except Exception:
                     assert True  # get方法存在
 
         except ImportError:

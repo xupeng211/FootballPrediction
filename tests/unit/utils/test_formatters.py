@@ -270,7 +270,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FORMATTERS_AVAILABLE:
-        from src.utils.formatters import (
+from src.utils.formatters import (
             format_currency,
             format_datetime,
             format_json,

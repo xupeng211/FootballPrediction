@@ -200,7 +200,7 @@ class TestDependencyInjection:
 
     def test_dependencies_module_imports(self):
         """测试依赖模块导入"""
-        from src.api import dependencies
+from src.api import dependencies
 
         assert dependencies is not None
 
@@ -211,7 +211,7 @@ class TestDependencyInjection:
 
     def test_prediction_engine_dependency(self):
         """测试预测引擎依赖"""
-        from src.api.dependencies import get_prediction_engine
+from src.api.dependencies import get_prediction_engine
 
         # 获取预测引擎实例
         get_prediction_engine()
@@ -220,7 +220,7 @@ class TestDependencyInjection:
 
     def test_redis_manager_dependency(self):
         """测试Redis管理器依赖"""
-        from src.api.dependencies import get_redis_manager
+from src.api.dependencies import get_redis_manager
 
         # 获取Redis管理器实例
         get_redis_manager()
@@ -234,7 +234,7 @@ class TestModelsAndSchemas:
 
     def test_import_api_models(self):
         """测试导入API模型"""
-        from src.api import models
+from src.api import models
 
         assert models is not None
 
@@ -255,7 +255,7 @@ class TestModelsAndSchemas:
 
     def test_import_schemas(self):
         """测试导入模式"""
-        from src.api import schemas
+from src.api import schemas
 
         assert schemas is not None
 
@@ -274,7 +274,7 @@ class TestConfiguration:
 
     def test_cors_configuration(self):
         """测试CORS配置"""
-        from src._config.cors_config import get_cors_origins
+from src._config.cors_config import get_cors_origins
 
         origins = get_cors_origins()
         assert isinstance(origins, list)
@@ -283,7 +283,7 @@ class TestConfiguration:
 
     def test_openapi_configuration(self):
         """测试OpenAPI配置"""
-        from src._config.openapi_config import custom_openapi
+from src._config.openapi_config import custom_openapi
 
         # 调用自定义OpenAPI配置
         openapi_schema = custom_openapi()

@@ -14,8 +14,8 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
-    EventType,
-    RealtimeEvent,
+EventType,
+RealtimeEvent,
     create_prediction_created_event,
     create_prediction_updated_event,
     create_system_alert_event,

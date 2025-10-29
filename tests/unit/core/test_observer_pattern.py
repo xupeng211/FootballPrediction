@@ -729,7 +729,7 @@ class TestGlobalObserverManager:
     @pytest.mark.asyncio
     async def test_system_functions(self):
         """测试系统级函数"""
-        from src.observers.manager import (
+from src.observers.manager import (
             initialize_observer_system,
             start_observer_system,
             stop_observer_system,

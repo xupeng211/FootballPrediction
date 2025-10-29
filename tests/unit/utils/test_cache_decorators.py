@@ -21,7 +21,7 @@ class TestCacheDecorators:
 
     def test_make_cache_key_basic(self):
         """测试基础缓存键生成"""
-        from src.cache.decorators import _make_cache_key
+from src.cache.decorators import _make_cache_key
 
         def test_func(a, b, c=None):
             return a + b + (c or 0)
@@ -32,7 +32,7 @@ class TestCacheDecorators:
 
     def test_make_cache_key_with_prefix(self):
         """测试带前缀的缓存键生成"""
-        from src.cache.decorators import _make_cache_key
+from src.cache.decorators import _make_cache_key
 
         def test_func(x):
             return x * 2
@@ -43,7 +43,7 @@ class TestCacheDecorators:
 
     def test_make_cache_key_with_user_id(self):
         """测试带用户ID的缓存键生成"""
-        from src.cache.decorators import _make_cache_key
+from src.cache.decorators import _make_cache_key
 
         def test_func(x):
             return x * 2
@@ -54,7 +54,7 @@ class TestCacheDecorators:
 
     def test_make_cache_key_exclude_args(self):
         """测试排除参数的缓存键生成"""
-        from src.cache.decorators import _make_cache_key
+from src.cache.decorators import _make_cache_key
 
         def test_func(a, b, sensitive=None):
             return a + b
@@ -216,7 +216,7 @@ class TestCacheDecorators:
 
     def test_cache_key_uniqueness(self):
         """测试缓存键的唯一性"""
-        from src.cache.decorators import _make_cache_key
+from src.cache.decorators import _make_cache_key
 
         def func1(x):
             return x

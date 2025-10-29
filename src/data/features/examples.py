@@ -341,7 +341,8 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
         logger.info(f"✅ 发现 {len(features_list)} 个特征：\n")
 
         for i, feature in enumerate(features_list[:10]):  # 只显示前10个
-            print(f"{i + 1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}")
+            print(f"{i +"
+        1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}")
 
         if len(features_list) > 10:
             logger.info(f"    ... 还有 {len(features_list) - 10} 个特征")

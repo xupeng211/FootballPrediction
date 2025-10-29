@@ -267,7 +267,7 @@ def test_module_imports():
     """测试：模块导入"""
     if HEALTH_AVAILABLE:
         # 智能Mock兼容修复模式：移除真实API导入
-        from src.api.health.utils import HealthChecker
+from src.api.health.utils import HealthChecker
 
         assert HealthChecker is not None
         assert router is not None
@@ -276,7 +276,7 @@ def test_module_imports():
 def test_health_checker_class():
     """测试：健康检查器类"""
     if HEALTH_AVAILABLE:
-        from src.api.health.utils import HealthChecker
+from src.api.health.utils import HealthChecker
 
         assert hasattr(HealthChecker, "check_all_services")
         assert hasattr(HealthChecker, "check_database")

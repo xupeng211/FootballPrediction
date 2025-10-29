@@ -376,7 +376,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试模块导入功能"""
     if SCORES_COLLECTOR_AVAILABLE:
-        from src.collectors.scores_collector import (
+from src.collectors.scores_collector import (
             ScoresCollector,
             ScoresCollectorFactory,
         )

@@ -153,7 +153,7 @@ class MockCryptoUtils:
             hash_obj = hashlib.new(algorithm)
             hash_obj.update(text.encode("utf-8"))
             return hash_obj.hexdigest()
-        except:
+except Exception:
             return ""
 
     @staticmethod
@@ -165,7 +165,7 @@ class MockCryptoUtils:
         try:
             encoded_bytes = base64.b64encode(text.encode("utf-8"))
             return encoded_bytes.decode("utf-8")
-        except:
+except Exception:
             return ""
 
     @staticmethod
@@ -177,7 +177,7 @@ class MockCryptoUtils:
         try:
             decoded_bytes = base64.b64decode(encoded_text.encode("utf-8"))
             return decoded_bytes.decode("utf-8")
-        except:
+except Exception:
             return ""
 
 
@@ -188,7 +188,7 @@ class MockFileUtils:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
-        except:
+except Exception:
             return None
 
     @staticmethod
@@ -199,7 +199,7 @@ class MockFileUtils:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
-        except:
+except Exception:
             return False
 
     @staticmethod
@@ -207,7 +207,7 @@ class MockFileUtils:
         """获取文件大小"""
         try:
             return os.path.getsize(file_path)
-        except:
+except Exception:
             return 0
 
 
@@ -238,7 +238,7 @@ class MockDataUtils:
         try:
             data = json.loads(json_str)
             return True, data
-        except:
+except Exception:
             return False, None
 
     @staticmethod

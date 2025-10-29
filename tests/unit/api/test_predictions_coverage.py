@@ -42,16 +42,16 @@ def test_predictions_module_backward_compatibility():
     """测试predictions模块的向后兼容性"""
     # 模拟旧版本的导入方式
     try:
-        from src.api.predictions import router as old_router
+from src.api.predictions import router as old_router
 
         # 验证新版本导入方式
-        from src.api.predictions.router import router as new_router
+from src.api.predictions.router import router as new_router
 
         # 两个导入应该指向同一个对象（重新导出）
         assert old_router is new_router
     except ImportError:
         # 如果新模块不存在，至少确保旧模块能导入
-        from src.api.predictions import router
+from src.api.predictions import router
 
         assert router is not None
 

@@ -134,7 +134,7 @@ class TestUserProfileService:
         service = UserProfileService()
 
         # 验证继承自SimpleService
-        from src.services.base_unified import SimpleService
+from src.services.base_unified import SimpleService
 
         assert isinstance(service, SimpleService)
         assert hasattr(service, "name")

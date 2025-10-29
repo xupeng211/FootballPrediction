@@ -57,7 +57,7 @@ def test_prediction_logic():
         from src.domain.models.match import Match
 
         # 创建一个比赛
-        match = Match(home_team_id=1, away_team_id=2, league_id=100)
+        Match(home_team_id=1, away_team_id=2, league_id=100)
 
         # 创建预测
         prediction = Prediction(match_id=1, user_id=100)

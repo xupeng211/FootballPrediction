@@ -272,7 +272,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if CELERY_APP_AVAILABLE:
-        from src.tasks.celery_app import (
+from src.tasks.celery_app import (
             DatabaseManager,
             RedisManager,
             celery_app,
@@ -307,7 +307,7 @@ def test_celery_app_singleton():
     """测试：Celery应用单例"""
     if CELERY_APP_AVAILABLE:
         # Celery应用通常是单例
-        from src.tasks.celery_app import celery_app as app1
-        from src.tasks.celery_app import celery_app as app2
+from src.tasks.celery_app import celery_app as app1
+from src.tasks.celery_app import celery_app as app2
 
         assert app1 is app2

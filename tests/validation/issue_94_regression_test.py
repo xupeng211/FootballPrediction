@@ -87,8 +87,8 @@ class TestIssue94RegressionGuard:
         for point in verification_points:
             print(f"🔧 {point}")
 
-        print(f"📊 累计净减少测试失败: 12个")
-        print(f"🚀 API端点实现: 12+个完整功能端点")
+        print("📊 累计净减少测试失败: 12个")
+        print("🚀 API端点实现: 12+个完整功能端点")
 
 
 if __name__ == "__main__":

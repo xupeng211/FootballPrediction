@@ -18,13 +18,13 @@ try:
 
     # 尝试导入其他类
     try:
-        from src.events.bus import Event, EventHandler
+from src.events.bus import Event, EventHandler
     except ImportError:
         Event = None
         EventHandler = None
 
     try:
-        from src.events.types import EventType
+from src.events.types import EventType
     except ImportError:
         EventType = None
 

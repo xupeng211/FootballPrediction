@@ -171,7 +171,7 @@ async def get_match_recommendations(
     except Exception as e:
         logger.error(f"获取投注建议失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -227,7 +227,7 @@ async def get_portfolio_recommendations(
     except Exception as e:
         logger.error(f"获取组合投注建议失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -276,7 +276,7 @@ async def get_performance_analysis(
     except Exception as e:
         logger.error(f"历史表现分析失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -315,7 +315,7 @@ async def update_match_odds(
             )
         else:
             raise HTTPException(
-                status_code=400,
+                status_code=400,  # TODO: 将魔法数字 400 提取为常量
                 detail="赔率更新失败",  # TODO: 将魔法数字 400 提取为常量
             )  # TODO: 将魔法数字 400 提取为常量
 
@@ -324,7 +324,7 @@ async def update_match_odds(
     except Exception as e:
         logger.error(f"更新赔率失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -385,7 +385,7 @@ async def get_available_strategies(
     except Exception as e:
         logger.error(f"获取策略列表失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -406,7 +406,7 @@ async def check_srs_compliance(
         predictions = await betting_service._get_match_predictions(match_id)
         if not predictions:
             raise HTTPException(
-                status_code=404,
+                status_code=404,  # TODO: 将魔法数字 404 提取为常量
                 detail="预测数据未找到",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
@@ -425,7 +425,7 @@ async def check_srs_compliance(
     except Exception as e:
         logger.error(f"SRS合规性检查失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -500,7 +500,7 @@ async def get_metrics(betting_service: BettingService = Depends(get_betting_serv
     except Exception as e:
         logger.error(f"获取指标失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -539,18 +539,7 @@ __all__ = [
 ]
 
 
-# 导出
-# 导出
-
-
-# 导出
-# 导出
-def register_betting_api(
-    app,
-):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def register_betting_api(app):  # TODO: 添加返回类型注解
     """注册投注API路由"""
     app.include_router(router)
     logger.info("投注API路由注册完成")
-
-
-# 导出

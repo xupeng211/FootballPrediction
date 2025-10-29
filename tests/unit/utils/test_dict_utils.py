@@ -686,7 +686,7 @@ class TestDictUtils:
         # 测试空字典
         cloned = DictUtils.deep_clone({})
         assert cloned == {}
-        assert cloned is not {}
+        assert cloned != {}
 
         # 测试None值
         cloned = DictUtils.deep_clone(None)

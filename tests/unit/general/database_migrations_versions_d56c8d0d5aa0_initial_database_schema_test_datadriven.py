@@ -1,3 +1,4 @@
+import random
 """
 Issue #83-C 数据驱动测试: database.migrations.versions.d56c8d0d5aa0_initial_database_schema
 覆盖率目标: 60% → 85%

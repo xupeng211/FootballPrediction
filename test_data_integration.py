@@ -90,7 +90,7 @@ async def test_collector():
             print("📈 获取数据源状态...")
             status = await collector.get_data_source_status()
 
-            print(f"✅ 数据源状态:")
+            print("✅ 数据源状态:")
             print(f"   可用数据源: {status['available_sources']}")
             print(f"   主要数据源: {status['primary_source']}")
             print(f"   总比赛数: {status['total_matches']}")

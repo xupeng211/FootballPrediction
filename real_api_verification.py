@@ -136,18 +136,18 @@ class RealAPIVerifier:
         failed_tests = len(self.problem_apis)
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 API验证统计:")
+        print("📈 API验证统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功API: {successful_tests}")
         print(f"   失败API: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
-        print(f"\n✅ 正常工作的API:")
+        print("\n✅ 正常工作的API:")
         for api in self.working_apis:
             print(f"   • {api['name']}: HTTP {api['status']} ({api['url']})")
 
         if self.problem_apis:
-            print(f"\n❌ 有问题的API:")
+            print("\n❌ 有问题的API:")
             for api in self.problem_apis:
                 if "status" in api:
                     print(f"   • {api['name']}: HTTP {api['status']} ({api['url']})")
@@ -158,13 +158,13 @@ class RealAPIVerifier:
         durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
-            print(f"\n⏱️  性能统计:")
+            print("\n⏱️  性能统计:")
             print(f"   平均响应时间: {avg_duration:.2f}秒")
             print(f"   最慢响应: {max(durations):.2f}秒")
             print(f"   最快响应: {min(durations):.2f}秒")
 
         # 系统评估
-        print(f"\n🎯 系统评估:")
+        print("\n🎯 系统评估:")
         if success_rate >= 80:
             print("   🟢 优秀: 系统API功能完善，可以支持种子用户测试")
         elif success_rate >= 60:
@@ -173,13 +173,13 @@ class RealAPIVerifier:
             print("   🔴 需要改进: 存在较多API问题，需要修复后再进行用户测试")
 
         # 对比原始测试结果
-        print(f"\n🔍 与种子用户测试对比:")
+        print("\n🔍 与种子用户测试对比:")
         print("   原测试发现的404问题主要是URL路径错误")
         print("   实际API端点大部分都正常工作")
         print("   数据API返回TODO假数据，需要真实数据库集成")
         print("   监控系统在正确路径正常工作")
 
-        print(f"\n🚀 下一步建议:")
+        print("\n🚀 下一步建议:")
         if success_rate >= 80:
             print("   1. 修复用户认证系统集成")
             print("   2. 集成真实数据库数据到data API")

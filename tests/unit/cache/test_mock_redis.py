@@ -402,7 +402,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if MOCK_REDIS_AVAILABLE:
-        from src.cache.mock_redis import MockRedisManager
+from src.cache.mock_redis import MockRedisManager
 
         assert MockRedisManager is not None
 

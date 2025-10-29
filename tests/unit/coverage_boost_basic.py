@@ -165,7 +165,7 @@ class TestBasicCoverageBoost:
         # 测试异常处理
         try:
             raise mock_exception
-        except:
+except Exception:
             assert True  # 异常被正确抛出
 
     def test_configuration_mock(self):

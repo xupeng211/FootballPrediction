@@ -14,8 +14,6 @@ very_long_line = (
 )
 
 
-def example_function(
-    x, y, z
 ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """TODO: 添加函数文档"""
     if x > 0:
@@ -24,8 +22,17 @@ def example_function(
         return None
 
 
-def badly_formatted_function(
-    x, y, z
 ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """TODO: 添加函数文档"""
     # TODO: 添加返回类型注解
+
+):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def example_function(
+    """TODO: 添加函数文档"""
+    x, y, z
+):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def badly_formatted_function(
+    """TODO: 添加函数文档"""
+    x, y, z
+):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解

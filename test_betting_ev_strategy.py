@@ -252,10 +252,10 @@ class BettingEVStrategyTester:
             if portfolio and "recommended_bets" in portfolio:
                 passed_tests += 1
                 total_tests += 1
-                print(f"  ✅ 组合优化功能: 正常工作")
+                print("  ✅ 组合优化功能: 正常工作")
             else:
                 total_tests += 1
-                print(f"  ❌ 组合优化功能: 异常")
+                print("  ❌ 组合优化功能: 异常")
 
         except Exception as e:
             total_tests += 1
@@ -342,7 +342,7 @@ class BettingEVStrategyTester:
             passed_tests += 1
             print(f"  ✅ SRS策略配置正确: 风险容忍度={strategy.risk_tolerance}")
         else:
-            print(f"  ❌ SRS策略配置异常")
+            print("  ❌ SRS策略配置异常")
 
         accuracy_rate = passed_tests / total_tests
         self.test_results["individual_tests"][test_name] = {
@@ -468,7 +468,7 @@ class BettingEVStrategyTester:
             print(f"  ✅ 多样化评估: {diversity_score}")
         else:
             total_tests += 1
-            print(f"  ❌ 多样化评估: 失败")
+            print("  ❌ 多样化评估: 失败")
 
         accuracy_rate = passed_tests / total_tests
         self.test_results["individual_tests"][test_name] = {
@@ -518,7 +518,7 @@ class BettingEVStrategyTester:
             )
 
             if self._validate_recommendations(recommendations):
-                print(f"  ✅ 投注建议生成: 成功")
+                print("  ✅ 投注建议生成: 成功")
                 print(f"    - 策略: {recommendations.get('strategy_used')}")
                 print(f"    - 个体投注数: {len(recommendations.get('individual_bets', []))}")
                 print(
@@ -530,7 +530,7 @@ class BettingEVStrategyTester:
 
                 passed_tests = 1
             else:
-                print(f"  ❌ 投注建议生成: 失败")
+                print("  ❌ 投注建议生成: 失败")
                 passed_tests = 0
 
             total_tests = 1
@@ -572,7 +572,7 @@ class BettingEVStrategyTester:
             passed_components = sum(components_status.values())
             total_components = len(components_status)
 
-            print(f"  📋 组件状态检查:")
+            print("  📋 组件状态检查:")
             for component, status in components_status.items():
                 status_icon = "✅" if status else "❌"
                 print(f"    {status_icon} {component}: {'正常' if status else '异常'}")
@@ -580,10 +580,10 @@ class BettingEVStrategyTester:
             # 测试SRS配置
             srs_config_valid = self._validate_srs_configuration(betting_service.srs_config)
             if srs_config_valid:
-                print(f"  ✅ SRS配置: 有效")
+                print("  ✅ SRS配置: 有效")
                 passed_components += 1
             else:
-                print(f"  ❌ SRS配置: 无效")
+                print("  ❌ SRS配置: 无效")
             total_components += 1
 
             accuracy_rate = passed_components / total_components
@@ -860,20 +860,20 @@ class BettingEVStrategyTester:
 
         if "test_results" in self.test_results:
             results = self.test_results["test_results"]
-            print(f"\n📈 总体测试结果:")
+            print("\n📈 总体测试结果:")
             print(f"  - 总测试数: {results['total_tests_run']}")
             print(f"  - 通过测试数: {results['total_tests_passed']}")
             print(f"  - 总体准确率: {results['overall_accuracy']*100:.1f}%")
 
             critical_scores = results.get("critical_component_scores", {})
-            print(f"\n🔧 关键组件评分:")
+            print("\n🔧 关键组件评分:")
             print(f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy', 0)*100:.1f}%")
             print(
                 f"  - Kelly Criterion: {critical_scores.get('kelly_criterion_accuracy', 0)*100:.1f}%"
             )
             print(f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy', 0)*100:.1f}%")
 
-        print(f"\n📋 各项测试结果:")
+        print("\n📋 各项测试结果:")
         for test_name, result in self.test_results["individual_tests"].items():
             status_icon = (
                 "✅"
@@ -884,11 +884,11 @@ class BettingEVStrategyTester:
                 f"  {status_icon} {test_name}: {result['accuracy_rate']*100:.1f}% ({result['passed']}/{result['total']})"
             )
 
-        print(f"\n💡 建议:")
+        print("\n💡 建议:")
         for rec in self.test_results["recommendations"]:
             print(f"  {rec}")
 
-        print(f"\n🚀 后续步骤:")
+        print("\n🚀 后续步骤:")
         for step in self.test_results["next_steps"]:
             print(f"  • {step}")
 

@@ -25,7 +25,7 @@ class TestDependenciesModule:
             SECRET_KEY="test-secret", ALGORITHM="HS256", ACCESS_TOKEN_EXPIRE_MINUTES=30
         )
 
-        from src.api.dependencies import get_settings
+from src.api.dependencies import get_settings
 
         settings = get_settings()
         assert settings is not None
@@ -39,7 +39,7 @@ class TestDependenciesModule:
             "exp": datetime.utcnow().timestamp() + 3600,
         }
 
-        from src.api.dependencies import decode_token
+from src.api.dependencies import decode_token
 
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test"
         payload = decode_token(token)
@@ -47,7 +47,7 @@ class TestDependenciesModule:
 
     def test_verify_password(self, client):
         """测试密码验证"""
-        from src.api.dependencies import verify_password
+from src.api.dependencies import verify_password
 
         password = "testpass123"
         hashed = verify_password("testpass123", password)
@@ -60,7 +60,7 @@ class TestEventsModule:
 
     def test_event_creation(self):
         """测试事件创建"""
-        from src.api.events import Event
+from src.api.events import Event
 
         event = Event(
             event_type="test_event",
@@ -72,7 +72,7 @@ class TestEventsModule:
 
     def test_event_manager_initialization(self):
         """测试事件管理器初始化"""
-        from src.api.events import EventManager
+from src.api.events import EventManager
 
         manager = EventManager()
         assert manager is not None
@@ -80,7 +80,7 @@ class TestEventsModule:
 
     def test_event_handler_registration(self):
         """测试事件处理器注册"""
-        from src.api.events import EventManager
+from src.api.events import EventManager
 
         manager = EventManager()
 
@@ -92,7 +92,7 @@ class TestEventsModule:
 
     def test_event_publish(self):
         """测试事件发布"""
-        from src.api.events import Event, EventManager
+from src.api.events import Event, EventManager
 
         manager = EventManager()
 
@@ -117,7 +117,7 @@ class TestCQRSModuleExtended:
 
     def test_command_bus_initialization(self):
         """测试命令总线初始化"""
-        from src.api.cqrs import CommandBus
+from src.api.cqrs import CommandBus
 
         bus = CommandBus()
         assert bus is not None
@@ -125,7 +125,7 @@ class TestCQRSModuleExtended:
 
     def test_command_handler_registration(self):
         """测试命令处理器注册"""
-        from src.api.cqrs import CommandBus, CreateCommand
+from src.api.cqrs import CommandBus, CreateCommand
 
         bus = CommandBus()
 
@@ -137,7 +137,7 @@ class TestCQRSModuleExtended:
 
     def test_query_bus_initialization(self):
         """测试查询总线初始化"""
-        from src.api.cqrs import QueryBus
+from src.api.cqrs import QueryBus
 
         bus = QueryBus()
         assert bus is not None
@@ -145,7 +145,7 @@ class TestCQRSModuleExtended:
 
     def test_command_response_creation(self):
         """测试命令响应创建"""
-        from src.api.cqrs import CommandResponse
+from src.api.cqrs import CommandResponse
 
         response = CommandResponse(success=True, message="Command executed", _data={"id": 123})
         assert response.success is True
@@ -153,7 +153,7 @@ class TestCQRSModuleExtended:
 
     def test_query_response_creation(self):
         """测试查询响应创建"""
-        from src.api.cqrs import QueryResponse
+from src.api.cqrs import QueryResponse
 
         response = QueryResponse(_data=[{"id": 1, "name": "test"}], total=1, page=1)
         assert len(response.data) == 1
@@ -166,7 +166,7 @@ class TestDecoratorsModule:
 
     def test_rate_limit_decorator(self):
         """测试速率限制装饰器"""
-        from src.api.decorators import rate_limit
+from src.api.decorators import rate_limit
 
         @rate_limit(max_requests=10, window_seconds=60)
         def test_function():
@@ -177,7 +177,7 @@ class TestDecoratorsModule:
 
     def test_cache_result_decorator(self):
         """测试缓存结果装饰器"""
-        from src.api.decorators import cache_result
+from src.api.decorators import cache_result
 
         @cache_result(ttl=60)
         def expensive_function(x):
@@ -189,7 +189,7 @@ class TestDecoratorsModule:
 
     def test_timeout_decorator(self):
         """测试超时装饰器"""
-        from src.api.decorators import timeout
+from src.api.decorators import timeout
 
         @timeout(seconds=5)
         def quick_function():
@@ -200,7 +200,7 @@ class TestDecoratorsModule:
 
     def test_retry_decorator(self):
         """测试重试装饰器"""
-        from src.api.decorators import retry
+from src.api.decorators import retry
 
         attempts = 0
 
@@ -218,7 +218,7 @@ class TestDecoratorsModule:
 
     def test_log_requests_decorator(self):
         """测试请求日志装饰器"""
-        from src.api.decorators import log_requests
+from src.api.decorators import log_requests
 
         @log_requests
         def test_endpoint():
@@ -234,7 +234,7 @@ class TestMonitoringModule:
 
     def test_metrics_collector_initialization(self):
         """测试指标收集器初始化"""
-        from src.api.monitoring import MetricsCollector
+from src.api.monitoring import MetricsCollector
 
         collector = MetricsCollector()
         assert collector is not None
@@ -242,14 +242,14 @@ class TestMonitoringModule:
 
     def test_system_health_checker(self):
         """测试系统健康检查"""
-        from src.api.monitoring import SystemHealthChecker
+from src.api.monitoring import SystemHealthChecker
 
         checker = SystemHealthChecker()
         assert checker is not None
 
     def test_alert_manager_initialization(self):
         """测试告警管理器初始化"""
-        from src.api.monitoring import AlertManager
+from src.api.monitoring import AlertManager
 
         alert_manager = AlertManager()
         assert alert_manager is not None
@@ -257,14 +257,14 @@ class TestMonitoringModule:
 
     def test_metrics_exporter(self):
         """测试指标导出器"""
-        from src.api.monitoring import PrometheusExporter
+from src.api.monitoring import PrometheusExporter
 
         exporter = PrometheusExporter()
         assert exporter is not None
 
     def test_anomaly_detector(self):
         """测试异常检测器"""
-        from src.api.monitoring import AnomalyDetector
+from src.api.monitoring import AnomalyDetector
 
         detector = AnomalyDetector()
         assert detector is not None
@@ -282,7 +282,7 @@ class TestObserversModule:
 
     def test_observer_creation(self):
         """测试观察者创建"""
-        from src.api.observers import Observer
+from src.api.observers import Observer
 
         class TestObserver(Observer):
             def update(self, data):
@@ -293,7 +293,7 @@ class TestObserversModule:
 
     def test_subject_creation(self):
         """测试主题创建"""
-        from src.api.observers import Subject
+from src.api.observers import Subject
 
         subject = Subject()
         assert subject is not None
@@ -301,7 +301,7 @@ class TestObserversModule:
 
     def test_observer_attachment(self):
         """测试观察者附加"""
-        from src.api.observers import Observer, Subject
+from src.api.observers import Observer, Subject
 
         class TestObserver(Observer):
             def __init__(self):
@@ -318,7 +318,7 @@ class TestObserversModule:
 
     def test_observer_notification(self):
         """测试观察者通知"""
-        from src.api.observers import Observer, Subject
+from src.api.observers import Observer, Subject
 
         notifications = []
 
@@ -338,21 +338,21 @@ class TestObserversModule:
 
     def test_metrics_observer(self):
         """测试指标观察者"""
-        from src.api.observers import MetricsObserver
+from src.api.observers import MetricsObserver
 
         observer = MetricsObserver()
         assert observer is not None
 
     def test_cache_observer(self):
         """测试缓存观察者"""
-        from src.api.observers import CacheObserver
+from src.api.observers import CacheObserver
 
         observer = CacheObserver()
         assert observer is not None
 
     def test_prediction_observer(self):
         """测试预测观察者"""
-        from src.api.observers import PredictionObserver
+from src.api.observers import PredictionObserver
 
         observer = PredictionObserver()
         assert observer is not None
@@ -364,14 +364,14 @@ class TestFeaturesModule:
 
     def test_feature_extractor_initialization(self):
         """测试特征提取器初始化"""
-        from src.api.features import FeatureExtractor
+from src.api.features import FeatureExtractor
 
         extractor = FeatureExtractor()
         assert extractor is not None
 
     def test_feature_extraction(self):
         """测试特征提取"""
-        from src.api.features import FeatureExtractor
+from src.api.features import FeatureExtractor
 
         extractor = FeatureExtractor()
         _data = {
@@ -387,28 +387,28 @@ class TestFeaturesModule:
 
     def test_feature_store_initialization(self):
         """测试特征存储初始化"""
-        from src.api.features import FeatureStore
+from src.api.features import FeatureStore
 
         store = FeatureStore()
         assert store is not None
 
     def test_feature_calculator(self):
         """测试特征计算器"""
-        from src.api.features import FeatureCalculator
+from src.api.features import FeatureCalculator
 
         calculator = FeatureCalculator()
         assert calculator is not None
 
     def test_team_features(self):
         """测试球队特征"""
-        from src.api.features import TeamFeatures
+from src.api.features import TeamFeatures
 
         features = TeamFeatures()
         assert features is not None
 
     def test_match_features(self):
         """测试比赛特征"""
-        from src.api.features import MatchFeatures
+from src.api.features import MatchFeatures
 
         features = MatchFeatures()
         assert features is not None
@@ -420,35 +420,35 @@ class TestFacadesModule:
 
     def test_prediction_facade(self):
         """测试预测门面"""
-        from src.api.facades import PredictionFacade
+from src.api.facades import PredictionFacade
 
         facade = PredictionFacade()
         assert facade is not None
 
     def test_data_facade(self):
         """测试数据门面"""
-        from src.api.facades import DataFacade
+from src.api.facades import DataFacade
 
         facade = DataFacade()
         assert facade is not None
 
     def test_notification_facade(self):
         """测试通知门面"""
-        from src.api.facades import NotificationFacade
+from src.api.facades import NotificationFacade
 
         facade = NotificationFacade()
         assert facade is not None
 
     def test_facade_manager(self):
         """测试门面管理器"""
-        from src.api.facades import FacadeManager
+from src.api.facades import FacadeManager
 
         manager = FacadeManager()
         assert manager is not None
 
     def test_facade_pattern_implementation(self):
         """测试门面模式实现"""
-        from src.api.facades import PredictionFacade
+from src.api.facades import PredictionFacade
 
         class MockService:
             def predict(self, data):
@@ -465,35 +465,35 @@ class TestAdaptersModule:
 
     def test_data_adapter_initialization(self):
         """测试数据适配器初始化"""
-        from src.api.adapters import DataAdapter
+from src.api.adapters import DataAdapter
 
         adapter = DataAdapter()
         assert adapter is not None
 
     def test_football_data_adapter(self):
         """测试足球数据适配器"""
-        from src.api.adapters import FootballDataAdapter
+from src.api.adapters import FootballDataAdapter
 
         adapter = FootballDataAdapter()
         assert adapter is not None
 
     def test_external_api_adapter(self):
         """测试外部API适配器"""
-        from src.api.adapters import ExternalAPIAdapter
+from src.api.adapters import ExternalAPIAdapter
 
         adapter = ExternalAPIAdapter(base_url="https://api.example.com")
         assert adapter is not None
 
     def test_adapter_registry(self):
         """测试适配器注册表"""
-        from src.api.adapters import AdapterRegistry
+from src.api.adapters import AdapterRegistry
 
         registry = AdapterRegistry()
         assert registry is not None
 
     def test_adapter_registration(self):
         """测试适配器注册"""
-        from src.api.adapters import AdapterRegistry, DataAdapter
+from src.api.adapters import AdapterRegistry, DataAdapter
 
         class TestAdapter(DataAdapter):
             def get_data(self, params):
@@ -508,7 +508,7 @@ class TestAdaptersModule:
 
     def test_data_transformation(self):
         """测试数据转换"""
-        from src.api.adapters import FootballDataAdapter
+from src.api.adapters import FootballDataAdapter
 
         adapter = FootballDataAdapter()
         raw_data = {"team": "Real Madrid", "goals": 3}
@@ -522,28 +522,28 @@ class TestRepositoriesModuleExtended:
 
     def test_base_repository(self):
         """测试基础仓储"""
-        from src.api.repositories import BaseRepository
+from src.api.repositories import BaseRepository
 
         repo = BaseRepository()
         assert repo is not None
 
     def test_prediction_repository(self):
         """测试预测仓储"""
-        from src.api.repositories import PredictionRepository
+from src.api.repositories import PredictionRepository
 
         repo = PredictionRepository()
         assert repo is not None
 
     def test_user_repository(self):
         """测试用户仓储"""
-        from src.api.repositories import UserRepository
+from src.api.repositories import UserRepository
 
         repo = UserRepository()
         assert repo is not None
 
     def test_match_repository(self):
         """测试比赛仓储"""
-        from src.api.repositories import MatchRepository
+from src.api.repositories import MatchRepository
 
         repo = MatchRepository()
         assert repo is not None
@@ -565,7 +565,7 @@ class TestRepositoriesModuleExtended:
 
     def test_repository_manager(self):
         """测试仓储管理器"""
-        from src.api.repositories import RepositoryManager
+from src.api.repositories import RepositoryManager
 
         manager = RepositoryManager()
         assert manager is not None
@@ -577,14 +577,14 @@ class TestHealthModule:
 
     def test_health_check_initialization(self):
         """测试健康检查初始化"""
-        from src.api.health import HealthChecker
+from src.api.health import HealthChecker
 
         checker = HealthChecker()
         assert checker is not None
 
     def test_health_check_status(self):
         """测试健康检查状态"""
-        from src.api.health import HealthStatus
+from src.api.health import HealthStatus
 
         status = HealthStatus(status="healthy", checks={"database": "ok", "redis": "ok"})
         assert status.status == "healthy"
@@ -597,14 +597,14 @@ class TestBuggyAPIModule:
 
     def test_buggy_endpoint_exists(self):
         """测试问题端点存在"""
-        from src.api import buggy_api
+from src.api import buggy_api
 
         assert buggy_api is not None
 
     def test_error_handling_scenarios(self):
         """测试错误处理场景"""
         # 测试各种错误情况的处理
-        from src.api.cqrs import CommandResponse
+from src.api.cqrs import CommandResponse
 
         # 测试错误响应
         error_response = CommandResponse(
@@ -620,8 +620,8 @@ class TestIntegrationScenarios:
 
     def test_event_observer_integration(self):
         """测试事件-观察者集成"""
-        from src.api.events import Event, EventManager
-        from src.api.observers import Observer, Subject
+from src.api.events import Event, EventManager
+from src.api.observers import Observer, Subject
 
         # 创建事件管理器
         event_manager = EventManager()
@@ -647,8 +647,8 @@ class TestIntegrationScenarios:
 
     def test_cqrs_with_repository(self):
         """测试CQRS与仓储集成"""
-        from src.api.cqrs import CommandBus, CreateCommand
-        from src.api.repositories import PredictionRepository
+from src.api.cqrs import CommandBus, CreateCommand
+from src.api.repositories import PredictionRepository
 
         bus = CommandBus()
         PredictionRepository()
@@ -662,8 +662,8 @@ class TestIntegrationScenarios:
 
     def test_facade_with_observers(self):
         """测试门面与观察者集成"""
-        from src.api.facades import PredictionFacade
-        from src.api.observers import PredictionObserver
+from src.api.facades import PredictionFacade
+from src.api.observers import PredictionObserver
 
         facade = PredictionFacade()
         observer = PredictionObserver()

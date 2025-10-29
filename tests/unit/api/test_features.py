@@ -449,7 +449,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FEATURES_AVAILABLE:
-        from src.api.features import get_feature_store, router
+from src.api.features import get_feature_store, router
 
         assert router is not None
         assert get_feature_store is not None

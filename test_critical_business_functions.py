@@ -29,7 +29,7 @@ def test_team_management_critical():
 
         # 测试球队代码验证（3字母）
         try:
-            invalid_team = Team(name="Invalid", short_name="INV", code="INVALID")
+            Team(name="Invalid", short_name="INV", code="INVALID")
             print("❌ 球队代码验证失败")
             return False
         except Exception:
@@ -159,7 +159,7 @@ def test_league_management_critical():
 
         # 测试联赛代码验证 - 使用过长的代码
         try:
-            invalid_league = League(name="Invalid", short_name="INV", code="INVALIDCODE")
+            League(name="Invalid", short_name="INV", code="INVALIDCODE")
             print("❌ 联赛代码验证失败")
             return False
         except Exception:
@@ -227,8 +227,8 @@ def test_business_workflow_critical():
         league = League(name="Test League", short_name="TL", code="TLC")
 
         # 2. 创建球队
-        home_team = Team(name="Home Team", short_name="HT", code="HTC")
-        away_team = Team(name="Away Team", short_name="AT", code="ATC")
+        Team(name="Home Team", short_name="HT", code="HTC")
+        Team(name="Away Team", short_name="AT", code="ATC")
 
         # 3. 创建比赛
         match = Match(home_team_id=1, away_team_id=2, league_id=1)

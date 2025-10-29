@@ -73,14 +73,14 @@ class TestModuleStructure:
 
     def test_module_all_exists(self):
         """测试__all__存在"""
-        from src.models import prediction_service
+from src.models import prediction_service
 
         assert hasattr(prediction_service, "__all__")
         assert isinstance(prediction_service.__all__, list)
 
     def test_module_all_contents(self):
         """测试__all__内容"""
-        from src.models import prediction_service
+from src.models import prediction_service
 
         expected_all = [
             "PredictionResult",
@@ -102,7 +102,7 @@ class TestModuleStructure:
 
     def test_module_all_exports_exist(self):
         """测试__all__中的导出都存在"""
-        from src.models import prediction_service
+from src.models import prediction_service
 
         for name in prediction_service.__all__:
             assert hasattr(prediction_service, name), f"Missing export: {name}"
@@ -110,9 +110,9 @@ class TestModuleStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 验证所有导入的类和对象都是预期的类型
-        from src.models.prediction import PredictionCache as OriginalPredictionCache
-        from src.models.prediction import PredictionResult as OriginalPredictionResult
-        from src.models.prediction import PredictionService as OriginalPredictionService
+from src.models.prediction import PredictionCache as OriginalPredictionCache
+from src.models.prediction import PredictionResult as OriginalPredictionResult
+from src.models.prediction import PredictionService as OriginalPredictionService
 
         # 比较重新导入的对象与原始对象
         assert PredictionResult is OriginalPredictionResult
@@ -235,9 +235,9 @@ class TestModuleDocumentation:
         # PredictionCache的文档在原始模块中
 
         # 验证这些类都有文档（通过检查原始模块）
-        from src.models.prediction import PredictionCache as OriginalCache
-        from src.models.prediction import PredictionResult as OriginalResult
-        from src.models.prediction import PredictionService as OriginalService
+from src.models.prediction import PredictionCache as OriginalCache
+from src.models.prediction import PredictionResult as OriginalResult
+from src.models.prediction import PredictionService as OriginalService
 
         assert OriginalResult.__doc__ is not None
         assert OriginalService.__doc__ is not None
@@ -252,10 +252,10 @@ class TestIntegrationWithOriginalModule:
 
     def test_objects_are_identical(self):
         """测试重新导入的对象与原始对象相同"""
-        from src.models.prediction import PredictionCache as OriginalCache
-        from src.models.prediction import PredictionResult as OriginalResult
-        from src.models.prediction import PredictionService as OriginalService
-        from src.models.prediction import predictions_total as OriginalTotal
+from src.models.prediction import PredictionCache as OriginalCache
+from src.models.prediction import PredictionResult as OriginalResult
+from src.models.prediction import PredictionService as OriginalService
+from src.models.prediction import predictions_total as OriginalTotal
 
         # 验证对象引用相同
         assert PredictionResult is OriginalResult
@@ -289,7 +289,7 @@ class TestIntegrationWithOriginalModule:
         predictions_total.inc()
 
         # 通过原始模块应该看到相同的修改
-        from src.models.prediction import predictions_total as original_total
+from src.models.prediction import predictions_total as original_total
 
         assert original_total() == initial_count + 1
 
@@ -297,7 +297,7 @@ class TestIntegrationWithOriginalModule:
         prediction_accuracy.set(0.88)
 
         # 通过原始模块应该看到相同的值
-        from src.models.prediction import prediction_accuracy as original_accuracy
+from src.models.prediction import prediction_accuracy as original_accuracy
 
         assert original_accuracy() == 0.88
 
@@ -340,7 +340,7 @@ class TestErrorHandling:
         importlib.reload(src.models.prediction_service)
 
         # 验证导入仍然有效
-        from src.models.prediction_service import PredictionResult, PredictionService
+from src.models.prediction_service import PredictionResult, PredictionService
 
         assert PredictionResult is not None
         assert PredictionService is not None
@@ -447,7 +447,7 @@ class TestFutureProofing:
     def test_module_extensibility(self):
         """测试模块可扩展性"""
         # 验证模块结构支持未来扩展
-        from src.models import prediction_service
+from src.models import prediction_service
 
         # 模块应该有明确的__all__定义
         assert hasattr(prediction_service, "__all__")

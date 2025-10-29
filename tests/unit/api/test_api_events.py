@@ -130,7 +130,7 @@ class TestEventAPIRoutes:
             return None
 
         # 测试查找存在的处理器
-        from src.api.events import MetricsEventHandler
+from src.api.events import MetricsEventHandler
 
         handler = find_handler(MetricsEventHandler)
         assert handler is not None

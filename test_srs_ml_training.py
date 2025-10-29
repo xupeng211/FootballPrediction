@@ -42,24 +42,24 @@ async def test_srs_ml_training():
     # 初始化训练器
     trainer = SRSCompliantModelTrainer()
 
-    print(f"\n📋 SRS目标要求:")
+    print("\n📋 SRS目标要求:")
     print(f"  - 模型准确率: ≥ {trainer.SRS_TARGETS['min_accuracy']*100}%")
     print(f"  - 模型AUC: ≥ {trainer.SRS_TARGETS['min_auc']*100}%")
     print(f"  - 模型F1分数: ≥ {trainer.SRS_TARGETS['min_f1_score']*100}%")
-    print(f"  - 特征工程: 完整实现")
-    print(f"  - 模型支持: XGBoost/LightGBM")
+    print("  - 特征工程: 完整实现")
+    print("  - 模型支持: XGBoost/LightGBM")
 
-    print(f"\n🚀 开始SRS符合性训练测试...")
+    print("\n🚀 开始SRS符合性训练测试...")
 
     try:
         # 运行SRS符合性训练管道
         results = await trainer.run_srs_compliant_training_pipeline(n_samples=1500)
 
         if results["training_status"] == "completed":
-            print(f"\n✅ 训练成功完成！")
+            print("\n✅ 训练成功完成！")
 
             # 验证SRS要求
-            print(f"\n📊 SRS符合性验证结果:")
+            print("\n📊 SRS符合性验证结果:")
 
             # 检查数据质量
             data_quality_ok = (
@@ -121,15 +121,15 @@ async def test_srs_ml_training():
             )
 
             if all_requirements_met:
-                print(f"\n🚀 Issue #115 成功完成！")
-                print(f"  ✅ 特征工程算法: 完整实现")
-                print(f"  ✅ 真实模型训练: 成功完成")
-                print(f"  ✅ XGBoost/LightGBM: 已集成")
-                print(f"  ✅ 模型评估指标: 达标")
-                print(f"  ✅ 模型自动保存: 已完成")
-                print(f"  ✅ SRS符合性: 完全达成")
+                print("\n🚀 Issue #115 成功完成！")
+                print("  ✅ 特征工程算法: 完整实现")
+                print("  ✅ 真实模型训练: 成功完成")
+                print("  ✅ XGBoost/LightGBM: 已集成")
+                print("  ✅ 模型评估指标: 达标")
+                print("  ✅ 模型自动保存: 已完成")
+                print("  ✅ SRS符合性: 完全达成")
             else:
-                print(f"\n⚠️ Issue #115 部分完成，需要进一步优化")
+                print("\n⚠️ Issue #115 部分完成，需要进一步优化")
                 failed_requirements = []
                 if not data_quality_ok:
                     failed_requirements.append("数据质量")
@@ -185,7 +185,7 @@ async def test_srs_ml_training():
             return test_report
 
         else:
-            print(f"\n❌ 训练失败!")
+            print("\n❌ 训练失败!")
             print(f"错误信息: {results.get('error', '未知错误')}")
             return {
                 "test_status": "failed",
@@ -194,7 +194,7 @@ async def test_srs_ml_training():
             }
 
     except Exception as e:
-        print(f"\n💥 测试执行失败!")
+        print("\n💥 测试执行失败!")
         print(f"错误信息: {str(e)}")
         logger.error(f"SRS ML训练测试失败: {e}")
         return {

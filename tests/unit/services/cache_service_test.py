@@ -100,7 +100,7 @@ class TestServicesCacheService:
         # 测试删除不存在的键
         service = cache_service_class()
         result = await service.delete("non_existent_key")
-        assert result == False
+        assert not result
 
     @pytest.mark.asyncio
     async def test_edge_cases(self):

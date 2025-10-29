@@ -40,7 +40,7 @@ class TestPredictionAPIIntegration:
         assert "created_at" in data
 
         # 验证数据库中的数据
-        from src.database.models import Prediction
+from src.database.models import Prediction
 
         _result = await db_session.get(Prediction, data["id"])
         assert result is not None
@@ -82,7 +82,7 @@ class TestPredictionAPIIntegration:
         _user = sample_prediction_data["user"]
 
         # 创建更多预测
-        from src.database.models import Prediction
+from src.database.models import Prediction
 
         for i in range(5):
             pred = Prediction(
@@ -120,7 +120,7 @@ class TestPredictionAPIIntegration:
         _prediction = sample_prediction_data["prediction"]
 
         # 先更新比赛结果
-        from src.database.models import Match
+from src.database.models import Match
 
         match = await db_session.get(Match, prediction.match_id)
         match.status = "COMPLETED"
@@ -252,7 +252,7 @@ class TestPredictionAPIIntegration:
         assert response.status_code == 204
 
         # 验证已删除
-        from src.database.models import Prediction
+from src.database.models import Prediction
 
         _result = await db_session.get(Prediction, prediction.id)
         assert result is None
@@ -269,7 +269,7 @@ class TestPredictionAPIIntegration:
         _user = sample_prediction_data["user"]
 
         # 创建更多预测数据
-        from src.database.models import Match, Prediction
+from src.database.models import Match, Prediction
 
         predictions = []
         for i in range(10):

@@ -1,3 +1,4 @@
+import redis
 """
 维护任务模块
 

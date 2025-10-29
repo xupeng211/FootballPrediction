@@ -84,7 +84,7 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.skipif(not CQRS_AVAILABLE, reason="CQRS模块不可用")
     def test_cqrs_module_import(self):
         """测试CQRS模块导入"""
-        from src.cqrs import application, bus, commands, dto, handlers, queries
+from src.cqrs import application, bus, commands, dto, handlers, queries
 
         assert application is not None
         assert bus is not None

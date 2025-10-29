@@ -493,14 +493,14 @@ class DatabaseIntegrator:
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 集成测试统计:")
+        print("📈 集成测试统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
         # 集成步骤结果
-        print(f"\n🎯 集成步骤结果:")
+        print("\n🎯 集成步骤结果:")
         steps = [
             ("数据库连接", results["db_connection"]),
             ("数据创建", results["data_creation"]),
@@ -519,15 +519,15 @@ class DatabaseIntegrator:
         print(f"\n   集成完成率: {completed_steps}/{len(steps)} ({integration_completion:.1f}%)")
 
         # 数据统计
-        print(f"\n📊 数据库统计:")
+        print("\n📊 数据库统计:")
         print(f"   总记录数: {total_records}")
         if total_records > 0:
-            print(f"   🟢 数据库状态: 健康，包含真实数据")
+            print("   🟢 数据库状态: 健康，包含真实数据")
         else:
-            print(f"   🔴 数据库状态: 空，需要创建数据")
+            print("   🔴 数据库状态: 空，需要创建数据")
 
         # 系统评估
-        print(f"\n🎯 数据库集成评估:")
+        print("\n🎯 数据库集成评估:")
         if success_rate >= 85 and integration_completion >= 75:
             print("   🟢 优秀: 数据库集成成功，数据质量良好")
             system_status = "优秀"
@@ -546,7 +546,7 @@ class DatabaseIntegrator:
             deployment_ready = False
 
         # 下一步建议
-        print(f"\n🚀 下一步建议:")
+        print("\n🚀 下一步建议:")
         if deployment_ready:
             print("   ✨ 数据库已准备就绪，可以进行生产部署")
             print("   📋 后续工作:")
@@ -562,7 +562,7 @@ class DatabaseIntegrator:
                 for result in failed_tests[:3]:  # 显示前3个问题
                     print(f"      • {result['test_name']}: {result['details']}")
 
-        print(f"\n🎊 数据库集成完成!")
+        print("\n🎊 数据库集成完成!")
         print(f"   系统状态: {system_status}")
         print(f"   集成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)

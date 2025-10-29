@@ -320,7 +320,7 @@ class TestCQRSInitialization:
         """测试初始化CQRS系统"""
         await initialize_cqrs()
 
-        from src.cqrs.bus import get_command_bus, get_query_bus
+from src.cqrs.bus import get_command_bus, get_query_bus
 
         command_bus = get_command_bus()
         query_bus = get_query_bus()

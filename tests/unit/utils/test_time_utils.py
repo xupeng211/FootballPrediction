@@ -57,7 +57,7 @@ class TestTimeUtilsFormatting:
         # 根据实际实现，format_datetime不能处理None，会抛出AttributeError
         # 这里测试能够优雅地处理异常情况
         try:
-            formatted = TimeUtils.format_datetime(None)
+            TimeUtils.format_datetime(None)
             assert False, "应该抛出AttributeError"
         except AttributeError:
             # 期望的行为，能够正确处理None输入
@@ -335,7 +335,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TIME_UTILS_AVAILABLE:
-        from src.utils.time_utils import TimeUtils
+from src.utils.time_utils import TimeUtils
 
         assert TimeUtils is not None
 
@@ -343,7 +343,7 @@ def test_module_imports():
 def test_class_methods(self):
     """测试：类方法存在"""
     if TIME_UTILS_AVAILABLE:
-        from src.utils.time_utils import TimeUtils
+from src.utils.time_utils import TimeUtils
 
         expected_methods = [
             "format_datetime",

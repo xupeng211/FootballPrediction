@@ -525,7 +525,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FACTORY_AVAILABLE:
-        from src.adapters.factory import (
+from src.adapters.factory import (
             AdapterConfig,
             AdapterFactory,
             AdapterGroupConfig,

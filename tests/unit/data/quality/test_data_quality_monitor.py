@@ -704,6 +704,6 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
-        from src.data.quality.data_quality_monitor import DataQualityMonitor
+from src.data.quality.data_quality_monitor import DataQualityMonitor
 
         assert DataQualityMonitor is not None

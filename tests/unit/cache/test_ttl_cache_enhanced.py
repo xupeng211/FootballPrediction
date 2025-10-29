@@ -204,7 +204,7 @@ cleanup_all_expired_func = mock_cleanup_all_expired
 clear_all_caches_func = mock_clear_all_caches
 get_all_stats_func = mock_get_all_stats
 get_cache_func = mock_get_cache
-print(f"智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
+print("智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
 
 
 @pytest.mark.unit

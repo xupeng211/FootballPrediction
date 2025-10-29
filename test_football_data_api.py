@@ -69,7 +69,7 @@ async def test_football_data_api():
                 if team.venue:
                     print(f"     主场: {team.venue}")
 
-        print(f"\n🎉 Football-Data.org API测试成功！")
+        print("\n🎉 Football-Data.org API测试成功！")
         return True
 
     except Exception as e:

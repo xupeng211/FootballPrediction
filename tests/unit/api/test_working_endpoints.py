@@ -307,7 +307,7 @@ class TestPydanticModelsValidation:
 
     def test_prediction_result_model(self):
         """测试预测结果模型"""
-        from src.api.predictions.router import PredictionResult
+from src.api.predictions.router import PredictionResult
 
         _result = PredictionResult(
             match_id=123,
@@ -324,7 +324,7 @@ class TestPydanticModelsValidation:
 
     def test_league_info_model(self):
         """测试联赛信息模型"""
-        from src.api.data_router import LeagueInfo
+from src.api.data_router import LeagueInfo
 
         league = LeagueInfo(
             id=1,
@@ -337,7 +337,7 @@ class TestPydanticModelsValidation:
 
     def test_team_info_model(self):
         """测试球队信息模型"""
-        from src.api.data_router import TeamInfo
+from src.api.data_router import TeamInfo
 
         team = TeamInfo(
             id=1,
@@ -350,7 +350,7 @@ class TestPydanticModelsValidation:
 
     def test_match_info_model(self):
         """测试比赛信息模型"""
-        from src.api.data_router import MatchInfo
+from src.api.data_router import MatchInfo
 
         match = MatchInfo(
             id=1,
@@ -368,7 +368,7 @@ class TestPydanticModelsValidation:
 
     def test_odds_info_model(self):
         """测试赔率信息模型"""
-        from src.api.data_router import OddsInfo
+from src.api.data_router import OddsInfo
 
         odds = OddsInfo(
             id=1,
@@ -411,19 +411,19 @@ class TestDependenciesAndImports:
 
     def test_import_dependencies_module(self):
         """测试导入依赖模块"""
-        from src.api import dependencies
+from src.api import dependencies
 
         assert dependencies is not None
 
     def test_import_predictions_module(self):
         """测试导入预测模块"""
-        from src.api import predictions
+from src.api import predictions
 
         assert predictions is not None
 
     def test_import_data_module(self):
         """测试导入数据模块"""
-        from src.api import data
+from src.api import data
 
         assert data is not None
 

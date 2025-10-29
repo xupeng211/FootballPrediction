@@ -270,7 +270,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if HELPERS_AVAILABLE:
-        from src.utils.helpers import (
+from src.utils.helpers import (
             format_timestamp,
             generate_hash,
             generate_uuid,

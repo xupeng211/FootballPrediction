@@ -147,7 +147,7 @@ class TestHealthRouter:
 
     def test_database_check_function(self):
         """测试数据库检查内部函数"""
-        from src.api.health import _check_database
+from src.api.health import _check_database
 
         result = _check_database()
         assert result["status"] == "healthy"
