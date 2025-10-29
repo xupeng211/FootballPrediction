@@ -1,0 +1,239 @@
+# OddsPortal爬虫配置
+# OddsPortal Scraper Configuration
+
+# 基础配置
+basic:
+  enabled: true
+  name: "OddsPortal"
+  type: "web_scraper"
+  base_url: "https://www.oddsportal.com"
+  supported_sports: ["football", "soccer"]
+
+# 请求配置
+request:
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  timeout: 30
+  max_retries: 3
+  retry_delay: 2
+
+  # 速率限制
+  rate_limit:
+    requests_per_minute: 60
+    min_request_interval: 1.0  # 秒
+    burst_limit: 10
+
+# 连接配置
+connection:
+  max_connections: 10
+  max_connections_per_host: 5
+  connection_timeout: 30
+  read_timeout: 30
+
+# Headers配置
+headers:
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+  Accept-Language: "en-US,en;q=0.5"
+  Accept-Encoding: "gzip, deflate"
+  DNT: "1"
+  Connection: "keep-alive"
+  Upgrade-Insecure-Requests: "1"
+
+# 目标联赛配置
+leagues:
+  premier_league:
+    name: "English Premier League"
+    url: "/soccer/england/premier-league/"
+    enabled: true
+    priority: 1
+
+  la_liga:
+    name: "Spanish La Liga"
+    url: "/soccer/spain/laliga/"
+    enabled: true
+    priority: 2
+
+  bundesliga:
+    name: "German Bundesliga"
+    url: "/soccer/germany/bundesliga/"
+    enabled: true
+    priority: 3
+
+  serie_a:
+    name: "Italian Serie A"
+    url: "/soccer/italy/serie-a/"
+    enabled: true
+    priority: 4
+
+  ligue_1:
+    name: "French Ligue 1"
+    url: "/soccer/france/ligue-1/"
+    enabled: true
+    priority: 5
+
+  champions_league:
+    name: "UEFA Champions League"
+    url: "/soccer/europe/champions-league/"
+    enabled: true
+    priority: 6
+
+  europa_league:
+    name: "UEFA Europa League"
+    url: "/soccer/europe/europa-league/"
+    enabled: false
+    priority: 7
+
+# 数据抓取配置
+scraping:
+  # 数据字段
+  fields:
+    - "match_id"
+    - "home_team"
+    - "away_team"
+    - "league"
+    - "match_date"
+    - "status"
+    - "home_score"
+    - "away_score"
+    - "odds_home_win"
+    - "odds_draw"
+    - "odds_away_win"
+    - "over_under"
+    - "asian_handicap"
+
+  # 抓取模式
+  modes:
+    today_matches:
+      enabled: true
+      schedule: "0 */6 * * *"  # 每6小时执行一次
+
+    live_matches:
+      enabled: true
+      schedule: "*/15 * * * *"  # 每15分钟执行一次
+
+    league_matches:
+      enabled: true
+      schedule: "0 2 * * *"     # 每天凌晨2点执行
+
+    historical_data:
+      enabled: false
+      schedule: "0 3 * * 0"     # 每周日凌晨3点执行
+
+# 数据处理配置
+processing:
+  # 数据验证
+  validation:
+    min_odds_value: 1.01
+    max_odds_value: 50.0
+    required_fields: ["home_team", "away_team", "league"]
+
+  # 数据标准化
+  normalization:
+    team_name_mapping:
+      "Manchester Utd": "Manchester United"
+      "Man United": "Manchester United"
+      "Man City": "Manchester City"
+      "Liverpool FC": "Liverpool"
+      "Chelsea FC": "Chelsea"
+      "Arsenal FC": "Arsenal"
+
+  # 数据过滤
+  filtering:
+    exclude_finished_matches: false
+    min_confidence_threshold: 0.7
+    exclude_suspicious_odds: true
+
+# 缓存配置
+cache:
+  enabled: true
+  ttl: 300  # 5分钟
+  max_size: 1000
+
+# 监控配置
+monitoring:
+  enabled: true
+  metrics:
+    - "scraping_success_rate"
+    - "response_time"
+    - "data_quality_score"
+    - "error_count"
+
+  alerts:
+    high_error_rate:
+      threshold: 0.1  # 10%错误率
+      enabled: true
+
+    slow_response:
+      threshold: 10.0  # 10秒
+      enabled: true
+
+    data_quality_drop:
+      threshold: 0.8   # 80%质量分数
+      enabled: true
+
+# 错误处理
+error_handling:
+  max_consecutive_errors: 5
+  backoff_multiplier: 2.0
+  max_backoff_time: 60.0
+
+  # 错误类型处理
+  error_types:
+    timeout:
+      retry: true
+      max_retries: 3
+
+    http_error:
+      retry: true
+      max_retries: 2
+      retry_codes: [500, 502, 503, 504]
+
+    parse_error:
+      retry: false
+      log_level: "warning"
+
+    rate_limit:
+      retry: true
+      wait_time: 60.0
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  loggers:
+    scraper:
+      level: "INFO"
+
+    parser:
+      level: "DEBUG"
+
+    rate_limiter:
+      level: "WARNING"
+
+# 环境特定配置
+environments:
+  development:
+    enabled: true
+    rate_limit:
+      requests_per_minute: 30
+    scraping:
+      modes:
+        historical_data:
+          enabled: false
+
+  production:
+    enabled: true
+    rate_limit:
+      requests_per_minute: 120
+    monitoring:
+      alerts:
+        enabled: true
+
+  testing:
+    enabled: false
+    scraping:
+      modes:
+        today_matches:
+          enabled: false
+        live_matches:
+          enabled: false

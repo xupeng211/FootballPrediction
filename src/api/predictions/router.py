@@ -113,9 +113,10 @@ async def get_predictions_root():
             "history": "/history/{match_id}",
             "predict": "/{match_id}/predict",
             "batch": "/batch",
-            "verify": "/{match_id}/verify"
-        }
+            "verify": "/{match_id}/verify",
+        },
     }
+
 
 @router.get("/health")
 async def health_check():

@@ -11,6 +11,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class UserRegisterRequest(BaseModel):
     """用户注册请求模型"""
+
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     email: EmailStr = Field(..., description="邮箱地址")
     password: str = Field(..., min_length=6, max_length=100, description="密码")
@@ -24,7 +25,7 @@ class UserRegisterRequest(BaseModel):
                 "email": "test@example.com",
                 "password": "password123",
                 "first_name": "张",
-                "last_name": "三"
+                "last_name": "三",
             }
         }
     )
@@ -32,6 +33,7 @@ class UserRegisterRequest(BaseModel):
 
 class UserResponse(BaseModel):
     """用户响应模型"""
+
     id: int
     username: str
     email: str
@@ -75,18 +77,18 @@ class UserResponse(BaseModel):
                     "favorite_teams": [],
                     "favorite_leagues": [],
                     "notification_enabled": True,
-                    "language": "zh-CN"
+                    "language": "zh-CN",
                 },
                 "statistics": {
                     "total_predictions": 0,
                     "correct_predictions": 0,
-                    "accuracy_rate": 0.0
+                    "accuracy_rate": 0.0,
                 },
                 "level": "1",
                 "experience_points": "0",
                 "achievements": [],
                 "created_at": "2025-10-28T18:50:00Z",
-                "updated_at": "2025-10-28T18:50:00Z"
+                "updated_at": "2025-10-28T18:50:00Z",
             }
         }
     )
@@ -94,6 +96,7 @@ class UserResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     """令牌响应模型"""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -111,8 +114,8 @@ class TokenResponse(BaseModel):
                     "id": 1,
                     "username": "testuser",
                     "email": "test@example.com",
-                    "role": "user"
-                }
+                    "role": "user",
+                },
             }
         }
     )
@@ -120,6 +123,7 @@ class TokenResponse(BaseModel):
 
 class PasswordChangeRequest(BaseModel):
     """密码修改请求模型"""
+
     current_password: str = Field(..., description="当前密码")
     new_password: str = Field(..., min_length=6, max_length=100, description="新密码")
 
@@ -127,7 +131,7 @@ class PasswordChangeRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "current_password": "oldpassword123",
-                "new_password": "newpassword123"
+                "new_password": "newpassword123",
             }
         }
     )
@@ -135,19 +139,17 @@ class PasswordChangeRequest(BaseModel):
 
 class PasswordResetRequest(BaseModel):
     """密码重置请求模型"""
+
     email: EmailStr = Field(..., description="邮箱地址")
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "email": "test@example.com"
-            }
-        }
+        json_schema_extra={"example": {"email": "test@example.com"}}
     )
 
 
 class PasswordResetConfirm(BaseModel):
     """密码重置确认模型"""
+
     token: str = Field(..., description="重置令牌")
     new_password: str = Field(..., min_length=6, max_length=100, description="新密码")
 
@@ -155,7 +157,7 @@ class PasswordResetConfirm(BaseModel):
         json_schema_extra={
             "example": {
                 "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                "new_password": "newpassword123"
+                "new_password": "newpassword123",
             }
         }
     )
@@ -163,19 +165,15 @@ class PasswordResetConfirm(BaseModel):
 
 class MessageResponse(BaseModel):
     """通用消息响应模型"""
+
     message: str
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "message": "操作成功"
-            }
-        }
-    )
+    model_config = ConfigDict(json_schema_extra={"example": {"message": "操作成功"}})
 
 
 class UserUpdateRequest(BaseModel):
     """用户更新请求模型"""
+
     first_name: Optional[str] = Field(None, max_length=50, description="名")
     last_name: Optional[str] = Field(None, max_length=50, description="姓")
     avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
@@ -189,10 +187,7 @@ class UserUpdateRequest(BaseModel):
                 "last_name": "三",
                 "avatar_url": "https://example.com/avatar.jpg",
                 "bio": "足球预测爱好者",
-                "preferences": {
-                    "favorite_teams": [1, 2],
-                    "language": "zh-CN"
-                }
+                "preferences": {"favorite_teams": [1, 2], "language": "zh-CN"},
             }
         }
     )
@@ -200,6 +195,7 @@ class UserUpdateRequest(BaseModel):
 
 class UserStatsResponse(BaseModel):
     """用户统计响应模型"""
+
     total_predictions: int = Field(..., description="总预测次数")
     correct_predictions: int = Field(..., description="正确预测次数")
     accuracy_rate: float = Field(..., description="准确率")
@@ -221,7 +217,7 @@ class UserStatsResponse(BaseModel):
                 "best_streak": 8,
                 "current_streak": 3,
                 "average_odds": 2.15,
-                "average_confidence": 75.5
+                "average_confidence": 75.5,
             }
         }
     )

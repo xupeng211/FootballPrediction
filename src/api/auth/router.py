@@ -23,6 +23,7 @@ from src.api.auth.models import (
 from src.database.models.user import User
 from src.database.connection import get_async_session
 from src.services.auth_service import AuthService
+
 # 暂时移除监控指标，避免导入问题
 # from src.monitoring.metrics_collector import (
 #     increase_user_registrations,
@@ -36,7 +37,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 
 async def get_auth_service(
-    db: AsyncSession = Depends(get_async_session)
+    db: AsyncSession = Depends(get_async_session),
 ) -> AuthService:
     """获取认证服务实例"""
     return AuthService(db)
@@ -44,7 +45,7 @@ async def get_auth_service(
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
     """
     获取当前登录用户
@@ -200,13 +201,10 @@ async def update_current_user(
     更新当前登录用户的信息
     """
     # 更新允许的字段
-    allowed_fields = {
-        "first_name", "last_name", "avatar_url", "bio", "preferences"
-    }
+    allowed_fields = {"first_name", "last_name", "avatar_url", "bio", "preferences"}
 
     update_data = {
-        key: value for key, value in user_update.items()
-        if key in allowed_fields
+        key: value for key, value in user_update.items() if key in allowed_fields
     }
 
     if not update_data:
@@ -300,7 +298,9 @@ async def reset_password(
     - **token**: 重置令牌
     - **new_password**: 新密码
     """
-    success = await auth_service.reset_password(reset_data.token, reset_data.new_password)
+    success = await auth_service.reset_password(
+        reset_data.token, reset_data.new_password
+    )
 
     if not success:
         raise HTTPException(

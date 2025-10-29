@@ -189,8 +189,12 @@ class TestFileUtils:
     def test_write_json_file_alias_failure(self):
         """测试write_json_file失败情况"""
         # 使用mock模拟写入失败
-        with patch.object(FileUtils, 'write_json', side_effect=ValueError("模拟写入失败")):
-            _result = FileUtils.write_json_file({"test": "data"}, "/some/path/file.json")
+        with patch.object(
+            FileUtils, "write_json", side_effect=ValueError("模拟写入失败")
+        ):
+            _result = FileUtils.write_json_file(
+                {"test": "data"}, "/some/path/file.json"
+            )
             assert _result is False
 
     def test_cleanup_old_files(self):

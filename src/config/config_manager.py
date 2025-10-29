@@ -44,59 +44,15 @@ class ConfigSource(ABC):
 class FileConfigSource(ConfigSource):
     """文件配置源"""
 
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-
-    async def load(self) -> Dict[str, Any]:
-        """加载配置数据"""
-        try:
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                if self.file_path.endswith('.yaml') or self.file_path.endswith('.yml'):
-                    return yaml.safe_load(f) or {}
-                else:
-                    return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load config from {self.file_path}: {e}")
-            return {}
-
-    async def save(self, config: Dict[str, Any]) -> bool:
-        """保存配置数据"""
-        try:
-            with open(self.file_path, 'w', encoding='utf-8') as f:
-                if self.file_path.endswith('.yaml') or self.file_path.endswith('.yml'):
-                    yaml.safe_dump(config, f, default_flow_style=False)
-                else:
-                    json.dump(config, f, indent=2)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to save config to {self.file_path}: {e}")
-            return False
-
 
 class EnvironmentConfigSource(ConfigSource):
     """环境变量配置源"""
-
-    def __init__(self, prefix: str = ""):
-        self.prefix = prefix
-
-    async def load(self) -> Dict[str, Any]:
-        """加载配置数据"""
-        config = {}
-        for key, value in os.environ.items():
-            if key.startswith(self.prefix):
-                config_key = key[len(self.prefix):].lower()
-                config[config_key] = value
-        return config
-
-    async def save(self, config: Dict[str, Any]) -> bool:
-        """保存配置数据"""
-        # 环境变量通常不支持直接保存
-        return False
 
 
 @dataclass
 class ConfigCache:
     """配置缓存"""
+
     data: Dict[str, Any] = None
     timestamp: datetime = None
     ttl: int = 300  # 5分钟缓存
@@ -105,8 +61,16 @@ class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
 
+
+class ConfigManager:
+    """配置管理器"""
+
     def __init__(self):
-        self.rules: Dict[str, Callable] = {}
+        self.sources: List[ConfigSource] = []
+        self.cache: Optional[ConfigCache] = None
+        self.validator = ConfigValidator()
+        self._config: Dict[str, Any] = {}
+        self._encryption_key = self._generate_encryption_key()
 
     def add_rule(self, key: str, validator: Callable) -> None:
         """添加验证规则"""
@@ -125,15 +89,6 @@ class ConfigValidator:
 
 
 class ConfigManager:
-    """配置管理器"""
-
-    def __init__(self):
-        self.sources: List[ConfigSource] = []
-        self.cache: Optional[ConfigCache] = None
-        self.validator = ConfigValidator()
-        self._config: Dict[str, Any] = {}
-        self._encryption_key = self._generate_encryption_key()
-
     def add_source(self, source: ConfigSource) -> None:
         """添加配置源"""
         self.sources.append(source)
@@ -148,13 +103,18 @@ class ConfigManager:
 
     def _generate_encryption_key(self) -> str:
         """生成加密密钥"""
-        return base64.b64encode(os.urandom(32)).decode()
+        return base64.b64encode(
+            os.urandom(32)  # TODO: 将魔法数字 32 提取为常量
+        ).decode()  # TODO: 将魔法数字 32 提取为常量
 
+    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
+    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# TODO: 方法 def _convert_value 过长(50行)，建议拆分
     def _convert_value(self, value: str) -> Union[str, int, float, bool]:
         """尝试转换值的类型"""
         # 布尔值
-        if value.lower() in ('true', 'false'):
-            return value.lower() == 'true'
+        if value.lower() in ("true", "false"):
+            return value.lower() == "true"
 
         # 整数
         try:
@@ -232,9 +192,6 @@ class ConfigManager:
 
 
 # 全局配置管理器实例
-_global_config_manager = None
-
-
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
     global _global_config_manager

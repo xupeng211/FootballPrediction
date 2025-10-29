@@ -17,7 +17,7 @@ from src.services.auth_service import AuthService
 
 
 async def get_auth_service(
-    db: AsyncSession = Depends(get_async_session)
+    db: AsyncSession = Depends(get_async_session),
 ) -> AuthService:
     """获取认证服务实例"""
     return AuthService(db)
@@ -25,7 +25,7 @@ async def get_auth_service(
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
     """
     获取当前登录用户
@@ -51,7 +51,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """
     获取当前活跃用户
@@ -67,14 +67,13 @@ async def get_current_active_user(
     """
     if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="用户账户已被禁用"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="用户账户已被禁用"
         )
     return current_user
 
 
 async def get_current_verified_user(
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> User:
     """
     获取当前已验证用户
@@ -90,14 +89,13 @@ async def get_current_verified_user(
     """
     if not current_user.is_verified:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="请先验证您的邮箱地址"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="请先验证您的邮箱地址"
         )
     return current_user
 
 
 async def get_current_admin_user(
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> User:
     """
     获取当前管理员用户
@@ -113,14 +111,13 @@ async def get_current_admin_user(
     """
     if not current_user.is_admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="权限不足，需要管理员权限"
+            status_code=status.HTTP_403_FORBIDDEN, detail="权限不足，需要管理员权限"
         )
     return current_user
 
 
 async def get_current_premium_user(
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> User:
     """
     获取当前高级用户
@@ -136,8 +133,7 @@ async def get_current_premium_user(
     """
     if not current_user.is_premium:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="此功能需要高级用户权限"
+            status_code=status.HTTP_403_FORBIDDEN, detail="此功能需要高级用户权限"
         )
     return current_user
 
@@ -152,13 +148,14 @@ def require_permissions(required_roles: Optional[list] = None):
     Returns:
         依赖函数
     """
+
     async def permission_dependency(
-        current_user: User = Depends(get_current_active_user)
+        current_user: User = Depends(get_current_active_user),
     ) -> User:
         if required_roles and current_user.role not in required_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"权限不足，需要以下角色之一: {', '.join(required_roles)}"
+                detail=f"权限不足，需要以下角色之一: {', '.join(required_roles)}",
             )
         return current_user
 
@@ -177,13 +174,14 @@ class OptionalAuth:
 
     用于不强制要求用户登录的端点
     """
+
     def __init__(self):
         pass
 
     async def __call__(
         self,
         token: Optional[str] = Depends(oauth2_scheme),
-        auth_service: AuthService = Depends(get_auth_service)
+        auth_service: AuthService = Depends(get_auth_service),
     ) -> Optional[User]:
         """
         可选获取当前用户

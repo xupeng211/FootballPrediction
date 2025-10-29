@@ -73,7 +73,9 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def verify_token(self, token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
+    def verify_token(
+        self, token: str, token_type: str = "access"
+    ) -> Optional[Dict[str, Any]]:
         """验证令牌"""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -159,7 +161,9 @@ class AuthService:
 
         return user
 
-    async def login_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+    async def login_user(
+        self, username: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         """用户登录，返回令牌信息"""
         user = await self.authenticate_user(username, password)
         if not user:
@@ -247,9 +251,7 @@ class AuthService:
             "user_id": user.id,
             "type": "password_reset",
         }
-        reset_token = self.create_access_token(
-            reset_token_data, timedelta(hours=1)
-        )
+        reset_token = self.create_access_token(reset_token_data, timedelta(hours=1))
         return reset_token
 
     async def reset_password(self, reset_token: str, new_password: str) -> bool:
