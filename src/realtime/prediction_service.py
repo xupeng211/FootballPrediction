@@ -20,8 +20,8 @@ from enum import Enum
     create_prediction_updated_event,
     create_system_alert_event,
 )
-from .manager import get_websocket_manager
-from .subscriptions import get_subscription_manager
+        from .manager import get_websocket_manager
+        from .subscriptions import get_subscription_manager
 
 
 class PredictionStatus(str, Enum):

@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
 
 # 🔧 在应用启动前设置警告过滤器，确保测试日志清洁
-    from src.utils.warning_filters import setup_warning_filters
+            from src.utils.warning_filters import setup_warning_filters
 
     # 如果警告过滤器模块不可用，手动设置基本过滤器
     import warnings
@@ -16,26 +16,26 @@ from contextlib import asynccontextmanager
     # Marshmallow 4.x 已经移除了 warnings 模块
     # 使用通用的消息过滤器
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+        from fastapi import FastAPI, HTTPException
+        from fastapi.middleware.cors import CORSMiddleware
+        from fastapi.responses import JSONResponse
 
 # 可选的速率限制功能
-    from slowapi import Limiter, _rate_limit_exceeded_handler
-    from slowapi.errors import RateLimitExceeded
-    from slowapi.util import get_remote_address
+            from slowapi import Limiter, _rate_limit_exceeded_handler
+            from slowapi.errors import RateLimitExceeded
+            from slowapi.util import get_remote_address
 
 
-from src.api.health import router as health_router
-from src.api.schemas import RootResponse
-from src.config.openapi_config import setup_openapi
-from src.core.event_application import initialize_event_system, shutdown_event_system
-from src.cqrs.application import initialize_cqrs
-from src.database.connection import initialize_database
-from src.middleware.i18n import I18nMiddleware
-from src.monitoring.metrics_collector import (
-from src.observers import (
-from src.performance.integration import setup_performance_monitoring
+        from src.api.health import router as health_router
+        from src.api.schemas import RootResponse
+        from src.config.openapi_config import setup_openapi
+        from src.core.event_application import initialize_event_system, shutdown_event_system
+        from src.cqrs.application import initialize_cqrs
+        from src.database.connection import initialize_database
+        from src.middleware.i18n import I18nMiddleware
+        from src.monitoring.metrics_collector import (
+        from src.observers import (
+        from src.performance.integration import setup_performance_monitoring
 
 # 配置日志
 
@@ -69,7 +69,7 @@ from src.performance.integration import setup_performance_monitoring
     # 关闭观察者系统
 
     # 清理性能监控系统
-    from src.performance.integration import get_performance_integration
+            from src.performance.integration import get_performance_integration
 
 
 
@@ -80,28 +80,28 @@ from src.performance.integration import setup_performance_monitoring
 # 配置 OpenAPI 文档
 
 # 配置CORS（使用统一配置）
-from src.config.cors_config import get_cors_config
+        from src.config.cors_config import get_cors_config
 
 # 添加国际化中间件
 
 # 添加CORS中间件（统一配置）
 
 # 注册路由
-    from src.api.adapters import router as adapters_router
+            from src.api.adapters import router as adapters_router
 
     # 重新启用简化的认证系统
-    from src.api.simple_auth import router as auth_router
-    from src.api.cqrs import router as cqrs_router
-    from src.api.data_router import (
-    from src.api.decorators import router as decorators_router
-    from src.api.events import router as events_router
-    from src.api.facades import router as facades_router
-    from src.api.features_simple import router as features_router
-    from src.api.monitoring import router as monitoring_router
-    from src.api.observers import router as observers_router
-    from src.api.predictions import router as predictions_router
-    from src.api.repositories import router as repositories_router
-    from src.realtime.router import router as realtime_router
+            from src.api.simple_auth import router as auth_router
+            from src.api.cqrs import router as cqrs_router
+            from src.api.data_router import (
+            from src.api.decorators import router as decorators_router
+            from src.api.events import router as events_router
+            from src.api.facades import router as facades_router
+            from src.api.features_simple import router as features_router
+            from src.api.monitoring import router as monitoring_router
+            from src.api.observers import router as observers_router
+            from src.api.predictions import router as predictions_router
+            from src.api.repositories import router as repositories_router
+            from src.realtime.router import router as realtime_router
 
 
 

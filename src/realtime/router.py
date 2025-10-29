@@ -1,15 +1,15 @@
 
 
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException
-from typing import Optional, Dict, Any
+        from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException
+        from typing import Optional, Dict, Any
 import logging
 
-from .handlers import get_websocket_endpoint
-from .manager import get_websocket_manager
-from .subscriptions import get_subscription_manager
-from .prediction_api import router as prediction_api_router
-from .match_api import router as match_api_router
+        from .handlers import get_websocket_endpoint
+        from .manager import get_websocket_manager
+        from .subscriptions import get_subscription_manager
+        from .prediction_api import router as prediction_api_router
+        from .match_api import router as match_api_router
 
 
 # 包含API路由
@@ -35,11 +35,11 @@ from .match_api import router as match_api_router
 
         # 自动订阅预测事件
 
-        from .subscriptions import subscribe_to_predictions
+                from .subscriptions import subscribe_to_predictions
 
 
         # 发送订阅确认
-        from .events import RealtimeEvent, EventType
+                from .events import RealtimeEvent, EventType
 
 
         # 消息处理循环
@@ -54,11 +54,11 @@ from .match_api import router as match_api_router
         # 自动订阅比赛事件
 
 
-        from .subscriptions import subscribe_to_matches
+                from .subscriptions import subscribe_to_matches
 
 
         # 发送订阅确认
-        from .events import RealtimeEvent, EventType
+                from .events import RealtimeEvent, EventType
 
 
         # 消息处理循环

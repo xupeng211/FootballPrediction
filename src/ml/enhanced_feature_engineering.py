@@ -254,14 +254,14 @@ class EnhancedFeatureEngineer:
         # 2. 比赛重要性特征（根据联赛类型）
         league_name = match.get("league_name", "").lower()
         if any(keyword in league_name for keyword in ["champions", "europa", "cup"]):
-            features["match_importance"] = 1.0  # 重要比赛
+                features["match_importance"] = 1.0  # 重要比赛
         elif any(
             keyword in league_name
             for keyword in ["premier", "la liga", "bundesliga", "serie a"]
         ):
-            features["match_importance"] = 0.8  # 主要联赛
+                features["match_importance"] = 0.8  # 主要联赛
         else:
-            features["match_importance"] = 0.6  # 其他联赛
+                features["match_importance"] = 0.6  # 其他联赛
 
         # 3. 时间特征
         match_date = match.get("match_date", datetime.now())

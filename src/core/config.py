@@ -20,9 +20,9 @@ try:
 except ImportError:
     try:
         # Pydantic v1
-        from pydantic import BaseSettings, Field
+    from pydantic import BaseSettings, Field
 
-        HAS_PYDANTIC = True
+    HAS_PYDANTIC = True
     except ImportError:
         HAS_PYDANTIC = False
         BaseSettings = object
@@ -224,8 +224,7 @@ class Settings(SettingsClass):
         def __init__(self, **kwargs):
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-            self.test_database_url =
-    "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
+            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
             self.redis_url = "redis://redis:6379/0"
             self.api_host = "localhost"
             self.api_port = 8000

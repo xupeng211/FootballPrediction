@@ -52,8 +52,9 @@ class OddsPortalScraper:
         self.config = config or {}
         self.base_url = "https://www.oddsportal.com"
         self.session = None
-        self.user_agent =
+        self.user_agent = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+)
         self.timeout = aiohttp.ClientTimeout(total=30)
         self.max_retries = 3
         self.retry_delay = 2
@@ -86,8 +87,7 @@ class OddsPortalScraper:
             timeout=timeout,
             headers={
                 "User-Agent": self.user_agent,
-                "Accept": "text/html,application/xhtml+xml,application/xml;q =
-    0.9,image/webp,*/*;q=0.8",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 "Accept-Language": "en-US,en;q=0.5",
                 "Accept-Encoding": "gzip, deflate",
                 "DNT": "1",
@@ -720,10 +720,7 @@ async def test_oddsportal_scraper():
         for i, match in enumerate(today_matches[:3]):
             logger.info(f"Match {i+1}: {match.home_team} vs {match.away_team}")
             if match.odds_home_win:
-                logger.info(
-                    f"  Odds: Home =
-    {match.odds_home_win:.2f}, Draw={match.odds_draw:.2f}, Away={match.odds_away_win:.2f}"
-                )
+                logger.info(f"  Odds: Home={match.odds_home_win:.2f}, Draw={match.odds_draw:.2f}, Away={match.odds_away_win:.2f}")
 
     logger.info("OddsPortal scraper test completed")
 

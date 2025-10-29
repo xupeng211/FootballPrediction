@@ -28,7 +28,7 @@ from sklearn.metrics import (
     StratifiedKFold,
     cross_val_score,
 )
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+        from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # 尝试导入XGBoost和LightGBM
 try:
@@ -47,7 +47,7 @@ except ImportError:
     LGB_AVAILABLE = False
     logging.warning("LightGBM not available. Install with: pip install lightgbm")
 
-from src.core.logging_system import get_logger
+        from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -123,7 +123,7 @@ class AdvancedModelTrainer:
         self.is_trained = False
         self.training_history: list = []
         self.performance_metrics: dict = {}
-        self.feature_importance: dict = {}
+            self.feature_importance: dict = {}
         self.scaler = None
         self.label_encoder = None
         self.best_params = {}
@@ -324,10 +324,10 @@ class AdvancedModelTrainer:
                 self.best_params = model.get_params()
 
             # 获取特征重要性
-            if hasattr(self.model, "feature_importances_"):
+                if hasattr(self.model, "feature_importances_"):
                 feature_names = X_train.columns.tolist()
-                self.feature_importance = dict(
-                    zip(feature_names, self.model.feature_importances_)
+                    self.feature_importance = dict(
+                        zip(feature_names, self.model.feature_importances_)
                 )
 
             # 评估模型
@@ -373,7 +373,7 @@ class AdvancedModelTrainer:
                 "feature_count": len(X_train.columns),
                 "feature_importance": dict(
                     sorted(
-                        self.feature_importance.items(),
+                            self.feature_importance.items(),
                         key=lambda x: x[1],
                         reverse=True,
                     )[:10]
@@ -756,7 +756,7 @@ class EnsembleTrainer:
                 np.hstack(meta_features_val)
 
                 # 训练元模型（使用简单的逻辑回归）
-                from sklearn.linear_model import LogisticRegression
+                        from sklearn.linear_model import LogisticRegression
 
                 self.meta_model = LogisticRegression(random_state=42)
                 self.meta_model.fit(X_meta_train, y_train)
@@ -936,7 +936,7 @@ class EnsembleTrainer:
 
             if result["probabilities"]:
                 try:
-                    from sklearn.metrics import log_loss
+                            from sklearn.metrics import log_loss
 
                     metrics["log_loss"] = log_loss(y_test, result["probabilities"])
                 except Exception as e:
