@@ -31,12 +31,13 @@ logger = get_logger(__name__)
 @dataclass
 class TimeSeriesMetric:
     """时序指标数据模型"""
+
     measurement: str  # 测量名称，如 "quality_metrics"
     tags: Dict[str, str]  # 标签，用于过滤和分组
     fields: Dict[str, Union[float, int, str, bool]]  # 字段，实际的数据值
     timestamp: datetime  # 时间戳
 
-    def to_influx_point(self) -> 'Point':
+    def to_influx_point(self) -> "Point":
         """转换为InfluxDB Point对象"""
         if Point is None:
             return None
@@ -60,6 +61,7 @@ class TimeSeriesMetric:
 @dataclass
 class MetricQuery:
     """指标查询配置"""
+
     measurement: str
     fields: List[str]
     tags: Optional[Dict[str, str]] = None
@@ -78,10 +80,16 @@ class InfluxDBManager:
         self.logger = get_logger(self.__class__.__name__)
 
         # InfluxDB连接配置
-        self.influx_url = self.config.get('influxdb', {}).get('url', 'http://localhost:8086')
-        self.influx_token = self.config.get('influxdb', {}).get('token', '')
-        self.influx_org = self.config.get('influxdb', {}).get('org', 'football-prediction')
-        self.influx_bucket = self.config.get('influxdb', {}).get('bucket', 'quality-metrics')
+        self.influx_url = self.config.get("influxdb", {}).get(
+            "url", "http://localhost:8086"
+        )
+        self.influx_token = self.config.get("influxdb", {}).get("token", "")
+        self.influx_org = self.config.get("influxdb", {}).get(
+            "org", "football-prediction"
+        )
+        self.influx_bucket = self.config.get("influxdb", {}).get(
+            "bucket", "quality-metrics"
+        )
 
         self.client: Optional[InfluxDBClient] = None
         self.write_api = None
@@ -100,9 +108,7 @@ class InfluxDBManager:
 
         try:
             self.client = InfluxDBClient(
-                url=self.influx_url,
-                token=self.influx_token,
-                org=self.influx_org
+                url=self.influx_url, token=self.influx_token, org=self.influx_org
             )
 
             # 测试连接
@@ -120,11 +126,13 @@ class InfluxDBManager:
 
         except Exception as e:
             self.connection_attempts += 1
-            self.logger.error(f"InfluxDB连接失败 (尝试 {self.connection_attempts}/{self.max_connection_attempts}): {e}")
+            self.logger.error(
+                f"InfluxDB连接失败 (尝试 {self.connection_attempts}/{self.max_connection_attempts}): {e}"
+            )
 
             if self.connection_attempts < self.max_connection_attempts:
                 # 等待后重试
-                await asyncio.sleep(2 ** self.connection_attempts)
+                await asyncio.sleep(2**self.connection_attempts)
                 return await self.connect()
 
             return False
@@ -153,7 +161,9 @@ class InfluxDBManager:
 
             self.write_api.write(bucket=self.influx_bucket, record=point)
 
-            self.logger.debug(f"时序指标已写入: {metric.measurement} at {metric.timestamp}")
+            self.logger.debug(
+                f"时序指标已写入: {metric.measurement} at {metric.timestamp}"
+            )
             return True
 
         except Exception as e:
@@ -190,47 +200,51 @@ class InfluxDBManager:
 
             # 构建标签
             tags = {
-                'source': 'quality_gate_system',
-                'environment': self.config.get('environment', 'development')
+                "source": "quality_gate_system",
+                "environment": self.config.get("environment", "development"),
             }
 
             # 添加状态标签
-            if 'overall_status' in quality_data:
-                tags['status'] = quality_data['overall_status']
+            if "overall_status" in quality_data:
+                tags["status"] = quality_data["overall_status"]
 
             # 构建字段
             fields = {
-                'overall_score': float(quality_data.get('overall_score', 0)),
-                'gates_checked': int(quality_data.get('gates_checked', 0)),
-                'should_block': bool(quality_data.get('should_block', False))
+                "overall_score": float(quality_data.get("overall_score", 0)),
+                "gates_checked": int(quality_data.get("gates_checked", 0)),
+                "should_block": bool(quality_data.get("should_block", False)),
             }
 
             # 添加性能指标
-            if 'performance' in quality_data:
-                perf = quality_data['performance']
-                fields.update({
-                    'response_time_ms': float(perf.get('response_time_ms', 0)),
-                    'cpu_usage': float(perf.get('cpu_usage', 0)),
-                    'memory_usage': float(perf.get('memory_usage', 0)),
-                    'active_connections': int(perf.get('active_connections', 0))
-                })
+            if "performance" in quality_data:
+                perf = quality_data["performance"]
+                fields.update(
+                    {
+                        "response_time_ms": float(perf.get("response_time_ms", 0)),
+                        "cpu_usage": float(perf.get("cpu_usage", 0)),
+                        "memory_usage": float(perf.get("memory_usage", 0)),
+                        "active_connections": int(perf.get("active_connections", 0)),
+                    }
+                )
 
             # 添加摘要统计
-            if 'summary' in quality_data:
-                summary = quality_data['summary']
-                fields.update({
-                    'passed_count': int(summary.get('passed', 0)),
-                    'failed_count': int(summary.get('failed', 0)),
-                    'warning_count': int(summary.get('warning', 0)),
-                    'skipped_count': int(summary.get('skipped', 0))
-                })
+            if "summary" in quality_data:
+                summary = quality_data["summary"]
+                fields.update(
+                    {
+                        "passed_count": int(summary.get("passed", 0)),
+                        "failed_count": int(summary.get("failed", 0)),
+                        "warning_count": int(summary.get("warning", 0)),
+                        "skipped_count": int(summary.get("skipped", 0)),
+                    }
+                )
 
             # 创建时序指标
             metric = TimeSeriesMetric(
                 measurement="quality_metrics",
                 tags=tags,
                 fields=fields,
-                timestamp=timestamp
+                timestamp=timestamp,
             )
 
             return await self.write_metric(metric)
@@ -248,23 +262,23 @@ class InfluxDBManager:
             for result in gate_results:
                 # 构建标签
                 tags = {
-                    'gate_name': result.get('gate_name', 'unknown'),
-                    'status': result.get('status', 'unknown'),
-                    'source': 'quality_gate_system'
+                    "gate_name": result.get("gate_name", "unknown"),
+                    "status": result.get("status", "unknown"),
+                    "source": "quality_gate_system",
                 }
 
                 # 构建字段
                 fields = {
-                    'score': float(result.get('score', 0)),
-                    'threshold': float(result.get('threshold', 0)),
-                    'duration_ms': int(result.get('duration_ms', 0))
+                    "score": float(result.get("score", 0)),
+                    "threshold": float(result.get("threshold", 0)),
+                    "duration_ms": int(result.get("duration_ms", 0)),
                 }
 
                 metric = TimeSeriesMetric(
                     measurement="gate_results",
                     tags=tags,
                     fields=fields,
-                    timestamp=timestamp
+                    timestamp=timestamp,
                 )
                 metrics.append(metric)
 
@@ -290,15 +304,22 @@ class InfluxDBManager:
             for table in result:
                 for record in table.records:
                     data_point = {
-                        'time': record.get_time(),
-                        'measurement': record.get_measurement(),
-                        'field': record.get_field(),
-                        'value': record.get_value()
+                        "time": record.get_time(),
+                        "measurement": record.get_measurement(),
+                        "field": record.get_field(),
+                        "value": record.get_value(),
                     }
 
                     # 添加标签
                     for tag_key, tag_value in record.values.items():
-                        if tag_key.startswith('_') or tag_key in ['time', 'measurement', 'field', 'value', 'result', 'table']:
+                        if tag_key.startswith("_") or tag_key in [
+                            "time",
+                            "measurement",
+                            "field",
+                            "value",
+                            "result",
+                            "table",
+                        ]:
                             continue
                         data_point[tag_key] = tag_value
 
@@ -319,20 +340,22 @@ class InfluxDBManager:
 
         # 时间范围
         if query.start_time:
-            start_str = query.start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-            flux_parts.append(f'|> range(start: {start_str}')
+            start_str = query.start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            flux_parts.append(f"|> range(start: {start_str}")
 
             if query.end_time:
-                end_str = query.end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-                flux_parts.append(f', stop: {end_str}')
+                end_str = query.end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+                flux_parts.append(f", stop: {end_str}")
 
-            flux_parts.append(')')
+            flux_parts.append(")")
         else:
             # 默认查询最近24小时
-            flux_parts.append('|> range(start: -24h)')
+            flux_parts.append("|> range(start: -24h)")
 
         # 测量名称过滤
-        flux_parts.append(f'|> filter(fn: (r) => r._measurement == "{query.measurement}")')
+        flux_parts.append(
+            f'|> filter(fn: (r) => r._measurement == "{query.measurement}")'
+        )
 
         # 标签过滤
         if query.tags:
@@ -341,57 +364,67 @@ class InfluxDBManager:
 
         # 字段过滤
         if query.fields:
-            field_filter = ' or '.join([f'r._field == "{field}"' for field in query.fields])
-            flux_parts.append(f'|> filter(fn: (r) => {field_filter})')
+            field_filter = " or ".join(
+                [f'r._field == "{field}"' for field in query.fields]
+            )
+            flux_parts.append(f"|> filter(fn: (r) => {field_filter})")
 
         # 聚合操作
         if query.aggregation:
             if query.window:
-                flux_parts.append(f'|> aggregateWindow(every: {query.window}, fn: {query.aggregation}, createEmpty: false)')
+                flux_parts.append(
+                    f"|> aggregateWindow(every: {query.window}, fn: {query.aggregation}, createEmpty: false)"
+                )
             else:
-                flux_parts.append(f'|> {query.aggregation}()')
+                flux_parts.append(f"|> {query.aggregation}()")
 
         # 限制结果数量
         if query.limit:
-            flux_parts.append(f'|> limit(n: {query.limit})')
+            flux_parts.append(f"|> limit(n: {query.limit})")
 
-        return ' '.join(flux_parts)
+        return " ".join(flux_parts)
 
-    async def get_quality_metrics_history(self, hours: int = 24) -> List[Dict[str, Any]]:
+    async def get_quality_metrics_history(
+        self, hours: int = 24
+    ) -> List[Dict[str, Any]]:
         """获取质量指标历史数据"""
         query = MetricQuery(
             measurement="quality_metrics",
             fields=["overall_score", "gates_checked", "cpu_usage", "memory_usage"],
             start_time=datetime.now() - timedelta(hours=hours),
             aggregation="mean",
-            window="5m"
+            window="5m",
         )
 
         return await self.query_metrics(query)
 
-    async def get_gate_results_history(self, gate_name: str = None, hours: int = 24) -> List[Dict[str, Any]]:
+    async def get_gate_results_history(
+        self, gate_name: str = None, hours: int = 24
+    ) -> List[Dict[str, Any]]:
         """获取门禁结果历史数据"""
         query = MetricQuery(
             measurement="gate_results",
             fields=["score", "duration_ms"],
             start_time=datetime.now() - timedelta(hours=hours),
             aggregation="mean",
-            window="10m"
+            window="10m",
         )
 
         if gate_name:
-            query.tags = {'gate_name': gate_name}
+            query.tags = {"gate_name": gate_name}
 
         return await self.query_metrics(query)
 
-    async def get_metric_statistics(self, measurement: str, field: str, hours: int = 24) -> Dict[str, float]:
+    async def get_metric_statistics(
+        self, measurement: str, field: str, hours: int = 24
+    ) -> Dict[str, float]:
         """获取指标统计信息"""
         try:
             # 查询原始数据
             query = MetricQuery(
                 measurement=measurement,
                 fields=[field],
-                start_time=datetime.now() - timedelta(hours=hours)
+                start_time=datetime.now() - timedelta(hours=hours),
             )
 
             data_points = await self.query_metrics(query)
@@ -399,18 +432,22 @@ class InfluxDBManager:
             if not data_points:
                 return {}
 
-            values = [point['value'] for point in data_points if isinstance(point['value'], (int, float))]
+            values = [
+                point["value"]
+                for point in data_points
+                if isinstance(point["value"], (int, float))
+            ]
 
             if not values:
                 return {}
 
             return {
-                'count': len(values),
-                'min': min(values),
-                'max': max(values),
-                'mean': sum(values) / len(values),
-                'latest': values[-1] if values else 0,
-                'earliest': values[0] if values else 0
+                "count": len(values),
+                "min": min(values),
+                "max": max(values),
+                "mean": sum(values) / len(values),
+                "latest": values[-1] if values else 0,
+                "earliest": values[0] if values else 0,
             }
 
         except Exception as e:
@@ -423,16 +460,20 @@ class InfluxDBManager:
             self._ensure_connection()
 
             # 计算删除时间点
-            delete_time = (datetime.now() - timedelta(days=days_to_keep)).strftime('%Y-%m-%dT%H:%M:%SZ')
+            delete_time = (datetime.now() - timedelta(days=days_to_keep)).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
 
             # 构建删除查询
-            delete_query = f'''
+            delete_query = f"""
             from(bucket: "{self.influx_bucket}")
                 |> range(start: -365d, stop: {delete_time})
                 |> drop()
-            '''
+            """
             # 记录删除查询（用于调试）
-            logger.debug(f"Generated delete query for data older than {delete_time}: {delete_query.strip()}")
+            logger.debug(
+                f"Generated delete query for data older than {delete_time}: {delete_query.strip()}"
+            )
 
             # 执行删除 (注意：这需要适当的权限)
             # self.query_api.query(delete_query)
@@ -453,11 +494,11 @@ class InfluxDBManager:
 
             if bucket:
                 return {
-                    'name': bucket.name,
-                    'id': bucket.id,
-                    'org_id': bucket.org_id,
-                    'retention_rules': bucket.retention_rules,
-                    'created_at': bucket.created_at
+                    "name": bucket.name,
+                    "id": bucket.id,
+                    "org_id": bucket.org_id,
+                    "retention_rules": bucket.retention_rules,
+                    "created_at": bucket.created_at,
                 }
             else:
                 return {}
@@ -471,28 +512,24 @@ class InfluxDBManager:
         try:
             if not self.is_connected or not self.client:
                 return {
-                    'status': 'unhealthy',
-                    'message': 'InfluxDB未连接',
-                    'url': self.influx_url
+                    "status": "unhealthy",
+                    "message": "InfluxDB未连接",
+                    "url": self.influx_url,
                 }
 
             health = self.client.health()
 
             return {
-                'status': health.status,
-                'message': health.message,
-                'url': self.influx_url,
-                'bucket': self.influx_bucket,
-                'org': self.influx_org,
-                'connection_attempts': self.connection_attempts
+                "status": health.status,
+                "message": health.message,
+                "url": self.influx_url,
+                "bucket": self.influx_bucket,
+                "org": self.influx_org,
+                "connection_attempts": self.connection_attempts,
             }
 
         except Exception as e:
-            return {
-                'status': 'error',
-                'message': str(e),
-                'url': self.influx_url
-            }
+            return {"status": "error", "message": str(e), "url": self.influx_url}
 
 
 # 全局InfluxDB管理器实例
@@ -545,14 +582,9 @@ if __name__ == "__main__":
                 "response_time_ms": 145,
                 "cpu_usage": 42.5,
                 "memory_usage": 67.8,
-                "active_connections": 8
+                "active_connections": 8,
             },
-            "summary": {
-                "passed": 5,
-                "failed": 0,
-                "warning": 1,
-                "skipped": 0
-            }
+            "summary": {"passed": 5, "failed": 0, "warning": 1, "skipped": 0},
         }
 
         success = await save_quality_metrics(test_data)

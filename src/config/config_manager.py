@@ -65,18 +65,24 @@ class ConfigValidator:
 
 class ConfigManager:
     """配置管理器"""
+
     pass
+
 
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
 # 全局配置管理器实例
 _global_config_manager = None
 
+
 class ConfigCache:
     """配置缓存类"""
+
     pass
+
 
 class ConfigValidator:
     """配置验证器"""
+
 
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
@@ -84,7 +90,9 @@ class ConfigValidator:
 # TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
 class ConfigCache:
     """配置缓存类 - 第二个定义"""
+
     pass
+
 
 class ConfigValidator:
     def __init__(self):
@@ -129,8 +137,8 @@ class ConfigValidator:
 
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
+    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     def _convert_value(self, value: str) -> Union[str, int, float, bool]:
         """尝试转换值的类型"""
         # 布尔值
@@ -236,27 +244,44 @@ def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
     config_manager = get_config_manager()
 
     # 记录配置管理器状态
-    logger.debug(f"Config manager {config_manager.__class__.__name__} initialized for environment: {env}")
+    logger.debug(
+        f"Config manager {config_manager.__class__.__name__} initialized for environment: {env}"
+    )
 
     # 根据环境返回不同的配置
     if env == "production":
         return {
-            "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/football_prediction_prod"),
-            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379/0"),  # TODO: 将魔法数字 6379 提取为常量
+            "database_url": os.getenv(
+                "DATABASE_URL",
+                "postgresql+asyncpg://user:pass@localhost/football_prediction_prod",
+            ),
+            "redis_url": os.getenv(
+                "REDIS_URL", "redis://localhost:6379/0"
+            ),  # TODO: 将魔法数字 6379 提取为常量
             "log_level": "INFO",
             "debug": False,
         }
     elif env == "test":
         return {
-            "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost/football_prediction_test"),
-            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379/1"),  # TODO: 将魔法数字 6379 提取为常量
+            "database_url": os.getenv(
+                "DATABASE_URL",
+                "postgresql+asyncpg://user:pass@localhost/football_prediction_test",
+            ),
+            "redis_url": os.getenv(
+                "REDIS_URL", "redis://localhost:6379/1"
+            ),  # TODO: 将魔法数字 6379 提取为常量
             "log_level": "DEBUG",
             "debug": True,
         }
     else:  # development
         return {
-            "database_url": os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/football_prediction"),
-            "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379/0"),  # TODO: 将魔法数字 6379 提取为常量
+            "database_url": os.getenv(
+                "DATABASE_URL",
+                "postgresql+asyncpg://postgres:postgres@localhost/football_prediction",
+            ),
+            "redis_url": os.getenv(
+                "REDIS_URL", "redis://localhost:6379/0"
+            ),  # TODO: 将魔法数字 6379 提取为常量
             "log_level": "DEBUG",
             "debug": True,
         }
@@ -271,4 +296,5 @@ class ConfigCache:
 
 class ConfigValidator:
     """配置验证器 - 第二个定义"""
+
     pass

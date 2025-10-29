@@ -25,8 +25,10 @@ logger = logging.getLogger(__name__)
 # Pydantic Models
 # ============================================================================
 
+
 class MatchInfo(BaseModel):
     """比赛信息模型"""
+
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队")
     away_team: str = Field(..., description="客队")
@@ -41,6 +43,7 @@ class MatchInfo(BaseModel):
 
 class AddMatchRequest(BaseModel):
     """添加比赛请求模型"""
+
     match_id: int = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队")
     away_team: str = Field(..., description="客队")
@@ -51,6 +54,7 @@ class AddMatchRequest(BaseModel):
 
 class UpdateScoreRequest(BaseModel):
     """更新比分请求模型"""
+
     home_score: int = Field(..., ge=0, description="主队得分")
     away_score: int = Field(..., ge=0, description="客队得分")
     minute: Optional[int] = Field(None, ge=0, le=120, description="比赛分钟")
@@ -58,12 +62,14 @@ class UpdateScoreRequest(BaseModel):
 
 class UpdateStatusRequest(BaseModel):
     """更新状态请求模型"""
+
     status: str = Field(..., description="新状态")
     current_time: Optional[str] = Field(None, description="当前时间")
 
 
 class MatchStatsResponse(BaseModel):
     """比赛统计响应模型"""
+
     service_name: str
     total_matches: int
     live_matches: int
@@ -80,10 +86,10 @@ class MatchStatsResponse(BaseModel):
 # API Endpoints
 # ============================================================================
 
+
 @router.post("/add", summary="添加比赛到监控")
 async def add_match_to_monitoring(
-    request: AddMatchRequest,
-    background_tasks: BackgroundTasks
+    request: AddMatchRequest, background_tasks: BackgroundTasks
 ):
     """
     添加比赛到实时监控
@@ -110,11 +116,13 @@ async def add_match_to_monitoring(
             away_team=request.away_team,
             league=request.league,
             status=MatchStatus(request.status),
-            start_time=start_time
+            start_time=start_time,
         )
 
         if not success:
-            raise HTTPException(status_code=400, detail="Failed to add match to monitoring")
+            raise HTTPException(
+                status_code=400, detail="Failed to add match to monitoring"
+            )
 
         # 发送通知
         background_tasks.add_task(
@@ -125,15 +133,15 @@ async def add_match_to_monitoring(
                 "home_team": request.home_team,
                 "away_team": request.away_team,
                 "league": request.league,
-                "status": request.status
-            }
+                "status": request.status,
+            },
         )
 
         return {
             "success": True,
             "message": "Match added to monitoring successfully",
             "match_id": request.match_id,
-            "added_at": datetime.now().isoformat()
+            "added_at": datetime.now().isoformat(),
         }
 
     except ValueError:
@@ -145,9 +153,7 @@ async def add_match_to_monitoring(
 
 @router.put("/{match_id}/score", summary="更新比赛比分")
 async def update_match_score(
-    match_id: int,
-    request: UpdateScoreRequest,
-    background_tasks: BackgroundTasks
+    match_id: int, request: UpdateScoreRequest, background_tasks: BackgroundTasks
 ):
     """
     更新比赛比分
@@ -168,11 +174,13 @@ async def update_match_score(
             match_id=match_id,
             home_score=request.home_score,
             away_score=request.away_score,
-            minute=request.minute
+            minute=request.minute,
         )
 
         if not score_changed:
-            raise HTTPException(status_code=404, detail="Match not found or score unchanged")
+            raise HTTPException(
+                status_code=404, detail="Match not found or score unchanged"
+            )
 
         # 获取比赛信息
         match_info = await service.get_match_info(match_id)
@@ -186,8 +194,8 @@ async def update_match_score(
                 "home_score": request.home_score,
                 "away_score": request.away_score,
                 "minute": request.minute,
-                "display_score": f"{request.home_score}:{request.away_score}"
-            }
+                "display_score": f"{request.home_score}:{request.away_score}",
+            },
         )
 
         return {
@@ -198,7 +206,7 @@ async def update_match_score(
             "away_score": request.away_score,
             "minute": request.minute,
             "updated_at": datetime.now().isoformat(),
-            "match_info": match_info
+            "match_info": match_info,
         }
 
     except Exception as e:
@@ -208,9 +216,7 @@ async def update_match_score(
 
 @router.put("/{match_id}/status", summary="更新比赛状态")
 async def update_match_status(
-    match_id: int,
-    request: UpdateStatusRequest,
-    background_tasks: BackgroundTasks
+    match_id: int, request: UpdateStatusRequest, background_tasks: BackgroundTasks
 ):
     """
     更新比赛状态
@@ -235,11 +241,13 @@ async def update_match_status(
         status_changed = await service.update_match_status(
             match_id=match_id,
             status=MatchStatus(request.status),
-            current_time=current_time
+            current_time=current_time,
         )
 
         if not status_changed:
-            raise HTTPException(status_code=404, detail="Match not found or status unchanged")
+            raise HTTPException(
+                status_code=404, detail="Match not found or status unchanged"
+            )
 
         # 获取比赛信息
         match_info = await service.get_match_info(match_id)
@@ -251,9 +259,11 @@ async def update_match_status(
             "status_updated",
             {
                 "new_status": request.status,
-                "current_score": match_info.get("display_score") if match_info else None,
-                "minute": match_info.get("minute") if match_info else None
-            }
+                "current_score": (
+                    match_info.get("display_score") if match_info else None
+                ),
+                "minute": match_info.get("minute") if match_info else None,
+            },
         )
 
         return {
@@ -262,7 +272,7 @@ async def update_match_status(
             "match_id": match_id,
             "new_status": request.status,
             "updated_at": datetime.now().isoformat(),
-            "match_info": match_info
+            "match_info": match_info,
         }
 
     except ValueError:
@@ -303,7 +313,7 @@ async def get_match_info(match_id: int):
 async def get_league_matches(
     league: str,
     status: Optional[str] = Query(None, description="状态过滤"),
-    limit: int = Query(50, ge=1, le=200, description="返回数量限制")
+    limit: int = Query(50, ge=1, le=200, description="返回数量限制"),
 ):
     """
     获取指定联赛的所有比赛
@@ -333,7 +343,7 @@ async def get_league_matches(
             "total_count": len(matches),
             "status_filter": status,
             "limit": limit,
-            "retrieved_at": datetime.now().isoformat()
+            "retrieved_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -344,7 +354,7 @@ async def get_league_matches(
 @router.get("/live", summary="获取直播比赛")
 async def get_live_matches(
     league: Optional[str] = Query(None, description="联赛过滤"),
-    limit: int = Query(20, ge=1, le=100, description="返回数量限制")
+    limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
 ):
     """
     获取所有直播中的比赛
@@ -372,7 +382,7 @@ async def get_live_matches(
             "total_count": len(live_matches),
             "league_filter": league,
             "limit": limit,
-            "retrieved_at": datetime.now().isoformat()
+            "retrieved_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -401,8 +411,7 @@ async def get_match_service_stats():
 
 @router.post("/{match_id}/subscribe", summary="订阅比赛更新")
 async def subscribe_to_match_updates(
-    match_id: int,
-    user_id: str = Query(..., description="用户ID")
+    match_id: int, user_id: str = Query(..., description="用户ID")
 ):
     """
     订阅比赛更新通知
@@ -426,20 +435,21 @@ async def subscribe_to_match_updates(
             "message": "Successfully subscribed to match updates",
             "match_id": match_id,
             "user_id": user_id,
-            "subscribed_at": datetime.now().isoformat()
+            "subscribed_at": datetime.now().isoformat(),
         }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to subscribe to match updates: {e}")
-        raise HTTPException(status_code=500, detail="Failed to subscribe to match updates")
+        raise HTTPException(
+            status_code=500, detail="Failed to subscribe to match updates"
+        )
 
 
 @router.delete("/{match_id}/subscribe", summary="取消订阅比赛更新")
 async def unsubscribe_from_match_updates(
-    match_id: int,
-    user_id: str = Query(..., description="用户ID")
+    match_id: int, user_id: str = Query(..., description="用户ID")
 ):
     """
     取消订阅比赛更新通知
@@ -463,14 +473,16 @@ async def unsubscribe_from_match_updates(
             "message": "Successfully unsubscribed from match updates",
             "match_id": match_id,
             "user_id": user_id,
-            "unsubscribed_at": datetime.now().isoformat()
+            "unsubscribed_at": datetime.now().isoformat(),
         }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to unsubscribe from match updates: {e}")
-        raise HTTPException(status_code=500, detail="Failed to unsubscribe from match updates")
+        raise HTTPException(
+            status_code=500, detail="Failed to unsubscribe from match updates"
+        )
 
 
 @router.post("/broadcast/alert", summary="广播比赛告警")
@@ -479,7 +491,7 @@ async def broadcast_match_alert(
     match_id: Optional[int] = None,
     alert_type: str = "info",
     severity: str = "low",
-    component: str = "match_api"
+    component: str = "match_api",
 ):
     """
     广播比赛相关告警消息
@@ -504,7 +516,7 @@ async def broadcast_match_alert(
             "alert_type": alert_type,
             "severity": severity,
             "component": component,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         await service.broadcast_system_alert(message, alert_type, severity, component)
@@ -513,7 +525,7 @@ async def broadcast_match_alert(
             "success": True,
             "message": "Match alert broadcasted successfully",
             "alert_data": alert_data,
-            "broadcasted_at": datetime.now().isoformat()
+            "broadcasted_at": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -525,10 +537,9 @@ async def broadcast_match_alert(
 # Helper Functions
 # ============================================================================
 
+
 async def _send_match_notification(
-    match_id: int,
-    action: str,
-    data: Dict[str, Any]
+    match_id: int, action: str, data: Dict[str, Any]
 ) -> None:
     """发送比赛通知"""
     try:
@@ -540,8 +551,8 @@ async def _send_match_notification(
                 "match_id": match_id,
                 "action": action,
                 "timestamp": datetime.now().isoformat(),
-                **data
-            }
+                **data,
+            },
         }
 
         await websocket_manager.broadcast(notification)

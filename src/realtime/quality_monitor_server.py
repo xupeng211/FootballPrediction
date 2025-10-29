@@ -32,7 +32,7 @@ class QualityMonitorServer:
         self.app = FastAPI(
             title="实时质量监控服务",
             description="Real-time Quality Monitoring WebSocket Server",
-            version="1.0.0"
+            version="1.0.0",
         )
 
         # 配置CORS
@@ -48,7 +48,9 @@ class QualityMonitorServer:
         self.active_connections: Set[WebSocket] = set()
 
         # 数据存储
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+        self.redis_client = redis.Redis(
+            host="localhost", port=6379, db=0, decode_responses=True
+        )
 
         # 分析器
         self.metrics_analyzer = AdvancedMetricsAnalyzer()
@@ -99,16 +101,22 @@ class QualityMonitorServer:
         self.active_connections.add(websocket)
 
         client_id = f"client_{len(self.active_connections)}"
-        self.logger.info(f"新客户端连接: {client_id}, 总连接数: {len(self.active_connections)}")
+        self.logger.info(
+            f"新客户端连接: {client_id}, 总连接数: {len(self.active_connections)}"
+        )
 
         try:
             # 发送初始数据
             initial_metrics = await self.collect_quality_metrics()
-            await websocket.send_text(json.dumps({
-                "type": "initial_data",
-                "data": initial_metrics,
-                "timestamp": datetime.now().isoformat()
-            }))
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "initial_data",
+                        "data": initial_metrics,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+            )
 
             # 保持连接并处理客户端消息
             while True:
@@ -117,7 +125,9 @@ class QualityMonitorServer:
 
         except WebSocketDisconnect:
             self.active_connections.remove(websocket)
-            self.logger.info(f"客户端断开连接: {client_id}, 剩余连接数: {len(self.active_connections)}")
+            self.logger.info(
+                f"客户端断开连接: {client_id}, 剩余连接数: {len(self.active_connections)}"
+            )
         except Exception as e:
             self.logger.error(f"WebSocket连接错误: {e}")
             if websocket in self.active_connections:
@@ -131,16 +141,21 @@ class QualityMonitorServer:
 
             if message_type == "request_metrics":
                 metrics = await self.collect_quality_metrics()
-                await websocket.send_text(json.dumps({
-                    "type": "metrics_update",
-                    "data": metrics,
-                    "timestamp": datetime.now().isoformat()
-                }))
+                await websocket.send_text(
+                    json.dumps(
+                        {
+                            "type": "metrics_update",
+                            "data": metrics,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
+                )
             elif message_type == "ping":
-                await websocket.send_text(json.dumps({
-                    "type": "pong",
-                    "timestamp": datetime.now().isoformat()
-                }))
+                await websocket.send_text(
+                    json.dumps(
+                        {"type": "pong", "timestamp": datetime.now().isoformat()}
+                    )
+                )
 
         except json.JSONDecodeError:
             self.logger.warning(f"收到无效JSON消息: {data}")
@@ -164,34 +179,32 @@ class QualityMonitorServer:
                 "gates_checked": quality_results.get("gates_checked", 0),
                 "summary": quality_results.get("summary", {}),
                 "detailed_results": quality_results.get("results", []),
-
                 # 实时性能指标
                 "performance": {
                     "response_time_ms": 150,  # 模拟响应时间
-                    "cpu_usage": 45.2,        # 模拟CPU使用率
-                    "memory_usage": 68.5,     # 模拟内存使用率
-                    "active_connections": len(self.active_connections)
+                    "cpu_usage": 45.2,  # 模拟CPU使用率
+                    "memory_usage": 68.5,  # 模拟内存使用率
+                    "active_connections": len(self.active_connections),
                 },
-
                 # 趋势数据 (从Redis获取历史数据)
                 "trends": await self.get_trend_data(),
-
                 # 告警信息
                 "alerts": await self.get_active_alerts(),
-
                 # 系统健康状态
                 "system_health": {
                     "server_status": "healthy",
                     "database_status": "healthy",
-                    "redis_status": "healthy" if self.redis_client.ping() else "unhealthy"
-                }
+                    "redis_status": (
+                        "healthy" if self.redis_client.ping() else "unhealthy"
+                    ),
+                },
             }
 
             # 缓存到Redis
             self.redis_client.setex(
                 f"quality_metrics_{current_time.strftime('%Y%m%d_%H%M')}",
                 3600,  # 1小时过期
-                json.dumps(metrics)
+                json.dumps(metrics),
             )
 
             return metrics
@@ -202,7 +215,7 @@ class QualityMonitorServer:
                 "timestamp": datetime.now().isoformat(),
                 "error": str(e),
                 "overall_score": 0,
-                "overall_status": "ERROR"
+                "overall_status": "ERROR",
             }
 
     async def get_trend_data(self, hours: int = 24) -> Dict:
@@ -215,22 +228,24 @@ class QualityMonitorServer:
             for i in range(hours * 12):  # 每5分钟一个数据点
                 timestamp = current_time.replace(
                     minute=(current_time.minute - i * 5) % 60,
-                    hour=current_time.hour - (i * 5) // 60
+                    hour=current_time.hour - (i * 5) // 60,
                 )
                 key = f"quality_metrics_{timestamp.strftime('%Y%m%d_%H%M')}"
                 data = self.redis_client.get(key)
 
                 if data:
                     metrics = json.loads(data)
-                    trend_data.append({
-                        "timestamp": timestamp.isoformat(),
-                        "score": metrics.get("overall_score", 0),
-                        "status": metrics.get("overall_status", "UNKNOWN")
-                    })
+                    trend_data.append(
+                        {
+                            "timestamp": timestamp.isoformat(),
+                            "score": metrics.get("overall_score", 0),
+                            "status": metrics.get("overall_status", "UNKNOWN"),
+                        }
+                    )
 
             return {
                 "data_points": len(trend_data),
-                "trend": trend_data[:100]  # 最多返回100个数据点
+                "trend": trend_data[:100],  # 最多返回100个数据点
             }
 
         except Exception as e:
@@ -254,28 +269,32 @@ class QualityMonitorServer:
 
             # 质量分数告警
             if current_metrics.get("overall_score", 0) < 8.0:
-                alerts.append({
-                    "id": "quality_score_low",
-                    "type": "quality",
-                    "severity": "warning",
-                    "title": "质量分数偏低",
-                    "message": f"当前质量分数: {current_metrics.get('overall_score', 0):.2f}",
-                    "timestamp": datetime.now().isoformat(),
-                    "active": True
-                })
+                alerts.append(
+                    {
+                        "id": "quality_score_low",
+                        "type": "quality",
+                        "severity": "warning",
+                        "title": "质量分数偏低",
+                        "message": f"当前质量分数: {current_metrics.get('overall_score', 0):.2f}",
+                        "timestamp": datetime.now().isoformat(),
+                        "active": True,
+                    }
+                )
 
             # 系统健康告警
             system_health = current_metrics.get("system_health", {})
             if system_health.get("redis_status") != "healthy":
-                alerts.append({
-                    "id": "redis_unhealthy",
-                    "type": "system",
-                    "severity": "error",
-                    "title": "Redis连接异常",
-                    "message": "Redis缓存服务连接失败",
-                    "timestamp": datetime.now().isoformat(),
-                    "active": True
-                })
+                alerts.append(
+                    {
+                        "id": "redis_unhealthy",
+                        "type": "system",
+                        "severity": "error",
+                        "title": "Redis连接异常",
+                        "message": "Redis缓存服务连接失败",
+                        "timestamp": datetime.now().isoformat(),
+                        "active": True,
+                    }
+                )
 
             return alerts
 
@@ -288,11 +307,13 @@ class QualityMonitorServer:
         if not self.active_connections:
             return
 
-        message = json.dumps({
-            "type": "quality_update",
-            "data": data,
-            "timestamp": datetime.now().isoformat()
-        })
+        message = json.dumps(
+            {
+                "type": "quality_update",
+                "data": data,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         # 并发发送给所有客户端
         disconnected = []
@@ -336,50 +357,53 @@ class QualityMonitorServer:
             # 质量分数告警
             score = metrics.get("overall_score", 0)
             if score < 7.0:
-                alerts.append({
-                    "id": f"quality_critical_{datetime.now().strftime('%Y%m%d%H%M')}",
-                    "type": "quality",
-                    "severity": "critical",
-                    "title": "质量分数严重偏低",
-                    "message": f"质量分数 {score:.2f} 低于临界值 7.0",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "id": f"quality_critical_{datetime.now().strftime('%Y%m%d%H%M')}",
+                        "type": "quality",
+                        "severity": "critical",
+                        "title": "质量分数严重偏低",
+                        "message": f"质量分数 {score:.2f} 低于临界值 7.0",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
             elif score < 8.0:
-                alerts.append({
-                    "id": f"quality_warning_{datetime.now().strftime('%Y%m%d%H%M')}",
-                    "type": "quality",
-                    "severity": "warning",
-                    "title": "质量分数偏低",
-                    "message": f"质量分数 {score:.2f} 低于目标值 8.0",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "id": f"quality_warning_{datetime.now().strftime('%Y%m%d%H%M')}",
+                        "type": "quality",
+                        "severity": "warning",
+                        "title": "质量分数偏低",
+                        "message": f"质量分数 {score:.2f} 低于目标值 8.0",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             # 连接数告警
             active_connections = len(self.active_connections)
             if active_connections > 50:
-                alerts.append({
-                    "id": f"connections_high_{datetime.now().strftime('%Y%m%d%H%M')}",
-                    "type": "system",
-                    "severity": "warning",
-                    "title": "连接数过高",
-                    "message": f"活跃连接数 {active_connections} 超过阈值 50",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "id": f"connections_high_{datetime.now().strftime('%Y%m%d%H%M')}",
+                        "type": "system",
+                        "severity": "warning",
+                        "title": "连接数过高",
+                        "message": f"活跃连接数 {active_connections} 超过阈值 50",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             # 保存告警到Redis
             for alert in alerts:
                 self.redis_client.setex(
-                    f"alert:{alert['id']}",
-                    3600,  # 1小时过期
-                    json.dumps(alert)
+                    f"alert:{alert['id']}", 3600, json.dumps(alert)  # 1小时过期
                 )
 
             # 如果有新告警，立即广播
             if alerts:
-                await self.broadcast_quality_update({
-                    "type": "new_alerts",
-                    "alerts": alerts
-                })
+                await self.broadcast_quality_update(
+                    {"type": "new_alerts", "alerts": alerts}
+                )
 
         except Exception as e:
             self.logger.error(f"检查告警条件失败: {e}")
@@ -441,5 +465,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8001,
         reload=True,
-        log_level="info"
+        log_level="info",
     )

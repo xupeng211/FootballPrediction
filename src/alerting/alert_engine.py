@@ -27,6 +27,7 @@ logger = get_logger(__name__)
 
 class AlertSeverity(Enum):
     """告警严重程度"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -35,6 +36,7 @@ class AlertSeverity(Enum):
 
 class AlertType(Enum):
     """告警类型"""
+
     QUALITY = "quality"
     SECURITY = "security"
     PERFORMANCE = "performance"
@@ -45,6 +47,7 @@ class AlertType(Enum):
 
 class AlertStatus(Enum):
     """告警状态"""
+
     ACTIVE = "active"
     ACKNOWLEDGED = "acknowledged"
     RESOLVED = "resolved"
@@ -54,6 +57,7 @@ class AlertStatus(Enum):
 @dataclass
 class Alert:
     """告警数据模型"""
+
     id: str
     type: AlertType
     severity: AlertSeverity
@@ -75,36 +79,37 @@ class Alert:
         """转换为字典格式"""
         data = asdict(self)
         # 转换枚举为字符串
-        data['type'] = self.type.value
-        data['severity'] = self.severity.value
-        data['status'] = self.status.value
+        data["type"] = self.type.value
+        data["severity"] = self.severity.value
+        data["status"] = self.status.value
         # 转换datetime为ISO字符串
-        data['timestamp'] = self.timestamp.isoformat()
+        data["timestamp"] = self.timestamp.isoformat()
         if self.acknowledged_at:
-            data['acknowledged_at'] = self.acknowledged_at.isoformat()
+            data["acknowledged_at"] = self.acknowledged_at.isoformat()
         if self.resolved_at:
-            data['resolved_at'] = self.resolved_at.isoformat()
+            data["resolved_at"] = self.resolved_at.isoformat()
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Alert':
+    def from_dict(cls, data: Dict[str, Any]) -> "Alert":
         """从字典创建告警对象"""
         # 转换字符串为枚举
-        data['type'] = AlertType(data['type'])
-        data['severity'] = AlertSeverity(data['severity'])
-        data['status'] = AlertStatus(data['status'])
+        data["type"] = AlertType(data["type"])
+        data["severity"] = AlertSeverity(data["severity"])
+        data["status"] = AlertStatus(data["status"])
         # 转换ISO字符串为datetime
-        data['timestamp'] = datetime.fromisoformat(data['timestamp'])
-        if data.get('acknowledged_at'):
-            data['acknowledged_at'] = datetime.fromisoformat(data['acknowledged_at'])
-        if data.get('resolved_at'):
-            data['resolved_at'] = datetime.fromisoformat(data['resolved_at'])
+        data["timestamp"] = datetime.fromisoformat(data["timestamp"])
+        if data.get("acknowledged_at"):
+            data["acknowledged_at"] = datetime.fromisoformat(data["acknowledged_at"])
+        if data.get("resolved_at"):
+            data["resolved_at"] = datetime.fromisoformat(data["resolved_at"])
         return cls(**data)
 
 
 @dataclass
 class AlertRule:
     """告警规则配置"""
+
     id: str
     name: str
     description: str
@@ -141,11 +146,11 @@ class AnomalyDetector:
             features = []
             for data_point in historical_data:
                 feature_vector = [
-                    data_point.get('overall_score', 0),
-                    data_point.get('performance_cpu_usage', 0),
-                    data_point.get('performance_memory_usage', 0),
-                    data_point.get('active_connections', 0),
-                    data_point.get('gates_checked', 0)
+                    data_point.get("overall_score", 0),
+                    data_point.get("performance_cpu_usage", 0),
+                    data_point.get("performance_memory_usage", 0),
+                    data_point.get("active_connections", 0),
+                    data_point.get("gates_checked", 0),
                 ]
                 features.append(feature_vector)
 
@@ -172,11 +177,11 @@ class AnomalyDetector:
 
             # 构建特征向量
             feature_vector = [
-                current_data.get('overall_score', 0),
-                current_data.get('performance_cpu_usage', 0),
-                current_data.get('performance_memory_usage', 0),
-                current_data.get('active_connections', 0),
-                current_data.get('gates_checked', 0)
+                current_data.get("overall_score", 0),
+                current_data.get("performance_cpu_usage", 0),
+                current_data.get("performance_memory_usage", 0),
+                current_data.get("active_connections", 0),
+                current_data.get("gates_checked", 0),
             ]
 
             # 标准化
@@ -199,16 +204,17 @@ class TrendAnalyzer:
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
 
-    def analyze_trend(self, data_points: List[Dict[str, Any]],
-                     metric_path: str, window_size: int = 10) -> Dict[str, Any]:
+    def analyze_trend(
+        self, data_points: List[Dict[str, Any]], metric_path: str, window_size: int = 10
+    ) -> Dict[str, Any]:
         """分析指标趋势"""
         try:
             if len(data_points) < window_size:
                 return {
-                    'trend': 'insufficient_data',
-                    'direction': 0,
-                    'slope': 0,
-                    'confidence': 0
+                    "trend": "insufficient_data",
+                    "direction": 0,
+                    "slope": 0,
+                    "confidence": 0,
                 }
 
             # 提取指定指标的数值
@@ -219,14 +225,14 @@ class TrendAnalyzer:
                 value = self._extract_metric_value(point, metric_path)
                 if value is not None:
                     values.append(value)
-                    timestamps.append(datetime.fromisoformat(point['timestamp']))
+                    timestamps.append(datetime.fromisoformat(point["timestamp"]))
 
             if len(values) < 3:
                 return {
-                    'trend': 'insufficient_data',
-                    'direction': 0,
-                    'slope': 0,
-                    'confidence': 0
+                    "trend": "insufficient_data",
+                    "direction": 0,
+                    "slope": 0,
+                    "confidence": 0,
                 }
 
             # 计算线性趋势
@@ -242,45 +248,44 @@ class TrendAnalyzer:
 
             # 判断趋势方向
             if abs(slope) < 0.01:
-                trend = 'stable'
+                trend = "stable"
                 direction = 0
             elif slope > 0:
-                trend = 'improving'
+                trend = "improving"
                 direction = 1
             else:
-                trend = 'degrading'
+                trend = "degrading"
                 direction = -1
 
             # 计算变化率
             if len(values) >= 2:
-                change_rate = (values[-1] - values[0]) / values[0] * 100 if values[0] != 0 else 0
+                change_rate = (
+                    (values[-1] - values[0]) / values[0] * 100 if values[0] != 0 else 0
+                )
             else:
                 change_rate = 0
 
             return {
-                'trend': trend,
-                'direction': direction,
-                'slope': slope,
-                'confidence': confidence,
-                'change_rate': change_rate,
-                'current_value': values[-1],
-                'previous_value': values[-2] if len(values) >= 2 else values[-1],
-                'data_points': len(values)
+                "trend": trend,
+                "direction": direction,
+                "slope": slope,
+                "confidence": confidence,
+                "change_rate": change_rate,
+                "current_value": values[-1],
+                "previous_value": values[-2] if len(values) >= 2 else values[-1],
+                "data_points": len(values),
             }
 
         except Exception as e:
             self.logger.error(f"趋势分析失败: {e}")
-            return {
-                'trend': 'error',
-                'direction': 0,
-                'slope': 0,
-                'confidence': 0
-            }
+            return {"trend": "error", "direction": 0, "slope": 0, "confidence": 0}
 
-    def _extract_metric_value(self, data: Dict[str, Any], metric_path: str) -> Optional[float]:
+    def _extract_metric_value(
+        self, data: Dict[str, Any], metric_path: str
+    ) -> Optional[float]:
         """从数据中提取指定指标的值"""
         try:
-            keys = metric_path.split('.')
+            keys = metric_path.split(".")
             value = data
             for key in keys:
                 if isinstance(value, dict) and key in value:
@@ -299,7 +304,9 @@ class AlertEngine:
 
     def __init__(self):
         self.config = get_config()
-        self.redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=True)
+        self.redis_client = redis.Redis(
+            host="localhost", port=6379, db=1, decode_responses=True
+        )
         self.rules: Dict[str, AlertRule] = {}
         self.active_alerts: Dict[str, Alert] = {}
         self.alert_history: List[Alert] = []
@@ -328,7 +335,7 @@ class AlertEngine:
                     threshold=8.0,
                     severity=AlertSeverity.WARNING,
                     duration=300,
-                    cooldown=900
+                    cooldown=900,
                 ),
                 AlertRule(
                     id="quality_score_critical",
@@ -340,7 +347,7 @@ class AlertEngine:
                     threshold=6.0,
                     severity=AlertSeverity.CRITICAL,
                     duration=60,
-                    cooldown=300
+                    cooldown=300,
                 ),
                 AlertRule(
                     id="cpu_usage_high",
@@ -352,7 +359,7 @@ class AlertEngine:
                     threshold=85.0,
                     severity=AlertSeverity.WARNING,
                     duration=300,
-                    cooldown=600
+                    cooldown=600,
                 ),
                 AlertRule(
                     id="memory_usage_high",
@@ -364,7 +371,7 @@ class AlertEngine:
                     threshold=90.0,
                     severity=AlertSeverity.ERROR,
                     duration=300,
-                    cooldown=600
+                    cooldown=600,
                 ),
                 AlertRule(
                     id="active_connections_high",
@@ -376,8 +383,8 @@ class AlertEngine:
                     threshold=50.0,
                     severity=AlertSeverity.WARNING,
                     duration=180,
-                    cooldown=600
-                )
+                    cooldown=600,
+                ),
             ]
 
             for rule in default_rules:
@@ -396,23 +403,23 @@ class AlertEngine:
         try:
             rules_file = Path("config/alert_rules.json")
             if rules_file.exists():
-                with open(rules_file, 'r', encoding='utf-8') as f:
+                with open(rules_file, "r", encoding="utf-8") as f:
                     custom_rules = json.load(f)
 
                 for rule_data in custom_rules:
                     rule = AlertRule(
-                        id=rule_data['id'],
-                        name=rule_data['name'],
-                        description=rule_data['description'],
-                        type=AlertType(rule_data['type']),
-                        metric_path=rule_data['metric_path'],
-                        operator=rule_data['operator'],
-                        threshold=rule_data['threshold'],
-                        severity=AlertSeverity(rule_data['severity']),
-                        duration=rule_data.get('duration', 300),
-                        cooldown=rule_data.get('cooldown', 900),
-                        tags=rule_data.get('tags'),
-                        metadata=rule_data.get('metadata')
+                        id=rule_data["id"],
+                        name=rule_data["name"],
+                        description=rule_data["description"],
+                        type=AlertType(rule_data["type"]),
+                        metric_path=rule_data["metric_path"],
+                        operator=rule_data["operator"],
+                        threshold=rule_data["threshold"],
+                        severity=AlertSeverity(rule_data["severity"]),
+                        duration=rule_data.get("duration", 300),
+                        cooldown=rule_data.get("cooldown", 900),
+                        tags=rule_data.get("tags"),
+                        metadata=rule_data.get("metadata"),
                     )
                     self.rules[rule.id] = rule
 
@@ -438,7 +445,9 @@ class AlertEngine:
                     continue
 
                 # 检查是否满足告警条件
-                if self._evaluate_condition(current_value, rule.operator, rule.threshold):
+                if self._evaluate_condition(
+                    current_value, rule.operator, rule.threshold
+                ):
                     # 检查是否在冷却期内
                     if not self._is_in_cooldown(rule.id, rule.cooldown):
                         # 创建告警
@@ -451,15 +460,15 @@ class AlertEngine:
                             source="alert_engine",
                             timestamp=current_time,
                             details={
-                                'rule_id': rule.id,
-                                'metric_path': rule.metric_path,
-                                'threshold': rule.threshold,
-                                'current_value': current_value
+                                "rule_id": rule.id,
+                                "metric_path": rule.metric_path,
+                                "threshold": rule.threshold,
+                                "current_value": current_value,
                             },
                             threshold=rule.threshold,
                             current_value=current_value,
                             tags=rule.tags,
-                            metadata=rule.metadata
+                            metadata=rule.metadata,
                         )
                         triggered_alerts.append(alert)
 
@@ -487,10 +496,12 @@ class AlertEngine:
 
         return triggered_alerts
 
-    def _extract_metric_value(self, data: Dict[str, Any], metric_path: str) -> Optional[float]:
+    def _extract_metric_value(
+        self, data: Dict[str, Any], metric_path: str
+    ) -> Optional[float]:
         """从数据中提取指标值"""
         try:
-            keys = metric_path.split('_')
+            keys = metric_path.split("_")
             value = data
 
             for key in keys:
@@ -504,7 +515,9 @@ class AlertEngine:
         except Exception:
             return None
 
-    def _evaluate_condition(self, current_value: float, operator: str, threshold: float) -> bool:
+    def _evaluate_condition(
+        self, current_value: float, operator: str, threshold: float
+    ) -> bool:
         """评估告警条件"""
         try:
             if operator == "<":
@@ -557,7 +570,9 @@ class AlertEngine:
                     self.anomaly_detector.train(historical_data)
 
                 # 检测异常
-                is_anomaly, anomaly_score = self.anomaly_detector.detect_anomaly(metrics)
+                is_anomaly, anomaly_score = self.anomaly_detector.detect_anomaly(
+                    metrics
+                )
 
                 if is_anomaly:
                     alert = Alert(
@@ -569,10 +584,10 @@ class AlertEngine:
                         source="anomaly_detector",
                         timestamp=datetime.now(),
                         details={
-                            'anomaly_score': float(anomaly_score),
-                            'current_metrics': metrics
+                            "anomaly_score": float(anomaly_score),
+                            "current_metrics": metrics,
                         },
-                        tags=['anomaly', 'ml_detection']
+                        tags=["anomaly", "ml_detection"],
                     )
                     anomaly_alerts.append(alert)
 
@@ -590,15 +605,23 @@ class AlertEngine:
             historical_data = self._get_historical_data(hours=12)
             if len(historical_data) >= 5:
                 # 分析关键指标趋势
-                key_metrics = ['overall_score', 'performance_cpu_usage', 'performance_memory_usage']
+                key_metrics = [
+                    "overall_score",
+                    "performance_cpu_usage",
+                    "performance_memory_usage",
+                ]
 
                 for metric in key_metrics:
-                    trend_result = self.trend_analyzer.analyze_trend(historical_data, metric)
+                    trend_result = self.trend_analyzer.analyze_trend(
+                        historical_data, metric
+                    )
 
                     # 如果趋势恶化且置信度较高
-                    if (trend_result['trend'] == 'degrading' and
-                        trend_result['confidence'] > 0.7 and
-                        trend_result['change_rate'] < -10):  # 下降超过10%
+                    if (
+                        trend_result["trend"] == "degrading"
+                        and trend_result["confidence"] > 0.7
+                        and trend_result["change_rate"] < -10
+                    ):  # 下降超过10%
 
                         alert = Alert(
                             id=f"trend_{metric}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -608,11 +631,8 @@ class AlertEngine:
                             message=f"{metric}呈现下降趋势，变化率: {trend_result['change_rate']:.2f}%",
                             source="trend_analyzer",
                             timestamp=datetime.now(),
-                            details={
-                                'metric': metric,
-                                'trend_result': trend_result
-                            },
-                            tags=['trend', 'degrading']
+                            details={"metric": metric, "trend_result": trend_result},
+                            tags=["trend", "degrading"],
                         )
                         trend_alerts.append(alert)
 
@@ -631,7 +651,7 @@ class AlertEngine:
             for i in range(hours * 12):  # 每5分钟一个数据点
                 timestamp = current_time.replace(
                     minute=(current_time.minute - i * 5) % 60,
-                    hour=current_time.hour - (i * 5) // 60
+                    hour=current_time.hour - (i * 5) // 60,
                 )
                 key = f"quality_metrics_{timestamp.strftime('%Y%m%d_%H%M')}"
                 data = self.redis_client.get(key)
@@ -652,7 +672,9 @@ class AlertEngine:
 
         for alert in alerts:
             # 创建告警签名（基于类型、严重程度、消息）
-            signature = f"{alert.type.value}_{alert.severity.value}_{hash(alert.message)}"
+            signature = (
+                f"{alert.type.value}_{alert.severity.value}_{hash(alert.message)}"
+            )
 
             if signature not in seen_signatures:
                 unique_alerts.append(alert)
@@ -665,13 +687,11 @@ class AlertEngine:
         try:
             alert_key = f"alert:{alert.id}"
             self.redis_client.setex(
-                alert_key,
-                86400,  # 24小时过期
-                json.dumps(alert.to_dict())
+                alert_key, 86400, json.dumps(alert.to_dict())  # 24小时过期
             )
 
             # 设置冷却期
-            if 'rule_id' in alert.details:
+            if "rule_id" in alert.details:
                 cooldown_key = f"alert_cooldown:{alert.details['rule_id']}"
                 self.redis_client.setex(cooldown_key, 900, alert.timestamp.isoformat())
 
@@ -728,10 +748,13 @@ class AlertEngine:
 
     def get_alert_history(self, limit: int = 100) -> List[Alert]:
         """获取告警历史"""
-        return sorted(self.alert_history, key=lambda x: x.timestamp, reverse=True)[:limit]
+        return sorted(self.alert_history, key=lambda x: x.timestamp, reverse=True)[
+            :limit
+        ]
 
     def start_background_monitoring(self):
         """启动后台监控任务"""
+
         async def monitoring_loop():
             while True:
                 try:
@@ -769,13 +792,13 @@ class AlertEngine:
             # 这里可以调用质量门禁系统获取最新指标
             # 暂时返回示例数据
             return {
-                'overall_score': 8.5,
-                'overall_status': 'PASSED',
-                'performance_cpu_usage': 65.2,
-                'performance_memory_usage': 78.5,
-                'performance_active_connections': 12,
-                'gates_checked': 6,
-                'timestamp': datetime.now().isoformat()
+                "overall_score": 8.5,
+                "overall_status": "PASSED",
+                "performance_cpu_usage": 65.2,
+                "performance_memory_usage": 78.5,
+                "performance_active_connections": 12,
+                "gates_checked": 6,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -793,11 +816,13 @@ class AlertEngine:
             self.redis_client.setex(
                 notification_key,
                 3600,  # 1小时过期
-                json.dumps({
-                    'alert_id': alert.id,
-                    'sent_at': datetime.now().isoformat(),
-                    'channels': ['log']  # 可以扩展更多渠道
-                })
+                json.dumps(
+                    {
+                        "alert_id": alert.id,
+                        "sent_at": datetime.now().isoformat(),
+                        "channels": ["log"],  # 可以扩展更多渠道
+                    }
+                ),
             )
 
         except Exception as e:

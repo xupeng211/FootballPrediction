@@ -38,6 +38,7 @@ logger = get_logger(__name__)
 @dataclass
 class PredictionResult:
     """预测结果数据模型"""
+
     timestamp: datetime
     predicted_values: List[float]
     confidence_intervals: List[Tuple[float, float]]  # (lower, upper)
@@ -51,15 +52,16 @@ class PredictionResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         data = asdict(self)
-        data['timestamp'] = self.timestamp.isoformat()
+        data["timestamp"] = self.timestamp.isoformat()
         if self.actual_values:
-            data['actual_values'] = self.actual_values
+            data["actual_values"] = self.actual_values
         return data
 
 
 @dataclass
 class TrainingConfig:
     """LSTM训练配置"""
+
     sequence_length: int = 24  # 使用过去24个时间点
     prediction_horizon: int = 12  # 预测未来12个时间点
     lstm_units: List[int] = (64, 32)  # LSTM层单元数
@@ -95,22 +97,23 @@ class LSTMPredictor:
         self.model_path = self.model_dir / "lstm_quality_predictor.h5"
         self.scaler_path = self.model_dir / "scalers.pkl"
 
-    def prepare_data(self, data: List[Dict[str, Any]],
-                      target_column: str = "overall_score") -> Tuple[np.ndarray, np.ndarray]:
+    def prepare_data(
+        self, data: List[Dict[str, Any]], target_column: str = "overall_score"
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """准备训练数据"""
         try:
             # 转换为DataFrame
             df = pd.DataFrame(data)
 
             # 确保时间排序
-            if 'time' in df.columns:
-                df['time'] = pd.to_datetime(df['time'])
-                df = df.sort_values('time')
+            if "time" in df.columns:
+                df["time"] = pd.to_datetime(df["time"])
+                df = df.sort_values("time")
 
             # 选择特征列
             feature_columns = []
             for col in df.columns:
-                if col != target_column and df[col].dtype in ['float64', 'int64']:
+                if col != target_column and df[col].dtype in ["float64", "int64"]:
                     feature_columns.append(col)
 
             self.feature_columns = feature_columns
@@ -126,22 +129,38 @@ class LSTMPredictor:
             # 创建序列数据
             X, y = self._create_sequences(features_scaled, target_scaled)
 
-            self.logger.info(f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}")
+            self.logger.info(
+                f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}"
+            )
             return X, y
 
         except Exception as e:
             self.logger.error(f"数据准备失败: {e}")
             raise
 
-    def _create_sequences(self, features: np.ndarray, target: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _create_sequences(
+        self, features: np.ndarray, target: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """创建时间序列数据"""
         X, y = [], []
 
-        for i in range(len(features) - self.config.sequence_length - self.config.prediction_horizon + 1):
+        for i in range(
+            len(features)
+            - self.config.sequence_length
+            - self.config.prediction_horizon
+            + 1
+        ):
             # 输入序列
-            X.append(features[i:i + self.config.sequence_length])
+            X.append(features[i : i + self.config.sequence_length])
             # 目标序列
-            y.append(target[i + self.config.sequence_length:i + self.config.sequence_length + self.config.prediction_horizon])
+            y.append(
+                target[
+                    i
+                    + self.config.sequence_length : i
+                    + self.config.sequence_length
+                    + self.config.prediction_horizon
+                ]
+            )
 
         return np.array(X), np.array(y)
 
@@ -154,20 +173,19 @@ class LSTMPredictor:
             self.model = Sequential()
 
             # 第一层LSTM
-            self.model.add(LSTM(
-                self.config.lstm_units[0],
-                return_sequences=True,
-                input_shape=input_shape
-            ))
+            self.model.add(
+                LSTM(
+                    self.config.lstm_units[0],
+                    return_sequences=True,
+                    input_shape=input_shape,
+                )
+            )
             self.model.add(Dropout(self.config.dropout_rate))
             self.model.add(BatchNormalization())
 
             # 第二层LSTM
             if len(self.config.lstm_units) > 1:
-                self.model.add(LSTM(
-                    self.config.lstm_units[1],
-                    return_sequences=False
-                ))
+                self.model.add(LSTM(self.config.lstm_units[1], return_sequences=False))
                 self.model.add(Dropout(self.config.dropout_rate))
                 self.model.add(BatchNormalization())
 
@@ -177,8 +195,8 @@ class LSTMPredictor:
             # 编译模型
             self.model.compile(
                 optimizer=Adam(learning_rate=self.config.learning_rate),
-                loss='mse',
-                metrics=['mae']
+                loss="mse",
+                metrics=["mae"],
             )
 
             self.logger.info(f"LSTM模型构建完成: input_shape={input_shape}")
@@ -187,8 +205,12 @@ class LSTMPredictor:
             self.logger.error(f"模型构建失败: {e}")
             raise
 
-    def train(self, X: np.ndarray, y: np.ndarray,
-              validation_data: Optional[Tuple[np.ndarray, np.ndarray]] = None) -> Dict[str, Any]:
+    def train(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        validation_data: Optional[Tuple[np.ndarray, np.ndarray]] = None,
+    ) -> Dict[str, Any]:
         """训练LSTM模型"""
         if self.model is None:
             self.build_model(input_shape=(X.shape[1], X.shape[2]))
@@ -206,28 +228,25 @@ class LSTMPredictor:
             # 设置回调函数
             callbacks = [
                 EarlyStopping(
-                    monitor='val_loss',
+                    monitor="val_loss",
                     patience=self.config.early_stopping_patience,
                     restore_best_weights=True,
-                    verbose=1
+                    verbose=1,
                 ),
                 ReduceLROnPlateau(
-                    monitor='val_loss',
-                    factor=0.5,
-                    patience=5,
-                    min_lr=1e-7,
-                    verbose=1
-                )
+                    monitor="val_loss", factor=0.5, patience=5, min_lr=1e-7, verbose=1
+                ),
             ]
 
             # 训练模型
             history = self.model.fit(
-                X_train, y_train,
+                X_train,
+                y_train,
                 validation_data=validation_data,
                 epochs=self.config.epochs,
                 batch_size=self.config.batch_size,
                 callbacks=callbacks,
-                verbose=1
+                verbose=1,
             )
 
             self.is_trained = True
@@ -236,15 +255,17 @@ class LSTMPredictor:
 
             # 评估模型
             train_loss, train_mae = self.model.evaluate(X_train, y_train, verbose=0)
-            val_loss, val_mae = self.model.evaluate(validation_data[0], validation_data[1], verbose=0)
+            val_loss, val_mae = self.model.evaluate(
+                validation_data[0], validation_data[1], verbose=0
+            )
 
             training_stats = {
-                'train_loss': train_loss,
-                'train_mae': train_mae,
-                'val_loss': val_loss,
-                'val_mae': val_mae,
-                'epochs_trained': len(history.history['loss']),
-                'best_epoch': np.argmin(history.history['val_loss']) + 1
+                "train_loss": train_loss,
+                "train_mae": train_mae,
+                "val_loss": val_loss,
+                "val_mae": val_mae,
+                "epochs_trained": len(history.history["loss"]),
+                "best_epoch": np.argmin(history.history["val_loss"]) + 1,
             }
 
             self.logger.info(f"模型训练完成: {training_stats}")
@@ -254,8 +275,9 @@ class LSTMPredictor:
             self.logger.error(f"模型训练失败: {e}")
             raise
 
-    def predict(self, input_sequence: np.ndarray,
-                 return_confidence: bool = True) -> PredictionResult:
+    def predict(
+        self, input_sequence: np.ndarray, return_confidence: bool = True
+    ) -> PredictionResult:
         """进行预测"""
         if not self.is_trained:
             raise ValueError("模型尚未训练")
@@ -295,25 +317,26 @@ class LSTMPredictor:
                 for i, pred_val in enumerate(prediction):
                     std_error = errors[i] if i < len(errors) else np.mean(errors)
                     margin = 1.96 * std_error  # 95%置信区间
-                    confidence_intervals.append((
-                        max(0, pred_val - margin),
-                        min(10, pred_val + margin)  # 假设分数范围0-10
-                    ))
+                    confidence_intervals.append(
+                        (
+                            max(0, pred_val - margin),
+                            min(10, pred_val + margin),  # 假设分数范围0-10
+                        )
+                    )
             else:
                 # 如果没有验证数据，使用默认置信区间
                 for pred_val in prediction:
                     margin = 0.5  # 默认置信区间±0.5
-                    confidence_intervals.append((
-                        max(0, pred_val - margin),
-                        min(10, pred_val + margin)
-                    ))
+                    confidence_intervals.append(
+                        (max(0, pred_val - margin), min(10, pred_val + margin))
+                    )
 
             # 创建预测结果
             result = PredictionResult(
                 timestamp=datetime.now(),
                 predicted_values=prediction.tolist(),
                 confidence_intervals=confidence_intervals,
-                prediction_horizon=self.config.prediction_horizon
+                prediction_horizon=self.config.prediction_horizon,
             )
 
             self.logger.info(f"预测完成: 预测值={prediction[:3].tolist()}...")
@@ -332,16 +355,34 @@ class LSTMPredictor:
             )
 
             if len(recent_data) < self.config.sequence_length:
-                raise ValueError(f"历史数据不足，需要至少 {self.config.sequence_length} 个数据点")
+                raise ValueError(
+                    f"历史数据不足，需要至少 {self.config.sequence_length} 个数据点"
+                )
 
             # 提取特征数据
             features_data = []
             for point in recent_data:
                 feature_vector = [
-                    point.get('value', 0) if point.get('field') == 'overall_score' else 0,
-                    point.get('cpu_usage', 0) if point.get('field') == 'cpu_usage' else 0,
-                    point.get('memory_usage', 0) if point.get('field') == 'memory_usage' else 0,
-                    point.get('active_connections', 0) if point.get('field') == 'active_connections' else 0
+                    (
+                        point.get("value", 0)
+                        if point.get("field") == "overall_score"
+                        else 0
+                    ),
+                    (
+                        point.get("cpu_usage", 0)
+                        if point.get("field") == "cpu_usage"
+                        else 0
+                    ),
+                    (
+                        point.get("memory_usage", 0)
+                        if point.get("field") == "memory_usage"
+                        else 0
+                    ),
+                    (
+                        point.get("active_connections", 0)
+                        if point.get("field") == "active_connections"
+                        else 0
+                    ),
                 ]
                 features_data.append(feature_vector)
 
@@ -350,7 +391,7 @@ class LSTMPredictor:
                 features_data.insert(0, [7.0, 50.0, 60.0, 10])  # 默认值
 
             # 取最近的数据点
-            input_sequence = np.array(features_data[-self.config.sequence_length:])
+            input_sequence = np.array(features_data[-self.config.sequence_length :])
 
             # 进行预测
             result = self.predict(input_sequence)
@@ -362,7 +403,9 @@ class LSTMPredictor:
             self.logger.error(f"未来预测失败: {e}")
             raise
 
-    def evaluate_model(self, test_X: np.ndarray, test_y: np.ndarray) -> Dict[str, float]:
+    def evaluate_model(
+        self, test_X: np.ndarray, test_y: np.ndarray
+    ) -> Dict[str, float]:
         """评估模型性能"""
         try:
             # 预测
@@ -376,12 +419,7 @@ class LSTMPredictor:
             rmse = np.sqrt(mse)
             r2 = r2_score(actuals.flatten(), predictions.flatten())
 
-            metrics = {
-                'mae': mae,
-                'mse': mse,
-                'rmse': rmse,
-                'r2': r2
-            }
+            metrics = {"mae": mae, "mse": mse, "rmse": rmse, "r2": r2}
 
             self.logger.info(f"模型评估完成: {metrics}")
             return metrics
@@ -401,13 +439,16 @@ class LSTMPredictor:
             self.model.save(self.model_path)
 
             # 保存标准化器
-            with open(self.scaler_path, 'wb') as f:
-                pickle.dump({
-                    'scaler_X': self.scaler_X,
-                    'scaler_y': self.scaler_y,
-                    'feature_columns': self.feature_columns,
-                    'config': self.config
-                }, f)
+            with open(self.scaler_path, "wb") as f:
+                pickle.dump(
+                    {
+                        "scaler_X": self.scaler_X,
+                        "scaler_y": self.scaler_y,
+                        "feature_columns": self.feature_columns,
+                        "config": self.config,
+                    },
+                    f,
+                )
 
             self.logger.info(f"模型已保存: {self.model_path}")
             return True
@@ -427,12 +468,12 @@ class LSTMPredictor:
             self.model = tf.keras.models.load_model(self.model_path)
 
             # 加载标准化器
-            with open(self.scaler_path, 'rb') as f:
+            with open(self.scaler_path, "rb") as f:
                 scalers_data = pickle.load(f)
-                self.scaler_X = scalers_data['scaler_X']
-                self.scaler_y = scalers_data['scaler_y']
-                self.feature_columns = scalers_data['feature_columns']
-                self.config = scalers_data['config']
+                self.scaler_X = scalers_data["scaler_X"]
+                self.scaler_y = scalers_data["scaler_y"]
+                self.feature_columns = scalers_data["feature_columns"]
+                self.config = scalers_data["config"]
 
             self.is_trained = True
             self.logger.info(f"模型已加载: {self.model_path}")
@@ -448,7 +489,9 @@ class LSTMPredictor:
             self.logger.info(f"开始使用历史数据训练模型 (过去{days}天)")
 
             # 获取历史数据
-            historical_data = await influxdb_manager.get_quality_metrics_history(hours=days*24)
+            historical_data = await influxdb_manager.get_quality_metrics_history(
+                hours=days * 24
+            )
 
             if len(historical_data) < 100:
                 raise ValueError(f"历史数据不足，只有 {len(historical_data)} 个数据点")
@@ -502,7 +545,9 @@ if __name__ == "__main__":
         # 生成模拟历史数据
         np.random.seed(42)
         n_points = 200
-        timestamps = [datetime.now() - timedelta(hours=i) for i in range(n_points, 0, -1)]
+        timestamps = [
+            datetime.now() - timedelta(hours=i) for i in range(n_points, 0, -1)
+        ]
 
         mock_data = []
         for i, timestamp in enumerate(timestamps):
@@ -510,14 +555,18 @@ if __name__ == "__main__":
             base_score = 8.0 + 0.5 * np.sin(i * 0.1) + np.random.normal(0, 0.2)
             base_score = np.clip(base_score, 6.0, 10.0)
 
-            mock_data.append({
-                'time': timestamp.isoformat(),
-                'value': base_score,
-                'field': 'overall_score',
-                'cpu_usage': 40 + 20 * np.sin(i * 0.05) + np.random.normal(0, 5),
-                'memory_usage': 60 + 15 * np.cos(i * 0.08) + np.random.normal(0, 3),
-                'active_connections': 10 + 5 * np.sin(i * 0.03) + np.random.randint(-2, 3)
-            })
+            mock_data.append(
+                {
+                    "time": timestamp.isoformat(),
+                    "value": base_score,
+                    "field": "overall_score",
+                    "cpu_usage": 40 + 20 * np.sin(i * 0.05) + np.random.normal(0, 5),
+                    "memory_usage": 60 + 15 * np.cos(i * 0.08) + np.random.normal(0, 3),
+                    "active_connections": 10
+                    + 5 * np.sin(i * 0.03)
+                    + np.random.randint(-2, 3),
+                }
+            )
 
         print(f"✅ 生成了 {len(mock_data)} 个模拟数据点")
 

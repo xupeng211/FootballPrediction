@@ -24,6 +24,7 @@ from .subscriptions import SubscriptionManager
 
 class ConnectionState(Enum):
     """连接状态枚举"""
+
     DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
     CONNECTED = "connected"
@@ -33,6 +34,7 @@ class ConnectionState(Enum):
 @dataclass
 class ConnectionInfo:
     """连接信息"""
+
     connection_id: str
     user_id: Optional[str] = None
     session_id: Optional[str] = None
@@ -58,7 +60,7 @@ class WebSocketConnection:
         self,
         websocket: WebSocket,
         connection_id: Optional[str] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ):
         self.websocket = websocket
         self.connection_id = connection_id or str(uuid.uuid4())
@@ -68,7 +70,7 @@ class WebSocketConnection:
             connection_id=self.connection_id,
             user_id=user_id,
             ip_address=self._get_client_ip(),
-            user_agent=self._get_user_agent()
+            user_agent=self._get_user_agent(),
         )
         self.logger = logging.getLogger(f"{__name__}.Connection.{self.connection_id}")
         self._message_queue = asyncio.Queue()
@@ -76,14 +78,14 @@ class WebSocketConnection:
 
     def _get_client_ip(self) -> Optional[str]:
         """获取客户端IP地址"""
-        if hasattr(self.websocket, 'client'):
+        if hasattr(self.websocket, "client"):
             return self.websocket.client.host if self.websocket.client else None
         return None
 
     def _get_user_agent(self) -> Optional[str]:
         """获取用户代理"""
-        headers = getattr(self.websocket, 'headers', {})
-        return headers.get('user-agent')
+        headers = getattr(self.websocket, "headers", {})
+        return headers.get("user-agent")
 
     async def connect(self) -> None:
         """建立连接"""
@@ -155,15 +157,16 @@ class WebSocketConnection:
         while self._running and self.state == ConnectionState.CONNECTED:
             try:
                 message = await asyncio.wait_for(
-                    self.websocket.receive_text(),
-                    timeout=30.0  # 30秒超时
+                    self.websocket.receive_text(), timeout=30.0  # 30秒超时
                 )
                 self.info.last_activity = datetime.now()
                 await self._message_queue.put(message)
 
             except asyncio.TimeoutError:
                 # 发送心跳
-                await self.send({"type": "heartbeat", "timestamp": datetime.now().isoformat()})
+                await self.send(
+                    {"type": "heartbeat", "timestamp": datetime.now().isoformat()}
+                )
             except WebSocketDisconnect:
                 break
             except Exception as e:
@@ -206,7 +209,7 @@ class WebSocketManager:
         self,
         websocket: WebSocket,
         user_id: Optional[str] = None,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
     ) -> WebSocketConnection:
         """建立新连接"""
         connection = WebSocketConnection(websocket, user_id=user_id)
@@ -227,7 +230,9 @@ class WebSocketManager:
         if session_id:
             connection.info.session_id = session_id
 
-        self.logger.info(f"New connection established: {connection.connection_id} (user: {user_id})")
+        self.logger.info(
+            f"New connection established: {connection.connection_id} (user: {user_id})"
+        )
 
         # 发送连接成功事件
         await self._handle_connection_event(connection, "connected")
@@ -267,9 +272,7 @@ class WebSocketManager:
         self.logger.info(f"Connection disconnected: {connection_id}")
 
     async def send_to_connection(
-        self,
-        connection_id: str,
-        message: Union[str, dict, RealtimeEvent]
+        self, connection_id: str, message: Union[str, dict, RealtimeEvent]
     ) -> bool:
         """发送消息到特定连接"""
         if connection_id not in self.connections:
@@ -279,9 +282,7 @@ class WebSocketManager:
         return await connection.send(message)
 
     async def send_to_user(
-        self,
-        user_id: str,
-        message: Union[str, dict, RealtimeEvent]
+        self, user_id: str, message: Union[str, dict, RealtimeEvent]
     ) -> int:
         """发送消息到特定用户的所有连接"""
         if user_id not in self.user_connections:
@@ -298,7 +299,7 @@ class WebSocketManager:
         self,
         message: Union[str, dict, RealtimeEvent],
         room: Optional[str] = None,
-        exclude_connection: Optional[str] = None
+        exclude_connection: Optional[str] = None,
     ) -> int:
         """广播消息"""
         if room:
@@ -346,15 +347,13 @@ class WebSocketManager:
         self,
         connection_id: str,
         event_type: EventType,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """订阅事件"""
         return self.subscription_manager.subscribe(connection_id, event_type, filters)
 
     async def unsubscribe_from_event(
-        self,
-        connection_id: str,
-        event_type: EventType
+        self, connection_id: str, event_type: EventType
     ) -> bool:
         """取消订阅事件"""
         return self.subscription_manager.unsubscribe(connection_id, event_type)
@@ -362,17 +361,23 @@ class WebSocketManager:
     async def publish_event(self, event: RealtimeEvent) -> int:
         """发布事件"""
         # 获取订阅者
-        subscribers = self.subscription_manager.get_subscribers(event.event_type, event.data)
+        subscribers = self.subscription_manager.get_subscribers(
+            event.event_type, event.data
+        )
 
         success_count = 0
         for connection_id in subscribers:
             if await self.send_to_connection(connection_id, event):
                 success_count += 1
 
-        self.logger.debug(f"Event {event.event_type} sent to {success_count} subscribers")
+        self.logger.debug(
+            f"Event {event.event_type} sent to {success_count} subscribers"
+        )
         return success_count
 
-    async def _handle_connection_event(self, connection: WebSocketConnection, status: str) -> None:
+    async def _handle_connection_event(
+        self, connection: WebSocketConnection, status: str
+    ) -> None:
         """处理连接事件"""
         event = RealtimeEvent(
             event_type=EventType.CONNECTION_STATUS,
@@ -380,8 +385,8 @@ class WebSocketManager:
                 "connection_id": connection.connection_id,
                 "user_id": connection.info.user_id,
                 "status": status,
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         )
         await self.publish_event(event)
 
@@ -397,14 +402,18 @@ class WebSocketManager:
                         dead_connections.append(connection_id)
                     elif connection.get_uptime() > timedelta(hours=1):
                         # 检查长时间无活动的连接
-                        if datetime.now() - connection.info.last_activity > timedelta(minutes=30):
+                        if datetime.now() - connection.info.last_activity > timedelta(
+                            minutes=30
+                        ):
                             dead_connections.append(connection_id)
 
                 for connection_id in dead_connections:
                     await self.disconnect(connection_id)
 
                 if dead_connections:
-                    self.logger.info(f"Cleaned up {len(dead_connections)} dead connections")
+                    self.logger.info(
+                        f"Cleaned up {len(dead_connections)} dead connections"
+                    )
 
             except Exception as e:
                 self.logger.error(f"Cleanup task error: {e}")
@@ -422,7 +431,7 @@ class WebSocketManager:
             "users_by_connection_count": {
                 user_id: len(connections)
                 for user_id, connections in self.user_connections.items()
-            }
+            },
         }
 
     def get_connection_info(self, connection_id: str) -> Optional[Dict[str, Any]]:
@@ -441,7 +450,7 @@ class WebSocketManager:
             "last_activity": connection.info.last_activity.isoformat(),
             "uptime": str(connection.get_uptime()),
             "subscriptions": list(connection.info.subscriptions),
-            "state": connection.state.value
+            "state": connection.state.value,
         }
 
 

@@ -29,6 +29,7 @@ logger = get_logger(__name__)
 @dataclass
 class NotificationChannel:
     """通知渠道配置"""
+
     id: str
     name: str
     type: str  # email, slack, wechat, dingtalk
@@ -41,12 +42,12 @@ class EmailClient:
     """邮件通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.smtp_server = config.get('smtp_server', 'smtp.gmail.com')
-        self.smtp_port = config.get('smtp_port', 587)
-        self.username = config.get('username')
-        self.password = config.get('password')
-        self.from_email = config.get('from_email', self.username)
-        self.use_tls = config.get('use_tls', True)
+        self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
+        self.smtp_port = config.get("smtp_port", 587)
+        self.username = config.get("username")
+        self.password = config.get("password")
+        self.from_email = config.get("from_email", self.username)
+        self.use_tls = config.get("use_tls", True)
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_email(self, alert: Alert, recipients: List[str]) -> bool:
@@ -60,17 +61,17 @@ class EmailClient:
             text_content = self._render_text_template(alert)
 
             # 创建邮件消息
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = self.from_email
-            msg['To'] = ', '.join(recipients)
-            msg['Date'] = datetime.now().strftime('%a, %d %b %Y %H:%M:%S %z')
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = self.from_email
+            msg["To"] = ", ".join(recipients)
+            msg["Date"] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z")
 
             # 添加文本内容
-            msg.attach(MIMEText(text_content, 'plain', 'utf-8'))
+            msg.attach(MIMEText(text_content, "plain", "utf-8"))
 
             # 添加HTML内容
-            msg.attach(MIMEHtml(html_content, 'html', 'utf-8'))
+            msg.attach(MIMEHtml(html_content, "html", "utf-8"))
 
             # 发送邮件
             await self._send_email(msg, recipients)
@@ -230,10 +231,10 @@ class SlackClient:
     """Slack通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.webhook_url = config.get('webhook_url')
-        self.channel = config.get('channel', '#quality-alerts')
-        self.username = config.get('username', 'Quality Monitor')
-        self.icon_emoji = config.get('icon_emoji', ':robot_face:')
+        self.webhook_url = config.get("webhook_url")
+        self.channel = config.get("channel", "#quality-alerts")
+        self.username = config.get("username", "Quality Monitor")
+        self.icon_emoji = config.get("icon_emoji", ":robot_face:")
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_slack(self, alert: Alert) -> bool:
@@ -247,7 +248,7 @@ class SlackClient:
                 async with session.post(
                     self.webhook_url,
                     json=payload,
-                    headers={'Content-Type': 'application/json'}
+                    headers={"Content-Type": "application/json"},
                 ) as response:
                     if response.status == 200:
                         self.logger.info(f"Slack告警已发送: {alert.id}")
@@ -264,12 +265,12 @@ class SlackClient:
         """构建Slack消息格式"""
         # 根据严重程度选择颜色
         color_map = {
-            AlertSeverity.CRITICAL: '#ff0000',
-            AlertSeverity.ERROR: '#ff6600',
-            AlertSeverity.WARNING: '#ffaa00',
-            AlertSeverity.INFO: '#0066cc'
+            AlertSeverity.CRITICAL: "#ff0000",
+            AlertSeverity.ERROR: "#ff6600",
+            AlertSeverity.WARNING: "#ffaa00",
+            AlertSeverity.INFO: "#0066cc",
         }
-        color = color_map.get(alert.severity, '#666666')
+        color = color_map.get(alert.severity, "#666666")
 
         # 构建消息
         message = {
@@ -282,46 +283,38 @@ class SlackClient:
                     "title": f"[{alert.severity.value.upper()}] {alert.title}",
                     "text": alert.message,
                     "fields": [
-                        {
-                            "title": "告警类型",
-                            "value": alert.type.value,
-                            "short": True
-                        },
-                        {
-                            "title": "告警源",
-                            "value": alert.source,
-                            "short": True
-                        },
+                        {"title": "告警类型", "value": alert.type.value, "short": True},
+                        {"title": "告警源", "value": alert.source, "short": True},
                         {
                             "title": "触发时间",
-                            "value": alert.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                            "short": True
-                        }
+                            "value": alert.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                            "short": True,
+                        },
                     ],
                     "footer": "质量监控系统",
-                    "ts": int(alert.timestamp.timestamp())
+                    "ts": int(alert.timestamp.timestamp()),
                 }
-            ]
+            ],
         }
 
         # 添加当前值和阈值信息
         if alert.current_value is not None and alert.threshold is not None:
-            message["attachments"][0]["fields"].append({
-                "title": "当前值 / 阈值",
-                "value": f"{alert.current_value:.2f} / {alert.threshold:.2f}",
-                "short": True
-            })
+            message["attachments"][0]["fields"].append(
+                {
+                    "title": "当前值 / 阈值",
+                    "value": f"{alert.current_value:.2f} / {alert.threshold:.2f}",
+                    "short": True,
+                }
+            )
 
         # 添加详细信息
         if alert.details:
-            details_text = "\n".join([
-                f"• {key}: {value}" for key, value in alert.details.items()
-            ])
-            message["attachments"][0]["fields"].append({
-                "title": "详细信息",
-                "value": details_text,
-                "short": False
-            })
+            details_text = "\n".join(
+                [f"• {key}: {value}" for key, value in alert.details.items()]
+            )
+            message["attachments"][0]["fields"].append(
+                {"title": "详细信息", "value": details_text, "short": False}
+            )
 
         return message
 
@@ -330,8 +323,8 @@ class WeChatClient:
     """企业微信通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.webhook_url = config.get('webhook_url')
-        self.mentioned_list = config.get('mentioned_list', [])
+        self.webhook_url = config.get("webhook_url")
+        self.mentioned_list = config.get("mentioned_list", [])
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_wechat(self, alert: Alert) -> bool:
@@ -345,11 +338,11 @@ class WeChatClient:
                 async with session.post(
                     self.webhook_url,
                     json=payload,
-                    headers={'Content-Type': 'application/json'}
+                    headers={"Content-Type": "application/json"},
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        if result.get('errcode') == 0:
+                        if result.get("errcode") == 0:
                             self.logger.info(f"企业微信告警已发送: {alert.id}")
                             return True
                         else:
@@ -367,12 +360,12 @@ class WeChatClient:
         """构建企业微信消息格式"""
         # 根据严重程度选择颜色
         color_map = {
-            AlertSeverity.CRITICAL: 'warning',
-            AlertSeverity.ERROR: 'warning',
-            AlertSeverity.WARNING: 'info',
-            AlertSeverity.INFO: 'comment'
+            AlertSeverity.CRITICAL: "warning",
+            AlertSeverity.ERROR: "warning",
+            AlertSeverity.WARNING: "info",
+            AlertSeverity.INFO: "comment",
         }
-        color = color_map.get(alert.severity, 'info')
+        color = color_map.get(alert.severity, "info")
 
         # 构建Markdown内容
         content = f"""
@@ -388,7 +381,9 @@ class WeChatClient:
 
         # 添加当前值和阈值信息
         if alert.current_value is not None and alert.threshold is not None:
-            content += f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
+            content += (
+                f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
+            )
 
         # 添加详细信息
         if alert.details:
@@ -396,12 +391,7 @@ class WeChatClient:
             for key, value in alert.details.items():
                 content += f"- {key}: {value}\n"
 
-        message = {
-            "msgtype": "markdown",
-            "markdown": {
-                "content": content
-            }
-        }
+        message = {"msgtype": "markdown", "markdown": {"content": content}}
 
         # 添加@用户
         if self.mentioned_list:
@@ -414,10 +404,10 @@ class DingTalkClient:
     """钉钉通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.webhook_url = config.get('webhook_url')
-        self.secret = config.get('secret')
-        self.at_mobiles = config.get('at_mobiles', [])
-        self.is_at_all = config.get('is_at_all', False)
+        self.webhook_url = config.get("webhook_url")
+        self.secret = config.get("secret")
+        self.at_mobiles = config.get("at_mobiles", [])
+        self.is_at_all = config.get("is_at_all", False)
         self.logger = get_logger(self.__class__.__name__)
 
     async def send_alert_dingtalk(self, alert: Alert) -> bool:
@@ -431,11 +421,11 @@ class DingTalkClient:
                 async with session.post(
                     self.webhook_url,
                     json=payload,
-                    headers={'Content-Type': 'application/json'}
+                    headers={"Content-Type": "application/json"},
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        if result.get('errcode') == 0:
+                        if result.get("errcode") == 0:
                             self.logger.info(f"钉钉告警已发送: {alert.id}")
                             return True
                         else:
@@ -453,12 +443,12 @@ class DingTalkClient:
         """构建钉钉消息格式"""
         # 根据严重程度选择表情符号
         emoji_map = {
-            AlertSeverity.CRITICAL: '🚨',
-            AlertSeverity.ERROR: '❌',
-            AlertSeverity.WARNING: '⚠️',
-            AlertSeverity.INFO: 'ℹ️'
+            AlertSeverity.CRITICAL: "🚨",
+            AlertSeverity.ERROR: "❌",
+            AlertSeverity.WARNING: "⚠️",
+            AlertSeverity.INFO: "ℹ️",
         }
-        emoji = emoji_map.get(alert.severity, '📢')
+        emoji = emoji_map.get(alert.severity, "📢")
 
         # 构建Markdown内容
         text = f"""
@@ -474,7 +464,9 @@ class DingTalkClient:
 
         # 添加当前值和阈值信息
         if alert.current_value is not None and alert.threshold is not None:
-            text += f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
+            text += (
+                f"- 当前值: {alert.current_value:.2f}\n- 阈值: {alert.threshold:.2f}\n"
+            )
 
         # 添加详细信息
         if alert.details:
@@ -484,14 +476,8 @@ class DingTalkClient:
 
         message = {
             "msgtype": "markdown",
-            "markdown": {
-                "title": f"质量监控告警: {alert.title}",
-                "text": text
-            },
-            "at": {
-                "atMobiles": self.at_mobiles,
-                "isAtAll": self.is_at_all
-            }
+            "markdown": {"title": f"质量监控告警: {alert.title}", "text": text},
+            "at": {"atMobiles": self.at_mobiles, "isAtAll": self.is_at_all},
         }
 
         return message
@@ -515,18 +501,14 @@ class NotificationManager:
             # 默认通知渠道配置
             default_channels = [
                 NotificationChannel(
-                    id="log",
-                    name="日志记录",
-                    type="log",
-                    enabled=True,
-                    config={}
+                    id="log", name="日志记录", type="log", enabled=True, config={}
                 )
             ]
 
             # 尝试从配置文件加载渠道
             config_file = Path("config/notification_channels.json")
             if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, "r", encoding="utf-8") as f:
                     channels_config = json.load(f)
 
                 for channel_config in channels_config:
@@ -598,20 +580,20 @@ class NotificationManager:
             filters = channel.filters
 
             # 严重程度过滤
-            if 'severities' in filters:
-                allowed_severities = filters['severities']
+            if "severities" in filters:
+                allowed_severities = filters["severities"]
                 if alert.severity.value not in allowed_severities:
                     return False
 
             # 告警类型过滤
-            if 'types' in filters:
-                allowed_types = filters['types']
+            if "types" in filters:
+                allowed_types = filters["types"]
                 if alert.type.value not in allowed_types:
                     return False
 
             # 时间过滤
-            if 'active_hours' in filters:
-                active_hours = filters['active_hours']
+            if "active_hours" in filters:
+                active_hours = filters["active_hours"]
                 current_hour = datetime.now().hour
                 if current_hour not in active_hours:
                     return False
@@ -622,18 +604,24 @@ class NotificationManager:
             self.logger.error(f"检查告警过滤条件失败: {e}")
             return True  # 出错时默认发送
 
-    async def _send_to_channel(self, alert: Alert, channel: NotificationChannel) -> bool:
+    async def _send_to_channel(
+        self, alert: Alert, channel: NotificationChannel
+    ) -> bool:
         """发送告警到指定渠道"""
         try:
             if channel.type == "log":
                 # 日志记录
-                self.logger.warning(f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}")
+                self.logger.warning(
+                    f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
+                )
                 return True
 
             elif channel.type == "email":
                 client = self.clients.get(channel.id)
-                if client and channel.config.get('recipients'):
-                    return await client.send_alert_email(alert, channel.config['recipients'])
+                if client and channel.config.get("recipients"):
+                    return await client.send_alert_email(
+                        alert, channel.config["recipients"]
+                    )
 
             elif channel.type == "slack":
                 client = self.clients.get(channel.id)
@@ -677,10 +665,10 @@ class NotificationManager:
         status = {}
         for channel_id, channel in self.channels.items():
             status[channel_id] = {
-                'name': channel.name,
-                'type': channel.type,
-                'enabled': channel.enabled,
-                'has_client': channel_id in self.clients
+                "name": channel.name,
+                "type": channel.type,
+                "enabled": channel.enabled,
+                "has_client": channel_id in self.clients,
             }
         return status
 

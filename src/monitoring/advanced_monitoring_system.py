@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QualityMetrics:
     """质量指标数据类"""
+
     timestamp: datetime
     overall_score: float
     test_coverage: float
@@ -51,6 +52,7 @@ class QualityMetrics:
 @dataclass
 class QualityGate:
     """质量门禁配置"""
+
     name: str
     threshold: float
     operator: str  # "gte", "lte", "eq"
@@ -82,71 +84,71 @@ class AdvancedMonitoringSystem:
                 threshold=8.5,
                 operator="gte",
                 critical=True,
-                description="系统整体质量分数必须≥8.5"
+                description="系统整体质量分数必须≥8.5",
             ),
             QualityGate(
                 name="测试覆盖率",
                 threshold=80.0,
                 operator="gte",
                 critical=True,
-                description="测试覆盖率必须≥80%"
+                description="测试覆盖率必须≥80%",
             ),
             QualityGate(
                 name="代码质量分数",
                 threshold=8.0,
                 operator="gte",
                 critical=True,
-                description="代码质量分数必须≥8.0"
+                description="代码质量分数必须≥8.0",
             ),
             QualityGate(
                 name="安全分数",
                 threshold=9.0,
                 operator="gte",
                 critical=True,
-                description="安全分数必须≥9.0"
+                description="安全分数必须≥9.0",
             ),
             QualityGate(
                 name="SRS符合性",
                 threshold=95.0,
                 operator="gte",
                 critical=True,
-                description="SRS符合性必须≥95%"
+                description="SRS符合性必须≥95%",
             ),
             QualityGate(
                 name="ML模型准确率",
                 threshold=65.0,
                 operator="gte",
                 critical=False,
-                description="ML模型准确率必须≥65%"
+                description="ML模型准确率必须≥65%",
             ),
             QualityGate(
                 name="API可用性",
                 threshold=99.0,
                 operator="gte",
                 critical=True,
-                description="API可用性必须≥99%"
+                description="API可用性必须≥99%",
             ),
             QualityGate(
                 name="错误率",
                 threshold=5.0,
                 operator="lte",
                 critical=True,
-                description="错误率必须≤5%"
+                description="错误率必须≤5%",
             ),
             QualityGate(
                 name="响应时间",
                 threshold=500.0,
                 operator="lte",
                 critical=False,
-                description="平均响应时间必须≤500ms"
+                description="平均响应时间必须≤500ms",
             ),
             QualityGate(
                 name="技术债务比例",
                 threshold=10.0,
                 operator="lte",
                 critical=False,
-                description="技术债务比例必须≤10%"
-            )
+                description="技术债务比例必须≤10%",
+            ),
         ]
 
     def _setup_routes(self):
@@ -168,16 +170,20 @@ class AdvancedMonitoringSystem:
                 "timestamp": latest.timestamp.isoformat(),
                 "metrics": asdict(latest),
                 "quality_gates": await self._check_quality_gates(latest),
-                "status": "healthy" if await self._evaluate_health(latest) else "unhealthy"
+                "status": (
+                    "healthy" if await self._evaluate_health(latest) else "unhealthy"
+                ),
             }
 
         @self.app.get("/api/metrics/history")
         async def get_metrics_history(limit: int = 100):
             """获取历史质量指标"""
-            history = self.metrics_history[-limit:] if limit > 0 else self.metrics_history
+            history = (
+                self.metrics_history[-limit:] if limit > 0 else self.metrics_history
+            )
             return {
                 "metrics": [asdict(m) for m in history],
-                "total_count": len(history)
+                "total_count": len(history),
             }
 
         @self.app.get("/api/quality-gates")
@@ -185,17 +191,14 @@ class AdvancedMonitoringSystem:
             """获取质量门禁配置"""
             return {
                 "gates": [asdict(gate) for gate in self.quality_gates],
-                "total_count": len(self.quality_gates)
+                "total_count": len(self.quality_gates),
             }
 
         @self.app.get("/api/alerts")
         async def get_alerts(limit: int = 50):
             """获取告警历史"""
             alerts = self.alerts_sent[-limit:] if limit > 0 else self.alerts_sent
-            return {
-                "alerts": alerts,
-                "total_count": len(alerts)
-            }
+            return {"alerts": alerts, "total_count": len(alerts)}
 
         @self.app.post("/api/monitoring/start")
         async def start_monitoring(background_tasks: BackgroundTasks):
@@ -220,7 +223,11 @@ class AdvancedMonitoringSystem:
                 "status": "healthy" if self.monitoring_active else "stopped",
                 "monitoring_active": self.monitoring_active,
                 "metrics_count": len(self.metrics_history),
-                "last_update": self.metrics_history[-1].timestamp.isoformat() if self.metrics_history else None
+                "last_update": (
+                    self.metrics_history[-1].timestamp.isoformat()
+                    if self.metrics_history
+                    else None
+                ),
             }
 
     async def _collect_metrics(self) -> QualityMetrics:
@@ -247,7 +254,7 @@ class AdvancedMonitoringSystem:
                 ml_model_accuracy=metrics_data.get("ml_model_accuracy", 0.0),
                 api_availability=metrics_data.get("api_availability", 99.0),
                 error_rate=metrics_data.get("error_rate", 2.0),
-                response_time=metrics_data.get("response_time", 200.0)
+                response_time=metrics_data.get("response_time", 200.0),
             )
 
             logger.info(f"收集质量指标完成: 综合分数 {metrics.overall_score}/10")
@@ -270,17 +277,12 @@ class AdvancedMonitoringSystem:
                 ml_model_accuracy=60.0,
                 api_availability=95.0,
                 error_rate=5.0,
-                response_time=300.0
+                response_time=300.0,
             )
 
     async def _check_quality_gates(self, metrics: QualityMetrics) -> Dict[str, Any]:
         """检查质量门禁"""
-        results = {
-            "passed": 0,
-            "failed": 0,
-            "critical_failed": 0,
-            "gates": []
-        }
+        results = {"passed": 0, "failed": 0, "critical_failed": 0, "gates": []}
 
         for gate in self.quality_gates:
             # 获取指标值
@@ -295,7 +297,7 @@ class AdvancedMonitoringSystem:
                 "current": metric_value,
                 "passed": passed,
                 "critical": gate.critical,
-                "description": gate.description
+                "description": gate.description,
             }
 
             results["gates"].append(gate_result)
@@ -307,7 +309,9 @@ class AdvancedMonitoringSystem:
                 if gate.critical:
                     results["critical_failed"] += 1
 
-        results["overall_status"] = "passed" if results["critical_failed"] == 0 else "failed"
+        results["overall_status"] = (
+            "passed" if results["critical_failed"] == 0 else "failed"
+        )
         return results
 
     def _get_metric_field_name(self, gate_name: str) -> str:
@@ -322,7 +326,7 @@ class AdvancedMonitoringSystem:
             "API可用性": "api_availability",
             "错误率": "error_rate",
             "响应时间": "response_time",
-            "技术债务比例": "technical_debt_ratio"
+            "技术债务比例": "technical_debt_ratio",
         }
         return mapping.get(gate_name, "overall_score")
 
@@ -349,7 +353,7 @@ class AdvancedMonitoringSystem:
             "threshold": gate.threshold,
             "current_value": current_value,
             "severity": "critical" if gate.critical else "warning",
-            "description": f"质量门禁失败: {gate.name} 当前值 {current_value}, 阈值 {gate.threshold}"
+            "description": f"质量门禁失败: {gate.name} 当前值 {current_value}, 阈值 {gate.threshold}",
         }
 
         self.alerts_sent.append(alert)
@@ -377,7 +381,11 @@ class AdvancedMonitoringSystem:
                 # 发送告警
                 for gate_result in gate_results["gates"]:
                     if not gate_result["passed"]:
-                        gate = next(g for g in self.quality_gates if g.name == gate_result["name"])
+                        gate = next(
+                            g
+                            for g in self.quality_gates
+                            if g.name == gate_result["name"]
+                        )
                         await self._send_alert(gate, gate_result["current"])
 
                 # 等待60秒
