@@ -67,6 +67,12 @@ class DataTransformer(ABC):
         """转换数据格式"""
         pass
 
+class CompositeAdapter(Adapter):
+    # TODO: 方法 def get_adapter 过长(27行)，建议拆分
+    def __init__(self, name: str = "CompositeAdapter"):
+        pass
+
+class DataTransformer(ABC):
     def __init__(self, name: str = "CompositeAdapter"):
         self.name = name
         self.adapters: List[Adapter] = []
@@ -112,6 +118,8 @@ class CompositeAdapter(Adapter):
         return False
 
     # TODO: 方法 def get_adapter 过长(27行)，建议拆分
+# TODO: 方法 def get_adapter 过长(27行)，建议拆分
+# TODO: 方法 def get_adapter 过长(27行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
