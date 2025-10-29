@@ -133,16 +133,17 @@ async def get_adapters_root():
             "demo_comparison": "/demo/comparison",
             "demo_fallback": "/demo/fallback",
             "demo_transformation": "/demo/transformation",
-            "health": "/health"
+            "health": "/health",
         },
         "features": [
             "多数据源适配",
             "实时数据转换",
             "故障转移机制",
             "演示和对比功能",
-            "健康监控"
-        ]
+            "健康监控",
+        ],
     }
+
 
 # Registry endpoints
 @router.get("/registry/status")
@@ -188,8 +189,9 @@ async def get_registry_status():
             else:
                 # Mock对象可能没有status.value，跳过初始化
                 pass
-        except:
+        except Exception as e:
             # 初始化失败时静默处理（可能是mock对象）
+            logger.warning(f"Adapter registry initialization failed: {e}")
             pass
 
         # 获取健康状态
@@ -203,12 +205,13 @@ async def get_registry_status():
                     "total_adapters": 5,
                     "active_adapters": 4,
                 }
-        except:
+        except Exception as e:
             health_status = {
                 "status": "active",
                 "total_adapters": 0,
                 "active_adapters": 0,
             }
+            logger.warning(f"Health status fallback failed: {e}")
 
         # 获取指标摘要
         try:
@@ -220,11 +223,12 @@ async def get_registry_status():
                     "total_requests": 1000,
                     "success_rate": 0.95,
                 }
-        except:
+        except Exception as e:
             metrics = {
                 "total_requests": 0,
                 "success_rate": 0.0,
             }
+            logger.warning(f"Metrics summary fallback failed: {e}")
 
         return {"registry": health_status, "metrics": metrics}
     except Exception as e:
@@ -299,8 +303,9 @@ async def shutdown_registry():
             else:
                 # Mock对象可能没有shutdown方法，跳过
                 pass
-        except:
+        except Exception as e:
             # 关闭失败时静默处理（可能是mock对象）
+            logger.warning(f"Registry shutdown failed: {e}")
             pass
 
         return {"status": "success", "message": "适配器注册表已关闭"}
@@ -355,7 +360,8 @@ async def get_adapter_configs():
                         }
                     },
                 }
-            except:
+            except Exception as e:
+                logger.warning(f"Status details failed: {e}")
                 pass
 
         # 默认返回 - 测试期望的格式

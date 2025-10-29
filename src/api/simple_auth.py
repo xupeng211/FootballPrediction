@@ -18,6 +18,7 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/auth", tags=["认证"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
+
 # 简化的用户数据结构
 class SimpleUser(BaseModel):
     id: int
@@ -29,9 +30,8 @@ class SimpleUser(BaseModel):
     created_at: datetime
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
 
 # 简化的用户注册请求
 class SimpleUserRegister(BaseModel):
@@ -39,19 +39,33 @@ class SimpleUserRegister(BaseModel):
     email: str
     password: str
 
+
 # 简化的令牌响应
 class SimpleTokenResponse(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
 
+
 # 简化的认证服务
 class SimpleAuthService:
     def __init__(self):
         # 简化的用户存储（实际应用中应该使用数据库）
         self.users = {
-            "admin": {"id": 1, "username": "admin", "password": "admin123", "email": "admin@example.com", "role": "admin"},
-            "testuser": {"id": 2, "username": "testuser", "password": "test123", "email": "test@example.com", "role": "user"}
+            "admin": {
+                "id": 1,
+                "username": "admin",
+                "password": "admin123",
+                "email": "admin@example.com",
+                "role": "admin",
+            },
+            "testuser": {
+                "id": 2,
+                "username": "testuser",
+                "password": "test123",
+                "email": "test@example.com",
+                "role": "user",
+            },
         }
 
     def verify_password(self, plain_password: str, stored_password: str) -> bool:
@@ -73,7 +87,7 @@ class SimpleAuthService:
             email=user_data["email"],
             password=user_data["password"],
             role=user_data["role"],
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
     def create_user(self, username: str, email: str, password: str) -> SimpleUser:
@@ -82,14 +96,16 @@ class SimpleAuthService:
             raise ValueError("用户名已存在")
 
         # 简单的用户ID生成
-        new_id = max(user["id"] for user in self.users.values()) + 1 if self.users else 1
+        new_id = (
+            max(user["id"] for user in self.users.values()) + 1 if self.users else 1
+        )
 
         self.users[username] = {
             "id": new_id,
             "username": username,
             "password": password,
             "email": email,
-            "role": "user"
+            "role": "user",
         }
 
         return SimpleUser(
@@ -98,7 +114,7 @@ class SimpleAuthService:
             email=email,
             password=password,
             role="user",
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
     def store_user(self, user: SimpleUser) -> None:
@@ -108,7 +124,7 @@ class SimpleAuthService:
             "username": user.username,
             "password": user.password,
             "email": user.email,
-            "role": user.role
+            "role": user.role,
         }
 
     def get_user(self, username: str) -> Optional[SimpleUser]:
@@ -123,7 +139,7 @@ class SimpleAuthService:
             email=user_data["email"],
             password=user_data["password"],
             role=user_data["role"],
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
     def generate_token(self, user: SimpleUser) -> str:
@@ -162,7 +178,7 @@ class SimpleAuthService:
                 email=user_data["email"],
                 password=user_data["password"],
                 role=user_data["role"],
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
 
         except (ValueError, IndexError):
@@ -180,11 +196,13 @@ class SimpleAuthService:
             email=user_data["email"],
             password=user_data["password"],
             role=user_data["role"],
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
+
 
 # 全局认证服务实例
 auth_service = SimpleAuthService()
+
 
 # 依赖函数
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
@@ -214,21 +232,19 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
 
     return user
 
+
 # API端点
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_data: SimpleUserRegister):
     """用户注册"""
     try:
-        user = auth_service.create_user(user_data.username, user_data.email, user_data.password)
-        return {
-            "message": "用户注册成功",
-            "user": user.dict()
-        }
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+        user = auth_service.create_user(
+            user_data.username, user_data.email, user_data.password
         )
+        return {"message": "用户注册成功", "user": user.dict()}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 @router.post("/login")
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -246,23 +262,21 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     expires_in = 3600  # 1小时
 
     return SimpleTokenResponse(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=expires_in
+        access_token=access_token, token_type="bearer", expires_in=expires_in
     )
+
 
 @router.get("/me")
 async def get_current_user_info(current_user: SimpleUser = Depends(get_current_user)):
     """获取当前用户信息"""
-    return {
-        "user": current_user.dict(),
-        "message": "用户信息获取成功"
-    }
+    return {"user": current_user.dict(), "message": "用户信息获取成功"}
+
 
 @router.post("/logout")
 async def logout_user():
     """用户登出"""
     return {"message": "登出成功"}
+
 
 # 导出router
 __all__ = ["router"]

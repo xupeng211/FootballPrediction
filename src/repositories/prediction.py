@@ -128,7 +128,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         query = select(
             func.count(Prediction.id).label("total_predictions"),
             func.avg(Prediction.confidence).label("avg_confidence"),
-            func.sum(func.case((Prediction.is_correct == True, 1), else_=0)).label(
+            func.sum(func.case((Prediction.is_correct, 1), else_=0)).label(
                 "successful_predictions"
             ),
         ).where(Prediction.user_id == user_id)

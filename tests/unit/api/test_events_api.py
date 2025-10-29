@@ -135,7 +135,7 @@ class TestEventEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-                        assert "event_id" in _data or "success" in _data
+                              assert "event_id" in _data or "success" in _data
 
     @patch("src.api.events.EventManager.subscribe")
     def test_subscribe_to_event(self, mock_subscribe, client):

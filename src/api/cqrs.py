@@ -18,21 +18,6 @@ router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 
 
 # 依赖注入函数
-def get_prediction_cqrs_service():
-    """获取CQRS预测服务"""
-    return CQRSServiceFactory.create_prediction_service()
-
-
-def get_match_cqrs_service():
-    """获取CQRS比赛服务"""
-    return CQRSServiceFactory.create_match_service()
-
-
-def get_user_cqrs_service():
-    """获取CQRS用户服务"""
-    return CQRSServiceFactory.create_user_service()
-
-
 # 请求模型
 class CreatePredictionRequest(BaseModel):
     """创建预测请求"""
@@ -170,14 +155,14 @@ async def get_cqrs_root():
             "user_stats": "/users/{user_id}/stats",
             "match_details": "/matches/{match_id}",
             "upcoming_matches": "/matches/upcoming",
-            "system_status": "/system/status"
+            "system_status": "/system/status",
         },
         "commands": {
             "create_prediction": "POST /predictions",
             "update_prediction": "PUT /predictions/{prediction_id}",
             "delete_prediction": "DELETE /predictions/{prediction_id}",
-            "create_user": "POST /users"
-        }
+            "create_user": "POST /users",
+        },
     }
 
 
@@ -190,7 +175,7 @@ async def get_prediction(
     prediction = await service.get_prediction_by_id(prediction_id)
     if not prediction:
         raise HTTPException(
-            status_code=404, detail="预测不存在"
+            status_code=404, detail="预测不存在"  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
     return prediction.to_dict()
@@ -232,7 +217,7 @@ async def get_user_statistics(
     stats = await service.get_user_stats(user_id, include_predictions)
     if not stats:
         raise HTTPException(
-            status_code=404, detail="用户统计不存在"
+            status_code=404, detail="用户统计不存在"  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
     return stats.to_dict()
@@ -271,7 +256,7 @@ async def get_match(
     match = await service.get_match_by_id(match_id, include_predictions)
     if not match:
         raise HTTPException(
-            status_code=404, detail="比赛不存在"
+            status_code=404, detail="比赛不存在"  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
     return match.to_dict()
@@ -337,22 +322,28 @@ async def get_cqrs_system_status():
 
 # 预测命令端点
 # 预测命令端点
-def get_prediction_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+# 预测命令端点
+
+
+# 预测命令端点
+# 预测命令端点
+
+def get_prediction_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取预测CQRS服务"""
     return CQRSServiceFactory.create_prediction_service()
 
 
-def get_match_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_match_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取比赛CQRS服务"""
     return CQRSServiceFactory.create_match_service()
 
 
-def get_user_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_user_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取用户CQRS服务"""
     return CQRSServiceFactory.create_user_service()
 
 
-def get_analytics_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_analytics_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取分析CQRS服务"""
     return CQRSServiceFactory.create_analytics_service()
 

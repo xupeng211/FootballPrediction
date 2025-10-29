@@ -40,7 +40,7 @@ async def execute_advanced_prediction_api(
         # TODO: 实现具体的API逻辑
         result = {
             "status": "processing",
-            "job_id": "12345",
+            "job_id": "12345",  # TODO: 将魔法数字 12345 提取为常量
         }  # TODO: 将魔法数字 12345 提取为常量
 
         return AdvancedPredictionAPIResponse(
@@ -51,7 +51,7 @@ async def execute_advanced_prediction_api(
         )
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=str(e)
+            status_code=500, detail=str(e)  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 

@@ -50,7 +50,7 @@ def validate_match_id(match_id: int) -> None:
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
         raise HTTPException(
-            status_code=400, detail="比赛ID必须大于0"
+            status_code=400, detail="比赛ID必须大于0"  # TODO: 将魔法数字 400 提取为常量
         )  # TODO: 将魔法数字 400 提取为常量
 
 
@@ -59,7 +59,7 @@ def check_feature_store_availability() -> None:
     if get_feature_store() is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
-            status_code=503,
+            status_code=503,  # TODO: 将魔法数字 503 提取为常量
             detail="特征存储服务暂时不可用，请稍后重试",  # TODO: 将魔法数字 503 提取为常量
         )
 
@@ -76,7 +76,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         if not match:
             logger.warning(f"比赛 {match_id} 不存在")
             raise HTTPException(
-                status_code=404, detail=f"比赛 {match_id} 不存在"
+                status_code=404, detail=f"比赛 {match_id} 不存在"  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
         logger.debug(f"成功获取比赛信息: {match.home_team_id} vs {match.away_team_id}")
@@ -86,7 +86,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     except SQLAlchemyError as db_error:
         logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
         raise HTTPException(
-            status_code=500, detail="数据库查询失败，请稍后重试"
+            status_code=500, detail="数据库查询失败，请稍后重试"  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
     except (
         ValueError,
@@ -98,7 +98,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     ) as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
         raise HTTPException(
-            status_code=500, detail="查询比赛信息失败"
+            status_code=500, detail="查询比赛信息失败"  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
 
@@ -135,12 +135,14 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
 
 def build_response_data(
+    """TODO: 添加函数文档"""
     match: Match,
     features: Dict[str, Any],
     features_error: str,
     include_raw: bool,
 ) -> Dict[str, Any]:
-    """构造响应数据"""
+    """TODO: 添加函数文档
+    构造响应数据"""
     response_data = {
         "match_id": match.id,
         "home_team_id": match.home_team_id,

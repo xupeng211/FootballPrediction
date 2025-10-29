@@ -187,16 +187,17 @@ async def get_monitoring_root():
             "status": "/status",
             "prometheus": "/metrics/prometheus",
             "collector_health": "/collector/health",
-            "collector_status": "/collector/status"
+            "collector_status": "/collector/status",
         },
         "features": [
             "实时系统监控",
             "性能指标收集",
             "数据库连接监控",
             "Prometheus指标导出",
-            "健康状态检查"
-        ]
+            "健康状态检查",
+        ],
     }
+
 
 @router.get("/stats")
 async def get_monitoring_stats():
@@ -205,7 +206,7 @@ async def get_monitoring_stats():
         # 获取系统基本信息
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
 
         return {
             "system_stats": {
@@ -214,26 +215,24 @@ async def get_monitoring_stats():
                     "total_gb": round(memory.total / (1024**3), 2),
                     "available_gb": round(memory.available / (1024**3), 2),
                     "used_gb": round(memory.used / (1024**3), 2),
-                    "usage_percent": memory.percent
+                    "usage_percent": memory.percent,
                 },
                 "disk": {
                     "total_gb": round(disk.total / (1024**3), 2),
                     "used_gb": round(disk.used / (1024**3), 2),
                     "free_gb": round(disk.free / (1024**3), 2),
-                    "usage_percent": round((disk.used / disk.total) * 100, 2)
-                }
+                    "usage_percent": round((disk.used / disk.total) * 100, 2),
+                },
             },
             "service_status": {
                 "monitoring": "healthy",
                 "database": "connected",
-                "last_updated": datetime.utcnow().isoformat()
-            }
+                "last_updated": datetime.utcnow().isoformat(),
+            },
         }
     except Exception as e:
-        return {
-            "error": f"Failed to get stats: {str(e)}",
-            "status": "error"
-        }
+        return {"error": f"Failed to get stats: {str(e)}", "status": "error"}
+
 
 @router.get("/metrics")
 async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:

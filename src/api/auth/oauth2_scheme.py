@@ -12,5 +12,5 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="api/v1/auth/login",
     scheme_name="JWT",
     auto_error=True,
-    description="JWT访问令牌，格式: Bearer <token>"
+    description="JWT访问令牌，格式: Bearer <token>",
 )

@@ -1,0 +1,288 @@
+name: 质量门禁检查
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  quality-gate:
+    name: 质量门禁检查
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史记录
+
+    - name: 设置Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: 缓存依赖
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          .venv
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/requirements.lock
+        pip install pytest pytest-cov pytest-asyncio
+        pip install bandit
+        pip install mypy
+        pip install ruff
+
+    - name: 环境检查
+      run: |
+        python -c "import sys; print(f'Python: {sys.version}')"
+        pip list | grep -E "(pytest|bandit|mypy|ruff)" || echo "依赖检查完成"
+
+    - name: 安全扫描
+      run: |
+        echo "🔒 开始安全扫描..."
+        bandit -r src/ -f json -o security-report.json || true
+        bandit -r src/ --severity-level medium
+
+    - name: 依赖漏洞检查
+      run: |
+        echo "🔍 检查依赖漏洞..."
+        pip install pip-audit
+        pip-audit --format=json --output-dir=audit-reports || true
+
+    - name: 代码质量检查
+      run: |
+        echo "📊 代码质量检查..."
+
+        # Ruff检查
+        echo "Ruff检查:"
+        ruff check src/ --output-format=json --output-file=ruff-report.json || true
+        ruff check src/
+
+        # MyPy类型检查
+        echo -e "\nMyPy类型检查:"
+        mypy src/ --json-report mypy-report.json || true
+        mypy src/
+
+    - name: 运行测试
+      run: |
+        echo "🧪 运行测试套件..."
+
+        # 基础测试
+        pytest tests/unit/ -v --tb=short --cov=src --cov-report=xml --cov-report=html --cov-report=term-missing || true
+
+        # 集成测试
+        pytest tests/integration/ -v --tb=short || true
+
+    - name: 高级质量分析
+      run: |
+        echo "🔍 高级质量分析..."
+        python -c "
+        import sys
+        sys.path.append('.')
+        from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
+        from src.quality_gates.gate_system import QualityGateSystem
+
+        print('运行高级度量分析...')
+        analyzer = AdvancedMetricsAnalyzer()
+
+        # 运行质量门禁系统
+        gate_system = QualityGateSystem()
+        results = gate_system.run_all_checks()
+
+        print(f'质量门禁状态: {results[\"overall_status\"]}')
+        print(f'平均分数: {results[\"average_score\"]:.2f}')
+        print(f'是否阻止合并: {results[\"should_block\"]}')
+
+        # 保存结果到文件
+        import json
+        with open('quality-gate-results.json', 'w') as f:
+            json.dump(results, f, indent=2)
+        "
+
+    - name: 生成质量报告
+      run: |
+        echo "📄 生成质量报告..."
+        python -c "
+        import json
+        from datetime import datetime
+
+        try:
+            with open('quality-gate-results.json', 'r') as f:
+                results = json.load(f)
+
+            # 生成HTML报告
+            html_report = f'''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>质量门禁报告</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                    .header {{ background: #f0f0f0; padding: 20px; border-radius: 5px; }}
+                    .status-passed {{ color: green; }}
+                    .status-failed {{ color: red; }}
+                    .status-warning {{ color: orange; }}
+                    .gate-result {{ margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }}
+                    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }}
+                    .metric {{ background: #f9f9f9; padding: 15px; border-radius: 5px; }}
+                </style>
+            </head>
+            <body>
+                <div class=\"header\">
+                    <h1>🚪 质量门禁检查报告</h1>
+                    <p><strong>检查时间:</strong> {results['timestamp']}</p>
+                    <p><strong>检查耗时:</strong> {results['duration_seconds']:.2f}秒</p>
+                    <p><strong>总体状态:</strong> <span class=\"status-{results['overall_status'].lower()}\">{results['overall_status']}</span></p>
+                    <p><strong>平均分数:</strong> {results['average_score']:.2f}</p>
+                    <p><strong>是否阻止合并:</strong> {'是' if results['should_block'] else '否'}</p>
+                </div>
+
+                <div class=\"metrics\">
+                    <div class=\"metric\">
+                        <h3>📊 检查统计</h3>
+                        <p>通过: {results['summary']['passed']}</p>
+                        <p>失败: {results['summary']['failed']}</p>
+                        <p>警告: {results['summary']['warning']}</p>
+                        <p>跳过: {results['summary']['skipped']}</p>
+                    </div>
+                </div>
+
+                <h2>📋 详细结果</h2>
+            '''
+
+            for result in results['results']:
+                status_icon = {
+                    'passed': '✅',
+                    'failed': '❌',
+                    'warning': '⚠️',
+                    'skipped': '⏭️'
+                }.get(result['status'], '❓')
+
+                html_report += f'''
+                <div class=\"gate-result\">
+                    <h3>{status_icon} {result['gate_name']}</h3>
+                    <p><strong>状态:</strong> {result['status']}</p>
+                    <p><strong>消息:</strong> {result['message']}</p>
+                    <p><strong>分数:</strong> {result['score']:.2f} / {result['threshold']}</p>
+                    <p><strong>耗时:</strong> {result.get('duration_ms', 0)}ms</p>
+                    <p><strong>时间:</strong> {result['timestamp']}</p>
+                </div>
+                '''
+
+            html_report += '''
+                </body>
+            </html>
+            '''
+
+            with open('quality-report.html', 'w') as f:
+                f.write(html_report)
+
+            print('HTML质量报告已生成: quality-report.html')
+
+        except Exception as e:
+            print(f'生成报告失败: {e}')
+        "
+
+    - name: 质量门禁决策
+      run: |
+        echo "🚦 质量门禁决策..."
+        python -c "
+        import json
+        import sys
+
+        try:
+            with open('quality-gate-results.json', 'r') as f:
+                results = json.load(f)
+
+            overall_status = results.get('overall_status', 'FAILED')
+            should_block = results.get('should_block', True)
+            avg_score = results.get('average_score', 0)
+
+            print(f'总体状态: {overall_status}')
+            print(f'平均分数: {avg_score:.2f}')
+            print(f'是否阻止合并: {should_block}')
+
+            if should_block:
+                print('❌ 质量门禁未通过，阻止合并')
+                sys.exit(1)
+            elif overall_status == 'WARNING':
+                print('⚠️ 质量门禁通过但有警告')
+            else:
+                print('✅ 质量门禁完全通过')
+
+        except Exception as e:
+            print(f'质量门禁决策失败: {e}')
+            sys.exit(1)
+        "
+
+    - name: 上传质量报告
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quality-reports
+        path: |
+          quality-gate-results.json
+          quality-report.html
+          security-report.json
+          ruff-report.json
+          mypy-report.json
+          audit-reports/
+          htmlcov/
+        retention-days: 30
+
+    - name: 在PR中显示质量报告摘要
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          try {
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('quality-gate-results.json', 'utf8'));
+
+            const status = results.overall_status;
+            const score = results.average_score.toFixed(2);
+            const shouldBlock = results.should_block;
+
+            let comment = `## 🚪 质量门禁检查报告
+
+            **总体状态**: ${status === 'PASSED' ? '✅ 通过' : status === 'WARNING' ? '⚠️ 警告' : '❌ 失败'}
+            **平均分数**: ${score}/10
+            **是否阻止合并**: ${shouldBlock ? '🚫 是' : '✅ 否'}
+
+            ### 检查详情
+            `;
+
+            for (const result of results.results) {
+              const icon = result.status === 'passed' ? '✅' :
+                           result.status === 'failed' ? '❌' :
+                           result.status === 'warning' ? '⚠️' : '⏭️';
+              comment += `- ${icon} **${result.gate_name}**: ${result.message} (${result.score}/${result.threshold})\n`;
+            }
+
+            comment += `\n📊 [查看详细报告](https://github.com/${{context.repo.owner}/${{context.repo.repo}}/actions/runs/${{context.runId})`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+          } catch (error) {
+            console.log('无法读取质量报告，跳过PR评论');
+          }
+        "

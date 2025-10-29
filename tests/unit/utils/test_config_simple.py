@@ -13,8 +13,10 @@ def test_minimal_functionality():
 def test_imports_work():
     """Test that basic imports work correctly"""
     try:
-        import os
-        import sys
+    except Exception:
+        pass
+import os
+import sys
 
         assert True
     except ImportError:

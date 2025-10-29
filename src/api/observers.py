@@ -59,16 +59,17 @@ async def get_observers_root():
             "predictions": "/predictions",
             "cache": "/cache",
             "performance": "/performance",
-            "event_types": "/event-types"
+            "event_types": "/event-types",
         },
         "features": [
             "实时事件监控",
             "性能指标收集",
             "告警系统",
             "缓存管理",
-            "预测统计"
-        ]
+            "预测统计",
+        ],
     }
+
 
 @router.get("/status", summary="获取观察者系统状态")
 async def get_observer_status() -> Dict[str, Any]:

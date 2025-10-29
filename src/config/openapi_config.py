@@ -43,7 +43,7 @@ class OpenAPIConfig:
         """设置文档服务器信息"""
         app.servers = [
             {
-                "url": "http://localhost:8000",
+                "url": "http://localhost:8000",  # TODO: 将魔法数字 8000 提取为常量
                 "description": "开发环境",
             },  # TODO: 将魔法数字 8000 提取为常量
             {"url": "https://api.footballprediction.com", "description": "生产环境"},

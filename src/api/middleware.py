@@ -54,7 +54,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """简单的速率限制中间件"""
 
     def __init__(
-        self, app, calls: int = 100, period: int = 60
+        self, app, calls: int = 100, period: int = 60  # TODO: 将魔法数字 100 提取为常量
     ):  # TODO: 将魔法数字 100 提取为常量
         super().__init__(app)
         self.calls = calls
@@ -78,7 +78,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 检查是否超过限制
         if len(self.clients[client_ip]) >= self.calls:
             raise HTTPException(
-                status_code=429, detail="Rate limit exceeded"
+                status_code=429,  # TODO: 将魔法数字 429 提取为常量
+                detail="Rate limit exceeded",  # TODO: 将魔法数字 429 提取为常量
             )  # TODO: 将魔法数字 429 提取为常量
 
         self.clients[client_ip].append(current_time)
@@ -102,7 +103,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             raise HTTPException(
-                status_code=401, detail="Missing or invalid token"
+                status_code=401,  # TODO: 将魔法数字 401 提取为常量
+                detail="Missing or invalid token",  # TODO: 将魔法数字 401 提取为常量
             )  # TODO: 将魔法数字 401 提取为常量
 
         # 这里可以添加token验证逻辑
@@ -158,7 +160,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
     """简单的缓存中间件"""
 
     def __init__(
-        self, app, cache_timeout: int = 300
+        self, app, cache_timeout: int = 300  # TODO: 将魔法数字 300 提取为常量
     ):  # TODO: 将魔法数字 300 提取为常量
         super().__init__(app)
         self.cache: Dict[str, Dict[str, Any]] = {}

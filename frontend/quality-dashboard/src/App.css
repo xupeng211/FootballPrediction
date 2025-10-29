@@ -1,0 +1,467 @@
+/* 实时质量监控面板样式 */
+/* Real-time Quality Monitoring Dashboard Styles */
+
+/* 全局样式重置 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f0f2f5;
+}
+
+/* 加载容器样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.loading-container .ant-typography {
+  margin-top: 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* WebSocket状态指示器 */
+.ws-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.ws-status-indicator.connected {
+  background-color: #52c41a;
+  box-shadow: 0 0 8px rgba(82, 196, 26, 0.6);
+  animation: pulse 2s infinite;
+}
+
+.ws-status-indicator.disconnected {
+  background-color: #ff4d4f;
+  box-shadow: 0 0 8px rgba(255, 77, 79, 0.6);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 顶部导航栏样式 */
+.ant-layout-header {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* 主内容区域样式 */
+.ant-layout-content {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+}
+
+/* 卡片样式增强 */
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  min-height: 48px;
+}
+
+.ant-card-head-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ant-card-body {
+  padding: 16px;
+}
+
+/* 统计数字样式 */
+.ant-statistic-title {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.ant-statistic-content {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+/* 进度条样式 */
+.ant-progress-line {
+  margin-bottom: 8px;
+}
+
+.ant-progress-text {
+  font-size: 11px !important;
+}
+
+/* 标签样式 */
+.ant-tag {
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin: 2px;
+}
+
+/* 徽章样式 */
+.ant-badge-count {
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  border-radius: 8px;
+}
+
+/* 列表样式 */
+.ant-list-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-list-item:last-child {
+  border-bottom: none;
+}
+
+.ant-list-item-meta-title {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.ant-list-item-meta-description {
+  font-size: 11px;
+  color: #666;
+}
+
+/* 折叠面板样式 */
+.ant-collapse {
+  border: none;
+  background: transparent;
+}
+
+.ant-collapse-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 6px !important;
+  margin-bottom: 8px;
+  background: white;
+}
+
+.ant-collapse-header {
+  font-size: 13px !important;
+  padding: 12px 16px !important;
+}
+
+.ant-collapse-content {
+  border-top: 1px solid #f0f0f0;
+}
+
+.ant-collapse-content-box {
+  padding: 12px 16px;
+}
+
+/* 警告框样式 */
+.ant-alert {
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.ant-alert-message {
+  font-weight: 600;
+}
+
+.ant-alert-description {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+/* 按钮样式 */
+.ant-btn {
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 4px;
+}
+
+.ant-btn-sm {
+  height: 22px;
+  font-size: 11px;
+  padding: 0 8px;
+}
+
+/* 空状态样式 */
+.ant-empty {
+  padding: 24px;
+}
+
+.ant-empty-description {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 工具提示样式 */
+.ant-tooltip-inner {
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .ant-statistic-content {
+    font-size: 20px;
+  }
+
+  .ant-col {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ant-layout-header {
+    padding: 0 16px;
+  }
+
+  .ant-layout-content {
+    padding: 16px;
+  }
+
+  .ant-card-body {
+    padding: 12px;
+  }
+
+  .ant-statistic-content {
+    font-size: 18px;
+  }
+
+  .ant-btn {
+    font-size: 11px;
+    height: 24px;
+    padding: 0 8px;
+  }
+}
+
+/* 图表容器样式 */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+/* 质量指示器动画 */
+.quality-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.quality-indicator.excellent {
+  background-color: #52c41a;
+  box-shadow: 0 0 12px rgba(82, 196, 26, 0.4);
+}
+
+.quality-indicator.good {
+  background-color: #1890ff;
+  box-shadow: 0 0 12px rgba(24, 144, 255, 0.4);
+}
+
+.quality-indicator.warning {
+  background-color: #faad14;
+  box-shadow: 0 0 12px rgba(250, 173, 20, 0.4);
+  animation: blink 2s infinite;
+}
+
+.quality-indicator.error {
+  background-color: #ff4d4f;
+  box-shadow: 0 0 12px rgba(255, 77, 79, 0.4);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0.5;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 状态徽章 */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.status-badge.passed {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.status-badge.warning {
+  background-color: #fffbe6;
+  color: #faad14;
+  border: 1px solid #ffe58f;
+}
+
+.status-badge.failed {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.status-badge.skipped {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #d9d9d9;
+}
+
+/* 实时数据闪烁效果 */
+.realtime-update {
+  animation: highlight 1s ease-in-out;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(24, 144, 255, 0.1);
+  }
+  50% {
+    background-color: rgba(24, 144, 255, 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* 性能指标网格 */
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.performance-item {
+  text-align: center;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.performance-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1890ff;
+  margin-bottom: 4px;
+}
+
+.performance-label {
+  font-size: 11px;
+  color: #666;
+}
+
+/* 告警列表样式 */
+.alert-list-item {
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.alert-list-item.critical {
+  border-left-color: #ff4d4f;
+  background-color: #fff2f0;
+}
+
+.alert-list-item.warning {
+  border-left-color: #faad14;
+  background-color: #fffbe6;
+}
+
+.alert-list-item.info {
+  border-left-color: #1890ff;
+  background-color: #f0f5ff;
+}
+
+.alert-list-item:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 数据加载骨架屏 */
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton-item {
+  height: 60px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
