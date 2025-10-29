@@ -18,7 +18,7 @@ from .manager import (
     get_websocket_manager,
     send_to_user,
     broadcast_to_room,
-    broadcast_to_all
+    broadcast_to_all,
 )
 
 from .events import (
@@ -34,7 +34,7 @@ from .events import (
     create_odds_updated_event,
     create_system_alert_event,
     create_analytics_updated_event,
-    validate_event
+    validate_event,
 )
 
 from .subscriptions import (
@@ -46,7 +46,7 @@ from .subscriptions import (
     subscribe_to_predictions,
     subscribe_to_matches,
     subscribe_to_odds,
-    subscribe_to_system_alerts
+    subscribe_to_system_alerts,
 )
 
 from .prediction_service import (
@@ -56,7 +56,7 @@ from .prediction_service import (
     get_realtime_prediction_service,
     submit_prediction,
     get_prediction_status,
-    get_match_predictions
+    get_match_predictions,
 )
 
 from .match_service import (
@@ -66,7 +66,7 @@ from .match_service import (
     get_realtime_match_service,
     add_match_to_monitoring,
     update_match_score,
-    get_live_matches
+    get_live_matches,
 )
 
 __version__ = "1.0.0"
@@ -76,7 +76,6 @@ __author__ = "Football Prediction Team"
 __all__ = [
     # 路由
     "router",
-
     # 连接管理
     "WebSocketManager",
     "WebSocketConnection",
@@ -84,7 +83,6 @@ __all__ = [
     "send_to_user",
     "broadcast_to_room",
     "broadcast_to_all",
-
     # 事件系统
     "EventType",
     "RealtimeEvent",
@@ -99,7 +97,6 @@ __all__ = [
     "create_system_alert_event",
     "create_analytics_updated_event",
     "validate_event",
-
     # 订阅管理
     "SubscriptionManager",
     "SubscriptionType",
@@ -110,7 +107,6 @@ __all__ = [
     "subscribe_to_matches",
     "subscribe_to_odds",
     "subscribe_to_system_alerts",
-
     # 实时预测服务
     "RealtimePredictionService",
     "PredictionTask",
@@ -119,7 +115,6 @@ __all__ = [
     "submit_prediction",
     "get_prediction_status",
     "get_match_predictions",
-
     # 实时比赛服务
     "RealtimeMatchService",
     "MatchInfo",
@@ -127,5 +122,5 @@ __all__ = [
     "get_realtime_match_service",
     "add_match_to_monitoring",
     "update_match_score",
-    "get_live_matches"
+    "get_live_matches",
 ]

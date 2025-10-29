@@ -141,7 +141,7 @@ class TestAPIWithServiceIntegration:
             _data = response.json()
             assert "id" in data
             assert data["match_id"] == 1
-            assert data["predicted_home_score"]    == 2
+            assert data["predicted_home_score"] == 2
         else:
             # 如果端点不存在，验证mock被调用
             mock_service.create_prediction.assert_called_once()
@@ -260,7 +260,7 @@ class TestServiceWithRepositoryIntegration:
             # 断言
             if result:
                 assert result.match_id == 1
-                assert result.predicted_home_score    == 2
+                assert result.predicted_home_score == 2
             # 验证仓储方法被调用
             self.mock_prediction_repo.create.assert_called_once()
 
@@ -333,7 +333,7 @@ class TestEventDrivenIntegration:
 
         # 断言
         assert len(self.events) == 1
-        assert self.events[0]["event_type"]    == "prediction_created"
+        assert self.events[0]["event_type"] == "prediction_created"
         assert "data" in self.events[0]
 
     def test_match_status_update_event(self):
@@ -359,7 +359,7 @@ class TestEventDrivenIntegration:
         assert len(self.events) == 3
         assert all(e["event_type"] == "match_status_updated" for e in self.events)
         assert self.events[0]["old_status"] == "upcoming"
-        assert self.events[-1]["new_status"]    == "cancelled"
+        assert self.events[-1]["new_status"] == "cancelled"
 
 
 @pytest.mark.integration
@@ -496,9 +496,7 @@ class TestDatabaseTransactionIntegration:
         ("/api/v1/stats", "GET", [200, 404]),
     ],
 )
-def test_api_endpoint_availability(
-    endpoint, method, expected_status, client
-):
+def test_api_endpoint_availability(endpoint, method, expected_status, client):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
@@ -546,7 +544,7 @@ def test_service_method_integration(service_method, input_data, should_pass, cli
         assert all(isinstance(k, str) for k in input_data.keys())
     else:
         # 对于无效方法，确保被正确处理
-        assert service_method    == "invalid_method"
+        assert service_method == "invalid_method"
 
 
 @pytest.mark.integration

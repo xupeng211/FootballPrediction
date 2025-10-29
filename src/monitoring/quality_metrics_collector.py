@@ -37,7 +37,7 @@ class QualityMetricsCollector:
                 "ml_model_accuracy": await self._get_ml_accuracy(),
                 "api_availability": await self._get_api_availability(),
                 "error_rate": await self._get_error_rate(),
-                "response_time": await self._get_response_time()
+                "response_time": await self._get_response_time(),
             }
 
             # 计算综合质量分数
@@ -59,26 +59,36 @@ class QualityMetricsCollector:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
                 # 从输出中提取覆盖率
-                coverage_match = re.search(r'(\d+\.?\d*)%', result.stdout)
+                coverage_match = re.search(r"(\d+\.?\d*)%", result.stdout)
                 if coverage_match:
                     return float(coverage_match.group(1))
 
             # 尝试从pytest-cov输出获取
             result = subprocess.run(
-                ["python", "-m", "pytest", "--cov=src", "--cov-report=term-missing", "--tb=no", "-q"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "--cov=src",
+                    "--cov-report=term-missing",
+                    "--tb=no",
+                    "-q",
+                ],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
 
             if result.returncode == 0:
-                coverage_match = re.search(r'TOTAL\s+\d+\s+\d+\s+(\d+\.?\d*)%', result.stdout)
+                coverage_match = re.search(
+                    r"TOTAL\s+\d+\s+\d+\s+(\d+\.?\d*)%", result.stdout
+                )
                 if coverage_match:
                     return float(coverage_match.group(1))
 
@@ -96,11 +106,11 @@ class QualityMetricsCollector:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
-                errors = result.stdout.count('\n') if result.stdout.strip() else 0
+                errors = result.stdout.count("\n") if result.stdout.strip() else 0
                 # 根据错误数量计算分数
                 if errors == 0:
                     return 10.0
@@ -127,7 +137,7 @@ class QualityMetricsCollector:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
@@ -135,8 +145,12 @@ class QualityMetricsCollector:
                 try:
                     bandit_data = json.loads(result.stdout)
                     issues = bandit_data.get("results", [])
-                    high_issues = len([i for i in issues if i.get("issue_severity") == "HIGH"])
-                    medium_issues = len([i for i in issues if i.get("issue_severity") == "MEDIUM"])
+                    high_issues = len(
+                        [i for i in issues if i.get("issue_severity") == "HIGH"]
+                    )
+                    medium_issues = len(
+                        [i for i in issues if i.get("issue_severity") == "MEDIUM"]
+                    )
 
                     # 根据安全问题计算分数
                     if high_issues == 0 and medium_issues == 0:
@@ -164,11 +178,15 @@ class QualityMetricsCollector:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
-                total_lines = sum(int(line.split()[0]) for line in result.stdout.strip().split('\n') if line.strip())
+                total_lines = sum(
+                    int(line.split()[0])
+                    for line in result.stdout.strip().split("\n")
+                    if line.strip()
+                )
 
                 # 基于代码行数计算可维护性指数（简化算法）
                 if total_lines < 5000:
@@ -190,12 +208,22 @@ class QualityMetricsCollector:
         try:
             # 简化的技术债务计算，基于TODO/FIXME注释
             result = subprocess.run(
-                ["grep", "-r", "-i", "TODO\\|FIXME\\|XXX\\|HACK", "src/", "--include=*.py", "|", "wc", "-l"],
+                [
+                    "grep",
+                    "-r",
+                    "-i",
+                    "TODO\\|FIXME\\|XXX\\|HACK",
+                    "src/",
+                    "--include=*.py",
+                    "|",
+                    "wc",
+                    "-l",
+                ],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
                 timeout=30,
-                shell=True
+                shell=True,
             )
 
             if result.returncode == 0:
@@ -208,11 +236,15 @@ class QualityMetricsCollector:
                     capture_output=True,
                     text=True,
                     timeout=30,
-                    shell=True
+                    shell=True,
                 )
 
                 if files_result.returncode == 0:
-                    total_files = int(files_result.stdout.strip()) if files_result.stdout.strip() else 1
+                    total_files = (
+                        int(files_result.stdout.strip())
+                        if files_result.stdout.strip()
+                        else 1
+                    )
                     debt_ratio = (debt_items / max(total_files, 1)) * 10  # 转换为百分比
                     return min(debt_ratio, 20.0)  # 上限20%
 
@@ -231,7 +263,7 @@ class QualityMetricsCollector:
                 "api_availability": await self._get_api_availability(),
                 "data_integration": 95.0,  # 假设数据集成已完成
                 "feature_engineering": 95.0,  # 假设特征工程已完成
-                "betting_system": 90.0  # 假设投注系统基本完成
+                "betting_system": 90.0,  # 假设投注系统基本完成
             }
 
             # 计算SRS符合性（权重平均）
@@ -241,7 +273,7 @@ class QualityMetricsCollector:
                 "api_availability": 0.20,
                 "data_integration": 0.15,
                 "feature_engineering": 0.10,
-                "betting_system": 0.10
+                "betting_system": 0.10,
             }
 
             compliance = sum(srs_checks[key] * weights[key] for key in weights)
@@ -258,7 +290,7 @@ class QualityMetricsCollector:
             # 检查是否存在ML训练结果
             ml_results_path = self.project_root / "ml_results.json"
             if ml_results_path.exists():
-                with open(ml_results_path, 'r') as f:
+                with open(ml_results_path, "r") as f:
                     results = json.load(f)
                     return results.get("accuracy", 65.0)
 
@@ -267,10 +299,12 @@ class QualityMetricsCollector:
             if log_files:
                 # 简单解析最新日志文件
                 latest_log = max(log_files, key=os.path.getmtime)
-                with open(latest_log, 'r') as f:
+                with open(latest_log, "r") as f:
                     content = f.read()
                     # 查找准确率信息
-                    accuracy_match = re.search(r'accuracy[:\s]+([0-9.]+)%', content.lower())
+                    accuracy_match = re.search(
+                        r"accuracy[:\s]+([0-9.]+)%", content.lower()
+                    )
                     if accuracy_match:
                         return float(accuracy_match.group(1))
 
@@ -284,10 +318,18 @@ class QualityMetricsCollector:
         try:
             # 简单的API健康检查
             result = subprocess.run(
-                ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "http://localhost:8000/health"],
+                [
+                    "curl",
+                    "-s",
+                    "-o",
+                    "/dev/null",
+                    "-w",
+                    "%{http_code}",
+                    "http://localhost:8000/health",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0 and result.stdout == "200":
@@ -309,14 +351,14 @@ class QualityMetricsCollector:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
 
             if result.returncode == 0:
                 # 解析pytest输出
                 if "passed" in result.stdout:
-                    passed_match = re.search(r'(\d+) passed', result.stdout)
-                    failed_match = re.search(r'(\d+) failed', result.stdout)
+                    passed_match = re.search(r"(\d+) passed", result.stdout)
+                    failed_match = re.search(r"(\d+) failed", result.stdout)
 
                     passed = int(passed_match.group(1)) if passed_match else 0
                     failed = int(failed_match.group(1)) if failed_match else 0
@@ -338,10 +380,18 @@ class QualityMetricsCollector:
         try:
             # 测试API响应时间
             result = subprocess.run(
-                ["curl", "-s", "-o", "/dev/null", "-w", "%{time_total}", "http://localhost:8000/health"],
+                [
+                    "curl",
+                    "-s",
+                    "-o",
+                    "/dev/null",
+                    "-w",
+                    "%{time_total}",
+                    "http://localhost:8000/health",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0 and result.stdout:
@@ -362,7 +412,7 @@ class QualityMetricsCollector:
             "srs_compliance": 0.20,
             "ml_model_accuracy": 0.15,
             "api_availability": 0.10,
-            "error_rate": 0.05  # 错误率越低分数越高
+            "error_rate": 0.05,  # 错误率越低分数越高
         }
 
         total_score = 0.0
@@ -376,7 +426,11 @@ class QualityMetricsCollector:
                 total_score += error_score * weight
             else:
                 # 其他指标：归一化到0-10分
-                if metric == "test_coverage" or metric == "srs_compliance" or metric == "api_availability":
+                if (
+                    metric == "test_coverage"
+                    or metric == "srs_compliance"
+                    or metric == "api_availability"
+                ):
                     normalized = value / 10.0  # 百分比转换为0-10分
                 elif metric == "ml_model_accuracy":
                     normalized = value / 10.0  # 百分比转换为0-10分
@@ -402,5 +456,5 @@ class QualityMetricsCollector:
             "ml_model_accuracy": 65.0,
             "api_availability": 95.0,
             "error_rate": 5.0,
-            "response_time": 300.0
+            "response_time": 300.0,
         }

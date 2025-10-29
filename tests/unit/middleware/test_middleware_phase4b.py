@@ -15,6 +15,7 @@ def test_imports_work():
     try:
         import os
         import sys
+
         assert True
     except ImportError:
         pytest.fail("Basic imports failed")

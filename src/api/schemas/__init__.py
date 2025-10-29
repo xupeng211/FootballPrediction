@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class APIResponse(BaseModel):
     """通用API响应模型"""
+
     success: bool = Field(..., description="请求是否成功")
     message: str = Field(..., description="响应消息")
     data: Optional[Any] = Field(None, description="响应数据")
@@ -18,6 +19,7 @@ class APIResponse(BaseModel):
 
 class ServiceCheck(BaseModel):
     """服务检查结果模型"""
+
     status: str = Field(..., description="服务状态")
     response_time_ms: float = Field(..., description="响应时间(毫秒)")
     details: Optional[Dict[str, Any]] = Field(None, description="详细信息")
@@ -25,6 +27,7 @@ class ServiceCheck(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """健康检查API响应模型"""
+
     status: str = Field(..., description="整体健康状态")
     timestamp: str = Field(..., description="检查时间(ISO格式)")
     service: str = Field(..., description="服务名称")
@@ -36,6 +39,7 @@ class HealthCheckResponse(BaseModel):
 
 class StatusResponse(BaseModel):
     """服务状态API响应模型"""
+
     status: str = Field(..., description="整体状态")
     timestamp: str = Field(..., description="检查时间")
     services: Dict[str, str] = Field(..., description="各服务状态")
@@ -43,6 +47,7 @@ class StatusResponse(BaseModel):
 
 class MetricsResponse(BaseModel):
     """监控指标API响应模型"""
+
     status: str = Field(..., description="API状态")
     response_time_ms: float = Field(..., description="响应时间(毫秒)")
     system: Dict[str, Any] = Field(..., description="系统资源指标")
@@ -53,6 +58,7 @@ class MetricsResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """健康检查响应模型"""
+
     status: str = Field(..., description="健康状态")
     timestamp: str = Field(..., description="检查时间")
     service: str = Field(..., description="服务名称")
@@ -63,6 +69,7 @@ class HealthResponse(BaseModel):
 
 class RootResponse(BaseModel):
     """根路径API响应模型"""
+
     service: str = Field(..., description="服务名称")
     version: str = Field(..., description="版本号")
     status: str = Field(..., description="服务状态")
@@ -72,6 +79,7 @@ class RootResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """错误响应模型"""
+
     error: bool = Field(..., description="是否为错误")
     status_code: int = Field(..., description="HTTP状态码")
     message: str = Field(..., description="错误消息")

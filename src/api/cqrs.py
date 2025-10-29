@@ -328,6 +328,7 @@ async def get_cqrs_system_status():
 # 预测命令端点
 # 预测命令端点
 
+
 # 预测命令端点
 # 预测命令端点
 def get_prediction_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解

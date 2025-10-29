@@ -23,6 +23,7 @@ logger = get_logger(__name__)
 
 class GateStatus(Enum):
     """门禁状态枚举"""
+
     PASSED = "passed"
     FAILED = "failed"
     WARNING = "warning"
@@ -40,7 +41,7 @@ class GateResult:
         threshold: float,
         message: str,
         details: Optional[Dict[str, Any]] = None,
-        duration_ms: Optional[int] = None
+        duration_ms: Optional[int] = None,
     ):
         self.gate_name = gate_name
         self.status = status
@@ -61,7 +62,7 @@ class GateResult:
             "message": self.message,
             "details": self.details,
             "duration_ms": self.duration_ms,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
 
@@ -74,7 +75,7 @@ class QualityGate:
         description: str,
         threshold: float,
         critical: bool = True,
-        enabled: bool = True
+        enabled: bool = True,
     ):
         self.name = name
         self.description = description
@@ -91,7 +92,7 @@ class QualityGate:
                 status=GateStatus.SKIPPED,
                 score=0.0,
                 threshold=self.threshold,
-                message=f"门禁 {self.name} 已跳过"
+                message=f"门禁 {self.name} 已跳过",
             )
 
         start_time = datetime.now()
@@ -115,7 +116,7 @@ class QualityGate:
                 score=score,
                 threshold=self.threshold,
                 message=message,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
         except Exception as e:
@@ -129,7 +130,7 @@ class QualityGate:
                 threshold=self.threshold,
                 message=f"❌ {self.name}: 检查失败 - {str(e)}",
                 details={"error": str(e)},
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
     def _calculate_score(self) -> float:
@@ -145,7 +146,7 @@ class CodeQualityGate(QualityGate):
             name="代码质量",
             description="检查代码质量分数（Ruff + MyPy）",
             threshold=threshold,
-            critical=True
+            critical=True,
         )
         self.quality_guardian = QualityGuardian()
 
@@ -154,8 +155,16 @@ class CodeQualityGate(QualityGate):
         report = self.quality_guardian.run_quality_check()
 
         # Ruff和MyPy满分各5分，总分10分
-        ruff_score = 5.0 if report.get("ruff_errors", 0) == 0 else max(0, 5.0 - report.get("ruff_errors", 0))
-        mypy_score = 5.0 if report.get("mypy_errors", 0) == 0 else max(0, 5.0 - report.get("mypy_errors", 0))
+        ruff_score = (
+            5.0
+            if report.get("ruff_errors", 0) == 0
+            else max(0, 5.0 - report.get("ruff_errors", 0))
+        )
+        mypy_score = (
+            5.0
+            if report.get("mypy_errors", 0) == 0
+            else max(0, 5.0 - report.get("mypy_errors", 0))
+        )
 
         total_score = ruff_score + mypy_score
 
@@ -171,7 +180,7 @@ class TestCoverageGate(QualityGate):
             name="测试覆盖率",
             description="检查测试覆盖率百分比",
             threshold=threshold,
-            critical=True
+            critical=True,
         )
         self.quality_guardian = QualityGuardian()
 
@@ -189,7 +198,7 @@ class SecurityGate(QualityGate):
             name="安全检查",
             description="检查安全评分和漏洞扫描",
             threshold=threshold,
-            critical=True
+            critical=True,
         )
         self.quality_guardian = QualityGuardian()
 
@@ -207,7 +216,7 @@ class OverallQualityGate(QualityGate):
             name="综合质量",
             description="综合质量分数（包含高级度量）",
             threshold=threshold,
-            critical=True
+            critical=True,
         )
         self.integrator = QualityMetricsIntegrator()
 
@@ -231,7 +240,7 @@ class TechnicalDebtGate(QualityGate):
             name="技术债务",
             description="检查技术债务分数",
             threshold=threshold,
-            critical=False
+            critical=False,
         )
         self.analyzer = AdvancedMetricsAnalyzer()
 
@@ -251,7 +260,7 @@ class ComplexityGate(QualityGate):
             name="代码复杂度",
             description="检查代码可维护性指数",
             threshold=threshold,
-            critical=False
+            critical=False,
         )
         self.analyzer = AdvancedMetricsAnalyzer()
 
@@ -281,17 +290,25 @@ class QualityGateSystem:
                 "code_quality": {"enabled": True, "threshold": 8.0, "critical": True},
                 "test_coverage": {"enabled": True, "threshold": 80.0, "critical": True},
                 "security": {"enabled": True, "threshold": 9.0, "critical": True},
-                "overall_quality": {"enabled": True, "threshold": 8.5, "critical": True},
-                "technical_debt": {"enabled": True, "threshold": 60.0, "critical": False},
-                "complexity": {"enabled": True, "threshold": 70.0, "critical": False}
+                "overall_quality": {
+                    "enabled": True,
+                    "threshold": 8.5,
+                    "critical": True,
+                },
+                "technical_debt": {
+                    "enabled": True,
+                    "threshold": 60.0,
+                    "critical": False,
+                },
+                "complexity": {"enabled": True, "threshold": 70.0, "critical": False},
             },
             "blocking_mode": True,
-            "warning_threshold": 2  # 允许的警告数量
+            "warning_threshold": 2,  # 允许的警告数量
         }
 
         if config_path and Path(config_path).exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     user_config = json.load(f)
                 default_config.update(user_config)
             except Exception as e:
@@ -370,8 +387,12 @@ class QualityGateSystem:
 
         # 计算总体分数
         if results:
-            total_score = sum(r.score for r in results if r.status != GateStatus.SKIPPED)
-            avg_score = total_score / len([r for r in results if r.status != GateStatus.SKIPPED])
+            total_score = sum(
+                r.score for r in results if r.status != GateStatus.SKIPPED
+            )
+            avg_score = total_score / len(
+                [r for r in results if r.status != GateStatus.SKIPPED]
+            )
         else:
             total_score = 0.0
             avg_score = 0.0
@@ -391,8 +412,8 @@ class QualityGateSystem:
                 "passed": len([r for r in results if r.status == GateStatus.PASSED]),
                 "failed": len([r for r in results if r.status == GateStatus.FAILED]),
                 "warning": len([r for r in results if r.status == GateStatus.WARNING]),
-                "skipped": len([r for r in results if r.status == GateStatus.SKIPPED])
-            }
+                "skipped": len([r for r in results if r.status == GateStatus.SKIPPED]),
+            },
         }
 
         self.logger.info(f"质量门禁检查完成: {overall_status} ({duration:.2f}s)")
@@ -413,7 +434,7 @@ class QualityGateSystem:
             f"警告: {results['summary']['warning']}",
             f"跳过: {results['summary']['skipped']}",
             "",
-            "## 详细结果"
+            "## 详细结果",
         ]
 
         for result in results["results"]:
@@ -421,7 +442,7 @@ class QualityGateSystem:
                 "passed": "✅",
                 "failed": "❌",
                 "warning": "⚠️",
-                "skipped": "⏭️"
+                "skipped": "⏭️",
             }.get(result["status"], "❓")
 
             report_lines.append(f"### {result['gate_name']}")
@@ -436,11 +457,13 @@ class QualityGateSystem:
             report_lines.append("")
 
         if results["should_block"]:
-            report_lines.extend([
-                "## ⚠️ 阻止合并",
-                "由于存在关键门禁失败，建议阻止代码合并。",
-                "请修复所有关键问题后重新检查。"
-            ])
+            report_lines.extend(
+                [
+                    "## ⚠️ 阻止合并",
+                    "由于存在关键门禁失败，建议阻止代码合并。",
+                    "请修复所有关键问题后重新检查。",
+                ]
+            )
 
         return "\n".join(report_lines)
 
@@ -473,7 +496,7 @@ def main():
     report = gate_system.generate_report(results)
     report_path = Path("quality_gate_report.md")
 
-    with open(report_path, 'w', encoding='utf-8') as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
 
     print(f"\n📄 报告已保存: {report_path}")

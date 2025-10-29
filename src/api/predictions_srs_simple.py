@@ -90,7 +90,10 @@ class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
 
     matches: List[MatchInfo] = Field(
-        ..., description="比赛列表", min_items=1, max_items=1000  # TODO: 将魔法数字 1000 提取为常量
+        ...,
+        description="比赛列表",
+        min_items=1,
+        max_items=1000,  # TODO: 将魔法数字 1000 提取为常量
     )  # TODO: 将魔法数字 1000 提取为常量
     include_confidence: bool = Field(True, description="是否包含置信度")
     max_concurrent: int = Field(
@@ -174,7 +177,8 @@ class SimplePredictionService:
                 ]
 
                 if (
-                    len(self._rate_limit_cache[token]) >= 100  # TODO: 将魔法数字 100 提取为常量
+                    len(self._rate_limit_cache[token])
+                    >= 100  # TODO: 将魔法数字 100 提取为常量
                 ):  # TODO: 将魔法数字 100 提取为常量
                     return False
 
@@ -230,10 +234,12 @@ class SimplePredictionService:
 
         # 基于队名生成模拟特征
         home_strength = (
-            hash(match_info.home_team) % 50 / 100.0 + 0.4  # TODO: 将魔法数字 50 提取为常量
+            hash(match_info.home_team) % 50 / 100.0
+            + 0.4  # TODO: 将魔法数字 50 提取为常量
         )  # TODO: 将魔法数字 50 提取为常量
         away_strength = (
-            hash(match_info.away_team) % 50 / 100.0 + 0.4  # TODO: 将魔法数字 50 提取为常量
+            hash(match_info.away_team) % 50 / 100.0
+            + 0.4  # TODO: 将魔法数字 50 提取为常量
         )  # TODO: 将魔法数字 50 提取为常量
 
         return {

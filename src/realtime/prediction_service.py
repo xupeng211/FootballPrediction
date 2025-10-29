@@ -19,7 +19,7 @@ from .events import (
     RealtimeEvent,
     create_prediction_created_event,
     create_prediction_updated_event,
-    create_system_alert_event
+    create_system_alert_event,
 )
 from .manager import get_websocket_manager
 from .subscriptions import get_subscription_manager
@@ -27,16 +27,18 @@ from .subscriptions import get_subscription_manager
 
 class PredictionStatus(str, Enum):
     """预测状态枚举"""
-    PENDING = "pending"         # 等待处理
-    PROCESSING = "processing"   # 处理中
-    COMPLETED = "completed"     # 已完成
-    FAILED = "failed"          # 失败
-    CANCELLED = "cancelled"     # 已取消
+
+    PENDING = "pending"  # 等待处理
+    PROCESSING = "processing"  # 处理中
+    COMPLETED = "completed"  # 已完成
+    FAILED = "failed"  # 失败
+    CANCELLED = "cancelled"  # 已取消
 
 
 @dataclass
 class PredictionTask:
     """预测任务"""
+
     task_id: str
     match_id: int
     user_id: Optional[str] = None
@@ -82,7 +84,7 @@ class RealtimePredictionService:
         match_id: int,
         user_id: Optional[str] = None,
         model_version: str = "default",
-        priority: bool = False
+        priority: bool = False,
     ) -> str:
         """
         提交预测请求
@@ -96,13 +98,11 @@ class RealtimePredictionService:
         Returns:
             任务ID
         """
-        task_id = f"pred_{match_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{id(self)}"
-
-        task = PredictionTask(
-            task_id=task_id,
-            match_id=match_id,
-            user_id=user_id
+        task_id = (
+            f"pred_{match_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{id(self)}"
         )
+
+        task = PredictionTask(task_id=task_id, match_id=match_id, user_id=user_id)
 
         self.prediction_tasks[task_id] = task
 
@@ -131,9 +131,11 @@ class RealtimePredictionService:
             "status": task.status.value,
             "created_at": task.created_at.isoformat(),
             "started_at": task.started_at.isoformat() if task.started_at else None,
-            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+            "completed_at": (
+                task.completed_at.isoformat() if task.completed_at else None
+            ),
             "result": task.result,
-            "error": task.error
+            "error": task.error,
         }
 
     async def get_match_predictions(self, match_id: int) -> List[Dict[str, Any]]:
@@ -152,8 +154,7 @@ class RealtimePredictionService:
             try:
                 # 获取任务
                 task_id, priority = await asyncio.wait_for(
-                    self.task_queue.get(),
-                    timeout=1.0
+                    self.task_queue.get(), timeout=1.0
                 )
 
                 if task_id in self.prediction_tasks:
@@ -225,13 +226,13 @@ class RealtimePredictionService:
                 "team_strength": 0.8,
                 "home_advantage": 0.15,
                 "recent_form": 0.7,
-                "head_to_head": 0.6
+                "head_to_head": 0.6,
             },
             "metadata": {
                 "prediction_time": datetime.now().isoformat(),
                 "processing_time_ms": 2000,
-                "model_confidence": 0.85
-            }
+                "model_confidence": 0.85,
+            },
         }
 
         task.result = mock_result
@@ -245,7 +246,9 @@ class RealtimePredictionService:
             "user_id": task.user_id,
             "result": mock_result,
             "created_at": task.created_at.isoformat(),
-            "completed_at": task.completed_at.isoformat() if task.completed_at else None
+            "completed_at": (
+                task.completed_at.isoformat() if task.completed_at else None
+            ),
         }
 
     async def _emit_task_event(self, task: PredictionTask, event_type: str) -> None:
@@ -257,21 +260,23 @@ class RealtimePredictionService:
             "status": task.status.value,
             "created_at": task.created_at.isoformat(),
             "started_at": task.started_at.isoformat() if task.started_at else None,
-            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
-            "error": task.error
+            "completed_at": (
+                task.completed_at.isoformat() if task.completed_at else None
+            ),
+            "error": task.error,
         }
 
         if event_type == "prediction_requested":
             real_event = RealtimeEvent(
                 event_type=EventType.PREDICTION_CREATED,
                 data=event_data,
-                source="prediction_service"
+                source="prediction_service",
             )
         elif event_type in ["prediction_started", "prediction_failed"]:
             real_event = RealtimeEvent(
                 event_type=EventType.PREDICTION_UPDATED,
                 data=event_data,
-                source="prediction_service"
+                source="prediction_service",
             )
         else:
             return
@@ -292,12 +297,16 @@ class RealtimePredictionService:
                 "match_id": task.match_id,
                 "user_id": task.user_id,
                 "prediction_result": task.result,
-                "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+                "completed_at": (
+                    task.completed_at.isoformat() if task.completed_at else None
+                ),
                 "processing_time": (
-                    task.completed_at - task.started_at
-                ).total_seconds() if task.completed_at and task.started_at else None
+                    (task.completed_at - task.started_at).total_seconds()
+                    if task.completed_at and task.started_at
+                    else None
+                ),
             },
-            source="prediction_service"
+            source="prediction_service",
         )
 
         # 发布事件
@@ -312,14 +321,14 @@ class RealtimePredictionService:
         message: str,
         alert_type: str = "info",
         severity: str = "low",
-        component: str = "prediction_service"
+        component: str = "prediction_service",
     ) -> None:
         """广播系统告警"""
         alert_event = create_system_alert_event(
             alert_type=alert_type,
             message=message,
             component=component,
-            severity=severity
+            severity=severity,
         )
 
         await self.websocket_manager.publish_event(alert_event)
@@ -327,10 +336,26 @@ class RealtimePredictionService:
     async def get_service_stats(self) -> Dict[str, Any]:
         """获取服务统计信息"""
         total_tasks = len(self.prediction_tasks)
-        pending_tasks = sum(1 for t in self.prediction_tasks.values() if t.status == PredictionStatus.PENDING)
-        processing_tasks = sum(1 for t in self.prediction_tasks.values() if t.status == PredictionStatus.PROCESSING)
-        completed_tasks = sum(1 for t in self.prediction_tasks.values() if t.status == PredictionStatus.COMPLETED)
-        failed_tasks = sum(1 for t in self.prediction_tasks.values() if t.status == PredictionStatus.FAILED)
+        pending_tasks = sum(
+            1
+            for t in self.prediction_tasks.values()
+            if t.status == PredictionStatus.PENDING
+        )
+        processing_tasks = sum(
+            1
+            for t in self.prediction_tasks.values()
+            if t.status == PredictionStatus.PROCESSING
+        )
+        completed_tasks = sum(
+            1
+            for t in self.prediction_tasks.values()
+            if t.status == PredictionStatus.COMPLETED
+        )
+        failed_tasks = sum(
+            1
+            for t in self.prediction_tasks.values()
+            if t.status == PredictionStatus.FAILED
+        )
 
         return {
             "service_name": "realtime_prediction_service",
@@ -343,7 +368,7 @@ class RealtimePredictionService:
             "is_processing": self.is_processing,
             "tracked_matches": len(self.match_predictions),
             "max_concurrent_tasks": self.max_concurrent_tasks,
-            "task_timeout": self.task_timeout
+            "task_timeout": self.task_timeout,
         }
 
     async def cleanup_old_tasks(self, max_age_hours: int = 24) -> int:
@@ -351,7 +376,8 @@ class RealtimePredictionService:
         cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
 
         old_task_ids = [
-            task_id for task_id, task in self.prediction_tasks.items()
+            task_id
+            for task_id, task in self.prediction_tasks.items()
             if task.created_at < cutoff_time
         ]
 
@@ -376,9 +402,7 @@ def get_realtime_prediction_service() -> RealtimePredictionService:
 
 # 便捷函数
 async def submit_prediction(
-    match_id: int,
-    user_id: Optional[str] = None,
-    model_version: str = "default"
+    match_id: int, user_id: Optional[str] = None, model_version: str = "default"
 ) -> str:
     """提交预测请求"""
     service = get_realtime_prediction_service()

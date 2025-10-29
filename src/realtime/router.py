@@ -37,7 +37,7 @@ async def health_check():
             "module": "realtime",
             "version": "1.0.0",
             "connections": stats["total_connections"],
-            "rooms": stats["total_rooms"]
+            "rooms": stats["total_rooms"],
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -60,8 +60,8 @@ async def get_stats():
             "system": {
                 "status": "healthy",
                 "uptime": "N/A",  # 可以添加实际运行时间统计
-                "last_update": "now"
-            }
+                "last_update": "now",
+            },
         }
     except Exception as e:
         logger.error(f"Failed to get stats: {e}")
@@ -91,7 +91,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     user_id: Optional[str] = Query(None),
     session_id: Optional[str] = Query(None),
-    token: Optional[str] = Query(None)
+    token: Optional[str] = Query(None),
 ):
     """
     WebSocket连接端点
@@ -115,7 +115,7 @@ async def websocket_endpoint(
 async def predictions_websocket(
     websocket: WebSocket,
     match_ids: Optional[str] = Query(None),  # 逗号分隔的比赛ID
-    min_confidence: Optional[float] = Query(None)
+    min_confidence: Optional[float] = Query(None),
 ):
     """
     专门用于预测事件的WebSocket端点
@@ -135,24 +135,28 @@ async def predictions_websocket(
         match_id_list = None
         if match_ids:
             try:
-                match_id_list = [int(x.strip()) for x in match_ids.split(",") if x.strip()]
+                match_id_list = [
+                    int(x.strip()) for x in match_ids.split(",") if x.strip()
+                ]
             except ValueError:
                 logger.warning(f"Invalid match_ids format: {match_ids}")
 
         from .subscriptions import subscribe_to_predictions
+
         subscribe_to_predictions(connection_id, match_id_list, min_confidence)
 
         # 发送订阅确认
         from .events import RealtimeEvent, EventType
+
         confirm_event = RealtimeEvent(
             event_type=EventType.USER_SUBSCRIPTION_CHANGED,
             data={
                 "action": "auto_subscribed",
                 "subscription_type": "predictions",
                 "match_ids": match_id_list,
-                "min_confidence": min_confidence
+                "min_confidence": min_confidence,
             },
-            source="predictions_websocket"
+            source="predictions_websocket",
         )
         await endpoint.handler.manager.send_to_connection(connection_id, confirm_event)
 
@@ -181,7 +185,7 @@ async def predictions_websocket(
 async def matches_websocket(
     websocket: WebSocket,
     match_ids: Optional[str] = Query(None),  # 逗号分隔的比赛ID
-    leagues: Optional[str] = Query(None)    # 逗号分隔的联赛名称
+    leagues: Optional[str] = Query(None),  # 逗号分隔的联赛名称
 ):
     """
     专门用于比赛事件的WebSocket端点
@@ -201,7 +205,9 @@ async def matches_websocket(
         match_id_list = None
         if match_ids:
             try:
-                match_id_list = [int(x.strip()) for x in match_ids.split(",") if x.strip()]
+                match_id_list = [
+                    int(x.strip()) for x in match_ids.split(",") if x.strip()
+                ]
             except ValueError:
                 logger.warning(f"Invalid match_ids format: {match_ids}")
 
@@ -210,19 +216,21 @@ async def matches_websocket(
             league_list = [x.strip() for x in leagues.split(",") if x.strip()]
 
         from .subscriptions import subscribe_to_matches
+
         subscribe_to_matches(connection_id, match_id_list, league_list)
 
         # 发送订阅确认
         from .events import RealtimeEvent, EventType
+
         confirm_event = RealtimeEvent(
             event_type=EventType.USER_SUBSCRIPTION_CHANGED,
             data={
                 "action": "auto_subscribed",
                 "subscription_type": "matches",
                 "match_ids": match_id_list,
-                "leagues": league_list
+                "leagues": league_list,
             },
-            source="matches_websocket"
+            source="matches_websocket",
         )
         await endpoint.handler.manager.send_to_connection(connection_id, confirm_event)
 
@@ -248,10 +256,7 @@ async def matches_websocket(
 
 
 @router.post("/broadcast")
-async def broadcast_message(
-    message: Dict[str, Any],
-    room: Optional[str] = None
-):
+async def broadcast_message(message: Dict[str, Any], room: Optional[str] = None):
     """
     广播消息到所有连接或特定房间
 
@@ -262,6 +267,7 @@ async def broadcast_message(
         manager = get_websocket_manager()
 
         from .events import RealtimeEvent, EventType, validate_event
+
         if isinstance(message, dict) and "event_type" in message:
             # 如果是事件格式，创建RealtimeEvent
             event = RealtimeEvent(**message)
