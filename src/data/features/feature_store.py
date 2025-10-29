@@ -14,15 +14,15 @@ import pandas as pd
 
 
 
-    from feast import FeatureStore
-    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
-    from feast.repo_config import RepoConfig
+  from feast import FeatureStore
+from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
+from feast.repo_config import RepoConfig
 
-    from .online_stores.redis import RedisOnlineStoreConfig
+            from .online_stores.redis import RedisOnlineStoreConfig
 
 
-from .feature_definitions import head_to_head_features_view  # noqa: E402
-from .feature_definitions import (
+        from .feature_definitions import head_to_head_features_view  # noqa: E402
+        from .feature_definitions import (
 
 
 

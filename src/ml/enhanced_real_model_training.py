@@ -327,7 +327,7 @@ class SRSCompliantModelTrainer:
             auc = 0.0
 
         # 特征重要性
-        feature_importance = best_model.feature_importances_
+            feature_importance = best_model.feature_importances_
         feature_names = X.columns.tolist()
         importance_df = pd.DataFrame(
             {"feature": feature_names, "importance": feature_importance}
@@ -444,7 +444,7 @@ class SRSCompliantModelTrainer:
             auc = 0.0
 
         # 特征重要性
-        feature_importance = best_model.feature_importances_
+            feature_importance = best_model.feature_importances_
         feature_names = X.columns.tolist()
         importance_df = pd.DataFrame(
             {"feature": feature_names, "importance": feature_importance}
@@ -512,8 +512,8 @@ class SRSCompliantModelTrainer:
             "label_encoder": self.label_encoder,
             "feature_names": self.feature_engineer.get_feature_names(),
             "feature_importance": (
-                model_results["feature_importance"].to_dict("records")
-                if "feature_importance" in model_results
+                    model_results["feature_importance"].to_dict("records")
+                    if "feature_importance" in model_results
                 else None
             ),
             "srs_compliance": model_results["srs_compliance"],
@@ -547,8 +547,8 @@ class SRSCompliantModelTrainer:
             "model_metadata": model_data["model_metadata"],
             "best_params": model_data["best_params"],
             "feature_importance_top10": (
-                model_data["feature_importance"][:10]
-                if model_data["feature_importance"]
+                    model_data["feature_importance"][:10]
+                    if model_data["feature_importance"]
                 else None
             ),
             "compliance_certificate": {
@@ -602,8 +602,8 @@ class SRSCompliantModelTrainer:
             "feature_analysis": {
                 "total_features": model_results["n_features"],
                 "top_features": (
-                    model_data["feature_importance"][:5]
-                    if model_data["feature_importance"]
+                        model_data["feature_importance"][:5]
+                        if model_data["feature_importance"]
                     else []
                 ),
             },

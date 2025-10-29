@@ -18,10 +18,10 @@ from typing import Set
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+        from datetime import datetime
+        from typing import Any, Dict, List, Optional
 
-from .base_collector import CollectionResult, DataCollector
+        from .base_collector import CollectionResult, DataCollector
 
 
 class OddsCollector(DataCollector):

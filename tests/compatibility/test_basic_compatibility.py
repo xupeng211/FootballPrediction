@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 
-def test_python_version_compatibility(, client, client):
+def test_python_version_compatibility(client):
     """测试Python版本兼容性"""
     # 验证Python版本满足最低要求
     assert sys.version_info >= (3, 11), f"Python版本过低: {sys.version}"
