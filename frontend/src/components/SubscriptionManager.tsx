@@ -45,7 +45,8 @@ import {
   FilterOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
-import { useWebSocket, EVENT_TYPES } from '../hooks/useWebSocket';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { EVENT_TYPES } from '../services/websocket';
 
 const { Text, Title } = Typography;
 const { Option } = Select;
@@ -428,7 +429,6 @@ const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({
                               <Tag
                                 key={eventType}
                                 color={getEventTypeColor(eventType)}
-                                size="small"
                               >
                                 {eventType.replace('_', ' ')}
                               </Tag>

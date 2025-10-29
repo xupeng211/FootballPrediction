@@ -21,6 +21,8 @@ import {
   RiseOutlined,
   ReloadOutlined,
   InfoCircleOutlined,
+  LineChartOutlined,
+  AreaChartOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../store';
@@ -32,6 +34,7 @@ import RealtimeDashboard from './RealtimeDashboard';
 import RealtimePredictionPanel from './RealtimePredictionPanel';
 import SubscriptionManager from './SubscriptionManager';
 import RealtimeStatsPanel from './RealtimeStatsPanel';
+import AdvancedAnalytics from './AdvancedAnalytics';
 
 // 懒加载ECharts组件
 const ReactECharts = lazy(() => import('echarts-for-react').then(module => ({ default: module.default })));
@@ -600,6 +603,32 @@ const Dashboard: React.FC = () => {
         <Col span={24}>
           <Card title="📊 实时系统统计" size="small">
             <RealtimeStatsPanel userId="demo_user" />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 高级分析面板 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card
+            title={
+              <Space>
+                <AreaChartOutlined />
+                <span>🎯 高级数据分析</span>
+                <Tag color="blue">Beta</Tag>
+              </Space>
+            }
+            extra={
+              <Tooltip title="深度数据分析和智能投注建议">
+                <InfoCircleOutlined />
+              </Tooltip>
+            }
+          >
+            <AdvancedAnalytics
+              userId="demo_user"
+              height={1000}
+              refreshInterval={30000}
+            />
           </Card>
         </Col>
       </Row>

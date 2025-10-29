@@ -42,7 +42,8 @@ import {
   FireOutlined,
   RocketOutlined
 } from '@ant-design/icons';
-import { useWebSocket, useRealtimeEvent, EVENT_TYPES } from '../hooks/useWebSocket';
+import { useWebSocket, useRealtimeEvent } from '../hooks/useWebSocket';
+import { EVENT_TYPES } from '../services/websocket';
 
 const { Text, Title } = Typography;
 const { Option } = Select;
@@ -473,7 +474,7 @@ const RealtimePredictionPanel: React.FC<RealtimePredictionPanelProps> = ({
                         <Space>
                           {getStatusIcon(task.status)}
                           <Text strong>比赛 #{task.match_id}</Text>
-                          <Tag color={getStatusColor(task.status)} size="small">
+                          <Tag color={getStatusColor(task.status)}>
                             {task.status}
                           </Tag>
                         </Space>
@@ -504,7 +505,6 @@ const RealtimePredictionPanel: React.FC<RealtimePredictionPanelProps> = ({
                         <Alert
                           message={task.error}
                           type="error"
-                          size="small"
                           style={{ marginTop: '8px' }}
                         />
                       )}

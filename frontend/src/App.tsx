@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy } from 'react';
+import React, { useEffect, Suspense, lazy, useState } from 'react';
 import {
   Typography,
   Spin,
@@ -12,6 +12,7 @@ import { setGlobalLoading, addNotification } from './store/slices/uiSlice';
 import { fetchMatches } from './store/slices/matchesSlice';
 import { apiService } from './services/api';
 import ResponsiveLayout from './components/ResponsiveLayout';
+import MobileOptimizedLayout from './components/MobileOptimizedLayout';
 
 // 代码分割 - 懒加载组件
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -26,6 +27,20 @@ const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const globalLoading = useSelector((state: RootState) => state.ui.globalLoading);
   const theme = useSelector((state: RootState) => state.ui.theme);
+  const [useMobileLayout, setUseMobileLayout] = useState(false);
+
+  // 检测设备类型并选择布局
+  useEffect(() => {
+    const checkDeviceType = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                       (window.innerWidth <= 768);
+      setUseMobileLayout(isMobile);
+    };
+
+    checkDeviceType();
+    window.addEventListener('resize', checkDeviceType);
+    return () => window.removeEventListener('resize', checkDeviceType);
+  }, []);
 
   // 应用初始化
   useEffect(() => {
@@ -93,61 +108,109 @@ const App: React.FC = () => {
           <Route
             path="/"
             element={
-              <ResponsiveLayout pageTitle="仪表板">
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
-                  <Dashboard />
-                </Suspense>
-              </ResponsiveLayout>
+              useMobileLayout ? (
+                <MobileOptimizedLayout title="仪表板">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
+                    <Dashboard />
+                  </Suspense>
+                </MobileOptimizedLayout>
+              ) : (
+                <ResponsiveLayout pageTitle="仪表板">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
+                    <Dashboard />
+                  </Suspense>
+                </ResponsiveLayout>
+              )
             }
           />
           <Route
             path="/dashboard"
             element={
-              <ResponsiveLayout pageTitle="仪表板">
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
-                  <Dashboard />
-                </Suspense>
-              </ResponsiveLayout>
+              useMobileLayout ? (
+                <MobileOptimizedLayout title="仪表板">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
+                    <Dashboard />
+                  </Suspense>
+                </MobileOptimizedLayout>
+              ) : (
+                <ResponsiveLayout pageTitle="仪表板">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载仪表板..." /></div>}>
+                    <Dashboard />
+                  </Suspense>
+                </ResponsiveLayout>
+              )
             }
           />
           <Route
             path="/matches"
             element={
-              <ResponsiveLayout pageTitle="比赛预测">
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载比赛预测..." /></div>}>
-                  <MatchList />
-                </Suspense>
-              </ResponsiveLayout>
+              useMobileLayout ? (
+                <MobileOptimizedLayout title="比赛预测">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载比赛预测..." /></div>}>
+                    <MatchList />
+                  </Suspense>
+                </MobileOptimizedLayout>
+              ) : (
+                <ResponsiveLayout pageTitle="比赛预测">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载比赛预测..." /></div>}>
+                    <MatchList />
+                  </Suspense>
+                </ResponsiveLayout>
+              )
             }
           />
           <Route
             path="/analytics"
             element={
-              <ResponsiveLayout pageTitle="数据分析">
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载数据分析..." /></div>}>
-                  <Analytics />
-                </Suspense>
-              </ResponsiveLayout>
+              useMobileLayout ? (
+                <MobileOptimizedLayout title="数据分析">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载数据分析..." /></div>}>
+                    <Analytics />
+                  </Suspense>
+                </MobileOptimizedLayout>
+              ) : (
+                <ResponsiveLayout pageTitle="数据分析">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载数据分析..." /></div>}>
+                    <Analytics />
+                  </Suspense>
+                </ResponsiveLayout>
+              )
             }
           />
           <Route
             path="/settings"
             element={
-              <ResponsiveLayout pageTitle="系统设置">
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载系统设置..." /></div>}>
-                  <Settings />
-                </Suspense>
-              </ResponsiveLayout>
+              useMobileLayout ? (
+                <MobileOptimizedLayout title="系统设置">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载系统设置..." /></div>}>
+                    <Settings />
+                  </Suspense>
+                </MobileOptimizedLayout>
+              ) : (
+                <ResponsiveLayout pageTitle="系统设置">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载系统设置..." /></div>}>
+                    <Settings />
+                  </Suspense>
+                </ResponsiveLayout>
+              )
             }
           />
           <Route
             path="/help"
             element={
-              <ResponsiveLayout pageTitle="帮助中心">
-                <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载帮助中心..." /></div>}>
-                  <HelpCenter />
-                </Suspense>
-              </ResponsiveLayout>
+              useMobileLayout ? (
+                <MobileOptimizedLayout title="帮助中心">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载帮助中心..." /></div>}>
+                    <HelpCenter />
+                  </Suspense>
+                </MobileOptimizedLayout>
+              ) : (
+                <ResponsiveLayout pageTitle="帮助中心">
+                  <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="加载帮助中心..." /></div>}>
+                    <HelpCenter />
+                  </Suspense>
+                </ResponsiveLayout>
+              )
             }
           />
         </Routes>
