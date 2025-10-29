@@ -557,6 +557,8 @@ class EnhancedValueRatingCalculator:
 
         # 风险调整因子
         risk_factors = []
+        # 用于记录和调试各种风险因素
+        logger.debug(f"Risk factors initialized for EV calculation: {len(risk_factors)} factors")
 
         # 1. 概率风险
         if probability < 0.3:

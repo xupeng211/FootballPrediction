@@ -62,6 +62,11 @@ class DataTransformer(ABC):
         """转换数据格式"""
         pass
 
+class CompositeAdapter(Adapter):
+    """组合适配器，可以管理多个子适配器"""
+
+class CompositeAdapter(Adapter):
+# TODO: 方法 def get_adapter 过长(25行)，建议拆分
     def get_source_schema(self) -> Dict[str, Any]:
         """获取源数据结构"""
         return {}
@@ -73,8 +78,6 @@ class DataTransformer(ABC):
 
 
 class CompositeAdapter(Adapter):
-    """组合适配器，可以管理多个子适配器"""
-
     def __init__(self, name: str = "CompositeAdapter"):
         self.name = name
         self.adapters: List[Adapter] = []
@@ -119,6 +122,8 @@ class CompositeAdapter(Adapter):
             return True
         return False
 
+# TODO: 方法 def get_adapter 过长(25行)，建议拆分
+# TODO: 方法 def get_adapter 过长(25行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
