@@ -51,6 +51,8 @@ STREAM_PROCESSING_CONFIG = {
 import asyncio
 from kafka import KafkaConsumer, KafkaProducer
 import json
+from src.core.config import 
+from src.core.config import 
 
 
 class StreamProcessor:
