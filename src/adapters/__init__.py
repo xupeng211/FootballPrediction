@@ -14,7 +14,6 @@ from .football import (
     FootballDataAdapter,
     OptaDataAdapter,
 )
-from .registry_simple import AdapterRegistry as SimpleAdapterRegistry, register_adapter
 from .registry import AdapterRegistry
 
 __all__ = [

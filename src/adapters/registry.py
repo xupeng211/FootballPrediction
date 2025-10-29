@@ -2,7 +2,7 @@
 适配器注册表
 """
 
-from typing import Any, Dict, Optional, Type, List
+from typing import Dict, Optional, Type, List
 
 from src.core.exceptions import AdapterError
 from src.adapters.base import Adapter
@@ -48,8 +48,8 @@ class AdapterRegistry:
         if name in self.adapters:
             del self.adapters[name]
             # 从组中移除
-            for group_adapters in self.groups.values():
-                self.groups[group] = [a for a in group_adapters if a.name != name]
+            for group_name, group_adapters in self.groups.items():
+                self.groups[group_name] = [a for a in group_adapters if a.name != name]
 
     def get(self, name: str) -> Optional[Adapter]:
         """获取适配器"""
