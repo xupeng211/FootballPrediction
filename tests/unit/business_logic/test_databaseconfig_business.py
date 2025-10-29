@@ -11,16 +11,10 @@ P2阶段深度业务逻辑测试: DatabaseConfig
 - 数据驱动测试用例
 """
 
-import asyncio
-import json
 import os
 
 # 确保可以导入源码模块
 import sys
-import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -29,7 +23,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 # 导入目标模块
 try:
     import database.config
-    from database.config import (
         DatabaseConfig,
         get_database_config,
         get_database_url,
@@ -343,7 +336,6 @@ class TestDatabaseConfigBusinessLogic:
             pytest.skip("模块不可用")
 
         # 测试异步功能集成
-        import database.config
 
         # DatabaseConfig主要是同步类，但async_url属性用于异步连接
         try:

@@ -13,9 +13,7 @@ def analyze_requirements():
     files = [
         f
         for f in req_dir.glob("*.txt")
-        if not f.name.endswith(".lock")
-        and not f.name.endswith(".in")
-        and f.name != "README.md"
+        if not f.name.endswith(".lock") and not f.name.endswith(".in") and f.name != "README.md"
     ]
 
     print("=" * 80)
@@ -28,9 +26,7 @@ def analyze_requirements():
     for file_path in sorted(files):
         with open(file_path, "r", encoding="utf-8") as f:
             lines = [
-                line.strip()
-                for line in f.readlines()
-                if line.strip() and not line.startswith("#")
+                line.strip() for line in f.readlines() if line.strip() and not line.startswith("#")
             ]
 
         print(f"\n📄 {file_path.name} ({len(lines)} 个依赖)")
@@ -59,15 +55,11 @@ def find_common_dependencies(dependencies, all_deps):
 
     # 找出在多个文件中出现的依赖
     common_deps = {
-        pkg: files
-        for pkg, files in dependencies.items()
-        if pkg != "_total_" and len(files) > 1
+        pkg: files for pkg, files in dependencies.items() if pkg != "_total_" and len(files) > 1
     }
 
     print(f"\n📊 在多个文件中出现的依赖 ({len(common_deps)} 个):")
-    for pkg, files in sorted(
-        common_deps.items(), key=lambda x: len(x[1]), reverse=True
-    )[:20]:
+    for pkg, files in sorted(common_deps.items(), key=lambda x: len(x[1]), reverse=True)[:20]:
         print(f"  {pkg}: {', '.join(files)}")
 
     # 统计使用频率最高的依赖

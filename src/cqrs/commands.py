@@ -54,11 +54,7 @@ class CreatePredictionCommand(ValidatableCommand):
         # 在实际应用中，这些验证应该在服务层处理
         # 这里仅做基本验证
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
 
 
 class UpdatePredictionCommand(ValidatableCommand):
@@ -106,11 +102,7 @@ class UpdatePredictionCommand(ValidatableCommand):
         if self.confidence is not None and not (0 <= self.confidence <= 1):
             errors.append("置信度必须在0到1之间")
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
 
 
 class DeletePredictionCommand(ValidatableCommand):
@@ -138,11 +130,7 @@ class DeletePredictionCommand(ValidatableCommand):
             elif prediction.match.match_date < datetime.utcnow():
                 errors.append("无法删除已结束比赛的预测")
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
 
 
 class CreateUserCommand(ValidatableCommand):
@@ -187,11 +175,7 @@ class CreateUserCommand(ValidatableCommand):
             if existing_user.scalar():
                 errors.append("用户名已存在")
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
 
 
 class UpdateUserCommand(ValidatableCommand):
@@ -223,11 +207,7 @@ class UpdateUserCommand(ValidatableCommand):
             if not user:
                 errors.append("指定的用户不存在")
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
 
 
 class CreateMatchCommand(ValidatableCommand):
@@ -265,11 +245,7 @@ class CreateMatchCommand(ValidatableCommand):
         if self.match_date < datetime.utcnow():
             errors.append("比赛日期不能是过去的时间")
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
 
 
 class UpdateMatchCommand(ValidatableCommand):
@@ -311,8 +287,4 @@ class UpdateMatchCommand(ValidatableCommand):
         if self.away_score is not None and self.away_score < 0:
             errors.append("客队得分不能为负数")
 
-        return (
-            ValidationResult.success()
-            if not errors
-            else ValidationResult.failure(errors)
-        )
+        return ValidationResult.success() if not errors else ValidationResult.failure(errors)

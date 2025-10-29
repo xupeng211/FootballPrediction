@@ -125,9 +125,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         query_spec = QuerySpec(filters=filters, order_by=["match_date"])
         return await self.find_many(query_spec)
 
-    async def get_finished_matches(
-        self, days: int = 30, limit: int = 100
-    ) -> List[Match]:
+    async def get_finished_matches(self, days: int = 30, limit: int = 100) -> List[Match]:
         """获取已结束的比赛"""
         start_date = date.today() - timedelta(days=days)
 
@@ -287,9 +285,7 @@ class MatchRepository(MatchRepositoryInterface):
         await self.session.refresh(match)
         return match
 
-    async def update_by_id(
-        self, id: int, update_data: Dict[str, Any]
-    ) -> Optional[Match]:
+    async def update_by_id(self, id: int, update_data: Dict[str, Any]) -> Optional[Match]:
         """根据ID更新比赛"""
         query = update(Match).where(Match.id == id)
 
@@ -298,9 +294,7 @@ class MatchRepository(MatchRepositoryInterface):
 
         # 处理特殊字段
         if "match_date" in update_data and isinstance(update_data["match_date"], str):
-            update_data["match_date"] = datetime.fromisoformat(
-                update_data["match_date"]
-            )
+            update_data["match_date"] = datetime.fromisoformat(update_data["match_date"])
 
         if "status" in update_data:
             # 更新状态时，记录状态变更时间
@@ -401,9 +395,7 @@ class MatchRepository(MatchRepositoryInterface):
         }
         return await self.update_by_id(match_id, update_data)
 
-    async def postpone_match(
-        self, match_id: int, reason: Optional[str] = None
-    ) -> Optional[Match]:
+    async def postpone_match(self, match_id: int, reason: Optional[str] = None) -> Optional[Match]:
         """推迟比赛"""
         update_data = {
             "status": MatchStatus.POSTPONED.value,
@@ -413,9 +405,7 @@ class MatchRepository(MatchRepositoryInterface):
             update_data["notes"] = reason
         return await self.update_by_id(match_id, update_data)
 
-    async def cancel_match(
-        self, match_id: int, reason: Optional[str] = None
-    ) -> Optional[Match]:
+    async def cancel_match(self, match_id: int, reason: Optional[str] = None) -> Optional[Match]:
         """取消比赛"""
         update_data = {
             "status": MatchStatus.CANCELLED.value,
@@ -441,8 +431,7 @@ class MatchRepository(MatchRepositoryInterface):
             func.sum(
                 func.case(
                     (
-                        Prediction.predicted_home_score
-                        > Prediction.predicted_away_score,
+                        Prediction.predicted_home_score > Prediction.predicted_away_score,
                         1,
                     ),
                     else_=0,
@@ -451,8 +440,7 @@ class MatchRepository(MatchRepositoryInterface):
             func.sum(
                 func.case(
                     (
-                        Prediction.predicted_home_score
-                        < Prediction.predicted_away_score,
+                        Prediction.predicted_home_score < Prediction.predicted_away_score,
                         1,
                     ),
                     else_=0,
@@ -461,8 +449,7 @@ class MatchRepository(MatchRepositoryInterface):
             func.sum(
                 func.case(
                     (
-                        Prediction.predicted_home_score
-                        == Prediction.predicted_away_score,
+                        Prediction.predicted_home_score == Prediction.predicted_away_score,
                         1,
                     ),
                     else_=0,

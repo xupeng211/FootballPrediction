@@ -1,5 +1,4 @@
 # 通用模型测试
-import pytest
 
 try:
     pass

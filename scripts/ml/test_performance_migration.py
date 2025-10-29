@@ -81,17 +81,13 @@ def test_performance_optimization_migration():
 
             # 1. 创建备份表
             session.execute(text("DROP TABLE IF EXISTS matches_backup CASCADE;"))
-            session.execute(
-                text("CREATE TABLE matches_backup AS SELECT * FROM matches;")
-            )
+            session.execute(text("CREATE TABLE matches_backup AS SELECT * FROM matches;"))
             print("✅ 创建matches备份表")
 
             # 2. 检查是否能创建唯一约束（修复外键问题）
             try:
                 session.execute(
-                    text(
-                        "CREATE UNIQUE INDEX IF NOT EXISTS idx_matches_id_unique ON matches (id);"
-                    )
+                    text("CREATE UNIQUE INDEX IF NOT EXISTS idx_matches_id_unique ON matches (id);")
                 )
                 print("✅ 创建matches.id唯一约束")
             except Exception as e:
@@ -155,9 +151,7 @@ def check_current_migration_status():
 
         with db_manager.get_session() as session:
             try:
-                result = session.execute(
-                    text("SELECT version_num FROM alembic_version;")
-                )
+                result = session.execute(text("SELECT version_num FROM alembic_version;"))
                 current_version = result.scalar()
                 print(f"📋 当前数据库版本: {current_version}")
             except Exception:

@@ -21,9 +21,7 @@ def clean_file_imports(file_path: Path):
         stripped = line.strip()
 
         if in_imports and (
-            stripped.startswith("from ")
-            or stripped.startswith("import ")
-            or stripped == ""
+            stripped.startswith("from ") or stripped.startswith("import ") or stripped == ""
         ):
             if stripped.startswith("from ") or stripped.startswith("import "):
                 imports_section.append(stripped)
@@ -67,8 +65,7 @@ def clean_file_imports(file_path: Path):
             new_lines.append(imp)
 
     if other_imports and any(
-        not imp.startswith("from src.") and not imp.startswith("from ..")
-        for imp in other_imports
+        not imp.startswith("from src.") and not imp.startswith("from ..") for imp in other_imports
     ):
         new_lines.append("")
 

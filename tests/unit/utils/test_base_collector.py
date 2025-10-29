@@ -2,8 +2,6 @@
 
 import pytest
 
-from src.data.collectors.base_collector import CollectionResult, DataCollector
-
 
 @pytest.mark.unit
 class TestDataCollector:

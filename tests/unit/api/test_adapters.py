@@ -1,7 +1,6 @@
 # 智能Mock兼容修复模式 - API适配器测试增强
 # 解决响应数据结构不匹配和状态码不一致问题
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 适配器API端点测试
@@ -14,7 +13,6 @@ Tests for Adapter API Endpoints
 - 演示功能
 """
 
-from datetime import date, datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -523,9 +521,7 @@ class TestAdaptersAPI:
         date_to = date(2023, 12, 7)
 
         # When
-        response = client.get(
-            f"/adapters/football/matches?date_from={date_from}&date_to={date_to}"
-        )
+        response = client.get(f"/adapters/football/matches?date_from={date_from}&date_to={date_to}")
 
         # Then
         assert response.status_code == 200
@@ -549,9 +545,7 @@ class TestAdaptersAPI:
         _data = response.json()
         assert _data["source"] == "api_football"
         assert _data["match"]["id"] == 123  # 智能Mock兼容修复模式 - 整数类型
-        assert (
-            _data["match"]["home_team"] == "Manchester United"
-        )  # 智能Mock兼容修复模式 - 实际值
+        assert _data["match"]["home_team"] == "Manchester United"  # 智能Mock兼容修复模式 - 实际值
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_not_found(self, mock_registry, client):
@@ -770,9 +764,7 @@ class TestAdaptersAPI:
         # Given
         mock_registry.status.value = "active"
         mock_adapter = Mock()
-        mock_adapter.get_teams = AsyncMock(
-            side_effect=AttributeError("Invalid attribute")
-        )
+        mock_adapter.get_teams = AsyncMock(side_effect=AttributeError("Invalid attribute"))
         mock_registry.get_adapter.return_value = mock_adapter
 
         # When

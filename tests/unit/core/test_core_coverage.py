@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 核心模块测试覆盖率提升
@@ -109,9 +108,7 @@ class TestPredictionEngine:
 
     @patch("src.core.prediction_engine._lazy_import")
     @patch("src.core.prediction_engine.PredictionConfig")
-    def test_get_prediction_engine_first_call(
-        self, mock_config_class, mock_lazy_import
-    ):
+    def test_get_prediction_engine_first_call(self, mock_config_class, mock_lazy_import):
         """测试首次获取预测引擎"""
         # 设置模拟
         mock_config = Mock()
@@ -166,9 +163,7 @@ class TestPredictionEngine:
 
         with patch("src.core.prediction_engine.PredictionEngine") as mock_pe:
             with patch("src.core.prediction_engine.PredictionConfig") as mock_pc:
-                with patch(
-                    "src.core.prediction_engine.PredictionStatistics"
-                ) as mock_ps:
+                with patch("src.core.prediction_engine.PredictionStatistics") as mock_ps:
                     # 模拟导入
                     src.core.prediction_engine._lazy_import()
 

@@ -31,7 +31,7 @@ SEED_USERS = [
         "password": "PremiumSeed123!",
         "first_name": "高级",
         "last_name": "种子用户",
-        "description": "高级用户，测试高级功能访问"
+        "description": "高级用户，测试高级功能访问",
     },
     {
         "role": "regular_user",
@@ -40,7 +40,7 @@ SEED_USERS = [
         "password": "RegularSeed123!",
         "first_name": "普通",
         "last_name": "种子用户",
-        "description": "普通用户，测试基本功能"
+        "description": "普通用户，测试基本功能",
     },
     {
         "role": "analyst_user",
@@ -49,9 +49,10 @@ SEED_USERS = [
         "password": "AnalystSeed123!",
         "first_name": "分析",
         "last_name": "种子用户",
-        "description": "分析师用户，测试数据分析功能"
-    }
+        "description": "分析师用户，测试数据分析功能",
+    },
 ]
+
 
 class SeedUserTester:
     """种子用户测试器"""
@@ -68,7 +69,7 @@ class SeedUserTester:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -94,7 +95,7 @@ class SeedUserTester:
                         "系统健康检查",
                         True,
                         f"状态: {health_data.get('status')}, 数据库延迟: {health_data.get('checks', {}).get('database', {}).get('latency_ms')}ms",
-                        duration
+                        duration,
                     )
                     return True
                 else:
@@ -112,10 +113,7 @@ class SeedUserTester:
 
         try:
             async with httpx.AsyncClient(timeout=15) as client:
-                response = await client.post(
-                    f"{API_BASE_URL}/auth/register",
-                    json=user_config
-                )
+                response = await client.post(f"{API_BASE_URL}/auth/register", json=user_config)
                 duration = time.time() - start_time
 
                 if response.status_code == 201:
@@ -124,7 +122,7 @@ class SeedUserTester:
                         f"创建种子用户: {user_config['username']}",
                         True,
                         f"用户ID: {user_data.get('id')}, 角色: {user_data.get('role')}",
-                        duration
+                        duration,
                     )
                     return user_data
                 else:
@@ -133,17 +131,14 @@ class SeedUserTester:
                         f"创建种子用户: {user_config['username']}",
                         False,
                         f"错误: {error_data.get('detail')}",
-                        duration
+                        duration,
                     )
                     return {}
 
         except Exception as e:
             duration = time.time() - start_time
             self.log_test(
-                f"创建种子用户: {user_config['username']}",
-                False,
-                f"网络错误: {str(e)}",
-                duration
+                f"创建种子用户: {user_config['username']}", False, f"网络错误: {str(e)}", duration
             )
             return {}
 
@@ -155,13 +150,10 @@ class SeedUserTester:
             async with httpx.AsyncClient(timeout=15) as client:
                 login_data = {
                     "username": user_config["username"],
-                    "password": user_config["password"]
+                    "password": user_config["password"],
                 }
 
-                response = await client.post(
-                    f"{API_BASE_URL}/auth/login",
-                    data=login_data
-                )
+                response = await client.post(f"{API_BASE_URL}/auth/login", data=login_data)
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
@@ -170,26 +162,23 @@ class SeedUserTester:
                         f"用户登录: {user_config['username']}",
                         True,
                         f"角色: {token_data.get('user', {}).get('role')}, 令牌有效期: {token_data.get('expires_in')}秒",
-                        duration
+                        duration,
                     )
-                    return token_data.get('access_token')
+                    return token_data.get("access_token")
                 else:
                     error_data = response.json()
                     self.log_test(
                         f"用户登录: {user_config['username']}",
                         False,
                         f"错误: {error_data.get('detail')}",
-                        duration
+                        duration,
                     )
                     return ""
 
         except Exception as e:
             duration = time.time() - start_time
             self.log_test(
-                f"用户登录: {user_config['username']}",
-                False,
-                f"网络错误: {str(e)}",
-                duration
+                f"用户登录: {user_config['username']}", False, f"网络错误: {str(e)}", duration
             )
             return ""
 
@@ -200,10 +189,7 @@ class SeedUserTester:
         try:
             headers = {"Authorization": f"Bearer {token}"}
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.get(
-                    f"{API_BASE_URL}/auth/me",
-                    headers=headers
-                )
+                response = await client.get(f"{API_BASE_URL}/auth/me", headers=headers)
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
@@ -212,7 +198,7 @@ class SeedUserTester:
                         f"获取用户资料: {username}",
                         True,
                         f"用户ID: {user_data.get('id')}, 是否激活: {user_data.get('is_active')}, 是否验证: {user_data.get('is_verified')}",
-                        duration
+                        duration,
                     )
                     return True
                 else:
@@ -221,18 +207,13 @@ class SeedUserTester:
                         f"获取用户资料: {username}",
                         False,
                         f"错误: {error_data.get('detail')}",
-                        duration
+                        duration,
                     )
                     return False
 
         except Exception as e:
             duration = time.time() - start_time
-            self.log_test(
-                f"获取用户资料: {username}",
-                False,
-                f"网络错误: {str(e)}",
-                duration
-            )
+            self.log_test(f"获取用户资料: {username}", False, f"网络错误: {str(e)}", duration)
             return False
 
     async def test_api_endpoints(self, token: str, username: str) -> Dict[str, bool]:
@@ -256,13 +237,17 @@ class SeedUserTester:
                     duration = time.time() - start_time
 
                     success = response.status_code in [200, 404]  # 404也算成功，说明路由存在
-                    status_text = "访问成功" if response.status_code == 200 else f"HTTP {response.status_code}"
+                    status_text = (
+                        "访问成功"
+                        if response.status_code == 200
+                        else f"HTTP {response.status_code}"
+                    )
 
                     self.log_test(
                         f"API测试 - {description}",
                         success,
                         f"用户: {username}, 状态: {status_text}",
-                        duration
+                        duration,
                     )
 
                     results[endpoint] = success
@@ -270,10 +255,7 @@ class SeedUserTester:
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(
-                    f"API测试 - {description}",
-                    False,
-                    f"用户: {username}, 错误: {str(e)}",
-                    duration
+                    f"API测试 - {description}", False, f"用户: {username}, 错误: {str(e)}", duration
                 )
                 results[endpoint] = False
 
@@ -344,13 +326,13 @@ class SeedUserTester:
             # 登录获取令牌
             token = await self.test_user_login(user_config)
             if token:
-                self.active_tokens[user_config['username']] = token
+                self.active_tokens[user_config["username"]] = token
 
                 # 获取用户资料
-                await self.test_user_profile(token, user_config['username'])
+                await self.test_user_profile(token, user_config["username"])
 
                 # 测试API访问
-                await self.test_api_endpoints(token, user_config['username'])
+                await self.test_api_endpoints(token, user_config["username"])
 
                 # 模拟用户行为
                 await self.simulate_user_behavior(user_config, token)
@@ -367,7 +349,7 @@ class SeedUserTester:
         print("=" * 60)
 
         total_tests = len(self.test_results)
-        successful_tests = sum(1 for r in self.test_results if r['success'])
+        successful_tests = sum(1 for r in self.test_results if r["success"])
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
         print(f"📈 测试统计:")
@@ -383,7 +365,7 @@ class SeedUserTester:
         print(f"   成功登录用户: {len(self.active_tokens)}")
 
         # 计算平均响应时间
-        durations = [r['duration'] for r in self.test_results if r['duration'] > 0]
+        durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
             print(f"\n⏱️  性能统计:")
@@ -392,7 +374,7 @@ class SeedUserTester:
             print(f"   最快响应: {min(durations):.2f}秒")
 
         # 显示失败的测试
-        failed_tests = [r for r in self.test_results if not r['success']]
+        failed_tests = [r for r in self.test_results if not r["success"]]
         if failed_tests:
             print(f"\n❌ 失败的测试:")
             for test in failed_tests[:5]:  # 只显示前5个

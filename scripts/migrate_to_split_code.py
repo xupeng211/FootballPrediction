@@ -14,9 +14,7 @@ import subprocess
 def run_command(cmd: List[str], cwd: str = None) -> Tuple[bool, str]:
     """运行命令并返回结果"""
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=cwd or Path.cwd()
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd or Path.cwd())
         return result.returncode == 0, result.stdout + result.stderr
     except Exception as e:
         return False, str(e)
@@ -310,9 +308,7 @@ def push_to_remote():
         # 尝试推送当前分支
         current_branch, _ = run_command(["git", "branch", "--show-current"])
         if current_branch.strip():
-            success, output = run_command(
-                ["git", "push", "origin", current_branch.strip()]
-            )
+            success, output = run_command(["git", "push", "origin", current_branch.strip()])
             if success:
                 print(f"✓ 推送到分支 {current_branch.strip()} 成功")
                 return True

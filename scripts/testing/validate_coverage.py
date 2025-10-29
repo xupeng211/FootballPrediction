@@ -31,9 +31,7 @@ def parse_progress_latest() -> Optional[float]:
 
 def parse_ci_report() -> tuple[Optional[float], Optional[float]]:
     text = CI_REPORT.read_text(encoding="utf-8")
-    total_match = re.search(
-        r"^\|\s*\*\*合计\*\*\s*\|.*\|\s*([0-9.]+)%\s*\|$", text, re.MULTILINE
-    )
+    total_match = re.search(r"^\|\s*\*\*合计\*\*\s*\|.*\|\s*([0-9.]+)%\s*\|$", text, re.MULTILINE)
     total = float(total_match.group(1)) if total_match else None
     trend_entries = re.findall(
         r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\| [^|]+ \| [^|]+ \| [^|]+ \|\s*([0-9.]+)%\s*\|$",
@@ -72,9 +70,7 @@ def append_result(
         and all(abs(progress - value) <= 0.1 for value in compare_values)
     )
 
-    threshold_values = [
-        value for value in (progress, ci_total, ci_trend) if value is not None
-    ]
+    threshold_values = [value for value in (progress, ci_total, ci_trend) if value is not None]
     threshold_ok = (
         pytest_thr is not None
         and threshold_values
@@ -96,9 +92,7 @@ def append_result(
     lines.append("")
 
     report_text = CI_REPORT.read_text(encoding="utf-8")
-    CI_REPORT.write_text(
-        report_text.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8"
-    )
+    CI_REPORT.write_text(report_text.rstrip() + "\n" + "\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> None:

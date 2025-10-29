@@ -163,10 +163,7 @@ def check_file(file_path: Path) -> Dict:
             checker.stats["functions_with_types"] / max(checker.stats["functions"], 1)
         ) * 100
         doc_coverage = (
-            (
-                checker.stats["functions_with_docstrings"]
-                + checker.stats["classes_with_docstrings"]
-            )
+            (checker.stats["functions_with_docstrings"] + checker.stats["classes_with_docstrings"])
             / max(checker.stats["functions"] + checker.stats["classes"], 1)
             * 100
         )
@@ -239,14 +236,9 @@ def main():
             print(f"  ⚠️  {rel_path}: 类型注解覆盖率 {result['coverage']['types']:.1f}%")
 
     # 计算总体覆盖率
-    type_coverage = (
-        total_stats["functions_with_types"] / max(total_stats["functions"], 1)
-    ) * 100
+    type_coverage = (total_stats["functions_with_types"] / max(total_stats["functions"], 1)) * 100
     doc_coverage = (
-        (
-            total_stats["functions_with_docstrings"]
-            + total_stats["classes_with_docstrings"]
-        )
+        (total_stats["functions_with_docstrings"] + total_stats["classes_with_docstrings"])
         / max(total_stats["functions"] + total_stats["classes"], 1)
         * 100
     )

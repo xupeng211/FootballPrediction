@@ -4,15 +4,10 @@ Issue #83 覆盖率提升测试: adapters.factory
 生成时间: 2025-10-25 13:03
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
 try:
-    from adapters.factory import *
 
     IMPORTS_AVAILABLE = True
     print("成功导入模块: adapters.base")

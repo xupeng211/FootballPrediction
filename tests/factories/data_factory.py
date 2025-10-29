@@ -8,7 +8,6 @@ import json
 import random
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union
 
 from .base import BaseFactory, DataFactoryMixin, TimestampMixin
 
@@ -41,9 +40,7 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
             "score": random.randint(0, 100),
             "rating": round(random.uniform(1.0, 5.0), 1),
             "description": f"测试数据描述_{random.randint(1, 1000)}",
-            "tags": random.sample(
-                ["tag1", "tag2", "tag3", "tag4", "tag5"], random.randint(1, 3)
-            ),
+            "tags": random.sample(["tag1", "tag2", "tag3", "tag4", "tag5"], random.randint(1, 3)),
             "metadata": cls._generate_metadata(),
         }
 

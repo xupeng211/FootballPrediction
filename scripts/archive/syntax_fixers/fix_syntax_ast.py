@@ -315,9 +315,7 @@ class ASTSyntaxFixer:
 
 def main():
     parser = argparse.ArgumentParser(description="AST 驱动的 Python 语法修复工具")
-    parser.add_argument(
-        "directory", nargs="?", default="tests/unit", help="要修复的目录"
-    )
+    parser.add_argument("directory", nargs="?", default="tests/unit", help="要修复的目录")
     parser.add_argument("--max-files", type=int, default=30, help="每批处理的文件数")
     parser.add_argument("--report", help="报告文件路径")
     parser.add_argument(

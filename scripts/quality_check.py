@@ -8,6 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_command(cmd, description):
     """运行命令并返回结果"""
     print(f"🔧 {description}")
@@ -20,12 +21,16 @@ def run_command(cmd, description):
         print(f"错误信息: {result.stderr}")
         return False
 
+
 def main():
     """主检查函数"""
     print("🚀 开始代码质量检查...")
 
     checks = [
-        (["python", "-m", "pytest", "tests/unit/utils/test_dict_utils_fixed.py", "-v"], "dict_utils 功能测试"),
+        (
+            ["python", "-m", "pytest", "tests/unit/utils/test_dict_utils_fixed.py", "-v"],
+            "dict_utils 功能测试",
+        ),
         (["python", "-m", "pytest", "tests/unit/api/test_health.py", "-v"], "健康检查API测试"),
         (["ruff", "check", "src/utils/dict_utils.py"], "dict_utils 代码质量检查"),
         (["ruff", "check", "src/api/monitoring.py"], "monitoring 代码质量检查"),
@@ -47,6 +52,7 @@ def main():
     else:
         print("⚠️  存在质量问题需要修复")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

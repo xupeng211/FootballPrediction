@@ -105,9 +105,7 @@ class PerformanceProfiler:
             "function_profiles": self._parse_function_stats(ps),
         }
 
-        logger.info(
-            f"Performance profiling completed. Peak memory: {peak / 1024 / 1024:.2f} MB"
-        )
+        logger.info(f"Performance profiling completed. Peak memory: {peak / 1024 / 1024:.2f} MB")
         return result
 
     def _parse_function_stats(self, ps: pstats.Stats) -> List[FunctionProfile]:
@@ -221,9 +219,7 @@ class PerformanceProfiler:
 
     def get_slow_functions(self, threshold: float = 0.1) -> List[FunctionProfile]:
         """获取慢函数列表"""
-        return [
-            f for f in self.function_profiles.values() if f.average_time > threshold
-        ]
+        return [f for f in self.function_profiles.values() if f.average_time > threshold]
 
     def get_slow_queries(self, threshold: float = 0.5) -> List[QueryProfile]:
         """获取慢查询列表"""
@@ -308,9 +304,7 @@ def profile_function(name: Optional[str] = None):
 
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
-                async with _global_profiler.profile_async_function(
-                    name or func.__name__
-                ):
+                async with _global_profiler.profile_async_function(name or func.__name__):
                     return await func(*args, **kwargs)
 
             return async_wrapper
@@ -455,9 +449,7 @@ class APIEndpointProfiler:
         # 计算平均持续时间
         for stats in self.endpoint_stats.values():
             if stats["request_count"] > 0:
-                stats["average_duration"] = (
-                    stats["total_duration"] / stats["request_count"]
-                )
+                stats["average_duration"] = stats["total_duration"] / stats["request_count"]
             else:
                 stats["average_duration"] = 0
 

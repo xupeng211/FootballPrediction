@@ -9,25 +9,28 @@ import subprocess
 import time
 from pathlib import Path
 
+
 class TestCrisisSolutionLauncher:
     def __init__(self):
         self.project_root = Path(__file__).parent
         self.scripts = {
             "fix_test_crisis.py": "紧急修复测试错误",
             "github_issue_manager.py": "维护GitHub issues",
-            "test_quality_improvement_engine.py": "质量提升引擎"
+            "test_quality_improvement_engine.py": "质量提升引擎",
         }
 
     def show_banner(self):
         """显示启动横幅"""
-        print("""
+        print(
+            """
 ╔══════════════════════════════════════════════════════════════╗
 ║                 🚨 测试覆盖率危机解决方案                      ║
 ║                                                              ║
 ║  当前状态: 8.21%覆盖率 | 7,992个测试用例 | 5个错误           ║
 ║  目标状态: 30%覆盖率 | 高质量测试 | 0个错误                   ║
 ╚══════════════════════════════════════════════════════════════╝
-        """)
+        """
+        )
 
     def show_menu(self):
         """显示操作菜单"""
@@ -126,10 +129,28 @@ class TestCrisisSolutionLauncher:
         elif choice_num == 3:
             # 清理缓存
             print("🧹 清理Python缓存...")
-            subprocess.run(["find", ".", "-name", "__pycache__", "-type", "d", "-exec", "rm", "-rf", "{}", "+"],
-                         cwd=self.project_root, capture_output=True)
-            subprocess.run(["find", ".", "-name", "*.pyc", "-delete"],
-                         cwd=self.project_root, capture_output=True)
+            subprocess.run(
+                [
+                    "find",
+                    ".",
+                    "-name",
+                    "__pycache__",
+                    "-type",
+                    "d",
+                    "-exec",
+                    "rm",
+                    "-rf",
+                    "{}",
+                    "+",
+                ],
+                cwd=self.project_root,
+                capture_output=True,
+            )
+            subprocess.run(
+                ["find", ".", "-name", "*.pyc", "-delete"],
+                cwd=self.project_root,
+                capture_output=True,
+            )
             print("✅ 缓存清理完成")
 
         elif choice_num == 4:
@@ -186,8 +207,10 @@ class TestCrisisSolutionLauncher:
             for phase in range(1, 5):
                 print(f"\n{'='*60}")
                 print(f"执行阶段 {phase}/4")
-                print('='*60)
-                if not self.run_script("test_quality_improvement_engine.py", ["--execute-phase", str(phase)]):
+                print("=" * 60)
+                if not self.run_script(
+                    "test_quality_improvement_engine.py", ["--execute-phase", str(phase)]
+                ):
                     print(f"⚠️ 阶段 {phase} 执行有问题，但继续执行下一阶段")
                 time.sleep(2)
 
@@ -197,7 +220,7 @@ class TestCrisisSolutionLauncher:
         elif choice_num == 14:
             # 一键修复+改进
             print("🚀 一键修复+改进流程...")
-            print("="*60)
+            print("=" * 60)
 
             # 步骤1: 紧急修复
             print("步骤 1/4: 紧急修复测试错误")
@@ -216,7 +239,7 @@ class TestCrisisSolutionLauncher:
             print("\n步骤 4/4: 更新问题跟踪")
             self.run_script("github_issue_manager.py")
 
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("🎉 一键修复+改进完成!")
             print("\n📊 验证改进效果:")
             print("  make coverage    # 查看覆盖率")
@@ -245,6 +268,7 @@ class TestCrisisSolutionLauncher:
             print("\n按Enter键继续...")
             input()
 
+
 def main():
     """主函数"""
     launcher = TestCrisisSolutionLauncher()
@@ -265,6 +289,7 @@ def main():
             print("  python launch_test_crisis_solution.py --improve     # 改进模式")
     else:
         launcher.run()
+
 
 if __name__ == "__main__":
     main()

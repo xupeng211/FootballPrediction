@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 19 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, patch
 
 """
 Kafka消费者测试
@@ -10,7 +9,6 @@ Kafka消费者测试
 
 import asyncio
 import json
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -325,9 +323,7 @@ class TestKafkaMessageConsumer:
         """测试消费事件消息"""
         mock_message = MagicMock()
         mock_message.key = b"match_123"
-        mock_message.value = (
-            b'{"event_type": "match_created", "aggregate_id": "match_123"}'
-        )
+        mock_message.value = b'{"event_type": "match_created", "aggregate_id": "match_123"}'
         mock_message.headers = [("type", b"event")]
 
         async def message_iter():
@@ -391,7 +387,6 @@ class TestKafkaMessageConsumer:
     @pytest.mark.asyncio
     async def test_reset_offset_to_beginning(self, consumer, mock_kafka_consumer):
         """测试重置偏移量到开始"""
-        from kafka.structs import TopicPartition
 
         await consumer.start()
         await consumer.reset_offset_to_beginning("topic1", 0)

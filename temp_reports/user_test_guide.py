@@ -12,6 +12,7 @@ from datetime import datetime
 import requests
 from typing import Dict, Any
 
+
 class UserTestGuide:
     """用户测试指南类"""
 
@@ -21,9 +22,9 @@ class UserTestGuide:
 
     def print_header(self, title: str):
         """打印标题"""
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print(f"🧪 {title}")
-        print("="*50)
+        print("=" * 50)
 
     def print_step(self, step: int, title: str):
         """打印步骤"""
@@ -45,27 +46,19 @@ class UserTestGuide:
                 print(f"   数据库: {data.get('checks', {}).get('database', '未知')}")
                 print(f"   响应时间: {data.get('response_time_ms', 0):.2f}ms")
 
-                self.test_results.append({
-                    "测试": "健康检查",
-                    "状态": "通过",
-                    "详情": "系统运行正常"
-                })
+                self.test_results.append(
+                    {"测试": "健康检查", "状态": "通过", "详情": "系统运行正常"}
+                )
                 return True
             else:
                 print(f"❌ 健康检查失败: HTTP {response.status_code}")
-                self.test_results.append({
-                    "测试": "健康检查",
-                    "状态": "失败",
-                    "详情": f"HTTP {response.status_code}"
-                })
+                self.test_results.append(
+                    {"测试": "健康检查", "状态": "失败", "详情": f"HTTP {response.status_code}"}
+                )
                 return False
         except Exception as e:
             print(f"❌ 健康检查异常: {str(e)}")
-            self.test_results.append({
-                "测试": "健康检查",
-                "状态": "异常",
-                "详情": str(e)
-            })
+            self.test_results.append({"测试": "健康检查", "状态": "异常", "详情": str(e)})
             return False
 
     def test_single_prediction(self):
@@ -85,27 +78,23 @@ class UserTestGuide:
                 print(f"   客队胜率: {data.get('away_win_prob', 0):.2%}")
                 print(f"   置信度: {data.get('confidence', 0):.2%}")
 
-                self.test_results.append({
-                    "测试": "单个预测",
-                    "状态": "通过",
-                    "详情": f"预测结果: {data.get('predicted_outcome', '未知')}"
-                })
+                self.test_results.append(
+                    {
+                        "测试": "单个预测",
+                        "状态": "通过",
+                        "详情": f"预测结果: {data.get('predicted_outcome', '未知')}",
+                    }
+                )
                 return True
             else:
                 print(f"❌ 单个预测失败: HTTP {response.status_code}")
-                self.test_results.append({
-                    "测试": "单个预测",
-                    "状态": "失败",
-                    "详情": f"HTTP {response.status_code}"
-                })
+                self.test_results.append(
+                    {"测试": "单个预测", "状态": "失败", "详情": f"HTTP {response.status_code}"}
+                )
                 return False
         except Exception as e:
             print(f"❌ 单个预测异常: {str(e)}")
-            self.test_results.append({
-                "测试": "单个预测",
-                "状态": "异常",
-                "详情": str(e)
-            })
+            self.test_results.append({"测试": "单个预测", "状态": "异常", "详情": str(e)})
             return False
 
     def test_create_prediction(self):
@@ -123,27 +112,23 @@ class UserTestGuide:
                 print(f"   模型版本: {data.get('model_version', '未知')}")
                 print(f"   创建时间: {data.get('created_at', '未知')}")
 
-                self.test_results.append({
-                    "测试": "创建预测",
-                    "状态": "通过",
-                    "详情": f"新预测: 比赛{data.get('match_id', '未知')}"
-                })
+                self.test_results.append(
+                    {
+                        "测试": "创建预测",
+                        "状态": "通过",
+                        "详情": f"新预测: 比赛{data.get('match_id', '未知')}",
+                    }
+                )
                 return True
             else:
                 print(f"❌ 创建预测失败: HTTP {response.status_code}")
-                self.test_results.append({
-                    "测试": "创建预测",
-                    "状态": "失败",
-                    "详情": f"HTTP {response.status_code}"
-                })
+                self.test_results.append(
+                    {"测试": "创建预测", "状态": "失败", "详情": f"HTTP {response.status_code}"}
+                )
                 return False
         except Exception as e:
             print(f"❌ 创建预测异常: {str(e)}")
-            self.test_results.append({
-                "测试": "创建预测",
-                "状态": "异常",
-                "详情": str(e)
-            })
+            self.test_results.append({"测试": "创建预测", "状态": "异常", "详情": str(e)})
             return False
 
     def test_batch_prediction(self):
@@ -152,13 +137,9 @@ class UserTestGuide:
         print("正在为3场比赛生成批量预测...")
 
         try:
-            batch_request = {
-                "match_ids": [11111, 22222, 33333],
-                "model_version": "default"
-            }
+            batch_request = {"match_ids": [11111, 22222, 33333], "model_version": "default"}
             response = requests.post(
-                f"{self.base_url}/api/v1/predictions/batch",
-                json=batch_request
+                f"{self.base_url}/api/v1/predictions/batch", json=batch_request
             )
             if response.status_code == 200:
                 data = response.json()
@@ -168,27 +149,23 @@ class UserTestGuide:
                 print(f"   失败数量: {data.get('failed_count', 0)}")
                 print(f"   成功率: {data.get('success_count', 0)/data.get('total', 1)*100:.1f}%")
 
-                self.test_results.append({
-                    "测试": "批量预测",
-                    "状态": "通过",
-                    "详情": f"成功率: {data.get('success_count', 0)/data.get('total', 1)*100:.1f}%"
-                })
+                self.test_results.append(
+                    {
+                        "测试": "批量预测",
+                        "状态": "通过",
+                        "详情": f"成功率: {data.get('success_count', 0)/data.get('total', 1)*100:.1f}%",
+                    }
+                )
                 return True
             else:
                 print(f"❌ 批量预测失败: HTTP {response.status_code}")
-                self.test_results.append({
-                    "测试": "批量预测",
-                    "状态": "失败",
-                    "详情": f"HTTP {response.status_code}"
-                })
+                self.test_results.append(
+                    {"测试": "批量预测", "状态": "失败", "详情": f"HTTP {response.status_code}"}
+                )
                 return False
         except Exception as e:
             print(f"❌ 批量预测异常: {str(e)}")
-            self.test_results.append({
-                "测试": "批量预测",
-                "状态": "异常",
-                "详情": str(e)
-            })
+            self.test_results.append({"测试": "批量预测", "状态": "异常", "详情": str(e)})
             return False
 
     def test_prediction_verification(self):
@@ -208,27 +185,23 @@ class UserTestGuide:
                 print(f"   预测正确: {'是' if data.get('is_correct') else '否'}")
                 print(f"   准确度评分: {data.get('accuracy_score', 0):.2f}")
 
-                self.test_results.append({
-                    "测试": "预测验证",
-                    "状态": "通过",
-                    "详情": f"准确度: {data.get('accuracy_score', 0):.2f}"
-                })
+                self.test_results.append(
+                    {
+                        "测试": "预测验证",
+                        "状态": "通过",
+                        "详情": f"准确度: {data.get('accuracy_score', 0):.2f}",
+                    }
+                )
                 return True
             else:
                 print(f"❌ 预测验证失败: HTTP {response.status_code}")
-                self.test_results.append({
-                    "测试": "预测验证",
-                    "状态": "失败",
-                    "详情": f"HTTP {response.status_code}"
-                })
+                self.test_results.append(
+                    {"测试": "预测验证", "状态": "失败", "详情": f"HTTP {response.status_code}"}
+                )
                 return False
         except Exception as e:
             print(f"❌ 预测验证异常: {str(e)}")
-            self.test_results.append({
-                "测试": "预测验证",
-                "状态": "异常",
-                "详情": str(e)
-            })
+            self.test_results.append({"测试": "预测验证", "状态": "异常", "详情": str(e)})
             return False
 
     def run_comprehensive_test(self):
@@ -243,7 +216,7 @@ class UserTestGuide:
             self.test_single_prediction,
             self.test_create_prediction,
             self.test_batch_prediction,
-            self.test_prediction_verification
+            self.test_prediction_verification,
         ]
 
         passed = 0
@@ -279,10 +252,11 @@ class UserTestGuide:
 
         return success_rate
 
+
 def main():
     """主函数"""
     print("🏆 足球预测系统用户测试指南")
-    print("="*50)
+    print("=" * 50)
 
     base_url = input("请输入系统URL (默认: http://localhost:8000): ").strip()
     if not base_url:
@@ -302,6 +276,7 @@ def main():
         print("\n\n👋 测试已取消")
     except Exception as e:
         print(f"\n❌ 测试过程中发生错误: {str(e)}")
+
 
 if __name__ == "__main__":
     main()

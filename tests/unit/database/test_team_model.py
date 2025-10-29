@@ -4,8 +4,6 @@
 """
 
 from datetime import datetime
-from decimal import Decimal
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -338,9 +336,7 @@ class TestTeamModel:
         for i in range(5):
             team = Team()
             team.id = i + 1
-            team.team_name = (
-                f"Team {i + 1} FC"  # 智能Mock兼容修复模式 - 添加team_name属性
-            )
+            team.team_name = f"Team {i + 1} FC"  # 智能Mock兼容修复模式 - 添加team_name属性
             team.name = f"Team {i + 1} FC"
             team.team_code = f"TC{i + 1}"  # 智能Mock兼容修复模式 - 添加team_code属性
             team.short_name = f"T{i + 1}"

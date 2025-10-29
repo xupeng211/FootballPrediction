@@ -31,9 +31,7 @@ class KafkaMessageProducer:
         """停止生产者"""
         self.producer = None
 
-    async def send_message(
-        self, message: Dict[str, Any], retries: int = 3
-    ) -> Optional[Any]:
+    async def send_message(self, message: Dict[str, Any], retries: int = 3) -> Optional[Any]:
         """发送消息"""
         if self.producer is None:
             raise StreamingError("Producer not started")
@@ -96,9 +94,7 @@ class KafkaMessageProducer:
         else:
             return json.dumps(value, ensure_ascii=False).encode("utf-8")
 
-    def _prepare_headers(
-        self, headers: Optional[Dict[str, Any]]
-    ) -> Optional[List[tuple]]:
+    def _prepare_headers(self, headers: Optional[Dict[str, Any]]) -> Optional[List[tuple]]:
         """准备头部"""
         if not headers:
             return None

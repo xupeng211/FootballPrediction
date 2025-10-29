@@ -81,9 +81,7 @@ def fix_unused_imports(file_path):
                         new_imports.append(imp_clean)
 
                     if new_imports:
-                        new_line = re.sub(
-                            r"import\s+.+", f'import {", ".join(new_imports)}', line
-                        )
+                        new_line = re.sub(r"import\s+.+", f'import {", ".join(new_imports)}', line)
                         fixed_lines.append(new_line)
                     else:
                         # 如果所有导入都没有被使用，跳过这行

@@ -14,15 +14,15 @@ def fix_init_import(module_path):
         return False
 
     module_name = Path(module_path).name
-    content = f'''# {module_name} package init
+    content = f"""# {module_name} package init
 # 自动生成以解决导入问题
 
 from .router import router
 
 __all__ = ['router']
-'''
+"""
 
-    with open(init_file, 'w', encoding='utf-8') as f:
+    with open(init_file, "w", encoding="utf-8") as f:
         f.write(content)
 
     print(f"   ✅ 修复导入: {init_file}")
@@ -35,15 +35,15 @@ def main():
 
     # 需要修复的模块
     modules_to_fix = [
-        'src/api/adapters',
-        'src/api/facades',
-        'src/cqrs',
-        'src/middleware',
-        'src/streaming',
-        'src/ml',
-        'src/monitoring',
-        'src/realtime',
-        'src/tasks'
+        "src/api/adapters",
+        "src/api/facades",
+        "src/cqrs",
+        "src/middleware",
+        "src/streaming",
+        "src/ml",
+        "src/monitoring",
+        "src/realtime",
+        "src/tasks",
     ]
 
     fixed_count = 0

@@ -161,9 +161,7 @@ class TestI18n:
             init_i18n()
 
             # 验证调用参数
-            mock_gettext.bindtextdomain.assert_called_with(
-                "football_prediction", str(LOCALE_DIR)
-            )
+            mock_gettext.bindtextdomain.assert_called_with("football_prediction", str(LOCALE_DIR))
             mock_gettext.textdomain.assert_called_with("football_prediction")
             mock_gettext.install.assert_called_with(
                 "football_prediction", localedir=str(LOCALE_DIR)

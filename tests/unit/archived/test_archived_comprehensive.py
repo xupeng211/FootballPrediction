@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """API层综合测试 - 提升API覆盖率"""
 
 from datetime import datetime, timedelta
 
 import pytest
-from fastapi import status
 from fastapi.testclient import TestClient
-from pydantic import BaseModel
-
-from tests.factories import DataFactory, MockFactory
 
 
 @pytest.mark.unit
@@ -269,7 +264,6 @@ class TestAPIDependencies:
     def test_get_db_session(self):
         """测试数据库会话依赖"""
         try:
-            from src.api.dependencies import get_db_session
 
             # 使用mock测试
             with patch("src.api.dependencies.get_db_session") as mock_session:
@@ -373,9 +367,7 @@ class TestAPIResponses:
         try:
             from src.api.facades import SuccessResponse
 
-            response = SuccessResponse(
-                _data={"id": 1, "name": "test"}, message="Success"
-            )
+            response = SuccessResponse(_data={"id": 1, "name": "test"}, message="Success")
             assert response._data["id"] == 1
             assert response.message == "Success"
         except ImportError:
@@ -399,7 +391,6 @@ class TestAPIValidation:
     def test_validation_models(self):
         """测试验证模型"""
         try:
-            from pydantic import BaseModel, EmailStr, validator
 
             from src.api.models import UserCreate, UserUpdate
 

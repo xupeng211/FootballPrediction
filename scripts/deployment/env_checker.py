@@ -289,9 +289,7 @@ class EnvironmentChecker:
                 return False, "无法检查Git状态", {"error": result.stderr}
 
             # 检查是否有未提交的更改
-            uncommitted_changes = (
-                result.stdout.strip().split("\n") if result.stdout.strip() else []
-            )
+            uncommitted_changes = result.stdout.strip().split("\n") if result.stdout.strip() else []
 
             # 检查远程同步状态
             subprocess.run(
@@ -371,9 +369,7 @@ class EnvironmentChecker:
 
             for tool_name, command in tools.items():
                 try:
-                    result = subprocess.run(
-                        command.split(), capture_output=True, text=True
-                    )
+                    result = subprocess.run(command.split(), capture_output=True, text=True)
 
                     if result.returncode == 0:
                         version = result.stdout.strip().split("\n")[0]

@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -63,7 +62,6 @@ class TestAllAvailableModules:
     def test_data_validator_functions(self):
         """测试data_validator的所有函数"""
         try:
-            from utils.data_validator import (
                 validate_credit_card,
                 validate_date,
                 validate_email,
@@ -113,7 +111,6 @@ class TestAllAvailableModules:
     def test_dict_utils_functions(self):
         """测试dict_utils的所有函数"""
         try:
-            from utils.dict_utils import (
                 deep_merge,
                 filter_none,
                 flatten_dict,
@@ -148,7 +145,6 @@ class TestAllAvailableModules:
         try:
             import tempfile
 
-            from utils.file_utils import (
                 backup_file,
                 ensure_dir,
                 get_file_hash,
@@ -203,7 +199,6 @@ class TestAllAvailableModules:
     def test_string_utils_functions(self):
         """测试string_utils的所有函数"""
         try:
-            from utils.string_utils import (
                 camel_to_snake,
                 clean_html,
                 pluralize,
@@ -245,7 +240,6 @@ class TestAllAvailableModules:
         try:
             from datetime import datetime, timedelta, timezone
 
-            from utils.time_utils import (
                 duration_format,
                 format_datetime,
                 get_timezone_offset,
@@ -288,7 +282,6 @@ class TestAllAvailableModules:
     def test_validators_functions(self):
         """测试validators的所有函数"""
         try:
-            from utils.validators import (
                 validate_choice,
                 validate_email_format,
                 validate_length,
@@ -325,7 +318,6 @@ class TestAllAvailableModules:
     def test_config_loader_functions(self):
         """测试config_loader的所有函数"""
         try:
-            from utils.config_loader import (
                 get_config_value,
                 get_env_config,
                 load_config,
@@ -392,7 +384,6 @@ class TestAllAvailableModules:
     def test_i18n_module(self):
         """测试i18n模块"""
         try:
-            from utils.i18n import (
                 _,
                 get_current_language,
                 get_translations,
@@ -418,7 +409,6 @@ class TestAllAvailableModules:
     def test_helpers_module(self):
         """测试helpers模块"""
         try:
-            from utils.helpers import (
                 chunk_list,
                 deep_get,
                 deep_set,
@@ -487,7 +477,6 @@ class TestAllAvailableModules:
         try:
             from datetime import datetime, timezone
 
-            from utils.formatters import (
                 format_address,
                 format_bytes,
                 format_currency,
@@ -522,7 +511,6 @@ class TestAllAvailableModules:
     def test_retry_module(self):
         """测试retry模块"""
         try:
-            from utils.retry import (
                 RetryError,
                 exponential_backoff,
                 jitter_backoff,
@@ -717,7 +705,6 @@ class TestStandardLibraryCoverage:
 
     def test_collection_operations(self):
         """测试集合操作"""
-        from collections import Counter, OrderedDict, defaultdict, deque
 
         # Counter
         text = "hello world hello python"
@@ -747,7 +734,6 @@ class TestStandardLibraryCoverage:
     def test_importlib_operations(self):
         """测试动态导入"""
         import importlib
-        import sys
 
         # 测试导入标准模块
         modules_to_test = ["json", "os", "sys", "datetime", "pathlib"]

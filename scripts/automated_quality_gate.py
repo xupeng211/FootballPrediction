@@ -23,10 +23,7 @@ from datetime import datetime
 import logging
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -49,7 +46,7 @@ class AutomatedQualityGate:
             "max_import_errors": 100,
             "min_test_pass_rate": 85.0,
             "max_ruff_errors": 20,
-            "max_mypy_errors": 15
+            "max_mypy_errors": 15,
         }
 
         # 检查结果
@@ -59,7 +56,7 @@ class AutomatedQualityGate:
             "overall_status": "pending",
             "summary": {},
             "recommendations": [],
-            "gate_status": "unknown"
+            "gate_status": "unknown",
         }
 
     def run_syntax_check(self) -> Dict[str, Any]:
@@ -67,17 +64,11 @@ class AutomatedQualityGate:
         logger.info("🔧 执行语法检查...")
 
         # 基于Issue #98的智能语法修复
-        syntax_check_cmd = [
-            "python3", "scripts/smart_quality_fixer.py", "--syntax-only"
-        ]
+        syntax_check_cmd = ["python3", "scripts/smart_quality_fixer.py", "--syntax-only"]
 
         try:
             result = subprocess.run(
-                syntax_check_cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=300
+                syntax_check_cmd, cwd=self.project_root, capture_output=True, text=True, timeout=300
             )
 
             syntax_result = {
@@ -85,13 +76,15 @@ class AutomatedQualityGate:
                 "status": "pass" if result.returncode == 0 else "fail",
                 "errors_fixed": 0,  # 从输出中解析
                 "details": result.stdout,
-                "recommendations": []
+                "recommendations": [],
             }
 
             # 解析修复结果
             if "修复语法错误:" in result.stdout:
                 try:
-                    fixed_count = int(result.stdout.split("修复语法错误:")[1].split("个")[0].strip())
+                    fixed_count = int(
+                        result.stdout.split("修复语法错误:")[1].split("个")[0].strip()
+                    )
                     syntax_result["errors_fixed"] = fixed_count
                 except:
                     pass
@@ -100,7 +93,9 @@ class AutomatedQualityGate:
             if syntax_result["status"] == "fail":
                 syntax_result["recommendations"].append("运行语法修复工具解决语法问题")
             elif syntax_result["errors_fixed"] > 0:
-                syntax_result["recommendations"].append(f"成功修复{syntax_result['errors_fixed']}个语法错误")
+                syntax_result["recommendations"].append(
+                    f"成功修复{syntax_result['errors_fixed']}个语法错误"
+                )
 
             logger.info(f"✅ 语法检查完成: {syntax_result['status']}")
             return syntax_result
@@ -112,7 +107,7 @@ class AutomatedQualityGate:
                 "status": "timeout",
                 "errors_fixed": 0,
                 "details": "检查超时",
-                "recommendations": ["检查是否有无限循环或复杂语法问题"]
+                "recommendations": ["检查是否有无限循环或复杂语法问题"],
             }
         except Exception as e:
             logger.error(f"❌ 语法检查失败: {e}")
@@ -121,7 +116,7 @@ class AutomatedQualityGate:
                 "status": "error",
                 "errors_fixed": 0,
                 "details": str(e),
-                "recommendations": ["检查语法检查工具是否正常工作"]
+                "recommendations": ["检查语法检查工具是否正常工作"],
             }
 
     def run_quality_check(self) -> Dict[str, Any]:
@@ -129,9 +124,7 @@ class AutomatedQualityGate:
         logger.info("🛡️ 执行质量检查...")
 
         # 基于Issue #98的质量守护工具
-        quality_check_cmd = [
-            "python3", "scripts/quality_guardian.py", "--check-only"
-        ]
+        quality_check_cmd = ["python3", "scripts/quality_guardian.py", "--check-only"]
 
         try:
             result = subprocess.run(
@@ -139,7 +132,7 @@ class AutomatedQualityGate:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=600  # 10分钟超时
+                timeout=600,  # 10分钟超时
             )
 
             quality_result = {
@@ -147,13 +140,15 @@ class AutomatedQualityGate:
                 "status": "pass" if result.returncode == 0 else "fail",
                 "details": result.stdout,
                 "metrics": {},
-                "recommendations": []
+                "recommendations": [],
             }
 
             # 解析质量指标
             if "综合质量分数:" in result.stdout:
                 try:
-                    score_line = [line for line in result.stdout.split('\n') if "综合质量分数:" in line][0]
+                    score_line = [
+                        line for line in result.stdout.split("\n") if "综合质量分数:" in line
+                    ][0]
                     score = float(score_line.split("综合质量分数:")[1].split("/")[0].strip())
                     quality_result["metrics"]["overall_score"] = score
                 except:
@@ -161,14 +156,19 @@ class AutomatedQualityGate:
 
             if "测试覆盖率:" in result.stdout:
                 try:
-                    coverage_line = [line for line in result.stdout.split('\n') if "测试覆盖率:" in line][0]
+                    coverage_line = [
+                        line for line in result.stdout.split("\n") if "测试覆盖率:" in line
+                    ][0]
                     coverage = float(coverage_line.split("测试覆盖率:")[1].split("%")[0].strip())
                     quality_result["metrics"]["coverage"] = coverage
                 except:
                     pass
 
             # 生成建议
-            if quality_result["metrics"].get("coverage", 0) < self.quality_standards["min_coverage"]:
+            if (
+                quality_result["metrics"].get("coverage", 0)
+                < self.quality_standards["min_coverage"]
+            ):
                 quality_result["recommendations"].append(
                     f"覆盖率{quality_result['metrics']['coverage']:.1f}%低于标准{self.quality_standards['min_coverage']}%"
                 )
@@ -186,7 +186,7 @@ class AutomatedQualityGate:
                 "status": "timeout",
                 "details": "检查超时",
                 "metrics": {},
-                "recommendations": ["检查项目复杂度或优化检查逻辑"]
+                "recommendations": ["检查项目复杂度或优化检查逻辑"],
             }
         except Exception as e:
             logger.error(f"❌ 质量检查失败: {e}")
@@ -195,7 +195,7 @@ class AutomatedQualityGate:
                 "status": "error",
                 "details": str(e),
                 "metrics": {},
-                "recommendations": ["检查质量守护工具是否正常工作"]
+                "recommendations": ["检查质量守护工具是否正常工作"],
             }
 
     def run_test_coverage_check(self) -> Dict[str, Any]:
@@ -205,22 +205,20 @@ class AutomatedQualityGate:
         try:
             # 运行快速测试和覆盖率检查
             test_cmd = [
-                "python", "-m", "pytest",
+                "python",
+                "-m",
+                "pytest",
                 "tests/unit/utils/",  # 重点检查utils模块
                 "--cov=src/utils",
                 "--cov-report=term-missing",
                 "--cov-report=json:htmlcov/coverage.json",
                 "--tb=short",
                 "-x",  # 遇到第一个失败就停止
-                "--maxfail=10"
+                "--maxfail=10",
             ]
 
             result = subprocess.run(
-                test_cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=600
+                test_cmd, cwd=self.project_root, capture_output=True, text=True, timeout=600
             )
 
             coverage_result = {
@@ -228,25 +226,35 @@ class AutomatedQualityGate:
                 "status": "pass" if result.returncode == 0 else "fail",
                 "details": result.stdout,
                 "metrics": {},
-                "recommendations": []
+                "recommendations": [],
             }
 
             # 尝试读取覆盖率报告
             coverage_file = self.project_root / "htmlcov" / "coverage.json"
             if coverage_file.exists():
                 try:
-                    with open(coverage_file, 'r') as f:
+                    with open(coverage_file, "r") as f:
                         coverage_data = json.load(f)
-                        coverage_result["metrics"]["coverage_percent"] = coverage_data.get("totals", {}).get("percent_covered", 0)
-                        coverage_result["metrics"]["lines_covered"] = coverage_data.get("totals", {}).get("covered_lines", 0)
-                        coverage_result["metrics"]["lines_missing"] = coverage_data.get("totals", {}).get("missing_lines", 0)
+                        coverage_result["metrics"]["coverage_percent"] = coverage_data.get(
+                            "totals", {}
+                        ).get("percent_covered", 0)
+                        coverage_result["metrics"]["lines_covered"] = coverage_data.get(
+                            "totals", {}
+                        ).get("covered_lines", 0)
+                        coverage_result["metrics"]["lines_missing"] = coverage_data.get(
+                            "totals", {}
+                        ).get("missing_lines", 0)
                 except Exception as e:
                     logger.warning(f"无法解析覆盖率报告: {e}")
 
             # 从输出中解析测试结果
             if "passed" in result.stdout and "failed" in result.stdout:
                 try:
-                    summary_lines = [line for line in result.stdout.split('\n') if "passed" in line and "failed" in line]
+                    summary_lines = [
+                        line
+                        for line in result.stdout.split("\n")
+                        if "passed" in line and "failed" in line
+                    ]
                     if summary_lines:
                         summary_line = summary_lines[0]
                         # 解析类似 "20 passed, 1 failed" 的格式
@@ -281,7 +289,7 @@ class AutomatedQualityGate:
                 "status": "timeout",
                 "details": "检查超时",
                 "metrics": {},
-                "recommendations": ["优化测试执行效率或增加超时时间"]
+                "recommendations": ["优化测试执行效率或增加超时时间"],
             }
         except Exception as e:
             logger.error(f"❌ 覆盖率检查失败: {e}")
@@ -290,7 +298,7 @@ class AutomatedQualityGate:
                 "status": "error",
                 "details": str(e),
                 "metrics": {},
-                "recommendations": ["检查测试环境和依赖"]
+                "recommendations": ["检查测试环境和依赖"],
             }
 
     def evaluate_gate_status(self, results: List[Dict[str, Any]]) -> str:
@@ -344,7 +352,7 @@ class AutomatedQualityGate:
                 "passed": passed_checks,
                 "failed": failed_checks,
                 "errors": error_checks,
-                "timeouts": timeout_checks
+                "timeouts": timeout_checks,
             },
             "metrics": metrics,
             "checks": results,
@@ -353,8 +361,8 @@ class AutomatedQualityGate:
             "integration_notes": {
                 "issue_94_support": "支持Issue #94覆盖率提升计划",
                 "issue_98_methodology": "基于Issue #98智能质量修复方法论",
-                "issue_89_objective": "为Issue #89 CI/CD优化提供自动化支持"
-            }
+                "issue_89_objective": "为Issue #89 CI/CD优化提供自动化支持",
+            },
         }
 
         return report
@@ -407,8 +415,11 @@ class AutomatedQualityGate:
         report = self.generate_report(checks)
 
         # 保存报告
-        report_file = self.ci_reports_dir / f"quality_gate_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        report_file = (
+            self.ci_reports_dir
+            / f"quality_gate_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         logger.info(f"📋 质量报告已保存: {report_file}")
@@ -417,18 +428,12 @@ class AutomatedQualityGate:
 
     def print_summary(self, report: Dict[str, Any]):
         """打印检查摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🎯 自动化质量门禁检查摘要")
-        print("="*60)
+        print("=" * 60)
 
         # 门禁状态
-        status_emoji = {
-            "pass": "✅",
-            "warning": "⚠️",
-            "fail": "❌",
-            "error": "🚨",
-            "timeout": "⏰"
-        }
+        status_emoji = {"pass": "✅", "warning": "⚠️", "fail": "❌", "error": "🚨", "timeout": "⏰"}
 
         gate_status = report["gate_status"]
         print(f"门禁状态: {status_emoji.get(gate_status, '❓')} {gate_status.upper()}")
@@ -462,14 +467,16 @@ class AutomatedQualityGate:
             for step in report["next_steps"]:
                 print(f"  • {step}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
 
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="自动化质量门禁系统")
     parser.add_argument("--project-root", type=Path, help="项目根目录")
-    parser.add_argument("--output-format", choices=["json", "text"], default="text", help="输出格式")
+    parser.add_argument(
+        "--output-format", choices=["json", "text"], default="text", help="输出格式"
+    )
     parser.add_argument("--save-report", action="store_true", help="保存详细报告")
 
     args = parser.parse_args()
@@ -488,13 +495,7 @@ def main():
             gate.print_summary(report)
 
         # 设置退出码
-        exit_codes = {
-            "pass": 0,
-            "warning": 0,
-            "fail": 1,
-            "error": 2,
-            "timeout": 3
-        }
+        exit_codes = {"pass": 0, "warning": 0, "fail": 1, "error": 2, "timeout": 3}
 
         sys.exit(exit_codes.get(report["gate_status"], 2))
 

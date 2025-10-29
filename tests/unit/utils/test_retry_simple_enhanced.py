@@ -82,11 +82,7 @@ class TestRetrySimpleEnhanced:
     def test_retry_decorator_with_non_retryable_exception(self):
         """测试重试装饰器（非可重试异常）"""
 
-        @retry(
-            RetryConfig(
-                max_attempts=3, base_delay=0.01, retryable_exceptions=(ValueError,)
-            )
-        )
+        @retry(RetryConfig(max_attempts=3, base_delay=0.01, retryable_exceptions=(ValueError,)))
         def function_with_key_error():
             raise KeyError("Not retryable")
 
@@ -183,11 +179,7 @@ class TestRetrySimpleEnhanced:
         def attempt_callback(attempt, error, delay):
             callback_calls.append((attempt, str(error), delay))
 
-        @retry(
-            RetryConfig(
-                max_attempts=3, base_delay=0.01, attempt_callback=attempt_callback
-            )
-        )
+        @retry(RetryConfig(max_attempts=3, base_delay=0.01, attempt_callback=attempt_callback))
         def failing_function():
             raise ValueError("Callback test")
 

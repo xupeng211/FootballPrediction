@@ -80,9 +80,7 @@ class TeamDomainService:
             "capacity": team.capacity,
         }
 
-        team.update_info(
-            name=name, short_name=short_name, stadium=stadium, capacity=capacity
-        )
+        team.update_info(name=name, short_name=short_name, stadium=stadium, capacity=capacity)
 
         changed_fields: Dict[str, Any] = {}
         if name is not None and team.name != original["name"]:
@@ -96,9 +94,7 @@ class TeamDomainService:
 
         if changed_fields:
             self._events.append(
-                TeamProfileUpdatedEvent(
-                    team_id=team.id or 0, updated_fields=changed_fields
-                )
+                TeamProfileUpdatedEvent(team_id=team.id or 0, updated_fields=changed_fields)
             )
             self._persist(team)
 

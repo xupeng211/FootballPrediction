@@ -1,11 +1,7 @@
-from unittest.mock import MagicMock, patch
-
 """
 测试拆分后的重试机制
 Test Split Retry Mechanism
 """
-
-import asyncio
 
 import pytest
 
@@ -97,9 +93,7 @@ def test_polynomial_backoff_strategy():
     """测试多项式退避策略"""
     from src.utils.retry.strategies import PolynomialBackoffStrategy
 
-    strategy = PolynomialBackoffStrategy(
-        base_delay=1.0, power=2.0, max_delay=10.0, jitter=False
-    )
+    strategy = PolynomialBackoffStrategy(base_delay=1.0, power=2.0, max_delay=10.0, jitter=False)
 
     assert strategy.get_delay(attempt=0) == 1.0
     assert strategy.get_delay(attempt=1) == 4.0
@@ -248,7 +242,6 @@ async def test_circuit_breaker_failure():
 @pytest.mark.asyncio
 async def test_circuit_breaker_open_blocks_calls():
     """测试熔断器打开时阻止调用"""
-    from src.utils.retry.circuit import CircuitBreaker, CircuitState
 
     breaker = CircuitBreaker(failure_threshold=1)
 

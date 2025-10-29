@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 数据质量监控器优化测试
 Tests for Data Quality Monitor (Optimized Version)
@@ -7,14 +5,11 @@ Tests for Data Quality Monitor (Optimized Version)
 使用高性能mock方案测试数据质量监控功能
 """
 
-import asyncio
-import logging
 from datetime import datetime, timedelta
 
 import pytest
 
 # 导入优化的 mock
-from tests.mocks.fast_mocks import FastAsyncSession, FastDatabaseManager
 
 # 测试导入
 try:
@@ -83,9 +78,7 @@ class TestDataQualityMonitorOptimized:
         freshness_check = {"status": "healthy"}
         anomalies = []
 
-        score = data_quality_monitor._calculate_quality_score(
-            freshness_check, anomalies
-        )
+        score = data_quality_monitor._calculate_quality_score(freshness_check, anomalies)
         assert score == 100.0
 
     def test_calculate_quality_score_with_issues(self, data_quality_monitor):
@@ -96,9 +89,7 @@ class TestDataQualityMonitorOptimized:
             {"type": "unusual_score", "severity": "medium"},
         ]
 
-        score = data_quality_monitor._calculate_quality_score(
-            freshness_check, anomalies
-        )
+        score = data_quality_monitor._calculate_quality_score(freshness_check, anomalies)
         assert 50 <= score < 90
 
     def test_determine_overall_status(self, data_quality_monitor):
@@ -111,9 +102,7 @@ class TestDataQualityMonitorOptimized:
         ]
 
         for freshness, anomalies, expected in test_cases:
-            status = data_quality_monitor._determine_overall_status(
-                freshness, anomalies
-            )
+            status = data_quality_monitor._determine_overall_status(freshness, anomalies)
             assert status == expected
 
     def test_generate_recommendations(self, data_quality_monitor):
@@ -121,9 +110,7 @@ class TestDataQualityMonitorOptimized:
         freshness_check = {"status": "warning"}
         anomalies = [{"severity": "high"}]
 
-        recommendations = data_quality_monitor._generate_recommendations(
-            freshness_check, anomalies
-        )
+        recommendations = data_quality_monitor._generate_recommendations(freshness_check, anomalies)
         assert isinstance(recommendations, list)
         assert len(recommendations) > 0
         assert any("检查数据采集" in r for r in recommendations)
@@ -191,9 +178,7 @@ class TestDataQualityMonitorOptimized:
         with (
             patch.object(data_quality_monitor, "_find_suspicious_odds") as mock_odds,
             patch.object(data_quality_monitor, "_find_unusual_scores") as mock_scores,
-            patch.object(
-                data_quality_monitor, "_check_data_consistency"
-            ) as mock_consistency,
+            patch.object(data_quality_monitor, "_check_data_consistency") as mock_consistency,
         ):
             # 模拟异常
             mock_odds.return_value = [
@@ -224,9 +209,7 @@ class TestDataQualityMonitorOptimized:
     async def test_generate_quality_report(self, data_quality_monitor):
         """测试：生成质量报告"""
         with (
-            patch.object(
-                data_quality_monitor, "check_data_freshness"
-            ) as mock_freshness,
+            patch.object(data_quality_monitor, "check_data_freshness") as mock_freshness,
             patch.object(data_quality_monitor, "detect_anomalies") as mock_anomalies,
         ):
             mock_freshness.return_value = {"status": "healthy", "details": {}}
@@ -260,9 +243,7 @@ class TestDataQualityMonitorOptimized:
 
         # 极端严重性
         anomalies = [{"severity": "high"}] * 20
-        score = data_quality_monitor._calculate_quality_score(
-            {"status": "healthy"}, anomalies
-        )
+        score = data_quality_monitor._calculate_quality_score({"status": "healthy"}, anomalies)
         assert score == 0.0
 
 

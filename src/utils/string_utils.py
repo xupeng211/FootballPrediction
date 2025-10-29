@@ -33,9 +33,7 @@ class StringUtils:
         cleaned = text.strip()
 
         # 移除Unicode控制字符
-        cleaned = "".join(
-            char for char in cleaned if unicodedata.category(char)[0] != "C"
-        )
+        cleaned = "".join(char for char in cleaned if unicodedata.category(char)[0] != "C")
 
         if remove_special_chars:
             # 移除特殊字符，保留字母数字和基本标点
@@ -170,9 +168,7 @@ class StringUtils:
         return [float(num) for num in numbers if num]
 
     @staticmethod
-    def mask_sensitive_data(
-        text: str, mask_char: str = "*", visible_chars: int = 4
-    ) -> str:
+    def mask_sensitive_data(text: str, mask_char: str = "*", visible_chars: int = 4) -> str:
         """遮蔽敏感数据"""
         if not isinstance(text, str) or len(text) <= visible_chars:
             return text

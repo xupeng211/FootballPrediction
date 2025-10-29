@@ -36,10 +36,7 @@ def fix_complex_imports(content: str) -> str:
                         continue
 
                     # 检查是否是完整的导入语句
-                    if (
-                        import_line.startswith("from ")
-                        and " import " not in import_line
-                    ):
+                    if import_line.startswith("from ") and " import " not in import_line:
                         continue
 
                     if import_line.startswith("import ") and import_line == "import":

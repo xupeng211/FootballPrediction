@@ -33,8 +33,7 @@ sys.path.append(str(Path(__file__).parent))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -45,8 +44,9 @@ try:
         EnsembleTrainer,
         ModelType,
         XGB_AVAILABLE,
-        LGB_AVAILABLE
+        LGB_AVAILABLE,
     )
+
     ADVANCED_TRAINER_AVAILABLE = True
     logger.info("高级模型训练器导入成功")
 except ImportError as e:
@@ -56,6 +56,7 @@ except ImportError as e:
 # 尝试导入XGBoost和LightGBM
 try:
     import xgboost as xgb
+
     XGB_AVAILABLE = True
     logger.info("XGBoost可用")
 except ImportError:
@@ -64,6 +65,7 @@ except ImportError:
 
 try:
     import lightgbm as lgb
+
     LGB_AVAILABLE = True
     logger.info("LightGBM可用")
 except ImportError:
@@ -88,15 +90,19 @@ class EnhancedMLTrainingSystem:
             "accuracy": 0.68,
             "data_points": 1500,
             "features": 45,
-            "distribution": {"draw": 791, "home_win": 480, "away_win": 229}
+            "distribution": {"draw": 791, "home_win": 480, "away_win": 229},
         }
 
         logger.info("增强ML训练系统初始化完成")
-        logger.info(f"SRS基准: 准确率={self.srs_baseline['accuracy']:.2%}, "
-                   f"数据点={self.srs_baseline['data_points']}, "
-                   f"特征数={self.srs_baseline['features']}")
+        logger.info(
+            f"SRS基准: 准确率={self.srs_baseline['accuracy']:.2%}, "
+            f"数据点={self.srs_baseline['data_points']}, "
+            f"特征数={self.srs_baseline['features']}"
+        )
 
-    def generate_enhanced_training_data(self, n_samples: int = 2000) -> Tuple[pd.DataFrame, pd.Series]:
+    def generate_enhanced_training_data(
+        self, n_samples: int = 2000
+    ) -> Tuple[pd.DataFrame, pd.Series]:
         """生成增强训练数据，基于SRS成功经验扩展"""
         logger.info(f"生成增强训练数据，样本数: {n_samples}")
 
@@ -107,30 +113,87 @@ class EnhancedMLTrainingSystem:
 
         # 基础比赛特征（基于SRS的48个原始特征）
         basic_features = [
-            'home_team_strength', 'away_team_strength', 'home_form', 'away_form',
-            'head_to_head_home', 'head_to_head_away', 'home_goals_scored', 'away_goals_scored',
-            'home_goals_conceded', 'away_goals_conceded', 'home_win_rate', 'away_win_rate',
-            'home_draw_rate', 'away_draw_rate', 'home_loss_rate', 'away_loss_rate',
-            'home_clean_sheets', 'away_clean_sheets', 'home_failed_to_score', 'away_failed_to_score',
-            'avg_total_goals', 'avg_home_goals', 'avg_away_goals',
-            'home_shots_on_target', 'away_shots_on_target', 'home_corners', 'away_corners',
-            'home_fouls', 'away_fouls', 'home_yellow_cards', 'away_yellow_cards',
-            'home_red_cards', 'away_red_cards', 'home_possession', 'away_possession',
-            'travel_distance', 'rest_days', 'weather_impact', 'referee_tendency',
-            'stadium_advantage', 'season_phase', 'motivation_factor', 'injury_impact',
-            'market_odds_home', 'market_odds_draw', 'market_odds_away',
-            'betting_volume', 'momentum_home', 'momentum_away'
+            "home_team_strength",
+            "away_team_strength",
+            "home_form",
+            "away_form",
+            "head_to_head_home",
+            "head_to_head_away",
+            "home_goals_scored",
+            "away_goals_scored",
+            "home_goals_conceded",
+            "away_goals_conceded",
+            "home_win_rate",
+            "away_win_rate",
+            "home_draw_rate",
+            "away_draw_rate",
+            "home_loss_rate",
+            "away_loss_rate",
+            "home_clean_sheets",
+            "away_clean_sheets",
+            "home_failed_to_score",
+            "away_failed_to_score",
+            "avg_total_goals",
+            "avg_home_goals",
+            "avg_away_goals",
+            "home_shots_on_target",
+            "away_shots_on_target",
+            "home_corners",
+            "away_corners",
+            "home_fouls",
+            "away_fouls",
+            "home_yellow_cards",
+            "away_yellow_cards",
+            "home_red_cards",
+            "away_red_cards",
+            "home_possession",
+            "away_possession",
+            "travel_distance",
+            "rest_days",
+            "weather_impact",
+            "referee_tendency",
+            "stadium_advantage",
+            "season_phase",
+            "motivation_factor",
+            "injury_impact",
+            "market_odds_home",
+            "market_odds_draw",
+            "market_odds_away",
+            "betting_volume",
+            "momentum_home",
+            "momentum_away",
         ]
 
         # 增强特征（基于ML和数据分析）
         enhanced_features = [
-            'home_attack_efficiency', 'away_attack_efficiency', 'home_defense_stability', 'away_defense_stability',
-            'home_recent_form_trend', 'away_recent_form_trend', 'h2h dominance_score', 'goal_expectancy',
-            'xg_home', 'xg_away', 'xga_home', 'xga_away',
-            'ppda_home', 'ppda_away', 'home_pressure', 'away_pressure',
-            'home_counter_attack', 'away_counter_attack', 'set_piece_strength_home', 'set_piece_strength_away',
-            'player_quality_index_home', 'player_quality_index_away', 'squad_depth_home', 'squad_depth_away',
-            'manager_tactical_rating_home', 'manager_tactical_rating_away', 'team_cohesion_home', 'team_cohesion_away'
+            "home_attack_efficiency",
+            "away_attack_efficiency",
+            "home_defense_stability",
+            "away_defense_stability",
+            "home_recent_form_trend",
+            "away_recent_form_trend",
+            "h2h dominance_score",
+            "goal_expectancy",
+            "xg_home",
+            "xg_away",
+            "xga_home",
+            "xga_away",
+            "ppda_home",
+            "ppda_away",
+            "home_pressure",
+            "away_pressure",
+            "home_counter_attack",
+            "away_counter_attack",
+            "set_piece_strength_home",
+            "set_piece_strength_away",
+            "player_quality_index_home",
+            "player_quality_index_away",
+            "squad_depth_home",
+            "squad_depth_away",
+            "manager_tactical_rating_home",
+            "manager_tactical_rating_away",
+            "team_cohesion_home",
+            "team_cohesion_away",
         ]
 
         feature_names = basic_features + enhanced_features
@@ -141,13 +204,20 @@ class EnhancedMLTrainingSystem:
 
         # 添加相关性（基于真实足球数据的统计模式）
         correlation_patterns = {
-            'home_team_strength': [0], 'away_team_strength': [1],
-            'home_form': [2, 0], 'away_form': [3, 1],
-            'head_to_head_home': [4, 0, 1], 'head_to_head_away': [5, 1, 0],
-            'market_odds_home': [36, 0], 'market_odds_away': [38, 1],
-            'xg_home': [44, 0], 'xg_away': [45, 1],
-            'home_attack_efficiency': [40, 0], 'away_attack_efficiency': [41, 1],
-            'home_defense_stability': [42, 0], 'away_defense_stability': [43, 1]
+            "home_team_strength": [0],
+            "away_team_strength": [1],
+            "home_form": [2, 0],
+            "away_form": [3, 1],
+            "head_to_head_home": [4, 0, 1],
+            "head_to_head_away": [5, 1, 0],
+            "market_odds_home": [36, 0],
+            "market_odds_away": [38, 1],
+            "xg_home": [44, 0],
+            "xg_away": [45, 1],
+            "home_attack_efficiency": [40, 0],
+            "away_attack_efficiency": [41, 1],
+            "home_defense_stability": [42, 0],
+            "away_defense_stability": [43, 1],
         }
 
         # 应用相关性模式
@@ -163,25 +233,25 @@ class EnhancedMLTrainingSystem:
         # 生成目标变量，基于特征和真实足球概率模式
         # 基于SRS的数据分布模式
         base_prob = {
-            'home_win': 0.32,  # 480/1500 ≈ 0.32
-            'draw': 0.53,       # 791/1500 ≈ 0.53
-            'away_win': 0.15    # 229/1500 ≈ 0.15
+            "home_win": 0.32,  # 480/1500 ≈ 0.32
+            "draw": 0.53,  # 791/1500 ≈ 0.53
+            "away_win": 0.15,  # 229/1500 ≈ 0.15
         }
 
         # 基于特征计算概率
-        home_strength = X_df['home_team_strength'].values
-        away_strength = X_df['away_team_strength'].values
-        home_form = X_df['home_form'].values
-        away_form = X_df['away_form'].values
-        market_odds_home = X_df['market_odds_home'].values
-        market_odds_away = X_df['market_odds_away'].values
+        home_strength = X_df["home_team_strength"].values
+        away_strength = X_df["away_team_strength"].values
+        home_form = X_df["home_form"].values
+        away_form = X_df["away_form"].values
+        market_odds_home = X_df["market_odds_home"].values
+        market_odds_away = X_df["market_odds_away"].values
 
         # 调整概率
         home_advantage = home_strength - away_strength + home_form - away_form
-        market_factor = (1/market_odds_home - 1/market_odds_away) * 0.1
+        market_factor = (1 / market_odds_home - 1 / market_odds_away) * 0.1
 
-        home_win_prob = base_prob['home_win'] + home_advantage * 0.1 + market_factor
-        away_win_prob = base_prob['away_win'] - home_advantage * 0.1 - market_factor
+        home_win_prob = base_prob["home_win"] + home_advantage * 0.1 + market_factor
+        away_win_prob = base_prob["away_win"] - home_advantage * 0.1 - market_factor
         draw_prob = 1 - home_win_prob - away_win_prob
 
         # 确保概率在合理范围内
@@ -200,11 +270,11 @@ class EnhancedMLTrainingSystem:
         for i in range(n_samples):
             rand = np.random.random()
             if rand < home_win_prob[i]:
-                results.append('home_win')
+                results.append("home_win")
             elif rand < home_win_prob[i] + draw_prob[i]:
-                results.append('draw')
+                results.append("draw")
             else:
-                results.append('away_win')
+                results.append("away_win")
 
         y = pd.Series(results)
 
@@ -252,12 +322,12 @@ class EnhancedMLTrainingSystem:
             "data_info": {
                 "samples": len(X),
                 "features": len(X.columns),
-                "distribution": y.value_counts().to_dict()
+                "distribution": y.value_counts().to_dict(),
             },
             "models": {},
             "best_model": None,
             "ensemble_result": None,
-            "improvement_over_srs": {}
+            "improvement_over_srs": {},
         }
 
         # 数据预处理
@@ -267,14 +337,10 @@ class EnhancedMLTrainingSystem:
 
         # 标准化特征
         X_train_scaled = pd.DataFrame(
-            self.scaler.fit_transform(X_train),
-            columns=X_train.columns,
-            index=X_train.index
+            self.scaler.fit_transform(X_train), columns=X_train.columns, index=X_train.index
         )
         X_test_scaled = pd.DataFrame(
-            self.scaler.transform(X_test),
-            columns=X_test.columns,
-            index=X_test.index
+            self.scaler.transform(X_test), columns=X_test.columns, index=X_test.index
         )
 
         # 编码标签
@@ -285,22 +351,28 @@ class EnhancedMLTrainingSystem:
         model_configs = []
 
         if XGB_AVAILABLE:
-            model_configs.extend([
-                {"type": "xgboost_classifier", "name": "XGBoost分类器"},
-                {"type": "xgboost_regressor", "name": "XGBoost回归器"}
-            ])
+            model_configs.extend(
+                [
+                    {"type": "xgboost_classifier", "name": "XGBoost分类器"},
+                    {"type": "xgboost_regressor", "name": "XGBoost回归器"},
+                ]
+            )
 
         if LGB_AVAILABLE:
-            model_configs.extend([
-                {"type": "lightgbm_classifier", "name": "LightGBM分类器"},
-                {"type": "lightgbm_regressor", "name": "LightGBM回归器"}
-            ])
+            model_configs.extend(
+                [
+                    {"type": "lightgbm_classifier", "name": "LightGBM分类器"},
+                    {"type": "lightgbm_regressor", "name": "LightGBM回归器"},
+                ]
+            )
 
         # 添加传统模型作为备选
-        model_configs.extend([
-            {"type": "random_forest", "name": "随机森林"},
-            {"type": "gradient_boosting", "name": "梯度提升"}
-        ])
+        model_configs.extend(
+            [
+                {"type": "random_forest", "name": "随机森林"},
+                {"type": "gradient_boosting", "name": "梯度提升"},
+            ]
+        )
 
         # 训练各个模型
         model_results = {}
@@ -320,8 +392,7 @@ class EnhancedMLTrainingSystem:
                 try:
                     start_time = time.time()
                     result = await trainer.train_model(
-                        X_train_scaled, y_train_encoded,
-                        model_type, hyperparameter_tuning=True
+                        X_train_scaled, y_train_encoded, model_type, hyperparameter_tuning=True
                     )
                     training_time = time.time() - start_time
 
@@ -336,7 +407,7 @@ class EnhancedMLTrainingSystem:
                             "training_time": training_time,
                             "best_params": result.get("best_params", {}),
                             "feature_importance": result.get("feature_importance", {}),
-                            "metrics": result.get("metrics", {})
+                            "metrics": result.get("metrics", {}),
                         }
 
                         # 更新最佳模型
@@ -346,7 +417,9 @@ class EnhancedMLTrainingSystem:
                             self.best_model = trainer.model
                             self.feature_importance = result.get("feature_importance", {})
 
-                        logger.info(f"  {model_name}: 准确率={accuracy:.4f}, 训练时间={training_time:.2f}s")
+                        logger.info(
+                            f"  {model_name}: 准确率={accuracy:.4f}, 训练时间={training_time:.2f}s"
+                        )
                     else:
                         logger.warning(f"  {model_name} 训练失败: {result.get('error')}")
 
@@ -356,19 +429,20 @@ class EnhancedMLTrainingSystem:
         else:
             # 回退到基础实现
             logger.warning("高级模型训练器不可用，使用基础实现")
-            model_results = await self._train_basic_models(X_train_scaled, X_test_scaled, y_train_encoded, y_test_encoded)
+            model_results = await self._train_basic_models(
+                X_train_scaled, X_test_scaled, y_train_encoded, y_test_encoded
+            )
 
         results["models"] = model_results
-        results["best_model"] = {
-            "name": best_model_name,
-            "accuracy": best_accuracy
-        }
+        results["best_model"] = {"name": best_model_name, "accuracy": best_accuracy}
 
         # 训练集成模型
         if len(model_results) >= 2:
             logger.info("训练集成模型...")
             try:
-                ensemble_result = await self._train_ensemble_model(X_train_scaled, X_test_scaled, y_train_encoded, y_test_encoded)
+                ensemble_result = await self._train_ensemble_model(
+                    X_train_scaled, X_test_scaled, y_train_encoded, y_test_encoded
+                )
                 results["ensemble_result"] = ensemble_result
             except Exception as e:
                 logger.error(f"集成模型训练失败: {e}")
@@ -381,8 +455,12 @@ class EnhancedMLTrainingSystem:
             "srs_baseline_accuracy": srs_baseline_accuracy,
             "best_accuracy": best_accuracy,
             "improvement_percentage": improvement,
-            "data_increase": (len(X) - self.srs_baseline["data_points"]) / self.srs_baseline["data_points"] * 100,
-            "feature_increase": (len(X.columns) - self.srs_baseline["features"]) / self.srs_baseline["features"] * 100
+            "data_increase": (len(X) - self.srs_baseline["data_points"])
+            / self.srs_baseline["data_points"]
+            * 100,
+            "feature_increase": (len(X.columns) - self.srs_baseline["features"])
+            / self.srs_baseline["features"]
+            * 100,
         }
 
         # 保存训练历史
@@ -395,8 +473,9 @@ class EnhancedMLTrainingSystem:
 
         return results
 
-    async def _train_basic_models(self, X_train: pd.DataFrame, X_test: pd.DataFrame,
-                                 y_train: pd.Series, y_test: pd.Series) -> Dict[str, Any]:
+    async def _train_basic_models(
+        self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
+    ) -> Dict[str, Any]:
         """基础模型训练实现（回退方案）"""
         from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
@@ -405,7 +484,7 @@ class EnhancedMLTrainingSystem:
 
         models_config = {
             "随机森林": RandomForestClassifier(n_estimators=100, random_state=42),
-            "梯度提升": GradientBoostingClassifier(n_estimators=100, random_state=42)
+            "梯度提升": GradientBoostingClassifier(n_estimators=100, random_state=42),
         }
 
         for name, model in models_config.items():
@@ -421,7 +500,7 @@ class EnhancedMLTrainingSystem:
                     "type": name.lower().replace(" ", "_"),
                     "accuracy": accuracy,
                     "training_time": training_time,
-                    "feature_importance": dict(zip(X_train.columns, model.feature_importances_))
+                    "feature_importance": dict(zip(X_train.columns, model.feature_importances_)),
                 }
 
                 if accuracy > best_accuracy:
@@ -436,8 +515,9 @@ class EnhancedMLTrainingSystem:
 
         return model_results
 
-    async def _train_ensemble_model(self, X_train: pd.DataFrame, X_test: pd.DataFrame,
-                                   y_train: pd.Series, y_test: pd.Series) -> Dict[str, Any]:
+    async def _train_ensemble_model(
+        self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
+    ) -> Dict[str, Any]:
         """训练集成模型"""
         if not ADVANCED_TRAINER_AVAILABLE:
             return {"error": "高级模型训练器不可用"}
@@ -455,7 +535,7 @@ class EnhancedMLTrainingSystem:
                     ensemble_result = {
                         "ensemble_accuracy": accuracy,
                         "model_weights": result.get("model_weights", {}),
-                        "ensemble_metrics": result.get("ensemble_metrics", {})
+                        "ensemble_metrics": result.get("ensemble_metrics", {}),
                     }
 
                     logger.info(f"集成模型准确率: {accuracy:.4f}")
@@ -473,11 +553,7 @@ class EnhancedMLTrainingSystem:
             return {"error": "没有可用的特征重要性数据"}
 
         # 排序特征重要性
-        sorted_features = sorted(
-            self.feature_importance.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_features = sorted(self.feature_importance.items(), key=lambda x: x[1], reverse=True)
 
         top_features = sorted_features[:top_n]
 
@@ -487,17 +563,19 @@ class EnhancedMLTrainingSystem:
             "防守特征": [],
             "市场特征": [],
             "形态特征": [],
-            "其他特征": []
+            "其他特征": [],
         }
 
         for feature, importance in top_features:
-            if any(keyword in feature.lower() for keyword in ['attack', 'goal', 'shot', 'xg']):
+            if any(keyword in feature.lower() for keyword in ["attack", "goal", "shot", "xg"]):
                 feature_categories["进攻特征"].append((feature, importance))
-            elif any(keyword in feature.lower() for keyword in ['defense', 'clean', 'conceded', 'xga']):
+            elif any(
+                keyword in feature.lower() for keyword in ["defense", "clean", "conceded", "xga"]
+            ):
                 feature_categories["防守特征"].append((feature, importance))
-            elif any(keyword in feature.lower() for keyword in ['market', 'odds', 'betting']):
+            elif any(keyword in feature.lower() for keyword in ["market", "odds", "betting"]):
                 feature_categories["市场特征"].append((feature, importance))
-            elif any(keyword in feature.lower() for keyword in ['form', 'momentum', 'recent']):
+            elif any(keyword in feature.lower() for keyword in ["form", "momentum", "recent"]):
                 feature_categories["形态特征"].append((feature, importance))
             else:
                 feature_categories["其他特征"].append((feature, importance))
@@ -506,7 +584,9 @@ class EnhancedMLTrainingSystem:
             "top_features": top_features,
             "feature_categories": feature_categories,
             "total_features": len(self.feature_importance),
-            "top_n_coverage": sum(importance for _, importance in top_features) / sum(self.feature_importance.values()) * 100
+            "top_n_coverage": sum(importance for _, importance in top_features)
+            / sum(self.feature_importance.values())
+            * 100,
         }
 
     def save_training_results(self, filepath: str = "enhanced_ml_training_results.json") -> bool:
@@ -518,7 +598,7 @@ class EnhancedMLTrainingSystem:
                 "best_accuracy": self.best_accuracy,
                 "feature_importance": self.feature_importance,
                 "srs_baseline": self.srs_baseline,
-                "config": self.config
+                "config": self.config,
             }
 
             with open(filepath, "w", encoding="utf-8") as f:
@@ -557,11 +637,13 @@ class EnhancedMLTrainingSystem:
             training_results["summary"] = {
                 "total_models_trained": len(training_results.get("models", {})),
                 "best_model_accuracy": training_results.get("best_model", {}).get("accuracy", 0),
-                "ensemble_accuracy": training_results.get("ensemble_result", {}).get("ensemble_accuracy", 0),
+                "ensemble_accuracy": training_results.get("ensemble_result", {}).get(
+                    "ensemble_accuracy", 0
+                ),
                 "improvement_over_srs": training_results.get("improvement_over_srs", {}),
                 "xgboost_available": XGB_AVAILABLE,
                 "lightgbm_available": LGB_AVAILABLE,
-                "advanced_trainer_available": ADVANCED_TRAINER_AVAILABLE
+                "advanced_trainer_available": ADVANCED_TRAINER_AVAILABLE,
             }
 
             # 5. 保存结果
@@ -596,7 +678,7 @@ async def main():
     env_status = {
         "xgboost": XGB_AVAILABLE,
         "lightgbm": LGB_AVAILABLE,
-        "advanced_trainer": ADVANCED_TRAINER_AVAILABLE
+        "advanced_trainer": ADVANCED_TRAINER_AVAILABLE,
     }
 
     logger.info(f"环境状态: {env_status}")

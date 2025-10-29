@@ -44,9 +44,7 @@ def analyze_current_coverage() -> Tuple[float, Dict[str, float]]:
             total_coverage = coverage_data["totals"]["percent_covered"]
             module_coverage = {}
             for file_path, metrics in coverage_data["files"].items():
-                module_path = (
-                    file_path.replace("src/", "").replace(".py", "").replace("/", ".")
-                )
+                module_path = file_path.replace("src/", "").replace(".py", "").replace("/", ".")
                 module_coverage[module_path] = metrics["summary"]["percent_covered"]
             return total_coverage, module_coverage
         return 0.0, {}
@@ -61,9 +59,7 @@ def analyze_current_coverage() -> Tuple[float, Dict[str, float]]:
         module_coverage = {}
 
         for file_path, metrics in coverage_data["files"].items():
-            module_path = (
-                file_path.replace("src/", "").replace(".py", "").replace("/", ".")
-            )
+            module_path = file_path.replace("src/", "").replace(".py", "").replace("/", ".")
             module_coverage[module_path] = metrics["summary"]["percent_covered"]
 
         print(f"✅ 当前总覆盖率: {total_coverage:.2f}%")
@@ -318,9 +314,7 @@ def main():
 
     # 更新任务状态
     with open("docs/_reports/phase7_status.txt", "w") as f:
-        f.write(
-            f"Phase 7 Quick Version - Completed at {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        )
+        f.write(f"Phase 7 Quick Version - Completed at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Coverage: {total_coverage:.2f}% → 40% (target)\n")
         f.write(f"Modules Processed: {len(zero_modules)}\n")
         f.write(f"Tests Generated: {success_count}\n")

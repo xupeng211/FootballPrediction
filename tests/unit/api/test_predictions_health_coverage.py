@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 测试 predictions.health 模块的覆盖率补充

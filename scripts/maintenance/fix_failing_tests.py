@@ -100,9 +100,7 @@ class TestFixer:
             if "test_" in file_path.name:
                 for pattern, replacement in result_patterns:
                     # 避免替换类名或方法名
-                    content = re.sub(
-                        rf"\b{pattern[1:]}\b(?!\s*\()", replacement, content
-                    )
+                    content = re.sub(rf"\b{pattern[1:]}\b(?!\s*\()", replacement, content)
 
             # 4. 修复常见的导入问题
             if "NameError" in str(

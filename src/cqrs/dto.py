@@ -39,9 +39,7 @@ class PredictionDTO:
             "confidence": float(self.confidence) if self.confidence else None,
             "strategy_used": self.strategy_used,
             "points_earned": self.points_earned,
-            "accuracy_score": (
-                float(self.accuracy_score) if self.accuracy_score else None
-            ),
+            "accuracy_score": (float(self.accuracy_score) if self.accuracy_score else None),
             "notes": self.notes,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
@@ -172,15 +170,11 @@ class CommandResult:
     errors: Optional[List[str]] = None
 
     @classmethod
-    def success_result(
-        cls, data: Any = None, message: str = "操作成功"
-    ) -> "CommandResult":
+    def success_result(cls, data: Any = None, message: str = "操作成功") -> "CommandResult":
         """创建成功结果"""
         return cls(success=True, message=message, data=data)
 
     @classmethod
-    def failure_result(
-        cls, errors: List[str], message: str = "操作失败"
-    ) -> "CommandResult":
+    def failure_result(cls, errors: List[str], message: str = "操作失败") -> "CommandResult":
         """创建失败结果"""
         return cls(success=False, message=message, errors=errors)

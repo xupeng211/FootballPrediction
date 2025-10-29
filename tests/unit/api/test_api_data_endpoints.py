@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """API数据端点测试"""
 
 import pytest
@@ -7,7 +5,6 @@ from fastapi.testclient import TestClient
 
 # 尝试导入API模块并设置可用性标志
 try:
-    from src.api.data_api import router
 
     API_AVAILABLE = True
     TEST_SKIP_REASON = "API模块不可用"

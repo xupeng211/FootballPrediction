@@ -146,8 +146,7 @@ class MatchAnalyzer:
         team_matches = [
             m
             for m in self.matches
-            if (m.home_team == team or m.away_team == team)
-            and m.status == MatchStatus.FINISHED
+            if (m.home_team == team or m.away_team == team) and m.status == MatchStatus.FINISHED
         ]
         team_matches.sort(key=lambda x: x.match_date, reverse=True)
 
@@ -241,8 +240,7 @@ class MatchAnalyzer:
         team_matches = [
             m
             for m in self.matches
-            if (m.home_team == team or m.away_team == team)
-            and m.status == MatchStatus.FINISHED
+            if (m.home_team == team or m.away_team == team) and m.status == MatchStatus.FINISHED
         ]
         team_matches.sort(key=lambda x: x.match_date, reverse=True)
         recent_matches = team_matches[:matches]
@@ -294,8 +292,7 @@ class MatchAnalyzer:
         return [
             m
             for m in self.matches
-            if m.status == MatchStatus.FINISHED
-            and (m.home_score + m.away_score) >= min_total_goals
+            if m.status == MatchStatus.FINISHED and (m.home_score + m.away_score) >= min_total_goals
         ]
 
     def find_clean_sheets(self, team: Team) -> List[Match]:

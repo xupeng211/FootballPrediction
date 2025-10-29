@@ -112,9 +112,7 @@ class CoverageGapAnalyzer:
                 if func_lines & uncovered_lines:
                     # 计算覆盖率百分比
                     uncovered_func_lines = len(func_lines & uncovered_lines)
-                    coverage = (len(func_lines) - uncovered_func_lines) / len(
-                        func_lines
-                    )
+                    coverage = (len(func_lines) - uncovered_func_lines) / len(func_lines)
 
                     uncovered_funcs.append(
                         {
@@ -130,9 +128,7 @@ class CoverageGapAnalyzer:
                     )
 
             if uncovered_funcs:
-                gaps[file_path] = sorted(
-                    uncovered_funcs, key=lambda x: x["priority"], reverse=True
-                )
+                gaps[file_path] = sorted(uncovered_funcs, key=lambda x: x["priority"], reverse=True)
 
         return gaps
 
@@ -309,9 +305,7 @@ if __name__ == "__main__":
         for i, sugg in enumerate(suggestions[:10], 1):
             print(f"{i:2d}. {sugg['test_name']}")
             print(f"    文件: {sugg['file_path']}")
-            print(
-                f"    优先级: {sugg['priority']:.2f} | 当前覆盖率: {sugg['coverage']*100:.1f}%"
-            )
+            print(f"    优先级: {sugg['priority']:.2f} | 当前覆盖率: {sugg['coverage']*100:.1f}%")
             print(f"    预估工作量: {sugg['estimated_effort']}")
             print()
 
@@ -326,8 +320,7 @@ if __name__ == "__main__":
         # 估算总工作量
         effort_mapping = {"简单": 1, "中等": 2, "复杂": 3, "困难": 4}
         total_effort = sum(
-            effort_mapping.get(s["estimated_effort"].split()[0], 1)
-            for s in suggestions[:20]
+            effort_mapping.get(s["estimated_effort"].split()[0], 1) for s in suggestions[:20]
         )
         print(f"\n⏱️ 预估总工作量: {total_effort * 10}-{total_effort * 20} 分钟")
         print(f"   按每天30分钟计算，需要 {total_effort/2:.1f} 个工作日")

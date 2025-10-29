@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 数据质量监控器简化测试
 Tests for Data Quality Monitor (Simple Version)
@@ -8,7 +6,6 @@ Tests for Data Quality Monitor (Simple Version)
 """
 
 import logging
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -128,9 +125,7 @@ class TestDataQualityMonitorSimple:
 
             # 如果方法存在，测试它
             if hasattr(monitor, "_generate_recommendations"):
-                recommendations = monitor._generate_recommendations(
-                    freshness_check, anomalies
-                )
+                recommendations = monitor._generate_recommendations(freshness_check, anomalies)
                 assert isinstance(recommendations, list)
 
     def test_quality_score_boundary(self):

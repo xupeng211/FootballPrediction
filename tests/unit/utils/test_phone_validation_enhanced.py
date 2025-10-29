@@ -119,6 +119,4 @@ class TestPhoneValidatorEnhanced:
 
         for phone, expected in test_cases:
             result = is_valid_phone(phone)
-            assert (
-                result == expected
-            ), f"Phone {phone} expected {expected}, got {result}"
+            assert result == expected, f"Phone {phone} expected {expected}, got {result}"

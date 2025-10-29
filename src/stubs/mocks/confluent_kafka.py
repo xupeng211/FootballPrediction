@@ -169,10 +169,7 @@ class MockProducer:
         if on_delivery:
             try:
                 # 简单的延迟模拟
-                if (
-                    hasattr(asyncio, "get_event_loop")
-                    and asyncio.get_event_loop().is_running()
-                ):
+                if hasattr(asyncio, "get_event_loop") and asyncio.get_event_loop().is_running():
                     asyncio.get_event_loop().call_soon(on_delivery, None, message)
                 else:
                     on_delivery(None, message)

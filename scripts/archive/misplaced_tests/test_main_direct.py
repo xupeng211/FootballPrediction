@@ -98,9 +98,7 @@ def test_cors_middleware():
         assert cors_middleware is not None, "CORS中间件未配置"
         # In newer FastAPI versions, options are stored differently
         if hasattr(cors_middleware, "options"):
-            assert cors_middleware.options.get("allow_origins") == [
-                "http://localhost:3000"
-            ]
+            assert cors_middleware.options.get("allow_origins") == ["http://localhost:3000"]
             assert cors_middleware.options.get("allow_credentials") is True
         else:
             # Check the middleware kwargs directly

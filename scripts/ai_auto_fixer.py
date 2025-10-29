@@ -17,9 +17,11 @@ from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
 
+
 @dataclass
 class FixResult:
     """修复结果"""
+
     success: bool
     fix_type: str
     files_modified: List[str]
@@ -27,6 +29,7 @@ class FixResult:
     remaining_issues: List[str]
     confidence: float
     requires_manual_review: bool
+
 
 class AIAutoFixer:
     """AI自动化修复机器人"""
@@ -80,7 +83,7 @@ class AIAutoFixer:
                             issues_fixed=[],
                             remaining_issues=[str(e)],
                             confidence=0.0,
-                            requires_manual_review=True
+                            requires_manual_review=True,
                         )
                         results.append(result)
 
@@ -97,15 +100,18 @@ class AIAutoFixer:
             "style_issues": [],
             "type_errors": [],
             "security_issues": [],
-            "test_failures": []
+            "test_failures": [],
         }
 
         # 语法错误检查
         print("🔍 检查语法错误...")
         try:
-            result = subprocess.run([
-                "python", "-m", "py_compile", "src/**/*.py"
-            ], capture_output=True, text=True, shell=True)
+            result = subprocess.run(
+                ["python", "-m", "py_compile", "src/**/*.py"],
+                capture_output=True,
+                text=True,
+                shell=True,
+            )
             if result.returncode != 0:
                 syntax_errors = self._parse_syntax_errors(result.stderr)
                 issues["syntax_errors"] = syntax_errors
@@ -142,19 +148,21 @@ class AIAutoFixer:
     def _parse_syntax_errors(self, error_output: str) -> List[Dict]:
         """解析语法错误"""
         errors = []
-        lines = error_output.split('\n')
+        lines = error_output.split("\n")
 
         for line in lines:
-            if 'SyntaxError' in line or 'Invalid syntax' in line:
+            if "SyntaxError" in line or "Invalid syntax" in line:
                 # 尝试提取文件名和行号
                 match = re.search(r'File "([^"]+)", line (\d+)', line)
                 if match:
-                    errors.append({
-                        'file': match.group(1),
-                        'line': int(match.group(2)),
-                        'message': line.strip(),
-                        'fixable': True
-                    })
+                    errors.append(
+                        {
+                            "file": match.group(1),
+                            "line": int(match.group(2)),
+                            "message": line.strip(),
+                            "fixable": True,
+                        }
+                    )
         return errors
 
     def _check_import_errors(self) -> List[Dict]:
@@ -162,9 +170,11 @@ class AIAutoFixer:
         errors = []
 
         try:
-            result = subprocess.run([
-                "python", "-c",
-                """
+            result = subprocess.run(
+                [
+                    "python",
+                    "-c",
+                    """
 import sys
 import importlib.util
 import pathlib
@@ -179,18 +189,17 @@ if src_path.exists():
             importlib.import_module(module_name)
         except Exception as e:
             print(f'IMPORT_ERROR:{py_file}:{e}')
-"""
-            ], capture_output=True, text=True)
+""",
+                ],
+                capture_output=True,
+                text=True,
+            )
 
-            for line in result.stdout.split('\n'):
-                if line.startswith('IMPORT_ERROR:'):
-                    parts = line.split(':', 2)
+            for line in result.stdout.split("\n"):
+                if line.startswith("IMPORT_ERROR:"):
+                    parts = line.split(":", 2)
                     if len(parts) >= 3:
-                        errors.append({
-                            'file': parts[1],
-                            'message': parts[2],
-                            'fixable': True
-                        })
+                        errors.append({"file": parts[1], "message": parts[2], "fixable": True})
         except Exception as e:
             print(f"导入检查失败: {e}")
 
@@ -201,24 +210,26 @@ if src_path.exists():
         issues = []
 
         try:
-            result = subprocess.run([
-                "ruff", "check", "src/", "--output-format=json"
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["ruff", "check", "src/", "--output-format=json"], capture_output=True, text=True
+            )
 
             if result.stdout.strip():
                 ruff_issues = json.loads(result.stdout)
                 for issue in ruff_issues:
                     # 只包含可自动修复的问题
-                    if issue.get('fix', {}).get('applicability') == 'automatic':
-                        issues.append({
-                            'file': issue['filename'],
-                            'line': issue['location']['row'],
-                            'column': issue['location']['column'],
-                            'code': issue['code'],
-                            'message': issue['message'],
-                            'fixable': True,
-                            'ruff_fix': True
-                        })
+                    if issue.get("fix", {}).get("applicability") == "automatic":
+                        issues.append(
+                            {
+                                "file": issue["filename"],
+                                "line": issue["location"]["row"],
+                                "column": issue["location"]["column"],
+                                "code": issue["code"],
+                                "message": issue["message"],
+                                "fixable": True,
+                                "ruff_fix": True,
+                            }
+                        )
         except Exception as e:
             print(f"风格检查失败: {e}")
 
@@ -229,14 +240,16 @@ if src_path.exists():
         errors = []
 
         try:
-            result = subprocess.run([
-                "mypy", "src/", "--config-file", "mypy_minimum.ini", "--show-error-codes"
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["mypy", "src/", "--config-file", "mypy_minimum.ini", "--show-error-codes"],
+                capture_output=True,
+                text=True,
+            )
 
-            for line in result.stdout.split('\n'):
-                if line.strip() and ':' in line:
+            for line in result.stdout.split("\n"):
+                if line.strip() and ":" in line:
                     # 解析MyPy错误输出
-                    parts = line.split(':', 3)
+                    parts = line.split(":", 3)
                     if len(parts) >= 4:
                         try:
                             file_path = parts[0]
@@ -244,13 +257,15 @@ if src_path.exists():
                             error_type = parts[2].strip()
                             message = parts[3].strip()
 
-                            errors.append({
-                                'file': file_path,
-                                'line': line_num,
-                                'type': error_type,
-                                'message': message,
-                                'fixable': 'error:' in message  # 简单的类型注解错误可能可修复
-                            })
+                            errors.append(
+                                {
+                                    "file": file_path,
+                                    "line": line_num,
+                                    "type": error_type,
+                                    "message": message,
+                                    "fixable": "error:" in message,  # 简单的类型注解错误可能可修复
+                                }
+                            )
                         except (ValueError, IndexError):
                             continue
         except Exception as e:
@@ -263,24 +278,26 @@ if src_path.exists():
         issues = []
 
         try:
-            result = subprocess.run([
-                "bandit", "-r", "src/", "-f", "json"
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["bandit", "-r", "src/", "-f", "json"], capture_output=True, text=True
+            )
 
             if result.stdout.strip():
                 bandit_report = json.loads(result.stdout)
-                for issue in bandit_report.get('results', []):
+                for issue in bandit_report.get("results", []):
                     # 只包含中低危问题，高危问题需要手动审查
-                    severity = issue.get('issue_severity', 'MEDIUM')
-                    if severity in ['LOW', 'MEDIUM']:
-                        issues.append({
-                            'file': issue['filename'],
-                            'line': issue['line_number'],
-                            'code': issue['test_id'],
-                            'message': issue['issue_text'],
-                            'severity': severity,
-                            'fixable': True
-                        })
+                    severity = issue.get("issue_severity", "MEDIUM")
+                    if severity in ["LOW", "MEDIUM"]:
+                        issues.append(
+                            {
+                                "file": issue["filename"],
+                                "line": issue["line_number"],
+                                "code": issue["test_id"],
+                                "message": issue["issue_text"],
+                                "severity": severity,
+                                "fixable": True,
+                            }
+                        )
         except Exception as e:
             print(f"安全检查失败: {e}")
 
@@ -291,23 +308,25 @@ if src_path.exists():
         failures = []
 
         try:
-            result = subprocess.run([
-                "pytest", "tests/unit/", "--tb=short", "-v"
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["pytest", "tests/unit/", "--tb=short", "-v"], capture_output=True, text=True
+            )
 
             if result.returncode != 0:
                 # 解析pytest失败输出
-                lines = result.stdout.split('\n')
+                lines = result.stdout.split("\n")
                 for line in lines:
-                    if 'FAILED' in line and '::' in line:
+                    if "FAILED" in line and "::" in line:
                         parts = line.split()
                         if len(parts) >= 2:
                             test_name = parts[1]
-                            failures.append({
-                                'test': test_name,
-                                'message': 'Test failed',
-                                'fixable': False  # 测试失败通常需要手动修复
-                            })
+                            failures.append(
+                                {
+                                    "test": test_name,
+                                    "message": "Test failed",
+                                    "fixable": False,  # 测试失败通常需要手动修复
+                                }
+                            )
         except Exception as e:
             print(f"测试检查失败: {e}")
 
@@ -320,16 +339,16 @@ if src_path.exists():
         remaining_issues = []
 
         for error in errors:
-            if not error.get('fixable', False):
+            if not error.get("fixable", False):
                 remaining_issues.append(f"语法错误不可自动修复: {error['message']}")
                 continue
 
-            file_path = error['file']
-            line_num = error['line']
+            file_path = error["file"]
+            line_num = error["line"]
 
             try:
                 # 尝试常见语法错误修复
-                if self._fix_common_syntax_error(file_path, line_num, error['message']):
+                if self._fix_common_syntax_error(file_path, line_num, error["message"]):
                     fixed_files.append(file_path)
                     fixed_issues.append(f"修复 {file_path}:{line_num} 的语法错误")
                 else:
@@ -344,7 +363,7 @@ if src_path.exists():
             issues_fixed=fixed_issues,
             remaining_issues=remaining_issues,
             confidence=0.9 if fixed_issues else 0.0,
-            requires_manual_review=len(remaining_issues) > 0
+            requires_manual_review=len(remaining_issues) > 0,
         )
 
     def _fix_import_errors(self, errors: List[Dict]) -> FixResult:
@@ -354,8 +373,8 @@ if src_path.exists():
         remaining_issues = []
 
         for error in errors:
-            file_path = error['file']
-            message = error['message']
+            file_path = error["file"]
+            message = error["message"]
 
             try:
                 # 尝试常见导入错误修复
@@ -374,22 +393,20 @@ if src_path.exists():
             issues_fixed=fixed_issues,
             remaining_issues=remaining_issues,
             confidence=0.8 if fixed_issues else 0.0,
-            requires_manual_review=len(remaining_issues) > 0
+            requires_manual_review=len(remaining_issues) > 0,
         )
 
     def _fix_style_issues(self, errors: List[Dict]) -> FixResult:
         """修复代码风格问题"""
         try:
             # 使用ruff自动修复
-            result = subprocess.run([
-                "ruff", "format", "src/"
-            ], capture_output=True, text=True)
+            result = subprocess.run(["ruff", "format", "src/"], capture_output=True, text=True)
 
             if result.returncode == 0:
                 # 再次检查ruff check的问题
-                result = subprocess.run([
-                    "ruff", "check", "src/", "--fix"
-                ], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["ruff", "check", "src/", "--fix"], capture_output=True, text=True
+                )
 
                 return FixResult(
                     success=True,
@@ -398,7 +415,7 @@ if src_path.exists():
                     issues_fixed=["代码格式化和风格问题"],
                     remaining_issues=[],
                     confidence=0.95,
-                    requires_manual_review=False
+                    requires_manual_review=False,
                 )
             else:
                 return FixResult(
@@ -408,7 +425,7 @@ if src_path.exists():
                     issues_fixed=[],
                     remaining_issues=["ruff格式化失败"],
                     confidence=0.0,
-                    requires_manual_review=True
+                    requires_manual_review=True,
                 )
         except Exception as e:
             return FixResult(
@@ -418,7 +435,7 @@ if src_path.exists():
                 issues_fixed=[],
                 remaining_issues=[f"风格修复失败: {e}"],
                 confidence=0.0,
-                requires_manual_review=True
+                requires_manual_review=True,
             )
 
     def _fix_type_errors(self, errors: List[Dict]) -> FixResult:
@@ -428,13 +445,13 @@ if src_path.exists():
         remaining_issues = []
 
         for error in errors:
-            if not error.get('fixable', False):
+            if not error.get("fixable", False):
                 remaining_issues.append(f"类型错误需要手动修复: {error['message']}")
                 continue
 
-            file_path = error['file']
-            line_num = error['line']
-            message = error['message']
+            file_path = error["file"]
+            line_num = error["line"]
+            message = error["message"]
 
             try:
                 if self._fix_common_type_error(file_path, line_num, message):
@@ -452,7 +469,7 @@ if src_path.exists():
             issues_fixed=fixed_issues,
             remaining_issues=remaining_issues,
             confidence=0.7 if fixed_issues else 0.0,
-            requires_manual_review=len(remaining_issues) > 0
+            requires_manual_review=len(remaining_issues) > 0,
         )
 
     def _fix_security_issues(self, errors: List[Dict]) -> FixResult:
@@ -462,13 +479,13 @@ if src_path.exists():
         remaining_issues = []
 
         for error in errors:
-            if not error.get('fixable', False):
+            if not error.get("fixable", False):
                 remaining_issues.append(f"安全问题需要手动修复: {error['message']}")
                 continue
 
-            file_path = error['file']
-            line_num = error['line']
-            message = error['message']
+            file_path = error["file"]
+            line_num = error["line"]
+            message = error["message"]
 
             try:
                 if self._fix_common_security_issue(file_path, line_num, message):
@@ -486,7 +503,7 @@ if src_path.exists():
             issues_fixed=fixed_issues,
             remaining_issues=remaining_issues,
             confidence=0.8 if fixed_issues else 0.0,
-            requires_manual_review=len(remaining_issues) > 0
+            requires_manual_review=len(remaining_issues) > 0,
         )
 
     def _fix_test_failures(self, errors: List[Dict]) -> FixResult:
@@ -501,13 +518,13 @@ if src_path.exists():
             issues_fixed=[],
             remaining_issues=remaining_issues,
             confidence=0.0,
-            requires_manual_review=True
+            requires_manual_review=True,
         )
 
     def _fix_common_syntax_error(self, file_path: str, line_num: int, message: str) -> bool:
         """修复常见语法错误"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
@@ -517,18 +534,18 @@ if src_path.exists():
                 fixed_line = line
 
                 # 修复缺少冒号
-                if 'missing colon' in message.lower() and not line.strip().endswith(':'):
-                    fixed_line = line.rstrip() + ':\n'
+                if "missing colon" in message.lower() and not line.strip().endswith(":"):
+                    fixed_line = line.rstrip() + ":\n"
 
                 # 修复缩进错误（简单情况）
-                elif 'unexpected indent' in message.lower():
-                    fixed_line = '    ' + line.lstrip()
-                elif 'expected an indented block' in message.lower():
-                    fixed_line = '    pass\n' + line
+                elif "unexpected indent" in message.lower():
+                    fixed_line = "    " + line.lstrip()
+                elif "expected an indented block" in message.lower():
+                    fixed_line = "    pass\n" + line
 
                 if fixed_line != line:
                     lines[line_num - 1] = fixed_line
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.writelines(lines)
                     return True
 
@@ -546,20 +563,20 @@ if src_path.exists():
     def _fix_common_type_error(self, file_path: str, line_num: int, message: str) -> bool:
         """修复常见类型错误"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
                 line = lines[line_num - 1]
 
                 # 简单的类型注解添加
-                if 'argument' in message.lower() and 'has no type' in message.lower():
+                if "argument" in message.lower() and "has no type" in message.lower():
                     # 添加基本的类型注解
-                    if 'def ' in line and '->' not in line:
-                        fixed_line = line.rstrip() + ' -> None:\n'
+                    if "def " in line and "->" not in line:
+                        fixed_line = line.rstrip() + " -> None:\n"
                         lines[line_num - 1] = fixed_line
 
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, "w", encoding="utf-8") as f:
                             f.writelines(lines)
                         return True
 
@@ -571,7 +588,7 @@ if src_path.exists():
     def _fix_common_security_issue(self, file_path: str, line_num: int, message: str) -> bool:
         """修复常见安全问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             if line_num <= len(lines):
@@ -579,16 +596,16 @@ if src_path.exists():
                 fixed_line = line
 
                 # 修复硬编码密码等安全问题
-                if 'password' in message.lower() and '=' in line:
+                if "password" in message.lower() and "=" in line:
                     # 简单的密码变量重命名
-                    fixed_line = line.replace('password', 'password_hash')
-                elif 'hardcoded' in message.lower():
+                    fixed_line = line.replace("password", "password_hash")
+                elif "hardcoded" in message.lower():
                     # 添加注释说明这是示例代码
-                    fixed_line = line.rstrip() + '  # TODO: 使用配置文件\n'
+                    fixed_line = line.rstrip() + "  # TODO: 使用配置文件\n"
 
                 if fixed_line != line:
                     lines[line_num - 1] = fixed_line
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.writelines(lines)
                     return True
 
@@ -600,38 +617,45 @@ if src_path.exists():
     def _generate_fix_report(self, results: List[FixResult]) -> None:
         """生成修复报告"""
         report = {
-            'timestamp': datetime.now().isoformat(),
-            'total_fixes_attempted': len(results),
-            'successful_fixes': sum(1 for r in results if r.success),
-            'files_modified': list(set(file for r in results for file in r.files_modified)),
-            'fix_details': []
+            "timestamp": datetime.now().isoformat(),
+            "total_fixes_attempted": len(results),
+            "successful_fixes": sum(1 for r in results if r.success),
+            "files_modified": list(set(file for r in results for file in r.files_modified)),
+            "fix_details": [],
         }
 
         for result in results:
-            report['fix_details'].append({
-                'type': result.fix_type,
-                'success': result.success,
-                'files_modified': result.files_modified,
-                'issues_fixed': result.issues_fixed,
-                'remaining_issues': result.remaining_issues,
-                'confidence': result.confidence,
-                'requires_manual_review': result.requires_manual_review
-            })
+            report["fix_details"].append(
+                {
+                    "type": result.fix_type,
+                    "success": result.success,
+                    "files_modified": result.files_modified,
+                    "issues_fixed": result.issues_fixed,
+                    "remaining_issues": result.remaining_issues,
+                    "confidence": result.confidence,
+                    "requires_manual_review": result.requires_manual_review,
+                }
+            )
 
         # 保存报告
-        report_path = self.root_dir / 'ai_fix_report.json'
-        with open(report_path, 'w', encoding='utf-8') as f:
+        report_path = self.root_dir / "ai_fix_report.json"
+        with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"\n📄 修复报告已保存到: {report_path}")
         print(f"✅ 成功修复: {report['successful_fixes']}/{report['total_fixes_attempted']}")
         print(f"📁 修改文件: {len(report['files_modified'])}")
 
+
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="AI自动化修复机器人")
-    parser.add_argument("--target", choices=["all", "syntax", "imports", "style", "types", "security", "tests"],
-                       default="all", help="修复目标类型")
+    parser.add_argument(
+        "--target",
+        choices=["all", "syntax", "imports", "style", "types", "security", "tests"],
+        default="all",
+        help="修复目标类型",
+    )
     parser.add_argument("--report", action="store_true", help="只生成报告，不执行修复")
     parser.add_argument("--confidence", type=float, default=0.7, help="置信度阈值")
 
@@ -656,6 +680,7 @@ def main():
 
         print(f"\n🎯 修复完成: {successful}/{total} 类问题")
         print(f"📁 修改文件: {len(set(file for r in results for file in r.files_modified))}")
+
 
 if __name__ == "__main__":
     main()

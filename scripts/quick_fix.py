@@ -47,15 +47,11 @@ def fix_file(file_path: str):
         # 4. 修复 except 后面缺少冒号
         import re
 
-        content = re.sub(
-            r"except\s*\([^)]+\)\s*([^\n:])", r"except (\1):\n    \2", content
-        )
+        content = re.sub(r"except\s*\([^)]+\)\s*([^\n:])", r"except (\1):\n    \2", content)
         content = re.sub(r"except\s*([^\n:])", r"except Exception:\n    \1", content)
 
         # 5. 修复文档字符串
-        content = content.replace(
-            '"""适配器状态枚举"" ACTIVE', '"""适配器状态枚举"""\n    ACTIVE'
-        )
+        content = content.replace('"""适配器状态枚举"" ACTIVE', '"""适配器状态枚举"""\n    ACTIVE')
         content = content.replace(
             '"""被适配者接口"" @abstractmethod',
             '"""被适配者接口"""\n    @abstractmethod',

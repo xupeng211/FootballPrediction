@@ -185,10 +185,7 @@ class MatchDomainService:
                 importance += 0.2
 
             # 升级/降级关键战（最后3名）
-            if (
-                home_team_position >= total_teams - 2
-                or away_team_position >= total_teams - 2
-            ):
+            if home_team_position >= total_teams - 2 or away_team_position >= total_teams - 2:
                 importance += 0.1
 
         return min(importance, 1.0)

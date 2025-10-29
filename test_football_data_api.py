@@ -9,19 +9,21 @@ import sys
 from datetime import datetime, timedelta
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from src.collectors.data_sources import data_source_manager
+
 
 async def test_football_data_api():
     """测试Football-Data.org API连接"""
     print("🔧 测试Football-Data.org API连接...")
 
     # 检查API密钥
-    api_key = os.getenv('FOOTBALL_DATA_API_KEY')
+    api_key = os.getenv("FOOTBALL_DATA_API_KEY")
     if not api_key:
         print("❌ 未找到FOOTBALL_DATA_API_KEY环境变量")
         return False
@@ -73,8 +75,10 @@ async def test_football_data_api():
     except Exception as e:
         print(f"❌ Football-Data.org API测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def main():
     """主测试函数"""
@@ -96,6 +100,7 @@ async def main():
         print("1. 检查API密钥是否正确")
         print("2. 检查网络连接")
         print("3. 确认Football-Data.org服务状态")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

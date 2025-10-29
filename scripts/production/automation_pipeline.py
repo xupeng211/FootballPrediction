@@ -237,9 +237,7 @@ class ProductionAutomationPipeline:
             if issues:
                 print(f"⚠️  配置问题: {', '.join(issues)}")
 
-            self.check_results["configuration"]["status"] = (
-                "passed" if score >= 80 else "warning"
-            )
+            self.check_results["configuration"]["status"] = "passed" if score >= 80 else "warning"
             self.check_results["configuration"]["score"] = score
             print(f"✅ 配置验证完成 (得分: {score})")
             return True
@@ -284,9 +282,7 @@ class ProductionAutomationPipeline:
             if issues:
                 print(f"⚠️  CI/CD问题: {', '.join(issues)}")
 
-            self.check_results["ci_cd"]["status"] = (
-                "passed" if score >= 80 else "warning"
-            )
+            self.check_results["ci_cd"]["status"] = "passed" if score >= 80 else "warning"
             self.check_results["ci_cd"]["score"] = score
             print(f"✅ CI/CD检查完成 (得分: {score})")
             return True
@@ -302,9 +298,7 @@ class ProductionAutomationPipeline:
         print("\n📊 生成最终评估报告...")
 
         # 计算总分
-        total_score = sum(r["score"] for r in self.check_results.values()) / len(
-            self.check_results
-        )
+        total_score = sum(r["score"] for r in self.check_results.values()) / len(self.check_results)
 
         # 生成报告
         report = {
@@ -445,9 +439,7 @@ class ProductionAutomationPipeline:
             status_icon = (
                 "✅"
                 if result["status"] == "passed"
-                else "⚠️"
-                if result["status"] == "warning"
-                else "❌"
+                else "⚠️" if result["status"] == "warning" else "❌"
             )
             check_name_display = check_name.replace("_", " ").title()
             markdown_content += f"\n| {check_name_display} | {status_icon} | {result['score']} | >={self.thresholds['pass']} |"
@@ -460,13 +452,9 @@ class ProductionAutomationPipeline:
                 priority_icon = (
                     "🔴"
                     if rec["priority"] == "high"
-                    else "🟡"
-                    if rec["priority"] == "medium"
-                    else "🟢"
+                    else "🟡" if rec["priority"] == "medium" else "🟢"
                 )
-                markdown_content += (
-                    f"\n{priority_icon} **{rec['action']}** ({rec['category']})\n"
-                )
+                markdown_content += f"\n{priority_icon} **{rec['action']}** ({rec['category']})\n"
                 markdown_content += f"   - {rec['details']}\n"
 
         markdown_content += "\n## 📋 下一步行动\n"

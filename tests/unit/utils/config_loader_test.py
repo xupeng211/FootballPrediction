@@ -3,15 +3,10 @@ Issue #83 阶段3: utils.config_loader 全面测试
 优先级: MEDIUM - 配置加载工具
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
 try:
-    from utils.config_loader import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

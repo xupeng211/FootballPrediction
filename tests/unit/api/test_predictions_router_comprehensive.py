@@ -11,16 +11,12 @@
 测试覆盖 src/api/predictions/router.py 的所有端点
 """
 
-from datetime import datetime, timedelta
 from typing import Any, Dict
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.app import app
-from src.api.predictions.router import (
     BatchPredictionRequest,
     BatchPredictionResponse,
     PredictionHistory,

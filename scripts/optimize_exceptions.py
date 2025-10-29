@@ -102,9 +102,7 @@ def fix_exceptions_in_file(file_path, dry_run=True):
             suggested = suggest_specific_exception(file_path, line_idx, context)
 
             # 替换except Exception
-            new_line = original_line.replace(
-                "except Exception", f"except ({suggested})"
-            )
+            new_line = original_line.replace("except Exception", f"except ({suggested})")
 
             if dry_run:
                 print(f"  行 {line_idx+1}: {original_line.strip()}")

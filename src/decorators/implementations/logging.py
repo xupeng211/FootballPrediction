@@ -80,9 +80,7 @@ class LoggingDecorator(Decorator):
                         success_log["execution_time"] = context.get_execution_time()
                         success_log["execution_path"] = context.execution_path
 
-                logger_instance.log(
-                    getattr(logging, self.level), json.dumps(success_log)
-                )
+                logger_instance.log(getattr(logging, self.level), json.dumps(success_log))
 
             return result
 

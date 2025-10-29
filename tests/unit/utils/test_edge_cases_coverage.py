@@ -12,10 +12,7 @@ from __future__ import annotations
 
 import itertools
 import json
-import os
 import re
-import tempfile
-from collections import Counter, defaultdict, deque, namedtuple
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -659,7 +656,8 @@ class TestUtilsEdgeCases:
             assert email_regex.match(email) is not None
 
         # URL模式
-        url_pattern = r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
+        url_pattern =
+    r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
         url_regex = re.compile(url_pattern, re.IGNORECASE)
 
         valid_urls = [

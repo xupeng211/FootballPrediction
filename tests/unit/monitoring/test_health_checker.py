@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 19 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 健康检查器测试
@@ -11,7 +10,6 @@ Tests for Health Checker
 测试src.monitoring.health_checker模块的功能
 """
 
-from datetime import datetime, timedelta
 
 import pytest
 

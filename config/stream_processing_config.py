@@ -10,33 +10,17 @@ KAFKA_CONFIG = {
     "auto_offset_reset": True,
     "enable_auto_commit": False,
     "value_serializer": "org.apache.kafka.common.serialization.StringSerializer",
-        "value_deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
-        "key_serializer": "org.apache.kafka.common.serialization.StringSerializer",
-        "key_deserializer": "org.apache.kafka.common.serialization.StringDeserializer"
+    "value_deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
+    "key_serializer": "org.apache.kafka.common.serialization.StringSerializer",
+    "key_deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
 }
 
 # 流处理主题配置
 STREAM_TOPICS = {
-    "match_events": {
-        "topic": "match_events",
-        "partitions": 3,
-        "replication_factor": 1
-    },
-    "prediction_updates": {
-        "topic": "prediction_updates",
-        "partitions": 2,
-        "replication_factor": 1
-    },
-    "user_activities": {
-        "topic": "user_activities",
-        "partitions": 2,
-        "replication_factor": 1
-    },
-    "system_metrics": {
-        "topic": "system_metrics",
-        "partitions": 1,
-        "replication_factor": 1
-    }
+    "match_events": {"topic": "match_events", "partitions": 3, "replication_factor": 1},
+    "prediction_updates": {"topic": "prediction_updates", "partitions": 2, "replication_factor": 1},
+    "user_activities": {"topic": "user_activities", "partitions": 2, "replication_factor": 1},
+    "system_metrics": {"topic": "system_metrics", "partitions": 1, "replication_factor": 1},
 }
 
 # 流处理消费者配置
@@ -47,7 +31,7 @@ STREAM_CONSUMER_CONFIG = {
     "session_timeout_ms": 30000,
     "heartbeat_interval_ms": 3000,
     "max_poll_records": 100,
-        "fetch_max_wait_ms": 500
+    "fetch_max_wait_ms": 500,
 }
 
 # 流处理配置
@@ -58,19 +42,16 @@ STREAM_PROCESSING_CONFIG = {
     "error_handling": {
         "retry_attempts": 3,
         "retry_delay": 1.0,
-        "dead_letter_queue": "dlq_stream_processing"
+        "dead_letter_queue": "dlq_stream_processing",
     },
-    "monitoring": {
-        "enabled": True,
-        "metrics_interval": 60,
-        "performance_tracking": True
-    }
+    "monitoring": {"enabled": True, "metrics_interval": 60, "performance_tracking": True},
 }
 
 # 流处理使用示例
 import asyncio
 from kafka import KafkaConsumer, KafkaProducer
 import json
+
 
 class StreamProcessor:
     def __init__(self):

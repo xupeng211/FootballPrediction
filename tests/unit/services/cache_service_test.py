@@ -3,10 +3,6 @@ Issue #83 阶段3: services.cache_service 全面测试
 优先级: HIGH - 缓存服务核心
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 

@@ -5,7 +5,6 @@
 from datetime import datetime
 
 import pytest
-from pydantic import ValidationError
 
 from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
@@ -172,9 +171,7 @@ class TestAPIResponse:
     def test_error_response_alias(self):
         """测试错误响应别名方法"""
         error_data = {"type": "validation"}
-        _result = APIResponse.error_response(
-            message="别名错误", code=422, _data=error_data
-        )
+        _result = APIResponse.error_response(message="别名错误", code=422, _data=error_data)
 
         assert _result["success"] is False
         assert _result["message"] == "别名错误"

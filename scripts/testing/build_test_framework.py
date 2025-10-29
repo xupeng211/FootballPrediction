@@ -549,9 +549,7 @@ class TestPredictionService:
         service.db.execute.assert_called_once()
         service.db.commit.assert_called_once()
 '''
-        service_test_path = (
-            self.tests_dir / "unit" / "services" / "test_prediction_service.py"
-        )
+        service_test_path = self.tests_dir / "unit" / "services" / "test_prediction_service.py"
         with open(service_test_path, "w", encoding="utf-8") as f:
             f.write(service_test_template)
 
@@ -811,9 +809,7 @@ class PredictionFactory(BaseFactory):
         if self.status == "completed" and not self.result:
             self.result = f"{self.predicted_home_score}-{self.predicted_away_score}"
 '''
-        with open(
-            self.factories_dir / "prediction_factory.py", "w", encoding="utf-8"
-        ) as f:
+        with open(self.factories_dir / "prediction_factory.py", "w", encoding="utf-8") as f:
             f.write(prediction_factory)
 
         print("✅ 测试数据工厂创建完成")

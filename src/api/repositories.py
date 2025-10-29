@@ -42,9 +42,7 @@ async def get_predictions(
     if match_id:
         filters["match_id"] = match_id
 
-    query_spec = QuerySpec(
-        filters=filters, order_by=["-created_at"], limit=limit, offset=offset
-    )
+    query_spec = QuerySpec(filters=filters, order_by=["-created_at"], limit=limit, offset=offset)
 
     predictions = await repo.find_many(query_spec)
     return {
@@ -65,9 +63,7 @@ async def get_predictions(
 
 
 @router.get("/predictions/{prediction_id}", summary="获取单个预测")
-async def get_prediction(
-    prediction_id: int, repo: ReadOnlyPredictionRepoDep
-) -> Dict[str, Any]:
+async def get_prediction(prediction_id: int, repo: ReadOnlyPredictionRepoDep) -> Dict[str, Any]:
     """获取单个预测详情"""
     _prediction = await repo.get_by_id(prediction_id)
     if not prediction:
@@ -161,9 +157,7 @@ async def get_users(
     if is_active is not None:
         filters["is_active"] = is_active
 
-    query_spec = QuerySpec(
-        filters=filters, order_by=["username"], limit=limit, offset=offset
-    )
+    query_spec = QuerySpec(filters=filters, order_by=["username"], limit=limit, offset=offset)
 
     users = await repo.find_many(query_spec)
     return {
@@ -286,9 +280,7 @@ async def get_matches(
     if status:
         filters["status"] = status
 
-    query_spec = QuerySpec(
-        filters=filters, order_by=["-match_date"], limit=limit, offset=offset
-    )
+    query_spec = QuerySpec(filters=filters, order_by=["-match_date"], limit=limit, offset=offset)
 
     _matches = await repo.find_many(query_spec)
     return {

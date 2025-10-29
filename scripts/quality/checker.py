@@ -133,9 +133,7 @@ class QualityChecker:
     def _backup_files(self) -> Tuple[bool, str, Dict]:
         """备份文件"""
         try:
-            backup_dir = (
-                self.project_root / "backup" / datetime.now().strftime("%Y%m%d_%H%M%S")
-            )
+            backup_dir = self.project_root / "backup" / datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_dir.mkdir(parents=True, exist_ok=True)
 
             # 备份Python文件
@@ -254,9 +252,7 @@ class QualityChecker:
             if result.returncode == 0:
                 return True, "代码风格检查通过", {"issues": []}
             else:
-                issues = (
-                    result.stdout.strip().split("\n") if result.stdout.strip() else []
-                )
+                issues = result.stdout.strip().split("\n") if result.stdout.strip() else []
                 return (
                     False,
                     f"发现 {len(issues)} 个风格问题",
@@ -305,9 +301,7 @@ class QualityChecker:
             if result.returncode == 0:
                 return True, "代码风格检查通过", {"issues": []}
             else:
-                issues = (
-                    result.stdout.strip().split("\n") if result.stdout.strip() else []
-                )
+                issues = result.stdout.strip().split("\n") if result.stdout.strip() else []
                 return (
                     False,
                     f"发现 {len(issues)} 个风格问题",
@@ -355,9 +349,7 @@ class QualityChecker:
             if result.returncode == 0:
                 return True, "类型检查通过", {"issues": []}
             else:
-                issues = (
-                    result.stdout.strip().split("\n") if result.stdout.strip() else []
-                )
+                issues = result.stdout.strip().split("\n") if result.stdout.strip() else []
                 return (
                     False,
                     f"发现 {len(issues)} 个类型问题",
@@ -463,15 +455,11 @@ class QualityChecker:
             if report_result.returncode == 0:
                 try:
                     # 读取生成的coverage.json文件
-                    coverage_json_path = os.path.join(
-                        self.project_root, "coverage.json"
-                    )
+                    coverage_json_path = os.path.join(self.project_root, "coverage.json")
                     if os.path.exists(coverage_json_path):
                         with open(coverage_json_path, "r", encoding="utf-8") as f:
                             coverage_data = json.load(f)
-                        total_coverage = coverage_data.get("totals", {}).get(
-                            "percent_covered", 0
-                        )
+                        total_coverage = coverage_data.get("totals", {}).get("percent_covered", 0)
                     else:
                         return (
                             False,
@@ -699,9 +687,7 @@ class QualityChecker:
 
         for check_id, check_result in self.results["checks"].items():
             status = "✅" if check_result["success"] else "❌"
-            self.logger.info(
-                f"   {status} {check_result['name']}: {check_result['message']}"
-            )
+            self.logger.info(f"   {status} {check_result['name']}: {check_result['message']}")
 
 
 def main():
@@ -711,9 +697,7 @@ def main():
     parser = argparse.ArgumentParser(description="代码质量检查器")
     parser.add_argument("--project-root", default=".", help="项目根目录")
     parser.add_argument("--max-retries", type=int, default=3, help="最大重试次数")
-    parser.add_argument(
-        "--output", default="logs/quality_check.json", help="结果输出文件"
-    )
+    parser.add_argument("--output", default="logs/quality_check.json", help="结果输出文件")
     parser.add_argument("--summary", action="store_true", help="显示摘要")
 
     args = parser.parse_args()

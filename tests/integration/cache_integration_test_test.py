@@ -3,12 +3,6 @@ Issue #83 阶段3: integration.cache_integration_test 全面测试
 优先级: MEDIUM - 缓存集成测试
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
-import pytest
-
 # 集成测试 - 多模块协作测试
 IMPORTS_AVAILABLE = True
 

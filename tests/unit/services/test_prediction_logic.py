@@ -229,13 +229,9 @@ class TestPredictionValidation:
     def test_match_time_validation(self):
         """测试比赛时间验证"""
 
-        def validate_match_time(
-            match_time: datetime, prediction_time: datetime
-        ) -> bool:
+        def validate_match_time(match_time: datetime, prediction_time: datetime) -> bool:
             """验证预测时间是否在比赛开始前"""
-            if not isinstance(match_time, datetime) or not isinstance(
-                prediction_time, datetime
-            ):
+            if not isinstance(match_time, datetime) or not isinstance(prediction_time, datetime):
                 return False
             # 必须在比赛开始前至少1小时预测
             time_diff = match_time - prediction_time

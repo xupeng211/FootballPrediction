@@ -25,9 +25,7 @@ class AdapterRegistry:
             {"create_adapter": lambda self, cls, config=None: cls(config)},
         )()
 
-    def register(
-        self, name: str, adapter_class: Type, group: Optional[str] = None
-    ) -> None:
+    def register(self, name: str, adapter_class: Type, group: Optional[str] = None) -> None:
         """注册适配器"""
         if name in self.adapters:
             raise AdapterError(f"Adapter '{name}' already registered")

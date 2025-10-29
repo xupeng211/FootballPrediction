@@ -25,10 +25,7 @@ except ImportError as e:
     sys.exit(1)
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -57,7 +54,7 @@ class QualityGuardian:
             "test_health": 0,
             "security": 0,
             "recommendations": [],
-            "action_items": []
+            "action_items": [],
         }
 
     def run_full_quality_check(self) -> Dict[str, Any]:
@@ -110,15 +107,26 @@ class QualityGuardian:
             "mypy_errors": 0,
             "test_count": 0,
             "test_pass_rate": 0,
-            "files_count": 0
+            "files_count": 0,
         }
 
         # 覆盖率
         try:
-            result = subprocess.run([
-                sys.executable, "-m", "pytest", "tests/unit/api/test_health.py",
-                "--cov=src/", "--cov-report=json", "--tb=short", "-q"
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/unit/api/test_health.py",
+                    "--cov=src/",
+                    "--cov-report=json",
+                    "--tb=short",
+                    "-q",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             coverage_file = self.project_root / "coverage.json"
             if coverage_file.exists():
@@ -130,9 +138,12 @@ class QualityGuardian:
 
         # Ruff错误
         try:
-            result = subprocess.run([
-                "ruff", "check", "src/", "--output-format=json"
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["ruff", "check", "src/", "--output-format=json"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
             if result.stdout.strip():
                 ruff_data = json.loads(result.stdout)
                 metrics["ruff_errors"] = len(ruff_data)
@@ -141,9 +152,12 @@ class QualityGuardian:
 
         # MyPy错误
         try:
-            result = subprocess.run([
-                sys.executable, "-m", "mypy", "src/", "--show-error-codes"
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [sys.executable, "-m", "mypy", "src/", "--show-error-codes"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
             mypy_output = result.stderr
             metrics["mypy_errors"] = mypy_output.count("error:")
         except Exception as e:
@@ -162,7 +176,7 @@ class QualityGuardian:
             "complexity": "unknown",
             "maintainability": "unknown",
             "duplication": "unknown",
-            "issues": []
+            "issues": [],
         }
 
         # 基于Ruff和MyPy结果计算质量分数
@@ -190,7 +204,7 @@ class QualityGuardian:
             "coverage_adequacy": "insufficient",
             "test_distribution": "unknown",
             "flaky_tests": 0,
-            "recommendations": []
+            "recommendations": [],
         }
 
         coverage = self.quality_status.get("coverage", 0)
@@ -228,15 +242,15 @@ class QualityGuardian:
             "vulnerabilities": 0,
             "secrets_found": 0,
             "dependencies_risk": "unknown",
-            "recommendations": []
+            "recommendations": [],
         }
 
         # 基础安全检查（简化版）
         try:
             # 检查明显的安全问题
-            result = subprocess.run([
-                "bandit", "-r", "src/", "-f", "json"
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["bandit", "-r", "src/", "-f", "json"], capture_output=True, text=True, timeout=30
+            )
 
             if result.stdout.strip():
                 try:
@@ -266,18 +280,13 @@ class QualityGuardian:
     def _assess_overall_quality(self, metrics, code_quality, test_health, security):
         """评估综合质量"""
         # 计算综合分数
-        weights = {
-            "code_quality": 0.3,
-            "test_health": 0.4,
-            "security": 0.2,
-            "coverage": 0.1
-        }
+        weights = {"code_quality": 0.3, "test_health": 0.4, "security": 0.2, "coverage": 0.1}
 
         overall_score = (
-            code_quality["score"] * weights["code_quality"] +
-            test_health["score"] * weights["test_health"] +
-            security["score"] * weights["security"] +
-            (metrics.get("coverage", 0) / 10) * weights["coverage"]
+            code_quality["score"] * weights["code_quality"]
+            + test_health["score"] * weights["test_health"]
+            + security["score"] * weights["security"]
+            + (metrics.get("coverage", 0) / 10) * weights["coverage"]
         )
 
         self.quality_status["overall_score"] = round(overall_score, 2)
@@ -288,12 +297,14 @@ class QualityGuardian:
             "timestamp": datetime.now().isoformat(),
             "quality_status": self.quality_status,
             "trends": self._analyze_quality_trends(),
-            "benchmarks": self._compare_with_benchmarks()
+            "benchmarks": self._compare_with_benchmarks(),
         }
 
         # 保存报告
-        report_file = self.reports_dir / f"quality_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        report_file = (
+            self.reports_dir / f"quality_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         logger.info(f"质量报告已保存: {report_file}")
@@ -304,7 +315,7 @@ class QualityGuardian:
         trends = {
             "coverage_trend": "stable",
             "quality_trend": "stable",
-            "recommendation": "持续监控"
+            "recommendation": "持续监控",
         }
 
         # 查找历史数据
@@ -332,32 +343,25 @@ class QualityGuardian:
     def _compare_with_benchmarks(self) -> Dict[str, Any]:
         """与基准比较"""
         benchmarks = {
-            "industry_average": {
-                "coverage": 75,
-                "code_quality": 7,
-                "security": 8
-            },
-            "project_targets": {
-                "coverage": 40,
-                "code_quality": 8,
-                "security": 9
-            }
+            "industry_average": {"coverage": 75, "code_quality": 7, "security": 8},
+            "project_targets": {"coverage": 40, "code_quality": 8, "security": 9},
         }
 
         current = {
             "coverage": self.quality_status.get("coverage", 0),
             "code_quality": self.quality_status.get("code_quality", 0),
-            "security": self.quality_status.get("security", 0)
+            "security": self.quality_status.get("security", 0),
         }
 
-        comparison = {
-            "vs_industry": {},
-            "vs_targets": {}
-        }
+        comparison = {"vs_industry": {}, "vs_targets": {}}
 
         for metric in ["coverage", "code_quality", "security"]:
-            comparison["vs_industry"][metric] = current[metric] - benchmarks["industry_average"][metric]
-            comparison["vs_targets"][metric] = current[metric] - benchmarks["project_targets"][metric]
+            comparison["vs_industry"][metric] = (
+                current[metric] - benchmarks["industry_average"][metric]
+            )
+            comparison["vs_targets"][metric] = (
+                current[metric] - benchmarks["project_targets"][metric]
+            )
 
         return comparison
 
@@ -372,52 +376,62 @@ class QualityGuardian:
         mypy_errors = self.quality_status.get("mypy_errors", 0)
 
         if overall_score < 5:
-            action_items.append({
-                "priority": "HIGH",
-                "category": "overall",
-                "action": "整体质量需要重大改进",
-                "details": "建议制定详细的质量改进计划"
-            })
+            action_items.append(
+                {
+                    "priority": "HIGH",
+                    "category": "overall",
+                    "action": "整体质量需要重大改进",
+                    "details": "建议制定详细的质量改进计划",
+                }
+            )
 
         if coverage < 20:
-            action_items.append({
-                "priority": "HIGH",
-                "category": "coverage",
-                "action": "提升测试覆盖率",
-                "details": f"当前覆盖率{coverage:.1f}%，建议优先为核心模块添加测试"
-            })
+            action_items.append(
+                {
+                    "priority": "HIGH",
+                    "category": "coverage",
+                    "action": "提升测试覆盖率",
+                    "details": f"当前覆盖率{coverage:.1f}%，建议优先为核心模块添加测试",
+                }
+            )
 
         if mypy_errors > 500:
-            action_items.append({
-                "priority": "HIGH",
-                "category": "type_safety",
-                "action": "修复MyPy类型错误",
-                "details": f"当前有{mypy_errors}个类型错误，建议分批修复"
-            })
+            action_items.append(
+                {
+                    "priority": "HIGH",
+                    "category": "type_safety",
+                    "action": "修复MyPy类型错误",
+                    "details": f"当前有{mypy_errors}个类型错误，建议分批修复",
+                }
+            )
 
         if code_quality < 6:
-            action_items.append({
-                "priority": "MEDIUM",
-                "category": "code_quality",
-                "action": "改进代码质量",
-                "details": "运行代码格式化和清理工具"
-            })
+            action_items.append(
+                {
+                    "priority": "MEDIUM",
+                    "category": "code_quality",
+                    "action": "改进代码质量",
+                    "details": "运行代码格式化和清理工具",
+                }
+            )
 
         # 添加预防性建议
-        action_items.extend([
-            {
-                "priority": "LOW",
-                "category": "prevention",
-                "action": "建立质量门禁",
-                "details": "在CI/CD中集成质量检查"
-            },
-            {
-                "priority": "LOW",
-                "category": "monitoring",
-                "action": "定期质量监控",
-                "details": "建立定期质量检查和报告机制"
-            }
-        ])
+        action_items.extend(
+            [
+                {
+                    "priority": "LOW",
+                    "category": "prevention",
+                    "action": "建立质量门禁",
+                    "details": "在CI/CD中集成质量检查",
+                },
+                {
+                    "priority": "LOW",
+                    "category": "monitoring",
+                    "action": "定期质量监控",
+                    "details": "建立定期质量检查和报告机制",
+                },
+            ]
+        )
 
         # 按优先级排序
         priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
@@ -449,7 +463,9 @@ class QualityGuardian:
 
         if self.quality_status.get("action_items"):
             print("\n📋 高优先级行动项:")
-            high_priority_items = [item for item in self.quality_status["action_items"] if item["priority"] == "HIGH"]
+            high_priority_items = [
+                item for item in self.quality_status["action_items"] if item["priority"] == "HIGH"
+            ]
             for item in high_priority_items[:3]:
                 print(f"  🚨 {item['action']}: {item['details']}")
 
@@ -523,7 +539,12 @@ def main():
     parser.add_argument("--check-only", action="store_true", help="仅执行质量检查")
     parser.add_argument("--fix-only", action="store_true", help="仅执行自动修复")
     parser.add_argument("--optimize-only", action="store_true", help="仅优化质量标准")
-    parser.add_argument("--fix-types", nargs="+", choices=["syntax", "imports", "mypy", "ruff", "tests"], help="指定修复类型")
+    parser.add_argument(
+        "--fix-types",
+        nargs="+",
+        choices=["syntax", "imports", "mypy", "ruff", "tests"],
+        help="指定修复类型",
+    )
 
     args = parser.parse_args()
 

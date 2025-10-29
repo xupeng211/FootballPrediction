@@ -11,11 +11,9 @@ Performance Monitoring Middleware Tests
 
 import asyncio
 import time
-from typing import Any, Dict
 
 import pytest
 from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.performance.middleware import (
     BackgroundTaskPerformanceMonitor,

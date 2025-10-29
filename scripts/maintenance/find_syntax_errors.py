@@ -7,6 +7,7 @@ import os
 import py_compile
 from pathlib import Path
 
+
 def find_syntax_errors(directory="tests/"):
     """找到所有语法错误的文件"""
     syntax_errors = []
@@ -27,6 +28,7 @@ def find_syntax_errors(directory="tests/"):
 
     return syntax_correct, syntax_errors
 
+
 def main():
     print("🔍 搜索所有测试文件中的语法错误...")
 
@@ -45,6 +47,7 @@ def main():
         print("\n✅ 所有测试文件语法正确!")
 
     return len(syntax_errors)
+
 
 if __name__ == "__main__":
     exit(main())

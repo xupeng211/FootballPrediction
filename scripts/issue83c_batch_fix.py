@@ -128,6 +128,7 @@ class MockContextManager:
         }
 '''
 
+
 def fix_test_file(input_file, output_file):
     """修复单个测试文件"""
 
@@ -135,31 +136,31 @@ def fix_test_file(input_file, output_file):
 
     try:
         # 读取原文件
-        with open(input_file, 'r', encoding='utf-8') as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 替换Mock导入部分
         # 找到Mock导入部分并替换为内联实现
-        mock_import_pattern = r'# Mock策略库导入.*?except ImportError:\s+MOCKS_AVAILABLE = False'
+        mock_import_pattern = r"# Mock策略库导入.*?except ImportError:\s+MOCKS_AVAILABLE = False"
 
-        new_import_section = f'''import os{MOCK_TEMPLATE}
+        new_import_section = f"""import os{MOCK_TEMPLATE}
 
-MOCKS_AVAILABLE = True  # 直接设置为可用，因为我们内联了Mock实现'''
+MOCKS_AVAILABLE = True  # 直接设置为可用，因为我们内联了Mock实现"""
 
         content = re.sub(mock_import_pattern, new_import_section, content, flags=re.DOTALL)
 
         # 替换类名，添加Fixed后缀
-        content = re.sub(r'class (Test\w+Issue83C):', r'class \1Fixed:', content)
+        content = re.sub(r"class (Test\w+Issue83C):", r"class \1Fixed:", content)
 
         # 修复fixture中的Mock检查
         content = re.sub(
             r'if not MOCKS_AVAILABLE:\s+pytest\.skip\("Mock策略库不可用"\)',
-            'pass  # Mock策略总是可用',
-            content
+            "pass  # Mock策略总是可用",
+            content,
         )
 
         # 写入新文件
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(content)
 
         print(f"✅ 修复完成: {output_file}")
@@ -168,6 +169,7 @@ MOCKS_AVAILABLE = True  # 直接设置为可用，因为我们内联了Mock实�
     except Exception as e:
         print(f"❌ 修复失败: {e}")
         return False
+
 
 def main():
     """批量修复所有测试文件"""
@@ -185,7 +187,7 @@ def main():
         "tests/unit/services/prediction_test_issue83c.py",
         "tests/unit/tasks/manager_test_issue83c.py",
         "tests/unit/cache/manager_test_issue83c.py",
-        "tests/unit/middleware/cache_test_issue83c.py"
+        "tests/unit/middleware/cache_test_issue83c.py",
     ]
 
     success_count = 0
@@ -194,7 +196,7 @@ def main():
     for test_file in test_files:
         if os.path.exists(test_file):
             # 生成输出文件名（添加_fixed后缀）
-            output_file = test_file.replace('.py', '_fixed.py')
+            output_file = test_file.replace(".py", "_fixed.py")
 
             if fix_test_file(test_file, output_file):
                 success_count += 1
@@ -209,6 +211,7 @@ def main():
         print("示例命令:")
         print("python -m pytest tests/unit/core/di_test_issue83c_fixed.py -v")
         print("python -m pytest tests/unit/*/*_fixed.py -v --tb=short")
+
 
 if __name__ == "__main__":
     main()

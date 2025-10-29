@@ -70,9 +70,7 @@ class TestFeaturesProcessorImports:
             fp.aggregator  # 访问属性
             # 检查是否有弃用警告
             deprecation_warnings = [
-                warning
-                for warning in w
-                if issubclass(warning.category, DeprecationWarning)
+                warning for warning in w if issubclass(warning.category, DeprecationWarning)
             ]
             assert len(deprecation_warnings) > 0
             assert "已弃用" in str(deprecation_warnings[0].message)
@@ -130,9 +128,7 @@ class TestFeaturesProcessorComponents:
             # 测试无效数据
             invalid_data = {}
             _result = validator.validate(invalid_data)
-            assert (
-                result is False or isinstance(result, dict) and "errors" in str(result)
-            )
+            assert result is False or isinstance(result, dict) and "errors" in str(result)
 
     def test_component_initialization(self):
         """测试：组件初始化"""
@@ -143,9 +139,7 @@ class TestFeaturesProcessorComponents:
                     instance = component()
                     assert instance is not None
                 except Exception as e:
-                    pytest.skip(
-                        f"Component {component.__name__} cannot be instantiated: {e}"
-                    )
+                    pytest.skip(f"Component {component.__name__} cannot be instantiated: {e}")
 
     def test_component_configuration(self):
         """测试：组件配置"""
@@ -199,9 +193,7 @@ class TestFeaturesProcessorIntegration:
             if validator.validate(data):
                 # 步骤2：计算
                 if hasattr(calculator, "calculate"):
-                    _stats = calculator.calculate(
-                        _data["raw_values"], operation="stats"
-                    )
+                    _stats = calculator.calculate(_data["raw_values"], operation="stats")
                     assert stats is not None
 
                 # 步骤3：处理

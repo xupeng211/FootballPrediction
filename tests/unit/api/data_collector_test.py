@@ -3,15 +3,10 @@ Issue #83 阶段3: api.data_collector 全面测试
 优先级: HIGH - 数据收集API
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
 try:
-    from api.data_collector import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

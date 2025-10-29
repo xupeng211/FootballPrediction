@@ -154,9 +154,7 @@ def fix_file_var_annotated(file_path, line_numbers):
                 # 查找变量赋值并添加类型注解
                 if "=" in line and "data" in line and "{}" in line:
                     # 替换 data = {} 为 data: Dict[str, Any] = {}
-                    line = re.sub(
-                        r"(\s*)data\s*=\s*{}", r"\1data: Dict[str, Any] = {}", line
-                    )
+                    line = re.sub(r"(\s*)data\s*=\s*{}", r"\1data: Dict[str, Any] = {}", line)
                     lines[line_num - 1] = line
 
         # 写回文件

@@ -93,9 +93,7 @@ async def get_observers() -> Dict[str, Any]:
 
     for name, observer in manager._observers.items():
         stats = observer.get_stats()
-        stats["observed_event_types"] = [
-            et.value for et in observer.get_observed_event_types()
-        ]
+        stats["observed_event_types"] = [et.value for et in observer.get_observed_event_types()]
         observers[name] = stats
 
     return {
@@ -134,9 +132,7 @@ async def get_alerts(
         raise HTTPException(status_code=404, detail="告警观察者未找到")
 
     since = datetime.utcnow() - timedelta(hours=hours)
-    alerts = alerting_observer.get_alert_history(
-        severity=severity, since=since, limit=limit
-    )
+    alerts = alerting_observer.get_alert_history(severity=severity, since=since, limit=limit)
 
     return {
         "alerts": alerts,
@@ -150,9 +146,7 @@ async def get_alerts(
 
 
 @router.post("/alerts", summary="手动触发告警")
-async def trigger_alert(
-    request: AlertRequest, background_tasks: BackgroundTasks
-) -> Dict[str, str]:
+async def trigger_alert(request: AlertRequest, background_tasks: BackgroundTasks) -> Dict[str, str]:
     """手动触发一个告警"""
     manager = get_observer_manager()
 

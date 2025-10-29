@@ -25,11 +25,8 @@ class UserFactory:
     def create_test_user(cls, user_id: int = 1) -> "UserFactory":
         """Create a test user"""
         import hashlib
-        import secrets
 
-        password_hash = hashlib.sha256(
-            "test_password".encode(), usedforsecurity=False
-        ).hexdigest()
+        password_hash = hashlib.sha256("test_password".encode(), usedforsecurity=False).hexdigest()
 
         return cls(
             id=user_id,

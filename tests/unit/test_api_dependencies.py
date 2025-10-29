@@ -5,11 +5,8 @@ API依赖注入测试
 """
 
 import os
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-
-from src.api.dependencies import get_current_user, validate_secret_key
 
 
 @pytest.mark.unit
@@ -141,9 +138,7 @@ class TestAPIDependencies:
             assert ALGORITHM == "HS256"
 
         # 测试自定义值
-        with patch.dict(
-            os.environ, {"JWT_SECRET_KEY": "custom-secret-key", "ALGORITHM": "RS256"}
-        ):
+        with patch.dict(os.environ, {"JWT_SECRET_KEY": "custom-secret-key", "ALGORITHM": "RS256"}):
             # 重新导入模块以测试环境变量
             import importlib
 

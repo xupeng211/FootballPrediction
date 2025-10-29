@@ -72,17 +72,13 @@ class DatabaseManager:
     def get_session(self) -> Session:
         """获取同步会话"""
         if not self.initialized or not self._session_factory:
-            raise RuntimeError(
-                "DatabaseManager is not initialized. Call initialize() first."
-            )
+            raise RuntimeError("DatabaseManager is not initialized. Call initialize() first.")
         return self._session_factory()
 
     def get_async_session(self) -> AsyncSession:
         """获取异步会话"""
         if not self.initialized or not self._async_session_factory:
-            raise RuntimeError(
-                "DatabaseManager is not initialized. Call initialize() first."
-            )
+            raise RuntimeError("DatabaseManager is not initialized. Call initialize() first.")
         return self._async_session_factory()
 
 

@@ -200,9 +200,7 @@ class EnhancedBaseService(ABC):
         finally:
             duration = time.time() - start_time
             self.metrics.record_call(duration, success)
-            self.logger.debug(
-                f"Operation {operation_name} completed in {duration:.3f}s"
-            )
+            self.logger.debug(f"Operation {operation_name} completed in {duration:.3f}s")
 
     def add_dependency(self, name: str, service: "EnhancedBaseService"):
         """添加依赖服务"""
@@ -237,9 +235,7 @@ class EnhancedBaseService(ABC):
         return None
 
     def __repr__(self) -> str:
-        return (
-            f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
-        )
+        return f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
 
 
 # 为了向后兼容，保留原有的BaseService类

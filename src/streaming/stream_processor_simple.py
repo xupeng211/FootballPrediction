@@ -9,9 +9,7 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 class StreamProcessor:
     """流处理器基类"""
 
-    def __init__(
-        self, consumer, producer, input_topics: List[str], output_topics: List[str]
-    ):
+    def __init__(self, consumer, producer, input_topics: List[str], output_topics: List[str]):
         self.consumer = consumer
         self.producer = producer
         self.input_topics = input_topics

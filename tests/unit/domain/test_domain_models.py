@@ -1,8 +1,5 @@
 """测试领域模型模块"""
 
-from datetime import date, datetime
-from unittest.mock import Mock, patch
-
 import pytest
 
 try:
@@ -519,9 +516,7 @@ class TestDomainModels:
                 status="SCHEDULED",
             )
 
-            prediction = Prediction(
-                id=1, match_id=match.id, user_id=1, predicted_result="HOME_WIN"
-            )
+            prediction = Prediction(id=1, match_id=match.id, user_id=1, predicted_result="HOME_WIN")
 
             # 验证所有模型都创建成功
             assert league is not None

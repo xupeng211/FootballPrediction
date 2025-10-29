@@ -9,7 +9,8 @@ import sys
 from datetime import datetime
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 class TestModelsPredictionFixed:
     """修复版的预测模型测试类"""
@@ -24,7 +25,7 @@ class TestModelsPredictionFixed:
             predicted_result="home_win",
             confidence=0.75,
             prediction_time=datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
         assert prediction is not None
 
@@ -43,7 +44,7 @@ class TestModelsPredictionFixed:
         features = {
             "home_team_strength": 0.8,
             "away_team_strength": 0.6,
-            "historical_performance": 0.7
+            "historical_performance": 0.7,
         }
 
         prediction = PredictionResult(
@@ -52,7 +53,7 @@ class TestModelsPredictionFixed:
             confidence=0.65,
             prediction_time=datetime.utcnow(),
             model_version="v1.0.0",
-            features=features
+            features=features,
         )
 
         assert prediction.features == features
@@ -68,7 +69,7 @@ class TestModelsPredictionFixed:
             predicted_result="home_win",
             confidence=0.75,
             prediction_time=datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         # 测试缓存设置和获取
@@ -107,10 +108,10 @@ class TestModelsPredictionFixed:
         service = PredictionService()
 
         # 测试服务存在方法
-        assert hasattr(service, 'predict_match')
-        assert hasattr(service, 'batch_predict_matches')
-        assert hasattr(service, 'verify_prediction')
-        assert hasattr(service, 'get_prediction_statistics')
+        assert hasattr(service, "predict_match")
+        assert hasattr(service, "batch_predict_matches")
+        assert hasattr(service, "verify_prediction")
+        assert hasattr(service, "get_prediction_statistics")
 
     def test_prediction_service_async_methods(self):
         """测试预测服务异步方法"""
@@ -137,7 +138,7 @@ class TestModelsPredictionFixed:
             prediction_duration_seconds,
             prediction_accuracy,
             model_load_duration_seconds,
-            cache_hit_ratio
+            cache_hit_ratio,
         )
 
         # 测试Counter指标
@@ -176,6 +177,7 @@ class TestModelsPredictionFixed:
         assert gauge.name == "test_gauge"
         assert gauge.description == "Test gauge"
         assert gauge() == 0.0
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

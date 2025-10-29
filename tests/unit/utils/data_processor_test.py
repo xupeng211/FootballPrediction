@@ -3,15 +3,10 @@ Issue #83 阶段3: utils.data_processor 全面测试
 优先级: MEDIUM - 数据处理工具
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
 try:
-    from utils.data_processor import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

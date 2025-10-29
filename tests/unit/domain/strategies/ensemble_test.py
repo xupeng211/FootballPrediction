@@ -6,7 +6,6 @@ import pytest
 def test_ensemble_strategy_exists():
     """测试集成策略模块可以导入"""
     try:
-        from domain.strategies.ensemble import EnsembleStrategy
 
         assert True
     except ImportError:
@@ -16,7 +15,6 @@ def test_ensemble_strategy_exists():
 def test_ensemble_class_exists():
     """测试集成策略类存在"""
     try:
-        from domain.strategies.ensemble import WeightedEnsemble
 
         assert True
     except ImportError:

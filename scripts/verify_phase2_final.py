@@ -64,9 +64,7 @@ def main():
     if total_run > 100:
         # 估算整个项目（假设有6919个测试）
         total_tests = 6919
-        estimated_skipped = int(
-            (total_skipped / (total_skipped + total_run)) * total_tests
-        )
+        estimated_skipped = int((total_skipped / (total_skipped + total_run)) * total_tests)
 
         print("\n估算整个项目:")
         print(f"  估算跳过: {estimated_skipped}")

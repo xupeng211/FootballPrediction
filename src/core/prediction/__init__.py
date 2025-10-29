@@ -22,9 +22,7 @@ class PredictionStatistics:
         if is_correct:
             self.correct_predictions += 1
         self.accuracy = (
-            self.correct_predictions / self.total_predictions
-            if self.total_predictions > 0
-            else 0.0
+            self.correct_predictions / self.total_predictions if self.total_predictions > 0 else 0.0
         )
 
 

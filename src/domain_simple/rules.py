@@ -287,9 +287,7 @@ class BusinessRules:
         rules.append(
             BusinessRule(
                 name="non_empty_name",
-                condition=lambda t: hasattr(t, "name")
-                and t.name
-                and len(t.name.strip()) > 0,
+                condition=lambda t: hasattr(t, "name") and t.name and len(t.name.strip()) > 0,
                 error_message="Team name cannot be empty",
                 description="Ensures team has a valid name",
             )
@@ -299,8 +297,7 @@ class BusinessRules:
         rules.append(
             BusinessRule(
                 name="valid_founding_year",
-                condition=lambda t: t.founded_year is None
-                or t.founded_year <= datetime.now().year,
+                condition=lambda t: t.founded_year is None or t.founded_year <= datetime.now().year,
                 error_message="Founding year cannot be in the future",
                 description="Ensures founding year is valid",
             )

@@ -1,7 +1,6 @@
 """测试工具类方法"""
 
 from datetime import datetime, timedelta
-from decimal import Decimal
 
 import pytest
 

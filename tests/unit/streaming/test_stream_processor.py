@@ -2,20 +2,17 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 Tests for streaming.stream_processor
 Auto-generated test file
 """
 
-import asyncio
 
 import pytest
 
 # Test imports
 try:
-    from streaming.stream_processor import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

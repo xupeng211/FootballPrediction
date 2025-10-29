@@ -8,7 +8,7 @@ REDIS_CLUSTER_CONFIG = {
     "nodes": [
         {"host": "localhost", "port": 6379},
         {"host": "localhost", "port": 6380},
-        {"host": "localhost", "port": 6381}
+        {"host": "localhost", "port": 6381},
     ],
     "password": None,
     "decode_responses": False,
@@ -16,7 +16,7 @@ REDIS_CLUSTER_CONFIG = {
     "socket_keepalive_options": {},
     "retry_on_timeout": True,
     "health_check_interval": 30,
-    "max_connections": 100
+    "max_connections": 100,
 }
 
 # 分布式缓存配置
@@ -25,18 +25,16 @@ DISTRIBUTED_CACHE_CONFIG = {
     "cache_sharding": {
         "enabled": True,
         "sharding_strategy": "consistent_hashing",
-        "hash_tag": "football_prediction"
+        "hash_tag": "football_prediction",
     },
-    "cache_replication": {
-        "enabled": True,
-        "replication_factor": 2
-    },
+    "cache_replication": {"enabled": True, "replication_factor": 2},
     "cache_persistence": {
         "enabled": True,
         "save_interval": 300,
-        "backup_directory": "/var/lib/redis/backups"
-    }
+        "backup_directory": "/var/lib/redis/backups",
+    },
 }
+
 
 # 分布式缓存使用示例
 class DistributedCache:
@@ -60,6 +58,7 @@ class DistributedCache:
         print(f"使集群缓存失效: {pattern}")
         # 这里应该是实际的Redis集群失效实现
         pass
+
 
 # 全局分布式缓存实例
 distributed_cache = DistributedCache()

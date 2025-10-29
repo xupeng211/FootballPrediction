@@ -17,14 +17,10 @@ def enable_all_health_tests():
 
     # 简单地移除所有的 pytest.skip 调用
     # 替换所有 "if not HEALTH_AVAILABLE: pytest.skip(...)" 为 pass
-    content = re.sub(
-        r"if not HEALTH_AVAILABLE:\s*pytest\.skip\([^\)]+\)\s*\n", "", content
-    )
+    content = re.sub(r"if not HEALTH_AVAILABLE:\s*pytest\.skip\([^\)]+\)\s*\n", "", content)
 
     # 同时移除模块级别的 skipif 装饰器（如果有的话）
-    content = re.sub(
-        r"@pytest\.mark\.skipif\(not HEALTH_AVAILABLE, [^\)]+\)\s*\n", "", content
-    )
+    content = re.sub(r"@pytest\.mark\.skipif\(not HEALTH_AVAILABLE, [^\)]+\)\s*\n", "", content)
 
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)

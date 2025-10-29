@@ -22,142 +22,138 @@ class ExtendedTestGenerator:
         """获取20个目标模块的配置"""
         return {
             # Core模块 (4个)
-            'core.di': {
-                'category': 'core',
-                'mocks': ['di', 'config'],
-                'priority': 'high',
-                'complexity': 'high'
+            "core.di": {
+                "category": "core",
+                "mocks": ["di", "config"],
+                "priority": "high",
+                "complexity": "high",
             },
-            'core.config': {
-                'category': 'core',
-                'mocks': ['config', 'database'],
-                'priority': 'high',
-                'complexity': 'medium'
+            "core.config": {
+                "category": "core",
+                "mocks": ["config", "database"],
+                "priority": "high",
+                "complexity": "medium",
             },
-            'core.logging': {
-                'category': 'core',
-                'mocks': ['config'],
-                'priority': 'medium',
-                'complexity': 'low'
+            "core.logging": {
+                "category": "core",
+                "mocks": ["config"],
+                "priority": "medium",
+                "complexity": "low",
             },
-            'core.exceptions': {
-                'category': 'core',
-                'mocks': [],
-                'priority': 'medium',
-                'complexity': 'low'
+            "core.exceptions": {
+                "category": "core",
+                "mocks": [],
+                "priority": "medium",
+                "complexity": "low",
             },
-
             # API模块 (6个)
-            'api.data_router': {
-                'category': 'api',
-                'mocks': ['api', 'database', 'redis'],
-                'priority': 'high',
-                'complexity': 'high'
+            "api.data_router": {
+                "category": "api",
+                "mocks": ["api", "database", "redis"],
+                "priority": "high",
+                "complexity": "high",
             },
-            'api.cqrs': {
-                'category': 'api',
-                'mocks': ['api', 'cqrs', 'database'],
-                'priority': 'high',
-                'complexity': 'high'
+            "api.cqrs": {
+                "category": "api",
+                "mocks": ["api", "cqrs", "database"],
+                "priority": "high",
+                "complexity": "high",
             },
-            'api.predictions.router': {
-                'category': 'api',
-                'mocks': ['api', 'services', 'database'],
-                'priority': 'medium',
-                'complexity': 'medium'
+            "api.predictions.router": {
+                "category": "api",
+                "mocks": ["api", "services", "database"],
+                "priority": "medium",
+                "complexity": "medium",
             },
-            'api.repositories': {
-                'category': 'api',
-                'mocks': ['api', 'database'],
-                'priority': 'medium',
-                'complexity': 'medium'
+            "api.repositories": {
+                "category": "api",
+                "mocks": ["api", "database"],
+                "priority": "medium",
+                "complexity": "medium",
             },
-            'api.facades': {
-                'category': 'api',
-                'mocks': ['api', 'services'],
-                'priority': 'medium',
-                'complexity': 'medium'
+            "api.facades": {
+                "category": "api",
+                "mocks": ["api", "services"],
+                "priority": "medium",
+                "complexity": "medium",
             },
-            'api.events': {
-                'category': 'api',
-                'mocks': ['api', 'cqrs'],
-                'priority': 'medium',
-                'complexity': 'low'
+            "api.events": {
+                "category": "api",
+                "mocks": ["api", "cqrs"],
+                "priority": "medium",
+                "complexity": "low",
             },
-
             # Database模块 (5个)
-            'database.config': {
-                'category': 'database',
-                'mocks': ['database', 'config'],
-                'priority': 'high',
-                'complexity': 'medium'
+            "database.config": {
+                "category": "database",
+                "mocks": ["database", "config"],
+                "priority": "high",
+                "complexity": "medium",
             },
-            'database.definitions': {
-                'category': 'database',
-                'mocks': ['database'],
-                'priority': 'high',
-                'complexity': 'medium'
+            "database.definitions": {
+                "category": "database",
+                "mocks": ["database"],
+                "priority": "high",
+                "complexity": "medium",
             },
-            'database.models.match': {
-                'category': 'database',
-                'mocks': ['database'],
-                'priority': 'medium',
-                'complexity': 'medium'
+            "database.models.match": {
+                "category": "database",
+                "mocks": ["database"],
+                "priority": "medium",
+                "complexity": "medium",
             },
-            'database.models.user': {
-                'category': 'database',
-                'mocks': ['database'],
-                'priority': 'medium',
-                'complexity': 'low'
+            "database.models.user": {
+                "category": "database",
+                "mocks": ["database"],
+                "priority": "medium",
+                "complexity": "low",
             },
-            'database.repositories.base': {
-                'category': 'database',
-                'mocks': ['database'],
-                'priority': 'medium',
-                'complexity': 'high'
+            "database.repositories.base": {
+                "category": "database",
+                "mocks": ["database"],
+                "priority": "medium",
+                "complexity": "high",
             },
-
             # Services模块 (3个)
-            'services.prediction': {
-                'category': 'services',
-                'mocks': ['services', 'database', 'redis'],
-                'priority': 'high',
-                'complexity': 'high'
+            "services.prediction": {
+                "category": "services",
+                "mocks": ["services", "database", "redis"],
+                "priority": "high",
+                "complexity": "high",
             },
-            'services.data_processing': {
-                'category': 'services',
-                'mocks': ['services', 'database'],
-                'priority': 'medium',
-                'complexity': 'high'
+            "services.data_processing": {
+                "category": "services",
+                "mocks": ["services", "database"],
+                "priority": "medium",
+                "complexity": "high",
             },
-            'services.cache': {
-                'category': 'services',
-                'mocks': ['services', 'redis', 'async'],
-                'priority': 'medium',
-                'complexity': 'medium'
+            "services.cache": {
+                "category": "services",
+                "mocks": ["services", "redis", "async"],
+                "priority": "medium",
+                "complexity": "medium",
             },
-
             # CQRS模块 (2个)
-            'cqrs.application': {
-                'category': 'cqrs',
-                'mocks': ['cqrs', 'database'],
-                'priority': 'medium',
-                'complexity': 'high'
+            "cqrs.application": {
+                "category": "cqrs",
+                "mocks": ["cqrs", "database"],
+                "priority": "medium",
+                "complexity": "high",
             },
-            'cqrs.handlers': {
-                'category': 'cqrs',
-                'mocks': ['cqrs', 'services'],
-                'priority': 'medium',
-                'complexity': 'medium'
-            }
+            "cqrs.handlers": {
+                "category": "cqrs",
+                "mocks": ["cqrs", "services"],
+                "priority": "medium",
+                "complexity": "medium",
+            },
         }
 
     def generate_extended_test(self, module_name: str, module_info: Dict) -> str:
         """生成扩展测试文件内容"""
-        category = module_info['category']
-        mocks = module_info['mocks']
-        complexity = module_info['complexity']
-        priority = module_info['priority']
+        category = module_info["category"]
+        mocks = module_info["mocks"]
+        complexity = module_info["complexity"]
+        priority = module_info["priority"]
 
         # 基础文件头
         test_content = f'''"""
@@ -540,21 +536,21 @@ class EnhancedMockContextManager:
 
     def _class_name(self, module_name: str) -> str:
         """生成类名"""
-        return module_name.replace('.', '').title().replace('_', '') + 'Extended'
+        return module_name.replace(".", "").title().replace("_", "") + "Extended"
 
     def _get_function_test_count(self, complexity: str) -> int:
         """根据复杂度获取函数测试数量"""
-        counts = {'low': 2, 'medium': 3, 'high': 5}
+        counts = {"low": 2, "medium": 3, "high": 5}
         return counts.get(complexity, 3)
 
     def _get_class_test_count(self, complexity: str) -> int:
         """根据复杂度获取类测试数量"""
-        counts = {'low': 1, 'medium': 2, 'high': 3}
+        counts = {"low": 1, "medium": 2, "high": 3}
         return counts.get(complexity, 2)
 
     def _generate_function_test_code(self, category: str, complexity: str) -> str:
         """生成函数测试代码"""
-        base_test = '''
+        base_test = """
                     # 智能参数生成
                     if func.__code__.co_argcount == 0:
                         result = func()
@@ -565,36 +561,45 @@ class EnhancedMockContextManager:
                     else:
                         result = func({"test": "data"})
                         print(f"   函数 {func_name}({{'test': 'data'}}): {type(result)}")
-'''
+"""
 
         # 根据类别添加特定测试
-        if category == 'api':
-            return base_test + '''
+        if category == "api":
+            return (
+                base_test
+                + """
                     # API特定测试
                     if 'api' in self.mocks:
                         client = self.mocks['api']['client']
                         assert client is not None
-'''
-        elif category == 'database':
-            return base_test + '''
+"""
+            )
+        elif category == "database":
+            return (
+                base_test
+                + """
                     # 数据库特定测试
                     if 'database' in self.mocks:
                         session = self.mocks['database']['session']
                         assert session is not None
-'''
-        elif category == 'services':
-            return base_test + '''
+"""
+            )
+        elif category == "services":
+            return (
+                base_test
+                + """
                     # 服务特定测试
                     if 'services' in self.mocks:
                         service = self.mocks['services']['prediction_service']
                         assert service is not None
-'''
+"""
+            )
         else:
             return base_test
 
     def _generate_class_test_code(self, category: str, complexity: str) -> str:
         """生成类测试代码"""
-        base_test = '''
+        base_test = """
                     # 根据构造函数参数决定实例化策略
                     init_args = cls.__init__.__code__.co_argcount - 1
 
@@ -620,13 +625,13 @@ class EnhancedMockContextManager:
                             print(f"      方法 {method_name}: {type(result)}")
                         except Exception as me:
                             print(f"      方法 {method_name} 异常: {type(me).__name__}")
-'''
+"""
         return base_test
 
     def _generate_integration_test_code(self, category: str) -> str:
         """生成集成测试代码"""
-        if category == 'core':
-            return '''
+        if category == "core":
+            return """
             print("🔧 核心模块集成测试")
             if 'di' in self.mocks:
                 di_data = self.mocks['di']
@@ -634,9 +639,9 @@ class EnhancedMockContextManager:
             if 'config' in self.mocks:
                 config_data = self.mocks['config']
                 assert 'app_config' in config_data
-'''
-        elif category == 'api':
-            return '''
+"""
+        elif category == "api":
+            return """
             print("🌐 API模块集成测试")
             if 'api' in self.mocks:
                 api_data = self.mocks['api']
@@ -644,17 +649,17 @@ class EnhancedMockContextManager:
             if 'database' in self.mocks:
                 db_data = self.mocks['database']
                 assert 'session' in db_data
-'''
-        elif category == 'database':
-            return '''
+"""
+        elif category == "database":
+            return """
             print("🗄️ 数据库模块集成测试")
             if 'database' in self.mocks:
                 db_data = self.mocks['database']
                 assert 'engine' in db_data
                 assert 'pool' in db_data
-'''
-        elif category == 'services':
-            return '''
+"""
+        elif category == "services":
+            return """
             print("⚙️ 服务模块集成测试")
             if 'services' in self.mocks:
                 services_data = self.mocks['services']
@@ -662,26 +667,26 @@ class EnhancedMockContextManager:
             if 'redis' in self.mocks:
                 redis_data = self.mocks['redis']
                 assert 'client' in redis_data
-'''
-        elif category == 'cqrs':
-            return '''
+"""
+        elif category == "cqrs":
+            return """
             print("📋 CQRS模块集成测试")
             if 'cqrs' in self.mocks:
                 cqrs_data = self.mocks['cqrs']
                 assert 'command_bus' in cqrs_data
                 assert 'query_bus' in cqrs_data
-'''
+"""
         else:
-            return '''
+            return """
             print("🔧 通用模块集成测试")
             test_data = {"module": "{module_name}", "status": "testing"}
             assert test_data["status"] == "testing"
-'''
+"""
 
     def create_extended_test_file(self, module_name: str, module_info: Dict) -> str:
         """创建扩展测试文件"""
         # 生成测试文件路径
-        test_dir = Path("tests/unit") / module_info['category']
+        test_dir = Path("tests/unit") / module_info["category"]
         test_dir.mkdir(parents=True, exist_ok=True)
 
         self._class_name(module_name)
@@ -707,7 +712,7 @@ class EnhancedMockContextManager:
                 test_file, test_content = self.create_extended_test_file(module_name, module_info)
 
                 # 写入测试文件
-                with open(test_file, 'w', encoding='utf-8') as f:
+                with open(test_file, "w", encoding="utf-8") as f:
                     f.write(test_content)
 
                 print(f"   ✅ 生成成功: {test_file}")

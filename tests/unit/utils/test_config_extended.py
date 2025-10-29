@@ -49,9 +49,7 @@ class TestConfigExtended:
 
     def test_settings_with_custom_urls(self):
         """测试自定义URLs"""
-        with patch.dict(
-            os.environ, {"API_V1_STR": "/api/v2", "PROJECT_NAME": "Test Project"}
-        ):
+        with patch.dict(os.environ, {"API_V1_STR": "/api/v2", "PROJECT_NAME": "Test Project"}):
             settings = Settings()
             assert settings.api_v1_str == "/api/v2"
             assert settings.project_name == "Test Project"
@@ -60,9 +58,7 @@ class TestConfigExtended:
         """测试CORS origins配置"""
         with patch.dict(
             os.environ,
-            {
-                "BACKEND_CORS_ORIGINS": '["http://localhost:3000", "https://example.com"]'
-            },
+            {"BACKEND_CORS_ORIGINS": '["http://localhost:3000", "https://example.com"]'},
         ):
             settings = Settings()
             assert "http://localhost:3000" in settings.backend_cors_origins

@@ -250,9 +250,7 @@ def system_health_check_task() -> Dict[str, Any]:
         try:
             # 2. 检查Redis连接
 
-            redis_client = redis.from_url(
-                os.getenv("REDIS_URL", "redis://localhost:6379/0")
-            )
+            redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
             redis_client.ping()
             health_status["redis"] = {"status": "healthy", "message": "Redis连接正常"}
 
@@ -381,9 +379,7 @@ def database_maintenance_task() -> Dict[str, Any]:
 
                 result = await session.execute(table_size_query)
                 rows = await result.fetchall()
-                table_sizes = [
-                    {"table": row.table_name, "size": row.size} for row in rows
-                ]
+                table_sizes = [{"table": row.table_name, "size": row.size} for row in rows]
                 maintenance_results["table_sizes"] = table_sizes
 
                 await session.commit()

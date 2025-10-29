@@ -212,11 +212,7 @@ class TestDictUtilsComprehensive:
         data = {"apple": 1, "banana": 2, "cherry": 3, "apricot": 4}
         result = DictUtils.group_by_first_char(data)
 
-        expected = {
-            "A": {"apple": 1, "apricot": 4},
-            "B": {"banana": 2},
-            "C": {"cherry": 3}
-        }
+        expected = {"A": {"apple": 1, "apricot": 4}, "B": {"banana": 2}, "C": {"cherry": 3}}
         assert result == expected
 
     def test_validate_required_keys_success(self):
@@ -279,15 +275,32 @@ class TestDictUtilsComprehensive:
     def test_all_methods_exist(self):
         """测试所有方法都存在"""
         methods = [
-            'deep_merge', 'flatten_dict', 'filter_none_values', 'filter_empty_values',
-            'filter_by_keys', 'exclude_keys', 'get_nested_value', 'set_nested_value',
-            'rename_keys', 'swap_keys', 'invert_dict', 'pick_values', 'count_values',
-            'is_empty', 'merge_list', 'chunk_dict', 'sort_keys', 'group_by_first_char',
-            'validate_required_keys', 'convert_keys_case', 'deep_clone'
+            "deep_merge",
+            "flatten_dict",
+            "filter_none_values",
+            "filter_empty_values",
+            "filter_by_keys",
+            "exclude_keys",
+            "get_nested_value",
+            "set_nested_value",
+            "rename_keys",
+            "swap_keys",
+            "invert_dict",
+            "pick_values",
+            "count_values",
+            "is_empty",
+            "merge_list",
+            "chunk_dict",
+            "sort_keys",
+            "group_by_first_char",
+            "validate_required_keys",
+            "convert_keys_case",
+            "deep_clone",
         ]
 
         for method in methods:
             assert hasattr(DictUtils, method), f"方法 {method} 不存在"
+
 
 def test_dict_utils_comprehensive_suite():
     """DictUtils综合测试套件"""
@@ -298,6 +311,7 @@ def test_dict_utils_comprehensive_suite():
     assert DictUtils.count_values({"a": 1, "b": 2}) == 2
 
     print("✅ DictUtils综合测试套件通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

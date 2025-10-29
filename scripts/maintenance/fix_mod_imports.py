@@ -60,9 +60,7 @@ def fix_imports_in_file(file_path: Path) -> Tuple[int, List[str]]:
         # 修复导入语句
         for old_mod, new_mod in MODULE_MAPPING.items():
             # 处理相对导入
-            content = re.sub(
-                f"from\\s+\\.?{old_mod}\\s+import", f"from .{new_mod} import", content
-            )
+            content = re.sub(f"from\\s+\\.?{old_mod}\\s+import", f"from .{new_mod} import", content)
 
             # 处理绝对导入
             content = re.sub(

@@ -7,9 +7,6 @@ Tests core functionality of the observer pattern including observers, subjects, 
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -170,9 +167,7 @@ class TestSubject:
         return TestObserver()
 
     @pytest.mark.asyncio
-    async def test_observer_attachment_and_notification(
-        self, subject, observer, sample_events
-    ):
+    async def test_observer_attachment_and_notification(self, subject, observer, sample_events):
         """测试观察者附加和事件通知"""
         # 附加观察者
         await subject.attach(observer)
@@ -205,16 +200,12 @@ class TestSubject:
         subject._record_event(event2)
 
         # 按类型过滤
-        metric_events = subject.get_event_history(
-            event_type=ObservableEventType.METRIC_UPDATE
-        )
+        metric_events = subject.get_event_history(event_type=ObservableEventType.METRIC_UPDATE)
         assert len(metric_events) == 1
         assert metric_events[0].event_type == ObservableEventType.METRIC_UPDATE
 
         # 按来源手动过滤
-        source_events = [
-            e for e in subject.get_event_history() if e.source == "test_source"
-        ]
+        source_events = [e for e in subject.get_event_history() if e.source == "test_source"]
         assert len(source_events) == 1
 
     def test_subject_lifecycle_and_stats(self, subject):
@@ -261,9 +252,7 @@ class TestCompositeObserver:
         return composite
 
     @pytest.mark.asyncio
-    async def test_composite_observer_notification(
-        self, composite, observers, sample_events
-    ):
+    async def test_composite_observer_notification(self, composite, observers, sample_events):
         """测试组合观察者通知所有子观察者"""
         await composite.update(sample_events["metric"])
 
@@ -489,9 +478,7 @@ class TestSystemMetricsSubject:
     async def test_metric_setting_and_threshold_checking(self, subject):
         """测试指标设置和阈值检查"""
         # 设置阈值
-        subject.set_threshold(
-            "cpu_usage", warning=70.0, critical=90.0, direction="above"
-        )
+        subject.set_threshold("cpu_usage", warning=70.0, critical=90.0, direction="above")
 
         # 创建模拟观察者
         observer = AsyncMock()
@@ -509,9 +496,7 @@ class TestSystemMetricsSubject:
 
     def test_threshold_configuration(self, subject):
         """测试阈值配置"""
-        subject.set_threshold(
-            "memory_usage", warning=80.0, critical=95.0, direction="above"
-        )
+        subject.set_threshold("memory_usage", warning=80.0, critical=95.0, direction="above")
 
         assert "memory_usage" in subject._thresholds
         assert subject._thresholds["memory_usage"]["warning"] == 80.0

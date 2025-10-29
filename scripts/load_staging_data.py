@@ -167,9 +167,7 @@ class StagingDataLoader:
                 # 比赛时间（分布在一天的不同时间）
                 match_hour = 14 + (match_idx * 2) % 8  # 14:00 - 22:00
 
-                match_date = date.replace(
-                    hour=match_hour, minute=0, second=0, microsecond=0
-                )
+                match_date = date.replace(hour=match_hour, minute=0, second=0, microsecond=0)
 
                 match = {
                     "home_team_id": teams[home_idx]["id"],
@@ -180,11 +178,7 @@ class StagingDataLoader:
                     "status": "UPCOMING",
                     "venue": teams[home_idx]["stadium"],
                     "round": day // 7 + 1,  # 轮次
-                    "weather": "Clear"
-                    if day % 3 == 0
-                    else "Rainy"
-                    if day % 3 == 1
-                    else "Cloudy",
+                    "weather": "Clear" if day % 3 == 0 else "Rainy" if day % 3 == 1 else "Cloudy",
                     "attendance_estimate": 15000 + (match_idx * 2000),
                 }
 
@@ -343,9 +337,7 @@ class StagingDataLoader:
                     "user_id": user["id"],
                     "match_id": match["id"],
                     "prediction": pred_types[user_predictions % 3],
-                    "confidence": min(
-                        0.99, confidence_base + (user_predictions * 0.01)
-                    ),
+                    "confidence": min(0.99, confidence_base + (user_predictions * 0.01)),
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "status": "PENDING",
                 }

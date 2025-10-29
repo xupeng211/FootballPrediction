@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 工具类覆盖率提升测试
 专门针对utils模块的简单函数进行测试，快速提升覆盖率

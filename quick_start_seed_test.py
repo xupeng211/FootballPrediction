@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 import httpx
 
+
 class SeedTestQuickStarter:
     """种子用户测试快速启动器"""
 
@@ -19,12 +20,12 @@ class SeedTestQuickStarter:
 
     def print_banner(self):
         """打印欢迎横幅"""
-        print("🌱" + "="*60)
+        print("🌱" + "=" * 60)
         print("🌱 种子用户测试快速启动器")
-        print("="*62)
+        print("=" * 62)
         print(f"🎯 系统评分: 97.7/100 (优秀)")
         print(f"📅 启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("🌱" + "="*60)
+        print("🌱" + "=" * 60)
 
     async def check_system_status(self):
         """检查系统状态"""
@@ -38,10 +39,12 @@ class SeedTestQuickStarter:
                     data = response.json()
                     print(f"✅ 系统状态: {data.get('status', 'unknown')}")
 
-                    checks = data.get('checks', {})
-                    if 'database' in checks:
-                        db_info = checks['database']
-                        print(f"✅ 数据库: {db_info.get('status', 'unknown')} (延迟: {db_info.get('latency_ms', 'N/A')}ms)")
+                    checks = data.get("checks", {})
+                    if "database" in checks:
+                        db_info = checks["database"]
+                        print(
+                            f"✅ 数据库: {db_info.get('status', 'unknown')} (延迟: {db_info.get('latency_ms', 'N/A')}ms)"
+                        )
 
                     print("✅ 系统就绪，可以开始测试！")
                     return True
@@ -61,7 +64,7 @@ class SeedTestQuickStarter:
             ("📖 API文档", f"{self.api_base_url}/docs"),
             ("🏠 系统主页", f"{self.api_base_url}/"),
             ("❤️ 健康检查", f"{self.api_base_url}/api/health/"),
-            ("📊 OpenAPI规范", f"{self.api_base_url}/openapi.json")
+            ("📊 OpenAPI规范", f"{self.api_base_url}/openapi.json"),
         ]
 
         for name, url in urls_to_open:
@@ -153,7 +156,7 @@ class SeedTestQuickStarter:
         print(f"🎯 测试目标: 验证用户体验和功能完整性")
 
         print("\n🌟 感谢您的参与！您的反馈对我们非常重要。")
-        print("🌱" + "="*60)
+        print("🌱" + "=" * 60)
 
     async def run_quick_start(self):
         """运行快速启动"""
@@ -185,10 +188,12 @@ class SeedTestQuickStarter:
         # 显示成功消息
         self.print_success_message()
 
+
 async def main():
     """主函数"""
     starter = SeedTestQuickStarter()
     await starter.run_quick_start()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

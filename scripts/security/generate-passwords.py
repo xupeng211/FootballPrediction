@@ -48,27 +48,19 @@ class SecurePasswordGenerator:
         if length < (min_lowercase + min_uppercase + min_digits + min_special):
             raise ValueError(f"密码长度 {length} 不足以满足最低字符要求")
 
-        special_chars = (
-            self.special_extended if use_extended_special else self.special_safe
-        )
+        special_chars = self.special_extended if use_extended_special else self.special_safe
         all_chars = self.lowercase + self.uppercase + self.digits + special_chars
 
         # 确保密码包含每种类型的最小字符数
         password_chars = []
-        password_chars.extend(
-            secrets.choice(self.lowercase) for _ in range(min_lowercase)
-        )
-        password_chars.extend(
-            secrets.choice(self.uppercase) for _ in range(min_uppercase)
-        )
+        password_chars.extend(secrets.choice(self.lowercase) for _ in range(min_lowercase))
+        password_chars.extend(secrets.choice(self.uppercase) for _ in range(min_uppercase))
         password_chars.extend(secrets.choice(self.digits) for _ in range(min_digits))
         password_chars.extend(secrets.choice(special_chars) for _ in range(min_special))
 
         # 用随机字符填充剩余长度
         remaining_length = length - len(password_chars)
-        password_chars.extend(
-            secrets.choice(all_chars) for _ in range(remaining_length)
-        )
+        password_chars.extend(secrets.choice(all_chars) for _ in range(remaining_length))
 
         # 随机打乱字符顺序
         for i in range(len(password_chars)):

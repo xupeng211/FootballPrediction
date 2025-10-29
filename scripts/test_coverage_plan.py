@@ -93,9 +93,7 @@ def get_tested_endpoints():
                 tested_endpoints.add(match)
 
         # 查找测试函数名中的端点
-        func_matches = re.findall(
-            r"def test_(?:get_|post_|put_|delete_|patch_)(\w+)", content
-        )
+        func_matches = re.findall(r"def test_(?:get_|post_|put_|delete_|patch_)(\w+)", content)
         for match in func_matches:
             if match:
                 tested_endpoints.add(match)

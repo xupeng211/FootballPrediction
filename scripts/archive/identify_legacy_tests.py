@@ -68,9 +68,7 @@ def is_legacy_test(file_path: Path) -> bool:
                 if re.search(pattern, line):
                     # 检查该行是否包含 mock 关键字
                     if not any(re.search(mock_pat, line) for mock_pat in MOCK_PATTERNS):
-                        print(
-                            f"  📌 发现真实依赖: {file_path}:{line_num} - {line.strip()}"
-                        )
+                        print(f"  📌 发现真实依赖: {file_path}:{line_num} - {line.strip()}")
                         return True
 
     return False

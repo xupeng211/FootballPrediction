@@ -51,9 +51,7 @@ class BatchSyntaxFixer:
         content = re.sub(r"(class\s+\w+\([^)]*\))\s*\n", r"\1:\n", content)
 
         # 修复函数定义后的冒号
-        content = re.sub(
-            r"(def\s+\w+\([^)]*\)(?:\s*->\s*[^:]+)?)\s*\n", r"\1:\n", content
-        )
+        content = re.sub(r"(def\s+\w+\([^)]*\)(?:\s*->\s*[^:]+)?)\s*\n", r"\1:\n", content)
 
         # 修复 if/for/while/try/except/finally 后的冒号
         keywords = [
@@ -168,9 +166,7 @@ class BatchSyntaxFixer:
         content = re.sub(r"@abstractmethodasync", "@abstractmethod\nasync", content)
 
         # 修复 except 后面的错误
-        content = re.sub(
-            r"except\s*\(\s*([^)]+)\s*\)([^\\n])", r"except (\1):\n    \2", content
-        )
+        content = re.sub(r"except\s*\(\s*([^)]+)\s*\)([^\\n])", r"except (\1):\n    \2", content)
 
         # 修复字典返回值
         content = re.sub(r"return\s*\{([^}]+),\s*\)", r"return {\1}", content)
@@ -218,9 +214,7 @@ class BatchSyntaxFixer:
 
                 self.fixed_files.append(str(file_path))
                 self.total_fixes += total_fixes
-                print(
-                    f"✅ 修复 {file_path.relative_to(Path.cwd())} ({total_fixes} 处修复)"
-                )
+                print(f"✅ 修复 {file_path.relative_to(Path.cwd())} ({total_fixes} 处修复)")
                 return True
             else:
                 print(f"ℹ️ 无需修复 {file_path.relative_to(Path.cwd())}")
@@ -231,9 +225,7 @@ class BatchSyntaxFixer:
             self.failed_files.append(str(file_path))
             return False
 
-    def fix_multiple_files(
-        self, pattern: str = "**/*.py", max_files: int = 100
-    ) -> dict:
+    def fix_multiple_files(self, pattern: str = "**/*.py", max_files: int = 100) -> dict:
         """批量修复文件"""
         print("🔧 开始批量修复语法错误...")
         print(f"搜索模式: {pattern}")

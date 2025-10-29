@@ -78,11 +78,7 @@ class TestRetryActual:
     def test_retry_with_specific_exception(self):
         """测试特定异常重试"""
 
-        @retry(
-            RetryConfig(
-                max_attempts=3, base_delay=0.01, retryable_exceptions=(ValueError,)
-            )
-        )
+        @retry(RetryConfig(max_attempts=3, base_delay=0.01, retryable_exceptions=(ValueError,)))
         def function_with_key_error():
             raise KeyError("Not retryable")
 

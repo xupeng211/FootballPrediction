@@ -78,9 +78,7 @@ class TestEdgeCasesAndErrorHandling:
         # 测试URL错误
         with pytest.raises((urllib.error.URLError, ValueError)):
             try:
-                urllib.request.urlopen(
-                    "http://invalid-url-that-does-not-exist.com", timeout=1
-                )
+                urllib.request.urlopen("http://invalid-url-that-does-not-exist.com", timeout=1)
             except Exception:
                 raise urllib.error.URLError("Test URL error")
 
@@ -464,9 +462,7 @@ class TestEdgeCasesAndErrorHandling:
         }
 
         # 访问深层嵌套值
-        username = (
-            nested_config.get("database", {}).get("credentials", {}).get("username")
-        )
+        username = nested_config.get("database", {}).get("credentials", {}).get("username")
         assert username == "user"
 
         # 测试不存在的键

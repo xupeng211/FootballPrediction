@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 import httpx
 
+
 class CorrectedRouteTester:
     """修正的API路由测试器"""
 
@@ -25,7 +26,7 @@ class CorrectedRouteTester:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -36,7 +37,14 @@ class CorrectedRouteTester:
         if duration > 0:
             print(f"   ⏱️  耗时: {duration:.2f}秒")
 
-    async def test_api_route(self, name: str, path: str, method: str = "GET", expected_status: int = 200, data: dict = None):
+    async def test_api_route(
+        self,
+        name: str,
+        path: str,
+        method: str = "GET",
+        expected_status: int = 200,
+        data: dict = None,
+    ):
         """测试单个API路由"""
         start_time = time.time()
         try:
@@ -96,47 +104,43 @@ class CorrectedRouteTester:
             ("健康检查", "/api/health/", "GET", 200),
             ("API文档", "/docs", "GET", 200),
             ("系统根路径", "/", "GET", 200),
-
             # 认证相关
-            ("用户注册", "/api/v1/auth/register", "POST", 201, {"username": "testuser", "email": "test@example.com", "password": "testpass123"}),
+            (
+                "用户注册",
+                "/api/v1/auth/register",
+                "POST",
+                201,
+                {"username": "testuser", "email": "test@example.com", "password": "testpass123"},
+            ),
             ("用户登出", "/api/v1/auth/logout", "POST", 200),
-
             # 数据API（应该返回TODO数据）
             ("球队数据", "/api/v1/data/teams", "GET", 200),
             ("联赛数据", "/api/v1/data/leagues", "GET", 200),
             ("比赛数据", "/api/v1/data/matches", "GET", 200),
             ("赔率数据", "/api/v1/data/odds", "GET", 200),
-
             # 监控相关
             ("监控指标", "/api/v1/metrics", "GET", 200),
             ("服务状态", "/api/v1/status", "GET", 200),
             ("Prometheus指标", "/api/v1/metrics/prometheus", "GET", 200),
-
             # 功能路由
             ("功能信息", "/api/v1/features/", "GET", 200),
             ("功能健康检查", "/api/v1/features/health", "GET", 200),
-
             # 预测相关
             ("预测健康检查", "/api/v1/predictions/health", "GET", 200),
             ("最近预测", "/api/v1/predictions/recent", "GET", 200),
-
             # 事件系统
             ("事件健康检查", "/api/v1/events/health", "GET", 200),
             ("事件统计", "/api/v1/events/stats", "GET", 200),
             ("事件类型", "/api/v1/events/types", "GET", 200),
-
             # 观察者系统
             ("观察者状态", "/api/v1/observers/status", "GET", 200),
             ("观察者指标", "/api/v1/observers/metrics", "GET", 200),
-
             # CQRS系统
             ("CQRS系统状态", "/api/v1/cqrs/system/status", "GET", 200),
-
             # 仓储模式
             ("仓储预测列表", "/api/v1/repositories/predictions", "GET", 200),
             ("仓储用户列表", "/api/v1/repositories/users", "GET", 200),
             ("仓储比赛列表", "/api/v1/repositories/matches", "GET", 200),
-
             # 装饰器模式
             ("装饰器统计", "/api/v1/decorators/stats", "GET", 200),
         ]
@@ -195,7 +199,7 @@ class CorrectedRouteTester:
             "观察者系统": ["观察者状态", "观察者指标"],
             "CQRS系统": ["CQRS系统状态"],
             "仓储模式": ["仓储预测列表", "仓储用户列表", "仓储比赛列表"],
-            "装饰器模式": ["装饰器统计"]
+            "装饰器模式": ["装饰器统计"],
         }
 
         print(f"\n📊 功能模块成功率:")
@@ -204,9 +208,13 @@ class CorrectedRouteTester:
             if category_tests:
                 category_success = len([r for r in category_tests if r["success"]])
                 category_total = len(category_tests)
-                category_rate = (category_success / category_total * 100) if category_total > 0 else 0
+                category_rate = (
+                    (category_success / category_total * 100) if category_total > 0 else 0
+                )
                 status = "🟢" if category_rate == 100 else "🟡" if category_rate >= 50 else "🔴"
-                print(f"   {status} {category}: {category_success}/{category_total} ({category_rate:.0f}%)")
+                print(
+                    f"   {status} {category}: {category_success}/{category_total} ({category_rate:.0f}%)"
+                )
 
         # 系统评估
         print(f"\n🎯 系统完整性评估:")
@@ -246,7 +254,9 @@ class CorrectedRouteTester:
 
         # 核心功能检查
         core_functions = ["健康检查", "球队数据", "联赛数据", "比赛数据", "用户注册"]
-        core_success = len([r for r in self.test_results if r["success"] and r["test_name"] in core_functions])
+        core_success = len(
+            [r for r in self.test_results if r["success"] and r["test_name"] in core_functions]
+        )
         core_total = len(core_functions)
         core_rate = (core_success / core_total * 100) if core_total > 0 else 0
 
@@ -261,10 +271,12 @@ class CorrectedRouteTester:
 
         print("=" * 60)
 
+
 async def main():
     """主函数"""
     tester = CorrectedRouteTester()
     await tester.test_all_corrected_routes()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

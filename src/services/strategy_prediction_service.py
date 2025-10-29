@@ -132,9 +132,7 @@ class StrategyPredictionService:
         # 记录预测详情
         await self._log_prediction_details(prediction, prediction_output, strategy_name)
 
-        logger.info(
-            f"用户 {user_id} 对比赛 {match_id} 完成预测，使用策略: {strategy_name}"
-        )
+        logger.info(f"用户 {user_id} 对比赛 {match_id} 完成预测，使用策略: {strategy_name}")
 
         return prediction
 
@@ -273,9 +271,7 @@ class StrategyPredictionService:
         )
 
         # 计算实际性能（需要比赛结果）
-        actual_performance = await self._calculate_actual_performance(
-            recent_predictions
-        )
+        actual_performance = await self._calculate_actual_performance(recent_predictions)
 
         return {
             "strategy_name": strategy_name,
@@ -329,9 +325,7 @@ class StrategyPredictionService:
                 "type": strategy.strategy_type.value,
                 "healthy": strategy.is_healthy(),
                 "is_default": name == self._default_strategy,
-                "metrics": (
-                    strategy.get_metrics().__dict__ if strategy.get_metrics() else None
-                ),
+                "metrics": (strategy.get_metrics().__dict__ if strategy.get_metrics() else None),
                 "health": health_report.get(name, {}),
             }
 
@@ -353,9 +347,7 @@ class StrategyPredictionService:
         # 这里返回模拟数据
         return Team(id=team_id, name=f"Team_{team_id}", league_id=1)
 
-    async def _prepare_prediction_input(
-        self, context: PredictionContext
-    ) -> PredictionInput:
+    async def _prepare_prediction_input(self, context: PredictionContext) -> PredictionInput:
         """准备预测输入数据"""
         # 收集历史数据
         historical_data = await self._collect_historical_data(context)
@@ -372,9 +364,7 @@ class StrategyPredictionService:
             },
         )
 
-    async def _collect_historical_data(
-        self, context: PredictionContext
-    ) -> Dict[str, Any]:
+    async def _collect_historical_data(self, context: PredictionContext) -> Dict[str, Any]:
         """收集历史数据"""
         # 这里应该从数据库或缓存获取历史数据
         # 简化实现，返回模拟数据
@@ -421,9 +411,7 @@ class StrategyPredictionService:
 
         logger.info(f"预测详情: {details}")
 
-    async def _calculate_actual_performance(
-        self, predictions: List[Prediction]
-    ) -> Dict[str, Any]:
+    async def _calculate_actual_performance(self, predictions: List[Prediction]) -> Dict[str, Any]:
         """计算实际性能"""
         if not predictions:
             return {}
@@ -438,10 +426,7 @@ class StrategyPredictionService:
             actual_home = 2  # 应该从match获取
             actual_away = 1
 
-            if (
-                pred.predicted_home == actual_home
-                and pred.predicted_away == actual_away
-            ):
+            if pred.predicted_home == actual_home and pred.predicted_away == actual_away:
                 correct_predictions += 1
 
             score_diff = abs(pred.predicted_home - actual_home) + abs(
@@ -449,12 +434,8 @@ class StrategyPredictionService:
             )
             score_differences.append(score_diff)
 
-        accuracy = (
-            correct_predictions / total_predictions if total_predictions > 0 else 0
-        )
-        avg_score_diff = (
-            sum(score_differences) / len(score_differences) if score_differences else 0
-        )
+        accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
+        avg_score_diff = sum(score_differences) / len(score_differences) if score_differences else 0
 
         return {
             "accuracy": accuracy,

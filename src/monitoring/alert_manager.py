@@ -6,7 +6,6 @@ Alert Manager
 """
 
 import logging
-import os
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict, List
@@ -38,9 +37,7 @@ class AlertType(Enum):
 class Alert:
     """警报对象"""
 
-    def __init__(
-        self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str
-    ):
+    def __init__(self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str):
         self.name = name
         self.severity = severity
         self.type = alert_type
@@ -108,9 +105,7 @@ class AlertManager:
             }
 
         # 旧格式支持
-        alert = Alert(
-            name, severity or AlertSeverity.MEDIUM, type or AlertType.INFO, message
-        )
+        alert = Alert(name, severity or AlertSeverity.MEDIUM, type or AlertType.INFO, message)
         self.alerts.append(alert)
         logger.info(f"Created alert: {name} - {message}")
 
@@ -152,9 +147,7 @@ class AlertManager:
         }
 
         # 只有在没有时间戳信息时才添加当前时间
-        if not alert_with_meta.get("created_at") and not alert_with_meta.get(
-            "timestamp"
-        ):
+        if not alert_with_meta.get("created_at") and not alert_with_meta.get("timestamp"):
             alert_with_meta["created_at"] = datetime.utcnow().isoformat()
         self.active_alerts.append(alert_with_meta)
         return alert_id
@@ -186,15 +179,11 @@ class AlertManager:
 
     def get_alerts_by_severity(self, severity: AlertSeverity) -> List[Dict]:
         """根据严重程度获取告警"""
-        return [
-            alert for alert in self.active_alerts if alert.get("severity") == severity
-        ]
+        return [alert for alert in self.active_alerts if alert.get("severity") == severity]
 
     def get_alerts_by_type(self, alert_type: AlertType) -> List[Dict]:
         """根据类型获取告警"""
-        return [
-            alert for alert in self.active_alerts if alert.get("type") == alert_type
-        ]
+        return [alert for alert in self.active_alerts if alert.get("type") == alert_type]
 
     def archive_old_alerts(self, days: int = 30, hours: int = None) -> int:
         """归档旧告警"""
@@ -219,9 +208,7 @@ class AlertManager:
                         alert_id = alert.get("id", "")
                         self.remove_alert(alert_id)
                         archived_count += 1
-                        logger.info(
-                            f"Archived alert {alert_id} with timestamp {created_at}"
-                        )
+                        logger.info(f"Archived alert {alert_id} with timestamp {created_at}")
                 except (ValueError, TypeError):
                     # 如果时间戳格式有问题，跳过
                     continue
@@ -365,9 +352,7 @@ class AlertManager:
         """检查API响应时间（别名方法，用于测试兼容）"""
         return await self.monitor_api_response_time()
 
-    def aggregate_alerts(
-        self, alerts: List[Dict] = None, window_minutes: int = 60
-    ) -> Dict:
+    def aggregate_alerts(self, alerts: List[Dict] = None, window_minutes: int = 60) -> Dict:
         """聚合告警"""
         if alerts is None:
             alerts = self.active_alerts
@@ -422,9 +407,7 @@ class AlertManager:
                 condition = rule.get("condition")
                 if condition and callable(condition):
                     if condition(alert):
-                        logger.info(
-                            f"Alert suppressed by rule: {rule.get('reason', 'unknown')}"
-                        )
+                        logger.info(f"Alert suppressed by rule: {rule.get('reason', 'unknown')}")
                         return True
             return False
         except Exception as e:
@@ -479,12 +462,8 @@ class AlertManager:
             import json
 
             # 序列化告警数据
-            serialized_active = [
-                self._serialize_alert(alert) for alert in self.active_alerts
-            ]
-            serialized_history = [
-                self._serialize_alert(alert) for alert in self.alert_history
-            ]
+            serialized_active = [self._serialize_alert(alert) for alert in self.active_alerts]
+            serialized_history = [self._serialize_alert(alert) for alert in self.alert_history]
 
             return json.dumps(
                 {
@@ -533,19 +512,13 @@ class AlertManager:
             # 统计按类型 - 处理枚举对象
             alert_type_raw = alert.get("type", "unknown")
             alert_type = (
-                alert_type_raw.value
-                if hasattr(alert_type_raw, "value")
-                else str(alert_type_raw)
+                alert_type_raw.value if hasattr(alert_type_raw, "value") else str(alert_type_raw)
             )
             by_type[alert_type] = by_type.get(alert_type, 0) + 1
 
             # 统计按严重级别 - 处理枚举对象
             severity_raw = alert.get("severity", "unknown")
-            severity = (
-                severity_raw.value
-                if hasattr(severity_raw, "value")
-                else str(severity_raw)
-            )
+            severity = severity_raw.value if hasattr(severity_raw, "value") else str(severity_raw)
             by_severity[severity] = by_severity.get(severity, 0) + 1
 
         return {

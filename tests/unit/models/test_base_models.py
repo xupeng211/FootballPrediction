@@ -7,7 +7,6 @@ Tests base model functionality defined in src/models/base_models.py.
 """
 
 import datetime
-from typing import Any, Dict, List
 
 import pytest
 from pydantic import ValidationError
@@ -28,9 +27,7 @@ except ImportError:
     BASE_MODELS_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 @pytest.mark.unit
 class TestBaseModel:
     """BaseModel测试"""
@@ -123,9 +120,7 @@ class TestBaseModel:
         assert set(fields.keys()) == expected_fields
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 class TestTimestampedModel:
     """TimestampedModel测试"""
 
@@ -189,9 +184,7 @@ class TestTimestampedModel:
         assert "updated_at" in json_str
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 class TestIdentifiableModel:
     """IdentifiableModel测试"""
 
@@ -210,9 +203,7 @@ class TestIdentifiableModel:
 
     def test_identifiable_model_with_description(self):
         """测试IdentifiableModel带描述"""
-        model = IdentifiableModel(
-            id=42, name="Test Model", description="This is a test model"
-        )
+        model = IdentifiableModel(id=42, name="Test Model", description="This is a test model")
 
         assert model.id == 42
         assert model.name == "Test Model"
@@ -249,9 +240,7 @@ class TestIdentifiableModel:
 
     def test_identifiable_model_serialization(self):
         """测试IdentifiableModel序列化"""
-        model = IdentifiableModel(
-            id=123, name="Test Model", description="Test Description"
-        )
+        model = IdentifiableModel(id=123, name="Test Model", description="Test Description")
 
         data = model.model_dump()
         assert data["id"] == 123
@@ -267,9 +256,7 @@ class TestIdentifiableModel:
         assert "name" in json_str
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 class TestStatusModel:
     """StatusModel测试"""
 
@@ -343,9 +330,7 @@ class TestStatusModel:
         assert "is_enabled" in json_str
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 class TestMetadataModel:
     """MetadataModel测试"""
 
@@ -440,9 +425,7 @@ class TestMetadataModel:
         assert "tags" in json_str
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 class TestBaseModelsNamespace:
     """base_models命名空间测试"""
 
@@ -489,9 +472,7 @@ class TestBaseModelsNamespace:
             ), f"{model_class.__name__} should inherit from BaseModel"
 
 
-@pytest.mark.skipif(
-    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
-)
+@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
 class TestBaseModelsIntegration:
     """基础模型集成测试"""
 
@@ -499,14 +480,10 @@ class TestBaseModelsIntegration:
         """测试组合模型继承"""
 
         # 创建一个组合多个基础模型的类
-        class CombinedModel(
-            TimestampedModel, IdentifiableModel, StatusModel, MetadataModel
-        ):
+        class CombinedModel(TimestampedModel, IdentifiableModel, StatusModel, MetadataModel):
             pass
 
-        model = CombinedModel(
-            id=1, name="Combined Model", metadata={"type": "test"}, tags=["test"]
-        )
+        model = CombinedModel(id=1, name="Combined Model", metadata={"type": "test"}, tags=["test"])
 
         # 验证所有属性都存在
         assert model.id == 1
@@ -521,9 +498,7 @@ class TestBaseModelsIntegration:
         """测试完整的工作流"""
 
         # 1. 创建一个组合所有基础模型的类用于工作流测试
-        class WorkflowModel(
-            TimestampedModel, IdentifiableModel, StatusModel, MetadataModel
-        ):
+        class WorkflowModel(TimestampedModel, IdentifiableModel, StatusModel, MetadataModel):
             """工作流测试用的组合模型"""
 
             pass

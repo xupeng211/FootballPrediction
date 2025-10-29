@@ -5,8 +5,6 @@ Dict Utils Tests
 测试实际存在的字典处理工具。
 """
 
-from typing import Any, Dict, List
-
 import pytest
 
 from src.utils.dict_utils import DictUtils

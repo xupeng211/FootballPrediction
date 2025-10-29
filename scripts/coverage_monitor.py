@@ -60,9 +60,7 @@ class CoverageMonitor:
 
         # 只保留最近30天的数据
         cutoff = datetime.now() - timedelta(days=30)
-        history = [
-            h for h in history if datetime.fromisoformat(h["timestamp"]) > cutoff
-        ]
+        history = [h for h in history if datetime.fromisoformat(h["timestamp"]) > cutoff]
 
         # 保存历史
         self.save_history(history)
@@ -85,9 +83,7 @@ class CoverageMonitor:
         # 创建图表
         plt.figure(figsize=(12, 6))
         plt.plot(dates, coverages, "b-", label="实际覆盖率")
-        plt.axhline(
-            y=self.target, color="g", linestyle="--", label=f"目标: {self.target}%"
-        )
+        plt.axhline(y=self.target, color="g", linestyle="--", label=f"目标: {self.target}%")
         plt.axhline(
             y=self.threshold,
             color="r",
@@ -126,8 +122,7 @@ class CoverageMonitor:
         if len(history) >= 7:
             recent = history[-7:]
             avg_change = sum(
-                recent[i]["coverage"] - recent[i - 1]["coverage"]
-                for i in range(1, len(recent))
+                recent[i]["coverage"] - recent[i - 1]["coverage"] for i in range(1, len(recent))
             ) / (len(recent) - 1)
         else:
             avg_change = 0

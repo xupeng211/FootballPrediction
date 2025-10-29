@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 56 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 适配器注册表测试
@@ -556,9 +555,7 @@ class TestRegistryAdditionalCoverage:
         """测试执行健康检查时适配器失败"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
-        mock_adapter.health_check = AsyncMock(
-            side_effect=ValueError("Health check failed")
-        )
+        mock_adapter.health_check = AsyncMock(side_effect=ValueError("Health check failed"))
         registry.adapters["test_adapter"] = mock_adapter
 
         # 执行健康检查

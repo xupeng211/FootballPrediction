@@ -6,7 +6,6 @@ import pytest
 def test_scores_collector_exists():
     """测试比分收集器存在"""
     try:
-        from collectors.scores_collector_improved import ScoresCollectorImproved
 
         assert True
     except ImportError:

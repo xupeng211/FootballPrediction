@@ -159,9 +159,7 @@ def test_model_training_structure():
                 # 模拟 sklearn 组件
                 mock_sklearn_metrics = Mock()
                 mock_sklearn_metrics.accuracy_score = Mock(return_value=0.85)
-                mock_sklearn_metrics.classification_report = Mock(
-                    return_value={"precision": 0.85}
-                )
+                mock_sklearn_metrics.classification_report = Mock(return_value={"precision": 0.85})
                 modules_to_mock["sklearn.metrics"] = mock_sklearn_metrics
 
                 print("  ✅ XGBoost 分类器可用")
@@ -359,9 +357,7 @@ def test_model_algorithms():
         # 模拟交叉验证
         cv_scores = [0.82, 0.85, 0.83, 0.87, 0.84]
         mean_score = sum(cv_scores) / len(cv_scores)
-        std_score = (
-            sum((x - mean_score) ** 2 for x in cv_scores) / len(cv_scores)
-        ) ** 0.5
+        std_score = (sum((x - mean_score) ** 2 for x in cv_scores) / len(cv_scores)) ** 0.5
 
         print(f"  ✅ 交叉验证: 均值={mean_score:.3f}, 标准差={std_score:.3f}")
 
@@ -434,9 +430,7 @@ async def test_training_pipeline():
         # 执行完整管道
         data = await mock_get_data()
         features = await mock_feature_engineering(data)
-        model_result = await mock_train_model(
-            features["processed_features"], data["labels"]
-        )
+        model_result = await mock_train_model(features["processed_features"], data["labels"])
         log_result = await mock_log_metrics(
             {
                 "accuracy": model_result["accuracy"],
@@ -459,9 +453,7 @@ async def test_training_pipeline():
             return await asyncio.gather(*pipelines, return_exceptions=True)
 
         concurrent_results = await run_concurrent_pipelines()
-        successful_pipelines = len(
-            [r for r in concurrent_results if not isinstance(r, Exception)]
-        )
+        successful_pipelines = len([r for r in concurrent_results if not isinstance(r, Exception)])
         print(f"  ✅ 并发管道: {successful_pipelines}/{len(concurrent_results)} 成功")
 
         return True

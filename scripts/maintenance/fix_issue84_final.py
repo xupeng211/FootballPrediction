@@ -9,6 +9,7 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_syntax_errors():
     """修复所有剩余的语法错误"""
 
@@ -19,16 +20,13 @@ def fix_syntax_errors():
         "tests/test_conftest_containers.py",
         "tests/test_conftest_original.py",
         "tests/test_conftest_new.py",
-
         # 高优先级：except块缺失
         "tests/unit/utils/test_core_config_extended.py",
         "tests/unit/utils/test_streaming_simple.py",
         "tests/unit/utils/test_config_simple.py",
         "tests/unit/utils/test_logging_utils.py",
-
         # 高优先级：三引号字符串未终止
         "tests/unit/mocks/mock_factory_phase4a_backup.py",
-
         # 中优先级：缩进错误
         "tests/unit/test_lineage_basic.py",
         "tests/unit/test_utils_complete.py",
@@ -47,7 +45,6 @@ def fix_syntax_errors():
         "tests/unit/utils/test_ml_simple.py",
         "tests/unit/services/test_services_basic.py",
         "tests/unit/tasks/test_tasks_coverage_boost.py",
-
         # 中优先级：with语句缺少代码块
         "tests/unit/config/test_cors_config.py",
         "tests/unit/utils/test_i18n.py",
@@ -66,7 +63,6 @@ def fix_syntax_errors():
         "tests/unit/core/test_di_setup_real.py",
         "tests/unit/core/test_di_setup_functional.py",
         "tests/unit/security/test_key_manager.py",
-
         # 低优先级：await在非异步函数中
         "tests/unit/api/test_app_infrastructure.py",
         "tests/unit/middleware/test_middleware_phase4b.py",
@@ -102,6 +98,7 @@ def fix_syntax_errors():
 
     return fixed_count, failed_count
 
+
 def fix_single_file(file_path):
     """修复单个文件的语法错误"""
 
@@ -110,7 +107,7 @@ def fix_single_file(file_path):
         return False
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -125,7 +122,7 @@ def fix_single_file(file_path):
 
         # 如果内容有变化，写回文件
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         else:
@@ -136,14 +133,24 @@ def fix_single_file(file_path):
         print(f"❌ 修复文件时出错 {file_path}: {str(e)}")
         return False
 
+
 def fix_duplicate_parameters(content):
     """修复重复参数问题"""
     # 修复 def test_func(client, client): 类型的错误
     patterns = [
-        (r'def test_match_data\(\s*,\s*client,\s*client\s*\):', 'def test_match_data(client):'),
-        (r'def test_environment_setup\(\s*,\s*client,\s*client\s*\):', 'def test_environment_setup(client):'),
-        (r'def test_client\(db_session:\s*Session,\s*client,\s*client\s*\)', 'def test_client(db_session: Session, client)'),
-        (r'def test_redis_client\(redis_container,\s*client,\s*client\s*\):', 'def test_redis_client(redis_container, client):'),
+        (r"def test_match_data\(\s*,\s*client,\s*client\s*\):", "def test_match_data(client):"),
+        (
+            r"def test_environment_setup\(\s*,\s*client,\s*client\s*\):",
+            "def test_environment_setup(client):",
+        ),
+        (
+            r"def test_client\(db_session:\s*Session,\s*client,\s*client\s*\)",
+            "def test_client(db_session: Session, client)",
+        ),
+        (
+            r"def test_redis_client\(redis_container,\s*client,\s*client\s*\):",
+            "def test_redis_client(redis_container, client):",
+        ),
     ]
 
     for pattern, replacement in patterns:
@@ -151,10 +158,11 @@ def fix_duplicate_parameters(content):
 
     return content
 
+
 def fix_missing_except_blocks(content):
     """修复缺失的except块"""
     # 修复 try 块后缺少 except 的情况
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
     i = 0
 
@@ -163,18 +171,19 @@ def fix_missing_except_blocks(content):
         new_lines.append(line)
 
         # 检查是否有 try 语句但没有对应的 except
-        if 'try:' in line and i + 1 < len(lines):
+        if "try:" in line and i + 1 < len(lines):
             next_line = lines[i + 1]
             # 如果下一行是 import 语句或其他不应该在 try 块中的内容
-            if next_line.strip().startswith('import ') or next_line.strip().startswith('from '):
+            if next_line.strip().startswith("import ") or next_line.strip().startswith("from "):
                 # 添加 except 块
                 indent = len(line) - len(line.lstrip())
-                new_lines.append(' ' * indent + 'except Exception:')
-                new_lines.append(' ' * (indent + 4) + 'pass')
+                new_lines.append(" " * indent + "except Exception:")
+                new_lines.append(" " * (indent + 4) + "pass")
 
         i += 1
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_unterminated_triple_quotes(content):
     """修复未终止的三引号字符串"""
@@ -186,67 +195,73 @@ def fix_unterminated_triple_quotes(content):
 
     return content
 
+
 def fix_indentation_errors(content):
     """修复缩进错误"""
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
 
     for line in lines:
         stripped = line.strip()
 
         # 跳过空行和注释
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             new_lines.append(line)
             continue
 
         # 修复意外的缩进
-        if stripped.startswith('import ') or stripped.startswith('from '):
+        if stripped.startswith("import ") or stripped.startswith("from "):
             # import 语句不应该有额外缩进
             new_lines.append(stripped)
         else:
             new_lines.append(line)
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_missing_code_blocks(content):
     """修复缺失的代码块"""
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
 
     for i, line in enumerate(lines):
         new_lines.append(line)
 
         # 检查 with 语句后是否缺少代码块
-        if 'with ' in line and ':' in line:
+        if "with " in line and ":" in line:
             # 检查下一行是否有内容
             if i + 1 < len(lines):
                 next_line = lines[i + 1]
                 # 如果下一行是空行或者缩进不正确，添加 pass
-                if not next_line.strip() or (len(next_line) - len(next_line.lstrip()) <= len(line) - len(line.lstrip())):
+                if not next_line.strip() or (
+                    len(next_line) - len(next_line.lstrip()) <= len(line) - len(line.lstrip())
+                ):
                     indent = len(line) - len(line.lstrip()) + 4
-                    new_lines.append(' ' * indent + 'pass')
+                    new_lines.append(" " * indent + "pass")
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_await_outside_async(content):
     """修复 await 在非异步函数中的问题"""
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
 
     for i, line in enumerate(lines):
         # 如果找到 await 语句
-        if 'await ' in line and 'def ' not in line:
+        if "await " in line and "def " not in line:
             # 查找对应的函数定义
             for j in range(i, -1, -1):
-                if 'def ' in lines[j]:
+                if "def " in lines[j]:
                     # 检查是否是 async 函数
-                    if 'async def ' not in lines[j]:
+                    if "async def " not in lines[j]:
                         # 将函数改为 async
-                        lines[j] = lines[j].replace('def ', 'async def ')
+                        lines[j] = lines[j].replace("def ", "async def ")
                     break
         new_lines.append(line)
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 if __name__ == "__main__":
     print("🔧 Issue #84 最终语法错误修复脚本")

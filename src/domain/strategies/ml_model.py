@@ -164,9 +164,7 @@ class MLModelStrategy(PredictionStrategy):
                 prediction_proba = None
 
         # 后处理结果
-        output = await self._format_output(
-            prediction_result, prediction_proba, processed_input
-        )
+        output = await self._format_output(prediction_result, prediction_proba, processed_input)
 
         # 记录执行时间
         output.execution_time_ms = (time.time() - start_time) * 1000
@@ -177,9 +175,7 @@ class MLModelStrategy(PredictionStrategy):
 
         return output
 
-    async def batch_predict(
-        self, inputs: List[PredictionInput]
-    ) -> List[PredictionOutput]:
+    async def batch_predict(self, inputs: List[PredictionInput]) -> List[PredictionOutput]:
         """批量预测"""
         if not self._is_initialized:
             raise RuntimeError("策略未初始化")
@@ -231,9 +227,7 @@ class MLModelStrategy(PredictionStrategy):
 
         # 格式化输出
         outputs = []
-        for i, (input_data, pred_result) in enumerate(
-            zip(processed_inputs, prediction_results)
-        ):
+        for i, (input_data, pred_result) in enumerate(zip(processed_inputs, prediction_results)):
             pred_proba = prediction_probas[i] if prediction_probas is not None else None
             output = await self._format_output(pred_result, pred_proba, input_data)
             output.execution_time_ms = (time.time() - start_time) * 1000 / len(inputs)
@@ -312,9 +306,7 @@ class MLModelStrategy(PredictionStrategy):
     ) -> PredictionOutput:
         """格式化预测输出"""
         # 根据模型输出解析预测结果
-        if hasattr(prediction_result, "__iter__") and not isinstance(
-            prediction_result, str
-        ):
+        if hasattr(prediction_result, "__iter__") and not isinstance(prediction_result, str):
             # 如果输出是数组
             if len(prediction_result) >= 2:
                 pred_home = int(prediction_result[0])
@@ -328,9 +320,7 @@ class MLModelStrategy(PredictionStrategy):
         else:
             # 单值输出
             pred_value = float(prediction_result)
-            pred_home, pred_away = await self._convert_prediction_to_score(
-                pred_value, input_data
-            )
+            pred_home, pred_away = await self._convert_prediction_to_score(pred_value, input_data)
 
         # 计算置信度
         if prediction_proba is not None:
@@ -379,9 +369,7 @@ class MLModelStrategy(PredictionStrategy):
 
         return home_goals, away_goals
 
-    async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
-    ) -> None:
+    async def update_metrics(self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]) -> None:
         """更新策略性能指标"""
         if not actual_results:
             return
@@ -397,10 +385,7 @@ class MLModelStrategy(PredictionStrategy):
             actual_away = actual.get("actual_away_score", 0)
 
             # 检查预测是否正确
-            if (
-                pred.predicted_home == actual_home
-                and pred.predicted_away == actual_away
-            ):
+            if pred.predicted_home == actual_home and pred.predicted_away == actual_away:
                 correct_predictions += 1
 
             # 计算精确率、召回率等（这里简化处理）
@@ -415,9 +400,7 @@ class MLModelStrategy(PredictionStrategy):
                 false_negatives += 1
 
         # 计算指标
-        accuracy = (
-            correct_predictions / total_predictions if total_predictions > 0 else 0
-        )
+        accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
         precision = (
             true_positives / (true_positives + false_positives)
             if (true_positives + false_positives) > 0
@@ -429,9 +412,7 @@ class MLModelStrategy(PredictionStrategy):
             else 0
         )
         f1_score = (
-            2 * (precision * recall) / (precision + recall)
-            if (precision + recall) > 0
-            else 0
+            2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
         )
 
         self._metrics = StrategyMetrics(

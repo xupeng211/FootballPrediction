@@ -213,9 +213,7 @@ class Match:
     @property
     def is_upcoming(self) -> bool:
         """是否是即将开始的比赛"""
-        return (
-            self.status == MatchStatus.SCHEDULED and self.match_date > datetime.utcnow()
-        )
+        return self.status == MatchStatus.SCHEDULED and self.match_date > datetime.utcnow()
 
     @property
     def is_live(self) -> bool:

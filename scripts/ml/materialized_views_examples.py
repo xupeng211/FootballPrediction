@@ -50,9 +50,7 @@ class MaterializedViewExamples:
         )
         return create_async_engine(database_url, echo=False)
 
-    async def _execute_query(
-        self, query: str, params: dict = None
-    ) -> List[Dict[str, Any]]:
+    async def _execute_query(self, query: str, params: dict = None) -> List[Dict[str, Any]]:
         """执行查询并返回结果"""
         engine = await self._get_async_engine()
 

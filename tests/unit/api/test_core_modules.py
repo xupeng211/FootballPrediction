@@ -1,11 +1,8 @@
-from unittest.mock import Mock, patch
-
 """
 核心API模块测试
 Core API Modules Tests
 """
 
-import json
 from datetime import datetime
 
 import pytest
@@ -33,9 +30,7 @@ class TestCQRSModule:
         try:
             from src.api.cqrs import CommandResponse
 
-            response = CommandResponse(
-                success=True, message="Command executed", _data={"id": 123}
-            )
+            response = CommandResponse(success=True, message="Command executed", _data={"id": 123})
             assert response.success is True
             assert response.message == "Command executed"
             assert response._data["id"] == 123
@@ -162,7 +157,6 @@ class TestRepositoriesModule:
     def test_query_spec_builder(self):
         """测试查询规范构建器"""
         try:
-            from src.api.repositories import QueryBuilder, QuerySpec
 
             query = (
                 QueryBuilder()
@@ -391,9 +385,7 @@ class TestFacadesModule:
 
             facade = PredictionFacade(prediction_service=mock_service)
 
-            _result = facade.make_prediction(
-                match_id=123, home_team="Team A", away_team="Team B"
-            )
+            _result = facade.make_prediction(match_id=123, home_team="Team A", away_team="Team B")
 
             assert "prediction" in result
             mock_service.predict.assert_called_once()

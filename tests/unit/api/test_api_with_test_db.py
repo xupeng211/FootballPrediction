@@ -1,5 +1,3 @@
-from unittest.mock import Mock, patch
-
 """
 测试 API 使用测试数据库
 Test API with test database
@@ -9,7 +7,6 @@ import pytest
 from sqlalchemy.orm import Session
 
 # 不使用 TestClient，直接测试路由函数
-from src.api.monitoring import router as monitoring_router
 from src.database.dependencies import get_db
 
 

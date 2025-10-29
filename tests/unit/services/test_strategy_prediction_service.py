@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 50 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 策略预测服务测试
@@ -14,7 +13,6 @@ from datetime import datetime
 import pytest
 
 from src.domain.models import Match, Prediction, Team
-from src.domain.strategies import (
     PredictionContext,
     PredictionInput,
     PredictionOutput,

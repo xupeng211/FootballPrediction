@@ -5,8 +5,6 @@ Tests for String Utils (Fixed Version)
 测试src.utils.string_utils模块的实际功能
 """
 
-from typing import List
-
 import pytest
 
 # 测试导入
@@ -20,9 +18,7 @@ except ImportError as e:
     StringUtils = None
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 @pytest.mark.unit
 class TestStringUtilsTruncate:
     """字符串截断测试"""
@@ -92,9 +88,7 @@ class TestStringUtilsTruncate:
         assert _result == "Line 1\nL..."
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 class TestStringUtilsSlugify:
     """字符串slugify测试"""
 
@@ -159,9 +153,7 @@ class TestStringUtilsSlugify:
         assert _result in ["-"]  # 可能的结果
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 class TestStringUtilsCamelToSnake:
     """驼峰转下划线测试"""
 
@@ -207,9 +199,7 @@ class TestStringUtilsCamelToSnake:
         assert _result == ""
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 class TestStringUtilsSnakeToCamel:
     """下划线转驼峰测试"""
 
@@ -255,9 +245,7 @@ class TestStringUtilsSnakeToCamel:
         assert _result == "test123Case"
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 class TestStringUtilsCleanText:
     """文本清理测试"""
 
@@ -304,9 +292,7 @@ class TestStringUtilsCleanText:
         assert _result == "Line 1 Line 2 Line 3"
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 class TestStringUtilsExtractNumbers:
     """数字提取测试"""
 
@@ -367,9 +353,7 @@ class TestStringUtilsExtractNumbers:
         assert _result in [[1.23], [12300.0], []]
 
 
-@pytest.mark.skipif(
-    not STRING_UTILS_AVAILABLE, reason="String utils module not available"
-)
+@pytest.mark.skipif(not STRING_UTILS_AVAILABLE, reason="String utils module not available")
 class TestStringUtilsEdgeCases:
     """边界情况测试"""
 
@@ -397,9 +381,7 @@ class TestStringUtilsEdgeCases:
             StringUtils.extract_numbers(123)
 
 
-@pytest.mark.skipif(
-    STRING_UTILS_AVAILABLE, reason="String utils module should be available"
-)
+@pytest.mark.skipif(STRING_UTILS_AVAILABLE, reason="String utils module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

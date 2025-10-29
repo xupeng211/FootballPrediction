@@ -60,9 +60,7 @@ def upgrade() -> None:
     )
 
     # 添加新的索引来优化查询性能
-    op.create_index(
-        "idx_predictions_verification", "predictions", ["is_correct", "verified_at"]
-    )
+    op.create_index("idx_predictions_verification", "predictions", ["is_correct", "verified_at"])
     op.create_index("idx_predictions_actual_result", "predictions", ["actual_result"])
 
 

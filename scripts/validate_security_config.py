@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from datetime import datetime
 
+
 class SecurityValidator:
     """安全配置验证器"""
 
@@ -57,7 +58,7 @@ class SecurityValidator:
         weak_keys = [
             "your-secret-key-here",
             "your-jwt-secret-key-change-this",
-            "your-secret-key-here-please-change-this"
+            "your-secret-key-here-please-change-this",
         ]
 
         if jwt_secret in weak_keys:
@@ -140,7 +141,9 @@ class SecurityValidator:
             "X_FRAME_OPTIONS": os.getenv("X_FRAME_OPTIONS", "DENY"),
             "X_CONTENT_TYPE_OPTIONS": os.getenv("X_CONTENT_TYPE_OPTIONS", "nosniff"),
             "X_XSS_PROTECTION": os.getenv("X_XSS_PROTECTION", "1; mode=block"),
-            "STRICT_TRANSPORT_SECURITY": os.getenv("STRICT_TRANSPORT_SECURITY", "max-age=31536000; includeSubDomains")
+            "STRICT_TRANSPORT_SECURITY": os.getenv(
+                "STRICT_TRANSPORT_SECURITY", "max-age=31536000; includeSubDomains"
+            ),
         }
 
         for header, value in security_headers.items():
@@ -266,7 +269,7 @@ class SecurityValidator:
                 ("大写字母", require_uppercase),
                 ("小写字母", require_lowercase),
                 ("数字", require_numbers),
-                ("特殊字符", require_symbols)
+                ("特殊字符", require_symbols),
             ]
 
             for name, required in policy_items:
@@ -306,10 +309,7 @@ class SecurityValidator:
         """检查文件权限"""
         print("\n📁 检查文件权限...")
 
-        files_to_check = [
-            ".env.production",
-            "config/security_config.json"
-        ]
+        files_to_check = [".env.production", "config/security_config.json"]
 
         for file_path in files_to_check:
             if Path(file_path).exists():
@@ -348,9 +348,9 @@ class SecurityValidator:
 
     def run_validation(self) -> bool:
         """运行完整验证"""
-        print("="*80)
+        print("=" * 80)
         print("🔐 开始安全配置验证")
-        print("="*80)
+        print("=" * 80)
 
         validations = [
             self.validate_jwt_keys,
@@ -362,7 +362,7 @@ class SecurityValidator:
             self.validate_password_policy,
             self.validate_audit_logging,
             self.check_file_permissions,
-            self.validate_production_readiness
+            self.validate_production_readiness,
         ]
 
         all_passed = True
@@ -378,9 +378,9 @@ class SecurityValidator:
 
     def print_summary(self):
         """打印验证摘要"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("📊 安全配置验证报告")
-        print("="*80)
+        print("=" * 80)
         print(f"📅 验证时间: {datetime.utcnow().isoformat()}")
 
         if self.success:
@@ -405,29 +405,32 @@ class SecurityValidator:
             for i, error in enumerate(self.errors, 1):
                 print(f"   {i}. {error.replace('❌ ', '')}")
 
+
 def load_env_file(env_file: str):
     """加载指定的环境文件"""
     if Path(env_file).exists():
         print(f"📁 加载环境文件: {env_file}")
-        with open(env_file, 'r') as f:
+        with open(env_file, "r") as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     # 移除引号
-                    value = value.strip('"\'')
+                    value = value.strip("\"'")
                     os.environ[key] = value
         print("✅ 环境文件加载完成")
     else:
         print(f"❌ 环境文件不存在: {env_file}")
+
 
 def main():
     """主函数"""
     import argparse
 
     parser = argparse.ArgumentParser(description="验证安全配置")
-    parser.add_argument("--env-file", default=".env.production",
-                       help="要验证的环境文件路径 (默认: .env.production)")
+    parser.add_argument(
+        "--env-file", default=".env.production", help="要验证的环境文件路径 (默认: .env.production)"
+    )
     args = parser.parse_args()
 
     # 加载指定的环境文件
@@ -444,6 +447,7 @@ def main():
     # 设置退出码
     exit_code = 0 if all_passed else 1
     exit(exit_code)
+
 
 if __name__ == "__main__":
     main()

@@ -178,9 +178,7 @@ class DependencyAnalyzer:
 
             # 添加依赖边
             for req_name, req_version in pkg_info.get("requirements", {}).items():
-                self.dependency_graph.add_edge(
-                    pkg_name, req_name, requirement=req_version
-                )
+                self.dependency_graph.add_edge(pkg_name, req_name, requirement=req_version)
 
     def _identify_problematic_packages(self) -> List[Dict]:
         """识别问题包"""
@@ -252,9 +250,7 @@ class DependencyAnalyzer:
         solutions = []
 
         # 方案1: 移除冲突的开发工具
-        dev_tools = [
-            p for p in problematic if p["category"] == "dev_tool" and p["removable"]
-        ]
+        dev_tools = [p for p in problematic if p["category"] == "dev_tool" and p["removable"]]
         if dev_tools:
             solutions.append(
                 {
@@ -262,9 +258,7 @@ class DependencyAnalyzer:
                     "description": "移除冲突的开发工具（生产环境不需要）",
                     "packages": [p["name"] for p in dev_tools],
                     "impact": "low",
-                    "commands": [
-                        f"pip uninstall {' '.join([p['name'] for p in dev_tools])} -y"
-                    ],
+                    "commands": [f"pip uninstall {' '.join([p['name'] for p in dev_tools])} -y"],
                 }
             )
 
@@ -337,9 +331,7 @@ def main():
     print(f"问题包: {len(analysis['problematic_packages'])}")
 
     print("\n🔥 严重冲突:")
-    critical_conflicts = [
-        c for c in analysis["conflicts"] if c["severity"] == "critical"
-    ]
+    critical_conflicts = [c for c in analysis["conflicts"] if c["severity"] == "critical"]
     for conflict in critical_conflicts:
         print(
             f"  - {conflict['package']} 需要 {conflict['requires']} 但 {conflict['conflicts_with']} 是 {conflict['current_version']}"

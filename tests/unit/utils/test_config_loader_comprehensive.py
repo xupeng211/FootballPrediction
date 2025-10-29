@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, mock_open, patch
 
 """ConfigLoader模块综合测试 - 目标：从18%提升到60%"""
 
@@ -305,7 +304,6 @@ class TestConfigLoaderFromFile:
         # 模拟yaml库不可用
         with patch.dict("sys.modules", {"yaml": None}):
             with pytest.raises(ImportError):
-                import yaml
 
         # 或者模拟yaml导入失败
         with patch(
@@ -440,7 +438,6 @@ class TestConfigLoaderEdgeCases:
 
     def test_load_config_file_like_object(self):
         """测试传入类文件对象路径"""
-        import io
 
         from src.utils.config_loader import load_config_from_file
 

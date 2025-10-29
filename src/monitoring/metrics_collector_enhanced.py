@@ -49,9 +49,7 @@ class MetricsAggregator:
         for key, value in metrics.items():
             if key in self.aggregated_metrics:
                 # 简单的聚合逻辑：取平均值
-                self.aggregated_metrics[key] = (
-                    self.aggregated_metrics[key] + value
-                ) / 2
+                self.aggregated_metrics[key] = (self.aggregated_metrics[key] + value) / 2
             else:
                 self.aggregated_metrics[key] = value
         logger.debug(f"Aggregated {len(metrics)} metrics")

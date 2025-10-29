@@ -1,17 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 Tests for streaming.kafka_consumer_simple
 Auto-generated test file
 """
 
-import asyncio
-
 import pytest
 
 # Test imports
 try:
-    from streaming.kafka_consumer_simple import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

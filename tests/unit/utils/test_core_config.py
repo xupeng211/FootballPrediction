@@ -1,12 +1,8 @@
-from unittest.mock import MagicMock, patch
-
 """
 核心配置模块测试
 """
 
 import json
-import tempfile
-from pathlib import Path
 
 import pytest
 

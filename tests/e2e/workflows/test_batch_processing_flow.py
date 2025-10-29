@@ -7,7 +7,6 @@ import asyncio
 import csv
 import io
 import json
-import tempfile
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -99,9 +98,7 @@ class TestBatchProcessingFlow:
                 if status.get("status") == "COMPLETED":
                     break
                 elif status.get("status") == "FAILED":
-                    assert (
-                        False
-                    ), f"批量处理失败: {status.get('error', 'Unknown error')}"
+                    assert False, f"批量处理失败: {status.get('error', 'Unknown error')}"
 
         processing_duration = performance_metrics.end_timer("batch_processing")
         print(f"✅ 批量处理完成 ({processing_duration:.2f}s)")
@@ -127,9 +124,7 @@ class TestBatchProcessingFlow:
 
         # 验证成功处理的预测
         assert summary.get("successful", 0) > 0
-        assert (
-            summary.get("failed", 0) < summary.get("total", 0) * 0.1
-        )  # 失败率应低于10%
+        assert summary.get("failed", 0) < summary.get("total", 0) * 0.1  # 失败率应低于10%
 
         # 5. 验证预测已导入
         response = await api_client.get(
@@ -140,9 +135,7 @@ class TestBatchProcessingFlow:
 
         if response.status_code == 200:
             imported_predictions = response.json()
-            assert len(imported_predictions.get("data", [])) >= summary.get(
-                "successful", 0
-            )
+            assert len(imported_predictions.get("data", [])) >= summary.get("successful", 0)
             print(f"✅ 成功导入了 {len(imported_predictions.get('data', []))} 个预测")
 
         # 性能断言
@@ -173,18 +166,14 @@ class TestBatchProcessingFlow:
                 "prediction": "HOME_WIN" if i % 2 == 0 else "AWAY_WIN",
                 "confidence": 0.7 + (i * 0.05),
             }
-            await api_client.post(
-                "/api/v1/predictions", json=pred_data, headers=user_headers
-            )
+            await api_client.post("/api/v1/predictions", json=pred_data, headers=user_headers)
 
         # 2. 创建导出任务
         export_request = {
             "data_type": "predictions",
             "format": "csv",
             "filters": {
-                "date_from": (
-                    datetime.now(timezone.utc) - timedelta(days=1)
-                ).isoformat(),
+                "date_from": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
                 "date_to": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
             },
             "fields": [
@@ -305,9 +294,7 @@ class TestBatchProcessingFlow:
             if response.status_code == 200:
                 status = response.json()
                 processed = status.get("processed", 0)
-                print(
-                    f"📊 导入进度: {processed}/{total} ({processed / total * 100:.1f}%)"
-                )
+                print(f"📊 导入进度: {processed}/{total} ({processed / total * 100:.1f}%)")
 
                 if status.get("status") == "COMPLETED":
                     break
@@ -357,9 +344,7 @@ class TestBatchProcessingFlow:
             print(f"✅ 定时任务已创建: {job_id}")
 
             # 2. 获取任务列表
-            response = await api_client.get(
-                "/api/v1/batch/schedule", headers=analyst_headers
-            )
+            response = await api_client.get("/api/v1/batch/schedule", headers=analyst_headers)
 
             if response.status_code == 200:
                 jobs = response.json()

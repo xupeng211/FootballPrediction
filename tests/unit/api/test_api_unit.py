@@ -6,8 +6,6 @@ API Unit Tests
 Tests API component unit functionality avoiding complex integration environment.
 """
 
-from unittest.mock import AsyncMock, Mock, patch
-
 import pytest
 
 
@@ -389,7 +387,6 @@ class TestAPIUnit:
         """成功用例：API并发请求处理"""
         # Arrange
         import threading
-        import time
 
         results = []
         errors = []

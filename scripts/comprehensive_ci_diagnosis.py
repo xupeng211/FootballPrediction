@@ -8,6 +8,7 @@ import subprocess
 import re
 from pathlib import Path
 
+
 def analyze_local_issues():
     """分析本地可能存在的问题"""
     print("🔍 分析本地潜在问题...")
@@ -17,8 +18,9 @@ def analyze_local_issues():
     # 1. 检查Python语法
     print("  🔧 检查Python语法...")
     try:
-        result = subprocess.run(['python', '-m', 'py_compile', 'src/main.py'],
-                              capture_output=True, text=True)
+        result = subprocess.run(
+            ["python", "-m", "py_compile", "src/main.py"], capture_output=True, text=True
+        )
         if result.returncode != 0:
             issues.append(("语法错误", "main.py", result.stderr))
             print(f"    ❌ main.py语法错误: {result.stderr}")
@@ -30,8 +32,7 @@ def analyze_local_issues():
     # 2. 检查依赖问题
     print("  🔧 检查依赖...")
     try:
-        result = subprocess.run(['python', '-c', 'import fastapi'],
-                              capture_output=True, text=True)
+        result = subprocess.run(["python", "-c", "import fastapi"], capture_output=True, text=True)
         if result.returncode != 0:
             issues.append(("依赖缺失", "fastapi", result.stderr))
             print(f"    ❌ FastAPI导入失败: {result.stderr}")
@@ -42,7 +43,7 @@ def analyze_local_issues():
 
     # 3. 检查配置文件
     print("  🔧 检查配置文件...")
-    config_files = ['requirements.txt', 'pyproject.toml', '.env.example']
+    config_files = ["requirements.txt", "pyproject.toml", ".env.example"]
     for config_file in config_files:
         if Path(config_file).exists():
             print(f"    ✅ {config_file} 存在")
@@ -52,6 +53,7 @@ def analyze_local_issues():
 
     return issues
 
+
 def check_docker_issues():
     """检查Docker相关问题"""
     print("🐳 检查Docker相关问题...")
@@ -59,19 +61,25 @@ def check_docker_issues():
     docker_issues = []
 
     # 检查Dockerfile
-    if Path('Dockerfile').exists():
+    if Path("Dockerfile").exists():
         try:
-            with open('Dockerfile', 'r') as f:
+            with open("Dockerfile", "r") as f:
                 content = f.read()
 
             # 检查常见问题
-            if 'COPY requirements.txt' in content and not Path('requirements.txt').exists():
-                docker_issues.append(("Docker配置", "requirements.txt缺失",
-                                   "Dockerfile引用requirements.txt但文件不存在"))
+            if "COPY requirements.txt" in content and not Path("requirements.txt").exists():
+                docker_issues.append(
+                    (
+                        "Docker配置",
+                        "requirements.txt缺失",
+                        "Dockerfile引用requirements.txt但文件不存在",
+                    )
+                )
 
-            if 'python:' not in content:
-                docker_issues.append(("Docker配置", "Python基础镜像",
-                                   "Dockerfile可能缺少Python基础镜像"))
+            if "python:" not in content:
+                docker_issues.append(
+                    ("Docker配置", "Python基础镜像", "Dockerfile可能缺少Python基础镜像")
+                )
 
             print("    ✅ Dockerfile存在且基本配置正确")
 
@@ -83,14 +91,14 @@ def check_docker_issues():
         print("    ❌ Dockerfile不存在")
 
     # 检查docker-compose.yml
-    if Path('docker-compose.yml').exists():
+    if Path("docker-compose.yml").exists():
         print("    ✅ docker-compose.yml存在")
     else:
-        docker_issues.append(("Docker配置", "docker-compose.yml缺失",
-                           "docker-compose.yml不存在"))
+        docker_issues.append(("Docker配置", "docker-compose.yml缺失", "docker-compose.yml不存在"))
         print("    ❌ docker-compose.yml不存在")
 
     return docker_issues
+
 
 def check_python_environment():
     """检查Python环境问题"""
@@ -100,25 +108,24 @@ def check_python_environment():
 
     # 检查Python版本
     try:
-        result = subprocess.run(['python', '--version'],
-                              capture_output=True, text=True)
+        result = subprocess.run(["python", "--version"], capture_output=True, text=True)
         version = result.stdout.strip()
         print(f"    ✅ Python版本: {version}")
 
-        if '3.11' not in version and '3.12' not in version:
-            env_issues.append(("Python版本", "版本不匹配",
-                            f"当前版本 {version}，建议使用3.11+"))
+        if "3.11" not in version and "3.12" not in version:
+            env_issues.append(("Python版本", "版本不匹配", f"当前版本 {version}，建议使用3.11+"))
 
     except Exception as e:
         env_issues.append(("Python版本", "检查失败", str(e)))
         print(f"    ❌ 检查Python版本时出错: {e}")
 
     # 检查关键模块
-    critical_modules = ['fastapi', 'uvicorn', 'sqlalchemy', 'pydantic']
+    critical_modules = ["fastapi", "uvicorn", "sqlalchemy", "pydantic"]
     for module in critical_modules:
         try:
-            result = subprocess.run(['python', '-c', f'import {module}'],
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                ["python", "-c", f"import {module}"], capture_output=True, text=True
+            )
             if result.returncode == 0:
                 print(f"    ✅ {module} 可用")
             else:
@@ -130,6 +137,7 @@ def check_python_environment():
 
     return env_issues
 
+
 def check_import_issues():
     """检查导入问题"""
     print("📦 检查导入问题...")
@@ -138,20 +146,21 @@ def check_import_issues():
 
     # 检查main.py的导入
     try:
-        with open('src/main.py', 'r') as f:
+        with open("src/main.py", "r") as f:
             main_content = f.read()
 
         # 提取所有import语句
-        import_lines = re.findall(r'^\s*(?:from\s+\S+\s+)?import\s+\S+', main_content, re.MULTILINE)
+        import_lines = re.findall(r"^\s*(?:from\s+\S+\s+)?import\s+\S+", main_content, re.MULTILINE)
 
         for import_line in import_lines:
             try:
                 # 简单的导入测试
-                module_name = re.search(r'import\s+(\w+)', import_line)
+                module_name = re.search(r"import\s+(\w+)", import_line)
                 if module_name:
                     module = module_name.group(1)
-                    result = subprocess.run(['python', '-c', f'import {module}'],
-                                          capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["python", "-c", f"import {module}"], capture_output=True, text=True
+                    )
                     if result.returncode != 0:
                         import_issues.append(("导入错误", module, result.stderr))
                         print(f"    ❌ {module} 导入失败")
@@ -165,6 +174,7 @@ def check_import_issues():
         print(f"    ❌ 读取src/main.py时出错: {e}")
 
     return import_issues
+
 
 def generate_fix_recommendations(issues):
     """生成修复建议"""
@@ -187,6 +197,7 @@ def generate_fix_recommendations(issues):
             recommendations.append(f"更新Python版本: {details}")
 
     return recommendations
+
 
 def run_comprehensive_diagnosis():
     """运行全面诊断"""
@@ -254,6 +265,7 @@ def run_comprehensive_diagnosis():
     print("\n📄 详细报告已保存到: CI_DIAGNOSIS_REPORT.md")
 
     return all_issues, recommendations
+
 
 if __name__ == "__main__":
     run_comprehensive_diagnosis()

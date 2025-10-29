@@ -82,9 +82,7 @@ class TestScoresCollector:
         mock_http_client = AsyncMock()
         mock_http_client.get.return_value = MagicMock()
         mock_http_client.get.return_value.status_code = 200
-        mock_http_client.get.return_value.json.return_value = {
-            "matches": [mock_live_score_data]
-        }
+        mock_http_client.get.return_value.json.return_value = {"matches": [mock_live_score_data]}
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_live_matches()
@@ -229,9 +227,7 @@ class TestScoresCollector:
             }
         )
 
-        with patch.object(
-            collector, "_get_websocket_client", return_value=mock_websocket
-        ):
+        with patch.object(collector, "_get_websocket_client", return_value=mock_websocket):
             updates = []
             async for update in collector.subscribe_live_updates(match_id=12345):
                 updates.append(update)
@@ -333,9 +329,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            _result = await collector.collect_head_to_head(
-                home_team_id=10, away_team_id=20
-            )
+            _result = await collector.collect_head_to_head(home_team_id=10, away_team_id=20)
 
             assert _result is not None
             assert _result["home_team_wins"] == 5

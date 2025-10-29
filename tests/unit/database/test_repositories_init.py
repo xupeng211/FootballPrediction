@@ -147,9 +147,7 @@ class TestRepositoryIntegration:
             ]
 
             for repo_class in repository_classes:
-                assert issubclass(
-                    repo_class, BaseRepository
-                ), f"{repo_class}未继承BaseRepository"
+                assert issubclass(repo_class, BaseRepository), f"{repo_class}未继承BaseRepository"
 
         except Exception:
             pytest.skip("Repository继承关系检查失败")

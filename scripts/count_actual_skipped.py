@@ -81,9 +81,7 @@ def main():
                     }
                 )
 
-                print(
-                    f"  总计: {total}, 跳过: {skipped}, 运行: {run}, 跳过率: {skip_rate:.1f}%"
-                )
+                print(f"  总计: {total}, 跳过: {skipped}, 运行: {run}, 跳过率: {skip_rate:.1f}%")
 
             except subprocess.TimeoutExpired:
                 print("  超时，跳过此目录")

@@ -10,13 +10,11 @@ import asyncio
 import yaml
 import json
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
 from pathlib import Path
 
 from src.collectors.oddsportal_scraper import OddsPortalScraper, OddsPortalMatch
 from src.collectors.data_sources import DataSourceAdapter, MatchData, OddsData, TeamData
 from src.core.logging_system import get_logger
-from src.core.config import get_config
 
 logger = get_logger(__name__)
 
@@ -42,11 +40,7 @@ class OddsPortalIntegration:
     def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
         """加载配置文件"""
         if config_path is None:
-            config_path = (
-                Path(__file__).parent.parent.parent
-                / "config"
-                / "oddsportal_config.yaml"
-            )
+            config_path = Path(__file__).parent.parent.parent / "config" / "oddsportal_config.yaml"
 
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -54,9 +48,7 @@ class OddsPortalIntegration:
             logger.info(f"Loaded OddsPortal configuration from {config_path}")
             return config
         except FileNotFoundError:
-            logger.warning(
-                f"Configuration file not found: {config_path}, using defaults"
-            )
+            logger.warning(f"Configuration file not found: {config_path}, using defaults")
             return self._get_default_config()
         except yaml.YAMLError as e:
             logger.error(f"Error parsing configuration file: {e}")
@@ -194,9 +186,7 @@ class OddsPortalIntegration:
                 logger.warning(f"League {league_key} is not enabled or configured")
                 return []
 
-            self.logger.info(
-                f"Starting league matches scraping for {league_config['name']}"
-            )
+            self.logger.info(f"Starting league matches scraping for {league_config['name']}")
             matches = await self.scraper.scrape_league_matches(
                 league_config["url"], league_config["name"]
             )
@@ -208,9 +198,7 @@ class OddsPortalIntegration:
                 if match_data:
                     match_data_list.append(match_data)
 
-            self.logger.info(
-                f"Scraped {len(match_data_list)} matches for {league_config['name']}"
-            )
+            self.logger.info(f"Scraped {len(match_data_list)} matches for {league_config['name']}")
             return match_data_list
 
         except Exception as e:
@@ -222,9 +210,7 @@ class OddsPortalIntegration:
         try:
             # 创建比赛数据（MatchData不包含odds字段）
             match_id = (
-                int(match.match_id)
-                if match.match_id.isdigit()
-                else hash(match.match_id) % 1000000
+                int(match.match_id) if match.match_id.isdigit() else hash(match.match_id) % 1000000
             )
 
             match_data = MatchData(
@@ -288,11 +274,7 @@ class OddsPortalIntegration:
             init_ok = self.is_initialized
 
             return {
-                "status": (
-                    "healthy"
-                    if all([connection_ok, config_ok, init_ok])
-                    else "unhealthy"
-                ),
+                "status": ("healthy" if all([connection_ok, config_ok, init_ok]) else "unhealthy"),
                 "connection": connection_ok,
                 "configuration": config_ok,
                 "initialization": init_ok,
@@ -310,9 +292,7 @@ class OddsPortalIntegration:
 class OddsPortalAdapter(DataSourceAdapter):
     """OddsPortal适配器，实现DataSourceAdapter接口"""
 
-    def __init__(
-        self, config_path: Optional[str] = None, api_key: Optional[str] = None
-    ):
+    def __init__(self, config_path: Optional[str] = None, api_key: Optional[str] = None):
         super().__init__(api_key)
         self.integration = OddsPortalIntegration(config_path)
         self.logger = get_logger(self.__class__.__name__)
@@ -373,16 +353,12 @@ class OddsPortalAdapter(DataSourceAdapter):
                 if match.home_team not in teams_set:
                     teams_set.add(match.home_team)
                     teams_list.append(
-                        TeamData(
-                            id=hash(match.home_team) % 1000000, name=match.home_team
-                        )
+                        TeamData(id=hash(match.home_team) % 1000000, name=match.home_team)
                     )
                 if match.away_team not in teams_set:
                     teams_set.add(match.away_team)
                     teams_list.append(
-                        TeamData(
-                            id=hash(match.away_team) % 1000000, name=match.away_team
-                        )
+                        TeamData(id=hash(match.away_team) % 1000000, name=match.away_team)
                     )
 
             return teams_list
@@ -401,9 +377,7 @@ class OddsPortalAdapter(DataSourceAdapter):
                 if match.id == match_id:
                     # 从原始OddsPortalMatch创建OddsData
                     odds_portal_match = None
-                    for (
-                        op_match
-                    ) in await self.integration.scraper.scrape_today_matches():
+                    for op_match in await self.integration.scraper.scrape_today_matches():
                         if (
                             op_match.match_id == str(match_id)
                             or hash(op_match.match_id) % 1000000 == match_id
@@ -496,9 +470,7 @@ async def main():
 
         # 显示前3个比赛
         for i, match in enumerate(matches[:3]):
-            print(
-                f"Match {i+1}: {match.home_team} vs {match.away_team} ({match.league})"
-            )
+            print(f"Match {i+1}: {match.home_team} vs {match.away_team} ({match.league})")
 
     except Exception as e:
         print(f"Error: {e}")

@@ -6,14 +6,34 @@ Phase 3.2 - Core模块异常系统全面测试
 
 import pytest
 from src.core.exceptions import (
-    FootballPredictionError, ConfigError, DataError, ModelError,
-    PredictionError, CacheError, ServiceError, DatabaseError,
-    ConsistencyError, ValidationError, DataQualityError, PipelineError,
-    DomainError, BusinessRuleError, ServiceLifecycleError,
-    DependencyInjectionError, LineageError, TrackingError, BacktestError,
-    DataProcessingError, TaskExecutionError, TaskRetryError,
-    AuthenticationError, AuthorizationError, RateLimitError, TimeoutError,
-    AdapterError, StreamingError
+    FootballPredictionError,
+    ConfigError,
+    DataError,
+    ModelError,
+    PredictionError,
+    CacheError,
+    ServiceError,
+    DatabaseError,
+    ConsistencyError,
+    ValidationError,
+    DataQualityError,
+    PipelineError,
+    DomainError,
+    BusinessRuleError,
+    ServiceLifecycleError,
+    DependencyInjectionError,
+    LineageError,
+    TrackingError,
+    BacktestError,
+    DataProcessingError,
+    TaskExecutionError,
+    TaskRetryError,
+    AuthenticationError,
+    AuthorizationError,
+    RateLimitError,
+    TimeoutError,
+    AdapterError,
+    StreamingError,
 )
 
 
@@ -222,22 +242,42 @@ class TestCoreExceptionsComprehensive:
 
         exc = ServiceError(message, service_name)
 
-        assert hasattr(exc, 'message')
-        assert hasattr(exc, 'service_name')
+        assert hasattr(exc, "message")
+        assert hasattr(exc, "service_name")
         assert exc.message == message
         assert exc.service_name == service_name
 
     def test_all_exceptions_importable(self):
         """测试所有异常都可以导入"""
         exceptions = [
-            FootballPredictionError, ConfigError, DataError, ModelError,
-            PredictionError, CacheError, ServiceError, DatabaseError,
-            ConsistencyError, ValidationError, DataQualityError, PipelineError,
-            DomainError, BusinessRuleError, ServiceLifecycleError,
-            DependencyInjectionError, LineageError, TrackingError, BacktestError,
-            DataProcessingError, TaskExecutionError, TaskRetryError,
-            AuthenticationError, AuthorizationError, RateLimitError, TimeoutError,
-            AdapterError, StreamingError
+            FootballPredictionError,
+            ConfigError,
+            DataError,
+            ModelError,
+            PredictionError,
+            CacheError,
+            ServiceError,
+            DatabaseError,
+            ConsistencyError,
+            ValidationError,
+            DataQualityError,
+            PipelineError,
+            DomainError,
+            BusinessRuleError,
+            ServiceLifecycleError,
+            DependencyInjectionError,
+            LineageError,
+            TrackingError,
+            BacktestError,
+            DataProcessingError,
+            TaskExecutionError,
+            TaskRetryError,
+            AuthenticationError,
+            AuthorizationError,
+            RateLimitError,
+            TimeoutError,
+            AdapterError,
+            StreamingError,
         ]
 
         for exc_class in exceptions:
@@ -260,6 +300,7 @@ class TestCoreExceptionsComprehensive:
                 exc = exc_type(unicode_message)
             assert unicode_message in str(exc)
 
+
 def test_core_exceptions_comprehensive_suite():
     """Core异常系统综合测试套件"""
     # 快速验证核心异常功能
@@ -272,6 +313,7 @@ def test_core_exceptions_comprehensive_suite():
     assert service_exc.service_name == "服务名"
 
     print("✅ Core异常系统综合测试套件通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

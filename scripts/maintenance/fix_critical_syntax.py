@@ -53,9 +53,7 @@ def fix_critical_syntax_errors(file_path):
         changes_made.append("Fixed duplicate return statements")
 
     # 修复装饰器语法
-    content = re.sub(
-        r"@abstractmethodasync def", "@abstractmethod\n    async def", content
-    )
+    content = re.sub(r"@abstractmethodasync def", "@abstractmethod\n    async def", content)
     if content != original_content:
         changes_made.append("Fixed decorator syntax")
 

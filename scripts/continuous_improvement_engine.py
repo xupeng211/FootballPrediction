@@ -26,10 +26,7 @@ except ImportError as e:
     sys.exit(1)
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +53,7 @@ class ContinuousImprovementEngine:
         """加载改进历史"""
         if self.improvement_log.exists():
             try:
-                with open(self.improvement_log, 'r') as f:
+                with open(self.improvement_log, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"加载改进历史失败: {e}")
@@ -66,7 +63,7 @@ class ContinuousImprovementEngine:
         """加载质量目标"""
         if self.goals_file.exists():
             try:
-                with open(self.goals_file, 'r') as f:
+                with open(self.goals_file, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"加载质量目标失败: {e}")
@@ -78,7 +75,7 @@ class ContinuousImprovementEngine:
             "code_quality": 8.0,
             "security": 9.0,
             "timeline": "3_months",
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
     def run_continuous_improvement_cycle(self) -> Dict[str, Any]:
@@ -117,7 +114,7 @@ class ContinuousImprovementEngine:
             "improvement_plan": improvement_plan,
             "improvement_results": improvement_results,
             "verification_results": verification_results,
-            "success": verification_results.get("overall_improvement", False)
+            "success": verification_results.get("overall_improvement", False),
         }
 
         self._log_improvement_cycle(cycle_data)
@@ -142,7 +139,7 @@ class ContinuousImprovementEngine:
             "current": current_score,
             "target": target_score,
             "gap": max(0, target_score - current_score),
-            "priority": "HIGH" if current_score < 6 else "MEDIUM"
+            "priority": "HIGH" if current_score < 6 else "MEDIUM",
         }
 
         # 覆盖率差距
@@ -152,7 +149,7 @@ class ContinuousImprovementEngine:
             "current": current_coverage,
             "target": target_coverage,
             "gap": max(0, target_coverage - current_coverage),
-            "priority": "HIGH" if current_coverage < 15 else "MEDIUM"
+            "priority": "HIGH" if current_coverage < 15 else "MEDIUM",
         }
 
         # 代码质量差距
@@ -162,7 +159,7 @@ class ContinuousImprovementEngine:
             "current": current_quality,
             "target": target_quality,
             "gap": max(0, target_quality - current_quality),
-            "priority": "MEDIUM"
+            "priority": "MEDIUM",
         }
 
         # 安全性差距
@@ -172,7 +169,7 @@ class ContinuousImprovementEngine:
             "current": current_security,
             "target": target_security,
             "gap": max(0, target_security - current_security),
-            "priority": "LOW"
+            "priority": "LOW",
         }
 
         return gaps
@@ -184,7 +181,7 @@ class ContinuousImprovementEngine:
         # 按优先级排序差距
         prioritized_gaps = sorted(
             gap_analysis.items(),
-            key=lambda x: {"HIGH": 0, "MEDIUM": 1, "LOW": 2}.get(x[1]["priority"], 3)
+            key=lambda x: {"HIGH": 0, "MEDIUM": 1, "LOW": 2}.get(x[1]["priority"], 3),
         )
 
         for metric, gap_data in prioritized_gaps:
@@ -194,52 +191,58 @@ class ContinuousImprovementEngine:
 
         return plan
 
-    def _get_improvement_actions(self, metric: str, gap_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _get_improvement_actions(
+        self, metric: str, gap_data: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """获取改进措施"""
         actions = []
 
         if metric == "coverage":
             if gap_data["current"] < 15:
-                actions.append({
-                    "type": "test_generation",
-                    "priority": "HIGH",
-                    "description": "为核心模块生成基础测试",
-                    "target_modules": ["src/api", "src/core"],
-                    "expected_improvement": 3.0
-                })
+                actions.append(
+                    {
+                        "type": "test_generation",
+                        "priority": "HIGH",
+                        "description": "为核心模块生成基础测试",
+                        "target_modules": ["src/api", "src/core"],
+                        "expected_improvement": 3.0,
+                    }
+                )
             if gap_data["gap"] > 5:
-                actions.append({
-                    "type": "coverage_analysis",
-                    "priority": "MEDIUM",
-                    "description": "分析未覆盖代码并针对性添加测试",
-                    "expected_improvement": 2.0
-                })
+                actions.append(
+                    {
+                        "type": "coverage_analysis",
+                        "priority": "MEDIUM",
+                        "description": "分析未覆盖代码并针对性添加测试",
+                        "expected_improvement": 2.0,
+                    }
+                )
 
         elif metric == "overall_score" and gap_data["current"] < 6:
-            actions.append({
-                "type": "comprehensive_fix",
-                "priority": "HIGH",
-                "description": "运行综合质量修复",
-                "expected_improvement": 1.0
-            })
+            actions.append(
+                {
+                    "type": "comprehensive_fix",
+                    "priority": "HIGH",
+                    "description": "运行综合质量修复",
+                    "expected_improvement": 1.0,
+                }
+            )
 
         elif metric == "code_quality" and gap_data["gap"] > 1:
-            actions.append({
-                "type": "code_quality_improvement",
-                "priority": "MEDIUM",
-                "description": "改进代码质量指标",
-                "expected_improvement": 0.5
-            })
+            actions.append(
+                {
+                    "type": "code_quality_improvement",
+                    "priority": "MEDIUM",
+                    "description": "改进代码质量指标",
+                    "expected_improvement": 0.5,
+                }
+            )
 
         return actions
 
     def _execute_improvements(self, improvement_plan: List[Dict[str, Any]]) -> Dict[str, Any]:
         """执行改进措施"""
-        results = {
-            "actions_executed": 0,
-            "improvements_made": [],
-            "failures": []
-        }
+        results = {"actions_executed": 0, "improvements_made": [], "failures": []}
 
         for action in improvement_plan:
             print(f"  🔄 执行: {action['description']}")
@@ -257,24 +260,22 @@ class ContinuousImprovementEngine:
                     result = {"success": False, "message": f"未知改进类型: {action['type']}"}
 
                 if result.get("success", False):
-                    results["improvements_made"].append({
-                        "action": action["description"],
-                        "result": result
-                    })
+                    results["improvements_made"].append(
+                        {"action": action["description"], "result": result}
+                    )
                     results["actions_executed"] += 1
                     print("    ✅ 成功")
                 else:
-                    results["failures"].append({
-                        "action": action["description"],
-                        "error": result.get("message", "未知错误")
-                    })
+                    results["failures"].append(
+                        {
+                            "action": action["description"],
+                            "error": result.get("message", "未知错误"),
+                        }
+                    )
                     print(f"    ❌ 失败: {result.get('message', '未知错误')}")
 
             except Exception as e:
-                results["failures"].append({
-                    "action": action["description"],
-                    "error": str(e)
-                })
+                results["failures"].append({"action": action["description"], "error": str(e)})
                 print(f"    ❌ 异常: {e}")
 
         return results
@@ -291,7 +292,9 @@ class ContinuousImprovementEngine:
                     for py_file in module_path.rglob("*.py"):
                         if not py_file.name.startswith("__"):
                             # 检查是否有对应的测试文件
-                            test_file = self.project_root / "tests" / "unit" / f"test_{py_file.stem}.py"
+                            test_file = (
+                                self.project_root / "tests" / "unit" / f"test_{py_file.stem}.py"
+                            )
                             if not test_file.exists():
                                 # 生成基础测试文件
                                 self._create_basic_test_file(test_file, py_file)
@@ -300,7 +303,7 @@ class ContinuousImprovementEngine:
             return {
                 "success": True,
                 "generated_tests": generated_tests,
-                "message": f"生成了 {generated_tests} 个基础测试文件"
+                "message": f"生成了 {generated_tests} 个基础测试文件",
             }
 
         except Exception as e:
@@ -311,8 +314,9 @@ class ContinuousImprovementEngine:
         try:
             test_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(test_file, 'w') as f:
-                f.write(f'''#!/usr/bin/env python3
+            with open(test_file, "w") as f:
+                f.write(
+                    f'''#!/usr/bin/env python3
 """
 Auto-generated basic tests for {source_file.name}
 TODO: Expand these tests with actual functionality
@@ -342,7 +346,8 @@ class Test{source_file.stem.title().replace('_', '')}:
         """Test error handling"""
         # TODO: Implement error handling tests
         pass
-''')
+'''
+                )
         except Exception as e:
             logger.warning(f"创建测试文件失败 {test_file}: {e}")
 
@@ -350,15 +355,27 @@ class Test{source_file.stem.title().replace('_', '')}:
         """分析并改进覆盖率"""
         try:
             # 运行覆盖率分析
-            subprocess.run([
-                sys.executable, "-m", "pytest", "tests/unit/api/test_health.py",
-                "--cov=src/", "--cov-report=json", "--cov-report=html", "--tb=short", "-q"
-            ], capture_output=True, text=True, timeout=60)
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/unit/api/test_health.py",
+                    "--cov=src/",
+                    "--cov-report=json",
+                    "--cov-report=html",
+                    "--tb=short",
+                    "-q",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             return {
                 "success": True,
                 "message": "覆盖率分析完成，生成了HTML报告",
-                "coverage_report_generated": True
+                "coverage_report_generated": True,
             }
 
         except Exception as e:
@@ -373,7 +390,7 @@ class Test{source_file.stem.title().replace('_', '')}:
             return {
                 "success": True,
                 "fixes_applied": total_fixes,
-                "message": f"应用了 {total_fixes} 个自动修复"
+                "message": f"应用了 {total_fixes} 个自动修复",
             }
 
         except Exception as e:
@@ -383,13 +400,13 @@ class Test{source_file.stem.title().replace('_', '')}:
         """改进代码质量"""
         try:
             # 运行Ruff修复
-            result = subprocess.run([
-                "ruff", "check", "src/", "--fix"
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                ["ruff", "check", "src/", "--fix"], capture_output=True, text=True, timeout=60
+            )
 
             return {
                 "success": result.returncode == 0,
-                "message": "Ruff代码质量修复完成" if result.returncode == 0 else "Ruff修复发现问题"
+                "message": "Ruff代码质量修复完成" if result.returncode == 0 else "Ruff修复发现问题",
             }
 
         except Exception as e:
@@ -403,7 +420,11 @@ class Test{source_file.stem.title().replace('_', '')}:
         new_quality_status = self.guardian.run_full_quality_check()
 
         # 加载之前的质量状态
-        previous_status = self.improvement_history[-1]["quality_status_before"] if self.improvement_history else {}
+        previous_status = (
+            self.improvement_history[-1]["quality_status_before"]
+            if self.improvement_history
+            else {}
+        )
 
         # 计算改进情况
         improvements = {}
@@ -420,7 +441,9 @@ class Test{source_file.stem.title().replace('_', '')}:
                 "old": old_value,
                 "new": new_value,
                 "improvement": improvement,
-                "percentage_change": (improvement / max(old_value, 0.1)) * 100 if old_value > 0 else 0
+                "percentage_change": (
+                    (improvement / max(old_value, 0.1)) * 100 if old_value > 0 else 0
+                ),
             }
 
             if improvement > 0:
@@ -430,7 +453,7 @@ class Test{source_file.stem.title().replace('_', '')}:
             "overall_improvement": overall_improvement,
             "new_quality_status": new_quality_status,
             "improvements": improvements,
-            "summary": self._generate_improvement_summary(improvements)
+            "summary": self._generate_improvement_summary(improvements),
         }
 
     def _generate_improvement_summary(self, improvements: Dict[str, Any]) -> str:
@@ -459,14 +482,16 @@ class Test{source_file.stem.title().replace('_', '')}:
         recent_history = self.improvement_history[-50:]
 
         try:
-            with open(self.improvement_log, 'w') as f:
+            with open(self.improvement_log, "w") as f:
                 json.dump(recent_history, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"保存改进历史失败: {e}")
 
     def _generate_improvement_report(self, cycle_data: Dict[str, Any]):
         """生成改进报告"""
-        report_file = self.project_root / f"improvement-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.md"
+        report_file = (
+            self.project_root / f"improvement-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.md"
+        )
 
         verification = cycle_data.get("verification_results", {})
         improvements = verification.get("improvements", {})
@@ -488,13 +513,15 @@ class Test{source_file.stem.title().replace('_', '')}:
             "overall_score": "综合分数",
             "coverage": "测试覆盖率",
             "code_quality": "代码质量",
-            "security": "安全性"
+            "security": "安全性",
         }
 
         for metric in metrics:
             if metric in improvements:
                 data = improvements[metric]
-                change_symbol = "📈" if data["improvement"] > 0 else "📉" if data["improvement"] < 0 else "➡️"
+                change_symbol = (
+                    "📈" if data["improvement"] > 0 else "📉" if data["improvement"] < 0 else "➡️"
+                )
                 report_content += f"| {metric_names[metric]} | {data['old']:.1f} | {data['new']:.1f} | {change_symbol} {data['improvement']:+.1f} | {data['percentage_change']:+.1f}% |\n"
 
         report_content += """
@@ -531,16 +558,20 @@ class Test{source_file.stem.title().replace('_', '')}:
         if new_status.get("code_quality", 0) < 9:
             report_content += "- 📚 加强代码规范培训\n"
 
-        report_content += """
+        report_content += (
+            """
 ## 📈 趋势分析
 
 持续运行改进引擎以观察长期趋势。
 
 ---
-*报告生成时间: """ + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "*"
+*报告生成时间: """
+            + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            + "*"
+        )
 
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 f.write(report_content)
             logger.info(f"改进报告已保存: {report_file}")
         except Exception as e:
@@ -556,7 +587,7 @@ class Test{source_file.stem.title().replace('_', '')}:
                 cycle_start = datetime.now()
                 print(f"\n{'='*60}")
                 print(f"🚀 自动改进周期 - {cycle_start.strftime('%Y-%m-%d %H:%M:%S')}")
-                print('='*60)
+                print("=" * 60)
 
                 # 运行改进周期
                 self.run_continuous_improvement_cycle()
@@ -585,12 +616,12 @@ class Test{source_file.stem.title().replace('_', '')}:
         recent_cycles = self.improvement_history[-limit:]
 
         for i, cycle in enumerate(recent_cycles, 1):
-            timestamp = cycle.get('timestamp', 'Unknown')
-            success = cycle.get('success', False)
-            duration = cycle.get('duration_seconds', 0)
+            timestamp = cycle.get("timestamp", "Unknown")
+            success = cycle.get("success", False)
+            duration = cycle.get("duration_seconds", 0)
 
-            verification = cycle.get('verification_results', {})
-            improvements = verification.get('improvements', {})
+            verification = cycle.get("verification_results", {})
+            improvements = verification.get("improvements", {})
 
             print(f"\n{i}. 周期时间: {timestamp}")
             print(f"   状态: {'✅ 成功' if success else '❌ 失败'}")

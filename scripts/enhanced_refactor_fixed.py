@@ -10,13 +10,14 @@ import inspect
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
+
 def analyze_source_module(source_file: str) -> Dict[str, Any]:
     """分析源模块，提取函数和类信息"""
     if not os.path.exists(source_file):
         return {"functions": [], "classes": [], "imports": []}
 
     try:
-        with open(source_file, 'r', encoding='utf-8') as f:
+        with open(source_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         tree = ast.parse(content)
@@ -26,36 +27,35 @@ def analyze_source_module(source_file: str) -> Dict[str, Any]:
 
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
-                functions.append({
-                    "name": node.name,
-                    "args": [arg.arg for arg in node.args.args],
-                    "line": node.lineno
-                })
+                functions.append(
+                    {
+                        "name": node.name,
+                        "args": [arg.arg for arg in node.args.args],
+                        "line": node.lineno,
+                    }
+                )
             elif isinstance(node, ast.ClassDef):
                 methods = []
                 for item in node.body:
                     if isinstance(item, ast.FunctionDef):
                         methods.append(item.name)
-                classes.append({
-                    "name": node.name,
-                    "methods": methods,
-                    "line": node.lineno
-                })
+                classes.append({"name": node.name, "methods": methods, "line": node.lineno})
 
         return {
             "functions": functions,
             "classes": classes,
-            "has_content": len(functions) > 0 or len(classes) > 0
+            "has_content": len(functions) > 0 or len(classes) > 0,
         }
 
     except Exception as e:
         print(f"   ⚠️ 分析源文件失败: {e}")
         return {"functions": [], "classes": [], "imports": []}
 
+
 def create_enhanced_test_fixed(source_file: str, test_file: str, module_info: Dict) -> bool:
     """创建增强的真实业务逻辑测试 (修复版)"""
 
-    module_name = source_file.replace('src/', '').replace('.py', '').replace('/', '.')
+    module_name = source_file.replace("src/", "").replace(".py", "").replace("/", ".")
     class_name = module_name.title().replace(".", "").replace("_", "")
 
     # 分析源模块
@@ -312,7 +312,7 @@ class Test{class_name}Enhanced:
         os.makedirs(os.path.dirname(test_file), exist_ok=True)
 
         # 写入测试文件
-        with open(test_file, 'w', encoding='utf-8') as f:
+        with open(test_file, "w", encoding="utf-8") as f:
             f.write(test_template)
 
         return True
@@ -320,6 +320,7 @@ class Test{class_name}Enhanced:
     except Exception as e:
         print(f"   ❌ 创建增强测试文件失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -330,41 +331,45 @@ def main():
     # 核心模块列表 - 专注于高优先级模块
     enhanced_modules = [
         {
-            'source': 'src/utils/data_validator.py',
-            'test': 'tests/unit/utils/data_validator_test_enhanced.py',
-            'current_coverage': 0,
-            'target_coverage': 45,
-            'priority': 'HIGH'
+            "source": "src/utils/data_validator.py",
+            "test": "tests/unit/utils/data_validator_test_enhanced.py",
+            "current_coverage": 0,
+            "target_coverage": 45,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/utils/string_utils.py',
-            'test': 'tests/unit/utils/string_utils_test_enhanced.py',
-            'current_coverage': 0,
-            'target_coverage': 45,
-            'priority': 'HIGH'
+            "source": "src/utils/string_utils.py",
+            "test": "tests/unit/utils/string_utils_test_enhanced.py",
+            "current_coverage": 0,
+            "target_coverage": 45,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/utils/crypto_utils.py',
-            'test': 'tests/unit/utils/crypto_utils_test_enhanced.py',
-            'current_coverage': 0,
-            'target_coverage': 45,
-            'priority': 'HIGH'
-        }
+            "source": "src/utils/crypto_utils.py",
+            "test": "tests/unit/utils/crypto_utils_test_enhanced.py",
+            "current_coverage": 0,
+            "target_coverage": 45,
+            "priority": "HIGH",
+        },
     ]
 
     created_files = []
 
     for module_info in enhanced_modules:
-        source_file = module_info['source']
-        test_file = module_info['test']
+        source_file = module_info["source"]
+        test_file = module_info["test"]
 
         print(f"\n🚀 创建增强测试: {source_file}")
         print(f"   测试文件: {test_file}")
-        print(f"   覆盖率目标: {module_info['current_coverage']}% → {module_info['target_coverage']}%")
+        print(
+            f"   覆盖率目标: {module_info['current_coverage']}% → {module_info['target_coverage']}%"
+        )
 
         # 分析源模块
         source_analysis = analyze_source_module(source_file)
-        print(f"   源模块分析: {len(source_analysis['functions'])} 函数, {len(source_analysis['classes'])} 类")
+        print(
+            f"   源模块分析: {len(source_analysis['functions'])} 函数, {len(source_analysis['classes'])} 类"
+        )
 
         if create_enhanced_test_fixed(source_file, test_file, module_info):
             created_files.append(test_file)
@@ -383,12 +388,15 @@ def main():
 
         print("\n📋 建议测试命令:")
         print("   python3 -m pytest tests/unit/utils/data_validator_test_enhanced.py -v")
-        print("   python3 -m pytest tests/unit/utils/data_validator_test_enhanced.py --cov=src.utils --cov-report=term")
+        print(
+            "   python3 -m pytest tests/unit/utils/data_validator_test_enhanced.py --cov=src.utils --cov-report=term"
+        )
 
         return True
     else:
         print("\n⚠️ 没有创建任何增强测试文件")
         return False
+
 
 if __name__ == "__main__":
     main()

@@ -176,9 +176,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                     else None
                 ),
                 confidence=(
-                    float(prediction.confidence_score)
-                    if prediction.confidence_score
-                    else None
+                    float(prediction.confidence_score) if prediction.confidence_score else None
                 ),
                 strategy_used=strategy_name,
                 source=self._event_source,
@@ -229,9 +227,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                     else None
                 ),
                 confidence=(
-                    float(prediction.confidence_score)
-                    if prediction.confidence_score
-                    else None
+                    float(prediction.confidence_score) if prediction.confidence_score else None
                 ),
                 strategy_used=None,  # 更新时可能没有策略信息
                 previous_prediction=previous_prediction,
@@ -312,9 +308,7 @@ class EventDrivenMatchService:
         await self._match_repository.create(match)
 
         # 发布比赛创建事件
-        await self._publish_match_created_event(
-            match, created_by, initial_odds, weather
-        )
+        await self._publish_match_created_event(match, created_by, initial_odds, weather)
 
         return match
 
@@ -412,9 +406,7 @@ class EventDrivenUserService:
         # await self._user_repository.create(user)
 
         # 发布用户注册事件
-        await self._publish_user_registered_event(
-            user, referral_code, ip_address, user_agent
-        )
+        await self._publish_user_registered_event(user, referral_code, ip_address, user_agent)
 
         return user
 

@@ -6,7 +6,6 @@ Simplified pytest configuration for Stage 2
 import os
 import sys
 import warnings
-from typing import Any, Generator
 from unittest.mock import MagicMock
 
 import pytest

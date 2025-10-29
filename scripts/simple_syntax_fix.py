@@ -10,10 +10,11 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_duplicate_client_params(file_path):
     """修复重复的client参数"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -22,28 +23,28 @@ def fix_duplicate_client_params(file_path):
         # 匹配: def test_func(client, client, client, client, client, client):
         patterns = [
             # 6个重复的client
-            (r'(def\s+\w+\s*\([^)]*client)(?:,\s*client){5}([^)]*\):)', r'\1\2'),
+            (r"(def\s+\w+\s*\([^)]*client)(?:,\s*client){5}([^)]*\):)", r"\1\2"),
             # 5个重复的client
-            (r'(def\s+\w+\s*\([^)]*client)(?:,\s*client){4}([^)]*\):)', r'\1\2'),
+            (r"(def\s+\w+\s*\([^)]*client)(?:,\s*client){4}([^)]*\):)", r"\1\2"),
             # 4个重复的client
-            (r'(def\s+\w+\s*\([^)]*client)(?:,\s*client){3}([^)]*\):)', r'\1\2'),
+            (r"(def\s+\w+\s*\([^)]*client)(?:,\s*client){3}([^)]*\):)", r"\1\2"),
             # 3个重复的client
-            (r'(def\s+\w+\s*\([^)]*client)(?:,\s*client){2}([^)]*\):)', r'\1\2'),
+            (r"(def\s+\w+\s*\([^)]*client)(?:,\s*client){2}([^)]*\):)", r"\1\2"),
             # 2个重复的client
-            (r'(def\s+\w+\s*\([^)]*client),\s*client([^)]*\):)', r'\1\2'),
+            (r"(def\s+\w+\s*\([^)]*client),\s*client([^)]*\):)", r"\1\2"),
         ]
 
         for pattern, replacement in patterns:
             content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
         # 修复空参数开头的问题
-        content = re.sub(r'(def\s+\w+\s*\(\s*,)([^)]*\):)', r'(\2', content, flags=re.MULTILINE)
+        content = re.sub(r"(def\s+\w+\s*\(\s*,)([^)]*\):)", r"(\2", content, flags=re.MULTILINE)
 
         # 修复参数列表末尾多余的逗号
-        content = re.sub(r'(def\s+\w+\s*\([^)]*),\s*\):)', r'\1):', content, flags=re.MULTILINE)
+        content = re.sub(r"(def\s+\w+\s*\([^)]*),\s*\):)", r"\1):", content, flags=re.MULTILINE)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         return False
@@ -51,6 +52,7 @@ def fix_duplicate_client_params(file_path):
     except Exception as e:
         print(f"修复文件 {file_path} 时出错: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -61,7 +63,7 @@ def main():
     python_files = []
     for root, dirs, files in os.walk("tests"):
         # 跳过缓存目录
-        dirs[:] = [d for d in dirs if not d.startswith('.') and d != '__pycache__']
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
         for file in files:
             if file.endswith(".py"):
                 python_files.append(Path(root) / file)
@@ -75,6 +77,7 @@ def main():
             fixed_count += 1
 
     print(f"\n🎉 完成！修复了 {fixed_count} 个文件")
+
 
 if __name__ == "__main__":
     main()

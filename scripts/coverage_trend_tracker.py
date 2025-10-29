@@ -16,10 +16,7 @@ from typing import Dict, List, Optional, Any, Tuple
 import logging
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -37,11 +34,7 @@ class CoverageTrendTracker:
         self.data_dir.mkdir(exist_ok=True)
 
         # 目标配置
-        self.targets = {
-            "minimum": 20.0,
-            "target": 30.0,
-            "excellent": 50.0
-        }
+        self.targets = {"minimum": 20.0, "target": 30.0, "excellent": 50.0}
 
     def load_current_coverage(self) -> Optional[float]:
         """加载当前覆盖率"""
@@ -52,7 +45,7 @@ class CoverageTrendTracker:
             return None
 
         try:
-            with open(coverage_file, 'r') as f:
+            with open(coverage_file, "r") as f:
                 coverage_data = json.load(f)
 
             return coverage_data["totals"]["percent_covered"]
@@ -64,7 +57,7 @@ class CoverageTrendTracker:
         """加载历史数据"""
         if self.history_file.exists():
             try:
-                with open(self.history_file, 'r') as f:
+                with open(self.history_file, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"加载历史数据失败: {e}")
@@ -74,13 +67,15 @@ class CoverageTrendTracker:
     def save_history(self, history: List[Dict[str, Any]]):
         """保存历史数据"""
         try:
-            with open(self.history_file, 'w') as f:
+            with open(self.history_file, "w") as f:
                 json.dump(history, f, indent=2)
             logger.info(f"已保存历史数据: {len(history)} 条记录")
         except Exception as e:
             logger.error(f"保存历史数据失败: {e}")
 
-    def add_coverage_record(self, coverage: float, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+    def add_coverage_record(
+        self, coverage: float, metadata: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """添加覆盖率记录"""
         history = self.load_history()
 
@@ -89,14 +84,18 @@ class CoverageTrendTracker:
             "coverage": coverage,
             "date": datetime.datetime.utcnow().strftime("%Y-%m-%d"),
             "week": datetime.datetime.utcnow().isocalendar()[:2],  # (year, week_number)
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         # 计算变化
         if history:
             last_record = history[-1]
             record["change_from_previous"] = coverage - last_record["coverage"]
-            record["change_percentage"] = (record["change_from_previous"] / last_record["coverage"] * 100) if last_record["coverage"] > 0 else 0
+            record["change_percentage"] = (
+                (record["change_from_previous"] / last_record["coverage"] * 100)
+                if last_record["coverage"] > 0
+                else 0
+            )
         else:
             record["change_from_previous"] = 0.0
             record["change_percentage"] = 0.0
@@ -106,7 +105,8 @@ class CoverageTrendTracker:
         # 保留最近180天的数据
         cutoff_date = datetime.datetime.utcnow() - datetime.timedelta(days=180)
         history = [
-            record for record in history
+            record
+            for record in history
             if datetime.datetime.fromisoformat(record["timestamp"]) > cutoff_date
         ]
 
@@ -122,7 +122,7 @@ class CoverageTrendTracker:
                 "avg_daily_change": 0.0,
                 "avg_weekly_change": 0.0,
                 "momentum": 0.0,
-                "volatility": 0.0
+                "volatility": 0.0,
             }
 
         # 按日期排序
@@ -131,17 +131,17 @@ class CoverageTrendTracker:
         # 计算日变化
         daily_changes = []
         for i in range(1, len(sorted_history)):
-            prev_date = datetime.datetime.fromisoformat(sorted_history[i-1]["timestamp"])
+            prev_date = datetime.datetime.fromisoformat(sorted_history[i - 1]["timestamp"])
             curr_date = datetime.datetime.fromisoformat(sorted_history[i]["timestamp"])
             days_diff = (curr_date - prev_date).days or 1
 
-            change = sorted_history[i]["coverage"] - sorted_history[i-1]["coverage"]
+            change = sorted_history[i]["coverage"] - sorted_history[i - 1]["coverage"]
             daily_changes.append(change / days_diff)
 
         # 计算周变化
         weekly_changes = []
         for i in range(7, len(sorted_history)):
-            week_change = sorted_history[i]["coverage"] - sorted_history[i-7]["coverage"]
+            week_change = sorted_history[i]["coverage"] - sorted_history[i - 7]["coverage"]
             weekly_changes.append(week_change)
 
         # 趋势分析
@@ -166,7 +166,7 @@ class CoverageTrendTracker:
         if len(daily_changes) > 1:
             mean_change = sum(daily_changes) / len(daily_changes)
             variance = sum((x - mean_change) ** 2 for x in daily_changes) / len(daily_changes)
-            volatility = variance ** 0.5
+            volatility = variance**0.5
         else:
             volatility = 0.0
 
@@ -176,7 +176,7 @@ class CoverageTrendTracker:
             "avg_weekly_change": sum(weekly_changes) / len(weekly_changes) if weekly_changes else 0,
             "momentum": momentum,
             "volatility": volatility,
-            "data_points": len(sorted_history)
+            "data_points": len(sorted_history),
         }
 
     def predict_timeline(self, current_coverage: float, trends: Dict[str, Any]) -> Dict[str, Any]:
@@ -186,7 +186,7 @@ class CoverageTrendTracker:
                 "can_reach_target": False,
                 "estimated_days": None,
                 "estimated_date": None,
-                "confidence": "low"
+                "confidence": "low",
             }
 
         predictions = {}
@@ -197,7 +197,7 @@ class CoverageTrendTracker:
                     "reached": True,
                     "estimated_days": 0,
                     "estimated_date": datetime.datetime.utcnow().strftime("%Y-%m-%d"),
-                    "confidence": "high"
+                    "confidence": "high",
                 }
             else:
                 remaining = target_coverage - current_coverage
@@ -217,15 +217,17 @@ class CoverageTrendTracker:
                         "reached": False,
                         "estimated_days": None,
                         "estimated_date": None,
-                        "confidence": "very_low"
+                        "confidence": "very_low",
                     }
                 else:
-                    target_date = datetime.datetime.utcnow() + datetime.timedelta(days=estimated_days)
+                    target_date = datetime.datetime.utcnow() + datetime.timedelta(
+                        days=estimated_days
+                    )
                     predictions[target_name] = {
                         "reached": False,
                         "estimated_days": estimated_days,
                         "estimated_date": target_date.strftime("%Y-%m-%d"),
-                        "confidence": confidence
+                        "confidence": confidence,
                     }
 
         return predictions
@@ -238,7 +240,7 @@ class CoverageTrendTracker:
         if not history or current_coverage is None:
             return {
                 "error": "数据不足，无法生成报告",
-                "timestamp": datetime.datetime.utcnow().isoformat()
+                "timestamp": datetime.datetime.utcnow().isoformat(),
             }
 
         # 计算趋势
@@ -254,7 +256,7 @@ class CoverageTrendTracker:
             "max_coverage": max(coverages),
             "avg_coverage": sum(coverages) / len(coverages),
             "current_coverage": current_coverage,
-            "total_records": len(history)
+            "total_records": len(history),
         }
 
         # 按周统计
@@ -262,15 +264,24 @@ class CoverageTrendTracker:
 
         # 最近30天表现
         recent_30_days = [
-            record for record in history
-            if datetime.datetime.fromisoformat(record["timestamp"]) >
-               datetime.datetime.utcnow() - datetime.timedelta(days=30)
+            record
+            for record in history
+            if datetime.datetime.fromisoformat(record["timestamp"])
+            > datetime.datetime.utcnow() - datetime.timedelta(days=30)
         ]
 
         recent_performance = {
             "records_count": len(recent_30_days),
-            "avg_coverage": sum(r["coverage"] for r in recent_30_days) / len(recent_30_days) if recent_30_days else 0,
-            "improvement": recent_30_days[-1]["coverage"] - recent_30_days[0]["coverage"] if len(recent_30_days) > 1 else 0
+            "avg_coverage": (
+                sum(r["coverage"] for r in recent_30_days) / len(recent_30_days)
+                if recent_30_days
+                else 0
+            ),
+            "improvement": (
+                recent_30_days[-1]["coverage"] - recent_30_days[0]["coverage"]
+                if len(recent_30_days) > 1
+                else 0
+            ),
         }
 
         report = {
@@ -286,14 +297,14 @@ class CoverageTrendTracker:
                 "total_records": len(history),
                 "date_range": {
                     "start": history[0]["timestamp"] if history else None,
-                    "end": history[-1]["timestamp"] if history else None
-                }
-            }
+                    "end": history[-1]["timestamp"] if history else None,
+                },
+            },
         }
 
         # 保存报告
         try:
-            with open(self.report_file, 'w') as f:
+            with open(self.report_file, "w") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
             logger.info(f"趋势报告已保存: {self.report_file}")
         except Exception as e:
@@ -315,7 +326,7 @@ class CoverageTrendTracker:
                     "week_number": record["week"][1],
                     "coverages": [],
                     "start_date": record["timestamp"],
-                    "end_date": record["timestamp"]
+                    "end_date": record["timestamp"],
                 }
 
             weekly_data[week_key]["coverages"].append(record["coverage"])
@@ -328,16 +339,18 @@ class CoverageTrendTracker:
         weekly_stats = []
         for week_data in weekly_data.values():
             coverages = week_data["coverages"]
-            weekly_stats.append({
-                "week": week_data["week"],
-                "year": week_data["year"],
-                "week_number": week_data["week_number"],
-                "avg_coverage": sum(coverages) / len(coverages),
-                "min_coverage": min(coverages),
-                "max_coverage": max(coverages),
-                "measurements": len(coverages),
-                "improvement": coverages[-1] - coverages[0] if len(coverages) > 1 else 0
-            })
+            weekly_stats.append(
+                {
+                    "week": week_data["week"],
+                    "year": week_data["year"],
+                    "week_number": week_data["week_number"],
+                    "avg_coverage": sum(coverages) / len(coverages),
+                    "min_coverage": min(coverages),
+                    "max_coverage": max(coverages),
+                    "measurements": len(coverages),
+                    "improvement": coverages[-1] - coverages[0] if len(coverages) > 1 else 0,
+                }
+            )
 
         return sorted(weekly_stats, key=lambda x: (x["year"], x["week_number"]))
 
@@ -365,18 +378,36 @@ class CoverageTrendTracker:
 
         # 主图：覆盖率趋势
         plt.subplot(2, 1, 1)
-        plt.plot(dates, coverages, 'b-', linewidth=2, label='实际覆盖率')
-        plt.axhline(y=self.targets["minimum"], color='r', linestyle='--', alpha=0.7, label=f'最低要求: {self.targets["minimum"]}%')
-        plt.axhline(y=self.targets["target"], color='orange', linestyle='--', alpha=0.7, label=f'目标: {self.targets["target"]}%')
-        plt.axhline(y=self.targets["excellent"], color='g', linestyle='--', alpha=0.7, label=f'优秀: {self.targets["excellent"]}%')
+        plt.plot(dates, coverages, "b-", linewidth=2, label="实际覆盖率")
+        plt.axhline(
+            y=self.targets["minimum"],
+            color="r",
+            linestyle="--",
+            alpha=0.7,
+            label=f'最低要求: {self.targets["minimum"]}%',
+        )
+        plt.axhline(
+            y=self.targets["target"],
+            color="orange",
+            linestyle="--",
+            alpha=0.7,
+            label=f'目标: {self.targets["target"]}%',
+        )
+        plt.axhline(
+            y=self.targets["excellent"],
+            color="g",
+            linestyle="--",
+            alpha=0.7,
+            label=f'优秀: {self.targets["excellent"]}%',
+        )
 
-        plt.title('测试覆盖率趋势', fontsize=16, fontweight='bold')
-        plt.ylabel('覆盖率 (%)', fontsize=12)
+        plt.title("测试覆盖率趋势", fontsize=16, fontweight="bold")
+        plt.ylabel("覆盖率 (%)", fontsize=12)
         plt.grid(True, alpha=0.3)
-        plt.legend(loc='upper left')
+        plt.legend(loc="upper left")
 
         # 格式化x轴
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%m-%d"))
         plt.gca().xaxis.set_major_locator(mdates.WeekdayLocator(interval=1))
         plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=45)
 
@@ -384,21 +415,21 @@ class CoverageTrendTracker:
         plt.subplot(2, 1, 2)
         daily_changes = []
         for i in range(1, len(history)):
-            change = history[i]["coverage"] - history[i-1]["coverage"]
+            change = history[i]["coverage"] - history[i - 1]["coverage"]
             daily_changes.append(change)
 
         change_dates = dates[1:]
-        colors = ['g' if change > 0 else 'r' if change < 0 else 'gray' for change in daily_changes]
+        colors = ["g" if change > 0 else "r" if change < 0 else "gray" for change in daily_changes]
 
         plt.bar(change_dates, daily_changes, color=colors, alpha=0.7)
-        plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-        plt.title('每日覆盖率变化', fontsize=14)
-        plt.ylabel('变化 (%)', fontsize=12)
-        plt.xlabel('日期', fontsize=12)
+        plt.axhline(y=0, color="black", linestyle="-", alpha=0.3)
+        plt.title("每日覆盖率变化", fontsize=14)
+        plt.ylabel("变化 (%)", fontsize=12)
+        plt.xlabel("日期", fontsize=12)
         plt.grid(True, alpha=0.3)
 
         # 格式化x轴
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%m-%d"))
         plt.gca().xaxis.set_major_locator(mdates.WeekdayLocator(interval=1))
         plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=45)
 
@@ -406,7 +437,7 @@ class CoverageTrendTracker:
 
         # 保存图表
         try:
-            plt.savefig(self.trend_chart_file, dpi=300, bbox_inches='tight')
+            plt.savefig(self.trend_chart_file, dpi=300, bbox_inches="tight")
             plt.close()
             logger.info(f"趋势图表已保存: {self.trend_chart_file}")
             return True
@@ -462,7 +493,9 @@ class CoverageTrendTracker:
                     print(f"  {target_name.title():10}: ✅ 已达到")
                 elif prediction.get("estimated_days"):
                     confidence_emoji = {"high": "🔥", "medium": "🔸", "low": "🔹", "very_low": "⚪"}
-                    print(f"  {target_name.title():10}: 📅 {prediction['estimated_date']} ({prediction['estimated_days']}天) {confidence_emoji.get(prediction['confidence'], '?')}")
+                    print(
+                        f"  {target_name.title():10}: 📅 {prediction['estimated_date']} ({prediction['estimated_days']}天) {confidence_emoji.get(prediction['confidence'], '?')}"
+                    )
                 else:
                     print(f"  {target_name.title():10}: ❌ 无法预测")
             else:

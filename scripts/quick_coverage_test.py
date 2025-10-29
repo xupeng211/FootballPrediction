@@ -6,6 +6,7 @@ Issue #83 快速覆盖率测试
 
 import os
 
+
 def create_simple_tests():
     """为高优先级模块创建简单的测试用例"""
 
@@ -31,7 +32,6 @@ def test_historical_class_exists():
     except ImportError:
         pytest.skip("类导入失败")
 ''',
-
         "tests/unit/domain/strategies/ensemble_test.py": '''"""Domain Strategies Ensemble 测试"""
 
 import pytest
@@ -52,7 +52,6 @@ def test_ensemble_class_exists():
     except ImportError:
         pytest.skip("类导入失败")
 ''',
-
         "tests/unit/collectors/scores_collector_improved_test.py": '''"""数据收集器测试"""
 
 import pytest
@@ -74,7 +73,6 @@ def test_collector_can_instantiate():
     except ImportError:
         pytest.skip("实例化失败")
 ''',
-
         "tests/unit/domain/strategies/config_test.py": '''"""Domain Strategies Config 测试"""
 
 import pytest
@@ -95,7 +93,6 @@ def test_config_can_load():
     except ImportError:
         pytest.skip("配置加载失败")
 ''',
-
         "tests/unit/domain/models/league_test.py": '''"""Domain Models League 测试"""
 
 import pytest
@@ -116,7 +113,7 @@ def test_league_can_create():
         assert league is not None
     except ImportError:
         pytest.skip("创建失败")
-'''
+''',
     }
 
     print("🚀 创建简单测试用例...")
@@ -131,7 +128,7 @@ def test_league_can_create():
                 os.makedirs(test_dir, exist_ok=True)
 
             # 写入测试文件
-            with open(test_file, 'w', encoding='utf-8') as f:
+            with open(test_file, "w", encoding="utf-8") as f:
                 f.write(test_content)
 
             created_files.append(test_file)
@@ -147,6 +144,7 @@ def test_league_can_create():
 
     return created_files, failed_files
 
+
 def run_coverage_tests():
     """运行覆盖率测试"""
 
@@ -157,24 +155,29 @@ def run_coverage_tests():
         "tests/unit/domain/strategies/ensemble_test.py",
         "tests/unit/collectors/scores_collector_improved_test.py",
         "tests/unit/domain/strategies/config_test.py",
-        "tests/unit/domain/models/league_test.py"
+        "tests/unit/domain/models/league_test.py",
     ]
 
     for test_file in test_files:
         if os.path.exists(test_file):
             print(f"\n📊 运行测试: {test_file}")
-            module_name = test_file.replace("tests/unit/", "").replace("_test.py", ".py").replace("/", ".")
+            module_name = (
+                test_file.replace("tests/unit/", "").replace("_test.py", ".py").replace("/", ".")
+            )
             src_file = f"src/{module_name}"
 
             try:
                 # 运行单个测试文件
-                result = os.system(f"python3 -m pytest {test_file} -v --cov={src_file} --cov-report=term-missing --tb=no -q")
+                result = os.system(
+                    f"python3 -m pytest {test_file} -v --cov={src_file} --cov-report=term-missing --tb=no -q"
+                )
                 if result == 0:
                     print(f"✅ 测试通过: {test_file}")
                 else:
                     print(f"⚠️ 测试有问题: {test_file}")
             except Exception as e:
                 print(f"❌ 运行测试失败: {test_file} - {e}")
+
 
 def generate_issue83_status_report():
     """生成Issue #83状态报告"""
@@ -229,11 +232,12 @@ def generate_issue83_status_report():
 """
 
     try:
-        with open('docs/ISSUE83_PHASE1_COMPLETION_REPORT.md', 'w', encoding='utf-8') as f:
+        with open("docs/ISSUE83_PHASE1_COMPLETION_REPORT.md", "w", encoding="utf-8") as f:
             f.write(report)
         print("📄 阶段1完成报告已生成: docs/ISSUE83_PHASE1_COMPLETION_REPORT.md")
     except Exception as e:
         print(f"⚠️ 报告生成失败: {e}")
+
 
 if __name__ == "__main__":
     print("🔧 Issue #83 快速覆盖率测试")

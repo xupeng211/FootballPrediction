@@ -168,9 +168,7 @@ def main():
 
         # 查找Python文件
         py_files = list(Path(src_dir).rglob("*.py"))
-        py_files = [
-            f for f in py_files if f.name != "__init__.py" and "test" not in f.name
-        ]
+        py_files = [f for f in py_files if f.name != "__init__.py" and "test" not in f.name]
 
         # 排除已有测试的文件
         for py_file in py_files[:max_files]:

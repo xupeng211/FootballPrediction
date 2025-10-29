@@ -22,9 +22,7 @@ except ImportError:
     LOGGER_SIMPLE_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not LOGGER_SIMPLE_AVAILABLE, reason="Logger simple module not available"
-)
+@pytest.mark.skipif(not LOGGER_SIMPLE_AVAILABLE, reason="Logger simple module not available")
 @pytest.mark.unit
 class TestSimpleLogger:
     """SimpleLogger类测试"""
@@ -100,9 +98,7 @@ class TestSimpleLogger:
         logger = get_simple_logger("handler_test")
 
         # 验证添加了StreamHandler
-        stream_handlers = [
-            h for h in logger.handlers if isinstance(h, logging.StreamHandler)
-        ]
+        stream_handlers = [h for h in logger.handlers if isinstance(h, logging.StreamHandler)]
         assert len(stream_handlers) >= 1
 
     def test_get_simple_logger_handler_format(self):
@@ -282,14 +278,11 @@ class TestSimpleLogger:
     def test_get_simple_logger_thread_safety(self):
         """测试日志器线程安全性"""
         import threading
-        import time
 
         results = []
 
         def create_logger():
-            logger = get_simple_logger(
-                f"thread_test_{threading.current_thread().ident}"
-            )
+            logger = get_simple_logger(f"thread_test_{threading.current_thread().ident}")
             results.append(logger.name)
 
         # 创建多个线程同时创建日志器

@@ -48,9 +48,7 @@ def fix_test_file(file_path: str):
             lines = content.split("\n")
             for i, line in enumerate(lines):
                 if line.startswith("import pytest"):
-                    lines.insert(
-                        i + 1, "from unittest.mock import MagicMock, AsyncMock, patch"
-                    )
+                    lines.insert(i + 1, "from unittest.mock import MagicMock, AsyncMock, patch")
                     break
             content = "\n".join(lines)
 

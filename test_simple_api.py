@@ -10,9 +10,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 async def test_basic_api():
     """测试基本的API连接"""
-    api_key = os.getenv('FOOTBALL_DATA_API_KEY')
+    api_key = os.getenv("FOOTBALL_DATA_API_KEY")
     if not api_key:
         print("❌ 未找到API密钥")
         return
@@ -26,9 +27,7 @@ async def test_basic_api():
             print("🔧 测试获取比赛列表...")
             url = f"{base_url}/matches"
 
-            params = {
-                "limit": 10
-            }
+            params = {"limit": 10}
 
             async with session.get(url, params=params) as response:
                 print(f"状态码: {response.status}")
@@ -83,7 +82,9 @@ async def test_basic_api():
         except Exception as e:
             print(f"❌ 测试失败: {e}")
             import traceback
+
             traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(test_basic_api())

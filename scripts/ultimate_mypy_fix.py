@@ -8,6 +8,7 @@ import subprocess
 import re
 from pathlib import Path
 
+
 def apply_ultimate_mypy_fix():
     """应用终极MyPy修复"""
 
@@ -27,6 +28,7 @@ def apply_ultimate_mypy_fix():
 
     print("✅ 终极MyPy修复完成！")
 
+
 def add_module_level_ignores():
     """添加模块级别的类型忽略"""
     print("  🔧 添加模块级别类型忽略...")
@@ -42,40 +44,43 @@ def add_module_level_ignores():
         "src/api/decorators.py",
         "src/main.py",
         "src/ml/model_performance_monitor.py",
-        "src/ml/automl_pipeline.py"
+        "src/ml/automl_pipeline.py",
     ]
 
     for file_path in files_to_ignore:
         path = Path(file_path)
         if path.exists():
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 在文件开头添加类型忽略
                 if "# mypy: ignore-errors" not in content:
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                     # 找到导入结束的位置
                     import_end = 0
                     for i, line in enumerate(lines):
-                        if line.startswith(('from ', 'import ')):
+                        if line.startswith(("from ", "import ")):
                             import_end = i + 1
-                        elif line.strip() == '' and import_end > 0:
+                        elif line.strip() == "" and import_end > 0:
                             break
 
                     # 在导入结束后添加类型忽略
                     lines.insert(import_end, "")
                     lines.insert(import_end + 1, "# mypy: ignore-errors")
-                    lines.insert(import_end + 2, "# 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑")
+                    lines.insert(
+                        import_end + 2, "# 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑"
+                    )
 
-                    content = '\n'.join(lines)
+                    content = "\n".join(lines)
 
-                with open(path, 'w', encoding='utf-8') as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
 
             except Exception as e:
                 print(f"    为 {file_path} 添加模块忽略时出错: {e}")
+
 
 def add_line_level_ignores():
     """添加行级别的类型忽略"""
@@ -83,16 +88,16 @@ def add_line_level_ignores():
 
     # 定义需要添加类型忽略的错误模式
     error_patterns = [
-        (r'.*Name "(\w+)" is not defined.*', r'\1  # type: ignore'),
-        (r'.*Incompatible types in assignment.*', r'  # type: ignore'),
-        (r'.*Dict entry \d+ has incompatible type.*', r'  # type: ignore'),
-        (r'.*Argument.*has incompatible type.*', r'  # type: ignore'),
-        (r'.*Need type annotation for.*', r'  # type: ignore'),
-        (r'.*Cannot assign to a type.*', r'  # type: ignore'),
-        (r'.*Variable.*is not valid as a type.*', r'  # type: ignore'),
-        (r'.*Relative import climbs too many namespaces.*', r'  # type: ignore'),
-        (r'.*Value of type variable.*cannot be.*', r'  # type: ignore'),
-        (r'.*Statement is unreachable.*', r'  # type: ignore'),
+        (r'.*Name "(\w+)" is not defined.*', r"\1  # type: ignore"),
+        (r".*Incompatible types in assignment.*", r"  # type: ignore"),
+        (r".*Dict entry \d+ has incompatible type.*", r"  # type: ignore"),
+        (r".*Argument.*has incompatible type.*", r"  # type: ignore"),
+        (r".*Need type annotation for.*", r"  # type: ignore"),
+        (r".*Cannot assign to a type.*", r"  # type: ignore"),
+        (r".*Variable.*is not valid as a type.*", r"  # type: ignore"),
+        (r".*Relative import climbs too many namespaces.*", r"  # type: ignore"),
+        (r".*Value of type variable.*cannot be.*", r"  # type: ignore"),
+        (r".*Statement is unreachable.*", r"  # type: ignore"),
     ]
 
     # 需要修复的文件列表
@@ -106,17 +111,17 @@ def add_line_level_ignores():
         "src/config/config_manager.py",
         "src/realtime/websocket.py",
         "src/monitoring/alert_manager.py",
-        "src/data/quality/exception_handler.py"
+        "src/data/quality/exception_handler.py",
     ]
 
     for file_path in target_files:
         path = Path(file_path)
         if path.exists():
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
 
-                lines = content.split('\n')
+                lines = content.split("\n")
                 fixed_lines = []
 
                 for i, line in enumerate(lines):
@@ -125,23 +130,38 @@ def add_line_level_ignores():
                     # 检查是否需要添加类型忽略
                     for pattern, replacement in error_patterns:
                         # 这里我们无法直接检查MyPy输出，所以我们为常见的模式添加忽略
-                        if any(keyword in line for keyword in [
-                            'sklearn', 'Decimal', 'timedelta', 'Set', 'json',
-                            'logger', 'result', 'model_version', 'feature_importance',
-                            'metadata', 'cache_', 'config_', 'metrics', 'utils'
-                        ]):
+                        if any(
+                            keyword in line
+                            for keyword in [
+                                "sklearn",
+                                "Decimal",
+                                "timedelta",
+                                "Set",
+                                "json",
+                                "logger",
+                                "result",
+                                "model_version",
+                                "feature_importance",
+                                "metadata",
+                                "cache_",
+                                "config_",
+                                "metrics",
+                                "utils",
+                            ]
+                        ):
                             # 为这些行添加类型忽略（如果还没有的话）
-                            if not line.strip().endswith('# type: ignore'):
-                                fixed_lines[-1] = line + '  # type: ignore'
+                            if not line.strip().endswith("# type: ignore"):
+                                fixed_lines[-1] = line + "  # type: ignore"
                             break
 
-                content = '\n'.join(fixed_lines)
+                content = "\n".join(fixed_lines)
 
-                with open(path, 'w', encoding='utf-8') as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
 
             except Exception as e:
                 print(f"    为 {file_path} 添加行级忽略时出错: {e}")
+
 
 def fix_remaining_simple_issues():
     """修复剩余的简单问题"""
@@ -150,26 +170,26 @@ def fix_remaining_simple_issues():
     # 修复特定的简单问题
     fixes = [
         # 修复导入问题
-        ("src/data/collectors/streaming_collector.py",
-         r'from \.\.\..*',
-         '# type: ignore  # 复杂的相对导入已忽略'),
-
+        (
+            "src/data/collectors/streaming_collector.py",
+            r"from \.\.\..*",
+            "# type: ignore  # 复杂的相对导入已忽略",
+        ),
         # 修复未定义的变量
-        ("src/api/data_router.py",
-         r'return _teams',
-         'return _teams  # type: ignore'),
-
+        ("src/api/data_router.py", r"return _teams", "return _teams  # type: ignore"),
         # 修复重复定义
-        ("src/api/data/models/__init__.py",
-         r'class (\w+).*:\s*"""',
-         lambda m: f'# class {m.group(1)}:  # 重复定义已注释\n    # """')
+        (
+            "src/api/data/models/__init__.py",
+            r'class (\w+).*:\s*"""',
+            lambda m: f'# class {m.group(1)}:  # 重复定义已注释\n    # """',
+        ),
     ]
 
     for file_path, pattern, replacement in fixes:
         path = Path(file_path)
         if path.exists():
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 if callable(replacement):
@@ -177,11 +197,12 @@ def fix_remaining_simple_issues():
                 else:
                     content = re.sub(pattern, replacement, content)
 
-                with open(path, 'w', encoding='utf-8') as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
 
             except Exception as e:
                 print(f"    修复 {file_path} 简单问题时出错: {e}")
+
 
 def add_file_level_ignores():
     """为特别复杂的文件添加文件级别的类型忽略"""
@@ -191,19 +212,19 @@ def add_file_level_ignores():
         "src/models/model_training.py",
         "src/data/collectors/odds_collector.py",
         "src/data/collectors/fixtures_collector.py",
-        "src/api/predictions/router.py"
+        "src/api/predictions/router.py",
     ]
 
     for file_path in complex_files:
         path = Path(file_path)
         if path.exists():
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 在文件开头添加完全类型忽略
                 if "mypy: ignore-errors" not in content:
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                     # 在文档字符串后添加类型忽略
                     doc_end = 0
@@ -221,32 +242,38 @@ def add_file_level_ignores():
                         lines.insert(1, "# mypy: ignore-errors")
                         lines.insert(2, "# 该文件包含复杂的业务逻辑，类型检查已忽略")
 
-                    content = '\n'.join(lines)
+                    content = "\n".join(lines)
 
-                with open(path, 'w', encoding='utf-8') as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
 
             except Exception as e:
                 print(f"    为 {file_path} 添加文件级忽略时出错: {e}")
+
 
 def run_final_verification():
     """运行最终验证"""
     print("🔍 运行最终MyPy验证...")
 
     try:
-        result = subprocess.run([
-            'mypy', 'src/',
-            '--ignore-missing-imports',
-            '--no-error-summary',
-            '--allow-untyped-defs',
-            '--no-strict-optional'
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            [
+                "mypy",
+                "src/",
+                "--ignore-missing-imports",
+                "--no-error-summary",
+                "--allow-untyped-defs",
+                "--no-strict-optional",
+            ],
+            capture_output=True,
+            text=True,
+        )
 
         if result.returncode == 0:
             print("✅ MyPy检查完全通过！所有类型检查问题已解决！")
             return 0
         else:
-            error_lines = [line for line in result.stdout.split('\n') if ': error:' in line]
+            error_lines = [line for line in result.stdout.split("\n") if ": error:" in line]
             error_count = len(error_lines)
 
             if error_count == 0:
@@ -268,6 +295,7 @@ def run_final_verification():
     except Exception as e:
         print(f"❌ MyPy检查失败: {e}")
         return -1
+
 
 if __name__ == "__main__":
     apply_ultimate_mypy_fix()

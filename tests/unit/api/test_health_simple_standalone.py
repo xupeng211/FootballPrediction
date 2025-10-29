@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from unittest.mock import MagicMock, patch
 
 """
 健康检查模块独立测试
@@ -336,7 +335,8 @@ class TestHealthCheckSimple:
         assert min_time > 0, "Min response time should be greater than 0"
 
         print(
-            f"Health check performance: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+            f"Health check performance: avg =
+    {avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
         )
 
     # === 测试工具函数 ===

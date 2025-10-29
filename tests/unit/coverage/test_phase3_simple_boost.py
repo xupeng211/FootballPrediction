@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 第三阶段简单覆盖率提升测试
 Phase 3 Simple Coverage Boost Tests
@@ -9,7 +7,6 @@ Phase 3 Simple Coverage Boost Tests
 
 import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -259,9 +256,7 @@ class TestBusinessLogicSimple:
         # 模拟赔率转概率
         def odds_to_probability(odds: Dict[str, float]) -> Dict[str, float]:
             total_inverse = sum(1 / price for price in odds.values())
-            return {
-                outcome: (1 / price) / total_inverse for outcome, price in odds.items()
-            }
+            return {outcome: (1 / price) / total_inverse for outcome, price in odds.items()}
 
         # 测试赔率转换
         decimal_odds = {"home": 2.0, "draw": 3.2, "away": 4.5}
@@ -425,9 +420,7 @@ class TestErrorHandlingPatterns:
 
         @retry_operation(max_attempts=3)
         def failing_operation():
-            failing_operation.attempt_count = (
-                getattr(failing_operation, "attempt_count", 0) + 1
-            )
+            failing_operation.attempt_count = getattr(failing_operation, "attempt_count", 0) + 1
             if failing_operation.attempt_count < 3:
                 raise ConnectionError("Temporary failure")
             return "success"
@@ -463,9 +456,7 @@ class TestErrorHandlingPatterns:
 
         validator.add_rule(lambda x: "name" in x, "Missing required field: name")
 
-        validator.add_rule(
-            lambda x: isinstance(x.get("name"), str), "Name must be a string"
-        )
+        validator.add_rule(lambda x: isinstance(x.get("name"), str), "Name must be a string")
 
         validator.add_rule(
             lambda x: len(x.get("name", "")) >= 2, "Name must be at least 2 characters"
@@ -604,9 +595,7 @@ class TestDateTimeUtilities:
         def is_match_date_valid(match_date_str):
             """检查比赛日期是否有效"""
             try:
-                match_date = datetime.fromisoformat(
-                    match_date_str.replace("Z", "+00:00")
-                )
+                match_date = datetime.fromisoformat(match_date_str.replace("Z", "+00:00"))
                 now = datetime.utcnow()
 
                 # 比赛时间不能太过去或太未来

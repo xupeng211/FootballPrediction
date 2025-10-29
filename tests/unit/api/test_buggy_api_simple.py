@@ -43,9 +43,7 @@ class TestBuggyAPIBasic:
 
     def test_module_file_content(self):
         """测试：模块文件内容"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 验证文件包含预期的内容
@@ -57,9 +55,7 @@ class TestBuggyAPIBasic:
 
     def test_module_has_functions(self):
         """测试：模块有预期的函数"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查函数定义
@@ -69,18 +65,14 @@ class TestBuggyAPIBasic:
 
     def test_module_has_class(self):
         """测试：模块有预期的类"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         assert "class SomeAsyncService" in content
 
     def test_module_docstrings(self):
         """测试：模块有文档字符串"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             lines = f.readlines()
 
         # 检查函数有文档字符串
@@ -89,9 +81,7 @@ class TestBuggyAPIBasic:
 
     def test_endpoint_decorators(self):
         """测试：端点装饰器"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查FastAPI装饰器
@@ -100,9 +90,7 @@ class TestBuggyAPIBasic:
 
     def test_query_parameters(self):
         """测试：查询参数定义"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查Query参数
@@ -113,9 +101,7 @@ class TestBuggyAPIBasic:
 
     def test_async_patterns(self):
         """测试：异步模式"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查异步模式
@@ -124,9 +110,7 @@ class TestBuggyAPIBasic:
 
     def test_service_pattern(self):
         """测试：服务模式"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查服务实例化
@@ -135,9 +119,7 @@ class TestBuggyAPIBasic:
 
     def test_type_annotations(self):
         """测试：类型注解"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查类型注解
@@ -146,9 +128,7 @@ class TestBuggyAPIBasic:
 
     def test_error_handling_patterns(self):
         """测试：错误处理模式"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查是否有错误处理的注释或代码
@@ -156,9 +136,7 @@ class TestBuggyAPIBasic:
 
     def test_code_quality_indicators(self):
         """测试：代码质量指标"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             lines = f.readlines()
 
         # 基本代码质量检查
@@ -174,9 +152,7 @@ class TestBuggyAPIBasic:
 
     def test_function_return_patterns(self):
         """测试：函数返回模式"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查返回语句
@@ -185,9 +161,7 @@ class TestBuggyAPIBasic:
 
     def test_validation_patterns(self):
         """测试：验证模式"""
-        with open(
-            "/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r"
-        ) as f:
+        with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查参数验证

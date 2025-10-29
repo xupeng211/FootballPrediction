@@ -7,10 +7,8 @@ Realtime Events Definition - Football Prediction System
 Define all realtime event types and data structures
 """
 
-import json
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
 from pydantic import BaseModel, Field
 
@@ -195,20 +193,14 @@ class RealtimeEvent(BaseModel):
         )
 
     @classmethod
-    def from_match(
-        cls, match_event: MatchEvent, event_type: EventType
-    ) -> "RealtimeEvent":
+    def from_match(cls, match_event: MatchEvent, event_type: EventType) -> "RealtimeEvent":
         """从比赛事件创建"""
-        return cls(
-            event_type=event_type, data=match_event.to_dict(), source="match_service"
-        )
+        return cls(event_type=event_type, data=match_event.to_dict(), source="match_service")
 
     @classmethod
     def from_odds(cls, odds_event: OddsEvent, event_type: EventType) -> "RealtimeEvent":
         """从赔率事件创建"""
-        return cls(
-            event_type=event_type, data=odds_event.to_dict(), source="odds_service"
-        )
+        return cls(event_type=event_type, data=odds_event.to_dict(), source="odds_service")
 
     @classmethod
     def from_system_alert(cls, alert_event: SystemAlertEvent) -> "RealtimeEvent":
@@ -301,14 +293,10 @@ def create_odds_updated_event(
     change_percentage = None
     if previous_odds:
         change_percentage = {
-            "home_win": (
-                (home_win_odds - previous_odds["home_win"]) / previous_odds["home_win"]
-            )
+            "home_win": ((home_win_odds - previous_odds["home_win"]) / previous_odds["home_win"])
             * 100,
             "draw": ((draw_odds - previous_odds["draw"]) / previous_odds["draw"]) * 100,
-            "away_win": (
-                (away_win_odds - previous_odds["away_win"]) / previous_odds["away_win"]
-            )
+            "away_win": ((away_win_odds - previous_odds["away_win"]) / previous_odds["away_win"])
             * 100,
         }
 

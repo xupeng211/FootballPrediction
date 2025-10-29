@@ -28,20 +28,21 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 # 检查ML库可用性
 try:
     import xgboost as xgb
+
     XGB_AVAILABLE = True
 except ImportError:
     XGB_AVAILABLE = False
 
 try:
     import lightgbm as lgb
+
     LGB_AVAILABLE = True
 except ImportError:
     LGB_AVAILABLE = False
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -51,12 +52,7 @@ SRS_SUCCESS_BASELINE = {
     "data_points": 1500,
     "features": 45,
     "distribution": {"draw": 791, "home_win": 480, "away_win": 229},
-    "model_config": {
-        "n_estimators": 100,
-        "max_depth": 5,
-        "learning_rate": 0.1,
-        "random_state": 42
-    }
+    "model_config": {"n_estimators": 100, "max_depth": 5, "learning_rate": 0.1, "random_state": 42},
 }
 
 
@@ -70,11 +66,15 @@ class RealDataIntegrationSystem:
         self.model_performance = {}
 
         logger.info("真实数据集成系统初始化完成")
-        logger.info(f"SRS成功基准: 准确率={SRS_SUCCESS_BASELINE['accuracy']:.2%}, "
-                   f"数据量={SRS_SUCCESS_BASELINE['data_points']}, "
-                   f"特征数={SRS_SUCCESS_BASELINE['features']}")
+        logger.info(
+            f"SRS成功基准: 准确率={SRS_SUCCESS_BASELINE['accuracy']:.2%}, "
+            f"数据量={SRS_SUCCESS_BASELINE['data_points']}, "
+            f"特征数={SRS_SUCCESS_BASELINE['features']}"
+        )
 
-    def generate_srs_based_realistic_data(self, n_samples: int = 2000) -> Tuple[pd.DataFrame, pd.Series]:
+    def generate_srs_based_realistic_data(
+        self, n_samples: int = 2000
+    ) -> Tuple[pd.DataFrame, pd.Series]:
         """基于SRS成功模式生成真实数据"""
         logger.info(f"生成基于SRS模式的真实数据，样本数: {n_samples}")
 
@@ -83,59 +83,82 @@ class RealDataIntegrationSystem:
         # 基于SRS成功的45个特征工程
         srs_features = [
             # 基础实力特征
-            'home_team_strength', 'away_team_strength',
-            'home_form_momentum', 'away_form_momentum',
-            'head_to_head_advantage', 'home_advantage_factor',
-
+            "home_team_strength",
+            "away_team_strength",
+            "home_form_momentum",
+            "away_form_momentum",
+            "head_to_head_advantage",
+            "home_advantage_factor",
             # 进攻特征
-            'home_goals_per_game', 'away_goals_per_game',
-            'home_shots_on_target', 'away_shots_on_target',
-            'home_expected_goals', 'away_expected_goals',
-            'home_attack_efficiency', 'away_attack_efficiency',
-
+            "home_goals_per_game",
+            "away_goals_per_game",
+            "home_shots_on_target",
+            "away_shots_on_target",
+            "home_expected_goals",
+            "away_expected_goals",
+            "home_attack_efficiency",
+            "away_attack_efficiency",
             # 防守特征
-            'home_goals_conceded', 'away_goals_conceded',
-            'home_clean_sheets', 'away_clean_sheets',
-            'home_defense_stability', 'away_defense_stability',
-            'home_expected_goals_against', 'away_expected_goals_against',
-
+            "home_goals_conceded",
+            "away_goals_conceded",
+            "home_clean_sheets",
+            "away_clean_sheets",
+            "home_defense_stability",
+            "away_defense_stability",
+            "home_expected_goals_against",
+            "away_expected_goals_against",
             # 状态特征
-            'home_win_rate', 'away_win_rate',
-            'home_draw_rate', 'away_draw_rate',
-            'home_loss_rate', 'away_loss_rate',
-            'home_points_per_game', 'away_points_per_game',
-
+            "home_win_rate",
+            "away_win_rate",
+            "home_draw_rate",
+            "away_draw_rate",
+            "home_loss_rate",
+            "away_loss_rate",
+            "home_points_per_game",
+            "away_points_per_game",
             # 历史交战特征
-            'h2h_wins_home', 'h2h_draws', 'h2h_wins_away',
-            'h2h_goals_home', 'h2h_goals_away',
-            'h2h_recent_form',
-
+            "h2h_wins_home",
+            "h2h_draws",
+            "h2h_wins_away",
+            "h2h_goals_home",
+            "h2h_goals_away",
+            "h2h_recent_form",
             # 市场和环境特征
-            'home_field_advantage', 'travel_distance',
-            'rest_days_home', 'rest_days_away',
-            'weather_conditions', 'referee_bias',
-
+            "home_field_advantage",
+            "travel_distance",
+            "rest_days_home",
+            "rest_days_away",
+            "weather_conditions",
+            "referee_bias",
             # 市场特征
-            'stadium_capacity', 'attendance_factor',
-            'home_crowd_support', 'pitch_conditions',
-
+            "stadium_capacity",
+            "attendance_factor",
+            "home_crowd_support",
+            "pitch_conditions",
             # 技战术特征
-            'home_possession_avg', 'away_possession_avg',
-            'home_pass_accuracy', 'away_pass_accuracy',
-            'home_physicality', 'away_physicality',
-
+            "home_possession_avg",
+            "away_possession_avg",
+            "home_pass_accuracy",
+            "away_pass_accuracy",
+            "home_physicality",
+            "away_physicality",
             # 纪律特征
-            'home_yellow_cards_avg', 'away_yellow_cards_avg',
-            'home_red_cards_avg', 'away_red_cards_avg',
-            'home_fouls_avg', 'away_fouls_avg',
-
+            "home_yellow_cards_avg",
+            "away_yellow_cards_avg",
+            "home_red_cards_avg",
+            "away_red_cards_avg",
+            "home_fouls_avg",
+            "away_fouls_avg",
             # 赔率特征
-            'home_win_odds', 'draw_odds', 'away_win_odds',
-            'betting_volume', 'market_confidence'
+            "home_win_odds",
+            "draw_odds",
+            "away_win_odds",
+            "betting_volume",
+            "market_confidence",
         ]
 
         # 确保有45个特征
-        self.feature_columns = srs_features[:SRS_SUCCESS_BASELINE["features"]]
+        self.feature_columns = srs_features[: SRS_SUCCESS_BASELINE["features"]]
 
         # 生成基础特征数据
         X = np.random.randn(n_samples, len(self.feature_columns))
@@ -148,16 +171,19 @@ class RealDataIntegrationSystem:
 
         # 基于SRS分布生成目标变量
         probabilities = [
-            SRS_SUCCESS_BASELINE["distribution"]["draw"] / SRS_SUCCESS_BASELINE["data_points"],  # draw
-            SRS_SUCCESS_BASELINE["distribution"]["home_win"] / SRS_SUCCESS_BASELINE["data_points"],  # home_win
-            SRS_SUCCESS_BASELINE["distribution"]["away_win"] / SRS_SUCCESS_BASELINE["data_points"]   # away_win
+            SRS_SUCCESS_BASELINE["distribution"]["draw"]
+            / SRS_SUCCESS_BASELINE["data_points"],  # draw
+            SRS_SUCCESS_BASELINE["distribution"]["home_win"]
+            / SRS_SUCCESS_BASELINE["data_points"],  # home_win
+            SRS_SUCCESS_BASELINE["distribution"]["away_win"]
+            / SRS_SUCCESS_BASELINE["data_points"],  # away_win
         ]
 
         # 基于实力差异调整概率
-        home_strength = X_df['home_team_strength'].values
-        away_strength = X_df['away_team_strength'].values
-        home_form = X_df['home_form_momentum'].values
-        away_form = X_df['away_form_momentum'].values
+        home_strength = X_df["home_team_strength"].values
+        away_strength = X_df["away_team_strength"].values
+        home_form = X_df["home_form_momentum"].values
+        away_form = X_df["away_form_momentum"].values
 
         strength_diff = (home_strength - away_strength + home_form - away_form) * 0.1
 
@@ -182,11 +208,11 @@ class RealDataIntegrationSystem:
         for i in range(n_samples):
             rand = np.random.random()
             if rand < home_prob[i]:
-                results.append('home_win')
+                results.append("home_win")
             elif rand < home_prob[i] + draw_prob[i]:
-                results.append('draw')
+                results.append("draw")
             else:
-                results.append('away_win')
+                results.append("away_win")
 
         y = pd.Series(results)
 
@@ -196,21 +222,22 @@ class RealDataIntegrationSystem:
     def _add_srs_correlations(self, X: np.ndarray):
         """添加基于SRS成功模式的相关性"""
         # 实力相关性
-        strength_idx = self.feature_columns.index('home_team_strength')
-        away_strength_idx = self.feature_columns.index('away_team_strength')
+        strength_idx = self.feature_columns.index("home_team_strength")
+        away_strength_idx = self.feature_columns.index("away_team_strength")
 
         # 主客场实力负相关
         X[:, away_strength_idx] -= X[:, strength_idx] * 0.3
 
         # 进攻防守相关性
-        home_goals_idx = self.feature_columns.index('home_goals_per_game')
-        home_defense_idx = self.feature_columns.index('home_goals_conceded')
+        home_goals_idx = self.feature_columns.index("home_goals_per_game")
+        home_defense_idx = self.feature_columns.index("home_goals_conceded")
 
         # 进攻强防守弱相关
         X[:, home_defense_idx] -= X[:, home_goals_idx] * 0.2
 
-    def optimize_model_parameters(self, X_train: pd.DataFrame, X_test: pd.DataFrame,
-                                  y_train: pd.Series, y_test: pd.Series) -> Dict[str, Any]:
+    def optimize_model_parameters(
+        self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
+    ) -> Dict[str, Any]:
         """基于SRS成功经验优化模型参数"""
         logger.info("🔧 基于SRS成功经验优化模型参数...")
 
@@ -231,15 +258,15 @@ class RealDataIntegrationSystem:
 
             # 参数搜索空间
             param_grid = {
-                'n_estimators': [50, 100, 150, 200],
-                'max_depth': [3, 5, 7, 9],
-                'learning_rate': [0.05, 0.1, 0.15, 0.2],
-                'subsample': [0.8, 0.9, 1.0],
-                'colsample_bytree': [0.8, 0.9, 1.0],
-                'min_child_weight': [1, 3, 5],
-                'gamma': [0, 0.1, 0.2],
-                'reg_alpha': [0, 0.1, 0.5],
-                'reg_lambda': [1, 1.5, 2]
+                "n_estimators": [50, 100, 150, 200],
+                "max_depth": [3, 5, 7, 9],
+                "learning_rate": [0.05, 0.1, 0.15, 0.2],
+                "subsample": [0.8, 0.9, 1.0],
+                "colsample_bytree": [0.8, 0.9, 1.0],
+                "min_child_weight": [1, 3, 5],
+                "gamma": [0, 0.1, 0.2],
+                "reg_alpha": [0, 0.1, 0.5],
+                "reg_lambda": [1, 1.5, 2],
             }
 
             best_xgb_score = 0
@@ -250,15 +277,17 @@ class RealDataIntegrationSystem:
                 for max_depth in [5, 7, 9]:
                     for learning_rate in [0.1, 0.15]:
                         test_params = base_params.copy()
-                        test_params.update({
-                            'n_estimators': n_estimators,
-                            'max_depth': max_depth,
-                            'learning_rate': learning_rate
-                        })
+                        test_params.update(
+                            {
+                                "n_estimators": n_estimators,
+                                "max_depth": max_depth,
+                                "learning_rate": learning_rate,
+                            }
+                        )
 
-                        model = xgb.XGBClassifier(**test_params,
-                                                 eval_metric='mlogloss',
-                                                 use_label_encoder=False)
+                        model = xgb.XGBClassifier(
+                            **test_params, eval_metric="mlogloss", use_label_encoder=False
+                        )
 
                         model.fit(X_train_scaled, y_train_encoded)
                         y_pred = model.predict(X_test_scaled)
@@ -271,10 +300,12 @@ class RealDataIntegrationSystem:
             logger.info(f"  XGBoost最佳参数: {best_xgb_params}")
             logger.info(f"  XGBoost最佳准确率: {best_xgb_score:.4f}")
 
-            results['xgboost'] = {
-                'accuracy': best_xgb_score,
-                'params': best_xgb_params,
-                'improvement_over_srs': (best_xgb_score - SRS_SUCCESS_BASELINE["accuracy"]) / SRS_SUCCESS_BASELINE["accuracy"] * 100
+            results["xgboost"] = {
+                "accuracy": best_xgb_score,
+                "params": best_xgb_params,
+                "improvement_over_srs": (best_xgb_score - SRS_SUCCESS_BASELINE["accuracy"])
+                / SRS_SUCCESS_BASELINE["accuracy"]
+                * 100,
             }
 
         # LightGBM参数优化
@@ -285,10 +316,7 @@ class RealDataIntegrationSystem:
             base_params = SRS_SUCCESS_BASELINE["model_config"].copy()
 
             # LightGBM特定参数
-            base_params.update({
-                'num_leaves': 31,
-                'verbose': -1
-            })
+            base_params.update({"num_leaves": 31, "verbose": -1})
 
             best_lgb_score = 0
             best_lgb_params = base_params
@@ -298,11 +326,13 @@ class RealDataIntegrationSystem:
                 for max_depth in [5, 7, 9]:
                     for learning_rate in [0.1, 0.15]:
                         test_params = base_params.copy()
-                        test_params.update({
-                            'n_estimators': n_estimators,
-                            'max_depth': max_depth,
-                            'learning_rate': learning_rate
-                        })
+                        test_params.update(
+                            {
+                                "n_estimators": n_estimators,
+                                "max_depth": max_depth,
+                                "learning_rate": learning_rate,
+                            }
+                        )
 
                         model = lgb.LGBMClassifier(**test_params)
                         model.fit(X_train_scaled, y_train_encoded)
@@ -316,15 +346,19 @@ class RealDataIntegrationSystem:
             logger.info(f"  LightGBM最佳参数: {best_lgb_params}")
             logger.info(f"  LightGBM最佳准确率: {best_lgb_score:.4f}")
 
-            results['lightgbm'] = {
-                'accuracy': best_lgb_score,
-                'params': best_lgb_params,
-                'improvement_over_srs': (best_lgb_score - SRS_SUCCESS_BASELINE["accuracy"]) / SRS_SUCCESS_BASELINE["accuracy"] * 100
+            results["lightgbm"] = {
+                "accuracy": best_lgb_score,
+                "params": best_lgb_params,
+                "improvement_over_srs": (best_lgb_score - SRS_SUCCESS_BASELINE["accuracy"])
+                / SRS_SUCCESS_BASELINE["accuracy"]
+                * 100,
             }
 
         return results
 
-    def evaluate_ensemble_performance(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, Any]:
+    def evaluate_ensemble_performance(
+        self, X_test: pd.DataFrame, y_test: pd.Series
+    ) -> Dict[str, Any]:
         """评估集成模型性能"""
         logger.info("📊 评估集成模型性能...")
 
@@ -340,16 +374,16 @@ class RealDataIntegrationSystem:
         weights = []
         predictions_list = []
 
-        if 'xgboost' in self.model_performance:
-            weights.append(self.model_performance['xgboost']['accuracy'])
-            xgb_model = self._get_trained_model('xgboost')
+        if "xgboost" in self.model_performance:
+            weights.append(self.model_performance["xgboost"]["accuracy"])
+            xgb_model = self._get_trained_model("xgboost")
             if xgb_model:
                 xgb_pred = xgb_model.predict(X_test_scaled)
                 predictions_list.append(xgb_pred)
 
-        if 'lightgbm' in self.model_performance:
-            weights.append(self.model_performance['lightgbm']['accuracy'])
-            lgb_model = self._get_trained_model('lightgbm')
+        if "lightgbm" in self.model_performance:
+            weights.append(self.model_performance["lightgbm"]["accuracy"])
+            lgb_model = self._get_trained_model("lightgbm")
             if lgb_model:
                 lgb_pred = lgb_model.predict(X_test_scaled)
                 predictions_list.append(lgb_pred)
@@ -361,10 +395,12 @@ class RealDataIntegrationSystem:
             ensemble_accuracy = accuracy_score(y_test_encoded, ensemble_pred)
 
             ensemble_results = {
-                'ensemble_accuracy': ensemble_accuracy,
-                'individual_models': self.model_performance,
-                'weights': weights,
-                'improvement_over_srs': (ensemble_accuracy - SRS_SUCCESS_BASELINE["accuracy"]) / SRS_SUCCESS_BASELINE["accuracy"] * 100
+                "ensemble_accuracy": ensemble_accuracy,
+                "individual_models": self.model_performance,
+                "weights": weights,
+                "improvement_over_srs": (ensemble_accuracy - SRS_SUCCESS_BASELINE["accuracy"])
+                / SRS_SUCCESS_BASELINE["accuracy"]
+                * 100,
             }
 
             logger.info(f"  集成模型准确率: {ensemble_accuracy:.4f}")
@@ -417,33 +453,41 @@ class RealDataIntegrationSystem:
                     "training_samples": len(X_train),
                     "test_samples": len(X_test),
                     "features": len(X.columns),
-                    "distribution": y.value_counts().to_dict()
+                    "distribution": y.value_counts().to_dict(),
                 },
                 "optimization_results": optimization_results,
                 "ensemble_performance": ensemble_results,
-                "summary": {}
+                "summary": {},
             }
 
             # 汇总结果
             if optimization_results:
-                best_individual = max(optimization_results.values(),
-                                    key=lambda x: x.get('accuracy', 0))
-                best_accuracy = best_individual['accuracy']
+                best_individual = max(
+                    optimization_results.values(), key=lambda x: x.get("accuracy", 0)
+                )
+                best_accuracy = best_individual["accuracy"]
 
-                if ensemble_results.get('ensemble_accuracy', 0) > best_accuracy:
-                    best_accuracy = ensemble_results['ensemble_accuracy']
+                if ensemble_results.get("ensemble_accuracy", 0) > best_accuracy:
+                    best_accuracy = ensemble_results["ensemble_accuracy"]
                     best_model = "Ensemble"
                 else:
-                    best_model = next(k for k, v in optimization_results.items()
-                                   if v.get('accuracy', 0) == best_accuracy)
+                    best_model = next(
+                        k
+                        for k, v in optimization_results.items()
+                        if v.get("accuracy", 0) == best_accuracy
+                    )
 
-                improvement = (best_accuracy - SRS_SUCCESS_BASELINE["accuracy"]) / SRS_SUCCESS_BASELINE["accuracy"] * 100
+                improvement = (
+                    (best_accuracy - SRS_SUCCESS_BASELINE["accuracy"])
+                    / SRS_SUCCESS_BASELINE["accuracy"]
+                    * 100
+                )
 
                 optimization_report["summary"] = {
                     "best_model": best_model,
                     "best_accuracy": best_accuracy,
                     "improvement_over_srs": improvement,
-                    "models_optimized": len(optimization_results)
+                    "models_optimized": len(optimization_results),
                 }
 
                 logger.info(f"🏆 最佳模型: {best_model}")

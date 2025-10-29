@@ -120,9 +120,7 @@ def main():
     print("-" * 100)
 
     for i, item in enumerate(filtered_results[:25], 1):
-        priority = (
-            "🔴" if item["coverage"] < 20 else "🟡" if item["coverage"] < 50 else "🟢"
-        )
+        priority = "🔴" if item["coverage"] < 20 else "🟡" if item["coverage"] < 50 else "🟢"
         print(
             f"{item['file_path']:<55} {item['loc']:<8} {item['total_stmts']:<8} {item['coverage']:<8.1f}% {priority}"
         )
@@ -150,8 +148,7 @@ def main():
     total_loc = sum(item["loc"] for item in filtered_results)
     total_stmts = sum(item["total_stmts"] for item in filtered_results)
     weighted_coverage = (
-        sum(item["coverage"] * item["total_stmts"] for item in filtered_results)
-        / total_stmts
+        sum(item["coverage"] * item["total_stmts"] for item in filtered_results) / total_stmts
         if total_stmts > 0
         else 0
     )

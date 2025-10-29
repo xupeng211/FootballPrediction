@@ -13,8 +13,6 @@ import asyncio
 
 # 测试导入
 import sys
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import pytest
 
@@ -22,8 +20,6 @@ sys.path.insert(0, "src")
 
 try:
     from src.collectors.odds_collector import OddsCollector
-    from src.database.models import Bookmaker, OddsData
-    from src.utils.time_utils import utc_now
 
     ODDSCOLLECTOR_AVAILABLE = True
 except ImportError as e:
@@ -121,9 +117,7 @@ class TestOddsCollector:
         assert collector._validate_odds_data(invalid_data) is False
 
     @pytest.mark.asyncio
-    async def test_save_odds_to_database(
-        self, collector, mock_session, sample_odds_data
-    ):
+    async def test_save_odds_to_database(self, collector, mock_session, sample_odds_data):
         """测试保存赔率到数据库"""
         with patch("src.collectors.odds_collector.OddsData") as mock_odds_model:
             mock_odds_instance = Mock()

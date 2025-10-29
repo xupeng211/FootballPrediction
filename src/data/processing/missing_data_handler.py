@@ -58,9 +58,7 @@ class MissingDataHandler:
         self._settings = get_settings()
         self._fallback_defaults = self._load_fallback_defaults()
 
-    async def handle_missing_match_data(
-        self, match_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def handle_missing_match_data(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         处理比赛数据中的缺失值
 
@@ -133,9 +131,7 @@ class MissingDataHandler:
             return features_df
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(
-                f"Failed to handle missing features for match {match_id}: {str(e)}"
-            )
+            self.logger.error(f"Failed to handle missing features for match {match_id}: {str(e)}")
             # 出错时返回原始数据
             return features_df
 
@@ -253,9 +249,7 @@ class MissingDataHandler:
             try:
                 defaults[key] = float(value)
             except (TypeError, ValueError):
-                self.logger.warning(
-                    "忽略无效的默认均值（来源: %s）: %s=%s", source, key, value
-                )
+                self.logger.warning("忽略无效的默认均值（来源: %s）: %s=%s", source, key, value)
 
     def interpolate_time_series_data(self, data: pd.Series) -> pd.Series:
         """

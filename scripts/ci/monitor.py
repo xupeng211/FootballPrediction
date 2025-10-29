@@ -242,9 +242,7 @@ class GitHubCIMonitor:
                 analysis["suggestions"].extend(pattern_info["suggestions"])
 
                 # 提取具体错误详情
-                matches = re.findall(
-                    pattern_info["pattern"] + r".*", logs, re.IGNORECASE
-                )
+                matches = re.findall(pattern_info["pattern"] + r".*", logs, re.IGNORECASE)
                 analysis["details"].extend(matches[:3])  # 最多显示3个匹配项
                 break
 
@@ -272,9 +270,7 @@ class GitHubCIMonitor:
             conclusion = workflow.get("conclusion", workflow.get("status", "unknown"))
 
             # 时间格式化 - 显示相对时间更直观
-            created_at = datetime.fromisoformat(
-                workflow["created_at"].replace("Z", "+00:00")
-            )
+            created_at = datetime.fromisoformat(workflow["created_at"].replace("Z", "+00:00"))
             time_ago = self._format_time_ago(created_at)
 
             print(
@@ -285,9 +281,7 @@ class GitHubCIMonitor:
 
             # 对于失败的工作流，提供快速诊断选项
             if workflow.get("conclusion") == "failure":
-                print(
-                    f"   💡 快速诊断: python scripts/ci_monitor.py --analyze {workflow['id']}"
-                )
+                print(f"   💡 快速诊断: python scripts/ci_monitor.py --analyze {workflow['id']}")
 
     def display_detailed_analysis(self, run_id: int) -> None:
         """显示特定工作流运行的详细分析 - 深度诊断失败原因和修复建议"""
@@ -342,12 +336,8 @@ class GitHubCIMonitor:
 
                     # 检测到新的工作流运行
                     if last_run_id != current_run_id:
-                        print(
-                            f"\n🚀 检测到新的CI运行 #{current_workflow['run_number']}"
-                        )
-                        print(
-                            f"📝 提交: {current_workflow['head_commit']['message'][:80]}"
-                        )
+                        print(f"\n🚀 检测到新的CI运行 #{current_workflow['run_number']}")
+                        print(f"📝 提交: {current_workflow['head_commit']['message'][:80]}")
                         last_run_id = current_run_id
 
                     # 显示当前状态
@@ -355,14 +345,10 @@ class GitHubCIMonitor:
                     conclusion = current_workflow.get("conclusion")
 
                     if status == "in_progress":
-                        print(
-                            f"🔄 [{datetime.now().strftime('%H:%M:%S')}] CI正在运行..."
-                        )
+                        print(f"🔄 [{datetime.now().strftime('%H:%M:%S')}] CI正在运行...")
                     elif status == "completed":
                         if conclusion == "success":
-                            print(
-                                f"✅ [{datetime.now().strftime('%H:%M:%S')}] CI成功完成！"
-                            )
+                            print(f"✅ [{datetime.now().strftime('%H:%M:%S')}] CI成功完成！")
                             break
                         else:
                             print(

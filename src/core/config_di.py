@@ -70,9 +70,7 @@ class ConfigurationBinder:
                 elif config_path.suffix.lower() == ".json":
                     data = json.load(f)
                 else:
-                    raise DependencyInjectionError(
-                        f"不支持的配置文件格式: {config_path.suffix}"
-                    )
+                    raise DependencyInjectionError(f"不支持的配置文件格式: {config_path.suffix}")
 
             # 处理空文件情况
             if data is None:
@@ -209,15 +207,11 @@ class ConfigurationBinder:
                 lifetime = self._parse_lifetime(config.lifetime)
 
                 if lifetime == ServiceLifetime.SINGLETON:
-                    self.container.register_singleton(
-                        service_type, factory=factory_func
-                    )
+                    self.container.register_singleton(service_type, factory=factory_func)
                 elif lifetime == ServiceLifetime.SCOPED:
                     self.container.register_scoped(service_type, factory=factory_func)
                 else:
-                    self.container.register_transient(
-                        service_type, factory=factory_func
-                    )
+                    self.container.register_transient(service_type, factory=factory_func)
 
                 logger.debug(f"注册工厂服务: {service_name}")
 

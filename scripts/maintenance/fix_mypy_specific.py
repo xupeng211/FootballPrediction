@@ -66,12 +66,8 @@ def fix_var_annotation(content: str) -> str:
             # 添加类型注解
             if "group()" in line or "groupby" in line:
                 lines[i] = line.replace("grouped =", "grouped: Dict[str, Any] =")
-        elif (
-            "quality_issues" in line and "= " in line and ":" not in line.split("=")[0]
-        ):
-            lines[i] = line.replace(
-                "quality_issues =", "quality_issues: List[Dict[str, Any]] ="
-            )
+        elif "quality_issues" in line and "= " in line and ":" not in line.split("=")[0]:
+            lines[i] = line.replace("quality_issues =", "quality_issues: List[Dict[str, Any]] =")
 
     return "\n".join(lines)
 
@@ -90,9 +86,7 @@ def fix_sqlalchemy_error_import(content: str) -> str:
     if "SQLAlchemyError" in content or "DatabaseError" in content:
         if "from sqlalchemy import" in content:
             if "exc" not in content:
-                content = re.sub(
-                    r"(from sqlalchemy import [^\n]+)", r"\1, exc", content
-                )
+                content = re.sub(r"(from sqlalchemy import [^\n]+)", r"\1, exc", content)
         else:
             content = "from sqlalchemy import exc\n" + content
 
@@ -164,11 +158,7 @@ def fix_unreachable_code(content: str) -> str:
     for i, line in enumerate(lines):
         if "return" in line and i < len(lines) - 1:
             next_line = lines[i + 1].strip()
-            if (
-                next_line
-                and not next_line.startswith("#")
-                and not next_line.startswith("except")
-            ):
+            if next_line and not next_line.startswith("#") and not next_line.startswith("except"):
                 # 如果 return 后面还有代码，可能是逻辑错误
                 # 添加注释说明
                 lines[i + 1] = lines[i + 1] + "  # TODO: Review this logic"
@@ -222,9 +212,7 @@ def main():
     print("\n🔍 运行 MyPy 检查...")
     import subprocess
 
-    result = subprocess.run(
-        ["mypy", "src", "--no-error-summary"], capture_output=True, text=True
-    )
+    result = subprocess.run(["mypy", "src", "--no-error-summary"], capture_output=True, text=True)
 
     error_lines = [line for line in result.stderr.split("\n") if "error:" in line]
 

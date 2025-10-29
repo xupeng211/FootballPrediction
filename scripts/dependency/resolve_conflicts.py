@@ -112,9 +112,7 @@ class DependencyResolver:
                     if pkg_name not in conflicts:
                         conflicts[pkg_name] = Dependency(name=pkg_name)
                     conflicts[pkg_name].current_version = current_version
-                    conflicts[pkg_name].required_versions = pkg_info[
-                        "compatible_versions"
-                    ]
+                    conflicts[pkg_name].required_versions = pkg_info["compatible_versions"]
                     conflicts[pkg_name].conflicts.extend(pkg_info["conflicts"])
 
         # 3. 生成冲突报告
@@ -207,9 +205,7 @@ class DependencyResolver:
             print(f"\n  - {step['description']}")
 
             if step["type"] == "install":
-                result = subprocess.run(
-                    step["command"], shell=True, capture_output=True, text=True
-                )
+                result = subprocess.run(step["command"], shell=True, capture_output=True, text=True)
 
                 if result.returncode != 0:
                     print(f"    ❌ 失败: {result.stderr}")
@@ -219,9 +215,7 @@ class DependencyResolver:
 
             elif step["type"] == "uninstall":
                 # 先卸载冲突包
-                result = subprocess.run(
-                    step["command"], shell=True, capture_output=True, text=True
-                )
+                result = subprocess.run(step["command"], shell=True, capture_output=True, text=True)
 
                 if result.returncode != 0:
                     print(f"    ❌ 失败: {result.stderr}")
@@ -457,9 +451,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="依赖冲突解决工具")
     parser.add_argument("--detect-only", action="store_true", help="仅检测冲突，不解决")
-    parser.add_argument(
-        "--create-test-reqs", action="store_true", help="创建测试requirements"
-    )
+    parser.add_argument("--create-test-reqs", action="store_true", help="创建测试requirements")
 
     args = parser.parse_args()
 

@@ -37,9 +37,7 @@ class AuditSeverity(Enum):
 class AuditContext:
     """审计上下文"""
 
-    def __init__(
-        self, user_id: Optional[str] = None, action: Optional[AuditAction] = None
-    ):
+    def __init__(self, user_id: Optional[str] = None, action: Optional[AuditAction] = None):
         self.user_id = user_id
         self.action = action
         self.timestamp = datetime.now()

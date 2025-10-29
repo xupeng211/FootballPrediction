@@ -29,9 +29,13 @@ class SecuritySettings:
         self.rate_limit_enabled = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
 
         # CORS设置
-        self.cors_origins = os.getenv("CORS_ORIGINS", "*").split(",") if os.getenv("CORS_ORIGINS") else ["*"]
+        self.cors_origins = (
+            os.getenv("CORS_ORIGINS", "*").split(",") if os.getenv("CORS_ORIGINS") else ["*"]
+        )
         self.cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
-        self.cors_allow_methods = os.getenv("CORS_ALLOW_METHODS", "GET,POST,PUT,DELETE,OPTIONS").split(",")
+        self.cors_allow_methods = os.getenv(
+            "CORS_ALLOW_METHODS", "GET,POST,PUT,DELETE,OPTIONS"
+        ).split(",")
         self.cors_allow_headers = os.getenv("CORS_ALLOW_HEADERS", "*").split(",")
 
         # HTTPS/TLS设置
@@ -44,7 +48,9 @@ class SecuritySettings:
         self.x_frame_options = os.getenv("X_FRAME_OPTIONS", "DENY")
         self.x_content_type_options = os.getenv("X_CONTENT_TYPE_OPTIONS", "nosniff")
         self.x_xss_protection = os.getenv("X_XSS_PROTECTION", "1; mode=block")
-        self.strict_transport_security = os.getenv("STRICT_TRANSPORT_SECURITY", "max-age=31536000; includeSubDomains")
+        self.strict_transport_security = os.getenv(
+            "STRICT_TRANSPORT_SECURITY", "max-age=31536000; includeSubDomains"
+        )
 
         # 内容安全策略
         self.csp_enabled = os.getenv("CSP_ENABLED", "true").lower() == "true"
@@ -59,15 +65,25 @@ class SecuritySettings:
 
         # 密码策略
         self.password_min_length = int(os.getenv("PASSWORD_MIN_LENGTH", "12"))
-        self.password_require_uppercase = os.getenv("PASSWORD_REQUIRE_UPPERCASE", "true").lower() == "true"
-        self.password_require_lowercase = os.getenv("PASSWORD_REQUIRE_LOWERCASE", "true").lower() == "true"
-        self.password_require_numbers = os.getenv("PASSWORD_REQUIRE_NUMBERS", "true").lower() == "true"
-        self.password_require_symbols = os.getenv("PASSWORD_REQUIRE_SYMBOLS", "true").lower() == "true"
+        self.password_require_uppercase = (
+            os.getenv("PASSWORD_REQUIRE_UPPERCASE", "true").lower() == "true"
+        )
+        self.password_require_lowercase = (
+            os.getenv("PASSWORD_REQUIRE_LOWERCASE", "true").lower() == "true"
+        )
+        self.password_require_numbers = (
+            os.getenv("PASSWORD_REQUIRE_NUMBERS", "true").lower() == "true"
+        )
+        self.password_require_symbols = (
+            os.getenv("PASSWORD_REQUIRE_SYMBOLS", "true").lower() == "true"
+        )
 
         # 会话安全
         self.session_timeout_minutes = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
         self.session_secure_cookie = os.getenv("SESSION_SECURE_COOKIE", "true").lower() == "true"
-        self.session_http_only_cookie = os.getenv("SESSION_HTTP_ONLY_COOKIE", "true").lower() == "true"
+        self.session_http_only_cookie = (
+            os.getenv("SESSION_HTTP_ONLY_COOKIE", "true").lower() == "true"
+        )
         self.session_samesite_cookie = os.getenv("SESSION_SAMESITE_COOKIE", "Strict")
 
         # 审计日志
@@ -77,11 +93,17 @@ class SecuritySettings:
 
         # 数据保护
         self.encrypt_data_at_rest = os.getenv("ENCRYPT_DATA_AT_REST", "true").lower() == "true"
-        self.encrypt_data_in_transit = os.getenv("ENCRYPT_DATA_IN_TRANSIT", "true").lower() == "true"
+        self.encrypt_data_in_transit = (
+            os.getenv("ENCRYPT_DATA_IN_TRANSIT", "true").lower() == "true"
+        )
 
         # 监控和检测
-        self.enable_intrusion_detection = os.getenv("ENABLE_INTRUSION_DETECTION", "false").lower() == "true"
-        self.enable_anomaly_detection = os.getenv("ENABLE_ANOMALY_DETECTION", "false").lower() == "true"
+        self.enable_intrusion_detection = (
+            os.getenv("ENABLE_INTRUSION_DETECTION", "false").lower() == "true"
+        )
+        self.enable_anomaly_detection = (
+            os.getenv("ENABLE_ANOMALY_DETECTION", "false").lower() == "true"
+        )
 
 
 # 安全配置实例
@@ -237,7 +259,10 @@ def validate_security_config() -> List[str]:
     issues = []
 
     # 检查必需的配置
-    if not security_settings.jwt_secret_key or security_settings.jwt_secret_key == "your-secret-key-here":
+    if (
+        not security_settings.jwt_secret_key
+        or security_settings.jwt_secret_key == "your-secret-key-here"
+    ):
         issues.append("JWT_SECRET_KEY must be set to a secure value")
 
     # 检查密码策略

@@ -51,9 +51,7 @@ def fix_imports_in_file(file_path: Path) -> int:
                     docstring_end = i
 
         # 检查import语句
-        if (
-            stripped.startswith("import ") or stripped.startswith("from ")
-        ) and not in_docstring:
+        if (stripped.startswith("import ") or stripped.startswith("from ")) and not in_docstring:
             # 检查是否在函数或类内部
             # 简单检查：看前面有多少空格
             indent = len(line) - len(stripped)
@@ -90,8 +88,7 @@ def fix_imports_in_file(file_path: Path) -> int:
         if imp_stripped.startswith("from ."):
             local_imports.append(imp)
         elif any(
-            imp_stripped.startswith(f"from {lib}")
-            or imp_stripped.startswith(f"import {lib}")
+            imp_stripped.startswith(f"from {lib}") or imp_stripped.startswith(f"import {lib}")
             for lib in [
                 "os",
                 "sys",
@@ -136,9 +133,7 @@ def fix_imports_in_file(file_path: Path) -> int:
             ]
         ):
             stdlib_imports.append(imp)
-        elif imp_stripped.startswith("from src") or imp_stripped.startswith(
-            "import src"
-        ):
+        elif imp_stripped.startswith("from src") or imp_stripped.startswith("import src"):
             local_imports.append(imp)
         else:
             thirdparty_imports.append(imp)

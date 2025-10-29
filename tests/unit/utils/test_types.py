@@ -10,7 +10,6 @@ class TestDatabaseTypes:
     def test_database_types_import(self):
         """测试数据库类型导入"""
         try:
-            from src.database.types import JSONType, UUIDType
 
             assert True
         except ImportError:

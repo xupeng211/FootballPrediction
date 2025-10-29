@@ -205,9 +205,7 @@ class DataProcessingService:
 
         return result
 
-    async def batch_process(
-        self, data_list: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    async def batch_process(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """批量处理数据"""
         results = []
         for data in data_list:

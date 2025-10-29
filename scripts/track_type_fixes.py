@@ -35,9 +35,7 @@ class TypeFixTracker:
         ann401_count = ann401_result.stderr.count("ANN401")
 
         # 获取总 MyPy 错误
-        total_errors = len(
-            [line for line in ann401_result.stderr.split("\n") if "error:" in line]
-        )
+        total_errors = len([line for line in ann401_result.stderr.split("\n") if "error:" in line])
 
         # 按错误类型统计
         error_types = {}
@@ -47,9 +45,7 @@ class TypeFixTracker:
                 error_types[error_code] = error_types.get(error_code, 0) + 1
 
         # 获取警告统计
-        warnings = len(
-            [line for line in ann401_result.stderr.split("\n") if "warning:" in line]
-        )
+        warnings = len([line for line in ann401_result.stderr.split("\n") if "warning:" in line])
 
         # 按目录统计
         errors_by_dir = {}
@@ -101,8 +97,7 @@ class TypeFixTracker:
 
         return {
             "ann401_trend": previous["ann401_count"] - current["ann401_count"],
-            "errors_trend": previous["total_mypy_errors"]
-            - current["total_mypy_errors"],
+            "errors_trend": previous["total_mypy_errors"] - current["total_mypy_errors"],
             "time_diff": self._parse_time(current["timestamp"])
             - self._parse_time(previous["timestamp"]),
         }
@@ -131,11 +126,7 @@ class TypeFixTracker:
 
         # ANN401 进度
         ann401_color = (
-            "🟢"
-            if stats["ann401_count"] == 0
-            else "🟡"
-            if stats["ann401_count"] < 100
-            else "🔴"
+            "🟢" if stats["ann401_count"] == 0 else "🟡" if stats["ann401_count"] < 100 else "🔴"
         )
         print(f"\n{ann401_color} ANN401 类型注解: {stats['ann401_count']:,} 个")
         if trend["ann401_trend"] != 0:
@@ -146,9 +137,7 @@ class TypeFixTracker:
         errors_color = (
             "🟢"
             if stats["total_mypy_errors"] == 0
-            else "🟡"
-            if stats["total_mypy_errors"] < 50
-            else "🔴"
+            else "🟡" if stats["total_mypy_errors"] < 50 else "🔴"
         )
         print(f"\n{errors_color} MyPy 总错误: {stats['total_mypy_errors']:,} 个")
         if trend["errors_trend"] != 0:
@@ -210,9 +199,7 @@ class TypeFixTracker:
             current = history[-1]
 
             ann401_progress = (
-                (first["ann401_count"] - current["ann401_count"])
-                / first["ann401_count"]
-                * 100
+                (first["ann401_count"] - current["ann401_count"]) / first["ann401_count"] * 100
                 if first["ann401_count"] > 0
                 else 100
             )
@@ -270,11 +257,7 @@ class TypeFixTracker:
         history = self.load_history()
 
         # 计算趋势
-        trend = (
-            self.calculate_trend(history)
-            if history
-            else {"ann401_trend": 0, "errors_trend": 0}
-        )
+        trend = self.calculate_trend(history) if history else {"ann401_trend": 0, "errors_trend": 0}
 
         # 保存进度
         self.save_progress(stats)

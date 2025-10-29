@@ -1,12 +1,20 @@
-"""
-Base models
-"""
-
 import types
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
+
+
+# 创建一个简单的模块对象以保持向后兼容
+
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime
+
+
+"""
+Base models
+"""
 
 
 class FootballBaseModel(BaseModel):
@@ -49,7 +57,6 @@ class MetadataModel(BaseModel):
     tags: List[str] = []
 
 
-# 创建一个简单的模块对象以保持向后兼容
 base_models = types.SimpleNamespace(
     BaseModel=FootballBaseModel,
     TimestampedModel=TimestampedModel,
@@ -58,15 +65,9 @@ base_models = types.SimpleNamespace(
     MetadataModel=MetadataModel,
 )
 
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime
-
 
 class TimestampMixin:
     """时间戳混入类"""
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -5,7 +5,6 @@ Issue #83-C 端到端业务测试: 用户管理工作流
 
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -58,9 +57,7 @@ class TestUserManagementWorkflowE2E:
             "expires_at": datetime.now() + timedelta(hours=24),
         }
 
-        auth_result = mock_user_services["auth_service"].setup_authentication(
-            created_user["id"]
-        )
+        auth_result = mock_user_services["auth_service"].setup_authentication(created_user["id"])
         assert auth_result["auth_token"] is not None
 
         # 步骤3: 订阅设置

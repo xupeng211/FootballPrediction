@@ -23,17 +23,18 @@ from typing import List, Dict, Tuple, Optional
 import ast
 import importlib.util
 
+
 class Issue86P3Breakthrough:
     def __init__(self):
         self.coverage_data = {}
         self.priority_modules = []
         self.breakthrough_stats = {
-            'initial_coverage': 15.71,
-            'target_coverage': 30.0,
-            'current_coverage': 0.0,
-            'modules_processed': 0,
-            'tests_created': 0,
-            'mock_strategies_applied': 0
+            "initial_coverage": 15.71,
+            "target_coverage": 30.0,
+            "current_coverage": 0.0,
+            "modules_processed": 0,
+            "tests_created": 0,
+            "mock_strategies_applied": 0,
         }
 
     def load_current_coverage(self):
@@ -43,29 +44,37 @@ class Issue86P3Breakthrough:
         try:
             # 运行覆盖率测试
             result = subprocess.run(
-                ["python3", "-m", "pytest", "test_basic_pytest.py", "--cov=src", "--cov-report=json:coverage_p3.json", "--quiet"],
+                [
+                    "python3",
+                    "-m",
+                    "pytest",
+                    "test_basic_pytest.py",
+                    "--cov=src",
+                    "--cov-report=json:coverage_p3.json",
+                    "--quiet",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
 
             if result.returncode == 0 and Path("coverage_p3.json").exists():
-                with open("coverage_p3.json", 'r') as f:
+                with open("coverage_p3.json", "r") as f:
                     self.coverage_data = json.load(f)
 
-                total_coverage = self.coverage_data['totals']['percent_covered']
-                self.breakthrough_stats['current_coverage'] = total_coverage
+                total_coverage = self.coverage_data["totals"]["percent_covered"]
+                self.breakthrough_stats["current_coverage"] = total_coverage
 
                 print(f"✅ 当前覆盖率: {total_coverage:.2f}%")
                 return True
             else:
                 print("⚠️ 无法获取覆盖率数据，使用默认值")
-                self.breakthrough_stats['current_coverage'] = 15.71
+                self.breakthrough_stats["current_coverage"] = 15.71
                 return False
 
         except Exception as e:
             print(f"❌ 加载覆盖率数据失败: {e}")
-            self.breakthrough_stats['current_coverage'] = 15.71
+            self.breakthrough_stats["current_coverage"] = 15.71
             return False
 
     def identify_priority_modules(self) -> List[Dict]:
@@ -77,7 +86,7 @@ class Issue86P3Breakthrough:
             return self._get_default_priority_modules()
 
         priority_modules = []
-        files = self.coverage_data.get('files', [])
+        files = self.coverage_data.get("files", [])
 
         # 分析每个文件的覆盖率
         for file_data in files:
@@ -85,40 +94,44 @@ class Issue86P3Breakthrough:
                 # 如果是字符串，跳过
                 continue
 
-            if not isinstance(file_data, dict) or 'relative_path' not in file_data:
+            if not isinstance(file_data, dict) or "relative_path" not in file_data:
                 continue
 
-            file_path = file_data['relative_path']
+            file_path = file_data["relative_path"]
 
             # 获取覆盖率数据
-            if 'summary' in file_data and 'percent_covered' in file_data['summary']:
-                coverage = file_data['summary']['percent_covered']
+            if "summary" in file_data and "percent_covered" in file_data["summary"]:
+                coverage = file_data["summary"]["percent_covered"]
             else:
                 coverage = 0.0
 
             # 转换为模块路径
-            if file_path.startswith('src/'):
-                module_path = file_path[4:].replace('.py', '').replace('/', '.')
+            if file_path.startswith("src/"):
+                module_path = file_path[4:].replace(".py", "").replace("/", ".")
 
                 # 计算优先级分数
                 priority_score = self._calculate_priority_score(module_path, coverage, file_data)
 
                 # 安全获取数据
-                summary = file_data.get('summary', {})
-                missing_lines = summary.get('missing_lines', [])
+                summary = file_data.get("summary", {})
+                missing_lines = summary.get("missing_lines", [])
 
-                priority_modules.append({
-                    'module_path': module_path,
-                    'file_path': file_path,
-                    'current_coverage': coverage,
-                    'priority_score': priority_score,
-                    'lines_covered': summary.get('covered_lines', 0),
-                    'lines_total': summary.get('num_statements', 0),
-                    'missing_lines': missing_lines[:20] if isinstance(missing_lines, list) else []  # 前20行缺失
-                })
+                priority_modules.append(
+                    {
+                        "module_path": module_path,
+                        "file_path": file_path,
+                        "current_coverage": coverage,
+                        "priority_score": priority_score,
+                        "lines_covered": summary.get("covered_lines", 0),
+                        "lines_total": summary.get("num_statements", 0),
+                        "missing_lines": (
+                            missing_lines[:20] if isinstance(missing_lines, list) else []
+                        ),  # 前20行缺失
+                    }
+                )
 
         # 按优先级排序
-        priority_modules.sort(key=lambda x: x['priority_score'], reverse=True)
+        priority_modules.sort(key=lambda x: x["priority_score"], reverse=True)
 
         # 选择前15个高优先级模块
         top_modules = priority_modules[:15]
@@ -130,62 +143,64 @@ class Issue86P3Breakthrough:
         """获取默认高优先级模块列表"""
         return [
             {
-                'module_path': 'core.config',
-                'file_path': 'src/core/config.py',
-                'current_coverage': 36.5,
-                'priority_score': 85,
-                'lines_covered': 20,
-                'lines_total': 55,
-                'missing_lines': []
+                "module_path": "core.config",
+                "file_path": "src/core/config.py",
+                "current_coverage": 36.5,
+                "priority_score": 85,
+                "lines_covered": 20,
+                "lines_total": 55,
+                "missing_lines": [],
             },
             {
-                'module_path': 'core.di',
-                'file_path': 'src/core/di.py',
-                'current_coverage': 21.8,
-                'priority_score': 82,
-                'lines_covered': 15,
-                'lines_total': 69,
-                'missing_lines': []
+                "module_path": "core.di",
+                "file_path": "src/core/di.py",
+                "current_coverage": 21.8,
+                "priority_score": 82,
+                "lines_covered": 15,
+                "lines_total": 69,
+                "missing_lines": [],
             },
             {
-                'module_path': 'models.prediction',
-                'file_path': 'src/models/prediction.py',
-                'current_coverage': 64.9,
-                'priority_score': 78,
-                'lines_covered': 42,
-                'lines_total': 65,
-                'missing_lines': []
+                "module_path": "models.prediction",
+                "file_path": "src/models/prediction.py",
+                "current_coverage": 64.9,
+                "priority_score": 78,
+                "lines_covered": 42,
+                "lines_total": 65,
+                "missing_lines": [],
             },
             {
-                'module_path': 'api.cqrs',
-                'file_path': 'src/api/cqrs.py',
-                'current_coverage': 56.7,
-                'priority_score': 75,
-                'lines_covered': 38,
-                'lines_total': 67,
-                'missing_lines': []
+                "module_path": "api.cqrs",
+                "file_path": "src/api/cqrs.py",
+                "current_coverage": 56.7,
+                "priority_score": 75,
+                "lines_covered": 38,
+                "lines_total": 67,
+                "missing_lines": [],
             },
             {
-                'module_path': 'database.repositories.team_repository',
-                'file_path': 'src/database/repositories/team_repository.py',
-                'current_coverage': 45.2,
-                'priority_score': 80,
-                'lines_covered': 25,
-                'lines_total': 55,
-                'missing_lines': []
-            }
+                "module_path": "database.repositories.team_repository",
+                "file_path": "src/database/repositories/team_repository.py",
+                "current_coverage": 45.2,
+                "priority_score": 80,
+                "lines_covered": 25,
+                "lines_total": 55,
+                "missing_lines": [],
+            },
         ]
 
-    def _calculate_priority_score(self, module_path: str, coverage: float, file_data: Dict) -> float:
+    def _calculate_priority_score(
+        self, module_path: str, coverage: float, file_data: Dict
+    ) -> float:
         """计算模块优先级分数"""
         score = 0
 
         # 基础优先级（根据模块类型）
-        if any(keyword in module_path for keyword in ['core', 'models', 'api']):
+        if any(keyword in module_path for keyword in ["core", "models", "api"]):
             score += 40
-        elif any(keyword in module_path for keyword in ['database', 'services', 'utils']):
+        elif any(keyword in module_path for keyword in ["database", "services", "utils"]):
             score += 30
-        elif any(keyword in module_path for keyword in ['cache', 'tasks', 'monitoring']):
+        elif any(keyword in module_path for keyword in ["cache", "tasks", "monitoring"]):
             score += 20
 
         # 覆盖率缺口（覆盖率越低，优先级越高）
@@ -193,8 +208,8 @@ class Issue86P3Breakthrough:
         score += coverage_gap * 0.3
 
         # 代码复杂度（行数越多，价值越高）
-        summary = file_data.get('summary', {}) if isinstance(file_data, dict) else {}
-        total_lines = summary.get('num_statements', 0)
+        summary = file_data.get("summary", {}) if isinstance(file_data, dict) else {}
+        total_lines = summary.get("num_statements", 0)
         if total_lines > 100:
             score += 15
         elif total_lines > 50:
@@ -204,17 +219,20 @@ class Issue86P3Breakthrough:
 
         # 测试难度（有外部依赖的模块优先级更高）
         try:
-            file_full_path = Path(file_data['relative_path'])
+            file_full_path = Path(file_data["relative_path"])
             if file_full_path.exists():
-                with open(file_full_path, 'r', encoding='utf-8') as f:
+                with open(file_full_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 检查外部依赖
-                if any(import_word in content for import_word in ['requests', 'sqlalchemy', 'redis', 'celery']):
+                if any(
+                    import_word in content
+                    for import_word in ["requests", "sqlalchemy", "redis", "celery"]
+                ):
                     score += 10
 
                 # 检查异步函数
-                if 'async def' in content:
+                if "async def" in content:
                     score += 8
         except Exception:
             pass
@@ -223,9 +241,9 @@ class Issue86P3Breakthrough:
 
     def create_enhanced_test_for_module(self, module_info: Dict) -> bool:
         """为模块创建增强测试"""
-        module_path = module_info['module_path']
-        file_path = module_info['file_path']
-        current_coverage = module_info['current_coverage']
+        module_path = module_info["module_path"]
+        file_path = module_info["file_path"]
+        current_coverage = module_info["current_coverage"]
 
         print(f"🔧 为模块 {module_path} 创建增强测试 (当前覆盖率: {current_coverage:.1f}%)")
 
@@ -237,17 +255,19 @@ class Issue86P3Breakthrough:
             test_file_path = self._get_test_file_path(module_path)
 
             # 创建测试内容
-            test_content = self._generate_enhanced_test_content(module_path, source_analysis, module_info)
+            test_content = self._generate_enhanced_test_content(
+                module_path, source_analysis, module_info
+            )
 
             # 确保目录存在
             test_file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 写入测试文件
-            with open(test_file_path, 'w', encoding='utf-8') as f:
+            with open(test_file_path, "w", encoding="utf-8") as f:
                 f.write(test_content)
 
             print(f"  ✅ 创建测试文件: {test_file_path}")
-            self.breakthrough_stats['tests_created'] += 1
+            self.breakthrough_stats["tests_created"] += 1
 
             return True
 
@@ -260,80 +280,82 @@ class Issue86P3Breakthrough:
         try:
             full_path = Path(file_path)
             if not full_path.exists():
-                return {'classes': [], 'functions': [], 'imports': []}
+                return {"classes": [], "functions": [], "imports": []}
 
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
 
             analysis = {
-                'classes': [],
-                'functions': [],
-                'imports': [],
-                'async_functions': [],
-                'decorated_functions': []
+                "classes": [],
+                "functions": [],
+                "imports": [],
+                "async_functions": [],
+                "decorated_functions": [],
             }
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    analysis['classes'].append(node.name)
+                    analysis["classes"].append(node.name)
                 elif isinstance(node, ast.FunctionDef):
-                    if node.name.startswith('_'):
+                    if node.name.startswith("_"):
                         continue  # 跳过私有函数
 
                     func_info = {
-                        'name': node.name,
-                        'args': [arg.arg for arg in node.args.args],
-                        'returns': ast.unparse(node.returns) if node.returns else None,
-                        'is_async': False,
-                        'decorators': []
+                        "name": node.name,
+                        "args": [arg.arg for arg in node.args.args],
+                        "returns": ast.unparse(node.returns) if node.returns else None,
+                        "is_async": False,
+                        "decorators": [],
                     }
 
-                    if hasattr(node, 'decorator_list'):
-                        func_info['decorators'] = [ast.unparse(d) for d in node.decorator_list]
+                    if hasattr(node, "decorator_list"):
+                        func_info["decorators"] = [ast.unparse(d) for d in node.decorator_list]
 
-                    analysis['functions'].append(func_info)
+                    analysis["functions"].append(func_info)
 
                 elif isinstance(node, ast.AsyncFunctionDef):
-                    if node.name.startswith('_'):
+                    if node.name.startswith("_"):
                         continue
 
                     func_info = {
-                        'name': node.name,
-                        'args': [arg.arg for arg in node.args.args],
-                        'returns': ast.unparse(node.returns) if node.returns else None,
-                        'is_async': True,
-                        'decorators': []
+                        "name": node.name,
+                        "args": [arg.arg for arg in node.args.args],
+                        "returns": ast.unparse(node.returns) if node.returns else None,
+                        "is_async": True,
+                        "decorators": [],
                     }
 
-                    if hasattr(node, 'decorator_list'):
-                        func_info['decorators'] = [ast.unparse(d) for d in node.decorator_list]
+                    if hasattr(node, "decorator_list"):
+                        func_info["decorators"] = [ast.unparse(d) for d in node.decorator_list]
 
-                    analysis['async_functions'].append(func_info)
+                    analysis["async_functions"].append(func_info)
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
-                        analysis['imports'].append(alias.name)
+                        analysis["imports"].append(alias.name)
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         for alias in node.names:
-                            analysis['imports'].append(f"{node.module}.{alias.name}")
+                            analysis["imports"].append(f"{node.module}.{alias.name}")
 
             return analysis
 
         except Exception as e:
             print(f"  ⚠️ 源代码分析失败: {e}")
-            return {'classes': [], 'functions': [], 'imports': []}
+            return {"classes": [], "functions": [], "imports": []}
 
     def _get_test_file_path(self, module_path: str) -> Path:
         """获取测试文件路径"""
         # 将模块路径转换为测试文件路径
-        parts = module_path.split('.')
+        parts = module_path.split(".")
         test_path = Path("tests/unit") / Path(*parts)
         test_file = test_path.with_name(f"test_{test_path.name}_p3_enhanced.py")
         return test_file
 
-    def _generate_enhanced_test_content(self, module_path: str, analysis: Dict, module_info: Dict) -> str:
+    def _generate_enhanced_test_content(
+        self, module_path: str, analysis: Dict, module_info: Dict
+    ) -> str:
         """生成增强测试内容"""
         class_name = self._generate_class_name(module_path)
 
@@ -378,7 +400,7 @@ class {class_name}:
 '''
 
         # 为每个类生成测试
-        for class_name in analysis['classes']:
+        for class_name in analysis["classes"]:
             content += f'''    def test_{class_name.lower()}_initialization(self, mock_setup):
         """测试 {class_name} 初始化"""
         # TODO: 实现 {class_name} 初始化测试
@@ -394,9 +416,9 @@ class {class_name}:
 '''
 
         # 为每个函数生成测试
-        for func_info in analysis['functions']:
-            func_name = func_info['name']
-            if func_info['is_async']:
+        for func_info in analysis["functions"]:
+            func_name = func_info["name"]
+            if func_info["is_async"]:
                 content += f'''    @pytest.mark.asyncio
     async def test_{func_name}_async(self, mock_setup):
         """测试异步函数 {func_name}"""
@@ -451,21 +473,21 @@ if __name__ == "__main__":
 
     def _generate_class_name(self, module_path: str) -> str:
         """生成测试类名"""
-        parts = module_path.split('.')
+        parts = module_path.split(".")
         class_parts = []
 
         for part in parts:
-            if part not in ['src', '__init__']:
+            if part not in ["src", "__init__"]:
                 # 转换为PascalCase
-                class_part = ''.join(word.capitalize() for word in part.split('_'))
+                class_part = "".join(word.capitalize() for word in part.split("_"))
                 if class_part:
                     class_parts.append(class_part)
 
         # 使用最后2-3个部分生成类名
         if len(class_parts) >= 2:
-            class_name = ''.join(class_parts[-2:])
+            class_name = "".join(class_parts[-2:])
         else:
-            class_name = ''.join(class_parts) or "GeneratedTest"
+            class_name = "".join(class_parts) or "GeneratedTest"
 
         return f"Test{class_name}P3Enhanced"
 
@@ -474,50 +496,60 @@ if __name__ == "__main__":
         strategies = []
 
         # 基于导入的Mock策略
-        imports = analysis.get('imports', [])
-        if 'sqlalchemy' in str(imports):
-            strategies.append('''
+        imports = analysis.get("imports", [])
+        if "sqlalchemy" in str(imports):
+            strategies.append(
+                """
 # SQLAlchemy Mock策略
 mock_db_session = Mock()
 mock_db_session.query.return_value = Mock()
 mock_db_session.add.return_value = None
 mock_db_session.commit.return_value = None
-''')
+"""
+            )
 
-        if 'redis' in str(imports):
-            strategies.append('''
+        if "redis" in str(imports):
+            strategies.append(
+                """
 # Redis Mock策略
 mock_redis_client = Mock()
 mock_redis_client.get.return_value = json.dumps({"key": "value"})
 mock_redis_client.set.return_value = True
 mock_redis_client.delete.return_value = True
-''')
+"""
+            )
 
-        if 'requests' in str(imports):
-            strategies.append('''
+        if "requests" in str(imports):
+            strategies.append(
+                """
 # HTTP请求Mock策略
 mock_response = Mock()
 mock_response.status_code = 200
 mock_response.json.return_value = {"status": "success"}
 mock_response.text = "success"
-''')
+"""
+            )
 
         # 基于函数类型的Mock策略
-        if analysis.get('async_functions'):
-            strategies.append('''
+        if analysis.get("async_functions"):
+            strategies.append(
+                """
 # 异步函数Mock策略
 mock_async_func = AsyncMock()
 mock_async_func.return_value = {"async_result": True}
-''')
+"""
+            )
 
         if not strategies:
-            strategies.append('''
+            strategies.append(
+                """
 # 通用Mock策略
 mock_service = Mock()
 mock_service.return_value = {"status": "success"}
-''')
+"""
+            )
 
-        return '\n'.join(strategies)
+        return "\n".join(strategies)
 
     def run_p3_breakthrough(self):
         """执行P3重点突破"""
@@ -548,7 +580,7 @@ mock_service.return_value = {"status": "success"}
 
             if self.create_enhanced_test_for_module(module_info):
                 success_count += 1
-                self.breakthrough_stats['modules_processed'] += 1
+                self.breakthrough_stats["modules_processed"] += 1
 
         print("\n📊 P3突破统计:")
         print(f"  目标模块数: {len(priority_modules)}")
@@ -556,7 +588,7 @@ mock_service.return_value = {"status": "success"}
         print(f"  创建测试文件: {self.breakthrough_stats['tests_created']}")
 
         # 4. 验证新测试
-        if self.breakthrough_stats['tests_created'] > 0:
+        if self.breakthrough_stats["tests_created"] > 0:
             self._validate_created_tests()
 
         # 5. 生成报告
@@ -571,7 +603,9 @@ mock_service.return_value = {"status": "success"}
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 处理模块: {self.breakthrough_stats['modules_processed']}")
         print(f"📝 创建测试: {self.breakthrough_stats['tests_created']}")
-        print(f"📈 预期覆盖率: {self.breakthrough_stats['current_coverage']:.2f}% → {expected_coverage:.2f}%")
+        print(
+            f"📈 预期覆盖率: {self.breakthrough_stats['current_coverage']:.2f}% → {expected_coverage:.2f}%"
+        )
 
         return success_count >= len(priority_modules) * 0.8  # 80%成功率
 
@@ -588,7 +622,7 @@ mock_service.return_value = {"status": "success"}
                     ["python3", "-m", "pytest", str(test_file), "--collect-only", "-q"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
 
                 if result.returncode == 0:
@@ -604,18 +638,18 @@ mock_service.return_value = {"status": "success"}
 
     def _calculate_expected_coverage_improvement(self) -> float:
         """计算预期覆盖率提升"""
-        if not self.breakthrough_stats['modules_processed']:
-            return self.breakthrough_stats['current_coverage']
+        if not self.breakthrough_stats["modules_processed"]:
+            return self.breakthrough_stats["current_coverage"]
 
         # 基于处理的模块数量估算覆盖率提升
         # 每个高优先级模块预期提升5-8%覆盖率
         improvement_per_module = 6.5
-        total_improvement = self.breakthrough_stats['modules_processed'] * improvement_per_module
+        total_improvement = self.breakthrough_stats["modules_processed"] * improvement_per_module
 
-        expected_coverage = self.breakthrough_stats['current_coverage'] + total_improvement
+        expected_coverage = self.breakthrough_stats["current_coverage"] + total_improvement
 
         # 但不超过P3目标
-        p3_target = self.breakthrough_stats['target_coverage']
+        p3_target = self.breakthrough_stats["target_coverage"]
         return min(expected_coverage, p3_target)
 
     def _generate_breakthrough_report(self, start_time: float):
@@ -627,29 +661,36 @@ mock_service.return_value = {"status": "success"}
             "issue_number": 86,
             "phase": "P3",
             "duration_seconds": duration,
-            "initial_coverage": self.breakthrough_stats['initial_coverage'],
-            "current_coverage": self.breakthrough_stats['current_coverage'],
-            "target_coverage": self.breakthrough_stats['target_coverage'],
+            "initial_coverage": self.breakthrough_stats["initial_coverage"],
+            "current_coverage": self.breakthrough_stats["current_coverage"],
+            "target_coverage": self.breakthrough_stats["target_coverage"],
             "expected_coverage": self._calculate_expected_coverage_improvement(),
-            "modules_processed": self.breakthrough_stats['modules_processed'],
-            "tests_created": self.breakthrough_stats['tests_created'],
+            "modules_processed": self.breakthrough_stats["modules_processed"],
+            "tests_created": self.breakthrough_stats["tests_created"],
             "priority_modules": [
                 {
-                    'module_path': m['module_path'],
-                    'current_coverage': m['current_coverage'],
-                    'priority_score': m['priority_score']
+                    "module_path": m["module_path"],
+                    "current_coverage": m["current_coverage"],
+                    "priority_score": m["priority_score"],
                 }
                 for m in self.priority_modules
             ],
-            "success_rate": (self.breakthrough_stats['modules_processed'] / len(self.priority_modules) * 100) if self.priority_modules else 0
+            "success_rate": (
+                (self.breakthrough_stats["modules_processed"] / len(self.priority_modules) * 100)
+                if self.priority_modules
+                else 0
+            ),
         }
 
-        report_file = Path(f"issue86_p3_breakthrough_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        report_file = Path(
+            f"issue86_p3_breakthrough_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📋 P3突破报告已保存: {report_file}")
         return report
+
 
 def main():
     """主函数"""
@@ -668,6 +709,7 @@ def main():
         print("建议检查失败的模块并手动处理。")
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 维护任务测试
 Tests for Maintenance Tasks
@@ -359,9 +357,7 @@ class TestBackupTask:
 
         with patch("tarfile.extractall") as mock_extract:
             with patch("subprocess.run") as mock_subprocess:
-                _result = await task.restore_backup(
-                    "/backups/full_backup.tar.gz", "/tmp/restore"
-                )
+                _result = await task.restore_backup("/backups/full_backup.tar.gz", "/tmp/restore")
 
                 assert _result["status"] == "success"
                 assert mock_extract.called

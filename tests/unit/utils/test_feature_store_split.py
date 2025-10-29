@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 Test Split Feature Store
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -79,9 +78,7 @@ def test_feature_store_config():
     """测试特征仓库配置"""
     from src.data.features.feature_store.config import FeatureStoreConfig
 
-    _config = FeatureStoreConfig(
-        project_name="test_project", repo_path="/tmp/test_repo"
-    )
+    _config = FeatureStoreConfig(project_name="test_project", repo_path="/tmp/test_repo")
 
     assert _config.project_name == "test_project"
     assert _config.repo_path == "/tmp/test_repo"
@@ -169,9 +166,7 @@ def test_initialize_feature_store():
     from src.data.features.feature_store import initialize_feature_store
 
     with patch("src.data.features.feature_store.feature_store.HAS_FEAST", False):
-        store = initialize_feature_store(
-            project_name="test_init", repo_path="/tmp/test_init"
-        )
+        store = initialize_feature_store(project_name="test_init", repo_path="/tmp/test_init")
 
         assert store is not None
         assert store.config_manager._config.project_name == "test_init"

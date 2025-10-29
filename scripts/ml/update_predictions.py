@@ -78,9 +78,7 @@ class PredictionResultUpdater:
         """
         return predicted_result == actual_result
 
-    async def get_finished_matches_without_feedback(
-        self, limit: int = 100
-    ) -> List[Tuple]:
+    async def get_finished_matches_without_feedback(self, limit: int = 100) -> List[Tuple]:
         """
         获取已完成但未回填预测结果的比赛
 
@@ -149,9 +147,7 @@ class PredictionResultUpdater:
             await self.session.commit()
 
             if result.rowcount > 0:
-                logger.debug(
-                    f"成功更新预测 {prediction_id}: {actual_result}, 正确={is_correct}"
-                )
+                logger.debug(f"成功更新预测 {prediction_id}: {actual_result}, 正确={is_correct}")
                 return True
             else:
                 logger.warning(f"未找到预测 {prediction_id} 或更新失败")
@@ -183,15 +179,11 @@ class PredictionResultUpdater:
             stats["total_processed"] += 1
 
             # 计算实际结果
-            actual_result = self._calculate_match_result(
-                match.home_score, match.away_score
-            )
+            actual_result = self._calculate_match_result(match.home_score, match.away_score)
 
             # 判断预测是否正确
             predicted_result_value = prediction.predicted_result.value
-            is_correct = self._is_prediction_correct(
-                predicted_result_value, actual_result
-            )
+            is_correct = self._is_prediction_correct(predicted_result_value, actual_result)
 
             # 更新统计
             if is_correct:
@@ -200,9 +192,7 @@ class PredictionResultUpdater:
                 stats["incorrect_predictions"] += 1
 
             # 更新数据库
-            success = await self.update_prediction_result(
-                prediction.id, actual_result, is_correct
-            )
+            success = await self.update_prediction_result(prediction.id, actual_result, is_correct)
 
             if success:
                 stats["successful_updates"] += 1
@@ -328,9 +318,7 @@ class PredictionResultUpdater:
 
         overall_accuracy = 0.0
         if overall_stats.total_predictions > 0:
-            overall_accuracy = (
-                overall_stats.correct_predictions / overall_stats.total_predictions
-            )
+            overall_accuracy = overall_stats.correct_predictions / overall_stats.total_predictions
 
         # 按模型统计
         from sqlalchemy.sql import Select
@@ -454,9 +442,7 @@ def main(
             # 计算趋势
             if trends:
                 click.echo(f"\n📊 计算过去{days}天准确率趋势（窗口大小: {window}）...")
-                trends_data = await updater.calculate_model_accuracy_trends(
-                    days, window
-                )
+                trends_data = await updater.calculate_model_accuracy_trends(days, window)
 
                 for model_key, trend_points in trends_data.items():
                     click.echo(f"\n📈 {model_key} 趋势:")
@@ -467,12 +453,12 @@ def main(
 
                         # 简单趋势分析
                         if len(trend_points) >= 2:
-                            recent_avg = sum(
-                                p["accuracy"] for p in trend_points[-3:]
-                            ) / min(3, len(trend_points))
-                            early_avg = sum(
-                                p["accuracy"] for p in trend_points[:3]
-                            ) / min(3, len(trend_points))
+                            recent_avg = sum(p["accuracy"] for p in trend_points[-3:]) / min(
+                                3, len(trend_points)
+                            )
+                            early_avg = sum(p["accuracy"] for p in trend_points[:3]) / min(
+                                3, len(trend_points)
+                            )
 
                             if recent_avg > early_avg:
                                 trend_desc = "📈 上升"

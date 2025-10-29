@@ -13,9 +13,6 @@ FastAPI应用基础设施测试 - 符合严格测试规范
 """
 
 import asyncio
-from datetime import datetime
-from typing import Any, Dict, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -78,7 +75,6 @@ class TestFastAPIAppInfrastructure:
                     mock_setup_openapi.side_effect = Exception("Configuration failed")
 
                     with pytest.raises(Exception):
-                        from src.api.app import app
 
     def test_router_registration_success(self) -> None:
         """✅ 成功用例：路由注册成功"""

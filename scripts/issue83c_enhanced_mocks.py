@@ -35,14 +35,14 @@ class EnhancedMockContextManager:
     def _setup_environment(self):
         """设置测试环境变量"""
         env_vars = {
-            'DATABASE_URL': 'sqlite:///:memory:',
-            'REDIS_URL': 'redis://localhost:6379/0',
-            'ENVIRONMENT': 'testing',
-            'API_BASE_URL': 'http://localhost:8000',
-            'LOG_LEVEL': 'DEBUG',
-            'CACHE_TTL': '300',
-            'MAX_CONNECTIONS': '10',
-            'TIMEOUT': '30'
+            "DATABASE_URL": "sqlite:///:memory:",
+            "REDIS_URL": "redis://localhost:6379/0",
+            "ENVIRONMENT": "testing",
+            "API_BASE_URL": "http://localhost:8000",
+            "LOG_LEVEL": "DEBUG",
+            "CACHE_TTL": "300",
+            "MAX_CONNECTIONS": "10",
+            "TIMEOUT": "30",
         }
 
         for key, value in env_vars.items():
@@ -51,8 +51,14 @@ class EnhancedMockContextManager:
     def _cleanup_environment(self):
         """清理环境变量"""
         cleanup_keys = [
-            'DATABASE_URL', 'REDIS_URL', 'ENVIRONMENT', 'API_BASE_URL',
-            'LOG_LEVEL', 'CACHE_TTL', 'MAX_CONNECTIONS', 'TIMEOUT'
+            "DATABASE_URL",
+            "REDIS_URL",
+            "ENVIRONMENT",
+            "API_BASE_URL",
+            "LOG_LEVEL",
+            "CACHE_TTL",
+            "MAX_CONNECTIONS",
+            "TIMEOUT",
         ]
         for key in cleanup_keys:
             if key in os.environ:
@@ -61,28 +67,28 @@ class EnhancedMockContextManager:
     def _create_mocks(self):
         """创建各类Mock对象"""
         for category in self.categories:
-            if category == 'database':
+            if category == "database":
                 self.mock_data[category] = self._create_database_mocks()
-            elif category == 'redis':
+            elif category == "redis":
                 self.mock_data[category] = self._create_redis_mocks()
-            elif category == 'api':
+            elif category == "api":
                 self.mock_data[category] = self._create_api_mocks()
-            elif category == 'external':
+            elif category == "external":
                 self.mock_data[category] = self._create_external_mocks()
-            elif category == 'async':
+            elif category == "async":
                 self.mock_data[category] = self._create_async_mocks()
-            elif category == 'di':
+            elif category == "di":
                 self.mock_data[category] = self._create_di_mocks()
-            elif category == 'config':
+            elif category == "config":
                 self.mock_data[category] = self._create_config_mocks()
-            elif category == 'cqrs':
+            elif category == "cqrs":
                 self.mock_data[category] = self._create_cqrs_mocks()
-            elif category == 'services':
+            elif category == "services":
                 self.mock_data[category] = self._create_services_mocks()
-            elif category == 'cache':
+            elif category == "cache":
                 self.mock_data[category] = self._create_cache_mocks()
             else:
-                self.mock_data[category] = {'mock': Mock()}
+                self.mock_data[category] = {"mock": Mock()}
 
     def _create_database_mocks(self) -> Dict[str, Any]:
         """创建数据库相关Mock - 包括连接池"""
@@ -96,8 +102,8 @@ class EnhancedMockContextManager:
         pool_mock = Mock()
         connection_mock = Mock()
         connection_mock.execute.return_value = Mock()
-        connection_mock.fetchone.return_value = {'id': 1, 'name': 'test'}
-        connection_mock.fetchall.return_value = [{'id': 1, 'name': 'test'}]
+        connection_mock.fetchone.return_value = {"id": 1, "name": "test"}
+        connection_mock.fetchall.return_value = [{"id": 1, "name": "test"}]
         pool_mock.acquire.return_value = connection_mock
         pool_mock.release.return_value = None
 
@@ -111,17 +117,17 @@ class EnhancedMockContextManager:
 
         # 模拟仓储
         repository_mock = Mock()
-        repository_mock.get.return_value = {'id': 1}
-        repository_mock.create.return_value = {'id': 1, 'created': True}
-        repository_mock.update.return_value = {'id': 1, 'updated': True}
+        repository_mock.get.return_value = {"id": 1}
+        repository_mock.create.return_value = {"id": 1, "created": True}
+        repository_mock.update.return_value = {"id": 1, "updated": True}
         repository_mock.delete.return_value = True
 
         return {
-            'engine': engine_mock,
-            'pool': pool_mock,
-            'session': session_mock,
-            'repository': repository_mock,
-            'connection': connection_mock
+            "engine": engine_mock,
+            "pool": pool_mock,
+            "session": session_mock,
+            "repository": repository_mock,
+            "connection": connection_mock,
         }
 
     def _create_redis_mocks(self) -> Dict[str, Any]:
@@ -147,11 +153,7 @@ class EnhancedMockContextManager:
         cache_manager_mock.delete.return_value = True
         cache_manager_mock.clear.return_value = True
 
-        return {
-            'client': redis_client_mock,
-            'pool': redis_pool_mock,
-            'manager': cache_manager_mock
-        }
+        return {"client": redis_client_mock, "pool": redis_pool_mock, "manager": cache_manager_mock}
 
     def _create_api_mocks(self) -> Dict[str, Any]:
         """创建API相关Mock"""
@@ -178,10 +180,10 @@ class EnhancedMockContextManager:
         router_mock.add_websocket_route.return_value = None
 
         return {
-            'app': app_mock,
-            'client': client_mock,
-            'response': response_mock,
-            'router': router_mock
+            "app": app_mock,
+            "client": client_mock,
+            "response": response_mock,
+            "router": router_mock,
         }
 
     def _create_external_mocks(self) -> Dict[str, Any]:
@@ -205,11 +207,7 @@ class EnhancedMockContextManager:
         queue_mock.consume.return_value = {"message": "test"}
         queue_mock.acknowledge.return_value = None
 
-        return {
-            'http_service': http_service_mock,
-            'websocket': websocket_mock,
-            'queue': queue_mock
-        }
+        return {"http_service": http_service_mock, "websocket": websocket_mock, "queue": queue_mock}
 
     def _create_async_mocks(self) -> Dict[str, Any]:
         """创建异步Mock"""
@@ -234,11 +232,7 @@ class EnhancedMockContextManager:
         async_task_mock.delay.return_value = Mock(id="task_123")
         async_task_mock.apply_async.return_value = Mock(id="task_123")
 
-        return {
-            'database': async_db_mock,
-            'http_client': async_http_mock,
-            'task': async_task_mock
-        }
+        return {"database": async_db_mock, "http_client": async_http_mock, "task": async_task_mock}
 
     def _create_di_mocks(self) -> Dict[str, Any]:
         """创建依赖注入Mock"""
@@ -257,19 +251,15 @@ class EnhancedMockContextManager:
         resolver_mock = Mock()
         resolver_mock.resolve_dependencies.return_value = [Mock(), Mock()]
 
-        return {
-            'container': container_mock,
-            'factory': factory_mock,
-            'resolver': resolver_mock
-        }
+        return {"container": container_mock, "factory": factory_mock, "resolver": resolver_mock}
 
     def _create_config_mocks(self) -> Dict[str, Any]:
         """创建配置Mock"""
         return {
-            'app_config': {"database_url": "sqlite:///:memory:", "debug": True},
-            'database_config': {"pool_size": 10, "max_overflow": 20},
-            'api_config': {"host": "localhost", "port": 8000},
-            'cache_config': {"ttl": 300, "max_size": 1000}
+            "app_config": {"database_url": "sqlite:///:memory:", "debug": True},
+            "database_config": {"pool_size": 10, "max_overflow": 20},
+            "api_config": {"host": "localhost", "port": 8000},
+            "cache_config": {"ttl": 300, "max_size": 1000},
         }
 
     def _create_cqrs_mocks(self) -> Dict[str, Any]:
@@ -290,27 +280,23 @@ class EnhancedMockContextManager:
         event_handler_mock.publish.return_value = None
 
         return {
-            'command_bus': command_bus_mock,
-            'query_bus': query_bus_mock,
-            'event_handler': event_handler_mock
+            "command_bus": command_bus_mock,
+            "query_bus": query_bus_mock,
+            "event_handler": event_handler_mock,
         }
 
     def _create_services_mocks(self) -> Dict[str, Any]:
         """创建服务Mock"""
         return {
-            'prediction_service': Mock(return_value={"prediction": 0.85}),
-            'data_service': Mock(return_value={"status": "processed"}),
-            'user_service': Mock(return_value={"user": {"id": 1}}),
-            'notification_service': AsyncMock(return_value=True)
+            "prediction_service": Mock(return_value={"prediction": 0.85}),
+            "data_service": Mock(return_value={"status": "processed"}),
+            "user_service": Mock(return_value={"user": {"id": 1}}),
+            "notification_service": AsyncMock(return_value=True),
         }
 
     def _create_cache_mocks(self) -> Dict[str, Any]:
         """创建缓存Mock"""
-        return {
-            'redis_client': Mock(),
-            'cache_manager': Mock(),
-            'cache_store': Mock()
-        }
+        return {"redis_client": Mock(), "cache_manager": Mock(), "cache_store": Mock()}
 
     def _cleanup_patches(self):
         """清理所有补丁"""
@@ -335,50 +321,60 @@ class PracticalMockStrategies:
     @staticmethod
     def create_database_test(test_func):
         """数据库测试装饰器"""
+
         def wrapper(*args, **kwargs):
-            with EnhancedMockContextManager(['database']) as mocks:
-                kwargs['db_mocks'] = mocks['database']
+            with EnhancedMockContextManager(["database"]) as mocks:
+                kwargs["db_mocks"] = mocks["database"]
                 return test_func(*args, **kwargs)
+
         return wrapper
 
     @staticmethod
     def create_redis_test(test_func):
         """Redis测试装饰器"""
+
         def wrapper(*args, **kwargs):
-            with EnhancedMockContextManager(['redis']) as mocks:
-                kwargs['redis_mocks'] = mocks['redis']
+            with EnhancedMockContextManager(["redis"]) as mocks:
+                kwargs["redis_mocks"] = mocks["redis"]
                 return test_func(*args, **kwargs)
+
         return wrapper
 
     @staticmethod
     def create_api_test(test_func):
         """API测试装饰器"""
+
         def wrapper(*args, **kwargs):
-            with EnhancedMockContextManager(['api']) as mocks:
-                kwargs['api_mocks'] = mocks['api']
+            with EnhancedMockContextManager(["api"]) as mocks:
+                kwargs["api_mocks"] = mocks["api"]
                 return test_func(*args, **kwargs)
+
         return wrapper
 
     @staticmethod
     def create_async_test(test_func):
         """异步测试装饰器"""
+
         async def async_wrapper(*args, **kwargs):
-            with EnhancedMockContextManager(['async']) as mocks:
-                kwargs['async_mocks'] = mocks['async']
+            with EnhancedMockContextManager(["async"]) as mocks:
+                kwargs["async_mocks"] = mocks["async"]
                 if asyncio.iscoroutinefunction(test_func):
                     return await test_func(*args, **kwargs)
                 else:
                     return test_func(*args, **kwargs)
+
         return async_wrapper
 
     @staticmethod
     def create_integration_test(test_func, categories=None):
         """集成测试装饰器"""
-        categories = categories or ['database', 'redis', 'api']
+        categories = categories or ["database", "redis", "api"]
+
         def wrapper(*args, **kwargs):
             with EnhancedMockContextManager(categories) as mocks:
-                kwargs['integration_mocks'] = mocks
+                kwargs["integration_mocks"] = mocks
                 return test_func(*args, **kwargs)
+
         return wrapper
 
 
@@ -389,43 +385,43 @@ def test_enhanced_mocks():
 
     # 测试数据库Mock
     print("1. 测试数据库Mock...")
-    with EnhancedMockContextManager(['database']) as mocks:
-        db_mocks = mocks['database']
-        assert 'engine' in db_mocks
-        assert 'pool' in db_mocks
-        assert 'session' in db_mocks
+    with EnhancedMockContextManager(["database"]) as mocks:
+        db_mocks = mocks["database"]
+        assert "engine" in db_mocks
+        assert "pool" in db_mocks
+        assert "session" in db_mocks
         print("   ✅ 数据库Mock: 5 个组件")
 
     # 测试Redis Mock
     print("2. 测试Redis Mock...")
-    with EnhancedMockContextManager(['redis']) as mocks:
-        redis_mocks = mocks['redis']
-        assert 'client' in redis_mocks
-        assert 'pool' in redis_mocks
+    with EnhancedMockContextManager(["redis"]) as mocks:
+        redis_mocks = mocks["redis"]
+        assert "client" in redis_mocks
+        assert "pool" in redis_mocks
         print("   ✅ Redis Mock: 3 个组件")
 
     # 测试API Mock
     print("3. 测试API Mock...")
-    with EnhancedMockContextManager(['api']) as mocks:
-        api_mocks = mocks['api']
-        assert 'app' in api_mocks
-        assert 'client' in api_mocks
+    with EnhancedMockContextManager(["api"]) as mocks:
+        api_mocks = mocks["api"]
+        assert "app" in api_mocks
+        assert "client" in api_mocks
         print("   ✅ API Mock: 4 个组件")
 
     # 测试异步Mock
     print("4. 测试异步Mock...")
-    with EnhancedMockContextManager(['async']) as mocks:
-        async_mocks = mocks['async']
-        assert 'database' in async_mocks
-        assert 'http_client' in async_mocks
+    with EnhancedMockContextManager(["async"]) as mocks:
+        async_mocks = mocks["async"]
+        assert "database" in async_mocks
+        assert "http_client" in async_mocks
         print("   ✅ 异步Mock: 3 个组件")
 
     # 测试集成Mock
     print("5. 测试集成Mock...")
-    with EnhancedMockContextManager(['database', 'redis', 'api']) as mocks:
-        assert 'database' in mocks
-        assert 'redis' in mocks
-        assert 'api' in mocks
+    with EnhancedMockContextManager(["database", "redis", "api"]) as mocks:
+        assert "database" in mocks
+        assert "redis" in mocks
+        assert "api" in mocks
         print("   ✅ 集成Mock: 3 个类别")
 
     print("🎉 增强Mock策略库测试完成！")
@@ -441,7 +437,7 @@ def test_enhanced_mocks():
         "config - 配置Mock",
         "cqrs - CQRS模式Mock",
         "services - 业务服务Mock",
-        "cache - 缓存Mock"
+        "cache - 缓存Mock",
     ]
 
     for strategy in strategies:

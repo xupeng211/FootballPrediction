@@ -61,24 +61,18 @@ class Subject(ABC):
         if len(self._event_history) > 1000:
             self._event_history = self._event_history[-500:]
 
-        self.logger.debug(
-            f"Notifying {len(self._observers)} observers of event: {event_type}"
-        )
+        self.logger.debug(f"Notifying {len(self._observers)} observers of event: {event_type}")
 
         # 并发通知所有观察者
         tasks = []
         for observer in self._observers:
-            task = asyncio.create_task(
-                self._notify_observer(observer, event_type, data)
-            )
+            task = asyncio.create_task(self._notify_observer(observer, event_type, data))
             tasks.append(task)
 
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _notify_observer(
-        self, observer: Observer, event_type: str, data: Any
-    ) -> None:
+    async def _notify_observer(self, observer: Observer, event_type: str, data: Any) -> None:
         """安全地通知单个观察者"""
         try:
             await observer.update(self, event_type, data)
@@ -266,9 +260,7 @@ class ObservableService(Subject):
             {"service": self.service_name, "operation": operation, "params": params},
         )
 
-    async def on_operation_complete(
-        self, operation: str, result: Any, duration: float
-    ) -> None:
+    async def on_operation_complete(self, operation: str, result: Any, duration: float) -> None:
         """操作完成事件"""
         await self.notify(
             "operation.complete",
@@ -324,9 +316,7 @@ def create_observer_system() -> Dict[str, Observer]:
 
 
 # 便捷函数
-async def setup_service_observers(
-    service: ObservableService, observers: List[Observer]
-) -> None:
+async def setup_service_observers(service: ObservableService, observers: List[Observer]) -> None:
     """为服务设置观察者"""
     for observer in observers:
         service.attach(observer)

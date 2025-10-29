@@ -60,9 +60,7 @@ def test_metric_types_isolated():
             }
 
     # 测试MetricPoint
-    point = MetricPoint(
-        name="test_metric", value=100.5, labels={"env": "test"}, unit="ms"
-    )
+    point = MetricPoint(name="test_metric", value=100.5, labels={"env": "test"}, unit="ms")
     assert point.name == "test_metric"
     assert point.value == 100.5
     assert point.labels["env"] == "test"
@@ -70,9 +68,7 @@ def test_metric_types_isolated():
     assert isinstance(point.timestamp, datetime)
 
     # 测试MetricSummary
-    summary = MetricSummary(
-        count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0
-    )
+    summary = MetricSummary(count=10, sum=1000.0, avg=100.0, min=50.0, max=150.0, last=95.0)
     assert summary.count == 10
     assert summary.avg == 100.0
     assert summary.min == 50.0
@@ -102,7 +98,6 @@ def test_aggregator_isolated():
     import statistics
     from collections import defaultdict, deque
     from datetime import datetime, timedelta
-    from typing import Deque, Dict
 
     # 简化的MetricPoint定义
     class MetricPoint:
@@ -193,7 +188,6 @@ def test_aggregator_isolated():
 def test_alert_manager_isolated():
     """独立测试告警管理器"""
     from datetime import datetime, timedelta
-    from typing import Any, Callable, Dict, List, Optional
 
     # 简化的AlertInfo定义
     class AlertInfo:
@@ -213,9 +207,7 @@ def test_alert_manager_isolated():
             self.alert_history = []
             self.alert_handlers = []
 
-        def add_alert_rule(
-            self, name, condition, severity="medium", description="", cooldown=300
-        ):
+        def add_alert_rule(self, name, condition, severity="medium", description="", cooldown=300):
             self.alert_rules[name] = {
                 "condition": condition,
                 "severity": severity,
@@ -230,9 +222,7 @@ def test_alert_manager_isolated():
             for name, rule in self.alert_rules.items():
                 try:
                     if rule["last_triggered"]:
-                        cooldown_end = rule["last_triggered"] + timedelta(
-                            seconds=rule["cooldown"]
-                        )
+                        cooldown_end = rule["last_triggered"] + timedelta(seconds=rule["cooldown"])
                         if now < cooldown_end:
                             continue
 
@@ -267,9 +257,7 @@ def test_alert_manager_isolated():
         def get_alert_summary(self):
             severity_counts = {}
             for alert in self.active_alerts.values():
-                severity_counts[alert.severity] = (
-                    severity_counts.get(alert.severity, 0) + 1
-                )
+                severity_counts[alert.severity] = severity_counts.get(alert.severity, 0) + 1
 
             return {
                 "active_alerts": len(self.active_alerts),

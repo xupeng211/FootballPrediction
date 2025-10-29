@@ -9,6 +9,7 @@ import sys
 import os
 from pathlib import Path
 
+
 def run_command(cmd, description, allow_failure=False):
     """运行命令并处理结果"""
     print(f"🔍 {description}...")
@@ -19,7 +20,7 @@ def run_command(cmd, description, allow_failure=False):
             shell=True,
             capture_output=True,
             text=True,
-            cwd="/home/user/projects/FootballPrediction"
+            cwd="/home/user/projects/FootballPrediction",
         )
 
         if result.returncode == 0:
@@ -40,16 +41,13 @@ def run_command(cmd, description, allow_failure=False):
         print(f"   ❌ {description} 执行异常: {e}")
         return not allow_failure
 
+
 def quick_syntax_check():
     """快速语法检查"""
     print("🔍 进行快速语法检查...")
 
     # 检查关键文件的语法
-    critical_files = [
-        'src/core/di.py',
-        'src/utils/dict_utils.py',
-        'src/utils/time_utils.py'
-    ]
+    critical_files = ["src/core/di.py", "src/utils/dict_utils.py", "src/utils/time_utils.py"]
 
     syntax_ok = True
     checked_count = 0
@@ -59,7 +57,7 @@ def quick_syntax_check():
             success = run_command(
                 f"python -m py_compile {file_path}",
                 f"语法检查: {os.path.basename(file_path)}",
-                allow_failure=False
+                allow_failure=False,
             )
             if success:
                 checked_count += 1
@@ -77,6 +75,7 @@ def quick_syntax_check():
         print("   ℹ️ 没有找到关键文件，跳过语法检查")
         return True
 
+
 def main():
     """主函数"""
     print("🚀 预提交快速检查开始...")
@@ -85,15 +84,16 @@ def main():
     checks = [
         # 基础检查
         ("python --version", "Python版本检查", False),
-
         # 语法检查
         (quick_syntax_check, "语法检查", False),
-
         # 轻量级代码质量检查
         ("ruff check src/ --output-format=text --quiet | head -5", "Ruff快速检查", True),
-
         # 类型检查抽样 (只检查关键文件)
-        ("mypy src/utils/dict_utils.py src/core/di.py --no-error-summary --quiet", "MyPy抽样检查", True),
+        (
+            "mypy src/utils/dict_utils.py src/core/di.py --no-error-summary --quiet",
+            "MyPy抽样检查",
+            True,
+        ),
     ]
 
     failed_checks = []
@@ -128,5 +128,6 @@ def main():
         print("\n🎉 预提交检查全部通过！")
         return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

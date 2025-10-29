@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 """
 模拟Redis管理器测试
 Tests for Mock Redis Manager
@@ -390,9 +388,7 @@ class TestMockRedisManager:
             redis.delete(f"perf_key_{i}")
 
 
-@pytest.mark.skipif(
-    MOCK_REDIS_AVAILABLE, reason="Mock Redis module should be available"
-)
+@pytest.mark.skipif(MOCK_REDIS_AVAILABLE, reason="Mock Redis module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

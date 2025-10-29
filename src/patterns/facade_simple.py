@@ -71,9 +71,7 @@ class PredictionFacade:
             value_assessment = await self._assess_value(prediction, external_data)
 
             # 5. 生成建议
-            recommendations = await self._generate_recommendations(
-                prediction, value_assessment
-            )
+            recommendations = await self._generate_recommendations(prediction, value_assessment)
 
             # 6. 保存预测结果
             await self._save_prediction(prediction, request.user_id)
@@ -313,9 +311,7 @@ class AnalyticsFacade:
 
         return dashboard
 
-    async def generate_report(
-        self, report_type: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def generate_report(self, report_type: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """生成分析报告"""
         if report_type == "performance":
             return await self._generate_performance_report(params)
@@ -326,15 +322,11 @@ class AnalyticsFacade:
         else:
             raise ValueError(f"Unknown report type: {report_type}")
 
-    async def _get_overview_stats(
-        self, days: int, user_id: Optional[int]
-    ) -> Dict[str, Any]:
+    async def _get_overview_stats(self, days: int, user_id: Optional[int]) -> Dict[str, Any]:
         """获取概览统计"""
         return {"total_predictions": 100, "accuracy": 65.0, "active_users": 25}
 
-    async def _get_prediction_analytics(
-        self, days: int, user_id: Optional[int]
-    ) -> Dict[str, Any]:
+    async def _get_prediction_analytics(self, days: int, user_id: Optional[int]) -> Dict[str, Any]:
         """获取预测分析"""
         return {
             "daily_predictions": [{"date": "2024-01-01", "count": 10}],
@@ -346,9 +338,7 @@ class AnalyticsFacade:
             "confidence_distribution": {"high": 45, "medium": 80, "low": 25},
         }
 
-    async def _get_performance_metrics(
-        self, days: int, user_id: Optional[int]
-    ) -> Dict[str, Any]:
+    async def _get_performance_metrics(self, days: int, user_id: Optional[int]) -> Dict[str, Any]:
         """获取性能指标"""
         return {
             "roi": 15.5,
@@ -374,9 +364,7 @@ class AnalyticsFacade:
             "建议关注低联赛的比赛，价值机会更多",
         ]
 
-    async def _generate_performance_report(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _generate_performance_report(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """生成性能报告"""
         return {
             "report_type": "performance",
@@ -392,9 +380,7 @@ class AnalyticsFacade:
             "data": "Accuracy report data...",
         }
 
-    async def _generate_profitability_report(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _generate_profitability_report(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """生成盈利报告"""
         return {
             "report_type": "profitability",
@@ -457,21 +443,15 @@ class SystemFacade:
         return {
             "prediction": result.prediction["prediction"],
             "confidence": result.confidence,
-            "top_recommendation": (
-                result.recommendations[0] if result.recommendations else None
-            ),
+            "top_recommendation": (result.recommendations[0] if result.recommendations else None),
         }
 
-    async def get_dashboard_summary(
-        self, user_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_dashboard_summary(self, user_id: Optional[int] = None) -> Dict[str, Any]:
         """获取仪表板摘要"""
         if not self._analytics_facade:
             raise RuntimeError("System not initialized")
 
-        dashboard = await self._analytics_facade.generate_dashboard_data(
-            user_id=user_id
-        )
+        dashboard = await self._analytics_facade.generate_dashboard_data(user_id=user_id)
 
         # 返回关键摘要
         return {

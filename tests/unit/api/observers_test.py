@@ -3,10 +3,6 @@ Issue #83 阶段2: api.observers 综合测试
 优先级: HIGH - 事件观察者，架构核心组件
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
@@ -39,9 +35,7 @@ class TestApiObservers:
         class_name = "AlertRequest"
         try:
             # 提供必需的参数
-            instance = AlertRequest(
-                alert_type="error", severity="high", message="Test alert"
-            )
+            instance = AlertRequest(alert_type="error", severity="high", message="Test alert")
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")

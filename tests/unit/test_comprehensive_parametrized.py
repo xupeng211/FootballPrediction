@@ -5,8 +5,6 @@
 
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -186,9 +184,7 @@ class TestStringOperations:
             _result = string.split("_")
             assert "_" in string
 
-    @pytest.mark.parametrize(
-        "strings", [["a", "b", "c"], ["x", "y", "z"], [""], ["single"]]
-    )
+    @pytest.mark.parametrize("strings", [["a", "b", "c"], ["x", "y", "z"], [""], ["single"]])
     def test_string_list_operations(self, strings):
         """测试字符串列表操作"""
         assert isinstance(strings, list)

@@ -3,7 +3,6 @@
 """
 
 import os
-from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -152,10 +151,7 @@ class TestStringUtils:
     def test_clean_text(self):
         """测试清理文本"""
         assert StringUtils.clean_text("  Hello   World  ") == "Hello World"
-        assert (
-            StringUtils.clean_text("Multiple\n\nspaces\t\there")
-            == "Multiple spaces here"
-        )
+        assert StringUtils.clean_text("Multiple\n\nspaces\t\there") == "Multiple spaces here"
 
     def test_extract_numbers(self):
         """测试提取数字"""

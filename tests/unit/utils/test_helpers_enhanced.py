@@ -3,8 +3,6 @@ Helper函数补充测试
 补充 src.utils.helpers 模块的测试覆盖，目标达到100%覆盖率
 """
 
-from unittest.mock import patch
-
 import pytest
 
 from src.utils.helpers import generate_hash, generate_uuid, safe_get
@@ -253,7 +251,6 @@ class TestHelpersEnhanced:
     def test_thread_safety_considerations(self) -> None:
         """✅ 并发用例：线程安全考虑"""
         import threading
-        import time
 
         results = []
         errors = []

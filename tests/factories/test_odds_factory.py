@@ -94,9 +94,7 @@ class LiveOddsFactory(OddsFactory):
         model = Odds
 
     @classmethod
-    def create_live_odds(
-        cls, home_score: int, away_score: int, minute: int, **kwargs
-    ) -> Odds:
+    def create_live_odds(cls, home_score: int, away_score: int, minute: int, **kwargs) -> Odds:
         base_home = Decimal("1.80") if home_score > away_score else Decimal("2.80")
         base_away = Decimal("1.80") if away_score > home_score else Decimal("2.80")
         return cls(

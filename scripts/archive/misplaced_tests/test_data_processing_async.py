@@ -50,9 +50,7 @@ async def test_data_processing_service_async():
             result = await service.process_raw_match_data(sample_match_data)
             print(f"✅ process_raw_match_data 执行成功，结果类型: {type(result)}")
             if result is not None:
-                print(
-                    f"   结果包含 {len(result) if isinstance(result, dict) else 'N/A'} 个字段"
-                )
+                print(f"   结果包含 {len(result) if isinstance(result, dict) else 'N/A'} 个字段")
         except Exception as e:
             print(f"❌ process_raw_match_data 执行失败: {e}")
 
@@ -67,9 +65,7 @@ async def test_data_processing_service_async():
 
         # 测试 validate_data_quality
         try:
-            result = await service.validate_data_quality(
-                sample_match_data, "match_data"
-            )
+            result = await service.validate_data_quality(sample_match_data, "match_data")
             print(f"✅ validate_data_quality 执行成功，结果类型: {type(result)}")
             if result is not None:
                 print(f"   质量评分: {result.get('quality_score', 'N/A')}")

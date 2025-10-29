@@ -5,11 +5,8 @@ I18n Utils Complete Tests
 基于Issue #98四连胜成功模式，创建完整的国际化工具测试
 """
 
-import gettext
 import os
-import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -121,17 +118,13 @@ class TestI18nComplete:
                 init_i18n()
                 assert True
 
-        with patch(
-            "src.utils.i18n.gettext.textdomain", side_effect=KeyError("Test error")
-        ):
+        with patch("src.utils.i18n.gettext.textdomain", side_effect=KeyError("Test error")):
             with patch("os.getenv", return_value="zh_CN"):
                 # 应该不会抛出异常
                 init_i18n()
                 assert True
 
-        with patch(
-            "src.utils.i18n.gettext.install", side_effect=RuntimeError("Test error")
-        ):
+        with patch("src.utils.i18n.gettext.install", side_effect=RuntimeError("Test error")):
             with patch("os.getenv", return_value="zh_CN"):
                 # 应该不会抛出异常
                 init_i18n()
@@ -301,8 +294,7 @@ class TestI18nComplete:
         # 创建多个线程同时操作
         languages = ["zh", "en", "zh", "en"]
         threads = [
-            threading.Thread(target=set_and_get_language, args=(lang,))
-            for lang in languages
+            threading.Thread(target=set_and_get_language, args=(lang,)) for lang in languages
         ]
 
         # 启动所有线程

@@ -76,9 +76,7 @@ async def predictions_app(
     app = FastAPI()
     app.include_router(predictions_module.router, prefix="/api/v1")
 
-    async_session_factory = sessionmaker(
-        test_db, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session_factory = sessionmaker(test_db, class_=AsyncSession, expire_on_commit=False)
 
     from src.database.connection_mod import get_async_session
 
@@ -180,9 +178,7 @@ async def test_prediction_history_returns_records(
 
     match_id = cached_prediction["match_id"]
 
-    response = await integration_client.get(
-        f"/api/v1/predictions/history/{match_id}?limit=5"
-    )
+    response = await integration_client.get(f"/api/v1/predictions/history/{match_id}?limit=5")
     assert response.status_code == 200
 
     payload = response.json()
@@ -194,7 +190,5 @@ async def test_prediction_history_returns_records(
     assert data["predictions"][0]["model_version"] == "1.0"
 
     # 不存在的比赛返回404
-    missing_response = await integration_client.get(
-        "/api/v1/predictions/history/999999"
-    )
+    missing_response = await integration_client.get("/api/v1/predictions/history/999999")
     assert missing_response.status_code == 404

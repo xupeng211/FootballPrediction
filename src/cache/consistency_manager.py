@@ -128,9 +128,7 @@ class CacheConsistencyManager:
 
 
 # 便捷函数
-async def invalidate_entity_cache(
-    entity_type: str, entity_id: Union[int, List[int]]
-) -> bool:
+async def invalidate_entity_cache(entity_type: str, entity_id: Union[int, List[int]]) -> bool:
     """失效实体缓存的便捷函数"""
     manager = CacheConsistencyManager()
 

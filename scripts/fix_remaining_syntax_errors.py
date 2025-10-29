@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
+
 class SyntaxErrorFixer:
     def __init__(self):
         self.fixed_files = []
@@ -28,7 +29,7 @@ class SyntaxErrorFixer:
 
         for test_file in tests_dir.rglob("*.py"):
             try:
-                with open(test_file, 'r', encoding='utf-8') as f:
+                with open(test_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 尝试编译AST
@@ -51,23 +52,23 @@ class SyntaxErrorFixer:
                 print(f"🔧 修复缩进错误: {file_path}")
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     fixed_lines = []
 
                     for i, line in enumerate(lines):
                         # 检测并修复常见的缩进问题
-                        if line.strip() and not line.startswith('#'):
+                        if line.strip() and not line.startswith("#"):
                             # 计算当前缩进
                             current_indent = len(line) - len(line.lstrip())
 
                             # 修复第10行附近的问题
                             if i == 9:  # 第10行（0-based index）
-                                if current_indent >= 8 and not line.strip().startswith('def '):
+                                if current_indent >= 8 and not line.strip().startswith("def "):
                                     # 可能是过大的缩进，减少到4个空格
-                                    fixed_line = '    ' + line.lstrip()
+                                    fixed_line = "    " + line.lstrip()
                                     fixed_lines.append(fixed_line)
                                 else:
                                     fixed_lines.append(line)
@@ -77,8 +78,8 @@ class SyntaxErrorFixer:
                             fixed_lines.append(line)
 
                     # 写回文件
-                    fixed_content = '\n'.join(fixed_lines)
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    fixed_content = "\n".join(fixed_lines)
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(fixed_content)
 
                     self.fixed_files.append(file_path)
@@ -99,7 +100,7 @@ class SyntaxErrorFixer:
             "tests/unit/test_prediction_algorithms_part_2.py",
             "tests/unit/test_prediction_algorithms_part_3.py",
             "tests/unit/test_prediction_algorithms_part_4.py",
-            "tests/unit/test_prediction_algorithms_part_5.py"
+            "tests/unit/test_prediction_algorithms_part_5.py",
         ]
 
         for file_pattern in pattern_files:
@@ -108,22 +109,24 @@ class SyntaxErrorFixer:
                 print(f"🔧 修复预测算法测试: {file_path}")
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     fixed_lines = []
 
                     for i, line in enumerate(lines):
                         # 修复第7行附近的缩进问题
                         if i == 6:  # 第7行（0-based index）
-                            if line.strip() and not line.startswith('#'):
+                            if line.strip() and not line.startswith("#"):
                                 # 确保正确的缩进
-                                if line.strip().startswith('def ') or line.strip().startswith('class '):
+                                if line.strip().startswith("def ") or line.strip().startswith(
+                                    "class "
+                                ):
                                     fixed_line = line  # 保持原缩进
                                 else:
                                     # 其他内容减少缩进
-                                    fixed_line = '    ' + line.lstrip()
+                                    fixed_line = "    " + line.lstrip()
                                 fixed_lines.append(fixed_line)
                             else:
                                 fixed_lines.append(line)
@@ -131,8 +134,8 @@ class SyntaxErrorFixer:
                             fixed_lines.append(line)
 
                     # 写回文件
-                    fixed_content = '\n'.join(fixed_lines)
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    fixed_content = "\n".join(fixed_lines)
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(fixed_content)
 
                     self.fixed_files.append(file_path)
@@ -154,22 +157,22 @@ class SyntaxErrorFixer:
                 print(f"🔧 修复Phase3测试: {file_path}")
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     fixed_lines = []
 
                     for i, line in enumerate(lines):
                         # 修复第10行附近的缩进问题
                         if i == 9:  # 第10行（0-based index）
-                            if line.strip() and not line.startswith('#'):
+                            if line.strip() and not line.startswith("#"):
                                 # 确保正确的缩进级别
                                 stripped = line.lstrip()
-                                if stripped.startswith(('def ', 'class ', '@')):
-                                    fixed_line = '    ' + stripped  # 4空格缩进
+                                if stripped.startswith(("def ", "class ", "@")):
+                                    fixed_line = "    " + stripped  # 4空格缩进
                                 else:
-                                    fixed_line = '        ' + stripped  # 8空格缩进
+                                    fixed_line = "        " + stripped  # 8空格缩进
                                 fixed_lines.append(fixed_line)
                             else:
                                 fixed_lines.append(line)
@@ -177,8 +180,8 @@ class SyntaxErrorFixer:
                             fixed_lines.append(line)
 
                     # 写回文件
-                    fixed_content = '\n'.join(fixed_lines)
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    fixed_content = "\n".join(fixed_lines)
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(fixed_content)
 
                     self.fixed_files.append(file_path)
@@ -204,7 +207,7 @@ class SyntaxErrorFixer:
                     total_files += 1
 
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
+                        with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read()
                         ast.parse(content)
                     except SyntaxError:
@@ -213,7 +216,9 @@ class SyntaxErrorFixer:
                     except Exception:
                         pass
 
-        success_rate = ((total_files - remaining_errors) / total_files * 100) if total_files > 0 else 0
+        success_rate = (
+            ((total_files - remaining_errors) / total_files * 100) if total_files > 0 else 0
+        )
 
         print("\n📊 修复验证结果:")
         print(f"  总文件数: {total_files}")
@@ -231,12 +236,13 @@ class SyntaxErrorFixer:
             "fixed_files": [str(f) for f in self.fixed_files],
             "error_files": [(str(f), e) for f, e in self.errors_files],
             "total_fixed": len(self.fixed_files),
-            "total_errors": len(self.errors_files)
+            "total_errors": len(self.errors_files),
         }
 
         report_file = Path("syntax_error_fix_report.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             import json
+
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📋 修复报告已保存: {report_file}")
@@ -282,6 +288,7 @@ class SyntaxErrorFixer:
 
         return success
 
+
 def main():
     """主函数"""
     fixer = SyntaxErrorFixer()
@@ -292,6 +299,7 @@ def main():
         print("建议更新GitHub issue状态。")
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

@@ -20,19 +20,10 @@ HEALTH_URL = "http://localhost:8000/api/health/"
 
 # 现有测试用户账户
 EXISTING_USERS = [
-    {
-        "username": "admin",
-        "password": "admin123",
-        "role": "admin",
-        "description": "系统管理员用户"
-    },
-    {
-        "username": "testuser",
-        "password": "test123",
-        "role": "user",
-        "description": "普通测试用户"
-    }
+    {"username": "admin", "password": "admin123", "role": "admin", "description": "系统管理员用户"},
+    {"username": "testuser", "password": "test123", "role": "user", "description": "普通测试用户"},
 ]
+
 
 class SeedUserTester:
     """种子用户测试器"""
@@ -48,7 +39,7 @@ class SeedUserTester:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -74,7 +65,7 @@ class SeedUserTester:
                         "系统健康检查",
                         True,
                         f"状态: {health_data.get('status')}, 数据库延迟: {health_data.get('checks', {}).get('database', {}).get('latency_ms')}ms",
-                        duration
+                        duration,
                     )
                     return True
                 else:
@@ -122,7 +113,7 @@ class SeedUserTester:
                 "API可访问性测试",
                 success_rate >= 75,
                 f"可访问端点: {success_count}/{len(endpoints_to_test)} ({success_rate:.1f}%)",
-                duration
+                duration,
             )
             return success_rate >= 75
 
@@ -168,7 +159,7 @@ class SeedUserTester:
                     "数据库功能测试",
                     db_working,
                     "数据库连接正常，数据可访问" if db_working else "数据库存在问题",
-                    duration
+                    duration,
                 )
                 return db_working
 
@@ -189,14 +180,15 @@ class SeedUserTester:
 
                 if response.status_code == 200:
                     metrics_text = response.text
-                    metric_count = len([line for line in metrics_text.split('\n') if line and not line.startswith('#')])
-
-                    self.log_test(
-                        "监控系统测试",
-                        True,
-                        f"收集到 {metric_count} 个指标",
-                        duration
+                    metric_count = len(
+                        [
+                            line
+                            for line in metrics_text.split("\n")
+                            if line and not line.startswith("#")
+                        ]
                     )
+
+                    self.log_test("监控系统测试", True, f"收集到 {metric_count} 个指标", duration)
                     return True
                 else:
                     self.log_test("监控系统测试", False, f"HTTP {response.status_code}", duration)
@@ -220,7 +212,7 @@ class SeedUserTester:
             "role": user_role,
             "interactions": [],
             "start_time": datetime.now(),
-            "success": True
+            "success": True,
         }
 
         interactions = [
@@ -240,12 +232,14 @@ class SeedUserTester:
                 result = await interaction_func()
                 duration = time.time() - start_time
 
-                session_data["interactions"].append({
-                    "name": interaction_name,
-                    "success": result,
-                    "duration": duration,
-                    "timestamp": datetime.now().isoformat()
-                })
+                session_data["interactions"].append(
+                    {
+                        "name": interaction_name,
+                        "success": result,
+                        "duration": duration,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
                 status = "✅" if result else "❌"
                 print(f"   {status} {interaction_name} ({duration:.2f}s)")
@@ -255,16 +249,20 @@ class SeedUserTester:
 
             except Exception as e:
                 print(f"   ❌ {interaction_name} - 异常: {str(e)}")
-                session_data["interactions"].append({
-                    "name": interaction_name,
-                    "success": False,
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                })
+                session_data["interactions"].append(
+                    {
+                        "name": interaction_name,
+                        "success": False,
+                        "error": str(e),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
                 session_data["success"] = False
 
         session_data["end_time"] = datetime.now()
-        session_data["total_duration"] = (session_data["end_time"] - session_data["start_time"]).total_seconds()
+        session_data["total_duration"] = (
+            session_data["end_time"] - session_data["start_time"]
+        ).total_seconds()
 
         return session_data
 
@@ -360,7 +358,7 @@ class SeedUserTester:
         print("=" * 60)
 
         total_tests = len(self.test_results)
-        successful_tests = sum(1 for r in self.test_results if r['success'])
+        successful_tests = sum(1 for r in self.test_results if r["success"])
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
         print(f"📈 核心功能测试:")
@@ -379,10 +377,12 @@ class SeedUserTester:
             total_interactions += len(interactions)
             successful_interactions += user_success
 
-            print(f"   👤 {username}: {user_success}/{len(interactions)} 交互成功 ({session['total_duration']:.1f}s)")
+            print(
+                f"   👤 {username}: {user_success}/{len(interactions)} 交互成功 ({session['total_duration']:.1f}s)"
+            )
 
         if total_interactions > 0:
-            interaction_success_rate = (successful_interactions / total_interactions * 100)
+            interaction_success_rate = successful_interactions / total_interactions * 100
             print(f"   📊 总体交互成功率: {interaction_success_rate:.1f}%")
 
         print(f"\n📊 测试统计:")
@@ -392,7 +392,7 @@ class SeedUserTester:
         print(f"   成功率: {success_rate:.1f}%")
 
         # 计算平均响应时间
-        durations = [r['duration'] for r in self.test_results if r['duration'] > 0]
+        durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
             print(f"\n⏱️  性能统计:")

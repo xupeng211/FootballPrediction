@@ -24,11 +24,13 @@ Provides API endpoints for match prediction:
     import requests
 
     # 获取比赛预测
-    response = requests.get("http://localhost:8000/api/v1/predictions/12345")  # TODO: 将魔法数字 8000 提取为常量
+    response =
+    requests.get("http://localhost:8000/api/v1/predictions/12345")  # TODO: 将魔法数字 8000 提取为常量
     _prediction = response.json()
 
     # 实时预测
-    response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")  # TODO: 将魔法数字 8000 提取为常量
+    response =
+    requests.post("http://localhost:8000/api/v1/predictions/12345/predict")  # TODO: 将魔法数字 8000 提取为常量
     result = response.json()
     ```
 

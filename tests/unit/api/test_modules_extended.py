@@ -1,13 +1,7 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 扩展模块测试 - 覆盖更多API模块
 Extended Module Tests - Cover More API Modules
 """
-
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pytest
 from fastapi.testclient import TestClient
@@ -152,9 +146,7 @@ class TestCQRSModuleExtended:
         """测试命令响应创建"""
         from src.api.cqrs import CommandResponse
 
-        response = CommandResponse(
-            success=True, message="Command executed", _data={"id": 123}
-        )
+        response = CommandResponse(success=True, message="Command executed", _data={"id": 123})
         assert response.success is True
         assert response._data["id"] == 123
 
@@ -557,7 +549,6 @@ class TestRepositoriesModuleExtended:
 
     def test_query_spec_builder(self):
         """测试查询规范构建器"""
-        from src.api.repositories import QueryBuilder, QuerySpec
 
         query = (
             QueryBuilder()
@@ -594,9 +585,7 @@ class TestHealthModule:
         """测试健康检查状态"""
         from src.api.health import HealthStatus
 
-        status = HealthStatus(
-            status="healthy", checks={"database": "ok", "redis": "ok"}
-        )
+        status = HealthStatus(status="healthy", checks={"database": "ok", "redis": "ok"})
         assert status.status == "healthy"
         assert "database" in status.checks
 

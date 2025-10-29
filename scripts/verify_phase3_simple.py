@@ -117,9 +117,7 @@ def main():
         print("  - 可以进入 Phase 4：校准覆盖率配置")
         return True
     else:
-        print(
-            f"\n⚠️  Phase 3 需要继续优化：{total_count - success_count} 个测试仍有问题"
-        )
+        print(f"\n⚠️  Phase 3 需要继续优化：{total_count - success_count} 个测试仍有问题")
         return False
 
 

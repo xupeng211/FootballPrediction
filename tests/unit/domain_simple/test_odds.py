@@ -1,15 +1,7 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
-
 """
 Comprehensive tests for domain_simple.odds
 Auto-generated to maximize coverage
 """
-
-import asyncio
-import json
-import warnings
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 

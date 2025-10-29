@@ -7,7 +7,6 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.auth.oauth2_scheme import oauth2_scheme
@@ -66,9 +65,7 @@ async def get_current_active_user(
         HTTPException: 用户未激活
     """
     if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="用户账户已被禁用"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="用户账户已被禁用")
     return current_user
 
 
@@ -88,9 +85,7 @@ async def get_current_verified_user(
         HTTPException: 用户未验证邮箱
     """
     if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="请先验证您的邮箱地址"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请先验证您的邮箱地址")
     return current_user
 
 
@@ -132,9 +127,7 @@ async def get_current_premium_user(
         HTTPException: 用户不是高级用户
     """
     if not current_user.is_premium:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="此功能需要高级用户权限"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="此功能需要高级用户权限")
     return current_user
 
 

@@ -1,15 +1,10 @@
-from unittest.mock import AsyncMock, MagicMock, patch
-
 """测试统计策略"""
 
 import asyncio
-from datetime import datetime, timedelta
 
 import numpy as np
 import pytest
 
-from src.domain.models.prediction import Prediction
-from src.domain.strategies.base import PredictionInput as BasePredictionInput
 from src.domain.strategies.base import PredictionOutput, StrategyType
 from src.domain.strategies.statistical import StatisticalStrategy
 from tests.helpers.test_adapters import SimplePredictionInput as PredictionInput
@@ -228,13 +223,8 @@ async def test_home_advantage_calculation(statistical_strategy, prediction_input
 
     # 测试没有主场优势数据的情况
     statistical_strategy._team_stats[1]["home_goals_per_game"] = None
-    home_advantage_default = statistical_strategy._calculate_home_advantage(
-        prediction_input
-    )
-    assert (
-        home_advantage_default
-        == statistical_strategy._model_params["home_advantage_factor"]
-    )
+    home_advantage_default = statistical_strategy._calculate_home_advantage(prediction_input)
+    assert home_advantage_default == statistical_strategy._model_params["home_advantage_factor"]
 
 
 @pytest.mark.asyncio
@@ -252,9 +242,7 @@ async def test_validate_input(statistical_strategy):
 @pytest.mark.asyncio
 async def test_preprocessing(statistical_strategy, prediction_input):
     """测试数据预处理"""
-    processed = await statistical_strategy.pre_process(
-        prediction_input.to_base_prediction_input()
-    )
+    processed = await statistical_strategy.pre_process(prediction_input.to_base_prediction_input())
 
     assert processed is not None
     assert hasattr(processed, "match_id")
@@ -347,9 +335,7 @@ def test_poisson_probability_calculation(statistical_strategy):
     assert 0 < prob < 1
 
     # 验证概率总和接近1（k从0到10）
-    total_prob = sum(
-        statistical_strategy._poisson_probability(k, 1.5) for k in range(11)
-    )
+    total_prob = sum(statistical_strategy._poisson_probability(k, 1.5) for k in range(11))
     assert 0.95 < total_prob < 1.05  # 允许小的数值误差
 
 

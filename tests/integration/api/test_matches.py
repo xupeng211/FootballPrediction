@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
 
 
 @pytest.mark.integration
@@ -15,9 +14,7 @@ class TestMatchAPIIntegration:
     """比赛 API 集成测试"""
 
     @pytest.mark.asyncio
-    async def test_create_match(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_create_match(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试创建比赛"""
         # 先创建队伍
         from src.database.models import Team
@@ -43,9 +40,7 @@ class TestMatchAPIIntegration:
         }
 
         # 发送请求
-        response = await api_client.post(
-            "/api/v1/matches", json=request_data, headers=auth_headers
-        )
+        response = await api_client.post("/api/v1/matches", json=request_data, headers=auth_headers)
 
         # 验证响应
         assert response.status_code == 201
@@ -64,9 +59,7 @@ class TestMatchAPIIntegration:
         assert match.competition == request_data["competition"]
 
     @pytest.mark.asyncio
-    async def test_get_matches(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_get_matches(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试获取比赛列表"""
         # 创建测试数据
         from src.database.models import Match, Team
@@ -122,9 +115,7 @@ class TestMatchAPIIntegration:
         match = sample_match_data["match"]
 
         # 发送请求
-        response = await api_client.get(
-            f"/api/v1/matches/{match.id}", headers=auth_headers
-        )
+        response = await api_client.get(f"/api/v1/matches/{match.id}", headers=auth_headers)
 
         # 验证响应
         assert response.status_code == 200
@@ -196,9 +187,7 @@ class TestMatchAPIIntegration:
         await db_session.commit()
 
         # 获取即将到来的比赛
-        response = await api_client.get(
-            "/api/v1/matches/upcoming", headers=auth_headers
-        )
+        response = await api_client.get("/api/v1/matches/upcoming", headers=auth_headers)
 
         # 验证响应
         assert response.status_code == 200
@@ -208,9 +197,7 @@ class TestMatchAPIIntegration:
         assert all(m["status"] == "UPCOMING" for m in data["data"])
 
     @pytest.mark.asyncio
-    async def test_get_live_matches(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_get_live_matches(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试获取正在进行中的比赛"""
         # 创建测试数据
         from src.database.models import Match, Team
@@ -246,9 +233,7 @@ class TestMatchAPIIntegration:
         assert all(m["status"] == "LIVE" for m in data["data"])
 
     @pytest.mark.asyncio
-    async def test_match_search(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_match_search(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试搜索比赛"""
         # 创建测试数据
         from src.database.models import Match, Team
@@ -290,9 +275,7 @@ class TestMatchAPIIntegration:
         assert len(data["data"]) == 2  # match1 和 match2 都包含 team1
 
     @pytest.mark.asyncio
-    async def test_match_statistics(
-        self, api_client: AsyncClient, db_session, auth_headers: dict
-    ):
+    async def test_match_statistics(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试比赛统计"""
         # 创建不同状态的比赛
         from src.database.models import Match, Team
@@ -324,9 +307,7 @@ class TestMatchAPIIntegration:
         await db_session.commit()
 
         # 获取统计
-        response = await api_client.get(
-            "/api/v1/matches/statistics", headers=auth_headers
-        )
+        response = await api_client.get("/api/v1/matches/statistics", headers=auth_headers)
 
         # 验证响应
         assert response.status_code == 200

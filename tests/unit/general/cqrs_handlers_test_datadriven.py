@@ -7,10 +7,6 @@ Issue #83-C 数据驱动测试: cqrs.handlers
 
 import inspect
 import os
-import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -164,9 +160,7 @@ class TestHandlersDataDriven:
                         elif init_args == 1:
                             strategy_instance = strategy_class(sample_team_stats)
                         else:
-                            strategy_instance = strategy_class(
-                                sample_match_data, sample_team_stats
-                            )
+                            strategy_instance = strategy_class(sample_match_data, sample_team_stats)
 
                         assert strategy_instance is not None, "策略实例化失败"
                         print("   ✅ 策略实例化成功")
@@ -188,14 +182,10 @@ class TestHandlersDataDriven:
                                 else:
                                     result = method()
 
-                                assert (
-                                    result is not None
-                                ), f"方法 {method_name} 应该返回结果"
+                                assert result is not None, f"方法 {method_name} 应该返回结果"
                                 print(f"      方法 {method_name}: {type(result)}")
                             except Exception as me:
-                                print(
-                                    f"      方法 {method_name} 异常: {type(me).__name__}"
-                                )
+                                print(f"      方法 {method_name} 异常: {type(me).__name__}")
 
                 except Exception as e:
                     print(f"   ⚠️ 策略实例化异常: {type(e).__name__}")
@@ -262,9 +252,7 @@ class TestHandlersDataDriven:
                                 strategy_class(edge_case)
                                 print(f"   边界情况 {i+1}: 实例化成功")
                             except Exception as e:
-                                print(
-                                    f"   边界情况 {i+1}: 实例化失败 - {type(e).__name__}"
-                                )
+                                print(f"   边界情况 {i+1}: 实例化失败 - {type(e).__name__}")
 
                     except Exception as e:
                         print(f"   边界情况 {i+1} 异常: {type(e).__name__}")
@@ -273,9 +261,7 @@ class TestHandlersDataDriven:
             pytest.skip(f"无法导入模块进行边界测试: {e}")
 
     @pytest.mark.integration
-    def test_strategy_integration_with_services(
-        self, sample_match_data, sample_prediction_data
-    ):
+    def test_strategy_integration_with_services(self, sample_match_data, sample_prediction_data):
         """测试策略与服务集成"""
         if "services" not in self.mocks:
             pytest.skip("服务Mock不可用")

@@ -42,9 +42,7 @@ def add_import_to_file(filepath, import_statement):
             stripped = line.strip()
 
             # 跳过文档字符串
-            if not in_docstring and (
-                stripped.startswith('"""') or stripped.startswith("'''")
-            ):
+            if not in_docstring and (stripped.startswith('"""') or stripped.startswith("'''")):
                 in_docstring = True
                 continue
             elif in_docstring and ('"""' in stripped or "'''" in stripped):

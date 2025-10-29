@@ -126,9 +126,7 @@ def count_skipped_tests_fast():
                 if i > 0:
                     prev_line = lines[i - 1]
                     if "tests/" in prev_line:
-                        module = (
-                            prev_line.split("tests/")[1].split("::")[0].split(".py")[0]
-                        )
+                        module = prev_line.split("tests/")[1].split("::")[0].split(".py")[0]
                         module_skips[module] = module_skips.get(module, 0) + 1
 
         sorted_modules = sorted(module_skips.items(), key=lambda x: x[1], reverse=True)

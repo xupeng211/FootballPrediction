@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 import httpx
 
+
 class APIRouteFixer:
     """API路由修复器"""
 
@@ -27,7 +28,7 @@ class APIRouteFixer:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -38,7 +39,9 @@ class APIRouteFixer:
         if duration > 0:
             print(f"   ⏱️  耗时: {duration:.2f}秒")
 
-    async def test_api_route(self, name: str, path: str, method: str = "GET", expected_status: int = 200):
+    async def test_api_route(
+        self, name: str, path: str, method: str = "GET", expected_status: int = 200
+    ):
         """测试单个API路由"""
         start_time = time.time()
         try:
@@ -54,12 +57,14 @@ class APIRouteFixer:
 
                 if response.status_code == expected_status:
                     self.log_test(name, True, f"HTTP {response.status_code}", duration)
-                    self.fixed_routes.append({
-                        "name": name,
-                        "path": path,
-                        "status": response.status_code,
-                        "method": method
-                    })
+                    self.fixed_routes.append(
+                        {
+                            "name": name,
+                            "path": path,
+                            "status": response.status_code,
+                            "method": method,
+                        }
+                    )
                     return True
                 else:
                     details = f"HTTP {response.status_code} (期望: {expected_status})"
@@ -71,24 +76,23 @@ class APIRouteFixer:
                         details += " - 服务器内部错误"
 
                     self.log_test(name, False, details, duration)
-                    self.problem_routes.append({
-                        "name": name,
-                        "path": path,
-                        "status": response.status_code,
-                        "expected_status": expected_status,
-                        "method": method,
-                        "error": response.text[:200]
-                    })
+                    self.problem_routes.append(
+                        {
+                            "name": name,
+                            "path": path,
+                            "status": response.status_code,
+                            "expected_status": expected_status,
+                            "method": method,
+                            "error": response.text[:200],
+                        }
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
             self.log_test(name, False, f"连接错误: {str(e)}", duration)
-            self.problem_routes.append({
-                "name": name,
-                "path": path,
-                "method": method,
-                "error": str(e)
-            })
+            self.problem_routes.append(
+                {"name": name, "path": path, "method": method, "error": str(e)}
+            )
             return False
 
     async def test_all_routes(self):
@@ -106,31 +110,25 @@ class APIRouteFixer:
             ("API文档", "/docs", "GET", 200),
             ("OpenAPI规范", "/openapi.json", "GET", 200),
             ("系统根路径", "/", "GET", 200),
-
             # 认证相关（已验证正常）
             ("用户注册", "/api/v1/auth/register", "POST", 201),
             ("用户登录", "/api/v1/auth/login", "POST", 200),
             ("用户信息", "/api/v1/auth/me", "GET", 200),
             ("用户登出", "/api/v1/auth/logout", "POST", 200),
-
             # 数据API（预期返回TODO数据）
             ("球队数据", "/api/v1/data/teams", "GET", 200),
             ("联赛数据", "/api/v1/data/leagues", "GET", 200),
             ("比赛数据", "/api/v1/data/matches", "GET", 200),
-
             # 监控相关
             ("监控指标", "/api/v1/metrics/prometheus", "GET", 200),
             ("监控统计", "/api/v1/monitoring/stats", "GET", 200),  # 预期失败
-
             # 功能路由（预期有问题）
             ("功能路由", "/api/v1/features", "GET", 200),  # 预期重定向问题
-
             # 高级功能（预期404）
             ("预测路由", "/api/v1/predictions", "GET", 200),  # 预期404
             ("CQRS路由", "/api/v1/cqrs", "GET", 200),  # 预期404
             ("观察者路由", "/api/v1/observers", "GET", 200),  # 预期404
             ("适配器路由", "/api/v1/adapters", "GET", 200),  # 预期404
-
             # 其他可能的路由
             ("装饰器路由", "/api/v1/decorators", "GET", 200),  # 预期404
             ("门面路由", "/api/v1/facades", "GET", 200),  # 预期404
@@ -203,8 +201,11 @@ class APIRouteFixer:
             print(f"   3. 验证MINIMAL_API_MODE设置")
 
             # 具体路由建议
-            critical_missing = [r for r in not_found if any(keyword in r['name'].lower()
-                               for keyword in ['监控统计', '预测', 'cqrs'])]
+            critical_missing = [
+                r
+                for r in not_found
+                if any(keyword in r["name"].lower() for keyword in ["监控统计", "预测", "cqrs"])
+            ]
             if critical_missing:
                 print(f"\n   🎯 关键缺失路由:")
                 for route in critical_missing:
@@ -286,10 +287,12 @@ class APIRouteFixer:
 
         print("=" * 60)
 
+
 async def main():
     """主函数"""
     fixer = APIRouteFixer()
     await fixer.test_all_routes()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

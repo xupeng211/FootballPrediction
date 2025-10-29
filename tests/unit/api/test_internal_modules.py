@@ -1,11 +1,7 @@
-from unittest.mock import MagicMock, Mock
-
 """
 内部模块测试 - 测试CQRS、事件、观察者等内部模块
 Internal Modules Tests - Test CQRS, Events, Observers and other internal modules
 """
-
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -40,9 +36,7 @@ class TestCQRSModule:
         """测试查询响应创建"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(
-            _data=[{"id": 1, "name": "test"}], total=1, page=1, per_page=10
-        )
+        response = QueryResponse(_data=[{"id": 1, "name": "test"}], total=1, page=1, per_page=10)
         assert len(response.data) == 1
         assert response.total == 1
         assert response.page == 1
@@ -51,9 +45,7 @@ class TestCQRSModule:
         """测试创建命令"""
         from src.api.cqrs import CreateCommand
 
-        command = CreateCommand(
-            aggregate_id="test_123", _data={"name": "test", "value": 100}
-        )
+        command = CreateCommand(aggregate_id="test_123", _data={"name": "test", "value": 100})
         assert command.aggregate_id == "test_123"
         assert command._data["name"] == "test"
 
@@ -466,9 +458,7 @@ class TestMonitoringModule:
         """测试指标点创建"""
         from src.api.monitoring import MetricsPoint
 
-        point = MetricsPoint(
-            name="test_metric", value=100.5, timestamp=datetime.utcnow()
-        )
+        point = MetricsPoint(name="test_metric", value=100.5, timestamp=datetime.utcnow())
         assert point.name == "test_metric"
         assert point.value == 100.5
         assert point.timestamp is not None

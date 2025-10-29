@@ -3,9 +3,7 @@ Prediction领域模型边界条件测试 - 修复版本
 基于实际Prediction模型API的完整测试覆盖，目标达到90%+覆盖率
 """
 
-from datetime import datetime, timedelta
 from decimal import Decimal
-from unittest.mock import patch
 
 import pytest
 
@@ -139,9 +137,7 @@ class TestPredictionScore:
 
     def test_prediction_score_with_actual_results(self) -> None:
         """✅ 成功用例：包含实际比分的初始化"""
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=3, actual_away=1
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=3, actual_away=1)
         assert score.predicted_home == 2
         assert score.predicted_away == 1
         assert score.actual_home == 3
@@ -162,14 +158,10 @@ class TestPredictionScore:
     def test_prediction_score_negative_actual_values(self) -> None:
         """✅ 边界用例：负实际比分验证"""
         with pytest.raises(DomainError, match="实际主队比分不能为负数"):
-            PredictionScore(
-                predicted_home=2, predicted_away=1, actual_home=-1, actual_away=1
-            )
+            PredictionScore(predicted_home=2, predicted_away=1, actual_home=-1, actual_away=1)
 
         with pytest.raises(DomainError, match="实际客队比分不能为负数"):
-            PredictionScore(
-                predicted_home=2, predicted_away=1, actual_home=1, actual_away=-1
-            )
+            PredictionScore(predicted_home=2, predicted_away=1, actual_home=1, actual_away=-1)
 
     def test_prediction_score_zero_values(self) -> None:
         """✅ 边界用例：零比分测试"""
@@ -177,24 +169,18 @@ class TestPredictionScore:
         assert score.predicted_home == 0
         assert score.predicted_away == 0
 
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=0, actual_away=0
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=0, actual_away=0)
         assert score.actual_home == 0
         assert score.actual_away == 0
 
     def test_prediction_score_correct_score_check(self) -> None:
         """✅ 成功用例：正确比分检查"""
         # 完全正确的比分
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=2, actual_away=1
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=2, actual_away=1)
         assert score.is_correct_score is True
 
         # 错误的比分
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=1, actual_away=2
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=1, actual_away=2)
         assert score.is_correct_score is False
 
         # 未评估的比分
@@ -204,27 +190,19 @@ class TestPredictionScore:
     def test_prediction_score_correct_result_check(self) -> None:
         """✅ 成功用例：正确结果检查"""
         # 主队获胜预测正确
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=3, actual_away=1
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=3, actual_away=1)
         assert score.is_correct_result is True
 
         # 客队获胜预测正确
-        score = PredictionScore(
-            predicted_home=1, predicted_away=2, actual_home=0, actual_away=3
-        )
+        score = PredictionScore(predicted_home=1, predicted_away=2, actual_home=0, actual_away=3)
         assert score.is_correct_result is True
 
         # 平局预测正确
-        score = PredictionScore(
-            predicted_home=1, predicted_away=1, actual_home=2, actual_away=2
-        )
+        score = PredictionScore(predicted_home=1, predicted_away=1, actual_home=2, actual_away=2)
         assert score.is_correct_result is True
 
         # 主队获胜预测错误
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=1, actual_away=2
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=1, actual_away=2)
         assert score.is_correct_result is False
 
         # 未评估的结果
@@ -234,21 +212,15 @@ class TestPredictionScore:
     def test_prediction_score_goal_difference_error(self) -> None:
         """✅ 成功用例：净胜球误差计算"""
         # 完全正确的比分
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=2, actual_away=1
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=2, actual_away=1)
         assert score.goal_difference_error == 0
 
         # 预测主队胜2球，实际胜1球
-        score = PredictionScore(
-            predicted_home=3, predicted_away=1, actual_home=2, actual_away=1
-        )
+        score = PredictionScore(predicted_home=3, predicted_away=1, actual_home=2, actual_away=1)
         assert score.goal_difference_error == 1
 
         # 预测客队胜，实际主队胜
-        score = PredictionScore(
-            predicted_home=1, predicted_away=3, actual_home=2, actual_away=1
-        )
+        score = PredictionScore(predicted_home=1, predicted_away=3, actual_home=2, actual_away=1)
         assert score.goal_difference_error == 3
 
         # 未评估的比分
@@ -262,9 +234,7 @@ class TestPredictionScore:
         assert str(score) == "2-1"
 
         # 已评估的比分
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=3, actual_away=1
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=3, actual_away=1)
         assert str(score) == "2-1 (实际: 3-1)"
 
     def test_prediction_score_edge_cases(self) -> None:
@@ -275,15 +245,11 @@ class TestPredictionScore:
         assert score.predicted_away == 8
 
         # 大比分实际
-        score = PredictionScore(
-            predicted_home=2, predicted_away=1, actual_home=15, actual_away=12
-        )
+        score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=15, actual_away=12)
         assert score.goal_difference_error == 2  # |(2-1) - (15-12)| = |1 - 3| = 2
 
         # 0-0平局
-        score = PredictionScore(
-            predicted_home=0, predicted_away=0, actual_home=0, actual_away=0
-        )
+        score = PredictionScore(predicted_home=0, predicted_away=0, actual_home=0, actual_away=0)
         assert score.is_correct_score is True
         assert score.is_correct_result is True
 
@@ -466,8 +432,6 @@ class TestPrediction:
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
 
-        from datetime import datetime
-
         original_evaluated_at = prediction.evaluated_at  # 应该是None
 
         prediction.evaluate(actual_home=3, actual_away=1)
@@ -478,9 +442,7 @@ class TestPrediction:
         assert prediction.score.is_evaluated is True
         assert prediction.points is not None
         assert prediction.evaluated_at is not None
-        assert (
-            prediction.evaluated_at > prediction.created_at
-        )  # 评估时间应该晚于创建时间
+        assert prediction.evaluated_at > prediction.created_at  # 评估时间应该晚于创建时间
 
     def test_prediction_evaluate_invalid_status(self) -> None:
         """✅ 边界用例：无效状态评估"""
@@ -649,9 +611,7 @@ class TestPrediction:
 
         for i in range(1000):
             prediction = Prediction(user_id=i + 1, match_id=i + 1000)
-            prediction.make_prediction(
-                predicted_home=2, predicted_away=1, confidence=0.75
-            )
+            prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
 
         end_time = time.perf_counter()
 
@@ -667,12 +627,8 @@ class TestPrediction:
 
         def create_prediction(prediction_id: int):
             try:
-                prediction = Prediction(
-                    user_id=prediction_id, match_id=prediction_id + 1000
-                )
-                prediction.make_prediction(
-                    predicted_home=2, predicted_away=1, confidence=0.75
-                )
+                prediction = Prediction(user_id=prediction_id, match_id=prediction_id + 1000)
+                prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
                 results.append(prediction.user_id)
             except Exception as e:
                 errors.append(e)

@@ -22,11 +22,11 @@ from src.monitoring.advanced_monitoring_system import monitoring_system
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('logs/monitoring.log', encoding='utf-8')
-    ]
+        logging.FileHandler("logs/monitoring.log", encoding="utf-8"),
+    ],
 )
 
 logger = logging.getLogger(__name__)

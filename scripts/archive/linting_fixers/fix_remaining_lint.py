@@ -48,9 +48,7 @@ class RemainingLintFixer:
         """修复缺失的导入 (F821)"""
         try:
             # 获取该文件的F821错误
-            result = subprocess.run(
-                ["flake8", str(file_path)], capture_output=True, text=True
-            )
+            result = subprocess.run(["flake8", str(file_path)], capture_output=True, text=True)
 
             if "F821" not in result.stdout:
                 return False
@@ -120,9 +118,7 @@ class RemainingLintFixer:
     def fix_indentation_errors(self, file_path: Path) -> bool:
         """修复缩进错误 (E115, E999)"""
         try:
-            result = subprocess.run(
-                ["flake8", str(file_path)], capture_output=True, text=True
-            )
+            result = subprocess.run(["flake8", str(file_path)], capture_output=True, text=True)
 
             if "E115" not in result.stdout and "E999" not in result.stdout:
                 return False
@@ -134,10 +130,7 @@ class RemainingLintFixer:
 
             # 处理E115错误：注释行应该有适当缩进
             for line_output in result.stdout.strip().split("\n"):
-                if (
-                    "E115" in line_output
-                    and "expected an indented block (comment)" in line_output
-                ):
+                if "E115" in line_output and "expected an indented block (comment)" in line_output:
                     parts = line_output.split(":")
                     if len(parts) >= 2:
                         try:
@@ -145,9 +138,7 @@ class RemainingLintFixer:
                             if 0 <= line_num < len(lines):
                                 # 如果是注释行，添加适当的缩进
                                 if lines[line_num].strip().startswith("#"):
-                                    lines[line_num] = (
-                                        "        " + lines[line_num].lstrip()
-                                    )
+                                    lines[line_num] = "        " + lines[line_num].lstrip()
                                     modified = True
                                     self.errors_fixed += 1
                         except ValueError:

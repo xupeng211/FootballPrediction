@@ -27,8 +27,7 @@ import yaml
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -61,13 +60,13 @@ class DocsCIPipeline:
             "stages": {},
             "errors": [],
             "warnings": [],
-            "success": False
+            "success": False,
         }
 
     def _load_config(self) -> Dict[str, Any]:
         """加载MkDocs配置"""
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
             logger.info(f"✅ 成功加载配置文件: {self.config_path}")
             return config
@@ -80,7 +79,7 @@ class DocsCIPipeline:
         build: bool = True,
         deploy: bool = False,
         quality_check: bool = True,
-        deploy_target: str = "github-pages"
+        deploy_target: str = "github-pages",
     ) -> Dict[str, Any]:
         """
         运行完整的CI/CD流水线
@@ -136,17 +135,14 @@ class DocsCIPipeline:
         stage_name = "environment_check"
         logger.info("🔍 阶段1: 环境检查")
 
-        stage_result = {
-            "start_time": datetime.now().isoformat(),
-            "checks": {}
-        }
+        stage_result = {"start_time": datetime.now().isoformat(), "checks": {}}
 
         try:
             # 检查Python版本
             python_version = sys.version_info
             stage_result["checks"]["python_version"] = {
                 "version": f"{python_version.major}.{python_version.minor}.{python_version.micro}",
-                "valid": python_version >= (3, 8)
+                "valid": python_version >= (3, 8),
             }
 
             # 检查必需的目录
@@ -155,7 +151,7 @@ class DocsCIPipeline:
                 dir_path = self.project_root / dir_name
                 stage_result["checks"][f"directory_{dir_name}"] = {
                     "exists": dir_path.exists(),
-                    "path": str(dir_path)
+                    "path": str(dir_path),
                 }
 
             # 检查必需的文件
@@ -164,7 +160,7 @@ class DocsCIPipeline:
                 file_path = self.project_root / file_name
                 stage_result["checks"][f"file_{file_name.replace('/', '_')}"] = {
                     "exists": file_path.exists(),
-                    "path": str(file_path)
+                    "path": str(file_path),
                 }
 
             # 检查Git状态
@@ -173,11 +169,11 @@ class DocsCIPipeline:
                     ["git", "status", "--porcelain"],
                     capture_output=True,
                     text=True,
-                    cwd=self.project_root
+                    cwd=self.project_root,
                 )
                 stage_result["checks"]["git_status"] = {
                     "clean": len(git_result.stdout.strip()) == 0,
-                    "status": git_result.stdout.strip()[:100] if git_result.stdout else ""
+                    "status": git_result.stdout.strip()[:100] if git_result.stdout else "",
                 }
             except Exception:
                 stage_result["checks"]["git_status"] = {"error": "Git not available"}
@@ -199,10 +195,7 @@ class DocsCIPipeline:
         stage_name = "dependency_check"
         logger.info("📦 阶段2: 依赖检查")
 
-        stage_result = {
-            "start_time": datetime.now().isoformat(),
-            "dependencies": {}
-        }
+        stage_result = {"start_time": datetime.now().isoformat(), "dependencies": {}}
 
         try:
             # 检查必需的Python包
@@ -210,43 +203,38 @@ class DocsCIPipeline:
                 "mkdocs",
                 "mkdocs_material",
                 "pymdown_extensions",
-                "markdown_extensions"
+                "markdown_extensions",
             ]
 
             for package in required_packages:
                 try:
                     result = subprocess.run(
-                        [sys.executable, "-c", f"import {package}"],
-                        capture_output=True,
-                        text=True
+                        [sys.executable, "-c", f"import {package}"], capture_output=True, text=True
                     )
                     stage_result["dependencies"][package] = {
                         "installed": result.returncode == 0,
-                        "version": self._get_package_version(package) if result.returncode == 0 else None
+                        "version": (
+                            self._get_package_version(package) if result.returncode == 0 else None
+                        ),
                     }
                 except Exception as e:
-                    stage_result["dependencies"][package] = {
-                        "installed": False,
-                        "error": str(e)
-                    }
+                    stage_result["dependencies"][package] = {"installed": False, "error": str(e)}
 
             # 检查可选依赖
             optional_packages = ["mkdocs-minify-plugin", "mkdocs-git-revision-date-plugin"]
             for package in optional_packages:
                 try:
                     result = subprocess.run(
-                        [sys.executable, "-c", f"import {package}"],
-                        capture_output=True,
-                        text=True
+                        [sys.executable, "-c", f"import {package}"], capture_output=True, text=True
                     )
                     stage_result["dependencies"][f"optional_{package}"] = {
                         "installed": result.returncode == 0,
-                        "version": self._get_package_version(package) if result.returncode == 0 else None
+                        "version": (
+                            self._get_package_version(package) if result.returncode == 0 else None
+                        ),
                     }
                 except Exception:
-                    stage_result["dependencies"][f"optional_{package}"] = {
-                        "installed": False
-                    }
+                    stage_result["dependencies"][f"optional_{package}"] = {"installed": False}
 
             stage_result["success"] = True
             stage_result["end_time"] = datetime.now().isoformat()
@@ -266,7 +254,7 @@ class DocsCIPipeline:
             result = subprocess.run(
                 [sys.executable, "-c", f"import {package_name}; print({package_name}.__version__)"],
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode == 0:
                 return result.stdout.strip()
@@ -279,10 +267,7 @@ class DocsCIPipeline:
         stage_name = "docs_validation"
         logger.info("📋 阶段3: 文档验证")
 
-        stage_result = {
-            "start_time": datetime.now().isoformat(),
-            "validation": {}
-        }
+        stage_result = {"start_time": datetime.now().isoformat(), "validation": {}}
 
         try:
             # 检查文档目录结构
@@ -316,14 +301,14 @@ class DocsCIPipeline:
             "total_directories": 0,
             "index_exists": False,
             "readme_exists": False,
-            "issues": []
+            "issues": [],
         }
 
         try:
             # 统计文件和目录
             for root, dirs, files in os.walk(self.docs_dir):
                 result["total_directories"] += len(dirs)
-                result["total_files"] += len([f for f in files if f.endswith('.md')])
+                result["total_files"] += len([f for f in files if f.endswith(".md")])
 
             # 检查关键文件
             index_file = self.docs_dir / "INDEX.md"
@@ -351,7 +336,7 @@ class DocsCIPipeline:
             "total_lines": 0,
             "files_with_frontmatter": 0,
             "files_with_toc": 0,
-            "issues": []
+            "issues": [],
         }
 
         try:
@@ -360,24 +345,26 @@ class DocsCIPipeline:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     result["total_lines"] += len(lines)
                     result["total_words"] += len(content.split())
 
                     # 检查Front Matter
-                    if content.startswith('---'):
+                    if content.startswith("---"):
                         result["files_with_frontmatter"] += 1
 
                     # 检查目录
-                    if '## 📑 目录' in content or '## 目录' in content:
+                    if "## 📑 目录" in content or "## 目录" in content:
                         result["files_with_toc"] += 1
 
                     # 检查内容长度
                     if len(content.strip()) < 100:
-                        result["issues"].append(f"文件内容过少: {md_file.relative_to(self.docs_dir)}")
+                        result["issues"].append(
+                            f"文件内容过少: {md_file.relative_to(self.docs_dir)}"
+                        )
 
                 except Exception as e:
                     result["issues"].append(f"读取文件失败 {md_file}: {e}")
@@ -394,7 +381,7 @@ class DocsCIPipeline:
             "internal_links": 0,
             "external_links": 0,
             "broken_links": [],
-            "issues": []
+            "issues": [],
         }
 
         try:
@@ -402,22 +389,22 @@ class DocsCIPipeline:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 简单的链接检查（可以扩展）
                     import re
 
                     # 查找Markdown链接
-                    link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+                    link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
                     matches = re.findall(link_pattern, content)
 
                     for text, url in matches:
                         result["total_links"] += 1
 
-                        if url.startswith('http'):
+                        if url.startswith("http"):
                             result["external_links"] += 1
-                        elif url.startswith('#') or url.startswith('./') or url.startswith('../'):
+                        elif url.startswith("#") or url.startswith("./") or url.startswith("../"):
                             result["internal_links"] += 1
                         else:
                             result["issues"].append(f"不明确的链接格式: {url} in {md_file}")
@@ -437,7 +424,7 @@ class DocsCIPipeline:
             "theme_configured": False,
             "plugins_configured": False,
             "nav_configured": False,
-            "issues": []
+            "issues": [],
         }
 
         try:
@@ -475,10 +462,7 @@ class DocsCIPipeline:
         stage_name = "build"
         logger.info("🔨 阶段4: 构建文档")
 
-        stage_result = {
-            "start_time": datetime.now().isoformat(),
-            "build": {}
-        }
+        stage_result = {"start_time": datetime.now().isoformat(), "build": {}}
 
         try:
             # 清理之前的构建
@@ -488,12 +472,7 @@ class DocsCIPipeline:
 
             # 执行MkDocs构建
             cmd = ["mkdocs", "build", "--verbose"]
-            result = subprocess.run(
-                cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True)
 
             if result.returncode == 0:
                 # 统计构建结果
@@ -508,7 +487,7 @@ class DocsCIPipeline:
                     "js_files": len(js_files),
                     "site_size": self._get_directory_size(self.site_dir),
                     "build_output": result.stdout[-500:] if result.stdout else "",
-                    "build_time": datetime.now().isoformat()
+                    "build_time": datetime.now().isoformat(),
                 }
 
                 logger.info(f"✅ 构建成功: {len(html_files)} HTML页面")
@@ -516,7 +495,7 @@ class DocsCIPipeline:
                 stage_result["build"] = {
                     "success": False,
                     "error": result.stderr,
-                    "return_code": result.returncode
+                    "return_code": result.returncode,
                 }
                 raise Exception(f"MkDocs构建失败: {result.stderr}")
 
@@ -535,11 +514,7 @@ class DocsCIPipeline:
     def _get_directory_size(self, directory: Path) -> str:
         """获取目录大小"""
         try:
-            result = subprocess.run(
-                ["du", "-sh", str(directory)],
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(["du", "-sh", str(directory)], capture_output=True, text=True)
             if result.returncode == 0:
                 return result.stdout.split()[0]
         except Exception:
@@ -551,10 +526,7 @@ class DocsCIPipeline:
         stage_name = "quality_check"
         logger.info("📈 阶段5: 质量检查")
 
-        stage_result = {
-            "start_time": datetime.now().isoformat(),
-            "quality": {}
-        }
+        stage_result = {"start_time": datetime.now().isoformat(), "quality": {}}
 
         try:
             # 检查页面大小
@@ -583,12 +555,7 @@ class DocsCIPipeline:
 
     def _check_page_sizes(self) -> Dict[str, Any]:
         """检查页面大小"""
-        result = {
-            "total_pages": 0,
-            "large_pages": [],
-            "average_size": 0,
-            "max_size": 0
-        }
+        result = {"total_pages": 0, "large_pages": [], "average_size": 0, "max_size": 0}
 
         try:
             html_files = list(self.site_dir.rglob("*.html"))
@@ -599,10 +566,9 @@ class DocsCIPipeline:
                 sizes.append(size)
 
                 if size > 50000:  # 大于50KB
-                    result["large_pages"].append({
-                        "file": str(html_file.relative_to(self.site_dir)),
-                        "size": size
-                    })
+                    result["large_pages"].append(
+                        {"file": str(html_file.relative_to(self.site_dir)), "size": size}
+                    )
 
             result["total_pages"] = len(html_files)
             if sizes:
@@ -616,20 +582,16 @@ class DocsCIPipeline:
 
     def _check_images(self) -> Dict[str, Any]:
         """检查图片"""
-        result = {
-            "total_images": 0,
-            "image_types": {},
-            "large_images": []
-        }
+        result = {"total_images": 0, "image_types": {}, "large_images": []}
 
         try:
-            image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg']
+            image_extensions = [".png", ".jpg", ".jpeg", ".gif", ".svg"]
             image_files = []
 
             for ext in image_extensions:
                 files = list(self.site_dir.rglob(f"*{ext}"))
                 image_files.extend(files)
-                result["image_types"][ext.lstrip('.')] = len(files)
+                result["image_types"][ext.lstrip(".")] = len(files)
 
             result["total_images"] = len(image_files)
 
@@ -637,10 +599,9 @@ class DocsCIPipeline:
             for img_file in image_files:
                 size = img_file.stat().st_size
                 if size > 1024 * 1024:  # 大于1MB
-                    result["large_images"].append({
-                        "file": str(img_file.relative_to(self.site_dir)),
-                        "size": size
-                    })
+                    result["large_images"].append(
+                        {"file": str(img_file.relative_to(self.site_dir)), "size": size}
+                    )
 
         except Exception as e:
             logger.error(f"图片检查失败: {e}")
@@ -653,7 +614,7 @@ class DocsCIPipeline:
             "pages_with_title": 0,
             "pages_with_description": 0,
             "pages_with_h1": 0,
-            "issues": []
+            "issues": [],
         }
 
         try:
@@ -661,16 +622,16 @@ class DocsCIPipeline:
 
             for html_file in html_files[:10]:  # 检查前10个页面作为样本
                 try:
-                    with open(html_file, 'r', encoding='utf-8') as f:
+                    with open(html_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
-                    if '<title>' in content:
+                    if "<title>" in content:
                         result["pages_with_title"] += 1
 
                     if 'name="description"' in content:
                         result["pages_with_description"] += 1
 
-                    if '<h1' in content:
+                    if "<h1" in content:
                         result["pages_with_h1"] += 1
 
                 except Exception as e:
@@ -683,12 +644,7 @@ class DocsCIPipeline:
 
     def _check_performance(self) -> Dict[str, Any]:
         """检查性能"""
-        result = {
-            "css_files": 0,
-            "js_files": 0,
-            "external_resources": 0,
-            "issues": []
-        }
+        result = {"css_files": 0, "js_files": 0, "external_resources": 0, "issues": []}
 
         try:
             result["css_files"] = len(list(self.site_dir.rglob("*.css")))
@@ -697,10 +653,11 @@ class DocsCIPipeline:
             # 简单的外部资源检查
             index_file = self.site_dir / "index.html"
             if index_file.exists():
-                with open(index_file, 'r', encoding='utf-8') as f:
+                with open(index_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 import re
+
                 external_links = re.findall(r'https?://[^\s"\'<>]+', content)
                 result["external_resources"] = len(external_links)
 
@@ -714,10 +671,7 @@ class DocsCIPipeline:
         stage_name = "deploy"
         logger.info(f"🚀 阶段6: 部署到 {deploy_target}")
 
-        stage_result = {
-            "start_time": datetime.now().isoformat(),
-            "deploy": {}
-        }
+        stage_result = {"start_time": datetime.now().isoformat(), "deploy": {}}
 
         try:
             if deploy_target == "github-pages":
@@ -745,22 +699,18 @@ class DocsCIPipeline:
         """部署到GitHub Pages"""
         try:
             # 检查是否在GitHub Actions环境中
-            if os.getenv('GITHUB_ACTIONS'):
+            if os.getenv("GITHUB_ACTIONS"):
                 logger.info("📝 检测到GitHub Actions环境，使用内置部署")
                 stage_result["deploy"] = {
                     "method": "github_actions",
-                    "url": f"https://{os.getenv('GITHUB_REPOSITORY_OWNER')}.github.io/{os.getenv('GITHUB_REPOSITORY_NAME')}/"
+                    "url": f"https://{os.getenv('GITHUB_REPOSITORY_OWNER')}.github.io/{os.getenv('GITHUB_REPOSITORY_NAME')}/",
                 }
             else:
                 # 本地部署到gh-pages分支
                 logger.info("📝 本地部署到gh-pages分支")
 
                 # 检查gh-pages分支是否存在
-                result = subprocess.run(
-                    ["git", "branch", "-a"],
-                    capture_output=True,
-                    text=True
-                )
+                result = subprocess.run(["git", "branch", "-a"], capture_output=True, text=True)
 
                 if "gh-pages" not in result.stdout:
                     # 创建gh-pages分支
@@ -778,10 +728,7 @@ class DocsCIPipeline:
                 subprocess.run(["git", "commit", "-m", "Deploy documentation"], check=True)
                 subprocess.run(["git", "push", "origin", "gh-pages"], check=True)
 
-                stage_result["deploy"] = {
-                    "method": "local_gh_pages",
-                    "branch": "gh-pages"
-                }
+                stage_result["deploy"] = {"method": "local_gh_pages", "branch": "gh-pages"}
 
         except Exception as e:
             raise Exception(f"GitHub Pages部署失败: {e}")
@@ -790,10 +737,7 @@ class DocsCIPipeline:
         """部署到S3"""
         # 这里可以实现S3部署逻辑
         logger.warning("S3部署功能尚未实现")
-        stage_result["deploy"] = {
-            "method": "s3",
-            "status": "not_implemented"
-        }
+        stage_result["deploy"] = {"method": "s3", "status": "not_implemented"}
 
     async def _deploy_local(self, stage_result: Dict[str, Any]) -> None:
         """本地部署"""
@@ -807,10 +751,7 @@ class DocsCIPipeline:
                 shutil.rmtree(deploy_dir)
                 shutil.copytree(self.site_dir, deploy_dir)
 
-            stage_result["deploy"] = {
-                "method": "local",
-                "path": str(deploy_dir)
-            }
+            stage_result["deploy"] = {"method": "local", "path": str(deploy_dir)}
 
             logger.info(f"📁 文档已部署到本地: {deploy_dir}")
 
@@ -832,7 +773,7 @@ class DocsCIPipeline:
             output_path = self.build_dir / f"pipeline_report_{timestamp}.json"
 
         try:
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(self.pipeline_state, f, indent=2, ensure_ascii=False, default=str)
 
             logger.info(f"📄 流水线报告已保存: {output_path}")
@@ -844,30 +785,30 @@ class DocsCIPipeline:
 
     def print_pipeline_summary(self) -> None:
         """打印流水线摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 文档CI/CD流水线执行摘要")
-        print("="*60)
+        print("=" * 60)
 
         print(f"开始时间: {self.pipeline_state.get('start_time')}")
         print(f"结束时间: {self.pipeline_state.get('end_time')}")
         print(f"执行状态: {'✅ 成功' if self.pipeline_state.get('success') else '❌ 失败'}")
 
-        if self.pipeline_state.get('errors'):
+        if self.pipeline_state.get("errors"):
             print("\n❌ 错误信息:")
-            for error in self.pipeline_state['errors']:
+            for error in self.pipeline_state["errors"]:
                 print(f"  - {error}")
 
-        if self.pipeline_state.get('warnings'):
+        if self.pipeline_state.get("warnings"):
             print("\n⚠️ 警告信息:")
-            for warning in self.pipeline_state['warnings']:
+            for warning in self.pipeline_state["warnings"]:
                 print(f"  - {warning}")
 
         print("\n📋 阶段执行情况:")
-        for stage_name, stage_result in self.pipeline_state.get('stages', {}).items():
-            status = "✅ 成功" if stage_result.get('success') else "❌ 失败"
+        for stage_name, stage_result in self.pipeline_state.get("stages", {}).items():
+            status = "✅ 成功" if stage_result.get("success") else "❌ 失败"
             print(f"  - {stage_name}: {status}")
 
-        print("="*60)
+        print("=" * 60)
 
 
 async def main():
@@ -876,8 +817,12 @@ async def main():
     parser.add_argument("--build", action="store_true", help="构建文档")
     parser.add_argument("--deploy", action="store_true", help="部署文档")
     parser.add_argument("--quality-check", action="store_true", help="质量检查")
-    parser.add_argument("--deploy-target", choices=["github-pages", "s3", "local"],
-                       default="github-pages", help="部署目标")
+    parser.add_argument(
+        "--deploy-target",
+        choices=["github-pages", "s3", "local"],
+        default="github-pages",
+        help="部署目标",
+    )
     parser.add_argument("--config", default="mkdocs.yml", help="MkDocs配置文件")
     parser.add_argument("--report-output", help="报告输出路径")
     parser.add_argument("--full-pipeline", action="store_true", help="执行完整流水线")
@@ -893,15 +838,12 @@ async def main():
             build=args.build or True,
             deploy=args.deploy,
             quality_check=args.quality_check,
-            deploy_target=args.deploy_target
+            deploy_target=args.deploy_target,
         )
     else:
         # 默认执行完整流水线
         result = await pipeline.run_full_pipeline(
-            build=True,
-            deploy=args.deploy,
-            quality_check=True,
-            deploy_target=args.deploy_target
+            build=True, deploy=args.deploy, quality_check=True, deploy_target=args.deploy_target
         )
 
     # 保存报告
@@ -911,7 +853,7 @@ async def main():
     pipeline.print_pipeline_summary()
 
     # 设置退出码
-    sys.exit(0 if result.get('success') else 1)
+    sys.exit(0 if result.get("success") else 1)
 
 
 if __name__ == "__main__":

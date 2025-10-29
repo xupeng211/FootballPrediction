@@ -15,13 +15,9 @@ User Service Comprehensive Test Suite
 
 import asyncio
 import hashlib
-import json
-import secrets
-from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 # import jwt  # 使用Mock替代
 from uuid import uuid4
@@ -429,9 +425,7 @@ class TestUserServiceAuthentication:
         ]
 
         for password, expected_valid in test_passwords:
-            with patch.object(
-                mock_auth_service, "validate_password_strength"
-            ) as mock_validate:
+            with patch.object(mock_auth_service, "validate_password_strength") as mock_validate:
                 mock_validate.return_value = {
                     "valid": expected_valid,
                     "score": 8 if expected_valid else 2,
@@ -543,9 +537,7 @@ class TestUserManagement:
             mock_create.assert_called_once_with(sample_user_data)
 
     @pytest.mark.asyncio
-    async def test_create_user_duplicate_username(
-        self, mock_user_service, sample_user_data
-    ):
+    async def test_create_user_duplicate_username(self, mock_user_service, sample_user_data):
         """测试创建用户失败 - 用户名重复"""
         with patch.object(mock_user_service, "create_user") as mock_create:
             mock_create.return_value = {
@@ -627,9 +619,7 @@ class TestUserManagement:
 
         with patch.object(mock_user_service, "list_users") as mock_list:
             mock_list.return_value = {
-                "users": [
-                    {"user_id": f"user{i}", "username": f"user{i}"} for i in range(10)
-                ],
+                "users": [{"user_id": f"user{i}", "username": f"user{i}"} for i in range(10)],
                 "pagination": {
                     "page": page,
                     "per_page": per_page,
@@ -786,9 +776,7 @@ class TestUserProfileService:
             "preferences": {"language": "en", "new_setting": "test_value"},
         }
 
-        updated_profile = await user_profile_service.update_profile(
-            "update_user", updates
-        )
+        updated_profile = await user_profile_service.update_profile("update_user", updates)
 
         assert updated_profile is not None
         assert updated_profile.email == "updated@example.com"
@@ -936,9 +924,7 @@ class TestUserPermissions:
         with patch.object(mock_permission_service, "check_permission") as mock_check:
             mock_check.return_value = {"allowed": True, "reason": "Permission granted"}
 
-            result = await mock_permission_service.check_permission(
-                user_id, resource, action
-            )
+            result = await mock_permission_service.check_permission(user_id, resource, action)
 
             assert result["allowed"] is True
             assert "reason" in result
@@ -961,9 +947,7 @@ class TestUserPermissions:
         """测试列出用户权限"""
         user_id = "user1"
 
-        with patch.object(
-            mock_permission_service, "list_user_permissions"
-        ) as mock_list:
+        with patch.object(mock_permission_service, "list_user_permissions") as mock_list:
             mock_list.return_value = {
                 "permissions": [
                     {
@@ -997,9 +981,7 @@ class TestUserPermissions:
         }
 
         for role, expected_permissions in roles_permissions.items():
-            with patch.object(
-                mock_permission_service, "get_role_permissions"
-            ) as mock_role_perms:
+            with patch.object(mock_permission_service, "get_role_permissions") as mock_role_perms:
                 mock_role_perms.return_value = expected_permissions
 
                 permissions = await mock_permission_service.get_role_permissions(role)
@@ -1088,8 +1070,7 @@ class TestUserServiceSecurity:
         # 模拟会话验证
         def is_session_valid(session, current_ip, current_ua):
             return (
-                session.get("ip_address") == current_ip
-                and session.get("user_agent") == current_ua
+                session.get("ip_address") == current_ip and session.get("user_agent") == current_ua
             )
 
         # 测试正常会话

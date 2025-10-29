@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """
 测试密钥管理器
 """

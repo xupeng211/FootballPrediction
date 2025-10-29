@@ -58,9 +58,7 @@ def fix_adapters_factory():
 
     # 添加Mock导入
     if "Mock(" in content and "from unittest.mock import Mock" not in content:
-        content = content.replace(
-            "from unittest.mock import", "from unittest.mock import Mock,"
-        )
+        content = content.replace("from unittest.mock import", "from unittest.mock import Mock,")
 
     # 修复未定义的Mock
     content = re.sub(

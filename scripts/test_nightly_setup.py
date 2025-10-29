@@ -262,9 +262,7 @@ class NightlySetupTester:
                 # 检查是否有测试文件
                 test_files = list(Path("tests/unit").glob("**/*.py"))
                 if test_files:
-                    self.log(
-                        "failed", f"快速测试失败 (找到{len(test_files)}个测试文件)"
-                    )
+                    self.log("failed", f"快速测试失败 (找到{len(test_files)}个测试文件)")
                 else:
                     self.log("warnings", "没有找到单元测试文件")
         except subprocess.TimeoutExpired:

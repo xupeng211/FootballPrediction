@@ -8,6 +8,7 @@ import os
 import re
 from pathlib import Path
 
+
 class CompleteFinalFixer:
     def __init__(self):
         self.project_root = Path(__file__).parent.parent
@@ -38,12 +39,12 @@ class CompleteFinalFixer:
 
         factories_file = self.project_root / "tests/factories/__init__.py"
         if factories_file.exists():
-            with open(factories_file, 'r', encoding='utf-8') as f:
+            with open(factories_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "OddsFactory" not in content:
                 # 添加 OddsFactory
-                odds_factory = '''
+                odds_factory = """
 
 class OddsFactory:
     @staticmethod
@@ -55,8 +56,8 @@ class OddsFactory:
             "away_win": 2.80,
             "source": "Test Bookmaker"
         }
-'''
-                with open(factories_file, 'a', encoding='utf-8') as f:
+"""
+                with open(factories_file, "a", encoding="utf-8") as f:
                     f.write(odds_factory)
 
                 print("  ✅ 已添加 OddsFactory")
@@ -66,9 +67,11 @@ class OddsFactory:
         """修复函数签名问题"""
         print("🔧 修复函数签名问题...")
 
-        messaging_test_file = self.project_root / "tests/integration/test_messaging_event_integration.py"
+        messaging_test_file = (
+            self.project_root / "tests/integration/test_messaging_event_integration.py"
+        )
         if messaging_test_file.exists():
-            with open(messaging_test_file, 'r', encoding='utf-8') as f:
+            with open(messaging_test_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 查找 test_message_size_handling 函数
@@ -76,16 +79,18 @@ class OddsFactory:
                 # 多种可能的函数签名形式
                 patterns = [
                     r"def test_message_size_handling\(\s*\):",
-                    r"def test_message_size_handling\(\).*\):"
+                    r"def test_message_size_handling\(\).*\):",
                 ]
 
                 for pattern in patterns:
                     if re.search(pattern, content):
                         # 替换为正确的签名
-                        content = re.sub(pattern, "def test_message_size_handling(message_size=1024):", content)
+                        content = re.sub(
+                            pattern, "def test_message_size_handling(message_size=1024):", content
+                        )
                         break
 
-                with open(messaging_test_file, 'w', encoding='utf-8') as f:
+                with open(messaging_test_file, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 print("  ✅ 已修复函数签名")
@@ -97,11 +102,11 @@ class OddsFactory:
 
         date_utils_file = self.project_root / "tests/unit/utils/test_date_time_utils_part_20.py"
         if date_utils_file.exists():
-            with open(date_utils_file, 'r', encoding='utf-8') as f:
+            with open(date_utils_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 查找缩进问题
-            lines = content.split('\n')
+            lines = content.split("\n")
             fixed_lines = []
             fixed = False
 
@@ -109,11 +114,16 @@ class OddsFactory:
                 if "class TestDateTimeUtilsPart20:" in line and i + 1 < len(lines):
                     next_line = lines[i + 1]
                     # 如果下一行不是缩进的，需要修复
-                    if next_line and not next_line.startswith(' ') and not next_line.startswith('\t') and not next_line.strip() == '':
+                    if (
+                        next_line
+                        and not next_line.startswith(" ")
+                        and not next_line.startswith("\t")
+                        and not next_line.strip() == ""
+                    ):
                         # 在类定义后添加缩进的pass语句
                         fixed_lines.append(line)
-                        fixed_lines.append('    pass')  # 添加缩进的pass
-                        fixed_lines.append('')
+                        fixed_lines.append("    pass")  # 添加缩进的pass
+                        fixed_lines.append("")
                         fixed = True
                         print("  ✅ 已修复缩进错误，在类定义后添加pass语句")
                         self.fixes_applied += 1
@@ -123,8 +133,8 @@ class OddsFactory:
                     fixed_lines.append(line)
 
             if fixed:
-                content = '\n'.join(fixed_lines)
-                with open(date_utils_file, 'w', encoding='utf-8') as f:
+                content = "\n".join(fixed_lines)
+                with open(date_utils_file, "w", encoding="utf-8") as f:
                     f.write(content)
 
     def fix_pytest_undefined_error(self):
@@ -134,7 +144,7 @@ class OddsFactory:
         # 修复 test_quick_wins.py
         quick_wins_file = self.project_root / "tests/unit/utils/test_quick_wins.py"
         if quick_wins_file.exists():
-            with open(quick_wins_file, 'r', encoding='utf-8') as f:
+            with open(quick_wins_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 检查是否缺少 pytest 导入
@@ -142,7 +152,7 @@ class OddsFactory:
                 # 在文件开头添加 pytest 导入
                 content = "import pytest\n\n" + content
 
-                with open(quick_wins_file, 'w', encoding='utf-8') as f:
+                with open(quick_wins_file, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 print("  ✅ 已添加 pytest 导入到 test_quick_wins.py")
@@ -153,18 +163,19 @@ class OddsFactory:
         print("\n🧪 验证完整修复效果...")
 
         import subprocess
+
         try:
             result = subprocess.run(
                 ["python", "-m", "pytest", "--collect-only", "-q"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=90
+                timeout=90,
             )
 
             if result.returncode == 0:
                 # 成功收集所有测试
-                collected_match = re.search(r'(\d+)\s+tests? collected', result.stdout)
+                collected_match = re.search(r"(\d+)\s+tests? collected", result.stdout)
                 if collected_match:
                     collected = int(collected_match.group(1))
                     print(f"  🎉 测试收集成功: {collected} 个测试用例")
@@ -176,7 +187,7 @@ class OddsFactory:
             else:
                 # 有错误
                 if "errors" in result.stderr.lower():
-                    error_match = re.search(r'(\d+)\s+errors', result.stderr.lower())
+                    error_match = re.search(r"(\d+)\s+errors", result.stderr.lower())
                     if error_match:
                         errors = int(error_match.group(1))
                         print(f"  📊 剩余错误数量: {errors}")
@@ -200,20 +211,30 @@ class OddsFactory:
         print("\n📊 运行覆盖率测试...")
 
         import subprocess
+
         try:
             # 运行一个快速的覆盖率测试
             result = subprocess.run(
-                ["python", "-m", "pytest", "tests/unit/utils/", "--cov=src.utils", "--cov-report=term-missing", "--maxfail=5", "-q"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/unit/utils/",
+                    "--cov=src.utils",
+                    "--cov-report=term-missing",
+                    "--maxfail=5",
+                    "-q",
+                ],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=180
+                timeout=180,
             )
 
             if result.returncode == 0:
                 # 查找覆盖率结果
-                for line in result.stdout.split('\n'):
-                    if 'TOTAL' in line and '%' in line:
+                for line in result.stdout.split("\n"):
+                    if "TOTAL" in line and "%" in line:
                         print(f"  📈 {line.strip()}")
                         return True
                 print("  ✅ 覆盖率测试完成")
@@ -273,7 +294,7 @@ class OddsFactory:
 """
 
         report_file = self.project_root / "FINAL_FIX_COMPLETE_REPORT.md"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(report_content)
 
         print(f"\n📋 详细报告已生成: {report_file}")
@@ -300,6 +321,7 @@ class OddsFactory:
 
         # 生成最终报告
         self.generate_final_report(errors_remaining, test_count)
+
 
 if __name__ == "__main__":
     fixer = CompleteFinalFixer()

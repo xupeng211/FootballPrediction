@@ -6,6 +6,7 @@
 
 import os
 
+
 def create_minimal_test_files():
     """批量创建最小测试文件"""
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
             # 确保目录存在
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(minimal_content)
 
             print(f"✅ 创建成功: {file_path}")
@@ -116,6 +117,7 @@ if __name__ == "__main__":
     print(f"📊 创建成功率: {fixed_count/(fixed_count+failed_count)*100:.1f}%")
 
     return fixed_count, failed_count
+
 
 if __name__ == "__main__":
     print("🔧 Issue #84 批量最小测试文件创建脚本")

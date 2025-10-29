@@ -321,7 +321,7 @@ if __name__ == "__main__":
             content = conftest_file.read_text()
 
             # 添加改进的配置
-            improvements = '''
+            improvements = """
 # 改进的测试配置
 
 # 改进的异步会话fixture
@@ -380,7 +380,7 @@ def mock_database_error():
     def side_effect(*args, **kwargs):
         raise Exception("Database connection failed")
     return side_effect
-'''
+"""
 
             if improvements not in content:
                 content += improvements
@@ -395,15 +395,35 @@ def mock_database_error():
         logger.info("🧪 运行环境验证测试")
 
         test_commands = [
-            ["python", "-m", "pytest", "tests/unit/api/test_health.py::TestHealthChecker::test_health_checker_initialization", "-v"],
-            ["python", "-m", "pytest", "tests/unit/utils/test_dict_utils.py::TestDictUtilsFixed::test_deep_merge_basic", "-v"],
-            ["python", "-m", "pytest", "tests/unit/api/test_dependencies.py::TestParameterizedInput::test_handle_basic_inputs", "-v"]
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/api/test_health.py::TestHealthChecker::test_health_checker_initialization",
+                "-v",
+            ],
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/utils/test_dict_utils.py::TestDictUtilsFixed::test_deep_merge_basic",
+                "-v",
+            ],
+            [
+                "python",
+                "-m",
+                "pytest",
+                "tests/unit/api/test_dependencies.py::TestParameterizedInput::test_handle_basic_inputs",
+                "-v",
+            ],
         ]
 
         success_count = 0
         for cmd in test_commands:
             try:
-                result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    cmd, cwd=self.project_root, capture_output=True, text=True, timeout=30
+                )
                 if result.returncode == 0:
                     success_count += 1
                     logger.info(f"✅ 验证测试通过: {' '.join(cmd[4:])}")

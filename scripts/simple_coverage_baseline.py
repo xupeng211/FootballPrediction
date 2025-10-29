@@ -18,20 +18,22 @@ def run_coverage_baseline():
     # 定义稳定的基线测试套件
     baseline_tests = [
         "tests/unit/services/test_services_basic.py",
-        "tests/unit/adapters/test_registry.py"
+        "tests/unit/adapters/test_registry.py",
     ]
 
     print(f"📋 运行 {len(baseline_tests)} 个基线测试...")
 
     # 运行测试并生成覆盖率报告
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         *baseline_tests,
         "--cov=src",
         "--cov-report=json",
         "--cov-report=term",
         "--tb=short",
-        "-q"
+        "-q",
     ]
 
     try:
@@ -42,17 +44,17 @@ def run_coverage_baseline():
             return None
 
         # 读取覆盖率报告
-        with open('coverage.json', 'r') as f:
+        with open("coverage.json", "r") as f:
             coverage_data = json.load(f)
 
-        totals = coverage_data.get('totals', {})
-        coverage_percent = totals.get('percent_covered', 0)
-        covered_lines = totals.get('covered_lines', 0)
-        total_lines = totals.get('num_statements', 0)
+        totals = coverage_data.get("totals", {})
+        coverage_percent = totals.get("percent_covered", 0)
+        covered_lines = totals.get("covered_lines", 0)
+        total_lines = totals.get("num_statements", 0)
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("📊 覆盖率基线报告")
-        print("="*50)
+        print("=" * 50)
         print(f"🕐 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"📈 总体覆盖率: {coverage_percent:.2f}%")
         print(f"📝 覆盖行数: {covered_lines:,}")
@@ -60,35 +62,35 @@ def run_coverage_baseline():
         print(f"🧪 测试文件: {len(baseline_tests)} 个")
 
         # 显示高覆盖率模块
-        files = coverage_data.get('files', {})
+        files = coverage_data.get("files", {})
         if files:
             print("\n🏆 高覆盖率模块:")
             high_coverage = [
-                (file_path, file_data['summary']['percent_covered'])
+                (file_path, file_data["summary"]["percent_covered"])
                 for file_path, file_data in files.items()
-                if file_data['summary']['percent_covered'] > 50
+                if file_data["summary"]["percent_covered"] > 50
             ]
             high_coverage.sort(key=lambda x: x[1], reverse=True)
 
             for file_path, percent in high_coverage[:10]:
-                short_name = file_path.replace('/home/user/projects/FootballPrediction/src/', '')
+                short_name = file_path.replace("/home/user/projects/FootballPrediction/src/", "")
                 print(f"  📁 {short_name:<40} {percent:6.2f}%")
 
-        print("="*50)
+        print("=" * 50)
 
         # 保存基线数据
         baseline_data = {
-            'timestamp': datetime.now().isoformat(),
-            'coverage_percent': coverage_percent,
-            'covered_lines': covered_lines,
-            'total_lines': total_lines,
-            'test_files': baseline_tests
+            "timestamp": datetime.now().isoformat(),
+            "coverage_percent": coverage_percent,
+            "covered_lines": covered_lines,
+            "total_lines": total_lines,
+            "test_files": baseline_tests,
         }
 
         baseline_file = Path("reports/coverage_baseline.json")
         baseline_file.parent.mkdir(exist_ok=True)
 
-        with open(baseline_file, 'w', encoding='utf-8') as f:
+        with open(baseline_file, "w", encoding="utf-8") as f:
             json.dump(baseline_data, f, indent=2, ensure_ascii=False)
 
         print(f"💾 基线数据已保存: {baseline_file}")
@@ -107,13 +109,14 @@ def analyze_coverage_drop():
     issue83c_report = Path("ISSUE_83C_FINAL_COMPLETION_REPORT.md")
 
     if issue83c_report.exists():
-        with open(issue83c_report, 'r') as f:
+        with open(issue83c_report, "r") as f:
             content = f.read()
 
         # 查找覆盖率数据
         import re
-        old_coverage_match = re.search(r'起始覆盖率: ([\d.]+)%', content)
-        final_coverage_match = re.search(r'最终覆盖率: ([\d.]+)%', content)
+
+        old_coverage_match = re.search(r"起始覆盖率: ([\d.]+)%", content)
+        final_coverage_match = re.search(r"最终覆盖率: ([\d.]+)%", content)
 
         if old_coverage_match and final_coverage_match:
             start_coverage = float(old_coverage_match.group(1))
@@ -137,7 +140,7 @@ def analyze_coverage_drop():
     if not current_data:
         return False
 
-    current_coverage = current_data['coverage_percent']
+    current_coverage = current_data["coverage_percent"]
     drop = old_coverage - current_coverage
 
     print("📊 覆盖率变化分析:")
@@ -170,7 +173,7 @@ def establish_stable_baseline():
         print(f"\n第 {i+1}/3 次测试...")
         data = run_coverage_baseline()
         if data:
-            results.append(data['coverage_percent'])
+            results.append(data["coverage_percent"])
         else:
             print(f"❌ 第 {i+1} 次测试失败")
             return False
@@ -188,21 +191,21 @@ def establish_stable_baseline():
     print(f"   最大波动:   {max_diff:.2f}%")
 
     stable_baseline = {
-        'timestamp': datetime.now().isoformat(),
-        'coverage_percent': avg_coverage,
-        'stability_variance': max_diff,
-        'test_runs': results,
-        'is_stable': max_diff < 0.5
+        "timestamp": datetime.now().isoformat(),
+        "coverage_percent": avg_coverage,
+        "stability_variance": max_diff,
+        "test_runs": results,
+        "is_stable": max_diff < 0.5,
     }
 
     # 保存稳定基线
     stable_file = Path("reports/stable_coverage_baseline.json")
-    with open(stable_file, 'w', encoding='utf-8') as f:
+    with open(stable_file, "w", encoding="utf-8") as f:
         json.dump(stable_baseline, f, indent=2, ensure_ascii=False)
 
     print(f"💾 稳定基线已保存: {stable_file}")
 
-    if stable_baseline['is_stable']:
+    if stable_baseline["is_stable"]:
         print("✅ 覆盖率统计稳定，基线建立成功")
         return True
     else:
@@ -215,8 +218,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="覆盖率基线工具")
-    parser.add_argument('--analyze', action='store_true', help='分析覆盖率下降')
-    parser.add_argument('--stable', action='store_true', help='建立稳定基线')
+    parser.add_argument("--analyze", action="store_true", help="分析覆盖率下降")
+    parser.add_argument("--stable", action="store_true", help="建立稳定基线")
 
     args = parser.parse_args()
 

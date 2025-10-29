@@ -63,9 +63,7 @@ def verify_coverage_config():
     ]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, env=env
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
         output = result.stdout
 
         # 3. 分析覆盖率报告

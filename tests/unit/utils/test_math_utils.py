@@ -3,7 +3,6 @@
 """
 
 import math
-import random
 from typing import List, Optional, Tuple, Union
 
 import pytest
@@ -45,9 +44,7 @@ class MathUtils:
         return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
     @staticmethod
-    def is_point_in_circle(
-        px: float, py: float, cx: float, cy: float, radius: float
-    ) -> bool:
+    def is_point_in_circle(px: float, py: float, cx: float, cy: float, radius: float) -> bool:
         """判断点是否在圆内"""
         return MathUtils.distance(px, py, cx, cy) <= radius
 

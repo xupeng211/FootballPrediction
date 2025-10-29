@@ -1,11 +1,7 @@
-from unittest.mock import AsyncMock, MagicMock, patch
-
 """
 测试调度任务模块化拆分
 Test modular split of scheduler tasks
 """
-
-import json
 
 import pytest
 

@@ -1,5 +1,4 @@
 # 所有收集器测试
-import pytest
 
 try:
     from src.collectors.all_collectors import AllCollectors

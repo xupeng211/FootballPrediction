@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 适配器工厂测试
@@ -213,9 +212,7 @@ class TestAdapterFactory:
         parameters = {"api_key": "$MISSING_VAR"}
 
         # 应该抛出异常
-        with pytest.raises(
-            ValueError, match="Environment variable MISSING_VAR not found"
-        ):
+        with pytest.raises(ValueError, match="Environment variable MISSING_VAR not found"):
             factory._resolve_parameters(parameters)
 
     def test_mask_sensitive_parameters(self):
@@ -244,9 +241,7 @@ class TestAdapterFactory:
         factory = AdapterFactory()
 
         # 创建子适配器配置
-        child_config = AdapterConfig(
-            name="child_adapter", adapter_type="test_type", enabled=True
-        )
+        child_config = AdapterConfig(name="child_adapter", adapter_type="test_type", enabled=True)
         factory._configs["child_adapter"] = child_config
 
         # 模拟create_adapter方法

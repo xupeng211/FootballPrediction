@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """
 Celery应用配置测试
 Tests for Celery App Configuration

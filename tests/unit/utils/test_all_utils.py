@@ -4,14 +4,12 @@
 """
 
 import hashlib
-import json
 import os
 import re
 import secrets
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 
 import pytest
 
@@ -90,9 +88,7 @@ class TestStringUtils:
     def test_generate_random_string(self):
         """测试生成随机字符串"""
 
-        def random_string(
-            length: int, use_digits: bool = True, use_letters: bool = True
-        ) -> str:
+        def random_string(length: int, use_digits: bool = True, use_letters: bool = True) -> str:
             """生成随机字符串"""
             charset = ""
             if use_letters:
@@ -317,9 +313,7 @@ class TestFileUtils:
         assert _result == expected_md5
 
         # 测试SHA256
-        expected_sha256 = (
-            "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f"
-        )
+        expected_sha256 = "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f"
         _result = calculate_hash(content, "sha256")
         assert _result == expected_sha256
 
@@ -328,9 +322,7 @@ class TestFileUtils:
 
         def create_temp_file(content: str, suffix: str = ".tmp") -> str:
             """创建临时文件"""
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=suffix, delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False) as f:
                 f.write(content)
                 return f.name
 
@@ -437,11 +429,7 @@ class TestDataConversion:
             """深度合并两个字典"""
             _result = dict1.copy()
             for key, value in dict2.items():
-                if (
-                    key in result
-                    and isinstance(_result[key], dict)
-                    and isinstance(value, dict)
-                ):
+                if key in result and isinstance(_result[key], dict) and isinstance(value, dict):
                     _result[key] = deep_merge(_result[key], value)
                 else:
                     _result[key] = value

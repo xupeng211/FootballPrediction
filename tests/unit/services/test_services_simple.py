@@ -1,11 +1,7 @@
-from unittest.mock import Mock, patch
-
 """
 Services模块简化测试
 Services Module Simple Tests
 """
-
-from datetime import datetime
 
 import pytest
 
@@ -188,6 +184,4 @@ class TestServiceIntegration:
         with open(init_file, "r") as f:
             content = f.read()
             # 检查是否有导出语句
-            assert (
-                "import" in content or "from" in content
-            ), "__init__.py should have imports"
+            assert "import" in content or "from" in content, "__init__.py should have imports"

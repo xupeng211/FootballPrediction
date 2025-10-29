@@ -7,10 +7,8 @@ import os
 import aiohttp
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 import asyncio
-from collections import defaultdict
 
 from src.core.logging_system import get_logger
 
@@ -132,9 +130,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
         """从URL获取比赛数据"""
         matches = []
 
-        async with aiohttp.ClientSession(
-            headers=self.headers, timeout=self.timeout
-        ) as session:
+        async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
             async with session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -177,9 +173,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
                 away_team=match["awayTeam"]["name"],
                 home_team_id=match["homeTeam"]["id"],
                 away_team_id=match["awayTeam"]["id"],
-                match_date=datetime.fromisoformat(
-                    match["utcDate"].replace("Z", "+00:00")
-                ),
+                match_date=datetime.fromisoformat(match["utcDate"].replace("Z", "+00:00")),
                 league=match.get("competition", {}).get("name", ""),
                 league_id=match.get("competition", {}).get("id"),
                 status=status,
@@ -202,9 +196,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
             else:
                 return []
 
-            async with aiohttp.ClientSession(
-                headers=self.headers, timeout=self.timeout
-            ) as session:
+            async with aiohttp.ClientSession(headers=self.headers, timeout=self.timeout) as session:
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
@@ -297,9 +289,7 @@ class MockDataAdapter(DataSourceAdapter):
                     away_team=team2["name"],
                     home_team_id=team1["id"],
                     away_team_id=team2["id"],
-                    match_date=match_date.replace(
-                        hour=15 + i % 6, minute=0
-                    ),  # 不同时间
+                    match_date=match_date.replace(hour=15 + i % 6, minute=0),  # 不同时间
                     league=self._get_random_league(),
                     league_id=random.choice([39, 140, 135, 78, 61]),
                     status="upcoming",
@@ -567,17 +557,13 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
         date_from = datetime.now()
         date_to = date_from + timedelta(days=days)
 
-        return await self.get_matches(
-            date_from=date_from, date_to=date_to, status="SCHEDULED"
-        )
+        return await self.get_matches(date_from=date_from, date_to=date_to, status="SCHEDULED")
 
     def _parse_match_data(self, match: Dict) -> Optional[MatchData]:
         """解析比赛数据，增强错误处理"""
         try:
             # 验证必要字段
-            if not all(
-                key in match for key in ["id", "homeTeam", "awayTeam", "utcDate"]
-            ):
+            if not all(key in match for key in ["id", "homeTeam", "awayTeam", "utcDate"]):
                 logger.warning(f"比赛数据缺少必要字段: {match}")
                 return None
 
@@ -617,9 +603,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 away_team=match["awayTeam"]["name"],
                 home_team_id=match["homeTeam"]["id"],
                 away_team_id=match["awayTeam"]["id"],
-                match_date=datetime.fromisoformat(
-                    match["utcDate"].replace("Z", "+00:00")
-                ),
+                match_date=datetime.fromisoformat(match["utcDate"].replace("Z", "+00:00")),
                 league=league_name,
                 league_id=league_id,
                 status=status,
@@ -748,9 +732,7 @@ class DataSourceManager:
         for source_name, adapter in self.adapters.items():
             try:
                 logger.info(f"从数据源 {source_name} 收集比赛数据")
-                matches = await adapter.get_matches(
-                    date_from=date_from, date_to=date_to
-                )
+                matches = await adapter.get_matches(date_from=date_from, date_to=date_to)
                 all_matches.extend(matches)
                 logger.info(f"从 {source_name} 收集到 {len(matches)} 场比赛")
             except Exception as e:

@@ -7,10 +7,11 @@
 import os
 from datetime import datetime
 
+
 def create_simple_real_test(source_file, test_file, module_info):
     """创建简单但真实的测试文件"""
 
-    module_name = source_file.replace('src/', '').replace('.py', '').replace('/', '.')
+    module_name = source_file.replace("src/", "").replace(".py", "").replace("/", ".")
 
     test_content = f'''"""
 重构后的真实测试: {module_name}
@@ -125,7 +126,7 @@ class Test{module_name.title().replace(".", "").replace("_", "")}Real:
         os.makedirs(os.path.dirname(test_file), exist_ok=True)
 
         # 写入测试文件
-        with open(test_file, 'w', encoding='utf-8') as f:
+        with open(test_file, "w", encoding="utf-8") as f:
             f.write(test_content)
 
         return True
@@ -133,6 +134,7 @@ class Test{module_name.title().replace(".", "").replace("_", "")}Real:
     except Exception:
         print("   ❌ 创建测试文件失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -143,83 +145,83 @@ def main():
     # Issue #83-B阶段2扩展模块列表
     simple_modules = [
         {
-            'source': 'src/utils/data_validator.py',
-            'test': 'tests/unit/utils/data_validator_test_simple.py',
-            'current_coverage': 0,
-            'target_coverage': 40,
-            'priority': 'MEDIUM'
+            "source": "src/utils/data_validator.py",
+            "test": "tests/unit/utils/data_validator_test_simple.py",
+            "current_coverage": 0,
+            "target_coverage": 40,
+            "priority": "MEDIUM",
         },
         {
-            'source': 'src/core/exceptions.py',
-            'test': 'tests/unit/core/exceptions_test_simple.py',
-            'current_coverage': 90.62,
-            'target_coverage': 95,
-            'priority': 'HIGH'
+            "source": "src/core/exceptions.py",
+            "test": "tests/unit/core/exceptions_test_simple.py",
+            "current_coverage": 90.62,
+            "target_coverage": 95,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/models/common_models.py',
-            'test': 'tests/unit/models/common_models_test_simple.py',
-            'current_coverage': 78.12,
-            'target_coverage': 85,
-            'priority': 'MEDIUM'
+            "source": "src/models/common_models.py",
+            "test": "tests/unit/models/common_models_test_simple.py",
+            "current_coverage": 78.12,
+            "target_coverage": 85,
+            "priority": "MEDIUM",
         },
         # 阶段2：核心模块扩展
         {
-            'source': 'src/core/config.py',
-            'test': 'tests/unit/core/config_test_simple.py',
-            'current_coverage': 36.5,
-            'target_coverage': 60,
-            'priority': 'HIGH'
+            "source": "src/core/config.py",
+            "test": "tests/unit/core/config_test_simple.py",
+            "current_coverage": 36.5,
+            "target_coverage": 60,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/core/di.py',
-            'test': 'tests/unit/core/di_test_simple.py',
-            'current_coverage': 21.8,
-            'target_coverage': 50,
-            'priority': 'HIGH'
+            "source": "src/core/di.py",
+            "test": "tests/unit/core/di_test_simple.py",
+            "current_coverage": 21.8,
+            "target_coverage": 50,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/models/prediction.py',
-            'test': 'tests/unit/models/prediction_test_simple.py',
-            'current_coverage': 64.9,
-            'target_coverage': 80,
-            'priority': 'HIGH'
+            "source": "src/models/prediction.py",
+            "test": "tests/unit/models/prediction_test_simple.py",
+            "current_coverage": 64.9,
+            "target_coverage": 80,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/api/cqrs.py',
-            'test': 'tests/unit/api/cqrs_test_simple.py',
-            'current_coverage': 56.7,
-            'target_coverage': 75,
-            'priority': 'HIGH'
+            "source": "src/api/cqrs.py",
+            "test": "tests/unit/api/cqrs_test_simple.py",
+            "current_coverage": 56.7,
+            "target_coverage": 75,
+            "priority": "HIGH",
         },
         {
-            'source': 'src/utils/string_utils.py',
-            'test': 'tests/unit/utils/string_utils_test_simple.py',
-            'current_coverage': 0,
-            'target_coverage': 40,
-            'priority': 'MEDIUM'
+            "source": "src/utils/string_utils.py",
+            "test": "tests/unit/utils/string_utils_test_simple.py",
+            "current_coverage": 0,
+            "target_coverage": 40,
+            "priority": "MEDIUM",
         },
         {
-            'source': 'src/utils/crypto_utils.py',
-            'test': 'tests/unit/utils/crypto_utils_test_simple.py',
-            'current_coverage': 0,
-            'target_coverage': 40,
-            'priority': 'MEDIUM'
+            "source": "src/utils/crypto_utils.py",
+            "test": "tests/unit/utils/crypto_utils_test_simple.py",
+            "current_coverage": 0,
+            "target_coverage": 40,
+            "priority": "MEDIUM",
         },
         {
-            'source': 'src/services/data_processing.py',
-            'test': 'tests/unit/services/data_processing_test_simple.py',
-            'current_coverage': 45.2,
-            'target_coverage': 70,
-            'priority': 'HIGH'
-        }
+            "source": "src/services/data_processing.py",
+            "test": "tests/unit/services/data_processing_test_simple.py",
+            "current_coverage": 45.2,
+            "target_coverage": 70,
+            "priority": "HIGH",
+        },
     ]
 
     created_files = []
 
     for module_info in simple_modules:
-        source_file = module_info['source']
-        test_file = module_info['test']
+        source_file = module_info["source"]
+        test_file = module_info["test"]
 
         print(f"\n🔧 创建简化重构测试: {source_file}")
         print(f"   测试文件: {test_file}")
@@ -243,12 +245,15 @@ def main():
         print("   ...")
 
         print("\n📋 测试命令示例:")
-        print("   python3 -m pytest tests/unit/utils/data_validator_test_simple.py --cov=src --cov-report=term")
+        print(
+            "   python3 -m pytest tests/unit/utils/data_validator_test_simple.py --cov=src --cov-report=term"
+        )
 
         return True
     else:
         print("\n⚠️ 没有创建任何测试文件")
         return False
+
 
 if __name__ == "__main__":
     main()

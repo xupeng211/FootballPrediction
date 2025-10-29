@@ -2,8 +2,6 @@
 
 import pytest
 
-from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
-
 
 @pytest.mark.unit
 class TestResponseUtils:
@@ -31,8 +29,6 @@ class TestResponseUtils:
     def test_api_response_model(self):
         """测试API响应模型"""
         if hasattr(APIResponseModel, "__init__"):
-            response = APIResponseModel(
-                success=True, message="OK", _data={"test": "data"}
-            )
+            response = APIResponseModel(success=True, message="OK", _data={"test": "data"})
             assert response.success is True
             assert response._data == {"test": "data"}

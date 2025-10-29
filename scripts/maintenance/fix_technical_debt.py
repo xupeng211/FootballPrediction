@@ -82,9 +82,7 @@ def fix_import_errors(content: str) -> str:
                 docstring_quotes = None
 
         # 收集导入语句（不在文档字符串内）
-        if not in_docstring and (
-            stripped.startswith("import ") or stripped.startswith("from ")
-        ):
+        if not in_docstring and (stripped.startswith("import ") or stripped.startswith("from ")):
             imports.append(line)
         elif not in_docstring and not stripped.startswith("#"):
             code_lines.append(line)
@@ -95,12 +93,7 @@ def fix_import_errors(content: str) -> str:
     # 1. 文件头部（注释、文档字符串）
     header = []
     for line in code_lines[:10]:  # 前10行通常是头部
-        if (
-            line.strip().startswith("#")
-            or '"""' in line
-            or "'''" in line
-            or not line.strip()
-        ):
+        if line.strip().startswith("#") or '"""' in line or "'''" in line or not line.strip():
             header.append(line)
         else:
             break
@@ -174,9 +167,7 @@ def main():
     print(f"📊 发现 {len(error_files)} 个文件需要修复")
 
     # 按优先级分组
-    core_files = [
-        f for f in error_files if any(x in f for x in ["api/", "services/", "models/"])
-    ]
+    core_files = [f for f in error_files if any(x in f for x in ["api/", "services/", "models/"])]
     [f for f in error_files if f not in core_files]
 
     fixed_count = 0

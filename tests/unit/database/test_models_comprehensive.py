@@ -6,10 +6,6 @@ Database Models Comprehensive Tests
 专注于BaseModel核心功能和真实业务场景的测试。
 """
 
-from datetime import datetime, timedelta
-from decimal import Decimal
-from unittest.mock import MagicMock, Mock, patch
-
 import pytest
 
 from src.database.base import Base, BaseModel, TimestampMixin
@@ -116,9 +112,7 @@ class TestBaseModel:
 
         # 测试过滤逻辑
         filtered_data = {
-            key: value
-            for key, value in data.items()
-            if key in valid_columns or key == "id"
+            key: value for key, value in data.items() if key in valid_columns or key == "id"
         }
 
         assert "valid_field" in filtered_data
@@ -225,9 +219,7 @@ class TestModelBusinessLogic:
         valid_fields = {"id", "name", "created_at", "updated_at"}
         data = {"id": 1, "name": "test", "invalid_field": "should_be_filtered"}
 
-        filtered_data = {
-            key: value for key, value in data.items() if key in valid_fields
-        }
+        filtered_data = {key: value for key, value in data.items() if key in valid_fields}
 
         assert "id" in filtered_data
         assert "name" in filtered_data

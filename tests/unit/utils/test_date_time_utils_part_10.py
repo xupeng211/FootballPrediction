@@ -6,11 +6,6 @@ test_date_time_utils - 第10部分
 """
 
 import datetime
-import os
-import sys
-from unittest.mock import Mock, patch
-
-import pytest
 
 
 class TestDateTimeUtilsPart10:

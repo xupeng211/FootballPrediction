@@ -147,7 +147,6 @@ class TestImportedFunctionality:
 
     def test_prediction_service_functionality(self):
         """测试PredictionService功能"""
-        import asyncio
 
         # 测试可以创建PredictionService实例
         service = PredictionService()
@@ -266,7 +265,6 @@ class TestIntegrationWithOriginalModule:
 
     def test_functionality_preserved(self):
         """测试功能保持完整"""
-        import asyncio
         import datetime
 
         # 创建相同的对象应该产生相同的行为
@@ -321,7 +319,6 @@ class TestErrorHandling:
         # 验证所有预期的导入都存在
         try:
             # 这些导入应该成功
-            from src.models.prediction_service import (
                 PredictionCache,
                 PredictionResult,
                 PredictionService,
@@ -471,8 +468,6 @@ class TestFutureProofing:
             warnings.simplefilter("always")
 
             # 导入模块
-            import src.models.prediction_service
-            from src.models.prediction_service import PredictionResult
 
             # 验证没有弃用警告
             deprecation_warnings = [

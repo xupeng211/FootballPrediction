@@ -3,10 +3,6 @@ Issue #83 阶段2: domain.models.team 综合测试
 优先级: HIGH - 领域核心模型，业务逻辑关键
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块

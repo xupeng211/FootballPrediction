@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 缓存示例测试
 Tests for Cache Examples
@@ -39,9 +37,7 @@ except ImportError as e:
     cached_api_call = None
 
 
-@pytest.mark.skipif(
-    not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available"
-)
+@pytest.mark.skipif(not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available")
 @pytest.mark.unit
 class TestCacheExamples:
     """缓存示例测试"""
@@ -144,9 +140,7 @@ class TestCacheExamples:
             assert result1 == result2
 
 
-@pytest.mark.skipif(
-    CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module should be available"
-)
+@pytest.mark.skipif(CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -171,9 +165,7 @@ def test_module_imports():
         assert get_user_profile is not None
 
 
-@pytest.mark.skipif(
-    not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available"
-)
+@pytest.mark.skipif(not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available")
 class TestCacheExamplesAdvanced:
     """缓存示例高级测试"""
 

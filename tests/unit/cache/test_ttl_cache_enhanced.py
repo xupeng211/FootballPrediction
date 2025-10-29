@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 TTL缓存增强版测试
 Tests for Enhanced TTL Cache
@@ -14,7 +12,6 @@ import pytest
 
 # 智能Mock兼容修复模式 - 为TTL缓存增强版创建Mock支持
 import time
-from typing import Any, Dict
 
 
 class MockCacheEntry:
@@ -126,11 +123,7 @@ class MockTTLCache:
 
     def items(self):
         """返回所有项"""
-        return [
-            (key, entry.value)
-            for key, entry in self._data.items()
-            if not entry.is_expired()
-        ]
+        return [(key, entry.value) for key, entry in self._data.items() if not entry.is_expired()]
 
     def keys(self):
         """返回所有键"""
@@ -138,9 +131,7 @@ class MockTTLCache:
 
     def values(self):
         """返回所有值"""
-        return [
-            entry.value for key, entry in self._data.items() if not entry.is_expired()
-        ]
+        return [entry.value for key, entry in self._data.items() if not entry.is_expired()]
 
     def __iter__(self):
         """迭代键"""

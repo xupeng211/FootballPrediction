@@ -5,11 +5,8 @@ Issue #83-C 端到端业务测试: 预测工作流
 策略: 完整业务流程测试
 """
 
-import asyncio
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -83,9 +80,7 @@ class TestPredictionWorkflowE2E:
 
         # 步骤1: 数据收集和处理
         print("   步骤1: 数据收集和处理")
-        processed_data = mock_services["data_service"].process_match_data(
-            sample_match_data
-        )
+        processed_data = mock_services["data_service"].process_match_data(sample_match_data)
         assert processed_data["processed_data"] is True
         assert processed_data["data_quality"] == "high"
 
@@ -170,9 +165,7 @@ class TestPredictionWorkflowE2E:
                 min_conf <= prediction["confidence"] <= max_conf
             ), f"置信度 {prediction['confidence']} 不在预期范围 {min_conf}-{max_conf}"
 
-            print(
-                f"      ✅ {scenario['name']} - 置信度: {prediction['confidence']:.2f}"
-            )
+            print(f"      ✅ {scenario['name']} - 置信度: {prediction['confidence']:.2f}")
 
     @pytest.mark.e2e
     def test_prediction_workflow_error_handling(self, mock_services):
@@ -181,9 +174,7 @@ class TestPredictionWorkflowE2E:
 
         # 场景1: 数据处理失败
         print("      场景1: 数据处理失败")
-        mock_services["data_service"].process_match_data.side_effect = Exception(
-            "数据格式错误"
-        )
+        mock_services["data_service"].process_match_data.side_effect = Exception("数据格式错误")
 
         try:
             mock_services["data_service"].process_match_data({})
@@ -194,12 +185,8 @@ class TestPredictionWorkflowE2E:
         # 场景2: 预测服务失败
         print("      场景2: 预测服务失败")
         mock_services["data_service"].process_match_data.side_effect = None
-        mock_services["data_service"].process_match_data.return_value = {
-            "processed_data": True
-        }
-        mock_services["prediction_service"].predict.side_effect = Exception(
-            "模型服务不可用"
-        )
+        mock_services["data_service"].process_match_data.return_value = {"processed_data": True}
+        mock_services["prediction_service"].predict.side_effect = Exception("模型服务不可用")
 
         try:
             mock_services["prediction_service"].predict({}, {})
@@ -210,9 +197,7 @@ class TestPredictionWorkflowE2E:
         # 场景3: 数据库存储失败
         print("      场景3: 数据库存储失败")
         mock_services["prediction_service"].predict.side_effect = None
-        mock_services["database_session"].commit.side_effect = Exception(
-            "数据库连接失败"
-        )
+        mock_services["database_session"].commit.side_effect = Exception("数据库连接失败")
 
         try:
             mock_services["database_session"].commit()
@@ -251,9 +236,7 @@ class TestPredictionWorkflowE2E:
 
             # 预测
             if processed["processed_data"]:
-                prediction = mock_services["prediction_service"].predict(
-                    match_data=match
-                )
+                prediction = mock_services["prediction_service"].predict(match_data=match)
                 predictions.append(prediction)
 
         end_time = time.time()

@@ -9,7 +9,8 @@ import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 class TestBasicFunctionality:
     """基本功能测试类"""
@@ -33,6 +34,7 @@ class TestBasicFunctionality:
     def test_module_instantiation(self):
         """测试模块实例化"""
         from src.monitoring.anomaly_detector import AnomalyDetector
+
         detector = AnomalyDetector()
         assert detector is not None
 
@@ -71,9 +73,16 @@ class TestBasicFunctionality:
     def test_facade_classes(self):
         """测试门面类"""
         from src.facades.facades import (
-            PredictionSubsystem, PredictionFacade, DatabaseSubsystem,
-            DataCollectionFacade, CacheSubsystem, NotificationSubsystem,
-            AnalyticsSubsystem, MainSystemFacade, AnalyticsFacade, NotificationFacade
+            PredictionSubsystem,
+            PredictionFacade,
+            DatabaseSubsystem,
+            DataCollectionFacade,
+            CacheSubsystem,
+            NotificationSubsystem,
+            AnalyticsSubsystem,
+            MainSystemFacade,
+            AnalyticsFacade,
+            NotificationFacade,
         )
 
         # 创建门面实例
@@ -87,6 +96,7 @@ class TestBasicFunctionality:
         # 这是占位符实现，但应该能正常创建
         match = FootballMatch()
         assert match is not None
+
 
 if __name__ == "__main__":
     # 允许直接运行这个文件进行测试

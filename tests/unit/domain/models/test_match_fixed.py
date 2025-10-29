@@ -4,7 +4,6 @@ Match领域模型边界条件测试 - 修复版本
 """
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 import pytest
 
@@ -439,9 +438,7 @@ class TestMatch:
         assert past_match.days_until_match == 0  # 过去比赛返回0
 
         # 无比赛日期
-        no_date_match = Match(
-            home_team_id=1, away_team_id=2, league_id=10, season="2023-2024"
-        )
+        no_date_match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
         assert no_date_match.days_until_match == 0
 
     def test_match_duration_method(self) -> None:
@@ -604,9 +601,7 @@ class TestMatch:
 
         for season in valid_seasons:
             try:
-                match = Match(
-                    home_team_id=1, away_team_id=2, league_id=10, season=season
-                )
+                match = Match(home_team_id=1, away_team_id=2, league_id=10, season=season)
                 assert match.season == season
             except DomainError:
                 pytest.fail(f"Valid season '{season}' should not raise DomainError")
@@ -623,9 +618,7 @@ class TestMatch:
         start_time = time.perf_counter()
 
         for i in range(1000):
-            match = Match(
-                home_team_id=i, away_team_id=i + 1, league_id=10, season="2023-2024"
-            )
+            match = Match(home_team_id=i, away_team_id=i + 1, league_id=10, season="2023-2024")
 
         end_time = time.perf_counter()
 

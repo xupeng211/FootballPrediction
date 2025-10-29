@@ -2,18 +2,26 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
-from unittest.mock import AsyncMock, Mock
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-sys.path.insert(0, "src")
-
-"""
-适配器基类测试 - 简化版
-"""
 
 import pytest
 
 from src.adapters.base import Adapter, AdapterStatus
+
+
+# 创建一个具体的Adaptee
+
+# 创建一个具体实现
+
+
+# 测试状态
+
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, "src")
+"""
+适配器基类测试 - 简化版
+"""
 
 
 @pytest.mark.unit
@@ -28,12 +36,10 @@ class TestAdapter:
     def test_adapter_initialization(self):
         """测试适配器初始化"""
 
-        # 创建一个具体的Adaptee
         class TestAdaptee:
             async def request(self, *args, **kwargs):
                 return {"result": "test"}
 
-        # 创建一个具体实现
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
                 pass
@@ -68,8 +74,6 @@ class TestAdapter:
 
         adaptee = TestAdaptee()
         adapter = ConcreteAdapter(adaptee)
-
-        # 测试状态
         assert adapter.status == AdapterStatus.INACTIVE
 
     def test_adapter_status_transitions(self):

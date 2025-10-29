@@ -17,6 +17,7 @@ from typing import Dict, List, Tuple, Any
 import subprocess
 import re
 
+
 class Phase4BValidator:
     """Phase 4B验证器"""
 
@@ -34,7 +35,7 @@ class Phase4BValidator:
             "外部依赖完全Mock",
             "使用pytest标记",
             "断言覆盖主要逻辑和边界条件",
-            "所有测试可独立运行通过pytest"
+            "所有测试可独立运行通过pytest",
         ]
 
     def find_phase4b_test_files(self) -> List[Path]:
@@ -47,7 +48,7 @@ class Phase4BValidator:
             "tests/unit/services/test_data_processing_pipeline_simple.py",
             "tests/unit/utils/test_utilities_simple.py",
             "tests/unit/config/test_configuration_simple.py",
-            "tests/unit/mocks/mock_strategies.py"
+            "tests/unit/mocks/mock_strategies.py",
         ]
 
         found_files = []
@@ -64,7 +65,7 @@ class Phase4BValidator:
     def count_test_methods(self, file_path: Path) -> int:
         """统计测试文件中的测试方法数量"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -72,7 +73,7 @@ class Phase4BValidator:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    if node.name.startswith('test_'):
+                    if node.name.startswith("test_"):
                         test_methods.append(node.name)
 
             return len(test_methods)
@@ -88,20 +89,19 @@ class Phase4BValidator:
         results = {}
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 1. 文件路径与模块层级对应
             path_parts = file_path.parts
-            results["文件路径与模块层级对应"] = (
-                "tests" in path_parts and
-                ("unit" in path_parts or "integration" in path_parts)
+            results["文件路径与模块层级对应"] = "tests" in path_parts and (
+                "unit" in path_parts or "integration" in path_parts
             )
 
             # 2. 测试文件命名规范
             file_name = file_path.name
-            results["测试文件命名规范"] = (
-                file_name.startswith("test_") and file_name.endswith(".py")
+            results["测试文件命名规范"] = file_name.startswith("test_") and file_name.endswith(
+                ".py"
             )
 
             # 3. 每个函数包含成功和异常用例
@@ -135,7 +135,7 @@ class Phase4BValidator:
     def check_syntax(self, file_path: Path) -> bool:
         """检查文件语法正确性"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             ast.parse(content)
@@ -160,14 +160,14 @@ class Phase4BValidator:
     def count_docstring_lines(self, file_path: Path) -> int:
         """统计文档字符串行数"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 提取文档字符串
             docstring_pattern = r'"""[\s\S]*?"""'
             docstrings = re.findall(docstring_pattern, content)
 
-            total_lines = sum(len(doc.split('\n')) for doc in docstrings)
+            total_lines = sum(len(doc.split("\n")) for doc in docstrings)
             return total_lines
         except Exception:
             return 0
@@ -181,7 +181,7 @@ class Phase4BValidator:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             return result.returncode == 0
@@ -209,7 +209,9 @@ class Phase4BValidator:
         for file_path in self.test_files:
             method_count = self.count_test_methods(file_path)
             total_test_methods += method_count
-            self.test_methods.extend([(str(file_path.relative_to(self.project_root)), method_count)])
+            self.test_methods.extend(
+                [(str(file_path.relative_to(self.project_root)), method_count)]
+            )
 
         print(f"📈 总计 {total_test_methods} 个测试方法")
 
@@ -243,8 +245,7 @@ class Phase4BValidator:
         standards_compliance = {}
         for standard in self.test_standards:
             compliant_files = sum(
-                1 for standards in standards_results.values()
-                if standards.get(standard, False)
+                1 for standards in standards_results.values() if standards.get(standard, False)
             )
             compliance_rate = compliant_files / len(self.test_files) * 100
             standards_compliance[standard] = compliance_rate
@@ -258,29 +259,28 @@ class Phase4BValidator:
                 "syntax_ok_rate": syntax_ok_count / len(self.test_files) * 100,
                 "total_doc_lines": total_doc_lines,
                 "test_collectable_count": sum(1 for ok in test_results.values() if ok),
-                "test_collectable_rate": sum(1 for ok in test_results.values() if ok) / len(test_results) * 100
+                "test_collectable_rate": sum(1 for ok in test_results.values() if ok)
+                / len(test_results)
+                * 100,
             },
             "test_files": [],
             "test_file_details": [
-                {
-                    "file_path": str(file_path),
-                    "method_count": count
-                }
+                {"file_path": str(file_path), "method_count": count}
                 for file_path, count in self.test_methods
             ],
             "standards_compliance": standards_compliance,
             "standards_results": standards_results,
             "syntax_results": syntax_results,
-            "test_results": test_results
+            "test_results": test_results,
         }
 
         return report
 
     def print_report(self, report: Dict[str, Any]) -> None:
         """打印验证报告"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🏆 Phase 4B 验证报告")
-        print("="*80)
+        print("=" * 80)
 
         summary = report["summary"]
         print("\n📊 总体统计:")
@@ -310,9 +310,9 @@ class Phase4BValidator:
         # 计算总体评分
         avg_compliance = sum(report["standards_compliance"].values()) / len(self.test_standards)
         overall_score = (
-            summary['syntax_ok_rate'] * 0.3 +
-            summary['test_collectable_rate'] * 0.3 +
-            avg_compliance * 0.4
+            summary["syntax_ok_rate"] * 0.3
+            + summary["test_collectable_rate"] * 0.3
+            + avg_compliance * 0.4
         )
 
         print("\n🎯 Phase 4B 完成度评分:")
@@ -330,7 +330,8 @@ class Phase4BValidator:
         else:
             print("  ⚠️  评级: 需改进 (Needs Improvement)")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
+
 
 def main():
     """主函数"""
@@ -341,10 +342,12 @@ def main():
     # 保存报告到文件
     report_file = validator.project_root / "PHASE4B_VALIDATION_REPORT.json"
     import json
-    with open(report_file, 'w', encoding='utf-8') as f:
+
+    with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
     print(f"\n📄 详细报告已保存到: {report_file}")
+
 
 if __name__ == "__main__":
     main()

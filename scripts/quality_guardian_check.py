@@ -24,7 +24,7 @@ class QualityGuardian:
     def _load_baseline(self) -> Dict:
         """加载质量基线"""
         try:
-            with open(self.baseline_file, 'r', encoding='utf-8') as f:
+            with open(self.baseline_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
             print(f"❌ 质量基线文件不存在: {self.baseline_file}")
@@ -36,12 +36,7 @@ class QualityGuardian:
     def _run_command(self, command: List[str]) -> str:
         """执行命令并返回输出"""
         try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=300
-            )
+            result = subprocess.run(command, capture_output=True, text=True, timeout=300)
             return result.stdout
         except subprocess.TimeoutExpired:
             print(f"❌ 命令执行超时: {' '.join(command)}")
@@ -53,7 +48,7 @@ class QualityGuardian:
     def _parse_coverage_output(self, coverage_output: str) -> Dict:
         """解析覆盖率输出"""
         metrics = {}
-        lines = coverage_output.split('\n')
+        lines = coverage_output.split("\n")
 
         # 查找覆盖率报告部分
         coverage_section = False
@@ -66,14 +61,14 @@ class QualityGuardian:
                 continue
 
             # 解析TOTAL行
-            if 'TOTAL' in line:
+            if "TOTAL" in line:
                 parts = line.split()
                 # 查找包含百分比的最后一个字段
                 for part in reversed(parts):
-                    if part.endswith('%'):
+                    if part.endswith("%"):
                         try:
-                            coverage = float(part.rstrip('%'))
-                            metrics['total_coverage'] = coverage
+                            coverage = float(part.rstrip("%"))
+                            metrics["total_coverage"] = coverage
                             break
                         except ValueError:
                             continue
@@ -84,60 +79,61 @@ class QualityGuardian:
         utils_coverage = None
 
         for line in lines:
-            if 'src/domain/' in line and '%' in line:
+            if "src/domain/" in line and "%" in line:
                 parts = line.split()
                 for part in reversed(parts):
-                    if part.endswith('%'):
+                    if part.endswith("%"):
                         try:
-                            domain_coverage = float(part.rstrip('%'))
+                            domain_coverage = float(part.rstrip("%"))
                             break
                         except ValueError:
                             continue
 
-            if 'src/utils/' in line and '%' in line:
+            if "src/utils/" in line and "%" in line:
                 parts = line.split()
                 for part in reversed(parts):
-                    if part.endswith('%'):
+                    if part.endswith("%"):
                         try:
-                            utils_coverage = float(part.rstrip('%'))
+                            utils_coverage = float(part.rstrip("%"))
                             break
                         except ValueError:
                             continue
 
         if domain_coverage is not None:
-            metrics['domain_coverage'] = domain_coverage
+            metrics["domain_coverage"] = domain_coverage
         if utils_coverage is not None:
-            metrics['utils_coverage'] = utils_coverage
+            metrics["utils_coverage"] = utils_coverage
 
         return metrics
 
     def _check_test_results(self, test_output: str) -> Dict:
         """检查测试结果"""
         metrics = {}
-        lines = test_output.split('\n')
+        lines = test_output.split("\n")
 
         for line in lines:
             # 查找包含测试结果的行
-            if '=' in line and 'passed' in line:
+            if "=" in line and "passed" in line:
                 # 解析类似 "============= 264 passed in 0.70s =============" 的输出
-                if 'passed' in line and ('failed' in line or 'passed' in line):
+                if "passed" in line and ("failed" in line or "passed" in line):
                     # 提取passed数量
                     import re
-                    match = re.search(r'(\d+)\s+passed', line)
+
+                    match = re.search(r"(\d+)\s+passed", line)
                     if match:
                         passed = int(match.group(1))
 
                         # 查找failed数量
                         failed = 0
-                        failed_match = re.search(r'(\d+)\s+failed', line)
+                        failed_match = re.search(r"(\d+)\s+failed", line)
                         if failed_match:
                             failed = int(failed_match.group(1))
 
                         total = passed + failed
                         if total > 0:
-                            metrics['total_tests'] = total
-                            metrics['passed_tests'] = passed
-                            metrics['pass_rate'] = (passed / total) * 100
+                            metrics["total_tests"] = total
+                            metrics["passed_tests"] = passed
+                            metrics["pass_rate"] = (passed / total) * 100
                             break
 
         return metrics
@@ -151,26 +147,28 @@ class QualityGuardian:
         # 运行测试和覆盖率检查
         print("\n🧪 运行测试套件...")
         test_command = [
-            'python', '-m', 'pytest',
-            '-v',
-            'test_domain_league_comprehensive.py',
-            'test_domain_match_comprehensive.py',
-            'test_domain_prediction_comprehensive.py',
-            'test_domain_team_comprehensive.py',
-            'tests/unit/utils/test_crypto_utils.py',
-            'tests/unit/utils/test_date_utils.py',
-            'tests/unit/utils/test_file_utils.py',
-            'tests/unit/utils/test_i18n.py',
-            'tests/unit/utils/test_warning_filters.py',
-            '--cov=src',
-            '--cov-report=term-missing',
-            '--tb=short'
+            "python",
+            "-m",
+            "pytest",
+            "-v",
+            "test_domain_league_comprehensive.py",
+            "test_domain_match_comprehensive.py",
+            "test_domain_prediction_comprehensive.py",
+            "test_domain_team_comprehensive.py",
+            "tests/unit/utils/test_crypto_utils.py",
+            "tests/unit/utils/test_date_utils.py",
+            "tests/unit/utils/test_file_utils.py",
+            "tests/unit/utils/test_i18n.py",
+            "tests/unit/utils/test_warning_filters.py",
+            "--cov=src",
+            "--cov-report=term-missing",
+            "--tb=short",
         ]
 
         output = self._run_command(test_command)
 
         # 调试：保存输出到文件
-        with open('debug_output.log', 'w', encoding='utf-8') as f:
+        with open("debug_output.log", "w", encoding="utf-8") as f:
             f.write(output)
         print("📝 测试输出已保存到 debug_output.log")
 
@@ -188,12 +186,12 @@ class QualityGuardian:
         """检查质量门禁"""
         print("\n🚪 质量门禁检查:")
 
-        gates = self.baseline['quality_gates']
+        gates = self.baseline["quality_gates"]
         all_passed = True
 
         # 检查总覆盖率
-        total_cov = self.current_metrics.get('total_coverage', 0)
-        min_total = gates['minimum_total_coverage']
+        total_cov = self.current_metrics.get("total_coverage", 0)
+        min_total = gates["minimum_total_coverage"]
 
         if total_cov >= min_total:
             print(f"✅ 总覆盖率: {total_cov:.2f}% >= {min_total:.2f}%")
@@ -202,8 +200,8 @@ class QualityGuardian:
             all_passed = False
 
         # 检查测试通过率
-        pass_rate = self.current_metrics.get('pass_rate', 0)
-        min_pass_rate = gates['minimum_pass_rate']
+        pass_rate = self.current_metrics.get("pass_rate", 0)
+        min_pass_rate = gates["minimum_pass_rate"]
 
         if pass_rate >= min_pass_rate:
             print(f"✅ 测试通过率: {pass_rate:.1f}% >= {min_pass_rate:.1f}%")
@@ -212,8 +210,8 @@ class QualityGuardian:
             all_passed = False
 
         # 检查覆盖率回退
-        baseline_cov = self.baseline['baseline']['total_coverage']
-        max_regression = gates['maximum_regression']
+        baseline_cov = self.baseline["baseline"]["total_coverage"]
+        max_regression = gates["maximum_regression"]
 
         regression = baseline_cov - total_cov
         if regression <= max_regression:
@@ -244,7 +242,7 @@ def main():
     try:
         quality_passed = guardian.run_quality_checks()
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print(guardian.generate_report())
 
         if quality_passed:

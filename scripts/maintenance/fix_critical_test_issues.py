@@ -12,11 +12,9 @@ from typing import List, Dict, Any
 import logging
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class CriticalIssuesFixer:
     """关键问题修复器 - 遵循最佳实践"""
@@ -31,11 +29,7 @@ class CriticalIssuesFixer:
         logger.info(f"🔧 {description}")
         try:
             result = subprocess.run(
-                cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=30
+                cmd, cwd=self.project_root, capture_output=True, text=True, timeout=30
             )
             if result.returncode == 0:
                 logger.info(f"✅ {description} - 成功")
@@ -148,7 +142,7 @@ class TestDictUtilsFixed:
             ("key in _result", "key in result"),
             ("isinstance(_result[key], dict)", "isinstance(result[key], dict)"),
             ("_result[key] =", "result[key] ="),
-            ("return _result", "return result")
+            ("return _result", "return result"),
         ]
 
         original_content = content
@@ -177,53 +171,65 @@ class TestDictUtilsFixed:
         content = file_path.read_text()
 
         # 查找并修复 _get_database_metrics 函数
-        lines = content.split('\n')
+        lines = content.split("\n")
         fixed_lines = []
         in_function = False
 
         for i, line in enumerate(lines):
-            if 'def _get_database_metrics(' in line:
+            if "def _get_database_metrics(" in line:
                 in_function = True
                 fixed_lines.append(line)
                 continue
 
-            if in_function and 'teams = session.execute(' in line:
+            if in_function and "teams = session.execute(" in line:
                 # 修复查询逻辑
-                fixed_lines.append('        teams_result = session.execute(text("SELECT COUNT(*) as count FROM teams"))')
-                fixed_lines.append('        teams_count = teams_result.scalar()')
-                fixed_lines.append('')
-                fixed_lines.append('        matches_result = session.execute(text("SELECT COUNT(*) as count FROM matches"))')
-                fixed_lines.append('        matches_count = matches_result.scalar()')
-                fixed_lines.append('')
-                fixed_lines.append('        predictions_result = session.execute(text("SELECT COUNT(*) as count FROM predictions"))')
-                fixed_lines.append('        predictions_count = predictions_result.scalar()')
-                fixed_lines.append('')
+                fixed_lines.append(
+                    '        teams_result = session.execute(text("SELECT COUNT(*) as count FROM teams"))'
+                )
+                fixed_lines.append("        teams_count = teams_result.scalar()")
+                fixed_lines.append("")
+                fixed_lines.append(
+                    '        matches_result = session.execute(text("SELECT COUNT(*) as count FROM matches"))'
+                )
+                fixed_lines.append("        matches_count = matches_result.scalar()")
+                fixed_lines.append("")
+                fixed_lines.append(
+                    '        predictions_result = session.execute(text("SELECT COUNT(*) as count FROM predictions"))'
+                )
+                fixed_lines.append("        predictions_count = predictions_result.scalar()")
+                fixed_lines.append("")
                 fixed_lines.append('        stats["statistics"] = {')
                 fixed_lines.append('            "teams_count": teams_count,')
                 fixed_lines.append('            "matches_count": matches_count,')
                 fixed_lines.append('            "predictions_count": predictions_count')
-                fixed_lines.append('        }')
+                fixed_lines.append("        }")
                 continue
 
             if in_function and 'stats["statistics"]["teams_count"] = _val(teams)' in line:
                 # 跳过原来的错误行
                 continue
 
-            if in_function and line.strip().startswith('except ') or line.strip().startswith('return '):
+            if (
+                in_function
+                and line.strip().startswith("except ")
+                or line.strip().startswith("return ")
+            ):
                 fixed_lines.append(line)
                 in_function = False
                 continue
 
-            if not in_function or not any(keyword in line for keyword in ['teams_count', 'matches_count', 'predictions_count']):
+            if not in_function or not any(
+                keyword in line for keyword in ["teams_count", "matches_count", "predictions_count"]
+            ):
                 fixed_lines.append(line)
 
-        fixed_content = '\n'.join(fixed_lines)
+        fixed_content = "\n".join(fixed_lines)
 
         # 确保导入了 text 函数
-        if 'from sqlalchemy import text' not in fixed_content:
+        if "from sqlalchemy import text" not in fixed_content:
             fixed_content = fixed_content.replace(
-                'from sqlalchemy.orm import Session',
-                'from sqlalchemy.orm import Session\nfrom sqlalchemy import text'
+                "from sqlalchemy.orm import Session",
+                "from sqlalchemy.orm import Session\nfrom sqlalchemy import text",
             )
 
         if fixed_content != content:
@@ -250,8 +256,8 @@ class TestDictUtilsFixed:
         # 修复导入路径
         original_content = content
         content = content.replace(
-            'from src._config.openapi_config import OpenAPIConfig, setup_openapi',
-            'from src.config.openapi_config import OpenAPIConfig, setup_openapi'
+            "from src._config.openapi_config import OpenAPIConfig, setup_openapi",
+            "from src.config.openapi_config import OpenAPIConfig, setup_openapi",
         )
 
         if content != original_content:
@@ -359,7 +365,7 @@ if __name__ == "__main__":
         verifications = [
             "tests/unit/utils/test_dict_utils_fixed.py",
             "tests/unit/api/test_health.py",
-            "tests/unit/utils/test_dict_utils.py::TestDictUtils::test_deep_merge"
+            "tests/unit/utils/test_dict_utils.py::TestDictUtils::test_deep_merge",
         ]
 
         all_passed = True

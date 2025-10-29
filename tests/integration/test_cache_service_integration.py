@@ -1,25 +1,14 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 缓存与服务层集成测试
 测试缓存系统与服务层的正确交互
 """
 
-import asyncio
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 
 # 导入需要测试的模块
 try:
-    from cache.decorators import cache_invalidate, cache_update, cached
-    from cache.redis_manager import RedisManager
-    from services.analytics_service import AnalyticsService
-    from services.match_service import MatchService
-    from services.prediction_service import PredictionService
-    from services.user_service import UserService
 
     IMPORT_SUCCESS = True
 except ImportError as e:
@@ -225,9 +214,7 @@ class TestCacheInvalidationIntegration:
 
         async def mock_delete_pattern(pattern):
             # 模拟模式匹配删除
-            keys_to_delete = [
-                k for k in self.cache_data if pattern.replace("*", "") in k
-            ]
+            keys_to_delete = [k for k in self.cache_data if pattern.replace("*", "") in k]
             for k in keys_to_delete:
                 self.cache_data.pop(k, None)
             return len(keys_to_delete)
@@ -417,8 +404,7 @@ class TestCachePerformanceIntegration:
 
         # 验证统计完整性
         assert (
-            cache_stats["cache_hits"] + cache_stats["cache_misses"]
-            == cache_stats["total_requests"]
+            cache_stats["cache_hits"] + cache_stats["cache_misses"] == cache_stats["total_requests"]
         )
 
     @pytest.mark.asyncio
@@ -439,9 +425,7 @@ class TestCachePerformanceIntegration:
         assert memory_stats["used_memory_mb"] < memory_stats["total_memory_mb"]
 
         # 计算平均键大小
-        estimated_size = (memory_stats["used_memory_mb"] * 1024 * 1024) / memory_stats[
-            "key_count"
-        ]
+        estimated_size = (memory_stats["used_memory_mb"] * 1024 * 1024) / memory_stats["key_count"]
         assert abs(estimated_size - memory_stats["avg_key_size_bytes"]) < 100
 
     @pytest.mark.asyncio

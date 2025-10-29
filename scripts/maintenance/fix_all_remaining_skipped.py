@@ -46,9 +46,7 @@ except ImportError as e:
     router = None"""
 
     # 替换导入部分
-    content = re.sub(
-        r"import pytest.*?router = None", new_imports, content, flags=re.DOTALL
-    )
+    content = re.sub(r"import pytest.*?router = None", new_imports, content, flags=re.DOTALL)
 
     # 为 TestHealthChecker 类添加 mock fixture
     test_health_checker_with_mock = '''
@@ -147,9 +145,7 @@ class TestHealthChecker:
 
     # 替换 TestHealthChecker 类
     class_pattern = r"class TestHealthChecker:.*?(?=class|\n\nclass|\ndef|\n#|\Z)"
-    content = re.sub(
-        class_pattern, test_health_checker_with_mock, content, flags=re.DOTALL
-    )
+    content = re.sub(class_pattern, test_health_checker_with_mock, content, flags=re.DOTALL)
 
     # 保存文件
     with open(file_path, "w", encoding="utf-8") as f:
@@ -361,9 +357,7 @@ class TestHealthCheckerErrorHandling:
         assert all("checked_" in result for result in results)'''
 
     # 替换 TestHealthCheckerErrorHandling 类
-    class_pattern = (
-        r"class TestHealthCheckerErrorHandling:.*?(?=class|\n\nclass|\n#|\Z)"
-    )
+    class_pattern = r"class TestHealthCheckerErrorHandling:.*?(?=class|\n\nclass|\n#|\Z)"
     content = re.sub(class_pattern, simplified_error_handling, content, flags=re.DOTALL)
 
     # 保存文件

@@ -31,9 +31,7 @@ def check_prerequisites():
         print("✅ Docker Compose 已安装")
     except (subprocess.CalledProcessError, FileNotFoundError):
         try:
-            subprocess.run(
-                ["docker", "compose", "version"], check=True, capture_output=True
-            )
+            subprocess.run(["docker", "compose", "version"], check=True, capture_output=True)
             print("✅ Docker Compose 已安装")
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("❌ Docker Compose 未安装")

@@ -3,10 +3,6 @@ Issue #83 阶段2: domain.strategies.statistical 综合测试
 优先级: MEDIUM - 统计策略，预测算法核心
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块

@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 门面模式API端点测试
@@ -219,9 +218,7 @@ class TestFacadesAPI:
         mock_factory.create_facade.return_value = mock_facade
 
         # When
-        response = client.post(
-            "/facades/initialize?facade_type=main&facade_name=test_main"
-        )
+        response = client.post("/facades/initialize?facade_type=main&facade_name=test_main")
 
         # Then
         assert response.status_code == 200
@@ -239,9 +236,7 @@ class TestFacadesAPI:
         global_facades["existing_facade"] = mock_facade
 
         # When
-        response = client.post(
-            "/facades/initialize?facade_type=main&facade_name=existing_facade"
-        )
+        response = client.post("/facades/initialize?facade_type=main&facade_name=existing_facade")
 
         # Then
         assert response.status_code == 200
@@ -256,9 +251,7 @@ class TestFacadesAPI:
         mock_factory.create_facade.side_effect = ValueError("Invalid facade type")
 
         # When
-        response = client.post(
-            "/facades/initialize?facade_type=invalid_type&facade_name=test"
-        )
+        response = client.post("/facades/initialize?facade_type=invalid_type&facade_name=test")
 
         # Then
         assert response.status_code == 400  # ValueError会被转换为400错误
@@ -751,9 +744,7 @@ class TestFacadesAPI:
         data_facade = MockFacade()
         # 让预测操作失败
         prediction_facade = MockFacade()
-        prediction_facade.execute = AsyncMock(
-            side_effect=ValueError("Prediction failed")
-        )
+        prediction_facade.execute = AsyncMock(side_effect=ValueError("Prediction failed"))
 
         global_facades.update(
             {

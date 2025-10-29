@@ -14,23 +14,65 @@ from src import main as main_module
 from src.database.connection import get_async_session
 from src.database.models import Match, MatchStatus, PredictedResult, Predictions
 
+
+# 创建符合schema的完整响应
+
+# Mock数据质量监控器 - 模块不存在时跳过
+# 注意：这个模块可能不存在，所以暂时注释掉
+# mock_dqm = MagicMock()
+# mock_dqm.generate_quality_report = AsyncMock(return_value={
+#     "overall_status": "healthy",
+#     "quality_score": 95.0,
+#     "anomalies": {"count": 0, "items": []},
+#     "report_time": datetime.now().isoformat(),
+# })
+# stack.enter_context(
+#     patch("src.data.quality.data_quality_monitor.DataQualityMonitor",
+#           return_value=mock_dqm)
+# )
+
+
+# 设置环境变量在导入前
+
+
+# 延迟导入，在设置好环境变量和 mock 后
+
+
+# 设置环境变量在导入前
+
+# 创建mock session - 必须在这里创建，确保是同一个实例
+
+
+# 延迟导入，在设置好环境变量和 mock 后
+
+
+# 创建返回mock session的异步生成器
+
+# 使用FastAPI的dependency_overrides机制
+
+# 为了向后兼容，返回client本身，但添加mock_session属性
+# 清理dependency overrides - 在测试结束后清理
+
+
+from unittest.mock import AsyncMock, Mock
+
+import pytest
+
+
+# Mock 基本方法
+
+
 """API测试配置"""
 
 
 def _install_health_stubs(stack: ExitStack) -> None:
     """将健康检查依赖替换为轻量桩对象"""
-
     mock_db_manager = MagicMock()
     session_cm = MagicMock()
     session_cm.__enter__.return_value = MagicMock()
     session_cm.__exit__.return_value = False
     mock_db_manager.get_session.return_value = session_cm
-
-    stack.enter_context(
-        patch("src.api.health.get_database_manager", return_value=mock_db_manager)
-    )
-
-    # 创建符合schema的完整响应
+    stack.enter_context(patch("src.api.health.get_database_manager", return_value=mock_db_manager))
     health_check_response = {
         "healthy": True,
         "status": "healthy",
@@ -38,48 +80,26 @@ def _install_health_stubs(stack: ExitStack) -> None:
         "details": {"message": "Service is healthy"},
     }
     async_success = AsyncMock(return_value=health_check_response)
-    stack.enter_context(
-        patch("src.api.health._collect_database_health", new=async_success)
-    )
+    stack.enter_context(patch("src.api.health._collect_database_health", new=async_success))
     stack.enter_context(patch("src.api.health._check_mlflow", new=async_success))
     stack.enter_context(patch("src.api.health._check_redis", new=async_success))
     stack.enter_context(patch("src.api.health._check_kafka", new=async_success))
     stack.enter_context(patch("src.api.health._check_filesystem", new=async_success))
 
-    # Mock数据质量监控器 - 模块不存在时跳过
-    # 注意：这个模块可能不存在，所以暂时注释掉
-    # mock_dqm = MagicMock()
-    # mock_dqm.generate_quality_report = AsyncMock(return_value={
-    #     "overall_status": "healthy",
-    #     "quality_score": 95.0,
-    #     "anomalies": {"count": 0, "items": []},
-    #     "report_time": datetime.now().isoformat(),
-    # })
-    # stack.enter_context(
-    #     patch("src.data.quality.data_quality_monitor.DataQualityMonitor",
-    #           return_value=mock_dqm)
-    # )
-
 
 @pytest.fixture
 def api_client(monkeypatch):
     """API测试客户端，默认启用最小化健康检查模式"""
-    # 设置环境变量在导入前
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
     monkeypatch.setenv("ENABLE_FEAST", "false")
     monkeypatch.setenv("MINIMAL_API_MODE", "true")  # 只加载健康检查路由
-
     stack = ExitStack()
     try:
         _install_health_stubs(stack)
-
-        # 延迟导入，在设置好环境变量和 mock 后
-
         main = importlib.reload(main_module)
         app = main.app
-
         app.dependency_overrides = {}
         with TestClient(app, raise_server_exceptions=False) as client:
             yield client
@@ -101,46 +121,33 @@ def mock_async_session():
 @pytest.fixture
 def api_client_full(monkeypatch):
     """API测试客户端，加载所有路由（用于测试非健康检查端点）
-
     使用dependency_overrides来注入mock dependencies，这是FastAPI推荐的测试方式。
     返回一个包含client和mock_session的命名空间对象，以便测试可以配置mock行为。
     """
-    # 设置环境变量在导入前
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
     monkeypatch.setenv("ENABLE_FEAST", "false")
     monkeypatch.setenv("MINIMAL_API_MODE", "false")  # 加载所有路由
-
-    # 创建mock session - 必须在这里创建，确保是同一个实例
     mock_session = MagicMock(spec=AsyncSession)
     mock_session.execute = AsyncMock()
     mock_session.commit = AsyncMock()
     mock_session.rollback = AsyncMock()
     mock_session.close = AsyncMock()
-
     stack = ExitStack()
     try:
         _install_health_stubs(stack)
-
-        # 延迟导入，在设置好环境变量和 mock 后
-
         main = importlib.reload(main_module)
         app = main.app
 
-        # 创建返回mock session的异步生成器
         async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
             yield mock_session
 
-        # 使用FastAPI的dependency_overrides机制
         app.dependency_overrides[get_async_session] = override_get_async_session
-
         with TestClient(app, raise_server_exceptions=False) as client:
-            # 为了向后兼容，返回client本身，但添加mock_session属性
             client.mock_session = mock_session
             yield client
     finally:
-        # 清理dependency overrides - 在测试结束后清理
         try:
             app.dependency_overrides.clear()
         except Exception:
@@ -189,7 +196,6 @@ def sample_match_finished():
 @pytest.fixture
 def sample_prediction():
     """创建一个示例预测"""
-
     _prediction = MagicMock(spec=Predictions)
     prediction.id = 1
     prediction.match_id = 12345
@@ -226,17 +232,11 @@ def sample_prediction_data():
 健康检查测试的 fixtures
 """
 
-from unittest.mock import AsyncMock, Mock
-
-import pytest
-
 
 @pytest.fixture
 def mock_health_checker():
     """Mock 健康检查器"""
     checker = Mock()
-
-    # Mock 基本方法
     checker.check_all_services = AsyncMock(
         return_value={
             "status": "healthy",
@@ -248,19 +248,11 @@ def mock_health_checker():
             "timestamp": "2025-01-12T10:00:00Z",
         }
     )
-
-    checker.check_database = AsyncMock(
-        return_value={"status": "healthy", "response_time": 0.001}
-    )
-
-    checker.check_redis = AsyncMock(
-        return_value={"status": "healthy", "response_time": 0.0005}
-    )
-
+    checker.check_database = AsyncMock(return_value={"status": "healthy", "response_time": 0.001})
+    checker.check_redis = AsyncMock(return_value={"status": "healthy", "response_time": 0.0005})
     checker.check_prediction_service = AsyncMock(
         return_value={"status": "healthy", "response_time": 0.01}
     )
-
     return checker
 
 

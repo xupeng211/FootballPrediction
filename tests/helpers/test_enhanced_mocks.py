@@ -97,9 +97,7 @@ class EnhancedMock:
         consumer_mock = MagicMock()
 
         # Producer mock
-        producer_mock.send = MagicMock(
-            return_value=MagicMock(topic="test", partition=0, offset=0)
-        )
+        producer_mock.send = MagicMock(return_value=MagicMock(topic="test", partition=0, offset=0))
         producer_mock.send_and_wait = AsyncMock(return_value=True)
         producer_mock.flush = MagicMock()
         producer_mock.close = MagicMock()
@@ -268,9 +266,7 @@ def mock_celery_task(task_name: str, return_value: Any = None):
     def decorator(func):
         def wrapper(*args, **kwargs):
             task_mock = MagicMock()
-            task_mock.apply.return_value.get.return_value = return_value or {
-                "status": "success"
-            }
+            task_mock.apply.return_value.get.return_value = return_value or {"status": "success"}
             task_mock.apply_async.return_value.id = "task_id_123"
 
             with patch(f"src.tasks.{task_name}", task_mock):

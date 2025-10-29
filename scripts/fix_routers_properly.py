@@ -33,7 +33,7 @@ async def health_check():
     return {{"status": "ok", "module": "{module_name}"}}
 '''
 
-    with open(router_file, 'w', encoding='utf-8') as f:
+    with open(router_file, "w", encoding="utf-8") as f:
         f.write(content)
 
     print(f"   ✅ 修复路由器: {router_file}")
@@ -46,15 +46,15 @@ def main():
 
     # 需要修复的路由器
     routers_to_fix = [
-        'src/api/adapters/router.py',
-        'src/api/facades/router.py',
-        'src/cqrs/router.py',
-        'src/middleware/router.py',
-        'src/streaming/router.py',
-        'src/ml/router.py',
-        'src/monitoring/router.py',
-        'src/realtime/router.py',
-        'src/tasks/router.py'
+        "src/api/adapters/router.py",
+        "src/api/facades/router.py",
+        "src/cqrs/router.py",
+        "src/middleware/router.py",
+        "src/streaming/router.py",
+        "src/ml/router.py",
+        "src/monitoring/router.py",
+        "src/realtime/router.py",
+        "src/tasks/router.py",
     ]
 
     fixed_count = 0

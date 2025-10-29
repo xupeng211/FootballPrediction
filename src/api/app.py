@@ -1,10 +1,4 @@
-"""
-FastAPI主应用
-FastAPI Main Application
 
-整合所有API路由和中间件。
-Integrates all API routes and middleware.
-"""
 
 import time
 from contextlib import asynccontextmanager
@@ -28,12 +22,103 @@ from src.config.openapi_config import setup_openapi
 from src.core.logging import get_logger
 from src.core.prediction import PredictionEngine
 
-logger = get_logger(__name__)
 
 # 全局预测引擎实例
+
+
+        # 不抛出异常，允许应用继续启动
+
+
+            # 如果预测引擎有清理方法，在这里调用
+
+
+    # 启动时初始化
+
+
+    # 关闭时清理
+
+
+# 创建FastAPI应用
+
+# 设置自定义OpenAPI schema
+
+# 中间件配置
+
+
+
+
+            # 记录请求开始
+
+            # 处理请求
+
+            # 记录请求完成
+
+            # 添加处理时间到响应头
+
+
+            # 记录错误
+
+
+# 添加请求日志中间件
+
+# 注册路由
+
+# 导入并注册数据集成路由
+from src.api.data_integration import router as data_integration_router
+
+
+# 导入并注册SRS规范增强预测路由
+from src.api.predictions_enhanced import router as predictions_enhanced_router
+
+
+# 导入并注册SRS规范简化预测路由（不依赖数据库）
+from src.api.predictions_srs_simple import router as predictions_srs_simple_router
+
+
+
+# 全局异常处理
+
+
+
+
+
+
+
+
+
+# 根路径
+
+
+# 健康检查
+
+
+# Metrics 端点
+    # 简单的占位符指标
+# TYPE http_requests_total counter
+
+# HELP request_duration_seconds Request duration in seconds
+# TYPE request_duration_seconds histogram
+
+# HELP api_health_status API health status
+# TYPE api_health_status gauge
+
+
+# 测试端点
+
+
+    from datetime import datetime
+
+    import uvicorn
+
+    # 开发环境配置
+"""
+FastAPI主应用
+FastAPI Main Application
+整合所有API路由和中间件。
+Integrates all API routes and middleware.
+"""
+logger = get_logger(__name__)
 prediction_engine: Union[PredictionEngine, None] = None
-
-
 async def init_prediction_engine():
     """初始化预测引擎"""
     global prediction_engine
@@ -42,38 +127,25 @@ async def init_prediction_engine():
         logger.info("预测引擎初始化成功")
     except (ValueError, KeyError, AttributeError, HTTPError) as e:
         logger.error(f"预测引擎初始化失败: {e}")
-        # 不抛出异常，允许应用继续启动
-
-
 async def close_prediction_engine():
     """关闭预测引擎"""
     global prediction_engine
     if prediction_engine:
         try:
-            # 如果预测引擎有清理方法，在这里调用
             prediction_engine = None
             logger.info("预测引擎已关闭")
         except (ValueError, KeyError, AttributeError, HTTPError) as e:
             logger.error(f"关闭预测引擎时出错: {e}")
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    # 启动时初始化
     logger.info("启动足球预测API服务...")
     await init_prediction_engine()
     logger.info("服务启动完成")
-
     yield
-
-    # 关闭时清理
     logger.info("关闭足球预测API服务...")
     await close_prediction_engine()
     logger.info("服务已关闭")
-
-
-# 创建FastAPI应用
 app = FastAPI(
     title="Football Prediction API",
     description="足球预测系统API - 提供比赛预测、数据查询和统计分析功能",
@@ -83,11 +155,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=lifespan,
 )
-
-# 设置自定义OpenAPI schema
 setup_openapi(app)
-
-# 中间件配置
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 生产环境应配置具体域名
@@ -95,43 +163,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.add_middleware(
     GZipMiddleware, minimum_size=1000
 )  # TODO: 将魔法数字 1000 提取为常量
-
-
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """请求日志中间件"""
-
     async def dispatch(self, request: Request, call_next):
         start_time = None
         try:
-            # 记录请求开始
             start_time = time.time()
             logger.info(
                 f"Request started: {request.method} {request.url.path} "
                 f"from {request.client.host if request.client else 'unknown'}"
             )
-
-            # 处理请求
             response = await call_next(request)
-
-            # 记录请求完成
             process_time = time.time() - start_time if start_time else 0
             logger.info(
                 f"Request completed: {request.method} {request.url.path} "
                 f"status={response.status_code} "
                 f"duration={process_time:.3f}s"
             )
-
-            # 添加处理时间到响应头
             response.headers["X-Process-Time"] = str(process_time)
-
             return response
-
         except (ValueError, KeyError, AttributeError, HTTPError) as e:
-            # 记录错误
             process_time = time.time() - start_time if start_time else 0
             logger.error(
                 f"Request failed: {request.method} {request.url.path} "
@@ -139,38 +193,18 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 f"duration={process_time:.3f}s"
             )
             raise
-
-
-# 添加请求日志中间件
 app.add_middleware(RequestLoggingMiddleware)
-
-# 注册路由
 app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
 app.include_router(predictions_router)
 app.include_router(data_router)
 app.include_router(adapters_router)
-
-# 导入并注册数据集成路由
-from src.api.data_integration import router as data_integration_router
-
 app.include_router(data_integration_router, prefix="/api/v1", tags=["data-integration"])
-
-# 导入并注册SRS规范增强预测路由
-from src.api.predictions_enhanced import router as predictions_enhanced_router
-
 app.include_router(
     predictions_enhanced_router, prefix="/api/v1", tags=["predictions-srs"]
 )
-
-# 导入并注册SRS规范简化预测路由（不依赖数据库）
-from src.api.predictions_srs_simple import router as predictions_srs_simple_router
-
 app.include_router(
     predictions_srs_simple_router, prefix="/api/v1", tags=["predictions-srs-simple"]
 )
-
-
-# 全局异常处理
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """HTTP异常处理"""
@@ -178,7 +212,6 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         f"HTTP exception: {exc.status_code} {exc.detail} "
         f"at {request.method} {request.url.path}"
     )
-
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -189,15 +222,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             }
         },
     )
-
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """请求验证异常处理"""
     logger.warning(
         f"Validation error at {request.method} {request.url.path}: {exc.errors()}"
     )
-
     return JSONResponse(
         status_code=422,  # TODO: 将魔法数字 422 提取为常量
         content={
@@ -209,8 +239,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             }
         },
     )
-
-
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """通用异常处理"""
@@ -218,7 +246,6 @@ async def general_exception_handler(request: Request, exc: Exception):
         f"Unhandled exception at {request.method} {request.url.path}: {str(exc)}",
         exc_info=True,
     )
-
     return JSONResponse(
         status_code=500,  # TODO: 将魔法数字 500 提取为常量
         content={
@@ -229,9 +256,6 @@ async def general_exception_handler(request: Request, exc: Exception):
             }
         },
     )
-
-
-# 根路径
 @app.get("/")
 async def root():
     """根路径"""
@@ -241,9 +265,6 @@ async def root():
         "docs": "/docs",
         "health": "/api/health",
     }
-
-
-# 健康检查
 @app.get("/api/health")
 async def health_check():
     """健康检查端点"""
@@ -252,31 +273,17 @@ async def health_check():
         "timestamp": time.time(),
         "service": "football-prediction-api",
     }
-
-
-# Metrics 端点
 @app.get("/metrics")
 async def metrics_endpoint():
     """Prometheus 格式的指标端点"""
-    # 简单的占位符指标
     metrics_data = """# HELP http_requests_total Total number of HTTP requests
-# TYPE http_requests_total counter
 http_requests_total{method="GET",endpoint="/api/health"} 1
-
-# HELP request_duration_seconds Request duration in seconds
-# TYPE request_duration_seconds histogram
 request_duration_seconds_bucket{le="0.1"} 1
 request_duration_seconds_bucket{le="1.0"} 1
 request_duration_seconds_bucket{le="+Inf"} 1
-
-# HELP api_health_status API health status
-# TYPE api_health_status gauge
 api_health_status 1
 """
     return Response(content=metrics_data, media_type="text/plain")
-
-
-# 测试端点
 @app.get("/api/test")
 async def test_endpoint():
     """测试端点"""
@@ -284,14 +291,7 @@ async def test_endpoint():
         "message": "API is working!",
         "timestamp": datetime.now().isoformat(),
     }
-
-
 if __name__ == "__main__":
-    from datetime import datetime
-
-    import uvicorn
-
-    # 开发环境配置
     uvicorn.run(
         "app:app",
         host="0.0.0.0",

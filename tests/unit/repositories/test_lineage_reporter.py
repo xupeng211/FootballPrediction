@@ -1,5 +1,4 @@
 # 血统报告器测试
-import pytest
 
 try:
     pass

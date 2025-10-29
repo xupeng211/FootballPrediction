@@ -37,17 +37,13 @@ def analyze_failures():
         if "FAILED" in line and "::" in line:
             test_name = extract_test_name(line)
             error_type = extract_error_type_from_line(line)
-            failed_tests.append(
-                {"name": test_name, "error": error_type, "full_line": line}
-            )
+            failed_tests.append({"name": test_name, "error": error_type, "full_line": line})
 
         # 错误的测试
         elif "ERROR" in line and "::" in line:
             test_name = extract_test_name(line)
             error_type = extract_error_type_from_line(line)
-            error_tests.append(
-                {"name": test_name, "error": error_type, "full_line": line}
-            )
+            error_tests.append({"name": test_name, "error": error_type, "full_line": line})
 
         # 跳过的测试
         elif "SKIPPED" in line and "::" in line:
@@ -83,9 +79,7 @@ def analyze_failures():
 
     # 按错误类型统计
     print("\n  按错误类型:")
-    for error_type, tests in sorted(
-        failed_by_type.items(), key=lambda x: len(x[1]), reverse=True
-    ):
+    for error_type, tests in sorted(failed_by_type.items(), key=lambda x: len(x[1]), reverse=True):
         print(f"    {error_type}: {len(tests)}个")
         # 显示示例
         if tests:
@@ -94,9 +88,7 @@ def analyze_failures():
 
     # 按文件统计
     print("\n  按文件分布:")
-    for file_name, tests in sorted(
-        failed_by_file.items(), key=lambda x: len(x[1]), reverse=True
-    ):
+    for file_name, tests in sorted(failed_by_file.items(), key=lambda x: len(x[1]), reverse=True):
         print(f"    {file_name}: {len(tests)}个失败")
 
     # 分析错误测试
@@ -113,9 +105,7 @@ def analyze_failures():
 
     # 按错误类型统计
     print("\n  按错误类型:")
-    for error_type, tests in sorted(
-        error_by_type.items(), key=lambda x: len(x[1]), reverse=True
-    ):
+    for error_type, tests in sorted(error_by_type.items(), key=lambda x: len(x[1]), reverse=True):
         print(f"    {error_type}: {len(tests)}个")
         if tests:
             example = tests[0]["name"].split("::")[-1]
@@ -123,9 +113,7 @@ def analyze_failures():
 
     # 按文件统计
     print("\n  按文件分布:")
-    for file_name, tests in sorted(
-        error_by_file.items(), key=lambda x: len(x[1]), reverse=True
-    ):
+    for file_name, tests in sorted(error_by_file.items(), key=lambda x: len(x[1]), reverse=True):
         print(f"    {file_name}: {len(tests)}个错误")
 
     # 分析跳过测试
@@ -142,9 +130,7 @@ def analyze_failures():
     print("\n🔧 修复建议:")
 
     # 1. 导入问题
-    import_errors = failed_by_type.get("ImportError", []) + error_by_type.get(
-        "ImportError", []
-    )
+    import_errors = failed_by_type.get("ImportError", []) + error_by_type.get("ImportError", [])
     if import_errors:
         print(f"\n  1. 导入问题 (共{len(import_errors)}个):")
         print("     - 检查sys.path配置")
@@ -155,12 +141,8 @@ def analyze_failures():
         print(f"     - 需要修复的文件: {', '.join(list(files)[:3])}...")
 
     # 2. 属性错误
-    attr_errors = failed_by_type.get("AttributeError", []) + error_by_type.get(
-        "AttributeError", []
-    )
-    name_errors = failed_by_type.get("NameError", []) + error_by_type.get(
-        "NameError", []
-    )
+    attr_errors = failed_by_type.get("AttributeError", []) + error_by_type.get("AttributeError", [])
+    name_errors = failed_by_type.get("NameError", []) + error_by_type.get("NameError", [])
     if attr_errors or name_errors:
         total = len(attr_errors) + len(name_errors)
         print(f"\n  2. 属性/名称错误 (共{total}个):")
@@ -169,9 +151,9 @@ def analyze_failures():
         print("     - 检查变量是否已定义")
 
     # 3. 抽象方法错误
-    abstract_errors = failed_by_type.get(
-        "AbstractMethodError", []
-    ) + failed_by_type.get("TypeError", [])
+    abstract_errors = failed_by_type.get("AbstractMethodError", []) + failed_by_type.get(
+        "TypeError", []
+    )
     if abstract_errors:
         print(f"\n  3. 抽象方法/类型错误 (共{len(abstract_errors)}个):")
         print("     - 实现所有抽象方法")

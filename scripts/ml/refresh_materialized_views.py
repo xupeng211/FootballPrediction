@@ -119,9 +119,7 @@ class MaterializedViewRefresher:
 
                 # 执行刷新
                 if concurrent:
-                    refresh_query = text(
-                        f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view_name};"
-                    )
+                    refresh_query = text(f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view_name};")
                     logger.info(f"使用并发模式刷新 {view_name}")
                 else:
                     refresh_query = text(f"REFRESH MATERIALIZED VIEW {view_name};")
@@ -264,9 +262,7 @@ class MaterializedViewRefresher:
                     # 获取最后更新时间（如果视图有 last_updated 字段）
                     last_updated = None
                     try:
-                        last_updated_query = text(
-                            f"SELECT MAX(last_updated) FROM {view_name};"
-                        )
+                        last_updated_query = text(f"SELECT MAX(last_updated) FROM {view_name};")
                         last_updated_result = await conn.execute(last_updated_query)
                         last_updated = last_updated_result.scalar()
                         if last_updated:
@@ -277,9 +273,9 @@ class MaterializedViewRefresher:
 
                     view_info[view_name] = {
                         "managed_key": managed_view_key,
-                        "description": self.MATERIALIZED_VIEWS.get(
-                            managed_view_key, {}
-                        ).get("description", "未知"),
+                        "description": self.MATERIALIZED_VIEWS.get(managed_view_key, {}).get(
+                            "description", "未知"
+                        ),
                         "has_indexes": row.has_indexes,
                         "is_populated": row.is_populated,
                         "row_count": row_count,

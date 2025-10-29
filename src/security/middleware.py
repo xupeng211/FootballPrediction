@@ -74,9 +74,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """速率限制中间件"""
 
-    def __init__(
-        self, app: ASGIApp, requests_per_minute: int = 60, burst_size: int = 10
-    ):
+    def __init__(self, app: ASGIApp, requests_per_minute: int = 60, burst_size: int = 10):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.burst_size = burst_size
@@ -134,9 +132,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # 检查每分钟限制
         one_minute_ago = current_time - 60
-        recent_requests = [
-            req_time for req_time in requests if req_time > one_minute_ago
-        ]
+        recent_requests = [req_time for req_time in requests if req_time > one_minute_ago]
 
         return len(recent_requests) >= self.requests_per_minute
 
@@ -165,9 +161,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
         try:
             os.makedirs(os.path.dirname(audit_file), exist_ok=True)
             handler = logging.FileHandler(audit_file)
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             handler.setFormatter(formatter)
             self.audit_logger.addHandler(handler)
         except Exception as e:
@@ -207,9 +201,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             f"User-Agent: {request.headers.get('User-Agent', 'Unknown')}"
         )
 
-    def _log_request_complete(
-        self, request: Request, response: Response, duration: float
-    ):
+    def _log_request_complete(self, request: Request, response: Response, duration: float):
         """记录请求完成"""
         self.audit_logger.info(
             f"Request completed: {request.method} {request.url} - "
@@ -285,11 +277,8 @@ def setup_security_middleware(app: ASGIApp) -> ASGIApp:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
-        allow_credentials=os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower()
-        == "true",
-        allow_methods=os.getenv(
-            "CORS_ALLOW_METHODS", "GET,POST,PUT,DELETE,OPTIONS"
-        ).split(","),
+        allow_credentials=os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true",
+        allow_methods=os.getenv("CORS_ALLOW_METHODS", "GET,POST,PUT,DELETE,OPTIONS").split(","),
         allow_headers=os.getenv("CORS_ALLOW_HEADERS", "*").split(","),
     )
 
@@ -307,9 +296,7 @@ def setup_security_middleware(app: ASGIApp) -> ASGIApp:
     app.add_middleware(AuditLoggingMiddleware, enabled=audit_enabled)
 
     # 安全头中间件
-    security_headers_enabled = (
-        os.getenv("SECURE_HEADERS_ENABLED", "true").lower() == "true"
-    )
+    security_headers_enabled = os.getenv("SECURE_HEADERS_ENABLED", "true").lower() == "true"
     app.add_middleware(SecurityHeadersMiddleware, enabled=security_headers_enabled)
 
     # CSP中间件
@@ -331,9 +318,7 @@ class SecurityConfig:
         self.rate_limit_burst = int(os.getenv("RATE_LIMIT_BURST", "10"))
 
         self.cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
-        self.cors_allow_credentials = (
-            os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
-        )
+        self.cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
 
         self.security_headers_enabled = (
             os.getenv("SECURE_HEADERS_ENABLED", "true").lower() == "true"
@@ -342,9 +327,7 @@ class SecurityConfig:
 
         self.force_https = os.getenv("FORCE_HTTPS", "false").lower() == "true"
 
-        self.audit_log_enabled = (
-            os.getenv("AUDIT_LOG_ENABLED", "true").lower() == "true"
-        )
+        self.audit_log_enabled = os.getenv("AUDIT_LOG_ENABLED", "true").lower() == "true"
         self.audit_log_level = os.getenv("AUDIT_LOG_LEVEL", "INFO")
 
         self.password_min_length = int(os.getenv("PASSWORD_MIN_LENGTH", "12"))
@@ -362,9 +345,7 @@ class SecurityConfig:
         )
 
         self.session_timeout_minutes = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
-        self.session_secure_cookie = (
-            os.getenv("SESSION_SECURE_COOKIE", "true").lower() == "true"
-        )
+        self.session_secure_cookie = os.getenv("SESSION_SECURE_COOKIE", "true").lower() == "true"
         self.session_http_only_cookie = (
             os.getenv("SESSION_HTTP_ONLY_COOKIE", "true").lower() == "true"
         )

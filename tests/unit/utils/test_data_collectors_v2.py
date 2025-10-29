@@ -1,5 +1,4 @@
 # 数据收集器v2测试
-import pytest
 
 try:
     pass

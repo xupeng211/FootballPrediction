@@ -8,100 +8,106 @@ import os
 import re
 import ast
 
+
 def fix_first_line_indentation(filepath):
     """修复第一行缩进问题"""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         if lines:
             first_line = lines[0]
             # 如果第一行是缩进的docstring开始，修复它
-            if first_line.strip().startswith('"""') and first_line.startswith('    '):
+            if first_line.strip().startswith('"""') and first_line.startswith("    "):
                 lines[0] = first_line.lstrip()
 
                 # 写回文件
-                fixed_content = '\n'.join(lines)
-                with open(filepath, 'w', encoding='utf-8') as f:
+                fixed_content = "\n".join(lines)
+                with open(filepath, "w", encoding="utf-8") as f:
                     f.write(fixed_content)
                 return True
         return False
     except Exception:
         return False
 
+
 def fix_function_body(filepath):
     """修复函数体缺失问题"""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         fixed_lines = []
 
         for i, line in enumerate(lines):
             i + 1
 
             # 检查函数定义行
-            if re.match(r'^\s*def\s+\w+.*\:$', line):
+            if re.match(r"^\s*def\s+\w+.*\:$", line):
                 fixed_lines.append(line)
 
                 # 检查下一行是否为空或缺少代码块
                 if i + 1 < len(lines):
                     next_line = lines[i + 1]
-                    if next_line.strip() == '' or not next_line.startswith('    '):
+                    if next_line.strip() == "" or not next_line.startswith("    "):
                         # 添加pass语句
-                        indent = '    '  # 4个空格
-                        if line.startswith('    '):
-                            indent = '        '  # 8个空格
-                        fixed_lines.append(f'{indent}pass  # TODO: 实现函数逻辑')
+                        indent = "    "  # 4个空格
+                        if line.startswith("    "):
+                            indent = "        "  # 8个空格
+                        fixed_lines.append(f"{indent}pass  # TODO: 实现函数逻辑")
                         continue
 
             fixed_lines.append(line)
 
         # 写回文件
-        fixed_content = '\n'.join(fixed_lines)
-        with open(filepath, 'w', encoding='utf-8') as f:
+        fixed_content = "\n".join(fixed_lines)
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(fixed_content)
 
         return True
     except Exception:
         return False
 
+
 def fix_generic_indentation(filepath):
     """修复通用缩进问题"""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         fixed_lines = []
 
         for line in lines:
             if line.strip():
                 # 检查是否有过深缩进
-                if re.match(r'^\s{12,}', line):  # 12个或更多空格
+                if re.match(r"^\s{12,}", line):  # 12个或更多空格
                     stripped = line.lstrip()
                     # 判断应该的缩进级别
-                    if stripped.startswith(('def ', 'class ', '@')):
-                        fixed_lines.append('    ' + stripped)  # 4个空格
-                    elif stripped.startswith(('if ', 'for ', 'while ', 'try:', 'except', 'else:', 'finally:', 'with ')):
-                        fixed_lines.append('    ' + stripped)  # 4个空格
+                    if stripped.startswith(("def ", "class ", "@")):
+                        fixed_lines.append("    " + stripped)  # 4个空格
+                    elif stripped.startswith(
+                        ("if ", "for ", "while ", "try:", "except", "else:", "finally:", "with ")
+                    ):
+                        fixed_lines.append("    " + stripped)  # 4个空格
                     else:
-                        fixed_lines.append('        ' + stripped)  # 8个空格
+                        fixed_lines.append("        " + stripped)  # 8个空格
                 else:
                     fixed_lines.append(line)
             else:
                 fixed_lines.append(line)
 
         # 写回文件
-        fixed_content = '\n'.join(fixed_lines)
-        with open(filepath, 'w', encoding='utf-8') as f:
+        fixed_content = "\n".join(fixed_lines)
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(fixed_content)
 
         return True
     except Exception:
         return False
+
 
 def main():
     """主函数"""
@@ -110,12 +116,12 @@ def main():
 
     # 获取所有有语法错误的文件
     error_files = []
-    for root, dirs, files in os.walk('tests'):
+    for root, dirs, files in os.walk("tests"):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 filepath = os.path.join(root, file)
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         content = f.read()
                     ast.parse(content)
                 except SyntaxError:
@@ -127,7 +133,7 @@ def main():
 
     fixed_count = 0
     for filepath in error_files:
-        relative_path = os.path.relpath(filepath, 'tests')
+        relative_path = os.path.relpath(filepath, "tests")
         print(f"\n修复: {relative_path}")
 
         # 尝试不同的修复方法
@@ -160,12 +166,12 @@ def main():
 
     # 最终验证
     final_errors = []
-    for root, dirs, files in os.walk('tests'):
+    for root, dirs, files in os.walk("tests"):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 filepath = os.path.join(root, file)
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         content = f.read()
                     ast.parse(content)
                 except SyntaxError:
@@ -182,6 +188,7 @@ def main():
         print(f"✅ P1任务基本完成！仅剩 {len(final_errors)} 个错误需要手动处理")
     else:
         print(f"⚠️ P1任务部分完成，还需处理 {len(final_errors)} 个错误")
+
 
 if __name__ == "__main__":
     main()

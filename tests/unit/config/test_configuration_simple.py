@@ -16,11 +16,9 @@
 - 错误处理和边界条件
 """
 
-import asyncio
 import json
 import os
 import tempfile
-from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -228,11 +226,10 @@ class TestConfigManager:
         test_config1 = {"app": {"name": "test"}}
         test_config2 = {"database": {"host": "localhost"}}
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f1, tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f2:
+        with (
+            tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f1,
+            tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f2,
+        ):
 
             json.dump(test_config1, f1)
             json.dump(test_config2, f2)
@@ -386,9 +383,7 @@ class TestConfigValidator:
         """测试嵌套键验证"""
         validator = ConfigValidator()
 
-        validator.add_rule(
-            "app.debug", lambda x: isinstance(x, bool), "调试模式必须是布尔值"
-        )
+        validator.add_rule("app.debug", lambda x: isinstance(x, bool), "调试模式必须是布尔值")
 
         # 测试嵌套键获取
         config = {"app": {"debug": True, "version": "1.0"}}

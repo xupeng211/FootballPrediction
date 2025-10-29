@@ -18,18 +18,19 @@ from typing import List, Dict, Tuple, Optional
 import re
 import yaml
 
+
 class RoadmapPhase4Executor:
     def __init__(self):
         self.phase_stats = {
-            'start_coverage': 15.71,
-            'target_coverage': 75.0,
-            'current_coverage': 0.0,
-            'start_time': time.time(),
-            'microservices_created': 0,
-            'containers_configured': 0,
-            'ci_cd_enhanced': 0,
-            'deployment_automated': 0,
-            'architecture_gates_passed': 0
+            "start_coverage": 15.71,
+            "target_coverage": 75.0,
+            "current_coverage": 0.0,
+            "start_time": time.time(),
+            "microservices_created": 0,
+            "containers_configured": 0,
+            "ci_cd_enhanced": 0,
+            "deployment_automated": 0,
+            "architecture_gates_passed": 0,
         }
 
     def execute_phase4(self):
@@ -57,9 +58,13 @@ class RoadmapPhase4Executor:
         self.generate_phase4_report()
 
         # 计算最终状态
-        duration = time.time() - self.phase_stats['start_time']
-        success = (microservices_success and containerization_success and
-                  cicd_success and deployment_success)
+        duration = time.time() - self.phase_stats["start_time"]
+        success = (
+            microservices_success
+            and containerization_success
+            and cicd_success
+            and deployment_success
+        )
 
         print("\n🎉 路线图阶段4执行完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
@@ -77,29 +82,29 @@ class RoadmapPhase4Executor:
 
         microservices = [
             {
-                'name': 'Prediction Service',
-                'description': '预测服务微服务',
-                'port': 8001,
-                'directory': 'microservices/prediction'
+                "name": "Prediction Service",
+                "description": "预测服务微服务",
+                "port": 8001,
+                "directory": "microservices/prediction",
             },
             {
-                'name': 'Data Collection Service',
-                'description': '数据采集服务微服务',
-                'port': 8002,
-                'directory': 'microservices/data_collection'
+                "name": "Data Collection Service",
+                "description": "数据采集服务微服务",
+                "port": 8002,
+                "directory": "microservices/data_collection",
             },
             {
-                'name': 'User Management Service',
-                'description': '用户管理服务微服务',
-                'port': 8003,
-                'directory': 'microservices/user_management'
+                "name": "User Management Service",
+                "description": "用户管理服务微服务",
+                "port": 8003,
+                "directory": "microservices/user_management",
             },
             {
-                'name': 'Analytics Service',
-                'description': '分析服务微服务',
-                'port': 8004,
-                'directory': 'microservices/analytics'
-            }
+                "name": "Analytics Service",
+                "description": "分析服务微服务",
+                "port": 8004,
+                "directory": "microservices/analytics",
+            },
         ]
 
         success_count = 0
@@ -110,7 +115,7 @@ class RoadmapPhase4Executor:
 
             if self.create_microservice(service):
                 success_count += 1
-                self.phase_stats['microservices_created'] += 1
+                self.phase_stats["microservices_created"] += 1
 
         print(f"\n✅ 微服务架构实现完成: {success_count}/{len(microservices)}")
         return success_count >= len(microservices) * 0.8
@@ -122,20 +127,20 @@ class RoadmapPhase4Executor:
 
         container_configs = [
             {
-                'name': 'Multi-Service Docker Compose',
-                'description': '多服务Docker Compose配置',
-                'file': 'docker-compose.microservices.yml'
+                "name": "Multi-Service Docker Compose",
+                "description": "多服务Docker Compose配置",
+                "file": "docker-compose.microservices.yml",
             },
             {
-                'name': 'Kubernetes Deployment',
-                'description': 'Kubernetes部署配置',
-                'file': 'k8s/deployment.yml'
+                "name": "Kubernetes Deployment",
+                "description": "Kubernetes部署配置",
+                "file": "k8s/deployment.yml",
             },
             {
-                'name': 'Service Mesh Configuration',
-                'description': '服务网格配置（Istio）',
-                'file': 'k8s/istio-config.yml'
-            }
+                "name": "Service Mesh Configuration",
+                "description": "服务网格配置（Istio）",
+                "file": "k8s/istio-config.yml",
+            },
         ]
 
         success_count = 0
@@ -145,7 +150,7 @@ class RoadmapPhase4Executor:
 
             if self.create_container_config(config):
                 success_count += 1
-                self.phase_stats['containers_configured'] += 1
+                self.phase_stats["containers_configured"] += 1
 
         print(f"\n✅ 容器化部署完成: {success_count}/{len(container_configs)}")
         return success_count >= len(container_configs) * 0.8
@@ -157,20 +162,20 @@ class RoadmapPhase4Executor:
 
         cicd_enhancements = [
             {
-                'name': 'Multi-Stage CI Pipeline',
-                'description': '多阶段CI流水线配置',
-                'file': '.github/workflows/multi-stage-ci.yml'
+                "name": "Multi-Stage CI Pipeline",
+                "description": "多阶段CI流水线配置",
+                "file": ".github/workflows/multi-stage-ci.yml",
             },
             {
-                'name': 'Automated Testing Pipeline',
-                'description': '自动化测试流水线',
-                'file': '.github/workflows/automated-testing.yml'
+                "name": "Automated Testing Pipeline",
+                "description": "自动化测试流水线",
+                "file": ".github/workflows/automated-testing.yml",
             },
             {
-                'name': 'Security Scanning Pipeline',
-                'description': '安全扫描流水线',
-                'file': '.github/workflows/security-scan.yml'
-            }
+                "name": "Security Scanning Pipeline",
+                "description": "安全扫描流水线",
+                "file": ".github/workflows/security-scan.yml",
+            },
         ]
 
         success_count = 0
@@ -180,7 +185,7 @@ class RoadmapPhase4Executor:
 
             if self.create_cicd_enhancement(enhancement):
                 success_count += 1
-                self.phase_stats['ci_cd_enhanced'] += 1
+                self.phase_stats["ci_cd_enhanced"] += 1
 
         print(f"\n✅ CI/CD流水线增强完成: {success_count}/{len(cicd_enhancements)}")
         return success_count >= len(cicd_enhancements) * 0.8
@@ -192,20 +197,20 @@ class RoadmapPhase4Executor:
 
         deployment_configs = [
             {
-                'name': 'Blue-Green Deployment',
-                'description': '蓝绿部署配置',
-                'file': 'deployment/blue-green.yml'
+                "name": "Blue-Green Deployment",
+                "description": "蓝绿部署配置",
+                "file": "deployment/blue-green.yml",
             },
             {
-                'name': 'Canary Deployment',
-                'description': '金丝雀部署配置',
-                'file': 'deployment/canary.yml'
+                "name": "Canary Deployment",
+                "description": "金丝雀部署配置",
+                "file": "deployment/canary.yml",
             },
             {
-                'name': 'Rolling Update Strategy',
-                'description': '滚动更新策略配置',
-                'file': 'deployment/rolling-update.yml'
-            }
+                "name": "Rolling Update Strategy",
+                "description": "滚动更新策略配置",
+                "file": "deployment/rolling-update.yml",
+            },
         ]
 
         success_count = 0
@@ -215,7 +220,7 @@ class RoadmapPhase4Executor:
 
             if self.create_deployment_config(config):
                 success_count += 1
-                self.phase_stats['deployment_automated'] += 1
+                self.phase_stats["deployment_automated"] += 1
 
         print(f"\n✅ 自动化部署系统完成: {success_count}/{len(deployment_configs)}")
         return success_count >= len(deployment_configs) * 0.8
@@ -223,7 +228,7 @@ class RoadmapPhase4Executor:
     def create_microservice(self, service_info: Dict) -> bool:
         """创建微服务"""
         try:
-            service_dir = Path(service_info['directory'])
+            service_dir = Path(service_info["directory"])
             service_dir.mkdir(parents=True, exist_ok=True)
 
             # 创建主应用文件
@@ -367,12 +372,12 @@ if __name__ == "__main__":
     )
 '''
 
-            with open(app_file, 'w', encoding='utf-8') as f:
+            with open(app_file, "w", encoding="utf-8") as f:
                 f.write(app_content)
 
             # 创建Dockerfile
             dockerfile = service_dir / "Dockerfile"
-            docker_content = f'''FROM python:3.11-slim
+            docker_content = f"""FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -399,28 +404,28 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \\
 
 # 启动命令
 CMD ["python", "main.py"]
-'''
+"""
 
-            with open(dockerfile, 'w', encoding='utf-8') as f:
+            with open(dockerfile, "w", encoding="utf-8") as f:
                 f.write(docker_content)
 
             # 创建requirements.txt
             requirements = service_dir / "requirements.txt"
-            req_content = '''fastapi==0.104.1
+            req_content = """fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
 httpx==0.25.2
 structlog==23.2.0
 prometheus-client==0.19.0
-'''
+"""
 
-            with open(requirements, 'w', encoding='utf-8') as f:
+            with open(requirements, "w", encoding="utf-8") as f:
                 f.write(req_content)
 
             # 创建配置文件
             config_file = service_dir / "config.yml"
-            config_content = f'''# {service_info['name']} 配置文件
+            config_content = f"""# {service_info['name']} 配置文件
 
 service:
   name: "{service_info['name']}"
@@ -452,9 +457,9 @@ monitoring:
 security:
   cors_enabled: true
   authentication_required: false
-'''
+"""
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 f.write(config_content)
 
             print(f"   ✅ 创建成功: {service_dir}")
@@ -467,11 +472,11 @@ security:
     def create_container_config(self, config_info: Dict) -> bool:
         """创建容器配置"""
         try:
-            config_file = Path(config_info['file'])
+            config_file = Path(config_info["file"])
             config_file.parent.mkdir(parents=True, exist_ok=True)
 
-            if 'docker-compose' in config_info['file']:
-                content = f'''# {config_info['name']}
+            if "docker-compose" in config_info["file"]:
+                content = f"""# {config_info['name']}
 # {config_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -664,10 +669,10 @@ volumes:
 networks:
   microservices-network:
     driver: bridge
-'''
+"""
 
-            elif 'k8s' in config_info['file'] and 'deployment' in config_info['file']:
-                content = f'''# {config_info['name']}
+            elif "k8s" in config_info["file"] and "deployment" in config_info["file"]:
+                content = f"""# {config_info['name']}
 # {config_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -777,10 +782,10 @@ spec:
       target:
         type: Utilization
         averageUtilization: 80
-'''
+"""
 
-            elif 'istio' in config_info['file']:
-                content = f'''# {config_info['name']}
+            elif "istio" in config_info["file"]:
+                content = f"""# {config_info['name']}
 # {config_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -890,9 +895,9 @@ spec:
       consecutiveErrors: 3
       interval: 30s
       baseEjectionTime: 30s
-'''
+"""
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"   ✅ 创建成功: {config_file}")
@@ -905,11 +910,11 @@ spec:
     def create_cicd_enhancement(self, enhancement_info: Dict) -> bool:
         """创建CI/CD增强"""
         try:
-            config_file = Path(enhancement_info['file'])
+            config_file = Path(enhancement_info["file"])
             config_file.parent.mkdir(parents=True, exist_ok=True)
 
-            if 'multi-stage-ci' in enhancement_info['file']:
-                content = f'''# {enhancement_info['name']}
+            if "multi-stage-ci" in enhancement_info["file"]:
+                content = f"""# {enhancement_info['name']}
 # {enhancement_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -1166,10 +1171,10 @@ jobs:
         webhook_url: ${{ secrets.SLACK_WEBHOOK }}
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-'''
+"""
 
-            elif 'automated-testing' in enhancement_info['file']:
-                content = f'''# {enhancement_info['name']}
+            elif "automated-testing" in enhancement_info["file"]:
+                content = f"""# {enhancement_info['name']}
 # {enhancement_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -1357,10 +1362,10 @@ jobs:
           Load Tests: ${{ needs.load-tests.result }}
           Security Tests: ${{ needs.security-tests.result }}
           Compatibility Tests: ${{ needs.compatibility-tests.result }}
-'''
+"""
 
-            elif 'security-scan' in enhancement_info['file']:
-                content = f'''# {enhancement_info['name']}
+            elif "security-scan" in enhancement_info["file"]:
+                content = f"""# {enhancement_info['name']}
 # {enhancement_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -1594,9 +1599,9 @@ jobs:
         text: |
           🚨 Security vulnerabilities detected in ${{ github.repository }}!
           Please review the security scan results and take appropriate action.
-'''
+"""
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"   ✅ 创建成功: {config_file}")
@@ -1609,11 +1614,11 @@ jobs:
     def create_deployment_config(self, config_info: Dict) -> bool:
         """创建部署配置"""
         try:
-            config_file = Path(config_info['file'])
+            config_file = Path(config_info["file"])
             config_file.parent.mkdir(parents=True, exist_ok=True)
 
-            if 'blue-green' in config_info['file']:
-                content = f'''# {config_info['name']}
+            if "blue-green" in config_info["file"]:
+                content = f"""# {config_info['name']}
 # {config_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -1740,10 +1745,10 @@ spec:
         query: |
           sum(rate(http_server_requests{{status!~"5..",service="{{args.service-name}}}}[2m])) /
           sum(rate(http_server_requests{{service="{{args.service-name}}"}}[2m]))
-'''
+"""
 
-            elif 'canary' in config_info['file']:
-                content = f'''# {config_info['name']}
+            elif "canary" in config_info["file"]:
+                content = f"""# {config_info['name']}
 # {config_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -1918,10 +1923,10 @@ spec:
           histogram_quantile(0.99,
             sum(rate(http_request_duration_seconds_bucket{{service="{{args.service-name}}"}}[2m])) by (le)
           )
-'''
+"""
 
-            elif 'rolling-update' in config_info['file']:
-                content = f'''# {config_info['name']}
+            elif "rolling-update" in config_info["file"]:
+                content = f"""# {config_info['name']}
 # {config_info['description']}
 # 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
@@ -2116,9 +2121,9 @@ data:
       cache_enabled: true
       rate_limiting: true
       request_logging: true
-'''
+"""
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"   ✅ 创建成功: {config_file}")
@@ -2130,32 +2135,35 @@ data:
 
     def generate_phase4_report(self):
         """生成阶段4报告"""
-        duration = time.time() - self.phase_stats['start_time']
+        duration = time.time() - self.phase_stats["start_time"]
 
         report = {
             "phase": "4",
             "title": "架构升级",
             "execution_time": duration,
-            "start_coverage": self.phase_stats['start_coverage'],
-            "target_coverage": self.phase_stats['target_coverage'],
-            "microservices_created": self.phase_stats['microservices_created'],
-            "containers_configured": self.phase_stats['containers_configured'],
-            "ci_cd_enhanced": self.phase_stats['ci_cd_enhanced'],
-            "deployment_automated": self.phase_stats['deployment_automated'],
+            "start_coverage": self.phase_stats["start_coverage"],
+            "target_coverage": self.phase_stats["target_coverage"],
+            "microservices_created": self.phase_stats["microservices_created"],
+            "containers_configured": self.phase_stats["containers_configured"],
+            "ci_cd_enhanced": self.phase_stats["ci_cd_enhanced"],
+            "deployment_automated": self.phase_stats["deployment_automated"],
             "system_health": "🏆 优秀",
             "automation_level": "100%",
-            "success": (self.phase_stats['microservices_created'] >= 3 and
-                       self.phase_stats['containers_configured'] >= 2 and
-                       self.phase_stats['ci_cd_enhanced'] >= 2 and
-                       self.phase_stats['deployment_automated'] >= 2)
+            "success": (
+                self.phase_stats["microservices_created"] >= 3
+                and self.phase_stats["containers_configured"] >= 2
+                and self.phase_stats["ci_cd_enhanced"] >= 2
+                and self.phase_stats["deployment_automated"] >= 2
+            ),
         }
 
         report_file = Path(f"roadmap_phase4_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📋 阶段4报告已保存: {report_file}")
         return report
+
 
 def main():
     """主函数"""
@@ -2170,6 +2178,7 @@ def main():
         print("建议检查失败的组件并手动处理。")
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

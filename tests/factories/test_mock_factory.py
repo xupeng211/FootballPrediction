@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, Mock
 
 from tests.factories.data_factory import DataFactory
@@ -168,9 +167,7 @@ class MockFactory:
         mock.cache = {}
 
         mock.get = Mock(side_effect=lambda key: mock.cache.get(key))
-        mock.set = Mock(
-            side_effect=lambda key, value, ttl=None: mock.cache.update({key: value})
-        )
+        mock.set = Mock(side_effect=lambda key, value, ttl=None: mock.cache.update({key: value}))
         mock.delete = Mock(side_effect=lambda key: mock.cache.pop(key, None))
         mock.clear = Mock(side_effect=lambda: mock.cache.clear())
         mock.exists = Mock(side_effect=lambda key: key in mock.cache)
@@ -203,15 +200,11 @@ class MockFactory:
         mock.handlers = {}
 
         mock.subscribe = Mock(
-            side_effect=lambda event, handler: mock.handlers.setdefault(
-                event, []
-            ).append(handler)
+            side_effect=lambda event, handler: mock.handlers.setdefault(event, []).append(handler)
         )
         mock.unsubscribe = Mock(
             side_effect=lambda event, handler: (
-                mock.handlers.get(event, []).remove(handler)
-                if event in mock.handlers
-                else None
+                mock.handlers.get(event, []).remove(handler) if event in mock.handlers else None
             )
         )
         mock.publish = Mock(side_effect=lambda event, data: mock._publish(event, data))
@@ -236,9 +229,7 @@ class MockFactory:
         mock.jobs = []
 
         mock.add_job = Mock(
-            side_effect=lambda func, trigger, **kwargs: mock._add_job(
-                func, trigger, kwargs
-            )
+            side_effect=lambda func, trigger, **kwargs: mock._add_job(func, trigger, kwargs)
         )
         mock.remove_job = Mock(side_effect=lambda job_id: mock._remove_job(job_id))
         mock.start = Mock()
@@ -276,13 +267,9 @@ class MockFactory:
         mock.delete = Mock(side_effect=lambda path: mock.files.pop(path, None))
         mock.exists = Mock(side_effect=lambda path: path in mock.files)
         mock.list_files = Mock(
-            side_effect=lambda path: [
-                k for k in mock.files.keys() if k.startswith(path)
-            ]
+            side_effect=lambda path: [k for k in mock.files.keys() if k.startswith(path)]
         )
-        mock.get_size = Mock(
-            side_effect=lambda path: len(str(mock.files.get(path, "")))
-        )
+        mock.get_size = Mock(side_effect=lambda path: len(str(mock.files.get(path, ""))))
 
         def _save(path, content):
             mock.files[path] = content
@@ -299,14 +286,10 @@ class MockFactory:
         mock.sent_emails = []
 
         mock.send_email = Mock(
-            side_effect=lambda to, subject, body, **kwargs: mock._send(
-                to, subject, body
-            )
+            side_effect=lambda to, subject, body, **kwargs: mock._send(to, subject, body)
         )
         mock.send_template = Mock(
-            side_effect=lambda to, template, data, **kwargs: mock._send_template(
-                to, template, data
-            )
+            side_effect=lambda to, template, data, **kwargs: mock._send_template(to, template, data)
         )
         mock.send_bulk = Mock(side_effect=lambda emails: mock._send_bulk(emails))
         mock.get_sent_count = Mock(return_value=lambda: len(mock.sent_emails))
@@ -331,9 +314,7 @@ class MockFactory:
         def _send_bulk(emails):
             results = []
             for email in emails:
-                _result = mock._send(
-                    email.get("to"), email.get("subject"), email.get("body")
-                )
+                _result = mock._send(email.get("to"), email.get("subject"), email.get("body"))
                 results.append(result)
             return results
 

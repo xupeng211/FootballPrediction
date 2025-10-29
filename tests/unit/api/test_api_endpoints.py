@@ -3,13 +3,9 @@
 解决API导入失败和端点不存在问题
 """
 
-import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
@@ -205,8 +201,7 @@ def create_mock_app():
         """列出球队"""
         return {
             "teams": [
-                {"id": i, "name": f"Team {i}", "league": "Premier League"}
-                for i in range(1, 6)
+                {"id": i, "name": f"Team {i}", "league": "Premier League"} for i in range(1, 6)
             ]
         }
 
@@ -287,8 +282,7 @@ def create_mock_app():
         return {
             "league_id": league_id,
             "standings": [
-                {"position": i, "team": f"Team {i}", "points": 20 - i}
-                for i in range(1, 6)
+                {"position": i, "team": f"Team {i}", "points": 20 - i} for i in range(1, 6)
             ],
         }
 
@@ -300,10 +294,7 @@ def create_mock_app():
     @app.post("/api/v1/auth/login")
     async def login(credentials: dict):
         """登录"""
-        if (
-            credentials.get("username") == "test"
-            and credentials.get("password") == "test"
-        ):
+        if credentials.get("username") == "test" and credentials.get("password") == "test":
             return {
                 "access_token": "mock_token_123",
                 "token_type": "bearer",
@@ -495,9 +486,7 @@ class TestPredictionEndpoints:
     def test_update_prediction(self, mock_get_service, client):
         """测试更新预测"""
         service = AsyncMock()
-        service.update_prediction = AsyncMock(
-            return_value={"id": 1, "status": "updated"}
-        )
+        service.update_prediction = AsyncMock(return_value={"id": 1, "status": "updated"})
         mock_get_service.return_value = service
 
         update_data = {"algorithm": "neural_network"}
@@ -1019,9 +1008,7 @@ class TestCaching:
 
         with patch("src.api.data.get_match_service") as mock_get:
             service = AsyncMock()
-            service.get_match = AsyncMock(
-                return_value={"id": 123, "data": "fresh_data"}
-            )
+            service.get_match = AsyncMock(return_value={"id": 123, "data": "fresh_data"})
             mock_get.return_value = service
 
             response = client.get("/api/v1/matches/123")

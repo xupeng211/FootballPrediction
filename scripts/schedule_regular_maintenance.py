@@ -11,21 +11,23 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
+
 # import crontab  # 改为使用内置方案
+
 
 class RegularMaintenanceScheduler:
     def __init__(self):
         self.schedule_config = {
-            'daily_health_check': '0 8 * * *',     # 每天早上8点
-            'weekly_cleanup': '0 6 * * 0',        # 每周日凌晨6点
-            'monthly_optimization': '0 5 1 * *',  # 每月1号凌晨5点
-            'quality_monitoring': '*/30 * * * *'  # 每30分钟
+            "daily_health_check": "0 8 * * *",  # 每天早上8点
+            "weekly_cleanup": "0 6 * * 0",  # 每周日凌晨6点
+            "monthly_optimization": "0 5 1 * *",  # 每月1号凌晨5点
+            "quality_monitoring": "*/30 * * * *",  # 每30分钟
         }
         self.monitoring_config = {
-            'enabled': True,
-            'alert_threshold': 70,
-            'dashboard_port': 8080,
-            'log_retention_days': 30
+            "enabled": True,
+            "alert_threshold": 70,
+            "dashboard_port": 8080,
+            "log_retention_days": 30,
         }
 
     def setup_cron_jobs(self):
@@ -60,7 +62,7 @@ WantedBy=multi-user.target
 
         service_file = Path("/tmp/football-prediction-maintenance.service")
         try:
-            with open(service_file, 'w') as f:
+            with open(service_file, "w") as f:
                 f.write(service_content)
             print(f"✅ 创建了systemd服务文件: {service_file}")
             print("💡 手动安装命令:")
@@ -257,7 +259,7 @@ WantedBy=multi-user.target
 </html>"""
 
         dashboard_file = dashboard_dir / "dashboard.html"
-        with open(dashboard_file, 'w', encoding='utf-8') as f:
+        with open(dashboard_file, "w", encoding="utf-8") as f:
             f.write(dashboard_html)
         print(f"✅ 创建监控面板: {dashboard_file}")
 
@@ -343,7 +345,7 @@ if __name__ == '__main__':
 """
 
         api_file = dashboard_dir / "monitoring_api.py"
-        with open(api_file, 'w', encoding='utf-8') as f:
+        with open(api_file, "w", encoding="utf-8") as f:
             f.write(monitoring_api)
 
         # 设置执行权限
@@ -380,7 +382,7 @@ python3 -m http.server $PORT
 """
 
         start_file = Path("start_monitoring.sh")
-        with open(start_file, 'w') as f:
+        with open(start_file, "w") as f:
             f.write(start_script)
 
         # 设置执行权限
@@ -388,10 +390,10 @@ python3 -m http.server $PORT
         print(f"✅ 创建启动脚本: {start_file}")
 
         return {
-            'dashboard_file': str(dashboard_file),
-            'api_file': str(api_file),
-            'start_script': str(start_file),
-            'port': self.monitoring_config['dashboard_port']
+            "dashboard_file": str(dashboard_file),
+            "api_file": str(api_file),
+            "start_script": str(start_file),
+            "port": self.monitoring_config["dashboard_port"],
         }
 
     def create_maintenance_scripts(self):
@@ -551,14 +553,11 @@ if __name__ == '__main__':
 """
 
         # 写入脚本文件
-        scripts = [
-            ('quick_health_check.py', quick_health),
-            ('auto_update.py', auto_update)
-        ]
+        scripts = [("quick_health_check.py", quick_health), ("auto_update.py", auto_update)]
 
         for filename, content in scripts:
             script_file = scripts_dir / filename
-            with open(script_file, 'w', encoding='utf-8') as f:
+            with open(script_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
             # 设置执行权限
@@ -581,49 +580,49 @@ if __name__ == '__main__':
                 ["python3", "monitoring/monitoring_api.py", "--json"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
                 json.loads(result.stdout)
-                test_results.append(('监控API', '✅ 正常'))
+                test_results.append(("监控API", "✅ 正常"))
                 print("  ✅ 监控API正常工作")
             else:
-                test_results.append(('监控API', f'❌ 错误: {result.stderr[:100]}'))
+                test_results.append(("监控API", f"❌ 错误: {result.stderr[:100]}"))
                 print("  ❌ 监控API失败")
         except Exception as e:
-            test_results.append(('监控API', f'❌ 异常: {e}'))
+            test_results.append(("监控API", f"❌ 异常: {e}"))
             print(f"  ❌ 监控API异常: {e}")
 
         # 测试2: 检查监控面板文件
         dashboard_file = Path("monitoring/dashboard.html")
         if dashboard_file.exists():
-            test_results.append(('监控面板', '✅ 文件存在'))
+            test_results.append(("监控面板", "✅ 文件存在"))
             print("  ✅ 监控面板文件存在")
         else:
-            test_results.append(('监控面板', '❌ 文件缺失'))
+            test_results.append(("监控面板", "❌ 文件缺失"))
             print("  ❌ 监控面板文件缺失")
 
         # 测试3: 验证维护脚本
         health_script = Path("scripts/maintenance/quick_health_check.py")
         if health_script.exists() and os.access(health_script, os.X_OK):
-            test_results.append(('健康检查脚本', '✅ 可执行'))
+            test_results.append(("健康检查脚本", "✅ 可执行"))
             print("  ✅ 健康检查脚本可执行")
         else:
-            test_results.append(('健康检查脚本', '❌ 不可用'))
+            test_results.append(("健康检查脚本", "❌ 不可用"))
             print("  ❌ 健康检查脚本不可用")
 
         # 测试4: 检查启动脚本
         start_script = Path("start_monitoring.sh")
         if start_script.exists() and os.access(start_script, os.X_OK):
-            test_results.append(('启动脚本', '✅ 可执行'))
+            test_results.append(("启动脚本", "✅ 可执行"))
             print("  ✅ 启动脚本可执行")
         else:
-            test_results.append(('启动脚本', '❌ 不可用'))
+            test_results.append(("启动脚本", "❌ 不可用"))
             print("  ❌ 启动脚本不可用")
 
         # 计算成功率
-        passed = len([r for r in test_results if '✅' in r[1]])
+        passed = len([r for r in test_results if "✅" in r[1]])
         total = len(test_results)
         success_rate = (passed / total) * 100
 
@@ -639,29 +638,29 @@ if __name__ == '__main__':
         print("=" * 50)
 
         report = {
-            'setup_time': datetime.now().isoformat(),
-            'scheduler_version': '1.0.0',
-            'components': {
-                'cron_jobs': self.schedule_config,
-                'monitoring_dashboard': {
-                    'enabled': self.monitoring_config['enabled'],
-                    'port': self.monitoring_config['dashboard_port'],
-                    'alert_threshold': self.monitoring_config['alert_threshold']
+            "setup_time": datetime.now().isoformat(),
+            "scheduler_version": "1.0.0",
+            "components": {
+                "cron_jobs": self.schedule_config,
+                "monitoring_dashboard": {
+                    "enabled": self.monitoring_config["enabled"],
+                    "port": self.monitoring_config["dashboard_port"],
+                    "alert_threshold": self.monitoring_config["alert_threshold"],
                 },
-                'maintenance_scripts': 2,
-                'log_retention_days': self.monitoring_config['log_retention_days']
+                "maintenance_scripts": 2,
+                "log_retention_days": self.monitoring_config["log_retention_days"],
             },
-            'setup_status': 'completed',
-            'next_actions': [
-                '运行 ./start_monitoring.sh 启动监控面板',
-                '检查 crontab -l 验证定时任务',
-                '监控 http://localhost:8080/monitoring/dashboard.html'
-            ]
+            "setup_status": "completed",
+            "next_actions": [
+                "运行 ./start_monitoring.sh 启动监控面板",
+                "检查 crontab -l 验证定时任务",
+                "监控 http://localhost:8080/monitoring/dashboard.html",
+            ],
         }
 
         # 保存报告
         report_file = Path("maintenance_scheduler_setup_report.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"✅ 设置报告已保存: {report_file}")
@@ -675,7 +674,9 @@ if __name__ == '__main__':
 
         print("\\n📊 监控面板:")
         print("  启动命令: ./start_monitoring.sh")
-        print(f"  访问地址: http://localhost:{self.monitoring_config['dashboard_port']}/monitoring/dashboard.html")
+        print(
+            f"  访问地址: http://localhost:{self.monitoring_config['dashboard_port']}/monitoring/dashboard.html"
+        )
         print("  API接口: python3 monitoring/monitoring_api.py --json")
 
         print("\\n🔧 维护脚本:")
@@ -722,17 +723,19 @@ if __name__ == '__main__':
         print(f"🧪 系统测试: {'通过' if test_success else '需要调试'}")
 
         return {
-            'success': cron_success and test_success,
-            'duration': duration,
-            'dashboard_info': dashboard_info,
-            'scripts_count': scripts_count,
-            'report': report
+            "success": cron_success and test_success,
+            "duration": duration,
+            "dashboard_info": dashboard_info,
+            "scripts_count": scripts_count,
+            "report": report,
         }
+
 
 def main():
     """主函数"""
     scheduler = RegularMaintenanceScheduler()
     return scheduler.setup_regular_maintenance()
+
 
 if __name__ == "__main__":
     success = main()

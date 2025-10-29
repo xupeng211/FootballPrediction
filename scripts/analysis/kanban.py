@@ -47,9 +47,7 @@ overall = cov["totals"]["percent_covered"]
 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # 3. 基线 & 改进计划
-base_name = (
-    f"COVERAGE_BASELINE_P{phase}_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.md"
-)
+base_name = f"COVERAGE_BASELINE_P{phase}_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.md"
 baseline = REPORT_DIR / base_name
 bl = [f"# 📊 Coverage Baseline (Phase {phase}, {ts})", ""]
 bl.append(f"- 当前总覆盖率：**{overall:.1f}%**")

@@ -317,9 +317,7 @@ def main():
 """
 
     os.makedirs("docs/_reports", exist_ok=True)
-    with open(
-        "docs/_reports/PHASE6_2_FINAL_OPTIMIZATION.md", "w", encoding="utf-8"
-    ) as f:
+    with open("docs/_reports/PHASE6_2_FINAL_OPTIMIZATION.md", "w", encoding="utf-8") as f:
         f.write(report)
 
     print("\n📄 最终报告已保存: docs/_reports/PHASE6_2_FINAL_OPTIMIZATION.md")

@@ -303,9 +303,7 @@ class Phase4AMockFactory:
     def create_mock_load_balancer():
         """创建负载均衡器 Mock"""
         balancer = Mock()
-        balancer.select_service = AsyncMock(
-            return_value={"service": "service_1", "load": 0.3}
-        )
+        balancer.select_service = AsyncMock(return_value={"service": "service_1", "load": 0.3})
         balancer.get_services = AsyncMock(
             return_value=[
                 {"name": "service_1", "healthy": True, "load": 0.3},
@@ -328,12 +326,8 @@ class Phase4AMockFactory:
         service.execute_query = AsyncMock(
             return_value={"success": True, "rows": [{"id": 1}], "execution_time": 0.002}
         )
-        service.execute_batch = AsyncMock(
-            return_value={"success": True, "results": [{"rows": []}]}
-        )
-        service.health_check = AsyncMock(
-            return_value={"healthy": True, "active_connections": 5}
-        )
+        service.execute_batch = AsyncMock(return_value={"success": True, "results": [{"rows": []}]})
+        service.health_check = AsyncMock(return_value={"healthy": True, "active_connections": 5})
         return service
 
     @staticmethod
@@ -343,9 +337,7 @@ class Phase4AMockFactory:
         service.get = AsyncMock(return_value={"success": True, "value": "cached_data"})
         service.set = AsyncMock(return_value={"success": True, "key": "test_key"})
         service.delete = AsyncMock(return_value={"success": True, "deleted": True})
-        service.health_check = AsyncMock(
-            return_value={"healthy": True, "memory_usage": "45%"}
-        )
+        service.health_check = AsyncMock(return_value={"healthy": True, "memory_usage": "45%"})
         return service
 
     @staticmethod
@@ -358,12 +350,8 @@ class Phase4AMockFactory:
                 "prediction": {"home_win": 0.6, "draw": 0.3, "away_win": 0.1},
             }
         )
-        service.get_prediction_history = AsyncMock(
-            return_value={"predictions": [], "total": 0}
-        )
-        service.health_check = AsyncMock(
-            return_value={"healthy": True, "models_loaded": 5}
-        )
+        service.get_prediction_history = AsyncMock(return_value={"predictions": [], "total": 0})
+        service.health_check = AsyncMock(return_value={"healthy": True, "models_loaded": 5})
         return service
 
     @staticmethod
@@ -378,15 +366,9 @@ class Phase4AMockFactory:
                 "expires_in": 3600,
             }
         )
-        service.logout = AsyncMock(
-            return_value={"success": True, "message": "Session invalidated"}
-        )
-        service.authenticate = AsyncMock(
-            return_value={"success": True, "user_id": "mock_user"}
-        )
-        service.validate_token = AsyncMock(
-            return_value={"valid": True, "user_id": "mock_user"}
-        )
+        service.logout = AsyncMock(return_value={"success": True, "message": "Session invalidated"})
+        service.authenticate = AsyncMock(return_value={"success": True, "user_id": "mock_user"})
+        service.validate_token = AsyncMock(return_value={"valid": True, "user_id": "mock_user"})
         return service
 
     @staticmethod
@@ -396,12 +378,8 @@ class Phase4AMockFactory:
         service.send_notification = AsyncMock(
             return_value={"success": True, "notification_id": "notif_123"}
         )
-        service.get_notifications = AsyncMock(
-            return_value={"notifications": [], "unread_count": 0}
-        )
-        service.mark_as_read = AsyncMock(
-            return_value={"success": True, "marked_count": 1}
-        )
+        service.get_notifications = AsyncMock(return_value={"notifications": [], "unread_count": 0})
+        service.mark_as_read = AsyncMock(return_value={"success": True, "marked_count": 1})
         return service
 
     @staticmethod
@@ -417,9 +395,7 @@ class Phase4AMockFactory:
                 "response_time": 0.045,
             }
         )
-        service.get_health_status = AsyncMock(
-            return_value={"status": "healthy", "checks": []}
-        )
+        service.get_health_status = AsyncMock(return_value={"status": "healthy", "checks": []})
         service.get_logs = AsyncMock(return_value={"logs": [], "total": 0})
         return service
 
@@ -430,12 +406,8 @@ class Phase4AMockFactory:
         service.collect_match_data = AsyncMock(
             return_value={"success": True, "matches_collected": 10}
         )
-        service.collect_team_stats = AsyncMock(
-            return_value={"success": True, "teams_updated": 20}
-        )
-        service.process_live_data = AsyncMock(
-            return_value={"success": True, "events_processed": 5}
-        )
+        service.collect_team_stats = AsyncMock(return_value={"success": True, "teams_updated": 20})
+        service.process_live_data = AsyncMock(return_value={"success": True, "events_processed": 5})
         return service
 
     @staticmethod
@@ -446,23 +418,17 @@ class Phase4AMockFactory:
             return_value={"success": True, "service_id": "service_123"}
         )
         registry.discover_service = AsyncMock(
-            return_value={
-                "service": {"name": "test_service", "host": "localhost", "port": 8080}
-            }
+            return_value={"service": {"name": "test_service", "host": "localhost", "port": 8080}}
         )
         registry.get_all_services = AsyncMock(return_value={"services": []})
-        registry.health_check = AsyncMock(
-            return_value={"healthy": True, "registered_services": 15}
-        )
+        registry.health_check = AsyncMock(return_value={"healthy": True, "registered_services": 15})
         return registry
 
     @staticmethod
     def create_mock_circuit_breaker():
         """创建熔断器 Mock"""
         circuit_breaker = Mock()
-        circuit_breaker.call = AsyncMock(
-            return_value={"success": True, "data": "mock_response"}
-        )
+        circuit_breaker.call = AsyncMock(return_value={"success": True, "data": "mock_response"})
         circuit_breaker.get_state = Mock(return_value="CLOSED")
         circuit_breaker.is_open = Mock(return_value=False)
         return circuit_breaker
@@ -480,12 +446,8 @@ class Phase4AMockFactory:
     def create_mock_message_queue():
         """创建消息队列 Mock"""
         queue = Mock()
-        queue.publish = AsyncMock(
-            return_value={"success": True, "message_id": "msg_123"}
-        )
-        queue.consume = AsyncMock(
-            return_value={"message": {"type": "test", "data": {}}}
-        )
+        queue.publish = AsyncMock(return_value={"success": True, "message_id": "msg_123"})
+        queue.consume = AsyncMock(return_value={"message": {"type": "test", "data": {}}})
         queue.get_queue_size = Mock(return_value=10)
         queue.health_check = AsyncMock(return_value={"healthy": True, "consumers": 3})
         return queue
@@ -498,9 +460,7 @@ class Phase4AMockFactory:
         service.set = AsyncMock(return_value={"success": True, "key": "test_key"})
         service.delete = AsyncMock(return_value={"success": True, "key": "test_key"})
         service.clear = AsyncMock(return_value={"success": True, "cleared_keys": 10})
-        service.health_check = AsyncMock(
-            return_value={"healthy": True, "cache_size": "1MB"}
-        )
+        service.health_check = AsyncMock(return_value={"healthy": True, "cache_size": "1MB"})
         return service
 
     @staticmethod
@@ -509,15 +469,9 @@ class Phase4AMockFactory:
         service = Mock()
         service.query = AsyncMock(return_value={"success": True, "rows": 5, "data": []})
         service.execute = AsyncMock(return_value={"success": True, "affected_rows": 1})
-        service.transaction = AsyncMock(
-            return_value={"success": True, "transaction_id": "tx_123"}
-        )
-        service.get_connection_info = Mock(
-            return_value={"host": "localhost", "port": 5432}
-        )
-        service.health_check = AsyncMock(
-            return_value={"healthy": True, "connections": 10}
-        )
+        service.transaction = AsyncMock(return_value={"success": True, "transaction_id": "tx_123"})
+        service.get_connection_info = Mock(return_value={"host": "localhost", "port": 5432})
+        service.health_check = AsyncMock(return_value={"healthy": True, "connections": 10})
         return service
 
     @staticmethod
@@ -531,9 +485,7 @@ class Phase4AMockFactory:
         client.delete = AsyncMock(return_value={"success": True, "key": "test_key"})
         client.exists = AsyncMock(return_value=True)
         client.ping = AsyncMock(return_value={"status": "PONG"})
-        client.info = Mock(
-            return_value={"redis_version": "6.2.0", "used_memory": "1MB"}
-        )
+        client.info = Mock(return_value={"redis_version": "6.2.0", "used_memory": "1MB"})
         return client
 
     @staticmethod

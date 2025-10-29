@@ -123,17 +123,13 @@ def main() -> None:
     slow_coverage = parse_coverage_from_text(slow_text)
     integration_coverage = parse_coverage_from_text(integration_text)
 
-    total_matches = re.findall(
-        r"TOTAL\s+\d+\s+\d+(?:\s+\d+)?\s+([0-9]+)%", coverage_text
-    )
+    total_matches = re.findall(r"TOTAL\s+\d+\s+\d+(?:\s+\d+)?\s+([0-9]+)%", coverage_text)
     if total_matches:
         overall_coverage = float(total_matches[-1])
     else:
         print("⚠️ Coverage TOTAL not found")
         existing = [
-            c
-            for c in (fast_coverage, slow_coverage, integration_coverage)
-            if c is not None
+            c for c in (fast_coverage, slow_coverage, integration_coverage) if c is not None
         ]
         overall_coverage = existing[-1] if existing else 0.0
 
@@ -141,9 +137,7 @@ def main() -> None:
         passed=fast_stats.passed + slow_stats.passed + integration_stats.passed,
         failed=fast_stats.failed + slow_stats.failed + integration_stats.failed,
         skipped=fast_stats.skipped + slow_stats.skipped + integration_stats.skipped,
-        deselected=fast_stats.deselected
-        + slow_stats.deselected
-        + integration_stats.deselected,
+        deselected=fast_stats.deselected + slow_stats.deselected + integration_stats.deselected,
         xfailed=fast_stats.xfailed + slow_stats.xfailed + integration_stats.xfailed,
         xpassed=fast_stats.xpassed + slow_stats.xpassed + integration_stats.xpassed,
         duration=fast_stats.duration + slow_stats.duration + integration_stats.duration,
@@ -162,9 +156,7 @@ def main() -> None:
     display_integration_cov = (
         integration_coverage if integration_coverage is not None else overall_coverage
     )
-    base_fast_cov = (
-        display_fast_cov if display_fast_cov is not None else overall_coverage
-    )
+    base_fast_cov = display_fast_cov if display_fast_cov is not None else overall_coverage
 
     overall_cov_display = overall_coverage if overall_coverage is not None else 0.0
 
@@ -214,16 +206,10 @@ def main() -> None:
         return lines
 
     detail_lines = ["### 详细耗时", ""]
+    detail_lines.extend(format_slowest_section("Fast 最慢用例 Top 10", fast_stats.slowest or []))
+    detail_lines.extend(format_slowest_section("Slow 最慢用例 Top 10", slow_stats.slowest or []))
     detail_lines.extend(
-        format_slowest_section("Fast 最慢用例 Top 10", fast_stats.slowest or [])
-    )
-    detail_lines.extend(
-        format_slowest_section("Slow 最慢用例 Top 10", slow_stats.slowest or [])
-    )
-    detail_lines.extend(
-        format_slowest_section(
-            "Integration 最慢用例 Top 10", integration_stats.slowest or []
-        )
+        format_slowest_section("Integration 最慢用例 Top 10", integration_stats.slowest or [])
     )
 
     coverage_lines = [
@@ -237,9 +223,7 @@ def main() -> None:
 
     base_fast_cov = display_fast_cov
     coverage_gain = overall_cov_display - base_fast_cov
-    duration_diff = (
-        slow_stats.duration + integration_stats.duration
-    ) - fast_stats.duration
+    duration_diff = (slow_stats.duration + integration_stats.duration) - fast_stats.duration
 
     fast_ok = fast_stats.duration <= 120
     coverage_ok = overall_cov_display >= 70
@@ -252,9 +236,7 @@ def main() -> None:
         "- **主要耗时模块**:",
     ]
 
-    combined_slowest = (slow_stats.slowest or [])[:5] + (
-        integration_stats.slowest or []
-    )[:5]
+    combined_slowest = (slow_stats.slowest or [])[:5] + (integration_stats.slowest or [])[:5]
     if not combined_slowest:
         combined_slowest = fast_stats.slowest or []
     analysis_lines.extend(f"  - {item}" for item in combined_slowest[:5])
@@ -349,11 +331,7 @@ def load_existing_history() -> List[dict]:
     if "## 历史趋势" not in content:
         return []
     history_section = content.split("## 历史趋势", 1)[1]
-    lines = [
-        line.strip()
-        for line in history_section.splitlines()
-        if line.strip().startswith("|")
-    ]
+    lines = [line.strip() for line in history_section.splitlines() if line.strip().startswith("|")]
     rows: List[dict] = []
     for line in lines[2:]:  # Skip header
         parts = [part.strip() for part in line.strip("|").split("|")]

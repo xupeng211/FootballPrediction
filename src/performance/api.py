@@ -264,7 +264,8 @@ async def get_performance_report(
             content=report_content,
             media_type=media_type,
             headers={
-                "Content-Disposition": f"attachment; filename=performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
+                "Content-Disposition": f"attachment; filename =
+    performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
             },
         )
 

@@ -23,9 +23,7 @@
 
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -153,12 +151,8 @@ class MockPredictionStrategyFactory:
     def __init__(self):
         self._strategies = {
             "neural_network": MockPredictionStrategy("neural_network", (0.8, 0.95)),
-            "ensemble_predictor": MockPredictionStrategy(
-                "ensemble_predictor", (0.7, 0.9)
-            ),
-            "statistical_model": MockPredictionStrategy(
-                "statistical_model", (0.6, 0.85)
-            ),
+            "ensemble_predictor": MockPredictionStrategy("ensemble_predictor", (0.7, 0.9)),
+            "statistical_model": MockPredictionStrategy("statistical_model", (0.6, 0.85)),
             "ml_classifier": MockPredictionStrategy("ml_classifier", (0.75, 0.92)),
         }
 
@@ -279,14 +273,9 @@ class TestStrategyPredictionCore:
 
                             # 验证初始化
                             assert service._strategy_factory is mock_strategy_factory
-                            assert (
-                                service._prediction_domain_service
-                                is mock_domain_service
-                            )
+                            assert service._prediction_domain_service is mock_domain_service
                             assert service._match_repository is mock_match_repo
-                            assert (
-                                service._prediction_repository is mock_prediction_repo
-                            )
+                            assert service._prediction_repository is mock_prediction_repo
                             assert service._default_strategy == "ensemble_predictor"
 
     def test_service_initialization_failure(self) -> None:
@@ -312,9 +301,7 @@ class TestStrategyPredictionCore:
 
             # Mock策略工厂
             mock_neural_strategy = MockPredictionStrategy("neural_network", (0.8, 0.95))
-            mock_ensemble_strategy = MockPredictionStrategy(
-                "ensemble_predictor", (0.7, 0.9)
-            )
+            mock_ensemble_strategy = MockPredictionStrategy("ensemble_predictor", (0.7, 0.9))
 
             mock_factory = Mock(spec=PredictionStrategyFactory)
             mock_factory.get_strategy.side_effect = lambda name: {
@@ -382,15 +369,11 @@ class TestStrategyPredictionCore:
             service._match_repository = Mock(spec=MatchRepository)
             service._match_repository.get_by_id.return_value = mock_match
             service._get_team_info = AsyncMock(
-                side_effect=lambda team_id: (
-                    mock_home_team if team_id == 1 else mock_away_team
-                )
+                side_effect=lambda team_id: (mock_home_team if team_id == 1 else mock_away_team)
             )
             service._prediction_repository = Mock(spec=PredictionRepository)
             service._get_or_create_strategy = AsyncMock(return_value=mock_strategy)
-            service._prepare_prediction_input = AsyncMock(
-                return_value=MockPredictionInput()
-            )
+            service._prepare_prediction_input = AsyncMock(return_value=MockPredictionInput())
             service._strategy_factory = Mock(spec=PredictionStrategyFactory)
             service._strategy_factory.get_strategy.return_value = mock_strategy
             service._prediction_domain_service = mock_domain_service
@@ -478,18 +461,14 @@ class TestStrategyPredictionCore:
 
             with patch("asyncio.sleep"):
                 # 执行批量预测
-                results = await service.batch_predict(
-                    match_ids=[101, 102, 103], user_id=1
-                )
+                results = await service.batch_predict(match_ids=[101, 102, 103], user_id=1)
 
             # 验证批量预测结果
             assert len(results) == 3
             assert all(result is not None for result in results)
 
             # 验证调用
-            service._match_repository.get_by_ids.assert_called_once_with(
-                [101, 102, 103]
-            )
+            service._match_repository.get_by_ids.assert_called_once_with([101, 102, 103])
             mock_strategy.batch_predict.assert_called_once()
             mock_domain_service.create_many.assert_called_once()
             service._prediction_repository.create_many.assert_called_once()
@@ -529,9 +508,7 @@ class TestStrategyPredictionCore:
 
             service._match_repository = Mock(spec=MatchRepository)
             service._match_repository.get_by_id.return_value = mock_match
-            service._get_team_info = AsyncMock(
-                side_effect=[mock_home_team, mock_away_team]
-            )
+            service._get_team_info = AsyncMock(side_effect=[mock_home_team, mock_away_team])
 
             with patch(
                 "src.services.strategy_prediction_service.PredictionContext",
@@ -592,13 +569,9 @@ class TestStrategyPredictionCore:
             )
 
             # 创建高信心度策略
-            high_confidence_strategy = MockPredictionStrategy(
-                "high_confidence", (0.9, 0.98)
-            )
+            high_confidence_strategy = MockPredictionStrategy("high_confidence", (0.9, 0.98))
 
-            service._get_or_create_strategy = AsyncMock(
-                return_value=high_confidence_strategy
-            )
+            service._get_or_create_strategy = AsyncMock(return_value=high_confidence_strategy)
 
             # 验证策略信心度属性
             strategy = service._get_or_create_strategy("high_confidence")
@@ -623,9 +596,7 @@ class TestStrategyPredictionCore:
 
             with patch.object(service, "_strategy_factory", mock_factory):
                 with pytest.raises(ValueError, match="策略信心度范围无效"):
-                    service._validate_strategy_confidence(
-                        MockPredictionStrategy("low", (0.3, 0.4))
-                    )
+                    service._validate_strategy_confidence(MockPredictionStrategy("low", (0.3, 0.4)))
 
     def test_prediction_result_validation_success(self) -> None:
         """✅ 成功用例：预测结果验证成功"""
@@ -762,9 +733,7 @@ class TestStrategyPredictionCore:
             failing_strategy.predict.side_effect = [Exception("Strategy error")]
 
             recovery_strategy = MockPredictionStrategy("recovery")
-            recovery_strategy.predict.return_value = MockPredictionOutput(
-                1, 1, "draw", 0.6
-            )
+            recovery_strategy.predict.return_value = MockPredictionOutput(1, 1, "draw", 0.6)
 
             service._get_or_create_strategy = AsyncMock()
             service._get_or_create_strategy.side_effect = [

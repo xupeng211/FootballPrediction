@@ -1,12 +1,7 @@
-from unittest.mock import Mock, patch
-
 """
 全面API测试 v3 - 覆盖所有已实现的端点
 Comprehensive API Tests v3 - Cover All Implemented Endpoints
 """
-
-import json
-from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -58,11 +53,7 @@ class TestComprehensiveAPI:
         ]
 
         for endpoint, expected_status in endpoints:
-            response = (
-                client.get(endpoint)
-                if expected_status != 201
-                else client.post(endpoint)
-            )
+            response = client.get(endpoint) if expected_status != 201 else client.post(endpoint)
             # 期望状态码或422（验证错误）
             assert response.status_code in [
                 expected_status,
@@ -228,9 +219,7 @@ class TestComprehensiveAPI:
 
         # 3. 验证预测
         actual_result = retrieved["predicted_outcome"]
-        response = client.post(
-            f"/predictions/{match_id}/verify?actual_result={actual_result}"
-        )
+        response = client.post(f"/predictions/{match_id}/verify?actual_result={actual_result}")
         assert response.status_code == 200
         verification = response.json()
         assert "is_correct" in verification
@@ -288,9 +277,7 @@ class TestComprehensiveAPI:
 
         # 概率之和应该等于1
         prob_sum = (
-            prediction["home_win_prob"]
-            + prediction["draw_prob"]
-            + prediction["away_win_prob"]
+            prediction["home_win_prob"] + prediction["draw_prob"] + prediction["away_win_prob"]
         )
         assert abs(prob_sum - 1.0) < 0.001
 

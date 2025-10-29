@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 22 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 API特征管理测试

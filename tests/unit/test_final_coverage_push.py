@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
 
 """最终覆盖率提升测试 - 冲刺30%目标"""
 
@@ -131,11 +130,7 @@ class TestUtilsExtra:
             try:
                 from utils import func_name
 
-                func = (
-                    globals()[func_name]
-                    if func_name in globals()
-                    else locals()[func_name]
-                )
+                func = globals()[func_name] if func_name in globals() else locals()[func_name]
                 assert callable(func)
             except ImportError:
                 # 如果导入失败，记录但不失败

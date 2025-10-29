@@ -71,9 +71,7 @@ def generate_coverage_report(coverage_data, output_file):
         .strip(),
         "coverage": coverage_data,
         "threshold": {"current": 40, "target": 80},
-        "status": "PASS"
-        if coverage_data and coverage_data["line_coverage"] >= 40
-        else "FAIL",
+        "status": "PASS" if coverage_data and coverage_data["line_coverage"] >= 40 else "FAIL",
     }
 
     with open(output_file, "w") as f:
@@ -186,9 +184,7 @@ def main():
             total_covered = total_lines - total_missing
             module_cov = (total_covered / total_lines * 100) if total_lines > 0 else 0
 
-            print(
-                f"{module:15} {module_cov:6.2f}% ({total_covered:4}/{total_lines:4} 行)"
-            )
+            print(f"{module:15} {module_cov:6.2f}% ({total_covered:4}/{total_lines:4} 行)")
 
     print("\n" + "=" * 60)
 

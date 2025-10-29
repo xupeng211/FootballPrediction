@@ -348,9 +348,7 @@ class ServiceLifecycleManager:
         """获取正在运行的服务"""
         with self._lock:
             return [
-                name
-                for name, info in self._services.items()
-                if info.state == ServiceState.RUNNING
+                name for name, info in self._services.items() if info.state == ServiceState.RUNNING
             ]
 
     async def health_check(self, name: Optional[str] = None) -> Dict[str, bool]:
@@ -423,9 +421,7 @@ class ServiceLifecycleManager:
 
                 # 等待下次检查
                 try:
-                    await asyncio.wait_for(
-                        self._shutdown_event.wait(), timeout=interval
-                    )
+                    await asyncio.wait_for(self._shutdown_event.wait(), timeout=interval)
                     break  # 收到停止信号
                 except asyncio.TimeoutError:
                     continue  # 继续循环
@@ -528,9 +524,7 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
 
 
 # 生命周期装饰器
-def lifecycle_service(
-    name: Optional[str] = None, dependencies: Optional[List[str]] = None
-):
+def lifecycle_service(name: Optional[str] = None, dependencies: Optional[List[str]] = None):
     """服务生命周期装饰器"""
 
     def decorator(cls):

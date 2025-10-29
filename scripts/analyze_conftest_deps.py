@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def analyze_conftest_dependencies():
     """分析conftest.py的依赖链"""
     print("🔍 分析conftest.py依赖链")
@@ -19,13 +20,13 @@ def analyze_conftest_dependencies():
         return []
 
     try:
-        with open(conftest_path, 'r', encoding='utf-8') as f:
+        with open(conftest_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         imports = []
         for i, line in enumerate(lines, 1):
             line = line.strip()
-            if line.startswith('from ') or line.startswith('import '):
+            if line.startswith("from ") or line.startswith("import "):
                 imports.append((i, line))
 
         print(f"发现 {len(imports)} 个导入语句:")
@@ -40,6 +41,7 @@ def analyze_conftest_dependencies():
     except Exception as e:
         print(f"❌ 分析conftest.py失败: {e}")
         return []
+
 
 def identify_problematic_imports():
     """识别有问题的导入"""
@@ -58,7 +60,7 @@ def identify_problematic_imports():
         return []
 
     try:
-        with open(conftest_path, 'r', encoding='utf-8') as f:
+        with open(conftest_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         problematic = []
@@ -75,6 +77,7 @@ def identify_problematic_imports():
     except Exception as e:
         print(f"❌ 识别问题导入失败: {e}")
         return []
+
 
 def create_simplified_conftest():
     """创建简化的conftest.py"""
@@ -252,11 +255,12 @@ def global_cleanup():
         # 备份原文件
         if original_path.exists():
             import shutil
+
             shutil.copy2(original_path, backup_path)
             print(f"✅ 原conftest.py已备份到: {backup_path}")
 
         # 写入简化版本
-        with open(original_path, 'w', encoding='utf-8') as f:
+        with open(original_path, "w", encoding="utf-8") as f:
             f.write(simplified_conftest)
 
         print("✅ 简化版conftest.py已创建")
@@ -265,6 +269,7 @@ def global_cleanup():
     except Exception as e:
         print(f"❌ 创建简化版conftest.py失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -295,6 +300,7 @@ def main():
     else:
         print("\\n⚠️ 需要手动处理一些问题")
         return False
+
 
 if __name__ == "__main__":
     success = main()

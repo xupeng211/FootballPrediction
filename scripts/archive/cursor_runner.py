@@ -127,9 +127,7 @@ class CursorClosedLoopRunner:
                         "python_files": context.get("project_stats", {}).get(
                             "total_python_files", 0
                         ),
-                        "test_files": context.get("project_stats", {}).get(
-                            "total_test_files", 0
-                        ),
+                        "test_files": context.get("project_stats", {}).get("total_test_files", 0),
                         "lines_of_code": context.get("project_stats", {}).get(
                             "total_lines_of_code", 0
                         ),
@@ -188,9 +186,7 @@ class CursorClosedLoopRunner:
             task_words = self.task_description.split()
             complexity_indicators = ["模块", "系统", "接口", "数据库", "API", "服务"]
 
-            complexity_score = sum(
-                1 for word in task_words if word in complexity_indicators
-            )
+            complexity_score = sum(1 for word in task_words if word in complexity_indicators)
 
             # 根据复杂度评估建议的子任务
             if complexity_score >= 3:
@@ -321,9 +317,7 @@ class CursorClosedLoopRunner:
             results = checker.run_all_checks()
 
             all_passed = all(result["success"] for result in results.values())
-            failed_checks = [
-                result["name"] for result in results.values() if not result["success"]
-            ]
+            failed_checks = [result["name"] for result in results.values() if not result["success"]]
 
             if all_passed:
                 return (
@@ -361,9 +355,7 @@ class CursorClosedLoopRunner:
 
         return True
 
-    def save_execution_log(
-        self, output_file: str = "logs/cursor_execution.json"
-    ) -> None:
+    def save_execution_log(self, output_file: str = "logs/cursor_execution.json") -> None:
         """保存执行日志"""
         output_path = self.project_root / output_file
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -383,9 +375,7 @@ class CursorClosedLoopRunner:
 
         for phase_id, phase_data in self.execution_log["phases"].items():
             status = "✅" if phase_data["success"] else "❌"
-            self.logger.info(
-                f"   {status} {phase_data['name']}: {phase_data['message']}"
-            )
+            self.logger.info(f"   {status} {phase_data['name']}: {phase_data['message']}")
 
 
 def main():
@@ -395,9 +385,7 @@ def main():
     parser = argparse.ArgumentParser(description="Cursor闭环执行器")
     parser.add_argument("--task", default="", help="任务描述")
     parser.add_argument("--project-root", default=".", help="项目根目录")
-    parser.add_argument(
-        "--output", default="logs/cursor_execution.json", help="执行日志输出文件"
-    )
+    parser.add_argument("--output", default="logs/cursor_execution.json", help="执行日志输出文件")
     parser.add_argument("--summary", action="store_true", help="显示执行摘要")
 
     args = parser.parse_args()

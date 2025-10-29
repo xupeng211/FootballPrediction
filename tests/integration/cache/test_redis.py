@@ -5,8 +5,6 @@ Redis 缓存集成测试
 
 import asyncio
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
 
 import pytest
 

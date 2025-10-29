@@ -6,7 +6,6 @@ Tests for Data Validator
 """
 
 from datetime import date, datetime
-from typing import Any, Dict, List
 
 import pytest
 
@@ -177,9 +176,7 @@ class TestDataValidator:
         """测试：邮箱验证（与is_valid_email对比）"""
         # 两个方法应该返回相同的结果
         email = "test@example.com"
-        assert self.validator.validate_email(email) == self.validator.is_valid_email(
-            email
-        )
+        assert self.validator.validate_email(email) == self.validator.is_valid_email(email)
 
     # ==================== 电话验证测试 ====================
 

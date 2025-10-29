@@ -2,12 +2,10 @@
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.core import config
-from src.core.config import Config, get_config
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
@@ -113,8 +111,6 @@ class TestConfigModule:
         """测试从文件加载配置"""
         # Mock测试
         with patch("builtins.open", create=True) as mock_open:
-            mock_open.return_value.__enter__.return_value.read.return_value = (
-                '{"test": "value"}'
-            )
+            mock_open.return_value.__enter__.return_value.read.return_value = '{"test": "value"}'
             _config = get_config()
             assert config is not None

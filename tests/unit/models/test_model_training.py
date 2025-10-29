@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 模型训练模块测试
 Model Training Module Tests
@@ -7,8 +5,6 @@ Model Training Module Tests
 测试src/models/model_training.py中定义的模型训练功能，专注于实现100%覆盖率。
 Tests model training functionality defined in src/models/model_training.py, focused on achieving 100% coverage.
 """
-
-import sys
 
 import pytest
 
@@ -28,9 +24,7 @@ except ImportError:
     MODEL_TRAINING_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 @pytest.mark.unit
 class TestBaselineModelTrainer:
     """BaselineModelTrainer测试"""
@@ -71,9 +65,7 @@ class TestBaselineModelTrainer:
 
     def test_baseline_model_trainer_instantiation_positional_args(self):
         """测试BaselineModelTrainer位置参数实例化"""
-        trainer = BaselineModelTrainer(
-            "arg1", "arg2", mlflow_tracking_uri="http://test:5000"
-        )
+        trainer = BaselineModelTrainer("arg1", "arg2", mlflow_tracking_uri="http://test:5000")
 
         assert trainer.mlflow_tracking_uri == "http://test:5000"
         assert trainer.config == {}
@@ -155,9 +147,7 @@ class TestBaselineModelTrainer:
         assert eval_result is None
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 class TestDependencyChecks:
     """依赖检查测试"""
 
@@ -241,9 +231,7 @@ class TestDependencyChecks:
         assert isinstance(versions, list)
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 class TestMlflowMock:
     """MLflow Mock对象测试（当MLflow未安装时）"""
 
@@ -286,9 +274,7 @@ class TestMlflowMock:
         mlflow.sklearn.log_model(Mock(), "mock_model")
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 class TestMlflowClientMock:
     """MLflow Client Mock对象测试"""
 
@@ -323,16 +309,12 @@ class TestMlflowClientMock:
         """测试get_latest_versions方法带参数"""
         client = MlflowClient()
 
-        versions = client.get_latest_versions(
-            name="model_name", stages=["Production", "Staging"]
-        )
+        versions = client.get_latest_versions(name="model_name", stages=["Production", "Staging"])
         assert versions == []
         assert isinstance(versions, list)
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 class TestModuleAll:
     """模块__all__测试"""
 
@@ -360,17 +342,13 @@ class TestModuleAll:
             assert hasattr(model_training, name)
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 class TestIntegration:
     """集成测试"""
 
     def test_trainer_with_mlflow_integration(self):
         """测试训练器与MLflow集成"""
-        trainer = BaselineModelTrainer(
-            mlflow_tracking_uri="http://integration-test:5000"
-        )
+        trainer = BaselineModelTrainer(mlflow_tracking_uri="http://integration-test:5000")
 
         # 模拟使用MLflow的训练过程
         with mlflow.start_run(run_name="integration_test"):
@@ -457,9 +435,7 @@ class TestIntegration:
         assert versions == []
 
 
-@pytest.mark.skipif(
-    not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
-)
+@pytest.mark.skipif(not MODEL_TRAINING_AVAILABLE, reason="Model training module not available")
 class TestEdgeCases:
     """边界情况测试"""
 

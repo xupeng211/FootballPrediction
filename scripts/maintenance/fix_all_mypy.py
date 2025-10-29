@@ -48,9 +48,7 @@ def add_missing_typing_imports():
                     typing_imports.append("Any")
 
                 if typing_imports:
-                    lines.insert(
-                        insert_idx, f"from typing import {', '.join(typing_imports)}"
-                    )
+                    lines.insert(insert_idx, f"from typing import {', '.join(typing_imports)}")
                     content = "\n".join(lines)
 
                     with open(path, "w", encoding="utf-8") as f:
@@ -134,9 +132,7 @@ def remove_unused_type_ignore():
         # 移除特定的type: ignore
         content = re.sub(r"  # type: ignore\n", "\n", content)
         content = re.sub(r"(\])\s*# type: ignore", r"\1", content)
-        content = re.sub(
-            r"(\w+)\s*:\s*\w+\s*=\s*\w+\s*# type: ignore", r"\1 = \1", content
-        )
+        content = re.sub(r"(\w+)\s*:\s*\w+\s*=\s*\w+\s*# type: ignore", r"\1 = \1", content)
 
         if content != original:
             with open(path, "w", encoding="utf-8") as f:

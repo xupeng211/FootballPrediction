@@ -37,9 +37,7 @@ def fix_baseservice_in_file(file_path: Path) -> bool:
 
         # 在最后一个import后添加BaseService导入
         if last_import_idx >= 0:
-            lines.insert(
-                last_import_idx + 1, "from src.services.base_service import BaseService"
-            )
+            lines.insert(last_import_idx + 1, "from src.services.base_service import BaseService")
             content = "\n".join(lines)
             file_path.write_text(content, encoding="utf-8")
             print(f"  ✓ 修复了 {file_path.name}")

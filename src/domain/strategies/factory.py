@@ -201,9 +201,7 @@ class PredictionStrategyFactory:
         """获取所有策略实例"""
         return self._strategies.copy()
 
-    def get_strategies_by_type(
-        self, strategy_type: StrategyType
-    ) -> List[PredictionStrategy]:
+    def get_strategies_by_type(self, strategy_type: StrategyType) -> List[PredictionStrategy]:
         """根据类型获取策略列表
 
         Args:
@@ -238,9 +236,7 @@ class PredictionStrategyFactory:
                 continue
 
             try:
-                strategy = await self.create_strategy(
-                    strategy_name=strategy_name, config=config
-                )
+                strategy = await self.create_strategy(strategy_name=strategy_name, config=config)
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"创建策略 '{strategy_name}' 失败: {e}")
@@ -255,9 +251,7 @@ class PredictionStrategyFactory:
             strategy_name = config.get("name")
             if strategy_name and strategy_name not in self._strategies:
                 try:
-                    await self.create_strategy(
-                        strategy_name=strategy_name, config=config
-                    )
+                    await self.create_strategy(strategy_name=strategy_name, config=config)
                 except (
                     ValueError,
                     TypeError,
@@ -400,9 +394,7 @@ class PredictionStrategyFactory:
 
         try:
             with open(config_path, "w", encoding="utf-8") as f:
-                yaml.dump(
-                    default_config, f, default_flow_style=False, allow_unicode=True
-                )
+                yaml.dump(default_config, f, default_flow_style=False, allow_unicode=True)
             logger.info(f"创建默认策略配置文件: {config_path}")
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存默认配置失败: {e}")
@@ -528,9 +520,7 @@ class PredictionStrategyFactory:
             health_report[name] = {
                 "healthy": strategy.is_healthy(),
                 "type": strategy.strategy_type.value,
-                "metrics": (
-                    strategy.get_metrics().__dict__ if strategy.get_metrics() else None
-                ),
+                "metrics": (strategy.get_metrics().__dict__ if strategy.get_metrics() else None),
                 "config": strategy.get_config(),
             }
 

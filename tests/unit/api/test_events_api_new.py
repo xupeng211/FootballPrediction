@@ -11,7 +11,6 @@ Tests for Event System API
 测试src.api.events模块的功能
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -23,8 +22,6 @@ try:
         get_event_statistics,
         router,
     )
-    from src.core.event_application import EventApplication
-    from src.events import EventBus
     from src.events.handlers import AnalyticsEventHandler, MetricsEventHandler
 
     EVENTS_AVAILABLE = True
@@ -394,12 +391,7 @@ class TestEventsAPIIntegration:
 
             # 验证处理器指标
             assert "handler_metrics" in _result["metrics"]
-            assert (
-                _result["metrics"]["handler_metrics"]["MetricsEventHandler"][
-                    "processed"
-                ]
-                == 5000
-            )
+            assert _result["metrics"]["handler_metrics"]["MetricsEventHandler"]["processed"] == 5000
 
             # 验证分析数据
             assert _result["analytics"]["event_types"]["prediction.created"] == 4000

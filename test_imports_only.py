@@ -8,7 +8,8 @@ import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def test_critical_imports():
     """测试关键模块导入"""
@@ -16,16 +17,16 @@ def test_critical_imports():
     print("=" * 50)
 
     critical_modules = [
-        ('src.monitoring.anomaly_detector', 'AnomalyDetector'),
-        ('src.cache.decorators', 'cache_result'),
-        ('src.domain.strategies.config', 'StrategyConfig'),
-        ('src.facades.facades', 'MainSystemFacade'),
-        ('src.decorators.decorators', 'CacheDecorator'),
-        ('src.domain.strategies.historical', 'HistoricalStrategy'),
-        ('src.domain.strategies.ensemble', 'EnsembleStrategy'),
-        ('src.performance.analyzer', 'PerformanceAnalyzer'),
-        ('src.adapters.football', 'FootballMatch'),
-        ('src.patterns.facade', 'PredictionRequest'),
+        ("src.monitoring.anomaly_detector", "AnomalyDetector"),
+        ("src.cache.decorators", "cache_result"),
+        ("src.domain.strategies.config", "StrategyConfig"),
+        ("src.facades.facades", "MainSystemFacade"),
+        ("src.decorators.decorators", "CacheDecorator"),
+        ("src.domain.strategies.historical", "HistoricalStrategy"),
+        ("src.domain.strategies.ensemble", "EnsembleStrategy"),
+        ("src.performance.analyzer", "PerformanceAnalyzer"),
+        ("src.adapters.football", "FootballMatch"),
+        ("src.patterns.facade", "PredictionRequest"),
     ]
 
     success_count = 0
@@ -56,6 +57,7 @@ def test_critical_imports():
 
     return success_count == len(critical_modules)
 
+
 def test_pytest_availability():
     """测试pytest是否可用"""
     print("\n🧪 测试pytest可用性")
@@ -63,8 +65,10 @@ def test_pytest_availability():
 
     try:
         import subprocess
-        result = subprocess.run([sys.executable, '-m', 'pytest', '--version'],
-                              capture_output=True, text=True, timeout=5)
+
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--version"], capture_output=True, text=True, timeout=5
+        )
         if result.returncode == 0:
             print(f"✅ pytest可用: {result.stdout.strip()}")
             return True
@@ -75,6 +79,7 @@ def test_pytest_availability():
         print(f"❌ pytest测试失败: {e}")
         return False
 
+
 def test_basic_functionality():
     """测试基本功能"""
     print("\n🧪 测试基本功能")
@@ -83,17 +88,20 @@ def test_basic_functionality():
     try:
         # 测试一个简单的类实例化
         from src.monitoring.anomaly_detector import AnomalyDetector
+
         AnomalyDetector()
         print("✅ AnomalyDetector 实例化成功")
 
         # 测试一个简单的方法调用
         from src.cache.decorators import cache_result
+
         print("✅ cache_result 装饰器可用")
 
         return True
     except Exception as e:
         print(f"❌ 基本功能测试失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -122,6 +130,7 @@ def main():
     else:
         print("\n⚠️ 阶段1部分完成，仍有问题需要解决。")
         return False
+
 
 if __name__ == "__main__":
     success = main()

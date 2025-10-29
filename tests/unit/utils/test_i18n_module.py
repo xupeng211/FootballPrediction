@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 国际化模块测试
 """
 
-import os
 from pathlib import Path
 
 import pytest

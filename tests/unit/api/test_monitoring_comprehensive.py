@@ -2,20 +2,17 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 Monitoring API 综合测试
 提升 monitoring 模块覆盖率的关键测试
 """
 
-import asyncio
 import json
 
 # 测试导入
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import pytest
 
@@ -30,7 +27,6 @@ try:
         _health_check_detailed,
         router,
     )
-    from src.database.dependencies import get_db_session
 
     MONITORING_AVAILABLE = True
 except ImportError as e:
@@ -86,12 +82,8 @@ class TestMonitoringAPI:
             patch("psutil.disk_usage") as mock_disk,
         ):
             mock_cpu.return_value = 25.5
-            mock_memory.return_value = Mock(
-                percent=60.0, used=8589934592, total=17179869184
-            )
-            mock_disk.return_value = Mock(
-                percent=40.0, used=107374182400, total=1073741824000
-            )
+            mock_memory.return_value = Mock(percent=60.0, used=8589934592, total=17179869184)
+            mock_disk.return_value = Mock(percent=40.0, used=107374182400, total=1073741824000)
 
         metrics = _get_system_metrics()
 
@@ -492,9 +484,7 @@ class TestMonitoringAlerts:
 
         if sample_metrics["application"]["error_rate"] > 0.1:
             severity = (
-                "critical"
-                if sample_metrics["application"]["error_rate"] > 0.2
-                else "warning"
+                "critical" if sample_metrics["application"]["error_rate"] > 0.2 else "warning"
             )
             alerts.append(
                 {

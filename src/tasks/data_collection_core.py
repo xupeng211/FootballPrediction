@@ -176,9 +176,7 @@ def emergency_data_collection_task(
         logger.warning(f"Emergency data collection triggered for: {critical_types}")
 
         # 使用asyncio.run在同步上下文中运行异步代码
-        results = asyncio.run(
-            task.orchestrator.collect_all_data(data_types=critical_types)
-        )
+        results = asyncio.run(task.orchestrator.collect_all_data(data_types=critical_types))
 
         # 标记为紧急收集
         results["emergency"] = True

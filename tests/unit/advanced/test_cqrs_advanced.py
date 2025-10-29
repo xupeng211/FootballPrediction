@@ -139,9 +139,7 @@ class TestCQRS:
         for test_value in test_cases:
             try:
                 mock_processor = Mock()
-                mock_processor.process.return_value = (
-                    f"processed_{type(test_value).__name__}"
-                )
+                mock_processor.process.return_value = f"processed_{type(test_value).__name__}"
 
                 result = mock_processor.process(test_value)
                 assert result is not None

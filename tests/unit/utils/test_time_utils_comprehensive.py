@@ -2,8 +2,6 @@
 时间工具模块完整测试
 """
 
-from datetime import datetime, timedelta, timezone
-
 import pytest
 
 # from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
@@ -90,12 +88,8 @@ class TestTimeUtils:
     def test_parse_datetime_custom(self):
         """测试解析日期时间字符串（自定义格式）"""
         # 测试不同格式
-        assert TimeUtils.parse_datetime("2022-01-15", "%Y-%m-%d") == datetime(
-            2022, 1, 15
-        )
-        assert TimeUtils.parse_datetime("15/01/2022", "%d/%m/%Y") == datetime(
-            2022, 1, 15
-        )
+        assert TimeUtils.parse_datetime("2022-01-15", "%Y-%m-%d") == datetime(2022, 1, 15)
+        assert TimeUtils.parse_datetime("15/01/2022", "%d/%m/%Y") == datetime(2022, 1, 15)
         assert TimeUtils.parse_datetime("20220115", "%Y%m%d") == datetime(2022, 1, 15)
 
     def test_parse_datetime_invalid(self):

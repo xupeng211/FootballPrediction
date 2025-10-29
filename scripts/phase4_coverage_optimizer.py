@@ -11,22 +11,23 @@ import sys
 from pathlib import Path
 import json
 
+
 class Phase4CoverageOptimizer:
     def __init__(self):
         self.target_modules = {
-            'priority1': {  # 已有中等覆盖率，提升到80%+
-                'src/core/config.py': {'current': 36.50, 'target': 80},
-                'src/models/prediction.py': {'current': 64.94, 'target': 85},
-                'src/api/data_router.py': {'current': 60.32, 'target': 80},
-                'src/api/predictions/router.py': {'current': 56.82, 'target': 80},
-                'src/database/models/league.py': {'current': 76.74, 'target': 85},
-                'src/core/logging.py': {'current': 61.90, 'target': 80},
+            "priority1": {  # 已有中等覆盖率，提升到80%+
+                "src/core/config.py": {"current": 36.50, "target": 80},
+                "src/models/prediction.py": {"current": 64.94, "target": 85},
+                "src/api/data_router.py": {"current": 60.32, "target": 80},
+                "src/api/predictions/router.py": {"current": 56.82, "target": 80},
+                "src/database/models/league.py": {"current": 76.74, "target": 85},
+                "src/core/logging.py": {"current": 61.90, "target": 80},
             },
-            'priority2': {  # 从0开始，但价值高
-                'src/main.py': {'current': 0, 'target': 60},
-                'src/adapters/factory.py': {'current': 0, 'target': 70},
-                'src/api/app.py': {'current': 0, 'target': 50},
-            }
+            "priority2": {  # 从0开始，但价值高
+                "src/main.py": {"current": 0, "target": 60},
+                "src/adapters/factory.py": {"current": 0, "target": 70},
+                "src/api/app.py": {"current": 0, "target": 50},
+            },
         }
 
         self.current_coverage = 15.71
@@ -39,10 +40,10 @@ class Phase4CoverageOptimizer:
 
         # 创建测试文件
         test_files = [
-            'test_core_config_enhanced.py',
-            'test_models_prediction_enhanced.py',
-            'test_api_routers_enhanced.py',
-            'test_database_models_enhanced.py'
+            "test_core_config_enhanced.py",
+            "test_models_prediction_enhanced.py",
+            "test_api_routers_enhanced.py",
+            "test_database_models_enhanced.py",
         ]
 
         for test_file in test_files:
@@ -52,7 +53,7 @@ class Phase4CoverageOptimizer:
         """创建单个测试文件"""
         print(f"  📝 创建测试文件: {filename}")
 
-        if filename == 'test_core_config_enhanced.py':
+        if filename == "test_core_config_enhanced.py":
             content = '''#!/usr/bin/env python3
 """
 增强的核心配置测试 - 覆盖率优化
@@ -172,7 +173,7 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 '''
 
-        elif filename == 'test_models_prediction_enhanced.py':
+        elif filename == "test_models_prediction_enhanced.py":
             content = '''#!/usr/bin/env python3
 """
 增强的预测模型测试 - 覆盖率优化
@@ -320,7 +321,7 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 '''
 
-        elif filename == 'test_api_routers_enhanced.py':
+        elif filename == "test_api_routers_enhanced.py":
             content = '''#!/usr/bin/env python3
 """
 增强的API路由测试 - 覆盖率优化
@@ -470,7 +471,7 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 '''
 
-        elif filename == 'test_database_models_enhanced.py':
+        elif filename == "test_database_models_enhanced.py":
             content = '''#!/usr/bin/env python3
 """
 增强的数据库模型测试 - 覆盖率优化
@@ -626,7 +627,7 @@ if __name__ == "__main__":
 
         # 写入文件
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 f.write(content)
             print(f"    ✅ {filename} 创建成功")
         except Exception as e:
@@ -638,10 +639,10 @@ if __name__ == "__main__":
         print("=" * 40)
 
         test_files = [
-            'test_core_config_enhanced.py',
-            'test_models_prediction_enhanced.py',
-            'test_api_routers_enhanced.py',
-            'test_database_models_enhanced.py'
+            "test_core_config_enhanced.py",
+            "test_models_prediction_enhanced.py",
+            "test_api_routers_enhanced.py",
+            "test_database_models_enhanced.py",
         ]
 
         total_tests = 0
@@ -652,10 +653,7 @@ if __name__ == "__main__":
                 print(f"  🧪 运行 {test_file}")
                 try:
                     result = subprocess.run(
-                        ["python", test_file],
-                        capture_output=True,
-                        text=True,
-                        timeout=60
+                        ["python", test_file], capture_output=True, text=True, timeout=60
                     )
 
                     if result.returncode == 0:
@@ -683,49 +681,54 @@ if __name__ == "__main__":
         try:
             # 运行覆盖率测试
             test_files = [
-                'test_basic_pytest.py',
-                'test_core_config_enhanced.py',
-                'test_models_prediction_enhanced.py',
-                'test_api_routers_enhanced.py',
-                'test_database_models_enhanced.py'
+                "test_basic_pytest.py",
+                "test_core_config_enhanced.py",
+                "test_models_prediction_enhanced.py",
+                "test_api_routers_enhanced.py",
+                "test_database_models_enhanced.py",
             ]
 
             existing_tests = [f for f in test_files if os.path.exists(f)]
 
             if existing_tests:
                 result = subprocess.run(
-                    ["pytest"] + existing_tests + [
+                    ["pytest"]
+                    + existing_tests
+                    + [
                         "--cov=src",
                         "--cov-report=term-missing",
                         "--cov-report=json:coverage_report.json",
-                        "--quiet"
+                        "--quiet",
                     ],
                     capture_output=True,
                     text=True,
-                    timeout=120
+                    timeout=120,
                 )
 
                 if result.returncode == 0:
                     print("✅ 覆盖率报告生成成功")
 
                     # 读取JSON报告
-                    if os.path.exists('coverage_report.json'):
-                        with open('coverage_report.json', 'r') as f:
+                    if os.path.exists("coverage_report.json"):
+                        with open("coverage_report.json", "r") as f:
                             coverage_data = json.load(f)
 
-                        total_coverage = coverage_data['totals']['percent_covered']
+                        total_coverage = coverage_data["totals"]["percent_covered"]
                         print(f"🎯 当前总覆盖率: {total_coverage:.2f}%")
 
                         # 显示改进的模块
                         print("\n📈 模块覆盖率改进:")
-                        for filename, info in coverage_data['files'].items():
-                            if any(target in filename for target in [
-                                'src/core/config.py',
-                                'src/models/prediction.py',
-                                'src/api/data_router.py',
-                                'src/database/models/league.py'
-                            ]):
-                                coverage = info['summary']['percent_covered']
+                        for filename, info in coverage_data["files"].items():
+                            if any(
+                                target in filename
+                                for target in [
+                                    "src/core/config.py",
+                                    "src/models/prediction.py",
+                                    "src/api/data_router.py",
+                                    "src/database/models/league.py",
+                                ]
+                            ):
+                                coverage = info["summary"]["percent_covered"]
                                 print(f"  {filename}: {coverage:.2f}%")
 
                         return total_coverage
@@ -777,6 +780,7 @@ if __name__ == "__main__":
 
         return final_coverage
 
+
 def main():
     """主函数"""
     optimizer = Phase4CoverageOptimizer()
@@ -788,6 +792,7 @@ def main():
     else:
         print("\n📊 阶段4部分完成. 继续改进中...")
         return False
+
 
 if __name__ == "__main__":
     success = main()

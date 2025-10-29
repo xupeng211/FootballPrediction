@@ -87,9 +87,7 @@ def fix_file_imports(file_path: Path) -> int:
 
         if "Any" in content and "from typing import Any" not in content:
             if "from typing import" in content:
-                content = re.sub(
-                    r"from typing import (.*)", r"from typing import \1, Any", content
-                )
+                content = re.sub(r"from typing import (.*)", r"from typing import \1, Any", content)
             else:
                 content = "from typing import Any\n" + content
 
@@ -194,9 +192,7 @@ def main():
     # 4. 运行部分测试验证
     print("\n4. 运行部分测试验证...")
     test_files = [
-        f
-        for f in broken_files
-        if "test_api_simple.py" in str(f) or "test_placeholder.py" in str(f)
+        f for f in broken_files if "test_api_simple.py" in str(f) or "test_placeholder.py" in str(f)
     ]
 
     if test_files:

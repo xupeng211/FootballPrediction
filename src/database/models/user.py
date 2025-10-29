@@ -5,8 +5,6 @@ from enum import Enum
 from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, String, Text, JSON
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
 
 from ..base import BaseModel
 
@@ -26,9 +24,7 @@ class User(BaseModel):
     __tablename__ = "users"
 
     # 基本信息
-    username = Column(
-        String(50), unique=True, nullable=False, index=True, comment="用户名"
-    )
+    username = Column(String(50), unique=True, nullable=False, index=True, comment="用户名")
     email = Column(String(255), unique=True, nullable=False, index=True, comment="邮箱")
     password_hash = Column(String(255), nullable=False, comment="密码哈希")
 
@@ -54,9 +50,7 @@ class User(BaseModel):
 
     # 等级和成就
     level = Column(String(10), default="1", nullable=False, comment="用户等级")
-    experience_points = Column(
-        String(20), default="0", nullable=False, comment="经验值"
-    )
+    experience_points = Column(String(20), default="0", nullable=False, comment="经验值")
     achievements = Column(JSON, nullable=True, default=list, comment="成就列表")
 
     # 时间戳字段继承自BaseModel (created_at, updated_at)

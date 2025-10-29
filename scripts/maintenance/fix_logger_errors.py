@@ -68,9 +68,7 @@ def fix_logger_in_file(file_path: Path) -> bool:
                     ):
                         # 在方法前添加 logger
                         indent = "    "
-                        lines.insert(
-                            method_idx, f"{indent}logger = logging.getLogger(__name__)"
-                        )
+                        lines.insert(method_idx, f"{indent}logger = logging.getLogger(__name__)")
                         content = "\n".join(lines)
             else:
                 # 模块级别 logger
@@ -130,11 +128,7 @@ def main():
 
     # 验证修复效果
     print("\n🔍 验证修复效果...")
-    result = (
-        os.popen('mypy src 2>&1 | grep "logger" | grep "not defined" | wc -l')
-        .read()
-        .strip()
-    )
+    result = os.popen('mypy src 2>&1 | grep "logger" | grep "not defined" | wc -l').read().strip()
     remaining = int(result) if result else 0
 
     if remaining == 0:

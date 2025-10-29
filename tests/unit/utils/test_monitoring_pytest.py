@@ -170,11 +170,13 @@ async def _get_business_metrics_test(db):
     }
     try:
         # 模拟查询
-        recent_predictions_q = "SELECT COUNT(*) FROM predictions WHERE predicted_at >= NOW() - INTERVAL '24 hours'"
+        recent_predictions_q =
+    "SELECT COUNT(*) FROM predictions WHERE predicted_at >= NOW() - INTERVAL '24 hours'"
         upcoming_matches_q = (
             "SELECT COUNT(*) FROM matches WHERE match_time <= NOW() + INTERVAL '7 days'"
         )
-        accuracy_rate_q = "SELECT CASE WHEN SUM(total) = 0 THEN 0 ELSE ROUND(SUM(correct)::numeric / SUM(total) * 100, 2) END FROM (SELECT COUNT(*) AS total, 0 AS correct FROM predictions WHERE verified_at >= NOW() - INTERVAL '30 days') t"
+        accuracy_rate_q =
+    "SELECT CASE WHEN SUM(total) = 0 THEN 0 ELSE ROUND(SUM(correct)::numeric / SUM(total) * 100, 2) END FROM (SELECT COUNT(*) AS total, 0 AS correct FROM predictions WHERE verified_at >= NOW() - INTERVAL '30 days') t"
 
         def _val(res):
             try:

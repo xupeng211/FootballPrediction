@@ -44,8 +44,7 @@ def analyze_metrics_collector_code():
                     if isinstance(item, ast.FunctionDef):
                         methods.append(item.name)
                         if any(
-                            isinstance(d, ast.Name) and d.id == "async"
-                            for d in item.decorator_list
+                            isinstance(d, ast.Name) and d.id == "async" for d in item.decorator_list
                         ):
                             async_functions.append(f"{node.name}.{item.name}")
                 classes.append({"name": node.name, "methods": methods})
@@ -74,11 +73,7 @@ def analyze_metrics_collector_code():
                     m
                     for m in cls["methods"]
                     if m
-                    in [
-                        af.split(".")[1]
-                        for af in async_functions
-                        if af.startswith(cls["name"])
-                    ]
+                    in [af.split(".")[1] for af in async_functions if af.startswith(cls["name"])]
                 ]
                 sync_methods = [m for m in cls["methods"] if m not in async_methods]
 

@@ -24,9 +24,7 @@ def fix_file(file_path: Path):
             line.startswith("from sqlalchemy") or line.startswith("import sqlalchemy")
         ):
             sqlalchemy_imports.append(line)
-        elif not imports_done and (
-            line.startswith("from ") or line.startswith("import ")
-        ):
+        elif not imports_done and (line.startswith("from ") or line.startswith("import ")):
             other_imports.append(line)
         elif line.strip() == "" and not imports_done:
             continue
@@ -42,19 +40,11 @@ def fix_file(file_path: Path):
         for imp in sqlalchemy_imports:
             if imp.startswith("from sqlalchemy import"):
                 symbols.update(
-                    [
-                        s.strip()
-                        for s in imp.replace("from sqlalchemy import", "").split(",")
-                    ]
+                    [s.strip() for s in imp.replace("from sqlalchemy import", "").split(",")]
                 )
             elif imp.startswith("from sqlalchemy.orm import"):
                 symbols.update(
-                    [
-                        s.strip()
-                        for s in imp.replace("from sqlalchemy.orm import", "").split(
-                            ","
-                        )
-                    ]
+                    [s.strip() for s in imp.replace("from sqlalchemy.orm import", "").split(",")]
                 )
             elif imp.startswith("import sqlalchemy"):
                 base_imports.add("sqlalchemy")
@@ -68,24 +58,18 @@ def fix_file(file_path: Path):
             core_symbols = [
                 s
                 for s in symbols
-                if not s.endswith(" as ")
-                and s not in ["relationship", "mapped_column", "Mapped"]
+                if not s.endswith(" as ") and s not in ["relationship", "mapped_column", "Mapped"]
             ]
             orm_symbols = [
                 s
                 for s in symbols
-                if s in ["relationship", "mapped_column", "Mapped"]
-                or s.endswith(" as SQLEnum")
+                if s in ["relationship", "mapped_column", "Mapped"] or s.endswith(" as SQLEnum")
             ]
 
             if core_symbols:
-                new_imports.append(
-                    f"from sqlalchemy import {', '.join(sorted(core_symbols))}"
-                )
+                new_imports.append(f"from sqlalchemy import {', '.join(sorted(core_symbols))}")
             if orm_symbols:
-                new_imports.append(
-                    f"from sqlalchemy.orm import {', '.join(sorted(orm_symbols))}"
-                )
+                new_imports.append(f"from sqlalchemy.orm import {', '.join(sorted(orm_symbols))}")
 
         # 重新构建文件内容
         new_lines = []
@@ -102,9 +86,7 @@ def fix_file(file_path: Path):
                     new_lines.append(imp)
                 new_lines.append("")
                 imports_added = True
-            elif line.startswith("from sqlalchemy") or line.startswith(
-                "import sqlalchemy"
-            ):
+            elif line.startswith("from sqlalchemy") or line.startswith("import sqlalchemy"):
                 continue  # 跳过旧的 sqlalchemy 导入
             else:
                 new_lines.append(line)

@@ -4,7 +4,6 @@
 测试 src.database.models 模块的基本功能
 """
 
-from unittest.mock import Mock, patch
 
 import pytest
 

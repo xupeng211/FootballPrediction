@@ -11,7 +11,6 @@ Tests for improved odds collector
 测试赔率收集器的功能。
 """
 
-import asyncio
 import sys
 from pathlib import Path
 
@@ -71,7 +70,6 @@ class TestOddsCollectorImproved:
     def test_odds_collector_warning_on_import(self, mock_logger):
         """测试导入时的弃用警告"""
         with pytest.warns(DeprecationWarning):
-            from src.collectors.odds_collector_improved import OddsCollector
 
     # ========================================
     # OddsCollectorManager 测试

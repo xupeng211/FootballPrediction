@@ -237,9 +237,7 @@ class TestDictUtilsWorking:
         # 创建一个较大的嵌套字典
         large_dict = {}
         for i in range(100):
-            large_dict[f"section_{i}"] = {
-                f"key_{j}": f"value_{i}_{j}" for j in range(10)
-            }
+            large_dict[f"section_{i}"] = {f"key_{j}": f"value_{i}_{j}" for j in range(10)}
 
         # 测试扁平化性能
         flattened = DictUtils.flatten_dict(large_dict)

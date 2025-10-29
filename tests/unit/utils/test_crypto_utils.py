@@ -1,9 +1,5 @@
 """测试加密工具模块"""
 
-import base64
-import hashlib
-from unittest.mock import Mock, patch
-
 import pytest
 
 try:

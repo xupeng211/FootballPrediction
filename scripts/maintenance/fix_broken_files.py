@@ -42,11 +42,7 @@ def fix_file_syntax(file_path: Path) -> bool:
         ):
             in_function_or_class = True
             indent_level = len(line) - len(stripped)
-        elif (
-            in_function_or_class
-            and stripped
-            and not line.startswith(" " * (indent_level + 1))
-        ):
+        elif in_function_or_class and stripped and not line.startswith(" " * (indent_level + 1)):
             # 检查是否退出了函数/类
             if len(line) - len(stripped) <= indent_level:
                 in_function_or_class = False
@@ -105,8 +101,7 @@ def fix_file_syntax(file_path: Path) -> bool:
             if imp_stripped.startswith("from ."):
                 local_imports.append(imp)
             elif any(
-                imp_stripped.startswith(f"import {lib}")
-                or imp_stripped.startswith(f"from {lib}")
+                imp_stripped.startswith(f"import {lib}") or imp_stripped.startswith(f"from {lib}")
                 for lib in [
                     "os",
                     "sys",
@@ -130,9 +125,7 @@ def fix_file_syntax(file_path: Path) -> bool:
                 ]
             ):
                 stdlib_imports.append(imp)
-            elif imp_stripped.startswith("from src") or imp_stripped.startswith(
-                "import src"
-            ):
+            elif imp_stripped.startswith("from src") or imp_stripped.startswith("import src"):
                 local_imports.append(imp)
             else:
                 thirdparty_imports.append(imp)

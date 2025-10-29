@@ -75,11 +75,7 @@ def fix_syntax_errors(content: str) -> str:
         # 如果是import语句且不在文件顶部（前50行）
         if (stripped.startswith("import ") or stripped.startswith("from ")) and i > 50:
             # 检查是否在函数或类内部
-            if any(
-                line.startswith(" ")
-                for line in new_lines[max(0, i - 10) : i]
-                if line.strip()
-            ):
+            if any(line.startswith(" ") for line in new_lines[max(0, i - 10) : i] if line.strip()):
                 # 在函数/类内部，跳过
                 final_lines.append(line)
             else:
@@ -114,8 +110,7 @@ def fix_syntax_errors(content: str) -> str:
             if imp_stripped.startswith("from ."):
                 local_imports.append(imp)
             elif any(
-                imp_stripped.startswith(f"import {lib}")
-                or imp_stripped.startswith(f"from {lib}")
+                imp_stripped.startswith(f"import {lib}") or imp_stripped.startswith(f"from {lib}")
                 for lib in [
                     "os",
                     "sys",
@@ -160,9 +155,7 @@ def fix_syntax_errors(content: str) -> str:
                 ]
             ):
                 stdlib_imports.append(imp)
-            elif imp_stripped.startswith("from src") or imp_stripped.startswith(
-                "import src"
-            ):
+            elif imp_stripped.startswith("from src") or imp_stripped.startswith("import src"):
                 local_imports.append(imp)
             else:
                 thirdparty_imports.append(imp)
@@ -226,14 +219,12 @@ def check_and_fix_file(file_path: Path) -> bool:
             for line in lines:
                 stripped = line.strip()
                 # 保留文件顶部的import（前30行）
-                if (
-                    stripped.startswith("import ") or stripped.startswith("from ")
-                ) and len(kept_lines) < 30:
+                if (stripped.startswith("import ") or stripped.startswith("from ")) and len(
+                    kept_lines
+                ) < 30:
                     kept_lines.append(line)
                 # 保留非import语句
-                elif not (
-                    stripped.startswith("import ") or stripped.startswith("from ")
-                ):
+                elif not (stripped.startswith("import ") or stripped.startswith("from ")):
                     kept_lines.append(line)
                 # 跳过其他位置的import
             fixed_content = "\n".join(kept_lines)

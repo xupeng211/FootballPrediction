@@ -1,5 +1,3 @@
-from unittest.mock import Mock, patch
-
 """
 测试 health 模块的覆盖率补充
 Test coverage supplement for health module
@@ -83,7 +81,6 @@ def test_health_module_warning_stacklevel():
         warnings.simplefilter("always")
 
         # 导入模块
-        from src.api.health import router
 
         # 查找弃用警告
         deprecation_warnings = [

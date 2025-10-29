@@ -9,6 +9,7 @@ import ast
 import json
 from pathlib import Path
 
+
 class CoverageBooster:
     def __init__(self, module_path):
         self.module_path = module_path
@@ -23,7 +24,7 @@ class CoverageBooster:
             return None
 
         try:
-            with open(self.src_file, 'r', encoding='utf-8') as f:
+            with open(self.src_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -34,31 +35,37 @@ class CoverageBooster:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    functions.append({
-                        'name': node.name,
-                        'lineno': node.lineno,
-                        'args': [arg.arg for arg in node.args.args],
-                        'is_async': isinstance(node, ast.AsyncFunctionDef),
-                        'docstring': ast.get_docstring(node)
-                    })
+                    functions.append(
+                        {
+                            "name": node.name,
+                            "lineno": node.lineno,
+                            "args": [arg.arg for arg in node.args.args],
+                            "is_async": isinstance(node, ast.AsyncFunctionDef),
+                            "docstring": ast.get_docstring(node),
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
                     methods = []
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
-                            methods.append({
-                                'name': item.name,
-                                'lineno': item.lineno,
-                                'args': [arg.arg for arg in item.args.args],
-                                'is_async': isinstance(item, ast.AsyncFunctionDef),
-                                'docstring': ast.get_docstring(item)
-                            })
+                            methods.append(
+                                {
+                                    "name": item.name,
+                                    "lineno": item.lineno,
+                                    "args": [arg.arg for arg in item.args.args],
+                                    "is_async": isinstance(item, ast.AsyncFunctionDef),
+                                    "docstring": ast.get_docstring(item),
+                                }
+                            )
 
-                    classes.append({
-                        'name': node.name,
-                        'lineno': node.lineno,
-                        'methods': methods,
-                        'docstring': ast.get_docstring(node)
-                    })
+                    classes.append(
+                        {
+                            "name": node.name,
+                            "lineno": node.lineno,
+                            "methods": methods,
+                            "docstring": ast.get_docstring(node),
+                        }
+                    )
                 elif isinstance(node, (ast.Import, ast.ImportFrom)):
                     if isinstance(node, ast.Import):
                         for alias in node.names:
@@ -68,11 +75,7 @@ class CoverageBooster:
                         for alias in node.names:
                             imports.append(f"from {module} import {alias.name}")
 
-            return {
-                'functions': functions,
-                'classes': classes,
-                'imports': imports
-            }
+            return {"functions": functions, "classes": classes, "imports": imports}
 
         except Exception as e:
             print(f"❌ 分析源文件失败: {e}")
@@ -85,74 +88,74 @@ class CoverageBooster:
             return None
 
         test_content = []
-        module_name = self.module_path.replace('/', '.').replace('.py', '')
+        module_name = self.module_path.replace("/", ".").replace(".py", "")
 
         # 添加导入
         test_content.append('"""自动生成的测试文件 - Issue #83 覆盖率提升"""')
-        test_content.append('')
-        test_content.append('import pytest')
-        test_content.append('from unittest.mock import Mock, patch, AsyncMock')
+        test_content.append("")
+        test_content.append("import pytest")
+        test_content.append("from unittest.mock import Mock, patch, AsyncMock")
 
         # 添加源模块导入
-        for imp in analysis_result['imports']:
-            if 'import' in imp:
+        for imp in analysis_result["imports"]:
+            if "import" in imp:
                 test_content.append(imp)
 
-        test_content.append(f'from {module_name} import *')
-        test_content.append('')
+        test_content.append(f"from {module_name} import *")
+        test_content.append("")
 
         # 生成函数测试
-        for func in analysis_result['functions']:
-            if not func['name'].startswith('_'):  # 跳过私有函数
+        for func in analysis_result["functions"]:
+            if not func["name"].startswith("_"):  # 跳过私有函数
                 test_content.extend(self._generate_function_test(func, module_name))
 
         # 生成类测试
-        for cls in analysis_result['classes']:
+        for cls in analysis_result["classes"]:
             test_content.extend(self._generate_class_test(cls, module_name))
 
-        return '\n'.join(test_content)
+        return "\n".join(test_content)
 
     def _generate_function_test(self, func, module_name):
         """生成函数测试用例"""
 
         tests = []
-        func_name = func['name']
+        func_name = func["name"]
 
-        if func['is_async']:
-            tests.append('@pytest.mark.asyncio')
-            tests.append(f'async def test_{func_name}():')
+        if func["is_async"]:
+            tests.append("@pytest.mark.asyncio")
+            tests.append(f"async def test_{func_name}():")
         else:
-            tests.append(f'def test_{func_name}():')
+            tests.append(f"def test_{func_name}():")
 
         tests.append('    """测试函数功能"""')
 
         # 根据参数数量生成测试逻辑
-        arg_count = len(func['args'])
+        arg_count = len(func["args"])
 
         if arg_count == 0:
-            if func['is_async']:
-                tests.append('    # TODO: 实现异步函数测试')
-                tests.append('    result = await func_name()')
+            if func["is_async"]:
+                tests.append("    # TODO: 实现异步函数测试")
+                tests.append("    result = await func_name()")
             else:
-                tests.append('    # TODO: 实现函数测试')
-                tests.append('    result = func_name()')
+                tests.append("    # TODO: 实现函数测试")
+                tests.append("    result = func_name()")
         elif arg_count == 1:
-            tests.append('    # TODO: 实现带参数的函数测试')
+            tests.append("    # TODO: 实现带参数的函数测试")
             tests.append('    test_param = "test_value"')
-            if func['is_async']:
-                tests.append('    result = await func_name(test_param)')
+            if func["is_async"]:
+                tests.append("    result = await func_name(test_param)")
             else:
-                tests.append('    result = func_name(test_param)')
+                tests.append("    result = func_name(test_param)")
         else:
-            tests.append('    # TODO: 实现多参数函数测试')
+            tests.append("    # TODO: 实现多参数函数测试")
             tests.append('    test_params = ["param1", "param2"]')
-            if func['is_async']:
-                tests.append('    result = await func_name(*test_params)')
+            if func["is_async"]:
+                tests.append("    result = await func_name(*test_params)")
             else:
-                tests.append('    result = func_name(*test_params)')
+                tests.append("    result = func_name(*test_params)")
 
-        tests.append('    assert result is not None  # TODO: 完善断言')
-        tests.append('')
+        tests.append("    assert result is not None  # TODO: 完善断言")
+        tests.append("")
 
         return tests
 
@@ -160,56 +163,56 @@ class CoverageBooster:
         """生成类测试用例"""
 
         tests = []
-        class_name = cls['name']
+        class_name = cls["name"]
 
-        tests.append(f'class Test{class_name.title()}:')
+        tests.append(f"class Test{class_name.title()}:")
         tests.append('    """测试类功能"""')
-        tests.append('')
+        tests.append("")
 
         # 生成实例化测试
-        tests.append('    def test_initialization(self):')
+        tests.append("    def test_initialization(self):")
         tests.append('        """测试类初始化"""')
-        tests.append(f'        # TODO: 实现{class_name}类的初始化测试')
-        tests.append(f'        instance = {class_name}()')
-        tests.append('        assert instance is not None')
-        tests.append('')
+        tests.append(f"        # TODO: 实现{class_name}类的初始化测试")
+        tests.append(f"        instance = {class_name}()")
+        tests.append("        assert instance is not None")
+        tests.append("")
 
         # 生成方法测试
-        for method in cls['methods']:
-            if not method['name'].startswith('_'):  # 跳过私有方法
-                method_name = method['name']
+        for method in cls["methods"]:
+            if not method["name"].startswith("_"):  # 跳过私有方法
+                method_name = method["name"]
 
-                if method['is_async']:
-                    tests.append('    @pytest.mark.asyncio')
-                    tests.append(f'    async def test_{method_name}(self):')
+                if method["is_async"]:
+                    tests.append("    @pytest.mark.asyncio")
+                    tests.append(f"    async def test_{method_name}(self):")
                 else:
-                    tests.append(f'    def test_{method_name}(self):')
+                    tests.append(f"    def test_{method_name}(self):")
 
                 tests.append(f'        """测试{method_name}方法"""')
-                tests.append(f'        # TODO: 实现{method_name}方法测试')
+                tests.append(f"        # TODO: 实现{method_name}方法测试")
 
                 # 创建实例
-                tests.append(f'        instance = {class_name}()')
+                tests.append(f"        instance = {class_name}()")
 
                 # 根据参数调用方法
-                arg_count = len(method['args'])
-                if 'self' in method['args']:
+                arg_count = len(method["args"])
+                if "self" in method["args"]:
                     arg_count -= 1
 
                 if arg_count == 0:
-                    if method['is_async']:
-                        tests.append(f'        result = await instance.{method_name}()')
+                    if method["is_async"]:
+                        tests.append(f"        result = await instance.{method_name}()")
                     else:
-                        tests.append(f'        result = instance.{method_name}()')
+                        tests.append(f"        result = instance.{method_name}()")
                 else:
                     tests.append('        test_params = ["param1", "param2"]')
-                    if method['is_async']:
-                        tests.append(f'        result = await instance.{method_name}(*test_params)')
+                    if method["is_async"]:
+                        tests.append(f"        result = await instance.{method_name}(*test_params)")
                     else:
-                        tests.append(f'        result = instance.{method_name}(*test_params)')
+                        tests.append(f"        result = instance.{method_name}(*test_params)")
 
-                tests.append('        assert result is not None  # TODO: 完善断言')
-                tests.append('')
+                tests.append("        assert result is not None  # TODO: 完善断言")
+                tests.append("")
 
         return tests
 
@@ -244,13 +247,14 @@ class CoverageBooster:
 
         # 写入测试文件
         try:
-            with open(self.test_file, 'w', encoding='utf-8') as f:
+            with open(self.test_file, "w", encoding="utf-8") as f:
                 f.write(test_content)
             print(f"✅ 测试文件已生成: {self.test_file}")
             return True
         except Exception as e:
             print(f"❌ 写入测试文件失败: {e}")
             return False
+
 
 def boost_top_modules():
     """提升前5个高优先级模块的覆盖率"""
@@ -261,7 +265,7 @@ def boost_top_modules():
         "domain/strategies/ensemble.py",
         "collectors/scores_collector_improved.py",
         "domain/strategies/config.py",
-        "domain/models/league.py"
+        "domain/models/league.py",
     ]
 
     print("🎯 Issue #83 覆盖率提升 - 阶段1: 快速见效")
@@ -294,6 +298,7 @@ def boost_top_modules():
 
     return boosted_modules, failed_modules
 
+
 if __name__ == "__main__":
     print("🔧 Issue #83 覆盖率提升助手")
     print("=" * 40)
@@ -302,8 +307,12 @@ if __name__ == "__main__":
 
     if boosted:
         print("\n🚀 现在可以运行测试验证覆盖率提升:")
-        print("pytest tests/unit/domain/strategies/historical_test.py --cov=src/domain/strategies/historical.py")
-        print("pytest tests/unit/domain/strategies/ensemble_test.py --cov=src/domain/strategies/ensemble.py")
+        print(
+            "pytest tests/unit/domain/strategies/historical_test.py --cov=src/domain/strategies/historical.py"
+        )
+        print(
+            "pytest tests/unit/domain/strategies/ensemble_test.py --cov=src/domain/strategies/ensemble.py"
+        )
         print("等等...")
 
     print("\n🎯 下一步: 运行覆盖率测试验证提升效果")

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 Tests for streaming.kafka_producer
 """
@@ -8,7 +6,6 @@ import pytest
 
 # Import the module under test
 try:
-    from streaming.kafka_producer import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

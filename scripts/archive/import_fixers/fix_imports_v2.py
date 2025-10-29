@@ -49,9 +49,7 @@ def fix_imports_in_file(file_path: Path):
         # Find all words in the file to check against our import map.
         words_in_file = set(re.findall(r"\b(\w+)\b", content))
 
-        needed_modules = {
-            IMPORT_MAP[word] for word in words_in_file if word in IMPORT_MAP
-        }
+        needed_modules = {IMPORT_MAP[word] for word in words_in_file if word in IMPORT_MAP}
 
         # Process grouped imports (typing, datetime, etc.)
         for module, names in MODULE_GROUP.items():
@@ -64,10 +62,7 @@ def fix_imports_in_file(file_path: Path):
                     if match:
                         imported_names = {
                             name.strip()
-                            for name in match.group(1)
-                            .replace("(", "")
-                            .replace(")", "")
-                            .split(",")
+                            for name in match.group(1).replace("(", "").replace(")", "").split(",")
                         }
                         all_names = sorted(list(imported_names | needed_names))
                         new_import_line = f"from {module} import {', '.join(all_names)}"

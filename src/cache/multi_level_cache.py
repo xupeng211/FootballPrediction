@@ -109,9 +109,7 @@ class MultiLevelCache:
             "l1_cache_size": len(self.l1_cache),
             "l2_cache_size": len(self.l2_cache),
             "l3_cache_size": len(self.l3_cache),
-            "total_cache_size": len(self.l1_cache)
-            + len(self.l2_cache)
-            + len(self.l3_cache),
+            "total_cache_size": len(self.l1_cache) + len(self.l2_cache) + len(self.l3_cache),
         }
 
 

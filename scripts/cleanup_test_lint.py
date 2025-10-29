@@ -41,9 +41,7 @@ def fix_unused_imports(file_path):
             continue
 
         # 保留非导入行
-        if not line_stripped.startswith("import ") and not line_stripped.startswith(
-            "from "
-        ):
+        if not line_stripped.startswith("import ") and not line_stripped.startswith("from "):
             new_lines.append(line)
             continue
 

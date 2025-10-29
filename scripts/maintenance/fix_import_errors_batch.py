@@ -111,9 +111,7 @@ def fix_file_imports(file_path):
             new_lines = []
             for line in lines:
                 # 跳过注释掉的导入
-                if line.strip().startswith("#from") or line.strip().startswith(
-                    "# import"
-                ):
+                if line.strip().startswith("#from") or line.strip().startswith("# import"):
                     new_lines.append(line)
                 # 保留其他行
                 else:

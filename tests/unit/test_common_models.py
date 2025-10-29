@@ -4,7 +4,6 @@
 测试 src.models.common_models 模块的功能
 """
 
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -182,7 +181,8 @@ class TestErrorResponse:
 
     def test_error_response_long_messages(self):
         """测试长消息的错误响应"""
-        long_error_message = "这是一个非常长的错误消息，详细描述了系统中发生的错误情况，包括错误的原因、影响范围以及可能的解决方案。这个消息可能会被记录到日志中，用于后续的错误分析和系统改进工作。"
+        long_error_message =
+    "这是一个非常长的错误消息，详细描述了系统中发生的错误情况，包括错误的原因、影响范围以及可能的解决方案。这个消息可能会被记录到日志中，用于后续的错误分析和系统改进工作。"
 
         error = ErrorResponse(
             error_code="DETAILED_ERROR", error_message=long_error_message

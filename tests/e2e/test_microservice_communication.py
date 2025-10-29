@@ -13,12 +13,9 @@
 """
 
 import asyncio
-import json
 import time
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -116,9 +113,7 @@ class TestMicroserviceCommunication:
 
     @pytest.mark.e2e
     @pytest.mark.asyncio
-    async def test_database_connection_pooling(
-        self, database_manager, performance_metrics
-    ):
+    async def test_database_connection_pooling(self, database_manager, performance_metrics):
         """测试数据库连接池管理"""
         start_time = time.time()
 
@@ -126,9 +121,7 @@ class TestMicroserviceCommunication:
             # 模拟多次数据库连接请求
             connection_tasks = []
             for i in range(5):
-                task = asyncio.create_task(
-                    self._simulate_db_query(database_manager, f"query_{i}")
-                )
+                task = asyncio.create_task(self._simulate_db_query(database_manager, f"query_{i}"))
                 connection_tasks.append(task)
 
             # 并发执行查询
@@ -142,9 +135,7 @@ class TestMicroserviceCommunication:
             response_time = time.time() - start_time
             performance_metrics["response_times"].append(response_time)
             performance_metrics["successful_requests"] += len(successful_queries)
-            performance_metrics["failed_requests"] += len(results) - len(
-                successful_queries
-            )
+            performance_metrics["failed_requests"] += len(results) - len(successful_queries)
 
         except Exception as e:
             performance_metrics["failed_requests"] += 1
@@ -438,8 +429,7 @@ class TestMicroserviceCommunication:
             return  # 如果没有请求，跳过测试
 
         success_rate = (
-            performance_metrics["successful_requests"]
-            / performance_metrics["total_requests"]
+            performance_metrics["successful_requests"] / performance_metrics["total_requests"]
         )
 
         # 性能断言
@@ -452,10 +442,7 @@ class TestMicroserviceCommunication:
             assert avg_response_time < 0.5  # 平均响应时间应<500ms
 
         # 错误率检查
-        error_rate = (
-            performance_metrics["failed_requests"]
-            / performance_metrics["total_requests"]
-        )
+        error_rate = performance_metrics["failed_requests"] / performance_metrics["total_requests"]
         assert error_rate <= 0.3  # 错误率应<=30%
 
 

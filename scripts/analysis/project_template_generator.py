@@ -139,9 +139,7 @@ class ProjectTemplateGenerator:
                 if target_dir.exists():
                     shutil.rmtree(target_dir)
                 # 使用简单的ignore模式
-                ignore_func = shutil.ignore_patterns(
-                    *self.template_config["exclude_patterns"]
-                )
+                ignore_func = shutil.ignore_patterns(*self.template_config["exclude_patterns"])
                 shutil.copytree(source_dir, target_dir, ignore=ignore_func)
                 print(f"  ✅ {dir_name}/")
 
@@ -613,12 +611,8 @@ python generate_project.py --name YourProject
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="AICultureKit项目模板生成器")
-    parser.add_argument(
-        "--output", "-o", default="./template_output", help="模板输出路径"
-    )
-    parser.add_argument(
-        "--name", "-n", default="python-project-template", help="模板名称"
-    )
+    parser.add_argument("--output", "-o", default="./template_output", help="模板输出路径")
+    parser.add_argument("--name", "-n", default="python-project-template", help="模板名称")
     parser.add_argument("--source", "-s", default=".", help="源项目路径")
 
     args = parser.parse_args()

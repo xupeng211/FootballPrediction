@@ -2,20 +2,15 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, patch
 
 """
 流处理器测试
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 
 import pytest
 
-from src.core.exceptions import StreamingError
 from src.streaming.stream_processor_simple import (
     BatchProcessor,
     MessageProcessor,
@@ -168,9 +163,7 @@ class TestStreamProcessor:
         async def batch_process(batch):
             return {
                 "batch_size": len(batch),
-                "items": [
-                    {"key": msg["key"], "value": {"batched": True}} for msg in batch
-                ],
+                "items": [{"key": msg["key"], "value": {"batched": True}} for msg in batch],
             }
 
         processor.consumer.consume.return_value = AsyncIterator(messages)()

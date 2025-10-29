@@ -3,19 +3,14 @@ FastAPI主应用测试
 FastAPI Main Application Tests
 """
 
-import asyncio
 import time
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi import Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.testclient import TestClient
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # 尝试导入API模块并设置可用性标志
 try:
-    from src.api.app import (
         RequestLoggingMiddleware,
         app,
         close_prediction_engine,
@@ -26,7 +21,6 @@ try:
         root,
         test_endpoint,
     )
-    from src.core.logging import get_logger
 
     API_AVAILABLE = True
     TEST_SKIP_REASON = "API模块不可用"
@@ -198,7 +192,6 @@ class TestExceptionHandlers:
     def test_exception_handlers_import(self):
         """测试异常处理器导入"""
         try:
-            from src.api.app import (
                 http_exception_handler,
                 validation_exception_handler,
                 general_exception_handler,

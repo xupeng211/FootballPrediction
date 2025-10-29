@@ -1,4 +1,3 @@
-from unittest.mock import Mock, patch
 
 """
 验证工具测试
@@ -96,7 +95,8 @@ class TestValidationUtils:
         def is_valid_url(url):
             if not url:
                 return False
-            pattern = r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
+            pattern =
+    r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
             return re.match(pattern, url) is not None
 
         # 有效URL

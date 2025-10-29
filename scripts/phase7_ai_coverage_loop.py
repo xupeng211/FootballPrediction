@@ -107,9 +107,7 @@ class AICoverageOrchestrator:
 
             for file_path, metrics in coverage_data["files"].items():
                 # 将文件路径转换为模块路径
-                module_path = (
-                    file_path.replace("src/", "").replace(".py", "").replace("/", ".")
-                )
+                module_path = file_path.replace("src/", "").replace(".py", "").replace("/", ".")
                 module_coverage[module_path] = metrics["summary"]["percent_covered"]
 
             print(f"✅ 当前总覆盖率: {total_coverage:.2f}%")
@@ -117,9 +115,7 @@ class AICoverageOrchestrator:
 
         return 0.0, {}
 
-    def identify_zero_coverage_modules(
-        self, coverage_data: Dict[str, float]
-    ) -> List[str]:
+    def identify_zero_coverage_modules(self, coverage_data: Dict[str, float]) -> List[str]:
         """识别零覆盖率模块"""
         zero_modules = []
 
@@ -130,10 +126,7 @@ class AICoverageOrchestrator:
                     relative_path = os.path.relpath(module_path, self.src_dir)
                     module_name = relative_path.replace(".py", "").replace("/", ".")
 
-                    if (
-                        module_name not in coverage_data
-                        or coverage_data.get(module_name, 0) == 0
-                    ):
+                    if module_name not in coverage_data or coverage_data.get(module_name, 0) == 0:
                         zero_modules.append(module_name)
 
         return sorted(zero_modules)
@@ -177,12 +170,8 @@ class AICoverageOrchestrator:
                 tree = ast.parse(f.read())
 
             # 计算复杂度指标
-            num_classes = len(
-                [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-            )
-            num_functions = len(
-                [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
-            )
+            num_classes = len([n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)])
+            num_functions = len([n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)])
             len(
                 [
                     line
@@ -208,9 +197,7 @@ class AICoverageOrchestrator:
         priority = 5
 
         # 核心模块优先级更高
-        if any(
-            keyword in module for keyword in ["core", "api", "services", "database"]
-        ):
+        if any(keyword in module for keyword in ["core", "api", "services", "database"]):
             priority -= 1
 
         # 复杂度影响
@@ -305,9 +292,7 @@ class AICoverageOrchestrator:
             elif isinstance(node, ast.ClassDef):
                 methods = []
                 for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and not item.name.startswith(
-                        "_"
-                    ):
+                    if isinstance(item, ast.FunctionDef) and not item.name.startswith("_"):
                         methods.append(
                             {
                                 "name": item.name,
@@ -444,9 +429,7 @@ class Test{module_name.title()}AI:
         print(f"\n📍 发现 {len(zero_modules)} 个零覆盖率模块")
 
         # 3. 优先级排序
-        targets = self.prioritize_modules(
-            zero_modules[:10], coverage_data
-        )  # 限制前10个
+        targets = self.prioritize_modules(zero_modules[:10], coverage_data)  # 限制前10个
         print(f"\n📋 Phase 7 目标: 为前 {len(targets)} 个模块生成测试")
 
         # 4. 生成测试
@@ -481,9 +464,7 @@ class Test{module_name.title()}AI:
         }
 
         # 保存报告
-        report_file = (
-            self.reports_dir / f"phase7_coverage_report_{int(time.time())}.json"
-        )
+        report_file = self.reports_dir / f"phase7_coverage_report_{int(time.time())}.json"
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 

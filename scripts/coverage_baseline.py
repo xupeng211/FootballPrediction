@@ -26,7 +26,7 @@ class CoverageBaseline:
         baseline_tests = [
             "tests/unit/services/test_services_basic.py",
             "tests/unit/adapters/test_registry.py",
-            "tests/unit/utils/test_string_utils.py::TestStringUtilsTruncate"
+            "tests/unit/utils/test_string_utils.py::TestStringUtilsTruncate",
         ]
 
         # 验证测试文件存在
@@ -45,13 +45,15 @@ class CoverageBaseline:
 
         # 运行测试并生成覆盖率报告
         cmd = [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             *existing_tests,
             "--cov=src",
             "--cov-report=json",
             "--cov-report=term-missing",
             "--tb=short",
-            "-q"
+            "-q",
         ]
 
         try:
@@ -65,26 +67,26 @@ class CoverageBaseline:
 
             # 读取覆盖率报告
             try:
-                with open('coverage.json', 'r') as f:
+                with open("coverage.json", "r") as f:
                     coverage_data = json.load(f)
 
-                totals = coverage_data.get('totals', {})
-                coverage_percent = totals.get('percent_covered', 0)
-                covered_lines = totals.get('covered_lines', 0)
-                total_lines = totals.get('num_statements', 0)
+                totals = coverage_data.get("totals", {})
+                coverage_percent = totals.get("percent_covered", 0)
+                covered_lines = totals.get("covered_lines", 0)
+                total_lines = totals.get("num_statements", 0)
 
                 baseline_data = {
-                    'timestamp': datetime.now().isoformat(),
-                    'coverage_percent': coverage_percent,
-                    'covered_lines': covered_lines,
-                    'total_lines': total_lines,
-                    'test_files': existing_tests,
-                    'test_count': len(existing_tests),
-                    'files': coverage_data.get('files', {})
+                    "timestamp": datetime.now().isoformat(),
+                    "coverage_percent": coverage_percent,
+                    "covered_lines": covered_lines,
+                    "total_lines": total_lines,
+                    "test_files": existing_tests,
+                    "test_count": len(existing_tests),
+                    "files": coverage_data.get("files", {}),
                 }
 
                 # 保存基线数据
-                with open(self.baseline_file, 'w', encoding='utf-8') as f:
+                with open(self.baseline_file, "w", encoding="utf-8") as f:
                     json.dump(baseline_data, f, indent=2, ensure_ascii=False)
 
                 self.print_baseline_report(baseline_data)
@@ -103,33 +105,35 @@ class CoverageBaseline:
 
     def print_baseline_report(self, data):
         """打印基线报告"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 覆盖率基线报告")
-        print("="*60)
+        print("=" * 60)
         print(f"🕐 时间戳: {data['timestamp']}")
         print(f"📈 总体覆盖率: {data['coverage_percent']:.2f}%")
         print(f"📝 覆盖行数: {data['covered_lines']:,}")
         print(f"📄 总代码行数: {data['total_lines']:,}")
         print(f"🧪 测试文件数: {data['test_count']}")
         print("\n📁 测试文件列表:")
-        for i, test_file in enumerate(data['test_files'], 1):
+        for i, test_file in enumerate(data["test_files"], 1):
             print(f"  {i}. {test_file}")
 
         # 模块覆盖率Top 10
-        if data['files']:
+        if data["files"]:
             print("\n🏆 模块覆盖率 Top 10:")
             sorted_files = sorted(
-                [(file_data['name'], file_data['summary']['percent_covered'])
-                 for file_data in data['files'].values()],
+                [
+                    (file_data["name"], file_data["summary"]["percent_covered"])
+                    for file_data in data["files"].values()
+                ],
                 key=lambda x: x[1],
-                reverse=True
+                reverse=True,
             )
 
             for i, (file_path, percent) in enumerate(sorted_files[:10], 1):
-                short_name = file_path.replace('/home/user/projects/FootballPrediction/', '')
+                short_name = file_path.replace("/home/user/projects/FootballPrediction/", "")
                 print(f"  {i:2d}. {short_name:<60} {percent:6.2f}%")
 
-        print("="*60)
+        print("=" * 60)
 
     def compare_with_baseline(self, current_data):
         """与基线数据比较"""
@@ -138,16 +142,16 @@ class CoverageBaseline:
             return False
 
         try:
-            with open(self.baseline_file, 'r') as f:
+            with open(self.baseline_file, "r") as f:
                 baseline_data = json.load(f)
 
-            baseline_coverage = baseline_data['coverage_percent']
-            current_coverage = current_data['coverage_percent']
+            baseline_coverage = baseline_data["coverage_percent"]
+            current_coverage = current_data["coverage_percent"]
             difference = current_coverage - baseline_coverage
 
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("📊 与基线比较")
-            print("="*50)
+            print("=" * 50)
             print(f"基线覆盖率: {baseline_coverage:.2f}%")
             print(f"当前覆盖率: {current_coverage:.2f}%")
             print(f"差异: {difference:+.2f}%")
@@ -159,7 +163,7 @@ class CoverageBaseline:
             else:
                 print("➡️ 覆盖率持平")
 
-            print("="*50)
+            print("=" * 50)
             return True
 
         except Exception as e:
@@ -200,7 +204,7 @@ class CoverageBaseline:
             print(f"\n第 {i+1} 次测试...")
             data = self.run_baseline_tests()
             if data:
-                results.append(data['coverage_percent'])
+                results.append(data["coverage_percent"])
             else:
                 print(f"❌ 第 {i+1} 次测试失败")
                 return False
@@ -236,9 +240,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="覆盖率基线工具")
-    parser.add_argument('--establish', action='store_true', help='建立基线')
-    parser.add_argument('--compare', action='store_true', help='与基线比较')
-    parser.add_argument('--stability', action='store_true', help='分析稳定性')
+    parser.add_argument("--establish", action="store_true", help="建立基线")
+    parser.add_argument("--compare", action="store_true", help="与基线比较")
+    parser.add_argument("--stability", action="store_true", help="分析稳定性")
 
     args = parser.parse_args()
 

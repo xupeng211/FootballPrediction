@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from unittest.mock import AsyncMock, patch
 
 """
 预测服务健康检查模块单元测试
@@ -20,7 +19,6 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from src.api.predictions.health_simple import health_router
     from src.main import app
 
     CLIENT_AVAILABLE = True
@@ -200,7 +198,6 @@ class TestPredictionsHealthSimple:
     def test_health_check_concurrent_requests(self, client):
         """测试并发请求处理"""
         import threading
-        import time
 
         results = []
         errors = []
@@ -372,7 +369,8 @@ class TestHealthCheckPerformance:
         assert min_time > 0, "Min response time should be greater than 0"
 
         print(
-            f"Health check performance: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+            f"Health check performance: avg =
+    {avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
         )
 
 

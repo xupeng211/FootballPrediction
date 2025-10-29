@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 Test Modular Metrics Exporter
 """
 
-import time
 from datetime import datetime
 
 import pytest
@@ -15,7 +14,6 @@ from prometheus_client import CollectorRegistry
 @pytest.mark.unit
 def test_metric_definitions():
     """测试指标定义"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import (
         MetricsDefinitions,
         _MockCounter,
         _MockGauge,

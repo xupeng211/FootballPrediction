@@ -11,8 +11,6 @@ Tests for Tasks Utils
 测试src.tasks.utils模块的任务工具函数
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import List
 
 import pytest
 
@@ -42,9 +40,7 @@ except ImportError as e:
     get_task_priority = None
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 @pytest.mark.unit
 class TestShouldCollectLiveScores:
     """测试：是否应该采集实时比分"""
@@ -105,18 +101,14 @@ class TestShouldCollectLiveScores:
     async def test_should_collect_database_error(self):
         """测试：数据库错误时返回False"""
         with patch("src.tasks.utils.DatabaseManager") as mock_db_manager:
-            mock_db_manager.return_value.get_async_session.side_effect = Exception(
-                "Database error"
-            )
+            mock_db_manager.return_value.get_async_session.side_effect = Exception("Database error")
 
             _result = await should_collect_live_scores()
 
             assert _result is False
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestGetUpcomingMatches:
     """测试：获取即将到来的比赛"""
 
@@ -208,9 +200,7 @@ class TestGetUpcomingMatches:
             assert matches[0]["status"] == "scheduled"
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestIsMatchDay:
     """测试：是否是比赛日"""
 
@@ -250,9 +240,7 @@ class TestIsMatchDay:
         assert isinstance(result, bool)
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestGetActiveLeagues:
     """测试：获取活跃联赛"""
 
@@ -318,9 +306,7 @@ class TestGetActiveLeagues:
             assert all(isinstance(league, str) for league in leagues)
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestCalculateNextCollectionTime:
     """测试：计算下次采集时间"""
 
@@ -363,9 +349,7 @@ class TestCalculateNextCollectionTime:
     def test_calculate_next_custom_interval(self):
         """测试：计算自定义间隔采集时间"""
         now = datetime.now()
-        next_time = calculate_next_collection_time(
-            "custom_task", now, interval_minutes=45
-        )
+        next_time = calculate_next_collection_time("custom_task", now, interval_minutes=45)
 
         # 自定义间隔应该在45分钟内
         time_diff = next_time - now
@@ -376,9 +360,7 @@ class TestCalculateNextCollectionTime:
         now = datetime.now()
         base_time = now.replace(hour=18, minute=0, second=0, microsecond=0)
 
-        next_time = calculate_next_collection_time(
-            "evening_update", now, base_time=base_time
-        )
+        next_time = calculate_next_collection_time("evening_update", now, base_time=base_time)
 
         # 如果已经过了18:00，应该是明天的18:00
         if now.hour >= 18:
@@ -388,9 +370,7 @@ class TestCalculateNextCollectionTime:
             assert next_time.hour == 18
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestCleanupStaleTasks:
     """测试：清理过期任务"""
 
@@ -446,9 +426,7 @@ class TestCleanupStaleTasks:
             assert cleaned_count == 3
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestGetTaskPriority:
     """测试：获取任务优先级"""
 
@@ -503,9 +481,7 @@ class TestGetTaskPriority:
             ), f"Task {task_name} should have priority {expected_priority}"
 
 
-@pytest.mark.skipif(
-    not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
-)
+@pytest.mark.skipif(not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available")
 class TestTasksUtilsIntegration:
     """任务工具函数集成测试"""
 
@@ -633,9 +609,7 @@ class TestTasksUtilsIntegration:
             assert _result is True
 
 
-@pytest.mark.skipif(
-    TASKS_UTILS_AVAILABLE, reason="Tasks utils module should be available"
-)
+@pytest.mark.skipif(TASKS_UTILS_AVAILABLE, reason="Tasks utils module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

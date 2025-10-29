@@ -8,7 +8,6 @@ from unittest.mock import Mock, patch
 特征计算器模块化测试
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -202,7 +201,6 @@ def test_outlier_detection():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.features.feature_calculator import (
         FeatureCalculator,
         calculate_max,
         calculate_mean,

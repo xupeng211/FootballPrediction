@@ -1,6 +1,4 @@
 # 外部服务Mock配置
-import asyncio
-from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock
 
 

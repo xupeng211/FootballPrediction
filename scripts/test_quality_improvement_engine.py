@@ -15,15 +15,18 @@ from typing import Dict, List, Any, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 
+
 class QualityLevel(Enum):
-    CRITICAL = "critical"    # 核心业务逻辑
-    HIGH = "high"           # 重要功能模块
-    MEDIUM = "medium"       # 一般功能模块
-    LOW = "low"            # 工具类和辅助函数
+    CRITICAL = "critical"  # 核心业务逻辑
+    HIGH = "high"  # 重要功能模块
+    MEDIUM = "medium"  # 一般功能模块
+    LOW = "low"  # 工具类和辅助函数
+
 
 @dataclass
 class TestTarget:
     """测试目标数据类"""
+
     module_path: str
     file_path: Path
     functions: List[str]
@@ -32,6 +35,7 @@ class TestTarget:
     quality_level: QualityLevel
     current_coverage: float
     target_coverage: float
+
 
 class TestQualityImprovementEngine:
     def __init__(self):
@@ -50,7 +54,7 @@ class TestQualityImprovementEngine:
             "core": QualityLevel.HIGH,
             "decorators": QualityLevel.MEDIUM,
             "adapters": QualityLevel.MEDIUM,
-            "observers": QualityLevel.LOW
+            "observers": QualityLevel.LOW,
         }
 
         self.analysis_results = {}
@@ -69,7 +73,7 @@ class TestQualityImprovementEngine:
             module_info = self._analyze_python_file(py_file)
             if module_info:
                 relative_path = py_file.relative_to(self.src_root)
-                module_name = str(relative_path.with_suffix('')).replace(os.sep, '.')
+                module_name = str(relative_path.with_suffix("")).replace(os.sep, ".")
                 modules[module_name] = module_info
 
         print(f"✅ 分析完成: {len(modules)}个模块")
@@ -78,7 +82,7 @@ class TestQualityImprovementEngine:
     def _analyze_python_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """分析单个Python文件"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -105,7 +109,7 @@ class TestQualityImprovementEngine:
                 "classes": classes,
                 "complexity": complexity,
                 "quality_level": quality_level,
-                "lines": len(content.split('\n'))
+                "lines": len(content.split("\n")),
             }
 
         except Exception as e:
@@ -140,7 +144,7 @@ class TestQualityImprovementEngine:
             "total_tests": 0,
             "coverage_by_module": {},
             "problematic_tests": [],
-            "missing_tests": {}
+            "missing_tests": {},
         }
 
         # 统计测试文件
@@ -156,21 +160,22 @@ class TestQualityImprovementEngine:
 
                     # 检查问题测试
                     if file_analysis["problematic"]:
-                        test_analysis["problematic_tests"].append({
-                            "file": str(test_file),
-                            "issues": file_analysis["issues"]
-                        })
+                        test_analysis["problematic_tests"].append(
+                            {"file": str(test_file), "issues": file_analysis["issues"]}
+                        )
 
             except Exception as e:
                 print(f"    ⚠️ 分析测试文件失败 {test_file}: {e}")
 
-        print(f"✅ 测试分析完成: {test_analysis['total_files']}个文件, {test_analysis['total_tests']}个测试")
+        print(
+            f"✅ 测试分析完成: {test_analysis['total_files']}个文件, {test_analysis['total_tests']}个测试"
+        )
         return test_analysis
 
     def _analyze_test_file(self, test_file: Path) -> Optional[Dict[str, Any]]:
         """分析测试文件"""
         try:
-            with open(test_file, 'r', encoding='utf-8') as f:
+            with open(test_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -185,7 +190,12 @@ class TestQualityImprovementEngine:
 
                 # 统计断言
                 if isinstance(node, ast.Call):
-                    if isinstance(node.func, ast.Name) and node.func.id in ["assert", "assertEqual", "assertTrue", "assertFalse"]:
+                    if isinstance(node.func, ast.Name) and node.func.id in [
+                        "assert",
+                        "assertEqual",
+                        "assertTrue",
+                        "assertFalse",
+                    ]:
                         assertions += 1
 
             # 检查问题
@@ -199,20 +209,22 @@ class TestQualityImprovementEngine:
                         "test_count": test_count,
                         "assertions": assertions,
                         "problematic": True,
-                        "issues": issues
+                        "issues": issues,
                     }
 
             return {
                 "test_count": test_count,
                 "assertions": assertions,
                 "problematic": False,
-                "issues": issues
+                "issues": issues,
             }
 
         except Exception:
             return None
 
-    def generate_improvement_plan(self, source_analysis: Dict[str, Any], test_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def generate_improvement_plan(
+        self, source_analysis: Dict[str, Any], test_analysis: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """生成改进计划"""
         print("📋 生成测试质量改进计划...")
 
@@ -220,57 +232,62 @@ class TestQualityImprovementEngine:
 
         # Phase 1: 修复问题测试 (优先级: Critical)
         if test_analysis["problematic_tests"]:
-            plan.append({
-                "phase": 1,
-                "title": "修复问题测试",
-                "priority": "critical",
-                "estimated_time": "2-4小时",
-                "tasks": self._generate_fix_tasks(test_analysis["problematic_tests"]),
-                "expected_coverage_increase": "2-5%"
-            })
+            plan.append(
+                {
+                    "phase": 1,
+                    "title": "修复问题测试",
+                    "priority": "critical",
+                    "estimated_time": "2-4小时",
+                    "tasks": self._generate_fix_tasks(test_analysis["problematic_tests"]),
+                    "expected_coverage_increase": "2-5%",
+                }
+            )
 
         # Phase 2: 核心模块深度测试 (优先级: High)
-        critical_modules = [k for k, v in source_analysis.items()
-                          if v.get("quality_level") == QualityLevel.CRITICAL]
+        critical_modules = [
+            k for k, v in source_analysis.items() if v.get("quality_level") == QualityLevel.CRITICAL
+        ]
 
         if critical_modules:
-            plan.append({
-                "phase": 2,
-                "title": "核心模块深度测试",
-                "priority": "high",
-                "estimated_time": "1-2天",
-                "modules": critical_modules[:5],  # 先处理前5个最重要的模块
-                "expected_coverage_increase": "5-10%"
-            })
+            plan.append(
+                {
+                    "phase": 2,
+                    "title": "核心模块深度测试",
+                    "priority": "high",
+                    "estimated_time": "1-2天",
+                    "modules": critical_modules[:5],  # 先处理前5个最重要的模块
+                    "expected_coverage_increase": "5-10%",
+                }
+            )
 
         # Phase 3: 重要模块边界测试 (优先级: Medium)
-        high_modules = [k for k, v in source_analysis.items()
-                       if v.get("quality_level") == QualityLevel.HIGH]
+        high_modules = [
+            k for k, v in source_analysis.items() if v.get("quality_level") == QualityLevel.HIGH
+        ]
 
         if high_modules:
-            plan.append({
-                "phase": 3,
-                "title": "重要模块边界测试",
-                "priority": "medium",
-                "estimated_time": "2-3天",
-                "modules": high_modules[:8],
-                "expected_coverage_increase": "5-8%"
-            })
+            plan.append(
+                {
+                    "phase": 3,
+                    "title": "重要模块边界测试",
+                    "priority": "medium",
+                    "estimated_time": "2-3天",
+                    "modules": high_modules[:8],
+                    "expected_coverage_increase": "5-8%",
+                }
+            )
 
         # Phase 4: 集成测试增强 (优先级: Medium)
-        plan.append({
-            "phase": 4,
-            "title": "集成测试增强",
-            "priority": "medium",
-            "estimated_time": "2-3天",
-            "tasks": [
-                "API端点完整测试",
-                "数据库事务测试",
-                "缓存集成测试",
-                "服务间通信测试"
-            ],
-            "expected_coverage_increase": "3-6%"
-        })
+        plan.append(
+            {
+                "phase": 4,
+                "title": "集成测试增强",
+                "priority": "medium",
+                "estimated_time": "2-3天",
+                "tasks": ["API端点完整测试", "数据库事务测试", "缓存集成测试", "服务间通信测试"],
+                "expected_coverage_increase": "3-6%",
+            }
+        )
 
         print(f"✅ 改进计划生成完成: {len(plan)}个阶段")
         return plan
@@ -404,7 +421,7 @@ def test_performance():
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=300
+                timeout=300,
             )
 
             if result.returncode == 0:
@@ -431,23 +448,26 @@ def test_performance():
         for module_name in modules[:3]:  # 先处理3个模块
             try:
                 # 查找对应的源文件
-                module_file = self.src_root / module_name.replace('.', os.sep) / "__init__.py"
+                module_file = self.src_root / module_name.replace(".", os.sep) / "__init__.py"
                 if not module_file.exists():
                     module_file = self.src_root / f"{module_name.replace('.', os.sep)}.py"
 
                 if module_file.exists():
                     module_info = self._analyze_python_file(module_file)
                     if module_info:
-                        test_template = self.generate_test_templates({
-                            **module_info,
-                            "module_name": module_name
-                        })
+                        test_template = self.generate_test_templates(
+                            {**module_info, "module_name": module_name}
+                        )
 
                         # 生成测试文件
-                        test_file_path = self.tests_root / "unit" / f"test_{module_name.split('.')[-1]}_generated.py"
+                        test_file_path = (
+                            self.tests_root
+                            / "unit"
+                            / f"test_{module_name.split('.')[-1]}_generated.py"
+                        )
                         test_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-                        with open(test_file_path, 'w', encoding='utf-8') as f:
+                        with open(test_file_path, "w", encoding="utf-8") as f:
                             f.write(test_template)
 
                         print(f"  ✅ 生成测试文件: {test_file_path}")
@@ -507,7 +527,7 @@ def test_parametrized_boundary(input_data, expected):
 '''
 
         test_file = self.tests_root / "unit" / "test_boundary_conditions_generated.py"
-        with open(test_file, 'w', encoding='utf-8') as f:
+        with open(test_file, "w", encoding="utf-8") as f:
             f.write(boundary_test_template)
 
         print(f"✅ 生成边界测试模板: {test_file}")
@@ -566,7 +586,7 @@ class TestCacheIntegration:
         test_file = self.tests_root / "integration" / "test_integration_generated.py"
         test_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(test_file, 'w', encoding='utf-8') as f:
+        with open(test_file, "w", encoding="utf-8") as f:
             f.write(integration_test_template)
 
         print(f"✅ 生成集成测试模板: {test_file}")
@@ -588,7 +608,11 @@ class TestCacheIntegration:
 """
 
         for phase in self.improvement_plan:
-            status = "✅ 已完成" if phase.get("completed") else "🔄 进行中" if phase.get("in_progress") else "⏳ 待开始"
+            status = (
+                "✅ 已完成"
+                if phase.get("completed")
+                else "🔄 进行中" if phase.get("in_progress") else "⏳ 待开始"
+            )
             report += f"""
 ### 阶段 {phase['phase']}: {phase['title']}
 - **状态**: {status}
@@ -614,7 +638,7 @@ class TestCacheIntegration:
             coverage_file = self.project_root / "htmlcov" / "index.html"
             coverage = "Unknown"
             if coverage_file.exists():
-                with open(coverage_file, 'r', encoding='utf-8') as f:
+                with open(coverage_file, "r", encoding="utf-8") as f:
                     content = f.read()
                     match = re.search(r'<span class="pc_cov">([\d.]+)%</span>', content)
                     if match:
@@ -628,21 +652,18 @@ class TestCacheIntegration:
                 ["python", "-m", "pytest", "--collect-only", "-q"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             test_cases = "Unknown"
             if result.returncode == 0:
                 import re
-                match = re.search(r'(\d+)\s+tests? collected', result.stdout)
+
+                match = re.search(r"(\d+)\s+tests? collected", result.stdout)
                 if match:
                     test_cases = int(match.group(1))
 
-            return {
-                "test_files": test_files,
-                "test_cases": test_cases,
-                "coverage": coverage
-            }
+            return {"test_files": test_files, "test_cases": test_cases, "coverage": coverage}
 
         except Exception as e:
             return {"error": str(e)}
@@ -666,13 +687,13 @@ class TestCacheIntegration:
             "source_analysis": source_analysis,
             "test_analysis": test_analysis,
             "improvement_plan": self.improvement_plan,
-            "generated_at": datetime.now().isoformat()
+            "generated_at": datetime.now().isoformat(),
         }
 
         results_file = self.project_root / "data" / "test_quality_analysis.json"
         results_file.parent.mkdir(exist_ok=True)
 
-        with open(results_file, 'w', encoding='utf-8') as f:
+        with open(results_file, "w", encoding="utf-8") as f:
             json.dump(self.analysis_results, f, indent=2, default=str)
 
         print(f"📊 分析结果已保存: {results_file}")
@@ -680,7 +701,7 @@ class TestCacheIntegration:
         # 步骤5: 生成进度报告
         report = self.generate_progress_report()
         report_file = self.project_root / "test_quality_improvement_report.md"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"📋 进度报告已生成: {report_file}")
@@ -701,6 +722,7 @@ class TestCacheIntegration:
         print("  python scripts/test_quality_improvement_engine.py --execute-phase 3")
         print("  python scripts/test_quality_improvement_engine.py --execute-phase 4")
         print("  make coverage  # 验证改进效果")
+
 
 if __name__ == "__main__":
     import sys

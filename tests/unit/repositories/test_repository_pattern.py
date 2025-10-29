@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
-from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 """
 仓储模式单元测试
@@ -12,45 +11,37 @@ Repository Pattern Unit Tests
 Tests core functionality of the repository pattern.
 """
 
-import asyncio
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 
 import pytest
 
 from src.database.models import Match, Prediction, User
-from src.repositories.base import (
     BaseRepository,
     QuerySpec,
     ReadOnlyRepository,
     Repository,
     WriteOnlyRepository,
 )
-from src.repositories.di import (
     get_match_repository,
     get_prediction_repository,
     get_read_only_prediction_repository,
     get_user_repository,
 )
-from src.repositories.match import (
     MatchRepository,
     MatchRepositoryInterface,
     MatchStatus,
     ReadOnlyMatchRepository,
 )
-from src.repositories.prediction import (
     PredictionRepository,
     PredictionRepositoryInterface,
     ReadOnlyPredictionRepository,
 )
-from src.repositories.provider import (
     DefaultRepositoryFactory,
     RepositoryFactory,
     RepositoryProvider,
     get_repository_provider,
     set_repository_provider,
 )
-from src.repositories.user import (
     ReadOnlyUserRepository,
     UserRepository,
     UserRepositoryInterface,

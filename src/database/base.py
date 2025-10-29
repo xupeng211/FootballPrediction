@@ -18,9 +18,7 @@ class Base(DeclarativeBase):
 class TimestampMixin:
     """时间戳混入类，为模型添加创建时间和更新时间字段"""
 
-    created_at = Column(
-        DateTime, default=datetime.utcnow, nullable=False, comment="创建时间"
-    )
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
 
     updated_at = Column(
         DateTime,
@@ -83,14 +81,10 @@ class BaseModel(Base, TimestampMixin):
         """
         # 过滤掉不属于模型的字段
         valid_columns = {column.name for column in cls.__table__.columns}
-        filtered_data = {
-            key: value for key, value in data.items() if key in valid_columns
-        }
+        filtered_data = {key: value for key, value in data.items() if key in valid_columns}
         return cls(**filtered_data)
 
-    def update_from_dict(
-        self, data: Dict[str, Any], exclude_fields: Optional[set] = None
-    ) -> None:
+    def update_from_dict(self, data: Dict[str, Any], exclude_fields: Optional[set] = None) -> None:
         """
         从字典更新模型对象
 

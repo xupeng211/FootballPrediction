@@ -29,9 +29,7 @@ def check_mcp_packages():
 
     for package in packages:
         try:
-            result = subprocess.run(
-                ["pip", "show", package], capture_output=True, text=True
-            )
+            result = subprocess.run(["pip", "show", package], capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"✅ {package}: Installed")
             else:
@@ -51,9 +49,7 @@ def check_npm_mcp_servers():
 
     for server in servers:
         try:
-            result = subprocess.run(
-                ["npm", "list", "-g", server], capture_output=True, text=True
-            )
+            result = subprocess.run(["npm", "list", "-g", server], capture_output=True, text=True)
             if result.returncode == 0:
                 print(f"✅ {server}: Installed")
             else:
@@ -144,9 +140,7 @@ def main():
     print("- Project-specific servers: ⚠️  Some require custom implementation")
 
     print("\n🎯 Next Steps:")
-    print(
-        "1. Install missing npm packages: npm install -g @modelcontextprotocol/server-*"
-    )
+    print("1. Install missing npm packages: npm install -g @modelcontextprotocol/server-*")
     print("2. Create custom MCP servers for MLflow, Feast, Coverage, Pytest")
     print("3. Test MCP server connections")
     print("4. Configure environment variables for service connections")

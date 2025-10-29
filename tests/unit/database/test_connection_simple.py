@@ -1,5 +1,3 @@
-from unittest.mock import Mock, patch
-
 """
 数据库连接简化测试
 Tests for Database Connection (Simple Version)

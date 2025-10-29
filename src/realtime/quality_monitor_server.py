@@ -9,14 +9,10 @@ Real-time Quality Monitoring WebSocket Server
 import asyncio
 import json
 from datetime import datetime
-from typing import Dict, List, Optional, Set
-from pathlib import Path
 
 import redis
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 
 from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
@@ -48,9 +44,7 @@ class QualityMonitorServer:
         self.active_connections: Set[WebSocket] = set()
 
         # 数据存储
-        self.redis_client = redis.Redis(
-            host="localhost", port=6379, db=0, decode_responses=True
-        )
+        self.redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 
         # 分析器
         self.metrics_analyzer = AdvancedMetricsAnalyzer()
@@ -101,9 +95,7 @@ class QualityMonitorServer:
         self.active_connections.add(websocket)
 
         client_id = f"client_{len(self.active_connections)}"
-        self.logger.info(
-            f"新客户端连接: {client_id}, 总连接数: {len(self.active_connections)}"
-        )
+        self.logger.info(f"新客户端连接: {client_id}, 总连接数: {len(self.active_connections)}")
 
         try:
             # 发送初始数据
@@ -152,9 +144,7 @@ class QualityMonitorServer:
                 )
             elif message_type == "ping":
                 await websocket.send_text(
-                    json.dumps(
-                        {"type": "pong", "timestamp": datetime.now().isoformat()}
-                    )
+                    json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()})
                 )
 
         except json.JSONDecodeError:
@@ -194,9 +184,7 @@ class QualityMonitorServer:
                 "system_health": {
                     "server_status": "healthy",
                     "database_status": "healthy",
-                    "redis_status": (
-                        "healthy" if self.redis_client.ping() else "unhealthy"
-                    ),
+                    "redis_status": ("healthy" if self.redis_client.ping() else "unhealthy"),
                 },
             }
 
@@ -401,9 +389,7 @@ class QualityMonitorServer:
 
             # 如果有新告警，立即广播
             if alerts:
-                await self.broadcast_quality_update(
-                    {"type": "new_alerts", "alerts": alerts}
-                )
+                await self.broadcast_quality_update({"type": "new_alerts", "alerts": alerts})
 
         except Exception as e:
             self.logger.error(f"检查告警条件失败: {e}")

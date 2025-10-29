@@ -6,7 +6,6 @@ Kafka 消息流集成测试
 import asyncio
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List
 
 import pytest
 
@@ -79,9 +78,7 @@ class TestKafkaIntegration:
         consumer.close()
 
     @pytest.mark.asyncio
-    async def test_prediction_event_flow(
-        self, test_kafka, db_session, sample_prediction_data
-    ):
+    async def test_prediction_event_flow(self, test_kafka, db_session, sample_prediction_data):
         """测试预测事件流"""
         import uuid
 
@@ -370,7 +367,6 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_message_partitioning(self, test_kafka):
         """测试消息分区"""
-        from kafka import KafkaConsumer, KafkaProducer
 
         topic = test_kafka["topics"][0]
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -421,7 +417,6 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_error_handling(self, test_kafka):
         """测试错误处理"""
-        import uuid
 
         from kafka import KafkaProducer
         from kafka.errors import KafkaError
@@ -474,9 +469,7 @@ class TestKafkaIntegration:
                     "message_id": i,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
-                future = producer.send(
-                    topic, key=f"producer_{producer_id}", value=message
-                )
+                future = producer.send(topic, key=f"producer_{producer_id}", value=message)
                 _metadata = future.get(timeout=10)
                 messages.append(metadata)
             return messages

@@ -7,9 +7,6 @@ End-to-End Workflow Tests
 """
 
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -17,8 +14,6 @@ from fastapi.testclient import TestClient
 
 # TODO: 根据实际模块调整导入
 try:
-    from src.cache.redis_client import get_redis_client
-    from src.database.connection import get_db_session
     from src.main import app
 except ImportError as e:
     print(f"导入警告: {e}")

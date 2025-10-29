@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 第四阶段核心模块深度覆盖测试
@@ -13,18 +12,12 @@ Phase 4 Core Modules Deep Coverage Tests
 """
 
 import asyncio
-import json
-import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 import pytest
 
 # 测试导入 - 使用核心模块导入策略
 try:
-    from src.core.error_handler import ErrorHandler, GlobalErrorHandler
     from src.core.prediction.config import PredictionConfig
-    from src.core.prediction.statistics import PredictionStatistics
     from src.core.prediction_engine import PredictionEngine
 
     CORE_AVAILABLE = True
@@ -43,9 +36,6 @@ except ImportError as e:
     CQRS_AVAILABLE = False
 
 try:
-    from src.domain.events import DomainEvent, Event, EventBus
-    from src.domain.models.events import MatchEvent, PredictionEvent
-    from src.observers.base import Observer
 
     EVENTS_AVAILABLE = True
 except ImportError as e:
@@ -53,7 +43,6 @@ except ImportError as e:
     EVENTS_AVAILABLE = False
 
 try:
-    from src.domain.services import PredictionDomainService
     from src.facades.facades import DataProcessingFacade, PredictionFacade
 
     FACADE_AVAILABLE = True
@@ -63,7 +52,6 @@ except ImportError as e:
 
 try:
     from src.api.data_router import router
-    from src.api.dependencies import get_database, get_prediction_service
 
     API_AVAILABLE = True
 except ImportError as e:
@@ -260,9 +248,7 @@ class TestAPIRouterAdvanced:
 
             return chained_request
 
-        chain = create_chain(
-            [cors_middleware, auth_middleware, logging_middleware], mock_handler
-        )
+        chain = create_chain([cors_middleware, auth_middleware, logging_middleware], mock_handler)
         chain({"path": "/test"})
 
         # 验证中间件执行顺序
@@ -510,9 +496,7 @@ class TestEventSystemAdvanced:
         event_bus.subscribe(MatchEvent, retryable_handler)
 
         # 发布事件
-        match_event = MatchEvent(
-            event_id="event_456", data={"match_id": 789, "status": "started"}
-        )
+        match_event = MatchEvent(event_id="event_456", data={"match_id": 789, "status": "started"})
 
         # 应该成功（经过重试）
         result = await event_bus.publish(match_event)

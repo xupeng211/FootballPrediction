@@ -4,8 +4,6 @@ Auto-generated basic tests for advanced_predictions.py
 TODO: Expand these tests with actual functionality
 """
 
-import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from advanced_predictions import *

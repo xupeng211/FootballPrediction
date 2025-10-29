@@ -64,9 +64,7 @@ class ImportCleaner:
             print(f"⚠️ 警告：无法检查 {file_path}: {e}")
             return []
 
-    def parse_imports(
-        self, content: str
-    ) -> Tuple[List[ast.Import], List[ast.ImportFrom]]:
+    def parse_imports(self, content: str) -> Tuple[List[ast.Import], List[ast.ImportFrom]]:
         """解析 AST 获取所有 import 语句"""
         try:
             tree = ast.parse(content)
@@ -114,11 +112,7 @@ class ImportCleaner:
                 import_lines.append(line)
             elif stripped == "" and import_lines:
                 import_lines.append(line)
-            elif (
-                import_lines
-                and not stripped.startswith(("import ", "from "))
-                and stripped != ""
-            ):
+            elif import_lines and not stripped.startswith(("import ", "from ")) and stripped != "":
                 in_import_section = False
 
             if not in_import_section or not stripped.startswith(("import ", "from ")):
@@ -329,9 +323,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="自动清理和排序 Python import 语句")
-    parser.add_argument(
-        "directory", nargs="?", default=".", help="要清理的目录 (默认: 当前目录)"
-    )
+    parser.add_argument("directory", nargs="?", default=".", help="要清理的目录 (默认: 当前目录)")
     parser.add_argument(
         "--report",
         default="docs/_reports/IMPORT_CLEANUP_REPORT.md",

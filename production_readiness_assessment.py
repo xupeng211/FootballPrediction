@@ -13,6 +13,7 @@ import os
 from datetime import datetime
 import httpx
 
+
 class ProductionReadinessAssessor:
     """生产就绪度评估器"""
 
@@ -21,7 +22,14 @@ class ProductionReadinessAssessor:
         self.test_results = []
         self.system_metrics = {}
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0, score: float = None):
+    def log_test(
+        self,
+        test_name: str,
+        success: bool,
+        details: str = "",
+        duration: float = 0,
+        score: float = None,
+    ):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -29,7 +37,7 @@ class ProductionReadinessAssessor:
             "details": details,
             "duration": duration,
             "score": score,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -50,7 +58,7 @@ class ProductionReadinessAssessor:
             ("基础健康检查", "/api/health/"),
             ("应用健康状态", "/api/v1/status"),
             ("API文档可用性", "/docs"),
-            ("OpenAPI规范", "/openapi.json")
+            ("OpenAPI规范", "/openapi.json"),
         ]
 
         health_score = 0
@@ -82,27 +90,24 @@ class ProductionReadinessAssessor:
             "认证系统": [
                 ("/api/v1/auth/register", "POST"),
                 ("/api/v1/auth/login", "POST"),
-                ("/api/v1/auth/logout", "POST")
+                ("/api/v1/auth/logout", "POST"),
             ],
             "数据API": [
                 ("/api/v1/data/teams", "GET"),
                 ("/api/v1/data/leagues", "GET"),
                 ("/api/v1/data/matches", "GET"),
-                ("/api/v1/data/odds", "GET")
+                ("/api/v1/data/odds", "GET"),
             ],
             "预测系统": [
                 ("/api/v1/predictions/health", "GET"),
-                ("/api/v1/predictions/recent", "GET")
+                ("/api/v1/predictions/recent", "GET"),
             ],
             "监控系统": [
                 ("/api/v1/metrics/prometheus", "GET"),
                 ("/api/v1/events/health", "GET"),
-                ("/api/v1/observers/status", "GET")
+                ("/api/v1/observers/status", "GET"),
             ],
-            "核心架构": [
-                ("/api/v1/cqrs/system/status", "GET"),
-                ("/api/v1/features/health", "GET")
-            ]
+            "核心架构": [("/api/v1/cqrs/system/status", "GET"), ("/api/v1/features/health", "GET")],
         }
 
         total_score = 0
@@ -138,7 +143,9 @@ class ProductionReadinessAssessor:
                 status = "🟡"
             else:
                 status = "🔴"
-            print(f"   {status} {category}: {category_success}/{len(endpoints)} ({category_score:.0f}%)")
+            print(
+                f"   {status} {category}: {category_success}/{len(endpoints)} ({category_score:.0f}%)"
+            )
 
         overall_api_score = total_score / len(api_categories)
         return overall_api_score, category_scores
@@ -150,7 +157,7 @@ class ProductionReadinessAssessor:
         performance_tests = [
             ("响应时间测试", self.test_response_times),
             ("并发处理测试", self.test_concurrent_requests),
-            ("系统资源使用", self.check_system_resources)
+            ("系统资源使用", self.check_system_resources),
         ]
 
         performance_scores = []
@@ -173,11 +180,7 @@ class ProductionReadinessAssessor:
 
     async def test_response_times(self):
         """测试响应时间"""
-        endpoints = [
-            "/api/health/",
-            "/api/v1/data/teams",
-            "/api/v1/predictions/health"
-        ]
+        endpoints = ["/api/health/", "/api/v1/data/teams", "/api/v1/predictions/health"]
 
         response_times = []
         for endpoint in endpoints:
@@ -205,6 +208,7 @@ class ProductionReadinessAssessor:
 
     async def test_concurrent_requests(self):
         """测试并发请求处理"""
+
         async def make_request():
             try:
                 async with httpx.AsyncClient(timeout=5) as client:
@@ -236,18 +240,22 @@ class ProductionReadinessAssessor:
         """检查系统资源使用"""
         cpu_percent = psutil.cpu_percent(interval=1)
         memory_info = psutil.virtual_memory()
-        disk_info = psutil.disk_usage('/')
+        disk_info = psutil.disk_usage("/")
 
         self.system_metrics = {
             "cpu_percent": cpu_percent,
             "memory_percent": memory_info.percent,
-            "disk_percent": (disk_info.used / disk_info.total) * 100
+            "disk_percent": (disk_info.used / disk_info.total) * 100,
         }
 
         # 评分：CPU < 70%, Memory < 80%, Disk < 90%
         cpu_score = 100 if cpu_percent < 70 else 80 if cpu_percent < 85 else 60
         memory_score = 100 if memory_info.percent < 80 else 80 if memory_info.percent < 90 else 60
-        disk_score = 100 if self.system_metrics["disk_percent"] < 90 else 80 if self.system_metrics["disk_percent"] < 95 else 60
+        disk_score = (
+            100
+            if self.system_metrics["disk_percent"] < 90
+            else 80 if self.system_metrics["disk_percent"] < 95 else 60
+        )
 
         return (cpu_score + memory_score + disk_score) / 3
 
@@ -259,7 +267,7 @@ class ProductionReadinessAssessor:
             ("CORS配置检查", self.check_cors_configuration),
             ("错误处理安全性", self.check_error_handling),
             ("认证系统安全性", self.check_auth_security),
-            ("HTTPS支持检查", self.check_https_support)
+            ("HTTPS支持检查", self.check_https_support),
         ]
 
         security_scores = []
@@ -285,14 +293,13 @@ class ProductionReadinessAssessor:
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.options(
-                    f"{self.api_base_url}/api/health/",
-                    headers={"Origin": "http://localhost:3000"}
+                    f"{self.api_base_url}/api/health/", headers={"Origin": "http://localhost:3000"}
                 )
                 # 检查CORS头
                 cors_headers = [
                     "Access-Control-Allow-Origin",
                     "Access-Control-Allow-Methods",
-                    "Access-Control-Allow-Headers"
+                    "Access-Control-Allow-Headers",
                 ]
                 header_count = sum(1 for header in cors_headers if header in response.headers)
                 return (header_count / len(cors_headers)) * 100
@@ -310,8 +317,9 @@ class ProductionReadinessAssessor:
                         error_data = response.json()
                         # 检查是否暴露敏感信息
                         sensitive_info = ["password", "secret", "key", "token", "stack"]
-                        exposed_count = sum(1 for info in sensitive_info
-                                           if info in str(error_data).lower())
+                        exposed_count = sum(
+                            1 for info in sensitive_info if info in str(error_data).lower()
+                        )
                         security_score = max(0, 100 - (exposed_count * 20))
                         return security_score
                     except:
@@ -330,7 +338,7 @@ class ProductionReadinessAssessor:
                 if response.status_code == 401:
                     return 100  # 正确返回未授权
                 elif response.status_code == 200:
-                    return 50   # 允许未授权访问，安全性较低
+                    return 50  # 允许未授权访问，安全性较低
                 else:
                     return 80
         except:
@@ -351,7 +359,7 @@ class ProductionReadinessAssessor:
         data_endpoints = [
             ("/api/v1/data/teams", "球队数据"),
             ("/api/v1/data/leagues", "联赛数据"),
-            ("/api/v1/data/matches", "比赛数据")
+            ("/api/v1/data/matches", "比赛数据"),
         ]
 
         quality_scores = []
@@ -392,7 +400,7 @@ class ProductionReadinessAssessor:
             "api_functionality": 0.3,
             "performance": 0.2,
             "security": 0.15,
-            "data_quality": 0.15
+            "data_quality": 0.15,
         }
 
         overall_score = sum(scores[key] * weight for key, weight in weights.items())
@@ -460,7 +468,7 @@ class ProductionReadinessAssessor:
                     "api_functionality": "API功能",
                     "performance": "性能指标",
                     "security": "安全措施",
-                    "data_quality": "数据质量"
+                    "data_quality": "数据质量",
                 }
                 print(f"      • {area_names.get(area, area)}: {score:.1f}/100")
 
@@ -530,10 +538,12 @@ class ProductionReadinessAssessor:
         # 生成报告
         self.generate_readiness_report(scores)
 
+
 async def main():
     """主函数"""
     assessor = ProductionReadinessAssessor()
     await assessor.run_production_readiness_assessment()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

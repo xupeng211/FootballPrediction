@@ -25,14 +25,10 @@ class CommandBus:
         self._handlers: Dict[Type[Command], CommandHandler] = {}
         self._middleware: list = []
 
-    def register_handler(
-        self, command_type: Type[Command], handler: CommandHandler
-    ) -> None:
+    def register_handler(self, command_type: Type[Command], handler: CommandHandler) -> None:
         """注册命令处理器"""
         self._handlers[command_type] = handler
-        logger.info(
-            f"注册命令处理器: {command_type.__name__} -> {handler.__class__.__name__}"
-        )
+        logger.info(f"注册命令处理器: {command_type.__name__} -> {handler.__class__.__name__}")
 
     def register_middleware(self, middleware) -> None:
         """注册中间件"""
@@ -88,9 +84,7 @@ class QueryBus:
     def register_handler(self, query_type: Type[Query], handler: QueryHandler) -> None:
         """注册查询处理器"""
         self._handlers[query_type] = handler
-        logger.info(
-            f"注册查询处理器: {query_type.__name__} -> {handler.__class__.__name__}"
-        )
+        logger.info(f"注册查询处理器: {query_type.__name__} -> {handler.__class__.__name__}")
 
     def register_middleware(self, middleware) -> None:
         """注册中间件"""

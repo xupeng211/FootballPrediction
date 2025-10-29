@@ -29,28 +29,34 @@ def fix_missing_colons(file_path):
         # Fix 2: Dictionary literals missing colons (key value [array])
         content = re.sub(
             r'("([^"]+)"|\'([^\']+)\')\s*\[([^\]]+)\]',
-            lambda m: f"{m.group(1)}: [{m.group(4)}]"
-            if not any(op in content[m.start() : m.end() + 50] for op in [": :", "::"])
-            else m.group(0),
+            lambda m: (
+                f"{m.group(1)}: [{m.group(4)}]"
+                if not any(op in content[m.start() : m.end() + 50] for op in [": :", "::"])
+                else m.group(0)
+            ),
             content,
         )
 
         # Fix 3: Dictionary literals missing colons (key value "string")
         content = re.sub(
             r'("([^"]+)"|\'([^\']+)\')\s*"([^"]+)"',
-            lambda m: f'{m.group(1)}: "{m.group(4)}"'
-            if ":" not in content[m.start() : m.start() + 100]
-            and not m.group(4).startswith((":", " ", ",", "]", "}"))
-            else m.group(0),
+            lambda m: (
+                f'{m.group(1)}: "{m.group(4)}"'
+                if ":" not in content[m.start() : m.start() + 100]
+                and not m.group(4).startswith((":", " ", ",", "]", "}"))
+                else m.group(0)
+            ),
             content,
         )
 
         # Fix 4: Dictionary literals missing colons (key value number)
         content = re.sub(
             r'("([^"]+)"|\'([^\']+)\')\s+([0-9]+\.?[0-9]*)',
-            lambda m: f"{m.group(1)}: {m.group(4)}"
-            if ":" not in content[m.start() : m.start() + 50]
-            else m.group(0),
+            lambda m: (
+                f"{m.group(1)}: {m.group(4)}"
+                if ":" not in content[m.start() : m.start() + 50]
+                else m.group(0)
+            ),
             content,
         )
 

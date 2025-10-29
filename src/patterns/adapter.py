@@ -130,9 +130,7 @@ class WeatherAPIImpl(ExternalAPI):
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=10)
-            )
+            self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10))
         return self.session
 
     async def fetch_data(self, endpoint: str, params: Dict[str, Any]) -> Any:
@@ -241,9 +239,7 @@ class FootballApiAdapter(APIAdapter):
     async def get_team_stats(self, team_id: int) -> ExternalData:
         """获取球队统计"""
         try:
-            raw_data = await self.external_api.fetch_data(
-                "teams/stats", {"team": team_id}
-            )
+            raw_data = await self.external_api.fetch_data("teams/stats", {"team": team_id})
             transformed_data = self.transform_data(raw_data)
 
             return ExternalData(
@@ -472,15 +468,11 @@ class UnifiedDataCollector:
                     KeyError,
                     RuntimeError,
                 ) as e:
-                    self.logger.error(
-                        f"Failed to collect team stats from {name}: {str(e)}"
-                    )
+                    self.logger.error(f"Failed to collect team stats from {name}: {str(e)}")
 
         return results
 
-    async def collect_weather_data(
-        self, location: str, date: datetime
-    ) -> Optional[ExternalData]:
+    async def collect_weather_data(self, location: str, date: datetime) -> Optional[ExternalData]:
         """收集天气数据"""
         for name, adapter in self.adapters.items():
             if isinstance(adapter, WeatherApiAdapter):
@@ -493,9 +485,7 @@ class UnifiedDataCollector:
                     KeyError,
                     RuntimeError,
                 ) as e:
-                    self.logger.error(
-                        f"Failed to collect weather from {name}: {str(e)}"
-                    )
+                    self.logger.error(f"Failed to collect weather from {name}: {str(e)}")
 
         return None
 

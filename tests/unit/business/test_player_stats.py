@@ -2,7 +2,6 @@
 球员统计业务逻辑测试
 """
 
-from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -64,11 +63,7 @@ class Player:
         # 更新评分（模拟）
         base_rating = 6.0
         rating = (
-            base_rating
-            + (goals * 0.5)
-            + (assists * 0.3)
-            - (yellow_cards * 0.2)
-            - (red_cards * 0.5)
+            base_rating + (goals * 0.5) + (assists * 0.3) - (yellow_cards * 0.2) - (red_cards * 0.5)
         )
         self.stats.ratings.append(min(10, max(0, rating)))
 
@@ -124,38 +119,25 @@ class PlayerAnalyzer:
 
     def get_top_scorers(self, limit: int = 10) -> List[Player]:
         """获取射手榜"""
-        return sorted(self.players.values(), key=lambda p: p.stats.goals, reverse=True)[
-            :limit
-        ]
+        return sorted(self.players.values(), key=lambda p: p.stats.goals, reverse=True)[:limit]
 
     def get_top_assisters(self, limit: int = 10) -> List[Player]:
         """获取助攻榜"""
-        return sorted(
-            self.players.values(), key=lambda p: p.stats.assists, reverse=True
-        )[:limit]
+        return sorted(self.players.values(), key=lambda p: p.stats.assists, reverse=True)[:limit]
 
     def get_players_by_position(self, position: Position) -> List[Player]:
         """根据位置获取球员"""
         return [p for p in self.players.values() if p.position == position]
 
-    def get_best_rated_players(
-        self, min_matches: int = 5, limit: int = 10
-    ) -> List[Player]:
+    def get_best_rated_players(self, min_matches: int = 5, limit: int = 10) -> List[Player]:
         """获取最高评分球员"""
-        qualified = [
-            p for p in self.players.values() if p.stats.matches_played >= min_matches
-        ]
-        return sorted(qualified, key=lambda p: p.get_average_rating(), reverse=True)[
-            :limit
-        ]
+        qualified = [p for p in self.players.values() if p.stats.matches_played >= min_matches]
+        return sorted(qualified, key=lambda p: p.get_average_rating(), reverse=True)[:limit]
 
     def find_most_consistent_player(self, min_matches: int = 10) -> Optional[Player]:
         """找到最稳定的球员（评分方差最小）"""
-        import math
 
-        candidates = [
-            p for p in self.players.values() if len(p.stats.ratings) >= min_matches
-        ]
+        candidates = [p for p in self.players.values() if len(p.stats.ratings) >= min_matches]
 
         if not candidates:
             return None
@@ -194,8 +176,7 @@ class PlayerAnalyzer:
             "yellow_cards": stats.yellow_cards,
             "red_cards": stats.red_cards,
             "goal_involvement": stats.goals + stats.assists,
-            "goal_involvement_per_game": (stats.goals + stats.assists)
-            / stats.matches_played,
+            "goal_involvement_per_game": (stats.goals + stats.assists) / stats.matches_played,
         }
 
     def compare_players(self, player1_id: int, player2_id: int) -> Dict[str, Any]:
@@ -223,13 +204,9 @@ class PlayerAnalyzer:
             },
             "comparison": {
                 "better_goals": p1.name if p1.stats.goals > p2.stats.goals else p2.name,
-                "better_assists": (
-                    p1.name if p1.stats.assists > p2.stats.assists else p2.name
-                ),
+                "better_assists": (p1.name if p1.stats.assists > p2.stats.assists else p2.name),
                 "better_rating": (
-                    p1.name
-                    if p1.get_average_rating() > p2.get_average_rating()
-                    else p2.name
+                    p1.name if p1.get_average_rating() > p2.get_average_rating() else p2.name
                 ),
             },
         }
@@ -257,16 +234,12 @@ class PlayerAnalyzer:
             self.players.values(), key=lambda p: p.stats.yellow_cards, reverse=True
         )[:5]
 
-        most_red = sorted(
-            self.players.values(), key=lambda p: p.stats.red_cards, reverse=True
-        )[:5]
+        most_red = sorted(self.players.values(), key=lambda p: p.stats.red_cards, reverse=True)[:5]
 
         cleanest = [
             p
             for p in self.players.values()
-            if p.stats.matches_played >= 10
-            and p.stats.yellow_cards == 0
-            and p.stats.red_cards == 0
+            if p.stats.matches_played >= 10 and p.stats.yellow_cards == 0 and p.stats.red_cards == 0
         ][:5]
 
         return {
@@ -298,10 +271,7 @@ class PlayerAnalyzer:
 
         # 计算综合分数
         total_score = (
-            age_factor * 30
-            + performance_factor * 30
-            + goal_factor * 20
-            + assist_factor * 15
+            age_factor * 30 + performance_factor * 30 + goal_factor * 20 + assist_factor * 15
         ) * position_factor
 
         return {

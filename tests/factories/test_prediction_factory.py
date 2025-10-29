@@ -97,9 +97,7 @@ class PredictionFactory(BaseFactory):
         return cls(**cls._attach_match(base))
 
     @classmethod
-    def create_correct_prediction(
-        cls, actual_home_score: int, actual_away_score: int, **kwargs
-    ):
+    def create_correct_prediction(cls, actual_home_score: int, actual_away_score: int, **kwargs):
         if actual_home_score > actual_away_score:
             _result = PredictedResult.HOME_WIN
         elif actual_home_score < actual_away_score:
@@ -109,17 +107,13 @@ class PredictionFactory(BaseFactory):
         base = {
             "predicted_result": result,
             "home_win_probability": (
-                Decimal("0.60")
-                if _result == PredictedResult.HOME_WIN
-                else Decimal("0.20")
+                Decimal("0.60") if _result == PredictedResult.HOME_WIN else Decimal("0.20")
             ),
             "draw_probability": (
                 Decimal("0.60") if _result == PredictedResult.DRAW else Decimal("0.20")
             ),
             "away_win_probability": (
-                Decimal("0.60")
-                if _result == PredictedResult.AWAY_WIN
-                else Decimal("0.20")
+                Decimal("0.60") if _result == PredictedResult.AWAY_WIN else Decimal("0.20")
             ),
             "predicted_home_score": Decimal(str(actual_home_score)),
             "predicted_away_score": Decimal(str(actual_away_score)),
@@ -130,9 +124,7 @@ class PredictionFactory(BaseFactory):
         return cls(**data)
 
     @classmethod
-    def create_incorrect_prediction(
-        cls, actual_home_score: int, actual_away_score: int, **kwargs
-    ):
+    def create_incorrect_prediction(cls, actual_home_score: int, actual_away_score: int, **kwargs):
         result_pool = [
             PredictedResult.HOME_WIN,
             PredictedResult.DRAW,

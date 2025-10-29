@@ -122,7 +122,6 @@ class TestMetadataManagerCompatibility:
         except ImportError:
             # 至少旧路径应该工作（作为兼容性包装器）
             try:
-                from src.lineage.metadata_manager import MetadataManager  # type: ignore
 
                 assert True  # 导入成功
             except ImportError:
@@ -148,7 +147,6 @@ class TestMetadataManagerCompatibility:
 
             # 触发警告
             try:
-                from src.lineage.metadata_manager import MetadataManager  # type: ignore
             except ImportError:
                 pass
 
@@ -204,7 +202,6 @@ class TestMetadataManagerCompatibility:
 
             def import_module():
                 try:
-                    from src.lineage.metadata_manager import (
                         MetadataManager,
                     )  # type: ignore
                 except ImportError:

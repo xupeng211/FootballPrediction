@@ -87,9 +87,7 @@ def main():
         print("=" * 80)
         print("\n1. 修复导入错误")
         print("2. 检查Optional、Any等类型注解是否已导入")
-        print(
-            "3. 运行: pytest --ignore=tests/unit/utils/test_redis_connection_manager.py"
-        )
+        print("3. 运行: pytest --ignore=tests/unit/utils/test_redis_connection_manager.py")
         print("4. 或者临时移除/重命名有问题的测试文件")
     else:
         print("\n✅ 所有测试文件都没有问题！")

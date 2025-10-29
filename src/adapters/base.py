@@ -46,11 +46,13 @@ class Target(ABC):
 
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
+
     pass
 
 
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
+
     pass
 
 
@@ -61,6 +63,7 @@ class DataTransformer(ABC):
     async def transform(self, data: Any, **kwargs) -> Any:
         """转换数据格式"""
         pass
+
 
 class CompositeAdapter(Adapter):
     """组合适配器，可以管理多个子适配器"""
@@ -74,7 +77,6 @@ class CompositeAdapter(Adapter):
     def get_target_schema(self) -> Dict[str, Any]:
         """获取目标数据结构"""
         pass
-
 
     def __init__(self, name: str = "CompositeAdapter"):
         self.name = name
@@ -120,8 +122,8 @@ class CompositeAdapter(Adapter):
             return True
         return False
 
-# TODO: 方法 def get_adapter 过长(25行)，建议拆分
-# TODO: 方法 def get_adapter 过长(25行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(25行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(25行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
@@ -136,9 +138,7 @@ class CompositeAdapter(Adapter):
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 过滤异常结果
-        successful_results = [
-            result for result in results if not isinstance(result, Exception)
-        ]
+        successful_results = [result for result in results if not isinstance(result, Exception)]
 
         return {
             "adapter_name": self.name,

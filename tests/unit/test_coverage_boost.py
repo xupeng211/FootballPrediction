@@ -1,19 +1,10 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """测试覆盖率提升文件 - 专门用于增加覆盖率"""
 
 
 import asyncio
-import base64
-import hashlib
-import json
-import re
-import secrets
-import uuid
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pytest
 
@@ -377,7 +368,6 @@ class TestCoreFunctionality:
     def test_validation_functions(self):
         """测试验证函数"""
         try:
-            from utils import (
                 validate_email,
                 validate_json,
                 validate_phone,
@@ -708,7 +698,6 @@ class TestErrorHandling:
         """测试导入错误处理"""
         # 测试导入不存在的函数
         try:
-            from utils import nonexistent_function
 
             assert False, "Should have raised ImportError"
         except ImportError:

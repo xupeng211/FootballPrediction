@@ -243,7 +243,6 @@ def test_warning_filters():
     try:
         import warnings
 
-        from utils.warning_filters import (
             filter_deprecation_warnings,
             ignore_user_warnings,
         )
@@ -303,7 +302,6 @@ def test_response():
 def test_retry():
     """测试retry模块"""
     try:
-        from utils.retry import RetryError, retry
 
         attempts = 0
 

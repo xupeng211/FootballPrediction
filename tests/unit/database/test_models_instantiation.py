@@ -67,9 +67,7 @@ class TestModelsInstantiation:
         try:
             from src.database.models.league import League
 
-            league = League(
-                id=39, name="Premier League", country="England", season=2024
-            )
+            league = League(id=39, name="Premier League", country="England", season=2024)
             assert league.id == 39
             assert league.name == "Premier League"
             assert league.country == "England"

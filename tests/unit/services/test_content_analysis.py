@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 内容分析服务测试
 Tests for Content Analysis Service
@@ -109,10 +107,7 @@ class TestContentAnalysisService:
         # Then
         assert info["name"] == "ContentAnalysisService"
         assert info["type"] == "ContentAnalysisService"
-        assert (
-            info["description"]
-            == "Content analysis service for football prediction system"
-        )
+        assert info["description"] == "Content analysis service for football prediction system"
         assert info["version"] == "1.0.0"
         assert info["models_loaded"] is True
 
@@ -156,18 +151,14 @@ class TestContentAnalysisService:
         assert _result._result["language"] == "unknown"
 
     @pytest.mark.asyncio
-    async def test_analyze_content_without_initialization(
-        self, service, sample_text_content
-    ):
+    async def test_analyze_content_without_initialization(self, service, sample_text_content):
         """测试：未初始化时分析内容"""
         # When / Then
         with pytest.raises(RuntimeError, match="服务未初始化"):
             await service.analyze_content(sample_text_content)
 
     @pytest.mark.asyncio
-    async def test_batch_analyze(
-        self, service, sample_text_content, sample_image_content
-    ):
+    async def test_batch_analyze(self, service, sample_text_content, sample_image_content):
         """测试：批量分析内容"""
         # Given
         await service.initialize()
@@ -396,10 +387,7 @@ class TestContentAnalysisService:
     def test_generate_summary_long_text(self, service):
         """测试：生成长文本摘要"""
         # Given
-        text = (
-            "这是一段很长的文本。包含了很多内容。需要进行摘要。超过了一百个字符的限制。"
-            * 3
-        )
+        text = "这是一段很长的文本。包含了很多内容。需要进行摘要。超过了一百个字符的限制。" * 3
 
         # When
         summary = service.generate_summary(text, 50)
@@ -434,9 +422,7 @@ class TestContentModel:
     def test_content_creation(self):
         """测试：创建内容对象"""
         # Given & When
-        content = Content(
-            content_id="test_001", content_type="text", _data={"text": "测试内容"}
-        )
+        content = Content(content_id="test_001", content_type="text", _data={"text": "测试内容"})
 
         # Then
         assert content.id == "test_001"

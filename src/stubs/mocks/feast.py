@@ -60,9 +60,7 @@ class ValueType:
 class MockFeatureStore:
     """模拟特征存储"""
 
-    def __init__(
-        self, repo_path: Optional[str] = None, config_path: Optional[str] = None
-    ):
+    def __init__(self, repo_path: Optional[str] = None, config_path: Optional[str] = None):
         self.repo_path = repo_path
         self.config_path = config_path
         self._feature_views: Dict[str, FeatureView] = {}
@@ -140,10 +138,7 @@ class MockFeatureStore:
                 key = f"{feature_view}__{feature_name}"
 
                 # 查找特征值
-                if (
-                    entity_key in self._feature_data
-                    and key in self._feature_data[entity_key]
-                ):
+                if entity_key in self._feature_data and key in self._feature_data[entity_key]:
                     row_features[key] = self._feature_data[entity_key][key]
                 else:
                     # 返回默认值
@@ -178,9 +173,7 @@ class MockFeatureStore:
         self, start_date: datetime, end_date: datetime, feature_views: List[str] = None
     ) -> None:
         """增量物化"""
-        logger.info(
-            f"Materializing incremental features from {start_date} to {end_date}"
-        )
+        logger.info(f"Materializing incremental features from {start_date} to {end_date}")
 
     def teardown(self) -> None:
         """清理特征存储"""
@@ -208,9 +201,7 @@ class MockFeatureService:
         self.feature_store = feature_store
         self._service_config: Optional[Dict[str, Any]] = None
 
-    def get_feature_vector(
-        self, entity_id: str, feature_refs: List[str]
-    ) -> Dict[str, Any]:
+    def get_feature_vector(self, entity_id: str, feature_refs: List[str]) -> Dict[str, Any]:
         """获取特征向量"""
         entity_rows = [{"entity_id": entity_id}]
         features, _ = self.feature_store.get_online_features(feature_refs, entity_rows)
@@ -220,9 +211,7 @@ class MockFeatureService:
 class MockFeastClient:
     """模拟Feast客户端"""
 
-    def __init__(
-        self, repo_path: Optional[str] = None, config_path: Optional[str] = None
-    ):
+    def __init__(self, repo_path: Optional[str] = None, config_path: Optional[str] = None):
         self.feature_store = MockFeatureStore(repo_path, config_path)
         self._services: Dict[str, MockFeatureService] = {}
 
@@ -234,9 +223,7 @@ class MockFeastClient:
         self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
     ) -> "MockOnlineResponse":
         """获取在线特征"""
-        features, field_names = self.feature_store.get_online_features(
-            feature_refs, entity_rows
-        )
+        features, field_names = self.feature_store.get_online_features(feature_refs, entity_rows)
         return MockOnlineResponse(features, field_names)
 
     def serve(self, port: int = 6566) -> None:

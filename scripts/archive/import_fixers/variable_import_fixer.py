@@ -43,9 +43,7 @@ class VariableImportFixer:
 
             # Apply patterns
             for pattern, replacement in self.patterns:
-                content, count = re.subn(
-                    pattern, replacement, content, flags=re.MULTILINE
-                )
+                content, count = re.subn(pattern, replacement, content, flags=re.MULTILINE)
                 fixes_made += count
 
             # Remove unused imports (basic approach)
@@ -136,9 +134,7 @@ class VariableImportFixer:
         python_files = list(self.tests_dir.rglob("*.py"))
 
         for file_path in python_files:
-            if file_path.name.startswith("test_") or file_path.name.endswith(
-                "_test.py"
-            ):
+            if file_path.name.startswith("test_") or file_path.name.endswith("_test.py"):
                 fixes = self.fix_file(file_path)
                 if fixes > 0:
                     self.files_fixed += 1
@@ -148,9 +144,7 @@ class VariableImportFixer:
         print("\n=== Variable and Import Fix Summary ===")
         print(f"Files fixed: {self.files_fixed}")
         print(f"Total fixes: {self.total_fixes}")
-        print(
-            f"✅ Successfully fixed variable/import errors in {self.files_fixed} files!"
-        )
+        print(f"✅ Successfully fixed variable/import errors in {self.files_fixed} files!")
 
 
 if __name__ == "__main__":

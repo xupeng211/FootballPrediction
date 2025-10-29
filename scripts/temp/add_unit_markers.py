@@ -6,10 +6,11 @@
 import os
 from pathlib import Path
 
+
 def add_unit_marker_to_file(file_path: Path) -> bool:
     """为单个文件添加unit标记"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 如果已经有unit标记，跳过
@@ -17,11 +18,11 @@ def add_unit_marker_to_file(file_path: Path) -> bool:
             return False
 
         # 找到第一个测试类
-        lines = content.split('\n')
+        lines = content.split("\n")
         insert_index = -1
 
         for i, line in enumerate(lines):
-            if line.strip().startswith('class Test'):
+            if line.strip().startswith("class Test"):
                 insert_index = i
                 break
 
@@ -33,8 +34,8 @@ def add_unit_marker_to_file(file_path: Path) -> bool:
         lines.insert(insert_index + 1, "")
 
         # 写回文件
-        new_content = '\n'.join(lines)
-        with open(file_path, 'w', encoding='utf-8') as f:
+        new_content = "\n".join(lines)
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(new_content)
 
         return True
@@ -42,6 +43,7 @@ def add_unit_marker_to_file(file_path: Path) -> bool:
     except Exception as e:
         print(f"Error processing {file_path}: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -62,6 +64,7 @@ def main():
             print(f"Added unit marker to: {file_path}")
 
     print(f"\n✅ 添加了unit标记到 {processed} 个文件")
+
 
 if __name__ == "__main__":
     main()

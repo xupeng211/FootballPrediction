@@ -9,8 +9,11 @@ from datetime import datetime
 from typing import Any, Dict, List
 from pydantic import ValidationError
 from src.api.schemas import (
-    APIResponse, ServiceCheck, HealthCheckResponse,
-    StatusResponse, MetricsResponse
+    APIResponse,
+    ServiceCheck,
+    HealthCheckResponse,
+    StatusResponse,
+    MetricsResponse,
 )
 
 
@@ -34,7 +37,7 @@ class TestAPIResponseComprehensive:
             message="获取数据成功",
             data={"id": 1, "name": "测试"},
             errors=None,
-            timestamp="2024-01-01T10:00:00"
+            timestamp="2024-01-01T10:00:00",
         )
 
         assert response.success is True
@@ -50,7 +53,7 @@ class TestAPIResponseComprehensive:
             message="验证失败",
             data=None,
             errors=["用户名不能为空", "密码长度不足"],
-            timestamp="2024-01-01T10:00:00"
+            timestamp="2024-01-01T10:00:00",
         )
 
         assert response.success is False
@@ -62,10 +65,7 @@ class TestAPIResponseComprehensive:
     def test_api_response_serialization(self):
         """测试API响应序列化"""
         response = APIResponse(
-            success=True,
-            message="测试",
-            data={"count": 5},
-            timestamp="2024-01-01T10:00:00"
+            success=True, message="测试", data={"count": 5}, timestamp="2024-01-01T10:00:00"
         )
 
         data = response.model_dump()
@@ -75,7 +75,7 @@ class TestAPIResponseComprehensive:
             "message": "测试",
             "data": {"count": 5},
             "errors": None,
-            "timestamp": "2024-01-01T10:00:00"
+            "timestamp": "2024-01-01T10:00:00",
         }
         assert data == expected
 
@@ -86,7 +86,7 @@ class TestAPIResponseComprehensive:
             "message": "测试",
             "data": {"count": 5},
             "errors": None,
-            "timestamp": "2024-01-01T10:00:00"
+            "timestamp": "2024-01-01T10:00:00",
         }
 
         response = APIResponse(**data)
@@ -112,10 +112,7 @@ class TestServiceCheckComprehensive:
 
     def test_service_check_minimal(self):
         """测试最小服务检查"""
-        check = ServiceCheck(
-            status="healthy",
-            response_time_ms=150.5
-        )
+        check = ServiceCheck(status="healthy", response_time_ms=150.5)
 
         assert check.status == "healthy"
         assert check.response_time_ms == 150.5
@@ -123,17 +120,9 @@ class TestServiceCheckComprehensive:
 
     def test_service_check_full(self):
         """测试完整服务检查"""
-        details = {
-            "database": "connected",
-            "cache": "available",
-            "version": "1.0.0"
-        }
+        details = {"database": "connected", "cache": "available", "version": "1.0.0"}
 
-        check = ServiceCheck(
-            status="healthy",
-            response_time_ms=95.2,
-            details=details
-        )
+        check = ServiceCheck(status="healthy", response_time_ms=95.2, details=details)
 
         assert check.status == "healthy"
         assert check.response_time_ms == 95.2
@@ -163,19 +152,11 @@ class TestServiceCheckComprehensive:
 
     def test_service_check_serialization(self):
         """测试服务检查序列化"""
-        check = ServiceCheck(
-            status="healthy",
-            response_time_ms=120.5,
-            details={"test": "value"}
-        )
+        check = ServiceCheck(status="healthy", response_time_ms=120.5, details={"test": "value"})
 
         data = check.model_dump()
 
-        expected = {
-            "status": "healthy",
-            "response_time_ms": 120.5,
-            "details": {"test": "value"}
-        }
+        expected = {"status": "healthy", "response_time_ms": 120.5, "details": {"test": "value"}}
         assert data == expected
 
 
@@ -186,7 +167,7 @@ class TestHealthCheckResponseComprehensive:
         """测试最小健康检查响应"""
         checks = {
             "database": ServiceCheck(status="healthy", response_time_ms=50.0),
-            "cache": ServiceCheck(status="healthy", response_time_ms=10.0)
+            "cache": ServiceCheck(status="healthy", response_time_ms=10.0),
         }
 
         response = HealthCheckResponse(
@@ -196,7 +177,7 @@ class TestHealthCheckResponseComprehensive:
             version="1.0.0",
             uptime=3600.0,
             response_time_ms=100.0,
-            checks=checks
+            checks=checks,
         )
 
         assert response.status == "healthy"
@@ -211,7 +192,7 @@ class TestHealthCheckResponseComprehensive:
         """测试降级状态的健康检查"""
         checks = {
             "database": ServiceCheck(status="healthy", response_time_ms=50.0),
-            "cache": ServiceCheck(status="unhealthy", response_time_ms=5000.0)
+            "cache": ServiceCheck(status="unhealthy", response_time_ms=5000.0),
         }
 
         response = HealthCheckResponse(
@@ -221,7 +202,7 @@ class TestHealthCheckResponseComprehensive:
             version="1.0.0",
             uptime=3600.0,
             response_time_ms=5050.0,
-            checks=checks
+            checks=checks,
         )
 
         assert response.status == "degraded"
@@ -237,7 +218,7 @@ class TestHealthCheckResponseComprehensive:
             version="1.0.0",
             uptime=0.0,
             response_time_ms=0.0,
-            checks={}
+            checks={},
         )
 
         assert response.status == "unknown"
@@ -252,17 +233,13 @@ class TestHealthCheckResponseComprehensive:
                 details={
                     "connection_pool": "8/10 active",
                     "query_performance": "excellent",
-                    "last_backup": "2024-01-01T02:00:00"
-                }
+                    "last_backup": "2024-01-01T02:00:00",
+                },
             ),
             "cache": ServiceCheck(
                 status="degraded",
                 response_time_ms=150.8,
-                details={
-                    "hit_rate": "85%",
-                    "memory_usage": "60%",
-                    "evictions": "12/min"
-                }
+                details={"hit_rate": "85%", "memory_usage": "60%", "evictions": "12/min"},
             ),
             "external_api": ServiceCheck(
                 status="healthy",
@@ -270,9 +247,9 @@ class TestHealthCheckResponseComprehensive:
                 details={
                     "endpoint": "https://api.football-data.org",
                     "rate_limit": "1000/hour",
-                    "last_success": "2024-01-01T09:58:00"
-                }
-            )
+                    "last_success": "2024-01-01T09:58:00",
+                },
+            ),
         }
 
         response = HealthCheckResponse(
@@ -282,20 +259,20 @@ class TestHealthCheckResponseComprehensive:
             version="1.0.0",
             uptime=7200.0,
             response_time_ms=396.0,
-            checks=checks
+            checks=checks,
         )
 
         assert response.status == "degraded"
         assert len(response.checks) == 3
         assert response.checks["database"].details["connection_pool"] == "8/10 active"
         assert response.checks["cache"].details["hit_rate"] == "85%"
-        assert response.checks["external_api"].details["endpoint"] == "https://api.football-data.org"
+        assert (
+            response.checks["external_api"].details["endpoint"] == "https://api.football-data.org"
+        )
 
     def test_health_check_response_serialization(self):
         """测试健康检查响应序列化"""
-        checks = {
-            "test": ServiceCheck(status="healthy", response_time_ms=50.0)
-        }
+        checks = {"test": ServiceCheck(status="healthy", response_time_ms=50.0)}
 
         response = HealthCheckResponse(
             status="healthy",
@@ -304,7 +281,7 @@ class TestHealthCheckResponseComprehensive:
             version="1.0.0",
             uptime=1000.0,
             response_time_ms=100.0,
-            checks=checks
+            checks=checks,
         )
 
         data = response.model_dump()
@@ -320,16 +297,10 @@ class TestStatusResponseComprehensive:
 
     def test_status_response_basic(self):
         """测试基本状态响应"""
-        services = {
-            "api": "running",
-            "database": "running",
-            "cache": "running"
-        }
+        services = {"api": "running", "database": "running", "cache": "running"}
 
         response = StatusResponse(
-            status="operational",
-            timestamp="2024-01-01T10:00:00",
-            services=services
+            status="operational", timestamp="2024-01-01T10:00:00", services=services
         )
 
         assert response.status == "operational"
@@ -339,17 +310,10 @@ class TestStatusResponseComprehensive:
 
     def test_status_response_mixed_status(self):
         """测试混合状态响应"""
-        services = {
-            "api": "running",
-            "database": "error",
-            "cache": "warning",
-            "worker": "stopped"
-        }
+        services = {"api": "running", "database": "error", "cache": "warning", "worker": "stopped"}
 
         response = StatusResponse(
-            status="degraded",
-            timestamp="2024-01-01T10:00:00",
-            services=services
+            status="degraded", timestamp="2024-01-01T10:00:00", services=services
         )
 
         assert response.status == "degraded"
@@ -358,11 +322,7 @@ class TestStatusResponseComprehensive:
 
     def test_status_response_empty_services(self):
         """测试空服务状态响应"""
-        response = StatusResponse(
-            status="unknown",
-            timestamp="2024-01-01T10:00:00",
-            services={}
-        )
+        response = StatusResponse(status="unknown", timestamp="2024-01-01T10:00:00", services={})
 
         assert response.status == "unknown"
         assert len(response.services) == 0
@@ -379,13 +339,11 @@ class TestStatusResponseComprehensive:
             "worker_queue": "running",
             "scheduler": "running",
             "monitoring": "running",
-            "logging": "running"
+            "logging": "running",
         }
 
         response = StatusResponse(
-            status="operational",
-            timestamp="2024-01-01T10:00:00",
-            services=services
+            status="operational", timestamp="2024-01-01T10:00:00", services=services
         )
 
         assert response.status == "operational"
@@ -422,21 +380,17 @@ class TestSchemasIntegrationComprehensive:
                 "name": "张三",
                 "predictions": [
                     {"match_id": 100, "score": "2-1"},
-                    {"match_id": 101, "score": "1-1"}
-                ]
+                    {"match_id": 101, "score": "1-1"},
+                ],
             },
-            "metadata": {
-                "total_count": 2,
-                "page": 1,
-                "per_page": 10
-            }
+            "metadata": {"total_count": 2, "page": 1, "per_page": 10},
         }
 
         response = APIResponse(
             success=True,
             message="获取用户预测成功",
             data=nested_data,
-            timestamp="2024-01-01T10:00:00"
+            timestamp="2024-01-01T10:00:00",
         )
 
         assert response.data["user"]["name"] == "张三"
@@ -452,8 +406,8 @@ class TestSchemasIntegrationComprehensive:
                 details={
                     "connection_pool": {"active": 5, "idle": 15, "total": 20},
                     "performance": {"avg_query_time": "12ms", "slow_queries": 0},
-                    "replication": {"lag": "0s", "status": "synced"}
-                }
+                    "replication": {"lag": "0s", "status": "synced"},
+                },
             )
         }
 
@@ -464,7 +418,7 @@ class TestSchemasIntegrationComprehensive:
             version="1.0.0",
             uptime=86400.0,
             response_time_ms=25.5,
-            checks=detailed_checks
+            checks=detailed_checks,
         )
 
         db_check = response.checks["database"]
@@ -482,16 +436,11 @@ class TestSchemasIntegrationComprehensive:
             data={
                 "predictions": [
                     {"id": 1, "match": "Arsenal vs Chelsea", "prediction": "2-1"},
-                    {"id": 2, "match": "Man Utd vs Liverpool", "prediction": "1-1"}
+                    {"id": 2, "match": "Man Utd vs Liverpool", "prediction": "1-1"},
                 ],
-                "pagination": {
-                    "page": 1,
-                    "per_page": 10,
-                    "total": 25,
-                    "pages": 3
-                }
+                "pagination": {"page": 1, "per_page": 10, "total": 25, "pages": 3},
             },
-            timestamp="2024-01-01T10:00:00"
+            timestamp="2024-01-01T10:00:00",
         )
 
         assert success_response.success is True
@@ -502,11 +451,8 @@ class TestSchemasIntegrationComprehensive:
         error_response = APIResponse(
             success=False,
             message="请求验证失败",
-            errors=[
-                "比赛ID是必需的",
-                "预测比分格式无效"
-            ],
-            timestamp="2024-01-01T10:00:00"
+            errors=["比赛ID是必需的", "预测比分格式无效"],
+            timestamp="2024-01-01T10:00:00",
         )
 
         assert error_response.success is False
@@ -564,11 +510,12 @@ def test_api_schemas_comprehensive_suite():
         version="1.0.0",
         uptime=1000.0,
         response_time_ms=100.0,
-        checks=checks
+        checks=checks,
     )
     assert health.service == "test"
 
     print("✅ API Schema综合测试套件通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

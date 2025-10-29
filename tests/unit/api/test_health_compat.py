@@ -87,9 +87,7 @@ class TestHealthCompatibility:
 
         # 检查没有意外的导出
         actual_exports = {
-            name
-            for name in dir(health_module)
-            if not name.startswith("_") or name == "__all__"
+            name for name in dir(health_module) if not name.startswith("_") or name == "__all__"
         }
 
         # 移除Python默认属性

@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 23 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 测试Redis操作类

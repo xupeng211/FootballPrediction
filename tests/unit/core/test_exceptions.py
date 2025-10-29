@@ -185,9 +185,7 @@ class TestCoreExceptions:
 
     def test_exception_with_long_message(self):
         """测试长消息的异常"""
-        long_message = (
-            "This is a very long error message that might occur in production " * 10
-        )
+        long_message = "This is a very long error message that might occur in production " * 10
         error = PredictionError(long_message)
         assert str(error) == long_message
 

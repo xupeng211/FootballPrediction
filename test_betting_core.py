@@ -69,10 +69,10 @@ class CoreEVCalculator:
 
     def __init__(self):
         self.SRS_TARGETS = {
-            'min_ev_threshold': 0.05,
-            'min_confidence': 0.6,
-            'max_risk_level': RiskLevel.MEDIUM,
-            'min_value_rating': 6.0
+            "min_ev_threshold": 0.05,
+            "min_confidence": 0.6,
+            "max_risk_level": RiskLevel.MEDIUM,
+            "min_value_rating": 6.0,
         }
 
     def calculate_ev(self, probability: float, odds: float) -> float:
@@ -81,9 +81,9 @@ class CoreEVCalculator:
             return -1.0
         return (probability * odds) - 1
 
-    def calculate_kelly_fraction(self, ev: float, odds: float,
-                                probability: float,
-                                max_fraction: float = 0.25) -> float:
+    def calculate_kelly_fraction(
+        self, ev: float, odds: float, probability: float, max_fraction: float = 0.25
+    ) -> float:
         """计算Kelly准则投注比例"""
         if ev <= 0 or odds <= 1:
             return 0.0
@@ -129,23 +129,26 @@ class CoreEVCalculator:
         total_score = base_score + prob_bonus
         return min(total_score, 10.0)
 
-    def check_srs_compliance(self, ev: float, probability: float,
-                           risk_level: RiskLevel, value_rating: float) -> Dict[str, Any]:
+    def check_srs_compliance(
+        self, ev: float, probability: float, risk_level: RiskLevel, value_rating: float
+    ) -> Dict[str, Any]:
         """检查SRS合规性"""
         compliance = {
-            'min_ev_met': ev >= self.SRS_TARGETS['min_ev_threshold'],
-            'min_confidence_met': probability >= self.SRS_TARGETS['min_confidence'],
-            'max_risk_met': risk_level.value <= self.SRS_TARGETS['max_risk_level'].value,
-            'min_value_met': value_rating >= self.SRS_TARGETS['min_value_rating'],
-            'overall_compliance': False
+            "min_ev_met": ev >= self.SRS_TARGETS["min_ev_threshold"],
+            "min_confidence_met": probability >= self.SRS_TARGETS["min_confidence"],
+            "max_risk_met": risk_level.value <= self.SRS_TARGETS["max_risk_level"].value,
+            "min_value_met": value_rating >= self.SRS_TARGETS["min_value_rating"],
+            "overall_compliance": False,
         }
 
-        compliance['overall_compliance'] = all([
-            compliance['min_ev_met'],
-            compliance['min_confidence_met'],
-            compliance['max_risk_met'],
-            compliance['min_value_met']
-        ])
+        compliance["overall_compliance"] = all(
+            [
+                compliance["min_ev_met"],
+                compliance["min_confidence_met"],
+                compliance["max_risk_met"],
+                compliance["min_value_met"],
+            ]
+        )
 
         return compliance
 
@@ -156,59 +159,64 @@ class CoreStrategyOptimizer:
 
     def __init__(self):
         self.strategies = {
-            'conservative': {
-                'max_kelly_fraction': 0.15,
-                'min_ev_threshold': 0.08,
-                'risk_tolerance': 0.3,
-                'name': '保守策略'
+            "conservative": {
+                "max_kelly_fraction": 0.15,
+                "min_ev_threshold": 0.08,
+                "risk_tolerance": 0.3,
+                "name": "保守策略",
             },
-            'balanced': {
-                'max_kelly_fraction': 0.25,
-                'min_ev_threshold': 0.05,
-                'risk_tolerance': 0.5,
-                'name': '平衡策略'
+            "balanced": {
+                "max_kelly_fraction": 0.25,
+                "min_ev_threshold": 0.05,
+                "risk_tolerance": 0.5,
+                "name": "平衡策略",
             },
-            'srs_compliant': {
-                'max_kelly_fraction': 0.20,
-                'min_ev_threshold': 0.05,
-                'risk_tolerance': 0.4,
-                'name': 'SRS合规策略'
-            }
+            "srs_compliant": {
+                "max_kelly_fraction": 0.20,
+                "min_ev_threshold": 0.05,
+                "risk_tolerance": 0.4,
+                "name": "SRS合规策略",
+            },
         }
 
-    def evaluate_betting_opportunity(self, probability: float, odds: float,
-                                   strategy_name: str = 'srs_compliant') -> Dict[str, Any]:
+    def evaluate_betting_opportunity(
+        self, probability: float, odds: float, strategy_name: str = "srs_compliant"
+    ) -> Dict[str, Any]:
         """评估投注机会"""
         ev_calculator = CoreEVCalculator()
-        strategy = self.strategies.get(strategy_name, self.strategies['srs_compliant'])
+        strategy = self.strategies.get(strategy_name, self.strategies["srs_compliant"])
 
         # 计算核心指标
         ev = ev_calculator.calculate_ev(probability, odds)
-        kelly_fraction = ev_calculator.calculate_kelly_fraction(ev, odds, probability, strategy['max_kelly_fraction'])
+        kelly_fraction = ev_calculator.calculate_kelly_fraction(
+            ev, odds, probability, strategy["max_kelly_fraction"]
+        )
         risk_level = ev_calculator.assess_risk_level(probability, odds, ev)
         value_rating = ev_calculator.calculate_value_rating(ev, probability, odds)
 
         # 检查SRS合规性
-        srs_compliance = ev_calculator.check_srs_compliance(ev, probability, risk_level, value_rating)
+        srs_compliance = ev_calculator.check_srs_compliance(
+            ev, probability, risk_level, value_rating
+        )
 
         # 生成投注建议
-        if ev >= strategy['min_ev_threshold'] and srs_compliance['overall_compliance']:
-            recommendation = 'bet'
+        if ev >= strategy["min_ev_threshold"] and srs_compliance["overall_compliance"]:
+            recommendation = "bet"
         elif ev > 0:
-            recommendation = 'small_bet'
+            recommendation = "small_bet"
         else:
-            recommendation = 'avoid'
+            recommendation = "avoid"
 
         return {
-            'ev': ev,
-            'kelly_fraction': kelly_fraction,
-            'risk_level': risk_level.value,
-            'value_rating': value_rating,
-            'recommendation': recommendation,
-            'srs_compliance': srs_compliance,
-            'strategy_used': strategy_name,
-            'probability': probability,
-            'odds': odds
+            "ev": ev,
+            "kelly_fraction": kelly_fraction,
+            "risk_level": risk_level.value,
+            "value_rating": value_rating,
+            "recommendation": recommendation,
+            "srs_compliance": srs_compliance,
+            "strategy_used": strategy_name,
+            "probability": probability,
+            "odds": odds,
         }
 
 
@@ -218,12 +226,12 @@ class BettingCoreTester:
 
     def __init__(self):
         self.test_results = {
-            'test_name': 'Betting EV Strategy Core Test',
-            'issue_number': 116,
-            'test_date': datetime.now().isoformat(),
-            'test_status': 'running',
-            'individual_tests': {},
-            'summary': {}
+            "test_name": "Betting EV Strategy Core Test",
+            "issue_number": 116,
+            "test_date": datetime.now().isoformat(),
+            "test_status": "running",
+            "individual_tests": {},
+            "summary": {},
         }
 
     async def run_core_tests(self):
@@ -262,8 +270,8 @@ class BettingCoreTester:
 
         except Exception as e:
             print(f"❌ 测试执行失败: {e}")
-            self.test_results['test_status'] = 'error'
-            self.test_results['error'] = str(e)
+            self.test_results["test_status"] = "error"
+            self.test_results["error"] = str(e)
             return self.test_results
 
     async def _test_ev_calculation_precision(self):
@@ -272,7 +280,7 @@ class BettingCoreTester:
 
         calculator = CoreEVCalculator()
         test_cases = [
-            (0.6, 2.0, 0.2),    # (概率, 赔率, 期望EV)
+            (0.6, 2.0, 0.2),  # (概率, 赔率, 期望EV)
             (0.4, 2.5, 0.0),
             (0.3, 3.0, -0.1),
             (0.8, 1.8, 0.44),
@@ -289,11 +297,11 @@ class BettingCoreTester:
                 print(f"  ❌ 概率={prob}, 期望={expected:.3f}, 实际={calculated:.3f}")
 
         accuracy = passed / len(test_cases)
-        self.test_results['individual_tests']['ev_calculation'] = {
-            'passed': passed,
-            'total': len(test_cases),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.9 else 'failed'
+        self.test_results["individual_tests"]["ev_calculation"] = {
+            "passed": passed,
+            "total": len(test_cases),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
         print(f"  📈 EV计算精度: {accuracy*100:.1f}%")
@@ -321,11 +329,11 @@ class BettingCoreTester:
                 print(f"  ❌ EV={ev}, 期望范围={expected_range}, 实际={kelly:.3f}")
 
         accuracy = passed / len(test_cases)
-        self.test_results['individual_tests']['kelly_criterion'] = {
-            'passed': passed,
-            'total': len(test_cases),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.9 else 'failed'
+        self.test_results["individual_tests"]["kelly_criterion"] = {
+            "passed": passed,
+            "total": len(test_cases),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
         print(f"  📈 Kelly准则精度: {accuracy*100:.1f}%")
@@ -353,11 +361,11 @@ class BettingCoreTester:
                 print(f"  ❌ 概率={prob}, 期望={expected_risk.value}, 实际={assessed_risk.value}")
 
         accuracy = passed / len(test_cases)
-        self.test_results['individual_tests']['risk_assessment'] = {
-            'passed': passed,
-            'total': len(test_cases),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.9 else 'failed'
+        self.test_results["individual_tests"]["risk_assessment"] = {
+            "passed": passed,
+            "total": len(test_cases),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
         print(f"  📈 风险评估精度: {accuracy*100:.1f}%")
@@ -384,11 +392,11 @@ class BettingCoreTester:
                 print(f"  ❌ EV={ev}, 期望≥{min_expected}, 实际={rating:.1f}")
 
         accuracy = passed / len(test_cases)
-        self.test_results['individual_tests']['value_rating'] = {
-            'passed': passed,
-            'total': len(test_cases),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.9 else 'failed'
+        self.test_results["individual_tests"]["value_rating"] = {
+            "passed": passed,
+            "total": len(test_cases),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
         print(f"  📈 价值评级精度: {accuracy*100:.1f}%")
@@ -399,7 +407,7 @@ class BettingCoreTester:
 
         calculator = CoreEVCalculator()
         test_cases = [
-            (0.65, 2.1, True),   # (概率, 赔率, 是否应该合规)
+            (0.65, 2.1, True),  # (概率, 赔率, 是否应该合规)
             (0.4, 2.8, False),
             (0.75, 1.9, True),
             (0.3, 4.0, False),
@@ -412,7 +420,7 @@ class BettingCoreTester:
             value = calculator.calculate_value_rating(ev, prob, odds)
             compliance = calculator.check_srs_compliance(ev, prob, risk, value)
 
-            if compliance['overall_compliance'] == should_comply:
+            if compliance["overall_compliance"] == should_comply:
                 passed += 1
                 status = "✅ 合规" if should_comply else "✅ 不合规"
                 print(f"  {status}: 概率={prob}, EV={ev:.3f}")
@@ -421,11 +429,11 @@ class BettingCoreTester:
                 print(f"  {status}: 概率={prob}, EV={ev:.3f}")
 
         accuracy = passed / len(test_cases)
-        self.test_results['individual_tests']['srs_compliance'] = {
-            'passed': passed,
-            'total': len(test_cases),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.8 else 'failed'
+        self.test_results["individual_tests"]["srs_compliance"] = {
+            "passed": passed,
+            "total": len(test_cases),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.8 else "failed",
         }
 
         print(f"  📈 SRS合规性精度: {accuracy*100:.1f}%")
@@ -435,7 +443,7 @@ class BettingCoreTester:
         print("\n🎯 测试策略优化...")
 
         optimizer = CoreStrategyOptimizer()
-        strategies = ['conservative', 'balanced', 'srs_compliant']
+        strategies = ["conservative", "balanced", "srs_compliant"]
 
         passed = 0
         for strategy_name in strategies:
@@ -444,10 +452,19 @@ class BettingCoreTester:
                 result = optimizer.evaluate_betting_opportunity(0.65, 2.1, strategy_name)
 
                 # 验证结果结构
-                required_keys = ['ev', 'kelly_fraction', 'risk_level', 'value_rating', 'recommendation', 'srs_compliance']
+                required_keys = [
+                    "ev",
+                    "kelly_fraction",
+                    "risk_level",
+                    "value_rating",
+                    "recommendation",
+                    "srs_compliance",
+                ]
                 if all(key in result for key in required_keys):
                     passed += 1
-                    print(f"  ✅ {strategy_name}: EV={result['ev']:.3f}, 建议={result['recommendation']}")
+                    print(
+                        f"  ✅ {strategy_name}: EV={result['ev']:.3f}, 建议={result['recommendation']}"
+                    )
                 else:
                     print(f"  ❌ {strategy_name}: 结果结构不完整")
 
@@ -455,11 +472,11 @@ class BettingCoreTester:
                 print(f"  ❌ {strategy_name}: 异常 ({e})")
 
         accuracy = passed / len(strategies)
-        self.test_results['individual_tests']['strategy_optimization'] = {
-            'passed': passed,
-            'total': len(strategies),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.9 else 'failed'
+        self.test_results["individual_tests"]["strategy_optimization"] = {
+            "passed": passed,
+            "total": len(strategies),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
         print(f"  📈 策略优化精度: {accuracy*100:.1f}%")
@@ -472,106 +489,91 @@ class BettingCoreTester:
 
         # 模拟真实比赛场景
         scenarios = [
-            {
-                'name': '热门主队',
-                'probability': 0.7,
-                'odds': 1.85,
-                'expected_outcome': 'bet'
-            },
-            {
-                'name': '势均力敌',
-                'probability': 0.5,
-                'odds': 2.1,
-                'expected_outcome': 'bet'
-            },
-            {
-                'name': '冷门高赔',
-                'probability': 0.25,
-                'odds': 4.5,
-                'expected_outcome': 'avoid'
-            },
-            {
-                'name': '价值投注',
-                'probability': 0.6,
-                'odds': 2.2,
-                'expected_outcome': 'bet'
-            }
+            {"name": "热门主队", "probability": 0.7, "odds": 1.85, "expected_outcome": "bet"},
+            {"name": "势均力敌", "probability": 0.5, "odds": 2.1, "expected_outcome": "bet"},
+            {"name": "冷门高赔", "probability": 0.25, "odds": 4.5, "expected_outcome": "avoid"},
+            {"name": "价值投注", "probability": 0.6, "odds": 2.2, "expected_outcome": "bet"},
         ]
 
         passed = 0
         for scenario in scenarios:
             try:
                 result = optimizer.evaluate_betting_opportunity(
-                    scenario['probability'], scenario['odds'], 'srs_compliant'
+                    scenario["probability"], scenario["odds"], "srs_compliant"
                 )
 
                 # 检查SRS合规性
-                srs_ok = result['srs_compliance']['overall_compliance']
+                srs_ok = result["srs_compliance"]["overall_compliance"]
 
                 # 检查推荐合理性
                 recommendation_ok = (
-                    (result['recommendation'] in ['bet', 'small_bet'] and result['ev'] > 0) or
-                    (result['recommendation'] == 'avoid' and result['ev'] <= 0)
-                )
+                    result["recommendation"] in ["bet", "small_bet"] and result["ev"] > 0
+                ) or (result["recommendation"] == "avoid" and result["ev"] <= 0)
 
                 if srs_ok and recommendation_ok:
                     passed += 1
-                    print(f"  ✅ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']}")
+                    print(
+                        f"  ✅ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']}"
+                    )
                 else:
-                    print(f"  ⚠️ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']} (需要改进)")
+                    print(
+                        f"  ⚠️ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']} (需要改进)"
+                    )
 
             except Exception as e:
                 print(f"  ❌ {scenario['name']}: 异常 ({e})")
 
         accuracy = passed / len(scenarios)
-        self.test_results['individual_tests']['comprehensive_scenarios'] = {
-            'passed': passed,
-            'total': len(scenarios),
-            'accuracy': accuracy,
-            'status': 'passed' if accuracy >= 0.7 else 'failed'
+        self.test_results["individual_tests"]["comprehensive_scenarios"] = {
+            "passed": passed,
+            "total": len(scenarios),
+            "accuracy": accuracy,
+            "status": "passed" if accuracy >= 0.7 else "failed",
         }
 
         print(f"  📈 综合场景精度: {accuracy*100:.1f}%")
 
     def _calculate_summary(self):
         """计算测试总结"""
-        individual_tests = self.test_results['individual_tests']
+        individual_tests = self.test_results["individual_tests"]
 
         if not individual_tests:
-            self.test_results['test_status'] = 'failed'
+            self.test_results["test_status"] = "failed"
             return
 
-        total_passed = sum(test['passed'] for test in individual_tests.values())
-        total_tests = sum(test['total'] for test in individual_tests.values())
+        total_passed = sum(test["passed"] for test in individual_tests.values())
+        total_tests = sum(test["total"] for test in individual_tests.values())
         overall_accuracy = total_passed / total_tests if total_tests > 0 else 0
 
         # 关键功能评分
         critical_scores = {
-            'ev_calculation': individual_tests.get('ev_calculation', {}).get('accuracy', 0),
-            'kelly_criterion': individual_tests.get('kelly_criterion', {}).get('accuracy', 0),
-            'srs_compliance': individual_tests.get('srs_compliance', {}).get('accuracy', 0),
-            'risk_assessment': individual_tests.get('risk_assessment', {}).get('accuracy', 0)
+            "ev_calculation": individual_tests.get("ev_calculation", {}).get("accuracy", 0),
+            "kelly_criterion": individual_tests.get("kelly_criterion", {}).get("accuracy", 0),
+            "srs_compliance": individual_tests.get("srs_compliance", {}).get("accuracy", 0),
+            "risk_assessment": individual_tests.get("risk_assessment", {}).get("accuracy", 0),
         }
 
         # 判断总体状态
         if overall_accuracy >= 0.9 and all(score >= 0.8 for score in critical_scores.values()):
-            status = 'passed'
-        elif overall_accuracy >= 0.7 and critical_scores['srs_compliance'] >= 0.8:
-            status = 'partially_passed'
+            status = "passed"
+        elif overall_accuracy >= 0.7 and critical_scores["srs_compliance"] >= 0.8:
+            status = "partially_passed"
         else:
-            status = 'failed'
+            status = "failed"
 
-        self.test_results.update({
-            'test_status': status,
-            'summary': {
-                'total_tests': total_tests,
-                'total_passed': total_passed,
-                'overall_accuracy': overall_accuracy,
-                'critical_scores': critical_scores,
-                'srs_compliance_achieved': critical_scores['srs_compliance'] >= 0.8,
-                'core_functionality_achieved': overall_accuracy >= 0.8
+        self.test_results.update(
+            {
+                "test_status": status,
+                "summary": {
+                    "total_tests": total_tests,
+                    "total_passed": total_passed,
+                    "overall_accuracy": overall_accuracy,
+                    "critical_scores": critical_scores,
+                    "srs_compliance_achieved": critical_scores["srs_compliance"] >= 0.8,
+                    "core_functionality_achieved": overall_accuracy >= 0.8,
+                },
             }
-        })
+        )
 
     def generate_report(self):
         """生成测试报告"""
@@ -583,14 +585,14 @@ class BettingCoreTester:
         print(f"📅 测试时间: {self.test_results['test_date']}")
         print(f"🔢 Issue编号: #{self.test_results['issue_number']}")
 
-        if 'summary' in self.test_results:
-            summary = self.test_results['summary']
+        if "summary" in self.test_results:
+            summary = self.test_results["summary"]
             print(f"\n📈 总体结果:")
             print(f"  - 总测试数: {summary['total_tests']}")
             print(f"  - 通过测试数: {summary['total_passed']}")
             print(f"  - 总体准确率: {summary['overall_accuracy']*100:.1f}%")
 
-            critical = summary['critical_scores']
+            critical = summary["critical_scores"]
             print(f"\n🔧 关键功能评分:")
             print(f"  - EV计算精度: {critical['ev_calculation']*100:.1f}%")
             print(f"  - Kelly准则: {critical['kelly_criterion']*100:.1f}%")
@@ -598,18 +600,24 @@ class BettingCoreTester:
             print(f"  - 风险评估: {critical['risk_assessment']*100:.1f}%")
 
         print(f"\n📋 详细测试结果:")
-        for test_name, result in self.test_results['individual_tests'].items():
-            status_icon = "✅" if result['status'] == 'passed' else "⚠️" if result['status'] == 'partially_passed' else "❌"
-            print(f"  {status_icon} {test_name}: {result['accuracy']*100:.1f}% ({result['passed']}/{result['total']})")
+        for test_name, result in self.test_results["individual_tests"].items():
+            status_icon = (
+                "✅"
+                if result["status"] == "passed"
+                else "⚠️" if result["status"] == "partially_passed" else "❌"
+            )
+            print(
+                f"  {status_icon} {test_name}: {result['accuracy']*100:.1f}% ({result['passed']}/{result['total']})"
+            )
 
         # 保存报告
-        report_path = Path('test_betting_core_report.json')
-        with open(report_path, 'w', encoding='utf-8') as f:
+        report_path = Path("test_betting_core_report.json")
+        with open(report_path, "w", encoding="utf-8") as f:
             json.dump(self.test_results, f, indent=2, ensure_ascii=False, default=str)
 
         print(f"\n📄 测试报告已保存到: {report_path}")
 
-        if self.test_results['test_status'] == 'passed':
+        if self.test_results["test_status"] == "passed":
             print("\n🎉 Issue #116 EV计算和投注策略核心功能完全实现！")
             print("✅ EV计算算法: 精确实现")
             print("✅ Kelly Criterion: 正确应用")
@@ -617,7 +625,7 @@ class BettingCoreTester:
             print("✅ SRS合规性: 完全符合")
             print("✅ 投注策略: 逻辑正确")
             print("✅ Issue #116 核心功能可以标记为完成！")
-        elif self.test_results['test_status'] == 'partially_passed':
+        elif self.test_results["test_status"] == "partially_passed":
             print("\n⚠️ Issue #116 部分完成，核心功能已实现")
             print("🔧 主要算法正确，需要完善细节和集成")
         else:
@@ -634,7 +642,7 @@ async def main():
     tester.generate_report()
 
     print("\n" + "=" * 80)
-    if test_result['test_status'] in ['passed', 'partially_passed']:
+    if test_result["test_status"] in ["passed", "partially_passed"]:
         print("🎉 核心功能测试完成！")
         print(f"状态: {'完全通过' if test_result['test_status'] == 'passed' else '部分通过'}")
     else:

@@ -168,9 +168,7 @@ def test_import_failure():
         for tool_name, command in tools_to_test:
             try:
                 click.echo(f"  🔍 运行 {tool_name}...")
-                result = subprocess.run(
-                    command, capture_output=True, text=True, timeout=30
-                )
+                result = subprocess.run(command, capture_output=True, text=True, timeout=30)
 
                 ci_outputs[tool_name] = {
                     "returncode": result.returncode,
@@ -201,13 +199,9 @@ def test_import_failure():
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(ci_outputs, f, indent=2, ensure_ascii=False)
 
-        issues_found = sum(
-            1 for output in ci_outputs.values() if output.get("has_issues", False)
-        )
+        issues_found = sum(1 for output in ci_outputs.values() if output.get("has_issues", False))
 
-        click.echo(
-            f"✅ CI监控完成，{len(tools_to_test)}个工具中{issues_found}个发现问题"
-        )
+        click.echo(f"✅ CI监控完成，{len(tools_to_test)}个工具中{issues_found}个发现问题")
         return True
 
     def analyze_issues(self) -> bool:

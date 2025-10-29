@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Tuple
 
+
 class BrokenTestFileFixer:
     def __init__(self):
         self.fixed_files = []
@@ -19,7 +20,7 @@ class BrokenTestFileFixer:
     def _load_templates(self) -> Dict[str, str]:
         """加载测试文件模板"""
         return {
-            'unit_test': '''"""
+            "unit_test": '''"""
 {description}
 """
 
@@ -71,8 +72,7 @@ class Test{ClassName}:
 if __name__ == "__main__":
     pytest.main([__file__])
 ''',
-
-            'integration_test': '''"""
+            "integration_test": '''"""
 {description}
 """
 
@@ -128,7 +128,7 @@ class Test{ClassName}Integration:
 
 if __name__ == "__main__":
     pytest.main([__file__])
-'''
+''',
         }
 
     def identify_broken_files(self) -> List[Path]:
@@ -149,18 +149,18 @@ if __name__ == "__main__":
     def _is_file_broken(self, file_path: Path) -> bool:
         """检查文件是否损坏"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 检查常见的损坏模式
             broken_patterns = [
-                r'^\s+import\s+',  # 行首有过多缩进的import
-                r'^\s+from\s+.*import',  # 行首有过多缩进的from...import
+                r"^\s+import\s+",  # 行首有过多缩进的import
+                r"^\s+from\s+.*import",  # 行首有过多缩进的from...import
                 r'""".*"""\s*\n\s+import',  # 文档字符串后立即有缩进的import
-                r'#\s*通用Mock策略\s*\n\s+from',  # 注释后有缩进的import
-                r'^\s+# 高级Mock策略\s*$',  # 只有一行注释，内容缺失
-                r'class\s+\w+\s*:\s*$',  # 空的类定义
-                r'def\s+\w+\s*\(.*\)\s*:\s*$',  # 空的方法定义
+                r"#\s*通用Mock策略\s*\n\s+from",  # 注释后有缩进的import
+                r"^\s+# 高级Mock策略\s*$",  # 只有一行注释，内容缺失
+                r"class\s+\w+\s*:\s*$",  # 空的类定义
+                r"def\s+\w+\s*\(.*\)\s*:\s*$",  # 空的方法定义
             ]
 
             for pattern in broken_patterns:
@@ -168,12 +168,14 @@ if __name__ == "__main__":
                     return True
 
             # 检查是否缺少基本结构
-            if not any(keyword in content for keyword in ['import pytest', 'def test_', 'class Test']):
+            if not any(
+                keyword in content for keyword in ["import pytest", "def test_", "class Test"]
+            ):
                 return True
 
             # 尝试编译检查语法
             try:
-                compile(content, str(file_path), 'exec')
+                compile(content, str(file_path), "exec")
             except SyntaxError:
                 return True
 
@@ -185,49 +187,53 @@ if __name__ == "__main__":
     def extract_metadata_from_file(self, file_path: Path) -> Dict[str, str]:
         """从文件中提取元数据"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 提取模块信息
-            module_match = re.search(r'module[:\s]+([^\n]+)', content, re.IGNORECASE)
+            module_match = re.search(r"module[:\s]+([^\n]+)", content, re.IGNORECASE)
             module_name = module_match.group(1).strip() if module_match else file_path.stem
 
             # 提取类别信息
-            category_match = re.search(r'类别[:\s]+([^\n]+)', content, re.IGNORECASE)
+            category_match = re.search(r"类别[:\s]+([^\n]+)", content, re.IGNORECASE)
             category = category_match.group(1).strip() if category_match else "unit"
 
             # 提取优先级
-            priority_match = re.search(r'优先级[:\s]+([^\n]+)', content, re.IGNORECASE)
+            priority_match = re.search(r"优先级[:\s]+([^\n]+)", content, re.IGNORECASE)
             priority = priority_match.group(1).strip() if priority_match else "MEDIUM"
 
             # 提取描述
             desc_match = re.search(r'"""\s*(.*?)\s*"""', content, re.DOTALL)
-            description = desc_match.group(1).strip() if desc_match else f"自动修复的测试文件: {module_name}"
+            description = (
+                desc_match.group(1).strip() if desc_match else f"自动修复的测试文件: {module_name}"
+            )
 
             return {
-                'module_name': module_name,
-                'category': category,
-                'priority': priority,
-                'description': description,
-                'file_name': file_path.name,
-                'created_time': "2025-10-26"
+                "module_name": module_name,
+                "category": category,
+                "priority": priority,
+                "description": description,
+                "file_name": file_path.name,
+                "created_time": "2025-10-26",
             }
         except Exception:
             # 默认元数据
             return {
-                'module_name': file_path.stem,
-                'category': 'unit',
-                'priority': 'MEDIUM',
-                'description': f"自动修复的测试文件: {file_path.stem}",
-                'file_name': file_path.name,
-                'created_time': "2025-10-26"
+                "module_name": file_path.stem,
+                "category": "unit",
+                "priority": "MEDIUM",
+                "description": f"自动修复的测试文件: {file_path.stem}",
+                "file_name": file_path.name,
+                "created_time": "2025-10-26",
             }
 
     def generate_class_name(self, metadata: Dict[str, str]) -> str:
         """生成测试类名"""
-        module_name = metadata['module_name']
+        module_name = metadata["module_name"]
         # 转换为PascalCase
-        class_name = ''.join(word.capitalize() for word in module_name.replace('_', ' ').replace('-', ' ').split())
+        class_name = "".join(
+            word.capitalize() for word in module_name.replace("_", " ").replace("-", " ").split()
+        )
         if not class_name:
             class_name = "TestAutoGenerated"
         return class_name
@@ -236,7 +242,9 @@ if __name__ == "__main__":
         """重建测试文件"""
         try:
             # 确定使用哪个模板
-            template_type = 'integration_test' if 'integration' in metadata['category'].lower() else 'unit_test'
+            template_type = (
+                "integration_test" if "integration" in metadata["category"].lower() else "unit_test"
+            )
             template = self.templates[template_type]
 
             # 生成类名
@@ -244,15 +252,15 @@ if __name__ == "__main__":
 
             # 填充模板
             content = template.format(
-                description=metadata['description'],
-                module_name=metadata['module_name'],
-                priority=metadata['priority'],
-                created_time=metadata['created_time'],
-                ClassName=class_name
+                description=metadata["description"],
+                module_name=metadata["module_name"],
+                priority=metadata["priority"],
+                created_time=metadata["created_time"],
+                ClassName=class_name,
             )
 
             # 写入文件
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"  ✅ 重建成功: {file_path}")
@@ -273,9 +281,9 @@ if __name__ == "__main__":
         for file_path in files:
             try:
                 backup_path = backup_dir / file_path.name
-                with open(file_path, 'r', encoding='utf-8') as src:
+                with open(file_path, "r", encoding="utf-8") as src:
                     content = src.read()
-                with open(backup_path, 'w', encoding='utf-8') as dst:
+                with open(backup_path, "w", encoding="utf-8") as dst:
                     dst.write(content)
                 print(f"  💾 已备份: {file_path} -> {backup_path}")
             except Exception as e:
@@ -288,9 +296,9 @@ if __name__ == "__main__":
         valid_count = 0
         for file_path in self.fixed_files:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                compile(content, str(file_path), 'exec')
+                compile(content, str(file_path), "exec")
                 valid_count += 1
                 print(f"  ✅ 验证通过: {file_path}")
             except Exception as e:
@@ -354,15 +362,20 @@ if __name__ == "__main__":
             "failed_files": self.failed_files,
             "total_fixed": len(self.fixed_files),
             "total_failed": len(self.failed_files),
-            "success_rate": (len(self.fixed_files) / (len(self.fixed_files) + len(self.failed_files)) * 100) if self.fixed_files or self.failed_files else 0
+            "success_rate": (
+                (len(self.fixed_files) / (len(self.fixed_files) + len(self.failed_files)) * 100)
+                if self.fixed_files or self.failed_files
+                else 0
+            ),
         }
 
         report_file = Path("test_files_rebuild_report.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📋 重建报告已保存: {report_file}")
         return report
+
 
 def main():
     """主函数"""
@@ -376,6 +389,7 @@ def main():
         print("\n⚠️ 部分文件需要手动处理")
 
     return success
+
 
 if __name__ == "__main__":
     success = main()
