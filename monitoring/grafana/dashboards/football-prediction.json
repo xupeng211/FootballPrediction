@@ -1,0 +1,48 @@
+{
+  "dashboard": {
+    "title": "Football Prediction System Dashboard",
+    "panels": [
+      {
+        "title": "Application Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"football-prediction\"}"
+          }
+        ]
+      },
+      {
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])"
+          }
+        ]
+      },
+      {
+        "title": "Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}
