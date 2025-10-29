@@ -6,7 +6,6 @@ import {
   Space,
   Drawer,
   Typography,
-  Card,
   Row,
   Col,
 } from 'antd';
@@ -17,7 +16,6 @@ import {
   TrophyOutlined,
   SettingOutlined,
   QuestionCircleOutlined,
-  HomeOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 

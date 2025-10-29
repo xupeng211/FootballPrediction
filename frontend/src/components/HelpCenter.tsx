@@ -14,7 +14,6 @@ import {
   Avatar,
 } from 'antd';
 import {
-  QuestionCircleOutlined,
   BookOutlined,
   PhoneOutlined,
   MailOutlined,
