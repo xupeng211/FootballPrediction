@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-10-30T16:50:14.596751",
+  "test_files_created": 6,
+  "total_tests": 0,
+  "coverage_data": {
+    "src.api.schemas": {
+      "error": "Test execution timeout"
+    },
+    "src.api.models": {
+      "error": "Test execution timeout"
+    },
+    "src.domain.models": {
+      "error": "Test execution timeout"
+    },
+    "src.domain.strategies": {
+      "error": "Test execution timeout"
+    },
+    "src.domain.services": {
+      "error": "Test execution timeout"
+    },
+    "src.database.models": {
+      "error": "Test execution timeout"
+    }
+  },
+  "recommendations": [
+    "🎉 优秀：测试用例数量充足",
+    "📈 建议：当前覆盖率偏低，目标60%+",
+    "🚀 Phase G Week 3：继续为健康模块生成测试",
+    "🎯 Phase G Week 3：重点提升utils, domain, services层测试",
+    "📊 Phase G Week 3：建立自动化测试质量监控"
+  ],
+  "test_stats": {
+    "total_test_files": 104780,
+    "total_test_cases": 324140,
+    "test_types": {
+      "unit": 323888,
+      "integration": 2944,
+      "api": 6092,
+      "domain": 2030,
+      "database": 4615
+    }
+  }
+}
