@@ -335,8 +335,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TIME_UTILS_AVAILABLE:
-from src.utils.time_utils import TimeUtils
-
+        from src.utils.time_utils import TimeUtils
         assert TimeUtils is not None
 
 

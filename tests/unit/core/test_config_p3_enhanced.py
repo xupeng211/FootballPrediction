@@ -6,12 +6,15 @@ P3重点突破生成
 """
 
 import pytest
+from unittest.mock import Mock
 
 # 导入目标模块
 try:
-    from core.config import *
+    from src.core.config import Config
+    print("✅ Config模块导入成功")
 except ImportError as e:
-    print(f"警告: 无法导入模块 {module_path}: {e}")
+    print(f"警告: 无法导入Config模块: {e}")
+    Config = None
 
 
 # 通用Mock策略

@@ -8,11 +8,14 @@
 
 
 import pytest
+from unittest.mock import Mock
 
 # 尝试导入目标模块
 try:
+    from src.core.di import DIContainer
 except ImportError as e:
     print(f"警告: 无法导入模块: {e}")
+    DIContainer = None
 
 
 # 通用Mock设置

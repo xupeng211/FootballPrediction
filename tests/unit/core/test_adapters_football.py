@@ -21,7 +21,7 @@ from src.adapters.base import Adapter
 
 
 # 使用Mock适配器代替真实实现
-    from src.adapters.football import FootballDataAdapter
+from src.adapters.football import FootballDataAdapter
 
 
 
