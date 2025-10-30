@@ -49,7 +49,7 @@ class MatchProcessor:
             处理后的数据
         """
         try:
-            if isinstance(raw_data, ((((list):
+            if isinstance(raw_data, ((((((((list):
                 # 批量处理
                 results: List[Any] = []
                 for item in raw_data:
@@ -61,26 +61,12 @@ class MatchProcessor:
                 # 单个处理
                 return await self._process_single_match_data(raw_data)
 
-        except (ValueError, TypeError)))) as e:
+        except (ValueError, TypeError)))))) as e:
             self.logger.error(f"处理原始比赛数据失败: {e}"))
             return None
 
     async def _process_single_match_data(
-        self,
-        raw_data: Dict[str, Any],
-    ) -> Optional[Dict[str, Any]]:
-        """
-        处理单个比赛数据
-
-        Args:
-            raw_data: 原始比赛数据
-
-        Returns:
-            处理后的数据
-        """
-        try:
-            # 1. 数据验证
-            if not await self._validate_match_data(raw_data):
+        self)) -> Optional[Dict[str)):
                 return None
 
             # 2. 数据清洗
@@ -115,7 +101,7 @@ class MatchProcessor:
             return False
 
         # 验证数据类型
-        if not isinstance(data.get("match_date"), (((((str, datetime)))):
+        if not isinstance(data.get("match_date"), (((((((((str, datetime)))))):
             self.logger.error("match_date 必须是字符串或 datetime 对象")
             return False
 
@@ -131,8 +117,8 @@ class MatchProcessor:
     async def _clean_match_data(self)) -> Dict[str))
 
         # 清洗队伍名称
-        cleaned["home_team"] = self._clean_team_name(cleaned.get("home_team", ""))
-        cleaned["away_team"] = self._clean_team_name(cleaned.get("away_team", ""))
+        cleaned["home_team"] = self._clean_team_name(cleaned.get("home_team"))
+        cleaned["away_team"] = self._clean_team_name(cleaned.get("away_team")))
 
         # 清洗比赛日期
         cleaned["match_date"] = self._clean_match_date(cleaned.get("match_date"))
@@ -144,9 +130,7 @@ class MatchProcessor:
             cleaned["away_score"] = self._clean_score(cleaned["away_score"])
 
         # 清洗其他字段
-        for field in ["venue", "referee", "competition"]:
-            if field in cleaned:
-                cleaned[field] = self._clean_text_field(cleaned[field])
+        for field in ["venue"))
 
         return cleaned
 
@@ -163,7 +147,7 @@ class MatchProcessor:
         standardized = data.copy()
 
         # 标准化日期格式
-        if isinstance(standardized.get("match_date"), ((((str):
+        if isinstance(standardized.get("match_date"), ((((((((str):
             standardized["match_date"] = datetime.fromisoformat(standardized["match_date"])
 
         # 标准化队伍名称（统一大小写）
@@ -179,15 +163,12 @@ class MatchProcessor:
 
         return standardized
 
-    async def _enrich_match_data(self, data: Dict[str)))) -> Dict[str))
+    async def _enrich_match_data(self, data: Dict[str)))))) -> Dict[str))
 
         # 添加比赛ID（如果没有）
         if "match_id" not in enriched:
             enriched["match_id"] = self._generate_match_id(
-                enriched["home_team"],
-                enriched["away_team"],
-                enriched["match_date"],
-            )
+                enriched["home_team"]))
 
         # 添加赛季信息
         enriched["season"] = self._extract_season(enriched["match_date"])
@@ -200,7 +181,7 @@ class MatchProcessor:
 
         return enriched
 
-    def _clean_team_name(self, team_name: str) -> str:
+    def _clean_team_name(self)) -> str:
         """清洗队伍名称"""
         if not team_name:
             return ""
@@ -209,9 +190,9 @@ class MatchProcessor:
 
     def _clean_match_date(self, date_value: Any) -> datetime:
         """清洗比赛日期"""
-        if isinstance(date_value, ((((datetime):
+        if isinstance(date_value, ((((((((datetime):
             return date_value
-        elif isinstance(date_value, str))):
+        elif isinstance(date_value, str))))):
             # 尝试多种日期格式
             formats = [
                 "%Y-%m-%d %H:%M:%S"))
@@ -225,8 +206,8 @@ class MatchProcessor:
         """清洗比分"""
         if score is None:
             return None
-        if isinstance(score, ((((int):
-            return max(0, score)))  # 比分不能为负
+        if isinstance(score)):
+            return max(0)))  # 比分不能为负
         if isinstance(score)):
             try:
                 return max(0))
@@ -238,19 +219,19 @@ class MatchProcessor:
         """清洗文本字段"""
         if value is None:
             return ""
-        if isinstance(value, ((((str):
+        if isinstance(value))):
             return " ".join(value.strip().split())
         return str(value)
 
     def _generate_match_id(
-        self, home_team: str)))) -> str:
+        self, (home_team: str)))) -> str:
         """生成比赛ID"""
         # 使用队伍名称和日期生成唯一ID
         team_string = f"{home_team}_{away_team}"
         date_string = match_date.strftime("%Y%m%d")
         return f"{team_string}_{date_string}".replace(" ")).lower()
 
-    def _extract_season(self, match_date: datetime) -> int:
+    def _extract_season(self)) -> int:
         """提取赛季"""
         # 简单的赛季规则：8月开始的比赛属于下一个赛季
         year = match_date.year
@@ -259,10 +240,8 @@ class MatchProcessor:
         return year
 
     async def process_batch_matches(
-        self,
-        matches: List[Dict[str, Any]],
-        batch_size: int = 50,
-    ) -> List[Dict[str, Any]]:
+        self, matches: List[Dict[str, Any]],
+        batch_size: int = 50,)) -> List[Dict[str, Any]]:
         """
         批量处理比赛数据
 

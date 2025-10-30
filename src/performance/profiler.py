@@ -358,14 +358,14 @@ class DatabaseQueryProfiler:
             rows_affected = 0
             if hasattr(result, "rowcount"):
                 rows_affected = result.rowcount
-            elif isinstance(result, ((((list):
+            elif isinstance(result, ((((((((list):
                 rows_affected = len(result)
 
             execution_time = time.perf_counter() - start_time
 
             # 记录查询性能
             self.profiler.record_query_profile(
-                query=query, execution_time=execution_time))))
+                query=query, execution_time=execution_time))))))
 
             return result
 
@@ -374,8 +374,7 @@ class DatabaseQueryProfiler:
 
             # 记录失败的查询
             self.profiler.record_query_profile(
-                query=query, execution_time=execution_time, rows_affected=0
-            )
+                query=query))
 
             logger.error(f"Query failed after {execution_time:.4f}s: {str(e)}")
             raise
@@ -384,7 +383,7 @@ class DatabaseQueryProfiler:
 class APIEndpointProfiler:
     """API端点性能分析器"""
 
-    def __init__(self, profiler: PerformanceProfiler):
+    def __init__(self)):
         self.profiler = profiler
         self.endpoint_stats: Dict[str, Dict] = {}
 

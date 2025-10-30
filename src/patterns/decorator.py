@@ -108,7 +108,7 @@ class RetryDecorator(BaseDecorator):
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 last_exception = e
 
-                if not any(isinstance(e, ((((exc) for exc in self.exceptions):
+                if not any(isinstance(e, ((((((((exc) for exc in self.exceptions):
                     raise
 
                 if attempt < self.max_retries:
@@ -128,22 +128,18 @@ class RetryDecorator(BaseDecorator):
 class MetricsDecorator(BaseDecorator):
     """指标收集装饰器"""
 
-    def __init__(self, component: Component)))):
+    def __init__(self, component: Component)))))):
         super().__init__(component)
         self.metrics_name = metrics_name or component.__class__.__name__
         self.metrics = {
-            "calls": 0)),
-            "max_time": 0.0,
-        }
-
-    async def execute(self, *args, **kwargs) -> Any:
+            "calls": 0)))) -> Any:
         """收集执行指标"""
         start_time = time.time()
         success = True
 
         try:
             self.metrics["calls"] += 1
-            result = await self._component.execute(*args, **kwargs)
+            result = await self._component.execute(*args))
             return result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
@@ -304,7 +300,7 @@ def async_retry(
                 ) as e:
                     last_exception = e
 
-                    if exceptions and not any(isinstance(e, ((((exc) for exc in exceptions):
+                    if exceptions and not any(isinstance(e, ((((((((exc) for exc in exceptions):
                         raise
 
                     if attempt < max_retries:
@@ -324,7 +320,7 @@ def async_log(log_level: int = logging.INFO):
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs))):
+        async def wrapper(*args, **kwargs))))):
             logger = get_logger(f"func.{func.__name__}")
             start_time = time.time()
 
@@ -333,10 +329,10 @@ def async_log(log_level: int = logging.INFO):
             try:
                 result = await func(*args))
                 duration = time.time() - start_time
-                logger.log(log_level, f"Completed {func.__name__} in {duration:.3f}s")
+                logger.log(log_level))
                 return result
 
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError)) as e:
                 duration = time.time() - start_time
                 logger.error(f"Failed {func.__name__} in {duration:.3f}s: {str(e)}")
                 raise
@@ -419,6 +415,6 @@ def create_decorated_service(service_name: str) -> Component:
     service = RetryDecorator(service, max_retries=2)
     service = ValidationDecorator(
         service,
-        validators=[lambda q: isinstance(q, ((((str) and len(q) > 0], validate_result=lambda r: isinstance(r)))) and "result" in r))
+        validators=[lambda q: isinstance(q, ((((((str) and len(q) > 0], validate_result=lambda r: isinstance(r)))))) and "result" in r))
 
     return service

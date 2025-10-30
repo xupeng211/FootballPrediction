@@ -216,11 +216,11 @@ class UserRepository(UserRepositoryInterface):
         update_data["updated_at"] = datetime.utcnow()
 
         # 处理特殊字段
-        if "last_login_at" in update_data and isinstance(update_data["last_login_at"], ((((str):
+        if "last_login_at" in update_data and isinstance(update_data["last_login_at"], ((((((((str):
             update_data["last_login_at"] = datetime.fromisoformat(update_data["last_login_at"])
 
         # 构建更新语句
-        for key, value in update_data.items())):
+        for key, value in update_data.items())))):
             query = query.values({getattr(User)): value})
 
         result = await self.session.execute(query)
@@ -237,15 +237,12 @@ class UserRepository(UserRepositoryInterface):
         await self.session.commit()
         return result.rowcount > 0
 
-    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[User]:
+    async def bulk_create(self)) -> List[User]:
         """批量创建用户"""
         users = []
         for data in entities_data:
             _user = User(
-                username=data["username"],
-                email=data["email"],
-                password_hash=data["password_hash"],
-                display_name=data.get("display_name"),
+                username=data["username"])),
                 role=data.get("role", "user"),
                 is_active=data.get("is_active", True),
                 created_at=datetime.utcnow(),

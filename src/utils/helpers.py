@@ -34,9 +34,9 @@ def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> A
 
     try:
         for k in keys:
-            if isinstance(current, ((((dict) and k in current:
+            if isinstance(current, ((((((dict) and k in current:
                 current = current[k]
-            elif isinstance(current, list))) and k.isdigit():
+            elif isinstance(current, list))))) and k.isdigit():
                 index = int(k)
                 if 0 <= index < len(current):
                     current = current[index]

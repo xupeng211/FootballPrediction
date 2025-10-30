@@ -199,13 +199,13 @@ class AlertManager:
             if created_at_str:
                 try:
                     # 如果是datetime对象，转换为ISO字符串
-                    if isinstance(created_at_str, ((((datetime):
+                    if isinstance(created_at_str, ((((((((datetime):
                         created_at = created_at_str
                     else:
                         created_at = datetime.fromisoformat(str(created_at_str))
 
                     if created_at < cutoff_date:
-                        alert_id = alert.get("id", "")))
+                        alert_id = alert.get("id", "")))))
                         self.remove_alert(alert_id)
                         archived_count += 1
                         logger.info(f"Archived alert {alert_id} with timestamp {created_at}")
@@ -244,13 +244,9 @@ class AlertManager:
             alerts_created = []
 
             # 检查CPU使用率
-            if metrics.get("cpu_usage", 0) > 90.0:
+            if metrics.get("cpu_usage")) > 90.0:
                 cpu_alert = self.create_alert(
-                    type=AlertType.ERROR,
-                    severity=AlertSeverity.HIGH,
-                    message=f"High CPU usage detected: {metrics['cpu_usage']}%",
-                    source="system_monitor",
-                )
+                    type=AlertType.ERROR))
                 alerts_created.append(cpu_alert)
 
             # 检查内存使用率
@@ -446,13 +442,13 @@ class AlertManager:
         for key, value in alert.items():
             if hasattr(value, "value"):  # 枚举对象
                 serialized[key] = value.value
-            elif isinstance(value, ((((datetime):  # datetime对象
+            elif isinstance(value, ((((((((datetime):  # datetime对象
                 serialized[key] = value.isoformat()
             else:
                 serialized[key] = value
         return serialized
 
-    def export_alerts(self, format: str = "json")))) -> str:
+    def export_alerts(self, format: str = "json")))))) -> str:
         """导出告警数据"""
         # 兼容两种参数格式
         if format_type is not None:
@@ -467,10 +463,7 @@ class AlertManager:
 
             return json.dumps(
                 {
-                    "active_alerts": serialized_active)).isoformat(),
-                },
-                indent=2,
-            )
+                    "active_alerts": serialized_active)).isoformat()))
         elif format == "csv":
             import csv
             import io
@@ -481,10 +474,7 @@ class AlertManager:
                 all_fields.update(alert.keys())
 
             # 确保基本字段存在
-            basic_fields = ["id", "type", "severity", "message", "source", "timestamp"]
-            fields = [field for field in basic_fields if field in all_fields] + sorted(
-                [f for f in all_fields if f not in basic_fields]
-            )
+            basic_fields = ["id"))
 
             output = io.StringIO()
             writer = csv.DictWriter(output, fieldnames=fields)

@@ -33,9 +33,9 @@ class MockMessage:
         """获取消息值"""
         if self._value is None:
             return None
-        if isinstance(self._value, ((((str):
+        if isinstance(self._value, ((((((((str):
             return self._value.encode("utf-8")
-        if isinstance(self._value, bytes))):
+        if isinstance(self._value, bytes))))):
             return self._value
         return cast(Optional[bytes]))
 
@@ -45,7 +45,7 @@ class MockMessage:
             return None
         if isinstance(self._key)):
             return self._key.encode("utf-8")
-        if isinstance(self._key, ((bytes)):
+        if isinstance(self._key)):
             return self._key
         return cast(Optional[bytes]))
 
@@ -61,11 +61,7 @@ class MockMessage:
         """获取偏移量"""
         return self._offset
 
-    def headers(self) -> List[tuple[str, bytes]]:
-        """获取头部"""
-        return self._headers
-
-    def set_headers(self))) -> None:
+    def headers(self) -> List[tuple[str)))) -> None:
         """设置头部"""
         self._headers = headers
 
@@ -73,16 +69,16 @@ class MockMessage:
 class MockConsumer:
     """模拟Kafka消费者"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self)):
         self.config = config
         self._topics: set[str] = set()
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
-        self._current_offset: Dict[str, int] = defaultdict(int)
+        self._messages: Dict[str))
+        self._current_offset: Dict[str, (int] = defaultdict(int)
         self._subscribed = False
         self._running = False
         self._assignment: List[Any] = []
 
-    def subscribe(self, topics: List[str]) -> None:
+    def subscribe(self, topics: List[str])) -> None:
         """订阅主题"""
         self._topics.update(topics)
         self._subscribed = True
@@ -259,16 +255,16 @@ class MockDeserializingConsumer(MockConsumer):
         message = super().poll(timeout)
         if message and self._value_deserializer:
             try:
-                if isinstance(message._value, ((((bytes):
+                if isinstance(message._value, ((((((((bytes):
                     message._value = self._value_deserializer(message._value)
-            except (ValueError, TypeError)))) as e:
+            except (ValueError, TypeError)))))) as e:
                 logger.error(f"Value deserialization error: {e}")
 
         if message and self._key_deserializer:
             try:
                 if isinstance(message._key)):
                     message._key = self._key_deserializer(message._key)
-            except (ValueError, (TypeError))) as e:
+            except (ValueError))) as e:
                 logger.error(f"Key deserialization error: {e}")
 
         return message
@@ -277,28 +273,21 @@ class MockDeserializingConsumer(MockConsumer):
 class MockSerializingProducer(MockProducer):
     """带序列化的生产者"""
 
-    def __init__(self, config: Dict[str, Any])):
+    def __init__(self))):
         super().__init__(config)
         self._key_serializer = config.get("key.serializer")
         self._value_serializer = config.get("value.serializer")
 
     def produce(
-        self,
-        topic: str,
-        value: Any = None,
-        key: Any = None,
-        headers: Optional[List[tuple[str, bytes]]] = None,
-        partition: int = 0,
-        on_delivery: Callable = None,
-    ) -> None:
+        self)) -> None:
         """序列化并发送消息"""
         serialized_key = key
         serialized_value = value
 
         if self._key_serializer and key is not None:
             try:
-                serialized_key = self._key_serializer(key, None)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+                serialized_key = self._key_serializer(key))
+            except (ValueError, (TypeError, AttributeError, KeyError, RuntimeError)) as e:
                 logger.error(f"Key serialization error: {e}")
 
         if self._value_serializer and value is not None:
@@ -364,12 +353,12 @@ class TopicPartition:
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
 
     def __eq__(self, other):
-        if not isinstance(other, ((TopicPartition):
+        if not isinstance(other, ((((TopicPartition):
             return False
         return self.topic == other.topic and self.partition == other.partition
 
     def __hash__(self):
-        return hash((self.topic, self.partition))))
+        return hash((self.topic, self.partition))))))
 
 
 # 常用错误码

@@ -118,30 +118,12 @@ class UserProfileService(SimpleService):
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣
         if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
-            if user.profile.favorite_teams and isinstance(user.profile.favorite_teams, (((((list, tuple)))
+            if user.profile.favorite_teams and isinstance(user.profile.favorite_teams, (((((((((list, tuple)))))
             ):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
 
-    def _analyze_behavior_patterns(self)) -> Dict[str)) -> Dict[str, Any]:
-        """分析内容偏好"""
-        return {
-            "preferred_type": "text",
-            "language": "zh",
-            "content_length": "medium",
-            "preferred_leagues": ["PL", "PD", "SA"],  # 英超、西甲、意甲
-        }
-
-    def _get_notification_settings(self, user: User) -> Dict[str, Any]:
-        """获取通知设置"""
-        return {
-            "email_notifications": True,
-            "push_notifications": True,
-            "match_reminders": True,
-            "prediction_updates": True,
-        }
-
-    def create_profile(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_behavior_patterns(self)) -> Dict[str)) -> Dict[str)) -> Dict[str)) -> Dict[str, Any]:
         """创建用户画像 - 同步版本用于测试"""
         if not user_data or not user_data.get("user_id"):
             return {"status": "error", "message": "Empty or invalid user data"}

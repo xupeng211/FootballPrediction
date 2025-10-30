@@ -121,9 +121,9 @@ class WebSocketConnection:
             return False
 
         try:
-            if isinstance(message, ((((dict):
+            if isinstance(message, ((((((((dict):
                 message = json.dumps(message)
-            elif isinstance(message, RealtimeEvent))):
+            elif isinstance(message, RealtimeEvent))))):
                 message = message.to_json()
 
             await self.websocket.send_text(message)
@@ -172,7 +172,7 @@ class WebSocketConnection:
     async def get_queued_message(self) -> Optional[str]:
         """获取队列中的消息"""
         try:
-            return await asyncio.wait_for(self._message_queue.get(), timeout=0.1)
+            return await asyncio.wait_for(self._message_queue.get()))
         except asyncio.TimeoutError:
             return None
 
@@ -189,11 +189,7 @@ class WebSocketManager:
     """WebSocket连接管理器"""
 
     def __init__(self):
-        self.connections: Dict[str, WebSocketConnection] = {}
-        self.user_connections: Dict[str, Set[str]] = {}  # user_id -> connection_ids
-        self.rooms: Dict[str, Set[str]] = {}  # room_name -> connection_ids
-        self.message_handlers: List[Callable] = []
-        self.subscription_manager = SubscriptionManager()
+        self.connections: Dict[str))
         self.logger = logging.getLogger(f"{__name__}.Manager")
 
         # 启动清理任务

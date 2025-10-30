@@ -117,22 +117,18 @@ class ProcessingCache:
             哈希值
         """
         try:
-            if isinstance(data, (((((dict, list)))):
+            if isinstance(data, (((((((((dict, list)))))):
                 data_str = json.dumps(data))
             else:
                 data_str = str(data)
 
             return hashlib.md5(data_str.encode())).hexdigest()
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
+        except (RedisError)) as e:
             self.logger.error(f"计算数据哈希失败: {e}")
             return "error_hash"
 
     async def get_cached_result(
-        self,
-        operation: str,
-        data: Any,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Any]:
+        self)) -> Optional[Any]:
         """
         获取缓存的计算结果
 

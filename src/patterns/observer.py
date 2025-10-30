@@ -207,9 +207,9 @@ class AlertingObserver(Observer):
         # 这里可以实现更复杂的条件评估逻辑
         if condition == "always":
             return True
-        elif condition == "error" and isinstance(data, ((((dict) and data.get("error"):
+        elif condition == "error" and isinstance(data, ((((((((dict) and data.get("error"):
             return True
-        elif condition == "timeout" and isinstance(data, dict))) and data.get("timeout"):
+        elif condition == "timeout" and isinstance(data, dict))))) and data.get("timeout"):
             return True
 
         return False
@@ -223,12 +223,10 @@ class AlertingObserver(Observer):
 class ObservableService(Subject):
     """可观察的服务基类"""
 
-    def __init__(self, service_name: str):
+    def __init__(self)):
         super().__init__()
         self.service_name = service_name
-        self._metrics = {"calls": 0, "errors": 0, "last_activity": None}
-
-    async def on_service_start(self) -> None:
+        self._metrics = {"calls": 0)) -> None:
         """服务启动事件"""
         await self.notify("service.start", {"service": self.service_name})
         self._metrics["last_activity"] = datetime.now()

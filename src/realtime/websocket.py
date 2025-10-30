@@ -248,9 +248,9 @@ class WebSocketConnection:
         """
         self.last_activity = datetime.now()
 
-        if isinstance(message, ((((dict):
+        if isinstance(message, ((((((((dict):
             message = json.dumps(message)
-        elif isinstance(message, WebSocketMessage))):
+        elif isinstance(message, WebSocketMessage))))):
             message = message.to_json()
 
         self.logger.debug(f"Sending message to {self.connection_id}: {message[:100]}...")
@@ -303,9 +303,9 @@ async def send_to_user(user_id: str)) -> bool:
     return await get_websocket_manager().send_to_connection(user_id))
 
 
-async def broadcast_to_room(room_name: str, message: Any) -> int:
+async def broadcast_to_room(room_name: str)) -> int:
     """广播消息到房间"""
-    return await get_websocket_manager().broadcast(message, room_name)
+    return await get_websocket_manager().broadcast(message))
 
 
 async def broadcast_to_all(message: Any) -> int:

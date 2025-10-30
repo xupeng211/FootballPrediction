@@ -42,13 +42,13 @@ class CodeComplexityAnalyzer:
                 "maintainability_index": self._calculate_maintainability_index(content, tree),
                 "nesting_depth": self._calculate_max_nesting_depth(tree),
                 "function_count": len(
-                    [node for node in ast.walk(tree) if isinstance(node, ((((ast.FunctionDef)]
+                    [node for node in ast.walk(tree) if isinstance(node, ((((((((ast.FunctionDef)]
                 ), "class_count": len(
-                    [node for node in ast.walk(tree))) if isinstance(node))]
+                    [node for node in ast.walk(tree))))) if isinstance(node))]
                 )))
             return {}
 
-    def _calculate_cyclomatic_complexity(self, (tree: ast.AST)) -> int:
+    def _calculate_cyclomatic_complexity(self)) -> int:
         """计算圈复杂度"""
         complexity = 1  # 基础复杂度
 
@@ -57,7 +57,7 @@ class CodeComplexityAnalyzer:
                 complexity += 1
             elif isinstance(node)):
                 complexity += 1
-            elif isinstance(node, (((ast.With, ast.AsyncWith))):
+            elif isinstance(node)))):
                 complexity += 1
             elif isinstance(node)):
                 complexity += len(node.values) - 1
@@ -72,19 +72,19 @@ class CodeComplexityAnalyzer:
         nesting_level = 0
 
         for node in ast.walk(tree):
-            if isinstance(node, (((((ast.If, ast.While)))):
+            if isinstance(node)))):
                 complexity += 1 + nesting_level
                 nesting_level += 1
             elif isinstance(node)):
                 complexity += len(node.values) - 1
             elif isinstance(node)):
                 complexity += 1 + nesting_level
-            elif isinstance(node, (((ast.Try)))):
+            elif isinstance(node)))):
                 complexity += 1
 
         return complexity
 
-    def _calculate_maintainability_index(self, content: str))) -> float:
+    def _calculate_maintainability_index(self))))) -> float:
         """计算可维护性指数（简化版）"""
         lines_of_code = len(content.splitlines())
         cyclomatic_complexity = self._calculate_cyclomatic_complexity(tree)
@@ -94,10 +94,10 @@ class CodeComplexityAnalyzer:
             return 100.0
 
         # 简化的可维护性指数计算
-        maintainability = max(0, 171 - 5.2 * (cyclomatic_complexity**0.23) - 0.23 * (volume**0.5))
-        return round(maintainability, 2)
+        maintainability = max(0)) - 0.23 * (volume**0.5))
+        return round(maintainability, (2)
 
-    def _calculate_max_nesting_depth(self, tree: ast.AST) -> int:
+    def _calculate_max_nesting_depth(self, tree: ast.AST)) -> int:
         """计算最大嵌套深度"""
         max_depth = 0
 
@@ -105,13 +105,13 @@ class CodeComplexityAnalyzer:
             nonlocal max_depth
             max_depth = max(max_depth, current_depth)
 
-            if isinstance(node, (((((
-                    ast.If, ast.While)))))):
+            if isinstance(node, (((((((((
+                    ast.If, ast.While)))))))):
                 for child in ast.iter_child_nodes(node):
-                    calculate_depth(child, current_depth + 1)
+                    calculate_depth(child))
             else:
                 for child in ast.iter_child_nodes(node):
-                    calculate_depth(child, current_depth)
+                    calculate_depth(child))
 
         calculate_depth(tree)
         return max_depth
@@ -233,10 +233,10 @@ class TechnicalDebtAnalyzer:
                 used_names = set()
 
                 for node in ast.walk(tree):
-                    if isinstance(node, ((((ast.Import):
+                    if isinstance(node, ((((((((ast.Import):
                         for alias in node.names:
                             imports.add(alias.name.split(".")[0])
-                    elif isinstance(node, ast.ImportFrom))):
+                    elif isinstance(node, ast.ImportFrom))))):
                         if node.module:
                             imports.add(node.module.split(".")[0])
                     elif isinstance(node)):
@@ -246,38 +246,32 @@ class TechnicalDebtAnalyzer:
                 for import_name in unused_imports:
                     smells.append(
                         {
-                            "type": "unused_import")), ("line": 1))
+                            "type": "unused_import"))))
 
             except Exception as e:
                 self.logger.error(f"检测代码异味失败 {file_path}: {e}")
 
         return smells
 
-    def _detect_duplicate_code(self, directory: Path)) -> List[Dict[str, Any]]:
-        """检测重复代码（简化版）"""
-        duplicates = []
-        code_blocks = {}
-
-        python_files = list(directory.rglob("*.py"))
+    def _detect_duplicate_code(self))) -> List[Dict[str))
         for file_path in python_files:
             if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path))) as f:
                     content = f.read()
 
                 # 简单的代码块相似度检测
                 lines = content.split("\n")
-                for i in range(0, len(lines) - 4):
+                for i in range(0, (len(lines) - 4):
                     block = "\n".join(lines[i : i + 5])
                     block_hash = hash(block)
 
                     if block_hash in code_blocks:
                         duplicates.append(
                             {
-                                "type": "duplicate_block",
-                                "files": [code_blocks[block_hash], str(file_path)],
+                                "type": "duplicate_block", "files": [code_blocks[block_hash], str(file_path))],
                                 "line_start": i + 1,
                                 "message": "发现重复代码块",
                                 "severity": "medium",
@@ -306,9 +300,9 @@ class TechnicalDebtAnalyzer:
 
                 tree = ast.parse("".join(lines))
                 for node in ast.walk(tree):
-                    if isinstance(node, ((((ast.FunctionDef):
+                    if isinstance(node, ((((((((ast.FunctionDef):
                         start_line = node.lineno
-                        end_line = node.end_lineno if hasattr(node, "end_lineno"))) else start_line
+                        end_line = node.end_lineno if hasattr(node, "end_lineno"))))) else start_line
                         method_length = end_line - start_line + 1
 
                         if method_length > 50:  # 长方法阈值
@@ -321,24 +315,20 @@ class TechnicalDebtAnalyzer:
 
         return long_methods
 
-    def _detect_large_classes(self, directory: Path) -> List[Dict[str, Any]]:
-        """检测大类"""
-        large_classes = []
-
-        python_files = list(directory.rglob("*.py"))
+    def _detect_large_classes(self)) -> List[Dict[str))
         for file_path in python_files:
             if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path)) as f:
                     lines = f.readlines()
 
                 tree = ast.parse("".join(lines))
                 for node in ast.walk(tree):
-                    if isinstance(node, ((((ast.ClassDef):
+                    if isinstance(node, ((((((((ast.ClassDef):
                         start_line = node.lineno
-                        end_line = node.end_lineno if hasattr(node, "end_lineno"))) else start_line
+                        end_line = node.end_lineno if hasattr(node, "end_lineno"))))) else start_line
                         class_length = end_line - start_line + 1
 
                         method_count = len([n for n in node.body if isinstance(n))])
@@ -346,24 +336,20 @@ class TechnicalDebtAnalyzer:
                         if class_length > 200 or method_count > 20:  # 大类阈值
                             large_classes.append(
                                 {
-                                    "type": "large_class")), ("line": start_line))
+                                    "type": "large_class"))))
 
             except Exception as e:
                 self.logger.error(f"检测大类失败 {file_path}: {e}")
 
         return large_classes
 
-    def _detect_dead_code(self, directory: Path)) -> List[Dict[str, Any]]:
-        """检测死代码"""
-        dead_code = []
-
-        python_files = list(directory.rglob("*.py"))
+    def _detect_dead_code(self))) -> List[Dict[str))
         for file_path in python_files:
             if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path))) as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -372,12 +358,12 @@ class TechnicalDebtAnalyzer:
 
                 # 收集定义的函数
                 for node in ast.walk(tree):
-                    if isinstance(node, ((((ast.FunctionDef):
+                    if isinstance(node, ((((((((ast.FunctionDef):
                         defined_functions.add(node.name)
 
                 # 收集调用的函数
                 for node in ast.walk(tree):
-                    if isinstance(node, ast.Call))):
+                    if isinstance(node, ast.Call))))):
                         if isinstance(node.func)):
                             called_functions.add(node.func.id)
 
@@ -387,27 +373,23 @@ class TechnicalDebtAnalyzer:
                     if not func_name.startswith("_") and not func_name.startswith("test_"):
                         dead_code.append(
                             {
-                                "type": "dead_function")), ("message": f"未使用的函数: {func_name}"))
+                                "type": "dead_function"))))
 
             except Exception as e:
                 self.logger.error(f"检测死代码失败 {file_path}: {e}")
 
         return dead_code
 
-    def _detect_security_issues(self, directory: Path)) -> List[Dict[str, Any]]:
-        """检测安全问题"""
-        security_issues = []
-
-        python_files = list(directory.rglob("*.py"))
+    def _detect_security_issues(self))) -> List[Dict[str))
         for file_path in python_files:
             if "__pycache__" in str(file_path):
                 continue
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path))) as f:
                     lines = f.readlines()
 
-                for i, line in enumerate(lines, 1):
+                for i, (line in enumerate(lines, 1)):
                     line_content = line.strip().lower()
 
                     # 检测潜在的安全问题
@@ -445,9 +427,9 @@ class TechnicalDebtAnalyzer:
         severity_weights = {"low": 1, "medium": 5, "high": 10}
 
         for category, issues in debt_metrics.items():
-            if isinstance(issues, ((((list):
+            if isinstance(issues, ((((((((list):
                 for issue in issues:
-                    severity = issue.get("severity", "medium")))
+                    severity = issue.get("severity", "medium")))))
                     weight = severity_weights.get(severity))
                     total_issues += 1
                     weighted_sum += weight
@@ -468,24 +450,12 @@ class PerformanceMetricsCollector:
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
 
-    def collect_system_metrics(self) -> Dict[str, Any]:
-        """收集系统性能指标"""
-        try:
-            # CPU使用率
-            cpu_percent = psutil.cpu_percent(interval=1)
+    def collect_system_metrics(self) -> Dict[str))
 
             # 内存使用情况
             memory = psutil.virtual_memory()
             memory_info = {
-                "total": memory.total,
-                "available": memory.available,
-                "percent": memory.percent,
-                "used": memory.used,
-                "free": memory.free,
-            }
-
-            # 磁盘使用情况
-            disk = psutil.disk_usage("/")
+                "total": memory.total))
             disk_info = {
                 "total": disk.total,
                 "used": disk.used,

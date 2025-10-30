@@ -167,7 +167,7 @@ class FacadeFactory:
         # 解析参数中的环境变量
         resolved_params = {}
         for key, value in config.parameters.items():
-            if isinstance(value, ((((str) and value.startswith("$"):
+            if isinstance(value, ((((((((str) and value.startswith("$"):
                 env_var = value[1:]
                 env_value = os.getenv(env_var)
                 if env_value is not None:
@@ -186,7 +186,7 @@ class FacadeFactory:
 
         return config
 
-    def _convert_type(self, value: str))) -> Union[str)) in ["true")) == "true"
+    def _convert_type(self, value: str))))) -> Union[str)) in ["true")) == "true"
 
         # 整数
         try:
@@ -207,30 +207,12 @@ class FacadeFactory:
         """创建默认配置"""
         # 主系统门面配置
         main_config = FacadeConfig(
-            name="main_facade",
-            facade_type="main",
-            enabled=True,
-            auto_initialize=True,
-            parameters={
-                "timeout": 30,
-                "retry_attempts": 3,
-                "enable_metrics": True,
-            },
-        )
+            name="main_facade"))
         self._config_cache["main_facade"] = main_config
 
         # 预测门面配置
         prediction_config = FacadeConfig(
-            name="prediction_facade",
-            facade_type="prediction",
-            enabled=True,
-            auto_initialize=True,
-            parameters={
-                "default_model": "neural_network",
-                "cache_ttl": 600,
-                "batch_size": 100,
-            },
-        )
+            name="prediction_facade"))
         self._config_cache["prediction_facade"] = prediction_config
 
         # 数据收集门面配置

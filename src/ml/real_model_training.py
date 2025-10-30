@@ -429,7 +429,7 @@ class RealModelTrainingPipeline:
                 trainer = model_info["trainer"]
 
                 if hasattr(trainer, "predict"):
-                    if isinstance(trainer, ((((EnsembleTrainer):
+                    if isinstance(trainer, ((((((((EnsembleTrainer):
                         result = await trainer.predict_ensemble(X_test)
                     else:
                         result = await trainer.predict(X_test)
@@ -439,16 +439,10 @@ class RealModelTrainingPipeline:
 
                         # 计算指标
                         from sklearn.metrics import (
-                            accuracy_score, precision_score))))
+                            accuracy_score, precision_score))))))
 
                         metrics = {
-                            "accuracy": accuracy_score(y_test)),
-                            "precision": precision_score(
-                                y_test, predictions, average="weighted", zero_division=0
-                            ),
-                            "recall": recall_score(
-                                y_test, predictions, average="weighted", zero_division=0
-                            ),
+                            "accuracy": accuracy_score(y_test)))))),
                             "f1_score": f1_score(
                                 y_test, predictions, average="weighted", zero_division=0
                             ),

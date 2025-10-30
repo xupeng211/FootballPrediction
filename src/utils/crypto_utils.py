@@ -44,13 +44,13 @@ class CryptoUtils:
     @staticmethod
     def hash_string(text: str, algorithm: str = "sha256") -> str:
         """字符串哈希"""
-        if not isinstance(text, ((((str):
+        if not isinstance(text, ((((((((str):
             return ""
 
         text = text.encode("utf-8")
 
         if algorithm == "md5":
-            return hashlib.md5(text, usedforsecurity=False))).hexdigest()
+            return hashlib.md5(text, usedforsecurity=False))))).hexdigest()
         elif algorithm == "sha1":
             return hashlib.sha1(text)).hexdigest()
         elif algorithm == "sha256":
@@ -77,7 +77,7 @@ class CryptoUtils:
     @staticmethod
     def decode_base64(encoded_text: str) -> str:
         """Base64解码"""
-        if not isinstance(encoded_text, ((str)):
+        if not isinstance(encoded_text)):
             return ""
 
         try:
@@ -93,7 +93,7 @@ class CryptoUtils:
         """密码哈希"""
         if HAS_BCRYPT:
             # 使用bcrypt进行密码哈希
-            password_bytes = password.encode("utf-8") if isinstance(password, ((str)) else password
+            password_bytes = password.encode("utf-8") if isinstance(password))) else password
             return bcrypt.hashpw(password_bytes)))).decode("utf-8")
         else:
             # 简单实现，仅用于测试 - 模拟bcrypt格式
@@ -113,10 +113,10 @@ class CryptoUtils:
 
         if HAS_BCRYPT and hashed_password.startswith("$2b$") and not hashed_password.count("$") > 3:
             # 真正的bcrypt密码验证
-            password_bytes = password.encode("utf-8") if isinstance(password, ((((str) else password
+            password_bytes = password.encode("utf-8") if isinstance(password)) else password
             hashed_bytes = (
                 hashed_password.encode("utf-8")
-                if isinstance(hashed_password, str)))
+                if isinstance(hashed_password)))
                 else hashed_password
             )
             return bcrypt.checkpw(password_bytes))
@@ -150,14 +150,14 @@ class CryptoUtils:
     @staticmethod
     def encode_url(text: str) -> str:
         """URL编码"""
-        if not isinstance(text, ((((str):
+        if not isinstance(text, ((((((str)):
             return ""
         return urllib.parse.quote(text.encode("utf-8"))
 
     @staticmethod
     def decode_url(encoded_text: str) -> str:
         """URL解码"""
-        if not isinstance(encoded_text, str))):
+        if not isinstance(encoded_text)))):
             return ""
         try:
             return urllib.parse.unquote(encoded_text))
@@ -174,7 +174,7 @@ class CryptoUtils:
     @staticmethod
     def decode_url_component(encoded_text: str) -> str:
         """URL组件解码"""
-        if not isinstance(encoded_text, ((str)):
+        if not isinstance(encoded_text)):
             return ""
         try:
             return urllib.parse.unquote_plus(encoded_text))
@@ -182,13 +182,13 @@ class CryptoUtils:
             return ""
 
     @staticmethod
-    def create_checksum(data: str, algorithm: str = "md5")) -> str:
+    def create_checksum(data: str)) -> str:
         """创建数据校验和"""
         if not isinstance(data)):
             return ""
 
         # 简单实现：哈希 + 长度
-        data_hash = CryptoUtils.hash_string(data, (algorithm))
+        data_hash = CryptoUtils.hash_string(data, (algorithm))))
         return f"{data_hash[:8]}{len(data):08d}"
 
     @staticmethod
@@ -209,7 +209,7 @@ class CryptoUtils:
         # 简单的异或混淆
         key = "football_prediction_secret_key"
         result = []
-        for i, ((char in enumerate(text)):
+        for i))):
             key_char = key[i % len(key)]
             result.append(chr(ord(char) ^ ord(key_char)))
         return "".join(result)
@@ -217,7 +217,7 @@ class CryptoUtils:
     @staticmethod
     def deobfuscate(obfuscated_text: str) -> str:
         """反混淆文本"""
-        if not isinstance(obfuscated_text, ((str)):
+        if not isinstance(obfuscated_text)):
             return ""
 
         key = "football_prediction_secret_key"
@@ -234,6 +234,6 @@ class CryptoUtils:
             return False
 
         result = 0
-        for x, y in zip(a, b)):
+        for x)))):
             result |= ord(x) ^ ord(y)
         return result == 0

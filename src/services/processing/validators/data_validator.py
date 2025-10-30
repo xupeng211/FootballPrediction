@@ -76,9 +76,9 @@ class DataValidator:
         """
         try:
             # 转换为DataFrame
-            if isinstance(data, ((((dict):
+            if isinstance(data, ((((((((dict):
                 df = pd.DataFrame([data])
-            elif isinstance(data, list))):
+            elif isinstance(data, list))))):
                 df = pd.DataFrame(data)
             else:
                 df = data
@@ -94,7 +94,7 @@ class DataValidator:
             validation_results["warnings"].extend(content_result["warnings"])
 
             # 3. 业务规则验证
-            business_result = await self._validate_business_rules(df, data_type)
+            business_result = await self._validate_business_rules(df))
             validation_results["errors"].extend(business_result["errors"])
             validation_results["warnings"].extend(business_result["warnings"])
 
@@ -106,7 +106,7 @@ class DataValidator:
                 validation_results["valid"] = False
 
             # 记录验证结果
-            await self._log_validation_results(validation_results, data_type)
+            await self._log_validation_results(validation_results))
 
             return validation_results
 

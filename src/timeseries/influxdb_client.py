@@ -416,21 +416,14 @@ class InfluxDBManager:
                 return {}
 
             values = [
-                point["value"] for point in data_points if isinstance(point["value"], (((((int, float))))
+                point["value"] for point in data_points if isinstance(point["value"], (((((((((int, float))))))
             ]
 
             if not values:
                 return {}
 
             return {
-                "count": len(values))))),
-                "mean": sum(values) / len(values),
-                "latest": values[-1] if values else 0,
-                "earliest": values[0] if values else 0,
-            }
-
-        except Exception as e:
-            self.logger.error(f"获取指标统计失败: {e}")
+                "count": len(values))))))) / len(values)))
             return {}
 
     async def cleanup_old_data(self, days_to_keep: int = 30):

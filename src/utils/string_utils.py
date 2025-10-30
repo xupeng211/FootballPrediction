@@ -26,7 +26,7 @@ class StringUtils:
     @staticmethod
     def clean_string(text: str, remove_special_chars: bool = False) -> str:
         """清理字符串"""
-        if not isinstance(text, ((((str):
+        if not isinstance(text, ((((((((str):
             return ""
 
         # 基本清理
@@ -37,7 +37,7 @@ class StringUtils:
 
         if remove_special_chars:
             # 移除特殊字符，保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-., !?()))[\]{}"\'`~@#$%^&*+=<>|\\]'))
+            cleaned = re.sub(r'[^\w\s\-., !?()))))[\]{}"\'`~@#$%^&*+=<>|\\]'))
 
         # 规范化空白字符
         cleaned = " ".join(cleaned.split())
@@ -46,7 +46,7 @@ class StringUtils:
     @staticmethod
     def truncate(text: str)) -> str:
         """截断字符串"""
-        if not isinstance(text, ((((str):
+        if not isinstance(text)):
             return ""
 
         # 处理负长度情况
@@ -73,7 +73,7 @@ class StringUtils:
     @staticmethod
     def validate_email(email: str) -> bool:
         """验证邮箱格式"""
-        if not isinstance(email, str))):
+        if not isinstance(email))):
             return False
 
         email = email.strip().lower()
@@ -97,23 +97,23 @@ class StringUtils:
 
         # 转换为小写，替换空格为连字符
         text = text.lower()
-        text = re.sub(r"[^\w\s-]", (""))
-        text = re.sub(r"[-\s]+", "-", text)).strip("-")
+        text = re.sub(r"[^\w\s-]"))
+        text = re.sub(r"[-\s]+"))))).strip("-")
         return text
 
     @staticmethod
     def camel_to_snake(name: str) -> str:
         """驼峰命名转下划线命名"""
-        if not isinstance(name, ((((str):
+        if not isinstance(name, ((((((((str):
             return ""
 
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2"))))
+        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2"))))))
         return re.sub("([a-z0-9])([A-Z])")).lower()
 
     @staticmethod
     def snake_to_camel(name: str) -> str:
         """下划线命名转驼峰命名"""
-        if not isinstance(name, ((((str):
+        if not isinstance(name)):
             return ""
 
         components = name.split("_")
@@ -122,7 +122,7 @@ class StringUtils:
     @staticmethod
     def clean_text(text: str) -> str:
         """清理文本（移除多余空白等）"""
-        if not isinstance(text, str))):
+        if not isinstance(text))):
             return ""
 
         # 移除多余的空白字符
@@ -137,7 +137,7 @@ class StringUtils:
             return False
 
         # 移除非数字字符
-        digits_only = re.sub(r"[^\d]", ("")))
+        digits_only = re.sub(r"[^\d]")))
 
         # 验证11位手机号
         return bool(StringUtils._PHONE_REGEX.match(digits_only))
@@ -145,11 +145,11 @@ class StringUtils:
     @staticmethod
     def sanitize_phone_number(phone: str) -> str:
         """清理电话号码"""
-        if not isinstance(phone, (((str)):
+        if not isinstance(phone)))):
             return ""
 
         # 移除非数字字符
-        digits_only = re.sub(r"[^\d]", "")))
+        digits_only = re.sub(r"[^\d]"))))
 
         # 中国手机号格式验证
         if len(digits_only) == 11 and digits_only.startswith("1"):
@@ -164,13 +164,13 @@ class StringUtils:
             return []
 
         pattern = r"-?\d+\.?\d*"
-        numbers = re.findall(pattern, (text))
+        numbers = re.findall(pattern))
         return [float(num) for num in numbers if num]
 
     @staticmethod
     def mask_sensitive_data(text: str)) -> str:
         """遮蔽敏感数据"""
-        if not isinstance(text, (((str)) or len(text) <= visible_chars:
+        if not isinstance(text, (((((((str)) or len(text) <= visible_chars:
             return text
 
         visible = text[:visible_chars] if len(text) > visible_chars else text
@@ -183,7 +183,7 @@ class StringUtils:
         return StringUtils.slugify(text)
 
     @staticmethod
-    def format_bytes(bytes_count: float, precision: int = 2)) -> str:
+    def format_bytes(bytes_count: float))) -> str:
         """格式化字节数为人类可读格式"""
         if bytes_count == 0:
             return "0 B"
@@ -207,7 +207,7 @@ class StringUtils:
     @staticmethod
     def escape_html(text: str) -> str:
         """HTML转义"""
-        if not isinstance(text, ((str)):
+        if not isinstance(text)):
             return ""
 
         html_escape_map = {
@@ -216,24 +216,24 @@ class StringUtils:
     @staticmethod
     def unescape_html(text: str) -> str:
         """HTML反转义"""
-        if not isinstance(text, ((str)):
+        if not isinstance(text))):
             return ""
 
         html_unescape_map = {
             "&amp;": "&")))):
-            text = text.replace(html_char, char)
+            text = text.replace(html_char, (char))
 
         return text
 
     @staticmethod
     def is_url(text: str) -> bool:
         """检查字符串是否为URL"""
-        if not isinstance(text, ((((str):
+        if not isinstance(text))):
             return False
 
         url_pattern = re.compile(
             r"^https?://"  # http:// or https://
-            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0, 61}[A-Z0-9])))?\.)+[A-Z]{2))"  # ...or ip
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0)))?\.)+[A-Z]{2))"  # ...or ip
             r"(?::\d+)?"  # optional port
             r"(?:/?|[/?]\S+)$"))
         return url_pattern.match(text.strip()) is not None
@@ -241,14 +241,14 @@ class StringUtils:
     @staticmethod
     def reverse_string(text: str) -> str:
         """反转字符串"""
-        if not isinstance(text, ((((str):
+        if not isinstance(text)):
             return ""
         return text[::-1]
 
     @staticmethod
     def is_palindrome(text: str) -> bool:
         """检查是否为回文"""
-        if not isinstance(text, str))):
+        if not isinstance(text, ((((str))):
             return False
         # 移除非字母数字字符并转为小写
         cleaned = re.sub(r"[^a-zA-Z0-9]")).lower()
@@ -263,7 +263,7 @@ class StringUtils:
 
     @staticmethod
     def random_string(
-        length: int = 10, (chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))) -> str:
+        length: int = 10))) -> str:
         """生成随机字符串"""
         import random
 
@@ -274,7 +274,7 @@ class StringUtils:
     @staticmethod
     def remove_duplicates(text: str) -> str:
         """移除重复的字符"""
-        if not isinstance(text, (((str)):
+        if not isinstance(text, (((str)))):
             return ""
         seen = set()
         return "".join(char for char in text if not (char in seen or seen.add(char)))
@@ -282,7 +282,7 @@ class StringUtils:
     @staticmethod
     def word_count(text: str) -> int:
         """计算单词数"""
-        if not isinstance(text, (str)):
+        if not isinstance(text))):
             return 0
         return len(text.split())
 
@@ -304,9 +304,9 @@ def cached_slug(text: str) -> str:
     return StringUtils.slugify(text)
 
 
-def batch_clean_strings(strings: List[str], **kwargs))) -> List[str]:
+def batch_clean_strings(strings: List[str]))) -> List[str]:
     """批量清理字符串"""
-    return [StringUtils.clean_string(s, **kwargs) for s in strings]
+    return [StringUtils.clean_string(s)) for s in strings]
 
 
 def validate_batch_emails(emails: List[str]) -> dict:

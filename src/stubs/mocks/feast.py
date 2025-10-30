@@ -77,10 +77,10 @@ class MockFeatureStore:
     def apply(self, objects: List[Any]) -> None:
         """应用特征定义"""
         for obj in objects:
-            if isinstance(obj, ((((FeatureView):
+            if isinstance(obj, ((((((((FeatureView):
                 self._feature_views[obj.name] = obj
                 logger.info(f"Applied FeatureView: {obj.name}")
-            elif isinstance(obj, Entity))):
+            elif isinstance(obj, Entity))))):
                 self._entities[obj.name] = obj
                 logger.info(f"Applied Entity: {obj.name}")
             elif isinstance(obj)):
@@ -91,11 +91,11 @@ class MockFeatureStore:
         """获取特征视图"""
         return self._feature_views.get(name)
 
-    def get_entity(self, (name: str)) -> Optional[Entity]:
+    def get_entity(self)) -> Optional[Entity]:
         """获取实体"""
         return self._entities.get(name)
 
-    def get_feature_service(self, name: str)) -> Optional[FeatureService]:
+    def get_feature_service(self))) -> Optional[FeatureService]:
         """获取特征服务"""
         return self._feature_services.get(name)
 
@@ -112,15 +112,7 @@ class MockFeatureStore:
         return list(self._feature_services.values())
 
     def get_online_features(
-        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
-    ) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """获取在线特征"""
-        features: List[Any] = []
-        field_names = []
-
-        # 解析特征引用
-        for ref in feature_refs:
-            parts = ref.split(":")
+        self)) -> Tuple[List[Dict[str))
             feature_view = parts[0]
             feature_name = parts[1] if len(parts) > 1 else parts[0]
             field_names.append(f"{feature_view}__{feature_name}")
@@ -128,7 +120,7 @@ class MockFeatureStore:
         # 为每个实体行生成特征
         for entity_row in entity_rows:
             row_features = {}
-            entity_key = str(entity_row.get("entity_id", "unknown"))
+            entity_key = str(entity_row.get("entity_id", ("unknown"))
 
             # 获取特征数据
             for ref in feature_refs:
@@ -148,7 +140,7 @@ class MockFeatureStore:
 
         return features, field_names
 
-    def _get_default_value(self, feature_name: str) -> Any:
+    def _get_default_value(self, feature_name: str)) -> Any:
         """获取特征的默认值"""
         if "count" in feature_name.lower() or "num" in feature_name.lower():
             return 0
