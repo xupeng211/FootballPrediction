@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 项目文档
+    url: https://github.com/xupeng211/FootballPrediction/blob/main/docs/INDEX.md
+    about: 查看完整的项目文档
+  - name: 🚀 快速开始
+    url: https://github.com/xupeng211/FootballPrediction/blob/main/README.md#-快速开始-5分钟
+    about: 5分钟快速上手指南
+  - name: 📋 开发指南
+    url: https://github.com/xupeng211/FootballPrediction/blob/main/docs/how-to/QUICKSTART_TOOLS.md
+    about: 开发者快速指南
+  - name: 🧪 测试指南
+    url: https://github.com/xupeng211/FootballPrediction/blob/main/docs/testing/TEST_IMPROVEMENT_GUIDE.md
+    about: 测试策略和最佳实践
