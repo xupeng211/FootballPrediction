@@ -41,7 +41,7 @@ class ServiceA:
 
 
 class ServiceB:
-    """服务B实现，依赖服务A"""
+    """服务B实现,依赖服务A"""
 
     def __init__(self, service_a: ServiceA):
         self.service_a = service_a
@@ -55,7 +55,7 @@ class ServiceB:
 
 
 class ServiceC:
-    """服务C实现，依赖服务B"""
+    """服务C实现,依赖服务B"""
 
     def __init__(self, service_b: ServiceB):
         self.service_b = service_b
@@ -87,7 +87,7 @@ class TestServiceDescriptor:
     """服务描述符测试"""
 
     def test_service_descriptor_creation(self):
-        """测试：创建服务描述符"""
+        """测试:创建服务描述符"""
         descriptor = ServiceDescriptor(
             interface=IService,
             implementation=ServiceA,
@@ -102,7 +102,7 @@ class TestServiceDescriptor:
         assert descriptor.dependencies == []
 
     def test_service_descriptor_with_factory(self):
-        """测试：带工厂方法的服务描述符"""
+        """测试:带工厂方法的服务描述符"""
 
         def factory():
             return ServiceA()
@@ -118,7 +118,7 @@ class TestServiceDescriptor:
         assert descriptor.implementation is None
 
     def test_service_descriptor_with_instance(self):
-        """测试：带实例的服务描述符"""
+        """测试:带实例的服务描述符"""
         instance = ServiceA()
         descriptor = ServiceDescriptor(
             interface=IService,
@@ -131,7 +131,7 @@ class TestServiceDescriptor:
         assert descriptor.implementation is None
 
     def test_service_descriptor_dependencies_initialized(self):
-        """测试：依赖列表初始化"""
+        """测试:依赖列表初始化"""
         descriptor = ServiceDescriptor(
             interface=IService,
             implementation=ServiceA,
@@ -146,7 +146,7 @@ class TestDIContainerBasic:
     """DI容器基础测试"""
 
     def test_container_creation(self):
-        """测试：创建容器"""
+        """测试:创建容器"""
         container = DIContainer()
         assert container.name == "default"
         assert container._services == {}
@@ -156,12 +156,12 @@ class TestDIContainerBasic:
         assert container._building == []
 
     def test_container_with_name(self):
-        """测试：创建带名称的容器"""
+        """测试:创建带名称的容器"""
         container = DIContainer("test_container")
         assert container.name == "test_container"
 
     def test_register_singleton_with_implementation(self):
-        """测试：注册单例服务（实现类）"""
+        """测试:注册单例服务（实现类）"""
         container = DIContainer()
         container.register_singleton(IService, ServiceA)
 
@@ -171,7 +171,7 @@ class TestDIContainerBasic:
         assert descriptor.lifetime == ServiceLifetime.SINGLETON
 
     def test_register_singleton_with_instance(self):
-        """测试：注册单例服务（实例）"""
+        """测试:注册单例服务（实例）"""
         container = DIContainer()
         instance = ServiceA()
         container.register_singleton(IService, instance=instance)
@@ -181,7 +181,7 @@ class TestDIContainerBasic:
         assert descriptor.instance is instance
 
     def test_register_singleton_with_factory(self):
-        """测试：注册单例服务（工厂方法）"""
+        """测试:注册单例服务（工厂方法）"""
         container = DIContainer()
 
         def factory():
@@ -194,7 +194,7 @@ class TestDIContainerBasic:
         assert descriptor.factory == factory
 
     def test_register_scoped_service(self):
-        """测试：注册作用域服务"""
+        """测试:注册作用域服务"""
         container = DIContainer()
         container.register_scoped(IService, ServiceA)
 
@@ -202,7 +202,7 @@ class TestDIContainerBasic:
         assert descriptor.lifetime == ServiceLifetime.SCOPED
 
     def test_register_transient_service(self):
-        """测试：注册瞬时服务"""
+        """测试:注册瞬时服务"""
         container = DIContainer()
         container.register_transient(IService, ServiceA)
 
@@ -210,15 +210,15 @@ class TestDIContainerBasic:
         assert descriptor.lifetime == ServiceLifetime.TRANSIENT
 
     def test_register_without_implementation_or_factory(self):
-        """测试：注册时没有提供实现或工厂"""
+        """测试:注册时没有提供实现或工厂"""
         container = DIContainer()
 
-        # 根据实际实现，如果没有指定实现，会使用接口本身作为实现
+        # 根据实际实现，如果没有指定实现,会使用接口本身作为实现
         container.register_transient(IService)
         assert IService in container._services
 
     def test_register_same_interface_twice(self):
-        """测试：重复注册同一接口"""
+        """测试:重复注册同一接口"""
         container = DIContainer()
         container.register_singleton(IService, ServiceA)
 
@@ -229,7 +229,7 @@ class TestDIContainerBasic:
         assert descriptor.lifetime == ServiceLifetime.TRANSIENT
 
     def test_register_self_as_implementation(self):
-        """测试：注册时使用自身作为实现"""
+        """测试:注册时使用自身作为实现"""
         container = DIContainer()
         container.register_singleton(ServiceA)  # 没有指定接口
 
@@ -243,7 +243,7 @@ class TestDIContainerResolution:
     """DI容器解析测试"""
 
     def test_resolve_singleton(self):
-        """测试：解析单例服务"""
+        """测试:解析单例服务"""
         container = DIContainer()
         container.register_singleton(IService, ServiceA)
 
@@ -255,7 +255,7 @@ class TestDIContainerResolution:
         assert isinstance(instance1, ServiceA)
 
     def test_resolve_transient(self):
-        """测试：解析瞬时服务"""
+        """测试:解析瞬时服务"""
         container = DIContainer()
         container.register_transient(IService, ServiceA)
 
@@ -267,18 +267,18 @@ class TestDIContainerResolution:
         assert instance1.id != instance2.id
 
     def test_resolve_scoped_without_scope(self):
-        """测试：无作用域时解析作用域服务"""
+        """测试:无作用域时解析作用域服务"""
         container = DIContainer()
         container.register_scoped(IService, ServiceA)
 
         instance1 = container.resolve(IService)
         instance2 = container.resolve(IService)
 
-        # 没有作用域时，应该当作单例处理
+        # 没有作用域时,应该当作单例处理
         assert instance1 is instance2
 
     def test_resolve_scoped_with_scope(self):
-        """测试：带作用域时解析作用域服务"""
+        """测试:带作用域时解析作用域服务"""
         container = DIContainer()
         container.register_scoped(IService, ServiceA)
 
@@ -291,11 +291,11 @@ class TestDIContainerResolution:
         # 同一作用域内应该是同一个实例
         assert instance1 is instance2
 
-        # 注意：根据日志提示，如果没有活动的作用域，
-        # 作用域服务会被当作单例处理，所以这里可能返回同一个实例
+        # 注意:根据日志提示，如果没有活动的作用域，
+        # 作用域服务会被当作单例处理,所以这里可能返回同一个实例
 
     def test_resolve_with_factory(self):
-        """测试：解析工厂创建的服务"""
+        """测试:解析工厂创建的服务"""
         container = DIContainer()
 
         created_instances = []
@@ -318,7 +318,7 @@ class TestDIContainerResolution:
         assert instance1 is instance2
 
     def test_resolve_with_pre_registered_instance(self):
-        """测试：解析预注册的实例"""
+        """测试:解析预注册的实例"""
         container = DIContainer()
         original_instance = ServiceA()
         container.register_singleton(IService, instance=original_instance)
@@ -329,7 +329,7 @@ class TestDIContainerResolution:
         assert resolved_instance is original_instance
 
     def test_resolve_unregistered_service(self):
-        """测试：解析未注册的服务"""
+        """测试:解析未注册的服务"""
         container = DIContainer()
 
         with pytest.raises(DependencyInjectionError) as exc_info:
@@ -339,19 +339,19 @@ class TestDIContainerResolution:
         assert "IService" in str(exc_info.value)
 
     def test_resolve_with_dependency_injection(self):
-        """测试：解析带依赖注入的服务"""
+        """测试:解析带依赖注入的服务"""
         container = DIContainer()
         container.register_transient(ServiceA)
         container.register_transient(ServiceB)
 
-        # ServiceB依赖ServiceA，应该自动注入
+        # ServiceB依赖ServiceA,应该自动注入
         service_b = container.resolve(ServiceB)
 
         assert isinstance(service_b, ServiceB)
         assert isinstance(service_b.service_a, ServiceA)
 
     def test_resolve_nested_dependencies(self):
-        """测试：解析嵌套依赖的服务"""
+        """测试:解析嵌套依赖的服务"""
         container = DIContainer()
         container.register_transient(ServiceA)
         container.register_transient(ServiceB)
@@ -365,9 +365,9 @@ class TestDIContainerResolution:
         assert isinstance(service_c.service_b.service_a, ServiceA)
 
     def test_resolve_circular_dependency(self):
-        """测试：解析循环依赖的服务（替代测试）"""
+        """测试:解析循环依赖的服务（替代测试）"""
         # 测试容器能够检测循环依赖
-        # 这是一个更简单的测试，验证容器的基本功能
+        # 这是一个更简单的测试,验证容器的基本功能
         container = DIContainer()
 
         class A:
@@ -378,7 +378,7 @@ class TestDIContainerResolution:
             def __init__(self, a: "A"):
                 self.a = a
 
-        # 在不支持循环依赖的容器中，这应该被检测到
+        # 在不支持循环依赖的容器中,这应该被检测到
         # 或者我们只测试容器的基本功能
         assert container is not None
         assert hasattr(container, "register_transient")
@@ -395,10 +395,10 @@ class TestDIContainerResolution:
         assert service.name == "simple"
 
     def test_resolve_service_with_constructor_args(self):
-        """测试：解析带构造函数参数的服务"""
+        """测试:解析带构造函数参数的服务"""
         container = DIContainer()
 
-        # 注册带参数的服务，但容器无法自动提供这些参数
+        # 注册带参数的服务,但容器无法自动提供这些参数
         container.register_transient(ServiceWithArgs)
 
         with pytest.raises((TypeError, DependencyInjectionError)):
@@ -409,7 +409,7 @@ class TestDIContainerLifecycle:
     """DI容器生命周期测试"""
 
     def test_create_scope(self):
-        """测试：创建作用域"""
+        """测试:创建作用域"""
         container = DIContainer()
         container.register_scoped(IService, ServiceA)
 
@@ -420,7 +420,7 @@ class TestDIContainerLifecycle:
             assert isinstance(instance, ServiceA)
 
     def test_multiple_scopes(self):
-        """测试：多个作用域"""
+        """测试:多个作用域"""
         container = DIContainer()
         container.register_scoped(IService, ServiceA)
 
@@ -436,7 +436,7 @@ class TestDIContainerLifecycle:
         assert instance1 is not instance2
 
     def test_singleton_across_scopes(self):
-        """测试：单例在多个作用域中保持一致"""
+        """测试:单例在多个作用域中保持一致"""
         container = DIContainer()
         container.register_singleton(IService, ServiceA)
 
@@ -452,7 +452,7 @@ class TestDIContainerLifecycle:
         assert instance1 is instance2
 
     def test_transient_always_new(self):
-        """测试：瞬时服务总是创建新实例"""
+        """测试:瞬时服务总是创建新实例"""
         container = DIContainer()
         container.register_transient(IService, ServiceA)
 
@@ -470,7 +470,7 @@ class TestDIContainerAdvanced:
     """DI容器高级测试"""
 
     def test_container_isolation(self):
-        """测试：容器隔离"""
+        """测试:容器隔离"""
         container1 = DIContainer("container1")
         container2 = DIContainer("container2")
 
@@ -485,7 +485,7 @@ class TestDIContainerAdvanced:
         assert isinstance(instance2, ServiceB)
 
     def test_container_clear(self):
-        """测试：清空容器"""
+        """测试:清空容器"""
         container = DIContainer()
         container.register_singleton(IService, ServiceA)
 
@@ -498,7 +498,7 @@ class TestDIContainerAdvanced:
             assert len(container._services) == 0
 
     def test_check_service_registered(self):
-        """测试：检查服务是否已注册"""
+        """测试:检查服务是否已注册"""
         container = DIContainer()
 
         # 假设实现了is_registered方法
@@ -509,7 +509,7 @@ class TestDIContainerAdvanced:
             assert container.is_registered(IService)
 
     def test_resolve_all_implementations(self):
-        """测试：解析所有实现（如果支持）"""
+        """测试:解析所有实现（如果支持）"""
         container = DIContainer()
 
         # 注册多个服务
@@ -523,7 +523,7 @@ class TestDIContainerAdvanced:
             assert len(services) >= 3
 
     def test_dependency_analysis(self):
-        """测试：依赖分析"""
+        """测试:依赖分析"""
         container = DIContainer()
 
         # 注册有依赖的服务
@@ -535,7 +535,7 @@ class TestDIContainerAdvanced:
             assert ServiceA in deps
 
     def test_error_messages(self):
-        """测试：错误消息的质量"""
+        """测试:错误消息的质量"""
         container = DIContainer()
 
         # 未注册服务的错误消息
@@ -573,7 +573,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert (
             input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )

@@ -1,6 +1,6 @@
-"""""""
+""""""""
 简单模块测试 - 替代复杂的 skipped 测试
-"""""""
+""""""""
 
 import sys
 
@@ -25,7 +25,7 @@ from src.api.health.utils import HealthChecker
             checker = HealthChecker()
             assert checker is not None
         except Exception:
-            # 如果需要参数，跳过
+            # 如果需要参数,跳过
             pytest.skip("HealthChecker 需要参数初始化")
 
     except ImportError:

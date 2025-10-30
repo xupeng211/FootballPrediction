@@ -7,7 +7,7 @@ from datetime import datetime
 适配器API端点测试
 Tests for Adapter API Endpoints
 
-测试适配器模式的所有API端点，包括：
+测试适配器模式的所有API端点,包括:
 - 适配器注册表管理
 - 配置管理
 - 足球数据获取
@@ -20,7 +20,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免复杂的依赖问题
-# 真实模块存在但依赖复杂，在测试环境中使用Mock是最佳实践
+# 真实模块存在但依赖复杂,在测试环境中使用Mock是最佳实践
 IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用"
@@ -100,7 +100,7 @@ except ImportError:
         }
 
 
-print("智能Mock兼容修复模式：使用Mock服务确保API适配器测试稳定性")
+print("智能Mock兼容修复模式:使用Mock服务确保API适配器测试稳定性")
 
 
 class MockAdapter:
@@ -306,7 +306,7 @@ class TestAdaptersAPI:
 
     @patch("src.adapters.registry")
     def test_get_registry_status_inactive(self, mock_registry, client):
-        """测试：获取未初始化的注册表状态"""
+        """测试:获取未初始化的注册表状态"""
         # Given
         mock_registry.status.value = "inactive"
         mock_registry.initialize = AsyncMock()
@@ -333,7 +333,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_registry_status_active(self, mock_registry, client):
-        """测试：获取已初始化的注册表状态"""
+        """测试:获取已初始化的注册表状态"""
         # Given
         mock_registry.status.value = "active"
         mock_registry.get_health_status = AsyncMock(
@@ -363,7 +363,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_initialize_registry(self, mock_registry, client):
-        """测试：初始化注册表"""
+        """测试:初始化注册表"""
         # Given
         mock_registry.initialize = AsyncMock()
 
@@ -377,7 +377,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_shutdown_registry(self, mock_registry, client):
-        """测试：关闭注册表"""
+        """测试:关闭注册表"""
         # Given
         mock_registry.shutdown = AsyncMock()
 
@@ -393,7 +393,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_factory")
     def test_get_adapter_configs(self, mock_factory, client):
-        """测试：获取适配器配置"""
+        """测试:获取适配器配置"""
         # Given
         mock_factory.list_configs.return_value = ["adapter1", "adapter2"]
         mock_factory.get_config.side_effect = [
@@ -433,7 +433,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_factory")
     def test_load_adapter_config_success(self, mock_factory, client):
-        """测试：成功加载适配器配置"""
+        """测试:成功加载适配器配置"""
         # Given
         mock_factory._configs = {}
         config_data = {
@@ -453,7 +453,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_factory")
     def test_load_adapter_config_missing_name(self, mock_factory, client):
-        """测试：加载配置缺少适配器名称"""
+        """测试:加载配置缺少适配器名称"""
         # Given
         config_data = {
             "adapter_type": "api-football",
@@ -472,7 +472,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_with_adapter(self, mock_registry, client):
-        """测试：使用适配器获取足球比赛数据"""
+        """测试:使用适配器获取足球比赛数据"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -493,7 +493,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取足球比赛数据"""
+        """测试:演示模式获取足球比赛数据"""
         # Given
         mock_registry.status.value = "active"
         mock_registry.get_adapter.return_value = None  # 没有可用适配器
@@ -512,7 +512,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_with_dates(self, mock_registry, client):
-        """测试：使用日期范围获取比赛数据"""
+        """测试:使用日期范围获取比赛数据"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -532,7 +532,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_success(self, mock_registry, client):
-        """测试：成功获取单个比赛详情"""
+        """测试:成功获取单个比赛详情"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -550,7 +550,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_not_found(self, mock_registry, client):
-        """测试：比赛不存在"""
+        """测试:比赛不存在"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -564,7 +564,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取比赛详情"""
+        """测试:演示模式获取比赛详情"""
         # Given
         mock_registry.status.value = "active"
         mock_registry.get_adapter.return_value = None
@@ -582,7 +582,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_success(self, mock_registry, client):
-        """测试：成功获取球队数据"""
+        """测试:成功获取球队数据"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -601,7 +601,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_with_search(self, mock_registry, client):
-        """测试：搜索球队"""
+        """测试:搜索球队"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -617,7 +617,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取球队数据"""
+        """测试:演示模式获取球队数据"""
         # Given
         mock_registry.status.value = "active"
         mock_registry.get_adapter.return_value = None
@@ -635,7 +635,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_team_players_success(self, mock_registry, client):
-        """测试：成功获取球队球员"""
+        """测试:成功获取球队球员"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = MockAdapter()
@@ -656,7 +656,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_team_players_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取球员数据"""
+        """测试:演示模式获取球员数据"""
         # Given
         mock_registry.status.value = "active"
         mock_registry.get_adapter.return_value = None
@@ -676,7 +676,7 @@ class TestAdaptersAPI:
     # ==================== 演示功能测试 ====================
 
     def test_demo_adapter_comparison(self, client):
-        """测试：多数据源对比演示"""
+        """测试:多数据源对比演示"""
         # When
         response = client.get("/adapters/demo/comparison?match_id=12345")
 
@@ -690,7 +690,7 @@ class TestAdaptersAPI:
         assert len(_data["benefits"]) > 0
 
     def test_demo_adapter_fallback(self, client):
-        """测试：故障转移演示"""
+        """测试:故障转移演示"""
         # When
         response = client.get("/adapters/demo/fallback")
 
@@ -707,7 +707,7 @@ class TestAdaptersAPI:
         assert len(_data["timeline"]) == 3
 
     def test_demo_data_transformation(self, client):
-        """测试：数据转换演示"""
+        """测试:数据转换演示"""
         # When
         response = client.get("/adapters/demo/transformation")
 
@@ -729,7 +729,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_error(self, mock_registry, client):
-        """测试：获取比赛数据时的错误处理"""
+        """测试:获取比赛数据时的错误处理"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = Mock()
@@ -745,7 +745,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_error(self, mock_registry, client):
-        """测试：获取比赛详情时的错误处理"""
+        """测试:获取比赛详情时的错误处理"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = Mock()
@@ -761,7 +761,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_error(self, mock_registry, client):
-        """测试：获取球队数据时的错误处理"""
+        """测试:获取球队数据时的错误处理"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = Mock()
@@ -777,7 +777,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_team_players_error(self, mock_registry, client):
-        """测试：获取球员数据时的错误处理"""
+        """测试:获取球员数据时的错误处理"""
         # Given
         mock_registry.status.value = "active"
         mock_adapter = Mock()
@@ -796,7 +796,7 @@ class TestAdaptersAPI:
     # ==================== 参数验证测试 ====================
 
     def test_get_football_matches_with_live_filter(self, client):
-        """测试：使用live过滤器获取比赛"""
+        """测试:使用live过滤器获取比赛"""
         # When
         response = client.get("/adapters/football/matches?live=true")
 
@@ -806,7 +806,7 @@ class TestAdaptersAPI:
         assert _data["filters"]["live"] is True
 
     def test_get_football_matches_all_parameters(self, client):
-        """测试：使用所有参数获取比赛"""
+        """测试:使用所有参数获取比赛"""
         # Given
         params = {
             "date_from": "2023-12-01",

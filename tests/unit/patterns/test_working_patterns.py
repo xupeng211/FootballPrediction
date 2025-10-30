@@ -538,7 +538,7 @@ def test_patterns_module_import():
         assert facade is not None
         assert factory is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_patterns_coverage_helper():

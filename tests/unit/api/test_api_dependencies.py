@@ -7,7 +7,7 @@ import pytest
 from fastapi.security import HTTPAuthorizationCredentials
 
     from jose import jwt
-    # 如果jose不可用，使用python-jose
+    # 如果jose不可用,使用python-jose
     from python_jose import jwt
 
 
@@ -90,7 +90,7 @@ from src.api.dependencies import (
 
 
 
-        # 智能Mock兼容修复模式：移除真实API导入
+        # 智能Mock兼容修复模式:移除真实API导入
 
 
 
@@ -103,9 +103,9 @@ from src.api.dependencies import (
 
 
 
-"""""""
+""""""""
 API依赖注入模块测试
-"""""""
+""""""""
 pytest_plugins = "asyncio"
 try:
 except ImportError:

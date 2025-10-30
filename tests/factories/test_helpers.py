@@ -274,7 +274,7 @@ def setup_test_mocks(required_mocks: List[str]) -> Dict[str, Mock]:
 
 # 测试数据生成器装饰器
 def with_test_data(**data_overrides):
-    """装饰器：为测试函数提供测试数据"""
+    """装饰器:为测试函数提供测试数据"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -292,7 +292,7 @@ def with_test_data(**data_overrides):
 
 # Mock环境装饰器
 def with_mocks(required_mocks: List[str]):
-    """装饰器：为测试函数提供Mock对象"""
+    """装饰器:为测试函数提供Mock对象"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):

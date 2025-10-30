@@ -6,7 +6,7 @@ import os
 第三阶段简单覆盖率提升测试
 Phase 3 Simple Coverage Boost Tests
 
-专注于快速提升覆盖率的高价值测试，避免复杂的依赖问题
+专注于快速提升覆盖率的高价值测试,避免复杂的依赖问题
 """
 
 import json
@@ -48,7 +48,7 @@ class TestCoreConfigCoverage:
 
     @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心模块不可用")
     def test_config_loading(self):
-        """测试：配置加载 - 覆盖率补充"""
+        """测试:配置加载 - 覆盖率补充"""
         # 模拟配置加载
         with patch.dict(
             "os.environ",
@@ -67,7 +67,7 @@ class TestCoreConfigCoverage:
 
     @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心模块不可用")
     def test_logging_configuration(self):
-        """测试：日志配置 - 覆盖率补充"""
+        """测试:日志配置 - 覆盖率补充"""
         logger = get_logger("test_logger")
 
         # 验证日志器创建
@@ -78,7 +78,7 @@ class TestCoreConfigCoverage:
 
     @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心模块不可用")
     def test_environment_variable_handling(self):
-        """测试：环境变量处理 - 覆盖率补充"""
+        """测试:环境变量处理 - 覆盖率补充"""
         # 测试环境变量解析
         with patch.dict(
             "os.environ",
@@ -117,7 +117,7 @@ class TestUtilsSimpleCoverage:
 
     @pytest.mark.skipif(not UTILS_AVAILABLE, reason="工具模块不可用")
     def test_password_hashing(self):
-        """测试：密码哈希 - 覆盖率补充"""
+        """测试:密码哈希 - 覆盖率补充"""
         password = "test_password_123"
 
         # 测试密码哈希
@@ -136,7 +136,7 @@ class TestUtilsSimpleCoverage:
 
     @pytest.mark.skipif(not UTILS_AVAILABLE, reason="工具模块不可用")
     def test_email_validation(self):
-        """测试：邮箱验证 - 覆盖率补充"""
+        """测试:邮箱验证 - 覆盖率补充"""
         # 有效邮箱
         valid_emails = [
             "user@example.com",
@@ -161,18 +161,18 @@ class TestUtilsSimpleCoverage:
 
     @pytest.mark.skipif(not UTILS_AVAILABLE, reason="工具模块不可用")
     def test_phone_validation(self):
-        """测试：电话号码验证 - 覆盖率补充"""
+        """测试:电话号码验证 - 覆盖率补充"""
         # 有效电话号码
         valid_phones = ["+1234567890", "123-456-7890", "(123) 456-7890", "1234567890"]
 
         for phone in valid_phones:
             result = validate_phone(phone)
-            # 由于我们不知道实际的validate_phone实现，只测试函数可调用
+            # 由于我们不知道实际的validate_phone实现,只测试函数可调用
             assert isinstance(result, bool)
 
     @pytest.mark.skipif(not UTILS_AVAILABLE, reason="工具模块不可用")
     def test_string_processing_utilities(self):
-        """测试：字符串处理工具 - 覆盖率补充"""
+        """测试:字符串处理工具 - 覆盖率补充"""
 
         # 测试字符串清理
         def clean_string(s: str) -> str:
@@ -197,7 +197,7 @@ class TestModelsSimpleCoverage:
 
     @pytest.mark.skipif(not MODELS_AVAILABLE, reason="模型模块不可用")
     def test_response_creation(self):
-        """测试：响应创建 - 覆盖率补充"""
+        """测试:响应创建 - 覆盖率补充"""
         # 测试成功响应
         success_response = create_response(
             data={"id": 1, "name": "Test"}, message="Operation successful"
@@ -219,7 +219,7 @@ class TestModelsSimpleCoverage:
 
     @pytest.mark.skipif(not MODELS_AVAILABLE, reason="模型模块不可用")
     def test_data_serialization(self):
-        """测试：数据序列化 - 覆盖率补充"""
+        """测试:数据序列化 - 覆盖率补充"""
         # 测试数据序列化
         test_data = {
             "id": 123,
@@ -255,7 +255,7 @@ class TestBusinessLogicSimple:
     """简单业务逻辑测试"""
 
     def test_prediction_probability_calculation(self):
-        """测试：预测概率计算 - 覆盖率补充"""
+        """测试:预测概率计算 - 覆盖率补充"""
 
         # 模拟赔率转概率
         def odds_to_probability(odds: Dict[str, float]) -> Dict[str, float]:
@@ -275,7 +275,7 @@ class TestBusinessLogicSimple:
             assert 0.0 < prob < 1.0
 
     def test_team_name_standardization(self):
-        """测试：队名标准化 - 覆盖率补充"""
+        """测试:队名标准化 - 覆盖率补充"""
 
         def standardize_team_name(name: str) -> str:
             if not name:
@@ -302,7 +302,7 @@ class TestBusinessLogicSimple:
         assert standardize_team_name("") == ""
 
     def test_match_data_validation(self):
-        """测试：比赛数据验证 - 覆盖率补充"""
+        """测试:比赛数据验证 - 覆盖率补充"""
 
         def validate_match_data(data: Dict[str, Any]) -> Dict[str, Any]:
             errors = []
@@ -351,7 +351,7 @@ class TestBusinessLogicSimple:
         assert len(result["errors"]) > 0
 
     def test_data_aggregation_functions(self):
-        """测试：数据聚合函数 - 覆盖率补充"""
+        """测试:数据聚合函数 - 覆盖率补充"""
         # 模拟预测结果数据
         predictions = [
             {"match_id": 1, "confidence": 0.85, "actual": "home_win"},
@@ -366,7 +366,7 @@ class TestBusinessLogicSimple:
             if not predictions:
                 return 0.0
 
-            # 简化计算：假设预测的获胜方就是actual
+            # 简化计算:假设预测的获胜方就是actual
             correct = sum(1 for p in predictions if p.get("confidence", 0) > 0.8)
             return correct / len(predictions)
 
@@ -391,9 +391,9 @@ class TestErrorHandlingPatterns:
     """错误处理模式测试"""
 
     def test_exception_handling_strategies(self):
-        """测试：异常处理策略 - 覆盖率补充"""
+        """测试:异常处理策略 - 覆盖率补充"""
 
-        # 策略1：返回默认值
+        # 策略1:返回默认值
         def safe_divide(a, b, default=0):
             try:
                 return a / b
@@ -404,7 +404,7 @@ class TestErrorHandlingPatterns:
         assert safe_divide(10, 0) == 0
         assert safe_divide("10", 2) == 0
 
-        # 策略2：重试机制
+        # 策略2:重试机制
         def retry_operation(max_attempts=3):
             def decorator(func):
                 def wrapper(*args, **kwargs):
@@ -435,7 +435,7 @@ class TestErrorHandlingPatterns:
         assert failing_operation.attempt_count == 3
 
     def test_data_validation_patterns(self):
-        """测试：数据验证模式 - 覆盖率补充"""
+        """测试:数据验证模式 - 覆盖率补充"""
 
         # 验证器模式
         class Validator:
@@ -477,7 +477,7 @@ class TestErrorHandlingPatterns:
         assert any("Missing required field: name" in error for error in errors)
 
     def test_resource_management_patterns(self):
-        """测试：资源管理模式 - 覆盖率补充"""
+        """测试:资源管理模式 - 覆盖率补充"""
 
         # 上下文管理器模式
         class Resource:
@@ -521,7 +521,7 @@ class TestDateTimeUtilities:
     """日期时间工具测试"""
 
     def test_date_format_conversions(self):
-        """测试：日期格式转换 - 覆盖率补充"""
+        """测试:日期格式转换 - 覆盖率补充"""
         # 测试不同的日期格式
         date_formats = [
             "2023-12-01T20:00:00Z",
@@ -569,7 +569,7 @@ class TestDateTimeUtilities:
             assert parsed is None
 
     def test_time_calculations(self):
-        """测试：时间计算 - 覆盖率补充"""
+        """测试:时间计算 - 覆盖率补充"""
         now = datetime.utcnow()
 
         # 测试时间差计算
@@ -594,7 +594,7 @@ class TestDateTimeUtilities:
         assert diff_result["seconds"] == 90000  # 27小时 = 97200秒
 
     def test_business_date_logic(self):
-        """测试：业务日期逻辑 - 覆盖率补充"""
+        """测试:业务日期逻辑 - 覆盖率补充"""
 
         def is_match_date_valid(match_date_str):
             """检查比赛日期是否有效"""

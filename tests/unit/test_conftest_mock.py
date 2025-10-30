@@ -3,10 +3,10 @@
 # TODO: Consider creating a fixture for 28 repeated Mock creations
 
 
-"""""""
+""""""""
 Mock配置文件
 处理所有导入错误和模块依赖问题
-"""""""
+""""""""
 
 import sys
 from pathlib import Path
@@ -20,7 +20,7 @@ sys.path.insert(0, str(project_root))
 
 # 在收集测试之前设置所有Mock
 def pytest_configure(config):
-    """pytest配置钩子，在测试开始前设置Mock"""
+    """pytest配置钩子,在测试开始前设置Mock"""
 
     # Mock所有可能有问题的外部依赖
     external_deps = [

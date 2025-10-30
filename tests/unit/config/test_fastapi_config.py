@@ -2,7 +2,7 @@
 FastAPI配置模块测试
 FastAPI Config Module Tests
 
-测试src/config/fastapi_config.py中定义的FastAPI配置功能，专注于实现100%覆盖率。
+测试src/config/fastapi_config.py中定义的FastAPI配置功能,专注于实现100%覆盖率。
 Tests FastAPI configuration functionality defined in src/config/fastapi_config.py, focused on achieving 100% coverage.
 """
 

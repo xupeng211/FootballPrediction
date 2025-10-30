@@ -2,7 +2,7 @@
 国际化工具完整测试
 I18n Utils Complete Tests
 
-基于Issue #98四连胜成功模式，创建完整的国际化工具测试
+基于Issue #98四连胜成功模式,创建完整的国际化工具测试
 """
 
 import os
@@ -78,7 +78,7 @@ class TestI18nComplete:
 
     def test_init_i18n_creates_locale_directory(self):
         """测试初始化国际化创建本地化目录"""
-        # 如果目录已存在，先删除
+        # 如果目录已存在,先删除
         if LOCALE_DIR.exists():
             import shutil
 
@@ -354,7 +354,7 @@ class TestI18nComplete:
 
     def test_directory_creation_permissions(self):
         """测试目录创建和权限"""
-        # 如果目录存在，先删除
+        # 如果目录存在,先删除
         if LOCALE_DIR.exists():
             import shutil
 
@@ -436,7 +436,7 @@ class TestI18nComplete:
                 if func != init_i18n:
                     assert isinstance(result, (str, type(None)))
             except Exception:
-                # 某些操作可能失败，这是正常的
+                # 某些操作可能失败,这是正常的
                 pass
 
     def test_i18n_workflow_simulation(self):
@@ -484,7 +484,7 @@ class TestI18nComplete:
                         # 如果没有抛出异常，说明错误被正确处理
                         assert True
                     except Exception:
-                        # 如果抛出异常，应该被上层处理
+                        # 如果抛出异常,应该被上层处理
                         pass
 
     def test_performance_considerations(self):

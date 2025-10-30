@@ -23,7 +23,7 @@ class TestCoreConfig:
 
             # 函数应该可以调用（可能返回None）
             get_config()
-            # 不关心返回值，只关心是否可以调用
+            # 不关心返回值,只关心是否可以调用
             assert True
         except Exception:
             pytest.skip("get_config function not callable")

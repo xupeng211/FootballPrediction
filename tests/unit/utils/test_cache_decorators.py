@@ -4,9 +4,9 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-"""""""
+""""""""
 缓存装饰器模块测试
-"""""""
+""""""""
 
 import asyncio
 
@@ -67,7 +67,7 @@ from src.cache.decorators import _make_cache_key
 
     def test_cache_result_sync(self):
         """测试同步函数结果缓存"""
-        # 由于redis可能不可用，使用模拟
+        # 由于redis可能不可用,使用模拟
         with patch("src.cache.decorators.RedisManager") as mock_redis_class:
             mock_redis = MagicMock()
             mock_redis_class.return_value = mock_redis
@@ -135,7 +135,7 @@ from src.cache.decorators import _make_cache_key
             # 第一次调用
             result1 = expensive_function(10)
             assert result1 == 20
-            assert call_count == 0  # 由于缓存命中，函数不应该被调用
+            assert call_count == 0  # 由于缓存命中,函数不应该被调用
 
     def test_cache_with_ttl(self):
         """测试带TTL的缓存"""
@@ -240,7 +240,7 @@ from src.cache.decorators import _make_cache_key
             mock_redis = MagicMock()
             mock_redis_class.return_value = mock_redis
 
-            # Redis抛出异常时，函数应该正常执行
+            # Redis抛出异常时,函数应该正常执行
             mock_redis.get.side_effect = Exception("Redis error")
 
             from src.cache.decorators import cache_result
@@ -249,7 +249,7 @@ from src.cache.decorators import _make_cache_key
             def test_function(x):
                 return x * 2
 
-            # 即使Redis出错，函数也应该正常工作
+            # 即使Redis出错,函数也应该正常工作
             _result = test_function(5)
             assert _result == 10
 
@@ -277,4 +277,4 @@ from src.cache.decorators import _make_cache_key
             # 第二次调用（如果缓存了None值）
             _result2 = returns_none()
             assert result2 is None
-            # 取决于实现，None值可能被缓存也可能不被缓存
+            # 取决于实现,None值可能被缓存也可能不被缓存

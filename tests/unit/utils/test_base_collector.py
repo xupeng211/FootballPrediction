@@ -44,7 +44,7 @@ class TestDataCollector:
 
             from src.data.collectors.base_collector import DataCollector
 
-            # DataCollector 应该是抽象类，不能直接实例化
+            # DataCollector 应该是抽象类,不能直接实例化
             with pytest.raises(TypeError):
                 DataCollector()
         except Exception:

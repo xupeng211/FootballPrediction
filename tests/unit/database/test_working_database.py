@@ -700,7 +700,7 @@ class TestDatabaseIntegration:
                 if key in cache:
                     return cache[key]
 
-                # 缓存未命中，查询数据库
+                # 缓存未命中,查询数据库
                 db_queries += 1
                 data = self.data.get(key)
                 if data:
@@ -749,7 +749,7 @@ def test_database_module_import():
         assert repositories is not None
         assert connection is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_database_coverage_helper():

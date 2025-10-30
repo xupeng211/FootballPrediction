@@ -170,7 +170,7 @@ class MockBaseRepository:
                 results.append(MockPrediction(id=1, user_id=1, match_id=1))
                 results.append(MockPrediction(id=2, user_id=1, match_id=2))
         else:
-            # 无过滤条件，返回默认数据
+            # 无过滤条件,返回默认数据
             results.append(MockPrediction(id=1, user_id=1, match_id=1))
             results.append(MockPrediction(id=2, user_id=1, match_id=2))
 
@@ -348,8 +348,8 @@ class MockPredictionRepository(MockBaseRepository):
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免真实数据库连接复杂性"
 
-# 在测试环境中，我们总是使用Mock实现来确保测试的稳定性和独立性
-print("智能Mock兼容修复模式：使用MockPredictionRepository确保测试稳定性")
+# 在测试环境中,我们总是使用Mock实现来确保测试的稳定性和独立性
+print("智能Mock兼容修复模式:使用MockPredictionRepository确保测试稳定性")
 
 # 使用Mock实现
 PredictionRepo = MockPredictionRepository
@@ -656,7 +656,7 @@ class TestDatabaseRepositoriesPrediction:
             assert hasattr(repo, "get_by_match") or True
 
         except Exception as e:
-            # 在Mock模式下，不应该有异常
+            # 在Mock模式下,不应该有异常
             assert False, f"Mock模式下不应该有异常: {e}"
 
     def test_constants(self):

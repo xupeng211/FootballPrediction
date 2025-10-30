@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 17 repeated Mock creations
 
 
-"""""""
+""""""""
 SQL兼容性测试
 Tests for SQL Compatibility
 
 测试src.database.sql_compatibility模块的功能
-"""""""
+""""""""
 
 import pytest
 
@@ -17,7 +17,7 @@ import pytest
 @pytest.mark.unit
 @pytest.mark.database
 def test_sql_compatibility_module_import():
-    """测试：SQL兼容性模块导入"""
+    """测试:SQL兼容性模块导入"""
     try:
             JSONB,
             cast_to_jsonb,
@@ -36,7 +36,7 @@ def test_sql_compatibility_module_import():
             to_jsonb,
         )
 
-        # 如果导入成功，至少说明模块存在
+        # 如果导入成功,至少说明模块存在
         assert True
     except ImportError as e:
         pytest.skip(f"SQL兼容性模块不可用: {e}")
@@ -46,7 +46,7 @@ class TestJSONBType:
     """JSONB类型测试"""
 
     def test_jsonb_type_import(self):
-        """测试：JSONB类型导入"""
+        """测试:JSONB类型导入"""
         try:
             from src.database.sql_compatibility import JSONB
 
@@ -55,7 +55,7 @@ class TestJSONBType:
             pytest.skip("JSONB类型不可用")
 
     def test_get_jsonb_type_function(self):
-        """测试：获取JSONB类型函数"""
+        """测试:获取JSONB类型函数"""
         try:
             from src.database.sql_compatibility import get_jsonb_type
 
@@ -65,7 +65,7 @@ class TestJSONBType:
         except ImportError:
             pytest.skip("get_jsonb_type函数不可用")
         except Exception:
-            # 可能需要数据库方言，这是可以接受的
+            # 可能需要数据库方言,这是可以接受的
             pass
 
 
@@ -73,7 +73,7 @@ class TestJSONBFunctions:
     """JSONB函数测试"""
 
     def test_jsonb_as_text_function(self):
-        """测试：JSONB转文本函数"""
+        """测试:JSONB转文本函数"""
         try:
             from src.database.sql_compatibility import jsonb_as_text
 
@@ -88,7 +88,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_as_text函数不可用")
 
     def test_jsonb_contains_function(self):
-        """测试：JSONB包含函数"""
+        """测试:JSONB包含函数"""
         try:
             from src.database.sql_compatibility import jsonb_contains
 
@@ -102,7 +102,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_contains函数不可用")
 
     def test_jsonb_exists_function(self):
-        """测试：JSONB存在函数"""
+        """测试:JSONB存在函数"""
         try:
             from src.database.sql_compatibility import jsonb_exists
 
@@ -116,7 +116,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_exists函数不可用")
 
     def test_jsonb_extract_path_function(self):
-        """测试：JSONB路径提取函数"""
+        """测试:JSONB路径提取函数"""
         try:
             from src.database.sql_compatibility import jsonb_extract_path
 
@@ -130,7 +130,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_extract_path函数不可用")
 
     def test_jsonb_extract_path_text_function(self):
-        """测试：JSONB路径提取文本函数"""
+        """测试:JSONB路径提取文本函数"""
         try:
             from src.database.sql_compatibility import jsonb_extract_path_text
 
@@ -144,7 +144,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_extract_path_text函数不可用")
 
     def test_jsonb_array_elements_function(self):
-        """测试：JSONB数组元素函数"""
+        """测试:JSONB数组元素函数"""
         try:
             from src.database.sql_compatibility import jsonb_array_elements
 
@@ -157,7 +157,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_array_elements函数不可用")
 
     def test_jsonb_each_function(self):
-        """测试：JSONB each函数"""
+        """测试:JSONB each函数"""
         try:
             from src.database.sql_compatibility import jsonb_each
 
@@ -170,7 +170,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_each函数不可用")
 
     def test_jsonb_object_keys_function(self):
-        """测试：JSONB对象键函数"""
+        """测试:JSONB对象键函数"""
         try:
             from src.database.sql_compatibility import jsonb_object_keys
 
@@ -183,7 +183,7 @@ class TestJSONBFunctions:
             pytest.skip("jsonb_object_keys函数不可用")
 
     def test_jsonb_typeof_function(self):
-        """测试：JSONB类型函数"""
+        """测试:JSONB类型函数"""
         try:
             from src.database.sql_compatibility import jsonb_typeof
 
@@ -200,7 +200,7 @@ class TestJSONBAggregateFunctions:
     """JSONB聚合函数测试"""
 
     def test_jsonb_build_object_function(self):
-        """测试：JSONB构建对象函数"""
+        """测试:JSONB构建对象函数"""
         try:
             from src.database.sql_compatibility import jsonb_build_object
 
@@ -216,7 +216,7 @@ class TestJSONBAggregateFunctions:
             pytest.skip("jsonb_build_object函数不可用")
 
     def test_jsonb_agg_function(self):
-        """测试：JSONB聚合函数"""
+        """测试:JSONB聚合函数"""
         try:
             from src.database.sql_compatibility import jsonb_agg
 
@@ -229,7 +229,7 @@ class TestJSONBAggregateFunctions:
             pytest.skip("jsonb_agg函数不可用")
 
     def test_to_jsonb_function(self):
-        """测试：转JSONB函数"""
+        """测试:转JSONB函数"""
         try:
             from src.database.sql_compatibility import to_jsonb
 
@@ -242,7 +242,7 @@ class TestJSONBAggregateFunctions:
             pytest.skip("to_jsonb函数不可用")
 
     def test_cast_to_jsonb_function(self):
-        """测试：转JSONB类型函数"""
+        """测试:转JSONB类型函数"""
         try:
             from src.database.sql_compatibility import cast_to_jsonb
 
@@ -259,7 +259,7 @@ class TestSQLCompatibilityModule:
     """SQL兼容性模块测试"""
 
     def test_module_all_attribute(self):
-        """测试：模块__all__属性"""
+        """测试:模块__all__属性"""
         try:
             import src.database.sql_compatibility as sql_compat
 
@@ -283,7 +283,7 @@ class TestSQLCompatibilityModule:
             pytest.skip("SQL兼容性模块不可用")
 
     def test_module_docstring(self):
-        """测试：模块文档字符串"""
+        """测试:模块文档字符串"""
         try:
             import src.database.sql_compatibility as sql_compat
 
@@ -294,7 +294,7 @@ class TestSQLCompatibilityModule:
             pytest.skip("SQL兼容性模块不可用")
 
     def test_function_consistency(self):
-        """测试：函数一致性"""
+        """测试:函数一致性"""
         try:
             from src.database.sql_compatibility import (
                 get_jsonb_type,
@@ -316,7 +316,7 @@ class TestPostgreSQLSpecificFeatures:
     """PostgreSQL特定功能测试"""
 
     def test_postgresql_jsonb_operations(self):
-        """测试：PostgreSQL JSONB操作"""
+        """测试:PostgreSQL JSONB操作"""
         try:
             from src.database.sql_compatibility import (
                 jsonb_contains,
@@ -325,7 +325,7 @@ class TestPostgreSQLSpecificFeatures:
             )
 
             # 这些是PostgreSQL特有的JSONB操作
-            # 在没有数据库连接的情况下，我们只能测试函数存在
+            # 在没有数据库连接的情况下,我们只能测试函数存在
             assert callable(jsonb_contains)
             assert callable(jsonb_exists)
             assert callable(jsonb_extract_path)
@@ -333,7 +333,7 @@ class TestPostgreSQLSpecificFeatures:
             pytest.skip("PostgreSQL JSONB操作不可用")
 
     def test_postgresql_aggregate_functions(self):
-        """测试：PostgreSQL聚合函数"""
+        """测试:PostgreSQL聚合函数"""
         try:
             from src.database.sql_compatibility import jsonb_agg, jsonb_build_object
 
@@ -348,8 +348,8 @@ class TestSQLiteCompatibility:
     """SQLite兼容性测试"""
 
     def test_sqlite_json_functions(self):
-        """测试：SQLite JSON函数"""
-        # 在SQLite环境中，JSONB函数可能有不同的实现
+        """测试:SQLite JSON函数"""
+        # 在SQLite环境中,JSONB函数可能有不同的实现
         # 这里我们测试基本的函数可用性
         try:
             from src.database.sql_compatibility import get_jsonb_type, jsonb_as_text
@@ -361,12 +361,12 @@ class TestSQLiteCompatibility:
             pytest.skip("SQLite JSON函数不可用")
 
     def test_cross_database_compatibility(self):
-        """测试：跨数据库兼容性"""
+        """测试:跨数据库兼容性"""
         try:
             from src.database.sql_compatibility import get_jsonb_type
 
             # 函数应该能够处理不同的数据库方言
-            # 在没有实际数据库连接的情况下，我们测试函数存在
+            # 在没有实际数据库连接的情况下,我们测试函数存在
             assert callable(get_jsonb_type)
 
             # 可能需要模拟不同的方言
@@ -378,7 +378,7 @@ class TestSQLiteCompatibility:
                 # 如果成功，结果应该不是None
                 assert _result is not None
             except Exception:
-                # 可能需要更多上下文，这是可以接受的
+                # 可能需要更多上下文,这是可以接受的
                 pass
         except ImportError:
             pytest.skip("跨数据库兼容性函数不可用")

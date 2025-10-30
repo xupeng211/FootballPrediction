@@ -1,9 +1,9 @@
-"""""""
+""""""""
 比分收集器单元测试
 Unit tests for Scores Collector
 
 测试 src.collectors.scores_collector 模块的实时比分收集功能
-"""""""
+""""""""
 
 import os
 
@@ -125,7 +125,7 @@ class TestScoresCollector:
     @pytest.mark.asyncio
     async def test_get_live_matches_from_db_integration(self, scores_collector):
         """测试从数据库获取实时比赛（集成测试层面）"""
-        # 这个测试验证方法的接口正确性，而不是实际的数据库查询
+        # 这个测试验证方法的接口正确性,而不是实际的数据库查询
         # 实际的数据库查询应该通过更高层次的集成测试来验证
 
         # 验证方法存在且可调用

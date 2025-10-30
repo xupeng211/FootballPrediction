@@ -1,9 +1,9 @@
-"""""""
+""""""""
 健康检查API测试
 Tests for Health Check API
 
 测试src.api.health模块的健康检查功能
-"""""""
+""""""""
 
 import time
 
@@ -41,12 +41,12 @@ class TestHealthCheck:
         return TestClient(app)
 
     def test_router_exists(self):
-        """测试：路由器存在"""
+        """测试:路由器存在"""
         assert router is not None
         assert hasattr(router, "routes")
 
     def test_check_database_function(self):
-        """测试：数据库检查函数"""
+        """测试:数据库检查函数"""
         _result = _check_database()
         assert isinstance(_result, dict)
         assert "status" in _result
@@ -55,7 +55,7 @@ class TestHealthCheck:
         assert isinstance(_result["latency_ms"], int)
 
     def test_health_check_endpoint(self, client):
-        """测试：基础健康检查端点"""
+        """测试:基础健康检查端点"""
         response = client.get("/health/")
         assert response.status_code == 200
 
@@ -70,7 +70,7 @@ class TestHealthCheck:
         assert "database" in _data["checks"]
 
     def test_liveness_check_endpoint(self, client):
-        """测试：存活检查端点"""
+        """测试:存活检查端点"""
         response = client.get("/health/liveness")
         assert response.status_code == 200
 
@@ -85,7 +85,7 @@ class TestHealthCheck:
         assert _data["service"] == "football-prediction-api"
 
     def test_readiness_check_endpoint(self, client):
-        """测试：就绪检查端点"""
+        """测试:就绪检查端点"""
         response = client.get("/health/readiness")
         assert response.status_code == 200
 
@@ -100,7 +100,7 @@ class TestHealthCheck:
         assert "database" in _data["checks"]
 
     def test_detailed_health_endpoint(self, client):
-        """测试：详细健康检查端点"""
+        """测试:详细健康检查端点"""
         response = client.get("/health/detailed")
         assert response.status_code == 200
 
@@ -133,7 +133,7 @@ class TestHealthCheckMocked:
     """使用模拟的健康检查测试"""
 
     def test_health_check_with_unhealthy_database(self):
-        """测试：数据库不健康时的整体状态"""
+        """测试:数据库不健康时的整体状态"""
         with patch("src.api.health._check_database") as mock_check:
             mock_check.return_value = {"status": "unhealthy", "latency_ms": 1000}
 
@@ -150,7 +150,7 @@ class TestHealthCheckMocked:
             assert _data["checks"]["database"]["status"] == "unhealthy"
 
     def test_readiness_check_with_unhealthy_database(self):
-        """测试：数据库不健康时的就绪状态"""
+        """测试:数据库不健康时的就绪状态"""
         with patch("src.api.health._check_database") as mock_check:
             mock_check.return_value = {
                 "status": "unhealthy",
@@ -169,7 +169,7 @@ class TestHealthCheckMocked:
             assert _data["checks"]["database"]["status"] == "unhealthy"
 
     def test_health_check_timestamp_changes(self):
-        """测试：健康检查时间戳变化"""
+        """测试:健康检查时间戳变化"""
         app = FastAPI()
         app.include_router(router, prefix="/health")
         client = TestClient(app)
@@ -195,7 +195,7 @@ class TestHealthCheckIntegration:
     """健康检查集成测试"""
 
     def test_all_endpoints_respond(self):
-        """测试：所有端点都有响应"""
+        """测试:所有端点都有响应"""
         app = FastAPI()
         app.include_router(router, prefix="/health")
         client = TestClient(app)
@@ -213,7 +213,7 @@ class TestHealthCheckIntegration:
             assert "status" in response.json()
 
     def test_response_headers(self):
-        """测试：响应头"""
+        """测试:响应头"""
         app = FastAPI()
         app.include_router(router, prefix="/health")
         client = TestClient(app)
@@ -222,7 +222,7 @@ class TestHealthCheckIntegration:
         assert response.headers["content-type"] == "application/json"
 
     def test_health_check_structure(self):
-        """测试：健康检查响应结构"""
+        """测试:健康检查响应结构"""
         app = FastAPI()
         app.include_router(router, prefix="/health")
         client = TestClient(app)
@@ -241,7 +241,7 @@ class TestHealthCheckIntegration:
         assert isinstance(_data["checks"], dict)
 
     def test_database_check_consistency(self):
-        """测试：数据库检查一致性"""
+        """测试:数据库检查一致性"""
         # 多次调用数据库检查函数
         result1 = _check_database()
         result2 = _check_database()
@@ -256,14 +256,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not HEALTH_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if HEALTH_AVAILABLE:
 from src.api.health import _check_database, router
 
@@ -273,7 +273,7 @@ from src.api.health import _check_database, router
 
 
 def test_router_routes():
-    """测试：路由器路由"""
+    """测试:路由器路由"""
     if HEALTH_AVAILABLE:
         routes = [route.path for route in router.routes]
         expected_routes = ["/", "/liveness", "/readiness", "/detailed"]
@@ -284,7 +284,7 @@ def test_router_routes():
 
 @pytest.mark.asyncio
 async def test_async_endpoints():
-    """测试：异步端点"""
+    """测试:异步端点"""
     if HEALTH_AVAILABLE:
         # 直接调用端点函数
 from src.api.health import (

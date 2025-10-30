@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""""""
+""""""""
 赔率收集器改进版测试
 Tests for improved odds collector
 
 测试赔率收集器的功能。
-"""""""
+""""""""
 
 import sys
 from pathlib import Path
@@ -468,7 +468,7 @@ class TestOddsCollectorIntegration:
 
         # 执行工作流程
         await manager.start_collection()
-        assert True  # 如果没有异常，说明工作流程正常
+        assert True  # 如果没有异常,说明工作流程正常
 
     def test_component_dependency_injection(self):
         """测试组件依赖注入"""

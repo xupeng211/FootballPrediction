@@ -154,7 +154,7 @@ async def test_team_form_prediction(statistical_strategy, prediction_input):
     assert len(result) == 2
     assert all(isinstance(x, (int, float)) for x in result)
 
-    # 主队状态更好，应该预测主队进球更多
+    # 主队状态更好,应该预测主队进球更多
     assert _result[0] >= _result[1]
 
 
@@ -168,7 +168,7 @@ async def test_head_to_head_prediction(statistical_strategy, prediction_input):
     assert isinstance(result, tuple)
     assert len(result) == 2
 
-    # 基于对战历史，主队占优
+    # 基于对战历史,主队占优
     assert _result[0] >= _result[1]
 
 
@@ -271,7 +271,7 @@ async def test_confidence_calculation(statistical_strategy, prediction_input):
 
     variance = np.var(home_preds) + np.var(away_preds)
 
-    # 方差越小，置信度越高
+    # 方差越小,置信度越高
     expected_confidence = max(0.3, 1.0 - variance / 2.0)
 
     # 验证置信度在合理范围内
@@ -330,7 +330,7 @@ def test_poisson_probability_calculation(statistical_strategy):
     prob = statistical_strategy._poisson_probability(0, 1.5)
     assert 0 < prob < 1
 
-    # 测试lambda=1.5时，k=2的概率
+    # 测试lambda=1.5时,k=2的概率
     prob = statistical_strategy._poisson_probability(2, 1.5)
     assert 0 < prob < 1
 

@@ -32,17 +32,17 @@ class TestDataProcessor:
     """数据处理器基类测试"""
 
     def test_data_processor_is_abstract(self):
-        """测试：数据处理器是抽象类"""
+        """测试:数据处理器是抽象类"""
         with pytest.raises(TypeError):
             DataProcessor()
 
     def test_data_processor_methods(self):
-        """测试：数据处理器方法定义"""
+        """测试:数据处理器方法定义"""
         # 检查抽象方法
         assert DataProcessor.process.__isabstractmethod__
 
     def test_data_processor_implementation(self):
-        """测试：数据处理器实现"""
+        """测试:数据处理器实现"""
 
         class ConcreteProcessor(DataProcessor):
             async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -553,12 +553,12 @@ class TestDataProcessingIntegration:
         assert "processed_at" in result
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not PROCESSING_AVAILABLE
         assert True  # 表明测试意识到模块不可用

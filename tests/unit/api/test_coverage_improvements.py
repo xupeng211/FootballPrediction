@@ -3,13 +3,13 @@
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
 
-"""""""
+""""""""
 测试覆盖率提升 - API模块测试
 Coverage Improvement - API Module Tests
 
-专门为提升覆盖率而创建的测试用例，专注于低覆盖率的核心API模块。
+专门为提升覆盖率而创建的测试用例,专注于低覆盖率的核心API模块。
 Created specifically to improve coverage for low-coverage core API modules.
-"""""""
+""""""""
 
 import asyncio
 import os
@@ -338,7 +338,7 @@ class TestJWTIntegration:
         assert decoded["sub"] == "11111"
 
 
-# 如果某些依赖不可用，添加兼容性测试
+# 如果某些依赖不可用,添加兼容性测试
 class TestModuleImports:
     """测试模块导入"""
 

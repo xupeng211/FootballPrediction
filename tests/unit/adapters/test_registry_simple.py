@@ -1,7 +1,7 @@
-"""""""
+""""""""
 简化适配器注册表模块测试
 Tests simple adapter registry functionality defined in src/adapters/registry_simple.py
-"""""""
+""""""""
 
 
 import pytest

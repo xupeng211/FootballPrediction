@@ -42,7 +42,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_success(self):
-        """测试：成功获取当前用户"""
+        """测试:成功获取当前用户"""
         mock_credentials = Mock()
         mock_credentials.credentials = "valid_token"
 
@@ -57,7 +57,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_with_admin_role(self):
-        """测试：获取管理员用户"""
+        """测试:获取管理员用户"""
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
 
@@ -71,7 +71,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_invalid_token(self):
-        """测试：无效令牌"""
+        """测试:无效令牌"""
         mock_credentials = Mock()
         mock_credentials.credentials = "invalid_token"
 
@@ -86,7 +86,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_missing_sub(self):
-        """测试：缺少sub声明"""
+        """测试:缺少sub声明"""
         mock_credentials = Mock()
         mock_credentials.credentials = "token_without_sub"
 
@@ -100,7 +100,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_default_role(self):
-        """测试：默认角色"""
+        """测试:默认角色"""
         mock_credentials = Mock()
         mock_credentials.credentials = "token_without_role"
 
@@ -119,7 +119,7 @@ class TestGetAdminUser:
 
     @pytest.mark.asyncio
     async def test_get_admin_user_success(self):
-        """测试：管理员用户验证成功"""
+        """测试:管理员用户验证成功"""
         admin_user = {"id": 1, "role": "admin", "token": "admin_token"}
 
         _result = await get_admin_user(admin_user)
@@ -129,7 +129,7 @@ class TestGetAdminUser:
 
     @pytest.mark.asyncio
     async def test_get_admin_user_non_admin(self):
-        """测试：非管理员用户被拒绝"""
+        """测试:非管理员用户被拒绝"""
         normal_user = {"id": 2, "role": "user", "token": "user_token"}
 
         with pytest.raises(HTTPException) as exc_info:
@@ -140,7 +140,7 @@ class TestGetAdminUser:
 
     @pytest.mark.asyncio
     async def test_get_admin_user_missing_role(self):
-        """测试：缺少角色信息被拒绝"""
+        """测试:缺少角色信息被拒绝"""
         user_without_role = {"id": 3, "token": "token"}
 
         with pytest.raises(HTTPException) as exc_info:
@@ -155,7 +155,7 @@ class TestGetPredictionEngine:
 
     @pytest.mark.asyncio
     async def test_get_prediction_engine_success(self):
-        """测试：成功获取预测引擎"""
+        """测试:成功获取预测引擎"""
         mock_engine = AsyncMock()
 
         with patch("src.core.prediction_engine.get_prediction_engine") as mock_get_engine:
@@ -168,7 +168,7 @@ class TestGetPredictionEngine:
 
     @pytest.mark.asyncio
     async def test_get_prediction_engine_none(self):
-        """测试：预测引擎返回None"""
+        """测试:预测引擎返回None"""
         with patch("src.core.prediction_engine.get_prediction_engine") as mock_get_engine:
             mock_get_engine.return_value = None
 
@@ -183,7 +183,7 @@ class TestGetRedisManager:
 
     @pytest.mark.asyncio
     async def test_get_redis_manager_success(self):
-        """测试：成功获取Redis管理器"""
+        """测试:成功获取Redis管理器"""
         mock_redis = Mock()
 
         with patch("src.cache.redis_manager.get_redis_manager") as mock_get_redis:
@@ -201,7 +201,7 @@ class TestVerifyPredictionPermission:
 
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_success(self):
-        """测试：预测权限验证成功"""
+        """测试:预测权限验证成功"""
         _user = {"id": 1, "role": "user"}
         match_id = 123
 
@@ -211,7 +211,7 @@ class TestVerifyPredictionPermission:
 
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_admin(self):
-        """测试：管理员预测权限"""
+        """测试:管理员预测权限"""
         admin_user = {"id": 2, "role": "admin"}
         match_id = 456
 
@@ -226,7 +226,7 @@ class TestRateLimitCheck:
 
     @pytest.mark.asyncio
     async def test_rate_limit_check_success(self):
-        """测试：速率限制通过"""
+        """测试:速率限制通过"""
         _user = {"id": 1, "role": "user"}
 
         _result = await rate_limit_check(user)
@@ -235,7 +235,7 @@ class TestRateLimitCheck:
 
     @pytest.mark.asyncio
     async def test_rate_limit_check_admin(self):
-        """测试：管理员速率限制"""
+        """测试:管理员速率限制"""
         admin_user = {"id": 2, "role": "admin"}
 
         _result = await rate_limit_check(admin_user)
@@ -249,7 +249,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_admin_user_flow(self):
-        """测试：管理员用户流程"""
+        """测试:管理员用户流程"""
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
 
@@ -266,7 +266,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_normal_user_flow(self):
-        """测试：普通用户流程"""
+        """测试:普通用户流程"""
         mock_credentials = Mock()
         mock_credentials.credentials = "user_token"
 
@@ -284,7 +284,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_permission_and_rate_limit_flow(self):
-        """测试：权限和速率限制流程"""
+        """测试:权限和速率限制流程"""
         _user = {"id": 123, "role": "user", "token": "valid_token"}
         match_id = 456
 
@@ -298,7 +298,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_full_dependency_chain(self):
-        """测试：完整依赖链"""
+        """测试:完整依赖链"""
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
 
@@ -326,7 +326,7 @@ class TestDependenciesIntegration:
             assert redis is mock_redis
 
     def test_constants_configuration(self):
-        """测试：常量配置"""
+        """测试:常量配置"""
         assert SECRET_KEY is not None
         assert ALGORITHM == "HS256"
         assert security is not None
@@ -334,7 +334,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_user_requests(self):
-        """测试：并发用户请求"""
+        """测试:并发用户请求"""
         import asyncio
 
         mock_credentials_list = [Mock(credentials=f"token_{i}") for i in range(5)]
@@ -355,7 +355,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_error_handling_chain(self):
-        """测试：错误处理链"""
+        """测试:错误处理链"""
         mock_credentials = Mock()
         mock_credentials.credentials = "invalid_token"
 
@@ -370,11 +370,11 @@ class TestDependenciesIntegration:
 
             # 后续的依赖也应该失败
             with pytest.raises(HTTPException):
-                await get_admin_user({"id": 1, "role": "user"})  # 这个会通过，因为不需要token
+                await get_admin_user({"id": 1, "role": "user"})  # 这个会通过,因为不需要token
 
     @pytest.mark.asyncio
     async def test_dependency_caching(self):
-        """测试：依赖缓存"""
+        """测试:依赖缓存"""
         # FastAPI的依赖注入会缓存相同参数的依赖
         _user = {"id": 1, "role": "user"}
 
@@ -388,12 +388,12 @@ class TestDependenciesIntegration:
         assert result3 is True
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DEPENDENCIES_AVAILABLE
         assert True  # 表明测试意识到模块不可用

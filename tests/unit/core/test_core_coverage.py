@@ -415,7 +415,7 @@ try:
 except ImportError:
     get_prediction_engine = None
 
-# 如果关键函数不可用，跳过测试
+# 如果关键函数不可用,跳过测试
 if get_simple_logger is None:
     pytest.skip("logger_simple模块不可用", allow_module_level=True)
 

@@ -8,7 +8,7 @@ Phase 4A Week 2 - 数据库服务综合测试套件
 
 Database Service Comprehensive Test Suite
 
-这个测试文件提供数据库服务的全面测试覆盖，包括：
+这个测试文件提供数据库服务的全面测试覆盖,包括：
 - 数据访问层测试
 - 事务处理测试
 - 连接池管理测试
@@ -16,7 +16,7 @@ Database Service Comprehensive Test Suite
 - 查询优化和性能测试
 - 数据一致性和完整性测试
 
-测试覆盖率目标：>=95%
+测试覆盖率目标:>=95%
 """
 
 import asyncio
@@ -26,7 +26,7 @@ from enum import Enum
 
 import pytest
 
-# 导入实际数据库模块，如果失败则使用Mock
+# 导入实际数据库模块,如果失败则使用Mock
 try:
     from src.database.connection import DatabaseManager
     from src.database.models.base import BaseModel
@@ -153,7 +153,7 @@ class MockConnection:
             elif query_lower.startswith("delete"):
                 rows_affected = self._simulate_delete(query, params)
             elif query_lower.startswith("select"):
-                # SELECT查询返回行数，不影响行数
+                # SELECT查询返回行数,不影响行数
                 pass
 
         except Exception as e:
@@ -253,7 +253,7 @@ class MockConnection:
             return 0
 
         if params:
-            # 简单模拟：更新所有记录
+            # 简单模拟:更新所有记录
             updated_count = 0
             for record in self._data_store[table_name]:
                 record.update(params)
@@ -267,7 +267,7 @@ class MockConnection:
         if table_name not in self._data_store:
             return 0
 
-        # 简单模拟：删除所有记录
+        # 简单模拟:删除所有记录
         count = len(self._data_store[table_name])
         self._data_store[table_name].clear()
         return count
@@ -317,7 +317,7 @@ class MockDatabaseEngine:
         if connection.is_connected:
             self.connection_pool.append(connection)
         else:
-            # 连接已断开，不返回池中
+            # 连接已断开,不返回池中
             pass
 
     async def close(self):
@@ -508,7 +508,7 @@ class TestTransactionManagement:
         await mock_connection.commit()
 
         # 提交后事务应该有结束时间
-        # 注意：在我们的Mock中，事务在提交后被清空
+        # 注意:在我们的Mock中,事务在提交后被清空
 
     @pytest.mark.asyncio
     async def test_nested_transaction_prevention(self, mock_connection):
@@ -930,7 +930,7 @@ class TestTransactionManager:
                 assert transaction_manager.in_transaction is True
                 await inner_tx.execute("INSERT INTO users (name) VALUES ('inner')")
 
-            # 内部事务提交，外部事务仍活跃
+            # 内部事务提交,外部事务仍活跃
             assert transaction_manager.in_transaction is True
 
     @pytest.mark.asyncio
@@ -1362,7 +1362,7 @@ class TestDatabasePerformance:
         # 缓存应该显著提高性能
         first_execution / second_execution if second_execution > 0 else 1
 
-        # 在真实环境中，缓存应该带来明显性能提升
+        # 在真实环境中,缓存应该带来明显性能提升
         # 这里我们只验证第二次执行不会比第一次慢太多
         assert second_execution <= first_execution * 1.5
 

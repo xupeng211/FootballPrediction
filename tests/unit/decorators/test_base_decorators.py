@@ -380,7 +380,7 @@ class TestBaseDecorators:
             async def async_function(x):
                 return x * 2
 
-            # 如果支持异步，测试它
+            # 如果支持异步,测试它
             import asyncio
 
             if hasattr(async_function, "__await__"):
@@ -480,7 +480,7 @@ class TestBaseDecorators:
             memory_intensive_function(i)
 
         # 验证装饰器不会无限增长内存
-        # 这里只能测试基本功能，实际内存监控需要更复杂的工具
+        # 这里只能测试基本功能,实际内存监控需要更复杂的工具
 
     def test_decorator_configuration(self):
         """测试装饰器配置"""

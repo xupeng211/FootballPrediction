@@ -40,18 +40,18 @@ class TestDatabaseRole:
     """数据库角色测试"""
 
     def test_role_values(self):
-        """测试：角色枚举值"""
+        """测试:角色枚举值"""
         assert DatabaseRole.READER.value == "reader"
         assert DatabaseRole.WRITER.value == "writer"
         assert DatabaseRole.ADMIN.value == "admin"
 
     def test_role_comparison(self):
-        """测试：角色比较"""
+        """测试:角色比较"""
         assert DatabaseRole.READER == DatabaseRole.READER
         assert DatabaseRole.READER != DatabaseRole.WRITER
 
     def test_role_string_representation(self):
-        """测试：角色字符串表示"""
+        """测试:角色字符串表示"""
         assert str(DatabaseRole.READER) == "DatabaseRole.READER"
         assert repr(DatabaseRole.READER) == "<DatabaseRole.READER: 'reader'>"
 
@@ -60,14 +60,14 @@ class TestDatabaseManager:
     """数据库管理器测试"""
 
     def test_singleton_pattern(self):
-        """测试：单例模式"""
+        """测试:单例模式"""
         manager1 = DatabaseManager()
         manager2 = DatabaseManager()
         assert manager1 is manager2
         assert id(manager1) == id(manager2)
 
     def test_initialization_default(self):
-        """测试：默认初始化"""
+        """测试:默认初始化"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
             patch("src.database.connection.create_async_engine") as mock_async_create_engine,
@@ -85,7 +85,7 @@ class TestDatabaseManager:
             mock_async_sessionmaker.assert_called_once()
 
     def test_initialization_with_custom_url(self):
-        """测试：使用自定义URL初始化"""
+        """测试:使用自定义URL初始化"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
             patch("src.database.connection.create_async_engine") as mock_async_create_engine,
@@ -102,7 +102,7 @@ class TestDatabaseManager:
             assert "postgresql+asyncpg://custom:pass@host:5432/db" in str(async_call_args)
 
     def test_initialization_no_url(self):
-        """测试：没有URL时的初始化"""
+        """测试:没有URL时的初始化"""
         with patch.dict("os.environ", {}, clear=True):
             pass
         with patch.dict("os.environ", {}, clear=True):
@@ -114,7 +114,7 @@ class TestDatabaseManager:
             assert "Database URL is required" in str(exc_info.value)
 
     def test_double_initialization(self):
-        """测试：重复初始化"""
+        """测试:重复初始化"""
         with patch("src.database.connection.create_engine") as mock_create_engine:
             manager = DatabaseManager()
             manager.initialize("postgresql://test/test")
@@ -124,7 +124,7 @@ class TestDatabaseManager:
             assert mock_create_engine.call_count == 1
 
     def test_get_sync_session(self):
-        """测试：获取同步会话"""
+        """测试:获取同步会话"""
         mock_session = Mock()
         mock_session_factory = Mock(return_value=mock_session)
 
@@ -144,7 +144,7 @@ class TestDatabaseManager:
             mock_session_factory.assert_called_once()
 
     def test_get_sync_session_auto_initialize(self):
-        """测试：获取同步会话时自动初始化"""
+        """测试:获取同步会话时自动初始化"""
         mock_session = Mock()
         mock_session_factory = Mock(return_value=mock_session)
 
@@ -165,7 +165,7 @@ class TestDatabaseManager:
             assert manager.initialized is True
 
     def test_get_async_session(self):
-        """测试：获取异步会话"""
+        """测试:获取异步会话"""
         mock_async_session = Mock()
         mock_async_session_factory = Mock(return_value=mock_async_session)
 
@@ -185,7 +185,7 @@ class TestDatabaseManager:
             mock_async_session_factory.assert_called_once()
 
     def test_get_async_session_auto_initialize(self):
-        """测试：获取异步会话时自动初始化"""
+        """测试:获取异步会话时自动初始化"""
         mock_async_session = Mock()
         mock_async_session_factory = Mock(return_value=mock_async_session)
 
@@ -210,12 +210,12 @@ class TestMultiUserDatabaseManager:
     """多用户数据库管理器测试"""
 
     def test_inheritance(self):
-        """测试：继承关系"""
+        """测试:继承关系"""
         manager = MultiUserDatabaseManager()
         assert isinstance(manager, DatabaseManager)
 
     def test_initialization(self):
-        """测试：多用户管理器初始化"""
+        """测试:多用户管理器初始化"""
         manager = MultiUserDatabaseManager()
         assert hasattr(manager, "readers")
         assert hasattr(manager, "writers")
@@ -229,14 +229,14 @@ class TestFactoryFunctions:
     """工厂函数测试"""
 
     def test_get_database_manager(self):
-        """测试：获取数据库管理器"""
+        """测试:获取数据库管理器"""
         manager1 = get_database_manager()
         manager2 = get_database_manager()
         assert isinstance(manager1, DatabaseManager)
         assert manager1 is manager2  # 单例
 
     def test_get_multi_user_database_manager(self):
-        """测试：获取多用户数据库管理器"""
+        """测试:获取多用户数据库管理器"""
         manager1 = get_multi_user_database_manager()
         manager2 = get_multi_user_database_manager()
         assert isinstance(manager1, MultiUserDatabaseManager)
@@ -244,7 +244,7 @@ class TestFactoryFunctions:
         assert manager1 is not manager2
 
     def test_initialize_database(self):
-        """测试：初始化数据库函数"""
+        """测试:初始化数据库函数"""
         with patch("src.database.connection.get_database_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_get_manager.return_value = mock_manager
@@ -254,7 +254,7 @@ class TestFactoryFunctions:
             mock_manager.initialize.assert_called_once_with("postgresql://test/test")
 
     def test_initialize_multi_user_database(self):
-        """测试：初始化多用户数据库函数"""
+        """测试:初始化多用户数据库函数"""
         with patch("src.database.connection.get_multi_user_database_manager") as mock_get_manager:
             mock_manager = Mock()
             mock_get_manager.return_value = mock_manager
@@ -264,8 +264,8 @@ class TestFactoryFunctions:
             mock_manager.initialize.assert_called_once_with("postgresql://test/test")
 
     def test_initialize_test_database(self):
-        """测试：初始化测试数据库函数"""
-        # 这个函数目前是空的，只是确保它不会抛出异常
+        """测试:初始化测试数据库函数"""
+        # 这个函数目前是空的,只是确保它不会抛出异常
         initialize_test_database()
 
 
@@ -273,7 +273,7 @@ class TestSessionFunctions:
     """会话获取函数测试"""
 
     def test_get_db_session(self):
-        """测试：获取数据库会话"""
+        """测试:获取数据库会话"""
         mock_session = Mock()
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
@@ -284,7 +284,7 @@ class TestSessionFunctions:
             mock_manager.get_session.assert_called_once()
 
     def test_get_async_session(self):
-        """测试：获取异步会话"""
+        """测试:获取异步会话"""
         mock_async_session = Mock()
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
@@ -295,7 +295,7 @@ class TestSessionFunctions:
             mock_manager.get_async_session.assert_called_once()
 
     def test_get_reader_session(self):
-        """测试：获取读会话"""
+        """测试:获取读会话"""
         mock_session = Mock()
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
@@ -305,7 +305,7 @@ class TestSessionFunctions:
             assert session == mock_session
 
     def test_get_writer_session(self):
-        """测试：获取写会话"""
+        """测试:获取写会话"""
         mock_session = Mock()
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
@@ -315,7 +315,7 @@ class TestSessionFunctions:
             assert session == mock_session
 
     def test_get_admin_session(self):
-        """测试：获取管理会话"""
+        """测试:获取管理会话"""
         mock_session = Mock()
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
@@ -325,7 +325,7 @@ class TestSessionFunctions:
             assert session == mock_session
 
     def test_get_session_alias(self):
-        """测试：会话获取别名"""
+        """测试:会话获取别名"""
         mock_session = Mock()
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
@@ -335,7 +335,7 @@ class TestSessionFunctions:
             assert session == mock_session
 
     def test_get_async_reader_session(self):
-        """测试：获取异步读会话"""
+        """测试:获取异步读会话"""
         mock_async_session = Mock()
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
@@ -345,7 +345,7 @@ class TestSessionFunctions:
             assert async_session == mock_async_session
 
     def test_get_async_writer_session(self):
-        """测试：获取异步写会话"""
+        """测试:获取异步写会话"""
         mock_async_session = Mock()
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
@@ -355,7 +355,7 @@ class TestSessionFunctions:
             assert async_session == mock_async_session
 
     def test_get_async_admin_session(self):
-        """测试：获取异步管理会话"""
+        """测试:获取异步管理会话"""
         mock_async_session = Mock()
         mock_manager = Mock()
         mock_manager.get_async_session.return_value = mock_async_session
@@ -369,7 +369,7 @@ class TestDatabaseManagerIntegration:
     """数据库管理器集成测试"""
 
     def test_engine_configuration(self):
-        """测试：引擎配置"""
+        """测试:引擎配置"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
             patch("src.database.connection.create_async_engine") as mock_async_create_engine,
@@ -389,7 +389,7 @@ class TestDatabaseManagerIntegration:
             assert async_call_kwargs["pool_recycle"] == 300
 
     def test_url_conversion(self):
-        """测试：URL转换"""
+        """测试:URL转换"""
         with (
             patch("src.database.connection.create_engine"),
             patch("src.database.connection.create_async_engine") as mock_async_create_engine,
@@ -404,7 +404,7 @@ class TestDatabaseManagerIntegration:
             assert async_call_args == expected_async_url
 
     def test_session_factory_configuration(self):
-        """测试：会话工厂配置"""
+        """测试:会话工厂配置"""
         with (
             patch("src.database.connection.create_engine") as mock_create_engine,
             patch("src.database.connection.create_async_engine") as mock_async_create_engine,
@@ -429,7 +429,7 @@ class TestDatabaseManagerIntegration:
             )
 
     def test_manager_state_persistence(self):
-        """测试：管理器状态持久化"""
+        """测试:管理器状态持久化"""
         manager1 = DatabaseManager()
 
         with (
@@ -467,7 +467,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert (
             input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )

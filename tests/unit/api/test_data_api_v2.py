@@ -77,7 +77,7 @@ class TestDataAPIV2:
         """测试获取不存在的联赛"""
         league_id = 99999
         response = client.get(f"/data/leagues/{league_id}")
-        # 模拟数据总是返回200，而不是404
+        # 模拟数据总是返回200,而不是404
         assert response.status_code == 200
         _data = response.json()
         assert _data["id"] == league_id
@@ -345,7 +345,7 @@ class TestDataAPIV2:
     def test_invalid_status(self, client):
         """测试无效状态"""
         client.get("/data/matches?status=invalid")
-        # 由于没有验证，可能返回200但结果为空
+        # 由于没有验证,可能返回200但结果为空
 
     # ==================== Response Format Tests ====================
 
@@ -487,4 +487,4 @@ class TestDataAPIIntegration:
             # 验证引用的联赛存在
             league_id = match["league_id"]
             response = client.get(f"/data/leagues/{league_id}")
-            # 可能返回200或404，取决于模拟数据的一致性
+            # 可能返回200或404,取决于模拟数据的一致性

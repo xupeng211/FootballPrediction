@@ -10,7 +10,7 @@ import redis.asyncio
 """
 Redis Mocks for Testing
 
-提供Redis相关的Mock实现，解决版本兼容性问题
+提供Redis相关的Mock实现,解决版本兼容性问题
 """
 
 

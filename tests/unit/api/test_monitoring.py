@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 # 测试导入
 try:
-    # 智能Mock兼容修复模式：移除真实API导入
+    # 智能Mock兼容修复模式:移除真实API导入
 
     MONITORING_AVAILABLE = True
 except ImportError as e:
@@ -31,13 +31,13 @@ class TestMonitoringRouter:
     """监控路由器测试"""
 
     def test_router_exists(self):
-        """测试：路由器存在"""
+        """测试:路由器存在"""
         assert router is not None
         assert hasattr(router, "routes")
         assert router.tags == ["monitoring"]
 
     def test_router_routes(self):
-        """测试：路由器路由"""
+        """测试:路由器路由"""
         routes = [route.path for route in router.routes]
 
         # 验证预期的路由存在
@@ -51,7 +51,7 @@ class TestMonitoringModule:
     """监控模块测试"""
 
     def test_module_structure(self):
-        """测试：模块结构"""
+        """测试:模块结构"""
         import src.api.monitoring as monitoring_module
 
         # 验证模块级别的属性
@@ -65,7 +65,7 @@ class TestMonitoringModule:
 
     @patch("src.api.monitoring.logger")
     def test_logger_available(self, mock_logger):
-        """测试：日志记录器可用"""
+        """测试:日志记录器可用"""
         import src.api.monitoring as monitoring_module
 
         # 验证logger被导入
@@ -82,8 +82,8 @@ class TestDatabaseMetrics:
 
     @pytest.mark.asyncio
     async def test_get_database_metrics_success(self):
-        """测试：成功获取数据库指标"""
-        # 由于函数未导出，我们通过模块导入测试
+        """测试:成功获取数据库指标"""
+        # 由于函数未导出,我们通过模块导入测试
         import src.api.monitoring as monitoring_module
 
         # 创建模拟数据库会话
@@ -136,7 +136,7 @@ class TestDatabaseMetrics:
 
     @pytest.mark.asyncio
     async def test_get_database_metrics_error(self):
-        """测试：获取数据库指标错误"""
+        """测试:获取数据库指标错误"""
         import src.api.monitoring as monitoring_module
 
         # 创建模拟数据库会话
@@ -159,7 +159,7 @@ class TestBusinessMetrics:
 
     @pytest.mark.asyncio
     async def test_get_business_metrics_success(self):
-        """测试：成功获取业务指标"""
+        """测试:成功获取业务指标"""
         import src.api.monitoring as monitoring_module
 
         # 创建模拟数据库会话
@@ -202,7 +202,7 @@ class TestBusinessMetrics:
 
     @pytest.mark.asyncio
     async def test_get_business_metrics_null_values(self):
-        """测试：业务指标为空值"""
+        """测试:业务指标为空值"""
         import src.api.monitoring as monitoring_module
 
         # 创建模拟数据库会话
@@ -232,7 +232,7 @@ class TestMonitoringEndpoints:
     """监控端点测试"""
 
     def test_create_app_with_monitoring_router(self):
-        """测试：创建带有监控路由的应用"""
+        """测试:创建带有监控路由的应用"""
         app = FastAPI()
         app.include_router(router, prefix="/monitoring")
 
@@ -244,8 +244,8 @@ class TestMonitoringEndpoints:
     @patch("src.api.monitoring._get_database_metrics")
     @patch("src.api.monitoring._get_business_metrics")
     def test_get_metrics_endpoint_structure(self, mock_business, mock_db_metrics, mock_db_session):
-        """测试：指标端点结构"""
-        # 由于端点可能依赖数据库，我们只测试基本结构
+        """测试:指标端点结构"""
+        # 由于端点可能依赖数据库,我们只测试基本结构
         import src.api.monitoring as monitoring_module
 
         # 验证端点函数存在
@@ -258,14 +258,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not MONITORING_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if MONITORING_AVAILABLE:
         import src.api.monitoring as monitoring_module
 
@@ -274,13 +274,13 @@ def test_module_imports():
 
 
 def test_monitoring_tags():
-    """测试：监控路由器标签"""
+    """测试:监控路由器标签"""
     if MONITORING_AVAILABLE:
         assert router.tags == ["monitoring"]
 
 
 def test_route_decorators():
-    """测试：路由装饰器"""
+    """测试:路由装饰器"""
     if MONITORING_AVAILABLE:
         # 验证路由有正确的装饰器
         for route in router.routes:
@@ -291,7 +291,7 @@ def test_route_decorators():
 
 @pytest.mark.asyncio
 async def test_monitoring_integration():
-    """测试：监控集成"""
+    """测试:监控集成"""
     if MONITORING_AVAILABLE:
         # 验证监控模块可以集成到FastAPI应用
         app = FastAPI()

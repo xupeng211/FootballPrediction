@@ -48,7 +48,7 @@ class TestFixturesCollector:
             return FixturesCollector(mock_db_session, mock_redis_client)
 
     def test_collector_initialization(self, collector, mock_db_session, mock_redis_client):
-        """测试：收集器初始化"""
+        """测试:收集器初始化"""
         assert collector.db_session is mock_db_session
         assert collector.redis_client is mock_redis_client
         assert collector.cache_timeout == 3600
@@ -57,7 +57,7 @@ class TestFixturesCollector:
         assert collector.headers["X-Auth-Token"] == "test_token"
 
     def test_collector_initialization_no_token(self, mock_db_session, mock_redis_client):
-        """测试：收集器初始化（无API令牌）"""
+        """测试:收集器初始化（无API令牌）"""
         with patch.dict(os.environ, {}, clear=True):
             with patch("src.collectors.fixtures_collector.logger") as mock_logger:
                 collector = FixturesCollector(mock_db_session, mock_redis_client)
@@ -66,7 +66,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_with_cache(self, collector, mock_redis_client):
-        """测试：从缓存收集球队赛程"""
+        """测试:从缓存收集球队赛程"""
         # 模拟缓存命中
         cached_data = '[{"id": 1, "homeTeam": "Team A", "awayTeam": "Team B"}]'
         mock_redis_client.get.return_value = cached_data
@@ -80,7 +80,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_force_refresh(self, collector, mock_redis_client):
-        """测试：强制刷新收集球队赛程"""
+        """测试:强制刷新收集球队赛程"""
         # 模拟缓存存在但强制刷新
         cached_data = '[{"id": 1}]'
         mock_redis_client.get.return_value = cached_data
@@ -98,7 +98,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_api_success(self, collector, mock_redis_client):
-        """测试：从API成功收集球队赛程"""
+        """测试:从API成功收集球队赛程"""
         # 模拟缓存未命中
         mock_redis_client.get.return_value = None
 
@@ -126,7 +126,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_api_error(self, collector, mock_redis_client):
-        """测试：API错误处理"""
+        """测试:API错误处理"""
         mock_redis_client.get.return_value = None
 
         with patch.object(collector, "_fetch_from_api") as mock_fetch:
@@ -139,7 +139,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_collect_all_fixtures(self, collector):
-        """测试：收集所有赛程"""
+        """测试:收集所有赛程"""
         mock_teams = [
             Mock(id=1, name="Team A"),
             Mock(id=2, name="Team B"),
@@ -168,7 +168,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_store_fixtures_in_db(self, collector):
-        """测试：存储赛程到数据库"""
+        """测试:存储赛程到数据库"""
         fixtures_data = [
             {
                 "id": 1,
@@ -194,7 +194,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_store_fixtures_existing_match(self, collector):
-        """测试：存储已存在的比赛"""
+        """测试:存储已存在的比赛"""
         fixtures_data = [{"id": 1, "homeTeam": {"id": 10}}]
 
         # 模拟比赛已存在
@@ -212,7 +212,7 @@ class TestFixturesCollector:
             collector.db_session.commit.assert_not_called()
 
     def test_format_fixture_data(self, collector):
-        """测试：格式化赛程数据"""
+        """测试:格式化赛程数据"""
         raw_fixture = {
             "id": 123,
             "homeTeam": {"id": 1, "name": "Team A"},
@@ -234,7 +234,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_collect_by_date_range(self, collector):
-        """测试：按日期范围收集赛程"""
+        """测试:按日期范围收集赛程"""
         start_date = datetime(2024, 2, 1)
         end_date = datetime(2024, 2, 29)
 
@@ -250,7 +250,7 @@ class TestFixturesCollector:
             mock_fetch.assert_called_once_with(start_date, end_date)
 
     def test_get_cache_key(self, collector):
-        """测试：获取缓存键"""
+        """测试:获取缓存键"""
         if hasattr(collector, "_get_cache_key"):
             key = collector._get_cache_key("team", 123, 30)
             assert "team" in key
@@ -259,7 +259,7 @@ class TestFixturesCollector:
 
     @pytest.mark.asyncio
     async def test_cleanup_old_cache(self, collector, mock_redis_client):
-        """测试：清理旧缓存"""
+        """测试:清理旧缓存"""
         if hasattr(collector, "cleanup_old_cache"):
             with patch.object(collector, "_get_all_cache_keys") as mock_get_keys:
                 mock_get_keys.return_value = [
@@ -279,7 +279,7 @@ class TestFixturesCollectorIntegration:
 
     @pytest.mark.asyncio
     async def test_full_collection_workflow(self):
-        """测试：完整收集工作流"""
+        """测试:完整收集工作流"""
         mock_db = AsyncMock()
         mock_redis = Mock()
         mock_redis.get = AsyncMock(return_value=None)
@@ -323,7 +323,7 @@ class TestFixturesCollectorIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_collection(self):
-        """测试：并发收集"""
+        """测试:并发收集"""
 
         mock_db = AsyncMock()
         mock_redis = Mock()
@@ -344,7 +344,7 @@ class TestFixturesCollectorIntegration:
             assert all(len(r) > 0 for r in results)
 
     def test_error_recovery(self):
-        """测试：错误恢复"""
+        """测试:错误恢复"""
         mock_db = AsyncMock()
         mock_redis = Mock()
 
@@ -361,7 +361,7 @@ class TestFixturesCollectorIntegration:
 
     @pytest.mark.asyncio
     async def test_data_validation(self):
-        """测试：数据验证"""
+        """测试:数据验证"""
         mock_db = AsyncMock()
         mock_redis = Mock()
         mock_redis.get = AsyncMock(return_value=None)
@@ -382,12 +382,12 @@ class TestFixturesCollectorIntegration:
         mock_db.add.assert_not_called()
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not COLLECTORS_AVAILABLE
         assert True  # 表明测试意识到模块不可用

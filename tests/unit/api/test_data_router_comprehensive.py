@@ -1,4 +1,4 @@
-"""""""
+""""""""
 数据API路由全面测试 - Phase 4A实施
 
 严格遵循Issue #81的7项测试规范：
@@ -20,8 +20,8 @@
 - 参数验证和边界条件
 - 错误处理和异常场景
 
-目标：为数据API提供全面的测试覆盖，提升API路由模块的测试覆盖率
-"""""""
+目标:为数据API提供全面的测试覆盖,提升API路由模块的测试覆盖率
+""""""""
 
 from datetime import datetime, timedelta
 
@@ -129,7 +129,7 @@ class TestDataRouterComprehensive:
             try:
                 return TestClient(app)
 except Exception:
-                # 如果TestClient不可用，创建Mock客户端
+                # 如果TestClient不可用,创建Mock客户端
                 mock_client = Mock()
                 mock_client.get = Mock()
                 mock_client.post = Mock()
@@ -194,7 +194,7 @@ except Exception:
     # ==================== 联赛API测试 ====================
 
     def test_get_leagues_success(self, test_client) -> None:
-        """✅ 成功用例：获取联赛列表成功"""
+        """✅ 成功用例:获取联赛列表成功"""
         # Mock响应
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
@@ -224,7 +224,7 @@ except Exception:
             assert "country" in league
 
     def test_get_leagues_with_country_filter(self, test_client) -> None:
-        """✅ 成功用例：按国家筛选联赛"""
+        """✅ 成功用例:按国家筛选联赛"""
         country = "England"
 
         if hasattr(test_client, "get"):
@@ -245,7 +245,7 @@ except Exception:
         assert all(league.get("country") == country for league in response_data)
 
     def test_get_leagues_with_season_filter(self, test_client) -> None:
-        """✅ 成功用例：按赛季筛选联赛"""
+        """✅ 成功用例:按赛季筛选联赛"""
         season = "2024-25"
 
         if hasattr(test_client, "get"):
@@ -266,7 +266,7 @@ except Exception:
         assert all(league.get("season") == season for league in response_data)
 
     def test_get_leagues_with_limit(self, test_client) -> None:
-        """✅ 成功用例：限制联赛返回数量"""
+        """✅ 成功用例:限制联赛返回数量"""
         limit = 5
 
         if hasattr(test_client, "get"):
@@ -282,7 +282,7 @@ except Exception:
         assert len(response_data) <= limit
 
     def test_get_leagues_boundary_values(self, test_client) -> None:
-        """✅ 边界测试：联赛API参数边界值"""
+        """✅ 边界测试:联赛API参数边界值"""
         # 测试最小限制值
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
@@ -302,7 +302,7 @@ except Exception:
         assert response.status_code == 422
 
     def test_get_league_by_id_success(self, test_client, sample_league) -> None:
-        """✅ 成功用例：根据ID获取单个联赛"""
+        """✅ 成功用例:根据ID获取单个联赛"""
         league_id = 1
 
         if hasattr(test_client, "get"):
@@ -323,7 +323,7 @@ except Exception:
         assert "country" in response_data
 
     def test_get_league_not_found(self, test_client) -> None:
-        """✅ 异常用例：联赛不存在"""
+        """✅ 异常用例:联赛不存在"""
         league_id = 99999
 
         if hasattr(test_client, "get"):
@@ -335,7 +335,7 @@ except Exception:
         assert response.status_code == 404
 
     def test_get_league_invalid_id(self, test_client) -> None:
-        """✅ 异常用例：无效联赛ID"""
+        """✅ 异常用例:无效联赛ID"""
         # 使用负数ID
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 422
@@ -346,7 +346,7 @@ except Exception:
     # ==================== 球队API测试 ====================
 
     def test_get_teams_success(self, test_client) -> None:
-        """✅ 成功用例：获取球队列表成功"""
+        """✅ 成功用例:获取球队列表成功"""
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
             test_client.get.return_value.json.return_value = [
@@ -379,7 +379,7 @@ except Exception:
             assert "short_name" in team
 
     def test_get_teams_with_league_filter(self, test_client) -> None:
-        """✅ 成功用例：按联赛筛选球队"""
+        """✅ 成功用例:按联赛筛选球队"""
         league_id = 1
 
         if hasattr(test_client, "get"):
@@ -395,7 +395,7 @@ except Exception:
         assert all(team.get("league_id") == league_id for team in response_data)
 
     def test_get_teams_with_country_filter(self, test_client) -> None:
-        """✅ 成功用例：按国家筛选球队"""
+        """✅ 成功用例:按国家筛选球队"""
         country = "Spain"
 
         if hasattr(test_client, "get"):
@@ -411,7 +411,7 @@ except Exception:
         assert all(team.get("country") == country for team in response_data)
 
     def test_get_teams_with_search(self, test_client) -> None:
-        """✅ 成功用例：搜索球队"""
+        """✅ 成功用例:搜索球队"""
         search_term = "United"
 
         if hasattr(test_client, "get"):
@@ -428,7 +428,7 @@ except Exception:
         assert all(search_term.lower() in team.get("name", "").lower() for team in response_data)
 
     def test_get_teams_boundary_values(self, test_client) -> None:
-        """✅ 边界测试：球队API参数边界值"""
+        """✅ 边界测试:球队API参数边界值"""
         # 测试最小限制值
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
@@ -448,7 +448,7 @@ except Exception:
         assert response.status_code == 422
 
     def test_get_team_by_id_success(self, test_client, sample_team) -> None:
-        """✅ 成功用例：根据ID获取单个球队"""
+        """✅ 成功用例:根据ID获取单个球队"""
         team_id = 1
 
         if hasattr(test_client, "get"):
@@ -468,7 +468,7 @@ except Exception:
         assert "name" in response_data
 
     def test_get_team_statistics_success(self, test_client) -> None:
-        """✅ 成功用例：获取球队统计数据"""
+        """✅ 成功用例:获取球队统计数据"""
         team_id = 1
         season = "2024-25"
 
@@ -511,7 +511,7 @@ except Exception:
         assert response_data["points"] == response_data["wins"] * 3 + response_data["draws"]
 
     def test_get_team_statistics_data_validation(self) -> None:
-        """✅ 数据验证：球队统计数据一致性"""
+        """✅ 数据验证:球队统计数据一致性"""
         # 测试有效的统计数据
         valid_stats = {
             "matches_played": 30,
@@ -536,7 +536,7 @@ except Exception:
     # ==================== 比赛API测试 ====================
 
     def test_get_matches_success(self, test_client) -> None:
-        """✅ 成功用例：获取比赛列表成功"""
+        """✅ 成功用例:获取比赛列表成功"""
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
             test_client.get.return_value.json.return_value = [
@@ -567,7 +567,7 @@ except Exception:
             assert "status" in match
 
     def test_get_matches_with_league_filter(self, test_client) -> None:
-        """✅ 成功用例：按联赛筛选比赛"""
+        """✅ 成功用例:按联赛筛选比赛"""
         league_id = 1
 
         if hasattr(test_client, "get"):
@@ -588,7 +588,7 @@ except Exception:
         assert all(match.get("league_id") == league_id for match in response_data)
 
     def test_get_matches_with_team_filter(self, test_client) -> None:
-        """✅ 成功用例：按球队筛选比赛"""
+        """✅ 成功用例:按球队筛选比赛"""
         team_id = 1
 
         if hasattr(test_client, "get"):
@@ -608,7 +608,7 @@ except Exception:
         )
 
     def test_get_matches_with_date_range(self, test_client) -> None:
-        """✅ 成功用例：按日期范围筛选比赛"""
+        """✅ 成功用例:按日期范围筛选比赛"""
         date_from = "2024-01-01"
         date_to = "2024-01-31"
 
@@ -625,7 +625,7 @@ except Exception:
         # 验证日期范围筛选逻辑
 
     def test_get_matches_with_status_filter(self, test_client) -> None:
-        """✅ 成功用例：按状态筛选比赛"""
+        """✅ 成功用例:按状态筛选比赛"""
         status = "live"
 
         if hasattr(test_client, "get"):
@@ -639,7 +639,7 @@ except Exception:
         assert all(match.get("status") == status for match in response_data)
 
     def test_get_match_by_id_success(self, test_client, sample_match) -> None:
-        """✅ 成功用例：根据ID获取单场比赛"""
+        """✅ 成功用例:根据ID获取单场比赛"""
         match_id = 12345
 
         if hasattr(test_client, "get"):
@@ -662,7 +662,7 @@ except Exception:
         assert response_data["id"] == match_id
 
     def test_get_match_statistics_success(self, test_client) -> None:
-        """✅ 成功用例：获取比赛统计数据"""
+        """✅ 成功用例:获取比赛统计数据"""
         match_id = 12345
 
         if hasattr(test_client, "get"):
@@ -691,7 +691,7 @@ except Exception:
         assert abs(possession_home + possession_away - 100.0) < 0.1  # 控球率约等于100%
 
     def test_match_status_validation(self) -> None:
-        """✅ 数据验证：比赛状态枚举"""
+        """✅ 数据验证:比赛状态枚举"""
         valid_statuses = ["pending", "live", "finished", "cancelled"]
 
         # 测试所有有效状态
@@ -705,7 +705,7 @@ except Exception:
     # ==================== 赔率API测试 ====================
 
     def test_get_odds_success(self, test_client) -> None:
-        """✅ 成功用例：获取赔率数据成功"""
+        """✅ 成功用例:获取赔率数据成功"""
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
             test_client.get.return_value.json.return_value = [
@@ -736,7 +736,7 @@ except Exception:
             assert "away_win" in odds
 
     def test_get_odds_with_match_filter(self, test_client) -> None:
-        """✅ 成功用例：按比赛筛选赔率"""
+        """✅ 成功用例:按比赛筛选赔率"""
         match_id = 12345
 
         if hasattr(test_client, "get"):
@@ -752,7 +752,7 @@ except Exception:
         assert all(odds.get("match_id") == match_id for odds in response_data)
 
     def test_get_odds_with_bookmaker_filter(self, test_client) -> None:
-        """✅ 成功用例：按博彩公司筛选赔率"""
+        """✅ 成功用例:按博彩公司筛选赔率"""
         bookmaker = "Bet365"
 
         if hasattr(test_client, "get"):
@@ -768,7 +768,7 @@ except Exception:
         assert all(odds.get("bookmaker") == bookmaker for odds in response_data)
 
     def test_get_odds_boundary_values(self, test_client) -> None:
-        """✅ 边界测试：赔率API参数边界值"""
+        """✅ 边界测试:赔率API参数边界值"""
         # 测试最小限制值
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
@@ -788,7 +788,7 @@ except Exception:
         assert response.status_code == 422
 
     def test_get_match_odds_success(self, test_client) -> None:
-        """✅ 成功用例：获取指定比赛的所有赔率"""
+        """✅ 成功用例:获取指定比赛的所有赔率"""
         match_id = 12345
 
         if hasattr(test_client, "get"):
@@ -820,7 +820,7 @@ except Exception:
         assert all(odds.get("match_id") == match_id for odds in response_data)
 
     def test_odds_value_validation(self) -> None:
-        """✅ 数据验证：赔率值合理性"""
+        """✅ 数据验证:赔率值合理性"""
         # 测试有效的赔率值
         valid_odds = {"home_win": 1.85, "draw": 3.20, "away_win": 4.50}
 
@@ -833,7 +833,7 @@ except Exception:
     # ==================== 性能和并发测试 ====================
 
     def test_concurrent_data_requests(self, test_client) -> None:
-        """✅ 成功用例：并发数据请求处理"""
+        """✅ 成功用例:并发数据请求处理"""
 
         async def make_request(endpoint):
             if hasattr(test_client, "get"):
@@ -855,7 +855,7 @@ except Exception:
         assert all(results)
 
     def test_data_response_time_performance(self, test_client) -> None:
-        """✅ 性能测试：数据API响应时间"""
+        """✅ 性能测试:数据API响应时间"""
         import time
 
         start_time = time.time()
@@ -874,7 +874,7 @@ except Exception:
         assert response.status_code == 200
 
     def test_large_data_set_handling(self, test_client) -> None:
-        """✅ 性能测试：大数据集处理"""
+        """✅ 性能测试:大数据集处理"""
         # 模拟返回大量数据的请求
         if hasattr(test_client, "get"):
             # 创建大量Mock数据
@@ -891,14 +891,14 @@ except Exception:
         end_time = time.time()
         response_time = end_time - start_time
 
-        # 即使是大数据集，响应时间也应该合理
+        # 即使是大数据集,响应时间也应该合理
         assert response_time < 2.0  # 2秒内响应
         assert response.status_code == 200
 
     # ==================== 边界条件和特殊场景测试 ====================
 
     def test_empty_database_response(self, test_client) -> None:
-        """✅ 边界测试：空数据库响应"""
+        """✅ 边界测试:空数据库响应"""
         # 模拟数据库为空的情况
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
@@ -912,7 +912,7 @@ except Exception:
         assert len(response_data) == 0
 
     def test_special_characters_in_names(self, test_client) -> None:
-        """✅ 边界测试：名称包含特殊字符"""
+        """✅ 边界测试:名称包含特殊字符"""
         # 模拟包含特殊字符的球队/联赛名称
         special_names = [
             "FC Barcelona",
@@ -931,7 +931,7 @@ except Exception:
             assert response.status_code in [200, 422]
 
     def test_date_format_validation(self, test_client) -> None:
-        """✅ 边界测试：日期格式验证"""
+        """✅ 边界测试:日期格式验证"""
         # 测试各种日期格式
         date_formats = ["2024-01-15", "2024-01-15T10:00:00Z", "2024-01-15 10:00:00"]
 
@@ -943,7 +943,7 @@ except Exception:
             assert response.status_code in [200, 422]
 
     def test_extremely_large_ids(self, test_client) -> None:
-        """✅ 边界测试：极大ID值"""
+        """✅ 边界测试:极大ID值"""
         large_ids = [999999999, 18446744073709551615]  # 最大64位整数
 
         for large_id in large_ids:
@@ -954,7 +954,7 @@ except Exception:
             assert response.status_code in [404, 422]
 
     def test_unicode_support(self, test_client) -> None:
-        """✅ 边界测试：Unicode字符支持"""
+        """✅ 边界测试:Unicode字符支持"""
         unicode_names = ["切尔西", "皇家马德里", "Бавария", "بارcelona", " München"]
 
         for unicode_name in unicode_names:
@@ -968,7 +968,7 @@ except Exception:
     # ==================== 数据完整性和一致性测试 ====================
 
     def test_team_league_relationship_consistency(self) -> None:
-        """✅ 数据完整性：球队-联赛关系一致性"""
+        """✅ 数据完整性:球队-联赛关系一致性"""
         # 验证球队所属联赛ID存在且有效
         team_data = {"id": 1, "name": "Test Team", "league_id": 1}
 
@@ -978,7 +978,7 @@ except Exception:
         assert team_data["league_id"] == league_data["id"]
 
     def test_match_team_relationship_consistency(self) -> None:
-        """✅ 数据完整性：比赛-球队关系一致性"""
+        """✅ 数据完整性:比赛-球队关系一致性"""
         # 验证比赛中的球队ID存在且有效
         match_data = {
             "id": 1,
@@ -993,7 +993,7 @@ except Exception:
         assert match_data["home_team_name"] != match_data["away_team_name"]
 
     def test_odds_match_relationship_consistency(self) -> None:
-        """✅ 数据完整性：赔率-比赛关系一致性"""
+        """✅ 数据完整性:赔率-比赛关系一致性"""
         odds_data = {"id": 1, "match_id": 12345, "bookmaker": "Test Bookmaker"}
 
         # 验证赔率关联的比赛ID
@@ -1002,7 +1002,7 @@ except Exception:
         assert len(odds_data["bookmaker"]) > 0
 
     def test_statistics_data_ranges(self) -> None:
-        """✅ 数据完整性：统计数据范围验证"""
+        """✅ 数据完整性:统计数据范围验证"""
         # 测试比赛统计数据范围
         match_stats = {
             "possession_home": 55.5,
@@ -1022,16 +1022,16 @@ except Exception:
         assert all(value >= 0 for value in match_stats.values() if isinstance(value, (int, float)))
 
     def test_points_calculation_consistency(self) -> None:
-        """✅ 数据一致性：积分计算验证"""
+        """✅ 数据一致性:积分计算验证"""
         # 测试积分计算逻辑
         team_stats = {"wins": 18, "draws": 8, "losses": 7, "points": 62}
 
-        # 验证积分计算（胜3分，平1分）
+        # 验证积分计算（胜3分,平1分）
         expected_points = team_stats["wins"] * 3 + team_stats["draws"]
         assert team_stats["points"] == expected_points
 
     def test_odds_probability_relationship(self) -> None:
-        """✅ 数据一致性：赔率与概率关系"""
+        """✅ 数据一致性:赔率与概率关系"""
         # 简化的赔率到概率转换（不包含博彩公司利润）
         odds = {"home_win": 2.0, "draw": 3.2, "away_win": 4.5}
 
@@ -1041,7 +1041,7 @@ except Exception:
         away_prob = 1 / odds["away_win"]
         total_prob = home_prob + draw_prob + away_prob
 
-        # 验证概率关系（应该大于1，因为包含博彩公司利润）
+        # 验证概率关系（应该大于1,因为包含博彩公司利润）
         assert total_prob > 1.0
         assert total_prob < 2.0  # 通常不会超过2
 

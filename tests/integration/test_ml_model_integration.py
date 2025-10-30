@@ -49,10 +49,10 @@ class TestMLModelIntegrationTests:
             yield mock_redis
 
     def test_complete_workflow_ml_model_integration_tests(self, client, db_session, redis_client):
-        """测试完整工作流：ML Model Integration Tests"""
+        """测试完整工作流:ML Model Integration Tests"""
         # TODO: 实现具体的集成测试逻辑
 
-        # 示例：测试API端点
+        # 示例:测试API端点
         if hasattr(client, "get"):
             # 健康检查
             response = client.get("/api/health")
@@ -81,7 +81,7 @@ class TestMLModelIntegrationTests:
         assert True
 
     def test_error_handling_ml_model_integration_tests(self, client):
-        """测试错误处理：ML Model Integration Tests"""
+        """测试错误处理:ML Model Integration Tests"""
         # TODO: 测试各种错误场景
 
         error_scenarios = [
@@ -98,7 +98,7 @@ class TestMLModelIntegrationTests:
         assert True
 
     def test_performance_ml_model_integration_tests(self, client):
-        """测试性能：ML Model Integration Tests"""
+        """测试性能:ML Model Integration Tests"""
         # TODO: 测试性能指标
 
         start_time = datetime.now()
@@ -107,17 +107,17 @@ class TestMLModelIntegrationTests:
         for i in range(10):
             if hasattr(client, "get"):
                 client.get(f"/api/test/{i}")
-                # 不强制要求成功，主要测试性能
+                # 不强制要求成功,主要测试性能
 
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
 
-        # 性能断言（示例：10次调用在5秒内完成）
+        # 性能断言（示例:10次调用在5秒内完成）
         assert duration < 5.0, f"性能测试失败: 耗时{duration:.2f}秒"
 
     @pytest.mark.asyncio
     async def test_async_operations_ml_model_integration_tests(self):
-        """测试异步操作：ML Model Integration Tests"""
+        """测试异步操作:ML Model Integration Tests"""
         # TODO: 测试异步操作
 
         async def sample_async_operation():
@@ -125,10 +125,10 @@ class TestMLModelIntegrationTests:
             return {"status": "completed"}
 
         result = await sample_async_operation()
-        assert result["status"]       == "completed"
+        assert result["status"]        == "completed"
 
     def test_data_consistency_ml_model_integration_tests(self, db_session, redis_client):
-        """测试数据一致性：ML Model Integration Tests"""
+        """测试数据一致性:ML Model Integration Tests"""
         # TODO: 测试数据一致性
 
         # 模拟数据一致性检查
@@ -144,7 +144,7 @@ class TestMLModelIntegrationTests:
         assert test_data["status"] is not None
 
     def test_security_ml_model_integration_tests(self, client):
-        """测试安全性：ML Model Integration Tests"""
+        """测试安全性:ML Model Integration Tests"""
         # TODO: 测试安全相关功能
 
         security_tests = [
@@ -161,5 +161,5 @@ class TestMLModelIntegrationTests:
         assert True
 
 
-if __name__       == "__main__":
+if __name__        == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

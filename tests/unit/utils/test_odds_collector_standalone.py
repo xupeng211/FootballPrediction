@@ -254,7 +254,7 @@ class TestOddsCollector:
             "average": {"home": 2.0, "draw": 3.2, "away": 3.8},
         }
 
-        # 这个方法在Mock中是空的，只测试调用不报错
+        # 这个方法在Mock中是空的,只测试调用不报错
         await odds_collector._save_odds_to_db(123, odds_data)
         # 没有异常就算通过
 
@@ -306,7 +306,7 @@ class TestOddsCollectorHelperMethods:
         for match_id in match_ids:
             # 测试方法接受不同的ID格式
             assert callable(odds_collector.collect_match_odds)
-            # 这里不调用方法，只测试参数接受
+            # 这里不调用方法,只测试参数接受
 
     def test_odds_data_structure(self, odds_collector):
         """测试赔率数据结构"""

@@ -33,9 +33,9 @@ from src.adapters.football import FootballDataAdapter
         # Mock方法测试
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
-"""""""
+""""""""
 足球数据适配器测试 - 简化版
-"""""""
+""""""""
 class MockFootballDataAdapter(Adapter):
     """Mock足球数据适配器"""
     def __init__(self, _config=None):

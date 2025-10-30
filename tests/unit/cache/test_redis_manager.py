@@ -74,7 +74,7 @@ def mock_get_redis_manager():
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免复杂的依赖问题
-# 真实模块存在但依赖复杂，在测试环境中使用Mock是最佳实践
+# 真实模块存在但依赖复杂,在测试环境中使用Mock是最佳实践
 IMPORTS_AVAILABLE = True
 redis_manager_class = MockRedisManager
 key_manager_class = MockCacheKeyManager
@@ -84,7 +84,7 @@ delete_cache_func = mock_delete_cache
 exists_cache_func = mock_exists_cache
 ttl_cache_func = mock_ttl_cache
 get_redis_manager_func = mock_get_redis_manager
-print("智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
+print("智能Mock兼容修复模式:使用Mock服务确保测试稳定性")
 
 
 @pytest.mark.unit
@@ -92,7 +92,7 @@ class TestRedisManager:
     """Redis管理器测试"""
 
     def test_imports(self):
-        """测试：模块导入"""
+        """测试:模块导入"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -107,19 +107,19 @@ class TestRedisManager:
         assert callable(ttl_cache_func)
 
     def test_get_redis_manager(self):
-        """测试：获取Redis管理器"""
+        """测试:获取Redis管理器"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
         manager1 = get_redis_manager_func()
         manager2 = get_redis_manager_func()
 
-        # 对于Mock实现，每次创建新实例是可以接受的
+        # 对于Mock实现,每次创建新实例是可以接受的
         assert isinstance(manager1, redis_manager_class)
         assert isinstance(manager2, redis_manager_class)
 
     def test_redis_manager_initialization(self):
-        """测试：Redis管理器初始化"""
+        """测试:Redis管理器初始化"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -133,7 +133,7 @@ class TestRedisManager:
         assert manager.redis_url == custom_url
 
     def test_redis_manager_attributes(self):
-        """测试：Redis管理器属性"""
+        """测试:Redis管理器属性"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -147,7 +147,7 @@ class TestRedisManager:
         assert hasattr(manager, "logger")
 
     def test_get_key_manager(self):
-        """测试：获取键管理器"""
+        """测试:获取键管理器"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -158,7 +158,7 @@ class TestRedisManager:
         assert key_manager is manager.key_manager
 
     def test_sync_convenience_functions_exist(self):
-        """测试：同步便捷函数存在"""
+        """测试:同步便捷函数存在"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -174,7 +174,7 @@ class TestCacheKeyManager:
     """缓存键管理器测试"""
 
     def test_cache_key_manager_import(self):
-        """测试：缓存键管理器导入"""
+        """测试:缓存键管理器导入"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -182,7 +182,7 @@ class TestCacheKeyManager:
         assert manager is not None
 
     def test_cache_key_manager_methods(self):
-        """测试：缓存键管理器方法"""
+        """测试:缓存键管理器方法"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -197,7 +197,7 @@ class TestCacheConvenienceFunctions:
     """缓存便捷函数测试"""
 
     def test_get_cache_function(self):
-        """测试：获取缓存函数"""
+        """测试:获取缓存函数"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -207,7 +207,7 @@ class TestCacheConvenienceFunctions:
         assert result == expected
 
     def test_set_cache_function(self):
-        """测试：设置缓存函数"""
+        """测试:设置缓存函数"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -215,7 +215,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
 
     def test_set_cache_with_ttl(self):
-        """测试：设置带TTL的缓存函数"""
+        """测试:设置带TTL的缓存函数"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -223,7 +223,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
 
     def test_delete_cache_function(self):
-        """测试：删除缓存函数"""
+        """测试:删除缓存函数"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -231,7 +231,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
 
     def test_exists_cache_function(self):
-        """测试：检查缓存存在函数"""
+        """测试:检查缓存存在函数"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -239,7 +239,7 @@ class TestCacheConvenienceFunctions:
         assert result is True
 
     def test_ttl_cache_function(self):
-        """测试：获取TTL函数"""
+        """测试:获取TTL函数"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -247,20 +247,20 @@ class TestCacheConvenienceFunctions:
         assert result == 3600
 
     def test_ttl_cache_not_exists(self):
-        """测试：获取不存在键的TTL"""
+        """测试:获取不存在键的TTL"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现总是返回3600，这在测试环境中是可以接受的
+        # Mock实现总是返回3600,这在测试环境中是可以接受的
         result = ttl_cache_func("non_existent_key")
         assert result == 3600
 
     def test_ttl_cache_error_handling(self):
-        """测试：TTL错误处理"""
+        """测试:TTL错误处理"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现不会抛出错误，这在测试环境中是可以接受的
+        # Mock实现不会抛出错误,这在测试环境中是可以接受的
         result = ttl_cache_func("test_key")
         assert result == 3600
 
@@ -269,20 +269,20 @@ class TestAsyncCacheFunctions:
     """异步缓存函数测试"""
 
     def test_async_cache_functions_import(self):
-        """测试：异步缓存函数导入"""
+        """测试:异步缓存函数导入"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
         # Mock实现中，我们不需要真实的异步函数
         # 这里只验证导入是否正常工作
-        assert True  # 简化的测试，在Mock环境中不需要真实异步函数
+        assert True  # 简化的测试,在Mock环境中不需要真实异步函数
 
     def test_async_functions_exist(self):
-        """测试：异步函数存在"""
+        """测试:异步函数存在"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现中，我们不需要真实的异步函数
+        # Mock实现中,我们不需要真实的异步函数
         # 这里只验证测试结构是否正常
         assert True
 
@@ -291,27 +291,27 @@ class TestModuleMetadata:
     """模块元数据测试"""
 
     def test_module_version(self):
-        """测试：模块版本信息"""
+        """测试:模块版本信息"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现中没有版本信息，这在测试环境中是可以接受的
+        # Mock实现中没有版本信息,这在测试环境中是可以接受的
         assert True
 
     def test_module_description(self):
-        """测试：模块描述"""
+        """测试:模块描述"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现中没有描述信息，这在测试环境中是可以接受的
+        # Mock实现中没有描述信息,这在测试环境中是可以接受的
         assert True
 
     def test_module_exports(self):
-        """测试：模块导出"""
+        """测试:模块导出"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现中没有__all__，这在测试环境中是可以接受的
+        # Mock实现中没有__all__,这在测试环境中是可以接受的
         assert True
 
 
@@ -319,25 +319,25 @@ class TestErrorHandling:
     """错误处理测试"""
 
     def test_redis_unavailable_handling(self):
-        """测试：Redis不可用时的处理"""
+        """测试:Redis不可用时的处理"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现不会抛出错误，这在测试环境中是可以接受的
+        # Mock实现不会抛出错误,这在测试环境中是可以接受的
         result = get_cache_func("test_key")
         assert result is not None
 
     def test_serialization_error_handling(self):
-        """测试：序列化错误处理"""
+        """测试:序列化错误处理"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现可以处理任何对象，不会抛出序列化错误
+        # Mock实现可以处理任何对象,不会抛出序列化错误
         result = set_cache_func("test_key", object())
         assert result is True
 
     def test_connection_error_handling(self):
-        """测试：连接错误处理"""
+        """测试:连接错误处理"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -350,7 +350,7 @@ class TestConfiguration:
     """配置测试"""
 
     def test_default_redis_url(self):
-        """测试：默认Redis URL"""
+        """测试:默认Redis URL"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -358,7 +358,7 @@ class TestConfiguration:
         assert manager.redis_url == "redis://localhost:6379"
 
     def test_custom_redis_url(self):
-        """测试：自定义Redis URL"""
+        """测试:自定义Redis URL"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
@@ -374,10 +374,10 @@ class TestConfiguration:
             assert manager.redis_url == url
 
     def test_environment_redis_url(self):
-        """测试：环境变量Redis URL"""
+        """测试:环境变量Redis URL"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # Mock实现不依赖环境变量，这在测试环境中是可以接受的
+        # Mock实现不依赖环境变量,这在测试环境中是可以接受的
         manager = redis_manager_class()
         assert manager.redis_url is not None

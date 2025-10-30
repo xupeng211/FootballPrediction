@@ -1,17 +1,17 @@
-"""""""
+""""""""
 Phase 4A Week 2 - 缓存服务综合测试套件
 
 Cache Service Comprehensive Test Suite
 
-这个测试文件提供缓存服务的全面测试覆盖，包括：
+这个测试文件提供缓存服务的全面测试覆盖,包括：
 - Redis缓存操作测试
 - 缓存策略和过期机制测试
 - 缓存性能和并发测试
 - 缓存一致性和失效测试
 - 分布式缓存和集群测试
 
-测试覆盖率目标：>=95%
-"""""""
+测试覆盖率目标:>=95%
+""""""""
 
 import asyncio
 import time
@@ -20,7 +20,7 @@ from enum import Enum
 
 import pytest
 
-# 导入实际缓存模块，如果失败则使用Mock
+# 导入实际缓存模块,如果失败则使用Mock
 try:
     from src.services.processing.caching.base.base_cache import (
         BaseCache,
@@ -604,7 +604,7 @@ class TestCacheStrategies:
         async def load_from_database(key):
             return mock_db.get(key)
 
-        # Cache-Aside: 先查缓存，没有再查数据库
+        # Cache-Aside: 先查缓存,没有再查数据库
         key = "user:123"
 
         # 首次访问（缓存未命中）

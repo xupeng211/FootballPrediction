@@ -1,9 +1,9 @@
-"""""""
+""""""""
 服务层综合测试 - 重构版本
 Service Layer Comprehensive Tests - Refactored
 
-基于真实业务逻辑的服务层测试，覆盖核心功能和边界情况。
-"""""""
+基于真实业务逻辑的服务层测试,覆盖核心功能和边界情况。
+""""""""
 
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -142,7 +142,7 @@ class TestContentAnalysisService:
             content_type="text",
             data={
                 "title": "足球比赛分析",
-                "text": "这是一场精彩的足球比赛，双方表现出色。",
+                "text": "这是一场精彩的足球比赛,双方表现出色。",
                 "author": "analyst001",
                 "category": "sports",
             },
@@ -204,7 +204,7 @@ class TestContentAnalysisService:
         assert sample_content.content_type == "text"
         assert "足球比赛分析" in sample_content.data["title"]
 
-        # 由于实际分析方法可能不存在，我们测试基本的内容处理能力
+        # 由于实际分析方法可能不存在,我们测试基本的内容处理能力
         content_text = sample_content.data.get("text", "")
         assert len(content_text) > 0
         assert "足球" in content_text
@@ -456,7 +456,7 @@ class TestServiceManager:
     @pytest.mark.asyncio
     async def test_initialize_with_failure(self, service_manager):
         """测试初始化过程中的失败处理"""
-        # 创建模拟服务，确保有 name 属性
+        # 创建模拟服务,确保有 name 属性
         service1 = Mock()
         service1.name = "service1"
         service1.initialize = AsyncMock(return_value=True)
@@ -474,7 +474,7 @@ class TestServiceManager:
         result = await service_manager.initialize_all()
 
         # 即使有服务失败，其他服务仍应该被初始化
-        assert result is False  # 由于有失败，整体返回False
+        assert result is False  # 由于有失败,整体返回False
         service1.initialize.assert_called_once()
         service2.initialize.assert_called_once()
         service3.initialize.assert_called_once()
@@ -510,7 +510,7 @@ class TestServiceManager:
         service_manager.register_service("service1", service1)
         service_manager.register_service("service2", service2)
 
-        # 即使有服务关闭失败，也不应该抛出异常
+        # 即使有服务关闭失败,也不应该抛出异常
         await service_manager.shutdown_all()
 
         service1.shutdown.assert_called_once()
@@ -572,7 +572,7 @@ class TestServiceIntegration:
         await services["user"].initialize()
         await services["content"].initialize()
 
-        # 模拟用户行为：创建用户画像 -> 分析内容 -> 审计记录
+        # 模拟用户行为:创建用户画像 -> 分析内容 -> 审计记录
         user = User("user_001", "testuser")
         Content("content_001", "text", {"text": "足球比赛分析"})
 
@@ -595,7 +595,7 @@ class TestServiceIntegration:
         """测试服务故障传播处理"""
         manager, services = integrated_services
 
-        # 移除不兼容的服务，创建新的管理器只包含兼容服务
+        # 移除不兼容的服务,创建新的管理器只包含兼容服务
         test_manager = ServiceManager()
         test_manager.register_service("user", services["user"])
         test_manager.register_service("content", services["content"])
@@ -609,7 +609,7 @@ class TestServiceIntegration:
 
         # 初始化应该处理失败而不崩溃
         result = await test_manager.initialize_all()
-        assert result is False  # 由于有失败，返回False
+        assert result is False  # 由于有失败,返回False
 
         # 其他服务应该仍然可用
         assert services["audit"] is not None
@@ -696,7 +696,7 @@ class TestServiceIntegration:
         """测试错误边界隔离"""
         manager, services = integrated_services
 
-        # 在一个服务中引发错误，不应该影响其他服务
+        # 在一个服务中引发错误,不应该影响其他服务
         try:
             # 尝试创建无效内容
             Content("", "", {})

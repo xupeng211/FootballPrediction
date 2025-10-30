@@ -26,7 +26,7 @@ Mock策略优化 - Phase 4B高优先级任务
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
 
-目标：优化Phase 4B测试的Mock策略，提升测试执行效率
+目标:优化Phase 4B测试的Mock策略,提升测试执行效率
 """
 
 import asyncio

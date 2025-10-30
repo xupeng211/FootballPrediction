@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
 
-"""""""
+""""""""
 数据收集核心测试（修复版）
 Tests for Data Collection Core (Fixed Version)
 
 测试src.tasks.data_collection_core模块的数据收集功能
-"""""""
+""""""""
 
 
 import pytest
@@ -24,7 +24,7 @@ except ImportError:
     celery_app = None
     logger = None
 
-# 如果模块不可用，创建模拟
+# 如果模块不可用,创建模拟
 if not DATA_COLLECTION_CORE_AVAILABLE:
     celery_app = Mock()
     logger = Mock()
@@ -40,7 +40,7 @@ class TestDataCollectionTask:
 
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     def test_task_creation(self, mock_orchestrator_class):
-        """测试：任务创建"""
+        """测试:任务创建"""
         mock_orchestrator = Mock()
         mock_orchestrator_class.return_value = mock_orchestrator
 
@@ -53,7 +53,7 @@ class TestDataCollectionTask:
 
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     def test_set_database_manager(self, mock_orchestrator_class):
-        """测试：设置数据库管理器"""
+        """测试:设置数据库管理器"""
         mock_orchestrator = Mock()
         mock_orchestrator.collectors = {"collector1": Mock(), "collector2": Mock()}
         mock_orchestrator_class.return_value = mock_orchestrator
@@ -75,7 +75,7 @@ class TestDataCollectionTask:
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     @patch("src.tasks.data_collection_core.logger")
     def test_on_failure(self, mock_logger):
-        """测试：任务失败回调"""
+        """测试:任务失败回调"""
         task = DataCollectionTask()
 
         exc = Exception("Test error")
@@ -92,7 +92,7 @@ class TestDataCollectionTask:
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     @patch("src.tasks.data_collection_core.logger")
     def test_on_success(self, mock_logger):
-        """测试：任务成功回调"""
+        """测试:任务成功回调"""
         task = DataCollectionTask()
 
         retval = {"status": "success"}
@@ -113,15 +113,15 @@ class TestDataCollectionCoreModule:
     """数据收集核心模块测试"""
 
     def test_celery_app_exists(self):
-        """测试：Celery应用存在"""
+        """测试:Celery应用存在"""
         assert celery_app is not None
 
     def test_logger_exists(self):
-        """测试：日志记录器存在"""
+        """测试:日志记录器存在"""
         assert logger is not None
 
     def test_module_constants(self):
-        """测试：模块常量"""
+        """测试:模块常量"""
         import src.tasks.data_collection_core as module
 
         # 验证模块属性
@@ -145,14 +145,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DATA_COLLECTION_CORE_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if DATA_COLLECTION_CORE_AVAILABLE:
 from src.tasks.data_collection_core import (
             DataCollectionTask,
@@ -166,7 +166,7 @@ from src.tasks.data_collection_core import (
 
 
 def test_celery_app_configuration():
-    """测试：Celery应用配置"""
+    """测试:Celery应用配置"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         # 验证Celery应用配置
         assert celery_app.main == "data_collection"
@@ -174,7 +174,7 @@ def test_celery_app_configuration():
 
 @pytest.mark.asyncio
 async def test_async_usage():
-    """测试：异步使用场景"""
+    """测试:异步使用场景"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         with patch("src.tasks.data_collection_core.DataCollectionOrchestrator"):
             task = DataCollectionTask()
@@ -197,7 +197,7 @@ class TestDataCollectionIntegration:
     @patch("src.tasks.data_collection_core.DatabaseManager")
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     def test_collection_workflow(self, mock_db_manager_class, mock_orchestrator_class):
-        """测试：收集工作流"""
+        """测试:收集工作流"""
         # 设置模拟
         mock_db_manager = Mock()
         mock_db_manager_class.return_value = mock_db_manager
@@ -226,7 +226,7 @@ class TestDataCollectionIntegration:
 # 测试模拟场景
 @pytest.mark.asyncio
 async def test_mock_scenarios():
-    """测试：模拟场景"""
+    """测试:模拟场景"""
     # 模拟Celery任务执行
     mock_task = Mock()
     mock_task.id = "test_task_789"
@@ -236,15 +236,15 @@ async def test_mock_scenarios():
     # 模拟任务执行
     try:
         _result = {"collected": 10, "status": "success"}
-        # 在真实环境中，这里会调用on_success
+        # 在真实环境中,这里会调用on_success
         assert _result["status"] == "success"
     except Exception:
-        # 在真实环境中，这里会调用on_failure
+        # 在真实环境中,这里会调用on_failure
         pass
 
 
 def test_error_handling():
-    """测试：错误处理"""
+    """测试:错误处理"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         with patch("src.tasks.data_collection_core.logger") as mock_logger:
             task = DataCollectionTask()
@@ -261,7 +261,7 @@ def test_error_handling():
 
 
 def test_performance_metrics():
-    """测试：性能指标"""
+    """测试:性能指标"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         import time
 

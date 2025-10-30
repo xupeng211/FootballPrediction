@@ -1,9 +1,9 @@
-"""""""
+""""""""
 时间工具测试
 Tests for Time Utils
 
 测试src.utils.time_utils模块的时间处理功能
-"""""""
+""""""""
 
 from datetime import datetime, timedelta, timezone
 
@@ -26,7 +26,7 @@ class TestTimeUtilsFormatting:
     """时间工具格式化测试"""
 
     def test_format_datetime(self):
-        """测试：格式化日期时间"""
+        """测试:格式化日期时间"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         formatted = TimeUtils.format_datetime(dt)
         assert isinstance(formatted, str)
@@ -35,42 +35,42 @@ class TestTimeUtilsFormatting:
         assert "12:30:45" in formatted
 
     def test_format_datetime_with_format(self):
-        """测试：格式化日期时间（自定义格式）"""
+        """测试:格式化日期时间（自定义格式）"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         formatted = TimeUtils.format_datetime(dt, "%Y-%m-%d")
         assert formatted == "2023-01-01"
 
     def test_format_date(self):
-        """测试：格式化日期"""
+        """测试:格式化日期"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         formatted = TimeUtils.format_datetime(dt, "%Y-%m-%d")
         assert formatted == "2023-01-01"
 
     def test_format_time(self):
-        """测试：格式化时间"""
+        """测试:格式化时间"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         formatted = TimeUtils.format_datetime(dt, "%H:%M:%S")
         assert formatted == "12:30:45"
 
     def test_format_datetime_none(self):
-        """测试：格式化None日期时间"""
-        # 根据实际实现，format_datetime不能处理None，会抛出AttributeError
+        """测试:格式化None日期时间"""
+        # 根据实际实现，format_datetime不能处理None,会抛出AttributeError
         # 这里测试能够优雅地处理异常情况
         try:
             TimeUtils.format_datetime(None)
             assert False, "应该抛出AttributeError"
         except AttributeError:
-            # 期望的行为，能够正确处理None输入
+            # 期望的行为,能够正确处理None输入
             assert True
 
     def test_format_datetime_timezone(self):
-        """测试：格式化时区日期时间"""
+        """测试:格式化时区日期时间"""
         dt = datetime(2023, 1, 1, 12, 30, 45, tzinfo=timezone.utc)
         formatted = TimeUtils.format_datetime(dt)
         assert isinstance(formatted, str)
 
     def test_format_datetime_microseconds(self):
-        """测试：格式化带微秒的日期时间"""
+        """测试:格式化带微秒的日期时间"""
         dt = datetime(2023, 1, 1, 12, 30, 45, 123456)
         formatted = TimeUtils.format_datetime(dt)
         # 可能包含或忽略微秒
@@ -82,7 +82,7 @@ class TestTimeUtilsParsing:
     """时间工具解析测试"""
 
     def test_parse_datetime(self):
-        """测试：解析日期时间字符串"""
+        """测试:解析日期时间字符串"""
         dt_str = "2023-01-01 12:30:45"
         dt = TimeUtils.parse_datetime(dt_str)
         assert dt.year == 2023
@@ -93,7 +93,7 @@ class TestTimeUtilsParsing:
         assert dt.second == 45
 
     def test_parse_date(self):
-        """测试：解析日期字符串"""
+        """测试:解析日期字符串"""
         date_str = "2023-01-01"
         dt = TimeUtils.parse_date(date_str)
         assert dt.year == 2023
@@ -101,7 +101,7 @@ class TestTimeUtilsParsing:
         assert dt.day == 1
 
     def test_parse_time(self):
-        """测试：解析时间字符串"""
+        """测试:解析时间字符串"""
         time_str = "12:30:45"
         dt = TimeUtils.parse_time(time_str)
         assert dt.hour == 12
@@ -109,7 +109,7 @@ class TestTimeUtilsParsing:
         assert dt.second == 45
 
     def test_parse_invalid_datetime(self):
-        """测试：解析无效日期时间"""
+        """测试:解析无效日期时间"""
         invalid_str = "invalid-date"
         try:
             TimeUtils.parse_datetime(invalid_str)
@@ -118,14 +118,14 @@ class TestTimeUtilsParsing:
             pass
 
     def test_parse_datetime_iso_format(self):
-        """测试：解析ISO格式日期时间"""
+        """测试:解析ISO格式日期时间"""
         iso_str = "2023-01-01T12:30:45"
         dt = TimeUtils.parse_datetime(iso_str)
         assert dt.year == 2023
         assert dt.month == 1
 
     def test_parse_datetime_custom_format(self):
-        """测试：解析自定义格式日期时间"""
+        """测试:解析自定义格式日期时间"""
         dt_str = "01/01/2023 12:30"
         # 如果支持自定义格式解析
         if hasattr(TimeUtils, "parse_datetime_format"):
@@ -140,7 +140,7 @@ class TestTimeUtilsOperations:
     """时间工具操作测试"""
 
     def test_add_days(self):
-        """测试：添加天数"""
+        """测试:添加天数"""
         dt = datetime(2023, 1, 1)
         _result = TimeUtils.add_days(dt, 7)
         assert _result.year == 2023
@@ -148,21 +148,21 @@ class TestTimeUtilsOperations:
         assert _result.day == 8
 
     def test_add_hours(self):
-        """测试：添加小时"""
+        """测试:添加小时"""
         dt = datetime(2023, 1, 1, 12, 0, 0)
         _result = TimeUtils.add_hours(dt, 5)
         assert _result.hour == 17
         assert _result.day == 1
 
     def test_add_minutes(self):
-        """测试：添加分钟"""
+        """测试:添加分钟"""
         dt = datetime(2023, 1, 1, 12, 30, 0)
         _result = TimeUtils.add_minutes(dt, 45)
         assert _result.minute == 15
         assert _result.hour == 13
 
     def test_subtract_days(self):
-        """测试：减去天数"""
+        """测试:减去天数"""
         dt = datetime(2023, 1, 8)
         _result = TimeUtils.subtract_days(dt, 7)
         assert _result.day == 1
@@ -170,7 +170,7 @@ class TestTimeUtilsOperations:
         assert _result.year == 2023
 
     def test_get_weekday(self):
-        """测试：获取星期几"""
+        """测试:获取星期几"""
         # 2023-01-01是星期日
         dt = datetime(2023, 1, 1)
         weekday = TimeUtils.get_weekday(dt)
@@ -178,7 +178,7 @@ class TestTimeUtilsOperations:
         assert 0 <= weekday <= 6
 
     def test_is_weekend(self):
-        """测试：是否是周末"""
+        """测试:是否是周末"""
         # 周六
         saturday = datetime(2023, 1, 7)
         assert TimeUtils.is_weekend(saturday) is True
@@ -192,14 +192,14 @@ class TestTimeUtilsOperations:
         assert TimeUtils.is_weekend(monday) is False
 
     def test_get_days_between(self):
-        """测试：获取两个日期之间的天数"""
+        """测试:获取两个日期之间的天数"""
         start = datetime(2023, 1, 1)
         end = datetime(2023, 1, 8)
         days = TimeUtils.get_days_between(start, end)
         assert days == 7
 
     def test_get_business_days(self):
-        """测试：获取工作日天数"""
+        """测试:获取工作日天数"""
         start = datetime(2023, 1, 2)  # 周一
         end = datetime(2023, 1, 6)  # 周五
         business_days = TimeUtils.get_business_days(start, end)
@@ -211,7 +211,7 @@ class TestTimeUtilsValidation:
     """时间工具验证测试"""
 
     def test_is_valid_date(self):
-        """测试：验证有效日期"""
+        """测试:验证有效日期"""
         assert TimeUtils.is_valid_date("2023-01-01") is True
         assert TimeUtils.is_valid_date("2023-02-28") is True
         assert TimeUtils.is_valid_date("2023-02-29") is False  # 非闰年
@@ -219,7 +219,7 @@ class TestTimeUtilsValidation:
         assert TimeUtils.is_valid_date("invalid") is False
 
     def test_is_valid_time(self):
-        """测试：验证有效时间"""
+        """测试:验证有效时间"""
         assert TimeUtils.is_valid_time("12:00:00") is True
         assert TimeUtils.is_valid_time("23:59:59") is True
         assert TimeUtils.is_valid_time("24:00:00") is False
@@ -227,7 +227,7 @@ class TestTimeUtilsValidation:
         assert TimeUtils.is_valid_time("invalid") is False
 
     def test_is_future_date(self):
-        """测试：是否是未来日期"""
+        """测试:是否是未来日期"""
         future_date = datetime.now() + timedelta(days=1)
         past_date = datetime.now() - timedelta(days=1)
 
@@ -235,7 +235,7 @@ class TestTimeUtilsValidation:
         assert TimeUtils.is_future_date(past_date) is False
 
     def test_is_past_date(self):
-        """测试：是否是过去日期"""
+        """测试:是否是过去日期"""
         past_date = datetime.now() - timedelta(days=1)
         future_date = datetime.now() + timedelta(days=1)
 
@@ -243,7 +243,7 @@ class TestTimeUtilsValidation:
         assert TimeUtils.is_past_date(future_date) is False
 
     def test_date_range_overlap(self):
-        """测试：日期范围重叠"""
+        """测试:日期范围重叠"""
         # 测试重叠的日期范围
         range1 = (datetime(2023, 1, 1), datetime(2023, 1, 7))
         range2 = (datetime(2023, 1, 5), datetime(2023, 1, 10))
@@ -259,7 +259,7 @@ class TestTimeUtilsTimezone:
     """时间工具时区测试"""
 
     def test_convert_timezone(self):
-        """测试：时区转换"""
+        """测试:时区转换"""
         utc_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
         # 转换为其他时区
@@ -268,19 +268,19 @@ class TestTimeUtilsTimezone:
             assert local_dt is not None
 
     def test_get_utc_now(self):
-        """测试：获取当前UTC时间"""
+        """测试:获取当前UTC时间"""
         utc_now = TimeUtils.get_utc_now()
         assert isinstance(utc_now, datetime)
         assert utc_now.tzinfo is not None
         assert utc_now.tzinfo == timezone.utc
 
     def test_get_local_now(self):
-        """测试：获取本地时间"""
+        """测试:获取本地时间"""
         local_now = TimeUtils.get_local_now()
         assert isinstance(local_now, datetime)
 
     def test_timezone_offset(self):
-        """测试：时区偏移"""
+        """测试:时区偏移"""
         if hasattr(TimeUtils, "get_timezone_offset"):
             offset = TimeUtils.get_timezone_offset("America/New_York")
             assert isinstance(offset, (int, float))
@@ -291,7 +291,7 @@ class TestTimeUtilsPerformance:
     """时间工具性能测试"""
 
     def test_format_performance(self):
-        """测试：格式化性能"""
+        """测试:格式化性能"""
         dt = datetime.now()
 
         import time
@@ -306,7 +306,7 @@ class TestTimeUtilsPerformance:
         assert end_time - start_time < 1.0
 
     def test_parse_performance(self):
-        """测试：解析性能"""
+        """测试:解析性能"""
         dt_str = "2023-01-01 12:30:45"
 
         import time
@@ -326,21 +326,21 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not TIME_UTILS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if TIME_UTILS_AVAILABLE:
         from src.utils.time_utils import TimeUtils
         assert TimeUtils is not None
 
 
 def test_class_methods(self):
-    """测试：类方法存在"""
+    """测试:类方法存在"""
     if TIME_UTILS_AVAILABLE:
 from src.utils.time_utils import TimeUtils
 
@@ -369,7 +369,7 @@ class TestTimeUtilsEdgeCases:
     """时间工具边界情况测试"""
 
     def test_leap_year_handling(self):
-        """测试：闰年处理"""
+        """测试:闰年处理"""
         # 闰年2月29日
         leap_date = datetime(2024, 2, 29)
         formatted = TimeUtils.format_date(leap_date)
@@ -383,13 +383,13 @@ class TestTimeUtilsEdgeCases:
             pass
 
     def test_midnight_handling(self):
-        """测试：午夜处理"""
+        """测试:午夜处理"""
         midnight = datetime(2023, 1, 1, 0, 0, 0)
         formatted = TimeUtils.format_time(midnight)
         assert "00:00:00" in formatted
 
     def test_end_of_month(self):
-        """测试：月末处理"""
+        """测试:月末处理"""
         # 1月31日
         jan_end = datetime(2023, 1, 31)
         next_month = TimeUtils.add_days(jan_end, 1)
@@ -403,7 +403,7 @@ class TestTimeUtilsEdgeCases:
         assert next_year.month == 1
 
     def test_daylight_saving(self):
-        """测试：夏令时处理"""
+        """测试:夏令时处理"""
         # 夏令时开始和结束时间
         if hasattr(TimeUtils, "is_daylight_saving"):
             dt = datetime(2023, 7, 1)  # 北半球夏令时
@@ -411,7 +411,7 @@ class TestTimeUtilsEdgeCases:
             assert isinstance(is_dst, bool)
 
     def test_large_time_differences(self):
-        """测试：大的时间差"""
+        """测试:大的时间差"""
         base_dt = datetime(2000, 1, 1)
         future_dt = datetime(2100, 1, 1)
 
@@ -420,7 +420,7 @@ class TestTimeUtilsEdgeCases:
             assert years == 100
 
     def test_microsecond_precision(self):
-        """测试：微秒精度"""
+        """测试:微秒精度"""
         dt = datetime(2023, 1, 1, 12, 30, 45, 999999)
         formatted = TimeUtils.format_datetime(dt)
 
@@ -429,7 +429,7 @@ class TestTimeUtilsEdgeCases:
             assert "999999" in formatted or "999999" in formatted[:10]
 
     def test_negative_time_differences(self):
-        """测试：负时间差"""
+        """测试:负时间差"""
         base_dt = datetime(2023, 1, 8)
 
         # 减去7天
@@ -438,7 +438,7 @@ class TestTimeUtilsEdgeCases:
         assert _result.month == 1
 
     def test_timezone_edge_cases(self):
-        """测试：时区边界情况"""
+        """测试:时区边界情况"""
         # 跨越时区边界的时间
         utc_dt = datetime(2023, 1, 1, 23, 30, 0, tzinfo=timezone.utc)
 

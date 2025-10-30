@@ -2,7 +2,7 @@
 验证器参数化测试
 Tests for Validators (Parametrized)
 
-使用参数化测试减少重复代码，提高测试覆盖率
+使用参数化测试减少重复代码,提高测试覆盖率
 """
 
 import re
@@ -70,7 +70,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_email(self, email, expected):
-        """测试：邮箱验证（参数化）"""
+        """测试:邮箱验证（参数化）"""
         if validate_email is not None:
             _result = validate_email(email)
             assert _result == expected
@@ -90,12 +90,12 @@ class TestValidatorsParametrized:
             ("123-456", False),
             ("", False),
             (None, False),
-            (1234567890, False),  # 数字类型，应该接受字符串
+            (1234567890, False),  # 数字类型,应该接受字符串
             ("+1 555 123 45678", False),  # 太长
         ],
     )
     def test_validate_phone(self, phone, expected):
-        """测试：电话验证（参数化）"""
+        """测试:电话验证（参数化）"""
         if validate_phone is not None:
             _result = validate_phone(phone)
             assert _result == expected
@@ -121,7 +121,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_url(self, url, expected):
-        """测试：URL验证（参数化）"""
+        """测试:URL验证（参数化）"""
         if validate_url is not None:
             _result = validate_url(url)
             assert _result == expected
@@ -146,7 +146,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_username(self, username, expected):
-        """测试：用户名验证（参数化）"""
+        """测试:用户名验证（参数化）"""
         if validate_username is not None:
             _result = validate_username(username)
             assert _result == expected
@@ -170,7 +170,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_password(self, password, expected):
-        """测试：密码验证（参数化）"""
+        """测试:密码验证（参数化）"""
         if validate_password is not None:
             _result = validate_password(password)
             assert _result == expected
@@ -193,7 +193,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_credit_card(self, card, expected):
-        """测试：信用卡验证（参数化）"""
+        """测试:信用卡验证（参数化）"""
         if validate_credit_card is not None:
             _result = validate_credit_card(card)
             assert _result == expected
@@ -218,7 +218,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_ipv4_address(self, ip, expected):
-        """测试：IPv4地址验证（参数化）"""
+        """测试:IPv4地址验证（参数化）"""
         if validate_ipv4_address is not None:
             _result = validate_ipv4_address(ip)
             assert _result == expected
@@ -240,7 +240,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_mac_address(self, mac, expected):
-        """测试：MAC地址验证（参数化）"""
+        """测试:MAC地址验证（参数化）"""
         if validate_mac_address is not None:
             _result = validate_mac_address(mac)
             assert _result == expected
@@ -262,7 +262,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_date_string(self, date_str, format, expected):
-        """测试：日期字符串验证（参数化）"""
+        """测试:日期字符串验证（参数化）"""
         if validate_date_string is not None:
             _result = validate_date_string(date_str, format)
             assert _result == expected
@@ -284,7 +284,7 @@ class TestValidatorsParametrized:
         ],
     )
     def test_validate_json_string(self, json_str, expected):
-        """测试：JSON字符串验证（参数化）"""
+        """测试:JSON字符串验证（参数化）"""
         if validate_json_string is not None:
             _result = validate_json_string(json_str)
             assert _result == expected
@@ -295,7 +295,7 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not VALIDATORS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
@@ -330,7 +330,7 @@ class TestValidatorsComplex:
         ],
     )
     def test_validate_complex_data(self, data, field_rules, expected):
-        """测试：复杂数据验证（参数化）"""
+        """测试:复杂数据验证（参数化）"""
 
         # 模拟批量验证函数
         def validate_complex(data, rules):
@@ -381,7 +381,7 @@ class TestValidatorsComplex:
         ],
     )
     def test_sanitize_and_validate(self, input_data, sanitizer, expected):
-        """测试：清理和验证数据（参数化）"""
+        """测试:清理和验证数据（参数化）"""
         # 清理数据
         cleaned = sanitizer(input_data)
 
@@ -423,7 +423,7 @@ class TestValidatorsComplex:
         ],
     )
     def test_business_rules_validation(self, business_rules, data, expected):
-        """测试：业务规则验证（参数化）"""
+        """测试:业务规则验证（参数化）"""
 
         def validate_business(data, rules):
             # 年龄检查
@@ -468,7 +468,7 @@ class TestValidatorsEdgeCases:
         ],
     )
     def test_edge_cases(self, input_value):
-        """测试：边界情况输入（参数化）"""
+        """测试:边界情况输入（参数化）"""
         # 测试各种输入类型是否能被正确处理
         if validate_email is not None:
             _result = validate_email(input_value)
@@ -490,7 +490,7 @@ class TestValidatorsEdgeCases:
         ],
     )
     def test_unicode_validation(self, unicode_input):
-        """测试：Unicode输入验证（参数化）"""
+        """测试:Unicode输入验证（参数化）"""
         if validate_email is not None:
             # 某些验证器可能不支持Unicode
             try:

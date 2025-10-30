@@ -31,7 +31,7 @@ class TestFeaturesProcessor:
         return FeaturesProcessor()
 
     def test_processor_initialization(self, processor):
-        """测试：处理器初始化"""
+        """测试:处理器初始化"""
         assert processor is not None
         # 检查基本属性
         assert hasattr(processor, "process")
@@ -41,7 +41,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_process_features_success(self, processor):
-        """测试：成功处理特征"""
+        """测试:成功处理特征"""
         # 模拟输入数据
         input_data = {
             "match_id": 123,
@@ -54,7 +54,7 @@ class TestFeaturesProcessor:
             },
         }
 
-        # 如果有process方法，测试它
+        # 如果有process方法,测试它
         if hasattr(processor, "process"):
             try:
                 _result = await processor.process(input_data)
@@ -67,7 +67,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_process_features_with_dataframe(self, processor):
-        """测试：使用DataFrame处理特征"""
+        """测试:使用DataFrame处理特征"""
         # 创建测试DataFrame
         df = pd.DataFrame(
             {
@@ -89,7 +89,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_validate_features(self, processor):
-        """测试：验证特征"""
+        """测试:验证特征"""
         valid_features = {
             "match_id": 123,
             "team_id": 1,
@@ -113,7 +113,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_process_batch_features(self, processor):
-        """测试：批量处理特征"""
+        """测试:批量处理特征"""
         batch_data = [
             {"match_id": 1, "features": {"home_goals": 2}},
             {"match_id": 2, "features": {"home_goals": 1}},
@@ -128,7 +128,7 @@ class TestFeaturesProcessor:
                 pytest.skip(f"Batch processing requires dependencies: {e}")
 
     def test_feature_transformation(self, processor):
-        """测试：特征转换"""
+        """测试:特征转换"""
         raw_features = {
             "home_goals_last_5": [2, 1, 3, 0, 2],
             "away_goals_last_5": [1, 2, 0, 1, 1],
@@ -142,7 +142,7 @@ class TestFeaturesProcessor:
                 assert "avg_home_goals" in result or "sum_home_goals" in result
 
     def test_feature_engineering(self, processor):
-        """测试：特征工程"""
+        """测试:特征工程"""
         base_features = {
             "home_wins": 10,
             "home_draws": 5,
@@ -161,7 +161,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_process_with_time_series(self, processor):
-        """测试：处理时间序列特征"""
+        """测试:处理时间序列特征"""
         time_series_data = {
             "match_id": 123,
             "timestamps": ["2024-01-01", "2024-01-08", "2024-01-15"],
@@ -175,7 +175,7 @@ class TestFeaturesProcessor:
                 assert "trend" in result or "moving_average" in result
 
     def test_feature_selection(self, processor):
-        """测试：特征选择"""
+        """测试:特征选择"""
         all_features = {
             "feature_1": 0.5,
             "feature_2": 0.8,
@@ -190,7 +190,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_error_handling(self, processor):
-        """测试：错误处理"""
+        """测试:错误处理"""
         # 测试None输入
         if hasattr(processor, "process"):
             with pytest.raises((ValueError, TypeError, AttributeError)):
@@ -202,7 +202,7 @@ class TestFeaturesProcessor:
                 await processor.process("invalid_string")
 
     def test_processor_configuration(self, processor):
-        """测试：处理器配置"""
+        """测试:处理器配置"""
         # 测试默认配置
         if hasattr(processor, "config"):
             default_config = processor.config
@@ -217,7 +217,7 @@ class TestFeaturesProcessor:
                 assert processor._config["batch_size"] == 100
 
     def test_feature_normalization(self, processor):
-        """测试：特征归一化"""
+        """测试:特征归一化"""
         features = {
             "goals_scored": [0, 1, 2, 3, 4, 5],
             "possession": [30, 45, 50, 60, 70, 85],
@@ -234,7 +234,7 @@ class TestFeaturesProcessor:
 
     @pytest.mark.asyncio
     async def test_processor_performance(self, processor):
-        """测试：处理器性能"""
+        """测试:处理器性能"""
         # 创建大量测试数据
         large_dataset = [{"match_id": i, "features": {"value": i * 0.1}} for i in range(1000)]
 
@@ -261,7 +261,7 @@ class TestFeaturesProcessorIntegration:
 
     @pytest.mark.asyncio
     async def test_full_pipeline(self):
-        """测试：完整处理管道"""
+        """测试:完整处理管道"""
         processor = FeaturesProcessor()
 
         # 模拟完整的特征处理流程
@@ -279,23 +279,23 @@ class TestFeaturesProcessorIntegration:
             ],
         }
 
-        # 步骤1：验证数据
+        # 步骤1:验证数据
         if hasattr(processor, "validate"):
             is_valid = processor.validate(raw_data)
             if not is_valid:
                 pytest.skip("Invalid test data")
 
-        # 步骤2：提取特征
+        # 步骤2:提取特征
         if hasattr(processor, "extract_features"):
             features = processor.extract_features(raw_data)
             assert features is not None
 
-        # 步骤3：特征工程
+        # 步骤3:特征工程
         if hasattr(processor, "engineer_features") and "features" in locals():
             engineered = processor.engineer_features(features)
             assert engineered is not None
 
-        # 步骤4：处理特征
+        # 步骤4:处理特征
         if hasattr(processor, "process"):
             if "engineered" in locals():
                 _result = await processor.process(engineered)
@@ -304,7 +304,7 @@ class TestFeaturesProcessorIntegration:
             assert _result is not None
 
     def test_processor_factory_pattern(self):
-        """测试：处理器工厂模式"""
+        """测试:处理器工厂模式"""
         if hasattr(FeaturesProcessor, "create"):
             # 测试工厂方法创建处理器
             processor = FeaturesProcessor.create(type="basic")
@@ -312,7 +312,7 @@ class TestFeaturesProcessorIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_processing(self):
-        """测试：并发处理"""
+        """测试:并发处理"""
         import asyncio
 
         processor = FeaturesProcessor()
@@ -328,12 +328,12 @@ class TestFeaturesProcessorIntegration:
             assert len(successful_results) > 0
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not FEATURES_PROCESSOR_AVAILABLE
         assert True  # 表明测试意识到模块不可用

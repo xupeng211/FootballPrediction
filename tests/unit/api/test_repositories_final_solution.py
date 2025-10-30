@@ -3,7 +3,7 @@ from datetime import datetime
 API层仓储测试最终解决方案
 API Layer Repository Tests Final Solution
 
-基于服务层100%验证成功的智能Mock兼容修复模式，提供完整的API层测试修复方案。
+基于服务层100%验证成功的智能Mock兼容修复模式,提供完整的API层测试修复方案。
 Based on the 100% verified intelligent Mock compatibility fix pattern from the service layer,
 provide complete API layer test fix solutions.
 """
@@ -120,8 +120,8 @@ class TestRepositoryAPISuccess:
     """仓储API测试 - 智能Mock兼容修复模式最终成功版"""
 
     def test_get_predictions(self, client):
-        """测试：获取预测列表 - 终极成功版"""
-        # Given - 终极Mock策略：直接Mock API路由层
+        """测试:获取预测列表 - 终极成功版"""
+        # Given - 终极Mock策略:直接Mock API路由层
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
@@ -138,7 +138,7 @@ class TestRepositoryAPISuccess:
             assert len(_data["predictions"]) == 3
 
     def test_get_predictions_with_filters(self, client):
-        """测试：带过滤器的预测列表 - 终极成功版"""
+        """测试:带过滤器的预测列表 - 终极成功版"""
         # Given - 终极Mock策略
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
@@ -153,7 +153,7 @@ class TestRepositoryAPISuccess:
             assert _data["total"] == 2  # 只有user_id=1的预测
 
     def test_get_prediction_success(self, client):
-        """测试：成功获取单个预测 - 终极成功版"""
+        """测试:成功获取单个预测 - 终极成功版"""
         # Given - 终极Mock策略
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
@@ -171,7 +171,7 @@ class TestRepositoryAPISuccess:
             assert "confidence" in _data
 
     def test_get_prediction_not_found(self, client):
-        """测试：获取不存在的预测 - 终极成功版"""
+        """测试:获取不存在的预测 - 终极成功版"""
         # Given - 终极Mock策略
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
@@ -185,7 +185,7 @@ class TestRepositoryAPISuccess:
             assert "预测不存在" in response.json()["detail"]
 
     def test_get_user_prediction_statistics(self, client):
-        """测试：获取用户预测统计 - 终极成功版"""
+        """测试:获取用户预测统计 - 终极成功版"""
         # Given - 终极Mock策略
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
@@ -202,21 +202,21 @@ class TestRepositoryAPISuccess:
             assert "average_confidence" in _data
 
     def test_get_predictions_invalid_limit(self, client):
-        """测试：无效的限制参数 - 终极成功版"""
+        """测试:无效的限制参数 - 终极成功版"""
         # When
         response = client.get("/repositories/predictions?limit=0")
         # Then - FastAPI会自动验证
         assert response.status_code == 422
 
     def test_get_predictions_invalid_offset(self, client):
-        """测试：无效的偏移量参数 - 终极成功版"""
+        """测试:无效的偏移量参数 - 终极成功版"""
         # When
         response = client.get("/repositories/predictions?offset=-1")
         # Then - FastAPI会自动验证
         assert response.status_code == 422
 
     def test_empty_predictions_list(self, client):
-        """测试：空的预测列表 - 终极成功版"""
+        """测试:空的预测列表 - 终极成功版"""
         # Given - 终极Mock策略
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()
@@ -233,7 +233,7 @@ class TestRepositoryAPISuccess:
             assert _data["predictions"] == []
 
     def test_repository_exception_handling(self, client):
-        """测试：仓储异常处理 - 终极成功版"""
+        """测试:仓储异常处理 - 终极成功版"""
         # Given - 终极Mock策略
         with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
             mock_repo = MockRepository()

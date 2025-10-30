@@ -4,10 +4,10 @@ from typing import Any
 from typing import Tuple
 from typing import Dict
 from datetime import datetime
-"""""""
+""""""""
 工具函数测试 - Phase 4B高优先级任务
 
-测试src/utils/中的工具函数模块，包括：
+测试src/utils/中的工具函数模块,包括：
 - 数据转换和格式化工具
 - 字符串处理和验证函数
 - 日期时间工具函数
@@ -26,8 +26,8 @@ from datetime import datetime
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
 
-目标：将utils模块覆盖率提升至60%
-"""""""
+目标:将utils模块覆盖率提升至60%
+""""""""
 
 import asyncio
 import base64
@@ -53,7 +53,7 @@ class MockStringUtils:
         cleaned = text.strip()
 
         if remove_special_chars:
-            # 移除特殊字符，保留字母数字和基本标点
+            # 移除特殊字符,保留字母数字和基本标点
             cleaned = re.sub(r"[^\w\s\-.,!?]", "", cleaned)
 
         return cleaned
@@ -74,7 +74,7 @@ class MockStringUtils:
         if not isinstance(text, str):
             return ""
 
-        # 转换为小写，替换空格为连字符
+        # 转换为小写,替换空格为连字符
         slug = text.lower().strip()
         slug = re.sub(r"\s+", "-", slug)
         slug = re.sub(r"[^\w\-]", "", slug)
@@ -139,7 +139,7 @@ class MockDateUtils:
         if not isinstance(dt, datetime):
             return False
 
-        return dt.weekday() in [5, 6]  # 周六、周日
+        return dt.weekday() in [5, 6]  # 周六,周日
 
 
 class MockCryptoUtils:
@@ -318,26 +318,26 @@ class TestUtilsSimple:
 
     # 字符串工具测试
     def test_string_clean_basic_success(self) -> None:
-        """✅ 成功用例：基本字符串清理成功"""
+        """✅ 成功用例:基本字符串清理成功"""
         dirty_text = "  Hello, World!  "
         cleaned = MockStringUtils.clean_string(dirty_text)
 
         assert cleaned == "Hello, World!"
 
     def test_string_clean_special_chars_success(self) -> None:
-        """✅ 成功用例：清理特殊字符成功"""
+        """✅ 成功用例:清理特殊字符成功"""
         text_with_special = "Hello@#World$%^"
         cleaned = MockStringUtils.clean_string(text_with_special, remove_special_chars=True)
 
         assert cleaned == "HelloWorld"
 
     def test_string_clean_invalid_input(self) -> None:
-        """❌ 异常用例：无效输入清理"""
+        """❌ 异常用例:无效输入清理"""
         result = MockStringUtils.clean_string(123)
         assert result == ""
 
     def test_email_validation_valid_emails(self) -> None:
-        """✅ 成功用例：有效邮箱验证"""
+        """✅ 成功用例:有效邮箱验证"""
         valid_emails = [
             "test@example.com",
             "user.name@domain.org",
@@ -348,7 +348,7 @@ class TestUtilsSimple:
             assert MockStringUtils.validate_email(email) is True
 
     def test_email_validation_invalid_emails(self) -> None:
-        """❌ 异常用例：无效邮箱验证"""
+        """❌ 异常用例:无效邮箱验证"""
         invalid_emails = [
             "invalid-email",
             "@domain.com",
@@ -361,7 +361,7 @@ class TestUtilsSimple:
             assert MockStringUtils.validate_email(email) is False
 
     def test_slug_generation_success(self) -> None:
-        """✅ 成功用例：Slug生成成功"""
+        """✅ 成功用例:Slug生成成功"""
         test_cases = [
             ("Hello World", "hello-world"),
             ("Python Programming", "python-programming"),
@@ -372,7 +372,7 @@ class TestUtilsSimple:
             assert MockStringUtils.generate_slug(input_text) == expected_slug
 
     def test_text_truncation_success(self) -> None:
-        """✅ 成功用例：文本截断成功"""
+        """✅ 成功用例:文本截断成功"""
         long_text = "This is a very long text that should be truncated"
         truncated = MockStringUtils.truncate_text(long_text, 20)
 
@@ -380,7 +380,7 @@ class TestUtilsSimple:
         assert truncated.endswith("...")
 
     def test_text_truncation_no_truncate(self) -> None:
-        """✅ 成功用例：文本无需截断"""
+        """✅ 成功用例:文本无需截断"""
         short_text = "Short text"
         result = MockStringUtils.truncate_text(short_text, 20)
 
@@ -388,21 +388,21 @@ class TestUtilsSimple:
 
     # 日期工具测试
     def test_datetime_format_success(self) -> None:
-        """✅ 成功用例：日期时间格式化成功"""
+        """✅ 成功用例:日期时间格式化成功"""
         dt = datetime(2023, 12, 25, 15, 30, 0)
         formatted = MockDateUtils.format_datetime(dt)
 
         assert formatted == "2023-12-25 15:30:00"
 
     def test_datetime_format_custom_success(self) -> None:
-        """✅ 成功用例：自定义日期时间格式化成功"""
+        """✅ 成功用例:自定义日期时间格式化成功"""
         dt = datetime(2023, 12, 25)
         formatted = MockDateUtils.format_datetime(dt, "%Y/%m/%d")
 
         assert formatted == "2023/12/25"
 
     def test_date_parsing_success(self) -> None:
-        """✅ 成功用例：日期解析成功"""
+        """✅ 成功用例:日期解析成功"""
         date_str = "2023-12-25"
         parsed = MockDateUtils.parse_date(date_str)
 
@@ -412,14 +412,14 @@ class TestUtilsSimple:
         assert parsed.day == 25
 
     def test_date_parsing_invalid(self) -> None:
-        """❌ 异常用例：无效日期解析"""
+        """❌ 异常用例:无效日期解析"""
         invalid_date = "2023-13-45"
         result = MockDateUtils.parse_date(invalid_date)
 
         assert result is None
 
     def test_time_ago_calculation_success(self) -> None:
-        """✅ 成功用例：相对时间计算成功"""
+        """✅ 成功用例:相对时间计算成功"""
         now = datetime.utcnow()
 
         # 测试不同时间间隔
@@ -435,7 +435,7 @@ class TestUtilsSimple:
             assert expected in result
 
     def test_weekend_check_success(self) -> None:
-        """✅ 成功用例：周末检查成功"""
+        """✅ 成功用例:周末检查成功"""
         # 周六
         saturday = datetime(2023, 12, 23)  # 2023-12-23是周六
         assert MockDateUtils.is_weekend(saturday) is True
@@ -450,7 +450,7 @@ class TestUtilsSimple:
 
     # 加密工具测试
     def test_hash_generation_success(self) -> None:
-        """✅ 成功用例：哈希生成成功"""
+        """✅ 成功用例:哈希生成成功"""
         text = "Hello World"
         hash_value = MockCryptoUtils.generate_hash(text)
 
@@ -458,7 +458,7 @@ class TestUtilsSimple:
         assert isinstance(hash_value, str)
 
     def test_hash_generation_different_algorithms(self) -> None:
-        """✅ 成功用例：不同算法哈希生成"""
+        """✅ 成功用例:不同算法哈希生成"""
         text = "test"
 
         sha256_hash = MockCryptoUtils.generate_hash(text, "sha256")
@@ -468,7 +468,7 @@ class TestUtilsSimple:
         assert len(sha512_hash) > len(sha256_hash)
 
     def test_base64_encoding_decoding_success(self) -> None:
-        """✅ 成功用例：Base64编码解码成功"""
+        """✅ 成功用例:Base64编码解码成功"""
         original_text = "Hello, World!"
 
         encoded = MockCryptoUtils.encode_base64(original_text)
@@ -477,7 +477,7 @@ class TestUtilsSimple:
         assert decoded == original_text
 
     def test_base64_invalid_decoding(self) -> None:
-        """❌ 异常用例：无效Base64解码"""
+        """❌ 异常用例:无效Base64解码"""
         invalid_base64 = "Not a valid base64!"
         result = MockCryptoUtils.decode_base64(invalid_base64)
 
@@ -485,7 +485,7 @@ class TestUtilsSimple:
 
     # 文件工具测试
     def test_file_operations_success(self) -> None:
-        """✅ 成功用例：文件操作成功"""
+        """✅ 成功用例:文件操作成功"""
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             temp_path = f.name
             test_content = "Test file content"
@@ -514,7 +514,7 @@ class TestUtilsSimple:
                 os.remove(temp_path)
 
     def test_file_operations_invalid_path(self) -> None:
-        """❌ 异常用例：无效文件路径操作"""
+        """❌ 异常用例:无效文件路径操作"""
         result = MockFileUtils.safe_read_file("/nonexistent/path/file.txt")
         assert result is None
 
@@ -523,7 +523,7 @@ class TestUtilsSimple:
 
     # 数据工具测试
     def test_dict_flattening_success(self) -> None:
-        """✅ 成功用例：字典扁平化成功"""
+        """✅ 成功用例:字典扁平化成功"""
         nested_dict = {
             "user": {"name": "John", "address": {"city": "New York", "country": "USA"}},
             "settings": {"theme": "dark"},
@@ -539,7 +539,7 @@ class TestUtilsSimple:
         assert flattened["user.address.city"] == "New York"
 
     def test_json_validation_success(self) -> None:
-        """✅ 成功用例：JSON验证成功"""
+        """✅ 成功用例:JSON验证成功"""
         valid_json = '{"name": "John", "age": 30}'
         is_valid, data = MockDataUtils.validate_json(valid_json)
 
@@ -548,7 +548,7 @@ class TestUtilsSimple:
         assert data["age"] == 30
 
     def test_json_validation_invalid(self) -> None:
-        """❌ 异常用例：无效JSON验证"""
+        """❌ 异常用例:无效JSON验证"""
         invalid_json = '{"name": "John", age: 30}'  # 缺少引号
         is_valid, data = MockDataUtils.validate_json(invalid_json)
 
@@ -556,7 +556,7 @@ class TestUtilsSimple:
         assert data is None
 
     def test_phone_sanitization_success(self) -> None:
-        """✅ 成功用例：电话号码清理成功"""
+        """✅ 成功用例:电话号码清理成功"""
         test_phones = [
             ("13812345678", "13812345678"),
             ("138-1234-5678", "13812345678"),
@@ -572,7 +572,7 @@ class TestUtilsSimple:
 
     # 性能工具测试
     def test_memoization_success(self) -> None:
-        """✅ 成功用例：记忆化装饰器成功"""
+        """✅ 成功用例:记忆化装饰器成功"""
         call_count = 0
 
         @MockPerformanceUtils.memoize
@@ -602,7 +602,7 @@ class TestUtilsSimple:
         assert call_count == 3  # 重新计算
 
     def test_retry_decorator_success(self) -> None:
-        """✅ 成功用例：重试装饰器成功"""
+        """✅ 成功用例:重试装饰器成功"""
         attempt_count = 0
 
         @MockPerformanceUtils.retry(max_attempts=3, delay=0.1)
@@ -618,7 +618,7 @@ class TestUtilsSimple:
         assert attempt_count == 3
 
     def test_retry_decorator_max_attempts_failure(self) -> None:
-        """❌ 异常用例：重试达到最大次数失败"""
+        """❌ 异常用例:重试达到最大次数失败"""
         attempt_count = 0
 
         @MockPerformanceUtils.retry(max_attempts=2, delay=0.1)
@@ -633,7 +633,7 @@ class TestUtilsSimple:
         assert attempt_count == 2
 
     def test_edge_cases_boundary_values(self) -> None:
-        """✅ 成功用例：边界值测试"""
+        """✅ 成功用例:边界值测试"""
         # 空字符串处理
         assert MockStringUtils.clean_string("") == ""
         assert MockStringUtils.truncate_text("", 10) == ""
@@ -650,7 +650,7 @@ class TestUtilsSimple:
         assert len(result) <= 5
 
     def test_performance_benchmarks_success(self) -> None:
-        """✅ 成功用例：性能基准测试成功"""
+        """✅ 成功用例:性能基准测试成功"""
         import time
 
         # 测试字符串处理性能
@@ -670,7 +670,7 @@ class TestUtilsSimple:
         assert len(truncated) <= 50 + 3  # 包含"..."
 
     def test_concurrent_operations_success(self) -> None:
-        """✅ 成功用例：并发操作测试成功"""
+        """✅ 成功用例:并发操作测试成功"""
         import threading
 
         results = []

@@ -39,7 +39,7 @@ class TestAPIDependencies:
         """测试密钥验证函数"""
         # 直接调用函数测试
         result = validate_secret_key()
-        assert result is None  # 函数没有返回值，只是记录日志
+        assert result is None  # 函数没有返回值,只是记录日志
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(not IMPORT_SUCCESS, reason="Module import failed")
@@ -59,7 +59,7 @@ class TestAPIDependencies:
             # 如果JWT不可用，这是预期的
             pass
         except Exception:
-            # 其他异常也是可以接受的，因为我们没有设置完整的JWT环境
+            # 其他异常也是可以接受的,因为我们没有设置完整的JWT环境
             pass
 
     @pytest.mark.asyncio
@@ -72,7 +72,7 @@ class TestAPIDependencies:
             result = await get_admin_user(test_user)
             assert result == test_user
         except Exception:
-            # 可能因为依赖问题失败，这是可以接受的
+            # 可能因为依赖问题失败,这是可以接受的
             pass
 
     @pytest.mark.asyncio
@@ -172,7 +172,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入（None值在单独的测试中处理）
+        # 基础断言,确保测试能处理各种输入（None值在单独的测试中处理）
         assert isinstance(
             input_value, (str, int, bool, list, dict)
         ), f"Unexpected type for input_value: {input_value}"

@@ -186,7 +186,7 @@ class TestDictUtils:
 
     def test_combination_operations(self):
         """测试组合操作"""
-        # 先深度合并，再扁平化
+        # 先深度合并,再扁平化
         dict1 = {"config": {"db": {"host": "localhost"}}}
         dict2 = {"config": {"db": {"port": 5432}, "api": {"version": "v1"}}}
 
@@ -200,7 +200,7 @@ class TestDictUtils:
         assert flattened["config.db.port"] == 5432
         assert flattened["config.api.version"] == "v1"
 
-        # 先扁平化，再过滤None
+        # 先扁平化,再过滤None
         _data = {
             "user": {
                 "name": "John",
@@ -229,7 +229,7 @@ class TestDictUtils:
         # 测试循环引用
         a = {}
         a["self"] = a
-        # flatten_dict可能会导致无限递归，但实际实现可能有保护
+        # flatten_dict可能会导致无限递归,但实际实现可能有保护
 
         # 测试特殊键名
         _data = {

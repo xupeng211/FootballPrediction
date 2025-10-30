@@ -6,10 +6,10 @@ import pytest
 
 from src.cache.redis_manager import RedisManager
 
-"""""""
+""""""""
 Redis管理器修复版测试 V2
 修复了所有已知的问题
-"""""""
+""""""""
 
 
 # 添加src目录到Python路径
@@ -214,7 +214,7 @@ class TestRedisManagerFixedV2:
         redis_manager._async_client = mock_async_client
 
         await redis_manager.aclose()
-        # 异步版本不设置async_client为None，这是设计如此
+        # 异步版本不设置async_client为None,这是设计如此
         assert True
 
     def test_error_handling_get(self, redis_manager, mock_sync_client):

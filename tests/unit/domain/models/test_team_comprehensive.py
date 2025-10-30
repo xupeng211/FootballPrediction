@@ -1,8 +1,8 @@
 from datetime import datetime
 """
 Team领域模型全面边界条件测试
-基于成功的边界条件测试模式，对核心业务模型进行深度测试覆盖
-目标：将team模块覆盖率提升到90%+
+基于成功的边界条件测试模式,对核心业务模型进行深度测试覆盖
+目标:将team模块覆盖率提升到90%+
 """
 
 from unittest.mock import patch
@@ -18,7 +18,7 @@ class TestTeamStats:
     """TeamStats值对象边界条件测试"""
 
     def test_team_stats_initialization_default(self) -> None:
-        """✅ 成功用例：默认初始化"""
+        """✅ 成功用例:默认初始化"""
         stats = TeamStats()
 
         assert stats.matches_played == 0
@@ -29,7 +29,7 @@ class TestTeamStats:
         assert stats.goals_against == 0
 
     def test_team_stats_initialization_with_values(self) -> None:
-        """✅ 成功用例：带值初始化"""
+        """✅ 成功用例:带值初始化"""
         stats = TeamStats(
             matches_played=10, wins=6, draws=2, losses=2, goals_for=15, goals_against=8
         )
@@ -42,7 +42,7 @@ class TestTeamStats:
         assert stats.goals_against == 8
 
     def test_team_stats_negative_values_validation(self) -> None:
-        """✅ 边界用例：负数值验证"""
+        """✅ 边界用例:负数值验证"""
         with pytest.raises(DomainError, match="统计数据不能为负数"):
             TeamStats(matches_played=-1)
 
@@ -62,7 +62,7 @@ class TestTeamStats:
             TeamStats(goals_against=-1)
 
     def test_team_stats_matches_validation(self) -> None:
-        """✅ 边界用例：比赛场次验证"""
+        """✅ 边界用例:比赛场次验证"""
         # 胜负平之和大于总场次
         with pytest.raises(DomainError, match="胜负平场次之和不能大于总比赛场次"):
             TeamStats(matches_played=5, wins=3, draws=3, losses=0)
@@ -71,7 +71,7 @@ class TestTeamStats:
             TeamStats(matches_played=0, wins=1, draws=0, losses=0)
 
     def test_team_stats_valid_scenarios(self) -> None:
-        """✅ 成功用例：有效场景"""
+        """✅ 成功用例:有效场景"""
         # 完美匹配
         stats = TeamStats(matches_played=10, wins=5, draws=3, losses=2)
         assert stats.matches_played == 10
@@ -90,8 +90,8 @@ class TestTeamStats:
         assert stats.draws == 5
 
     def test_team_stats_points_property(self) -> None:
-        """✅ 成功用例：积分计算"""
-        # 标准积分规则：胜3平1负0
+        """✅ 成功用例:积分计算"""
+        # 标准积分规则:胜3平1负0
         stats = TeamStats(matches_played=10, wins=6, draws=2, losses=2)
         assert stats.points == 6 * 3 + 2 * 1  # 20分
 
@@ -108,7 +108,7 @@ class TestTeamStats:
         assert stats.points == 0
 
     def test_team_stats_goal_difference_property(self) -> None:
-        """✅ 成功用例：净胜球计算"""
+        """✅ 成功用例:净胜球计算"""
         stats = TeamStats(goals_for=15, goals_against=8)
         assert stats.goal_difference == 7
 
@@ -121,7 +121,7 @@ class TestTeamStats:
         assert stats.goal_difference == 0
 
     def test_team_stats_win_rate_property(self) -> None:
-        """✅ 成功用例：胜率计算"""
+        """✅ 成功用例:胜率计算"""
         # 无比赛场次
         stats = TeamStats(matches_played=0)
         assert stats.win_rate == 0.0
@@ -139,7 +139,7 @@ class TestTeamStats:
         assert stats.win_rate == 0.0
 
     def test_team_stats_update_method(self) -> None:
-        """✅ 成功用例：更新统计"""
+        """✅ 成功用例:更新统计"""
         stats = TeamStats()
 
         # 胜利
@@ -164,7 +164,7 @@ class TestTeamStats:
         assert stats.goals_against == 4
 
     def test_team_stats_str_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         stats = TeamStats(matches_played=10, wins=6, draws=2, losses=2)
         str_repr = str(stats)
         assert "10场" in str_repr
@@ -173,7 +173,7 @@ class TestTeamStats:
         assert "2负" in str_repr
 
     def test_team_stats_edge_cases(self) -> None:
-        """✅ 边界用例：极端情况"""
+        """✅ 边界用例:极端情况"""
         # 大数字
         stats = TeamStats(
             matches_played=1000,
@@ -199,7 +199,7 @@ class TestTeamForm:
     """TeamForm值对象边界条件测试"""
 
     def test_team_form_initialization_default(self) -> None:
-        """✅ 成功用例：默认初始化"""
+        """✅ 成功用例:默认初始化"""
         form = TeamForm()
 
         assert form.last_matches == []
@@ -207,7 +207,7 @@ class TestTeamForm:
         assert form.streak_type == ""
 
     def test_team_form_initialization_with_values(self) -> None:
-        """✅ 成功用例：带值初始化"""
+        """✅ 成功用例:带值初始化"""
         form = TeamForm(last_matches=["W", "D", "L", "W"], current_streak=2, streak_type="win")
 
         assert form.last_matches == ["W", "D", "L", "W"]
@@ -215,7 +215,7 @@ class TestTeamForm:
         assert form.streak_type == "win"
 
     def test_team_form_invalid_result_validation(self) -> None:
-        """✅ 边界用例：无效结果验证"""
+        """✅ 边界用例:无效结果验证"""
         with pytest.raises(DomainError, match="比赛结果只能是 W/D/L"):
             TeamForm(last_matches=["X"])
 
@@ -226,7 +226,7 @@ class TestTeamForm:
             TeamForm(last_matches=["1"])
 
     def test_team_form_max_matches_validation(self) -> None:
-        """✅ 边界用例：最大比赛场次验证"""
+        """✅ 边界用例:最大比赛场次验证"""
         # 正好10场
         form = TeamForm(last_matches=["W"] * 10)
         assert len(form.last_matches) == 10
@@ -236,7 +236,7 @@ class TestTeamForm:
             TeamForm(last_matches=["W"] * 11)
 
     def test_team_form_add_result_method(self) -> None:
-        """✅ 成功用例：添加结果"""
+        """✅ 成功用例:添加结果"""
         form = TeamForm()
 
         # 添加胜利
@@ -258,7 +258,7 @@ class TestTeamForm:
         assert form.streak_type == "loss"
 
     def test_team_form_add_result_invalid(self) -> None:
-        """✅ 边界用例：添加无效结果"""
+        """✅ 边界用例:添加无效结果"""
         form = TeamForm()
 
         with pytest.raises(DomainError, match="比赛结果只能是 W/D/L"):
@@ -268,7 +268,7 @@ class TestTeamForm:
             form.add_result("win")
 
     def test_team_form_streak_calculation(self) -> None:
-        """✅ 成功用例：连续记录计算"""
+        """✅ 成功用例:连续记录计算"""
         form = TeamForm()
 
         # 连胜
@@ -294,7 +294,7 @@ class TestTeamForm:
         assert form.streak_type == "win"
 
     def test_team_form_recent_form_string(self) -> None:
-        """✅ 成功用例：最近状态字符串"""
+        """✅ 成功用例:最近状态字符串"""
         form = TeamForm()
 
         # 添加结果
@@ -311,7 +311,7 @@ class TestTeamForm:
         assert form.recent_form_string == "DW"
 
     def test_team_form_is_in_good_form(self) -> None:
-        """✅ 成功用例：状态良好判断"""
+        """✅ 成功用例:状态良好判断"""
         form = TeamForm()
 
         # 少于5场
@@ -325,7 +325,7 @@ class TestTeamForm:
             form.add_result(result)
         assert not form.is_in_good_form
 
-        # 状态良好：5场不败且至少3胜
+        # 状态良好:5场不败且至少3胜
         form = TeamForm()
         for result in ["W", "W", "W", "D", "D"]:  # 3胜2平
             form.add_result(result)
@@ -338,7 +338,7 @@ class TestTeamForm:
         assert form.is_in_good_form
 
     def test_team_form_str_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         form = TeamForm()
         form.add_result("W")
         form.add_result("W")
@@ -349,7 +349,7 @@ class TestTeamForm:
         assert "2W" in str_repr  # 连胜2场
 
     def test_team_form_edge_cases(self) -> None:
-        """✅ 边界用例：极端情况"""
+        """✅ 边界用例:极端情况"""
         # 混合连续记录
         form = TeamForm()
         results = ["W", "W", "D", "W", "L", "L", "L", "D", "W", "W"]
@@ -372,7 +372,7 @@ class TestTeam:
     """Team领域模型边界条件测试"""
 
     def test_team_initialization_minimal(self) -> None:
-        """✅ 成功用例：最小初始化"""
+        """✅ 成功用例:最小初始化"""
         team = Team(name="Test Team")
 
         assert team.name == "Test Team"
@@ -387,7 +387,7 @@ class TestTeam:
         assert team.form is not None
 
     def test_team_initialization_full(self) -> None:
-        """✅ 成功用例：完整初始化"""
+        """✅ 成功用例:完整初始化"""
         team = Team(
             id=1,
             name="Test Club",
@@ -415,7 +415,7 @@ class TestTeam:
         assert team.logo_url == "http://test.com/logo.png"
 
     def test_team_validation_empty_name(self) -> None:
-        """✅ 边界用例：空名称验证"""
+        """✅ 边界用例:空名称验证"""
         with pytest.raises(DomainError, match="球队名称不能为空"):
             Team(name="")
 
@@ -426,7 +426,7 @@ class TestTeam:
             Team(name="\t\n")
 
     def test_team_validation_short_name(self) -> None:
-        """✅ 边界用例：简称验证"""
+        """✅ 边界用例:简称验证"""
         # 正常长度
         team = Team(name="Test", short_name="TST")
         assert team.short_name == "TST"
@@ -440,7 +440,7 @@ class TestTeam:
             Team(name="Test", short_name="A" * 11)
 
     def test_team_validation_code(self) -> None:
-        """✅ 边界用例：代码验证"""
+        """✅ 边界用例:代码验证"""
         # 正常3字母代码
         team = Team(name="Test", code="TST")
         assert team.code == "TST"
@@ -460,7 +460,7 @@ class TestTeam:
             Team(name="Test", code="TEST")
 
     def test_team_validation_founded_year(self) -> None:
-        """✅ 边界用例：成立年份验证"""
+        """✅ 边界用例:成立年份验证"""
         # 正常年份
         current_year = datetime.utcnow().year
         team = Team(name="Test", founded_year=2000)
@@ -475,7 +475,7 @@ class TestTeam:
             Team(name="Test", founded_year=current_year + 1)
 
     def test_team_validation_capacity(self) -> None:
-        """✅ 边界用例：容量验证"""
+        """✅ 边界用例:容量验证"""
         # 正常容量
         team = Team(name="Test", capacity=50000)
         assert team.capacity == 50000
@@ -489,13 +489,13 @@ class TestTeam:
             Team(name="Test", capacity=-1)
 
     def test_team_national_type(self) -> None:
-        """✅ 成功用例：国家队类型"""
+        """✅ 成功用例:国家队类型"""
         team = Team(name="Test National", type=TeamType.NATIONAL, country="Testland")
         assert team.type == TeamType.NATIONAL
         assert team.name == "Test National"
 
     def test_team_update_info_method(self) -> None:
-        """✅ 成功用例：更新信息"""
+        """✅ 成功用例:更新信息"""
         team = Team(name="Original")
         original_updated = team.updated_at
 
@@ -515,14 +515,14 @@ class TestTeam:
         assert team.updated_at > original_updated
 
     def test_team_update_info_negative_capacity(self) -> None:
-        """✅ 边界用例：更新信息负容量"""
+        """✅ 边界用例:更新信息负容量"""
         team = Team(name="Test")
 
         with pytest.raises(DomainError, match="体育场容量不能为负数"):
             team.update_info(capacity=-100)
 
     def test_team_add_match_result_method(self) -> None:
-        """✅ 成功用例：添加比赛结果"""
+        """✅ 成功用例:添加比赛结果"""
         team = Team(name="Test")
 
         # 添加胜利
@@ -542,7 +542,7 @@ class TestTeam:
         assert team.form.last_matches == ["D", "W"]
 
     def test_team_add_match_result_invalid(self) -> None:
-        """✅ 边界用例：无效比赛结果"""
+        """✅ 边界用例:无效比赛结果"""
         team = Team(name="Test")
 
         with pytest.raises(DomainError, match="比赛结果必须是 win/draw/loss"):
@@ -555,7 +555,7 @@ class TestTeam:
             team.add_match_result("win", 1, -1)
 
     def test_team_activation_methods(self) -> None:
-        """✅ 成功用例：激活/停用方法"""
+        """✅ 成功用例:激活/停用方法"""
         team = Team(name="Test")
         original_updated = team.updated_at
 
@@ -576,7 +576,7 @@ class TestTeam:
         assert team.updated_at > original_updated
 
     def test_team_promotion_relegation(self) -> None:
-        """✅ 成功用例：升级/降级"""
+        """✅ 成功用例:升级/降级"""
         team = Team(name="Test")
         original_updated = team.updated_at
 
@@ -595,10 +595,10 @@ class TestTeam:
         assert team.updated_at > original_updated
 
     def test_team_calculate_strength(self) -> None:
-        """✅ 成功用例：计算实力"""
+        """✅ 成功用例:计算实力"""
         team = Team(name="Test")
 
-        # 无比赛记录，默认中等实力
+        # 无比赛记录,默认中等实力
         strength = team.calculate_strength()
         assert strength == 50.0
 
@@ -614,7 +614,7 @@ class TestTeam:
         assert 0 <= strength <= 100
 
     def test_team_display_properties(self) -> None:
-        """✅ 成功用例：显示属性"""
+        """✅ 成功用例:显示属性"""
         # 有简称
         team = Team(name="Long Name", short_name="LN")
         assert team.full_name == "Long Name"
@@ -626,7 +626,7 @@ class TestTeam:
         assert team.display_name == "Simple Name"
 
     def test_team_age_property(self) -> None:
-        """✅ 成功用例：球队年龄"""
+        """✅ 成功用例:球队年龄"""
         current_year = datetime.utcnow().year
 
         # 有成立年份
@@ -639,7 +639,7 @@ class TestTeam:
 
     @patch("src.domain.models.team.datetime")
     def test_team_rank_property(self, mock_datetime):
-        """✅ 成功用例：排名级别"""
+        """✅ 成功用例:排名级别"""
         # 模拟当前时间
         mock_datetime.utcnow.return_value.year = 2023
 
@@ -667,7 +667,7 @@ class TestTeam:
         assert team.rank == "中游"
 
     def test_team_domain_events(self) -> None:
-        """✅ 成功用例：领域事件管理"""
+        """✅ 成功用例:领域事件管理"""
         team = Team(name="Test")
 
         # 初始没有事件
@@ -685,7 +685,7 @@ class TestTeam:
         assert len(team.get_domain_events()) == 0
 
     def test_team_serialization(self) -> None:
-        """✅ 成功用例：序列化"""
+        """✅ 成功用例:序列化"""
         team = Team(
             id=1,
             name="Test Team",
@@ -713,7 +713,7 @@ class TestTeam:
         assert "rank" in data
 
     def test_team_deserialization(self) -> None:
-        """✅ 成功用例：反序列化"""
+        """✅ 成功用例:反序列化"""
         data = {
             "id": 1,
             "name": "Test Team",
@@ -751,7 +751,7 @@ class TestTeam:
         assert team.form.last_matches == ["W", "D"]
 
     def test_team_str_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         team = Team(name="Test Team", code="TST")
         team.add_match_result("win", 2, 1)
         team.add_match_result("win", 1, 0)
@@ -761,7 +761,7 @@ class TestTeam:
         assert "TST" in str_repr
 
     def test_team_edge_cases(self) -> None:
-        """✅ 边界用例：极端情况"""
+        """✅ 边界用例:极端情况"""
         # 极端容量
         team = Team(name="Big Stadium", capacity=1000000)
         assert team.capacity == 1000000
@@ -781,7 +781,7 @@ class TestTeam:
         assert team.name == long_name
 
     def test_team_comprehensive_workflow(self) -> None:
-        """✅ 集成用例：完整工作流"""
+        """✅ 集成用例:完整工作流"""
         # 创建球队
         team = Team(
             name="Test United",
@@ -820,7 +820,7 @@ class TestTeam:
         assert stats.draws == 3
         assert stats.losses == 2
         assert stats.points == 7 * 3 + 3 * 1  # 24分
-        assert stats.goal_difference == 18 - 11  # 实际净胜球：7
+        assert stats.goal_difference == 18 - 11  # 实际净胜球:7
 
         # 验证实力计算
         strength = team.calculate_strength()

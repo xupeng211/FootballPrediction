@@ -365,7 +365,7 @@ class TestCryptoUtils:
 
     def test_with_mocked_randomness(self):
         """测试模拟随机性"""
-        # 移除mock测试，因为crypto_utils模块可能不直接使用os.urandom
+        # 移除mock测试,因为crypto_utils模块可能不直接使用os.urandom
         utils = CryptoUtils()
 
         try:

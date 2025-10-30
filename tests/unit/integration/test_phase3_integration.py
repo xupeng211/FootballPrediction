@@ -3,8 +3,8 @@ from datetime import datetime
 集成测试 - 第三阶段
 Integration Tests - Phase 3
 
-专注于数据库集成、API集成、外部服务集成等的测试
-目标：提升整体系统覆盖率和集成测试质量
+专注于数据库集成、API集成,外部服务集成等的测试
+目标:提升整体系统覆盖率和集成测试质量
 """
 
 import asyncio
@@ -51,7 +51,7 @@ class TestServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_data_processing_with_audit_integration(self):
-        """测试：数据处理与审计服务集成 - 覆盖率补充"""
+        """测试:数据处理与审计服务集成 - 覆盖率补充"""
         # 创建服务实例
         data_service = DataProcessingService()
         audit_service = AuditService()
@@ -138,7 +138,7 @@ class TestServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_service_error_propagation(self):
-        """测试：服务间错误传播 - 覆盖率补充"""
+        """测试:服务间错误传播 - 覆盖率补充"""
 
         # 创建模拟的下游服务
         class DownstreamService:
@@ -215,7 +215,7 @@ class TestDatabaseIntegration:
     """数据库集成测试"""
 
     def test_database_connection_management(self):
-        """测试：数据库连接管理 - 覆盖率补充"""
+        """测试:数据库连接管理 - 覆盖率补充"""
 
         # 模拟数据库连接管理器
         class MockDatabaseConnection:
@@ -295,7 +295,7 @@ class TestDatabaseIntegration:
         asyncio.run(test_connection_lifecycle())
 
     def test_transaction_management(self):
-        """测试：事务管理 - 覆盖率补充"""
+        """测试:事务管理 - 覆盖率补充"""
 
         # 模拟事务管理器
         class MockTransactionManager:
@@ -405,7 +405,7 @@ class TestDatabaseIntegration:
         asyncio.run(test_transaction_workflow())
 
     def test_database_pool_management(self):
-        """测试：数据库连接池管理 - 覆盖率补充"""
+        """测试:数据库连接池管理 - 覆盖率补充"""
 
         # 模拟连接池
         class MockConnectionPool:
@@ -473,7 +473,7 @@ class TestDatabaseIntegration:
                         # 连接已在池中
                         return
 
-                # 连接不在可用列表中，需要重新添加
+                # 连接不在可用列表中,需要重新添加
                 self.available_connections.append(
                     {
                         "id": connection_id,
@@ -547,7 +547,7 @@ class TestCacheIntegration:
     """缓存集成测试"""
 
     def test_ttl_cache_integration(self):
-        """测试：TTL缓存集成 - 覆盖率补充"""
+        """测试:TTL缓存集成 - 覆盖率补充"""
         # 创建TTL缓存实例
         cache = TTLCache(default_ttl=60)  # 60秒默认TTL
 
@@ -588,7 +588,7 @@ class TestCacheIntegration:
         assert all(retrieved_data[key] is not None for key in batch_data.keys())
 
     def test_cache_with_service_integration(self):
-        """测试：缓存与服务集成 - 覆盖率补充"""
+        """测试:缓存与服务集成 - 覆盖率补充"""
 
         # 创建带缓存的服务
         class CachedDataService:
@@ -605,7 +605,7 @@ class TestCacheIntegration:
                 if cached_result is not None:
                     return {"data": cached_result, "from_cache": True}
 
-                # 缓存未命中，从数据源获取
+                # 缓存未命中,从数据源获取
                 self.call_count += 1
                 fresh_data = self._fetch_user_from_database(user_id)
 
@@ -668,7 +668,7 @@ class TestCacheIntegration:
 
         # 验证缓存效果
         db_calls_after = service.get_cache_stats()["db_calls"]
-        assert db_calls_after <= 5  # 4个唯一用户，可能有一些重复调用，但应该接近4次
+        assert db_calls_after <= 5  # 4个唯一用户，可能有一些重复调用,但应该接近4次
 
         # 测试缓存失效
         service.invalidate_user_cache(123)
@@ -681,7 +681,7 @@ class TestAPIIntegration:
     """API集成测试"""
 
     def test_dependency_injection_integration(self):
-        """测试：依赖注入集成 - 覆盖率补充"""
+        """测试:依赖注入集成 - 覆盖率补充"""
 
         # 模拟FastAPI依赖注入系统
         class MockRequest:
@@ -777,12 +777,12 @@ class TestAPIIntegration:
 
         # 4. 权限不足请求
         user_request = MockRequest(headers={"Authorization": "Bearer user_token"})
-        # 这里会失败，因为token无效
+        # 这里会失败,因为token无效
         with pytest.raises(PermissionError):
             require_admin_user(user_request)
 
     def test_middleware_integration(self):
-        """测试：中间件集成 - 覆盖率补充"""
+        """测试:中间件集成 - 覆盖率补充"""
 
         # 模拟中间件系统
         class MockMiddleware:
@@ -874,7 +874,7 @@ class TestAPIIntegration:
         asyncio.run(run_middleware_test())
 
     def test_error_handling_integration(self):
-        """测试：错误处理集成 - 覆盖率补充"""
+        """测试:错误处理集成 - 覆盖率补充"""
 
         # 模拟错误处理系统
         class ErrorHandler:
@@ -964,7 +964,7 @@ class TestSystemIntegration:
     """系统集成测试"""
 
     def test_full_request_lifecycle(self):
-        """测试：完整请求生命周期 - 覆盖率补充"""
+        """测试:完整请求生命周期 - 覆盖率补充"""
         # 模拟完整的HTTP请求处理生命周期
 
         class RequestProcessor:
@@ -1119,7 +1119,7 @@ class TestSystemIntegration:
         asyncio.run(test_request_lifecycle())
 
     def test_async_task_integration(self):
-        """测试：异步任务集成 - 覆盖率补充"""
+        """测试:异步任务集成 - 覆盖率补充"""
         # 模拟异步任务系统
 
         class AsyncTaskManager:

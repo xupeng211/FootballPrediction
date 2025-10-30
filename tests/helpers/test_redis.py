@@ -120,11 +120,11 @@ def reset_redis_mocks() -> None:
         _global_async_redis_mock._store.clear()
 
 
-# 向后兼容的函数（现在只是返回 mock 实例，不使用 monkeypatch）
+# 向后兼容的函数（现在只是返回 mock 实例,不使用 monkeypatch）
 def apply_redis_mocks(*args, **kwargs) -> Dict[str, Any]:
     """
-    向后兼容：返回 Redis mocks
-    不再使用 monkeypatch，而是返回 mock 实例供测试使用
+    向后兼容:返回 Redis mocks
+    不再使用 monkeypatch,而是返回 mock 实例供测试使用
     """
     return {
         "redis": get_mock_redis(),

@@ -2,7 +2,7 @@
 观察者模块测试
 Observers Module Tests
 
-测试src/observers/observers.py中定义的观察者实现，专注于实现高覆盖率。
+测试src/observers/observers.py中定义的观察者实现,专注于实现高覆盖率。
 Tests observers implementations defined in src/observers/observers.py, focused on achieving high coverage.
 """
 
@@ -565,7 +565,7 @@ class TestObserverIntegration:
         try:
             await observer.update(event)
         except Exception as e:
-            # 如果有异常，应该是被正确处理的
+            # 如果有异常,应该是被正确处理的
             assert isinstance(e, (ValueError, KeyError, TypeError))
 
     def test_observer_inheritance(self):
@@ -615,7 +615,7 @@ class TestObserverIntegration:
         observer._counters["test"] = 10
         observer._gauges["test_gauge"] = 25.5
 
-        # 如果有序列化方法，测试它
+        # 如果有序列化方法,测试它
         if hasattr(observer, "to_dict"):
             data = observer.to_dict()
             assert isinstance(data, dict)
@@ -668,7 +668,7 @@ def test_module_imports():
 @pytest.mark.skipif(not OBSERVERS_AVAILABLE, reason="Observers module not available")
 def test_observer_constants():
     """测试观察者常量"""
-    # 如果模块中有常量定义，测试它们
+    # 如果模块中有常量定义,测试它们
     from src.observers import observers
 
     if hasattr(observers, "DEFAULT_AGGREGATION_WINDOW"):

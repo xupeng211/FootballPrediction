@@ -258,7 +258,7 @@ class TestDecoratorsModule:
             # 第二次调用应该使用缓存
             _result2 = expensive_function(5)
             assert _result2 == 25
-            # 如果缓存工作，call_count应该还是1
+            # 如果缓存工作,call_count应该还是1
         except ImportError:
             pytest.skip("cache_result装饰器未实现")
 

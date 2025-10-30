@@ -460,7 +460,7 @@ class TestBasicCoverage:
         assert any([]) is False  # 空列表返回False
 
     def test_min_max_sum(self):
-        """测试min、max、sum"""
+        """测试min、max,sum"""
         numbers = [1, 5, 3, 9, 2]
         assert min(numbers) == 1
         assert max(numbers) == 9

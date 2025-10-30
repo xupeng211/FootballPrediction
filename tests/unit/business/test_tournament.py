@@ -110,7 +110,7 @@ class Group:
 
     def generate_fixtures(self):
         """生成小组赛程"""
-        # 循环赛，每队打其他队一次
+        # 循环赛,每队打其他队一次
         for i in range(len(self.teams)):
             for j in range(i + 1, len(self.teams)):
                 match = Match(
@@ -124,7 +124,7 @@ class Group:
 
     def update_standings(self):
         """更新小组排名"""
-        # 按积分排序，然后按净胜球，然后按进球数
+        # 按积分排序，然后按净胜球,然后按进球数
         self.standings = sorted(
             self.teams,
             key=lambda t: (t.points, t.goals_for - t.goals_against, t.goals_for),
@@ -200,7 +200,7 @@ class Tournament:
         # 按小组排名排序
         teams.sort(key=lambda t: t.points, reverse=True)
 
-        # 创建对阵（第一对第八，第二对第七，等）
+        # 创建对阵（第一对第八，第二对第七,等）
         round_matches = []
         for i in range(0, len(teams), 2):
             if i + 1 < len(teams):
@@ -217,7 +217,7 @@ class Tournament:
 
     def simulate_knockout_match(self, match: Match):
         """模拟淘汰赛"""
-        # 如果比分相同，进行点球大战
+        # 如果比分相同,进行点球大战
         if match.home_score == match.away_score:
             # 点球大战（简化）
             home_penalty = random.choice([0, 1, 2, 3, 4, 5])

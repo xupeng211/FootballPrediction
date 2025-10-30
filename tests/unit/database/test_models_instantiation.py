@@ -135,7 +135,7 @@ class TestModelsInstantiation:
                     or hasattr(base, "updated_at")
                 )
             except TypeError:
-                # 抽象类不能实例化，这是正常的
+                # 抽象类不能实例化,这是正常的
                 pytest.skip("BaseModel is abstract")
         except ImportError:
             pytest.skip("Base model not available")

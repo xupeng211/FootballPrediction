@@ -2,7 +2,7 @@ import pytest
 
 try:
 except ImportError:
-    # 如果导入失败，创建简单的mock类用于测试
+    # 如果导入失败,创建简单的mock类用于测试
     class APIResponse:
         def __init__(self, success=True):
             self.success = success

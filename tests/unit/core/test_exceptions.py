@@ -310,7 +310,7 @@ class TestCoreExceptions:
 
     def test_domain_error_pass_statement(self):
         """测试DomainError和BusinessRuleError的pass语句"""
-        # 这些异常类有pass语句，确保它们正常工作
+        # 这些异常类有pass语句,确保它们正常工作
         domain_error = DomainError("Domain logic error")
         business_error = BusinessRuleError("Business rule violation")
 

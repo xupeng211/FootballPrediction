@@ -37,7 +37,7 @@ class TestEventHealthCheck:
 
     @pytest.mark.asyncio
     async def test_event_health_check_success(self):
-        """测试：健康检查成功"""
+        """测试:健康检查成功"""
         mock_app = AsyncMock()
         mock_app.health_check.return_value = {
             "status": "healthy",
@@ -57,7 +57,7 @@ class TestEventHealthCheck:
 
     @pytest.mark.asyncio
     async def test_event_health_check_unhealthy(self):
-        """测试：健康检查返回不健康状态"""
+        """测试:健康检查返回不健康状态"""
         mock_app = AsyncMock()
         mock_app.health_check.return_value = {
             "status": "unhealthy",
@@ -74,7 +74,7 @@ class TestEventHealthCheck:
 
     @pytest.mark.asyncio
     async def test_event_health_check_exception(self):
-        """测试：健康检查抛出异常"""
+        """测试:健康检查抛出异常"""
         mock_app = AsyncMock()
         mock_app.health_check.side_effect = RuntimeError("Service unavailable")
 
@@ -91,7 +91,7 @@ class TestGetEventStatistics:
 
     @pytest.mark.asyncio
     async def test_get_event_statistics_success(self):
-        """测试：成功获取事件统计"""
+        """测试:成功获取事件统计"""
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {
             "total_events": 1000,
@@ -114,7 +114,7 @@ class TestGetEventStatistics:
 
     @pytest.mark.asyncio
     async def test_get_event_statistics_with_metrics(self):
-        """测试：获取带指标的事件统计"""
+        """测试:获取带指标的事件统计"""
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {
             "total_events": 500,
@@ -138,7 +138,7 @@ class TestGetEventStatistics:
             patch("src.api.events._find_handler") as mock_find_handler,
         ):
             mock_get_bus.return_value = mock_bus
-            # 第一次调用返回metrics处理器，第二次返回analytics处理器
+            # 第一次调用返回metrics处理器,第二次返回analytics处理器
             mock_find_handler.side_effect = [
                 mock_metrics_handler,
                 mock_analytics_handler,
@@ -155,7 +155,7 @@ class TestGetEventStatistics:
 
     @pytest.mark.asyncio
     async def test_get_event_statistics_no_handlers(self):
-        """测试：没有找到处理器"""
+        """测试:没有找到处理器"""
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {"total_events": 100, "handlers": 0}
 
@@ -174,7 +174,7 @@ class TestGetEventStatistics:
 
     @pytest.mark.asyncio
     async def test_get_event_statistics_bus_error(self):
-        """测试：事件总线错误"""
+        """测试:事件总线错误"""
         mock_bus = Mock()
         mock_bus.get_stats.side_effect = Exception("Bus error")
 
@@ -190,7 +190,7 @@ class TestFindHandler:
     """查找处理器测试"""
 
     def test_find_handler_success(self):
-        """测试：成功找到处理器"""
+        """测试:成功找到处理器"""
         if "_find_handler" in globals():
             [Mock(spec=MetricsEventHandler), Mock(spec=AnalyticsEventHandler), Mock()]
 
@@ -199,7 +199,7 @@ class TestFindHandler:
                 # 测试逻辑取决于实际实现
 
     def test_find_handler_not_found(self):
-        """测试：未找到处理器"""
+        """测试:未找到处理器"""
         if "_find_handler" in globals():
             [Mock(spec=AnalyticsEventHandler), Mock()]
 
@@ -213,14 +213,14 @@ class TestEventsAPIIntegration:
     """事件API集成测试"""
 
     def test_router_configuration(self):
-        """测试：路由配置"""
+        """测试:路由配置"""
         assert router is not None
         assert router.prefix == "/events"
         assert "事件系统" in router.tags
 
     @pytest.mark.asyncio
     async def test_full_event_api_flow(self):
-        """测试：完整的事件API流程"""
+        """测试:完整的事件API流程"""
         # Mock所有依赖
         mock_app = AsyncMock()
         mock_app.health_check.return_value = {"status": "healthy"}
@@ -261,7 +261,7 @@ class TestEventsAPIIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_api_calls(self):
-        """测试：并发API调用"""
+        """测试:并发API调用"""
         import asyncio
 
         mock_app = AsyncMock()
@@ -281,7 +281,7 @@ class TestEventsAPIIntegration:
 
     @pytest.mark.asyncio
     async def test_error_propagation(self):
-        """测试：错误传播"""
+        """测试:错误传播"""
         # 测试健康检查错误传播
         mock_app = AsyncMock()
         mock_app.health_check.side_effect = ValueError("Invalid configuration")
@@ -294,7 +294,7 @@ class TestEventsAPIIntegration:
 
     @pytest.mark.asyncio
     async def test_handler_metrics_collection(self):
-        """测试：处理器指标收集"""
+        """测试:处理器指标收集"""
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {"total_events": 50}
 
@@ -318,7 +318,7 @@ class TestEventsAPIIntegration:
                 assert _result["metrics"]["requests"] == 100 * (i + 1)
 
     def test_router_tags_and_metadata(self):
-        """测试：路由标签和元数据"""
+        """测试:路由标签和元数据"""
         # 验证路由配置
         assert hasattr(router, "routes")
 
@@ -331,7 +331,7 @@ class TestEventsAPIIntegration:
 
     @pytest.mark.asyncio
     async def test_event_system_metrics_detailed(self):
-        """测试：详细事件系统指标"""
+        """测试:详细事件系统指标"""
         # 创建复杂的模拟数据
         mock_bus = Mock()
         mock_bus.get_stats.return_value = {
@@ -398,12 +398,12 @@ class TestEventsAPIIntegration:
             assert _result["analytics"]["time_distribution"]["last_hour"] == 1000
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not EVENTS_AVAILABLE
         assert True  # 表明测试意识到模块不可用

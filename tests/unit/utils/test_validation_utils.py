@@ -1,7 +1,7 @@
 
-"""""""
+""""""""
 验证工具测试
-"""""""
+""""""""
 
 import re
 from datetime import date, datetime
@@ -153,7 +153,7 @@ class TestValidationUtils:
                 datetime.strptime(value, format)
                 return True, None
             except ValueError:
-                return False, f"日期格式错误，应为{format}"
+                return False, f"日期格式错误,应为{format}"
 
         # 有效日期
         assert validate_date(date.today()) == (True, None)
@@ -161,9 +161,9 @@ class TestValidationUtils:
         assert validate_date("2022-01-01") == (True, None)
 
         # 无效日期
-        assert validate_date("2022-13-01") == (False, "日期格式错误，应为%Y-%m-%d")
-        assert validate_date("2022-01-32") == (False, "日期格式错误，应为%Y-%m-%d")
-        assert validate_date("01/01/2022") == (False, "日期格式错误，应为%Y-%m-%d")
+        assert validate_date("2022-13-01") == (False, "日期格式错误,应为%Y-%m-%d")
+        assert validate_date("2022-01-32") == (False, "日期格式错误,应为%Y-%m-%d")
+        assert validate_date("01/01/2022") == (False, "日期格式错误,应为%Y-%m-%d")
         assert validate_date(123) == (False, "必须是日期或字符串")
 
     def test_range_validation(self):
@@ -214,14 +214,14 @@ class TestValidationUtils:
                 return False
             return re.match(pattern, value) is not None
 
-        # 用户名验证（字母数字下划线，3-20字符）
+        # 用户名验证（字母数字下划线,3-20字符）
         username_pattern = r"^\w{3,20}$"
         assert validate_regex("user123", username_pattern) is True
         assert validate_regex("user_name", username_pattern) is True
         assert validate_regex("us", username_pattern) is False  # 太短
         assert validate_regex("user@name", username_pattern) is False  # 非法字符
 
-        # 密码验证（至少8位，包含大小写字母和数字）
+        # 密码验证（至少8位,包含大小写字母和数字）
         password_pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$"
         assert validate_regex("Password123", password_pattern) is True
         assert validate_regex("password123", password_pattern) is False  # 没有大写
@@ -351,14 +351,14 @@ class TestValidationUtils:
         def validate_conditional(
             data, condition_field, condition_value, field_to_validate, validator
         ):
-            """条件验证：当某个字段满足条件时，验证另一个字段"""
+            """条件验证:当某个字段满足条件时,验证另一个字段"""
             if condition_field not in data:
                 return True, None  # 条件字段不存在，跳过验证
 
             if data[condition_field] == condition_value:
                 return validator(data.get(field_to_validate))
             else:
-                return True, None  # 条件不满足，跳过验证
+                return True, None  # 条件不满足,跳过验证
 
         _data = {
             "user_type": "premium",
@@ -366,7 +366,7 @@ class TestValidationUtils:
             "card_number": "4111111111111111",
         }
 
-        # 当用户类型是premium时，必须有支付方式
+        # 当用户类型是premium时,必须有支付方式
         def has_payment_method(value):
             return value is not None and value != "", "高级用户必须设置支付方式"
 
@@ -375,7 +375,7 @@ class TestValidationUtils:
         )
         assert is_valid is True
 
-        # 当支付方式是信用卡时，必须提供卡号
+        # 当支付方式是信用卡时,必须提供卡号
         def has_valid_card_number(value):
             if not value:
                 return False, "信用卡支付必须提供卡号"

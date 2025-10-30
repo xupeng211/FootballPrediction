@@ -5,7 +5,7 @@
 
 """
 高性能 Mock 对象
-优化的 mock 实现，提升测试执行速度
+优化的 mock 实现,提升测试执行速度
 """
 
 
@@ -227,7 +227,7 @@ class FastHTTPClient:
         return response
 
 
-# 预创建的实例，供测试直接使用
+# 预创建的实例,供测试直接使用
 FAST_DB_MANAGER = FastDatabaseManager()
 FAST_REDIS_MANAGER = FastRedisManager()
 FAST_HTTP_CLIENT = FastHTTPClient()

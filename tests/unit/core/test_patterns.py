@@ -114,9 +114,9 @@ import pytest
         # 收集天气数据
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
-"""""""
+""""""""
 设计模式实现的单元测试
-"""""""
+""""""""
 try:
         AdapterFactory,
         ExternalData,

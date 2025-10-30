@@ -22,24 +22,24 @@ class TestAdapterStatus:
     """适配器状态测试"""
 
     def test_status_values(self):
-        """测试：状态枚举值"""
+        """测试:状态枚举值"""
         assert AdapterStatus.ACTIVE.value == "active"
         assert AdapterStatus.INACTIVE.value == "inactive"
         assert AdapterStatus.ERROR.value == "error"
         assert AdapterStatus.MAINTENANCE.value == "maintenance"
 
     def test_status_comparison(self):
-        """测试：状态比较"""
+        """测试:状态比较"""
         assert AdapterStatus.ACTIVE == AdapterStatus.ACTIVE
         assert AdapterStatus.ACTIVE != AdapterStatus.INACTIVE
 
     def test_status_string_representation(self):
-        """测试：状态字符串表示"""
+        """测试:状态字符串表示"""
         assert str(AdapterStatus.ACTIVE) == "AdapterStatus.ACTIVE"
         assert repr(AdapterStatus.ACTIVE) == "<AdapterStatus.ACTIVE: 'active'>"
 
     def test_status_iteration(self):
-        """测试：状态迭代"""
+        """测试:状态迭代"""
         statuses = list(AdapterStatus)
         assert AdapterStatus.ACTIVE in statuses
         assert AdapterStatus.INACTIVE in statuses
@@ -51,18 +51,18 @@ class TestAdaptee:
     """被适配者测试"""
 
     def test_adaptee_is_abstract(self):
-        """测试：被适配者是抽象类"""
+        """测试:被适配者是抽象类"""
         with pytest.raises(TypeError):
             Adaptee()
 
     def test_adaptee_methods(self):
-        """测试：被适配者方法定义"""
+        """测试:被适配者方法定义"""
         # 检查抽象方法
         assert Adaptee.get_data.__isabstractmethod__
         assert Adaptee.send_data.__isabstractmethod__
 
     def test_adaptee_implementation(self):
-        """测试：被适配者实现"""
+        """测试:被适配者实现"""
 
         class ConcreteAdaptee(Adaptee):
             async def get_data(self, *args, **kwargs):
@@ -89,17 +89,17 @@ class TestTarget:
     """目标接口测试"""
 
     def test_target_is_abstract(self):
-        """测试：目标是抽象类"""
+        """测试:目标是抽象类"""
         with pytest.raises(TypeError):
             Target()
 
     def test_target_methods(self):
-        """测试：目标方法定义"""
+        """测试:目标方法定义"""
         # 检查抽象方法
         assert Target.request.__isabstractmethod__
 
     def test_target_implementation(self):
-        """测试：目标实现"""
+        """测试:目标实现"""
 
         class ConcreteTarget(Target):
             async def request(self, *args, **kwargs):
@@ -120,17 +120,17 @@ class TestAdapter:
     """适配器测试"""
 
     def test_adapter_inheritance(self):
-        """测试：适配器继承"""
+        """测试:适配器继承"""
         # 测试适配器继承自Target
         assert issubclass(Adapter, Target)
 
     def test_adapter_is_abstract(self):
-        """测试：适配器是抽象类"""
+        """测试:适配器是抽象类"""
         with pytest.raises(TypeError):
             Adapter(Mock(spec=Adaptee))
 
     def test_adapter_initialization(self):
-        """测试：适配器初始化"""
+        """测试:适配器初始化"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -157,7 +157,7 @@ class TestAdapter:
         assert isinstance(adapter.metrics, dict)
 
     def test_adapter_initialization_default_name(self):
-        """测试：适配器默认名称"""
+        """测试:适配器默认名称"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -180,7 +180,7 @@ class TestAdapter:
         assert adapter.name == "ConcreteAdapter"
 
     def test_adapter_metrics_initialization(self):
-        """测试：适配器指标初始化"""
+        """测试:适配器指标初始化"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -208,7 +208,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_initialize_success(self):
-        """测试：适配器初始化成功"""
+        """测试:适配器初始化成功"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -235,7 +235,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_initialize_failure(self):
-        """测试：适配器初始化失败"""
+        """测试:适配器初始化失败"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -262,7 +262,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_cleanup_success(self):
-        """测试：适配器清理成功"""
+        """测试:适配器清理成功"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -288,7 +288,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_cleanup_failure(self):
-        """测试：适配器清理失败"""
+        """测试:适配器清理失败"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -315,7 +315,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_request_active(self):
-        """测试：适配器请求（活跃状态）"""
+        """测试:适配器请求（活跃状态）"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -340,7 +340,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_request_inactive(self):
-        """测试：适配器请求（非活跃状态）"""
+        """测试:适配器请求（非活跃状态）"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -355,14 +355,14 @@ class TestAdapter:
 
         mock_adaptee = Mock(spec=Adaptee)
         adapter = ConcreteAdapter(mock_adaptee)
-        # 适配器默认状态是 INACTIVE，不需要手动设置
+        # 适配器默认状态是 INACTIVE,不需要手动设置
 
         with pytest.raises(RuntimeError, match="not active"):
             await adapter.request()
 
     @pytest.mark.asyncio
     async def test_adapter_request_metrics_update(self):
-        """测试：适配器请求指标更新"""
+        """测试:适配器请求指标更新"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -387,7 +387,7 @@ class TestAdapter:
 
     @pytest.mark.asyncio
     async def test_adapter_request_with_args(self):
-        """测试：适配器请求带参数"""
+        """测试:适配器请求带参数"""
 
         class ConcreteAdapter(Adapter):
             async def _initialize(self):
@@ -414,7 +414,7 @@ class TestAdapterConcreteImplementation:
 
     @pytest.mark.asyncio
     async def test_full_adapter_lifecycle(self):
-        """测试：完整适配器生命周期"""
+        """测试:完整适配器生命周期"""
 
         class TestAdaptee(Adaptee):
             def __init__(self):
@@ -471,7 +471,7 @@ class TestAdapterConcreteImplementation:
 
     @pytest.mark.asyncio
     async def test_adapter_error_handling(self):
-        """测试：适配器错误处理"""
+        """测试:适配器错误处理"""
 
         class TestAdaptee(Adaptee):
             async def get_data(self, *args, **kwargs):
@@ -511,7 +511,7 @@ class TestAdapterConcreteImplementation:
 
     @pytest.mark.asyncio
     async def test_adapter_composition(self):
-        """测试：适配器组合"""
+        """测试:适配器组合"""
 
         class SourceAdaptee(Adaptee):
             async def get_data(self, *args, **kwargs):

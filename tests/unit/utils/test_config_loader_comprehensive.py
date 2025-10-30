@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-"""ConfigLoader模块综合测试 - 目标：从18%提升到60%"""
+"""ConfigLoader模块综合测试 - 目标:从18%提升到60%"""
 
 
 import json
@@ -441,7 +441,7 @@ from src.utils.config_loader import load_config_from_file
 
 from src.utils.config_loader import load_config_from_file
 
-        # 注意：load_config_from_file期望文件路径，不是文件对象
+        # 注意:load_config_from_file期望文件路径,不是文件对象
         # 这个测试确保它能优雅地处理错误输入
         assert load_config_from_file(None) == {}
         assert load_config_from_file("") == {}
@@ -587,7 +587,7 @@ from src.utils.config_loader import load_config_from_file
             # 验证结果一致
             assert loaded1 == loaded2 == loaded3 == config_data
 
-            # 注意：实际的缓存需要在应用程序层面实现
+            # 注意:实际的缓存需要在应用程序层面实现
         finally:
             os.unlink(temp_file)
 

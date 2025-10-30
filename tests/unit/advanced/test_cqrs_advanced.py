@@ -1,8 +1,8 @@
-"""""""
+""""""""
 高级覆盖率提升测试: CQRS
 目标覆盖率: 56.67% → 80%
 策略: 高级Mock + 真实业务逻辑测试
-"""""""
+""""""""
 
 import os
 import sys
@@ -46,7 +46,7 @@ class TestCQRS:
 except Exception:
                             continue
 
-            # 如果没有找到类，至少验证模块存在
+            # 如果没有找到类,至少验证模块存在
             assert True
         except Exception:
             pytest.skip("初始化测试跳过")
@@ -93,7 +93,7 @@ except Exception:
             assert result == {"status": "success"}
             async_mock.process.assert_called_once_with("test")
 
-        # 如果支持异步，运行测试
+        # 如果支持异步,运行测试
         try:
             import asyncio
 

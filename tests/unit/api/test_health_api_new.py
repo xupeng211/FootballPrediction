@@ -28,7 +28,7 @@ from src.api.app import app
 
     def test_health_check_with_database(self, client):
         """测试包含数据库状态的健康检查"""
-        # 当前API不支持数据库检查参数，但可以测试基本功能
+        # 当前API不支持数据库检查参数,但可以测试基本功能
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
@@ -42,7 +42,7 @@ from src.api.app import app
             assert "ready" in _data
 
         else:
-            # 如果端点不存在，至少测试健康检查
+            # 如果端点不存在,至少测试健康检查
             response = client.get("/api/health")
             assert response.status_code == 200
 
@@ -53,7 +53,7 @@ from src.api.app import app
             _data = response.json()
             assert data.get("alive") is True or data.get("status") == "alive"
         else:
-            # 如果端点不存在，至少测试健康检查
+            # 如果端点不存在,至少测试健康检查
             response = client.get("/api/health")
             assert response.status_code == 200
 

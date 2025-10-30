@@ -2,7 +2,7 @@
 简单API测试覆盖率提升
 Simple API Coverage Improvement
 
-专注于提升基础API模块的覆盖率，避免复杂依赖。
+专注于提升基础API模块的覆盖率,避免复杂依赖。
 Focus on improving coverage for basic API modules without complex dependencies.
 """
 
@@ -115,7 +115,7 @@ class TestConstants:
             "TAGS": ["api", "football", "predictions"],
         }
 
-        # 这些常量可能不存在，但我们测试导入不会失败
+        # 这些常量可能不存在,但我们测试导入不会失败
         for const_name, const_value in api_constants.items():
             # 只是验证不会出错
             assert isinstance(const_value, (str, list))
@@ -245,7 +245,7 @@ class TestBasicFunctionality:
 
     def test_string_operations(self):
         """测试字符串操作"""
-        # 测试基本的字符串操作，这些在API处理中很常见
+        # 测试基本的字符串操作,这些在API处理中很常见
         test_string = "Football Prediction API"
 
         # 基本断言

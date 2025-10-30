@@ -3,14 +3,14 @@ Phase 4A Week 2 - 用户服务综合测试套件
 
 User Service Comprehensive Test Suite
 
-这个测试文件提供用户服务的全面测试覆盖，包括：
+这个测试文件提供用户服务的全面测试覆盖,包括：
 - 用户认证和授权测试
 - 用户管理功能测试
 - 用户画像和偏好设置测试
 - 用户行为分析测试
 - 安全性和权限控制测试
 
-测试覆盖率目标：>=95%
+测试覆盖率目标:>=95%
 """
 
 import asyncio
@@ -34,7 +34,7 @@ except ImportError:
     User = Mock()
     SimpleService = Mock
 
-# 简化的Mock服务类定义，避免导入问题
+# 简化的Mock服务类定义,避免导入问题
 
 
 class MockAuthService:
@@ -488,7 +488,7 @@ class TestUserServiceAuthentication:
 
             assert "session_id" in session
             assert "user_id" in session
-            # expires_at是可选的，检查基本字段即可
+            # expires_at是可选的,检查基本字段即可
 
 
 class TestUserManagement:

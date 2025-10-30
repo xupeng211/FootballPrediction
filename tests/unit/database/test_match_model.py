@@ -1,7 +1,7 @@
-"""""""
+""""""""
 智能Mock兼容修复模式 - Match模型测试修复
 解决SQLAlchemy关系映射和模型初始化问题
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -156,16 +156,16 @@ class MockMatch:
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
-print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
+print("智能Mock兼容修复模式:强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
 
 # 强制使用Mock实现
 Match = MockMatch
 MatchStatus = MockMatchStatus
 Team = MockTeam
 
-"""""""
+""""""""
 数据库模型测试 - Match模型
-"""""""
+""""""""
 
 
 @pytest.mark.unit
@@ -290,7 +290,7 @@ class TestMatchModel:
         """测试比赛转换为字典"""
         match_dict = sample_match.to_dict() if hasattr(sample_match, "to_dict") else {}
 
-        # 如果没有to_dict方法，测试__dict__
+        # 如果没有to_dict方法,测试__dict__
         if not match_dict:
             match_dict = sample_match.__dict__
 

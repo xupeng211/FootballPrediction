@@ -2,7 +2,7 @@
 高价值模块覆盖率提升测试
 High Value Module Coverage Boost Tests
 
-专注于提升API、服务和核心业务逻辑的测试覆盖率
+专注于提升API,服务和核心业务逻辑的测试覆盖率
 """
 
 import asyncio
@@ -26,7 +26,7 @@ class TestCoreServicesCoverage:
     """核心服务覆盖率补充测试"""
 
     def test_data_processing_service_lifecycle(self):
-        """测试：数据处理服务生命周期 - 覆盖率补充"""
+        """测试:数据处理服务生命周期 - 覆盖率补充"""
         service = DataProcessingService()
 
         # 测试初始化
@@ -36,7 +36,7 @@ class TestCoreServicesCoverage:
         assert hasattr(service, "cleanup")
 
     def test_audit_service_functionality(self):
-        """测试：审计服务功能 - 覆盖率补充"""
+        """测试:审计服务功能 - 覆盖率补充"""
         service = AuditService()
 
         # 测试事件记录
@@ -56,7 +56,7 @@ class TestCoreServicesCoverage:
 
     @pytest.mark.asyncio
     async def test_data_processing_basic_flow(self):
-        """测试：数据处理基本流程 - 覆盖率补充"""
+        """测试:数据处理基本流程 - 覆盖率补充"""
         service = DataProcessingService()
         await service.initialize()
 
@@ -75,7 +75,7 @@ class TestCoreServicesCoverage:
         await service.cleanup()
 
     def test_audit_service_error_handling(self):
-        """测试：审计服务错误处理 - 覆盖率补充"""
+        """测试:审计服务错误处理 - 覆盖率补充"""
         service = AuditService()
 
         # 测试空数据处理
@@ -86,7 +86,7 @@ class TestCoreServicesCoverage:
             pass  # 错误处理是可以接受的
 
     def test_service_configuration(self):
-        """测试：服务配置 - 覆盖率补充"""
+        """测试:服务配置 - 覆盖率补充"""
         # 测试服务初始化参数
         try:
             service1 = DataProcessingService()
@@ -95,7 +95,7 @@ class TestCoreServicesCoverage:
             assert service1 is not None
             assert service2 is not None
         except Exception:
-            pass  # 如果服务无法实例化，跳过测试
+            pass  # 如果服务无法实例化,跳过测试
 
 
 @pytest.mark.skipif(not SERVICES_AVAILABLE, reason="服务模块不可用")
@@ -103,12 +103,12 @@ class TestPredictionEngineCoverage:
     """预测引擎覆盖率补充测试"""
 
     def test_prediction_engine_import(self):
-        """测试：预测引擎导入 - 覆盖率补充"""
-        # 由于PredictionEngine可能不可用，直接跳过测试
+        """测试:预测引擎导入 - 覆盖率补充"""
+        # 由于PredictionEngine可能不可用,直接跳过测试
         pytest.skip("PredictionEngine not available in current environment")
 
     def test_prediction_engine_mock(self):
-        """测试：预测引擎模拟 - 覆盖率补充"""
+        """测试:预测引擎模拟 - 覆盖率补充"""
         try:
             from src.core.prediction_engine import PredictionEngine
 
@@ -134,7 +134,7 @@ class TestUtilityFunctionsCoverage:
     """工具函数覆盖率补充测试"""
 
     def test_datetime_utilities(self):
-        """测试：日期时间工具 - 覆盖率补充"""
+        """测试:日期时间工具 - 覆盖率补充"""
         from datetime import datetime, timedelta
 
         # 测试基础日期操作
@@ -146,7 +146,7 @@ class TestUtilityFunctionsCoverage:
         assert isinstance(now, datetime)
 
     def test_string_utilities(self):
-        """测试：字符串工具 - 覆盖率补充"""
+        """测试:字符串工具 - 覆盖率补充"""
         # 测试基础字符串操作
         test_str = "football_prediction"
 
@@ -155,7 +155,7 @@ class TestUtilityFunctionsCoverage:
         assert test_str.replace("_", " ") == "football prediction"
 
     def test_dict_utilities(self):
-        """测试：字典工具 - 覆盖率补充"""
+        """测试:字典工具 - 覆盖率补充"""
         # 测试基础字典操作
         test_dict = {
             "match_id": 123,
@@ -170,7 +170,7 @@ class TestUtilityFunctionsCoverage:
         assert test_dict["score"]["home"] == 2
 
     def test_list_operations(self):
-        """测试：列表操作 - 覆盖率补充"""
+        """测试:列表操作 - 覆盖率补充"""
         # 测试基础列表操作
         predictions = [
             {"id": 1, "confidence": 0.8},
@@ -183,7 +183,7 @@ class TestUtilityFunctionsCoverage:
         assert len(high_confidence) == 2
 
     def test_type_checking(self):
-        """测试：类型检查 - 覆盖率补充"""
+        """测试:类型检查 - 覆盖率补充"""
         # 测试类型检查操作
         test_data = {
             "int_val": 42,
@@ -202,7 +202,7 @@ class TestErrorHandlingCoverage:
     """错误处理覆盖率补充测试"""
 
     def test_exception_handling_patterns(self):
-        """测试：异常处理模式 - 覆盖率补充"""
+        """测试:异常处理模式 - 覆盖率补充"""
         # 测试基本异常处理
         try:
             pass
@@ -215,7 +215,7 @@ class TestErrorHandlingCoverage:
             assert True  # 正确捕获值错误
 
     def test_defensive_programming(self):
-        """测试：防御性编程 - 覆盖率补充"""
+        """测试:防御性编程 - 覆盖率补充"""
 
         # 测试空值检查
         def safe_divide(a, b):
@@ -228,7 +228,7 @@ class TestErrorHandlingCoverage:
         assert safe_divide(10, None) is None
 
     def test_data_validation(self):
-        """测试：数据验证 - 覆盖率补充"""
+        """测试:数据验证 - 覆盖率补充"""
 
         # 测试数据验证逻辑
         def validate_match_data(data):
@@ -254,7 +254,7 @@ class TestIntegrationScenarios:
     """集成场景覆盖率补充测试"""
 
     def test_service_interaction_mock(self):
-        """测试：服务交互模拟 - 覆盖率补充"""
+        """测试:服务交互模拟 - 覆盖率补充"""
         # 简化的服务交互测试
         mock_service = Mock()
         mock_service.process_data.return_value = {"success": True}
@@ -264,7 +264,7 @@ class TestIntegrationScenarios:
 
     @pytest.mark.asyncio
     async def test_async_workflow_mock(self):
-        """测试：异步工作流模拟 - 覆盖率补充"""
+        """测试:异步工作流模拟 - 覆盖率补充"""
 
         # 模拟异步工作流
         async def process_workflow(data):

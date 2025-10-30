@@ -325,7 +325,7 @@ class TestPredictionBusinessRules:
                 return False
             if has_suspended:
                 return False
-            # 这里可以添加更多规则，如最小预测数等
+            # 这里可以添加更多规则,如最小预测数等
             return True
 
         # 测试用户状态
@@ -350,7 +350,7 @@ class TestPredictionBusinessRules:
             if predicted_home == actual_home and predicted_away == actual_away:
                 return 10
 
-            # 正确预测胜负平：3分
+            # 正确预测胜负平:3分
             pred_result = (
                 "home"
                 if predicted_home > predicted_away
@@ -372,7 +372,7 @@ class TestPredictionBusinessRules:
             if pred_diff == actual_diff:
                 return 1
 
-            # 其他情况：0分
+            # 其他情况:0分
             return 0
 
         # 测试用例

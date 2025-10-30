@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, Mock
 测试配置中心 - 增强版
 Enhanced Test Configuration Center
 
-提供统一的测试配置管理，包括：
+提供统一的测试配置管理,包括:
 - 测试数据库配置
 - Mock服务配置
 - 环境变量管理
@@ -346,7 +346,7 @@ class TestUtilities:
         """断言字典包含指定键值对"""
         for key, value in expected.items():
             assert key in actual, f"Key '{key}' not found in dictionary"
-            assert actual[key]       == value, f"Expected {key}={value}, got {actual[key]}"
+            assert actual[key]        == value, f"Expected {key}={value}, got {actual[key]}"
 
     @staticmethod
     def assert_list_contains(actual: list, expected_items: list):

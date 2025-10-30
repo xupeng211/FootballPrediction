@@ -128,7 +128,7 @@ import time
 DictUtils 模块增强测试套件
 Enhanced DictUtils Test Suite
 Phase 2 - 提升核心模块覆盖率至50%+
-目标：覆盖dict_utils模块的所有功能和边界情况
+目标:覆盖dict_utils模块的所有功能和边界情况
 """
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 @pytest.mark.unit
@@ -185,13 +185,13 @@ def test_deep_merge_nested_multiple_levels(self):
         expected = {"a": {"b": {"c": 1, "d": 2}}}
         assert result == expected
 def test_deep_merge_conflicting_types_dict_vs_value(self):
-        """测试冲突类型：字典 vs 值"""
+        """测试冲突类型:字典 vs 值"""
         dict1 = {"a": {"x": 1}}
         dict2 = {"a": 2}
         result = DictUtils.deep_merge(dict1, dict2)
         assert result == {"a": 2}
 def test_deep_merge_conflicting_types_value_vs_dict(self):
-        """测试冲突类型：值 vs 字典"""
+        """测试冲突类型:值 vs 字典"""
         dict1 = {"a": 1}
         dict2 = {"a": {"x": 2}}
         result = DictUtils.deep_merge(dict1, dict2)

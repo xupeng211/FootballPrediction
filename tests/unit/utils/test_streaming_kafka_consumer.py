@@ -142,7 +142,7 @@ class TestKafkaMessageConsumer:
     async def test_commit_failure(self, consumer):
         """测试提交失败 - 简化版本不会失败"""
         await consumer.start()
-        # 简化版本的commit不会失败，只测试正常提交
+        # 简化版本的commit不会失败,只测试正常提交
         await consumer.commit()
         _stats = consumer.get_stats()
         assert stats["last_commit_offset"] >= 0
@@ -151,7 +151,7 @@ class TestKafkaMessageConsumer:
     async def test_seek_to_offset(self, consumer):
         """测试跳转到偏移量"""
         await consumer.start()
-        # 简化版本的seek不会失败，只测试调用
+        # 简化版本的seek不会失败,只测试调用
         await consumer.seek("topic1", 0, 100)
         assert consumer.consumer is not None
 

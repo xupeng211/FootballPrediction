@@ -142,7 +142,7 @@ class TestCacheComprehensive:
             assert cache.get("key1") == "value1"
             assert cache.get("key2") == "value2"
 
-            # 添加第三个键，应该驱逐最旧的
+            # 添加第三个键,应该驱逐最旧的
             cache.set("key3", "value3")
             assert cache.get("key3") == "value3"
             # key1应该被驱逐

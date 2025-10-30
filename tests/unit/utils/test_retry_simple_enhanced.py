@@ -111,7 +111,7 @@ class TestRetrySimpleEnhanced:
             failing_function()
 
         assert len(delays) == 2
-        # 验证抖动效果：延迟应该略有不同
+        # 验证抖动效果:延迟应该略有不同
         assert delays[0] != delays[1] or abs(delays[0] - delays[1]) > 0.001
 
     @pytest.mark.asyncio
@@ -157,7 +157,7 @@ class TestRetrySimpleEnhanced:
             slow_failing_function()
 
         elapsed = time.time() - start_time
-        # 应该在超时前停止，不会执行所有5次重试
+        # 应该在超时前停止,不会执行所有5次重试
         assert elapsed < 0.5
 
     def test_retry_preserves_function_metadata(self):
@@ -186,7 +186,7 @@ class TestRetrySimpleEnhanced:
         with pytest.raises(ValueError):
             failing_function()
 
-        assert len(callback_calls) == 2  # 3次尝试，前2次失败
+        assert len(callback_calls) == 2  # 3次尝试,前2次失败
         assert callback_calls[0][0] == 1  # 第一次尝试
         assert callback_calls[1][0] == 2  # 第二次尝试
         assert "Callback test" in callback_calls[0][1]
@@ -213,7 +213,7 @@ class TestRetrySimpleEnhanced:
         with pytest.raises(ValueError):
             failing_function()
 
-        # 验证指数退避：0.1, 0.2, 0.4
+        # 验证指数退避:0.1, 0.2, 0.4
         assert delays[0] == 0.1
         assert delays[1] == 0.2
         assert delays[2] == 0.4
@@ -241,7 +241,7 @@ class TestRetrySimpleEnhanced:
         with pytest.raises(ValueError):
             failing_function()
 
-        # 验证最大延迟限制：10, 20, 20
+        # 验证最大延迟限制:10, 20, 20
         assert delays[0] == 10
         assert delays[1] == 20
         assert delays[2] == 20

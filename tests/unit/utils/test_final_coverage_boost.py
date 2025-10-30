@@ -25,7 +25,7 @@ class TestFinalCoverageBoost:
             from src.core.config import get_config
 
             get_config()
-            # 不关心返回值，只关心函数能调用
+            # 不关心返回值,只关心函数能调用
             assert True
         except ImportError:
             pytest.skip("get_config not available")

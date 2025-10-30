@@ -62,7 +62,7 @@ class TestI18nModule:
         mock_gettext.bindtextdomain.side_effect = Exception("Test exception")
 
         # 调用函数应该不抛出异常
-        init_i18n()  # 应该正常返回，不抛出异常
+        init_i18n()  # 应该正常返回,不抛出异常
 
     def test_init_i18n_creates_directory(self, tmp_path):
         """测试初始化时创建目录"""

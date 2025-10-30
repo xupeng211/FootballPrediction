@@ -31,13 +31,13 @@ class TestDataProcessorBase:
     """数据处理器基类测试"""
 
     def test_data_processor_is_abstract(self) -> None:
-        """✅ 边界用例：数据处理器是抽象类"""
+        """✅ 边界用例:数据处理器是抽象类"""
         # 不能直接实例化抽象类
         with pytest.raises(TypeError):
             DataProcessor()
 
     def test_concrete_processors_inherit_base(self) -> None:
-        """✅ 成功用例：具体处理器继承基类"""
+        """✅ 成功用例:具体处理器继承基类"""
         processors = [
             MatchDataProcessor(),
             OddsDataProcessor(),
@@ -57,7 +57,7 @@ class TestMatchDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_match_data(self) -> None:
-        """✅ 成功用例：处理比赛数据"""
+        """✅ 成功用例:处理比赛数据"""
         processor = MatchDataProcessor()
         input_data = {
             "id": "match_123",
@@ -77,7 +77,7 @@ class TestMatchDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_match_data_without_id(self) -> None:
-        """✅ 边界用例：处理没有ID的比赛数据"""
+        """✅ 边界用例:处理没有ID的比赛数据"""
         processor = MatchDataProcessor()
         input_data = {"home_team": "Team A", "away_team": "Team B"}
 
@@ -90,7 +90,7 @@ class TestMatchDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_complex_match_data(self) -> None:
-        """✅ 成功用例：处理复杂比赛数据"""
+        """✅ 成功用例:处理复杂比赛数据"""
         processor = MatchDataProcessor()
         complex_data = {
             "id": "complex_match",
@@ -119,7 +119,7 @@ class TestOddsDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_odds_data(self) -> None:
-        """✅ 成功用例：处理赔率数据"""
+        """✅ 成功用例:处理赔率数据"""
         processor = OddsDataProcessor()
         input_data = {
             "match_id": "match_123",
@@ -139,7 +139,7 @@ class TestOddsDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_odds_with_floats(self) -> None:
-        """✅ 成功用例：处理浮点数赔率"""
+        """✅ 成功用例:处理浮点数赔率"""
         processor = OddsDataProcessor()
         odds_data = {
             "match_id": "match_456",
@@ -163,7 +163,7 @@ class TestScoresDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_scores_data(self) -> None:
-        """✅ 成功用例：处理比分数据"""
+        """✅ 成功用例:处理比分数据"""
         processor = ScoresDataProcessor()
         input_data = {
             "match_id": "match_123",
@@ -191,7 +191,7 @@ class TestFeaturesDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_features_data(self) -> None:
-        """✅ 成功用例：处理特征数据"""
+        """✅ 成功用例:处理特征数据"""
         processor = FeaturesDataProcessor()
         input_data = {
             "match_id": "match_123",
@@ -212,7 +212,7 @@ class TestFeaturesDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_ml_features(self) -> None:
-        """✅ 成功用例：处理机器学习特征"""
+        """✅ 成功用例:处理机器学习特征"""
         processor = FeaturesDataProcessor()
         ml_features = {
             "match_id": "ml_match",
@@ -242,7 +242,7 @@ class TestDataQualityValidator:
     """数据质量验证器测试"""
 
     def test_validate_valid_data(self) -> None:
-        """✅ 成功用例：验证有效数据"""
+        """✅ 成功用例:验证有效数据"""
         validator = DataQualityValidator()
         valid_data = {"id": "123", "name": "test"}
 
@@ -252,18 +252,18 @@ class TestDataQualityValidator:
         assert validator.errors == []
 
     def test_validate_empty_data(self) -> None:
-        """✅ 边界用例：验证空数据"""
+        """✅ 边界用例:验证空数据"""
         validator = DataQualityValidator()
         empty_data = {}
 
         result = validator.validate(empty_data)
 
         assert result is False
-        # 根据实际实现，空数据会先被标记为"Data is empty"
+        # 根据实际实现,空数据会先被标记为"Data is empty"
         assert "Data is empty" in validator.errors
 
     def test_validate_none_data(self) -> None:
-        """✅ 边界用例：验证None数据"""
+        """✅ 边界用例:验证None数据"""
         validator = DataQualityValidator()
 
         result = validator.validate(None)
@@ -272,7 +272,7 @@ class TestDataQualityValidator:
         assert "Data is empty" in validator.errors
 
     def test_validate_data_with_extra_fields(self) -> None:
-        """✅ 成功用例：验证包含额外字段的数据"""
+        """✅ 成功用例:验证包含额外字段的数据"""
         validator = DataQualityValidator()
         data_with_extra = {
             "id": "123",
@@ -287,7 +287,7 @@ class TestDataQualityValidator:
         assert validator.errors == []
 
     def test_multiple_validation_errors(self) -> None:
-        """✅ 成功用例：多个验证错误"""
+        """✅ 成功用例:多个验证错误"""
         validator = DataQualityValidator()
         invalid_data = {"name": "test"}  # 缺少id字段
 
@@ -298,7 +298,7 @@ class TestDataQualityValidator:
         assert "Missing required field: id" in validator.errors[0]
 
     def test_error_state_clearing(self) -> None:
-        """✅ 成功用例：错误状态清除"""
+        """✅ 成功用例:错误状态清除"""
         validator = DataQualityValidator()
 
         # 第一次验证失败
@@ -316,7 +316,7 @@ class TestAnomalyDetector:
     """异常检测器测试"""
 
     def test_detect_no_anomalies(self) -> None:
-        """✅ 成功用例：检测无异常"""
+        """✅ 成功用例:检测无异常"""
         detector = AnomalyDetector()
         normal_data = {"value": 50, "name": "test"}
 
@@ -325,7 +325,7 @@ class TestAnomalyDetector:
         assert anomalies == []
 
     def test_detect_large_value_anomaly(self) -> None:
-        """✅ 成功用例：检测大值异常"""
+        """✅ 成功用例:检测大值异常"""
         detector = AnomalyDetector()
         large_value_data = {"value": 1500}
 
@@ -335,7 +335,7 @@ class TestAnomalyDetector:
         assert "Value too large: 1500" in anomalies[0]
 
     def test_detect_invalid_type_anomaly(self) -> None:
-        """✅ 成功用例：检测无效类型异常"""
+        """✅ 成功用例:检测无效类型异常"""
         detector = AnomalyDetector()
         invalid_type_data = {"value": "not_a_number"}
 
@@ -345,17 +345,17 @@ class TestAnomalyDetector:
         assert "Invalid value type" in anomalies[0]
 
     def test_detect_negative_value(self) -> None:
-        """✅ 边界用例：检测负值"""
+        """✅ 边界用例:检测负值"""
         detector = AnomalyDetector()
         negative_data = {"value": -100}
 
         anomalies = detector.detect(negative_data)
 
-        # 负值应该在阈值范围内，不算异常
+        # 负值应该在阈值范围内,不算异常
         assert anomalies == []
 
     def test_detect_boundary_values(self) -> None:
-        """✅ 边界用例：检测边界值"""
+        """✅ 边界用例:检测边界值"""
         detector = AnomalyDetector()
 
         # 测试边界值
@@ -369,7 +369,7 @@ class TestAnomalyDetector:
         assert len(anomalies) == 1
 
     def test_detect_no_value_field(self) -> None:
-        """✅ 边界用例：数据中没有value字段"""
+        """✅ 边界用例:数据中没有value字段"""
         detector = AnomalyDetector()
         data_without_value = {"name": "test", "other_field": 123}
 
@@ -378,7 +378,7 @@ class TestAnomalyDetector:
         assert anomalies == []
 
     def test_detect_with_zero_value(self) -> None:
-        """✅ 边界用例：零值检测"""
+        """✅ 边界用例:零值检测"""
         detector = AnomalyDetector()
         zero_data = {"value": 0}
 
@@ -392,7 +392,7 @@ class TestMissingDataHandlers:
     """缺失数据处理器测试"""
 
     def test_missing_scores_handler(self) -> None:
-        """✅ 成功用例：缺失比分处理器"""
+        """✅ 成功用例:缺失比分处理器"""
         handler = MissingScoresHandler()
 
         # 完整数据
@@ -419,7 +419,7 @@ class TestMissingDataHandlers:
         assert result["away_score"] == 0
 
     def test_missing_team_handler(self) -> None:
-        """✅ 成功用例：缺失球队处理器"""
+        """✅ 成功用例:缺失球队处理器"""
         handler = MissingTeamHandler()
 
         # 完整数据
@@ -439,7 +439,7 @@ class TestMissingDataHandlers:
             assert result == expected
 
     def test_missing_data_handler_base(self) -> None:
-        """✅ 成功用例：基类缺失数据处理器"""
+        """✅ 成功用例:基类缺失数据处理器"""
         handler = MissingDataHandler()
         test_data = {"test": "data"}
 
@@ -454,7 +454,7 @@ class TestBronzeToSilverProcessor:
 
     @pytest.mark.asyncio
     async def test_process_valid_data(self) -> None:
-        """✅ 成功用例：处理有效数据"""
+        """✅ 成功用例:处理有效数据"""
         processor = BronzeToSilverProcessor()
         input_data = {"id": "123", "name": "test"}
 
@@ -467,7 +467,7 @@ class TestBronzeToSilverProcessor:
 
     @pytest.mark.asyncio
     async def test_process_with_validation_errors(self) -> None:
-        """✅ 成功用例：处理验证错误的数据"""
+        """✅ 成功用例:处理验证错误的数据"""
         processor = BronzeToSilverProcessor()
         invalid_data = {}  # 缺少id字段
 
@@ -480,7 +480,7 @@ class TestBronzeToSilverProcessor:
 
     @pytest.mark.asyncio
     async def test_process_with_anomalies(self) -> None:
-        """✅ 成功用例：处理包含异常的数据"""
+        """✅ 成功用例:处理包含异常的数据"""
         processor = BronzeToSilverProcessor()
         anomalous_data = {"id": "123", "value": 2000}
 
@@ -493,7 +493,7 @@ class TestBronzeToSilverProcessor:
 
     @pytest.mark.asyncio
     async def test_process_missing_data(self) -> None:
-        """✅ 成功用例：处理缺失数据"""
+        """✅ 成功用例:处理缺失数据"""
         processor = BronzeToSilverProcessor()
         incomplete_data = {"id": "123"}  # 缺失比分和球队信息
 
@@ -508,7 +508,7 @@ class TestBronzeToSilverProcessor:
 
     @pytest.mark.asyncio
     async def test_processor_components_initialization(self) -> None:
-        """✅ 成功用例：处理器组件初始化"""
+        """✅ 成功用例:处理器组件初始化"""
         processor = BronzeToSilverProcessor()
 
         assert len(processor.validators) == 1
@@ -526,7 +526,7 @@ class TestDataProcessingService:
     """数据处理服务测试"""
 
     def test_service_initialization(self) -> None:
-        """✅ 成功用例：服务初始化"""
+        """✅ 成功用例:服务初始化"""
         service = DataProcessingService()
 
         assert service.initialized is False
@@ -539,7 +539,7 @@ class TestDataProcessingService:
         assert isinstance(service.bronze_to_silver, BronzeToSilverProcessor)
 
     def test_service_initialization_with_session(self) -> None:
-        """✅ 成功用例：带会话的服务初始化"""
+        """✅ 成功用例:带会话的服务初始化"""
         mock_session = Mock()
         service = DataProcessingService(session=mock_session)
 
@@ -547,7 +547,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_initialize_service(self) -> None:
-        """✅ 成功用例：初始化服务"""
+        """✅ 成功用例:初始化服务"""
         service = DataProcessingService()
 
         assert service.initialized is False
@@ -560,7 +560,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_process_data_with_known_type(self) -> None:
-        """✅ 成功用例：处理已知类型的数据"""
+        """✅ 成功用例:处理已知类型的数据"""
         service = DataProcessingService()
         match_data = {
             "type": "match",
@@ -577,7 +577,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_process_data_with_unknown_type(self) -> None:
-        """✅ 成功用例：处理未知类型的数据"""
+        """✅ 成功用例:处理未知类型的数据"""
         service = DataProcessingService()
         unknown_data = {"type": "unknown_type", "id": "123", "data": "test"}
 
@@ -590,7 +590,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_process_data_without_type(self) -> None:
-        """✅ 成功用例：处理没有类型的数据（默认为match）"""
+        """✅ 成功用例:处理没有类型的数据（默认为match）"""
         service = DataProcessingService()
         data_without_type = {"id": "123", "name": "test"}
 
@@ -602,7 +602,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_process_data_auto_initialization(self) -> None:
-        """✅ 成功用例：数据处理时自动初始化"""
+        """✅ 成功用例:数据处理时自动初始化"""
         service = DataProcessingService()
         assert service.initialized is False
 
@@ -613,7 +613,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_batch_process_data(self) -> None:
-        """✅ 成功用例：批量处理数据"""
+        """✅ 成功用例:批量处理数据"""
         service = DataProcessingService()
         batch_data = [
             {"type": "match", "id": "1", "home_team": "Team A"},
@@ -635,7 +635,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_batch_process_empty_list(self) -> None:
-        """✅ 边界用例：批量处理空列表"""
+        """✅ 边界用例:批量处理空列表"""
         service = DataProcessingService()
 
         results = await service.batch_process([])
@@ -644,7 +644,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_cleanup_service(self) -> None:
-        """✅ 成功用例：清理服务"""
+        """✅ 成功用例:清理服务"""
         service = DataProcessingService()
         await service.initialize()
 
@@ -655,7 +655,7 @@ class TestDataProcessingService:
 
     @pytest.mark.asyncio
     async def test_service_integration_workflow(self) -> None:
-        """✅ 集成用例：完整的服务工作流"""
+        """✅ 集成用例:完整的服务工作流"""
         service = DataProcessingService()
 
         # 1. 处理单个数据
@@ -694,7 +694,7 @@ class TestDataProcessingPerformance:
 
     @pytest.mark.asyncio
     async def test_single_processing_performance(self) -> None:
-        """✅ 性能用例：单个数据处理性能"""
+        """✅ 性能用例:单个数据处理性能"""
         service = DataProcessingService()
         test_data = {"type": "match", "id": "perf_test", "data": "x" * 100}
 
@@ -713,7 +713,7 @@ class TestDataProcessingPerformance:
 
     @pytest.mark.asyncio
     async def test_batch_processing_performance(self) -> None:
-        """✅ 性能用例：批量处理性能"""
+        """✅ 性能用例:批量处理性能"""
         service = DataProcessingService()
         batch_size = 50
         batch_data = [
@@ -735,7 +735,7 @@ class TestDataProcessingPerformance:
 
     @pytest.mark.asyncio
     async def test_concurrent_processing(self) -> None:
-        """✅ 并发用例：并发数据处理"""
+        """✅ 并发用例:并发数据处理"""
         service = DataProcessingService()
 
         async def process_data_concurrently(data_id: int):
@@ -758,7 +758,7 @@ class TestDataProcessingErrorHandling:
 
     @pytest.mark.asyncio
     async def test_handle_malformed_data(self) -> None:
-        """✅ 错误处理用例：处理畸形数据"""
+        """✅ 错误处理用例:处理畸形数据"""
         service = DataProcessingService()
 
         # 测试各种畸形数据
@@ -772,7 +772,7 @@ class TestDataProcessingErrorHandling:
         for data in malformed_cases:
             try:
                 result = await service.process_data(data)
-                # 应该返回某种结果，不抛出异常
+                # 应该返回某种结果,不抛出异常
                 assert isinstance(result, dict)
                 assert "processed_at" in result or "status" in result
             except Exception as e:
@@ -780,7 +780,7 @@ class TestDataProcessingErrorHandling:
 
     @pytest.mark.asyncio
     async def test_processor_exception_handling(self) -> None:
-        """✅ 错误处理用例：处理器异常处理"""
+        """✅ 错误处理用例:处理器异常处理"""
 
         # 创建一个会抛出异常的处理器
         class FaultyProcessor(DataProcessor):
@@ -797,12 +797,12 @@ class TestDataProcessingErrorHandling:
             # 如果没有抛出异常，应该有合理的默认处理
             assert isinstance(result, dict)
         except ValueError:
-            # 如果异常被传播，这也是可以接受的
+            # 如果异常被传播,这也是可以接受的
             pass
 
     @pytest.mark.asyncio
     async def test_batch_processing_with_errors(self) -> None:
-        """✅ 错误处理用例：批量处理中的错误"""
+        """✅ 错误处理用例:批量处理中的错误"""
         service = DataProcessingService()
 
         # 混合正常和异常数据
@@ -819,5 +819,5 @@ class TestDataProcessingErrorHandling:
             assert results[0]["type"] == "match"
             assert results[2]["type"] == "match"
         except Exception:
-            # 如果整个批次失败，这也是合理的
+            # 如果整个批次失败,这也是合理的
             pass

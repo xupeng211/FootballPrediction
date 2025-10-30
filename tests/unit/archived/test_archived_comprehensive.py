@@ -131,7 +131,7 @@ class TestAPIEndpoints:
             client = TestClient(app)
 
             response = client.get("/health")
-            # 可能返回404或其他状态码，只要不崩溃即可
+            # 可能返回404或其他状态码,只要不崩溃即可
             assert response.status_code in [200, 404, 405]
         except (ImportError, Exception):
             pytest.skip("Health check not available")
@@ -199,7 +199,7 @@ class TestAPIFeatures:
     def test_query_creation(self):
         """测试查询创建"""
         try:
-            # 简化的查询创建测试，避免复杂CQRS依赖
+            # 简化的查询创建测试,避免复杂CQRS依赖
             class SimpleQuery:
                 def __init__(self, user_id: str):
                     self.user_id = user_id
@@ -277,7 +277,7 @@ class TestAPIDependencies:
     def test_get_current_user(self):
         """测试当前用户依赖"""
         try:
-            # 简化测试，避免复杂的依赖问题
+            # 简化测试,避免复杂的依赖问题
             with patch("src.api.dependencies.get_current_user") as mock_get_user:
                 mock_user_obj = Mock()
                 mock_get_user.return_value = mock_user_obj

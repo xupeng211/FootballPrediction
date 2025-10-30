@@ -6,14 +6,14 @@ Phase 4A Week 3 - 综合服务集成测试套件
 
 Comprehensive Service Integration Test Suite
 
-这个测试文件提供端到端的服务集成测试，包括：
+这个测试文件提供端到端的服务集成测试,包括：
 - 用户服务到预测服务的完整流程
 - 数据处理管道的端到端测试
 - 缓存服务与数据库服务的集成
 - 外部API集成测试
 - 完整业务流程验证
 
-测试覆盖率目标：>=95%
+测试覆盖率目标:>=95%
 """
 
 import asyncio
@@ -575,7 +575,7 @@ class TestServiceIntegration:
                 mock_fallback.return_value.status_code = 200
                 mock_fallback.return_value.json.return_value = {
                     "matches": [],
-                    "message": "服务降级，使用缓存数据",
+                    "message": "服务降级,使用缓存数据",
                 }
 
                 response = await api_client.get("/api/v1/matches/fallback")
@@ -602,7 +602,7 @@ class TestServiceIntegration:
             assert result["retry_count"] == max_retries
 
             test_metrics.success_count += 1
-            print(f"✅ 重试机制正确，重试了{retry_count}次")
+            print(f"✅ 重试机制正确,重试了{retry_count}次")
 
         except Exception as e:
             test_metrics.error_count += 1
@@ -617,7 +617,7 @@ class TestServiceIntegration:
         """测试服务依赖关系图"""
         print("🧪 开始测试场景: 服务依赖关系图")
 
-        # 模拟服务依赖关系：
+        # 模拟服务依赖关系:
         # 用户服务 -> 缓存服务 -> 数据库服务
         # 预测服务 -> 用户服务 -> 数据库服务
 

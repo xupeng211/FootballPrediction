@@ -1,7 +1,7 @@
 from typing import Any
 """
 集成测试配置文件
-提供数据库、Redis、Kafka 等集成测试的共享 fixtures
+提供数据库、Redis,Kafka 等集成测试的共享 fixtures
 """
 
 import asyncio
@@ -276,13 +276,13 @@ async def test_user_token(api_client):
         if response.status_code == 200:
             return response.json()["access_token"]
 
-    # 如果注册失败，尝试直接登录
+    # 如果注册失败,尝试直接登录
     login_data = {"username": user_data["username"], "password": user_data["password"]}
     response = await api_client.post("/api/v1/auth/login", _data=login_data)
     if response.status_code == 200:
         return response.json()["access_token"]
 
-    # 如果都失败，返回模拟 token
+    # 如果都失败,返回模拟 token
     return "mock_test_token"
 
 

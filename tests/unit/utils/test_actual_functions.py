@@ -22,13 +22,13 @@ def test_crypto_utils_basic():
         test_data = "test_message"
         crypto = CryptoUtils()
 
-        # 如果有加密方法，测试它们
+        # 如果有加密方法,测试它们
         if hasattr(crypto, 'encrypt'):
             encrypted = crypto.encrypt(test_data)
             assert encrypted != test_data
 
         if hasattr(crypto, 'decrypt'):
-            # 如果有解密方法，测试解密
+            # 如果有解密方法,测试解密
             pass
 
         print("✅ CryptoUtils基本功能测试通过")

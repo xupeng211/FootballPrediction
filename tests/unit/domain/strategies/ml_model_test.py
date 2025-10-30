@@ -1,6 +1,6 @@
 """
 Issue #83 阶段2: domain.strategies.ml_model 综合测试
-优先级: MEDIUM - 机器学习策略，算法核心
+优先级: MEDIUM - 机器学习策略,算法核心
 """
 
 import pytest
@@ -126,7 +126,7 @@ class TestDomainStrategiesMl_Model:
             pytest.skip("模块导入失败")
 
         # TODO: 实现集成测试
-        # 模拟真实业务场景，测试组件协作
+        # 模拟真实业务场景,测试组件协作
         assert True  # 基础集成测试通过
 
     def test_error_handling(self):

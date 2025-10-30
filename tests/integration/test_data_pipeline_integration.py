@@ -51,10 +51,10 @@ class TestDataPipelineIntegrationTests:
     def test_complete_workflow_data_pipeline_integration_tests(
         self, client, db_session, redis_client
     ):
-        """测试完整工作流：Data Pipeline Integration Tests"""
+        """测试完整工作流:Data Pipeline Integration Tests"""
         # TODO: 实现具体的集成测试逻辑
 
-        # 示例：测试API端点
+        # 示例:测试API端点
         if hasattr(client, "get"):
             # 健康检查
             response = client.get("/api/health")
@@ -83,7 +83,7 @@ class TestDataPipelineIntegrationTests:
         assert True
 
     def test_error_handling_data_pipeline_integration_tests(self, client):
-        """测试错误处理：Data Pipeline Integration Tests"""
+        """测试错误处理:Data Pipeline Integration Tests"""
         # TODO: 测试各种错误场景
 
         error_scenarios = [
@@ -100,7 +100,7 @@ class TestDataPipelineIntegrationTests:
         assert True
 
     def test_performance_data_pipeline_integration_tests(self, client):
-        """测试性能：Data Pipeline Integration Tests"""
+        """测试性能:Data Pipeline Integration Tests"""
         # TODO: 测试性能指标
 
         start_time = datetime.now()
@@ -109,17 +109,17 @@ class TestDataPipelineIntegrationTests:
         for i in range(10):
             if hasattr(client, "get"):
                 client.get(f"/api/test/{i}")
-                # 不强制要求成功，主要测试性能
+                # 不强制要求成功,主要测试性能
 
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
 
-        # 性能断言（示例：10次调用在5秒内完成）
+        # 性能断言（示例:10次调用在5秒内完成）
         assert duration < 5.0, f"性能测试失败: 耗时{duration:.2f}秒"
 
     @pytest.mark.asyncio
     async def test_async_operations_data_pipeline_integration_tests(self):
-        """测试异步操作：Data Pipeline Integration Tests"""
+        """测试异步操作:Data Pipeline Integration Tests"""
         # TODO: 测试异步操作
 
         async def sample_async_operation():
@@ -130,7 +130,7 @@ class TestDataPipelineIntegrationTests:
         assert result["status"] == "completed"
 
     def test_data_consistency_data_pipeline_integration_tests(self, db_session, redis_client):
-        """测试数据一致性：Data Pipeline Integration Tests"""
+        """测试数据一致性:Data Pipeline Integration Tests"""
         # TODO: 测试数据一致性
 
         # 模拟数据一致性检查
@@ -146,7 +146,7 @@ class TestDataPipelineIntegrationTests:
         assert test_data["status"] is not None
 
     def test_security_data_pipeline_integration_tests(self, client):
-        """测试安全性：Data Pipeline Integration Tests"""
+        """测试安全性:Data Pipeline Integration Tests"""
         # TODO: 测试安全相关功能
 
         security_tests = [

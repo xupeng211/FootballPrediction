@@ -60,7 +60,7 @@ class TestBaseModel:
         assert model.created_at is None
         assert model.updated_at is None
 
-        # 修复：使用日期对象，Pydantic会自动转换为datetime
+        # 修复:使用日期对象,Pydantic会自动转换为datetime
         custom_date = datetime.date(2023, 1, 1)
         model = BaseModel(created_at=custom_date)
         assert model.id is None
@@ -94,12 +94,12 @@ class TestBaseModel:
         json_str = model.model_dump_json()
 
         assert "id" in json_str
-        # 修复：JSON序列化可能不包含空格，检查更简单的模式
+        # 修复:JSON序列化可能不包含空格,检查更简单的模式
         assert '"id":1' in json_str or '"id": 1' in json_str
 
     def test_base_model_from_attributes(self):
         """测试BaseModel从属性创建"""
-        # 创建一个字典，然后从属性创建模型
+        # 创建一个字典,然后从属性创建模型
         custom_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
         data = {"id": 123, "created_at": custom_time}
         model = BaseModel(**data)

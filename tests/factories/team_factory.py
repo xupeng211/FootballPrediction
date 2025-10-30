@@ -85,7 +85,7 @@ class TeamFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
         teams = []
         for i in range(count):
             team_data = cls.create(**kwargs)
-            # 如果没有指定名称，添加序号避免重复
+            # 如果没有指定名称,添加序号避免重复
             if "name" not in kwargs:
                 team_data["name"] = f"{team_data['name']}_{i + 1}"
             teams.append(team_data)

@@ -208,7 +208,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert (
             input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )

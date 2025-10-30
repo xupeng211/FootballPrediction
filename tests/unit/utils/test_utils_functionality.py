@@ -31,7 +31,7 @@ class TestUtilsFunctionality:
         except ImportError:
             pytest.skip("Time utils not available")
         except Exception:
-            # 如果函数不存在或调用失败，跳过
+            # 如果函数不存在或调用失败,跳过
             pytest.skip("Time utils function not callable")
 
     def test_time_utils_format_duration(self):

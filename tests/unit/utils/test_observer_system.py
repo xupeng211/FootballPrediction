@@ -1,11 +1,11 @@
 
-"""""""
+""""""""
 观察者系统单元测试
 Observer System Unit Tests
 
 测试观察者模式的核心功能。
 Tests core functionality of the observer pattern.
-"""""""
+""""""""
 
 import asyncio
 
@@ -306,7 +306,7 @@ async def test_event_filtering():
     """测试事件过滤"""
     observer = TestObserver()
 
-    # 添加过滤器：只处理错误事件
+    # 添加过滤器:只处理错误事件
     observer.add_filter(lambda e: e.event_type == ObservableEventType.ERROR_OCCURRED)
 
     # 创建不同类型的事件

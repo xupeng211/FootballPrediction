@@ -19,9 +19,9 @@ class TestHealthEndpoint:
     @with_mocks(["logger"])
     def test_health_check(self, mocks):
         """测试健康检查端点"""
-        # 导入需要在patch内，以避免导入错误
+        # 导入需要在patch内,以避免导入错误
         with patch("src.api.app.logger", mocks["logger"]):
-            # 由于导入问题，我们直接测试端点逻辑
+            # 由于导入问题,我们直接测试端点逻辑
             response_data = {
                 "status": "healthy",
                 "timestamp": "2025-01-13T00:00:00Z",

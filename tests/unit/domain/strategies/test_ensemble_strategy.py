@@ -193,7 +193,7 @@ async def test_dynamic_weighting(ensemble_strategy):
     # 验证动态权重已调整
     assert isinstance(_result, PredictionOutput)
 
-    # ML模型性能最好，应该有更高的权重
+    # ML模型性能最好,应该有更高的权重
     ml_weight = ensemble_strategy._strategy_weights["ml_model"].performance_weight
     statistical_weight = ensemble_strategy._strategy_weights["statistical"].performance_weight
 
@@ -275,7 +275,7 @@ async def test_strategy_failure_handling(ensemble_strategy):
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
-    # 应该仍然能够预测，使用剩余的策略
+    # 应该仍然能够预测,使用剩余的策略
     _result = await ensemble_strategy.predict(input_data)
 
     assert isinstance(_result, PredictionOutput)

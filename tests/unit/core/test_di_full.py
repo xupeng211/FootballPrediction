@@ -26,7 +26,7 @@ import pytest
 # 注册并获取服务
 
 
-# 在Mock环境中，装饰器只是返回类
+# 在Mock环境中,装饰器只是返回类
 
 
 # 注册依赖
@@ -94,7 +94,7 @@ def get_global_container():
 
 
 def register_service(name):
-    """装饰器：注册服务"""
+    """装饰器:注册服务"""
 
     def decorator(cls):
         _global_container.register_singleton(name, cls)

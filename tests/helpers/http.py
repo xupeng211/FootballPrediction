@@ -27,7 +27,7 @@ class MockHTTPResponse:
         return self._json_data
 
     def raise_for_status(self) -> None:
-        """检查状态码，如果错误则抛出异常"""
+        """检查状态码,如果错误则抛出异常"""
         if self.status_code >= 400:
             raise Exception(f"HTTP {self.status_code}")
 

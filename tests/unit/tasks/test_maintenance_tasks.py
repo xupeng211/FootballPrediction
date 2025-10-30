@@ -1,9 +1,9 @@
-"""""""
+""""""""
 维护任务测试
 Tests for Maintenance Tasks
 
 测试src.tasks.maintenance_tasks模块的维护任务功能
-"""""""
+""""""""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -44,7 +44,7 @@ class TestMaintenanceTaskManager:
     """维护任务管理器测试"""
 
     def test_manager_creation(self):
-        """测试：管理器创建"""
+        """测试:管理器创建"""
         manager = MaintenanceTaskManager()
         assert manager is not None
         assert hasattr(manager, "schedule_task")
@@ -54,7 +54,7 @@ class TestMaintenanceTaskManager:
 
     @pytest.mark.asyncio
     async def test_schedule_task(self):
-        """测试：调度任务"""
+        """测试:调度任务"""
         manager = MaintenanceTaskManager()
 
         with patch.object(manager, "scheduler") as mock_scheduler:
@@ -68,7 +68,7 @@ class TestMaintenanceTaskManager:
 
     @pytest.mark.asyncio
     async def test_execute_task(self):
-        """测试：执行任务"""
+        """测试:执行任务"""
         manager = MaintenanceTaskManager()
 
         with patch.object(manager, "execute_task_direct") as mock_execute:
@@ -82,7 +82,7 @@ class TestMaintenanceTaskManager:
             mock_execute.assert_called_once_with(task)
 
     def test_get_task_status(self):
-        """测试：获取任务状态"""
+        """测试:获取任务状态"""
         manager = MaintenanceTaskManager()
 
         # 模拟任务状态
@@ -100,7 +100,7 @@ class TestMaintenanceTaskManager:
         assert status["progress"] == 0.5
 
     def test_list_pending_tasks(self):
-        """测试：列出待处理任务"""
+        """测试:列出待处理任务"""
         manager = MaintenanceTaskManager()
 
         # 添加一些任务
@@ -128,7 +128,7 @@ class TestDatabaseMaintenanceTask:
 
     @pytest.mark.asyncio
     async def test_execute_database_backup(self):
-        """测试：执行数据库备份"""
+        """测试:执行数据库备份"""
         task = DatabaseMaintenanceTask()
 
         with patch.object(task, "backup_database") as mock_backup:
@@ -146,7 +146,7 @@ class TestDatabaseMaintenanceTask:
 
     @pytest.mark.asyncio
     async def test_execute_vacuum(self):
-        """测试：执行VACUUM操作"""
+        """测试:执行VACUUM操作"""
         task = DatabaseMaintenanceTask()
 
         with patch.object(task, "run_vacuum") as mock_vacuum:
@@ -160,7 +160,7 @@ class TestDatabaseMaintenanceTask:
 
     @pytest.mark.asyncio
     async def test_execute_analyze(self):
-        """测试：执行分析操作"""
+        """测试:执行分析操作"""
         task = DatabaseMaintenanceTask()
 
         with patch.object(task, "run_analyze") as mock_analyze:
@@ -188,7 +188,7 @@ class TestCacheCleanupTask:
 
     @pytest.mark.asyncio
     async def test_cleanup_expired_keys(self):
-        """测试：清理过期键"""
+        """测试:清理过期键"""
         task = CacheCleanupTask()
 
         with patch.object(task, "redis_client") as mock_redis:
@@ -202,7 +202,7 @@ class TestCacheCleanupTask:
 
     @pytest.mark.asyncio
     async def test_cleanup_large_values(self):
-        """测试：清理大值"""
+        """测试:清理大值"""
         task = CacheCleanupTask()
 
         with patch.object(task, "redis_client") as mock_redis:
@@ -216,7 +216,7 @@ class TestCacheCleanupTask:
 
     @pytest.mark.asyncio
     async def test_rebuild_index(self):
-        """测试：重建索引"""
+        """测试:重建索引"""
         task = CacheCleanupTask()
 
         with patch.object(task, "redis_client") as mock_redis:
@@ -236,7 +236,7 @@ class TestLogRotationTask:
 
     @pytest.mark.asyncio
     async def test_rotate_application_logs(self):
-        """测试：轮转应用日志"""
+        """测试:轮转应用日志"""
         task = LogRotationTask()
 
         with patch("os.path.exists", return_value=True):
@@ -252,7 +252,7 @@ class TestLogRotationTask:
 
     @pytest.mark.asyncio
     async def test_rotate_access_logs(self):
-        """测试：轮转访问日志"""
+        """测试:轮转访问日志"""
         task = LogRotationTask()
 
         with patch("os.listdir") as mock_listdir:
@@ -269,7 +269,7 @@ class TestLogRotationTask:
 
     @pytest.mark.asyncio
     async def test_cleanup_old_logs(self):
-        """测试：清理旧日志"""
+        """测试:清理旧日志"""
         task = LogRotationTask()
 
         with patch("os.listdir") as mock_listdir:
@@ -298,7 +298,7 @@ class TestBackupTask:
 
     @pytest.mark.asyncio
     async def test_full_backup(self):
-        """测试：完整备份"""
+        """测试:完整备份"""
         task = BackupTask()
 
         with patch.object(task, "backup_database") as mock_db_backup:
@@ -323,7 +323,7 @@ class TestBackupTask:
 
     @pytest.mark.asyncio
     async def test_incremental_backup(self):
-        """测试：增量备份"""
+        """测试:增量备份"""
         task = BackupTask()
 
         with patch.object(task, "create_incremental_backup") as mock_incremental:
@@ -340,7 +340,7 @@ class TestBackupTask:
 
     @pytest.mark.asyncio
     async def test_verify_backup(self):
-        """测试：验证备份"""
+        """测试:验证备份"""
         task = BackupTask()
 
         with patch("os.path.exists", return_value=True):
@@ -352,7 +352,7 @@ class TestBackupTask:
 
     @pytest.mark.asyncio
     async def test_restore_backup(self):
-        """测试：恢复备份"""
+        """测试:恢复备份"""
         task = BackupTask()
 
         with patch("tarfile.extractall") as mock_extract:
@@ -372,14 +372,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not MAINTENANCE_TASKS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if MAINTENANCE_TASKS_AVAILABLE:
 from src.tasks.maintenance_tasks import (
             BackupTask,
@@ -408,7 +408,7 @@ class TestHealthCheckTask:
 
     @pytest.mark.asyncio
     async def test_check_database_health(self):
-        """测试：检查数据库健康"""
+        """测试:检查数据库健康"""
         task = HealthCheckTask()
 
         with patch.object(task, "db_manager") as mock_db:
@@ -426,7 +426,7 @@ class TestHealthCheckTask:
 
     @pytest.mark.asyncio
     async def test_check_redis_health(self):
-        """测试：检查Redis健康"""
+        """测试:检查Redis健康"""
         task = HealthCheckTask()
 
         with patch.object(task, "redis_client") as mock_redis:
@@ -443,7 +443,7 @@ class TestHealthCheckTask:
 
     @pytest.mark.asyncio
     async def test_check_disk_space(self):
-        """测试：检查磁盘空间"""
+        """测试:检查磁盘空间"""
         task = HealthCheckTask()
 
         with patch("shutil.disk_usage") as mock_usage:
@@ -458,7 +458,7 @@ class TestHealthCheckTask:
 
     @pytest.mark.asyncio
     async def test_check_system_metrics(self):
-        """测试：检查系统指标"""
+        """测试:检查系统指标"""
         task = HealthCheckTask()
 
         with patch("psutil.cpu_percent") as mock_cpu:
@@ -477,7 +477,7 @@ class TestHealthCheckTask:
 
     @pytest.mark.asyncio
     async def test_generate_health_report(self):
-        """测试：生成健康报告"""
+        """测试:生成健康报告"""
         task = HealthCheckTask()
 
         # 模拟所有检查结果
@@ -504,7 +504,7 @@ class TestMaintenanceTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_maintenance_workflow(self):
-        """测试：维护工作流"""
+        """测试:维护工作流"""
         manager = MaintenanceTaskManager()
 
         # 创建任务队列
@@ -536,7 +536,7 @@ class TestMaintenanceTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_scheduled_maintenance(self):
-        """测试：定时维护"""
+        """测试:定时维护"""
         manager = MaintenanceTaskManager()
 
         with patch.object(manager, "scheduler") as mock_scheduler:
@@ -558,7 +558,7 @@ class TestMaintenanceTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_error_handling(self):
-        """测试：错误处理"""
+        """测试:错误处理"""
         manager = MaintenanceTaskManager()
         task = DatabaseMaintenanceTask()
 
@@ -572,7 +572,7 @@ class TestMaintenanceTasksIntegration:
             assert "error" in result
 
     def test_task_dependency(self):
-        """测试：任务依赖"""
+        """测试:任务依赖"""
         # 定义任务依赖
         backup_task = BackupTask()
         vacuum_task = DatabaseMaintenanceTask()
@@ -585,7 +585,7 @@ class TestMaintenanceTasksIntegration:
         assert backup_task in dependencies[vacuum_task]
 
     def test_task_priority(self):
-        """测试：任务优先级"""
+        """测试:任务优先级"""
         tasks = [
             DatabaseMaintenanceTask(priority=1),
             HealthCheckTask(priority=2),
@@ -603,7 +603,7 @@ class TestMaintenanceTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_task_timeout(self):
-        """测试：任务超时"""
+        """测试:任务超时"""
         manager = MaintenanceTaskManager()
         task = CacheCleanupTask()
 

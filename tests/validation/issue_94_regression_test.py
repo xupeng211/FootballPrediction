@@ -2,7 +2,7 @@
 Issue #94 API修复回归测试套件
 Issue #94 API Repair Regression Test Suite
 
-保护已修复的测试，确保后续工作不会破坏现有成果。
+保护已修复的测试,确保后续工作不会破坏现有成果。
 Protects fixed tests to ensure future work doesn't break existing achievements.
 """
 
@@ -71,7 +71,7 @@ class TestIssue94RegressionGuard:
         """Issue #94进展指标验证"""
         # 验证我们的修复成果
         expected_passing_tests = 13  # 6个适配器 + 7个Health测试
-        current_achievement = "13个测试通过，26.7%通过率"
+        current_achievement = "13个测试通过,26.7%通过率"
 
         print(f"🎯 Issue #94当前成就: {current_achievement}")
         assert expected_passing_tests >= 13, f"应该至少有{expected_passing_tests}个测试通过"

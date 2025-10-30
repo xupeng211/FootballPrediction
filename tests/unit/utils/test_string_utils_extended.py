@@ -27,7 +27,7 @@ class TestStringUtils:
         """测试自定义后缀截断"""
         text = "This is a very long string"
         _result = StringUtils.truncate(text, 10, suffix=" [more]")
-        # 截断长度10包含后缀，所以实际文本长度是 10 - 7 = 3
+        # 截断长度10包含后缀,所以实际文本长度是 10 - 7 = 3
         assert _result == "Thi [more]"
 
     def test_slugify(self):

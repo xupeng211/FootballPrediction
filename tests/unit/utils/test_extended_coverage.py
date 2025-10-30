@@ -143,7 +143,7 @@ class TestDataValidatorExtended:
             length_ok = len(phone) >= 7
             is_valid = has_digits and length_ok
 
-            # 简单验证，不期望完美准确性
+            # 简单验证,不期望完美准确性
             assert isinstance(is_valid, bool)
 
     def test_validate_json_data(self):
@@ -614,7 +614,7 @@ def test_extended_utils_import():
         assert dict_utils is not None
         assert file_utils is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_extended_coverage_helper():

@@ -270,7 +270,7 @@ class TestPerformanceMonitoringIntegration:
         integration = PerformanceMonitoringIntegration()
         integration.enabled = True
 
-        # 目前是TODO，但应该不抛出错误
+        # 目前是TODO,但应该不抛出错误
         integration.setup_alerting()
 
     def test_cleanup(self):
@@ -389,7 +389,7 @@ class TestErrorHandling:
         mock_app.add_middleware.side_effect = Exception("Middleware error")
 
         with patch("src.performance.integration.logger") as mock_logger:
-            # 应该不抛出错误，只记录日志
+            # 应该不抛出错误,只记录日志
             integration.integrate_with_fastapi(mock_app)
 
             mock_logger.error.assert_called_once()

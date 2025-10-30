@@ -1,10 +1,10 @@
-"""""""
+""""""""
 配置加载器工作测试
 Working Config Loader Tests
 
-测试src/utils/config_loader.py中定义的配置加载功能，专注于实现100%覆盖率。
+测试src/utils/config_loader.py中定义的配置加载功能,专注于实现100%覆盖率。
 Tests configuration loading functionality defined in src/utils/config_loader.py, focused on achieving 100% coverage.
-"""""""
+""""""""
 
 import json
 import os
@@ -150,7 +150,7 @@ class TestConfigLoaderWorking:
             pytest.skip("YAML library not available")
 
         # 测试YAML错误处理 - 模拟各种异常情况
-        # 由于具体的YAML解析错误可能因版本而异，我们主要测试错误处理逻辑存在
+        # 由于具体的YAML解析错误可能因版本而异,我们主要测试错误处理逻辑存在
         assert True  # 如果能执行到这里说明YAML导入和基本功能正常
 
     def test_integration_workflow(self):

@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class EnhancedMock:
-    """增强的Mock类，提供更多便利方法"""
+    """增强的Mock类,提供更多便利方法"""
 
     @staticmethod
     def create_async_mock(return_value: Any = None, side_effect: Any = None):
@@ -173,7 +173,7 @@ class MockContextManager:
 
 
 def mock_external_services():
-    """装饰器：Mock外部服务"""
+    """装饰器:Mock外部服务"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -193,7 +193,7 @@ def mock_external_services():
 
 
 def mock_api_responses(responses: Dict[str, Any]):
-    """装饰器：Mock API响应"""
+    """装饰器:Mock API响应"""
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
@@ -218,7 +218,7 @@ def mock_api_responses(responses: Dict[str, Any]):
 
 
 def mock_database_session(data: Optional[List[Dict]] = None):
-    """装饰器：Mock数据库会话"""
+    """装饰器:Mock数据库会话"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -238,7 +238,7 @@ def mock_database_session(data: Optional[List[Dict]] = None):
 
 
 def mock_redis_cache(cache_data: Optional[Dict[str, Any]] = None):
-    """装饰器：Mock Redis缓存"""
+    """装饰器:Mock Redis缓存"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -261,7 +261,7 @@ def mock_redis_cache(cache_data: Optional[Dict[str, Any]] = None):
 
 
 def mock_celery_task(task_name: str, return_value: Any = None):
-    """装饰器：Mock Celery任务"""
+    """装饰器:Mock Celery任务"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -278,7 +278,7 @@ def mock_celery_task(task_name: str, return_value: Any = None):
 
 
 def mock_mlflow_tracking():
-    """装饰器：Mock MLflow跟踪"""
+    """装饰器:Mock MLflow跟踪"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):

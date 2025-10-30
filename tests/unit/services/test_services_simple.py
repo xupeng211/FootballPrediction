@@ -1,7 +1,7 @@
-"""""""
+""""""""
 Services模块简化测试
 Services Module Simple Tests
-"""""""
+""""""""
 
 import pytest
 
@@ -16,7 +16,7 @@ def test_services_import():
 
         assert AuditService is not None
     except ImportError as e:
-        # 如果导入失败，记录但不测试
+        # 如果导入失败,记录但不测试
         pytest.skip(f"Cannot import AuditService: {e}")
 
     try:

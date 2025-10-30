@@ -1,7 +1,7 @@
-"""""""
+""""""""
 预测API路由业务逻辑测试
 
-基于真实FastAPI路由的业务逻辑测试，专注于：
+基于真实FastAPI路由的业务逻辑测试,专注于:
 - 真实HTTP状态码验证
 - Pydantic模型验证
 - 业务规则验证
@@ -9,7 +9,7 @@
 - 错误处理验证
 
 测试覆盖 src/api/predictions/router.py 的所有端点
-"""""""
+""""""""
 
 from typing import Any, Dict
 
@@ -207,7 +207,7 @@ class TestPredictionsRouter:
     def test_batch_predict_too_many_matches(self, client: TestClient) -> None:
         """超过最大批量限制"""
         request_data = {
-            "match_ids": list(range(1, 150)),  # 149个ID，超过100的限制
+            "match_ids": list(range(1, 150)),  # 149个ID,超过100的限制
             "model_version": "v1.2",
         }
 
@@ -395,11 +395,11 @@ class TestPredictionsRouter:
         """比赛ID验证"""
         # 测试负数ID
         client.get("/predictions/-1")
-        # 根据实际实现，可能接受或拒绝负数ID
+        # 根据实际实现,可能接受或拒绝负数ID
 
         # 测试零ID
         client.get("/predictions/0")
-        # 根据实际实现，可能接受或拒绝零ID
+        # 根据实际实现,可能接受或拒绝零ID
 
         # 测试极大ID
         client.get("/predictions/999999999")
@@ -482,7 +482,7 @@ class TestPredictionsRouter:
         }
 
         max(probs, key=probs.get)
-        # 注意：当前的模拟数据可能不遵循这个逻辑，但真实实现应该
+        # 注意:当前的模拟数据可能不遵循这个逻辑,但真实实现应该
         # assert data["predicted_outcome"] == max_prob_outcome
 
     def test_accuracy_score_calculation(self, client: TestClient) -> None:
@@ -495,8 +495,8 @@ class TestPredictionsRouter:
         data = response.json()
 
         if data["is_correct"]:
-            # 正确预测时，准确度应该等于置信度
+            # 正确预测时,准确度应该等于置信度
             assert data["accuracy_score"] > 0.5
         else:
-            # 错误预测时，准确度应该较低
+            # 错误预测时,准确度应该较低
             assert data["accuracy_score"] < 0.5

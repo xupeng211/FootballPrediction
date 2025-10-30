@@ -1,14 +1,14 @@
-"""""""
+""""""""
 事件驱动预测服务基础测试 - 符合严格测试规范
 
-测试src/services/event_prediction_service.py的事件驱动预测功能，包括：
+测试src/services/event_prediction_service.py的事件驱动预测功能,包括：
 - 预测请求处理和验证
 - 策略服务集成
 - 事件发布机制
 - 异步操作处理
 - 错误处理和回退
 - 业务规则验证
-符合7项严格测试规范：
+符合7项严格测试规范:
 1. ✅ 文件路径与模块层级对应
 2. ✅ 测试文件命名规范
 3. ✅ 每个函数包含成功和异常用例
@@ -16,7 +16,7 @@
 5. ✅ 使用pytest标记
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
-"""""""
+""""""""
 
 import asyncio
 from datetime import datetime
@@ -45,7 +45,7 @@ class TestEventPredictionServiceInfrastructure:
     """事件驱动预测服务基础设施测试 - 严格测试规范"""
 
     def test_service_initialization_success(self) -> None:
-        """✅ 成功用例：服务初始化成功"""
+        """✅ 成功用例:服务初始化成功"""
         if EventDrivenPredictionService is not None:
             # Mock事件总线
             mock_event_bus = Mock()
@@ -72,7 +72,7 @@ class TestEventPredictionServiceInfrastructure:
                         assert hasattr(service, "strategy_service")
 
     def test_service_initialization_failure(self) -> None:
-        """❌ 异常用例：服务初始化失败"""
+        """❌ 异常用例:服务初始化失败"""
         if EventDrivenPredictionService is not None:
             with patch(
                 "src.services.event_prediction_service.StrategyPredictionService"
@@ -86,7 +86,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_predict_match_success(self) -> None:
-        """✅ 成功用例：比赛预测成功"""
+        """✅ 成功用例:比赛预测成功"""
         if EventDrivenPredictionService is not None:
             # Mock服务依赖
             mock_event_bus = Mock()
@@ -131,7 +131,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_predict_match_invalid_strategy(self) -> None:
-        """❌ 异常用例：无效预测策略"""
+        """❌ 异常用例:无效预测策略"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -160,7 +160,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_predict_match_event_publishing(self) -> None:
-        """✅ 成功用例：预测事件发布"""
+        """✅ 成功用例:预测事件发布"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -194,7 +194,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_update_prediction_success(self) -> None:
-        """✅ 成功用例：更新预测成功"""
+        """✅ 成功用例:更新预测成功"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -236,7 +236,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_update_prediction_not_found(self) -> None:
-        """❌ 异常用例：预测不存在"""
+        """❌ 异常用例:预测不存在"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -265,7 +265,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_batch_prediction_success(self) -> None:
-        """✅ 成功用例：批量预测成功"""
+        """✅ 成功用例:批量预测成功"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -311,7 +311,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_concurrent_prediction_handling(self) -> None:
-        """✅ 成功用例：并发预测处理"""
+        """✅ 成功用例:并发预测处理"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -360,7 +360,7 @@ class TestEventPredictionServiceInfrastructure:
                         assert mock_strategy_service.predict.call_count == 3
 
     def test_prediction_validation_success(self) -> None:
-        """✅ 成功用例：预测验证成功"""
+        """✅ 成功用例:预测验证成功"""
         if EventDrivenPredictionService is not None:
             # 创建有效的预测对象
             valid_prediction = Mock()
@@ -374,7 +374,7 @@ class TestEventPredictionServiceInfrastructure:
             assert result is True
 
     def test_prediction_validation_failure(self) -> None:
-        """❌ 异常用例：预测验证失败"""
+        """❌ 异常用例:预测验证失败"""
         if EventDrivenPredictionService is not None:
             # 创建不完整的预测对象
             incomplete_prediction = Mock()
@@ -389,13 +389,13 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_error_recovery_mechanism(self) -> None:
-        """✅ 成功用例：错误恢复机制"""
+        """✅ 成功用例:错误恢复机制"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
 
             mock_strategy_service = Mock()
-            # 第一次调用失败，第二次成功
+            # 第一次调用失败,第二次成功
             mock_strategy_service.predict.side_effect = [
                 Exception("Temporary failure"),
                 Mock(id=4, match_id=400),
@@ -424,7 +424,7 @@ class TestEventPredictionServiceInfrastructure:
                         assert mock_strategy_service.predict.call_count == 2
 
     def test_event_bus_integration_success(self) -> None:
-        """✅ 成功用例：事件总线集成成功"""
+        """✅ 成功用例:事件总线集成成功"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -461,7 +461,7 @@ class TestEventPredictionServiceInfrastructure:
                         mock_event_bus.publish.assert_called_once_with(test_event)
 
     def test_service_configuration_success(self) -> None:
-        """✅ 成功用例：服务配置成功"""
+        """✅ 成功用例:服务配置成功"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()
@@ -498,7 +498,7 @@ class TestEventPredictionServiceInfrastructure:
 
     @pytest.mark.asyncio
     async def test_service_lifecycle_management(self) -> None:
-        """✅ 成功用例：服务生命周期管理"""
+        """✅ 成功用例:服务生命周期管理"""
         if EventDrivenPredictionService is not None:
             mock_event_bus = Mock()
             mock_event_bus.publish = AsyncMock()

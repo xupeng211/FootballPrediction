@@ -8,7 +8,7 @@ try:
     from src.database.models.team import Team
     from src.database.models.user import User
 except ImportError:
-    # 如果导入失败，创建简单的mock类用于测试
+    # 如果导入失败,创建简单的mock类用于测试
     class League:
         def __init__(self, name="Test League"):
             self.name = name

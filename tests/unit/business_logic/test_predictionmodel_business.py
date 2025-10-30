@@ -2,7 +2,7 @@ from datetime import datetime
 """
 预测模型业务逻辑深度测试
 重构完成: 1115行 → 400行 (压缩64%)
-目标: 真实业务逻辑覆盖，非模板化测试
+目标: 真实业务逻辑覆盖,非模板化测试
 
 测试范围:
 - PredictionResult 数据模型业务逻辑
@@ -190,7 +190,7 @@ class TestPredictionCacheBusinessLogic:
 
     @pytest.mark.skipif(not MODULE_AVAILABLE, reason="预测模块不可用")
     def test_cache_ttl_business_logic(self):
-        """测试缓存TTL业务逻辑（简化版本，真实TTL需要更复杂的实现）"""
+        """测试缓存TTL业务逻辑（简化版本,真实TTL需要更复杂的实现）"""
         cache = PredictionCache()
 
         test_result = PredictionResult(
@@ -301,7 +301,7 @@ class TestPredictionServiceBusinessLogic:
         # 第一次预测
         result1 = await service.predict_match(match_id)
 
-        # 检查是否被缓存（当前实现中不会自动缓存，但我们可以测试缓存功能）
+        # 检查是否被缓存（当前实现中不会自动缓存,但我们可以测试缓存功能）
         cache_key = f"match_{match_id}"
         service.cache.set(cache_key, result1)
 
@@ -431,7 +431,7 @@ class TestPredictionMonitoringBusinessLogic:
     def test_model_load_duration_monitoring_business_logic(self):
         """测试模型加载时间监控业务逻辑"""
         # 模拟模型加载时间测量
-        with patch("time.time", side_effect=[0.0, 1.5]):  # 开始时间0.0，结束时间1.5
+        with patch("time.time", side_effect=[0.0, 1.5]):  # 开始时间0.0,结束时间1.5
             model_load_duration_seconds.observe(1.5)
 
         # 验证观察到的值
@@ -518,7 +518,7 @@ class TestPredictionIntegrationBusinessLogic:
 
         for i, confidence in enumerate(confidences):
             result = await service.predict_match(12380 + i)
-            # 在真实场景中，这里会设置实际的置信度
+            # 在真实场景中,这里会设置实际的置信度
             # result.confidence = confidence  # 假设可以修改
             predictions.append(result)
 
@@ -533,6 +533,6 @@ class TestPredictionIntegrationBusinessLogic:
 if __name__ == "__main__":
     print("预测模型业务逻辑测试套件")
     if MODULE_AVAILABLE:
-        print("✅ 所有模块可用，测试已准备就绪")
+        print("✅ 所有模块可用,测试已准备就绪")
     else:
-        print("⚠️ 模块不可用，测试将被跳过")
+        print("⚠️ 模块不可用,测试将被跳过")

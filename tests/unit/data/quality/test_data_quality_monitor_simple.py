@@ -1,9 +1,9 @@
-"""""""
+""""""""
 数据质量监控器简化测试
 Tests for Data Quality Monitor (Simple Version)
 
 测试src.data.quality.data_quality_monitor模块的基本功能
-"""""""
+""""""""
 
 import logging
 
@@ -29,7 +29,7 @@ class TestDataQualityMonitorSimple:
     """数据质量监控器简化测试"""
 
     def test_monitor_creation(self):
-        """测试：监控器创建"""
+        """测试:监控器创建"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             assert monitor is not None
@@ -37,14 +37,14 @@ class TestDataQualityMonitorSimple:
             assert monitor.thresholds["data_freshness_hours"] == 24
 
     def test_monitor_custom_thresholds(self):
-        """测试：自定义阈值"""
+        """测试:自定义阈值"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             monitor.thresholds["data_freshness_hours"] = 12
             assert monitor.thresholds["data_freshness_hours"] == 12
 
     def test_calculate_quality_score_perfect(self):
-        """测试：计算质量分数（完美）"""
+        """测试:计算质量分数（完美）"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -55,7 +55,7 @@ class TestDataQualityMonitorSimple:
             assert score == 100.0
 
     def test_calculate_quality_score_with_issues(self):
-        """测试：计算质量分数（有问题）"""
+        """测试:计算质量分数（有问题）"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -66,7 +66,7 @@ class TestDataQualityMonitorSimple:
             assert 70 <= score < 90
 
     def test_determine_overall_status(self):
-        """测试：确定总体状态"""
+        """测试:确定总体状态"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -82,14 +82,14 @@ class TestDataQualityMonitorSimple:
                 assert status == expected
 
     def test_logging_configuration(self):
-        """测试：日志配置"""
+        """测试:日志配置"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             assert monitor.logger is not None
             assert isinstance(monitor.logger, logging.Logger)
 
     def test_threshold_values(self):
-        """测试：阈值验证"""
+        """测试:阈值验证"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -103,7 +103,7 @@ class TestDataQualityMonitorSimple:
 
     @pytest.mark.asyncio
     async def test_error_handling(self):
-        """测试：错误处理"""
+        """测试:错误处理"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager") as mock_db:
             mock_db.return_value.get_session.side_effect = Exception("DB Error")
 
@@ -116,20 +116,20 @@ class TestDataQualityMonitorSimple:
                 pass  # 预期可能有错误
 
     def test_generate_recommendations(self):
-        """测试：生成建议"""
+        """测试:生成建议"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
             freshness_check = {"overall_status": "warning"}
             anomalies = [{"type": "stale_data"}]
 
-            # 如果方法存在，测试它
+            # 如果方法存在,测试它
             if hasattr(monitor, "_generate_recommendations"):
                 recommendations = monitor._generate_recommendations(freshness_check, anomalies)
                 assert isinstance(recommendations, list)
 
     def test_quality_score_boundary(self):
-        """测试：质量分数边界"""
+        """测试:质量分数边界"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -147,7 +147,7 @@ class TestDataQualityMonitorSimple:
             assert 0 <= score < 70
 
     def test_status_priority(self):
-        """测试：状态优先级"""
+        """测试:状态优先级"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -175,14 +175,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DATA_QUALITY_MONITOR_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
 from src.data.quality.data_quality_monitor import DataQualityMonitor
 

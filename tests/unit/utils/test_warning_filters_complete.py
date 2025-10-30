@@ -1,9 +1,9 @@
-"""""""
+""""""""
 警告过滤器完整测试
 Warning Filters Complete Tests
 
-基于Issue #98四连胜成功模式，创建完整的警告过滤器测试
-"""""""
+基于Issue #98四连胜成功模式,创建完整的警告过滤器测试
+""""""""
 
 import logging
 import sys
@@ -132,7 +132,7 @@ class TestWarningFiltersComplete:
         # 这个测试模拟模块在非pytest环境下的行为
         with patch.dict(sys.modules, {"pytest": None}):
             # 重新导入模块以触发自动执行逻辑
-            # 注意：由于模块已经导入，这个测试主要验证逻辑
+            # 注意:由于模块已经导入,这个测试主要验证逻辑
             assert True
 
     @patch("src.utils.warning_filters.setup_warning_filters")
@@ -284,7 +284,7 @@ except Exception:
             assert "pytest" not in sys.modules
 
             # 在这种情况下，模块导入时会自动调用setup_warning_filters
-            # 由于模块已经导入，我们主要验证条件判断逻辑
+            # 由于模块已经导入,我们主要验证条件判断逻辑
             assert True
 
         finally:
@@ -351,7 +351,7 @@ except Exception:
         ]
 
         for error in error_scenarios:
-            # 验证异常被正确处理，不会导致程序崩溃
+            # 验证异常被正确处理,不会导致程序崩溃
             assert isinstance(error, Exception)
             assert str(error) != ""
 

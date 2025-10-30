@@ -3,10 +3,10 @@
 # TODO: Consider creating a fixture for 44 repeated Mock creations
 
 
-"""""""
+""""""""
 Mock测试模块
 用于测试无法直接导入或有语法错误的模块
-"""""""
+""""""""
 
 import sys
 from pathlib import Path
@@ -240,7 +240,7 @@ from src.services.base_unified import BaseService
 
     def test_domain_models_mock(self):
         """测试领域模型Mock"""
-        # 暂时跳过，因为team.py有语法错误
+        # 暂时跳过,因为team.py有语法错误
         # from src.domain.models.team import Team
 from src.domain.models.match import Match
 from src.domain.models.prediction import Prediction

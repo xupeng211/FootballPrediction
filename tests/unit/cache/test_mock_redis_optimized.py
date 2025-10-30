@@ -47,7 +47,7 @@ class TestMockRedisOptimized:
     """Mock Redis 优化测试"""
 
     def test_basic_operations(self, fast_redis):
-        """测试：基本操作"""
+        """测试:基本操作"""
         # 测试 set/get
         assert fast_redis.set("key1", "value1") is True
         assert fast_redis.get("key1") == "value1"
@@ -60,7 +60,7 @@ class TestMockRedisOptimized:
         assert fast_redis.get("key1") is None
 
     def test_expiry_operations(self, fast_redis):
-        """测试：过期时间操作"""
+        """测试:过期时间操作"""
         # 设置带过期时间的键
         assert fast_redis.set("expire_key", "expire_value", ex=60) is True
         assert fast_redis.ttl("expire_key") == 60
@@ -73,7 +73,7 @@ class TestMockRedisOptimized:
         assert fast_redis.ttl("nonexistent") == -1
 
     def test_exists_operation(self, fast_redis):
-        """测试：存在性检查"""
+        """测试:存在性检查"""
         # 初始状态
         assert fast_redis.exists("test_key") is False
 
@@ -86,7 +86,7 @@ class TestMockRedisOptimized:
         assert fast_redis.exists("test_key") is False
 
     def test_increment_decrement(self, fast_redis):
-        """测试：递增递减"""
+        """测试:递增递减"""
         # 初始值为 0
         assert fast_redis.incr("counter") == 1
         assert fast_redis.incr("counter") == 2
@@ -98,7 +98,7 @@ class TestMockRedisOptimized:
         assert fast_redis.get("counter") == "0"
 
     def test_hash_operations(self, fast_redis):
-        """测试：哈希操作"""
+        """测试:哈希操作"""
         # 设置哈希字段
         assert fast_redis.hset("user:1", "name", "Alice") is True
         assert fast_redis.hset("user:1", "age", "30") is True
@@ -111,7 +111,7 @@ class TestMockRedisOptimized:
         assert fast_redis.hgetall("nonexistent") == {}
 
     def test_sorted_set_operations(self, fast_redis):
-        """测试：有序集合操作"""
+        """测试:有序集合操作"""
         # 添加成员
         assert fast_redis.zadd("leaderboard", 100, "player1") == 1
         assert fast_redis.zadd("leaderboard", 200, "player2") == 1
@@ -121,11 +121,11 @@ class TestMockRedisOptimized:
         assert isinstance(members, list)
 
     def test_ping(self, fast_redis):
-        """测试：Ping"""
+        """测试:Ping"""
         assert fast_redis.ping() is True
 
     def test_keys(self, fast_redis):
-        """测试：获取键列表"""
+        """测试:获取键列表"""
         # 添加多个键
         fast_redis.set("test:1", "value1")
         fast_redis.set("test:2", "value2")
@@ -139,7 +139,7 @@ class TestMockRedisOptimized:
         assert "other:1" in keys
 
     def test_flush_all(self, fast_redis):
-        """测试：清空所有数据"""
+        """测试:清空所有数据"""
         # 添加数据
         fast_redis.set("key1", "value1")
         fast_redis.set("key2", "value2")
@@ -151,7 +151,7 @@ class TestMockRedisOptimized:
         assert fast_redis.exists("key2") is False
 
     def test_performance_metrics(self, fast_redis):
-        """测试：性能指标"""
+        """测试:性能指标"""
         initial_count = fast_redis.operation_count
 
         # 执行一些操作
@@ -163,7 +163,7 @@ class TestMockRedisOptimized:
         assert fast_redis.operation_count == initial_count + 3
 
     def test_complex_data_types(self, fast_redis):
-        """测试：复杂数据类型"""
+        """测试:复杂数据类型"""
         # JSON 数据
         import json
 
@@ -179,7 +179,7 @@ class TestMockRedisOptimized:
 
     @pytest.mark.asyncio
     async def test_async_compatibility(self, fast_redis):
-        """测试：异步兼容性"""
+        """测试:异步兼容性"""
         # 模拟异步操作
         loop = asyncio.get_event_loop()
 
@@ -197,7 +197,7 @@ class TestRedisManagerIntegration:
     """Redis Manager 集成测试"""
 
     def test_redis_manager_creation(self, mock_redis_manager):
-        """测试：Redis Manager 创建"""
+        """测试:Redis Manager 创建"""
         assert mock_redis_manager is not None
         assert hasattr(mock_redis_manager, "get")
         assert hasattr(mock_redis_manager, "set")
@@ -205,7 +205,7 @@ class TestRedisManagerIntegration:
 
     @pytest.mark.asyncio
     async def test_redis_cache_workflow(self, mock_redis_manager):
-        """测试：Redis 缓存工作流"""
+        """测试:Redis 缓存工作流"""
         # 模拟缓存工作流
         cache_key = "user:123:profile"
         cache_data = {"id": 123, "name": "Test User", "email": "test@example.com"}
@@ -229,7 +229,7 @@ class TestRedisManagerIntegration:
         assert mock_redis_manager.get(cache_key) is None
 
     def test_cache_invalidation(self, mock_redis_manager):
-        """测试：缓存失效"""
+        """测试:缓存失效"""
         # 设置多个相关缓存
         mock_redis_manager.set("user:123:data", "data1")
         mock_redis_manager.set("user:123:profile", "profile1")

@@ -327,7 +327,7 @@ def create_mock_app():
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock应用
-print("智能Mock兼容修复模式：强制使用Mock API应用以避免导入失败问题")
+print("智能Mock兼容修复模式:强制使用Mock API应用以避免导入失败问题")
 
 # 创建Mock应用
 app = create_mock_app()
@@ -394,7 +394,7 @@ class TestHealthEndpoint:
         """测试数据库健康检查失败 - 使用Mock服务"""
         # 智能Mock兼容修复模式 - 直接测试Mock行为
         response = client.get("/health")
-        # Mock应用总是返回健康状态，但我们可以验证结构
+        # Mock应用总是返回健康状态,但我们可以验证结构
         assert response.status_code == 200
 
         _data = response.json()
@@ -826,7 +826,7 @@ class TestValidation:
         """测试日期验证"""
         # 测试有效日期格式
         response = client.get("/api/v1/matches?date_from=2024-01-01&date_to=2024-01-31")
-        # 可能返回200或404，取决于是否有数据
+        # 可能返回200或404,取决于是否有数据
         assert response.status_code in [200, 404]
 
         # 测试无效日期格式

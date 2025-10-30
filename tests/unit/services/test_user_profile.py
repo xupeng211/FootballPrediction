@@ -44,14 +44,14 @@ class TestUserProfileService:
         return user
 
     def test_service_initialization(self, service):
-        """测试：服务初始化"""
+        """测试:服务初始化"""
         assert service.name == "UserProfileService"
         assert service._user_profiles == {}
         assert service._initialized is False
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, service):
-        """测试：成功初始化"""
+        """测试:成功初始化"""
         # When
         _result = await service.initialize()
 
@@ -61,7 +61,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_initialize_failure(self, service):
-        """测试：初始化失败"""
+        """测试:初始化失败"""
         # Given
         with patch.object(service, "_on_initialize", return_value=False):
             # When
@@ -73,7 +73,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_shutdown(self, service):
-        """测试：关闭服务"""
+        """测试:关闭服务"""
         # Given
         await service.initialize()
         service._user_profiles["test"] = Mock()
@@ -86,7 +86,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_get_service_info(self, service):
-        """测试：获取服务信息"""
+        """测试:获取服务信息"""
         # Given
         await service.initialize()
 
@@ -104,7 +104,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_generate_profile(self, service, sample_user):
-        """测试：生成用户画像"""
+        """测试:生成用户画像"""
         # Given
         await service.initialize()
 
@@ -121,7 +121,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_generate_profile_with_user_profile(self, service, sample_user_with_profile):
-        """测试：生成用户画像（带profile属性）"""
+        """测试:生成用户画像（带profile属性）"""
         # Given
         await service.initialize()
 
@@ -137,7 +137,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_get_profile_exists(self, service, sample_user):
-        """测试：获取存在的画像"""
+        """测试:获取存在的画像"""
         # Given
         await service.initialize()
         created_profile = await service.generate_profile(sample_user)
@@ -151,7 +151,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_get_profile_not_exists(self, service):
-        """测试：获取不存在的画像"""
+        """测试:获取不存在的画像"""
         # Given
         await service.initialize()
 
@@ -163,7 +163,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_update_profile_exists(self, service, sample_user):
-        """测试：更新存在的画像"""
+        """测试:更新存在的画像"""
         # Given
         await service.initialize()
         await service.generate_profile(sample_user)
@@ -180,7 +180,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_update_profile_not_exists(self, service):
-        """测试：更新不存在的画像"""
+        """测试:更新不存在的画像"""
         # Given
         await service.initialize()
 
@@ -191,7 +191,7 @@ class TestUserProfileService:
         assert _result is None
 
     def test_analyze_user_interests_default(self, service, sample_user):
-        """测试：分析用户兴趣（默认）"""
+        """测试:分析用户兴趣（默认）"""
         # When
         interests = service._analyze_user_interests(sample_user)
 
@@ -202,7 +202,7 @@ class TestUserProfileService:
         assert "预测" in interests
 
     def test_analyze_user_interests_with_teams(self, service, sample_user_with_profile):
-        """测试：分析用户兴趣（带球队）"""
+        """测试:分析用户兴趣（带球队）"""
         # When
         interests = service._analyze_user_interests(sample_user_with_profile)
 
@@ -211,7 +211,7 @@ class TestUserProfileService:
         assert "切尔西" in interests
 
     def test_analyze_behavior_patterns(self, service, sample_user):
-        """测试：分析用户行为模式"""
+        """测试:分析用户行为模式"""
         # When
         patterns = service._analyze_behavior_patterns(sample_user)
 
@@ -223,7 +223,7 @@ class TestUserProfileService:
         assert "prediction_activity" in patterns
 
     def test_analyze_content_preferences(self, service, sample_user):
-        """测试：分析内容偏好"""
+        """测试:分析内容偏好"""
         # When
         preferences = service._analyze_content_preferences(sample_user)
 
@@ -234,7 +234,7 @@ class TestUserProfileService:
         assert "preferred_leagues" in preferences
 
     def test_get_notification_settings(self, service, sample_user):
-        """测试：获取通知设置"""
+        """测试:获取通知设置"""
         # When
         settings = service._get_notification_settings(sample_user)
 
@@ -246,7 +246,7 @@ class TestUserProfileService:
         assert settings["prediction_updates"] is True
 
     def test_create_profile_success(self, service):
-        """测试：创建画像（成功）"""
+        """测试:创建画像（成功）"""
         # Given
         user_data = {
             "user_id": "new_user",
@@ -266,7 +266,7 @@ class TestUserProfileService:
         assert _result["profile"]["display_name"] == "New User"
 
     def test_create_profile_empty_data(self, service):
-        """测试：创建画像（空数据）"""
+        """测试:创建画像（空数据）"""
         # When
         _result = service.create_profile({})
 
@@ -275,7 +275,7 @@ class TestUserProfileService:
         assert "Empty or invalid user data" in _result["message"]
 
     def test_create_profile_missing_user_id(self, service):
-        """测试：创建画像（缺少user_id）"""
+        """测试:创建画像（缺少user_id）"""
         # Given
         user_data = {"name": "Test", "email": "test@example.com"}
 
@@ -286,7 +286,7 @@ class TestUserProfileService:
         assert _result["status"] == "error"
 
     def test_delete_profile_exists(self, service):
-        """测试：删除存在的画像"""
+        """测试:删除存在的画像"""
         # Given
         user_data = {"user_id": "delete_me", "name": "Delete Me"}
         service.create_profile(user_data)
@@ -299,7 +299,7 @@ class TestUserProfileService:
         assert "delete_me" not in service._user_profiles
 
     def test_delete_profile_not_exists(self, service):
-        """测试：删除不存在的画像"""
+        """测试:删除不存在的画像"""
         # When
         _result = service.delete_profile("nonexistent")
 
@@ -307,7 +307,7 @@ class TestUserProfileService:
         assert _result["status"] == "not_found"
 
     def test_profiles_property(self, service):
-        """测试：_profiles属性"""
+        """测试:_profiles属性"""
         # Given
         user_data = {"user_id": "test123", "name": "Test"}
         service.create_profile(user_data)
@@ -321,7 +321,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_multiple_profiles_management(self, service):
-        """测试：管理多个画像"""
+        """测试:管理多个画像"""
         # Given
         users = [
             Mock(id="user1", username="user1"),
@@ -339,7 +339,7 @@ class TestUserProfileService:
 
     @pytest.mark.asyncio
     async def test_profile_preferences_update(self, service, sample_user):
-        """测试：更新画像偏好"""
+        """测试:更新画像偏好"""
         # Given
         await service.initialize()
         await service.generate_profile(sample_user)
@@ -351,10 +351,10 @@ class TestUserProfileService:
 
         # Then
         assert updated is not None
-        # 注意：实际实现可能将整个preferences字典更新
+        # 注意:实际实现可能将整个preferences字典更新
 
     def test_user_profile_model(self):
-        """测试：UserProfile模型"""
+        """测试:UserProfile模型"""
         # Given
         preferences = {"language": "zh", "interests": ["足球"]}
 
@@ -373,7 +373,7 @@ class TestUserProfileService:
         assert profile.preferences == preferences
 
     def test_user_model(self):
-        """测试：User模型"""
+        """测试:User模型"""
         # When
         _user = User(id="user123", username="testuser")
 

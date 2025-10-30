@@ -49,7 +49,7 @@ class TestKafkaMessageProducer:
         """测试生产者初始化"""
         assert producer.bootstrap_servers == ["localhost:9092"]
         assert producer.topic == "test_topic"
-        # producer在初始化时是None，需要在start后设置
+        # producer在初始化时是None,需要在start后设置
         assert producer.producer is None
 
     @pytest.mark.asyncio
@@ -281,7 +281,7 @@ class TestKafkaMessageProducer:
         """测试失败重试"""
         await producer.start()
 
-        # 前两次失败，第三次成功
+        # 前两次失败,第三次成功
         mock_kafka_producer.send.side_effect = [
             KafkaError("Temporary failure"),
             KafkaError("Temporary failure"),

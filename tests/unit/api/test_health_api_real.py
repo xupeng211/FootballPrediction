@@ -226,11 +226,11 @@ from src.api.health import router
 
 
         # 验证路由标签
-"""""""
+""""""""
 健康检查API真实测试
 Tests for real health check API
 测试实际的健康检查API功能。
-"""""""
+""""""""
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 @pytest.mark.unit
@@ -527,7 +527,7 @@ class TestHealthAPIReal:
             mock_check.side_effect = Exception("Database connection failed")
             response = client.get("/api/v1/health/")
             assert response.status_code == 500
-    @pytest.mark.skip(reason="时间函数mock会影响HTTP客户端，暂时跳过此边缘测试")
+    @pytest.mark.skip(reason="时间函数mock会影响HTTP客户端,暂时跳过此边缘测试")
     def test_time_function_error_handling(self, client):
         """测试时间函数错误处理"""
         pass

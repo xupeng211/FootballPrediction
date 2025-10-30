@@ -6,15 +6,15 @@ from datetime import datetime
 """
 内容分析服务基础测试 - 符合严格测试规范
 
-测试src/services/content_analysis.py的内容分析功能，包括：
+测试src/services/content_analysis.py的内容分析功能,包括：
 - 内容抽象基类
-- 新闻、社交媒体、统计内容分析器
+- 新闻、社交媒体,统计内容分析器
 - 内容情感分析和趋势识别
 - 内容验证和过滤
 - 异步内容处理
 - 内容质量评估
 - 内容缓存和优化
-符合7项严格测试规范：
+符合7项严格测试规范:
 1. ✅ 文件路径与模块层级对应
 2. ✅ 测试文件命名规范
 3. ✅ 每个函数包含成功和异常用例
@@ -183,7 +183,7 @@ class TestContentAnalyzerAbstract:
     """内容分析器抽象测试 - 严格测试规范"""
 
     def test_abstract_class_structure(self) -> None:
-        """✅ 成功用例：抽象类结构验证"""
+        """✅ 成功用例:抽象类结构验证"""
         # 验证ContentAnalyzer是抽象类
         assert ContentAnalyzer is not None
         assert issubclass(ContentAnalyzer, ABC)
@@ -195,7 +195,7 @@ class TestContentAnalyzerAbstract:
             assert hasattr(ContentAnalyzer, method)
 
     def test_abstract_methods_are_abstract(self) -> None:
-        """✅ 成功用例：抽象方法都被标记为抽象"""
+        """✅ 成功用例:抽象方法都被标记为抽象"""
         # 验证所有抽象方法
         abstract_methods = ["analyze", "__init__", "__subclasshook__"]
 
@@ -206,7 +206,7 @@ class TestContentAnalyzerAbstract:
             ), f"Method {method} should be abstract"
 
     def test_concrete_analyzers_inherit_abstract(self) -> None:
-        """✅ 成功用例：具体分析器继承抽象类"""
+        """✅ 成功用例:具体分析器继承抽象类"""
         # 验证所有具体分析器都继承自ContentAnalyzer
         assert issubclass(NewsContentAnalyzer, ContentAnalyzer)
         assert issubclass(SocialMediaAnalyzer, ContentAnalyzer)
@@ -218,7 +218,7 @@ class TestContentAnalysisManager:
     """内容分析管理器测试 - 严格测试规范"""
 
     def test_manager_initialization_success(self) -> None:
-        """✅ 成功用例：管理器初始化成功"""
+        """✅ 成功用例:管理器初始化成功"""
         manager = ContentAnalysisManager()
 
         # 验证基本属性
@@ -230,7 +230,7 @@ class TestContentAnalysisManager:
         assert len(manager._analyzers) == 0
 
     def test_analyzer_registration_success(self) -> None:
-        """✅ 成功用例：分析器注册成功"""
+        """✅ 成功用例:分析器注册成功"""
         manager = ContentAnalysisManager()
 
         # 模拟分析器
@@ -247,7 +247,7 @@ class TestContentAnalysisManager:
         assert "social" in manager.get_available_analyzers()
 
     def test_analyzer_registration_duplicate(self) -> None:
-        """❌ 异常用例：重复注册分析器"""
+        """❌ 异常用例:重复注册分析器"""
         manager = ContentAnalysisManager()
 
         # 注册第一个分析器
@@ -259,7 +259,7 @@ class TestContentAnalysisManager:
             manager.register_analyzer("news", mock_analyzer)
 
     def test_analyzer_registration_invalid_type(self) -> None:
-        """❌ 异常用例：注册无效类型的分析器"""
+        """❌ 异常用例:注册无效类型的分析器"""
         manager = ContentAnalysisManager()
 
         # 尝试注册无效分析器
@@ -267,7 +267,7 @@ class TestContentAnalysisManager:
             manager.register_analyzer("invalid", "not_an_analyzer")
 
     def test_analyzer_creation_success(self) -> None:
-        """✅ 成功用例：分析器创建成功"""
+        """✅ 成功用例:分析器创建成功"""
         manager = ContentAnalysisManager()
 
         # 测试创建各种分析器
@@ -281,7 +281,7 @@ class TestContentAnalysisManager:
         assert isinstance(stats_analyzer, MockStatisticsContentAnalyzer)
 
     def test_analyzer_creation_failure(self) -> None:
-        """❌ 异常用例：分析器创建失败"""
+        """❌ 异常用例:分析器创建失败"""
         manager = ContentAnalysisManager()
 
         # 尝试创建未知类型
@@ -289,7 +289,7 @@ class TestContentAnalysisManager:
             manager.create_analyzer("invalid_type")
 
     def test_get_analyzer_success(self) -> None:
-        """✅ 成功用例：获取分析器成功"""
+        """✅ 成功用例:获取分析器成功"""
         manager = ContentAnalysisManager()
 
         # 注册分析器
@@ -301,7 +301,7 @@ class TestContentAnalysisManager:
         assert retrieved_analyzer is mock_analyzer
 
     def test_get_analyzer_not_found(self) -> None:
-        """❌ 异常用例：获取未注册的分析器"""
+        """❌ 异常用例:获取未注册的分析器"""
         manager = ContentAnalysisManager()
 
         # 尝试获取未注册的分析器
@@ -309,7 +309,7 @@ class TestContentAnalysisManager:
         assert unknown_analyzer is None
 
     def test_content_analysis_success(self) -> None:
-        """✅ 成功用例：内容分析成功"""
+        """✅ 成功用例:内容分析成功"""
         manager = ContentAnalysisManager()
 
         # 模拟分析器
@@ -326,7 +326,7 @@ class TestContentAnalysisManager:
 
     @pytest.mark.asyncio
     async def test_async_content_analysis(self) -> None:
-        """✅ 成功用例：异步内容分析"""
+        """✅ 成功用例:异步内容分析"""
         manager = ContentAnalysisManager()
 
         # 模拟分析器
@@ -343,7 +343,7 @@ class TestContentAnalysisManager:
 
     @pytest.mark.asyncio
     async def test_batch_content_analysis(self) -> None:
-        """✅ 成功用例：批量内容分析"""
+        """✅ 成功用例:批量内容分析"""
         manager = ContentAnalysisManager()
 
         # 模拟分析器
@@ -361,7 +361,7 @@ class TestContentAnalysisManager:
             assert result["type"] == "news"
 
     def test_content_validation_success(self) -> None:
-        """✅ 成功用例：内容验证成功"""
+        """✅ 成功用例:内容验证成功"""
         manager = ContentAnalysisManager()
 
         # 验证内容
@@ -373,7 +373,7 @@ class TestContentAnalysisManager:
         assert result.errors is None
 
     def test_quality_assessment_success(self) -> None:
-        """✅ 成功用例：内容质量评估成功"""
+        """✅ 成功用例:内容质量评估成功"""
         manager = ContentAnalysisManager()
 
         # 评估内容质量
@@ -384,7 +384,7 @@ class TestContentAnalysisManager:
         assert quality_result["overall_score"] == 0.85
 
     def test_trend_analysis_success(self) -> None:
-        """✅ 成功用例：趋势分析成功"""
+        """✅ 成功用例:趋势分析成功"""
         manager = ContentAnalysisManager()
 
         # 模拟历史数据
@@ -401,7 +401,7 @@ class TestContentAnalysisManager:
         assert trend_result["dominant_trend"] == ContentTrend.STABLE
 
     def test_content_filtering_success(self) -> None:
-        """✅ 成功用例：内容过滤成功"""
+        """✅ 成功用例:内容过滤成功"""
         manager = ContentAnalysisManager()
 
         # 测试不过滤的内容

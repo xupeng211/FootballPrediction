@@ -77,7 +77,7 @@ class TestPredictionWorkflow:
         return TestClient(app)
 
     def test_complete_prediction_workflow(self, client):
-        """测试：完整的预测工作流"""
+        """测试:完整的预测工作流"""
         # 1. 创建预测请求
         predict_request = {
             "match_id": "match_123",
@@ -111,7 +111,7 @@ class TestPredictionWorkflow:
         assert len(history_data["predictions"]) > 0
 
     def test_prediction_with_invalid_data(self, client):
-        """测试：无效数据的预测请求"""
+        """测试:无效数据的预测请求"""
         # 缺少必要字段
         invalid_request = {
             "home_team": "Team A"
@@ -123,7 +123,7 @@ class TestPredictionWorkflow:
         assert response.status_code in [400, 422]
 
     def test_prediction_for_nonexistent_match(self, client):
-        """测试：不存在的比赛预测"""
+        """测试:不存在的比赛预测"""
         response = client.get("/api/predictions/nonexistent_match")
         # 应该返回404或空结果
         assert response.status_code in [404, 200]
@@ -133,7 +133,7 @@ class TestPredictionWorkflow:
             assert len(data["predictions"]) == 0
 
     def test_concurrent_predictions(self, client):
-        """测试：并发预测请求"""
+        """测试:并发预测请求"""
         import threading
 
         results = []
@@ -168,7 +168,7 @@ class TestPredictionWorkflow:
         assert all(status == 200 for status in results)
 
     def test_prediction_response_format(self, client):
-        """测试：预测响应格式"""
+        """测试:预测响应格式"""
         request = {
             "match_id": "test_format",
             "home_team": "Team A",
@@ -243,7 +243,7 @@ class TestDataCollectionWorkflow:
         return TestClient(data_app)
 
     def test_data_collection_workflow(self, data_client):
-        """测试：数据收集工作流"""
+        """测试:数据收集工作流"""
         # 1. 收集比赛数据
         matches_response = data_client.post("/api/data/collect/matches", json={})
         assert matches_response.status_code == 200
@@ -266,7 +266,7 @@ class TestDataCollectionWorkflow:
         assert "total_odds" in status_data
 
     def test_data_collection_with_filters(self, data_client):
-        """测试：带过滤器的数据收集"""
+        """测试:带过滤器的数据收集"""
         # 带过滤器的收集请求
         filters = {
             "league": "Premier League",
@@ -279,7 +279,7 @@ class TestDataCollectionWorkflow:
         assert response.status_code == 200
 
     def test_data_collection_error_handling(self, data_client):
-        """测试：数据收集错误处理"""
+        """测试:数据收集错误处理"""
         # 无效的过滤器
         invalid_filters = {
             "league": "",  # 空字符串
@@ -296,7 +296,7 @@ class TestSystemIntegration:
     """系统集成测试"""
 
     def test_prediction_data_integration(self):
-        """测试：预测与数据集成"""
+        """测试:预测与数据集成"""
         # 模拟数据收集到预测的完整流程
         with patch("src.services.prediction_service.PredictionService") as mock_service:
             # 设置模拟服务
@@ -319,7 +319,7 @@ class TestSystemIntegration:
             asyncio.run(test_prediction())
 
     def test_error_propagation(self):
-        """测试：错误传播"""
+        """测试:错误传播"""
         with patch("src.services.prediction_service.PredictionService") as mock_service:
             # 设置模拟抛出异常
             mock_instance = AsyncMock()
@@ -337,7 +337,7 @@ class TestSystemIntegration:
             asyncio.run(test_error())
 
     def test_performance_requirements(self):
-        """测试：性能要求"""
+        """测试:性能要求"""
         import time
 
         # 预测响应时间应该小于1秒
@@ -358,7 +358,7 @@ class TestSystemIntegration:
             asyncio.run(test_performance())
 
     def test_concurrent_load(self):
-        """测试：并发负载"""
+        """测试:并发负载"""
         import asyncio
         import time
 
@@ -389,7 +389,7 @@ class TestSystemIntegration:
             asyncio.run(test_concurrent())
 
     def test_data_consistency(self):
-        """测试：数据一致性"""
+        """测试:数据一致性"""
         # 测试数据在系统各层之间的一致性
         test_data = {
             "match_id": 123,
@@ -407,7 +407,7 @@ class TestSystemIntegration:
         assert parsed_data["score"]["away"] == 1
 
     def test_security_headers(self):
-        """测试：安全头"""
+        """测试:安全头"""
         with patch("fastapi.FastAPI"):
             # 模拟FastAPI应用
             app = Mock()
@@ -420,7 +420,7 @@ class TestSystemIntegration:
                 "X-XSS-Protection": "1; mode=block",
             }
 
-            # 在真实环境中，这些应该由中间件添加
+            # 在真实环境中,这些应该由中间件添加
             assert len(security_headers) > 0
 
 
@@ -429,7 +429,7 @@ class TestMonitoringAndLogging:
     """监控和日志测试"""
 
     def test_logging_integration(self):
-        """测试：日志集成"""
+        """测试:日志集成"""
         import logging
 
         # 获取日志记录器
@@ -441,7 +441,7 @@ class TestMonitoringAndLogging:
             mock_info.assert_called_once_with("Test message")
 
     def test_metrics_collection(self):
-        """测试：指标收集"""
+        """测试:指标收集"""
         with patch("prometheus_client.Counter") as mock_counter:
             # 模拟指标创建
             counter = Mock()
@@ -461,7 +461,7 @@ class TestMonitoringAndLogging:
             assert counter.inc.called
 
     def test_health_check(self):
-        """测试：健康检查"""
+        """测试:健康检查"""
         # 模拟健康检查端点
         health_data = {
             "status": "healthy",
@@ -479,7 +479,7 @@ class TestMonitoringAndLogging:
         assert all(status == "healthy" for status in health_data["checks"].values())
 
     def test_error_monitoring(self):
-        """测试：错误监控"""
+        """测试:错误监控"""
         with patch("src.core.logger.get_logger") as mock_logger:
             mock_instance = Mock()
             mock_logger.return_value = mock_instance

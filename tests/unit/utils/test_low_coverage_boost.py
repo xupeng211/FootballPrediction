@@ -613,7 +613,7 @@ class TestWarningFilters:
 
     def test_setup_warning_filters(self):
         """测试设置警告过滤器"""
-        # 该函数主要是设置warnings过滤器，我们验证它不会抛出异常
+        # 该函数主要是设置warnings过滤器,我们验证它不会抛出异常
         try:
             result = setup_warning_filters()
             assert result is None  # 函数没有返回值
@@ -627,7 +627,7 @@ class TestWarningFilters:
         setup_warning_filters()
         setup_warning_filters()
 
-        # 如果没有异常，测试通过
+        # 如果没有异常,测试通过
         assert True
 
 

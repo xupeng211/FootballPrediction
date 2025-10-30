@@ -65,7 +65,7 @@ class MatchFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
             )
             default_data["away_possession"] = 100 - default_data["home_possession"]
 
-        # 如果比赛已完成，确定结果
+        # 如果比赛已完成,确定结果
         if default_data["status"] == "completed":
             if default_data["home_score"] > default_data["away_score"]:
                 default_data["result"] = "home_win"

@@ -56,7 +56,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.__init__()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
@@ -91,7 +91,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.__init__()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
@@ -126,7 +126,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.__init__()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
@@ -161,7 +161,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.__init__()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
@@ -196,7 +196,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.create_prediction_service()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_prediction_service("test")
                 assert result is not None
@@ -231,7 +231,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.create_match_service()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_match_service("test")
                 assert result is not None
@@ -266,7 +266,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.create_user_service()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_user_service("test")
                 assert result is not None
@@ -301,7 +301,7 @@ class TestCQRSApplicationBusinessLogic:
             result = cqrs.application.create_analytics_service()
             assert result is not None
         except Exception:
-            # 对于需要参数的函数，提供测试数据
+            # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_analytics_service("test")
                 assert result is not None
@@ -658,7 +658,7 @@ class TestCQRSApplicationBusinessLogic:
         ]
 
         if async_functions:
-            # 有异步函数，进行测试
+            # 有异步函数,进行测试
             for func_name in async_functions[:1]:  # 只测试第一个避免超时
                 try:
                     func = getattr(cqrs.application, func_name)

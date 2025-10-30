@@ -1,6 +1,6 @@
 """
 Match领域模型边界条件测试 - 修复版本
-基于实际Match模型API的完整测试覆盖，目标达到90%+覆盖率
+基于实际Match模型API的完整测试覆盖,目标达到90%+覆盖率
 """
 
 from datetime import datetime, timedelta
@@ -16,19 +16,19 @@ class TestMatchScore:
     """MatchScore值对象边界条件测试"""
 
     def test_match_score_initialization_default(self) -> None:
-        """✅ 成功用例：默认初始化"""
+        """✅ 成功用例:默认初始化"""
         score = MatchScore()
         assert score.home_score == 0
         assert score.away_score == 0
 
     def test_match_score_initialization_with_values(self) -> None:
-        """✅ 成功用例：指定值初始化"""
+        """✅ 成功用例:指定值初始化"""
         score = MatchScore(home_score=2, away_score=1)
         assert score.home_score == 2
         assert score.away_score == 1
 
     def test_match_score_negative_values_validation(self) -> None:
-        """✅ 边界用例：负比分验证"""
+        """✅ 边界用例:负比分验证"""
         with pytest.raises(DomainError, match="比分不能为负数"):
             MatchScore(home_score=-1, away_score=0)
 
@@ -39,7 +39,7 @@ class TestMatchScore:
             MatchScore(home_score=-1, away_score=-1)
 
     def test_match_score_total_goals_property(self) -> None:
-        """✅ 成功用例：总进球数属性"""
+        """✅ 成功用例:总进球数属性"""
         score = MatchScore(home_score=3, away_score=2)
         assert score.total_goals == 5
 
@@ -47,7 +47,7 @@ class TestMatchScore:
         assert score.total_goals == 0
 
     def test_match_score_goal_difference_property(self) -> None:
-        """✅ 成功用例：净胜球属性"""
+        """✅ 成功用例:净胜球属性"""
         score = MatchScore(home_score=3, away_score=1)
         assert score.goal_difference == 2
 
@@ -58,7 +58,7 @@ class TestMatchScore:
         assert score.goal_difference == 0
 
     def test_match_score_result_property(self) -> None:
-        """✅ 成功用例：比赛结果属性"""
+        """✅ 成功用例:比赛结果属性"""
         # 主队获胜
         score = MatchScore(home_score=2, away_score=1)
         assert score.result == MatchResult.HOME_WIN
@@ -76,7 +76,7 @@ class TestMatchScore:
         assert score.result == MatchResult.DRAW
 
     def test_match_score_str_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         score = MatchScore(home_score=2, away_score=1)
         assert str(score) == "2-1"
 
@@ -84,7 +84,7 @@ class TestMatchScore:
         assert str(score) == "0-0"
 
     def test_match_score_edge_cases(self) -> None:
-        """✅ 边界用例：极端比分"""
+        """✅ 边界用例:极端比分"""
         # 大比分
         score = MatchScore(home_score=100, away_score=0)
         assert score.total_goals == 100
@@ -103,7 +103,7 @@ class TestMatch:
     """Match领域模型边界条件测试"""
 
     def test_match_initialization_minimal(self) -> None:
-        """✅ 成功用例：最小初始化"""
+        """✅ 成功用例:最小初始化"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         assert match.home_team_id == 1
@@ -118,7 +118,7 @@ class TestMatch:
         assert match.attendance is None
 
     def test_match_initialization_full(self) -> None:
-        """✅ 成功用例：完整初始化"""
+        """✅ 成功用例:完整初始化"""
         match_date = datetime(2023, 6, 15, 18, 0)
         match = Match(
             id=1,
@@ -147,12 +147,12 @@ class TestMatch:
         assert match.attendance == 50000
 
     def test_match_validation_same_teams(self) -> None:
-        """✅ 边界用例：相同球队验证"""
+        """✅ 边界用例:相同球队验证"""
         with pytest.raises(DomainError, match="主队和客队不能相同"):
             Match(home_team_id=100, away_team_id=100, league_id=10, season="2023-2024")
 
     def test_match_validation_season_format_valid(self) -> None:
-        """✅ 成功用例：有效赛季格式"""
+        """✅ 成功用例:有效赛季格式"""
         # 单年格式
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023")
         assert match.season == "2023"
@@ -166,7 +166,7 @@ class TestMatch:
         assert match.season == ""
 
     def test_match_validation_season_format_invalid(self) -> None:
-        """✅ 边界用例：无效赛季格式"""
+        """✅ 边界用例:无效赛季格式"""
         # 非数字
         with pytest.raises(DomainError, match="赛季格式无效"):
             Match(home_team_id=1, away_team_id=2, league_id=10, season="abc")
@@ -180,7 +180,7 @@ class TestMatch:
             Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2025")
 
     def test_match_start_match_method(self) -> None:
-        """✅ 成功用例：开始比赛"""
+        """✅ 成功用例:开始比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
         original_updated = match.updated_at
 
@@ -194,26 +194,26 @@ class TestMatch:
         assert match.updated_at > original_updated
 
     def test_match_start_match_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态开始比赛"""
+        """✅ 边界用例:无效状态开始比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 已开始
         match.status = MatchStatus.LIVE
-        with pytest.raises(DomainError, match="比赛状态为 live，无法开始"):
+        with pytest.raises(DomainError, match="比赛状态为 live,无法开始"):
             match.start_match()
 
         # 已结束
         match.status = MatchStatus.FINISHED
-        with pytest.raises(DomainError, match="比赛状态为 finished，无法开始"):
+        with pytest.raises(DomainError, match="比赛状态为 finished,无法开始"):
             match.start_match()
 
         # 已取消
         match.status = MatchStatus.CANCELLED
-        with pytest.raises(DomainError, match="比赛状态为 cancelled，无法开始"):
+        with pytest.raises(DomainError, match="比赛状态为 cancelled,无法开始"):
             match.start_match()
 
     def test_match_update_score_method(self) -> None:
-        """✅ 成功用例：更新比分"""
+        """✅ 成功用例:更新比分"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
         original_updated = match.updated_at
 
@@ -229,7 +229,7 @@ class TestMatch:
         assert match.updated_at > original_updated
 
     def test_match_update_score_zero_scores(self) -> None:
-        """✅ 成功用例：零比分更新"""
+        """✅ 成功用例:零比分更新"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         match.update_score(0, 0)
@@ -240,7 +240,7 @@ class TestMatch:
         assert match.status == MatchStatus.SCHEDULED  # 0-0不应该改变状态
 
     def test_match_update_score_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态更新比分"""
+        """✅ 边界用例:无效状态更新比分"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 已结束的比赛
@@ -254,7 +254,7 @@ class TestMatch:
             match.update_score(1, 0)
 
     def test_match_finish_match_method(self) -> None:
-        """✅ 成功用例：结束比赛"""
+        """✅ 成功用例:结束比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 先开始比赛并设置比分
@@ -272,7 +272,7 @@ class TestMatch:
         assert match.updated_at > original_updated
 
     def test_match_finish_match_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态结束比赛"""
+        """✅ 边界用例:无效状态结束比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 未开始的比赛
@@ -284,7 +284,7 @@ class TestMatch:
             match.finish_match()
 
     def test_match_finish_match_no_score(self) -> None:
-        """✅ 边界用例：无比分结束比赛"""
+        """✅ 边界用例:无比分结束比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         match.start_match()
@@ -293,7 +293,7 @@ class TestMatch:
             match.finish_match()
 
     def test_match_cancel_match_method(self) -> None:
-        """✅ 成功用例：取消比赛"""
+        """✅ 成功用例:取消比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         original_updated = match.updated_at
@@ -307,7 +307,7 @@ class TestMatch:
         assert match.updated_at > original_updated
 
     def test_match_cancel_match_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态取消比赛"""
+        """✅ 边界用例:无效状态取消比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 已结束的比赛
@@ -321,7 +321,7 @@ class TestMatch:
             match.cancel_match()
 
     def test_match_postpone_match_method(self) -> None:
-        """✅ 成功用例：延期比赛"""
+        """✅ 成功用例:延期比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         new_date = datetime(2023, 12, 31, 15, 0)
@@ -337,7 +337,7 @@ class TestMatch:
         assert match.updated_at > original_updated
 
     def test_match_postpone_match_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态延期比赛"""
+        """✅ 边界用例:无效状态延期比赛"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 已结束的比赛
@@ -351,7 +351,7 @@ class TestMatch:
             match.postpone_match()
 
     def test_match_is_upcoming_property(self) -> None:
-        """✅ 成功用例：即将到来的比赛属性"""
+        """✅ 成功用例:即将到来的比赛属性"""
         # 未来比赛
         future_match = Match(
             home_team_id=1,
@@ -373,7 +373,7 @@ class TestMatch:
         assert past_match.is_upcoming is False
 
     def test_match_is_finished_property(self) -> None:
-        """✅ 成功用例：已完成比赛属性"""
+        """✅ 成功用例:已完成比赛属性"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         assert match.is_finished is False
@@ -382,7 +382,7 @@ class TestMatch:
         assert match.is_finished is True
 
     def test_match_can_predict_property(self) -> None:
-        """✅ 成功用例：可预测属性"""
+        """✅ 成功用例:可预测属性"""
         # 已安排的比赛
         scheduled_match = Match(
             home_team_id=1,
@@ -414,7 +414,7 @@ class TestMatch:
         assert cancelled_match.can_be_predicted is False
 
     def test_match_days_until_property(self) -> None:
-        """✅ 成功用例：距离比赛天数属性"""
+        """✅ 成功用例:距离比赛天数属性"""
         # 未来的比赛
         future_date = datetime.utcnow() + timedelta(days=5, hours=2)
         future_match = Match(
@@ -442,7 +442,7 @@ class TestMatch:
         assert no_date_match.days_until_match == 0
 
     def test_match_duration_method(self) -> None:
-        """✅ 成功用例：比赛持续时间方法"""
+        """✅ 成功用例:比赛持续时间方法"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 未开始的比赛
@@ -464,7 +464,7 @@ class TestMatch:
         assert duration is None
 
     def test_match_domain_events(self) -> None:
-        """✅ 成功用例：领域事件"""
+        """✅ 成功用例:领域事件"""
         match = Match(home_team_id=1, away_team_id=2, league_id=10, season="2023-2024")
 
         # 初始状态无事件
@@ -479,7 +479,7 @@ class TestMatch:
         assert len(events) > 0
 
     def test_match_serialization(self) -> None:
-        """✅ 成功用例：序列化"""
+        """✅ 成功用例:序列化"""
         match_date = datetime(2023, 6, 15, 18, 0)
         match = Match(
             id=1,
@@ -509,7 +509,7 @@ class TestMatch:
         assert data["score"]["away_score"] == 1
 
     def test_match_edge_cases(self) -> None:
-        """✅ 边界用例：边界条件测试"""
+        """✅ 边界用例:边界条件测试"""
         # 极端日期
         extreme_date = datetime(2099, 12, 31, 23, 59, 59)
         match = Match(
@@ -542,7 +542,7 @@ class TestMatch:
         assert match.attendance == 1000000
 
     def test_match_comprehensive_workflow(self) -> None:
-        """✅ 综合用例：完整比赛工作流"""
+        """✅ 综合用例:完整比赛工作流"""
         # 创建未来比赛
         future_date = datetime.utcnow() + timedelta(days=1)
         match = Match(
@@ -585,7 +585,7 @@ class TestMatch:
         assert len(events) > 0
 
     def test_match_season_format_validation_comprehensive(self) -> None:
-        """✅ 边界用例：赛季格式验证综合测试"""
+        """✅ 边界用例:赛季格式验证综合测试"""
         valid_seasons = ["2023", "2023-2024", "2024-2025", "1999", "1999-2000"]
         invalid_seasons = [
             "abc",
@@ -611,7 +611,7 @@ class TestMatch:
                 Match(home_team_id=1, away_team_id=2, league_id=10, season=season)
 
     def test_match_performance_considerations(self) -> None:
-        """✅ 性能用例：性能考虑"""
+        """✅ 性能用例:性能考虑"""
         import time
 
         # 测试大量Match对象创建性能
@@ -626,7 +626,7 @@ class TestMatch:
         assert end_time - start_time < 1.0
 
     def test_match_thread_safety_considerations(self) -> None:
-        """✅ 并发用例：线程安全考虑"""
+        """✅ 并发用例:线程安全考虑"""
         import threading
 
         results = []

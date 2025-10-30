@@ -3,7 +3,7 @@ from typing import Any
 """
 微服务通信端到端测试 / Microservice Communication E2E Tests
 
-测试真实微服务架构中的通信模式：
+测试真实微服务架构中的通信模式:
 - FastAPI REST API 通信
 - Kafka 消息队列通信
 - WebSocket 实时通信
@@ -11,7 +11,7 @@ from typing import Any
 - 服务发现和负载均衡
 - 熔断器和重试机制
 
-基于真实业务模块的高质量测试，压缩至300行以内。
+基于真实业务模块的高质量测试,压缩至300行以内。
 """
 
 import asyncio
@@ -230,7 +230,7 @@ class TestMicroserviceCommunication:
     @pytest.mark.e2e
     @pytest.mark.asyncio
     async def test_service_orchestration_workflow(self, performance_metrics):
-        """测试真实的服务编排工作流：预测生成->分析->通知"""
+        """测试真实的服务编排工作流:预测生成->分析->通知"""
         workflow_start = time.time()
 
         # 创建Kafka生产者
@@ -337,7 +337,7 @@ class TestMicroserviceCommunication:
             for invalid_msg in invalid_messages:
                 try:
                     result = await kafka_producer.send_message(invalid_msg)
-                    # 如果没有抛出异常，检查返回值
+                    # 如果没有抛出异常,检查返回值
                     if result is None:
                         performance_metrics["failed_requests"] += 1
                     else:
@@ -428,7 +428,7 @@ class TestMicroserviceCommunication:
     def test_performance_metrics_summary(self, performance_metrics):
         """测试性能指标汇总"""
         if performance_metrics["total_requests"] == 0:
-            return  # 如果没有请求，跳过测试
+            return  # 如果没有请求,跳过测试
 
         success_rate = (
             performance_metrics["successful_requests"] / performance_metrics["total_requests"]

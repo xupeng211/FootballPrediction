@@ -63,6 +63,6 @@ class TestDatabaseSubsystem:
     async def test_execute_query_on_inactive_subsystem(self):
         """测试在未激活的子系统上执行查询"""
         sub = DatabaseSubsystem()
-        # 不初始化，直接执行查询
+        # 不初始化,直接执行查询
         with pytest.raises(RuntimeError, match="Database subsystem is not active"):
             await sub.execute_query("SELECT 1")

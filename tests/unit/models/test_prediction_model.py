@@ -1,9 +1,9 @@
-"""""""
+""""""""
 预测模型测试
 Tests for Prediction Model
 
 测试src.models.prediction_model模块的预测模型功能
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -34,7 +34,7 @@ class TestPredictionStatus:
     """预测状态测试"""
 
     def test_prediction_status_enum(self):
-        """测试：预测状态枚举"""
+        """测试:预测状态枚举"""
         assert PredictionStatus.PENDING.value == "pending"
         assert PredictionStatus.PROCESSING.value == "processing"
         assert PredictionStatus.COMPLETED.value == "completed"
@@ -42,14 +42,14 @@ class TestPredictionStatus:
         assert PredictionStatus.CANCELLED.value == "cancelled"
 
     def test_prediction_status_values(self):
-        """测试：预测状态值"""
+        """测试:预测状态值"""
         statuses = list(PredictionStatus)
         assert len(statuses) == 5
         assert PredictionStatus.PENDING in statuses
         assert PredictionStatus.COMPLETED in statuses
 
     def test_prediction_status_comparison(self):
-        """测试：预测状态比较"""
+        """测试:预测状态比较"""
         status1 = PredictionStatus.PENDING
         status2 = PredictionStatus.PENDING
         status3 = PredictionStatus.COMPLETED
@@ -64,14 +64,14 @@ class TestPredictionType:
     """预测类型测试"""
 
     def test_prediction_type_enum(self):
-        """测试：预测类型枚举"""
+        """测试:预测类型枚举"""
         assert PredictionType.MATCH_RESULT.value == "match_result"
         assert PredictionType.OVER_UNDER.value == "over_under"
         assert PredictionType.CORRECT_SCORE.value == "correct_score"
         assert PredictionType.BOTH_TEAMS_SCORE.value == "both_teams_score"
 
     def test_prediction_type_values(self):
-        """测试：预测类型值"""
+        """测试:预测类型值"""
         types = list(PredictionType)
         assert len(types) == 4
         assert PredictionType.MATCH_RESULT in types
@@ -83,7 +83,7 @@ class TestPredictionModel:
     """预测模型测试"""
 
     def test_model_creation(self):
-        """测试：模型创建"""
+        """测试:模型创建"""
         model = PredictionModel("test_model", "classification")
         assert model.model_name == "test_model"
         assert model.model_type == "classification"
@@ -91,13 +91,13 @@ class TestPredictionModel:
         assert hasattr(model, "predictions")
 
     def test_model_creation_with_defaults(self):
-        """测试：使用默认值创建模型"""
+        """测试:使用默认值创建模型"""
         model = PredictionModel("default_model")
         assert model.model_name == "default_model"
         assert model.model_type == "classification"  # 默认值
 
     def test_train_model(self):
-        """测试：训练模型"""
+        """测试:训练模型"""
         model = PredictionModel("train_test")
 
         # 准备训练数据
@@ -113,7 +113,7 @@ class TestPredictionModel:
             assert model.is_trained is True
 
     def test_predict(self):
-        """测试：预测"""
+        """测试:预测"""
         model = PredictionModel("predict_test")
 
         # 先训练模型
@@ -132,7 +132,7 @@ class TestPredictionModel:
         assert len(predictions) == len(X_test)
 
     def test_predict_proba(self):
-        """测试：预测概率"""
+        """测试:预测概率"""
         model = PredictionModel("proba_test", "classification")
 
         # 先训练模型
@@ -150,7 +150,7 @@ class TestPredictionModel:
             assert len(probabilities) == len(X_test)
 
     def test_save_and_load_model(self):
-        """测试：保存和加载模型"""
+        """测试:保存和加载模型"""
         model1 = PredictionModel("save_test")
 
         # 训练模型
@@ -179,7 +179,7 @@ class TestPredictionModel:
                 os.unlink(model_path)
 
     def test_model_evaluation(self):
-        """测试：模型评估"""
+        """测试:模型评估"""
         model = PredictionModel("eval_test")
 
         # 训练模型
@@ -202,7 +202,7 @@ class TestPredictionModel:
             assert "accuracy" in metrics or "score" in metrics
 
     def test_feature_importance(self):
-        """测试：特征重要性"""
+        """测试:特征重要性"""
         model = PredictionModel("importance_test")
 
         # 训练模型
@@ -223,7 +223,7 @@ class TestPredictionModel:
             assert len(importance) == X.shape[1]
 
     def test_cross_validation(self):
-        """测试：交叉验证"""
+        """测试:交叉验证"""
         model = PredictionModel("cv_test")
 
         # 准备数据
@@ -244,14 +244,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not PREDICTION_MODEL_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if PREDICTION_MODEL_AVAILABLE:
 from src.models.prediction_model import (
             PredictionModel,
@@ -269,7 +269,7 @@ class TestPredictionModelAdvanced:
     """预测模型高级测试"""
 
     def test_model_with_different_types(self):
-        """测试：不同类型的模型"""
+        """测试:不同类型的模型"""
         types_to_test = ["classification", "regression", "clustering"]
 
         for model_type in types_to_test:
@@ -277,7 +277,7 @@ class TestPredictionModelAdvanced:
             assert model.model_type == model_type
 
     def test_model_hyperparameters(self):
-        """测试：模型超参数"""
+        """测试:模型超参数"""
         model = PredictionModel("hyperparam_test")
 
         # 设置超参数
@@ -288,7 +288,7 @@ class TestPredictionModelAdvanced:
             assert model.hyperparameters == hyperparams
 
     def test_batch_prediction(self):
-        """测试：批量预测"""
+        """测试:批量预测"""
         model = PredictionModel("batch_test")
 
         # 训练模型
@@ -310,7 +310,7 @@ class TestPredictionModelAdvanced:
             assert len(predictions) == len(X_test)
 
     def test_model_persistence_with_metadata(self):
-        """测试：带元数据的模型持久化"""
+        """测试:带元数据的模型持久化"""
         model = PredictionModel("metadata_test")
 
         # 添加元数据
@@ -326,7 +326,7 @@ class TestPredictionModelAdvanced:
             assert model._metadata == metadata
 
     def test_model_performance_tracking(self):
-        """测试：模型性能跟踪"""
+        """测试:模型性能跟踪"""
         model = PredictionModel("perf_test")
 
         # 训练并跟踪性能
@@ -344,7 +344,7 @@ class TestPredictionModelAdvanced:
             assert len(model.performance_history) >= initial_perf
 
     def test_model_ensemble(self):
-        """测试：模型集成"""
+        """测试:模型集成"""
         models = []
         for i in range(3):
             model = PredictionModel(f"ensemble_model_{i}")
@@ -375,7 +375,7 @@ class TestPredictionModelAdvanced:
             assert len(ensemble_pred) == len(X_test)
 
     def test_model_with_missing_data(self):
-        """测试：处理缺失数据"""
+        """测试:处理缺失数据"""
         model = PredictionModel("missing_data_test")
 
         # 带缺失值的数据
@@ -391,7 +391,7 @@ class TestPredictionModelAdvanced:
             pass
 
     def test_model_with_categorical_features(self):
-        """测试：处理分类特征"""
+        """测试:处理分类特征"""
         model = PredictionModel("categorical_test")
 
         # 包含分类特征的数据
@@ -412,7 +412,7 @@ class TestPredictionModelAdvanced:
             pass
 
     def test_model_explainability(self):
-        """测试：模型可解释性"""
+        """测试:模型可解释性"""
         model = PredictionModel("explainable_test")
 
         # 训练模型
@@ -429,7 +429,7 @@ class TestPredictionModelAdvanced:
             assert "feature_contributions" in explanation or "reasons" in explanation
 
     def test_model_monitoring(self):
-        """测试：模型监控"""
+        """测试:模型监控"""
         model = PredictionModel("monitor_test")
 
         # 模拟预测监控

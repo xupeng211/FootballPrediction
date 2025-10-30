@@ -1,9 +1,9 @@
-"""""""
+""""""""
 流处理任务测试
 Tests for Streaming Tasks
 
 测试src.tasks.streaming_tasks模块的流处理功能
-"""""""
+""""""""
 
 import json
 from datetime import datetime
@@ -40,7 +40,7 @@ class TestStreamMessage:
     """流消息测试"""
 
     def test_message_creation(self):
-        """测试：消息创建"""
+        """测试:消息创建"""
         msg = StreamMessage("test_topic", b"key", b"value")
         assert msg.topic == "test_topic"
         assert msg.key == b"key"
@@ -49,13 +49,13 @@ class TestStreamMessage:
         assert msg.headers is None
 
     def test_message_with_headers(self):
-        """测试：带头部的消息"""
+        """测试:带头部的消息"""
         headers = {"content-type": "application/json", "version": "1.0"}
         msg = StreamMessage("test_topic", b"key", b"value", headers=headers)
         assert msg.headers == headers
 
     def test_message_serialization(self):
-        """测试：消息序列化"""
+        """测试:消息序列化"""
         _data = {"event": "test", "data": {"id": 1}}
         msg = StreamMessage("test_topic", b"key", json.dumps(data).encode())
 
@@ -65,7 +65,7 @@ class TestStreamMessage:
         assert deserialized["data"]["id"] == 1
 
     def test_message_with_timestamp(self):
-        """测试：带时间戳的消息"""
+        """测试:带时间戳的消息"""
         timestamp = datetime.now()
         msg = StreamMessage("test_topic", b"key", b"value", timestamp=timestamp)
         assert msg.timestamp == timestamp
@@ -76,7 +76,7 @@ class TestKafkaProducer:
     """Kafka生产者测试"""
 
     def test_producer_creation(self):
-        """测试：生产者创建"""
+        """测试:生产者创建"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "client_id": "test_producer",
@@ -87,7 +87,7 @@ class TestKafkaProducer:
 
     @pytest.mark.asyncio
     async def test_produce_message(self):
-        """测试：生产消息"""
+        """测试:生产消息"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "client_id": "test_producer",
@@ -111,7 +111,7 @@ class TestKafkaProducer:
 
     @pytest.mark.asyncio
     async def test_produce_batch(self):
-        """测试：批量生产消息"""
+        """测试:批量生产消息"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "client_id": "test_producer",
@@ -138,7 +138,7 @@ class TestKafkaProducer:
 
     @pytest.mark.asyncio
     async def test_producer_error_handling(self):
-        """测试：生产者错误处理"""
+        """测试:生产者错误处理"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "client_id": "test_producer",
@@ -156,7 +156,7 @@ class TestKafkaProducer:
             assert "error" in result
 
     def test_producer_connection_health(self):
-        """测试：生产者连接健康检查"""
+        """测试:生产者连接健康检查"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "client_id": "test_producer",
@@ -176,7 +176,7 @@ class TestKafkaConsumer:
     """Kafka消费者测试"""
 
     def test_consumer_creation(self):
-        """测试：消费者创建"""
+        """测试:消费者创建"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
@@ -189,7 +189,7 @@ class TestKafkaConsumer:
 
     @pytest.mark.asyncio
     async def test_consume_messages(self):
-        """测试：消费消息"""
+        """测试:消费消息"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
@@ -227,7 +227,7 @@ class TestKafkaConsumer:
 
     @pytest.mark.asyncio
     async def test_consumer_commit_offsets(self):
-        """测试：提交偏移量"""
+        """测试:提交偏移量"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
@@ -252,7 +252,7 @@ class TestKafkaConsumer:
 
     @pytest.mark.asyncio
     async def test_consumer_pause_resume(self):
-        """测试：暂停和恢复消费"""
+        """测试:暂停和恢复消费"""
         _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
@@ -275,7 +275,7 @@ class TestStreamProcessor:
     """流处理器测试"""
 
     def test_processor_creation(self):
-        """测试：处理器创建"""
+        """测试:处理器创建"""
         _config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
@@ -287,7 +287,7 @@ class TestStreamProcessor:
 
     @pytest.mark.asyncio
     async def test_process_message(self):
-        """测试：处理消息"""
+        """测试:处理消息"""
 
         def process_func(data):
             _data["processed"] = True
@@ -325,7 +325,7 @@ class TestStreamProcessor:
 
     @pytest.mark.asyncio
     async def test_process_batch(self):
-        """测试：批量处理"""
+        """测试:批量处理"""
 
         def process_func(data):
             _data["batch_processed"] = True
@@ -356,7 +356,7 @@ class TestStreamProcessor:
 
     @pytest.mark.asyncio
     async def test_processing_error_handling(self):
-        """测试：处理错误处理"""
+        """测试:处理错误处理"""
 
         def failing_func(data):
             raise ValueError("Processing failed")
@@ -372,7 +372,7 @@ class TestStreamProcessor:
 
         # 应该捕获错误并记录
         _result = await processor.process_message(message)
-        # 根据实现，可能返回False或者将消息发送到死信队列
+        # 根据实现,可能返回False或者将消息发送到死信队列
         assert _result in [False, True]  # 取决于错误处理策略
 
 
@@ -381,7 +381,7 @@ class TestStreamMonitor:
     """流监控测试"""
 
     def test_monitor_creation(self):
-        """测试：监控器创建"""
+        """测试:监控器创建"""
         _config = {
             "metrics_interval": 60,
             "health_check_interval": 30,
@@ -393,7 +393,7 @@ class TestStreamMonitor:
 
     @pytest.mark.asyncio
     async def test_monitor_consumer_lag(self):
-        """测试：监控消费者延迟"""
+        """测试:监控消费者延迟"""
         _config = {"metrics_interval": 60, "topics": ["test_topic"]}
         monitor = StreamMonitor(config)
 
@@ -420,7 +420,7 @@ class TestStreamMonitor:
 
     @pytest.mark.asyncio
     async def test_monitor_throughput(self):
-        """测试：监控吞吐量"""
+        """测试:监控吞吐量"""
         _config = {"metrics_interval": 60, "topics": ["test_topic"]}
         monitor = StreamMonitor(config)
 
@@ -436,7 +436,7 @@ class TestStreamMonitor:
 
     @pytest.mark.asyncio
     async def test_trigger_alert(self):
-        """测试：触发警报"""
+        """测试:触发警报"""
         _config = {"alert_thresholds": {"lag": 100, "error_rate": 0.05}}
         monitor = StreamMonitor(config)
 
@@ -462,7 +462,7 @@ class TestStreamingTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_end_to_end_flow(self):
-        """测试：端到端流处理流程"""
+        """测试:端到端流处理流程"""
         # 创建生产者
         producer_config = {
             "bootstrap_servers": ["localhost:9092"],
@@ -519,7 +519,7 @@ class TestStreamingTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_streaming_pipeline(self):
-        """测试：流处理管道"""
+        """测试:流处理管道"""
         # 定义处理管道
         processors = [
             lambda x: {**x, "stage1": True},
@@ -554,7 +554,7 @@ class TestStreamingTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_error_recovery(self):
-        """测试：错误恢复"""
+        """测试:错误恢复"""
         _config = {
             "input_topics": ["input"],
             "output_topic": "output",
@@ -583,7 +583,7 @@ class TestStreamingTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_stream_scaling(self):
-        """测试：流处理扩展"""
+        """测试:流处理扩展"""
         # 创建多个消费者实例
         consumers = []
         for i in range(3):
@@ -611,7 +611,7 @@ class TestStreamingTasksIntegration:
 
     @pytest.mark.asyncio
     async def test_monitoring_dashboard_data(self):
-        """测试：监控仪表板数据"""
+        """测试:监控仪表板数据"""
         monitor = StreamMonitor({"metrics_interval": 30, "topics": ["topic1", "topic2"]})
 
         with patch.object(monitor, "metrics_store") as mock_store:
@@ -637,14 +637,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not STREAMING_TASKS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if STREAMING_TASKS_AVAILABLE:
 from src.tasks.streaming_tasks import (
             KafkaConsumer,

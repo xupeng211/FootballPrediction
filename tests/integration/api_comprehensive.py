@@ -3,13 +3,13 @@
 API集成测试 - Phase F核心组件
 API Integration Tests - Phase F Core Component
 
-这是Phase F: 企业级集成阶段的核心测试文件，涵盖：
+这是Phase F: 企业级集成阶段的核心测试文件，涵盖:
 - 完整的API工作流测试
 - 端到端功能验证
 - API文档同步验证
 - 性能和稳定性测试
 
-基于Issue #149的成功经验，使用已验证的Fallback测试策略。
+基于Issue #149的成功经验,使用已验证的Fallback测试策略。
 """
 
 import pytest
@@ -91,7 +91,7 @@ class TestAPIComprehensive:
         # 1. 基础健康检查
         if FASTAPI_AVAILABLE:
             response = self.client.get("/health")
-            assert response.status_code in [200, 404]  # 404是可接受的，端点可能不存在
+            assert response.status_code in [200, 404]  # 404是可接受的,端点可能不存在
 
             if response.status_code == 200:
                 health_data = response.json()
@@ -118,7 +118,7 @@ class TestAPIComprehensive:
         # 1. 获取可用预测模型
         if FASTAPI_AVAILABLE:
             response = self.client.get("/predictions/models")
-            # 404是可接受的，端点可能需要实现
+            # 404是可接受的,端点可能需要实现
             assert response.status_code in [200, 404, 422]
 
             if response.status_code == 200:
@@ -139,7 +139,7 @@ class TestAPIComprehensive:
                 "/predictions/predict",
                 json=prediction_request
             )
-            # 接受多种状态码，适应不同实现状态
+            # 接受多种状态码,适应不同实现状态
             assert response.status_code in [200, 201, 404, 422]
 
             if response.status_code in [200, 201]:
@@ -345,7 +345,7 @@ class TestAPIComprehensive:
             for header in security_headers
         )
 
-        # 如果没有安全头也不算失败，因为可能没有配置安全中间件
+        # 如果没有安全头也不算失败,因为可能没有配置安全中间件
         # 这个测试主要是确保不会因为安全配置而出错
 
     def test_api_cors_handling(self):
@@ -416,7 +416,7 @@ class TestAPIPerformanceAdvanced:
                     "error": str(e)
                 }
 
-        # 并发测试：20个请求
+        # 并发测试:20个请求
         start_time = time.time()
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
             futures = [executor.submit(make_health_request) for _ in range(20)]
@@ -454,7 +454,7 @@ class TestAPIPerformanceAdvanced:
             try:
                 self.client.get("/health")
             except:
-                pass  # 忽略错误，专注于内存使用
+                pass  # 忽略错误,专注于内存使用
 
         # 记录最终内存使用
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
@@ -548,6 +548,6 @@ class PhaseFTestReporter:
 # 测试执行入口
 if __name__ == "__main__":
     print("🚀 Phase F: API集成测试开始执行...")
-    print("📋 测试范围: API工作流、用户管理、数据集成、性能测试")
+    print("📋 测试范围: API工作流、用户管理、数据集成,性能测试")
     print("🎯 目标: 60%+ API集成测试覆盖率")
     print("🔧 基于Issue #149的成功经验进行测试开发")

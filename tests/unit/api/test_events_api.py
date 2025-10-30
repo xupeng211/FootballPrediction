@@ -1,9 +1,9 @@
 from unittest.mock import AsyncMock, Mock, patch
 
-"""""""
+""""""""
 事件API端点测试
 Events API Endpoints Tests
-"""""""
+""""""""
 
 import json
 from datetime import datetime
@@ -11,7 +11,7 @@ from datetime import datetime
 import pytest
 from fastapi.testclient import TestClient
 
-# 智能Mock兼容修复模式：移除真实API导入
+# 智能Mock兼容修复模式:移除真实API导入
 
 
 @pytest.mark.unit
@@ -190,7 +190,7 @@ class TestEventIntegration:
         client.get("/api/v1/events/types")
 
         # 验证事件系统基本功能可用
-        assert True  # 如果所有端点都跳过，测试通过
+        assert True  # 如果所有端点都跳过,测试通过
 
     def test_prediction_event_flow(self, client):
         """测试预测事件流"""
@@ -212,4 +212,4 @@ class TestEventIntegration:
         client.get("/api/v1/events/history")
 
         # 验证事件流处理
-        assert True  # 如果端点未实现，跳过测试
+        assert True  # 如果端点未实现,跳过测试

@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock, patch
 
-"""""""
+""""""""
 简单模块测试
-"""""""
+""""""""
 
 import pytest
 
@@ -75,7 +75,7 @@ class TestCryptoUtils:
         salt = "testsalt"
         hashed_with_salt = crypto_utils.CryptoUtils.hash_password(password, salt)
         assert isinstance(hashed_with_salt, str)
-        # 在bcrypt实现中，盐值是编码在哈希结果里的
+        # 在bcrypt实现中,盐值是编码在哈希结果里的
         assert hashed_with_salt != hashed
         assert hashed != password
 

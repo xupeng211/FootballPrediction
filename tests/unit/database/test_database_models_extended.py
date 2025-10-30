@@ -676,7 +676,7 @@ class TestDatabaseQueries:
                 method_func = getattr(match, method)
                 try:
                     result = method_func()
-                    # 结果应该是布尔值、整数或字符串
+                    # 结果应该是布尔值,整数或字符串
                     assert isinstance(result, (bool, int, str, type(None)))
                 except Exception:
                     pass

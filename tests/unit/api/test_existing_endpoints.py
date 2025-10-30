@@ -120,7 +120,7 @@ class TestExistingAPIEndpoints:
         # 请求带Accept-Encoding头
         response = client.get("/openapi.json", headers={"Accept-Encoding": "gzip"})
         assert response.status_code == 200
-        # 可能会也可能不会被压缩，取决于响应大小
+        # 可能会也可能不会被压缩,取决于响应大小
 
 
 @pytest.mark.unit
@@ -156,7 +156,7 @@ class TestDataAPIRoutes:
         response = client.get("/data/")
         if response.status_code == 404:
             pytest.skip("数据路由器端点未实现")
-        # 可能返回404或200，取决于实现
+        # 可能返回404或200,取决于实现
 
     def test_data_router_teams(self, client):
         """测试数据路由器球队端点"""
@@ -244,4 +244,4 @@ class TestSecurityFeatures:
         """测试响应头安全性"""
         client.get("/")
         # 检查是否有基本的安全头（如果实现了的话）
-        # 注意：这些可能没有实现，所以不强制要求
+        # 注意:这些可能没有实现,所以不强制要求

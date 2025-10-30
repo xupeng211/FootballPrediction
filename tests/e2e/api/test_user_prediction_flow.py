@@ -19,7 +19,7 @@ class TestUserPredictionFlow:
     async def test_complete_user_flow(
         self, api_client: AsyncClient, test_data_loader, performance_metrics
     ):
-        """测试完整的用户流程：注册 -> 登录 -> 查看比赛 -> 创建预测"""
+        """测试完整的用户流程:注册 -> 登录 -> 查看比赛 -> 创建预测"""
         # 1. 用户注册
         performance_metrics.start_timer("user_registration")
 

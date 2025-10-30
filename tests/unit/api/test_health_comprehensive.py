@@ -242,7 +242,7 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_health_check_dependency_chain(self, health_checker):
         """测试健康检查依赖链"""
-        # 模拟依赖关系：应用依赖于数据库，数据库依赖于网络
+        # 模拟依赖关系:应用依赖于数据库,数据库依赖于网络
 
         with (
             patch.object(health_checker, "check_network") as mock_network,

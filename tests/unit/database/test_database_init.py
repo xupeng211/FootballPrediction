@@ -1,7 +1,7 @@
-"""""""
+""""""""
 Database模块导入测试
 Database Module Import Tests
-"""""""
+""""""""
 
 import pytest
 
@@ -108,7 +108,7 @@ class TestDatabaseModuleIntegration:
             config = get_database_config()
             assert config is not None
         except Exception:
-            # 如果配置需要外部依赖，跳过测试
+            # 如果配置需要外部依赖,跳过测试
             pytest.skip("配置函数需要外部环境")
 
     def test_base_class_metadata(self):

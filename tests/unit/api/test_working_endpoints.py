@@ -1,8 +1,8 @@
 from datetime import datetime
-"""""""
+""""""""
 可工作的端点测试 - 专注于实际存在的功能
 Working Endpoints Tests - Focus on Actually Existing Functions
-"""""""
+""""""""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -106,7 +106,7 @@ class TestPredictionsAPIWorking:
         """测试批量预测"""
         payload = {"match_ids": [1, 2, 3]}
         response = client.post("/predictions/batch", json=payload)
-        # 可能因为路由问题返回404或422，但这是预期的
+        # 可能因为路由问题返回404或422,但这是预期的
         assert response.status_code in [200, 404, 422]
 
     def test_prediction_stats(self, client):
@@ -290,7 +290,7 @@ class TestEdgeCases:
     def test_unicode_search(self, client):
         """测试Unicode搜索"""
         response = client.get("/data/teams?search=皇家马德里")
-        # 可能返回404或200，取决于是否实现
+        # 可能返回404或200,取决于是否实现
         assert response.status_code in [200, 404]
 
     def test_date_filtering(self, client):

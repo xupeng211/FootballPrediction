@@ -134,7 +134,7 @@ class TestCacheKeyGeneration:
 
         key1 = _make_cache_key(func, (1, 2, 3), {}, exclude_args=["c"])
         key2 = _make_cache_key(func, (1, 2, 4), {}, exclude_args=["c"])
-        assert key1 == key2  # 排除c后，键应该相同
+        assert key1 == key2  # 排除c后,键应该相同
 
 
 class TestCacheResult:

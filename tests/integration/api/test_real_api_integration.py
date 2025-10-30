@@ -13,7 +13,7 @@ from src.main import app
 
 """
 真实API集成测试
-测试请求能够真正流转到service层，而不是返回mock数据
+测试请求能够真正流转到service层,而不是返回mock数据
 """
 
 # 添加src目录到Python路径
@@ -200,7 +200,7 @@ class TestRealAPIIntegration:
         mock_db_session.execute.return_value = mock_result
 
         response = client.get("/api/monitoring/metrics")
-        # 可能是404或200，取决于实现
+        # 可能是404或200,取决于实现
         assert response.status_code in [200, 404]
 
     def test_error_handling_integration(self, client):
@@ -260,7 +260,7 @@ class TestRealAPIIntegration:
         assert response.status_code == 200
 
         _data = response.json()
-        # 如果有数据，应该都是completed状态
+        # 如果有数据,应该都是completed状态
         for match in data:
             if "status" in match:
                 assert match["status"] == "completed"
@@ -270,7 +270,7 @@ class TestRealAPIIntegration:
         """测试认证的集成"""
         # 测试需要认证的端点（如果有）
         response = client.get("/api/admin/users")
-        # 可能是401或403，取决于实现
+        # 可能是401或403,取决于实现
         assert response.status_code in [401, 403, 404]
 
     def test_rate_limiting_integration(self, client):
@@ -294,7 +294,7 @@ class TestRealAPIIntegration:
         match_ids = [1, 2, 3]
         response = client.post("/api/data/matches/batch", json={"match_ids": match_ids})
 
-        # 可能是200或404，取决于是否实现批量端点
+        # 可能是200或404,取决于是否实现批量端点
         assert response.status_code in [200, 404]
 
     def test_response_format_consistency(self, client):
@@ -308,6 +308,6 @@ class TestRealAPIIntegration:
                 # 响应该是JSON对象或数组
                 assert isinstance(data, (dict, list))
 
-                # 如果是对象，应该有基本结构
+                # 如果是对象,应该有基本结构
                 if isinstance(data, dict):
                     assert len(data.keys()) > 0

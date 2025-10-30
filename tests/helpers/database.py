@@ -1,6 +1,6 @@
 """
 数据库测试辅助工具
-提供测试数据库连接、清理和数据操作功能
+提供测试数据库连接,清理和数据操作功能
 """
 
 from contextlib import asynccontextmanager

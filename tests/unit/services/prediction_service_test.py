@@ -240,7 +240,7 @@ prediction_service_class = MockPredictionService
 # 尝试导入目标模块用于验证存在性
 try:
 
-    print("真实服务模块存在，但为测试简化使用Mock服务")
+    print("真实服务模块存在,但为测试简化使用Mock服务")
 except ImportError as e:
     print(f"导入警告: {e} - 使用Mock服务")
 

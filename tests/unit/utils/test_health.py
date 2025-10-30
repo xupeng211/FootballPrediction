@@ -54,7 +54,7 @@ class TestPredictionAPI:
     """预测API路由测试"""
 
     def test_predictions_route_available_in_full_mode(self, api_client_full, sample_match):
-        """在完整模式下预测路由可用，并可返回实时预测结果"""
+        """在完整模式下预测路由可用,并可返回实时预测结果"""
         mock_match_result = MagicMock()
         mock_match_result.scalar_one_or_none.return_value = sample_match
         mock_prediction_result = MagicMock()

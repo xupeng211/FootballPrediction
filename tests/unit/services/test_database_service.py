@@ -90,7 +90,7 @@ class TestDatabaseService:
                 service = DatabaseService(**config)
                 assert service is not None
             except Exception:
-                # 某些配置可能不支持，这是可以接受的
+                # 某些配置可能不支持,这是可以接受的
                 pass
 
     def test_database_service_attributes(self):
@@ -113,7 +113,7 @@ class TestDatabaseService:
                 method = getattr(service, method_name)
                 assert callable(method)
             else:
-                # 方法不存在，跳过测试
+                # 方法不存在,跳过测试
                 pass
 
     def test_error_handling(self):
@@ -132,7 +132,7 @@ class TestDatabaseService:
                     service = DatabaseService(session=case)
                 assert service is not None
             except Exception:
-                # 某些配置可能抛出异常，这是可以接受的
+                # 某些配置可能抛出异常,这是可以接受的
                 pass
 
     def test_service_lifecycle(self):
@@ -171,7 +171,7 @@ class TestDatabaseService:
                 method = getattr(service, method_name)
                 assert callable(method)
             else:
-                # 方法不存在，跳过测试
+                # 方法不存在,跳过测试
                 pass
 
     def test_connection_management(self):
@@ -186,7 +186,7 @@ class TestDatabaseService:
                 method = getattr(service, method_name)
                 assert callable(method)
             else:
-                # 方法不存在，跳过测试
+                # 方法不存在,跳过测试
                 pass
 
     @pytest.mark.parametrize("operation_type", ["read", "write", "delete", "update"])
@@ -217,7 +217,7 @@ class TestDatabaseService:
                 method = getattr(service, method_name)
                 assert callable(method)
             else:
-                # 方法不存在，跳过测试
+                # 方法不存在,跳过测试
                 pass
 
     def test_service_integration_points(self):
@@ -231,7 +231,7 @@ class TestDatabaseService:
             # 集成点可能作为属性或方法存在
             if hasattr(service, point):
                 integration = getattr(service, point)
-                # 集成可能是对象、方法或其他类型
+                # 集成可能是对象,方法或其他类型
                 assert integration is not None
 
 

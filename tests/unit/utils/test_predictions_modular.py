@@ -203,7 +203,7 @@ async def test_batch_predict_too_many_matches():
     mock_session = AsyncMock()
 
     # 创建超过限制的match_ids列表
-    match_ids = list(range(1, 52))  # 51个比赛，超过50的限制
+    match_ids = list(range(1, 52))  # 51个比赛,超过50的限制
 
     # 执行处理器并期望抛出HTTPException
     with pytest.raises(HTTPException) as exc_info:

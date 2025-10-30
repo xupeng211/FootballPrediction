@@ -4,7 +4,7 @@ from factory.alchemy import SQLAlchemyModelFactory
 
 
 class BaseFactory(SQLAlchemyModelFactory):
-    """所有SQLAlchemy工厂的基础类，统一会话配置。"""
+    """所有SQLAlchemy工厂的基础类,统一会话配置。"""
 
     class Meta:
         abstract = True

@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
 
-"""""""
+""""""""
 API装饰器测试
 Tests for API Decorators
 
 测试src.api.decorators模块的装饰器演示端点
-"""""""
+""""""""
 
 import asyncio
 from datetime import datetime
@@ -58,13 +58,13 @@ class TestAPIDecorators:
         return TestClient(app)
 
     def test_router_exists(self):
-        """测试：路由器存在"""
+        """测试:路由器存在"""
         assert router is not None
         assert hasattr(router, "routes")
         assert len(router.routes) > 0
 
     def test_example_functions_exist(self):
-        """测试：示例函数存在"""
+        """测试:示例函数存在"""
         assert example_function_1 is not None
         assert example_function_2 is not None
         assert failing_function is not None
@@ -73,27 +73,27 @@ class TestAPIDecorators:
         assert asyncio.iscoroutinefunction(example_function_2)
 
     async def test_example_function_1(self):
-        """测试：示例函数1工作正常"""
+        """测试:示例函数1工作正常"""
         _result = await example_function_1(5, 10)
         assert _result == 15
 
     async def test_example_function_2(self):
-        """测试：示例函数2工作正常"""
+        """测试:示例函数2工作正常"""
         _result = await example_function_2("test")
         assert _result == "Processed: test"
 
     async def test_failing_function(self):
-        """测试：失败函数最终成功"""
+        """测试:失败函数最终成功"""
         _result = await failing_function(retry_count=2)
         assert _result == "Success after retries"
 
     async def test_failing_function_will_fail(self):
-        """测试：失败函数在重试次数不足时失败"""
+        """测试:失败函数在重试次数不足时失败"""
         with pytest.raises(ValueError):
             await failing_function(retry_count=1)
 
     async def test_slow_function(self):
-        """测试：慢速函数"""
+        """测试:慢速函数"""
         start = datetime.utcnow()
         _result = await slow_function(0.01)
         end = datetime.utcnow()
@@ -103,7 +103,7 @@ class TestAPIDecorators:
 
     @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_stats_all(self, mock_service, client):
-        """测试：获取所有装饰器统计"""
+        """测试:获取所有装饰器统计"""
         mock_service.get_all_stats.return_value = {
             "function1": {"calls": 10, "success_rate": 0.9},
             "function2": {"calls": 5, "success_rate": 1.0},
@@ -120,7 +120,7 @@ class TestAPIDecorators:
 
     @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_stats_specific(self, mock_service, client):
-        """测试：获取特定函数的装饰器统计"""
+        """测试:获取特定函数的装饰器统计"""
         mock_service.get_function_stats.return_value = {
             "function_name": "example_function_1",
             "calls": 10,
@@ -135,7 +135,7 @@ class TestAPIDecorators:
 
     @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_stats_not_found(self, mock_service, client):
-        """测试：获取不存在函数的统计"""
+        """测试:获取不存在函数的统计"""
         mock_service.get_function_stats.return_value = None
 
         response = client.get("/decorators/stats?function_name=nonexistent")
@@ -147,7 +147,7 @@ class TestAPIDecorators:
 
     @patch("src.api.decorators.global_decorator_service")
     def test_clear_decorator_stats(self, mock_service, client):
-        """测试：清空装饰器统计"""
+        """测试:清空装饰器统计"""
         mock_service.clear_stats.return_value = None
 
         response = client.post("/decorators/stats/clear")
@@ -175,7 +175,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_logging_decorator(self, mock_service, client):
-        """测试：日志装饰器演示"""
+        """测试:日志装饰器演示"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.return_value = 30
@@ -201,7 +201,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_retry_decorator(self, mock_service, client):
-        """测试：重试装饰器演示"""
+        """测试:重试装饰器演示"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.return_value = "Success after retries"
@@ -224,7 +224,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_cache_decorator_with_cache(self, mock_service, client):
-        """测试：缓存装饰器演示（使用缓存）"""
+        """测试:缓存装饰器演示（使用缓存）"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.return_value = 30
@@ -245,7 +245,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_timeout_decorator_success(self, mock_service, client):
-        """测试：超时装饰器演示（成功）"""
+        """测试:超时装饰器演示（成功）"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.return_value = "Completed"
@@ -262,7 +262,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_timeout_decorator_timeout(self, mock_service, client):
-        """测试：超时装饰器演示（超时）"""
+        """测试:超时装饰器演示（超时）"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.side_effect = ValueError("Timeout")
@@ -279,7 +279,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_metrics_decorator(self, mock_service, client):
-        """测试：指标装饰器演示"""
+        """测试:指标装饰器演示"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.side_effect = [
@@ -309,7 +309,7 @@ class TestDecoratorDemos:
 
     @patch("src.api.decorators.global_decorator_service")
     async def test_demo_combo_decorators(self, mock_service, client):
-        """测试：组合装饰器演示"""
+        """测试:组合装饰器演示"""
         # 创建模拟装饰器函数
         mock_decorated = AsyncMock()
         mock_decorated.return_value = 30
@@ -332,7 +332,7 @@ class TestDecoratorDemos:
         assert _data["input"] == 10
         assert len(_data["results"]) == 2
         assert _data["decorator_count"] == 4
-        assert _data["message"] == "同时应用了日志、指标、超时和缓存装饰器"
+        assert _data["message"] == "同时应用了日志、指标,超时和缓存装饰器"
 
 
 @pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
@@ -353,7 +353,7 @@ class TestDecoratorConfigManagement:
 
     @patch("src.api.decorators.global_decorator_service")
     def test_get_decorator_configs(self, mock_service, client):
-        """测试：获取装饰器配置"""
+        """测试:获取装饰器配置"""
         # 创建模拟工厂
         mock_factory = Mock()
         mock_factory.list_configs.return_value = ["logging", "cache", "retry"]
@@ -402,7 +402,7 @@ class TestDecoratorConfigManagement:
 
     @patch("src.api.decorators.global_decorator_service")
     def test_reload_decorator_configs(self, mock_service, client):
-        """测试：重新加载装饰器配置"""
+        """测试:重新加载装饰器配置"""
         mock_service.reload_configuration.return_value = None
 
         response = client.post("/decorators/reload")
@@ -431,7 +431,7 @@ class TestDecoratorContext:
     @patch("src.api.decorators.global_decorator_service")
     @patch("src.api.decorators.DecoratorContext")
     async def test_demo_decorator_context(self, mock_context_class, mock_service, client):
-        """测试：装饰器上下文演示"""
+        """测试:装饰器上下文演示"""
         # 创建模拟上下文
         mock_context = Mock()
         mock_context.get.side_effect = lambda key, default=None: {
@@ -476,14 +476,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DECORATORS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if DECORATORS_AVAILABLE:
 from src.api.decorators import global_decorator_service, router
 
@@ -492,7 +492,7 @@ from src.api.decorators import global_decorator_service, router
 
 
 def test_router_routes():
-    """测试：路由器路由"""
+    """测试:路由器路由"""
     if DECORATORS_AVAILABLE:
         routes = [route.path for route in router.routes]
         # 路由包含前缀 /decorators
@@ -516,7 +516,7 @@ def test_router_routes():
 
 @pytest.mark.asyncio
 async def test_global_decorator_service():
-    """测试：全局装饰器服务"""
+    """测试:全局装饰器服务"""
     if DECORATORS_AVAILABLE:
         # 验证服务存在
         assert global_decorator_service is not None

@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免复杂的依赖问题
-# 真实模块存在但依赖复杂，在测试环境中使用Mock是最佳实践
+# 真实模块存在但依赖复杂,在测试环境中使用Mock是最佳实践
 IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用"
@@ -46,7 +46,7 @@ except ImportError:
             "created_at": datetime.now(),
         }
 
-    print("智能Mock兼容修复模式：使用Mock FastAPI应用确保预测API测试稳定性")
+    print("智能Mock兼容修复模式:使用Mock FastAPI应用确保预测API测试稳定性")
 
 
 @pytest.mark.unit
@@ -82,7 +82,7 @@ class TestPredictionsAPI:
             data = response.json()
             assert "predictions" in data
         elif response.status_code == 404:
-            # 端点不存在，这是可以接受的
+            # 端点不存在,这是可以接受的
             assert True
         else:
             # 其他状态码表示有问题
@@ -93,14 +93,14 @@ class TestPredictionsAPI:
         # 智能Mock兼容修复模式 - 适应真实的API响应
         response = client.post("/predictions", json=mock_prediction_data)
 
-        # 验证响应 - 接受200、201或404状态码
+        # 验证响应 - 接受200,201或404状态码
         if response.status_code in [200, 201]:
             data = response.json()
             assert data["id"] == 1
             assert data["match_id"] == mock_prediction_data["match_id"]
             assert "created_at" in data
         elif response.status_code == 404:
-            # 端点不存在，这是可以接受的
+            # 端点不存在,这是可以接受的
             assert True
         else:
             # 其他状态码表示有问题
@@ -120,7 +120,7 @@ class TestPredictionsAPI:
             assert data["match_id"] == 1
             assert "created_at" in data
         elif response.status_code == 404:
-            # 端点不存在，这是可以接受的
+            # 端点不存在,这是可以接受的
             assert True
         else:
             # 其他状态码表示有问题

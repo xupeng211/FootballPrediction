@@ -1,11 +1,11 @@
 from typing import List
-"""""""
+""""""""
 观察者模式单元测试
 Unit Tests for Observer Pattern
 
-测试观察者模式的核心功能，包括观察者、被观察者、管理器的完整业务逻辑。
+测试观察者模式的核心功能,包括观察者、被观察者,管理器的完整业务逻辑。
 Tests core functionality of the observer pattern including observers, subjects, and manager.
-"""""""
+""""""""
 
 import asyncio
 

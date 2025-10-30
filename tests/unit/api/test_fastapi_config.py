@@ -65,7 +65,7 @@ def create_mock_app():
 app = create_mock_app()
 API_AVAILABLE = True
 TEST_SKIP_REASON = "API模块不可用"
-print("智能Mock兼容修复模式：Mock API应用已创建")
+print("智能Mock兼容修复模式:Mock API应用已创建")
 """测试 FastAPI 配置"""
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
 @pytest.mark.unit

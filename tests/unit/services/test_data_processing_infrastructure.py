@@ -5,14 +5,14 @@ from typing import Any
 """
 数据处理服务基础测试 - 符合严格测试规范
 
-测试src/services/data_processing.py的数据处理功能，包括：
+测试src/services/data_processing.py的数据处理功能,包括：
 - 抽象数据处理器基类
-- 比赛、赔率、比分数据处理器
+- 比赛、赔率,比分数据处理器
 - 数据验证和转换
 - 处理器管理和工厂模式
 - 异步操作支持
 - 错误处理和重试机制
-符合7项严格测试规范：
+符合7项严格测试规范:
 1. ✅ 文件路径与模块层级对应
 2. ✅ 测试文件命名规范
 3. ✅ 每个函数包含成功和异常用例
@@ -152,7 +152,7 @@ class TestDataProcessorAbstract:
     """数据处理器抽象测试 - 严格测试规范"""
 
     def test_abstract_class_structure(self) -> None:
-        """✅ 成功用例：抽象类结构验证"""
+        """✅ 成功用例:抽象类结构验证"""
         # 验证DataProcessor是抽象类
         assert DataProcessor is not None
         assert issubclass(DataProcessor, ABC)
@@ -164,7 +164,7 @@ class TestDataProcessorAbstract:
             assert hasattr(DataProcessor, method)
 
     def test_abstract_methods_are_abstract(self) -> None:
-        """✅ 成功用例：抽象方法都被标记为抽象"""
+        """✅ 成功用例:抽象方法都被标记为抽象"""
         # 验证所有抽象方法
         abstract_methods = ["process", "__init__", "__subclasshook__"]
 
@@ -180,7 +180,7 @@ class TestDataProcessingManager:
     """数据处理管理器测试 - 严格测试规范"""
 
     def test_factory_pattern_success(self) -> None:
-        """✅ 成功用例：工厂模式正常工作"""
+        """✅ 成功用例:工厂模式正常工作"""
         manager = DataProcessingManager()
 
         # 模拟可用的处理器
@@ -201,7 +201,7 @@ class TestDataProcessingManager:
         assert "scores" in registered
 
     def test_processor_creation_success(self) -> None:
-        """✅ 成功用例：处理器创建成功"""
+        """✅ 成功用例:处理器创建成功"""
         manager = DataProcessingManager()
 
         # 测试创建各种处理器
@@ -218,7 +218,7 @@ class TestDataProcessingManager:
         assert isinstance(scores_processor, MockScoresDataProcessor)
 
     def test_processor_creation_failure(self) -> None:
-        """❌ 异常用例：处理器创建失败"""
+        """❌ 异常用例:处理器创建失败"""
         manager = DataProcessingManager()
 
         # 尝试创建未知类型处理器
@@ -228,7 +228,7 @@ class TestDataProcessingManager:
         assert invalid_processor is None
 
     def test_get_processor_success(self) -> None:
-        """✅ 成功用例：获取处理器成功"""
+        """✅ 成功用例:获取处理器成功"""
         manager = DataProcessingManager()
 
         # 注册处理器
@@ -240,7 +240,7 @@ class TestDataProcessingManager:
         assert retrieved_processor is mock_processor
 
     def test_get_processor_with_cache(self) -> None:
-        """✅ 成功用例：从缓存获取处理器"""
+        """✅ 成功用例:从缓存获取处理器"""
         manager = DataProcessingManager()
 
         # 注册处理器
@@ -256,7 +256,7 @@ class TestDataProcessingManager:
         assert instance2 is instance1
 
     def test_get_processor_unknown_type(self) -> None:
-        """❌ 异常用例：未知处理器类型"""
+        """❌ 异常用例:未知处理器类型"""
         manager = DataProcessingManager()
 
         # 注册一个处理器
@@ -268,7 +268,7 @@ class TestDataProcessingManager:
         assert unknown_processor is None
 
     def test_data_processing_success(self) -> None:
-        """✅ 成功用例：数据处理成功"""
+        """✅ 成功用例:数据处理成功"""
         manager = DataProcessingManager()
 
         # 注册处理器
@@ -287,7 +287,7 @@ class TestDataProcessingManager:
 
     @pytest.mark.asyncio
     async def test_async_data_processing_success(self) -> None:
-        """✅ 成功用例：异步数据处理成功"""
+        """✅ 成功用例:异步数据处理成功"""
         manager = DataProcessingManager()
 
         # 注册处理器
@@ -305,7 +305,7 @@ class TestDataProcessingManager:
 
     @pytest.mark.asyncio
     async def test_batch_data_processing_success(self) -> None:
-        """✅ 成功用例：批量数据处理成功"""
+        """✅ 成功用例:批量数据处理成功"""
         manager = DataProcessingManager()
 
         # 注册处理器
@@ -324,7 +324,7 @@ class TestDataProcessingManager:
             assert "processed_at" in result
 
     def test_processor_validation_success(self) -> None:
-        """✅ 成功用例：处理器验证成功"""
+        """✅ 成功用例:处理器验证成功"""
         manager = DataProcessingManager()
 
         # 注册有效处理器
@@ -336,7 +336,7 @@ class TestDataProcessingManager:
         assert is_valid is True
 
     def test_error_handling_success(self) -> None:
-        """✅ 成功用例：错误处理成功"""
+        """✅ 成功用例:错误处理成功"""
         manager = DataProcessingManager()
 
         # 模拟处理器异常

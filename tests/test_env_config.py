@@ -89,7 +89,7 @@ def mock_redis_cluster() -> None:
     redis_cluster_mock.RedisCluster = RedisClusterStub
     redis_cluster_mock.ClusterNode = ClusterNodeStub
 
-    # 添加到sys.modules，防止导入错误
+    # 添加到sys.modules,防止导入错误
     sys.modules["redis.cluster"] = redis_cluster_mock
 
     # 也Mock相关的redis.asyncio模块

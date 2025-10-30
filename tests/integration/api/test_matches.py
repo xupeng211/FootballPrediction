@@ -1,7 +1,7 @@
-"""""""
+""""""""
 比赛 API 集成测试
 测试比赛 API 与数据库的交互
-"""""""
+""""""""
 
 from datetime import datetime, timezone
 
@@ -361,6 +361,6 @@ from src.database.models import Match, Team
             headers=auth_headers,
         )
 
-        # 根据业务逻辑，可能允许或拒绝重复比赛
+        # 根据业务逻辑,可能允许或拒绝重复比赛
         # 这里假设允许不同的队伍在不同时间比赛
         assert response.status_code in [201, 400, 409]

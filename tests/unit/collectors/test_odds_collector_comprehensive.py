@@ -146,7 +146,7 @@ class TestOddsCollector:
         match_id = 12345
 
         with patch.object(collector, "_fetch_odds") as mock_fetch:
-            # 前两次失败，第三次成功
+            # 前两次失败,第三次成功
             mock_fetch.side_effect = [
                 Exception("Network error"),
                 Exception("API error"),

@@ -29,7 +29,7 @@ class TestMakeCacheKey:
     """缓存键生成测试"""
 
     def test_make_cache_key_basic(self):
-        """测试：基础缓存键生成"""
+        """测试:基础缓存键生成"""
 
         def test_func(a, b):
             return a + b
@@ -42,7 +42,7 @@ class TestMakeCacheKey:
         assert key.startswith(expected_base)
 
     def test_make_cache_key_with_args(self):
-        """测试：带参数的缓存键生成"""
+        """测试:带参数的缓存键生成"""
 
         def test_func(a, b):
             return a + b
@@ -56,7 +56,7 @@ class TestMakeCacheKey:
         assert len(key.split(":")) >= 3
 
     def test_make_cache_key_with_kwargs(self):
-        """测试：带关键字参数的缓存键生成"""
+        """测试:带关键字参数的缓存键生成"""
 
         def test_func(a, b=None):
             return a
@@ -70,7 +70,7 @@ class TestMakeCacheKey:
         assert len(key.split(":")) >= 3
 
     def test_make_cache_key_with_prefix(self):
-        """测试：带前缀的缓存键生成"""
+        """测试:带前缀的缓存键生成"""
 
         def test_func(a):
             return a
@@ -81,7 +81,7 @@ class TestMakeCacheKey:
         assert "test_func" in key
 
     def test_make_cache_key_with_user_id(self):
-        """测试：带用户ID的缓存键生成"""
+        """测试:带用户ID的缓存键生成"""
 
         def test_func(a):
             return a
@@ -91,7 +91,7 @@ class TestMakeCacheKey:
         assert "user:123" in key
 
     def test_make_cache_key_exclude_args(self):
-        """测试：排除参数的缓存键生成"""
+        """测试:排除参数的缓存键生成"""
 
         def test_func(a, b, c=None):
             return a + b
@@ -101,11 +101,11 @@ class TestMakeCacheKey:
         key1 = _make_cache_key(test_func, args, kwargs)
         key2 = _make_cache_key(test_func, args, kwargs, exclude_args=["c"])
 
-        # 排除c后，键应该不同
+        # 排除c后,键应该不同
         assert key1 != key2
 
     def test_make_cache_key_serialization_error(self):
-        """测试：序列化错误处理"""
+        """测试:序列化错误处理"""
 
         def test_func(a):
             return a
@@ -120,7 +120,7 @@ class TestMakeCacheKey:
         assert len(key) > 0
 
     def test_make_cache_key_consistent(self):
-        """测试：缓存键一致性"""
+        """测试:缓存键一致性"""
 
         def test_func(a, b):
             return a + b
@@ -134,7 +134,7 @@ class TestMakeCacheKey:
         assert key1 == key2
 
     def test_make_cache_key_different_order(self):
-        """测试：不同参数顺序的键一致性"""
+        """测试:不同参数顺序的键一致性"""
 
         def test_func(a, b, c):
             return a + b + c
@@ -146,11 +146,11 @@ class TestMakeCacheKey:
         key1 = _make_cache_key(test_func, (), kwargs1)
         key2 = _make_cache_key(test_func, (), kwargs2)
 
-        # JSON序列化会排序键，所以应该相同
+        # JSON序列化会排序键,所以应该相同
         assert key1 == key2
 
     def test_make_cache_key_empty_params(self):
-        """测试：空参数的缓存键"""
+        """测试:空参数的缓存键"""
 
         def test_func():
             return "test"
@@ -165,7 +165,7 @@ class TestCacheResultDecorator:
     """缓存结果装饰器测试"""
 
     def test_sync_function_cache_hit(self):
-        """测试：同步函数缓存命中"""
+        """测试:同步函数缓存命中"""
         # 模拟Redis
         mock_redis = Mock()
         mock_redis.get.return_value = json.dumps({"result": "cached"})
@@ -181,7 +181,7 @@ class TestCacheResultDecorator:
             mock_redis.get.assert_called_once()
 
     def test_sync_function_cache_miss(self):
-        """测试：同步函数缓存未命中"""
+        """测试:同步函数缓存未命中"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -198,7 +198,7 @@ class TestCacheResultDecorator:
             mock_redis.set.assert_called_once()
 
     def test_async_function_cache(self):
-        """测试：异步函数缓存"""
+        """测试:异步函数缓存"""
         mock_redis = AsyncMock()
         mock_redis.aget.return_value = None
         mock_redis.aset.return_value = True
@@ -216,7 +216,7 @@ class TestCacheResultDecorator:
             asyncio.run(test())
 
     def test_cache_with_ttl(self):
-        """测试：带TTL的缓存"""
+        """测试:带TTL的缓存"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.setex.return_value = True
@@ -232,7 +232,7 @@ class TestCacheResultDecorator:
             mock_redis.setex.assert_called_once()
 
     def test_cache_with_prefix(self):
-        """测试：带前缀的缓存"""
+        """测试:带前缀的缓存"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -251,7 +251,7 @@ class TestCacheResultDecorator:
             assert cache_key.startswith("myprefix:")
 
     def test_cache_unless_condition(self):
-        """测试：unless条件"""
+        """测试:unless条件"""
         mock_redis = Mock()
 
         with patch("src.cache.decorators.RedisManager.get_instance", return_value=mock_redis):
@@ -260,17 +260,17 @@ class TestCacheResultDecorator:
             def test_func(x):
                 return f"computed-{x}"
 
-            # x > 5，不应该缓存
+            # x > 5,不应该缓存
             _result = test_func(10)
             assert _result == "computed-10"
             mock_redis.get.assert_not_called()
 
-            # x <= 5，应该缓存
+            # x <= 5,应该缓存
             _result = test_func(3)
             mock_redis.get.assert_called_once()
 
     def test_cache_custom_key_generator(self):
-        """测试：自定义键生成器"""
+        """测试:自定义键生成器"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -291,7 +291,7 @@ class TestCacheResultDecorator:
             assert cache_key == "custom:1"
 
     def test_cache_redis_error_fallback(self):
-        """测试：Redis错误时的回退"""
+        """测试:Redis错误时的回退"""
         mock_redis = Mock()
         mock_redis.get.side_effect = Exception("Redis error")
 
@@ -306,7 +306,7 @@ class TestCacheResultDecorator:
             assert _result == "computed-1"
 
     def test_cache_deserialize_error(self):
-        """测试：反序列化错误"""
+        """测试:反序列化错误"""
         mock_redis = Mock()
         mock_redis.get.return_value = "invalid json"
 
@@ -321,7 +321,7 @@ class TestCacheResultDecorator:
             assert _result == "computed-1"
 
     def test_cache_method(self):
-        """测试：缓存方法"""
+        """测试:缓存方法"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -339,7 +339,7 @@ class TestCacheResultDecorator:
             mock_redis.set.assert_called_once()
 
     def test_cache_classmethod(self):
-        """测试：缓存类方法"""
+        """测试:缓存类方法"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -357,7 +357,7 @@ class TestCacheResultDecorator:
             mock_redis.set.assert_called_once()
 
     def test_cache_staticmethod(self):
-        """测试：缓存静态方法"""
+        """测试:缓存静态方法"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -379,7 +379,7 @@ class TestCacheWithTTL:
     """带TTL的缓存装饰器测试"""
 
     def test_cache_with_ttl_decorator(self):
-        """测试：cache_with_ttl装饰器"""
+        """测试:cache_with_ttl装饰器"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.setex.return_value = True
@@ -398,7 +398,7 @@ class TestCacheWithTTL:
             assert call_args[0][1] == 7200
 
     def test_cache_with_ttl_default(self):
-        """测试：cache_with_ttl默认TTL"""
+        """测试:cache_with_ttl默认TTL"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -418,7 +418,7 @@ class TestCacheByUser:
     """基于用户的缓存装饰器测试"""
 
     def test_cache_by_user_decorator(self):
-        """测试：cache_by_user装饰器"""
+        """测试:cache_by_user装饰器"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -437,7 +437,7 @@ class TestCacheByUser:
             assert "user:123" in cache_key
 
     def test_cache_by_user_custom_param(self):
-        """测试：cache_by_user自定义用户参数"""
+        """测试:cache_by_user自定义用户参数"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -459,7 +459,7 @@ class TestCacheInvalidate:
     """缓存失效装饰器测试"""
 
     def test_cache_invalidate_decorator(self):
-        """测试：cache_invalidate装饰器"""
+        """测试:cache_invalidate装饰器"""
         mock_redis = Mock()
         mock_redis.delete.return_value = 1
 
@@ -471,10 +471,10 @@ class TestCacheInvalidate:
 
             _result = update_func(1)
             assert _result == "updated-1"
-            # 注意：实际的invalidate可能需要更复杂的逻辑
+            # 注意:实际的invalidate可能需要更复杂的逻辑
 
     def test_cache_invalidate_after_update(self):
-        """测试：更新后失效缓存"""
+        """测试:更新后失效缓存"""
         mock_redis = Mock()
         mock_redis.delete.return_value = 1
 
@@ -491,18 +491,18 @@ class TestCacheInvalidate:
             # 先缓存数据
             get_data(1)
 
-            # 更新数据，应该清除缓存
+            # 更新数据,应该清除缓存
             update_data(1)
 
             # 验证delete被调用
-            # 注意：具体实现可能需要调整
+            # 注意:具体实现可能需要调整
 
 
 class TestCacheDecoratorIntegration:
     """缓存装饰器集成测试"""
 
     def test_multiple_decorators(self):
-        """测试：多个装饰器组合"""
+        """测试:多个装饰器组合"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -523,7 +523,7 @@ class TestCacheDecoratorIntegration:
             assert "user:123" in cache_key
 
     def test_nested_functions(self):
-        """测试：嵌套函数的缓存"""
+        """测试:嵌套函数的缓存"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -545,7 +545,7 @@ class TestCacheDecoratorIntegration:
             assert mock_redis.set.call_count >= 1
 
     def test_recursive_function(self):
-        """测试：递归函数的缓存"""
+        """测试:递归函数的缓存"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
         mock_redis.set.return_value = True
@@ -565,7 +565,7 @@ class TestCacheDecoratorIntegration:
             assert mock_redis.set.call_count >= 5
 
     def test_generator_function(self):
-        """测试：生成器函数的缓存"""
+        """测试:生成器函数的缓存"""
         mock_redis = Mock()
         mock_redis.get.return_value = None
 
@@ -583,7 +583,7 @@ class TestCacheDecoratorIntegration:
             assert list(gen) == [1, 2, 3]
 
     def test_lambda_function(self):
-        """测试：Lambda函数的缓存"""
+        """测试:Lambda函数的缓存"""
         mock_redis = Mock()
 
         with patch("src.cache.decorators.RedisManager.get_instance", return_value=mock_redis):
@@ -594,11 +594,11 @@ class TestCacheDecoratorIntegration:
                 _result = test_func(5)
                 assert _result == 10
             except AttributeError:
-                # 预期的错误，Lambda没有某些属性
+                # 预期的错误,Lambda没有某些属性
                 pytest.skip("Lambda functions may not be cacheable")
 
     def test_partial_function(self):
-        """测试：偏函数的缓存"""
+        """测试:偏函数的缓存"""
         from functools import partial
 
         def test_func(a, b):
@@ -637,7 +637,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert (
             input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )

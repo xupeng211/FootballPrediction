@@ -23,13 +23,13 @@ class TestHealthStatus:
     """健康状态测试"""
 
     def test_status_values(self):
-        """测试：状态常量值"""
+        """测试:状态常量值"""
         assert HealthStatus.HEALTHY == "healthy"
         assert HealthStatus.UNHEALTHY == "unhealthy"
         assert HealthStatus.DEGRADED == "degraded"
 
     def test_status_constants(self):
-        """测试：状态常量"""
+        """测试:状态常量"""
         # 验证常量存在且是字符串
         assert isinstance(HealthStatus.HEALTHY, str)
         assert isinstance(HealthStatus.UNHEALTHY, str)
@@ -40,7 +40,7 @@ class TestHealthChecker:
     """健康检查器测试"""
 
     def test_health_checker_initialization(self):
-        """测试：健康检查器初始化"""
+        """测试:健康检查器初始化"""
         checker = HealthChecker()
 
         assert checker.db_manager is None
@@ -49,7 +49,7 @@ class TestHealthChecker:
         assert len(checker.last_checks) == 0
 
     def test_set_database_manager(self):
-        """测试：设置数据库管理器"""
+        """测试:设置数据库管理器"""
         checker = HealthChecker()
         mock_db = Mock()
 
@@ -57,7 +57,7 @@ class TestHealthChecker:
         assert checker.db_manager is mock_db
 
     def test_set_redis_manager(self):
-        """测试：设置Redis管理器"""
+        """测试:设置Redis管理器"""
         checker = HealthChecker()
         mock_redis = Mock()
 
@@ -66,7 +66,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_no_manager(self):
-        """测试：检查数据库（无管理器）"""
+        """测试:检查数据库（无管理器）"""
         checker = HealthChecker()
 
         health = await checker.check_database()
@@ -78,7 +78,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_success_fast(self):
-        """测试：检查数据库成功（快速响应）"""
+        """测试:检查数据库成功（快速响应）"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.fetch_one.return_value = {"test": 1}
@@ -95,7 +95,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_success_slow(self):
-        """测试：检查数据库成功（慢响应）"""
+        """测试:检查数据库成功（慢响应）"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.pool = None
@@ -112,7 +112,7 @@ class TestHealthChecker:
 
         health = await checker.check_database()
 
-        # 0.1秒小于1秒，应该是HEALTHY
+        # 0.1秒小于1秒,应该是HEALTHY
         # 如果我们模拟更长时间
         async def very_slow_query(query):
             await asyncio.sleep(1.1)
@@ -127,7 +127,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_very_slow(self):
-        """测试：检查数据库（非常慢响应）"""
+        """测试:检查数据库（非常慢响应）"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.pool = None
@@ -144,14 +144,14 @@ class TestHealthChecker:
 
         health = await checker.check_database()
 
-        # 0.2秒小于5秒，但我们需要模拟更长时间
+        # 0.2秒小于5秒,但我们需要模拟更长时间
         # 实际测试中不能真的等待5秒
         # 这里只验证逻辑结构
         assert "timestamp" in health
 
     @pytest.mark.asyncio
     async def test_check_database_with_pool_info(self):
-        """测试：检查数据库（带连接池信息）"""
+        """测试:检查数据库（带连接池信息）"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.fetch_one.return_value = {"test": 1}
@@ -178,7 +178,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_pool_overflow(self):
-        """测试：检查数据库（连接池溢出）"""
+        """测试:检查数据库（连接池溢出）"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.fetch_one.return_value = {"test": 1}
@@ -201,7 +201,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_error(self):
-        """测试：检查数据库错误"""
+        """测试:检查数据库错误"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.pool = None
@@ -218,7 +218,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_runtime_error(self):
-        """测试：检查数据库运行时错误"""
+        """测试:检查数据库运行时错误"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.pool = None
@@ -233,7 +233,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_database_timeout_error(self):
-        """测试：检查数据库超时错误"""
+        """测试:检查数据库超时错误"""
         checker = HealthChecker()
         mock_db = AsyncMock()
         mock_db.pool = None
@@ -248,7 +248,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_redis_no_manager(self):
-        """测试：检查Redis（无管理器）"""
+        """测试:检查Redis（无管理器）"""
         checker = HealthChecker()
 
         health = await checker.check_redis()
@@ -260,7 +260,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_redis_success(self):
-        """测试：检查Redis成功"""
+        """测试:检查Redis成功"""
         checker = HealthChecker()
         mock_redis = AsyncMock()
         mock_redis.health_check.return_value = True
@@ -275,7 +275,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_redis_failure(self):
-        """测试：检查Redis失败"""
+        """测试:检查Redis失败"""
         checker = HealthChecker()
         mock_redis = AsyncMock()
         mock_redis.health_check.return_value = False
@@ -290,7 +290,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_redis_exception(self):
-        """测试：检查Redis异常"""
+        """测试:检查Redis异常"""
         checker = HealthChecker()
         mock_redis = AsyncMock()
         mock_redis.health_check.side_effect = Exception("Redis connection error")
@@ -305,7 +305,7 @@ class TestHealthChecker:
 
     @pytest.mark.asyncio
     async def test_check_all_components(self):
-        """测试：检查所有组件"""
+        """测试:检查所有组件"""
         # 检查是否有check_all方法
         checker = HealthChecker()
 
@@ -327,11 +327,11 @@ class TestHealthChecker:
             assert "redis" in health
             assert "overall" in health
         else:
-            # 如果没有check_all方法，跳过测试
+            # 如果没有check_all方法,跳过测试
             pytest.skip("check_all method not implemented")
 
     def test_update_last_checks(self):
-        """测试：更新最后检查时间"""
+        """测试:更新最后检查时间"""
         checker = HealthChecker()
 
         # 如果有_update_last_checks方法
@@ -341,7 +341,7 @@ class TestHealthChecker:
             assert isinstance(checker.last_checks["database"], datetime)
 
     def test_get_component_status(self):
-        """测试：获取组件状态"""
+        """测试:获取组件状态"""
         checker = HealthChecker()
 
         # 如果有get_component_status方法
@@ -356,7 +356,7 @@ class TestHealthChecker:
             assert status is None
 
     def test_health_checker_timestamps(self):
-        """测试：健康检查时间戳"""
+        """测试:健康检查时间戳"""
         checker = HealthChecker()
 
         # 初始状态
@@ -370,19 +370,19 @@ class TestHealthChecker:
         assert isinstance(checker.last_checks["test"], datetime)
 
     def test_health_checker_singleton_pattern(self):
-        """测试：健康检查器单例模式（如果适用）"""
+        """测试:健康检查器单例模式（如果适用）"""
         # 创建多个实例
         checker1 = HealthChecker()
         checker2 = HealthChecker()
 
-        # 默认情况下，应该不是单例（除非明确实现）
+        # 默认情况下,应该不是单例（除非明确实现）
         assert checker1 is not checker2
         assert checker1.db_manager is None
         assert checker2.db_manager is None
 
     @pytest.mark.asyncio
     async def test_concurrent_health_checks(self):
-        """测试：并发健康检查"""
+        """测试:并发健康检查"""
         import asyncio
 
         checker = HealthChecker()

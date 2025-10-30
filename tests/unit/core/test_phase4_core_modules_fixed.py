@@ -8,8 +8,8 @@ from datetime import datetime
 第四阶段核心模块深度覆盖测试
 Phase 4 Core Modules Deep Coverage Tests
 
-专注于核心业务逻辑的深度覆盖测试，包括预测引擎、CQRS、事件系统等
-目标：30% → 40%覆盖率提升
+专注于核心业务逻辑的深度覆盖测试,包括预测引擎、CQRS,事件系统等
+目标:30% → 40%覆盖率提升
 """
 
 import asyncio
@@ -67,7 +67,7 @@ class TestPredictionEngineAdvanced:
 
     @pytest.mark.asyncio
     async def test_prediction_engine_lifecycle(self):
-        """测试：预测引擎完整生命周期"""
+        """测试:预测引擎完整生命周期"""
         config = PredictionConfig()
         engine = PredictionEngine(config)
 
@@ -97,7 +97,7 @@ class TestPredictionEngineAdvanced:
 
     @pytest.mark.asyncio
     async def test_prediction_engine_performance_monitoring(self):
-        """测试：预测引擎性能监控"""
+        """测试:预测引擎性能监控"""
         config = PredictionConfig(enable_monitoring=True)
         engine = PredictionEngine(config)
 
@@ -133,7 +133,7 @@ class TestPredictionEngineAdvanced:
 
     @pytest.mark.asyncio
     async def test_prediction_engine_error_handling(self):
-        """测试：预测引擎错误处理"""
+        """测试:预测引擎错误处理"""
         config = PredictionConfig()
         engine = PredictionEngine(config)
 
@@ -155,7 +155,7 @@ class TestPredictionEngineAdvanced:
 
     @pytest.mark.asyncio
     async def test_prediction_engine_data_flow(self):
-        """测试：预测引擎数据流"""
+        """测试:预测引擎数据流"""
         config = PredictionConfig()
         engine = PredictionEngine(config)
 
@@ -198,7 +198,7 @@ class TestAPIRouterAdvanced:
     """高级API路由器测试"""
 
     def test_router_registration_and_discovery(self):
-        """测试：路由器注册和发现"""
+        """测试:路由器注册和发现"""
         # 验证路由器存在
         assert router is not None
         assert hasattr(router, "routes")
@@ -214,7 +214,7 @@ class TestAPIRouterAdvanced:
             assert route.path.startswith("/")  # 所有路径应该以/开头
 
     def test_middleware_chain_integration(self):
-        """测试：中间件链集成"""
+        """测试:中间件链集成"""
         # 模拟中间件链
         middleware_chain = []
 
@@ -256,7 +256,7 @@ class TestAPIRouterAdvanced:
         assert middleware_chain == ["cors", "auth", "logging"]
 
     def test_response_formatting_consistency(self):
-        """测试：响应格式一致性"""
+        """测试:响应格式一致性"""
 
         # 模拟API响应格式化器
         class ResponseFormatter:
@@ -304,7 +304,7 @@ class TestCQRSApplicationAdvanced:
 
     @pytest.mark.asyncio
     async def test_command_bus_dispatching(self):
-        """测试：命令总线分发"""
+        """测试:命令总线分发"""
         command_bus = CommandBus()
 
         # 注册命令处理器
@@ -333,7 +333,7 @@ class TestCQRSApplicationAdvanced:
 
     @pytest.mark.asyncio
     async def test_query_bus_optimization(self):
-        """测试：查询总线优化"""
+        """测试:查询总线优化"""
         query_bus = QueryBus()
 
         # 注册查询处理器
@@ -374,7 +374,7 @@ class TestCQRSApplicationAdvanced:
 
     @pytest.mark.asyncio
     async def test_cqrs_data_integrity(self):
-        """测试：CQRS数据完整性"""
+        """测试:CQRS数据完整性"""
         # 创建CQRS应用
         cqrs_app = CQRSApplication()
 
@@ -416,7 +416,7 @@ class TestEventSystemAdvanced:
 
     @pytest.mark.asyncio
     async def test_event_publishing_and_handling(self):
-        """测试：事件发布和处理"""
+        """测试:事件发布和处理"""
         event_bus = EventBus()
 
         # 创建事件处理器
@@ -455,7 +455,7 @@ class TestEventSystemAdvanced:
 
     @pytest.mark.asyncio
     async def test_event_system_error_resilience(self):
-        """测试：事件系统错误恢复能力"""
+        """测试:事件系统错误恢复能力"""
         event_bus = EventBus()
 
         # 创建可能失败的事件处理器
@@ -502,7 +502,7 @@ class TestEventSystemAdvanced:
         # 应该成功（经过重试）
         result = await event_bus.publish(match_event)
         assert result is not None
-        assert failing_handler.attempts == 3  # 失败2次，第3次成功
+        assert failing_handler.attempts == 3  # 失败2次,第3次成功
 
 
 @pytest.mark.skipif(not FACADE_AVAILABLE, reason="外观模式不可用")
@@ -511,7 +511,7 @@ class TestFacadePatternAdvanced:
 
     @pytest.mark.asyncio
     async def test_facade_service_coordination(self):
-        """测试：外观服务协调"""
+        """测试:外观服务协调"""
         # 创建外观服务
         prediction_facade = PredictionFacade()
 
@@ -549,7 +549,7 @@ class TestFacadePatternAdvanced:
 
     @pytest.mark.asyncio
     async def test_facade_error_recovery(self):
-        """测试：外观错误恢复"""
+        """测试:外观错误恢复"""
         data_facade = DataProcessingFacade()
 
         # 创建可能失败的服务
@@ -578,7 +578,7 @@ class TestFacadePatternAdvanced:
                         continue
                     raise
 
-            raise RuntimeError(f"处理失败，已尝试{max_attempts}次")
+            raise RuntimeError(f"处理失败,已尝试{max_attempts}次")
 
         # 测试错误恢复
         test_data = {"batch_id": "batch_123", "records": [1, 2, 3]}

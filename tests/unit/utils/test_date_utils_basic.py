@@ -59,7 +59,7 @@ class TestDateUtils:
                     if result is not None:
                         assert isinstance(result, (datetime, date))
             except Exception:
-                # 某些格式可能不支持，这是可以接受的
+                # 某些格式可能不支持,这是可以接受的
                 pass
 
     def test_date_formatting(self):
@@ -339,7 +339,7 @@ class TestDateUtils:
                 # 应该优雅地处理无效输入
                 if hasattr(utils, "safe_parse"):
                     utils.safe_parse(case)
-                    # 如果方法存在，应该不抛出异常
+                    # 如果方法存在,应该不抛出异常
             except Exception:
                 pass
 
@@ -382,7 +382,7 @@ class TestDateUtils:
                 utils = DateUtils(**config)
                 assert utils is not None
             except Exception:
-                # 配置可能不支持，尝试默认构造函数
+                # 配置可能不支持,尝试默认构造函数
                 utils = DateUtils()
                 assert utils is not None
 

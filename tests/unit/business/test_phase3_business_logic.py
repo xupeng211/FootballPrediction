@@ -6,8 +6,8 @@ from typing import Any
 业务逻辑深度覆盖率测试 - 第三阶段
 Business Logic Deep Coverage Tests - Phase 3
 
-专注于核心业务逻辑、数据处理流程、预测算法等的深度测试覆盖
-目标：35% → 45%覆盖率提升
+专注于核心业务逻辑、数据处理流程,预测算法等的深度测试覆盖
+目标:35% → 45%覆盖率提升
 """
 
 import asyncio
@@ -47,7 +47,7 @@ class TestDataProcessingServiceAdvanced:
 
     @pytest.mark.asyncio
     async def test_batch_prediction_processing(self):
-        """测试：批量预测处理 - 覆盖率补充"""
+        """测试:批量预测处理 - 覆盖率补充"""
         service = DataProcessingService()
         await service.initialize()
 
@@ -88,7 +88,7 @@ class TestDataProcessingServiceAdvanced:
 
     @pytest.mark.asyncio
     async def test_data_pipeline_workflow(self):
-        """测试：数据处理管道工作流 - 覆盖率补充"""
+        """测试:数据处理管道工作流 - 覆盖率补充"""
         service = DataProcessingService()
         await service.initialize()
 
@@ -104,7 +104,7 @@ class TestDataProcessingServiceAdvanced:
             "odds": {"home": 2.1, "draw": 3.4, "away": 3.8},
         }
 
-        # 步骤1：数据清洗
+        # 步骤1:数据清洗
         cleaned_data = {
             "match_id": raw_data["match_id"],
             "home_team": raw_data["home_team"].strip().title(),
@@ -113,7 +113,7 @@ class TestDataProcessingServiceAdvanced:
             "processed_at": datetime.utcnow().isoformat(),
         }
 
-        # 步骤2：特征提取
+        # 步骤2:特征提取
         features = {
             "match_id": cleaned_data["match_id"],
             "team_length_diff": len(cleaned_data["home_team"]) - len(cleaned_data["away_team"]),
@@ -121,7 +121,7 @@ class TestDataProcessingServiceAdvanced:
             "odds_available": "odds" in raw_data,
         }
 
-        # 步骤3：预测生成
+        # 步骤3:预测生成
         prediction_result = await service.process_data(features)
 
         # 验证管道结果
@@ -133,7 +133,7 @@ class TestDataProcessingServiceAdvanced:
 
     @pytest.mark.asyncio
     async def test_error_recovery_and_retry(self):
-        """测试：错误恢复和重试机制 - 覆盖率补充"""
+        """测试:错误恢复和重试机制 - 覆盖率补充"""
         service = DataProcessingService()
         await service.initialize()
 
@@ -172,7 +172,7 @@ class TestDataProcessingServiceAdvanced:
         await service.cleanup()
 
     def test_data_quality_validation(self):
-        """测试：数据质量验证 - 覆盖率补充"""
+        """测试:数据质量验证 - 覆盖率补充"""
 
         # 创建数据质量验证器
         def validate_match_data_quality(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -247,7 +247,7 @@ class TestAuditServiceAdvanced:
     """审计服务高级测试"""
 
     def test_comprehensive_audit_trail(self):
-        """测试：综合审计跟踪 - 覆盖率补充"""
+        """测试:综合审计跟踪 - 覆盖率补充"""
         audit_service = AuditService()
 
         # 模拟复杂的业务操作审计
@@ -332,7 +332,7 @@ class TestAuditServiceAdvanced:
         assert summary.total_logs >= 7
 
     def test_audit_data_privacy_compliance(self):
-        """测试：审计数据隐私合规 - 覆盖率补充"""
+        """测试:审计数据隐私合规 - 覆盖率补充"""
         audit_service = AuditService()
 
         # 模拟敏感数据处理
@@ -393,10 +393,10 @@ class TestAuditServiceAdvanced:
         assert "4111-1111-1111-1111" not in str(audit_details)
 
     def test_audit_performance_monitoring(self):
-        """测试：审计性能监控 - 覆盖率补充"""
+        """测试:审计性能监控 - 覆盖率补充"""
         audit_service = AuditService()
 
-        # 性能测试：大量审计事件记录
+        # 性能测试:大量审计事件记录
         start_time = datetime.utcnow()
 
         events_to_create = 1000
@@ -432,7 +432,7 @@ class TestPredictionModelsAdvanced:
     """预测模型高级测试"""
 
     def test_prediction_confidence_calculation(self):
-        """测试：预测置信度计算 - 覆盖率补充"""
+        """测试:预测置信度计算 - 覆盖率补充"""
 
         # 创建预测结果模型
         class PredictionResult:
@@ -488,7 +488,7 @@ class TestPredictionModelsAdvanced:
         assert low_confidence_pred.calculate_entropy() > 1.5  # 高熵值
 
     def test_prediction_model_validation(self):
-        """测试：预测模型验证 - 覆盖率补充"""
+        """测试:预测模型验证 - 覆盖率补充"""
 
         # 创建预测模型验证器
         class PredictionModelValidator:
@@ -589,7 +589,7 @@ class TestPredictionModelsAdvanced:
         assert any("Confidence must be" in error for error in errors)
 
     def test_model_performance_metrics(self):
-        """测试：模型性能指标 - 覆盖率补充"""
+        """测试:模型性能指标 - 覆盖率补充"""
 
         # 创建性能指标计算器
         class ModelPerformanceMetrics:
@@ -687,7 +687,7 @@ class TestPredictionModelsAdvanced:
         assert 0.0 <= brier_score <= 1.0
         assert log_loss > 0.0
 
-        # 对于这个测试数据，准确率应该是0.8 (4/5正确)
+        # 对于这个测试数据,准确率应该是0.8 (4/5正确)
         assert abs(accuracy - 0.8) < 0.01
 
 
@@ -696,7 +696,7 @@ class TestUtilsAdvanced:
     """工具函数高级测试"""
 
     def test_time_zone_handling(self):
-        """测试：时区处理 - 覆盖率补充"""
+        """测试:时区处理 - 覆盖率补充"""
         from datetime import timedelta, timezone
 
         # 测试不同时区的时间转换
@@ -725,7 +725,7 @@ class TestUtilsAdvanced:
         assert "EST" in est_formatted
 
     def test_data_transformation_utilities(self):
-        """测试：数据转换工具 - 覆盖率补充"""
+        """测试:数据转换工具 - 覆盖率补充"""
 
         # 创建数据转换工具集
         class DataTransformer:
@@ -825,7 +825,7 @@ class TestUtilsAdvanced:
         assert metrics["overall_strength"] > 200  # 基础分数加成
 
     def test_advanced_data_validation(self):
-        """测试：高级数据验证 - 覆盖率补充"""
+        """测试:高级数据验证 - 覆盖率补充"""
 
         # 创建高级数据验证器
         class AdvancedDataValidator:
@@ -949,7 +949,7 @@ class TestBusinessLogicIntegration:
     """业务逻辑集成测试"""
 
     def test_end_to_end_prediction_workflow(self):
-        """测试：端到端预测工作流 - 覆盖率补充"""
+        """测试:端到端预测工作流 - 覆盖率补充"""
         # 模拟完整的预测业务流程
 
         # 1. 数据采集
@@ -1059,7 +1059,7 @@ class TestBusinessLogicIntegration:
         return 0.1
 
     def test_data_pipeline_error_handling(self):
-        """测试：数据管道错误处理 - 覆盖率补充"""
+        """测试:数据管道错误处理 - 覆盖率补充"""
         # 模拟数据管道中的各种错误情况
 
         class DataPipelineError(Exception):
@@ -1082,7 +1082,7 @@ class TestBusinessLogicIntegration:
                             return func(*args, **kwargs)
                         except DataQualityError as e:
                             last_error = e
-                            # 数据质量问题，不重试
+                            # 数据质量问题,不重试
                             break
                         except (ConnectionError, TimeoutError) as e:
                             last_error = e
@@ -1128,7 +1128,7 @@ class TestBusinessLogicIntegration:
             process_data_with_validation(network_error_data)
 
     def test_concurrent_prediction_processing(self):
-        """测试：并发预测处理 - 覆盖率补充"""
+        """测试:并发预测处理 - 覆盖率补充"""
         import asyncio
 
         async def process_single_prediction(match_data):

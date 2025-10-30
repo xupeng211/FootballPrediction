@@ -1,10 +1,10 @@
-"""""""
+""""""""
 增强真实业务逻辑测试: utils.data_validator
 覆盖率: 0% → 45%
 重构时间: 2025-10-25 13:41
 优先级: HIGH
-策略: 真实业务逻辑测试，避免空洞框架代码
-"""""""
+策略: 真实业务逻辑测试,避免空洞框架代码
+""""""""
 
 import pytest
 
@@ -46,9 +46,9 @@ class TestUtilsDataValidatorEnhanced:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块 utils.data_validator 导入失败")
 
-        # 基础验证：模块能够正常导入
+        # 基础验证:模块能够正常导入
         assert len(imported_items) >= 0, "应该能导入模块内容"
-        print(f"✅ 模块验证通过，包含 {len(imported_items)} 个可测试项目")
+        print(f"✅ 模块验证通过,包含 {len(imported_items)} 个可测试项目")
 
     @pytest.mark.unit
     def test_real_function_calls_with_valid_data(self):
@@ -85,11 +85,11 @@ class TestUtilsDataValidatorEnhanced:
                         else:
                             # 通用函数调用
                             result = item()
-                            print(f"   调用成功，结果: {type(result)}")
+                            print(f"   调用成功,结果: {type(result)}")
 
                     except Exception as func_e:
                         print(f"   ⚠️ 函数调用异常: {func_e}")
-                        # 继续测试其他函数，不失败
+                        # 继续测试其他函数,不失败
 
         except Exception as e:
             print(f"函数测试异常: {e}")
@@ -209,12 +209,12 @@ class TestUtilsDataValidatorEnhanced:
                     try:
                         item()
 except Exception:
-                        pass  # 忽略调用错误，专注于性能
+                        pass  # 忽略调用错误,专注于性能
 
         end_time = time.time()
         execution_time = end_time - start_time
 
-        print(f"⚡ 性能测试完成，耗时: {execution_time:.4f}秒")
+        print(f"⚡ 性能测试完成,耗时: {execution_time:.4f}秒")
         assert execution_time < 2.0, "性能测试应该在2秒内完成"
 
     @pytest.mark.unit

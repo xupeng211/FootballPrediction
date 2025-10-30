@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
 
-"""""""
+""""""""
 适配器工厂测试
 Tests for Adapter Factory
 
 测试src.adapters.factory模块的适配器工厂功能
-"""""""
+""""""""
 
 import json
 import tempfile
@@ -43,7 +43,7 @@ class TestAdapterConfig:
     """适配器配置测试"""
 
     def test_adapter_config_creation(self):
-        """测试：适配器配置创建"""
+        """测试:适配器配置创建"""
         _config = AdapterConfig(
             name="test_adapter",
             adapter_type="test",
@@ -65,7 +65,7 @@ class TestAdapterConfig:
         assert _config.retry_config == {"max_retries": 3}
 
     def test_adapter_config_defaults(self):
-        """测试：适配器配置默认值"""
+        """测试:适配器配置默认值"""
         _config = AdapterConfig(name="test", adapter_type="test")
 
         assert _config.enabled is True  # 默认启用
@@ -81,7 +81,7 @@ class TestAdapterGroupConfig:
     """适配器组配置测试"""
 
     def test_adapter_group_config_creation(self):
-        """测试：适配器组配置创建"""
+        """测试:适配器组配置创建"""
         group = AdapterGroupConfig(
             name="test_group",
             adapters=["adapter1", "adapter2"],
@@ -95,7 +95,7 @@ class TestAdapterGroupConfig:
         assert group.fallback_strategy == "parallel"
 
     def test_adapter_group_config_defaults(self):
-        """测试：适配器组配置默认值"""
+        """测试:适配器组配置默认值"""
         group = AdapterGroupConfig(name="test", adapters=["adapter1"])
 
         assert group.primary_adapter is None
@@ -107,7 +107,7 @@ class TestAdapterFactory:
     """适配器工厂测试"""
 
     def test_factory_creation(self):
-        """测试：工厂创建"""
+        """测试:工厂创建"""
         factory = AdapterFactory()
         assert factory is not None
         assert hasattr(factory, "_adapter_types")
@@ -115,7 +115,7 @@ class TestAdapterFactory:
         assert hasattr(factory, "_group_configs")
 
     def test_register_adapter_type(self):
-        """测试：注册适配器类型"""
+        """测试:注册适配器类型"""
         factory = AdapterFactory()
 
         # 创建模拟适配器类
@@ -129,7 +129,7 @@ class TestAdapterFactory:
         assert factory._adapter_types["test_adapter"] == mock_adapter_class
 
     def test_unregister_adapter_type(self):
-        """测试：注销适配器类型"""
+        """测试:注销适配器类型"""
         factory = AdapterFactory()
 
         # 创建模拟适配器类
@@ -143,7 +143,7 @@ class TestAdapterFactory:
         assert "test_adapter" not in factory._adapter_types
 
     def test_create_adapter_success(self):
-        """测试：成功创建适配器"""
+        """测试:成功创建适配器"""
         factory = AdapterFactory()
 
         # 创建模拟适配器类
@@ -172,7 +172,7 @@ class TestAdapterFactory:
         assert mock_adapter_class.called
 
     def test_create_adapter_disabled(self):
-        """测试：创建禁用的适配器"""
+        """测试:创建禁用的适配器"""
         factory = AdapterFactory()
 
         # 创建配置（禁用）
@@ -183,7 +183,7 @@ class TestAdapterFactory:
             factory.create_adapter(_config)
 
     def test_create_adapter_unknown_type(self):
-        """测试：创建未知类型的适配器"""
+        """测试:创建未知类型的适配器"""
         factory = AdapterFactory()
 
         # 创建配置（未知类型）
@@ -195,7 +195,7 @@ class TestAdapterFactory:
 
     @patch.dict("os.environ", {"TEST_API_KEY": "secret_value"})
     def test_resolve_parameters_with_env_var(self):
-        """测试：解析参数（包含环境变量）"""
+        """测试:解析参数（包含环境变量）"""
         factory = AdapterFactory()
 
         parameters = {"api_key": "$TEST_API_KEY", "normal_param": "normal_value"}
@@ -206,7 +206,7 @@ class TestAdapterFactory:
         assert resolved["normal_param"] == "normal_value"
 
     def test_resolve_parameters_missing_env_var(self):
-        """测试：解析参数（缺少环境变量）"""
+        """测试:解析参数（缺少环境变量）"""
         factory = AdapterFactory()
 
         parameters = {"api_key": "$MISSING_VAR"}
@@ -216,7 +216,7 @@ class TestAdapterFactory:
             factory._resolve_parameters(parameters)
 
     def test_mask_sensitive_parameters(self):
-        """测试：屏蔽敏感参数"""
+        """测试:屏蔽敏感参数"""
         factory = AdapterFactory()
 
         parameters = {
@@ -233,11 +233,11 @@ class TestAdapterFactory:
         assert masked["password"] == "***"
         assert masked["normal_param"] == "normal_value"
         assert masked["token"] == "***"
-        # public_key包含"key"但可能不在敏感列表中，取决于实现
+        # public_key包含"key"但可能不在敏感列表中,取决于实现
         # 实际实现只检查特定的敏感词
 
     def test_create_adapter_group(self):
-        """测试：创建适配器组"""
+        """测试:创建适配器组"""
         factory = AdapterFactory()
 
         # 创建子适配器配置
@@ -265,7 +265,7 @@ class TestAdapterFactory:
             mock_create.assert_called()
 
     def test_load_config_from_json(self):
-        """测试：从JSON文件加载配置"""
+        """测试:从JSON文件加载配置"""
         factory = AdapterFactory()
 
         # 创建临时JSON文件
@@ -312,7 +312,7 @@ class TestAdapterFactory:
             Path(temp_path).unlink()
 
     def test_load_config_from_yaml(self):
-        """测试：从YAML文件加载配置"""
+        """测试:从YAML文件加载配置"""
         factory = AdapterFactory()
 
         # 创建临时YAML文件
@@ -344,7 +344,7 @@ class TestAdapterFactory:
             Path(temp_path).unlink()
 
     def test_load_config_file_not_found(self):
-        """测试：加载不存在的配置文件"""
+        """测试:加载不存在的配置文件"""
         factory = AdapterFactory()
 
         # 应该抛出异常
@@ -352,7 +352,7 @@ class TestAdapterFactory:
             factory.load_config_from_file("/nonexistent/path.json")
 
     def test_load_config_unsupported_format(self):
-        """测试：加载不支持的配置文件格式"""
+        """测试:加载不支持的配置文件格式"""
         factory = AdapterFactory()
 
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -367,7 +367,7 @@ class TestAdapterFactory:
             Path(temp_path).unlink()
 
     def test_save_config_to_json(self):
-        """测试：保存配置到JSON文件"""
+        """测试:保存配置到JSON文件"""
         factory = AdapterFactory()
 
         # 添加配置
@@ -402,7 +402,7 @@ class TestAdapterFactory:
             Path(temp_path).unlink()
 
     def test_get_config(self):
-        """测试：获取配置"""
+        """测试:获取配置"""
         factory = AdapterFactory()
 
         # 添加配置
@@ -418,7 +418,7 @@ class TestAdapterFactory:
         assert not_found is None
 
     def test_get_group_config(self):
-        """测试：获取组配置"""
+        """测试:获取组配置"""
         factory = AdapterFactory()
 
         # 添加组配置
@@ -434,7 +434,7 @@ class TestAdapterFactory:
         assert not_found is None
 
     def test_list_configs(self):
-        """测试：列出所有配置"""
+        """测试:列出所有配置"""
         factory = AdapterFactory()
 
         # 添加配置
@@ -446,7 +446,7 @@ class TestAdapterFactory:
         assert set(configs) == {"config1", "config2"}
 
     def test_list_group_configs(self):
-        """测试：列出所有组配置"""
+        """测试:列出所有组配置"""
         factory = AdapterFactory()
 
         # 添加组配置
@@ -458,7 +458,7 @@ class TestAdapterFactory:
         assert set(groups) == {"group1", "group2"}
 
     def test_validate_config_unknown_type(self):
-        """测试：验证配置（未知类型）"""
+        """测试:验证配置（未知类型）"""
         factory = AdapterFactory()
 
         _config = AdapterConfig(name="test", adapter_type="unknown_type")
@@ -468,7 +468,7 @@ class TestAdapterFactory:
         assert "Unknown adapter type" in errors[0]
 
     def test_create_default_configs(self):
-        """测试：创建默认配置"""
+        """测试:创建默认配置"""
         factory = AdapterFactory()
 
         # 清空现有配置
@@ -497,12 +497,12 @@ class TestGlobalAdapterFactory:
     """全局适配器工厂测试"""
 
     def test_global_factory_exists(self):
-        """测试：全局工厂实例存在"""
+        """测试:全局工厂实例存在"""
         assert adapter_factory is not None
         assert isinstance(adapter_factory, AdapterFactory)
 
     def test_global_factory_has_configs(self):
-        """测试：全局工厂有默认配置"""
+        """测试:全局工厂有默认配置"""
         # 应该有默认配置
         configs = adapter_factory.list_configs()
         assert len(configs) > 0
@@ -516,14 +516,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not FACTORY_AVAILABLE
         assert True  # Basic assertion - consider enhancing
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if FACTORY_AVAILABLE:
 from src.adapters.factory import (
             AdapterConfig,
@@ -537,7 +537,7 @@ from src.adapters.factory import (
 
 
 def test_dataclass_fields():
-    """测试：数据类字段"""
+    """测试:数据类字段"""
     if FACTORY_AVAILABLE:
         # 验证AdapterConfig字段
         fields = AdapterConfig.__dataclass_fields__

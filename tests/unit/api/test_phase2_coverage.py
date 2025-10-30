@@ -9,8 +9,8 @@ from typing import Any
 核心API模块覆盖率测试 - 第二阶段
 Core API Module Coverage Tests - Phase 2
 
-专注于提升API路由、依赖注入、中间件等的测试覆盖率
-目标：28% → 35%
+专注于提升API路由、依赖注入,中间件等的测试覆盖率
+目标:28% → 35%
 """
 
 import asyncio
@@ -53,7 +53,7 @@ class TestAPISchemasCoverage:
     """API模式覆盖率补充测试"""
 
     def test_api_response_creation(self):
-        """测试：API响应创建 - 覆盖率补充"""
+        """测试:API响应创建 - 覆盖率补充"""
         response = APIResponse(
             success=True,
             message="操作成功",
@@ -67,7 +67,7 @@ class TestAPISchemasCoverage:
         assert response.timestamp == "2023-12-01T10:00:00Z"
 
     def test_api_response_error_format(self):
-        """测试：API响应错误格式 - 覆盖率补充"""
+        """测试:API响应错误格式 - 覆盖率补充"""
         response = APIResponse(
             success=False, message="操作失败", errors=["错误1", "错误2"], data=None
         )
@@ -78,7 +78,7 @@ class TestAPISchemasCoverage:
         assert response.data is None
 
     def test_api_response_serialization(self):
-        """测试：API响应序列化 - 覆盖率补充"""
+        """测试:API响应序列化 - 覆盖率补充"""
         response = APIResponse(success=True, message="测试", data={"key": "value"})
 
         # 测试转换为字典
@@ -88,7 +88,7 @@ class TestAPISchemasCoverage:
         assert "data" in response_dict
 
     def test_api_response_json_compatibility(self):
-        """测试：API响应JSON兼容性 - 覆盖率补充"""
+        """测试:API响应JSON兼容性 - 覆盖率补充"""
         response = APIResponse(
             success=True, message="JSON测试", data={"number": 42, "text": "hello"}
         )
@@ -104,7 +104,7 @@ class TestCoreExceptionsCoverage:
     """核心异常覆盖率补充测试"""
 
     def test_service_error_creation(self):
-        """测试：服务错误创建 - 覆盖率补充"""
+        """测试:服务错误创建 - 覆盖率补充"""
         error = ServiceError(message="服务不可用", service_name="prediction_service")
 
         assert str(error) == "服务不可用"
@@ -112,7 +112,7 @@ class TestCoreExceptionsCoverage:
         assert error.service_name == "prediction_service"
 
     def test_service_error_inheritance(self):
-        """测试：服务错误继承 - 覆盖率补充"""
+        """测试:服务错误继承 - 覆盖率补充"""
         error = ServiceError("测试错误")
 
         # 测试继承关系
@@ -120,14 +120,14 @@ class TestCoreExceptionsCoverage:
         assert isinstance(error, Exception)
 
     def test_service_error_without_service_name(self):
-        """测试：无服务名称的服务错误 - 覆盖率补充"""
+        """测试:无服务名称的服务错误 - 覆盖率补充"""
         error = ServiceError("通用错误")
 
         assert error.message == "通用错误"
         assert error.service_name is None
 
     def test_exception_chaining(self):
-        """测试：异常链 - 覆盖率补充"""
+        """测试:异常链 - 覆盖率补充"""
         try:
             try:
                 raise ValueError("原始错误")
@@ -144,7 +144,7 @@ class TestSecurityMiddlewareCoverage:
 
     @pytest.mark.asyncio
     async def test_security_headers_middleware(self):
-        """测试：安全头中间件 - 覆盖率补充"""
+        """测试:安全头中间件 - 覆盖率补充"""
         # 创建模拟应用
         mock_app = Mock()
         middleware = SecurityHeadersMiddleware(mock_app, enabled=True)
@@ -167,7 +167,7 @@ class TestSecurityMiddlewareCoverage:
         assert middleware.enabled is True
 
     def test_security_headers_configuration(self):
-        """测试：安全头配置 - 覆盖率补充"""
+        """测试:安全头配置 - 覆盖率补充"""
         middleware = SecurityHeadersMiddleware(Mock(), enabled=True)
 
         # 测试获取安全头
@@ -178,14 +178,14 @@ class TestSecurityMiddlewareCoverage:
         assert "X-Content-Type-Options" in headers
 
     def test_rate_limit_middleware_configuration(self):
-        """测试：速率限制中间件配置 - 覆盖率补充"""
+        """测试:速率限制中间件配置 - 覆盖率补充"""
         middleware = RateLimitMiddleware(Mock(), requests_per_minute=30, burst_size=5)
 
         assert middleware.requests_per_minute == 30
         assert middleware.burst_size == 5
 
     def test_rate_limit_client_ip_extraction(self):
-        """测试：客户端IP提取 - 覆盖率补充"""
+        """测试:客户端IP提取 - 覆盖率补充"""
         middleware = RateLimitMiddleware(Mock())
 
         # 测试直接IP
@@ -197,7 +197,7 @@ class TestSecurityMiddlewareCoverage:
         assert ip == "192.168.1.1"
 
     def test_rate_limit_forwarded_header(self):
-        """测试：X-Forwarded-For头处理 - 覆盖率补充"""
+        """测试:X-Forwarded-For头处理 - 覆盖率补充"""
         middleware = RateLimitMiddleware(Mock())
 
         request = Mock()
@@ -212,22 +212,22 @@ class TestDatabaseModelsCoverage:
     """数据库模型覆盖率补充测试"""
 
     def test_database_model_imports(self):
-        """测试：数据库模型导入 - 覆盖率补充"""
+        """测试:数据库模型导入 - 覆盖率补充"""
         # 简单测试导入是否成功
         assert RawMatchData is not None
         assert RawOddsData is not None
         assert RawScoresData is not None
 
     def test_database_model_class_structure(self):
-        """测试：数据库模型类结构 - 覆盖率补充"""
+        """测试:数据库模型类结构 - 覆盖率补充"""
         # 测试类属性存在性
         assert hasattr(RawMatchData, "__tablename__")
         assert hasattr(RawOddsData, "__tablename__")
         assert hasattr(RawScoresData, "__tablename__")
 
     def test_database_mock_operations(self):
-        """测试：数据库模拟操作 - 覆盖率补充"""
-        # 模拟数据库操作，避免实际的SQLAlchemy初始化
+        """测试:数据库模拟操作 - 覆盖率补充"""
+        # 模拟数据库操作,避免实际的SQLAlchemy初始化
         mock_data = Mock()
         mock_data.data_source = "test_api"
         mock_data.raw_data = {"match_id": 123}
@@ -243,9 +243,9 @@ class TestDatabaseModelsCoverage:
         assert mock_data.processed is True
 
     def test_data_validation_patterns(self):
-        """测试：数据验证模式 - 覆盖率补充"""
+        """测试:数据验证模式 - 覆盖率补充"""
 
-        # 测试数据验证逻辑，不依赖具体模型类
+        # 测试数据验证逻辑,不依赖具体模型类
         def validate_raw_data(data: Dict[str, Any]) -> bool:
             required_fields = ["data_source", "raw_data"]
             return all(field in data for field in required_fields)
@@ -268,12 +268,12 @@ class TestUtilsCoverage:
     """工具模块覆盖率补充测试"""
 
     def test_i18n_utils_translation(self):
-        """测试：国际化工具翻译 - 覆盖率补充"""
+        """测试:国际化工具翻译 - 覆盖率补充"""
         result = I18nUtils.translate("hello", language="zh")
         assert result == "hello"  # 简化实现返回原文本
 
     def test_i18n_supported_languages(self):
-        """测试：支持的语言列表 - 覆盖率补充"""
+        """测试:支持的语言列表 - 覆盖率补充"""
         languages = I18nUtils.get_supported_languages()
 
         assert isinstance(languages, dict)
@@ -283,7 +283,7 @@ class TestUtilsCoverage:
         assert languages["en"] == "en_US"
 
     def test_language_mapping(self):
-        """测试：语言映射 - 覆盖率补充"""
+        """测试:语言映射 - 覆盖率补充"""
         # 测试不同格式的语言代码
         assert supported_languages["zh"] == "zh_CN"
         assert supported_languages["zh-CN"] == "zh_CN"
@@ -296,7 +296,7 @@ class TestAPIIntegrationPatterns:
     """API集成模式覆盖率补充测试"""
 
     def test_error_response_pattern(self):
-        """测试：错误响应模式 - 覆盖率补充"""
+        """测试:错误响应模式 - 覆盖率补充"""
         # 模拟API错误响应
         error_response = APIResponse(
             success=False,
@@ -311,7 +311,7 @@ class TestAPIIntegrationPatterns:
 
     @pytest.mark.asyncio
     async def test_async_workflow_simulation(self):
-        """测试：异步工作流模拟 - 覆盖率补充"""
+        """测试:异步工作流模拟 - 覆盖率补充"""
 
         # 模拟异步API工作流
         async def process_prediction_request(
@@ -347,7 +347,7 @@ class TestAPIIntegrationPatterns:
         assert len(response.errors) > 0
 
     def test_data_transformation_patterns(self):
-        """测试：数据转换模式 - 覆盖率补充"""
+        """测试:数据转换模式 - 覆盖率补充"""
         # 模拟原始数据转换
         raw_match_data = {
             "id": 123,
@@ -378,7 +378,7 @@ class TestCommonPatternsCoverage:
     """通用模式覆盖率补充测试"""
 
     def test_dictionary_operations(self):
-        """测试：字典操作模式 - 覆盖率补充"""
+        """测试:字典操作模式 - 覆盖率补充"""
         # 测试嵌套字典安全访问
         data = {"level1": {"level2": {"value": "found"}}, "list_data": [1, 2, 3, 4, 5]}
 
@@ -397,7 +397,7 @@ class TestCommonPatternsCoverage:
         assert safe_get(data, "level1.nonexistent", "default") == "default"
 
     def test_list_comprehension_patterns(self):
-        """测试：列表推导模式 - 覆盖率补充"""
+        """测试:列表推导模式 - 覆盖率补充"""
         # 测试数据过滤和转换
         predictions = [
             {"id": 1, "confidence": 0.8, "outcome": "home_win"},
@@ -415,10 +415,10 @@ class TestCommonPatternsCoverage:
         assert home_wins == [1, 4]
 
     def test_error_handling_patterns(self):
-        """测试：错误处理模式 - 覆盖率补充"""
+        """测试:错误处理模式 - 覆盖率补充"""
         # 测试多种错误处理策略
 
-        # 策略1：返回默认值
+        # 策略1:返回默认值
         def safe_divide(a, b, default=0):
             try:
                 return a / b
@@ -429,7 +429,7 @@ class TestCommonPatternsCoverage:
         assert safe_divide(10, 0) == 0
         assert safe_divide("10", 2) == 0
 
-        # 策略2：抛出自定义异常
+        # 策略2:抛出自定义异常
         def validate_match_data(data):
             if not isinstance(data, dict):
                 raise ValueError("数据必须是字典格式")
@@ -443,7 +443,7 @@ class TestCommonPatternsCoverage:
             assert "字典格式" in str(e)
 
     def test_type_validation_patterns(self):
-        """测试：类型验证模式 - 覆盖率补充"""
+        """测试:类型验证模式 - 覆盖率补充"""
 
         # 测试数据类型验证
         def validate_prediction_data(data: Dict[str, Any]) -> Dict[str, str]:

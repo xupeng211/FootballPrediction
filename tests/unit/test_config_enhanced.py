@@ -1,6 +1,6 @@
 """
 配置管理模块增强测试
-补充 src.core.config 模块的测试覆盖，目标达到80%+覆盖率
+补充 src.core.config 模块的测试覆盖,目标达到80%+覆盖率
 """
 
 import json
@@ -18,7 +18,7 @@ class TestConfig:
     """配置管理类测试"""
 
     def test_config_initialization_basic(self) -> None:
-        """✅ 成功用例：基本初始化"""
+        """✅ 成功用例:基本初始化"""
         with tempfile.TemporaryDirectory() as temp_dir:
             config_dir = Path(temp_dir) / "testconfig"
 
@@ -32,7 +32,7 @@ class TestConfig:
             assert config.config_file.name == "config.json"
 
     def test_config_load_existing_file(self) -> None:
-        """✅ 成功用例：加载现有配置文件"""
+        """✅ 成功用例:加载现有配置文件"""
         test_config = {"key1": "value1", "key2": 42, "key3": True}
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -47,7 +47,7 @@ class TestConfig:
             assert config.config == test_config
 
     def test_config_load_nonexistent_file(self) -> None:
-        """✅ 边界用例：配置文件不存在"""
+        """✅ 边界用例:配置文件不存在"""
         with tempfile.TemporaryDirectory() as temp_dir:
             config_dir = Path(temp_dir) / "testconfig"
             config_file = config_dir / "nonexistent.json"
@@ -61,7 +61,7 @@ class TestConfig:
             assert config.config == {}
 
     def test_config_load_invalid_json(self) -> None:
-        """✅ 边界用例：配置文件JSON格式错误"""
+        """✅ 边界用例:配置文件JSON格式错误"""
         invalid_json = '{"key1": "value1", invalid}'
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -74,12 +74,12 @@ class TestConfig:
             with patch("src.core.config.Path.home", return_value=config_dir):
                 config = Config()
                 config.config_file = config_file
-                # 应该优雅地处理错误，配置为空
+                # 应该优雅地处理错误,配置为空
                 config._load_config()
                 assert config.config == {}
 
     def test_config_get_existing_key(self) -> None:
-        """✅ 成功用例：获取存在的配置项"""
+        """✅ 成功用例:获取存在的配置项"""
         config = Config()
         config.config = {"existing_key": "existing_value"}
 
@@ -87,7 +87,7 @@ class TestConfig:
         assert result == "existing_value"
 
     def test_config_get_nonexistent_key(self) -> None:
-        """✅ 边界用例：获取不存在的配置项"""
+        """✅ 边界用例:获取不存在的配置项"""
         config = Config()
         config.config = {}
 
@@ -95,7 +95,7 @@ class TestConfig:
         assert result is None
 
     def test_config_get_nonexistent_key_with_default(self) -> None:
-        """✅ 成功用例：获取不存在的配置项（带默认值）"""
+        """✅ 成功用例:获取不存在的配置项（带默认值）"""
         config = Config()
         config.config = {}
 
@@ -103,7 +103,7 @@ class TestConfig:
         assert result == "default_value"
 
     def test_config_get_existing_key_with_default(self) -> None:
-        """✅ 成功用例：获取存在的配置项（忽略默认值）"""
+        """✅ 成功用例:获取存在的配置项（忽略默认值）"""
         config = Config()
         config.config = {"existing_key": "existing_value"}
 
@@ -111,7 +111,7 @@ class TestConfig:
         assert result == "existing_value"
 
     def test_config_set_simple_value(self) -> None:
-        """✅ 成功用例：设置简单值"""
+        """✅ 成功用例:设置简单值"""
         config = Config()
         config.config = {}
 
@@ -119,7 +119,7 @@ class TestConfig:
         assert config.config == {"key1": "value1"}
 
     def test_config_set_complex_value(self) -> None:
-        """✅ 成功用例：设置复杂值"""
+        """✅ 成功用例:设置复杂值"""
         config = Config()
         config.config = {}
 
@@ -128,7 +128,7 @@ class TestConfig:
         assert config.config == {"complex_key": complex_value}
 
     def test_config_set_override_value(self) -> None:
-        """✅ 成功用例：覆盖现有值"""
+        """✅ 成功用例:覆盖现有值"""
         config = Config()
         config.config = {"key1": "old_value"}
 
@@ -136,7 +136,7 @@ class TestConfig:
         assert config.config == {"key1": "new_value"}
 
     def test_config_save_create_directory(self) -> None:
-        """✅ 成功用例：保存配置（创建目录）"""
+        """✅ 成功用例:保存配置（创建目录）"""
         with tempfile.TemporaryDirectory() as temp_dir:
             config_dir = Path(temp_dir) / "nested" / "dir"
             config_file = config_dir / "config.json"
@@ -155,7 +155,7 @@ class TestConfig:
             assert saved_config == {"key1": "value1"}
 
     def test_config_save_unicode_content(self) -> None:
-        """✅ 边界用例：保存Unicode内容"""
+        """✅ 边界用例:保存Unicode内容"""
         with tempfile.TemporaryDirectory() as temp_dir:
             config_dir = Path(temp_dir) / "testconfig"
             config_file = config_dir / "unicode.json"
@@ -174,7 +174,7 @@ class TestConfig:
             assert saved_config == {"chinese_key": "中文值", "emoji": "🚀"}
 
     def test_config_edge_cases_empty_config(self) -> None:
-        """✅ 边界用例：空配置处理"""
+        """✅ 边界用例:空配置处理"""
         config = Config()
         config.config = {}
 
@@ -187,7 +187,7 @@ class TestConfig:
         assert config.config == {"new_key": "new_value"}
 
     def test_config_edge_cases_large_config(self) -> None:
-        """✅ 边界用例：大配置处理"""
+        """✅ 边界用例:大配置处理"""
         config = Config()
         config.config = {}
 
@@ -202,7 +202,7 @@ class TestConfig:
         assert config.get("key_999") == "value_999"
 
     def test_config_edge_cases_special_characters(self) -> None:
-        """✅ 边界用例：特殊字符处理"""
+        """✅ 边界用例:特殊字符处理"""
         config = Config()
         config.config = {}
 
@@ -223,7 +223,7 @@ class TestConfig:
             assert config.get(key) == expected_value
 
     def test_config_key_conversion_to_string(self) -> None:
-        """✅ 边界用例：键转换为字符串"""
+        """✅ 边界用例:键转换为字符串"""
         config = Config()
         config.config = {}
 
@@ -244,7 +244,7 @@ class TestSettings:
     """应用程序设置类测试"""
 
     def test_settings_default_values(self) -> None:
-        """✅ 成功用例：默认值验证"""
+        """✅ 成功用例:默认值验证"""
         settings = Settings()
 
         # 数据库配置
@@ -279,7 +279,7 @@ class TestSettings:
         assert settings.metrics_collection_interval == 30
 
     def test_settings_custom_values_with_pydantic(self) -> None:
-        """✅ 成功用例：自定义值（有Pydantic时）"""
+        """✅ 成功用例:自定义值（有Pydantic时）"""
         if not HAS_PYDANTIC:
             pytest.skip("Pydantic not available")
 
@@ -300,7 +300,7 @@ class TestSettings:
         assert settings.log_level == "DEBUG"
 
     def test_settings_custom_values_without_pydantic(self) -> None:
-        """✅ 成功用例：自定义值（无Pydantic时）"""
+        """✅ 成功用例:自定义值（无Pydantic时）"""
         custom_values = {
             "database_url": "custom://localhost/db",
             "api_host": "custom_host",
@@ -318,7 +318,7 @@ class TestSettings:
         assert settings.log_level == "DEBUG"
 
     def test_settings_edge_cases_invalid_port_values(self) -> None:
-        """✅ 边界用例：无效端口值"""
+        """✅ 边界用例:无效端口值"""
         # 测试边界端口值
         valid_ports = [0, 1, 65535, 8080, 8000]
         for port in valid_ports:
@@ -326,7 +326,7 @@ class TestSettings:
             assert settings.api_port == port
 
     def test_settings_edge_cases_boolean_values(self) -> None:
-        """✅ 边界用例：布尔值处理"""
+        """✅ 边界用例:布尔值处理"""
         # 直接测试默认布尔值
         settings_true = Settings(metrics_enabled=True)
         settings_false = Settings(metrics_enabled=False)
@@ -335,7 +335,7 @@ class TestSettings:
         assert settings_false.metrics_enabled is False
 
     def test_settings_edge_cases_empty_lists(self) -> None:
-        """✅ 边界用例：空列表处理"""
+        """✅ 边界用例:空列表处理"""
         if HAS_PYDANTIC:
             settings = Settings(metrics_tables=[], enabled_services=[])
         else:
@@ -347,7 +347,7 @@ class TestSettings:
         assert settings.enabled_services == []
 
     def test_settings_environment_variable_loading(self) -> None:
-        """✅ 成功用例：环境变量加载"""
+        """✅ 成功用例:环境变量加载"""
         # 模拟环境变量
         env_vars = {
             "DATABASE_URL": "env://localhost/env_db",
@@ -371,7 +371,7 @@ class TestSettings:
                 assert settings.metrics_enabled is False
 
     def test_settings_list_env_parsing_json(self) -> None:
-        """✅ 成功用例：列表环境变量JSON解析"""
+        """✅ 成功用例:列表环境变量JSON解析"""
         if not HAS_PYDANTIC:
             json_list = '["item1", "item2", "item3"]'
 
@@ -380,7 +380,7 @@ class TestSettings:
                 assert settings.metrics_tables == ["item1", "item2", "item3"]
 
     def test_settings_list_env_parsing_csv(self) -> None:
-        """✅ 成功用例：列表环境变量CSV解析"""
+        """✅ 成功用例:列表环境变量CSV解析"""
         if not HAS_PYDANTIC:
             csv_list = "item1, item2, item3"
 
@@ -389,7 +389,7 @@ class TestSettings:
                 assert settings.metrics_tables == ["item1", "item2", "item3"]
 
     def test_settings_edge_cases_invalid_env_values(self) -> None:
-        """✅ 边界用例：无效环境变量值"""
+        """✅ 边界用例:无效环境变量值"""
         # 测试Pydantic验证错误处理
         if HAS_PYDANTIC:
             # Pydantic会抛出验证错误
@@ -403,7 +403,7 @@ class TestSettings:
                 assert settings.api_port == 8000  # 应该保持默认值
 
     def test_settings_complex_configuration(self) -> None:
-        """✅ 成功用例：复杂配置组合"""
+        """✅ 成功用例:复杂配置组合"""
         complex_config = {
             "database_url": "postgresql+asyncpg://user:pass@localhost:5432/complex_db",
             "redis_url": "redis://localhost:6379/1",
@@ -441,7 +441,7 @@ class TestConfigModuleFunctions:
     """配置模块函数测试"""
 
     def test_get_config_function(self) -> None:
-        """✅ 成功用例：get_config函数"""
+        """✅ 成功用例:get_config函数"""
         config = get_config()
         assert isinstance(config, Config)
         assert hasattr(config, "config")
@@ -450,7 +450,7 @@ class TestConfigModuleFunctions:
         assert hasattr(config, "save")
 
     def test_get_settings_function(self) -> None:
-        """✅ 成功用例：get_settings函数"""
+        """✅ 成功用例:get_settings函数"""
         settings = get_settings()
         assert isinstance(settings, Settings)
         assert hasattr(settings, "database_url")
@@ -458,7 +458,7 @@ class TestConfigModuleFunctions:
         assert hasattr(settings, "api_port")
 
     def test_global_config_singleton(self) -> None:
-        """✅ 成功用例：全局配置单例"""
+        """✅ 成功用例:全局配置单例"""
         config1 = get_config()
         config2 = get_config()
 
@@ -466,7 +466,7 @@ class TestConfigModuleFunctions:
         assert config1 is config2
 
     def test_global_settings_independence(self) -> None:
-        """✅ 成功用例：全局设置独立性"""
+        """✅ 成功用例:全局设置独立性"""
         settings1 = get_settings()
         settings2 = get_settings()
 
@@ -481,7 +481,7 @@ class TestConfigErrorHandling:
     """配置模块错误处理测试"""
 
     def test_config_file_permission_error(self) -> None:
-        """✅ 边界用例：配置文件权限错误"""
+        """✅ 边界用例:配置文件权限错误"""
         config = Config()
 
         # 模拟权限错误
@@ -492,7 +492,7 @@ class TestConfigErrorHandling:
                 config.save()
 
     def test_config_file_io_error(self) -> None:
-        """✅ 边界用例：配置文件IO错误"""
+        """✅ 边界用例:配置文件IO错误"""
         config = Config()
 
         # 模拟IO错误
@@ -503,7 +503,7 @@ class TestConfigErrorHandling:
                 config.save()
 
     def test_config_json_serialization_error(self) -> None:
-        """✅ 边界用例：JSON序列化错误"""
+        """✅ 边界用例:JSON序列化错误"""
         with tempfile.TemporaryDirectory() as temp_dir:
             config_dir = Path(temp_dir) / "testconfig"
             config_file = config_dir / "invalid.json"
@@ -520,7 +520,7 @@ class TestConfigErrorHandling:
                 config.save()
 
     def test_settings_invalid_type_conversion(self) -> None:
-        """✅ 边界用例：设置类型转换错误"""
+        """✅ 边界用例:设置类型转换错误"""
         if not HAS_PYDANTIC:
             with patch.dict(os.environ, {"API_PORT": "not_a_number"}):
                 settings = Settings()
@@ -533,7 +533,7 @@ class TestConfigPerformance:
     """配置模块性能测试"""
 
     def test_config_large_operations_performance(self) -> None:
-        """✅ 性能用例：大量配置操作"""
+        """✅ 性能用例:大量配置操作"""
         import time
 
         config = Config()
@@ -556,7 +556,7 @@ class TestConfigPerformance:
         assert get_time < 0.5  # 1000次get操作应该在0.5秒内完成
 
     def test_settings_initialization_performance(self) -> None:
-        """✅ 性能用例：设置初始化性能"""
+        """✅ 性能用例:设置初始化性能"""
         import time
 
         start_time = time.perf_counter()
@@ -573,7 +573,7 @@ class TestConfigThreadSafety:
     """配置模块线程安全测试"""
 
     def test_config_concurrent_access(self) -> None:
-        """✅ 并发用例：配置并发访问"""
+        """✅ 并发用例:配置并发访问"""
         import threading
 
         config = Config()

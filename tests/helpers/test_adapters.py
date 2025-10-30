@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 测试辅助工具 - 接口适配器
 Test Interface Adapters for Testing
 
-提供测试中需要的接口适配器，解决接口不匹配问题。
+提供测试中需要的接口适配器,解决接口不匹配问题。
 """
 
 from dataclasses import dataclass, field
@@ -18,7 +18,7 @@ from src.domain.strategies.base import PredictionInput as BasePredictionInput
 
 @dataclass
 class SimplePredictionInput:
-    """简化的预测输入数据结构，用于测试"""
+    """简化的预测输入数据结构,用于测试"""
 
     match_id: int
     home_team_id: int
@@ -67,5 +67,5 @@ class SimplePredictionInput:
         )
 
 
-# 为了向后兼容，提供一个别名
+# 为了向后兼容,提供一个别名
 PredictionInput = SimplePredictionInput

@@ -15,7 +15,7 @@ class TestAPIResponseModel:
     """API响应模型测试"""
 
     def test_model_creation_success(self):
-        """测试：创建成功响应模型"""
+        """测试:创建成功响应模型"""
         model = APIResponseModel(
             success=True,
             message="操作成功",
@@ -29,7 +29,7 @@ class TestAPIResponseModel:
         assert model.code == "200"
 
     def test_model_creation_error(self):
-        """测试：创建错误响应模型"""
+        """测试:创建错误响应模型"""
         model = APIResponseModel(success=False, message="操作失败", code="500")
 
         assert model.success is False
@@ -38,7 +38,7 @@ class TestAPIResponseModel:
         assert model.code == "500"
 
     def test_model_defaults(self):
-        """测试：模型默认值"""
+        """测试:模型默认值"""
         model = APIResponseModel(success=True, message="测试")
 
         assert model.success is True
@@ -47,7 +47,7 @@ class TestAPIResponseModel:
         assert model.code is None
 
     def test_model_serialization(self):
-        """测试：模型序列化"""
+        """测试:模型序列化"""
         model = APIResponseModel(success=True, message="测试", data={"key": "value"})
 
         jsondata = model.model_dump()
@@ -61,7 +61,7 @@ class TestAPIResponseSuccess:
     """API成功响应测试"""
 
     def test_success_withoutdata(self):
-        """测试：成功响应（无数据）"""
+        """测试:成功响应（无数据）"""
         response = APIResponse.success()
 
         assert response["success"] is True
@@ -70,7 +70,7 @@ class TestAPIResponseSuccess:
         assert "data" not in response
 
     def test_success_withdata(self):
-        """测试：成功响应（带数据）"""
+        """测试:成功响应（带数据）"""
         testdata = {"id": 1, "name": "test"}
         response = APIResponse.success(data=testdata)
 
@@ -80,7 +80,7 @@ class TestAPIResponseSuccess:
         assert "timestamp" in response
 
     def test_success_with_custom_message(self):
-        """测试：成功响应（自定义消息）"""
+        """测试:成功响应（自定义消息）"""
         response = APIResponse.success(message="创建成功")
 
         assert response["success"] is True
@@ -88,21 +88,21 @@ class TestAPIResponseSuccess:
         assert "timestamp" in response
 
     def test_success_with_nonedata(self):
-        """测试：成功响应（数据为None）"""
+        """测试:成功响应（数据为None）"""
         response = APIResponse.success(data=None)
 
         assert response["success"] is True
         assert "data" not in response
 
     def test_success_with_emptydata(self):
-        """测试：成功响应（空数据）"""
+        """测试:成功响应（空数据）"""
         response = APIResponse.success(data={})
 
         assert response["success"] is True
         assert response["data"] == {}
 
     def test_success_with_listdata(self):
-        """测试：成功响应（列表数据）"""
+        """测试:成功响应（列表数据）"""
         testdata = [1, 2, 3, {"test": "value"}]
         response = APIResponse.success(data=testdata)
 
@@ -110,7 +110,7 @@ class TestAPIResponseSuccess:
         assert response["data"] == testdata
 
     def test_success_timestamp_format(self):
-        """测试：成功响应时间戳格式"""
+        """测试:成功响应时间戳格式"""
         response = APIResponse.success()
         timestamp = response["timestamp"]
 
@@ -119,7 +119,7 @@ class TestAPIResponseSuccess:
         assert isinstance(timestamp, str)
 
     def test_success_response_alias(self):
-        """测试：成功响应别名方法"""
+        """测试:成功响应别名方法"""
         testdata = {"result": "ok"}
         response1 = APIResponse.success(data=testdata)
         response2 = APIResponse.success_response(data=testdata)
@@ -128,14 +128,14 @@ class TestAPIResponseSuccess:
         assert response1["success"] == response2["success"]
         assert response1["message"] == response2["message"]
         assert response1["data"] == response2["data"]
-        # 时间戳会不同，所以不比较
+        # 时间戳会不同,所以不比较
 
 
 class TestAPIResponseError:
     """API错误响应测试"""
 
     def test_error_default(self):
-        """测试：错误响应（默认参数）"""
+        """测试:错误响应（默认参数）"""
         response = APIResponse.error()
 
         assert response["success"] is False
@@ -145,7 +145,7 @@ class TestAPIResponseError:
         assert "data" not in response
 
     def test_error_with_message(self):
-        """测试：错误响应（自定义消息）"""
+        """测试:错误响应（自定义消息）"""
         response = APIResponse.error(message="验证失败")
 
         assert response["success"] is False
@@ -153,7 +153,7 @@ class TestAPIResponseError:
         assert response["code"] == 500
 
     def test_error_with_code(self):
-        """测试：错误响应（自定义错误码）"""
+        """测试:错误响应（自定义错误码）"""
         response = APIResponse.error(code=404, message="未找到")
 
         assert response["success"] is False
@@ -161,7 +161,7 @@ class TestAPIResponseError:
         assert response["code"] == 404
 
     def test_error_withdata(self):
-        """测试：错误响应（带数据）"""
+        """测试:错误响应（带数据）"""
         errordata = {"field": "email", "error": "格式无效"}
         response = APIResponse.error(message="验证错误", code=400, data=errordata)
 
@@ -171,14 +171,14 @@ class TestAPIResponseError:
         assert response["data"] == errordata
 
     def test_error_with_nonedata(self):
-        """测试：错误响应（数据为None）"""
+        """测试:错误响应（数据为None）"""
         response = APIResponse.error(data=None)
 
         assert response["success"] is False
         assert "data" not in response
 
     def test_error_response_alias(self):
-        """测试：错误响应别名方法"""
+        """测试:错误响应别名方法"""
         response1 = APIResponse.error(message="测试错误", code=400)
         response2 = APIResponse.error_response(message="测试错误", code=400)
 
@@ -186,10 +186,10 @@ class TestAPIResponseError:
         assert response1["success"] == response2["success"]
         assert response1["message"] == response2["message"]
         assert response1["code"] == response2["code"]
-        # 时间戳会不同，所以不比较
+        # 时间戳会不同,所以不比较
 
     def test_error_different_codes(self):
-        """测试：不同的错误代码"""
+        """测试:不同的错误代码"""
         codes = [200, 400, 401, 403, 404, 500, 503]
 
         for code in codes:
@@ -197,7 +197,7 @@ class TestAPIResponseError:
             assert response["code"] == code
 
     def test_error_string_code(self):
-        """测试：字符串错误代码"""
+        """测试:字符串错误代码"""
         response = APIResponse.error(code="VALIDATION_ERROR")
 
         assert response["code"] == "VALIDATION_ERROR"
@@ -207,18 +207,18 @@ class TestResponseUtils:
     """响应工具别名测试"""
 
     def test_response_utils_alias(self):
-        """测试：ResponseUtils别名"""
+        """测试:ResponseUtils别名"""
         assert ResponseUtils is APIResponse
 
     def test_response_utils_success(self):
-        """测试：ResponseUtils成功方法"""
+        """测试:ResponseUtils成功方法"""
         response = ResponseUtils.success(data={"test": True})
 
         assert response["success"] is True
         assert response["data"] == {"test": True}
 
     def test_response_utils_error(self):
-        """测试：ResponseUtils错误方法"""
+        """测试:ResponseUtils错误方法"""
         response = ResponseUtils.error(message="测试错误")
 
         assert response["success"] is False
@@ -229,7 +229,7 @@ class TestAPIResponseEdgeCases:
     """API响应边界情况测试"""
 
     def test_largedata_response(self):
-        """测试：大数据响应"""
+        """测试:大数据响应"""
         largedata = {"items": list(range(1000))}
         response = APIResponse.success(data=largedata)
 
@@ -237,7 +237,7 @@ class TestAPIResponseEdgeCases:
         assert len(response["data"]["items"]) == 1000
 
     def test_nesteddata_response(self):
-        """测试：嵌套数据响应"""
+        """测试:嵌套数据响应"""
         nesteddata = {"user": {"profile": {"settings": {"theme": "dark", "notifications": True}}}}
         response = APIResponse.success(data=nesteddata)
 
@@ -245,7 +245,7 @@ class TestAPIResponseEdgeCases:
         assert response["data"]["user"]["profile"]["settings"]["theme"] == "dark"
 
     def test_special_characters_in_message(self):
-        """测试：消息中的特殊字符"""
+        """测试:消息中的特殊字符"""
         messages = [
             "操作成功！",
             "Error: Invalid input",
@@ -259,7 +259,7 @@ class TestAPIResponseEdgeCases:
             assert response["message"] == msg
 
     def test_booleandata_response(self):
-        """测试：布尔数据响应"""
+        """测试:布尔数据响应"""
         response = APIResponse.success(data=True)
         assert response["data"] is True
 
@@ -267,7 +267,7 @@ class TestAPIResponseEdgeCases:
         assert response["data"] is False
 
     def test_numericdata_response(self):
-        """测试：数值数据响应"""
+        """测试:数值数据响应"""
         # 整数
         response = APIResponse.success(data=42)
         assert response["data"] == 42
@@ -281,7 +281,7 @@ class TestAPIResponseEdgeCases:
         assert response["data"] == 0
 
     def test_response_consistency(self):
-        """测试：响应一致性"""
+        """测试:响应一致性"""
         # 多次调用应该返回相同格式的响应
         responses = [
             APIResponse.success(),
@@ -303,7 +303,7 @@ class TestAPIResponsePerformance:
     """API响应性能测试"""
 
     def test_response_creation_speed(self):
-        """测试：响应创建速度"""
+        """测试:响应创建速度"""
         import time
 
         start_time = time.time()
@@ -318,7 +318,7 @@ class TestAPIResponsePerformance:
         assert end_time - start_time < 1.0
 
     def test_large_response_serialization(self):
-        """测试：大响应序列化"""
+        """测试:大响应序列化"""
         import json
 
         largedata = {
@@ -334,7 +334,7 @@ class TestAPIResponsePerformance:
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
     assert APIResponse is not None
@@ -343,7 +343,7 @@ def test_module_imports():
 
 
 def test_all_classes_exported():
-    """测试：所有类都被导出"""
+    """测试:所有类都被导出"""
     import src.utils.response as response_module
 
     expected_classes = ["APIResponseModel", "APIResponse", "ResponseUtils"]
@@ -353,7 +353,7 @@ def test_all_classes_exported():
 
 
 def test_static_methods():
-    """测试：静态方法存在"""
+    """测试:静态方法存在"""
     assert hasattr(APIResponse, "success")
     assert hasattr(APIResponse, "success_response")
     assert hasattr(APIResponse, "error")
@@ -383,7 +383,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert (
             input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )

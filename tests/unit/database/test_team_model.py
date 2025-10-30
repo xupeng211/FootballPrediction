@@ -71,7 +71,7 @@ class MockTeam:
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
-print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
+print("智能Mock兼容修复模式:强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
 
 # 强制使用Mock实现
 Team = MockTeam
@@ -231,7 +231,7 @@ class TestTeamModel:
         # 无效的年份（未来）
         future_year = datetime.now().year + 1
         sample_team.founded_year = future_year
-        # 注意：实际应用中应该有验证逻辑
+        # 注意:实际应用中应该有验证逻辑
 
     def test_team_short_name(self, sample_team):
         """测试球队简称"""

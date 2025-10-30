@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 22 repeated Mock creations
 
 
-"""""""
+""""""""
 API特征管理测试
 Tests for API Features
 
 测试src.api.features模块的特征管理功能
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -49,7 +49,7 @@ class TestFeatureStore:
     """特征存储测试"""
 
     def test_get_feature_store_initialization_success(self):
-        """测试：特征存储初始化成功"""
+        """测试:特征存储初始化成功"""
         # 重置全局变量
         import src.api.features
 
@@ -70,7 +70,7 @@ class TestFeatureStore:
             assert mock_store_class.call_count == 1
 
     def test_get_feature_store_initialization_failure(self):
-        """测试：特征存储初始化失败"""
+        """测试:特征存储初始化失败"""
         # 重置全局变量
         import src.api.features
 
@@ -83,7 +83,7 @@ class TestFeatureStore:
             assert store is None
 
     def test_get_feature_store_cached(self):
-        """测试：获取缓存的特征存储"""
+        """测试:获取缓存的特征存储"""
         # 设置全局变量
         import src.api.features
 
@@ -98,14 +98,14 @@ class TestValidationFunctions:
     """验证函数测试"""
 
     def test_validate_match_id_valid(self):
-        """测试：验证有效的比赛ID"""
+        """测试:验证有效的比赛ID"""
         # 不应该抛出异常
         validate_match_id(1)
         validate_match_id(100)
         validate_match_id(999999)
 
     def test_validate_match_id_invalid(self):
-        """测试：验证无效的比赛ID"""
+        """测试:验证无效的比赛ID"""
         with pytest.raises(HTTPException) as exc_info:
             validate_match_id(0)
         assert exc_info.value.status_code == 400
@@ -120,7 +120,7 @@ class TestValidationFunctions:
         assert exc_info.value.status_code == 400
 
     def test_check_feature_store_availability_available(self):
-        """测试：检查特征存储可用（可用）"""
+        """测试:检查特征存储可用（可用）"""
         with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = Mock()
 
@@ -128,7 +128,7 @@ class TestValidationFunctions:
             check_feature_store_availability()
 
     def test_check_feature_store_availability_unavailable(self):
-        """测试：检查特征存储可用（不可用）"""
+        """测试:检查特征存储可用（不可用）"""
         with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = None
 
@@ -144,7 +144,7 @@ class TestMatchInfo:
     """比赛信息测试"""
 
     async def test_get_match_info_success(self):
-        """测试：成功获取比赛信息"""
+        """测试:成功获取比赛信息"""
         # 创建模拟会话和比赛
         mock_session = Mock(spec=AsyncSession)
         mock_match = Mock()
@@ -167,7 +167,7 @@ class TestMatchInfo:
         mock_session.execute.assert_called_once()
 
     async def test_get_match_info_not_found(self):
-        """测试：比赛不存在"""
+        """测试:比赛不存在"""
         mock_session = Mock(spec=AsyncSession)
         mock_result = Mock()
         mock_result.scalar_one_or_none.return_value = None
@@ -179,7 +179,7 @@ class TestMatchInfo:
         assert "比赛 999 不存在" in exc_info.value.detail
 
     async def test_get_match_info_database_error(self):
-        """测试：数据库查询错误"""
+        """测试:数据库查询错误"""
         from sqlalchemy.exc import SQLAlchemyError
 
         mock_session = Mock(spec=AsyncSession)
@@ -191,7 +191,7 @@ class TestMatchInfo:
         assert "数据库查询失败" in exc_info.value.detail
 
     async def test_get_match_info_unknown_error(self):
-        """测试：未知错误"""
+        """测试:未知错误"""
         mock_session = Mock(spec=AsyncSession)
         mock_session.execute.side_effect = ValueError("Invalid data")
 
@@ -207,7 +207,7 @@ class TestFeaturesData:
     """特征数据测试"""
 
     async def test_get_features_data_success(self):
-        """测试：成功获取特征数据"""
+        """测试:成功获取特征数据"""
         # 创建模拟比赛和特征存储
         mock_match = Mock()
         mock_match.id = 123
@@ -228,7 +228,7 @@ class TestFeaturesData:
             mock_store.get_match_features_for_prediction.assert_called_once()
 
     async def test_get_features_data_store_unavailable(self):
-        """测试：特征存储不可用"""
+        """测试:特征存储不可用"""
         mock_match = Mock()
 
         with patch("src.api.features.get_feature_store") as mock_get:
@@ -240,7 +240,7 @@ class TestFeaturesData:
             assert error == "feature store unavailable"
 
     async def test_get_features_data_no_features(self):
-        """测试：没有特征数据"""
+        """测试:没有特征数据"""
         mock_match = Mock()
         mock_match.home_team_id = 1
         mock_match.away_team_id = 2
@@ -257,7 +257,7 @@ class TestFeaturesData:
             assert error is None
 
     async def test_get_features_data_error(self):
-        """测试：获取特征数据错误"""
+        """测试:获取特征数据错误"""
         mock_match = Mock()
         mock_match.home_team_id = 1
         mock_match.away_team_id = 2
@@ -281,7 +281,7 @@ class TestResponseBuilder:
     """响应构建器测试"""
 
     def test_build_response_data_success(self):
-        """测试：构建成功的响应数据"""
+        """测试:构建成功的响应数据"""
         mock_match = Mock()
         mock_match.id = 123
         mock_match.home_team_id = 1
@@ -308,7 +308,7 @@ class TestResponseBuilder:
         assert "raw_features" not in response
 
     def test_build_response_data_partial_success(self):
-        """测试：构建部分成功的响应数据"""
+        """测试:构建部分成功的响应数据"""
         mock_match = Mock()
         mock_match.id = 123
         mock_match.home_team_id = 1
@@ -327,7 +327,7 @@ class TestResponseBuilder:
         assert response["warning"] == "部分特征获取失败: Feature2 calculation failed"
 
     def test_build_response_data_with_raw_features(self):
-        """测试：构建包含原始特征的响应数据"""
+        """测试:构建包含原始特征的响应数据"""
         mock_match = Mock()
         mock_match.id = 123
         mock_match.home_team_id = 1
@@ -350,7 +350,7 @@ class TestResponseBuilder:
         ]
 
     def test_build_response_data_empty_features(self):
-        """测试：构建空特征的响应数据"""
+        """测试:构建空特征的响应数据"""
         mock_match = Mock()
         mock_match.id = 123
         mock_match.home_team_id = 1
@@ -399,14 +399,14 @@ class TestAPIEndpoints:
         return TestClient(test_app)
 
     def test_router_exists(self):
-        """测试：路由器存在"""
+        """测试:路由器存在"""
         assert router is not None
         assert hasattr(router, "routes")
         assert len(router.routes) > 0
 
     @pytest.mark.asyncio
     async def test_health_check_endpoint_simple(self):
-        """测试：健康检查端点（简化版）"""
+        """测试:健康检查端点（简化版）"""
         with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = Mock()
 
@@ -420,7 +420,7 @@ class TestAPIEndpoints:
 
     @pytest.mark.asyncio
     async def test_health_check_endpoint_unhealthy_simple(self):
-        """测试：健康检查端点（不健康，简化版）"""
+        """测试:健康检查端点（不健康,简化版）"""
         with patch("src.api.features.get_feature_store") as mock_get:
             mock_get.return_value = None
 
@@ -432,7 +432,7 @@ class TestAPIEndpoints:
             assert _result["status"] == "unhealthy"
             assert _result["feature_store"] == "unavailable"
 
-    # HTTP端点测试需要数据库依赖，已简化为单元测试
+    # HTTP端点测试需要数据库依赖,已简化为单元测试
 
 
 @pytest.mark.skipif(FEATURES_AVAILABLE, reason="Features module should be available")
@@ -440,14 +440,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not FEATURES_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if FEATURES_AVAILABLE:
 from src.api.features import get_feature_store, router
 
@@ -456,7 +456,7 @@ from src.api.features import get_feature_store, router
 
 
 def test_router_routes():
-    """测试：路由器路由"""
+    """测试:路由器路由"""
     if FEATURES_AVAILABLE:
         routes = [route.path for route in router.routes]
         expected_routes = ["/features/{match_id}", "/features/health"]
@@ -466,7 +466,7 @@ def test_router_routes():
 
 
 def test_global_feature_store():
-    """测试：全局特征存储变量"""
+    """测试:全局特征存储变量"""
     if FEATURES_AVAILABLE:
         # 验证全局变量存在
         import src.api.features

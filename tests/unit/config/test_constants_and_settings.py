@@ -1,6 +1,6 @@
 """
 配置和常量测试
-测试所有配置值、常量和设置
+测试所有配置值,常量和设置
 """
 
 import os
@@ -336,7 +336,7 @@ class TestEnvironmentVariables:
             if not os.getenv(var):
                 missing_vars.append(var)
 
-        # 在测试环境中，这些变量可能不存在，这是可以接受的
+        # 在测试环境中，这些变量可能不存在,这是可以接受的
         assert isinstance(missing_vars, list)
 
     def test_environment_specific_configs(self):

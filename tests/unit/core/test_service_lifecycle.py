@@ -215,12 +215,12 @@ class TestServiceLifecycleManager:
 
     def test_register_service_with_circular_dependency(self):
         """测试注册循环依赖服务"""
-        # 先注册服务A，并让它依赖服务B（B还未注册）
+        # 先注册服务A,并让它依赖服务B（B还未注册）
         Mock()
         # 手动设置A依赖B
         self.manager._services["service_a"] = Mock(dependencies=["service_b"])
 
-        # 现在注册服务B，让它依赖A，形成循环依赖
+        # 现在注册服务B，让它依赖A,形成循环依赖
         instance_b = Mock()
         with pytest.raises(ServiceLifecycleError, match="检测到循环依赖"):
             self.manager.register_service("service_b", instance_b, ["service_a"])
@@ -241,7 +241,7 @@ class TestServiceLifecycleManager:
 
     def test_unregister_service_with_running_dependents(self):
         """测试注销有运行依赖的服务"""
-        # 创建两个服务，service_b 依赖 service_a
+        # 创建两个服务,service_b 依赖 service_a
         instance_a = Mock()
         instance_b = Mock()
 
@@ -495,7 +495,7 @@ class TestServiceLifecycleManager:
         self.manager._services["service1"].state = ServiceState.RUNNING
         self.manager._services["service2"].state = ServiceState.RUNNING
 
-        # 首先计算启动顺序，这样停止顺序才会被设置
+        # 首先计算启动顺序,这样停止顺序才会被设置
         self.manager._calculate_startup_order()
         self.manager._calculate_stop_order()
 

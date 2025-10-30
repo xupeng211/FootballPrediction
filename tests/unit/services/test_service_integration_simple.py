@@ -2,7 +2,7 @@
 服务层集成测试（简化版）
 Service Layer Integration Tests (Simplified)
 
-测试服务层与数据层的集成功能，采用简化但全面的测试方法。
+测试服务层与数据层的集成功能,采用简化但全面的测试方法。
 Tests service layer integration with data layer using simplified but comprehensive approach.
 """
 
@@ -82,7 +82,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_league_service_create_success(self, mock_league_service, sample_league_data):
-        """成功用例：创建联赛"""
+        """成功用例:创建联赛"""
         # Arrange
         mock_league = Mock()
         mock_league.id = 1
@@ -98,7 +98,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_league_service_create_failure(self, mock_league_service, sample_league_data):
-        """异常用例：创建联赛失败"""
+        """异常用例:创建联赛失败"""
         # Arrange
         mock_league_service.create_league.side_effect = ValueError("联赛已存在")
 
@@ -108,7 +108,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_league_service_get_by_id_success(self, mock_league_service):
-        """成功用例：根据ID获取联赛"""
+        """成功用例:根据ID获取联赛"""
         # Arrange
         league_id = 1
         mock_league = Mock()
@@ -125,7 +125,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_league_service_get_by_id_not_found(self, mock_league_service):
-        """成功用例：获取不存在的联赛"""
+        """成功用例:获取不存在的联赛"""
         # Arrange
         league_id = 999
         mock_league_service.get_by_id.return_value = None
@@ -139,7 +139,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_league_service_update_success(self, mock_league_service, sample_league_data):
-        """成功用例：更新联赛"""
+        """成功用例:更新联赛"""
         # Arrange
         league_id = 1
         updated_data = {"name": "更新联赛"}
@@ -157,7 +157,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_league_service_delete_success(self, mock_league_service):
-        """成功用例：删除联赛"""
+        """成功用例:删除联赛"""
         # Arrange
         league_id = 1
         mock_league_service.delete_league.return_value = True
@@ -183,7 +183,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_match_service_create_success(self, mock_match_service, sample_match_data):
-        """成功用例：创建比赛"""
+        """成功用例:创建比赛"""
         # Arrange
         mock_match = Mock()
         mock_match.id = 1
@@ -200,7 +200,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_match_service_get_by_id_success(self, mock_match_service):
-        """成功用例：根据ID获取比赛"""
+        """成功用例:根据ID获取比赛"""
         # Arrange
         match_id = 1
         mock_match = Mock()
@@ -230,7 +230,7 @@ class TestServiceIntegrationSimple:
     async def test_prediction_service_create_success(
         self, mock_prediction_service, sample_prediction_data
     ):
-        """成功用例：创建预测"""
+        """成功用例:创建预测"""
         # Arrange
         mock_prediction = Mock()
         mock_prediction.id = 1
@@ -247,7 +247,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_prediction_service_get_by_id_success(self, mock_prediction_service):
-        """成功用例：根据ID获取预测"""
+        """成功用例:根据ID获取预测"""
         # Arrange
         prediction_id = 1
         mock_prediction = Mock()
@@ -263,7 +263,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_prediction_service_evaluate_success(self, mock_prediction_service):
-        """成功用例：评估预测"""
+        """成功用例:评估预测"""
         # Arrange
         prediction_id = 1
         evaluation_data = {"actual_home": 2, "actual_away": 1}
@@ -283,7 +283,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_prediction_service_get_by_user_success(self, mock_prediction_service):
-        """成功用例：根据用户获取预测"""
+        """成功用例:根据用户获取预测"""
         # Arrange
         user_id = 123
         mock_predictions = [Mock(), Mock()]
@@ -299,7 +299,7 @@ class TestServiceIntegrationSimple:
     # ========== 服务集成测试 ==========
 
     def test_service_dependency_injection(self, mock_service_config):
-        """成功用例：服务依赖注入"""
+        """成功用例:服务依赖注入"""
         # Act & Assert
         assert mock_service_config is not None
         assert mock_service_config.name == "测试服务"
@@ -307,7 +307,7 @@ class TestServiceIntegrationSimple:
         assert isinstance(mock_service_config.config, dict)
 
     def test_service_configuration_management(self, mock_service_config):
-        """成功用例：服务配置管理"""
+        """成功用例:服务配置管理"""
         # Act & Assert
         assert mock_service_config.config["api_timeout"] == 30
         assert mock_service_config.config["retry_attempts"] == 3
@@ -315,7 +315,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.parametrize("service_type", ["league", "match", "prediction"])
     def test_service_creation_various_types(self, mock_service_config, service_type):
-        """边界条件：测试不同服务类型的创建"""
+        """边界条件:测试不同服务类型的创建"""
         # Arrange
         service_name = f"test_{service_type}_service"
 
@@ -330,7 +330,7 @@ class TestServiceIntegrationSimple:
             pytest.fail(f"未知服务类型: {service_type}")
 
     def test_service_error_boundary_handling(self):
-        """成功用例：服务错误边界处理"""
+        """成功用例:服务错误边界处理"""
         # Arrange - 创建一个模拟服务
         mock_service = Mock()
         mock_service.create_league = Mock(side_effect=ValueError("测试错误"))
@@ -340,7 +340,7 @@ class TestServiceIntegrationSimple:
             mock_service.create_league({"name": "测试"})
 
     def test_service_metrics_tracking(self, mock_service_config):
-        """成功用例：服务指标跟踪"""
+        """成功用例:服务指标跟踪"""
         # Arrange - 模拟指标数据
         metrics = {
             "total_requests": 100,
@@ -358,7 +358,7 @@ class TestServiceIntegrationSimple:
         assert metrics["successful_requests"] == 95
 
     def test_service_transaction_boundary(self, mock_service_config):
-        """成功用例：事务边界条件"""
+        """成功用例:事务边界条件"""
         # Act & Assert - 简化事务测试
         assert hasattr(mock_service_config, "config")
         # 模拟事务管理逻辑
@@ -367,7 +367,7 @@ class TestServiceIntegrationSimple:
 
     @patch("src.core.logging.get_logger")
     def test_service_logging_integration(self, mock_get_logger, mock_service_config):
-        """成功用例：服务日志集成"""
+        """成功用例:服务日志集成"""
         # Arrange
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
@@ -380,7 +380,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_service_circuit_breaker_functionality(self):
-        """成功用例：服务熔断器功能"""
+        """成功用例:服务熔断器功能"""
         # Arrange
         mock_service = Mock()
         mock_service.is_circuit_open = False
@@ -398,7 +398,7 @@ class TestServiceIntegrationSimple:
         ["info", "debug", "warning", "error"],
     )
     def test_service_logging_levels(self, mock_service_config, log_level):
-        """边界条件：测试不同日志级别"""
+        """边界条件:测试不同日志级别"""
         # Arrange & Act & Assert
         mock_logger = Mock()
 
@@ -412,7 +412,7 @@ class TestServiceIntegrationSimple:
             mock_logger.error.assert_not_called()
 
     def test_service_health_check(self, mock_service_config):
-        """成功用例：服务健康检查"""
+        """成功用例:服务健康检查"""
         # Act - 模拟健康检查
         health_status = {
             "overall_status": "healthy",
@@ -428,7 +428,7 @@ class TestServiceIntegrationSimple:
         assert health_status["cache_connected"] is True
 
     def test_service_performance_monitoring(self, mock_service_config):
-        """成功用例：服务性能监控"""
+        """成功用例:服务性能监控"""
         # Act - 模拟性能监控
         start_time = datetime.utcnow()
         time.sleep(0.01)  # 模拟处理时间
@@ -441,7 +441,7 @@ class TestServiceIntegrationSimple:
 
     @pytest.mark.asyncio
     async def test_service_concurrent_operations(self, mock_league_service, sample_league_data):
-        """成功用例：服务并发操作"""
+        """成功用例:服务并发操作"""
         # Arrange
         mock_league_service.create_league.return_value = Mock(id=1, name="测试联赛")
 

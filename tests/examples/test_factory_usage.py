@@ -218,7 +218,7 @@ class TestFactoryUsage:
         assert len(matches) == 100  # 10轮 * 10场/轮
 
     def test_complex_test_scenario(self, test_db_session):
-        """复杂测试场景：完整的预测流程"""
+        """复杂测试场景:完整的预测流程"""
         # 1. 创建联赛
         premier_league = LeagueFactory.create_premier_league()
         test_db_session.flush()

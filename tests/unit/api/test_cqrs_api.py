@@ -47,7 +47,7 @@ class TestCQRSEndpoints:
 
         response = client.post("/api/v1/predictions", json=request_data)
 
-        # 由于路由可能不存在，接受404
+        # 由于路由可能不存在,接受404
         if response.status_code == 404:
             pytest.skip("CQRS预测端点未实现")
 
@@ -61,7 +61,7 @@ class TestCQRSEndpoints:
 
         response = client.get(f"/api/v1/predictions/{prediction_id}")
 
-        # 如果端点未实现，跳过
+        # 如果端点未实现,跳过
         if response.status_code == 404:
             pytest.skip("获取预测详情端点未实现")
 
@@ -77,7 +77,7 @@ class TestCQRSEndpoints:
 
         response = client.get(f"/api/v1/users/{user_id}/predictions")
 
-        # 如果端点未实现，跳过
+        # 如果端点未实现,跳过
         if response.status_code == 404:
             pytest.skip("获取用户预测列表端点未实现")
 
@@ -93,7 +93,7 @@ class TestCQRSEndpoints:
 
         response = client.get(f"/api/v1/users/{user_id}/stats")
 
-        # 如果端点未实现，跳过
+        # 如果端点未实现,跳过
         if response.status_code == 404:
             pytest.skip("获取用户统计端点未实现")
 
@@ -240,4 +240,4 @@ class TestCQRSIntegration:
         response = client.post("/api/v1/predictions", json=prediction_data)
 
         # 验证至少有一些步骤成功了
-        assert True  # 如果所有端点都跳过，测试通过
+        assert True  # 如果所有端点都跳过,测试通过

@@ -1,9 +1,9 @@
-"""""""
+""""""""
 模拟Redis管理器测试
 Tests for Mock Redis Manager
 
 测试src.cache.mock_redis模块的模拟Redis功能
-"""""""
+""""""""
 
 import json
 import time
@@ -27,7 +27,7 @@ class TestMockRedisManager:
     """模拟Redis管理器测试"""
 
     def test_singleton_pattern(self):
-        """测试：单例模式"""
+        """测试:单例模式"""
         # 创建多个实例
         redis1 = MockRedisManager()
         redis2 = MockRedisManager()
@@ -39,7 +39,7 @@ class TestMockRedisManager:
         assert id(redis1) == id(redis2) == id(redis3)
 
     def test_set_and_get(self):
-        """测试：设置和获取值"""
+        """测试:设置和获取值"""
         redis = MockRedisManager()
 
         # 设置值
@@ -51,14 +51,14 @@ class TestMockRedisManager:
         assert value == "test_value"
 
     def test_get_nonexistent_key(self):
-        """测试：获取不存在的键"""
+        """测试:获取不存在的键"""
         redis = MockRedisManager()
 
         value = redis.get("nonexistent_key")
         assert value is None
 
     def test_setex_with_ttl(self):
-        """测试：设置带TTL的值"""
+        """测试:设置带TTL的值"""
         redis = MockRedisManager()
 
         # 设置带TTL的值（1秒）
@@ -75,7 +75,7 @@ class TestMockRedisManager:
         assert value is None
 
     def test_delete_single_key(self):
-        """测试：删除单个键"""
+        """测试:删除单个键"""
         redis = MockRedisManager()
 
         # 设置值
@@ -90,7 +90,7 @@ class TestMockRedisManager:
         assert redis.get("delete_key") is None
 
     def test_delete_multiple_keys(self):
-        """测试：删除多个键"""
+        """测试:删除多个键"""
         redis = MockRedisManager()
 
         # 设置多个键
@@ -108,7 +108,7 @@ class TestMockRedisManager:
         assert redis.get("key3") is None
 
     def test_exists(self):
-        """测试：检查键是否存在"""
+        """测试:检查键是否存在"""
         redis = MockRedisManager()
 
         # 不存在的键
@@ -119,7 +119,7 @@ class TestMockRedisManager:
         assert redis.exists("exist_key") is True
 
     def test_expire_and_ttl(self):
-        """测试：设置过期时间和获取TTL"""
+        """测试:设置过期时间和获取TTL"""
         redis = MockRedisManager()
 
         # 设置键
@@ -139,7 +139,7 @@ class TestMockRedisManager:
         assert redis.get("expire_key") is None
 
     def test_increment(self):
-        """测试：递增"""
+        """测试:递增"""
         redis = MockRedisManager()
 
         # 初始递增
@@ -155,7 +155,7 @@ class TestMockRedisManager:
         assert value == 7
 
     def test_decrement(self):
-        """测试：递减"""
+        """测试:递减"""
         redis = MockRedisManager()
 
         # 初始递减
@@ -171,7 +171,7 @@ class TestMockRedisManager:
         assert value == -5
 
     def test_push_and_pop(self):
-        """测试：列表操作"""
+        """测试:列表操作"""
         redis = MockRedisManager()
 
         # 推入元素
@@ -192,7 +192,7 @@ class TestMockRedisManager:
         assert item == "item3"
 
     def test_hash_operations(self):
-        """测试：哈希操作"""
+        """测试:哈希操作"""
         redis = MockRedisManager()
 
         # 设置哈希字段
@@ -213,7 +213,7 @@ class TestMockRedisManager:
         assert redis.hget("hash_key", "field1") is None
 
     def test_set_operations(self):
-        """测试：集合操作"""
+        """测试:集合操作"""
         redis = MockRedisManager()
 
         # 添加成员
@@ -233,7 +233,7 @@ class TestMockRedisManager:
         assert set(members) == {"member1", "member3"}
 
     def test_flush_all(self):
-        """测试：清空所有数据"""
+        """测试:清空所有数据"""
         redis = MockRedisManager()
 
         # 设置多个键
@@ -251,7 +251,7 @@ class TestMockRedisManager:
         assert redis.hgetall("hash1") == {}
 
     def test_complex_data_types(self):
-        """测试：复杂数据类型"""
+        """测试:复杂数据类型"""
         redis = MockRedisManager()
 
         # 存储JSON
@@ -274,8 +274,8 @@ class TestMockRedisManager:
         assert "python" in retrieved["tags"]
 
     def test_data_persistence_across_instances(self):
-        """测试：跨实例数据持久化"""
-        # 由于是单例模式，数据应该在实例间共享
+        """测试:跨实例数据持久化"""
+        # 由于是单例模式,数据应该在实例间共享
         redis1 = MockRedisManager()
         redis2 = MockRedisManager()
 
@@ -286,7 +286,7 @@ class TestMockRedisManager:
         assert redis2.get("shared_key") == "shared_value"
 
     def test_concurrent_operations(self):
-        """测试：并发操作"""
+        """测试:并发操作"""
         import queue
         import threading
 
@@ -316,7 +316,7 @@ class TestMockRedisManager:
         assert results.qsize() == 30
 
     def test_memory_management(self):
-        """测试：内存管理"""
+        """测试:内存管理"""
         redis = MockRedisManager()
 
         # 添加大量数据
@@ -335,7 +335,7 @@ class TestMockRedisManager:
         assert len(redis._expirations) == 0
 
     def test_error_handling(self):
-        """测试：错误处理"""
+        """测试:错误处理"""
         redis = MockRedisManager()
 
         # 无效的TTL（负数）
@@ -356,15 +356,15 @@ class TestMockRedisManager:
 
         # 对不存在键的操作
         assert redis.delete("nonexistent_key") == 0
-        assert redis.incr("nonexistent_counter") == 1  # Redis行为：从0开始
+        assert redis.incr("nonexistent_counter") == 1  # Redis行为:从0开始
         assert redis.decr("nonexistent_counter") == -1
 
     def test_performance_benchmark(self):
-        """测试：性能基准"""
+        """测试:性能基准"""
         redis = MockRedisManager()
         import time
 
-        # 基准测试：1000次操作
+        # 基准测试:1000次操作
         iterations = 1000
 
         # 写入性能测试
@@ -393,14 +393,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not MOCK_REDIS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if MOCK_REDIS_AVAILABLE:
 from src.cache.mock_redis import MockRedisManager
 
@@ -412,7 +412,7 @@ class TestMockRedisManagerAdvanced:
     """模拟Redis管理器高级测试"""
 
     def test_transaction_simulation(self):
-        """测试：事务模拟"""
+        """测试:事务模拟"""
         redis = MockRedisManager()
 
         # 模拟事务（MULTI/EXEC）
@@ -439,7 +439,7 @@ class TestMockRedisManagerAdvanced:
                     _result = redis.hset(op[1], op[2], op[3])
                 results.append(result)
 
-            # 如果所有操作成功，提交；否则回滚
+            # 如果所有操作成功,提交;否则回滚
             if all(results):
                 return results
             else:
@@ -458,7 +458,7 @@ class TestMockRedisManagerAdvanced:
         assert redis.get("t1") == "value1"
 
     def test_pipeline_simulation(self):
-        """测试：管道模拟"""
+        """测试:管道模拟"""
         redis = MockRedisManager()
 
         # 模拟管道操作
@@ -488,7 +488,7 @@ class TestMockRedisManagerAdvanced:
         assert results[4] == 1
 
     def test_pubsub_simulation(self):
-        """测试：发布订阅模拟"""
+        """测试:发布订阅模拟"""
         MockRedisManager()
 
         # 创建简单的发布订阅系统
@@ -527,7 +527,7 @@ class TestMockRedisManagerAdvanced:
         assert len(pubsub.messages["sub3"]) == 1
 
     def test_lua_script_simulation(self):
-        """测试：Lua脚本模拟"""
+        """测试:Lua脚本模拟"""
         redis = MockRedisManager()
 
         # 模拟简单的Lua脚本
@@ -548,7 +548,7 @@ class TestMockRedisManagerAdvanced:
         assert redis.get("script_counter") == "10"
 
     def test_connection_pool_simulation(self):
-        """测试：连接池模拟"""
+        """测试:连接池模拟"""
         redis = MockRedisManager()
 
         # 模拟连接池
@@ -581,7 +581,7 @@ class TestMockRedisManagerAdvanced:
         assert pool.active_connections == 1
 
     def test_cluster_simulation(self):
-        """测试：集群模拟"""
+        """测试:集群模拟"""
         MockRedisManager()
 
         # 模拟简单集群分片
@@ -591,7 +591,7 @@ class TestMockRedisManagerAdvanced:
                 self.shards = {i: MockRedisManager() for i in range(nodes)}
 
             def _get_shard(self, key):
-                # 简单的分片算法：基于键的哈希
+                # 简单的分片算法:基于键的哈希
                 return hash(key) % self.nodes
 
             def set(self, key, value):
@@ -614,7 +614,7 @@ class TestMockRedisManagerAdvanced:
         assert cluster.get("cluster_key3") == "value3"
 
     def test_persistence_simulation(self):
-        """测试：持久化模拟"""
+        """测试:持久化模拟"""
         redis = MockRedisManager()
 
         # 模拟RDB快照
@@ -647,7 +647,7 @@ class TestMockRedisManagerAdvanced:
         assert len(aof_log) == 2
 
     def test_replication_simulation(self):
-        """测试：复制模拟"""
+        """测试:复制模拟"""
         master = MockRedisManager()
         slave = MockRedisManager()
 

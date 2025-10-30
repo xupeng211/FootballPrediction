@@ -17,158 +17,158 @@ class TestStringUtils:
     # ==================== 截断字符串测试 ====================
 
     def test_truncate_shorter_text(self):
-        """测试：短文本不需要截断"""
+        """测试:短文本不需要截断"""
         text = "Hello"
         _result = StringUtils.truncate(text, 10)
         assert _result == "Hello"
 
     def test_truncate_exact_length(self):
-        """测试：正好等于长度限制"""
+        """测试:正好等于长度限制"""
         text = "Hello World"
         _result = StringUtils.truncate(text, 11)
         assert _result == "Hello World"
 
     def test_truncate_longer_text(self):
-        """测试：长文本需要截断"""
+        """测试:长文本需要截断"""
         text = "This is a very long text"
         _result = StringUtils.truncate(text, 10)
         assert _result == "This is..."
 
     def test_truncate_custom_suffix(self):
-        """测试：自定义后缀"""
+        """测试:自定义后缀"""
         text = "This is a very long text"
         _result = StringUtils.truncate(text, 10, suffix=" [more]")
-        # 计算正确的结果：10 - len(" [more]") = 10 - 7 = 3个字符
+        # 计算正确的结果:10 - len(" [more]") = 10 - 7 = 3个字符
         assert _result == "Thi [more]"
 
     def test_truncate_empty_text(self):
-        """测试：空文本"""
+        """测试:空文本"""
         assert StringUtils.truncate("", 5) == ""
 
     def test_truncate_zero_length(self):
-        """测试：零长度限制"""
+        """测试:零长度限制"""
         text = "Hello"
         _result = StringUtils.truncate(text, 0)
-        # 0长度意味着只能放后缀，但truncate会保留至少后缀长度的字符
+        # 0长度意味着只能放后缀,但truncate会保留至少后缀长度的字符
         assert _result == "He..."
 
     # ==================== Slugify测试 ====================
 
     def test_slugify_simple(self):
-        """测试：简单slugify"""
+        """测试:简单slugify"""
         assert StringUtils.slugify("Hello World") == "hello-world"
 
     def test_slugify_with_special_chars(self):
-        """测试：包含特殊字符"""
+        """测试:包含特殊字符"""
         assert StringUtils.slugify("Python & AI") == "python-ai"
 
     def test_slugify_with_spaces(self):
-        """测试：多余空格"""
+        """测试:多余空格"""
         assert StringUtils.slugify("  Trim spaces  ") == "trim-spaces"
 
     def test_slugify_with_hyphens(self):
-        """测试：连字符处理"""
+        """测试:连字符处理"""
         assert StringUtils.slugify("word-word word") == "word-word-word"
 
     def test_slugify_empty(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         assert StringUtils.slugify("") == ""
 
     def test_slugify_numbers_and_symbols(self):
-        """测试：数字和符号"""
+        """测试:数字和符号"""
         assert StringUtils.slugify("Test 123!@#") == "test-123"
 
     # ==================== 驼峰转下划线测试 ====================
 
     def test_camel_to_snake_simple(self):
-        """测试：简单驼峰转下划线"""
+        """测试:简单驼峰转下划线"""
         assert StringUtils.camel_to_snake("helloWorld") == "hello_world"
 
     def test_camel_to_snake_multiple_words(self):
-        """测试：多个单词"""
+        """测试:多个单词"""
         assert StringUtils.camel_to_snake("HelloWorldTest") == "hello_world_test"
 
     def test_camel_to_snake_with_numbers(self):
-        """测试：包含数字"""
+        """测试:包含数字"""
         assert StringUtils.camel_to_snake("test123Value") == "test123_value"
 
     def test_camel_to_snake_with_acronyms(self):
-        """测试：包含缩写"""
+        """测试:包含缩写"""
         assert StringUtils.camel_to_snake("HTMLParser") == "html_parser"
 
     def test_camel_to_snake_already_snake(self):
-        """测试：已经是下划线格式"""
+        """测试:已经是下划线格式"""
         assert StringUtils.camel_to_snake("hello_world") == "hello_world"
 
     def test_camel_to_snake_empty(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         assert StringUtils.camel_to_snake("") == ""
 
     # ==================== 下划线转驼峰测试 ====================
 
     def test_snake_to_camel_simple(self):
-        """测试：简单下划线转驼峰"""
+        """测试:简单下划线转驼峰"""
         assert StringUtils.snake_to_camel("hello_world") == "helloWorld"
 
     def test_snake_to_camel_multiple(self):
-        """测试：多个下划线"""
+        """测试:多个下划线"""
         assert StringUtils.snake_to_camel("hello_world_test") == "helloWorldTest"
 
     def test_snake_to_camel_single_word(self):
-        """测试：单个单词"""
+        """测试:单个单词"""
         assert StringUtils.snake_to_camel("hello") == "hello"
 
     def test_snake_to_camel_with_numbers(self):
-        """测试：包含数字"""
+        """测试:包含数字"""
         assert StringUtils.snake_to_camel("test_123_value") == "test123Value"
 
     def test_snake_to_camel_with_underscores(self):
-        """测试：开头结尾的下划线"""
+        """测试:开头结尾的下划线"""
         # 实际实现会去掉开头和结尾的下划线
         assert StringUtils.snake_to_camel("_hello_world_") == "HelloWorld"
 
     def test_snake_to_camel_empty(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         assert StringUtils.snake_to_camel("") == ""
 
     # ==================== 清理文本测试 ====================
 
     def test_clean_text_simple(self):
-        """测试：简单清理"""
+        """测试:简单清理"""
         text = "  Hello   World  "
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_with_newlines(self):
-        """测试：包含换行"""
+        """测试:包含换行"""
         text = "Hello\n\nWorld\n\n"
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_with_tabs(self):
-        """测试：包含制表符"""
+        """测试:包含制表符"""
         text = "Hello\t\tWorld\t"
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_mixed_whitespace(self):
-        """测试：混合空白字符"""
+        """测试:混合空白字符"""
         text = "  Hello \n\n\t World  \t\n"
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_already_clean(self):
-        """测试：已经干净的文本"""
+        """测试:已经干净的文本"""
         text = "Hello World"
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_empty(self):
-        """测试：空文本"""
+        """测试:空文本"""
         assert StringUtils.clean_text("") == ""
 
     def test_clean_text_only_whitespace(self):
-        """测试：只有空白字符"""
+        """测试:只有空白字符"""
         text = "   \n\n\t   "
         _result = StringUtils.clean_text(text)
         assert _result == ""
@@ -176,49 +176,49 @@ class TestStringUtils:
     # ==================== 提取数字测试 ====================
 
     def test_extract_numbers_simple(self):
-        """测试：简单数字提取"""
+        """测试:简单数字提取"""
         text = "abc123def456"
         _result = StringUtils.extract_numbers(text)
         assert _result == [123.0, 456.0]
 
     def test_extract_numbers_no_numbers(self):
-        """测试：没有数字"""
+        """测试:没有数字"""
         text = "no numbers here"
         _result = StringUtils.extract_numbers(text)
         assert _result == []
 
     def test_extract_numbers_with_decimals(self):
-        """测试：包含小数"""
+        """测试:包含小数"""
         text = "The price is 12.99 dollars"
         _result = StringUtils.extract_numbers(text)
         assert _result == [12.99]
 
     def test_extract_numbers_negative_numbers(self):
-        """测试：负数"""
+        """测试:负数"""
         text = "Temperature is -5 degrees"
         _result = StringUtils.extract_numbers(text)
         assert _result == [-5.0]
 
     def test_extract_numbers_mixed(self):
-        """测试：混合数字"""
+        """测试:混合数字"""
         text = "Values: -1.5, 2, 3.14, and 100"
         _result = StringUtils.extract_numbers(text)
         assert _result == [-1.5, 2.0, 3.14, 100.0]
 
     def test_extract_numbers_only_numbers(self):
-        """测试：只有数字"""
+        """测试:只有数字"""
         text = "123"
         _result = StringUtils.extract_numbers(text)
         assert _result == [123.0]
 
     def test_extract_numbers_empty(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         assert StringUtils.extract_numbers("") == []
 
     # ==================== 组合测试 ====================
 
     def test_combined_operations(self):
-        """测试：组合操作"""
+        """测试:组合操作"""
         # 清理并截断
         text = "  Hello   World! This is a test.  "
         cleaned = StringUtils.clean_text(text)
@@ -230,7 +230,7 @@ class TestStringUtils:
         assert slug == "hello-world"
 
     def test_round_trip_conversions(self):
-        """测试：往返转换"""
+        """测试:往返转换"""
         # 驼峰到下划线再回到驼峰
         camel = "helloWorldTest"
         snake = StringUtils.camel_to_snake(camel)
@@ -241,13 +241,13 @@ class TestStringUtils:
         snake = "hello_world_test"
         camel = StringUtils.snake_to_camel(snake)
         back_to_snake = StringUtils.camel_to_snake(camel)
-        # 注意：开头的小写会丢失
+        # 注意:开头的小写会丢失
         assert back_to_snake == "hello_world_test"
 
     # ==================== 边界条件测试 ====================
 
     def test_unicode_handling(self):
-        """测试：Unicode处理"""
+        """测试:Unicode处理"""
         text = "测试文本"
         # slugify可能会移除Unicode字符
         slug = StringUtils.slugify(text)
@@ -258,14 +258,14 @@ class TestStringUtils:
         assert len(result) <= 3 + len("...")
 
     def test_very_long_text(self):
-        """测试：非常长的文本"""
+        """测试:非常长的文本"""
         text = "A" * 10000
         _result = StringUtils.truncate(text, 100)
         assert len(result) == 100
         assert _result.endswith("...")
 
     def test_text_with_line_breaks_in_slugify(self):
-        """测试：slugify处理换行"""
+        """测试:slugify处理换行"""
         text = "Hello\nWorld"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world"
@@ -273,13 +273,13 @@ class TestStringUtils:
     # ==================== 新增方法测试 ====================
 
     def test_unescape_html(self):
-        """测试：HTML反转义"""
+        """测试:HTML反转义"""
         html_text = "&lt;div&gt;Hello &amp; World&lt;/div&gt;"
         result = StringUtils.unescape_html(html_text)
         assert result == "<div>Hello & World</div>"
 
     def test_is_url(self):
-        """测试：URL检测"""
+        """测试:URL检测"""
         assert StringUtils.is_url("https://www.example.com") is True
         assert StringUtils.is_url("http://localhost:8000") is True
         assert StringUtils.is_url("ftp://example.com") is False
@@ -287,14 +287,14 @@ class TestStringUtils:
         assert StringUtils.is_url("") is False
 
     def test_reverse_string(self):
-        """测试：字符串反转"""
+        """测试:字符串反转"""
         assert StringUtils.reverse_string("hello") == "olleh"
         assert StringUtils.reverse_string("Python") == "nohtyP"
         assert StringUtils.reverse_string("") == ""
         assert StringUtils.reverse_string("a") == "a"
 
     def test_is_palindrome(self):
-        """测试：回文检测"""
+        """测试:回文检测"""
         assert StringUtils.is_palindrome("racecar") is True
         assert StringUtils.is_palindrome("RaceCar") is True
         assert StringUtils.is_palindrome("A man, a plan, a canal: Panama") is True
@@ -302,14 +302,14 @@ class TestStringUtils:
         assert StringUtils.is_palindrome("") is True
 
     def test_capitalize_words(self):
-        """测试：首字母大写"""
+        """测试:首字母大写"""
         assert StringUtils.capitalize_words("hello world") == "Hello World"
         assert StringUtils.capitalize_words("python programming") == "Python Programming"
         assert StringUtils.capitalize_words("") == ""
         assert StringUtils.capitalize_words("single") == "Single"
 
     def test_random_string(self):
-        """测试：随机字符串生成"""
+        """测试:随机字符串生成"""
         result1 = StringUtils.random_string(10)
         result2 = StringUtils.random_string(10)
         assert len(result1) == 10
@@ -319,14 +319,14 @@ class TestStringUtils:
         assert StringUtils.random_string(-5) == ""
 
     def test_remove_duplicates(self):
-        """测试：移除重复字符"""
+        """测试:移除重复字符"""
         assert StringUtils.remove_duplicates("hello") == "helo"
         assert StringUtils.remove_duplicates("aabbcc") == "abc"
         assert StringUtils.remove_duplicates("") == ""
         assert StringUtils.remove_duplicates("aaaa") == "a"
 
     def test_word_count(self):
-        """测试：单词计数"""
+        """测试:单词计数"""
         assert StringUtils.word_count("hello world") == 2
         assert StringUtils.word_count("this is a test") == 4
         assert StringUtils.word_count("") == 0
@@ -334,7 +334,7 @@ class TestStringUtils:
         assert StringUtils.word_count("single") == 1
 
     def test_char_frequency(self):
-        """测试：字符频率统计"""
+        """测试:字符频率统计"""
         freq = StringUtils.char_frequency("hello")
         assert freq["h"] == 1
         assert freq["e"] == 1

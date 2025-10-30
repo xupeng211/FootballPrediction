@@ -11,7 +11,7 @@ from src.cache.redis_manager import CacheKeyManager, RedisManager
 
 """
 Redis管理器测试
-测试Redis连接池、基础操作方法
+测试Redis连接池,基础操作方法
 """
 
 
@@ -194,14 +194,14 @@ class TestRedisManager:
     def test_keys_sync(self, redis_manager, mock_sync_client):
         """测试同步获取键列表"""
         redis_manager._sync_client = mock_sync_client
-        # RedisManager没有keys方法，跳过此测试
+        # RedisManager没有keys方法,跳过此测试
         pytest.skip("RedisManager does not have keys method")
 
     @pytest.mark.asyncio
     async def test_keys_async(self, redis_manager, mock_async_client):
         """测试异步获取键列表"""
         redis_manager._async_client = mock_async_client
-        # RedisManager没有akeys方法，跳过此测试
+        # RedisManager没有akeys方法,跳过此测试
         pytest.skip("RedisManager does not have akeys method")
 
     def test_health_check_healthy(self, redis_manager, mock_sync_client):
@@ -259,14 +259,14 @@ class TestRedisManager:
         # 这可能是设计上的问题，但测试要反映实际行为
         await redis_manager.aclose()
 
-        # 测试通过，因为没有抛出异常
+        # 测试通过,因为没有抛出异常
         assert True
 
     def test_get_stats(self, redis_manager, mock_sync_client):
         """测试获取统计信息"""
         redis_manager._sync_client = mock_sync_client
 
-        # RedisManager没有get_stats方法，使用get_info代替
+        # RedisManager没有get_stats方法,使用get_info代替
         _stats = redis_manager.get_info()
         assert stats is not None
 
@@ -306,7 +306,7 @@ class TestRedisManager:
 
         _result = redis_manager.get("test_key")
         assert _result is None
-        # redis_manager.get内部可能不调用logger.error，所以只检查结果
+        # redis_manager.get内部可能不调用logger.error,所以只检查结果
 
     @pytest.mark.asyncio
     async def test_error_handling_get_async(self, redis_manager, mock_async_client):
@@ -318,7 +318,7 @@ class TestRedisManager:
 
         _result = await redis_manager.aget("test_key")
         assert _result is None
-        # redis_manager.aget内部可能不调用logger.error，所以只检查结果
+        # redis_manager.aget内部可能不调用logger.error,所以只检查结果
 
     def test_mget_multiple_keys(self, redis_manager, mock_sync_client):
         """测试批量获取"""
@@ -345,36 +345,36 @@ class TestRedisManager:
     def test_increment(self, redis_manager, mock_sync_client):
         """测试增量操作"""
         redis_manager._sync_client = mock_sync_client
-        # RedisManager没有increment方法，跳过
+        # RedisManager没有increment方法,跳过
         pytest.skip("RedisManager does not have increment method")
 
     def test_decrement(self, redis_manager, mock_sync_client):
         """测试减量操作"""
         redis_manager._sync_client = mock_sync_client
-        # RedisManager没有decrement方法，跳过
+        # RedisManager没有decrement方法,跳过
         pytest.skip("RedisManager does not have decrement method")
 
     def test_hash_operations(self, redis_manager, mock_sync_client):
         """测试哈希操作"""
         redis_manager._sync_client = mock_sync_client
-        # RedisManager没有hash操作方法，跳过
+        # RedisManager没有hash操作方法,跳过
         pytest.skip("RedisManager does not have hash operations")
 
     def test_list_operations(self, redis_manager, mock_sync_client):
         """测试列表操作"""
         redis_manager._sync_client = mock_sync_client
-        # RedisManager没有list操作方法，跳过
+        # RedisManager没有list操作方法,跳过
         pytest.skip("RedisManager does not have list operations")
 
     def test_context_manager_sync(self, redis_manager, mock_sync_client):
         """测试同步上下文管理器"""
-        # RedisManager不支持上下文管理器，跳过
+        # RedisManager不支持上下文管理器,跳过
         pytest.skip("RedisManager does not support context manager")
 
     @pytest.mark.asyncio
     async def test_context_manager_async(self, redis_manager, mock_async_client):
         """测试异步上下文管理器"""
-        # RedisManager不支持异步上下文管理器，跳过
+        # RedisManager不支持异步上下文管理器,跳过
         pytest.skip("RedisManager does not support async context manager")
 
     def test_cache_key_prefix_validation(self):

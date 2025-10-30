@@ -52,7 +52,7 @@ class TestPredictionService:
                 result = asyncio.run(service.create_prediction(prediction_data))
                 assert result is not None
             else:
-                assert True  # 如果方法不存在，跳过测试
+                assert True  # 如果方法不存在,跳过测试
         except Exception as e:
             print(f"create_prediction测试跳过: {e}")
             assert True
@@ -409,7 +409,7 @@ def test_services_module_import():
         assert data_service is not None
         assert cache_service is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_services_coverage_helper():

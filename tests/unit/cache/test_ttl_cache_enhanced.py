@@ -194,7 +194,7 @@ def mock_get_cache(name):
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免复杂的依赖问题
-# 真实模块存在但依赖复杂，在测试环境中使用Mock是最佳实践
+# 真实模块存在但依赖复杂,在测试环境中使用Mock是最佳实践
 TTL_AVAILABLE = True
 cache_entry_class = MockCacheEntry
 ttl_cache_class = MockTTLCache
@@ -204,7 +204,7 @@ cleanup_all_expired_func = mock_cleanup_all_expired
 clear_all_caches_func = mock_clear_all_caches
 get_all_stats_func = mock_get_all_stats
 get_cache_func = mock_get_cache
-print("智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
+print("智能Mock兼容修复模式:使用Mock服务确保测试稳定性")
 
 
 @pytest.mark.unit
@@ -212,7 +212,7 @@ class TestCacheEntry:
     """缓存条目测试"""
 
     def test_cache_entry_creation(self):
-        """测试：缓存条目创建"""
+        """测试:缓存条目创建"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -223,7 +223,7 @@ class TestCacheEntry:
         assert entry.access_count == 0
 
     def test_cache_entry_is_expired(self):
-        """测试：缓存条目过期检查"""
+        """测试:缓存条目过期检查"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -236,7 +236,7 @@ class TestCacheEntry:
         assert entry.is_expired() is True
 
     def test_cache_entry_touch(self):
-        """测试：缓存条目访问更新"""
+        """测试:缓存条目访问更新"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -252,7 +252,7 @@ class TestCacheEntry:
         assert entry.last_accessed > initial_time
 
     def test_cache_entry_extend_ttl(self):
-        """测试：扩展缓存条目TTL"""
+        """测试:扩展缓存条目TTL"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -263,7 +263,7 @@ class TestCacheEntry:
         assert entry.ttl == initial_ttl + 30
 
     def test_cache_entry_to_dict(self):
-        """测试：缓存条目转字典"""
+        """测试:缓存条目转字典"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -282,7 +282,7 @@ class TestTTLCache:
     """TTL缓存测试"""
 
     def test_cache_creation(self):
-        """测试：缓存创建"""
+        """测试:缓存创建"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -291,7 +291,7 @@ class TestTTLCache:
         assert cache.default_ttl == 60
 
     def test_cache_set_and_get(self):
-        """测试：设置和获取缓存"""
+        """测试:设置和获取缓存"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -302,7 +302,7 @@ class TestTTLCache:
         assert cache.get("key1") == "value1"
 
     def test_cache_get_nonexistent(self):
-        """测试：获取不存在的键"""
+        """测试:获取不存在的键"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -310,7 +310,7 @@ class TestTTLCache:
         assert cache.get("nonexistent") is None
 
     def test_cache_get_with_default(self):
-        """测试：获取带默认值的键"""
+        """测试:获取带默认值的键"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -318,7 +318,7 @@ class TestTTLCache:
         assert cache.get("nonexistent", "default") == "default"
 
     def test_cache_set_with_ttl(self):
-        """测试：设置带TTL的缓存"""
+        """测试:设置带TTL的缓存"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -329,7 +329,7 @@ class TestTTLCache:
         assert cache.get("key1") == "value1"
 
     def test_cache_expiration(self):
-        """测试：缓存过期"""
+        """测试:缓存过期"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -343,7 +343,7 @@ class TestTTLCache:
         assert cache.get("key1") is None
 
     def test_cache_delete(self):
-        """测试：删除缓存"""
+        """测试:删除缓存"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -359,12 +359,12 @@ class TestTTLCache:
             # 如果没有delete方法，清空整个缓存
             cache.clear()
 
-        # 由于清空了整个缓存，应该返回None
+        # 由于清空了整个缓存,应该返回None
         result = cache.get("key1")
         assert result is None or result == "value1"  # 两种情况都可以接受
 
     def test_cache_clear(self):
-        """测试：清空缓存"""
+        """测试:清空缓存"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
@@ -378,18 +378,18 @@ class TestTTLCache:
         assert cache.get("key2") is None
 
     def test_cache_eviction_lru(self):
-        """测试：LRU淘汰策略"""
+        """测试:LRU淘汰策略"""
         if not TTL_AVAILABLE:
             pytest.skip("TTL cache enhanced module not available")
 
         cache = ttl_cache_class(maxsize=2, ttl=60)
 
-        # 添加3个键，应该淘汰最旧的
+        # 添加3个键,应该淘汰最旧的
         cache.set("key1", "value1")
         cache.set("key2", "value2")
         cache.set("key3", "value3")
 
-        # Mock实现中，由于没有实现LRU淘汰，所有键都存在是可以接受的
+        # Mock实现中，由于没有实现LRU淘汰,所有键都存在是可以接受的
         key1_result = cache.get("key1")
         key2_result = cache.get("key2")
         key3_result = cache.get("key3")
@@ -397,11 +397,11 @@ class TestTTLCache:
         # 至少验证基本功能正常
         assert key2_result == "value2"
         assert key3_result == "value3"
-        # key1可能存在也可能被淘汰，两种情况都可以接受
+        # key1可能存在也可能被淘汰,两种情况都可以接受
         assert key1_result in [None, "value1"]
 
     def test_cache_cleanup_expired(self):
-        """测试：清理过期缓存"""
+        """测试:清理过期缓存"""
         cache = ttl_cache_class(maxsize=100, ttl=1)
 
         # 添加一些键
@@ -419,7 +419,7 @@ class TestTTLCache:
         assert len(cache) == 0
 
     def test_cache_stats(self):
-        """测试：缓存统计"""
+        """测试:缓存统计"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         # 初始统计
@@ -441,7 +441,7 @@ class TestTTLCache:
         assert stats["size"] == 1
 
     def test_cache_contains(self):
-        """测试：缓存包含检查"""
+        """测试:缓存包含检查"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         cache.set("key1", "value1")
@@ -449,7 +449,7 @@ class TestTTLCache:
         assert "key2" not in cache
 
     def test_cache_len(self):
-        """测试：缓存长度"""
+        """测试:缓存长度"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         assert len(cache) == 0
@@ -461,7 +461,7 @@ class TestTTLCache:
         assert len(cache) == 2
 
     def test_cache_iteration(self):
-        """测试：缓存迭代"""
+        """测试:缓存迭代"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         cache.set("key1", "value1")
@@ -472,7 +472,7 @@ class TestTTLCache:
         assert "key2" in keys
 
     def test_cache_items(self):
-        """测试：缓存项"""
+        """测试:缓存项"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         cache.set("key1", "value1")
@@ -483,7 +483,7 @@ class TestTTLCache:
         assert ("key2", "value2") in items
 
     def test_cache_keys(self):
-        """测试：缓存键"""
+        """测试:缓存键"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         cache.set("key1", "value1")
@@ -494,7 +494,7 @@ class TestTTLCache:
         assert "key2" in keys
 
     def test_cache_values(self):
-        """测试：缓存值"""
+        """测试:缓存值"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         cache.set("key1", "value1")
@@ -511,14 +511,14 @@ class TestAsyncTTLCache:
 
     @pytest.mark.asyncio
     async def test_async_cache_creation(self):
-        """测试：异步缓存创建"""
+        """测试:异步缓存创建"""
         cache = async_ttl_cache_class(maxsize=100, ttl=60)
         assert cache.maxsize == 100
         assert cache.default_ttl == 60
 
     @pytest.mark.asyncio
     async def test_async_cache_set_and_get(self):
-        """测试：异步设置和获取缓存"""
+        """测试:异步设置和获取缓存"""
         cache = async_ttl_cache_class(maxsize=100, ttl=60)
 
         await cache.set("key1", "value1")
@@ -527,14 +527,14 @@ class TestAsyncTTLCache:
 
     @pytest.mark.asyncio
     async def test_async_cache_get_nonexistent(self):
-        """测试：异步获取不存在的键"""
+        """测试:异步获取不存在的键"""
         cache = async_ttl_cache_class(maxsize=100, ttl=60)
         value = await cache.get("nonexistent")
         assert value is None
 
     @pytest.mark.asyncio
     async def test_async_cache_expiration(self):
-        """测试：异步缓存过期"""
+        """测试:异步缓存过期"""
         cache = async_ttl_cache_class(maxsize=100, ttl=1)
 
         await cache.set("key1", "value1")
@@ -548,7 +548,7 @@ class TestAsyncTTLCache:
 
     @pytest.mark.asyncio
     async def test_async_cache_cleanup(self):
-        """测试：异步清理缓存"""
+        """测试:异步清理缓存"""
         cache = async_ttl_cache_class(maxsize=100, ttl=1)
 
         await cache.set("key1", "value1")
@@ -570,20 +570,20 @@ class TestCacheFactory:
     """缓存工厂测试"""
 
     def test_factory_create_cache(self):
-        """测试：工厂创建缓存"""
+        """测试:工厂创建缓存"""
         cache = CacheFactory.create_cache("test_cache", maxsize=100, ttl=60)
         assert cache is not None
         assert cache.maxsize == 100
         assert cache.default_ttl == 60
 
     def test_factory_get_cache(self):
-        """测试：工厂获取缓存"""
+        """测试:工厂获取缓存"""
         cache1 = CacheFactory.get_cache("test_cache")
         cache2 = CacheFactory.get_cache("test_cache")
         assert cache1 is cache2  # 应该返回相同的实例
 
     def test_factory_create_async_cache(self):
-        """测试：工厂创建异步缓存"""
+        """测试:工厂创建异步缓存"""
         cache = CacheFactory.create_async_cache("async_test_cache", maxsize=100, ttl=60)
         assert cache is not None
         assert isinstance(cache, AsyncTTLCache)
@@ -594,13 +594,13 @@ class TestGlobalCacheFunctions:
     """全局缓存函数测试"""
 
     def test_get_cache_function(self):
-        """测试：获取缓存函数"""
+        """测试:获取缓存函数"""
         cache = get_cache("test", maxsize=50, ttl=30)
         assert cache is not None
         assert isinstance(cache, TTLCache)
 
     def test_get_all_stats_function(self):
-        """测试：获取所有统计函数"""
+        """测试:获取所有统计函数"""
         # 创建一些缓存
         cache1 = get_cache("cache1")
         cache2 = get_cache("cache2")
@@ -616,7 +616,7 @@ class TestGlobalCacheFunctions:
         assert "cache2" in stats
 
     def test_clear_all_caches_function(self):
-        """测试：清空所有缓存函数"""
+        """测试:清空所有缓存函数"""
         # 创建一些缓存
         cache1 = get_cache("cache1")
         cache2 = get_cache("cache2")
@@ -632,7 +632,7 @@ class TestGlobalCacheFunctions:
         assert cache2.get("key2") is None
 
     def test_cleanup_all_expired_function(self):
-        """测试：清理所有过期缓存函数"""
+        """测试:清理所有过期缓存函数"""
         # 创建一些缓存
         cache1 = get_cache("cache1", ttl=1)
         cache2 = get_cache("cache2", ttl=60)
@@ -654,7 +654,7 @@ class TestCacheThreadSafety:
     """缓存线程安全测试"""
 
     def test_concurrent_access(self):
-        """测试：并发访问"""
+        """测试:并发访问"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
         errors = []
 
@@ -690,7 +690,7 @@ class TestCacheThreadSafety:
         assert len(errors) == 0
 
     def test_concurrent_cleanup(self):
-        """测试：并发清理"""
+        """测试:并发清理"""
         cache = ttl_cache_class(maxsize=100, ttl=1)
         errors = []
 
@@ -737,7 +737,7 @@ class TestCacheEdgeCases:
     """缓存边界情况测试"""
 
     def test_cache_with_zero_ttl(self):
-        """测试：零TTL缓存"""
+        """测试:零TTL缓存"""
         cache = ttl_cache_class(maxsize=100, ttl=0)
 
         cache.set("key1", "value1")
@@ -745,7 +745,7 @@ class TestCacheEdgeCases:
         assert cache.get("key1") is None
 
     def test_cache_with_negative_ttl(self):
-        """测试：负TTL缓存"""
+        """测试:负TTL缓存"""
         cache = ttl_cache_class(maxsize=100, ttl=-1)
 
         cache.set("key1", "value1")
@@ -753,14 +753,14 @@ class TestCacheEdgeCases:
         assert cache.get("key1") is None
 
     def test_cache_with_none_value(self):
-        """测试：None值缓存"""
+        """测试:None值缓存"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         cache.set("key1", None)
         assert cache.get("key1") is None
 
     def test_cache_with_large_value(self):
-        """测试：大值缓存"""
+        """测试:大值缓存"""
         cache = ttl_cache_class(maxsize=1, ttl=60)
 
         large_value = "x" * 10000
@@ -768,7 +768,7 @@ class TestCacheEdgeCases:
         assert cache.get("key1") == large_value
 
     def test_cache_with_special_characters(self):
-        """测试：特殊字符键值"""
+        """测试:特殊字符键值"""
         cache = ttl_cache_class(maxsize=100, ttl=60)
 
         special_key = "key_特殊字符!@#$%^&*()"
@@ -778,7 +778,7 @@ class TestCacheEdgeCases:
         assert cache.get(special_key) == special_value
 
     def test_cache_maxsize_zero(self):
-        """测试：零最大大小缓存"""
+        """测试:零最大大小缓存"""
         cache = ttl_cache_class(maxsize=0, ttl=60)
 
         cache.set("key1", "value1")
@@ -786,7 +786,7 @@ class TestCacheEdgeCases:
         assert cache.get("key1") is None
 
     def test_cache_maxsize_one(self):
-        """测试：大小为一的缓存"""
+        """测试:大小为一的缓存"""
         cache = ttl_cache_class(maxsize=1, ttl=60)
 
         cache.set("key1", "value1")

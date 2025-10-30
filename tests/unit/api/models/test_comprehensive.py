@@ -15,7 +15,7 @@ try:
     from src.api.models import *
 except ImportError as e:
     print(f"警告: 无法导入模块 api.models: {e}")
-    # 如果导入失败，跳过测试
+    # 如果导入失败,跳过测试
     pytest.skip(f"无法导入模块 api.models: {e}", allow_module_level=True)
 
 

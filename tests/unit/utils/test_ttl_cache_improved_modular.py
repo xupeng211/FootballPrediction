@@ -1,8 +1,8 @@
 
-"""""""
+""""""""
 测试模块化TTL缓存
 Test Modular TTL Cache
-"""""""
+""""""""
 
 import time
 
@@ -72,7 +72,7 @@ def test_ttl_cache_lru():
     # 访问key1使其成为最近使用
     cache.get("key1")
 
-    # 添加第三个项，应该淘汰key2
+    # 添加第三个项,应该淘汰key2
     cache.set("key3", "value3")
     assert cache.size() == 2
     assert cache.get("key1") == "value1"  # key1还在

@@ -2,7 +2,7 @@
 API单元测试
 API Unit Tests
 
-测试API组件的单元功能，避免复杂集成环境。
+测试API组件的单元功能,避免复杂集成环境。
 Tests API component unit functionality avoiding complex integration environment.
 """
 
@@ -17,7 +17,7 @@ class TestAPIUnit:
     # ========== 健康检查端点测试 ==========
 
     def test_health_endpoint_success(self):
-        """成功用例：健康检查端点"""
+        """成功用例:健康检查端点"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -33,7 +33,7 @@ class TestAPIUnit:
         assert "version" in data
 
     def test_health_endpoint_response_headers(self):
-        """成功用例：健康检查响应头"""
+        """成功用例:健康检查响应头"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -52,7 +52,7 @@ class TestAPIUnit:
     # ========== 联赛端点测试 ==========
 
     def test_get_leagues_endpoint_success(self):
-        """成功用例：获取联赛列表端点"""
+        """成功用例:获取联赛列表端点"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -96,7 +96,7 @@ class TestAPIUnit:
         ],
     )
     def test_create_league_endpoint_success(self, league_data):
-        """成功用例：创建联赛端点"""
+        """成功用例:创建联赛端点"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 201
@@ -112,7 +112,7 @@ class TestAPIUnit:
         assert data["name"] == league_data["name"]
 
     def test_create_league_endpoint_validation_error(self):
-        """异常用例：创建联赛验证错误"""
+        """异常用例:创建联赛验证错误"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 422
@@ -138,7 +138,7 @@ class TestAPIUnit:
     # ========== 比赛端点测试 ==========
 
     def test_get_matches_endpoint_success(self):
-        """成功用例：获取比赛列表端点"""
+        """成功用例:获取比赛列表端点"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -173,7 +173,7 @@ class TestAPIUnit:
         ],
     )
     def test_get_matches_with_filters(self, match_filters):
-        """边界条件：带过滤条件获取比赛"""
+        """边界条件:带过滤条件获取比赛"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -194,7 +194,7 @@ class TestAPIUnit:
     # ========== 预测端点测试 ==========
 
     def test_create_prediction_endpoint_success(self):
-        """成功用例：创建预测端点"""
+        """成功用例:创建预测端点"""
         # Arrange
         prediction_data = {
             "user_id": 123,
@@ -219,7 +219,7 @@ class TestAPIUnit:
         assert data["user_id"] == prediction_data["user_id"]
 
     def test_get_user_predictions_endpoint_success(self):
-        """成功用例：获取用户预测列表"""
+        """成功用例:获取用户预测列表"""
         # Arrange
         user_id = 123
         mock_response = Mock()
@@ -245,7 +245,7 @@ class TestAPIUnit:
 
     @pytest.mark.auth
     def test_login_endpoint_success(self):
-        """成功用例：登录端点"""
+        """成功用例:登录端点"""
         # Arrange
 
         mock_response = Mock()
@@ -267,7 +267,7 @@ class TestAPIUnit:
 
     @pytest.mark.auth
     def test_login_endpoint_invalid_credentials(self):
-        """异常用例：登录无效凭据"""
+        """异常用例:登录无效凭据"""
         # Arrange
 
         mock_response = Mock()
@@ -314,7 +314,7 @@ class TestAPIUnit:
         ],
     )
     def test_api_error_scenarios(self, error_scenario):
-        """边界条件：API错误场景"""
+        """边界条件:API错误场景"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = error_scenario["status_code"]
@@ -345,7 +345,7 @@ class TestAPIUnit:
         ],
     )
     def test_league_data_validation_errors(self, invalid_data):
-        """异常用例：联赛数据验证错误"""
+        """异常用例:联赛数据验证错误"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 422
@@ -365,7 +365,7 @@ class TestAPIUnit:
 
     @pytest.mark.performance
     def test_api_response_performance(self):
-        """成功用例：API响应性能"""
+        """成功用例:API响应性能"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -384,7 +384,7 @@ class TestAPIUnit:
         assert elapsed_time < 1.0
 
     def test_api_concurrent_requests_handling(self):
-        """成功用例：API并发请求处理"""
+        """成功用例:API并发请求处理"""
         # Arrange
         import threading
 
@@ -426,7 +426,7 @@ class TestAPIUnit:
         ],
     )
     def test_content_negotiation(self, accept_type):
-        """边界条件：内容协商"""
+        """边界条件:内容协商"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -448,7 +448,7 @@ class TestAPIUnit:
         ["v1", "v2"],
     )
     def test_api_versioning(self, api_version):
-        """边界条件：API版本控制"""
+        """边界条件:API版本控制"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -468,7 +468,7 @@ class TestAPIUnit:
     # ========== 缓存控制测试 ==========
 
     def test_caching_headers(self):
-        """成功用例：缓存控制头部"""
+        """成功用例:缓存控制头部"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
@@ -491,7 +491,7 @@ class TestAPIUnit:
     # ========== 限流控制测试 ==========
 
     def test_rate_limiting_headers(self):
-        """成功用例：限流控制头部"""
+        """成功用例:限流控制头部"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 429
@@ -517,7 +517,7 @@ class TestAPIUnit:
     # ========== 安全头部测试 ==========
 
     def test_security_headers(self):
-        """成功用例：安全头部"""
+        """成功用例:安全头部"""
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200

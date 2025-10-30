@@ -1,7 +1,7 @@
-"""""""
+""""""""
 简单工作测试 - 测试确实工作的功能
 Simple Working Tests - Test Actually Working Functions
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -243,7 +243,7 @@ class TestValidationAndErrors:
     def test_invalid_date_format(self, client):
         """测试无效的日期格式"""
         response = client.get("/data/matches?date_from=invalid-date")
-        # 可能返回200或422，取决于验证
+        # 可能返回200或422,取决于验证
         assert response.status_code in [200, 422]
 
     def test_empty_body_request(self, client):
@@ -297,7 +297,7 @@ class TestCORS:
         """测试CORS头"""
         client.get("/api/health")
         # CORS头可能在某些端点存在
-        # 不强制要求，因为取决于配置
+        # 不强制要求,因为取决于配置
 
 
 @pytest.mark.unit

@@ -21,7 +21,7 @@ from datetime import datetime
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
 
-目标：验证完整业务流程的正确性和稳定性
+目标:验证完整业务流程的正确性和稳定性
 """
 
 import asyncio
@@ -131,7 +131,7 @@ class TestBusinessWorkflowsE2E:
         return prediction_service
 
     async def test_user_registration_workflow_success(self, mock_user_service) -> None:
-        """✅ 成功用例：用户注册完整流程成功"""
+        """✅ 成功用例:用户注册完整流程成功"""
         # 模拟用户注册数据
         user_data = {
             "username": "testuser123",
@@ -140,17 +140,17 @@ class TestBusinessWorkflowsE2E:
             "phone": "13812345678",
         }
 
-        # 步骤1：验证输入数据
+        # 步骤1:验证输入数据
         if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["username", "email", "password"]
             missing_fields = DataValidator.validate_required_fields(user_data, required_fields)
             assert len(missing_fields) == 0
 
-        # 步骤2：验证邮箱格式
+        # 步骤2:验证邮箱格式
         if hasattr(StringUtils, "validate_email"):
             assert StringUtils.validate_email(user_data["email"]) is True
 
-        # 步骤3：验证手机号格式
+        # 步骤3:验证手机号格式
         if hasattr(StringUtils, "sanitize_phone_number"):
             clean_phone = StringUtils.sanitize_phone_number(user_data["phone"])
             assert clean_phone == "13812345678"
@@ -158,39 +158,39 @@ class TestBusinessWorkflowsE2E:
         # 步骤4：执行用户注册
         registration_result = await mock_user_service.register_user(user_data)
 
-        # 步骤5：验证注册结果
+        # 步骤5:验证注册结果
         assert registration_result["success"] is True
         assert "user_id" in registration_result
         assert registration_result["user_id"] == 12345
 
     async def test_user_authentication_workflow_success(self, mock_user_service) -> None:
-        """✅ 成功用例：用户认证完整流程成功"""
+        """✅ 成功用例:用户认证完整流程成功"""
         # 模拟登录数据
         login_data = {"username": "testuser123", "password": "securepassword123"}
 
-        # 步骤1：验证登录数据
+        # 步骤1:验证登录数据
         if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["username", "password"]
             missing_fields = DataValidator.validate_required_fields(login_data, required_fields)
             assert len(missing_fields) == 0
 
-        # 步骤2：验证用户存在
+        # 步骤2:验证用户存在
         user_validation = await mock_user_service.validate_user(login_data["username"])
         assert user_validation["success"] is True
 
-        # 步骤3：验证密码
+        # 步骤3:验证密码
         password_valid = await mock_user_service.verify_password(
             login_data["username"], login_data["password"]
         )
         assert password_valid is True
 
-        # 步骤4：生成认证令牌
+        # 步骤4:生成认证令牌
         if hasattr(CryptoUtils, "generate_token"):
             auth_token = CryptoUtils.generate_token(32)
             assert len(auth_token) == 64  # 32字节的十六进制
 
     async def test_prediction_creation_workflow_success(self, mock_prediction_service) -> None:
-        """✅ 成功用例：预测创建完整流程成功"""
+        """✅ 成功用例:预测创建完整流程成功"""
         # 模拟预测数据
         prediction_data = {
             "user_id": 12345,
@@ -200,7 +200,7 @@ class TestBusinessWorkflowsE2E:
             "confidence": 0.85,
         }
 
-        # 步骤1：验证预测数据
+        # 步骤1:验证预测数据
         if hasattr(DataValidator, "validate_required_fields"):
             required_fields = [
                 "user_id",
@@ -213,30 +213,30 @@ class TestBusinessWorkflowsE2E:
             )
             assert len(missing_fields) == 0
 
-        # 步骤2：验证比分范围
+        # 步骤2:验证比分范围
         home_score = prediction_data["predicted_home_score"]
         away_score = prediction_data["predicted_away_score"]
         assert 0 <= home_score <= 10
         assert 0 <= away_score <= 10
 
-        # 步骤3：验证信心度范围
+        # 步骤3:验证信心度范围
         confidence = prediction_data["confidence"]
         assert 0.0 <= confidence <= 1.0
 
         # 步骤4：创建预测
         prediction_result = await mock_prediction_service.create_prediction(prediction_data)
 
-        # 步骤5：验证预测结果
+        # 步骤5:验证预测结果
         assert prediction_result["success"] is True
         assert "prediction_id" in prediction_result
         assert prediction_result["predicted_home_score"] == home_score
         assert prediction_result["predicted_away_score"] == away_score
 
     async def test_data_collection_workflow_success(self) -> None:
-        """✅ 成功用例：数据收集完整流程成功"""
+        """✅ 成功用例:数据收集完整流程成功"""
         # 模拟数据收集流程
 
-        # 步骤1：配置数据收集器
+        # 步骤1:配置数据收集器
         collector_config = {
             "source": "external_api",
             "endpoint": "https://api.football-data.org/matches",
@@ -245,7 +245,7 @@ class TestBusinessWorkflowsE2E:
             "retry_count": 3,
         }
 
-        # 步骤2：验证配置
+        # 步骤2:验证配置
         if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["source", "endpoint", "api_key"]
             missing_fields = DataValidator.validate_required_fields(
@@ -253,11 +253,11 @@ class TestBusinessWorkflowsE2E:
             )
             assert len(missing_fields) == 0
 
-        # 步骤3：验证URL格式
+        # 步骤3:验证URL格式
         if hasattr(StringUtils, "validate_url"):
             assert StringUtils.validate_url(collector_config["endpoint"]) is True
 
-        # 步骤4：模拟数据收集
+        # 步骤4:模拟数据收集
         collected_data = {
             "matches": [
                 {
@@ -272,7 +272,7 @@ class TestBusinessWorkflowsE2E:
             "collection_timestamp": "2024-01-01T12:00:00Z",
         }
 
-        # 步骤5：验证收集的数据
+        # 步骤5:验证收集的数据
         assert "matches" in collected_data
         assert len(collected_data["matches"]) > 0
 
@@ -285,15 +285,15 @@ class TestBusinessWorkflowsE2E:
             assert len(missing_match_fields) == 0
 
     async def test_configuration_management_workflow_success(self) -> None:
-        """✅ 成功用例：配置管理完整流程成功"""
+        """✅ 成功用例:配置管理完整流程成功"""
         # 步骤1：创建配置管理器
         manager = ConfigManager()
 
-        # 步骤2：添加配置源
+        # 步骤2:添加配置源
         env_source = EnvironmentConfigSource("FOOTBALLPREDICTION_")
         manager.add_source(env_source)
 
-        # 步骤3：设置环境变量
+        # 步骤3:设置环境变量
         test_env = {
             "FOOTBALLPREDICTION_API_HOST": "localhost",
             "FOOTBALLPREDICTION_API_PORT": "8000",
@@ -306,30 +306,30 @@ class TestBusinessWorkflowsE2E:
             # 步骤4：加载配置
             config = await manager.load_all()
 
-            # 步骤5：验证配置加载
+            # 步骤5:验证配置加载
             assert "api_host" in config
             assert "api_port" in config
             assert "debug" in config
             assert config["debug"] is True
 
-            # 步骤6：获取特定配置值
+            # 步骤6:获取特定配置值
             api_host = manager.get("api_host", "default")
             assert api_host == "localhost"
 
     async def test_cors_workflow_success(self) -> None:
-        """✅ 成功用例：CORS处理完整流程成功"""
-        # 步骤1：获取CORS配置
+        """✅ 成功用例:CORS处理完整流程成功"""
+        # 步骤1:获取CORS配置
         if not hasattr(get_cors_config_by_env, "__call__"):
             pytest.skip("CORS config function not available")
 
         dev_config = get_cors_config_by_env("development")
         assert dev_config is not None
 
-        # 步骤2：验证CORS配置
+        # 步骤2:验证CORS配置
         if hasattr(dev_config, "validate"):
             assert dev_config.validate() is True
 
-        # 步骤3：模拟CORS请求
+        # 步骤3:模拟CORS请求
         mock_request = Mock()
         mock_request.method = "OPTIONS"
         mock_request.origin = "https://frontend.example.com"
@@ -338,7 +338,7 @@ class TestBusinessWorkflowsE2E:
             "Access-Control-Request-Headers": "Content-Type",
         }
 
-        # 步骤4：处理预检请求
+        # 步骤4:处理预检请求
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {
@@ -347,13 +347,13 @@ class TestBusinessWorkflowsE2E:
             "Access-Control-Allow-Headers": "Content-Type, Authorization",
         }
 
-        # 步骤5：验证CORS响应
+        # 步骤5:验证CORS响应
         assert mock_response.status_code == 200
         assert "Access-Control-Allow-Origin" in mock_response.headers
 
     async def test_error_handling_workflow_success(self) -> None:
-        """✅ 成功用例：错误处理完整流程成功"""
-        # 步骤1：模拟各种错误情况
+        """✅ 成功用例:错误处理完整流程成功"""
+        # 步骤1:模拟各种错误情况
         error_scenarios = [
             {
                 "type": "validation_error",
@@ -377,7 +377,7 @@ class TestBusinessWorkflowsE2E:
             },
         ]
 
-        # 步骤2：处理每种错误场景
+        # 步骤2:处理每种错误场景
         for scenario in error_scenarios:
             # 模拟错误处理
             error_handler = Mock()
@@ -399,14 +399,14 @@ class TestBusinessWorkflowsE2E:
             assert error_result["notified"] is True
 
     async def test_performance_monitoring_workflow_success(self) -> None:
-        """✅ 成功用例：性能监控完整流程成功"""
-        # 步骤1：创建性能监控器
+        """✅ 成功用例:性能监控完整流程成功"""
+        # 步骤1:创建性能监控器
         performance_monitor = Mock()
         performance_monitor.start_timer = Mock(return_value="timer_12345")
         performance_monitor.end_timer = Mock(return_value=0.05)
         performance_monitor.log_metric = Mock(return_value=True)
 
-        # 步骤2：模拟业务操作
+        # 步骤2:模拟业务操作
         operations = [
             "user_registration",
             "user_authentication",
@@ -443,20 +443,20 @@ class TestBusinessWorkflowsE2E:
         # 步骤3：验证性能指标
         assert len(performance_metrics) == len(operations)
 
-        # 步骤4：验证性能要求（所有操作应在100ms内完成）
+        # 步骤4:验证性能要求（所有操作应在100ms内完成）
         for metric in performance_metrics:
             assert metric["execution_time"] <= 0.1  # 100ms
             assert metric["success"] is True
 
     async def test_multi_environment_deployment_workflow_success(self) -> None:
-        """✅ 成功用例：多环境部署完整流程成功"""
-        # 步骤1：定义环境配置
+        """✅ 成功用例:多环境部署完整流程成功"""
+        # 步骤1:定义环境配置
         environments = ["development", "staging", "production"]
 
         deployment_results = []
 
         for env in environments:
-            # 步骤2：获取环境特定配置
+            # 步骤2:获取环境特定配置
             if env == "development":
                 config = {
                     "debug": True,
@@ -476,13 +476,13 @@ class TestBusinessWorkflowsE2E:
                     "api": {"cors_origins": ["https://prod.example.com"]},
                 }
 
-            # 步骤3：验证环境配置
+            # 步骤3:验证环境配置
             if hasattr(DataValidator, "validate_required_fields"):
                 required_fields = ["debug", "database", "api"]
                 missing_fields = DataValidator.validate_required_fields(config, required_fields)
                 assert len(missing_fields) == 0
 
-            # 步骤4：模拟部署验证
+            # 步骤4:模拟部署验证
             deployment_result = {
                 "environment": env,
                 "config_loaded": True,
@@ -492,7 +492,7 @@ class TestBusinessWorkflowsE2E:
 
             deployment_results.append(deployment_result)
 
-        # 步骤5：验证所有环境部署结果
+        # 步骤5:验证所有环境部署结果
         assert len(deployment_results) == len(environments)
 
         for result in deployment_results:
@@ -503,10 +503,10 @@ class TestBusinessWorkflowsE2E:
     async def test_end_to_end_api_workflow_success(
         self, mock_user_service, mock_prediction_service
     ) -> None:
-        """✅ 成功用例：端到端API完整流程成功"""
+        """✅ 成功用例:端到端API完整流程成功"""
         # 完整的API工作流：用户注册 -> 登录 -> 创建预测 -> 查询预测
 
-        # 步骤1：用户注册
+        # 步骤1:用户注册
         user_data = {
             "username": "endtoend_test_user",
             "email": "endtoend@example.com",
@@ -516,11 +516,11 @@ class TestBusinessWorkflowsE2E:
         registration_result = await mock_user_service.register_user(user_data)
         assert registration_result["success"] is True
 
-        # 步骤2：用户认证
+        # 步骤2:用户认证
         login_result = await mock_user_service.validate_user(user_data["username"])
         assert login_result["success"] is True
 
-        # 步骤3：创建预测
+        # 步骤3:创建预测
         prediction_data = {
             "user_id": registration_result["user_id"],
             "match_id": 99999,
@@ -532,13 +532,13 @@ class TestBusinessWorkflowsE2E:
         prediction_result = await mock_prediction_service.create_prediction(prediction_data)
         assert prediction_result["success"] is True
 
-        # 步骤4：查询用户预测历史
+        # 步骤4:查询用户预测历史
         user_predictions = await mock_prediction_service.get_user_predictions(
             registration_result["user_id"]
         )
         assert len(user_predictions) >= 1
 
-        # 步骤5：验证端到端流程完整性
+        # 步骤5:验证端到端流程完整性
         workflow_complete = {
             "user_registered": registration_result["success"],
             "user_authenticated": login_result["success"],

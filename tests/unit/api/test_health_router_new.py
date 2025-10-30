@@ -1,9 +1,9 @@
-"""""""
+""""""""
 健康检查API路由器测试
 Tests for health check API router
 
 测试健康检查API的各个端点功能。
-"""""""
+""""""""
 
 import time
 
@@ -163,13 +163,13 @@ from src.api.health import _check_database
         with patch("time.time", side_effect=Exception("Time error")):
             response = client.get("/api/v1/health/")
 
-            # 应该仍然返回200，因为time.time()错误不会阻止响应
+            # 应该仍然返回200,因为time.time()错误不会阻止响应
             assert response.status_code == 200
 
     def test_database_check_with_exception(self, client):
         """测试数据库检查异常时的处理"""
         with patch("src.api.health._check_database", side_effect=Exception("DB error")):
-            # 这应该会导致500错误，因为异常没有被捕获
+            # 这应该会导致500错误,因为异常没有被捕获
             response = client.get("/api/v1/health/")
             assert response.status_code == 500
 

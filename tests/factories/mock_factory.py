@@ -1,10 +1,10 @@
 from typing import List
 from typing import Dict
 from typing import Any
-"""""""
+""""""""
 Mock Factory - 统一的测试Mock对象创建
-提供预配置的高质量Mock对象，简化测试代码编写
-"""""""
+提供预配置的高质量Mock对象,简化测试代码编写
+""""""""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from tests.factories.data_factory import DataFactory
 
 
 class MockFactory:
-    """""""
+    """"""""
     Mock对象工厂类
-    提供各种预配置的Mock对象，确保测试的一致性和可维护性
-    """""""
+    提供各种预配置的Mock对象,确保测试的一致性和可维护性
+    """"""""
 
     # 默认配置常量
     DEFAULT_USER_ID = "test_user_123"
@@ -30,7 +30,7 @@ class MockFactory:
 
     @classmethod
     def mock_user(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock用户对象
 
         Args:
@@ -38,7 +38,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的用户Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -70,7 +70,7 @@ class MockFactory:
 
     @classmethod
     def mock_admin_user(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock管理员用户
 
         Args:
@@ -78,7 +78,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的管理员Mock对象
-        """""""
+        """"""""
         admin_overrides = {
             "username": "admin",
             "email": "admin@example.com",
@@ -92,7 +92,7 @@ class MockFactory:
 
     @classmethod
     def mock_match(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock比赛对象
 
         Args:
@@ -100,7 +100,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的比赛Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -129,7 +129,7 @@ class MockFactory:
 
     @classmethod
     def mock_prediction(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock预测对象
 
         Args:
@@ -137,7 +137,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的预测Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -167,7 +167,7 @@ class MockFactory:
 
     @classmethod
     def mock_team(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock球队对象
 
         Args:
@@ -175,7 +175,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的球队Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -199,7 +199,7 @@ class MockFactory:
 
     @classmethod
     def mock_league(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock联赛对象
 
         Args:
@@ -207,7 +207,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的联赛Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -231,7 +231,7 @@ class MockFactory:
     def mock_repository(
         cls, repository_type: str = "base", overrides: Dict[str, Any] = None
     ) -> Mock:
-        """""""
+        """"""""
         创建Mock仓储对象
 
         Args:
@@ -240,7 +240,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的仓储Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -331,7 +331,7 @@ class MockFactory:
 
     @classmethod
     def mock_database_connection(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock数据库连接
 
         Args:
@@ -339,7 +339,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的数据库连接Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -367,7 +367,7 @@ class MockFactory:
 
     @classmethod
     def mock_redis_client(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock Redis客户端
 
         Args:
@@ -375,7 +375,7 @@ class MockFactory:
 
         Returns:
             Mock: 配置好的Redis客户端Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -394,7 +394,7 @@ class MockFactory:
             value = mock._data.get(key)
             if value is None:
                 return None
-            # 如果是JSON字符串，尝试解析
+            # 如果是JSON字符串,尝试解析
             if isinstance(value, str) and (value.startswith("{") or value.startswith("[")):
                 try:
                     import json
@@ -423,7 +423,7 @@ except Exception:
 
     @classmethod
     def mock_api_client(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock API客户端
 
         Args:
@@ -431,7 +431,7 @@ except Exception:
 
         Returns:
             Mock: 配置好的API客户端Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -463,7 +463,7 @@ except Exception:
 
     @classmethod
     def mock_cache_service(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock缓存服务
 
         Args:
@@ -471,7 +471,7 @@ except Exception:
 
         Returns:
             Mock: 配置好的缓存服务Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -491,7 +491,7 @@ except Exception:
 
     @classmethod
     def mock_logger(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock日志器
 
         Args:
@@ -499,7 +499,7 @@ except Exception:
 
         Returns:
             Mock: 配置好的日志器Mock对象
-        """""""
+        """"""""
         mock = Mock()
         mock.info = Mock()
         mock.debug = Mock()
@@ -522,7 +522,7 @@ except Exception:
 
     @classmethod
     def mock_event_bus(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock事件总线
 
         Args:
@@ -530,7 +530,7 @@ except Exception:
 
         Returns:
             Mock: 配置好的事件总线Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -566,7 +566,7 @@ except Exception:
 
     @classmethod
     def mock_scheduler(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock任务调度器
 
         Args:
@@ -574,7 +574,7 @@ except Exception:
 
         Returns:
             Mock: 配置好的任务调度器Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -612,7 +612,7 @@ except Exception:
 
     @classmethod
     def mock_email_service(cls, overrides: Dict[str, Any] = None) -> Mock:
-        """""""
+        """"""""
         创建Mock邮件服务
 
         Args:
@@ -620,7 +620,7 @@ except Exception:
 
         Returns:
             Mock: 配置好的邮件服务Mock对象
-        """""""
+        """"""""
         if overrides is None:
             overrides = {}
 
@@ -670,7 +670,7 @@ except Exception:
 
     @classmethod
     def create_batch(cls, factory_method, count: int, **overrides) -> List[Mock]:
-        """""""
+        """"""""
         批量创建Mock对象
 
         Args:
@@ -680,7 +680,7 @@ except Exception:
 
         Returns:
             List[Mock]: Mock对象列表
-        """""""
+        """"""""
         mocks = []
         for i in range(count):
             item_overrides = overrides.copy()
@@ -695,7 +695,7 @@ except Exception:
 
     @classmethod
     def create_test_context(cls, **components) -> Dict[str, Any]:
-        """""""
+        """"""""
         创建完整的测试上下文
 
         Args:
@@ -703,7 +703,7 @@ except Exception:
 
         Returns:
             Dict[str, Any]: 包含所有Mock组件的测试上下文
-        """""""
+        """"""""
         context = {}
 
         # 默认包含所有组件
@@ -742,37 +742,37 @@ except Exception:
         return context
 
 
-# 便捷函数，用于快速创建常用Mock对象
+# 便捷函数,用于快速创建常用Mock对象
 def create_mock_user(**overrides) -> Mock:
-    """便捷函数：创建Mock用户"""
+    """便捷函数:创建Mock用户"""
     return MockFactory.mock_user(overrides)
 
 
 def create_mock_match(**overrides) -> Mock:
-    """便捷函数：创建Mock比赛"""
+    """便捷函数:创建Mock比赛"""
     return MockFactory.mock_match(overrides)
 
 
 def create_mock_prediction(**overrides) -> Mock:
-    """便捷函数：创建Mock预测"""
+    """便捷函数:创建Mock预测"""
     return MockFactory.mock_prediction(overrides)
 
 
 def create_mock_repository(repo_type: str = "base", **overrides) -> Mock:
-    """便捷函数：创建Mock仓储"""
+    """便捷函数:创建Mock仓储"""
     return MockFactory.mock_repository(repo_type, overrides)
 
 
 def create_mock_database(**overrides) -> Mock:
-    """便捷函数：创建Mock数据库连接"""
+    """便捷函数:创建Mock数据库连接"""
     return MockFactory.mock_database_connection(overrides)
 
 
 def create_mock_redis(**overrides) -> Mock:
-    """便捷函数：创建Mock Redis客户端"""
+    """便捷函数:创建Mock Redis客户端"""
     return MockFactory.mock_redis_client(overrides)
 
 
 def create_test_context(**components) -> Dict[str, Any]:
-    """便捷函数：创建测试上下文"""
+    """便捷函数:创建测试上下文"""
     return MockFactory.create_test_context(**components)

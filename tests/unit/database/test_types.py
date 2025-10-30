@@ -23,14 +23,14 @@ class TestSQLiteCompatibleJSONB:
     """SQLite兼容的JSONB类型测试"""
 
     def test_type_creation(self):
-        """测试：类型创建"""
+        """测试:类型创建"""
         json_type = SQLiteCompatibleJSONB()
         assert json_type is not None
         assert json_type.impl is not None
         assert json_type.cache_ok is True
 
     def test_load_dialect_impl_with_mock(self):
-        """测试：使用Mock测试方言加载"""
+        """测试:使用Mock测试方言加载"""
         json_type = SQLiteCompatibleJSONB()
 
         # Mock PostgreSQL dialect
@@ -56,7 +56,7 @@ class TestSQLiteCompatibleJSONB:
         assert _result is not None
 
     def test_process_bind_param_none(self):
-        """测试：处理绑定参数（None值）"""
+        """测试:处理绑定参数（None值）"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "sqlite"
@@ -65,7 +65,7 @@ class TestSQLiteCompatibleJSONB:
         assert _result is None
 
     def test_process_bind_param_postgresql(self):
-        """测试：处理绑定参数（PostgreSQL）"""
+        """测试:处理绑定参数（PostgreSQL）"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "postgresql"
@@ -81,7 +81,7 @@ class TestSQLiteCompatibleJSONB:
         assert _result == data_list
 
     def test_process_bind_param_sqlite(self):
-        """测试：处理绑定参数（SQLite）"""
+        """测试:处理绑定参数（SQLite）"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "sqlite"
@@ -101,7 +101,7 @@ class TestSQLiteCompatibleJSONB:
         assert parsed == data_list
 
     def test_process_result_value_none(self):
-        """测试：处理结果值（None）"""
+        """测试:处理结果值（None）"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
 
@@ -109,7 +109,7 @@ class TestSQLiteCompatibleJSONB:
         assert _result is None
 
     def test_process_result_value_postgresql(self):
-        """测试：处理结果值（PostgreSQL）"""
+        """测试:处理结果值（PostgreSQL）"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "postgresql"
@@ -119,7 +119,7 @@ class TestSQLiteCompatibleJSONB:
         assert _result == data
 
     def test_process_result_value_sqlite(self):
-        """测试：处理结果值（SQLite）"""
+        """测试:处理结果值（SQLite）"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "sqlite"
@@ -135,7 +135,7 @@ class TestSQLiteCompatibleJSONB:
         assert _result == invalid_str
 
     def test_unicode_handling(self):
-        """测试：Unicode处理"""
+        """测试:Unicode处理"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "sqlite"
@@ -148,7 +148,7 @@ class TestSQLiteCompatibleJSONB:
         assert parsed == data
 
     def test_empty_structures(self):
-        """测试：空结构处理"""
+        """测试:空结构处理"""
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
         dialect.name = "sqlite"
@@ -170,14 +170,14 @@ class TestCompatibleJSON:
     """兼容JSON类型测试"""
 
     def test_type_creation(self):
-        """测试：类型创建"""
+        """测试:类型创建"""
         json_type = CompatibleJSON()
         assert json_type is not None
         assert json_type.impl is not None
         assert json_type.cache_ok is True
 
     def test_load_dialect_impl_with_mock(self):
-        """测试：使用Mock测试方言加载"""
+        """测试:使用Mock测试方言加载"""
         json_type = CompatibleJSON()
 
         # Mock PostgreSQL dialect
@@ -191,7 +191,7 @@ class TestCompatibleJSON:
         assert _result is not None
 
     def test_process_bind_param_with_mock(self):
-        """测试：处理绑定参数"""
+        """测试:处理绑定参数"""
         json_type = CompatibleJSON()
         dialect = Mock()
 
@@ -205,7 +205,7 @@ class TestCompatibleJSON:
         assert _result is not None
 
     def test_process_result_value_with_mock(self):
-        """测试：处理结果值"""
+        """测试:处理结果值"""
         json_type = CompatibleJSON()
         dialect = Mock()
 
@@ -223,17 +223,17 @@ class TestUtilityFunctions:
     """工具函数测试"""
 
     def test_get_json_type_with_jsonb(self):
-        """测试：获取JSON类型（使用JSONB）"""
+        """测试:获取JSON类型（使用JSONB）"""
         json_type = get_json_type(use_jsonb=True)
         assert isinstance(json_type, SQLiteCompatibleJSONB)
 
     def test_get_json_type_without_jsonb(self):
-        """测试：获取JSON类型（不使用JSONB）"""
+        """测试:获取JSON类型（不使用JSONB）"""
         json_type = get_json_type(use_jsonb=False)
         assert isinstance(json_type, CompatibleJSON)
 
     def test_get_json_type_default(self):
-        """测试：获取JSON类型（默认）"""
+        """测试:获取JSON类型（默认）"""
         json_type = get_json_type()
         assert isinstance(json_type, SQLiteCompatibleJSONB)
 
@@ -242,7 +242,7 @@ class TestJSONTypeIntegration:
     """JSON类型集成测试"""
 
     def test_serialization_round_trip(self):
-        """测试：序列化往返"""
+        """测试:序列化往返"""
         json_type = SQLiteCompatibleJSONB()
         sqlite_dialect = Mock()
         sqlite_dialect.name = "sqlite"
@@ -266,7 +266,7 @@ class TestJSONTypeIntegration:
         assert _result == original_data
 
     def test_invalid_json_handling(self):
-        """测试：无效JSON处理"""
+        """测试:无效JSON处理"""
         json_type = SQLiteCompatibleJSONB()
         sqlite_dialect = Mock()
         sqlite_dialect.name = "sqlite"
@@ -279,7 +279,7 @@ class TestJSONTypeIntegration:
         assert bound == '"not a json string"'
 
     def test_special_characters(self):
-        """测试：特殊字符处理"""
+        """测试:特殊字符处理"""
         json_type = SQLiteCompatibleJSONB()
         sqlite_dialect = Mock()
         sqlite_dialect.name = "sqlite"

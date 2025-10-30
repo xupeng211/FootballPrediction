@@ -1,6 +1,6 @@
 """
 Phase G Week 3: API Schemas 单元测试
-自动生成的测试用例，覆盖src/api/schemas模块
+自动生成的测试用例,覆盖src/api/schemas模块
 """
 
 import pytest
@@ -285,7 +285,7 @@ class TestApiSchemas:
             with pytest.raises(Exception):
                 MatchRequest(**invalid_data)
         except Exception:
-            # 如果模型不可用，跳过测试
+            # 如果模型不可用,跳过测试
             pytest.skip("MatchRequest validation not available")
 
     @pytest.mark.parametrize("confidence", [0.0, 0.5, 1.0])

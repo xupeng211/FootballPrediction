@@ -30,8 +30,8 @@ class TestUtilsDataValidatorRefactored:
         if not IMPORTS_AVAILABLE:
             pytest.skip(f"模块 {module_name} 导入失败")
 
-        # 基础验证：模块能够正常导入
-        assert True  # 如果能执行到这里，说明导入成功
+        # 基础验证:模块能够正常导入
+        assert True  # 如果能执行到这里,说明导入成功
 
     # 函数测试
     def test_is_valid_email_function_1(self):
@@ -55,7 +55,7 @@ class TestUtilsDataValidatorRefactored:
 
         except Exception as e:
             print(f"函数测试异常: {e}")
-            # 记录但不失败，可能是设计如此
+            # 记录但不失败,可能是设计如此
             func_name = func["name"]
             pytest.skip(f"函数 {func_name} 测试跳过: {e}")
 
@@ -80,7 +80,7 @@ class TestUtilsDataValidatorRefactored:
 
         except Exception as e:
             print(f"函数测试异常: {e}")
-            # 记录但不失败，可能是设计如此
+            # 记录但不失败,可能是设计如此
             func_name = func["name"]
             pytest.skip(f"函数 {func_name} 测试跳过: {e}")
 
@@ -105,7 +105,7 @@ class TestUtilsDataValidatorRefactored:
 
         except Exception as e:
             print(f"函数测试异常: {e}")
-            # 记录但不失败，可能是设计如此
+            # 记录但不失败,可能是设计如此
             func_name = func["name"]
             pytest.skip(f"函数 {func_name} 测试跳过: {e}")
 
@@ -130,7 +130,7 @@ class TestUtilsDataValidatorRefactored:
 
         except Exception as e:
             print(f"函数测试异常: {e}")
-            # 记录但不失败，可能是设计如此
+            # 记录但不失败,可能是设计如此
             func_name = func["name"]
             pytest.skip(f"函数 {func_name} 测试跳过: {e}")
 
@@ -155,7 +155,7 @@ class TestUtilsDataValidatorRefactored:
 
         except Exception as e:
             print(f"函数测试异常: {e}")
-            # 记录但不失败，可能是设计如此
+            # 记录但不失败,可能是设计如此
             func_name = func["name"]
             pytest.skip(f"函数 {func_name} 测试跳过: {e}")
 

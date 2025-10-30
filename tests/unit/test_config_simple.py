@@ -146,8 +146,8 @@ class TestConfigSimple:
             # 测试数字键的行为
             config.set(123, "numeric_key_value")
             # set方法直接使用数字键，get方法会转换key为字符串查找
-            # get内部会将key转为str，所以用"123"查找会失败
-            # 但用数字123查找时，get会转为"123"，也找不到123这个数字键
+            # get内部会将key转为str,所以用"123"查找会失败
+            # 但用数字123查找时,get会转为"123",也找不到123这个数字键
             # 让我们测试实际的行为
             assert config.get(123) is None  # 因为get转为"123"但实际键是123
             assert config.get("123") is None  # 因为实际键是123不是字符串

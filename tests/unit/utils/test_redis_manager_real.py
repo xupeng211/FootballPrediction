@@ -406,7 +406,7 @@ class TestRedisManager:
         client = await redis_manager.get_async_client()
         assert client is redis_manager._async_client
 
-        # 客户端不存在，需要初始化
+        # 客户端不存在,需要初始化
         redis_manager._async_client = None
         redis_manager._init_async_pool = AsyncMock()
         redis_manager._async_client = MagicMock()

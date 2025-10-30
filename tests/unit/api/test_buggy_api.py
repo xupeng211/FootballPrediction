@@ -35,7 +35,7 @@ class TestBuggyAPI:
         return TestClient(app)
 
     def test_fixed_query_endpoint(self, client):
-        """测试：修复后的查询端点"""
+        """测试:修复后的查询端点"""
         response = client.get("/test/fixed_query")
         assert response.status_code == 200
         _data = response.json()
@@ -47,7 +47,7 @@ class TestBuggyAPI:
         assert _data["type"] == "int"
 
     def test_fixed_query_with_limit(self, client):
-        """测试：带限制参数的查询端点"""
+        """测试:带限制参数的查询端点"""
         response = client.get("/test/fixed_query?limit=50")
         assert response.status_code == 200
         _data = response.json()
@@ -55,7 +55,7 @@ class TestBuggyAPI:
         assert _data["type"] == "int"
 
     def test_fixed_query_validation(self, client):
-        """测试：查询参数验证"""
+        """测试:查询参数验证"""
         # 测试最小值边界
         response = client.get("/test/fixed_query?limit=1")
         assert response.status_code == 200
@@ -67,7 +67,7 @@ class TestBuggyAPI:
         assert response.json()["limit"] == 100
 
     def test_fixed_query_invalid_limit(self, client):
-        """测试：无效的查询参数"""
+        """测试:无效的查询参数"""
         # 小于最小值
         response = client.get("/test/fixed_query?limit=0")
         assert response.status_code == 422  # Validation error
@@ -81,7 +81,7 @@ class TestBuggyAPI:
         assert response.status_code == 422  # Validation error
 
     def test_buggy_query_endpoint(self, client):
-        """测试：修复后的buggy查询端点"""
+        """测试:修复后的buggy查询端点"""
         response = client.get("/test/buggy_query")
         assert response.status_code == 200
         _data = response.json()
@@ -93,7 +93,7 @@ class TestBuggyAPI:
         assert _data["type"] == "int"
 
     def test_buggy_query_with_parameter(self, client):
-        """测试：带参数的buggy查询端点"""
+        """测试:带参数的buggy查询端点"""
         response = client.get("/test/buggy_query?limit=25")
         assert response.status_code == 200
         _data = response.json()
@@ -102,7 +102,7 @@ class TestBuggyAPI:
 
     @patch("src.api.buggy_api.service")
     def test_buggy_async_endpoint(self, mock_service, client):
-        """测试：异步端点"""
+        """测试:异步端点"""
         mock_service.get_status = AsyncMock(return_value="test_status")
 
         response = client.get("/test/buggy_async")
@@ -118,17 +118,17 @@ class TestSomeAsyncService:
 
     @pytest.mark.asyncio
     async def test_get_status(self):
-        """测试：获取状态"""
+        """测试:获取状态"""
         service_instance = SomeAsyncService()
         status = await service_instance.get_status()
         assert status == "real_status"
 
     def test_service_instantiation(self):
-        """测试：服务实例化"""
+        """测试:服务实例化"""
         assert isinstance(service, SomeAsyncService)
         # 确保是同一个实例（单例模式）
         service2 = SomeAsyncService()
-        assert service is not service2  # 不是单例，每次创建新实例
+        assert service is not service2  # 不是单例,每次创建新实例
 
 
 @pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
@@ -136,7 +136,7 @@ class TestBuggyAPIIntegration:
     """Buggy API集成测试"""
 
     def test_router_structure(self):
-        """测试：路由器结构"""
+        """测试:路由器结构"""
         routes = list(router.routes)
         assert len(routes) == 3  # 应该有3个端点
 
@@ -146,12 +146,12 @@ class TestBuggyAPIIntegration:
         assert "/buggy_async" in route_paths
 
     def test_route_methods(self):
-        """测试：路由方法"""
+        """测试:路由方法"""
         for route in router.routes:
             assert "GET" in route.methods
 
     def test_endpoint_documentation(self):
-        """测试：端点文档"""
+        """测试:端点文档"""
         for route in router.routes:
             if hasattr(route, "endpoint"):
                 # 端点应该有文档字符串
@@ -159,7 +159,7 @@ class TestBuggyAPIIntegration:
                     assert len(route.endpoint.__doc__.strip()) > 0
 
     def test_query_parameter_specs(self):
-        """测试：查询参数规范"""
+        """测试:查询参数规范"""
         # 检查路由是否有正确的查询参数
         for route in router.routes:
             if hasattr(route, "dependant"):
@@ -167,7 +167,7 @@ class TestBuggyAPIIntegration:
                 assert route.dependant is not None
 
     def test_fastapi_integration(self):
-        """测试：FastAPI集成"""
+        """测试:FastAPI集成"""
         from fastapi import FastAPI
 
         app = FastAPI()
@@ -185,7 +185,7 @@ class TestBuggyAPIEdgeCases:
     """Buggy API边界情况测试"""
 
     def test_concurrent_requests(self):
-        """测试：并发请求"""
+        """测试:并发请求"""
         import threading
 
         from fastapi import FastAPI
@@ -217,7 +217,7 @@ class TestBuggyAPIEdgeCases:
         assert all(status == 200 for status in results)
 
     def test_large_limit_values(self):
-        """测试：大限制值"""
+        """测试:大限制值"""
         from fastapi import FastAPI
 
         app = FastAPI()
@@ -232,7 +232,7 @@ class TestBuggyAPIEdgeCases:
             assert response.json()["limit"] == value
 
     def test_endpoint_response_format(self):
-        """测试：端点响应格式"""
+        """测试:端点响应格式"""
         from fastapi import FastAPI
 
         app = FastAPI()
@@ -247,7 +247,7 @@ class TestBuggyAPIEdgeCases:
         assert set(data.keys()) == {"limit", "type"}
 
     def test_parameter_type_handling(self):
-        """测试：参数类型处理"""
+        """测试:参数类型处理"""
         from fastapi import FastAPI
 
         app = FastAPI()
@@ -265,12 +265,12 @@ class TestBuggyAPIEdgeCases:
         assert response.status_code in [200, 422]
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not BUGGY_API_AVAILABLE
         assert True  # 表明测试意识到模块不可用

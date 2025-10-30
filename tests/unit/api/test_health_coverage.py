@@ -1,7 +1,7 @@
-"""""""
+""""""""
 测试 health 模块的覆盖率补充
 Test coverage supplement for health module
-"""""""
+""""""""
 
 import warnings
 
@@ -20,7 +20,7 @@ def test_health_module_import():
 
 def test_health_module_deprecation_warning():
     """测试health模块的弃用警告"""
-    # 由于模块结构变化，弃用警告可能不会触发
+    # 由于模块结构变化,弃用警告可能不会触发
     # 我们只验证导入功能正常
     from src.api.health import router
 
@@ -59,7 +59,7 @@ from src.api.health.health import router as new_router
         # 两个导入应该指向同一个对象（重新导出）
         assert old_router is new_router
     except ImportError:
-        # 如果新模块不存在，至少确保旧模块能导入
+        # 如果新模块不存在,至少确保旧模块能导入
 from src.api.health import router
 
         assert router is not None

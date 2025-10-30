@@ -292,7 +292,7 @@ async def test_data_loader(api_client, auth_tokens):
         async def cleanup(self):
             """清理测试数据"""
             logger.info("🧹 清理 E2E 测试数据...")
-            # 这里可以实现清理逻辑，或者在每个测试方法后单独清理
+            # 这里可以实现清理逻辑,或者在每个测试方法后单独清理
             pass
 
     from datetime import timedelta
@@ -319,7 +319,7 @@ async def websocket_client():
             yield websocket
 
     except ImportError:
-        logger.warning("websockets 库未安装，跳过 WebSocket 测试")
+        logger.warning("websockets 库未安装,跳过 WebSocket 测试")
         yield None
     except Exception as e:
         logger.warning(f"WebSocket 连接失败: {e}")

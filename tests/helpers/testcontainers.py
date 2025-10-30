@@ -94,7 +94,7 @@ class RedisContainer(MockContainer):
 
 
 class TestPostgresContainer(PostgresContainer):
-    """扩展的PostgreSQL容器，配置了测试数据库"""
+    """扩展的PostgreSQL容器,配置了测试数据库"""
 
     def __init__(
         self,
@@ -115,25 +115,25 @@ class TestPostgresContainer(PostgresContainer):
 
     def setup_test_database(self) -> None:
         """设置测试数据库"""
-        # 在实际实现中，这里会创建表和插入测试数据
+        # 在实际实现中,这里会创建表和插入测试数据
         pass
 
 
 class TestRedisContainer(RedisContainer):
-    """扩展的Redis容器，配置了测试环境"""
+    """扩展的Redis容器,配置了测试环境"""
 
     def __init__(self, port: Optional[int] = None, **kwargs):
         super().__init__(image="redis:6", port=port or 16379, **kwargs)  # 避免与主Redis冲突
 
     def setup_test_data(self) -> None:
         """设置测试数据"""
-        # 在实际实现中，这里会插入测试数据
+        # 在实际实现中,这里会插入测试数据
         pass
 
 
 def wait_for_logs(container, predicate: str, timeout: int = 30, interval: float = 1.0) -> None:
     """等待容器日志中出现指定内容"""
-    # Mock实现，直接返回
+    # Mock实现,直接返回
     pass
 
 
@@ -167,7 +167,7 @@ def stop_test_containers(containers: Dict[str, MockContainer]) -> None:
         container.stop()
 
 
-# 模拟装饰器，用于不需要真实容器的测试
+# 模拟装饰器,用于不需要真实容器的测试
 def mock_containers(func):
     """Mock容器装饰器"""
 

@@ -150,7 +150,7 @@ class TestNoMonkeypatchMode:
 
         # 检查没有全局 mock requests 模块
         if "requests" in sys.modules:
-            # 如果模块已加载，确保不是我们的 mock
+            # 如果模块已加载,确保不是我们的 mock
             import requests
 
             assert hasattr(requests, "get")

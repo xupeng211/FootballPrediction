@@ -7,7 +7,7 @@
 适配器API端点简化测试
 Tests for Adapter API Endpoints (Simple Version)
 
-专注于测试API端点的核心功能，使用简化的Mock避免序列化问题。
+专注于测试API端点的核心功能,使用简化的Mock避免序列化问题。
 """
 
 
@@ -41,7 +41,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_registry_status(self, mock_registry, client):
-        """测试：获取注册表状态"""
+        """测试:获取注册表状态"""
         # Given
         mock_registry.status.value = "active"
         mock_registry.get_health_status = AsyncMock(
@@ -69,7 +69,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_initialize_registry(self, mock_registry, client):
-        """测试：初始化注册表"""
+        """测试:初始化注册表"""
         # Given
         mock_registry.initialize = AsyncMock()
 
@@ -83,7 +83,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_shutdown_registry(self, mock_registry, client):
-        """测试：关闭注册表"""
+        """测试:关闭注册表"""
         # Given
         mock_registry.shutdown = AsyncMock()
 
@@ -99,7 +99,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_factory")
     def test_get_adapter_configs(self, mock_factory, client):
-        """测试：获取适配器配置"""
+        """测试:获取适配器配置"""
         # Given
         mock_factory.list_configs.return_value = ["adapter1"]
         mock_factory.get_config.return_value = Mock(
@@ -127,7 +127,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_factory")
     def test_load_adapter_config(self, mock_factory, client):
-        """测试：加载适配器配置"""
+        """测试:加载适配器配置"""
         # Given
         mock_factory._configs = {}
         config_data = {
@@ -145,7 +145,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取足球比赛数据"""
+        """测试:演示模式获取足球比赛数据"""
         # Given
         mock_registry.get_adapter.return_value = None
 
@@ -160,7 +160,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_with_params(self, mock_registry, client):
-        """测试：带参数获取比赛数据"""
+        """测试:带参数获取比赛数据"""
         # Given
         mock_registry.get_adapter.return_value = None
 
@@ -176,7 +176,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取比赛详情"""
+        """测试:演示模式获取比赛详情"""
         # Given
         mock_registry.get_adapter.return_value = None
 
@@ -191,7 +191,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取球队数据"""
+        """测试:演示模式获取球队数据"""
         # Given
         mock_registry.get_adapter.return_value = None
 
@@ -206,7 +206,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_with_search(self, mock_registry, client):
-        """测试：搜索球队"""
+        """测试:搜索球队"""
         # Given
         mock_registry.get_adapter.return_value = None
 
@@ -220,7 +220,7 @@ class TestAdaptersAPI:
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_team_players_demo_mode(self, mock_registry, client):
-        """测试：演示模式获取球员数据"""
+        """测试:演示模式获取球员数据"""
         # Given
         mock_registry.get_adapter.return_value = None
 
@@ -236,7 +236,7 @@ class TestAdaptersAPI:
     # ==================== 演示功能测试 ====================
 
     def test_demo_adapter_comparison(self, client):
-        """测试：多数据源对比演示"""
+        """测试:多数据源对比演示"""
         # When
         response = client.get("/adapters/demo/comparison")
 
@@ -247,7 +247,7 @@ class TestAdaptersAPI:
         assert "benefits" in _data
 
     def test_demo_adapter_fallback(self, client):
-        """测试：故障转移演示"""
+        """测试:故障转移演示"""
         # When
         response = client.get("/adapters/demo/fallback")
 
@@ -259,7 +259,7 @@ class TestAdaptersAPI:
         assert _data["result"]["success"] is True
 
     def test_demo_data_transformation(self, client):
-        """测试：数据转换演示"""
+        """测试:数据转换演示"""
         # When
         response = client.get("/adapters/demo/transformation")
 
@@ -273,7 +273,7 @@ class TestAdaptersAPI:
     # ==================== 错误处理测试 ====================
 
     def test_get_football_matches_invalid_date_format(self, client):
-        """测试：无效日期格式"""
+        """测试:无效日期格式"""
         # When
         response = client.get("/adapters/football/matches?date_from=invalid-date")
 
@@ -283,7 +283,7 @@ class TestAdaptersAPI:
     # ==================== 边界条件测试 ====================
 
     def test_get_team_players_empty_team_id(self, client):
-        """测试：空的球队ID"""
+        """测试:空的球队ID"""
         # When
         response = client.get("/adapters/football/teams//players")
 

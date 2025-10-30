@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 16 repeated Mock creations
 
 
-"""""""
+""""""""
 任务错误日志记录器测试
 Tests for Task Error Logger
 
 测试src.tasks.error_logger模块的错误日志记录功能
-"""""""
+""""""""
 
 import asyncio
 from datetime import datetime
@@ -34,7 +34,7 @@ class TestTaskErrorLogger:
     """任务错误日志记录器测试"""
 
     def test_logger_creation(self):
-        """测试：日志记录器创建"""
+        """测试:日志记录器创建"""
         logger = TaskErrorLogger()
         assert logger is not None
         assert hasattr(logger, "db_manager")
@@ -45,7 +45,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_log_task_error(self):
-        """测试：记录任务错误"""
+        """测试:记录任务错误"""
         logger = TaskErrorLogger()
 
         # 模拟数据库管理器
@@ -67,7 +67,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_log_api_failure(self):
-        """测试：记录API失败"""
+        """测试:记录API失败"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -94,7 +94,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_log_retry_attempt(self):
-        """测试：记录重试尝试"""
+        """测试:记录重试尝试"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -119,7 +119,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_log_system_exception(self):
-        """测试：记录系统异常"""
+        """测试:记录系统异常"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -146,7 +146,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_get_error_statistics(self):
-        """测试：获取错误统计"""
+        """测试:获取错误统计"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -173,7 +173,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_log_batch_errors(self):
-        """测试：批量记录错误"""
+        """测试:批量记录错误"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -202,7 +202,7 @@ class TestTaskErrorLogger:
             assert mock_session.execute.call_count >= 1 or mock_session.add.call_count >= 1
 
     def test_error_context_serialization(self):
-        """测试：错误上下文序列化"""
+        """测试:错误上下文序列化"""
         logger = TaskErrorLogger()
 
         # 复杂的上下文数据
@@ -226,7 +226,7 @@ class TestTaskErrorLogger:
         assert "test" in serialized
 
     def test_format_error_message(self):
-        """测试：格式化错误消息"""
+        """测试:格式化错误消息"""
         logger = TaskErrorLogger()
 
         error = ValueError("Test error with details")
@@ -242,7 +242,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_clean_old_error_logs(self):
-        """测试：清理旧错误日志"""
+        """测试:清理旧错误日志"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -258,7 +258,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_log_with_custom_fields(self):
-        """测试：记录带自定义字段的错误"""
+        """测试:记录带自定义字段的错误"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -286,7 +286,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_error_aggregation(self):
-        """测试：错误聚合"""
+        """测试:错误聚合"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -325,7 +325,7 @@ class TestTaskErrorLogger:
 
     @pytest.mark.asyncio
     async def test_error_notification(self):
-        """测试：错误通知"""
+        """测试:错误通知"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -355,14 +355,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not ERROR_LOGGER_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if ERROR_LOGGER_AVAILABLE:
 from src.tasks.error_logger import TaskErrorLogger
 
@@ -375,7 +375,7 @@ class TestTaskErrorLoggerIntegration:
 
     @pytest.mark.asyncio
     async def test_end_to_end_error_logging(self):
-        """测试：端到端错误记录流程"""
+        """测试:端到端错误记录流程"""
         logger = TaskErrorLogger()
 
         # 模拟完整的错误处理流程
@@ -425,7 +425,7 @@ class TestTaskErrorLoggerIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_error_logging(self):
-        """测试：并发错误记录"""
+        """测试:并发错误记录"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:
@@ -451,10 +451,10 @@ class TestTaskErrorLoggerIntegration:
             assert mock_session.execute.call_count >= 10 or mock_session.add.call_count >= 10
 
     def test_error_logging_performance(self):
-        """测试：错误记录性能"""
+        """测试:错误记录性能"""
         TaskErrorLogger()
 
-        # 性能测试：快速序列化大量错误
+        # 性能测试:快速序列化大量错误
         import json
         import time
 
@@ -490,7 +490,7 @@ class TestTaskErrorLoggerIntegration:
 
     @pytest.mark.asyncio
     async def test_error_recovery_mechanism(self):
-        """测试：错误恢复机制"""
+        """测试:错误恢复机制"""
         logger = TaskErrorLogger()
 
         # 模拟数据库失败
@@ -505,14 +505,14 @@ class TestTaskErrorLoggerIntegration:
                 await logger.log_task_error("test_task", "test_123", error)
                 # 如果成功，说明有备用机制
             except Exception:
-                # 如果失败，应该记录到文件日志
+                # 如果失败,应该记录到文件日志
                 pass
 
             # 验证至少有一种记录方式工作
             assert True  # 只要程序没有崩溃就通过
 
     def test_error_categorization(self):
-        """测试：错误分类"""
+        """测试:错误分类"""
         logger = TaskErrorLogger()
 
         # 测试不同类型错误的分类
@@ -532,7 +532,7 @@ class TestTaskErrorLoggerIntegration:
                 assert category in [expected_category, "unknown"]
 
     def test_error_priority_assignment(self):
-        """测试：错误优先级分配"""
+        """测试:错误优先级分配"""
         logger = TaskErrorLogger()
 
         # 测试优先级分配
@@ -550,7 +550,7 @@ class TestTaskErrorLoggerIntegration:
 
     @pytest.mark.asyncio
     async def test_error_metrics_collection(self):
-        """测试：错误指标收集"""
+        """测试:错误指标收集"""
         logger = TaskErrorLogger()
 
         with patch.object(logger, "db_manager") as mock_db:

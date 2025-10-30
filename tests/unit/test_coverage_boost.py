@@ -711,7 +711,7 @@ class TestErrorHandling:
             # 测试None值处理
             try:
                 _result = validate_email(None)
-                # 如果返回False而不是抛出异常，也是可以接受的
+                # 如果返回False而不是抛出异常,也是可以接受的
                 assert _result is False
             except (TypeError, AttributeError):
                 pass  # 预期可能抛出异常

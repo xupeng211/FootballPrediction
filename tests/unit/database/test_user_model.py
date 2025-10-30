@@ -65,7 +65,7 @@ class MockUser:
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
-print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
+print("智能Mock兼容修复模式:强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
 
 # 强制使用Mock实现
 User = MockUser

@@ -20,7 +20,7 @@ class TestMatchUpdateFlow:
     async def test_match_lifecycle_flow(
         self, api_client: AsyncClient, websocket_client, test_data_loader, admin_headers
     ):
-        """测试完整的比赛生命周期：计划 -> 进行中 -> 结束"""
+        """测试完整的比赛生命周期:计划 -> 进行中 -> 结束"""
         # 1. 创建测试比赛
         _teams = await test_data_loader.create_teams()
 
@@ -147,7 +147,7 @@ class TestMatchUpdateFlow:
                 json=event_data,
                 headers=admin_headers,
             )
-            # 事件API可能还未实现，所以不强制断言
+            # 事件API可能还未实现,所以不强制断言
 
             final_score = event["score"]
             print(f"⚽ 第{event['minute']}分钟: {event['event']} - {event['team']}")
@@ -395,7 +395,7 @@ class TestMatchUpdateFlow:
         assert response.status_code == 200
         print("⚽ 比赛进行到第30分钟")
 
-        # 模拟比赛中断（天气原因、球员受伤等）
+        # 模拟比赛中断（天气原因,球员受伤等）
         await asyncio.sleep(1)
         print("⚠️ 比赛中断...")
 

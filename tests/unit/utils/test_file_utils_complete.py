@@ -2,7 +2,7 @@
 文件工具完整测试
 File Utils Complete Tests
 
-基于Issue #98成功模式，创建完整的文件工具测试
+基于Issue #98成功模式,创建完整的文件工具测试
 """
 
 import os
@@ -117,7 +117,7 @@ class TestFileUtilsComplete:
             assert isinstance(hash1, str)
             assert len(hash1) == 32  # MD5哈希长度
 
-            # 修改文件内容，哈希应该改变
+            # 修改文件内容,哈希应该改变
             file_path.write_text("Modified content", encoding="utf-8")
             hash2 = FileUtils.get_file_hash(file_path)
             assert hash1 != hash2
@@ -231,7 +231,7 @@ class TestFileUtilsComplete:
 
             # 测试目录类型检查
             assert FileUtils.is_directory(tmpdir) is True
-            # 注意：source_file在上下文中未定义，我们使用一个已创建的文件
+            # 注意:source_file在上下文中未定义,我们使用一个已创建的文件
             existing_file = [f for f in Path(tmpdir).iterdir() if f.is_file()][0]
             assert FileUtils.is_directory(existing_file) is False
 
@@ -305,7 +305,7 @@ class TestFileUtilsComplete:
             removed = FileUtils.cleanup_old_files(tmpdir, days=3)
             assert removed == 3
 
-            # 验证旧文件被删除，新文件保留
+            # 验证旧文件被删除,新文件保留
             assert not any(f.exists() for f in files)
             assert new_file.exists()
 

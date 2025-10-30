@@ -1,4 +1,4 @@
-"""""""
+""""""""
 P2阶段深度业务逻辑测试: DatabaseConfig
 目标覆盖率: 38.1% → 70%
 策略: 真实业务逻辑路径测试 (非Mock)
@@ -9,7 +9,7 @@ P2阶段深度业务逻辑测试: DatabaseConfig
 - 实际业务场景测试
 - 端到端功能验证
 - 数据驱动测试用例
-"""""""
+""""""""
 
 import os
 
@@ -337,7 +337,7 @@ class TestDatabaseConfigBusinessLogic:
 
         # 测试异步功能集成
 
-        # DatabaseConfig主要是同步类，但async_url属性用于异步连接
+        # DatabaseConfig主要是同步类,但async_url属性用于异步连接
         try:
             config = DatabaseConfig(
                 host="localhost",

@@ -247,7 +247,7 @@ class TestFileUtils:
         """测试Unicode处理"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "unicode.json"
-            data = {"chinese": "你好，世界！", "emoji": "🌍🚀", "special": "αβγδε"}
+            data = {"chinese": "你好,世界！", "emoji": "🌍🚀", "special": "αβγδε"}
 
             # 写入和读取Unicode数据
             FileUtils.write_json(data, file_path)

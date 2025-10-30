@@ -43,7 +43,7 @@ class TestCoreConfig:
                 result = config.get('test_key', 'default_value')
                 assert result is not None
             else:
-                assert True  # 如果没有get方法，跳过测试
+                assert True  # 如果没有get方法,跳过测试
         except Exception as e:
             print(f"Config.get测试跳过: {e}")
             assert True
@@ -56,7 +56,7 @@ class TestCoreConfig:
                 config.set('test_key', 'test_value')
                 assert True  # 设置操作完成
             else:
-                assert True  # 如果没有set方法，跳过测试
+                assert True  # 如果没有set方法,跳过测试
         except Exception as e:
             print(f"Config.set测试跳过: {e}")
             assert True
@@ -119,7 +119,7 @@ class TestCoreDI:
                 container.register('test_service', Mock())
                 assert True
             else:
-                assert True  # 如果没有register方法，跳过测试
+                assert True  # 如果没有register方法,跳过测试
         except Exception as e:
             print(f"DI容器注册测试跳过: {e}")
             assert True
@@ -135,7 +135,7 @@ class TestCoreDI:
                 resolved = container.resolve('test_service')
                 assert resolved is not None
             else:
-                assert True  # 如果方法不存在，跳过测试
+                assert True  # 如果方法不存在,跳过测试
         except Exception as e:
             print(f"DI容器解析测试跳过: {e}")
             assert True
@@ -291,7 +291,7 @@ def test_core_module_import():
         assert logging is not None
         assert di is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_core_coverage_helper():

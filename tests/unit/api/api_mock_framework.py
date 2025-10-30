@@ -3,7 +3,7 @@ from datetime import datetime
 API层智能Mock兼容修复模式工具
 API Layer Intelligent Mock Compatibility Fix Pattern Tools
 
-基于服务层100%验证成功的智能Mock兼容修复模式，为API层提供完整的Mock解决方案。
+基于服务层100%验证成功的智能Mock兼容修复模式,为API层提供完整的Mock解决方案。
 Based on the 100% verified intelligent Mock compatibility fix pattern from the service layer,
 provide complete Mock solutions for the API layer.
 """
@@ -58,7 +58,7 @@ class APITestMockFramework:
             "3": self.create_mock_prediction(id=3, user_id=1, match_id=125),
         }
 
-        # 完全独立的find_many实现，避免任何原始仓储调用
+        # 完全独立的find_many实现,避免任何原始仓储调用
         async def mock_find_many(query_spec):
             filters = query_spec.filters or {}
             results = list(test_data.values())

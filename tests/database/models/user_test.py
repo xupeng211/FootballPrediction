@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import Mock, AsyncMock, patch
 import asyncio
 
-# 模拟导入，实际使用时替换为真实导入
+# 模拟导入,实际使用时替换为真实导入
 try:
     from ..user import *
 except ImportError:
@@ -235,7 +235,7 @@ class TestUserRepository:
             raise Exception("Transaction failed")
 
         # 验证回滚
-        # 在实际测试中，这里会检查事务是否被回滚
+        # 在实际测试中,这里会检查事务是否被回滚
         mock_db_session.rollback.assert_called_once()
 
     def test_repository_lifecycle(self, mock_repository):

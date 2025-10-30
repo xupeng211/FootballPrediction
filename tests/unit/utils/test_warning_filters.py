@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 警告过滤器模块测试
 Warning Filters Module Tests
 
-测试src/utils/warning_filters.py中定义的警告过滤器功能，专注于实现100%覆盖率。
+测试src/utils/warning_filters.py中定义的警告过滤器功能,专注于实现100%覆盖率。
 Tests warning filters functionality defined in src/utils/warning_filters.py, focused on achieving 100% coverage.
 """
 
@@ -118,7 +118,7 @@ class TestModuleAutoExecution:
     def test_module_auto_execution_logic(self):
         """测试模块自动执行逻辑"""
         # 验证在非pytest环境下会调用setup_warning_filters
-        # 由于模块已经导入，我们直接测试条件判断逻辑
+        # 由于模块已经导入,我们直接测试条件判断逻辑
 
         # 验证pytest在sys.modules中（当前是测试环境）
         assert "pytest" in sys.modules
@@ -126,7 +126,7 @@ class TestModuleAutoExecution:
         # 测试条件判断
         if "pytest" not in sys.modules:
             # 这种情况下应该调用setup_warning_filters
-            assert True  # 这里只是测试逻辑，实际调用在模块初始化时
+            assert True  # 这里只是测试逻辑,实际调用在模块初始化时
         else:
             # 在pytest环境下不应该自动执行
             assert True
@@ -278,7 +278,7 @@ class TestModuleIntegration:
             setup_warning_filters()
 
             # 验证warnings模块状态改变
-            # 函数成功执行，没有抛出异常
+            # 函数成功执行,没有抛出异常
             assert True
 
         finally:

@@ -2,12 +2,12 @@
 配置管理器单元测试
 
 重构说明：
-- 移除所有Mock类，直接测试真实业务逻辑
+- 移除所有Mock类,直接测试真实业务逻辑
 - 压缩文件大小从847行到约300行
 - 提高测试密度和质量
 - 聚焦核心功能测试
 
-测试覆盖：
+测试覆盖:
 - 文件配置源加载和保存
 - 环境变量配置源处理
 - 配置管理器核心操作
@@ -391,7 +391,7 @@ class TestConfigValidator:
 
         # 测试不存在的键
         config = {"app": {"version": "1.0"}}
-        assert validator.validate(config) is False  # 缺少debug键，验证失败
+        assert validator.validate(config) is False  # 缺少debug键,验证失败
 
 
 @pytest.mark.unit
@@ -494,6 +494,6 @@ class TestConfigEdgeCases:
         manager.watch(failing_callback)
         manager.watch(working_callback)
 
-        # 即使一个监听器失败，其他监听器也应该被调用
+        # 即使一个监听器失败,其他监听器也应该被调用
         manager.set("test", "value")
         assert working_callback.called is True

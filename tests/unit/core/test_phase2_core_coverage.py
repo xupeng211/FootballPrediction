@@ -1,14 +1,14 @@
-"""""""
+""""""""
 核心模块业务逻辑测试 - 重构版本
 Core Module Business Logic Tests - Refactored Version
 
-基于真实业务逻辑的高质量测试，替代模板代码。
+基于真实业务逻辑的高质量测试,替代模板代码。
 High-quality tests based on real business logic, replacing template code.
 
-重构目标：
+重构目标:
 - 提高测试密度和质量
 - 基于真实业务逻辑而非模板
-"""""""
+""""""""
 
 import asyncio
 
@@ -89,7 +89,7 @@ class TestCQRSBusinessLogic:
     """CQRS业务逻辑测试"""
 
     def test_create_prediction_command_validation(self):
-        """测试：创建预测命令验证"""
+        """测试:创建预测命令验证"""
         data = BusinessDataFactory.create_prediction_data()
         command = CreatePredictionCommand(**data)
 
@@ -100,7 +100,7 @@ class TestCQRSBusinessLogic:
 
     @pytest.mark.asyncio
     async def test_prediction_command_validation_failure(self):
-        """测试：预测命令验证失败"""
+        """测试:预测命令验证失败"""
         command = CreatePredictionCommand(
             match_id=123,
             user_id=456,
@@ -114,7 +114,7 @@ class TestCQRSBusinessLogic:
         assert "置信度必须在0到1之间" in result.errors
 
     def test_user_command_business_rules(self):
-        """测试：用户命令业务规则"""
+        """测试:用户命令业务规则"""
         data = BusinessDataFactory.create_user_data()
         command = CreateUserCommand(**data)
 
@@ -124,7 +124,7 @@ class TestCQRSBusinessLogic:
 
     @pytest.mark.asyncio
     async def test_update_prediction_command(self):
-        """测试：更新预测命令"""
+        """测试:更新预测命令"""
         command = UpdatePredictionCommand(
             prediction_id=123, predicted_home=3, confidence=0.85
         )
@@ -133,7 +133,7 @@ class TestCQRSBusinessLogic:
         assert command.predicted_away is None  # 未更新
 
     def test_command_handler_implementation(self):
-        """测试：命令处理器实现"""
+        """测试:命令处理器实现"""
 
         class TestHandler(CommandHandler[Dict[str, Any]]):
             @property
@@ -158,7 +158,7 @@ class TestEventBusinessLogic:
     """事件系统业务逻辑测试"""
 
     def test_domain_event_creation(self):
-        """测试：领域事件创建"""
+        """测试:领域事件创建"""
 
         class PredictionCreatedEvent(DomainEvent):
             def __init__(self, prediction_id: int, user_id: int):
@@ -186,7 +186,7 @@ class TestEventBusinessLogic:
         assert event.source == "prediction_service"
 
     def test_integration_event_creation(self):
-        """测试：集成事件创建"""
+        """测试:集成事件创建"""
 
         class NotificationSentEvent(IntegrationEvent):
             def __init__(self, notification_id: str, message: str):
@@ -217,7 +217,7 @@ class TestEventBusinessLogic:
 
     @pytest.mark.asyncio
     async def test_event_handler_implementation(self):
-        """测试：事件处理器实现"""
+        """测试:事件处理器实现"""
 
         class TestEventHandler(EventHandler):
             def __init__(self):
@@ -251,7 +251,7 @@ class TestEventBusinessLogic:
         assert len(handler.handled_events) == 1
 
     def test_event_filter_business_rules(self):
-        """测试：事件过滤器业务规则"""
+        """测试:事件过滤器业务规则"""
         prediction_filter = EventTypeFilter(["prediction_created"])
 
         class PredictionEvent(Event):
@@ -291,7 +291,7 @@ class TestFacadeBusinessLogic:
     """门面模式业务逻辑测试"""
 
     def test_prediction_facade_workflow(self):
-        """测试：预测门面工作流"""
+        """测试:预测门面工作流"""
 
         class BusinessPredictionFacade:
             def __init__(self):
@@ -323,7 +323,7 @@ class TestFacadeBusinessLogic:
         assert result["prediction"]["id"] == 789
 
     def test_service_locator_implementation(self):
-        """测试：服务定位器实现"""
+        """测试:服务定位器实现"""
 
         class BusinessServiceLocator:
             def __init__(self):
@@ -361,7 +361,7 @@ class TestDecoratorBusinessLogic:
     """装饰器业务逻辑测试"""
 
     def test_retry_decorator_scenarios(self):
-        """测试：重试装饰器场景"""
+        """测试:重试装饰器场景"""
 
         def business_retry(max_attempts=3, delay=0.01):
             def decorator(func):
@@ -394,7 +394,7 @@ class TestDecoratorBusinessLogic:
         assert fetch_data.call_count == 3
 
     def test_cache_decorator_usage(self):
-        """测试：缓存装饰器使用"""
+        """测试:缓存装饰器使用"""
 
         def business_cache(ttl=60):
             def decorator(func):
@@ -425,7 +425,7 @@ class TestDecoratorBusinessLogic:
         assert expensive_operation.get_cache_info()["size"] == 1
 
     def test_logging_decorator_context(self):
-        """测试：日志装饰器上下文"""
+        """测试:日志装饰器上下文"""
 
         def business_logging():
             def decorator(func):
@@ -467,7 +467,7 @@ class TestBusinessDesignPatterns:
     """业务设计模式测试"""
 
     def test_strategy_pattern(self):
-        """测试：策略模式"""
+        """测试:策略模式"""
 
         from abc import ABC, abstractmethod
 
@@ -534,7 +534,7 @@ class TestBusinessDesignPatterns:
         assert advanced_result["confidence"] > simple_result["confidence"]
 
     def test_observer_pattern(self):
-        """测试：观察者模式"""
+        """测试:观察者模式"""
 
         class PredictionEventPublisher:
             def __init__(self):

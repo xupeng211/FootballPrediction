@@ -100,7 +100,7 @@ class TestEndToEndAPIIntegration:
         }
 
         response = client.post("/api/predictions/", json=prediction_data)
-        # 可能返回201（创建成功）、400（错误请求）或422（验证失败）
+        # 可能返回201（创建成功）,400（错误请求）或422（验证失败）
         assert response.status_code in [201, 400, 422, 404]
 
     def test_api_error_handling(self, client):
@@ -144,7 +144,7 @@ class TestEndToEndAPIIntegration:
             pytest.skip("API模块不可用")
 
         # 这里可以添加异步API测试
-        # 例如WebSocket连接、异步数据处理等
+        # 例如WebSocket连接,异步数据处理等
         pass
 
     def test_api_cors_headers(self, client):
@@ -179,7 +179,7 @@ class TestEndToEndAPIIntegration:
 
         # 检查是否有速率限制响应
         any(r.status_code == 429 for r in responses)
-        # 速率限制是可选的，所以不强制要求
+        # 速率限制是可选的,所以不强制要求
 
     def test_api_authentication(self, client):
         """测试API认证"""

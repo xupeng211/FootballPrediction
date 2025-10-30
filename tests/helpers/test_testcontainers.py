@@ -15,7 +15,7 @@ TestContainers配置模块
 
 class TestPostgresContainer:
     """
-    扩展的PostgreSQL容器，配置了测试数据库
+    扩展的PostgreSQL容器,配置了测试数据库
     """
 
     def __init__(self) -> None:
@@ -41,7 +41,7 @@ class TestPostgresContainer:
 
 class TestRedisContainer:
     """
-    扩展的Redis容器，配置了测试数据库
+    扩展的Redis容器,配置了测试数据库
     """
 
     def __init__(self) -> None:

@@ -232,7 +232,7 @@ async def test_circuit_breaker_failure():
     assert breaker.get_state() == CircuitState.CLOSED
     assert breaker.get_failure_count() == 1
 
-    # 第二次失败，应该打开熔断器
+    # 第二次失败,应该打开熔断器
     with pytest.raises(ValueError):
         await breaker.call(failing_func)
     assert breaker.get_state() == CircuitState.OPEN
@@ -252,7 +252,7 @@ async def test_circuit_breaker_open_blocks_calls():
     with pytest.raises(ValueError):
         await breaker.call(failing_func)
 
-    # 熔断器打开，应该阻止调用
+    # 熔断器打开,应该阻止调用
     with pytest.raises(Exception, match="熔断器已打开"):
         await breaker.call(failing_func)
 

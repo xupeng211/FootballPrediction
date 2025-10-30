@@ -18,7 +18,7 @@ from src.database.models import Match, MatchStatus, PredictedResult, Predictions
 # 创建符合schema的完整响应
 
 # Mock数据质量监控器 - 模块不存在时跳过
-# 注意：这个模块可能不存在，所以暂时注释掉
+# 注意:这个模块可能不存在,所以暂时注释掉
 # mock_dqm = MagicMock()
 # mock_dqm.generate_quality_report = AsyncMock(return_value={
 #     "overall_status": "healthy",
@@ -50,7 +50,7 @@ from src.database.models import Match, MatchStatus, PredictedResult, Predictions
 
 # 使用FastAPI的dependency_overrides机制
 
-# 为了向后兼容，返回client本身，但添加mock_session属性
+# 为了向后兼容，返回client本身,但添加mock_session属性
 # 清理dependency overrides - 在测试结束后清理
 
 
@@ -89,7 +89,7 @@ def _install_health_stubs(stack: ExitStack) -> None:
 
 @pytest.fixture
 def api_client(monkeypatch):
-    """API测试客户端，默认启用最小化健康检查模式"""
+    """API测试客户端,默认启用最小化健康检查模式"""
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
@@ -122,7 +122,7 @@ def mock_async_session():
 def api_client_full(monkeypatch):
     """API测试客户端，加载所有路由（用于测试非健康检查端点）
     使用dependency_overrides来注入mock dependencies，这是FastAPI推荐的测试方式。
-    返回一个包含client和mock_session的命名空间对象，以便测试可以配置mock行为。
+    返回一个包含client和mock_session的命名空间对象,以便测试可以配置mock行为。
     """
     monkeypatch.setenv("MINIMAL_HEALTH_MODE", "true")
     monkeypatch.setenv("FAST_FAIL", "false")

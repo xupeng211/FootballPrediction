@@ -1,8 +1,8 @@
 from datetime import datetime
-"""""""
+""""""""
 扩展模块测试 - 覆盖更多API模块
 Extended Module Tests - Cover More API Modules
-"""""""
+""""""""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -272,7 +272,7 @@ from src.api.monitoring import AnomalyDetector
     def test_health_check_endpoint(self, client):
         """测试健康检查端点"""
         response = client.get("/api/v1/health")
-        # 可能返回404，因为我们还没有实现这个路由
+        # 可能返回404,因为我们还没有实现这个路由
         assert response.status_code in [200, 404]
 
 

@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 56 repeated Mock creations
 
 
-"""""""
+""""""""
 适配器注册表测试
 Tests for Adapter Registry
 
 测试src.adapters.registry模块的适配器注册表功能
-"""""""
+""""""""
 
 import asyncio
 
@@ -52,7 +52,7 @@ class TestAdapterRegistry:
         return AdapterRegistry(factory=mock_factory)
 
     async def test_registry_creation(self, registry):
-        """测试：注册表创建"""
+        """测试:注册表创建"""
         assert registry is not None
         assert registry.status == RegistryStatus.INACTIVE
         assert registry.adapters == {}
@@ -60,13 +60,13 @@ class TestAdapterRegistry:
         assert registry.health_check_interval == 60.0
 
     async def test_registry_creation_with_default_factory(self):
-        """测试：使用默认工厂创建注册表"""
+        """测试:使用默认工厂创建注册表"""
         registry = AdapterRegistry()
         assert registry.factory is not None
         assert isinstance(registry.factory, AdapterFactory)
 
     async def test_initialize(self, registry):
-        """测试：初始化注册表"""
+        """测试:初始化注册表"""
         assert registry.status == RegistryStatus.INACTIVE
 
         await registry.initialize()
@@ -78,7 +78,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_initialize_already_initialized(self, registry):
-        """测试：初始化已初始化的注册表"""
+        """测试:初始化已初始化的注册表"""
         await registry.initialize()
 
         with pytest.raises(RuntimeError, match="Registry already initialized"):
@@ -88,7 +88,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_shutdown(self, registry):
-        """测试：关闭注册表"""
+        """测试:关闭注册表"""
         await registry.initialize()
         assert registry.status == RegistryStatus.ACTIVE
 
@@ -97,7 +97,7 @@ class TestAdapterRegistry:
         assert registry.status == RegistryStatus.INACTIVE
 
     async def test_shutdown_when_shutting_down(self, registry):
-        """测试：关闭正在关闭的注册表"""
+        """测试:关闭正在关闭的注册表"""
         await registry.initialize()
         registry.status = RegistryStatus.SHUTTING_DOWN
 
@@ -105,7 +105,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_shutdown_with_adapters(self, registry):
-        """测试：关闭注册表时清理适配器"""
+        """测试:关闭注册表时清理适配器"""
         # 创建模拟适配器
         adapter1 = Mock(spec=Adapter)
         adapter1.cleanup = AsyncMock()
@@ -123,7 +123,7 @@ class TestAdapterRegistry:
         adapter2.cleanup.assert_called_once()
 
     async def test_register_adapter(self, registry):
-        """测试：注册适配器"""
+        """测试:注册适配器"""
         await registry.initialize()
 
         # 创建配置和模拟适配器
@@ -143,14 +143,14 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_register_adapter_not_active(self, registry):
-        """测试：在非活跃状态下注册适配器"""
+        """测试:在非活跃状态下注册适配器"""
         _config = AdapterConfig(name="test", adapter_type="test")
 
         with pytest.raises(RuntimeError, match="Registry not active"):
             await registry.register_adapter(_config)
 
     async def test_register_adapter_already_exists(self, registry):
-        """测试：注册已存在的适配器"""
+        """测试:注册已存在的适配器"""
         await registry.initialize()
 
         # 创建配置
@@ -170,7 +170,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_unregister_adapter(self, registry):
-        """测试：注销适配器"""
+        """测试:注销适配器"""
         await registry.initialize()
 
         # 创建并注册适配器
@@ -192,7 +192,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_register_group(self, registry):
-        """测试：注册适配器组"""
+        """测试:注册适配器组"""
         await registry.initialize()
 
         # 创建组配置
@@ -212,7 +212,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_register_group_already_exists(self, registry):
-        """测试：注册已存在的组"""
+        """测试:注册已存在的组"""
         await registry.initialize()
 
         group_config = AdapterGroupConfig(name="test_group", adapters=[])
@@ -231,7 +231,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     async def test_unregister_group(self, registry):
-        """测试：注销适配器组"""
+        """测试:注销适配器组"""
         await registry.initialize()
 
         # 创建并注册组
@@ -253,7 +253,7 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
     def test_get_adapter(self, registry):
-        """测试：获取适配器"""
+        """测试:获取适配器"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
         registry.adapters["test_adapter"] = mock_adapter
@@ -267,7 +267,7 @@ class TestAdapterRegistry:
         assert adapter is None
 
     def test_get_group(self, registry):
-        """测试：获取适配器组"""
+        """测试:获取适配器组"""
         # 创建模拟组
         mock_group = Mock(spec=Adapter)
         registry.groups["test_group"] = mock_group
@@ -281,7 +281,7 @@ class TestAdapterRegistry:
         assert group is None
 
     def test_list_adapters(self, registry):
-        """测试：列出所有适配器"""
+        """测试:列出所有适配器"""
         registry.adapters["adapter1"] = Mock()
         registry.adapters["adapter2"] = Mock()
 
@@ -289,7 +289,7 @@ class TestAdapterRegistry:
         assert set(adapters) == {"adapter1", "adapter2"}
 
     def test_list_groups(self, registry):
-        """测试：列出所有组"""
+        """测试:列出所有组"""
         registry.groups["group1"] = Mock()
         registry.groups["group2"] = Mock()
 
@@ -297,7 +297,7 @@ class TestAdapterRegistry:
         assert set(groups) == {"group1", "group2"}
 
     def test_get_adapters_by_type(self, registry):
-        """测试：按类型获取适配器"""
+        """测试:按类型获取适配器"""
         # 创建不同类型的模拟适配器
         adapter1 = Mock()
         adapter1.__class__.__name__ = "TestAdapter"
@@ -317,7 +317,7 @@ class TestAdapterRegistry:
         assert adapter3 in test_adapters
 
     def test_get_active_adapters(self, registry):
-        """测试：获取活跃的适配器"""
+        """测试:获取活跃的适配器"""
         # 创建不同状态的模拟适配器
         adapter1 = Mock(spec=Adapter)
         adapter1.status = AdapterStatus.ACTIVE
@@ -337,7 +337,7 @@ class TestAdapterRegistry:
         assert adapter3 in active_adapters
 
     def test_get_inactive_adapters(self, registry):
-        """测试：获取非活跃的适配器"""
+        """测试:获取非活跃的适配器"""
         # 创建不同状态的模拟适配器
         adapter1 = Mock(spec=Adapter)
         adapter1.status = AdapterStatus.ACTIVE
@@ -357,7 +357,7 @@ class TestAdapterRegistry:
         assert adapter3 in inactive_adapters
 
     async def test_enable_adapter(self, registry):
-        """测试：启用适配器"""
+        """测试:启用适配器"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.initialize = AsyncMock()
@@ -369,12 +369,12 @@ class TestAdapterRegistry:
         mock_adapter.initialize.assert_called_once()
 
     async def test_enable_adapter_not_found(self, registry):
-        """测试：启用不存在的适配器"""
+        """测试:启用不存在的适配器"""
         _result = await registry.enable_adapter("nonexistent")
         assert _result is False
 
     async def test_enable_adapter_failure(self, registry):
-        """测试：启用适配器失败"""
+        """测试:启用适配器失败"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.initialize = AsyncMock(side_effect=ValueError("Failed"))
@@ -385,7 +385,7 @@ class TestAdapterRegistry:
         assert _result is False
 
     async def test_disable_adapter(self, registry):
-        """测试：禁用适配器"""
+        """测试:禁用适配器"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.cleanup = AsyncMock()
@@ -398,12 +398,12 @@ class TestAdapterRegistry:
         assert mock_adapter.status == AdapterStatus.INACTIVE
 
     async def test_disable_adapter_not_found(self, registry):
-        """测试：禁用不存在的适配器"""
+        """测试:禁用不存在的适配器"""
         _result = await registry.disable_adapter("nonexistent")
         assert _result is False
 
     async def test_restart_adapter(self, registry):
-        """测试：重启适配器"""
+        """测试:重启适配器"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.cleanup = AsyncMock()
@@ -417,12 +417,12 @@ class TestAdapterRegistry:
         mock_adapter.initialize.assert_called_once()
 
     async def test_restart_adapter_not_found(self, registry):
-        """测试：重启不存在的适配器"""
+        """测试:重启不存在的适配器"""
         _result = await registry.restart_adapter("nonexistent")
         assert _result is False
 
     async def test_restart_adapter_failure(self, registry):
-        """测试：重启适配器失败"""
+        """测试:重启适配器失败"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.cleanup = AsyncMock()
@@ -435,7 +435,7 @@ class TestAdapterRegistry:
 
     @patch("asyncio.sleep")
     async def test_health_check_loop(self, mock_sleep, registry):
-        """测试：健康检查循环"""
+        """测试:健康检查循环"""
         await registry.initialize()
 
         # 模拟健康检查任务被取消
@@ -453,7 +453,7 @@ class TestRegistryStatus:
     """注册表状态测试"""
 
     def test_registry_status_values(self):
-        """测试：注册表状态值"""
+        """测试:注册表状态值"""
         assert RegistryStatus.ACTIVE.value == "active"
         assert RegistryStatus.INACTIVE.value == "inactive"
         assert RegistryStatus.SHUTTING_DOWN.value == "shutting_down"
@@ -464,7 +464,7 @@ class TestGlobalRegistry:
     """全局注册表测试"""
 
     def test_global_registry_exists(self):
-        """测试：全局注册表实例存在"""
+        """测试:全局注册表实例存在"""
         assert adapter_registry is not None
         assert isinstance(adapter_registry, AdapterRegistry)
 
@@ -474,14 +474,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not REGISTRY_AVAILABLE
         assert True  # Basic assertion - consider enhancing
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if REGISTRY_AVAILABLE:
 from src.adapters.registry import AdapterRegistry, RegistryStatus
 
@@ -490,7 +490,7 @@ from src.adapters.registry import AdapterRegistry, RegistryStatus
 
 
 def test_enum_values():
-    """测试：枚举值"""
+    """测试:枚举值"""
     if REGISTRY_AVAILABLE:
         # 验证RegistryStatus是枚举
         assert hasattr(RegistryStatus, "__members__")
@@ -732,7 +732,7 @@ class TestRegistryAdditionalCoverage:
         # 初始状态
         assert registry.status == RegistryStatus.INACTIVE
 
-        # 这些操作需要在异步环境中测试，但我们可以验证状态枚举
+        # 这些操作需要在异步环境中测试,但我们可以验证状态枚举
         assert hasattr(registry, "status")
         assert isinstance(registry.status, RegistryStatus)
 

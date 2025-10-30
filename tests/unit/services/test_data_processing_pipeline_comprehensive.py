@@ -1,4 +1,4 @@
-"""""""
+""""""""
 数据处理服务业务逻辑深度测试
 重构完成: 1112行 → 450行 (压缩59%)
 目标: 基于真实模块的业务逻辑覆盖
@@ -10,7 +10,7 @@
 - 缺失数据处理策略
 - 青铜到银层数据管道
 - 批量处理和异步操作
-"""""""
+""""""""
 
 
 import pytest
@@ -214,7 +214,7 @@ class TestDataProcessingServiceBusinessLogic:
 
         await service.cleanup()
 
-        # cleanup 不应该改变 initialized 状态，但应该清理其他资源
+        # cleanup 不应该改变 initialized 状态,但应该清理其他资源
         assert service.initialized is True
 
 
@@ -349,7 +349,7 @@ class TestDataQualityValidatorBusinessLogic:
         """测试验证多个错误业务逻辑"""
         validator = DataQualityValidator()
 
-        # 先验证一个错误的数据（不是空的，但缺少id）
+        # 先验证一个错误的数据（不是空的,但缺少id）
         invalid_data = {"home_team": "Team A"}
         result = validator.validate(invalid_data)
 
@@ -686,6 +686,6 @@ class TestDataProcessingIntegrationBusinessLogic:
 if __name__ == "__main__":
     print("数据处理服务业务逻辑测试套件")
     if MODULE_AVAILABLE:
-        print("✅ 所有模块可用，测试已准备就绪")
+        print("✅ 所有模块可用,测试已准备就绪")
     else:
-        print("⚠️ 模块不可用，测试将被跳过")
+        print("⚠️ 模块不可用,测试将被跳过")

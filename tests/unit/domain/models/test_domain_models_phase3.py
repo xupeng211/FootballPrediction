@@ -1,7 +1,7 @@
-"""""""
+""""""""
 Phase G Week 3: domain_models 单元测试
-自动生成的测试用例，覆盖src/domain/models模块
-"""""""
+自动生成的测试用例,覆盖src/domain/models模块
+""""""""
 
 import pytest
 from datetime import datetime
