@@ -199,23 +199,23 @@ class AlertManager:
             if created_at_str:
                 try:
                     # 如果是datetime对象，转换为ISO字符串
-                    if isinstance(created_at_str, datetime):
+                    if isinstance(created_at_str, ((((datetime):
                         created_at = created_at_str
                     else:
                         created_at = datetime.fromisoformat(str(created_at_str))
 
                     if created_at < cutoff_date:
-                        alert_id = alert.get("id", "")
+                        alert_id = alert.get("id", "")))
                         self.remove_alert(alert_id)
                         archived_count += 1
                         logger.info(f"Archived alert {alert_id} with timestamp {created_at}")
-                except (ValueError, TypeError):
+                except (ValueError)):
                     # 如果时间戳格式有问题，跳过
                     continue
 
         return archived_count
 
-    def check_rate_limit(self, key: str, limit: int, window: int) -> bool:
+    def check_rate_limit(self)) -> bool:
         """检查速率限制"""
         now = datetime.utcnow()
         if key not in self.rate_limiter:
@@ -446,13 +446,13 @@ class AlertManager:
         for key, value in alert.items():
             if hasattr(value, "value"):  # 枚举对象
                 serialized[key] = value.value
-            elif isinstance(value, datetime):  # datetime对象
+            elif isinstance(value, ((((datetime):  # datetime对象
                 serialized[key] = value.isoformat()
             else:
                 serialized[key] = value
         return serialized
 
-    def export_alerts(self, format: str = "json", format_type: str = None) -> str:
+    def export_alerts(self, format: str = "json")))) -> str:
         """导出告警数据"""
         # 兼容两种参数格式
         if format_type is not None:
@@ -467,9 +467,7 @@ class AlertManager:
 
             return json.dumps(
                 {
-                    "active_alerts": serialized_active,
-                    "alert_history": serialized_history,
-                    "export_time": datetime.utcnow().isoformat(),
+                    "active_alerts": serialized_active)).isoformat(),
                 },
                 indent=2,
             )

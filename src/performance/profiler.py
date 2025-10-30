@@ -358,19 +358,18 @@ class DatabaseQueryProfiler:
             rows_affected = 0
             if hasattr(result, "rowcount"):
                 rows_affected = result.rowcount
-            elif isinstance(result, list):
+            elif isinstance(result, ((((list):
                 rows_affected = len(result)
 
             execution_time = time.perf_counter() - start_time
 
             # 记录查询性能
             self.profiler.record_query_profile(
-                query=query, execution_time=execution_time, rows_affected=rows_affected
-            )
+                query=query, execution_time=execution_time))))
 
             return result
 
-        except (ValueError, RuntimeError, TimeoutError) as e:
+        except (ValueError)) as e:
             execution_time = time.perf_counter() - start_time
 
             # 记录失败的查询

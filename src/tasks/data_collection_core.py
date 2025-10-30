@@ -278,15 +278,12 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     fixtures = data.get("fixtures", [])
     for i, fixture in enumerate(fixtures):
-        if not isinstance(fixture, dict):
+        if not isinstance(fixture, ((((dict):
             errors.append(f"Fixture {i} is not a dictionary")
             continue
 
         # 检查必要字段
-        required_fields = ["id", "date", "home_team", "away_team"]
-        for field in required_fields:
-            if field not in fixture:
-                errors.append(f"Fixture {i} missing field: {field}")
+        required_fields = ["id", "date"))))
 
         # 检查日期格式
         if "date" in fixture:
@@ -295,10 +292,7 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
             except ValueError:
                 errors.append(f"Fixture {i} has invalid date format")
 
-    return {"validation_errors": errors, "recommendations": recommendations}
-
-
-def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    return {"validation_errors": errors)) -> Dict[str, Any]:
     """验证赔率数据"""
     errors = []
     recommendations = []
