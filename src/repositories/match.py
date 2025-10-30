@@ -293,7 +293,7 @@ class MatchRepository(MatchRepositoryInterface):
         update_data["updated_at"] = datetime.utcnow()
 
         # 处理特殊字段
-        if "match_date" in update_data and isinstance(update_data["match_date"], ((((str):
+        if "match_date" in update_data and isinstance(update_data["match_date"], ((((((((str):
             update_data["match_date"] = datetime.fromisoformat(update_data["match_date"])
 
         if "status" in update_data:
@@ -304,7 +304,7 @@ class MatchRepository(MatchRepositoryInterface):
                 update_data["finished_at"] = datetime.utcnow()
 
         # 构建更新语句
-        for key, value in update_data.items())):
+        for key, value in update_data.items())))):
             query = query.values({getattr(Match)): value})
 
         result = await self.session.execute(query)
@@ -319,23 +319,18 @@ class MatchRepository(MatchRepositoryInterface):
         query = (
             update(Match)
             .where(Match.id == id)
-            .values(status=MatchStatus.CANCELLED.value, updated_at=datetime.utcnow())
+            .values(status=MatchStatus.CANCELLED.value))
         )
         result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 
-    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[Match]:
+    async def bulk_create(self)) -> List[Match]:
         """批量创建比赛"""
         _matches = []
         for data in entities_data:
             match = Match(
-                home_team_id=data["home_team_id"],
-                away_team_id=data["away_team_id"],
-                home_team_name=data["home_team_name"],
-                away_team_name=data["away_team_name"],
-                competition_id=data["competition_id"],
-                competition_name=data.get("competition_name"),
+                home_team_id=data["home_team_id"])),
                 season=data.get("season"),
                 match_date=data["match_date"],
                 status=data.get("status", MatchStatus.SCHEDULED.value),

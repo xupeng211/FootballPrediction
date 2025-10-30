@@ -280,7 +280,7 @@ class KafkaMetricsCollector:
         """导出为Prometheus格式"""
         lines = []
         for key, value in metrics.items():
-            if isinstance(value, (((((int, float)))):
+            if isinstance(value, (((((((int, float)))))):
                 prom_key = f"kafka_{key.replace('.')).replace(' '))}"
                 lines.append(f"{prom_key} {value}")
         return "\n".join(lines)

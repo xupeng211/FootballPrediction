@@ -74,7 +74,7 @@ class CorsConfig:
         """验证配置有效性"""
         try:
             # 验证max_age
-            if not isinstance(self.max_age, ((((int) or self.max_age < 0:
+            if not isinstance(self.max_age, ((((((((int) or self.max_age < 0:
                 return False
 
             # 验证max_age不超过24小时
@@ -84,7 +84,7 @@ class CorsConfig:
             # 验证methods
             if self.allow_methods:
                 valid_methods = {
-                    "GET", "POST")))) not in valid_methods:
+                    "GET", "POST")))))) not in valid_methods:
                         return False
 
             # 验证origins格式
@@ -112,14 +112,13 @@ class CorsConfig:
             r"^https?://"  # protocol
             r"(?:\S+(?::\S*)?@)?"  # authentication
             r"(?:"  # IP address exclusion
-            r"(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}"  # IP
+            r"(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1)){2}"  # IP
             r"(?:\.[0-9]\d?)?"  # port
             r")|"
             r"(?:(?:[a-z0-9\u00a1-\uffff]-*)*[a-z0-9\u00a1-\uffff]+)"  # domain label
             r"(?:\.(?:[a-z0-9\u00a1-\uffff]-*)*[a-z0-9\u00a1-\uffff]+)*"  # subdomain
-            r"\.[a-z\u00a1-\uffff]{2,}"  # TLD
-            r"))"
-            r"(?::\d{2,5})?"  # port
+            r"\.[a-z\u00a1-\uffff]{2)))"
+            r"(?::\d{2))?"  # port
             r"(?:/[^\s]*)?$",  # path
             re.IGNORECASE,
         )
@@ -255,7 +254,7 @@ class PreflightRequest:
 
     def __post_init__(self):
         """规范化请求头"""
-        if isinstance(self.headers, ((((str):
+        if isinstance(self.headers, ((((((((str):
             self.headers = [self.headers]
         self.method = self.method.upper()
 
@@ -265,7 +264,7 @@ class CorsPreflightResponse:
     """CORS预检响应"""
 
     status_code: int = 200
-    headers: Dict[str, str] = field(default_factory=dict)))
+    headers: Dict[str, str] = field(default_factory=dict)))))
     content: bytes = b""
 
     def __post_init__(self):
@@ -295,35 +294,14 @@ class CorsResponseHeaders:
 def get_development_cors_config() -> CorsConfig:
     """获取开发环境的CORS配置"""
     return CorsConfig(
-        allow_origins=["*"],
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
-        max_age=86400,
-        allow_credentials=False,
-        origin_validation_mode=CorsOriginValidationMode.LOOSE,
-        enable_preflight_cache=False,
-    )
+        allow_origins=["*"]))
 
 
 def get_production_cors_config() -> CorsConfig:
     """获取生产环境的CORS配置"""
     return CorsConfig(
         allow_origins=[
-            "https://api.footballprediction.com",
-            "https://admin.footballprediction.com",
-            "https://footballprediction.com",
-        ],
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["Content-Type", "Authorization", "X-API-Version"],
-        max_age=7200,
-        allow_credentials=True,
-        expose_headers=["X-Rate-Limit-Remaining", "X-Request-ID"],
-        origin_validation_mode=CorsOriginValidationMode.STRICT,
-        strict_slash=True,
-        wildcard_subdomains=True,
-        enable_preflight_cache=True,
-        preflight_cache_ttl=1800,
-    )
+            "https://api.footballprediction.com"))
 
 
 # 环境配置映射

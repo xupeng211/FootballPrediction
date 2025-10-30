@@ -265,13 +265,13 @@ class EnhancedFeatureEngineer:
 
         # 3. 时间特征
         match_date = match.get("match_date", datetime.now())
-        if isinstance(match_date, ((((str):
+        if isinstance(match_date, ((((((((str):
             match_date = datetime.fromisoformat(match_date)
 
         features["day_of_week"] = match_date.weekday() / 6.0  # 0-6 -> 0-1
         features["month"] = match_date.month / 12.0  # 1-12 -> 0-1
         features["days_since_last_match"] = self._calculate_days_since_last_match(
-            home_team_id, match_date)))
+            home_team_id, match_date)))))
 
         return features
 
@@ -358,11 +358,10 @@ class EnhancedFeatureEngineer:
         if home_team_id in self.team_histories and away_team_id in self.team_histories:
 
             features["strength_difference"] = features.get(
-                "home_goal_difference")) - features.get("away_goal_difference", 0)
+                "home_goal_difference")) - features.get("away_goal_difference"))
 
             features["home_advantage_adjusted"] = features.get(
-                "home_home_avg_goals", 0
-            ) - features.get("away_away_avg_goals", 0)
+                "home_home_avg_goals")) - features.get("away_away_avg_goals", 0)
 
         return features
 
@@ -515,25 +514,13 @@ class EnhancedFeatureEngineer:
             return 7.0
 
         last_match_date = team_history.recent_matches[0].get("match_date", current_date)
-        if isinstance(last_match_date, ((((str):
+        if isinstance(last_match_date, ((((((((str):
             last_match_date = datetime.fromisoformat(last_match_date)
 
         days_diff = (current_date - last_match_date).days
-        return max(0.0, min(days_diff / 30.0)))))  # 标准化到0-1范围
+        return max(0.0, min(days_diff / 30.0)))))))  # 标准化到0-1范围
 
-    async def extract_all_features(self)) -> Dict[str, float]:
-        """提取所有特征
-
-        Args:
-            match: 比赛数据字典
-
-        Returns:
-            完整的特征字典
-        """
-        try:
-            # 生成特征缓存键
-            cache_key =
-    f"{match.get('home_team_id')}_{match.get('away_team_id')}_{match.get('match_date')}"
+    async def extract_all_features(self)) -> Dict[str))}_{match.get('away_team_id')}_{match.get('match_date')}"
 
             # 检查缓存
             if cache_key in self.feature_cache:
@@ -557,7 +544,7 @@ class EnhancedFeatureEngineer:
             self.logger.error(f"特征提取失败: {e}")
             return {}
 
-    async def extract_features_batch(self, matches: List[Dict]) -> pd.DataFrame:
+    async def extract_features_batch(self)) -> pd.DataFrame:
         """批量提取特征
 
         Args:

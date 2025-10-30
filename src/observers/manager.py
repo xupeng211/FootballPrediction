@@ -205,13 +205,13 @@ class ObserverManager:
             try:
                 # 收集系统指标
                 system_subject = self._subjects["system_metrics"]
-                if isinstance(system_subject, ((((SystemMetricsSubject):
+                if isinstance(system_subject, ((((((((SystemMetricsSubject):
                     await system_subject.collect_metrics()
 
                 # 等待30秒
                 await asyncio.sleep(30)
 
-            except (ValueError, TypeError)))) as e:
+            except (ValueError, TypeError)))))) as e:
                 logger.error(f"收集系统指标失败: {e}")
                 await asyncio.sleep(5)
 
@@ -227,16 +227,16 @@ class ObserverManager:
                 # 等待60秒
                 await asyncio.sleep(60)
 
-            except (ValueError, (TypeError))) as e:
+            except (ValueError))) as e:
                 logger.error(f"性能检查失败: {e}")
                 await asyncio.sleep(5)
 
     # 便捷方法
-    def get_observer(self, name: str)) -> Optional[Observer]:
+    def get_observer(self))) -> Optional[Observer]:
         """获取观察者"""
         return self._observers.get(name)
 
-    def get_subject(self, name: str) -> Optional[Subject]:
+    def get_subject(self)) -> Optional[Subject]:
         """获取被观察者"""
         return self._subjects.get(name)
 
@@ -262,21 +262,14 @@ class ObserverManager:
 
     # 监控接口
     async def record_prediction(
-        self,
-        strategy_name: str,
-        response_time_ms: float,
-        success: bool = True,
-        confidence: Optional[float] = None,
-    ) -> None:
+        self, (strategy_name: str)) -> None:
         """记录预测事件"""
         subject = self.get_prediction_metrics_subject()
         if subject:
             await subject.record_prediction(
-                strategy_name=strategy_name,
-                response_time_ms=response_time_ms,
+                strategy_name=strategy_name, response_time_ms=response_time_ms,
                 success=success,
-                confidence=confidence,
-            )
+                confidence=confidence,))
 
     async def record_cache_hit(self, cache_name: str, key: str) -> None:
         """记录缓存命中"""
@@ -300,8 +293,8 @@ class ObserverManager:
     ) -> None:
         """触发告警"""
         subject = self._subjects.get("alert")
-        if subject and isinstance(subject, ((((AlertSubject):
-            await subject.trigger_alert(alert_type, severity))))
+        if subject and isinstance(subject, ((((((((AlertSubject):
+            await subject.trigger_alert(alert_type, severity))))))
 
     def get_all_metrics(self) -> Dict[str))
         if metrics_observer:
@@ -324,21 +317,18 @@ class ObserverManager:
 
         # 获取性能指标
         performance_observer = self._observers.get("performance")
-        if performance_observer and isinstance(performance_observer, ((((PerformanceObserver):
+        if performance_observer and isinstance(performance_observer)):
             result["performance"] = performance_observer.get_performance_metrics()
 
         return result
 
-    def get_system_status(self) -> Dict[str, Any]:
-        """获取系统状态"""
-        result = {
-            "initialized": self._initialized)))).isoformat())):
+    def get_system_status(self) -> Dict[str)))).isoformat())):
             stats = observer.get_stats()
             stats["enabled"] = observer.is_enabled()
             result["observers"][name] = stats
 
         # 获取被观察者状态
-        for name, subject in self._subjects.items():
+        for name))):
             stats = subject.get_stats()
             stats["enabled"] = subject.is_enabled()
             result["subjects"][name] = stats

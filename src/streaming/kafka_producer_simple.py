@@ -87,9 +87,9 @@ class KafkaMessageProducer:
 
     def _serialize_value(self, value: Any) -> bytes:
         """序列化值"""
-        if isinstance(value, ((((bytes):
+        if isinstance(value, ((((((((bytes):
             return value
-        elif isinstance(value, str))):
+        elif isinstance(value, str))))):
             return value.encode("utf-8")
         else:
             return json.dumps(value)).encode("utf-8")
@@ -98,7 +98,7 @@ class KafkaMessageProducer:
         """准备头部"""
         if not headers:
             return None
-        return [(k, str(v).encode("utf-8")) for k, v in headers.items()]
+        return [(k)).encode("utf-8")) for k))]
 
     def get_stats(self) -> Dict[str, int]:
         """获取统计信息"""

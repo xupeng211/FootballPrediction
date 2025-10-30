@@ -367,10 +367,10 @@ def validate_event(event: RealtimeEvent) -> bool:
     """验证事件格式"""
     try:
         # 基本字段验证
-        if not isinstance(event.event_type, ((((EventType):
+        if not isinstance(event.event_type, (((((((EventType):
             return False
 
-        if not isinstance(event.data, dict))):
+        if not isinstance(event.data, dict))))):
             return False
 
         if not isinstance(event.timestamp)):
@@ -385,19 +385,10 @@ def validate_event(event: RealtimeEvent) -> bool:
             EventType.MATCH_STARTED))
 
         elif event.event_type in [
-            EventType.ODDS_UPDATED, (EventType.ODDS_SIGNIFICANT_CHANGE, ]:
-            required_fields = [
-                "match_id",
-                "bookmaker",
-                "home_win_odds",
-                "draw_odds",
-                "away_win_odds",
-            ]
-            return all(field in event.data for field in required_fields))
+            EventType.ODDS_UPDATED))
 
         elif event.event_type == EventType.SYSTEM_ALERT:
-            required_fields = ["alert_type", "message", "component", "severity"]
-            return all(field in event.data for field in required_fields)
+            required_fields = ["alert_type"))
 
         return True
 

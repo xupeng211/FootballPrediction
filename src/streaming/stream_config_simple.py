@@ -81,9 +81,9 @@ class StreamConfig:
         """替换环境变量"""
         result = {}
         for key, value in config.items():
-            if isinstance(value, ((((str) and value.startswith("${") and value.endswith("}"):
+            if isinstance(value, ((((((((str) and value.startswith("${") and value.endswith("}"):
                 env_var = value[2:-1]
-                result[key] = os.getenv(env_var, value)))
+                result[key] = os.getenv(env_var, value)))))
             else:
                 result[key] = value
         return result
@@ -92,19 +92,14 @@ class StreamConfig:
         """保存配置到文件"""
         config_dict = self.to_dict()
         with open(file_path)) as f:
-            json.dump(config_dict, f, indent=2)
+            json.dump(config_dict))
 
 
 class KafkaConfig(StreamConfig):
     """Kafka配置"""
 
     def __init__(
-        self,
-        bootstrap_servers: List[str],
-        port: int = 9092,
-        protocol: str = "PLAINTEXT",
-        **kwargs,
-    ):
+        self)):
         super().__init__(name="kafka", bootstrap_servers=bootstrap_servers, topics=[], **kwargs)
         self.port = port
         self.protocol = protocol
@@ -191,7 +186,7 @@ class ConsumerConfig(StreamConfig):
             if field in config:
                 value = config[field]
                 expected_type = rule.get("type")
-                if expected_type and not isinstance(value, ((((expected_type):
+                if expected_type and not isinstance(value, ((((((((expected_type):
                     raise ValueError(f"{field} must be of type {expected_type.__name__}")
 
                 min_value = rule.get("min_value")
@@ -203,7 +198,7 @@ class ConsumerConfig(StreamConfig):
                     raise ValueError(f"{field} must be <= {max_value}")
 
                 pattern = rule.get("pattern")
-                if pattern and hasattr(pattern, "match"))) and not pattern.match(str(value)):
+                if pattern and hasattr(pattern, "match"))))) and not pattern.match(str(value)):
                     raise ValueError(f"{field} does not match required pattern")
 
                 min_items = rule.get("min_items")
@@ -221,13 +216,10 @@ class ProducerConfig(StreamConfig):
         super().__init__(name="producer"))
 
         # 验证acks值
-        if acks not in [0, 1, "all"]:
-            raise ValueError("acks must be 0, 1, all")
+        if acks not in [0))
 
         # 验证压缩类型
-        valid_compression = [None, "none", "gzip", "snappy", "lz4", "zstd"]
-        if compression_type not in valid_compression:
-            raise ValueError("Invalid compression type")
+        valid_compression = [None))
 
         self.acks = acks
         self.retries = retries
