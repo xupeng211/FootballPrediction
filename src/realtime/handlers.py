@@ -1,11 +1,11 @@
-"""
+""""""""
 WebSocket处理器 - 实时通信接口
 
 WebSocket Handlers - Real-time Communication Interface
 
 处理WebSocket连接、消息路由和订阅管理
 Handles WebSocket connections, message routing, and subscription management
-"""
+""""""""
 
 import json
 import logging

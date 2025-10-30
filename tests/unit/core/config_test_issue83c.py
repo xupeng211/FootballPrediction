@@ -1,11 +1,11 @@
-"""
+"""""""
 Issue #83-C 高级重构测试: core.config
 覆盖率: 36.5% → 70%
 创建时间: 2025-10-26 18:23
 优先级: HIGH
 类别: core
 策略: 高级Mock策略，解决复杂模块依赖问题
-"""
+"""""""
 
 import inspect
 import sys

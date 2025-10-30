@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
 
-"""
+"""""""
 适配器工厂测试
 Tests for Adapter Factory
 
 测试src.adapters.factory模块的适配器工厂功能
-"""
+"""""""
 
 import json
 import tempfile

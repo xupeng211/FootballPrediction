@@ -16,7 +16,6 @@ def validate_workflow_syntax(workflow_path):
         with open(workflow_path, 'r', encoding='utf-8') as f:
             content = yaml.safe_load(f)
 
-        required_fields = ['name', 'on', 'jobs']
         missing_fields = []
 
         # 检查name字段
@@ -139,7 +138,7 @@ def main():
 
     # 显示结果摘要
     summary = report["summary"]
-    print(f"\n📊 验证结果摘要:")
+    print("\n📊 验证结果摘要:")
     print(f"   总工作流数: {summary['total_workflows']}")
     print(f"   活跃工作流: {summary['active_workflows']}")
     print(f"   禁用工作流: {summary['disabled_workflows']}")
@@ -147,7 +146,7 @@ def main():
     print(f"   无效工作流: {summary['invalid_workflows']}")
 
     # 显示详细结果
-    print(f"\n📋 详细结果:")
+    print("\n📋 详细结果:")
     for workflow in report["workflows"]:
         status = "✅" if workflow["valid"] else "❌"
         print(f"   {status} {workflow['name']} ({workflow['file']})")
@@ -165,7 +164,7 @@ def main():
 
     # 返回结果
     if summary["invalid_workflows"] == 0:
-        print(f"\n🎉 所有工作流验证通过！GitHub Actions应该可以正常运行。")
+        print("\n🎉 所有工作流验证通过！GitHub Actions应该可以正常运行。")
         return 0
     else:
         print(f"\n⚠️  发现 {summary['invalid_workflows']} 个问题，需要修复。")

@@ -1,10 +1,10 @@
-"""
+"""""""
 健康检查工具测试
 Health Check Utils Tests
 
 测试src/api/health/utils.py中定义的健康检查工具功能。
 Tests health check utility functionality defined in src/api/health/utils.py.
-"""
+"""""""
 
 import asyncio
 import time

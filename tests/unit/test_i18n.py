@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
+"""""""
 国际化测试
 测试 src.utils.i18n 模块的功能
-"""
+"""""""
 
 
 import pytest

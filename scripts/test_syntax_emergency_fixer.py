@@ -71,7 +71,7 @@ class TestSyntaxEmergencyFixer:
                 content = f.read()
 
             lines = content.split('\n')
-            original_lines = lines.copy()
+            lines.copy()
             fixes = 0
 
             for line_num, error_msg in errors:
@@ -129,7 +129,7 @@ class TestSyntaxEmergencyFixer:
                 if next_line.strip().startswith('"'):
                     fixed_line = line.rstrip() + ' ' + next_line.strip()
                     all_lines[line_num + 1] = ''  # 删除下一行
-                    logger.info(f"  修复: 合并未完成的正则表达式")
+                    logger.info("  修复: 合并未完成的正则表达式")
 
         # 修复缩进问题
         elif 'unexpected indent' in error_message.lower():

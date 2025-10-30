@@ -1,10 +1,10 @@
 from datetime import datetime
-"""
+"""""""
 核心模块集成测试
 Core Modules Integration Tests
 
 专注于核心业务逻辑的集成测试，基于真实模块实现。
-"""
+"""""""
 
 import asyncio
 

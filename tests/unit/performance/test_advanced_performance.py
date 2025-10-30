@@ -73,9 +73,9 @@ class TestCachePerformance:
                     if random.random() < 0.7:  # 70%读操作
                         key = f"perf_test_key_{random.randint(0, num_keys-1)}"
                         if hasattr(cache, 'get'):
-                            result = cache.get(key)
+                            cache.get(key)
                         else:
-                            result = cache.get(key)
+                            cache.get(key)
                         operations += 1
                     else:  # 30%写操作
                         key = f"perf_test_write_{worker_id}_{i}"
@@ -85,7 +85,7 @@ class TestCachePerformance:
                         else:
                             cache[key] = value
                         operations += 1
-                except Exception as e:
+                except Exception:
                     errors += 1
 
             end_time = time.time()
@@ -612,11 +612,11 @@ class TestConcurrencyPerformance:
 
         # 非线程安全计数器可能小于预期值（竞态条件）
         assert unsafe_counter.value <= expected_operations, \
-            f"Unsafe counter should be <= expected due to race conditions"
+            "Unsafe counter should be <= expected due to race conditions"
 
         # 性能比较
         safe_ops_per_sec = expected_operations / safe_duration
-        unsafe_ops_per_sec = expected_operations / unsafe_duration
+        expected_operations / unsafe_duration
 
         # 线程安全版本应该仍然有合理的性能
         assert safe_ops_per_sec > 10000, f"Thread-safe performance too low: {safe_ops_per_sec:.0f} ops/sec"

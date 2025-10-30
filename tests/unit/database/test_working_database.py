@@ -301,7 +301,7 @@ class TestDatabaseConnection:
 
         # 获取连接
         conn1 = pool.get_connection()
-        conn2 = pool.get_connection()
+        pool.get_connection()
 
         status = pool.get_status()
         assert status["available"] == 3

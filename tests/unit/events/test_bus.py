@@ -1,10 +1,10 @@
-"""
+"""""""
 事件总线模块测试
 Event Bus Module Tests
 
 测试src/events/bus.py中定义的事件总线功能，专注于实现高覆盖率。
 Tests event bus functionality defined in src/events/bus.py, focused on achieving high coverage.
-"""
+"""""""
 
 import asyncio
 

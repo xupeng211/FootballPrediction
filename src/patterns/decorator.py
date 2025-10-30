@@ -1,8 +1,8 @@
-"""
+""""""""
 装饰器模式实现
 
 用于功能增强和横切关注点
-"""
+""""""""
 
 import asyncio
 import functools

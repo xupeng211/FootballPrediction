@@ -1,9 +1,9 @@
-"""
+"""""""
 数据质量监控器简化测试
 Tests for Data Quality Monitor (Simple Version)
 
 测试src.data.quality.data_quality_monitor模块的基本功能
-"""
+"""""""
 
 import logging
 

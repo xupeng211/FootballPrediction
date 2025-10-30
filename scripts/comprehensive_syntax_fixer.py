@@ -285,7 +285,6 @@ class ComprehensiveSyntaxFixer:
         string_char = None
 
         for line in lines:
-            original_line = line
             i = 0
             while i < len(line):
                 char = line[i]
@@ -323,7 +322,6 @@ class ComprehensiveSyntaxFixer:
         fixed_lines = []
 
         for line in lines:
-            original_line = line
 
             # 查找f-string模式
             fstring_pattern = r'f["\']([^"\']*)\{([^}]*)\}([^"\']*)["\']'
@@ -352,7 +350,6 @@ class ComprehensiveSyntaxFixer:
         fixed_lines = []
 
         for line in lines:
-            original_line = line
             stripped = line.strip()
 
             # 修复重复的import
@@ -436,17 +433,17 @@ class ComprehensiveSyntaxFixer:
         print("=" * 60)
 
         stats = self.fix_statistics
-        print(f"📁 文件处理:")
+        print("📁 文件处理:")
         print(f"   总文件数: {stats['total_files']}")
         print(f"   修复成功: {stats['successful_fixes']}")
         print(f"   修复失败: {stats['failed_fixes']}")
         print(f"   成功率: {stats['successful_fixes']/stats['total_files']*100:.1f}%")
 
-        print(f"\n🔧 修复统计:")
+        print("\n🔧 修复统计:")
         print(f"   总修复数: {stats['total_fixes_applied']}")
         print(f"   平均每文件: {stats['total_fixes_applied']/max(1, stats['successful_fixes']):.1f}")
 
-        print(f"\n📋 错误类型分布:")
+        print("\n📋 错误类型分布:")
         for error_type, count in stats['error_types_found'].items():
             print(f"   {error_type}: {count} 次")
 
@@ -469,7 +466,7 @@ class ComprehensiveSyntaxFixer:
         with open('comprehensive_syntax_fix_report.json', 'w', encoding='utf-8') as f:
             json.dump(report_data, f, indent=2, ensure_ascii=False)
 
-        print(f"\n📄 详细报告已保存: comprehensive_syntax_fix_report.json")
+        print("\n📄 详细报告已保存: comprehensive_syntax_fix_report.json")
 
 def main():
     """主函数"""
@@ -495,13 +492,13 @@ def main():
         'error_types_found': {**src_stats['error_types_found'], **scripts_stats['error_types_found']}
     }
 
-    print(f"\n🎉 全面语法修复完成!")
+    print("\n🎉 全面语法修复完成!")
     print(f"   总处理文件: {total_stats['total_files']}")
     print(f"   成功修复: {total_stats['successful_fixes']}")
     print(f"   总修复数: {total_stats['total_fixes_applied']}")
     print(f"   整体成功率: {total_stats['successful_fixes']/total_stats['total_files']*100:.1f}%")
 
-    print(f"\n🎯 下一步建议:")
+    print("\n🎯 下一步建议:")
     if total_stats['successful_fixes'] > 0:
         print("   ✅ 语法修复完成，现在可以运行Phase G工具")
         print("   📋 建议: python3 scripts/intelligent_test_gap_analyzer.py")

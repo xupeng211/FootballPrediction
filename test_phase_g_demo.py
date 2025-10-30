@@ -151,7 +151,7 @@ def main():
     print("📊 验证报告摘要:")
     print(f"   分析器状态: {verification_report['analyzer_test']}")
     print(f"   生成器状态: {verification_report['generator_test']}")
-    print(f"   验证报告: phase_g_verification_report.json")
+    print("   验证报告: phase_g_verification_report.json")
 
     print("\n🎯 Phase G核心功能验证:")
     if analysis_result and generation_result:

@@ -1,8 +1,8 @@
-"""
+""""""""
 适配器模式实现
 
 用于集成外部系统和API
-"""
+""""""""
 
 import asyncio
 from abc import ABC, abstractmethod

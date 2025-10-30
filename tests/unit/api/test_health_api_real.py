@@ -226,11 +226,11 @@ from src.api.health import router
 
 
         # 验证路由标签
-"""
+"""""""
 健康检查API真实测试
 Tests for real health check API
 测试实际的健康检查API功能。
-"""
+"""""""
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 @pytest.mark.unit

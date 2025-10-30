@@ -1,9 +1,9 @@
-"""
+"""""""
 比分收集器单元测试
 Unit tests for Scores Collector
 
 测试 src.collectors.scores_collector 模块的实时比分收集功能
-"""
+"""""""
 
 import os
 

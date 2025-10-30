@@ -136,7 +136,7 @@ class StressTester:
                 # POST请求，发送测试数据
                 data = self.generate_test_data()
                 async with session.post(url, json=data, headers=headers) as response:
-                    content = await response.text()
+                    await response.text()
                     response_time = time.time() - start_time
                     return TestResult(
                         url=url,
@@ -149,7 +149,7 @@ class StressTester:
             else:
                 # GET请求
                 async with session.get(url, headers=headers) as response:
-                    content = await response.text()
+                    await response.text()
                     response_time = time.time() - start_time
                     return TestResult(
                         url=url,
@@ -219,9 +219,9 @@ class StressTester:
 
     async def run_stress_test(self) -> None:
         """运行压力测试"""
-        logger.info(f"🚀 开始压力测试...")
+        logger.info("🚀 开始压力测试...")
         logger.info(f"📊 配置: {self.config.concurrent_users}并发用户, {self.config.duration}秒持续时间")
-        logger.info(f"🎯 目标: P95响应时间 < 200ms, 错误率 < 0.1%")
+        logger.info("🎯 目标: P95响应时间 < 200ms, 错误率 < 0.1%")
 
         self.start_time = datetime.now()
 
@@ -419,31 +419,31 @@ class StressTester:
         print("🎯 压力测试结果摘要")
         print("="*60)
 
-        print(f"📊 基础指标:")
+        print("📊 基础指标:")
         print(f"   总请求数: {metrics.total_requests:,}")
         print(f"   成功请求: {metrics.successful_requests:,}")
         print(f"   失败请求: {metrics.failed_requests:,}")
         print(f"   成功率: {(metrics.successful_requests/metrics.total_requests)*100:.2f}%")
         print(f"   吞吐量: {metrics.requests_per_second:.1f} RPS")
 
-        print(f"\n⚡ 响应时间:")
+        print("\n⚡ 响应时间:")
         print(f"   平均: {metrics.avg_response_time*1000:.1f}ms")
         print(f"   P50: {metrics.p50_response_time*1000:.1f}ms")
         print(f"   P90: {metrics.p90_response_time*1000:.1f}ms")
         print(f"   P95: {metrics.p95_response_time*1000:.1f}ms")
         print(f"   P99: {metrics.p99_response_time*1000:.1f}ms")
 
-        print(f"\n🏆 性能评估:")
+        print("\n🏆 性能评估:")
         print(f"   总体评级: {evaluation['overall_grade']}")
         print(f"   测试结果: {'✅ 通过' if evaluation['passed_all_tests'] else '❌ 失败'}")
 
         if evaluation['issues']:
-            print(f"\n⚠️ 发现问题:")
+            print("\n⚠️ 发现问题:")
             for issue in evaluation['issues']:
                 print(f"   - {issue}")
 
         if evaluation['recommendations']:
-            print(f"\n💡 建议:")
+            print("\n💡 建议:")
             for rec in evaluation['recommendations']:
                 print(f"   - {rec}")
 
@@ -496,7 +496,7 @@ async def main():
         report = tester.generate_report(metrics, evaluation)
 
         # 保存报告
-        report_file = tester.save_report(report)
+        tester.save_report(report)
 
         # 打印摘要
         tester.print_summary(metrics, evaluation)

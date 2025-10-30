@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
+""""""""
 InfluxDB时序数据库客户端
 InfluxDB Time Series Database Client
 
 提供高质量指标数据的时序存储、查询和分析功能
-"""
+""""""""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -437,11 +437,11 @@ class InfluxDBManager:
             )
 
             # 构建删除查询
-            delete_query = f"""
+            delete_query = f""""""""
             from(bucket: "{self.influx_bucket}")
                 |> range(start: -365d, stop: {delete_time})
                 |> drop()
-            """
+            """"""""
             # 记录删除查询（用于调试）
             logger.debug(
                 f"Generated delete query for data older than {delete_time}: {delete_query.strip()}"

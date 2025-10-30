@@ -134,11 +134,11 @@ from src.collectors import (
         # 收集数据
 
         # 检查一致性
-"""
+"""""""
 数据收集器真实模块测试
 Tests for real data collector modules
 测试实际存在的数据收集器功能。
-"""
+"""""""
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
     FixturesCollector,

@@ -1,4 +1,4 @@
-"""
+""""""""
 特征仓库使用示例
 
 演示如何使用足球预测系统的特征仓库进行特征存储、查询和模型训练。
@@ -11,7 +11,7 @@
 - 特征统计和管理
 
 基于 DATA_DESIGN.md 第6.1节特征仓库设计。
-"""
+""""""""
 
 import asyncio
 import logging
@@ -31,12 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 def example_initialize_feature_store() -> FootballFeatureStore:
-    """
+    """"""""
     示例：初始化特征仓库
 
     Returns:
         FootballFeatureStore: 特征仓库实例
-    """
+    """"""""
     logger.info("🚀 初始化特征仓库...")
 
     # 配置PostgreSQL离线存储 - 使用环境变量
@@ -63,12 +63,12 @@ def example_initialize_feature_store() -> FootballFeatureStore:
 
 
 def example_write_team_features(feature_store: FootballFeatureStore) -> None:
-    """
+    """"""""
     示例：写入球队特征数据
 
     Args:
         feature_store: 特征仓库实例
-    """
+    """"""""
     logger.info("📝 写入球队近期统计特征...")
 
     # 创建示例球队统计数据
@@ -136,12 +136,12 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
 
 
 def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
-    """
+    """"""""
     示例：写入赔率特征数据
 
     Args:
         feature_store: 特征仓库实例
-    """
+    """"""""
     logger.info("📝 写入赔率特征数据...")
 
     # 创建示例赔率数据
@@ -205,7 +205,7 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
 
 
 def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataFrame:
-    """
+    """"""""
     示例：获取在线特征（用于实时预测）
 
     Args:
@@ -213,7 +213,7 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
 
     Returns:
         pd.DataFrame: 在线特征数据
-    """
+    """"""""
     logger.info("🔍 获取在线特征数据...")
 
     # 构建实体数据（要预测的比赛）
@@ -235,7 +235,7 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
 def example_get_historical_features(
     feature_store: FootballFeatureStore,
 ) -> pd.DataFrame:
-    """
+    """"""""
     示例：获取历史特征（用于模型训练）
 
     Args:
@@ -243,7 +243,7 @@ def example_get_historical_features(
 
     Returns:
         pd.DataFrame: 历史特征数据
-    """
+    """"""""
     logger.info("📈 获取历史特征数据...")
 
     # 构建训练数据实体（历史比赛）
@@ -275,7 +275,7 @@ def example_get_historical_features(
 def example_create_training_dataset(
     feature_store: FootballFeatureStore,
 ) -> pd.DataFrame:
-    """
+    """"""""
     示例：创建机器学习训练数据集
 
     Args:
@@ -283,7 +283,7 @@ def example_create_training_dataset(
 
     Returns:
         pd.DataFrame: 训练数据集
-    """
+    """"""""
     logger.info("🎯 创建机器学习训练数据集...")
 
     # 指定训练数据的时间范围
@@ -303,12 +303,12 @@ def example_create_training_dataset(
 
 
 def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
-    """
+    """"""""
     示例：获取特征统计信息
 
     Args:
         feature_store: 特征仓库实例
-    """
+    """"""""
     logger.info("📊 获取特征统计信息...")
 
     # 获取不同特征视图的统计
@@ -327,12 +327,12 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
 
 
 def example_list_all_features(feature_store: FootballFeatureStore) -> None:
-    """
+    """"""""
     示例：列出所有特征
 
     Args:
         feature_store: 特征仓库实例
-    """
+    """"""""
     logger.info("📋 列出所有特征...")
 
     features_list = feature_store.list_features()
@@ -342,7 +342,7 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
 
         for i, feature in enumerate(features_list[:10]):  # 只显示前10个
             print(f"{i +"
-        1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}")
+        1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}")"
 
         if len(features_list) > 10:
             logger.info(f"    ... 还有 {len(features_list) - 10} 个特征")
@@ -351,9 +351,9 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
 
 
 async def run_complete_example() -> None:
-    """
+    """"""""
     运行完整的特征仓库示例
-    """
+    """"""""
     logger.info("🌟 足球特征仓库完整示例")
     logger.info("=" * 50)
 
@@ -399,14 +399,14 @@ async def run_complete_example() -> None:
 
 
 def example_integration_with_ml_pipeline() -> Dict[str, Any]:
-    """
+    """"""""
     示例：与机器学习流水线集成
 
     展示如何在ML训练和预测流程中使用特征仓库。
 
     Returns:
         Dict: 集成示例结果
-    """
+    """"""""
     logger.info("🤖 特征仓库与ML流水线集成示例...")
 
     # 模拟ML训练流程

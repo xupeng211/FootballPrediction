@@ -1,10 +1,10 @@
 import asyncio
 from typing import cast, defaultdict
 
-"""
+""""""""
 Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
-"""
+""""""""
 
 import logging
 from typing import Any, Callable, Dict, List, Optional

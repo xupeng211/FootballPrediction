@@ -1,9 +1,9 @@
-"""
+"""""""
 数据库连接简化测试
 Tests for Database Connection (Simple Version)
 
 测试src.database.connection模块的核心功能
-"""
+"""""""
 
 import pytest
 

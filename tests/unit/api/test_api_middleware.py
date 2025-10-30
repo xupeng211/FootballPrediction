@@ -223,9 +223,9 @@ from starlette.responses import JSONResponse
         # 正常请求
 
         # 短路请求
-"""
+"""""""
 API中间件测试
-"""
+"""""""
 pytest_plugins = "asyncio"
 try:
         AuthenticationMiddleware,
@@ -618,8 +618,8 @@ class TestCacheMiddleware:
         assert response.status_code == 200
         etag = response.headers.get("ETag")
         if etag:
-            assert etag.startswith('"')
-            assert etag.endswith('"')
+            assert etag.startswith('"')"
+            assert etag.endswith('"')"
     def test_if_none_match(self, client):
         """测试If-None-Match头部"""
         response1 = client.get("/test")

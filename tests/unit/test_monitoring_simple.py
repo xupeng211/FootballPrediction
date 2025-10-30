@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
+"""""""
 监控API简化测试
 测试 src.api.monitoring 模块的功能
-"""
+"""""""
 
 import time
 

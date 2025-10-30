@@ -61,7 +61,7 @@ class AutoTestGenerator:
         # 生成测试索引文件
         self._generate_test_index(generation_results)
 
-        print(f"✅ 测试生成完成:")
+        print("✅ 测试生成完成:")
         print(f"   生成文件: {len(generation_results['generated_files'])}")
         print(f"   生成测试用例: {generation_results['generated_test_cases']}")
         print(f"   输出目录: {self.output_dir}")
@@ -154,11 +154,11 @@ import os'''
 
         # 生成导入语句
         if modules_to_import:
-            imports.extend([f"try:" for _ in modules_to_import])
+            imports.extend(["try:" for _ in modules_to_import])
             for module in sorted(modules_to_import):
                 imports.append(f"    from {module} import *")
-            imports.extend([f"except ImportError:" for _ in modules_to_import])
-            imports.extend([f"    pass" for _ in modules_to_import])
+            imports.extend(["except ImportError:" for _ in modules_to_import])
+            imports.extend(["    pass" for _ in modules_to_import])
 
         return '\n'.join(imports)
 
@@ -508,7 +508,7 @@ def main():
     with open(results_file, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📊 生成结果:")
+    print("\n📊 生成结果:")
     print(f"   总文件数: {len(results['generated_files'])}")
     print(f"   总测试用例: {results['generated_test_cases']}")
     print(f"   错误数量: {len(results.get('generation_errors', []))}")

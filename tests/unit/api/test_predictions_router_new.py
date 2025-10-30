@@ -1,10 +1,10 @@
 
-"""
+"""""""
 预测API路由器测试
 Tests for predictions API router
 
 测试预测API的各个端点功能。
-"""
+"""""""
 
 
 import pytest

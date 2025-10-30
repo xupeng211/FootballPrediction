@@ -55,7 +55,7 @@ class TestBoundaryConditions:
                     if score < 0 or score > 1:
                         raise ValueError("Score must be between 0 and 1")
                     return round(score, 3)
-                except (TypeError, ValueError) as e:
+                except (TypeError, ValueError):
                     return None
 
             result = calculate_confidence(value)
@@ -100,7 +100,7 @@ class TestBoundaryConditions:
                     if any(ord(c) < 32 and c not in '\n\t' for c in name):
                         raise ValueError("Invalid control characters")
                     return True
-                except (TypeError, ValueError) as e:
+                except (TypeError, ValueError):
                     return False
 
             result = validate_team_name(text)
@@ -142,7 +142,7 @@ class TestBoundaryConditions:
                     raise ValueError("Match date out of reasonable range")
 
                 return True
-            except (TypeError, ValueError, OverflowError) as e:
+            except (TypeError, ValueError, OverflowError):
                 return False
 
         for test_date, test_type, description in date_tests:
@@ -186,7 +186,7 @@ class TestBoundaryConditions:
                     if len(data) > 5000:
                         raise ValueError("Too many unique items")
                 return True
-            except (TypeError, ValueError) as e:
+            except (TypeError, ValueError):
                 return False
 
         for data, test_type, description in collection_tests:
@@ -396,7 +396,7 @@ class TestExceptionHandling:
                 return float('inf')
             except InvalidOperation:
                 return None
-            except Exception as e:
+            except Exception:
                 return None
 
         # 测试各种除法情况
@@ -416,7 +416,7 @@ class TestExceptionHandling:
             if b == 0 and a != 0:
                 assert result == float('inf'), f"Expected infinity for {a}/{b}"
             elif b == 0 and a == 0:
-                assert result is None, f"Expected None for 0/0"
+                assert result is None, "Expected None for 0/0"
             else:
                 assert result is not None, f"Expected valid result for {a}/{b}"
                 if not math.isinf(result):
@@ -597,7 +597,6 @@ class TestErrorRecovery:
         random.seed(42)
 
         cache = MockCache()
-        call_count_before = cache.call_count
 
         def fallback_function():
             return {"data": "fallback_value", "timestamp": datetime.now().isoformat()}
@@ -871,7 +870,7 @@ class TestDataCorruptionHandling:
                     # 使用高精度Decimal
                     return Decimal(str(value))
 
-            except (ValueError, TypeError, InvalidOperation) as e:
+            except (ValueError, TypeError, InvalidOperation):
                 return None
 
         # 测试精度处理

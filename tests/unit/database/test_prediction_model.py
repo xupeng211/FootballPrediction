@@ -1,7 +1,7 @@
-"""
+"""""""
 智能Mock兼容修复模式 - Prediction模型测试修复
 解决SQLAlchemy关系映射和模型初始化问题
-"""
+"""""""
 
 from datetime import datetime
 from decimal import Decimal
@@ -90,8 +90,8 @@ class MockPredictions:
 
     def __repr__(self):
         # 智能Mock兼容修复模式 - 添加repr方法
-        return f"MockPredictions(id =
-    {self.id}, match_id={self.match_id}, model={self.model_version})"
+        return f"MockPredictions(id ="
+    {self.id}, match_id={self.match_id}, model={self.model_version})""
 
 
 class MockMatch:
@@ -113,9 +113,9 @@ PredictedResult = MockPredictedResult
 Predictions = MockPredictions
 Match = MockMatch
 
-"""
+"""""""
 数据库模型测试 - Prediction模型
-"""
+"""""""
 
 
 @pytest.mark.unit

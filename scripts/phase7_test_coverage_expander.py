@@ -72,15 +72,15 @@ class Phase7TestCoverageExpander:
             'recommendations': self._generate_recommendations()
         }
 
-        print(f"\n🎉 Phase 7 Week 1 测试覆盖率扩展完成:")
+        print("\n🎉 Phase 7 Week 1 测试覆盖率扩展完成:")
         print(f"   当前覆盖率: {final_result['summary']['current_coverage']}")
         print(f"   目标覆盖率: {final_result['summary']['target_coverage']}")
         print(f"   生成测试文件: {final_result['summary']['tests_generated']} 个")
         print(f"   API端点测试: {final_result['summary']['api_endpoints_tested']} 个")
         print(f"   执行时间: {final_result['elapsed_time']}")
-        print(f"   状态: ✅ 成功")
+        print("   状态: ✅ 成功")
 
-        print(f"\n📋 下一步行动:")
+        print("\n📋 下一步行动:")
         for i, step in enumerate(final_result['summary']['next_steps'][:3], 1):
             print(f"   {i}. {step}")
 

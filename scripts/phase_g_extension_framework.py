@@ -413,7 +413,7 @@ class ExtendedPhaseGSystem:
 
     def generate_multilang_tests(self, analysis_results: Dict, output_dir: str = "tests/generated_multilang") -> Dict:
         """为多语言项目生成测试"""
-        print(f"\n🤖 扩展Phase G多语言测试生成...")
+        print("\n🤖 扩展Phase G多语言测试生成...")
         print("=" * 60)
 
         output_path = Path(output_dir)
@@ -583,9 +583,9 @@ def main():
                 generation_results = extended_system.generate_multilang_tests(analysis_results)
 
                 # 显示摘要
-                print(f"\n" + "=" * 60)
-                print(f"📊 扩展Phase G多语言支持摘要")
-                print(f"=" * 60)
+                print("\n" + "=" * 60)
+                print("📊 扩展Phase G多语言支持摘要")
+                print("=" * 60)
                 print(f"🌐 支持的语言: {len(supported_langs)} 个")
                 print(f"📂 检测到的语言: {len(detected_langs)} 个")
                 print(f"📊 分析的函数: {analysis_results['total_functions']} 个")
@@ -593,17 +593,17 @@ def main():
                 print(f"📁 生成的文件: {generation_results['total_files_generated']} 个")
                 print(f"✅ 成功的语言: {len(generation_results['supported_languages'])} 个")
 
-                print(f"\n🎯 扩展框架功能:")
-                print(f"   ✅ 多语言代码分析")
-                print(f"   ✅ 多语言测试生成")
-                print(f"   ✅ 可扩展架构设计")
-                print(f"   ✅ 统一的接口规范")
+                print("\n🎯 扩展框架功能:")
+                print("   ✅ 多语言代码分析")
+                print("   ✅ 多语言测试生成")
+                print("   ✅ 可扩展架构设计")
+                print("   ✅ 统一的接口规范")
 
-                print(f"\n🚀 Phase G工具链已支持多语言扩展!")
+                print("\n🚀 Phase G工具链已支持多语言扩展!")
             else:
-                print(f"\n⚠️ 当前项目中未发现可分析的函数")
+                print("\n⚠️ 当前项目中未发现可分析的函数")
         else:
-            print(f"\n⚠️ 当前项目中未检测到支持的编程语言")
+            print("\n⚠️ 当前项目中未检测到支持的编程语言")
 
     except Exception as e:
         print(f"\n❌ 扩展框架执行失败: {e}")

@@ -1,11 +1,11 @@
 
-"""
+"""""""
 事件系统单元测试
 Event System Unit Tests
 
 测试事件系统的核心功能。
 Tests core functionality of the event system.
-"""
+"""""""
 
 import asyncio
 

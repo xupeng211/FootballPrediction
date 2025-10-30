@@ -1,8 +1,8 @@
-"""
+"""""""
 高级覆盖率提升测试: ConfigManager
 目标覆盖率: 36.5% → 75%
 策略: 高级Mock + 真实业务逻辑测试
-"""
+"""""""
 
 import os
 import sys

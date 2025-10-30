@@ -1,10 +1,10 @@
-"""
+""""""""
 适配器模式基类
 Adapter Pattern Base Classes
 
 定义适配器模式的核心接口和抽象类。
 Define core interfaces and abstract classes for the adapter pattern.
-"""
+""""""""
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -69,6 +69,9 @@ class CompositeAdapter(Adapter):
     """组合适配器，可以管理多个子适配器"""
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
+# TODO: 方法 def get_adapter 过长(23行)，建议拆分
+# TODO: 方法 def get_adapter 过长(23行)，建议拆分
+# TODO: 方法 def get_adapter 过长(23行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分

@@ -1,4 +1,4 @@
-"""
+"""""""
 Utils模块边界条件和业务逻辑测试
 
 重构说明：
@@ -6,7 +6,7 @@ Utils模块边界条件和业务逻辑测试
 - 基于真实存在的模块编写高质量业务逻辑测试
 - 测试覆盖dict_utils、data_validator、helpers、validators等核心工具模块
 - 压缩文件大小，提高测试密度和质量
-"""
+"""""""
 
 from __future__ import annotations
 
@@ -300,8 +300,8 @@ from src.utils.data_validator import DataValidator
             assert "<script" not in cleaned
             assert "<" not in cleaned
             assert ">" not in cleaned
-            assert '"' not in cleaned
-            assert "'" not in cleaned
+            assert '"' not in cleaned"
+            assert "'" not in cleaned'
             assert "&" not in cleaned
 
         # 测试长文本截断

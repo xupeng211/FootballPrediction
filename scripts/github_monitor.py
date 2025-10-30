@@ -134,34 +134,34 @@ class GitHubMonitor:
         health_data = self.analyze_issues_health()
 
         report_lines = [
-            f"# GitHub Issues监控报告",
-            f"",
+            "# GitHub Issues监控报告",
+            "",
             f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"**仓库**: {self.repo}",
-            f"**监控状态**: 🟢 健康",
-            f"",
-            f"---",
-            f"",
-            f"## 📊 总体统计",
-            f"",
-            f"### 🔢 数量统计",
-            f"```",
+            "**监控状态**: 🟢 健康",
+            "",
+            "---",
+            "",
+            "## 📊 总体统计",
+            "",
+            "### 🔢 数量统计",
+            "```",
             f"🔓 开放Issues: {health_data['summary']['total_open']}个",
             f"🔒 关闭Issues: {health_data['summary']['total_closed']}个",
             f"📅 本周新增: {health_data['summary']['recent_open']}个",
             f"✅ 本周解决: {health_data['summary']['recent_closed']}个",
             f"🏷️ 标签总数: {health_data['summary']['total_labels']}个",
-            f"```",
-            f"",
-            f"### 📈 健康指标",
+            "```",
+            "",
+            "### 📈 健康指标",
             f"- **解决率**: {(health_data['summary']['recent_closed'] / max(1, health_data['summary']['recent_open']) * 100):.1f}%",
             f"- **活跃度**: {'高' if health_data['summary']['recent_open'] > 0 else '正常'}",
             f"- **标签覆盖**: {'完善' if health_data['summary']['total_labels'] > 5 else '基础'}",
-            f"",
-            f"---",
-            f"",
-            f"## 🏷️ 标签分析",
-            f""
+            "",
+            "---",
+            "",
+            "## 🏷️ 标签分析",
+            ""
         ]
 
         # 添加标签统计
@@ -172,16 +172,16 @@ class GitHubMonitor:
                     f"- 开放: {stats['open']}个",
                     f"- 关闭: {stats['closed']}个",
                     f"- 总计: {stats['total']}个",
-                    f""
+                    ""
                 ])
 
         # 添加开放Issues样本
         if health_data["open_issues_sample"]:
             report_lines.extend([
                 "---",
-                f"",
-                f"## 🔓 开放Issues样本",
-                f""
+                "",
+                "## 🔓 开放Issues样本",
+                ""
             ])
 
             for i, issue in enumerate(health_data["open_issues_sample"], 1):
@@ -195,16 +195,16 @@ class GitHubMonitor:
                     f"- **标签**: {labels or '无标签'}",
                     f"- **创建时间**: {created}",
                     f"- **链接**: [{issue['html_url']}]({issue['html_url']})",
-                    f""
+                    ""
                 ])
 
         # 添加关闭Issues样本
         if health_data["closed_issues_sample"]:
             report_lines.extend([
                 "---",
-                f"",
-                f"## 🔒 最近关闭Issues样本",
-                f""
+                "",
+                "## 🔒 最近关闭Issues样本",
+                ""
             ])
 
             for i, issue in enumerate(health_data["closed_issues_sample"], 1):
@@ -218,36 +218,36 @@ class GitHubMonitor:
                     f"- **标签**: {labels or '无标签'}",
                     f"- **关闭时间**: {closed}",
                     f"- **链接**: [{issue['html_url']}]({issue['html_url']})",
-                    f""
+                    ""
                 ])
 
         # 添加建议部分
         report_lines.extend([
             "---",
-            f"",
-            f"## 💡 改进建议",
-            f"",
-            f"### 🎯 立即行动项",
-            f"- [ ] 检查开放Issues的优先级排序",
-            f"- [ ] 为无标签的Issues添加适当标签",
-            f"- [ ] 跟进长期开放的Issues",
-            f"",
-            f"### 🔄 持续改进",
-            f"- [ ] 定期审查和更新标签体系",
-            f"- [ ] 建立Issue响应时间目标",
-            f"- [ ] 完善Issue模板使用情况",
-            f"",
-            f"### 📊 监控指标",
-            f"- **目标解决率**: >80%",
-            f"- **目标响应时间**: <48小时",
-            f"- **目标标签覆盖率**: >90%",
-            f"",
-            f"---",
-            f"",
-            f"**报告生成完成**: 🎉 监控数据已收集并分析",
-            f"**下次监控**: 建议在24小时后再次执行",
-            f"",
-            f"*本报告由GitHub Monitor自动生成*"
+            "",
+            "## 💡 改进建议",
+            "",
+            "### 🎯 立即行动项",
+            "- [ ] 检查开放Issues的优先级排序",
+            "- [ ] 为无标签的Issues添加适当标签",
+            "- [ ] 跟进长期开放的Issues",
+            "",
+            "### 🔄 持续改进",
+            "- [ ] 定期审查和更新标签体系",
+            "- [ ] 建立Issue响应时间目标",
+            "- [ ] 完善Issue模板使用情况",
+            "",
+            "### 📊 监控指标",
+            "- **目标解决率**: >80%",
+            "- **目标响应时间**: <48小时",
+            "- **目标标签覆盖率**: >90%",
+            "",
+            "---",
+            "",
+            "**报告生成完成**: 🎉 监控数据已收集并分析",
+            "**下次监控**: 建议在24小时后再次执行",
+            "",
+            "*本报告由GitHub Monitor自动生成*"
         ])
 
         report_content = "\n".join(report_lines)
@@ -357,12 +357,12 @@ def main():
     else:
         # 生成完整报告
         output_file = args.output or f"github_monitoring_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        report_content = monitor.generate_monitoring_report(output_file)
+        monitor.generate_monitoring_report(output_file)
 
-        print(f"✅ 监控报告生成完成!")
+        print("✅ 监控报告生成完成!")
         print(f"📄 文件位置: {output_file}")
-        print(f"📊 数据统计: 已分析所有Issues和标签使用情况")
-        print(f"💡 改进建议: 已包含在报告中")
+        print("📊 数据统计: 已分析所有Issues和标签使用情况")
+        print("💡 改进建议: 已包含在报告中")
 
     print()
     print("🎉 GitHub监控任务完成!")

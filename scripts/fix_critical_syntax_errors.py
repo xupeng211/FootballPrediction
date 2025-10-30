@@ -46,7 +46,7 @@ class SyntaxErrorFixer:
             'failed_files_list': [str(f) for f in self.failed_files]
         }
 
-        print(f"\n📊 修复结果摘要:")
+        print("\n📊 修复结果摘要:")
         print(f"   总文件数: {summary['total_files']}")
         print(f"   修复成功: {summary['fixed_files']}")
         print(f"   修复失败: {summary['failed_files']}")
@@ -327,7 +327,7 @@ def main():
     with open('syntax_fix_report.json', 'w', encoding='utf-8') as f:
         json.dump(total_summary, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 详细报告: syntax_fix_report.json")
+    print("\n📄 详细报告: syntax_fix_report.json")
 
     # 给出下一步建议
     print("\n🎯 下一步建议:")

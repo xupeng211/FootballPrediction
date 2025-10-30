@@ -1,7 +1,7 @@
-"""
+"""""""
 智能Mock兼容修复模式 - PredictionService测试修复
 解决服务导入失败和依赖注入问题
-"""
+"""""""
 
 from datetime import datetime
 
@@ -433,8 +433,8 @@ class PredictionService:
             "SUM(CASE WHEN predicted_result = 'draw' THEN 1 ELSE 0 END) as draw_predictions, "
             "SUM(CASE WHEN predicted_result = 'away' THEN 1 ELSE 0 END) as away_predictions, "
             "SUM(CASE WHEN verified = true THEN 1 ELSE 0 END) as verified_predictions, "
-            "SUM(CASE WHEN verified =
-    true AND predicted_correct = true THEN 1 ELSE 0 END) as correct_predictions "
+            "SUM(CASE WHEN verified ="
+    true AND predicted_correct = true THEN 1 ELSE 0 END) as correct_predictions ""
             "FROM predictions WHERE created_at >= NOW() - INTERVAL '%s days' "
             "GROUP BY model_version",
             (days,),

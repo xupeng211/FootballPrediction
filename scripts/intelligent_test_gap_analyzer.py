@@ -443,7 +443,7 @@ def main():
 
     # 打印摘要
     summary = report['summary']
-    print(f"\n📊 分析摘要:")
+    print("\n📊 分析摘要:")
     print(f"   总函数数: {summary['total_functions']}")
     print(f"   未覆盖函数: {summary['uncovered_functions']}")
     print(f"   覆盖率: {summary['coverage_percentage']:.1f}%")
@@ -455,7 +455,7 @@ def main():
     print(f"\n📄 详细报告已保存至: {report_file}")
 
     # 生成高优先级建议
-    print(f"\n🎯 高优先级测试建议:")
+    print("\n🎯 高优先级测试建议:")
     for i, gap in enumerate(report['top_recommendations'][:5], 1):
         print(f"   {i}. {gap.function.name} ({gap.function.file_path})")
         print(f"      复杂度: {gap.function.complexity}, 工作量: {gap.estimated_effort}分钟")

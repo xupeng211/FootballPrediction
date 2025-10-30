@@ -1,17 +1,9 @@
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
 """
 批量处理配置
 生成时间：2025-10-26 20:57:22
 """
 
+from typing import Dict, Any, List, Optional
 # 批量处理配置
 BATCH_PROCESSING_CONFIG = {
     "batch_size": 100,
@@ -24,7 +16,6 @@ BATCH_PROCESSING_CONFIG = {
         "performance_logging": True,
     },
 }
-
 
 # 批量处理器基类
 class BatchProcessor:
@@ -67,7 +58,6 @@ class BatchProcessor:
         if self.current_batch:
             self.process_batch()
 
-
 # 预测结果批量处理器
 class PredictionBatchProcessor(BatchProcessor):
     def __init__(self):
@@ -78,7 +68,6 @@ class PredictionBatchProcessor(BatchProcessor):
         print(f"批量处理 {len(batch)} 个预测结果")
         # 这里应该是实际的批量处理实现
         pass
-
 
 # 数据收集批量处理器
 class DataCollectionBatchProcessor(BatchProcessor):
@@ -91,7 +80,6 @@ class DataCollectionBatchProcessor(BatchProcessor):
         # 这里应该是实际的批量处理实现
         pass
 
-
 # 用户活动批量处理器
 class UserActivityBatchProcessor(BatchProcessor):
     def __init__(self):
@@ -102,7 +90,6 @@ class UserActivityBatchProcessor(BatchProcessor):
         print(f"批量处理 {len(batch)} 个用户活动")
         # 这里应该是实际的批量处理实现
         pass
-
 
 # 全局批量处理器实例
 prediction_batch_processor = PredictionBatchProcessor()

@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""
+"""""""
 数据质量监控器测试
 Tests for Data Quality Monitor
 
 测试src.data.quality.data_quality_monitor模块的数据质量监控功能
-"""
+"""""""
 
 import logging
 from datetime import datetime, timedelta

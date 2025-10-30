@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
 
-"""
+"""""""
 数据收集核心测试（语法修复版）
 Tests for Data Collection Core (Syntax Fixed Version)
 
 测试src.tasks.data_collection_core模块的数据收集功能
-"""
+"""""""
 
 from datetime import datetime
 

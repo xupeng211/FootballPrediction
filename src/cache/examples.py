@@ -1,9 +1,9 @@
-"""
+""""""""
 缓存装饰器使用示例
 Cache Decorators Usage Examples
 
 展示如何在项目中使用各种缓存装饰器。
-"""
+""""""""
 
 import asyncio
 from typing import Any, Dict, List, Optional

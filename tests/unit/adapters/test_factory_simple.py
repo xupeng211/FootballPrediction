@@ -3,13 +3,13 @@
 # TODO: Consider creating a fixture for 45 repeated Mock creations
 
 
-"""
+"""""""
 简化适配器工厂模块测试
 Simple Adapter Factory Module Tests
 
 测试src/adapters/factory_simple.py中定义的简化适配器工厂功能，专注于实现100%覆盖率。
 Tests simple adapter factory functionality defined in src/adapters/factory_simple.py, focused on achieving 100% coverage.
-"""
+"""""""
 
 
 import pytest

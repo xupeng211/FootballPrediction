@@ -570,7 +570,7 @@ class TenantService:
                 and_(
                     UserRoleAssignment.user_id == user_id,
                     UserRoleAssignment.tenant_id == tenant_id,
-                    UserRoleAssignment.is_active == True
+                    UserRoleAssignment.is_active
                 )
             )
         )
@@ -584,7 +584,7 @@ class TenantService:
                 and_(
                     TenantRole.tenant_id == tenant_id,
                     TenantRole.code == role_code,
-                    TenantRole.is_active == True
+                    TenantRole.is_active
                 )
             )
         )

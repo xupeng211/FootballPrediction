@@ -78,7 +78,7 @@ class CoverageAnalyzer:
                 print(f"  ❌ 分析失败: {e}")
 
         # 汇总统计
-        print(f"\n📈 Phase E 测试汇总统计:")
+        print("\n📈 Phase E 测试汇总统计:")
         print(f"  🧪 总测试用例: {total_test_cases}")
         print(f"  ✅ 通过: {total_passed} ({total_passed/total_test_cases*100:.1f}%)" if total_test_cases > 0 else "  ✅ 通过: 0")
         print(f"  ❌ 失败: {total_failed} ({total_failed/total_test_cases*100:.1f}%)" if total_test_cases > 0 else "  ❌ 失败: 0")
@@ -356,7 +356,7 @@ class CoverageAnalyzer:
 
         # 显示总结
         summary = report["summary"]
-        print(f"\n🎯 Phase E 总结:")
+        print("\n🎯 Phase E 总结:")
         print(f"  📊 总测试用例: {summary['total_test_cases']}")
         print(f"  📈 测试成功率: {summary['success_rate']:.1%}")
         print(f"  📋 平均模块覆盖率: {summary['average_module_coverage']:.1f}%")
@@ -377,7 +377,7 @@ def main():
     print("🚀 启动Phase E覆盖率精细化分析...")
 
     # 创建完整报告
-    report = analyzer.create_coverage_report()
+    analyzer.create_coverage_report()
 
     if not args.report_only:
         # 显示额外分析

@@ -3,7 +3,7 @@ from typing import Dict
 from typing import Any
 from src.core.config import 
 from src.core.config import 
-"""
+""""""""
 高级质量监控系统
 Issue #123: Phase 3: 高级质量监控系统开发
 
@@ -13,7 +13,7 @@ Issue #123: Phase 3: 高级质量监控系统开发
 - 自动化质量门禁
 - 告警系统
 - 仪表盘可视化
-"""
+""""""""
 
 import logging
 from datetime import datetime, timezone
@@ -382,7 +382,7 @@ class AdvancedMonitoringSystem:
 
     async def _generate_dashboard_html(self) -> str:
         """生成监控面板HTML"""
-        return """
+        return """"""""
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -670,7 +670,7 @@ class AdvancedMonitoringSystem:
     </script>
 </body>
 </html>
-        """
+        """"""""
 
     def run(self, host: str = "0.0.0.0", port: int = 8080):
         """启动监控系统"""

@@ -1,10 +1,10 @@
-"""
+"""""""
 模型训练模块测试
 Model Training Module Tests
 
 测试src/models/model_training.py中定义的模型训练功能，专注于实现100%覆盖率。
 Tests model training functionality defined in src/models/model_training.py, focused on achieving 100% coverage.
-"""
+"""""""
 
 import pytest
 

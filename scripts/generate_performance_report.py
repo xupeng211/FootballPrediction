@@ -470,7 +470,7 @@ class PerformanceReportGenerator:
     def generate_markdown_content(self, report: Dict[str, Any]) -> str:
         """生成Markdown内容"""
         metadata = report["metadata"]
-        summary = report["test_summary"]
+        report["test_summary"]
         analysis = report["performance_analysis"]
         evaluation = report["performance_evaluation"]
         recommendations = report["recommendations"]
@@ -576,7 +576,7 @@ class PerformanceReportGenerator:
                 content += f"**优先级**: {action['priority']}\n"
                 content += f"**预计工作量**: {action['estimated_effort']}\n"
                 content += f"**截止日期**: {action['due_date']}\n"
-                content += f"**行动项**:\n"
+                content += "**行动项**:\n"
                 for i, action_item in enumerate(action['actions'], 1):
                     content += f"- {action_item}\n"
                 content += "\n"
@@ -621,13 +621,13 @@ class PerformanceReportGenerator:
         print(f"🏆 总体评级: {evaluation['overall_grade']}")
         print(f"✅ 测试状态: {'通过' if evaluation['passed_all_checks'] else '需要优化'}")
 
-        print(f"\n📊 关键指标:")
+        print("\n📊 关键指标:")
         print(f"   P95响应时间: {analysis['response_time_analysis']['p95_ms']:.1f}ms")
         print(f"   错误率: {analysis['throughput_analysis']['error_rate']:.2f}%")
         print(f"   吞吐量: {analysis['throughput_analysis']['requests_per_second']:.1f} RPS")
         print(f"   系统可用性: {analysis['system_analysis']['availability']:.1f}%")
 
-        print(f"\n💡 建议:")
+        print("\n💡 建议:")
         recommendations = report.get("recommendations", [])
         for i, rec in enumerate(recommendations[:3]):
             print(f"   {i+1}. [{rec['priority']}] {rec['issue']}")
@@ -660,10 +660,10 @@ def main():
         base_filename = args.output or f"performance_report_{timestamp}"
 
         if args.format in ["json", "both"]:
-            json_file = generator.save_report(report, f"{base_filename}.json")
+            generator.save_report(report, f"{base_filename}.json")
 
         if args.format in ["markdown", "both"]:
-            md_file = generator.save_markdown_report(report, f"{base_filename}.md")
+            generator.save_markdown_report(report, f"{base_filename}.md")
 
         # 打印摘要
         generator.print_summary(report)

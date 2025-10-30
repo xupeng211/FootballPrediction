@@ -1,8 +1,8 @@
 # mypy: ignore-errors
-"""
+""""""""
 比赛赛程收集器
 从各种数据源收集比赛赛程信息
-"""
+""""""""
 
 import os
 from datetime import datetime, timedelta
@@ -43,7 +43,7 @@ class FixturesCollector:
     async def collect_team_fixtures(
         self, team_id: int, days_ahead: int = 30, force_refresh: bool = False
     ) -> List[Dict[str, Any]]:
-        """
+        """"""""
         收集指定球队的未来比赛
 
         Args:
@@ -53,7 +53,7 @@ class FixturesCollector:
 
         Returns:
             比赛信息列表
-        """
+        """"""""
         cache_key = f"fixtures:team:{team_id}:{days_ahead}"
 
         # 尝试从缓存获取
@@ -91,7 +91,7 @@ class FixturesCollector:
         matchday: Optional[int] = None,
         force_refresh: bool = False,
     ) -> List[Dict[str, Any]]:
-        """
+        """"""""
         收集联赛的比赛赛程
 
         Args:
@@ -101,7 +101,7 @@ class FixturesCollector:
 
         Returns:
             比赛信息列表
-        """
+        """"""""
         cache_key = f"fixtures:league:{league_id}:{matchday or 'all'}"
 
         if not force_refresh:
@@ -255,12 +255,12 @@ class FixturesCollector:
         return fixtures
 
     async def refresh_all_fixtures(self) -> Dict[str, int]:
-        """
+        """"""""
         刷新所有比赛的赛程信息
 
         Returns:
             收集统计信息
-        """
+        """"""""
         stats = {
             "total_fixtures": 0,
             "new_fixtures": 0,

@@ -1,11 +1,11 @@
-"""
+"""""""
 Issue #83-C 高级重构测试: api.cqrs
 覆盖率: 56.7% → 80%
 创建时间: 2025-10-26 18:23
 优先级: MEDIUM
 类别: api
 策略: 高级Mock策略，解决复杂模块依赖问题
-"""
+"""""""
 
 import inspect
 import sys

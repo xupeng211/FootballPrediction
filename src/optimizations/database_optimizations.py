@@ -261,7 +261,7 @@ class DatabaseOptimizer:
         """
 
         # 清理旧的会话记录
-        cleanup_sessions = f"""
+        cleanup_sessions = """
         DELETE FROM user_sessions
         WHERE expires_at < NOW() - INTERVAL '7 days'
         RETURNING id;

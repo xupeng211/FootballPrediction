@@ -1,11 +1,11 @@
 
-"""
+"""""""
 观察者系统单元测试
 Observer System Unit Tests
 
 测试观察者模式的核心功能。
 Tests core functionality of the observer pattern.
-"""
+"""""""
 
 import asyncio
 

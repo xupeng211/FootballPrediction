@@ -1,8 +1,8 @@
-"""
+""""""""
 数据验证器
 
 验证处理后的数据质量和完整性。
-"""
+""""""""
 
 import logging
 from datetime import datetime, timedelta
@@ -64,7 +64,7 @@ class DataValidator:
         data: Union[Dict[str, Any], List[Dict[str, Any]], pd.DataFrame],
         data_type: str = "match_data",
     ) -> Dict[str, Any]:
-        """
+        """"""""
         验证数据质量
 
         Args:
@@ -73,7 +73,7 @@ class DataValidator:
 
         Returns:
             验证结果报告
-        """
+        """"""""
         try:
             # 转换为DataFrame
             if isinstance(data, dict):
@@ -123,7 +123,7 @@ class DataValidator:
             }
 
     async def _validate_structure(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
-        """
+        """"""""
         验证数据结构
 
         Args:
@@ -132,7 +132,7 @@ class DataValidator:
 
         Returns:
             结构验证结果
-        """
+        """"""""
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
         rules = self.validation_rules.get(data_type, {})
@@ -177,7 +177,7 @@ class DataValidator:
         return result
 
     async def _validate_content(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
-        """
+        """"""""
         验证数据内容
 
         Args:
@@ -186,7 +186,7 @@ class DataValidator:
 
         Returns:
             内容验证结果
-        """
+        """"""""
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
         # 检查重复记录
@@ -224,7 +224,7 @@ class DataValidator:
         return result
 
     async def _validate_business_rules(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
-        """
+        """"""""
         验证业务规则
 
         Args:
@@ -233,7 +233,7 @@ class DataValidator:
 
         Returns:
             业务规则验证结果
-        """
+        """"""""
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
         if data_type == "match_data":
@@ -339,7 +339,7 @@ class DataValidator:
         return result
 
     async def _generate_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """
+        """"""""
         生成数据统计信息
 
         Args:
@@ -347,7 +347,7 @@ class DataValidator:
 
         Returns:
             统计信息
-        """
+        """"""""
         stats = {
             "total_records": len(df),
             "total_columns": len(df.columns),
@@ -391,7 +391,7 @@ class DataValidator:
             self.logger.info(f"验证记录数: {stats['total_records']}")
 
     async def validate_batch_consistency(self, batches: List[pd.DataFrame]) -> Dict[str, Any]:
-        """
+        """"""""
         验证批次数据的一致性
 
         Args:
@@ -399,7 +399,7 @@ class DataValidator:
 
         Returns:
             一致性验证结果
-        """
+        """"""""
         result: Dict[str, Any] = {
             "consistent": True,
             "issues": [],

@@ -93,8 +93,8 @@ class BaseModel(Base, TimestampMixin):
             exclude_fields: 需要排除的字段集合
         """
         if exclude_fields is None:
-            exclude_fields = {"id"}
-        valid_fields = {column.name for column in self.__table__.columns}
+            pass
+        {column.name for column in self.__table__.columns}
         for key, value in data.items():
                 setattr(self, key, value)
 

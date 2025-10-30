@@ -1,4 +1,4 @@
-"""
+"""""""
 核心模块业务逻辑测试 - 重构版本
 Core Module Business Logic Tests - Refactored Version
 
@@ -8,7 +8,7 @@ High-quality tests based on real business logic, replacing template code.
 重构目标：
 - 提高测试密度和质量
 - 基于真实业务逻辑而非模板
-"""
+"""""""
 
 import asyncio
 

@@ -1,8 +1,8 @@
 from unittest.mock import MagicMock, patch
 
-"""
+"""""""
 简单模块测试
-"""
+"""""""
 
 import pytest
 

@@ -277,7 +277,7 @@ class AdvancedSyntaxFixer:
         """修复目录下的所有Python文件"""
         python_files = list(Path(directory).rglob("*.py"))
 
-        print(f"🚀 Phase G Week 3: 开始高级语法修复")
+        print("🚀 Phase G Week 3: 开始高级语法修复")
         print(f"📁 目标目录: {directory}")
         print(f"📂 发现 {len(python_files)} 个Python文件")
         print("=" * 60)
@@ -301,14 +301,14 @@ class AdvancedSyntaxFixer:
             print(f"📈 修复成功率: {success_rate:.1f}%")
 
         if self.fixed_files:
-            print(f"\n🎯 成功修复的文件:")
+            print("\n🎯 成功修复的文件:")
             for file_path in self.fixed_files[:10]:
                 print(f"   ✅ {file_path}")
             if len(self.fixed_files) > 10:
                 print(f"   ... 还有 {len(self.fixed_files) - 10} 个文件")
 
         if self.failed_files:
-            print(f"\n⚠️ 修复失败的文件:")
+            print("\n⚠️ 修复失败的文件:")
             for file_path in self.failed_files[:5]:
                 print(f"   ❌ {file_path}")
             if len(self.failed_files) > 5:

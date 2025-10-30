@@ -1,9 +1,9 @@
-"""
+"""""""
 预测模块单元测试
 
 测试 src/models/prediction.py 中的预测功能。
 专注于业务逻辑测试，提高测试密度和质量。
-"""
+"""""""
 
 import datetime
 

@@ -1,6 +1,6 @@
-"""
+""""""""
 简化的适配器工厂
-"""
+""""""""
 
 from typing import Any, Dict, Optional, Type
 
@@ -14,10 +14,19 @@ class AdapterFactory:
 _global_factory = AdapterFactory()
 
 
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
+# 全局工厂实例
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
+# 全局工厂实例
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
+# 全局工厂实例
     def __init__(self):
         self._adapters: Dict[str, Type] = {}
         self._instances: Dict[str, Any] = {}
 
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
 # TODO: 方法 def create_adapter 过长(23行)，建议拆分
     def create_adapter(
         """TODO: 添加函数文档"""

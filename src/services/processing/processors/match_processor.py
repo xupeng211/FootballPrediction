@@ -1,9 +1,9 @@
 # mypy: ignore-errors
-"""
+""""""""
 比赛数据处理器
 
 处理原始比赛数据的清洗、转换和标准化。
-"""
+""""""""
 
 import logging
 from datetime import datetime
@@ -39,7 +39,7 @@ class MatchProcessor:
         self,
         raw_data: Union[Dict[str, Any], List[Dict[str, Any]]],
     ) -> Optional[Union[Dict[str, Any], pd.DataFrame]]:
-        """
+        """"""""
         处理原始比赛数据
 
         Args:
@@ -47,7 +47,7 @@ class MatchProcessor:
 
         Returns:
             处理后的数据
-        """
+        """"""""
         try:
             if isinstance(raw_data, list):
                 # 批量处理
@@ -89,7 +89,7 @@ class MatchProcessor:
             return None
 
     async def _validate_match_data(self, data: Dict[str, Any]) -> bool:
-        """
+        """"""""
         验证比赛数据
 
         Args:
@@ -97,7 +97,7 @@ class MatchProcessor:
 
         Returns:
             是否验证通过
-        """
+        """"""""
         # 检查必需字段
         missing_fields = self.required_fields - set(data.keys())
         if missing_fields:
@@ -141,7 +141,7 @@ class MatchProcessor:
         return cleaned
 
     async def _standardize_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
+        """"""""
         标准化比赛数据
 
         Args:
@@ -149,7 +149,7 @@ class MatchProcessor:
 
         Returns:
             标准化后的数据
-        """
+        """"""""
         standardized = data.copy()
 
         # 标准化日期格式
@@ -248,7 +248,7 @@ class MatchProcessor:
     async def process_batch_matches(
         self, matches: List[Dict[str, Any]],
         batch_size: int = 50,)) -> List[Dict[str, Any]]:
-        """
+        """"""""
         批量处理比赛数据
 
         Args:
@@ -257,7 +257,7 @@ class MatchProcessor:
 
         Returns:
             处理后的比赛数据列表
-        """
+        """"""""
         processed_matches: List[Any] = []
         total = len(matches)
 
@@ -284,7 +284,7 @@ class MatchProcessor:
         self,
         matches: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        """
+        """"""""
         检测重复的比赛
 
         Args:
@@ -292,7 +292,7 @@ class MatchProcessor:
 
         Returns:
             重复的比赛列表
-        """
+        """"""""
         seen_matches = set()
         duplicates: List[Any] = []
 

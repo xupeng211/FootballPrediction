@@ -1,9 +1,9 @@
-"""
+"""""""
 警告过滤器完整测试
 Warning Filters Complete Tests
 
 基于Issue #98四连胜成功模式，创建完整的警告过滤器测试
-"""
+"""""""
 
 import logging
 import sys

@@ -2,9 +2,9 @@ from typing import List
 from typing import Dict
 from datetime import datetime
 from src.core.config import 
-"""
+""""""""
 特征计算器
-"""
+""""""""
 
 import numpy as np
 from dataclasses import dataclass
@@ -54,13 +54,13 @@ class TeamStats:
 
 
 class FeatureCalculator:
-    """特征计算器
+    """特征计算器"""""
 
     负责计算各种特征的核心类，支持：
     - 近期战绩特征计算
     - 历史对战特征计算
     - 赔率特征计算
-    - 批量计算和缓存优化"""
+    - 批量计算和缓存优化""""""""
 
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
@@ -71,7 +71,7 @@ class FeatureCalculator:
     def calculate_team_form_features(
         self, team: str, matches: List[MatchResult], last_n_matches: int = 5
     ) -> Dict[str, float]:
-        """计算球队近期状态特征
+        """计算球队近期状态特征"""""
 
         Args:
             team: 球队名称
@@ -80,7 +80,7 @@ class FeatureCalculator:
 
         Returns:
             球队状态特征字典
-        """
+        """"""""
         try:
             # 获取该球队的比赛
             team_matches = []
@@ -200,7 +200,7 @@ class FeatureCalculator:
         matches: List[MatchResult],
         last_n_matches: int = 10,
     ) -> Dict[str, float]:
-        """计算历史对战特征
+        """计算历史对战特征"""""
 
         Args:
             home_team: 主队名称
@@ -210,7 +210,7 @@ class FeatureCalculator:
 
         Returns:
             历史对战特征字典
-        """
+        """"""""
         try:
             # 获取两队之间的对战记录
             h2h_matches = []
@@ -323,7 +323,7 @@ class FeatureCalculator:
     def calculate_team_stats_features(
         self, team: str, matches: List[MatchResult], all_matches: List[MatchResult]
     ) -> Dict[str, float]:
-        """计算球队统计数据特征
+        """计算球队统计数据特征"""""
 
         Args:
             team: 球队名称
@@ -332,7 +332,7 @@ class FeatureCalculator:
 
         Returns:
             球队统计特征字典
-        """
+        """"""""
         try:
             # 计算球队基础统计
             team_stats = self._calculate_team_stats(team, matches)
@@ -410,7 +410,7 @@ class FeatureCalculator:
             return self._get_default_stats_features()
 
     def calculate_ranking_features(self, team: str, league_table: List[Dict]) -> Dict[str, float]:
-        """计算排名相关特征
+        """计算排名相关特征"""""
 
         Args:
             team: 球队名称
@@ -418,7 +418,7 @@ class FeatureCalculator:
 
         Returns:
             排名特征字典
-        """
+        """"""""
         try:
             if not league_table:
                 return self._get_default_ranking_features()
@@ -487,7 +487,7 @@ class FeatureCalculator:
     def calculate_match_importance_features(
         self, home_team: str, away_team: str, league: str, stage: str = None
     ) -> Dict[str, float]:
-        """计算比赛重要性特征
+        """计算比赛重要性特征"""""
 
         Args:
             home_team: 主队名称
@@ -497,7 +497,7 @@ class FeatureCalculator:
 
         Returns:
             比赛重要性特征字典
-        """
+        """"""""
         try:
             features = {}
 
@@ -570,7 +570,7 @@ class FeatureCalculator:
         league_table: List[Dict] = None,
         league: str = None,
     ) -> Dict[str, float]:
-        """计算所有特征的统一接口
+        """计算所有特征的统一接口"""""
 
         Args:
             home_team: 主队名称
@@ -581,7 +581,7 @@ class FeatureCalculator:
 
         Returns:
             完整特征字典
-        """
+        """"""""
         try:
             all_features = {}
 

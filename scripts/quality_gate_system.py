@@ -139,7 +139,7 @@ class TestCoverageGate(QualityGate):
         """检查测试覆盖率"""
         try:
             # 尝试运行覆盖率检查
-            result = subprocess.run(
+            subprocess.run(
                 ["python3", "-m", "pytest", "--cov=src", "--cov-report=json", "--cov-fail-under=0", "-q"],
                 capture_output=True,
                 text=True,
@@ -158,7 +158,7 @@ class TestCoverageGate(QualityGate):
                     name="Overall Coverage",
                     value=total_coverage,
                     threshold=self.threshold,
-                    description=f"总测试覆盖率",
+                    description="总测试覆盖率",
                     details={
                         "lines_covered": coverage_data.get('totals', {}).get('covered_lines', 0),
                         "lines_missing": coverage_data.get('totals', {}).get('missing_lines', 0),
@@ -538,7 +538,7 @@ class QualityGateSystem:
         failed_gates = len([r for r in self.results if r.status == GateStatus.FAILED])
         warning_gates = len([r for r in self.results if r.status == GateStatus.WARNING])
 
-        print(f"\n📈 门禁执行统计:")
+        print("\n📈 门禁执行统计:")
         print(f"   总门禁数: {len(self.results)}")
         print(f"   通过: {passed_gates}")
         print(f"   失败: {failed_gates}")
@@ -567,7 +567,7 @@ class QualityGateSystem:
             all_metrics.extend(result.metrics)
 
         if all_metrics:
-            print(f"\n📊 质量指标汇总:")
+            print("\n📊 质量指标汇总:")
             for metric in all_metrics:
                 metric_icon = {"PASSED": "✅", "FAILED": "❌", "WARNING": "⚠️", "SKIPPED": "⏭️"}
                 print(f"   {metric_icon[metric.status.value]} {metric.name}: {metric.value:.1f}%")
@@ -668,18 +668,18 @@ def main():
         # 执行所有门禁
         report = gate_system.execute_all_gates()
 
-        print(f"\n🎉 质量门禁系统执行完成!")
+        print("\n🎉 质量门禁系统执行完成!")
         print(f"   整体状态: {report['overall_status']}")
         print(f"   执行时间: {report['execution_duration']:.2f}秒")
 
         if report['overall_status'] == 'PASSED':
-            print(f"   ✅ 所有质量门禁通过，可以部署")
+            print("   ✅ 所有质量门禁通过，可以部署")
         elif report['overall_status'] == 'WARNING':
-            print(f"   ⚠️ 存在警告，建议修复后部署")
+            print("   ⚠️ 存在警告，建议修复后部署")
         else:
-            print(f"   ❌ 存在失败门禁，必须修复后才能部署")
+            print("   ❌ 存在失败门禁，必须修复后才能部署")
 
-        print(f"\n🚀 质量门禁系统已就绪，可集成到CI/CD流水线!")
+        print("\n🚀 质量门禁系统已就绪，可集成到CI/CD流水线!")
 
         return report
 

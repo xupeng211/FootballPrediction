@@ -1,11 +1,11 @@
-"""
+""""""""
 WebSocket连接管理器 - 生产级实现
 
 WebSocket Connection Manager - Production Implementation
 
 提供完整的WebSocket连接管理、房间管理、消息路由等功能
 Provides complete WebSocket connection management, room management, message routing, etc.
-"""
+""""""""
 
 import json
 import logging

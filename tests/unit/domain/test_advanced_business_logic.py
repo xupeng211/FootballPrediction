@@ -107,7 +107,7 @@ class TestPredictionStrategies:
                     # 使用简化的预测逻辑
                     prediction = {"home_score": 2, "away_score": 1, "confidence": 0.75}
 
-        except Exception as e:
+        except Exception:
             # Fallback测试
             prediction = {"home_score": 2, "away_score": 1, "confidence": 0.75}
             assert prediction is not None
@@ -138,7 +138,7 @@ class TestPredictionStrategies:
                     # 简化验证
                     assert test_data is not None
 
-        except Exception as e:
+        except Exception:
             assert True  # 策略不可用时跳过
 
     def test_historical_strategy_pattern_matching(self):
@@ -179,7 +179,7 @@ class TestPredictionStrategies:
                 similarity_score = 0.8
                 assert 0 <= similarity_score <= 1
 
-        except Exception as e:
+        except Exception:
             assert True  # 策略不可用时跳过
 
     def test_ensemble_strategy_weight_combination(self):
@@ -211,7 +211,7 @@ class TestPredictionStrategies:
                 }
                 assert combined_prediction is not None
 
-        except Exception as e:
+        except Exception:
             assert True  # 策略不可用时跳过
 
     def test_strategy_factory_dynamic_creation(self):
@@ -236,7 +236,7 @@ class TestPredictionStrategies:
                     # 简化创建验证
                     assert config["type"] is not None
 
-        except Exception as e:
+        except Exception:
             assert True  # 工厂不可用时跳过
 
 
@@ -282,7 +282,7 @@ class TestDomainServices:
                 }
                 assert prediction["match_id"] == 12345
 
-        except Exception as e:
+        except Exception:
             assert True  # 服务不可用时跳过
 
     def test_match_service_data_aggregation(self):
@@ -317,7 +317,7 @@ class TestDomainServices:
                 }
                 assert aggregated_data["id"] == 123
 
-        except Exception as e:
+        except Exception:
             assert True  # 服务不可用时跳过
 
     def test_team_service_performance_analysis(self):
@@ -360,7 +360,7 @@ class TestDomainServices:
                 }
                 assert performance_analysis["team_id"] == 1
 
-        except Exception as e:
+        except Exception:
             assert True  # 服务不可用时跳过
 
     def test_scoring_service_complex_metrics(self):
@@ -395,7 +395,7 @@ class TestDomainServices:
                 }
                 assert 0 <= comprehensive_score["overall_score"] <= 1
 
-        except Exception as e:
+        except Exception:
             assert True  # 服务不可用时跳过
 
 
@@ -442,7 +442,7 @@ class TestDomainEvents:
                 assert event["event_type"] == "prediction_created"
                 assert event["data"]["prediction_id"] == "pred_12345"
 
-        except Exception as e:
+        except Exception:
             assert True  # 事件系统不可用时跳过
 
     def test_match_finished_event_cascade_effects(self):
@@ -481,7 +481,7 @@ class TestDomainEvents:
                 ]
                 assert len(cascade_effects) >= 2
 
-        except Exception as e:
+        except Exception:
             assert True  # 事件系统不可用时跳过
 
     def test_event_bus_complex_routing(self):
@@ -548,7 +548,7 @@ class TestDomainEvents:
             assert "prediction_created" in stats["event_types"]
             assert "match_finished" in stats["event_types"]
 
-        except Exception as e:
+        except Exception:
             assert True  # 事件总线不可用时跳过
 
 
@@ -608,7 +608,7 @@ class TestDomainModels:
                 validation_result = validate_prediction(prediction_data)
                 assert validation_result["valid"] is True
 
-        except Exception as e:
+        except Exception:
             assert True  # 模型不可用时跳过
 
     def test_match_model_state_transitions(self):
@@ -666,7 +666,7 @@ class TestDomainModels:
                 assert match.status == "finished"
                 assert match.final_score == {"home": 2, "away": 1}
 
-        except Exception as e:
+        except Exception:
             assert True  # 模型不可用时跳过
 
     def test_team_model_performance_calculation(self):
@@ -715,7 +715,7 @@ class TestDomainModels:
                 rating = calculate_team_performance(team_data["matches"])
                 assert 0 <= rating <= 100
 
-        except Exception as e:
+        except Exception:
             assert True  # 模型不可用时跳过
 
 
@@ -934,7 +934,7 @@ def test_business_logic_integration():
 
         return True
 
-    except Exception as e:
+    except Exception:
         return False
 
 

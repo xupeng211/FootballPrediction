@@ -340,7 +340,7 @@ class TestAPIComprehensive:
         ]
 
         # 验证至少有一个安全头存在（如果配置了安全中间件）
-        has_security_headers = any(
+        any(
             header.lower() in [h.lower() for h in headers.keys()]
             for header in security_headers
         )
@@ -372,7 +372,7 @@ class TestAPIComprehensive:
                 "access-control-allow-headers"
             ]
 
-            has_cors_headers = any(
+            any(
                 header.lower() in [h.lower() for h in response.headers.keys()]
                 for header in cors_headers
             )
@@ -424,7 +424,7 @@ class TestAPIPerformanceAdvanced:
         end_time = time.time()
 
         # 性能断言
-        total_time = (end_time - start_time) * 1000
+        (end_time - start_time) * 1000
 
         # 平均响应时间应该小于500ms
         response_times = [r["response_time"] for r in results]
@@ -474,7 +474,7 @@ class TestAPIPerformanceAdvanced:
         for _ in range(50):
             start_time = time.time()
             try:
-                response = self.client.get("/health")
+                self.client.get("/health")
                 end_time = time.time()
                 response_times.append((end_time - start_time) * 1000)
             except:

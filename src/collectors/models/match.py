@@ -1,6 +1,6 @@
-"""
+""""""""
 Match model for data collection
-"""
+""""""""
 
 from dataclasses import dataclass
 from datetime import datetime

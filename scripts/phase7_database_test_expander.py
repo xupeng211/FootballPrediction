@@ -72,16 +72,16 @@ class Phase7DatabaseTestExpander:
             'recommendations': self._generate_db_recommendations()
         }
 
-        print(f"\n🎉 Phase 7 Week 2 数据库仓储层测试扩展完成:")
+        print("\n🎉 Phase 7 Week 2 数据库仓储层测试扩展完成:")
         print(f"   当前数据库覆盖率: {final_result['summary']['current_db_coverage']}")
         print(f"   目标数据库覆盖率: {final_result['summary']['target_db_coverage']}")
         print(f"   生成测试文件: {final_result['summary']['tests_generated']} 个")
         print(f"   仓储层测试: {final_result['summary']['repositories_tested']} 个")
         print(f"   数据库集成状态: {final_result['summary']['db_integration_status']}")
         print(f"   执行时间: {final_result['elapsed_time']}")
-        print(f"   状态: ✅ 成功")
+        print("   状态: ✅ 成功")
 
-        print(f"\n📋 下一步行动:")
+        print("\n📋 下一步行动:")
         for i, step in enumerate(final_result['recommendations'][:3], 1):
             print(f"   {i}. {step}")
 

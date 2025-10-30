@@ -369,7 +369,7 @@ class PhaseFIntegrationSetup:
             return False
 
         # 5. 检查外部服务
-        services = self.check_external_services()
+        self.check_external_services()
 
         # 6. 生成设置报告
         report = self.generate_setup_report()
@@ -430,7 +430,7 @@ def main():
         setup.check_python_version()
         setup.check_required_dependencies()
         setup.verify_test_structure()
-        services = setup.check_external_services()
+        setup.check_external_services()
         return
 
     if args.setup_ci:

@@ -168,7 +168,7 @@ def run_phase_g_demo():
     generator = AutoTestGenerator(config)
     generation_results = generator.generate_tests_from_analysis(analysis_report)
 
-    print(f"✅ 测试生成完成:")
+    print("✅ 测试生成完成:")
     print(f"   生成文件: {len(generation_results['generated_files'])}")
     print(f"   生成测试用例: {generation_results['generated_test_cases']}")
 
@@ -211,7 +211,7 @@ def run_phase_g_demo():
     with open('phase_g_demo_complete_report.json', 'w', encoding='utf-8') as f:
         json.dump(demo_report, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 演示报告已保存: phase_g_demo_complete_report.json")
+    print("\n📄 演示报告已保存: phase_g_demo_complete_report.json")
 
     # 7. 清理演示文件
     import shutil
@@ -236,6 +236,6 @@ if __name__ == "__main__":
     print(f"   分析器功能: {report['analyzer_results']['functions_found']}个函数")
     print(f"   生成器功能: {report['generator_results']['test_cases_created']}个测试用例")
     print(f"   整体状态: {report['phase_g_status']}")
-    print(f"   工具链完整性: 所有组件验证通过")
+    print("   工具链完整性: 所有组件验证通过")
 
-    print(f"\n🚀 Phase G工具链已准备就绪!")
+    print("\n🚀 Phase G工具链已准备就绪!")

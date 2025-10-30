@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 56 repeated Mock creations
 
 
-"""
+"""""""
 适配器注册表测试
 Tests for Adapter Registry
 
 测试src.adapters.registry模块的适配器注册表功能
-"""
+"""""""
 
 import asyncio
 

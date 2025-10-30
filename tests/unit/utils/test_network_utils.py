@@ -1,6 +1,6 @@
-"""
+"""""""
 网络工具测试
-"""
+"""""""
 
 import urllib.parse
 from typing import Any, Dict, List, Optional
@@ -100,7 +100,7 @@ class NetworkUtils:
         for part in parts[1:]:
             if "=" in part:
                 key, value = part.split("=", 1)
-                _result[key.strip()] = value.strip().strip('"')
+                _result[key.strip()] = value.strip().strip('"')"
 
         return result
 

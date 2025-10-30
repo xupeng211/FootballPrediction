@@ -1,7 +1,7 @@
-"""
+"""""""
 智能Mock兼容修复模式 - Match模型测试修复
 解决SQLAlchemy关系映射和模型初始化问题
-"""
+"""""""
 
 from datetime import datetime
 
@@ -105,8 +105,8 @@ class MockMatch:
 
     def __repr__(self):
         # 智能Mock兼容修复模式 - 使用符合测试期望的格式
-        return f"Match(id =
-    {self.id}, home_team_id={self.home_team_id}, away_team_id={self.away_team_id})"
+        return f"Match(id ="
+    {self.id}, home_team_id={self.home_team_id}, away_team_id={self.away_team_id})""
 
     def is_finished(self):
         """检查比赛是否结束"""
@@ -163,9 +163,9 @@ Match = MockMatch
 MatchStatus = MockMatchStatus
 Team = MockTeam
 
-"""
+"""""""
 数据库模型测试 - Match模型
-"""
+"""""""
 
 
 @pytest.mark.unit

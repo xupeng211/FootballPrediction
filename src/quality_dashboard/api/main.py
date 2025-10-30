@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
+""""""""
 实时质量监控面板API
 Real-time Quality Monitoring Dashboard API
 
 提供实时质量数据、WebSocket连接和RESTful API接口
-"""
+""""""""
 
 import asyncio
 import json

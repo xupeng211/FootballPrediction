@@ -6,10 +6,10 @@ import pytest
 
 from src.cache.redis_manager import RedisManager
 
-"""
+"""""""
 Redis管理器修复版测试 V2
 修复了所有已知的问题
-"""
+"""""""
 
 
 # 添加src目录到Python路径

@@ -1,12 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-"""
+"""""""
 简化日志管理工具测试
 Simplified Logging Management Tool Tests
 
 测试src/core/logger_simple.py中定义的简化日志管理功能。
 Tests simplified logging management functionality defined in src/core/logger_simple.py.
-"""
+"""""""
 
 import io
 import logging

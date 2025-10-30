@@ -1,8 +1,8 @@
-"""
+"""""""
 P3阶段高级集成测试: CQRSApplication
 目标覆盖率: 42.11% → 80%
 策略: 高级Mock + 真实依赖注入 + 端到端集成测试
-"""
+"""""""
 
 import asyncio
 import os
