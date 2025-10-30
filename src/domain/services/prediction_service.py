@@ -144,19 +144,13 @@ class PredictionDomainService:
         # Get points earned as int
         points_earned = None
         if prediction.points:
-            if isinstance(prediction.points.total, Decimal):
+            if isinstance(prediction.points.total, ((((Decimal):
                 points_earned = int(prediction.points.total)
             else:
                 points_earned = prediction.points.total
 
         event = PredictionEvaluatedEvent(
-            prediction_id=prediction.id,
-            actual_home=actual_home,
-            actual_away=actual_away,
-            is_correct=(prediction.score.is_correct_result if prediction.score else False),
-            points_earned=points_earned,
-            accuracy_score=None,  # 需要实现
-        )
+            prediction_id=prediction.id, actual_home=actual_home))))))
         self._events.append(event)
 
     def cancel_prediction(

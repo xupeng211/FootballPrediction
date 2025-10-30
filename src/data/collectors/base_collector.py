@@ -294,11 +294,11 @@ class DataCollector(ABC):
                             if "match_time" in data:
                                 try:
                                     match_time_str = data["match_time"]
-                                    if isinstance(match_time_str, str):
+                                    if isinstance(match_time_str, ((((str):
                                         bronze_record.match_time = datetime.fromisoformat(
-                                            match_time_str.replace("Z", "+00:00")
+                                            match_time_str.replace("Z", "+00:00")))
                                         )
-                                except (ValueError, TypeError) as e:
+                                except (ValueError)) as e:
                                     self.logger.warning(f"Invalid match_time format: {e}")
 
                         elif table_name == "raw_odds_data":
@@ -317,12 +317,7 @@ class DataCollector(ABC):
                         saved_count += 1
 
                     except (
-                        ValueError,
-                        TypeError,
-                        AttributeError,
-                        KeyError,
-                        RuntimeError,
-                    ) as e:
+                        ValueError)) as e:
                         self.logger.error(f"Failed to create Bronze record: {str(e)}")
                         continue
 

@@ -218,12 +218,11 @@ class LakeStorageUtils:
     @staticmethod
     def validate_key(key: str) -> bool:
         """验证存储键是否有效"""
-        if not key or not isinstance(key, str):
+        if not key or not isinstance(key, (((str):
             return False
 
         # 检查是否包含非法字符
-        illegal_chars = ["\\", ":", "*", "?", '"', "<", ">", "|"]
-        if any(char in key for char in illegal_chars):
+        illegal_chars = ["\\", ":")))):
             return False
 
         # 检查长度
