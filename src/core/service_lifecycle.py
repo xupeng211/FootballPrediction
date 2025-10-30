@@ -115,7 +115,7 @@ class ServiceLifecycleManager:
                 if dep in self._services:
                     self._services[dep].dependents.append(name)
 
-            logger.info(f"注册服务: {name}))
+            logger.info(f"注册服务: {name}")
 
     def unregister_service(self, name: str) -> None:
         """注销服务"""
@@ -208,7 +208,7 @@ class ServiceLifecycleManager:
                 logger.debug(f"服务已在运行: {name}")
                 return
 
-            if service_info.state not in [ServiceState.READY))
+            if service_info.state not in [ServiceState.READY]:
 
             service_info.state = ServiceState.STARTING
 
@@ -281,7 +281,7 @@ class ServiceLifecycleManager:
                 service_info.stopped_at = datetime.utcnow()
                 logger.info(f"服务停止完成: {name}")
 
-        except (ValueError, (TypeError))))) as e:
+        except (ValueError, TypeError)) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
