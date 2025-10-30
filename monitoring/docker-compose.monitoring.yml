@@ -1,0 +1,210 @@
+# 监控系统Docker Compose配置
+# Monitoring Stack Docker Compose Configuration
+
+version: '3.8'
+
+services:
+  # Prometheus - 指标收集和存储
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: football-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+
+  # Grafana - 可视化仪表板
+  grafana:
+    image: grafana/grafana:latest
+    container_name: football-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel,grafana-clock-panel
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.example.com:587
+      - GF_SMTP_USER=alerts@football-prediction.com
+      - GF_SMTP_PASSWORD=your-smtp-password
+      - GF_SMTP_FROM_ADDRESS=alerts@football-prediction.com
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # AlertManager - 告警管理
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: football-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./alertmanager/templates:/etc/alertmanager/templates
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+
+  # Node Exporter - 系统指标收集
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: football-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # PostgreSQL Exporter - 数据库指标
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: football-postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:password@postgres:5432/football_prediction?sslmode=disable
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  # Redis Exporter - 缓存指标
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: football-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  # Nginx Exporter - 负载均衡指标
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: football-nginx-exporter
+    ports:
+      - "9113:9113"
+    command:
+      - '-nginx.scrape-uri=http://nginx:80/nginx_status'
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
+  # cAdvisor - 容器指标
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: football-cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # Loki - 日志聚合（可选）
+  loki:
+    image: grafana/loki:latest
+    container_name: football-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+
+  # Promtail - 日志收集（可选）
+  promtail:
+    image: grafana/promtail:latest
+    container_name: football-promtail
+    volumes:
+      - ./promtail/promtail.yml:/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+    depends_on:
+      - loki
+
+  # Pushgateway - 批量任务指标（可选）
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: football-pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - monitoring
+      - football-network
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+  loki_data:
+
+networks:
+  monitoring:
+    driver: bridge
+  football-network:
+    external: true
