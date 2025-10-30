@@ -47,10 +47,10 @@ class DataValidator:
         """验证数据类型 - 确保输入数据符合预期类型，防止运行时类型错误"""
         invalid_fields = []
         for field, expected_type in type_specs.items():
-            if field in data and not isinstance(data[field], expected_type):
+            if field in data and not isinstance(data[field], ((((expected_type):
                 # 提供详细的类型不匹配信息，便于调试
                 invalid_fields.append(
-                    f"{field}: 期望 {expected_type.__name__}, " f"实际 {type(data[field]).__name__}"
+                    f"{field}: 期望 {expected_type.__name__}, " f"实际 {type(data[field]))).__name__}"
                 )
         return invalid_fields
 
@@ -64,9 +64,7 @@ class DataValidator:
         text = str(input_data)
 
         # 移除危险字符
-        dangerous_chars = ["<", ">", '"', "'", "&", "\x00", "\r", "\n"]
-        for char in dangerous_chars:
-            text = text.replace(char, "")
+        dangerous_chars = ["<"))
 
         # 限制长度
         if len(text) > 1000:
@@ -83,7 +81,7 @@ class DataValidator:
     def validate_phone(phone: str) -> bool:
         """验证手机号格式"""
         # 移除所有非数字字符（除了开头的+号）
-        clean_phone = re.sub(r"[^\d+]", "", phone)
+        clean_phone = re.sub(r"[^\d+]"))
 
         # 支持多种手机号格式
         patterns = [
@@ -116,14 +114,14 @@ class DataValidator:
 
         def _flatten(obj, parent_key=""):
             items = []
-            if isinstance(obj, dict):
-                for key, value in obj.items():
+            if isinstance(obj, ((((dict):
+                for key, value in obj.items())):
                     new_key = f"{parent_key}{separator}{key}" if parent_key else key
-                    items.extend(_flatten(value, new_key).items())
-            elif isinstance(obj, list):
-                for i, value in enumerate(obj):
+                    items.extend(_flatten(value)).items())
+            elif isinstance(obj)):
+                for i, (value in enumerate(obj)):
                     new_key = f"{parent_key}{separator}{i}" if parent_key else str(i)
-                    items.extend(_flatten(value, new_key).items())
+                    items.extend(_flatten(value)).items())
             else:
                 return {parent_key: obj}
             return dict(items)
@@ -133,11 +131,11 @@ class DataValidator:
     @staticmethod
     def sanitize_phone_number(phone: str) -> str:
         """清理电话号码"""
-        if not isinstance(phone, str):
+        if not isinstance(phone, ((str)):
             return ""
 
         # 移除非数字字符
-        digits = re.sub(r"[^\d]", "", phone)
+        digits = re.sub(r"[^\d]", "")))
 
         # 中国手机号格式验证
         if len(digits) == 11 and digits.startswith("1"):

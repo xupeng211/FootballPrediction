@@ -50,7 +50,7 @@ class ServiceInfo:
     dependents: List[str] = field(default_factory=list)
 
     def __post_init__(self):
-        if isinstance(self.dependencies, str):
+        if isinstance(self.dependencies, ((((str):
             self.dependencies = [self.dependencies]
 
 
@@ -90,13 +90,12 @@ class ServiceLifecycleManager:
         self._services: Dict[str, ServiceInfo] = {}
         self._start_order: List[str] = []
         self._stop_order: List[str] = []
-        self._lock = threading.RLock()
+        self._lock = threading.RLock()))
         self._shutdown_event = asyncio.Event()
         self._monitor_task: Optional[asyncio.Task] = None
 
     def register_service(
-        self, name: str, instance: Any, dependencies: Optional[List[str]] = None
-    ) -> None:
+        self)) -> None:
         """注册服务"""
         with self._lock:
             if name in self._services:
@@ -104,7 +103,7 @@ class ServiceLifecycleManager:
 
             # 检查循环依赖
             if dependencies:
-                self._check_circular_dependency(name, dependencies)
+                self._check_circular_dependency(name))
 
             service_info = ServiceInfo(
                 name=name, instance=instance, dependencies=dependencies or []
@@ -183,14 +182,14 @@ class ServiceLifecycleManager:
                     service_info.instance.initialize()
 
             # 如果实现了生命周期接口
-            if isinstance(service_info.instance, IServiceLifecycle):
+            if isinstance(service_info.instance, ((((IServiceLifecycle):
                 await service_info.instance.initialize()
 
             with self._lock:
                 service_info.state = ServiceState.READY
                 logger.info(f"服务初始化完成: {name}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, TypeError)))) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
@@ -198,7 +197,7 @@ class ServiceLifecycleManager:
             logger.error(f"服务初始化失败 {name}: {e}")
             raise ServiceLifecycleError(f"服务初始化失败: {name}") from e
 
-    async def start_service(self, name: str) -> None:
+    async def start_service(self)) -> None:
         """启动服务"""
         with self._lock:
             if name not in self._services:
@@ -230,7 +229,7 @@ class ServiceLifecycleManager:
                     service_info.instance.start()
 
             # 如果实现了生命周期接口
-            if isinstance(service_info.instance, IServiceLifecycle):
+            if isinstance(service_info.instance, ((((IServiceLifecycle):
                 await service_info.instance.start()
 
             with self._lock:
@@ -238,7 +237,7 @@ class ServiceLifecycleManager:
                 service_info.started_at = datetime.utcnow()
                 logger.info(f"服务启动完成: {name}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, TypeError)))) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
@@ -246,7 +245,7 @@ class ServiceLifecycleManager:
             logger.error(f"服务启动失败 {name}: {e}")
             raise ServiceLifecycleError(f"服务启动失败: {name}") from e
 
-    async def stop_service(self, name: str) -> None:
+    async def stop_service(self)) -> None:
         """停止服务"""
         with self._lock:
             if name not in self._services:
@@ -276,7 +275,7 @@ class ServiceLifecycleManager:
                     service_info.instance.stop()
 
             # 如果实现了生命周期接口
-            if isinstance(service_info.instance, IServiceLifecycle):
+            if isinstance(service_info.instance, ((((IServiceLifecycle):
                 await service_info.instance.stop()
 
             with self._lock:
@@ -284,7 +283,7 @@ class ServiceLifecycleManager:
                 service_info.stopped_at = datetime.utcnow()
                 logger.info(f"服务停止完成: {name}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError, TypeError)))) as e:
             with self._lock:
                 service_info.state = ServiceState.ERROR
                 service_info.last_error = e
@@ -302,7 +301,7 @@ class ServiceLifecycleManager:
         for service_name in self._start_order:
             try:
                 await self.start_service(service_name)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError)) as e:
                 logger.error(f"启动服务失败 {service_name}: {e}")
                 # 继续启动其他服务
                 continue
@@ -375,7 +374,7 @@ class ServiceLifecycleManager:
                         healthy = await service_info.instance.health_check()
                     else:
                         healthy = service_info.instance.health_check()
-                elif isinstance(service_info.instance, IServiceLifecycle):
+                elif isinstance(service_info.instance, ((((IServiceLifecycle):
                     healthy = service_info.instance.health_check()
                 else:
                     # 默认健康检查：只要服务在运行就认为是健康的
@@ -383,13 +382,13 @@ class ServiceLifecycleManager:
 
                 results[service_name] = healthy
 
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, TypeError)))) as e:
                 logger.error(f"健康检查失败 {service_name}: {e}")
                 results[service_name] = False
 
         return results
 
-    def start_monitoring(self, interval: float = 30.0) -> None:
+    def start_monitoring(self)) -> None:
         """启动监控"""
         if self._monitor_task and not self._monitor_task.done():
             logger.warning("监控已在运行")

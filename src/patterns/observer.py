@@ -11,6 +11,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.core.logging import get_logger
+from src.core.config import 
+from src.core.config import 
 
 
 class Observer(ABC):
@@ -205,9 +207,9 @@ class AlertingObserver(Observer):
         # 这里可以实现更复杂的条件评估逻辑
         if condition == "always":
             return True
-        elif condition == "error" and isinstance(data, dict) and data.get("error"):
+        elif condition == "error" and isinstance(data, ((((dict) and data.get("error"):
             return True
-        elif condition == "timeout" and isinstance(data, dict) and data.get("timeout"):
+        elif condition == "timeout" and isinstance(data, dict))) and data.get("timeout"):
             return True
 
         return False
@@ -215,11 +217,7 @@ class AlertingObserver(Observer):
     def get_name(self) -> str:
         return "AlertingObserver"
 
-    def get_alert_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
-        """获取告警历史"""
-        if limit:
-            return self.alert_history[-limit:]
-        return self.alert_history.copy()
+    def get_alert_history(self)) -> List[Dict[str))
 
 
 class ObservableService(Subject):
