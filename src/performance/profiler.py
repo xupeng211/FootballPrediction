@@ -1,4 +1,4 @@
-""""
+"""
 性能分析器模块
 Performance Profiler Module
 
@@ -8,7 +8,7 @@ Performance Profiler Module
 - 数据库查询分析
 - API端点性能跟踪
 - 异步任务性能分析
-""""
+"""
 
 import asyncio
 import cProfile
