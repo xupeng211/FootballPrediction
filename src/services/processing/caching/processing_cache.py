@@ -1,409 +1,318 @@
+"""
+数据处理缓存管理 - 重写版本
+
+提供数据处理的缓存功能，避免重复计算
+Processing Cache Manager - Rewritten Version
+"""
+
+import hashlib
 import json
-# mypy: ignore-errors
-""""
-数据处理缓存管理
-
-提供数据处理的缓存功能,避免重复计算.
-""""
-
 import logging
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
 
 from redis.exceptions import RedisError
 
-from src.cache.redis import CacheKeyManager, RedisManager
-
 
 class ProcessingCache:
-    """数据处理缓存管理器"""
+    """数据处理缓存管理器 - 简化版本
 
-    def __init__(self):
+    提供内存和Redis缓存功能，避免重复计算
+    """
+
+    def __init__(self, redis_client=None):
         """初始化缓存管理器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
-        self.redis_manager = None
-        self.key_manager = CacheKeyManager()
+        self.redis_client = redis_client
         self.cache_enabled = True
+        self.default_ttl = 3600  # 1小时默认过期时间
 
-        # 缓存配置
-        self.cache_ttl = {
-            "match_processing": 3600,  # 1小时
-            "odds_processing": 1800,  # 30分钟
-            "features_processing": 7200,  # 2小时
-            "validation": 900,  # 15分钟
-            "statistics": 1800,  # 30分钟
-        }
+        # 内存缓存作为备选方案
+        self._memory_cache = {}
+        self._memory_cache_timestamps = {}
 
-        # 缓存统计
-        self.stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "evictions": 0,
-            "errors": 0,
-        }
-
-    async def initialize(self) -> bool:
-        """初始化缓存管理器"""
-        try:
-            self.redis_manager = RedisManager()
-            self.logger.info("数据处理缓存管理器初始化完成")
-            return True
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"初始化缓存管理器失败: {e}")
-            self.cache_enabled = False
-            return False
-
-    async def shutdown(self) -> None:
-        """关闭缓存管理器"""
-        if self.redis_manager:
-            try:
-                if hasattr(self.redis_manager.close, "_mock_name"):
-                    await self.redis_manager.close()
-                else:
-                    self.redis_manager.close()
-            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-                self.logger.error(f"关闭缓存管理器失败: {e}")
-            self.redis_manager = None
-
-    def _generate_cache_key(
-        self,
-        operation: str,
-        data_hash: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> str:
-        """"
-        生成缓存键
-
-        Args:
-            operation: 操作类型
-            data_hash: 数据哈希值
-            params: 参数字典
-
-        Returns:
-            缓存键
-        """"
-        # 创建基础键
-        key_parts = [
-            "processing",
-            operation,
-            data_hash,
-        ]
-
-        # 添加参数
-        if params:
-            params_str = json.dumps(params, sort_keys=True)
-            params_hash = hashlib.md5(params_str.encode(), usedforsecurity=False).hexdigest()
-            key_parts.append(params_hash)
-
-        # 生成完整键
-        ":".join(key_parts)
-
-        # 使用键管理器规范化
-        return self.key_manager.create_key(
-            service="processing",
-            resource=operation,
-            identifier=data_hash,
-            params=params,
-        )
-
-    def _calculate_data_hash(self, data: Any) -> str:
-        """"
-        计算数据哈希值
-
-        Args:
-            data: 数据对象
-
-        Returns:
-            哈希值
-        """"
-        try:
-            if isinstance(data, (dict, list)):
-                data_str = json.dumps(data)
-            else:
-                data_str = str(data)
-
-            return hashlib.md5(data_str.encode())).hexdigest()
-        except (RedisError)) as e:
-            self.logger.error(f"计算数据哈希失败: {e}")
-            return "error_hash"
-
-    async def get_cached_result(
-        self)) -> Optional[Any]:
-        """"
-        获取缓存的计算结果
-
-        Args:
-            operation: 操作类型
-            data: 输入数据
-            params: 参数
-
-        Returns:
-            缓存的结果
-        """"
-        if not self.cache_enabled or not self.redis_manager:
-            self.stats["misses"] += 1
+    async def get(self, cache_key: str) -> Optional[Any]:
+        """获取缓存数据"""
+        if not self.cache_enabled:
             return None
 
         try:
-            # 计算数据哈希
-            data_hash = self._calculate_data_hash(data)
+            # 优先从内存缓存获取
+            memory_data = await self._get_from_memory(cache_key)
+            if memory_data is not None:
+                return memory_data
 
-            # 生成缓存键
-            cache_key = self._generate_cache_key(operation, data_hash, params)
+            # 尝试从Redis获取
+            if self.redis_client:
+                redis_data = await self._get_from_redis(cache_key)
+                if redis_data is not None:
+                    # 存入内存缓存
+                    await self._set_memory_cache(cache_key, redis_data)
+                    return redis_data
 
-            # 尝试获取缓存
-            result = await self.redis_manager.get(cache_key)
-
-            if result is not None:
-                # 反序列化结果
-                try:
-                    deserialized_result = json.loads(result)
-                    self.stats["hits"] += 1
-                    self.logger.debug(f"缓存命中: {operation}")
-                    return deserialized_result
-                except json.JSONDecodeError:
-                    self.logger.warning(f"缓存数据反序列化失败: {cache_key}")
-                    self.stats["errors"] += 1
-
-            self.stats["misses"] += 1
             return None
 
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"获取缓存结果失败: {e}")
-            self.stats["errors"] += 1
+        except Exception as e:
+            self.logger.warning(f"获取缓存失败 {cache_key}: {e}")
             return None
 
-    async def cache_result(
-        self,
-        operation: str,
-        data: Any,
-        result: Any,
-        params: Optional[Dict[str, Any]] = None,
-        ttl: Optional[int] = None,
-    ) -> bool:
-        """"
-        缓存计算结果
-
-        Args:
-            operation: 操作类型
-            data: 输入数据
-            result: 计算结果
-            params: 参数
-            ttl: 过期时间（秒）
-
-        Returns:
-            是否缓存成功
-        """"
-        if not self.cache_enabled or not self.redis_manager:
+    async def set(self, cache_key: str, data: Any, ttl: Optional[int] = None) -> bool:
+        """设置缓存数据"""
+        if not self.cache_enabled:
             return False
 
         try:
-            # 计算数据哈希
-            data_hash = self._calculate_data_hash(data)
+            success = True
+            ttl = ttl or self.default_ttl
 
-            # 生成缓存键
-            cache_key = self._generate_cache_key(operation, data_hash, params)
+            # 存入内存缓存
+            await self._set_memory_cache(cache_key, data, ttl)
 
-            # 序列化结果
-            serialized_result = json.dumps(result, default=str)
-
-            # 确定TTL
-            if ttl is None:
-                ttl = self.cache_ttl.get(operation, 3600)
-
-            # 存储到缓存
-            success = await self.redis_manager.set(cache_key, serialized_result, ex=ttl)
-
-            if success:
-                self.stats["sets"] += 1
-                self.logger.debug(f"缓存结果: {operation}, TTL: {ttl}s")
-            else:
-                self.stats["errors"] += 1
+            # 存入Redis缓存
+            if self.redis_client:
+                redis_success = await self._set_to_redis(cache_key, data, ttl)
+                success = success and redis_success
 
             return success
 
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"缓存结果失败: {e}")
-            self.stats["errors"] += 1
+        except Exception as e:
+            self.logger.warning(f"设置缓存失败 {cache_key}: {e}")
             return False
 
-    async def invalidate_cache(
-        self,
-        operation: Optional[str] = None,
-        data_hash: Optional[str] = None,
-    ) -> int:
-        """"
-        使缓存失效
-
-        Args:
-            operation: 操作类型（None表示所有操作）
-            data_hash: 数据哈希（None表示所有数据）
-
-        Returns:
-            失效的键数量
-        """"
-        if not self.cache_enabled or not self.redis_manager:
-            return 0
-
+    async def delete(self, cache_key: str) -> bool:
+        """删除缓存数据"""
         try:
-            invalidated_count = 0
+            success = True
 
-            # 构建匹配模式
-            if operation and data_hash:
-                # 使特定操作的特定数据缓存失效
-                cache_key = self._generate_cache_key(operation, data_hash)
-                if await self.redis_manager.delete(cache_key):
-                    invalidated_count += 1
-            elif operation:
-                # 使特定操作的所有缓存失效
-                pattern = f"processing:{operation}:*"
-                keys = await self.redis_manager.keys(pattern)
-                if keys:
-                    invalidated_count = await self.redis_manager.delete(*keys)
+            # 从内存缓存删除
+            if cache_key in self._memory_cache:
+                del self._memory_cache[cache_key]
+            if cache_key in self._memory_cache_timestamps:
+                del self._memory_cache_timestamps[cache_key]
+
+            # 从Redis删除
+            if self.redis_client:
+                try:
+                    await self.redis_client.delete(cache_key)
+                except RedisError as e:
+                    self.logger.warning(f"Redis删除失败 {cache_key}: {e}")
+                    success = False
+
+            return success
+
+        except Exception as e:
+            self.logger.warning(f"删除缓存失败 {cache_key}: {e}")
+            return False
+
+    async def clear(self, pattern: Optional[str] = None) -> int:
+        """清空缓存"""
+        try:
+            cleared_count = 0
+
+            # 清空内存缓存
+            if pattern:
+                keys_to_delete = [
+                    key for key in self._memory_cache.keys()
+                    if pattern in key
+                ]
+                for key in keys_to_delete:
+                    del self._memory_cache[key]
+                    if key in self._memory_cache_timestamps:
+                        del self._memory_cache_timestamps[key]
+                    cleared_count += 1
             else:
-                # 使所有处理缓存失效
-                pattern = "processing:*"
-                keys = await self.redis_manager.keys(pattern)
-                if keys:
-                    invalidated_count = await self.redis_manager.delete(*keys)
+                cleared_count += len(self._memory_cache)
+                self._memory_cache.clear()
+                self._memory_cache_timestamps.clear()
 
-            self.stats["evictions"] += invalidated_count
-            self.logger.info(f"使缓存失效: {invalidated_count} 个键")
-            return invalidated_count
+            # 清空Redis缓存
+            if self.redis_client:
+                try:
+                    if pattern:
+                        # 使用SCAN查找匹配的键
+                        cursor = 0
+                        while True:
+                            cursor, keys = await self.redis_client.scan(cursor, match=f"*{pattern}*", count=100)
+                            if keys:
+                                await self.redis_client.delete(*keys)
+                                cleared_count += len(keys)
+                            if cursor == 0:
+                                break
+                    else:
+                        # 清空所有缓存（谨慎使用）
+                        await self.redis_client.flushdb()
+                        cleared_count += 100  # 估算值
+                except RedisError as e:
+                    self.logger.warning(f"Redis清空失败: {e}")
 
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"使缓存失效失败: {e}")
-            self.stats["errors"] += 1
+            return cleared_count
+
+        except Exception as e:
+            self.logger.error(f"清空缓存失败: {e}")
             return 0
+
+    async def get_or_compute(self, cache_key: str, compute_func, ttl: Optional[int] = None, *args, **kwargs) -> Any:
+        """获取缓存数据或计算新数据"""
+        # 尝试从缓存获取
+        cached_data = await self.get(cache_key)
+        if cached_data is not None:
+            return cached_data
+
+        # 计算新数据
+        try:
+            if callable(compute_func):
+                if args or kwargs:
+                    new_data = await compute_func(*args, **kwargs)
+                else:
+                    new_data = await compute_func()
+            else:
+                new_data = compute_func
+
+            # 存入缓存
+            await self.set(cache_key, new_data, ttl)
+
+            return new_data
+
+        except Exception as e:
+            self.logger.error(f"计算数据失败 {cache_key}: {e}")
+            raise
+
+    def generate_cache_key(self, prefix: str, *args, **kwargs) -> str:
+        """生成缓存键"""
+        try:
+            # 组合所有参数
+            key_parts = [prefix]
+            key_parts.extend(str(arg) for arg in args)
+
+            # 处理关键字参数
+            if kwargs:
+                sorted_kwargs = sorted(kwargs.items())
+                key_parts.append(json.dumps(sorted_kwargs, sort_keys=True, default=str))
+
+            # 生成MD5哈希
+            key_string = ":".join(key_parts)
+            hash_key = hashlib.md5(key_string.encode()).hexdigest()
+
+            return f"{prefix}:{hash_key}"
+
+        except Exception as e:
+            self.logger.warning(f"生成缓存键失败: {e}")
+            return f"{prefix}:{datetime.utcnow().timestamp()}"
+
+    async def _get_from_memory(self, cache_key: str) -> Optional[Any]:
+        """从内存缓存获取数据"""
+        try:
+            # 检查是否过期
+            if cache_key in self._memory_cache_timestamps:
+                timestamp = self._memory_cache_timestamps[cache_key]
+                if datetime.utcnow() - timestamp > timedelta(seconds=self.default_ttl):
+                    del self._memory_cache[cache_key]
+                    del self._memory_cache_timestamps[cache_key]
+                    return None
+
+            return self._memory_cache.get(cache_key)
+
+        except Exception:
+            return None
+
+    async def _set_memory_cache(self, cache_key: str, data: Any, ttl: Optional[int] = None) -> None:
+        """设置内存缓存"""
+        try:
+            self._memory_cache[cache_key] = data
+            self._memory_cache_timestamps[cache_key] = datetime.utcnow()
+
+            # 限制内存缓存大小
+            if len(self._memory_cache) > 1000:  # 最大缓存条目数
+                # 删除最旧的条目
+                oldest_key = min(self._memory_cache_timestamps.keys(),
+                               key=lambda k: self._memory_cache_timestamps[k])
+                del self._memory_cache[oldest_key]
+                del self._memory_cache_timestamps[oldest_key]
+
+        except Exception as e:
+            self.logger.warning(f"设置内存缓存失败: {e}")
+
+    async def _get_from_redis(self, cache_key: str) -> Optional[Any]:
+        """从Redis获取数据"""
+        try:
+            data = await self.redis_client.get(cache_key)
+            if data:
+                return json.loads(data.decode('utf-8'))
+            return None
+
+        except (RedisError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            self.logger.warning(f"Redis获取失败 {cache_key}: {e}")
+            return None
+
+    async def _set_to_redis(self, cache_key: str, data: Any, ttl: int) -> bool:
+        """设置Redis缓存"""
+        try:
+            serialized_data = json.dumps(data, default=str)
+            await self.redis_client.setex(cache_key, ttl, serialized_data)
+            return True
+
+        except (RedisError, json.JSONEncodeError, TypeError) as e:
+            self.logger.warning(f"Redis设置失败 {cache_key}: {e}")
+            return False
 
     async def get_cache_stats(self) -> Dict[str, Any]:
-        """"
-        获取缓存统计信息
-
-        Returns:
-            缓存统计信息
-        """"
-        total_requests = self.stats["hits"] + self.stats["misses"]
-        hit_rate = self.stats["hits"] / total_requests * 100 if total_requests > 0 else 0
-
-        cache_stats = {
-            **self.stats,
-            "total_requests": total_requests,
-            "hit_rate": round(hit_rate, 2),
-            "cache_enabled": self.cache_enabled,
-        }
-
-        if self.redis_manager:
-            try:
-                # 获取Redis缓存信息
-                info = self.redis_manager.get_info()
-                if info:
-                    cache_stats["redis_info"] = {
-                        "used_memory": info.get("used_memory", 0),
-                        "connected_clients": info.get("connected_clients", 0),
-                        "keyspace_hits": info.get("keyspace_hits", 0),
-                        "keyspace_misses": info.get("keyspace_misses", 0),
-                    }
-            except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-                self.logger.error(f"获取Redis信息失败: {e}")
-
-        return cache_stats
-
-    async def cleanup_expired_cache(self) -> int:
-        """"
-        清理过期的缓存
-
-        Returns:
-            清理的键数量
-        """"
-        if not self.cache_enabled or not self.redis_manager:
-            return 0
-
+        """获取缓存统计信息"""
         try:
-            # Redis会自动清理过期键,这里主要是统计
-            self.logger.info("开始清理过期缓存")
+            stats = {
+                "memory_cache_size": len(self._memory_cache),
+                "cache_enabled": self.cache_enabled,
+                "default_ttl": self.default_ttl,
+                "has_redis_client": self.redis_client is not None
+            }
 
-            # 获取所有处理相关的键
-            pattern = "processing:*"
-            keys = await self.redis_manager.keys(pattern)
+            # Redis统计
+            if self.redis_client:
+                try:
+                    info = await self.redis_client.info()
+                    stats["redis_memory_used"] = info.get("used_memory_human", "N/A")
+                    stats["redis_connected_clients"] = info.get("connected_clients", 0)
+                    stats["redis_keyspace_hits"] = info.get("keyspace_hits", 0)
+                    stats["redis_keyspace_misses"] = info.get("keyspace_misses", 0)
+                except RedisError:
+                    stats["redis_status"] = "error"
+                else:
+                    stats["redis_status"] = "connected"
+            else:
+                stats["redis_status"] = "not_configured"
 
-            if not keys:
-                self.logger.info("没有找到需要清理的缓存键")
-                return 0
+            return stats
 
-            cleaned_count = 0
+        except Exception as e:
+            self.logger.error(f"获取缓存统计失败: {e}")
+            return {"error": str(e)}
 
-            # 检查每个键的TTL
-            for key in keys:
-                ttl = await self.redis_manager.ttl(key)
-                if ttl == -2:  # 键不存在
-                    cleaned_count += 1
-                elif ttl == -1:  # 键没有过期时间
-                    # 为永久键设置过期时间
-                    await self.redis_manager.expire(key, 3600)
-
-            self.logger.info(f"清理过期缓存完成,处理了 {len(keys)} 个键")
-            return cleaned_count
-
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"清理过期缓存失败: {e}")
-            self.stats["errors"] += 1
-            return 0
-
-    def enable_cache(self) -> None:
+    async def enable_cache(self) -> None:
         """启用缓存"""
         self.cache_enabled = True
-        self.logger.info("数据处理缓存已启用")
+        self.logger.info("缓存已启用")
 
-    def disable_cache(self) -> None:
+    async def disable_cache(self) -> None:
         """禁用缓存"""
         self.cache_enabled = False
-        self.logger.info("数据处理缓存已禁用")
+        self.logger.info("缓存已禁用")
 
-    def set_cache_ttl(self, operation: str, ttl: int) -> None:
-        """"
-        设置特定操作的缓存TTL
+    async def cleanup_expired(self) -> int:
+        """清理过期的内存缓存"""
+        try:
+            current_time = datetime.utcnow()
+            expired_keys = []
 
-        Args:
-            operation: 操作类型
-            ttl: 过期时间（秒）
-        """"
-        self.cache_ttl[operation] = ttl
-        self.logger.info(f"设置 {operation} 的缓存TTL为 {ttl} 秒")
+            for key, timestamp in self._memory_cache_timestamps.items():
+                if current_time - timestamp > timedelta(seconds=self.default_ttl):
+                    expired_keys.append(key)
 
-    async def warm_up_cache(
-        self,
-        operations: List[str],
-        sample_data: List[Any],
-        process_func: callable,
-    ) -> None:
-        """"
-        缓存预热
+            for key in expired_keys:
+                if key in self._memory_cache:
+                    del self._memory_cache[key]
+                del self._memory_cache_timestamps[key]
 
-        Args:
-            operations: 操作列表
-            sample_data: 示例数据
-            process_func: 处理函数
-        """"
-        if not self.cache_enabled:
-            self.logger.info("缓存已禁用,跳过预热")
-            return
+            return len(expired_keys)
 
-        self.logger.info(f"开始缓存预热,共 {len(operations)} 个操作")
-
-        for operation in operations:
-            for i, data in enumerate(sample_data[:5]):  # 每个操作预热5个样本
-                try:
-                    self.logger.debug(f"预热 {operation} 样本 {i + 1}")
-
-                    # 检查是否已缓存
-                    cached = await self.get_cached_result(operation, data)
-                    if cached is None:
-                        # 处理并缓存结果
-                        result = await process_func(data)
-                        await self.cache_result(operation, data, result)
-
-                except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-                    self.logger.error(f"预热 {operation} 失败: {e}")
-
-        self.logger.info("缓存预热完成")
+        except Exception as e:
+            self.logger.error(f"清理过期缓存失败: {e}")
+            return 0

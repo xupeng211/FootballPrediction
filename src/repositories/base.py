@@ -1,18 +1,18 @@
-""""
-仓储基类
-Repository Base Classes
+"""
+仓储基类模块 - 重写版本
 
-定义仓储模式的基础接口和实现.
-Defines base interfaces and implementations for repository pattern.
-""""
+定义仓储模式的基础接口和实现
+Repository Base Classes - Rewritten Version
+"""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql import Select
 
 # 泛型类型
 T = TypeVar("T")
@@ -21,8 +21,7 @@ ID = TypeVar("ID")
 
 @dataclass
 class QuerySpec:
-    """查询规范"""
-
+    """查询规范 - 简化版本"""
     filters: Optional[Dict[str, Any]] = None
     order_by: Optional[List[str]] = None
     limit: Optional[int] = None
@@ -31,13 +30,14 @@ class QuerySpec:
 
 
 class BaseRepository(Generic[T, ID], ABC):
-    """仓储基类"""""
+    """仓储基类 - 简化版本
 
-    提供基本的数据访问功能.
-    Provides basic data access functionality.
-    """"
+    提供基本的数据访问功能
+    Provides basic data access functionality
+    """
 
     def __init__(self, session: AsyncSession, model_class: type[T]):
+        """初始化仓储实例"""
         self.session = session
         self.model_class = model_class
 
@@ -47,182 +47,140 @@ class BaseRepository(Generic[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[T]:
+    async def get_all(
+        self,
+        query_spec: Optional[QuerySpec] = None
+    ) -> List[T]:
         """获取所有实体"""
         pass
 
     @abstractmethod
-    async def save(self, entity: T) -> T:
-        """保存实体"""
+    async def create(self, entity: T) -> T:
+        """创建实体"""
         pass
 
     @abstractmethod
-    async def delete(self, entity: T) -> bool:
+    async def update(self, id: ID, update_data: Dict[str, Any]) -> Optional[T]:
+        """更新实体"""
+        pass
+
+    @abstractmethod
+    async def delete(self, id: ID) -> bool:
         """删除实体"""
         pass
 
-    @abstractmethod
     async def exists(self, id: ID) -> bool:
         """检查实体是否存在"""
-        pass
+        query = select(self.model_class).where(self.model_class.id == id)
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none() is not None
 
     async def count(self, query_spec: Optional[QuerySpec] = None) -> int:
         """计算实体数量"""
         query = select(self.model_class)
 
         if query_spec and query_spec.filters:
-            query = self._apply_filters(query, query_spec.filters)
+            for key, value in query_spec.filters.items():
+                if hasattr(self.model_class, key):
+                    query = query.where(getattr(self.model_class, key) == value)
+                elif isinstance(value, dict):
+                    # 支持嵌套条件
+                    for operator, val in value.items():
+                        if operator == "$gt":
+                            query = query.where(getattr(self.model_class, key) > val)
+                        elif operator == "$lt":
+                            query = query.where(getattr(self.model_class, key) < val)
+                        elif operator == "$ne":
+                            query = query.where(getattr(self.model_class, key) != val)
+                        elif operator == "$like":
+                            query = query.where(getattr(self.model_class, key).like(val))
 
         result = await self.session.execute(query)
-        return len(result.fetchall())
+        return len(result.scalars().all())
 
-    def _apply_filters(self, query, filters: Dict[str, Any]):
-        """应用过滤器"""
+    def _build_query(self, query_spec: Optional[QuerySpec]) -> Select:
+        """构建查询"""
+        query = select(self.model_class)
+
+        if query_spec:
+            # 添加过滤条件
+            if query_spec.filters:
+                for key, value in query_spec.filters.items():
+                    if hasattr(self.model_class, key):
+                        query = query.where(getattr(self.model_class, key) == value)
+
+            # 添加排序
+            if query_spec.order_by:
+                for order_field in query_spec.order_by:
+                    if order_field.startswith('-'):
+                        field = order_field[1:]
+                        query = query.order_by(getattr(self.model_class, field).desc())
+                    else:
+                        query = query.order_by(getattr(self.model_class, order_field).asc())
+
+            # 添加分页
+            if query_spec.limit:
+                query = query.limit(query_spec.limit)
+            if query_spec.offset:
+                query = query.offset(query_spec.offset)
+
+            # 添加预加载
+            if query_spec.include:
+                for include_field in query_spec.include:
+                    if hasattr(self.model_class, include_field):
+                        query = query.options(selectinload(getattr(self.model_class, include_field)))
+
+        return query
+
+    def _apply_filters(self, query: Select, filters: Dict[str, Any]) -> Select:
+        """应用过滤条件"""
         for key, value in filters.items():
-            if isinstance(value, ((((((((dict):
-                # 支持嵌套条件
-                for operator, val in value.items())))):
-                    if operator == "$gt":
-                        query = query.where(getattr(self.model_class)) > val)
-                    elif operator == "$lt":
-                        query = query.where(getattr(self.model_class)) < val)
-                    elif operator == "$gte":
-                        query = query.where(getattr(self.model_class)) >= val)
-                    elif operator == "$lte":
-                        query = query.where(getattr(self.model_class)) <= val)
-                    elif operator == "$ne":
-                        query = query.where(getattr(self.model_class, key) != val)
-                    elif operator == "$in":
-                        query = query.where(getattr(self.model_class, key).in_(val))
-                    elif operator == "$nin":
-                        query = query.where(getattr(self.model_class, key).notin_(val))
-            else:
-                query = query.where(getattr(self.model_class, key) == value)
+            if hasattr(self.model_class, key):
+                if isinstance(value, (list, tuple)):
+                    # 支持IN操作
+                    query = query.where(getattr(self.model_class, key).in_(value))
+                elif isinstance(value, dict):
+                    # 支持复杂条件
+                    for operator, val in value.items():
+                        if operator == "$gt":
+                            query = query.where(getattr(self.model_class, key) > val)
+                        elif operator == "$lt":
+                            query = query.where(getattr(self.model_class, key) < val)
+                        elif operator == "$ne":
+                            query = query.where(getattr(self.model_class, key) != val)
+                        elif operator == "$like":
+                            query = query.where(getattr(self.model_class, key).like(val))
+                        elif operator == "$in":
+                            query = query.where(getattr(self.model_class, key).in_(val))
+                        elif operator == "$nin":
+                            query = query.where(getattr(self.model_class, key).notin_(val))
+                else:
+                    query = query.where(getattr(self.model_class, key) == value)
         return query
 
-    def _apply_order_by(self, query, order_by: List[str]):
-        """应用排序"""
-        for order in order_by:
-            if order.startswith("-"):
-                field = order[1:]
-                query = query.order_by(getattr(self.model_class, field).desc())
-            else:
-                query = query.order_by(getattr(self.model_class, order))
-        return query
+    async def find_by_filters(
+        self,
+        filters: Dict[str, Any],
+        limit: Optional[int] = None
+    ) -> List[T]:
+        """根据过滤条件查找实体"""
+        query = select(self.model_class)
+        query = self._apply_filters(query, filters)
 
-    def _apply_pagination(self, query, limit: int, offset: int):
-        """应用分页"""
-        if offset:
-            query = query.offset(offset)
         if limit:
             query = query.limit(limit)
-        return query
 
-    def _apply_includes(self, query, includes: List[str]):
-        """应用预加载"""
-        for include in includes:
-            if hasattr(self.model_class, include):
-                query = query.options(selectinload(getattr(self.model_class, include)))
-        return query
-
-
-class ReadOnlyRepository(BaseRepository[T, ID], ABC):
-    """只读仓储基类"""
-
-    @abstractmethod
-    async def find_one(self, query_spec: QuerySpec) -> Optional[T]:
-        """查找单个实体"""
-        pass
-
-    @abstractmethod
-    async def find_many(self, query_spec: QuerySpec) -> List[T]:
-        """查找多个实体"""
-        pass
-
-    async def search(self, keyword: str, fields: List[str]) -> List[T]:
-        """搜索实体"""
-        conditions = []
-        for field in fields:
-            if hasattr(self.model_class, field):
-                conditions.append(getattr(self.model_class, field).ilike(f"%{keyword}%"))
-
-        if conditions:
-            query = select(self.model_class).where(or_(*conditions))
-            result = await self.session.execute(query)
-            return result.scalars().all()
-        return []
-
-
-class WriteOnlyRepository(BaseRepository[T, ID], ABC):
-    """只写仓储基类"""
-
-    @abstractmethod
-    async def create(self, entity_data: Dict[str, Any]) -> T:
-        """创建新实体"""
-        pass
-
-    @abstractmethod
-    async def update_by_id(self, id: ID, update_data: Dict[str, Any]) -> Optional[T]:
-        """根据ID更新实体"""
-        pass
-
-    @abstractmethod
-    async def delete_by_id(self, id: ID) -> bool:
-        """根据ID删除实体"""
-        pass
-
-    @abstractmethod
-    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[T]:
-        """批量创建实体"""
-        pass
-
-    async def bulk_update(self, updates: List[Dict[str, Any]]) -> List[T]:
-        """批量更新实体"""
-        updated_entities = []
-        for update_data in updates:
-            if "id" in update_data:
-                entity = await self.update_by_id(update_data.pop("id"), update_data)
-                if entity:
-                    updated_entities.append(entity)
-        return updated_entities
-
-    async def bulk_delete(self, ids: List[ID]) -> int:
-        """批量删除实体"""
-        query = delete(self.model_class).where(self.model_class.id.in_(ids))
         result = await self.session.execute(query)
-        return result.rowcount
+        return result.scalars().all()
 
-
-class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
-    """完整仓储接口"""""
-
-    组合只读和只写接口.
-    Combines read-only and write-only interfaces.
-    """"
-
-    async def find_or_create(
-        self, find_spec: QuerySpec, create_data: Dict[str, Any]
-    ) -> tuple[T, bool]:
-        """查找或创建实体"""
-        entity = await self.find_one(find_spec)
-        if entity:
-            return entity, False
-
-        new_entity = await self.create(create_data)
-        return new_entity, True
-
-    async def update_or_create(
+    async def find_one_by_filters(
         self,
-        find_spec: QuerySpec,
-        update_data: Dict[str, Any],
-        create_data: Optional[Dict[str, Any]] = None,
-    ) -> tuple[T, bool]:
-        """更新或创建实体"""
-        entity = await self.find_one(find_spec)
-        if entity:
-            updated_entity = await self.update_by_id(entity.id, update_data)
-            return updated_entity, False
+        filters: Dict[str, Any]
+    ) -> Optional[T]:
+        """根据过滤条件查找单个实体"""
+        query = select(self.model_class)
+        query = self._apply_filters(query, filters)
+        query = query.limit(1)
 
-        final_create_data = create_data or update_data
-        new_entity = await self.create(final_create_data)
-        return new_entity, True
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
