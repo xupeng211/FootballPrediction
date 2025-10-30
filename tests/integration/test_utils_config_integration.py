@@ -21,7 +21,7 @@ from datetime import datetime
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
 
-目标：验证模块间集成的正确性和性能
+目标:验证模块间集成的正确性和性能
 """
 
 import os
@@ -49,7 +49,7 @@ try:
     from src.utils.date_utils import DateUtils
     from src.utils.string_utils import StringUtils
 except ImportError as e:
-    # 如果无法导入，创建Mock类用于测试
+    # 如果无法导入,创建Mock类用于测试
     print(f"Warning: Import error - {e}, using Mock classes")
     StringUtils = Mock()
     DateUtils = Mock()
@@ -94,7 +94,7 @@ class TestUtilsConfigIntegration:
             return f.name
 
     async def test_config_string_utils_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置与字符串工具集成成功"""
+        """✅ 成功用例:配置与字符串工具集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -126,7 +126,7 @@ class TestUtilsConfigIntegration:
                 assert "#" not in cleaned
 
     async def test_config_date_utils_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置与日期工具集成成功"""
+        """✅ 成功用例:配置与日期工具集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -149,7 +149,7 @@ class TestUtilsConfigIntegration:
             assert len(formatted) > 0
 
     async def test_config_crypto_utils_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置与加密工具集成成功"""
+        """✅ 成功用例:配置与加密工具集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -170,10 +170,10 @@ class TestUtilsConfigIntegration:
             if encryption_enabled:
                 hashed = CryptoUtils.hash_string(test_data, hash_algorithm)
                 assert hashed is not None
-                assert hashed       != test_data  # 应该被哈希化
+                assert hashed        != test_data  # 应该被哈希化
 
     async def test_config_data_validator_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置与数据验证器集成成功"""
+        """✅ 成功用例:配置与数据验证器集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -197,7 +197,7 @@ class TestUtilsConfigIntegration:
             assert len(missing) == 0
 
     async def test_environment_config_integration_success(self) -> None:
-        """✅ 成功用例：环境配置集成成功"""
+        """✅ 成功用例:环境配置集成成功"""
         # 设置测试环境变量
         test_env_vars = {
             "FOOTBALLPREDICTION_STRING_MAX_LENGTH": "150",
@@ -216,7 +216,7 @@ class TestUtilsConfigIntegration:
                 assert "encryption_enabled" in config
 
     async def test_cors_config_integration_success(self) -> None:
-        """✅ 成功用例：CORS配置集成成功"""
+        """✅ 成功用例:CORS配置集成成功"""
         if not hasattr(get_cors_config_by_env, "__call__"):
             pytest.skip("CORS config function not available")
 
@@ -235,7 +235,7 @@ class TestUtilsConfigIntegration:
             assert isinstance(prod_config.allow_origins, list)
 
     async def test_config_validation_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置验证集成成功"""
+        """✅ 成功用例:配置验证集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -266,7 +266,7 @@ class TestUtilsConfigIntegration:
             assert len(max_length_errors) == 0
 
     async def test_config_change_notification_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置变更通知集成成功"""
+        """✅ 成功用例:配置变更通知集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -291,10 +291,10 @@ class TestUtilsConfigIntegration:
         # 验证变更通知
         assert len(changes) >= 1
         assert changes[-1][0] == "test.key"
-        assert changes[-1][2]       == "test_value"
+        assert changes[-1][2]        == "test_value"
 
     async def test_multi_source_config_integration_success(self) -> None:
-        """✅ 成功用例：多源配置集成成功"""
+        """✅ 成功用例:多源配置集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -328,7 +328,7 @@ class TestUtilsConfigIntegration:
             assert config.get("app_name") == "football_prediction"
             assert config.get("version") == "1.0"
             assert "database" in config
-            assert config["database"]["host"]       == "localhost"
+            assert config["database"]["host"]        == "localhost"
 
         finally:
             # 清理临时文件
@@ -339,7 +339,7 @@ class TestUtilsConfigIntegration:
                 pass
 
     async def test_config_encryption_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置加密集成成功"""
+        """✅ 成功用例:配置加密集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -354,17 +354,17 @@ class TestUtilsConfigIntegration:
 
         if hasattr(manager, "encrypt_value"):
             encrypted = manager.encrypt_value(sensitive_value)
-            assert encrypted       != sensitive_value
+            assert encrypted        != sensitive_value
             assert len(encrypted) > 0
 
             if hasattr(manager, "decrypt_value"):
                 decrypted = manager.decrypt_value(encrypted)
-                assert decrypted       == sensitive_value
+                assert decrypted        == sensitive_value
 
     async def test_config_performance_monitoring_integration_success(
         self, temp_config_file
     ) -> None:
-        """✅ 成功用例：配置性能监控集成成功"""
+        """✅ 成功用例:配置性能监控集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -386,7 +386,7 @@ class TestUtilsConfigIntegration:
         assert avg_load_time < 0.1  # 100毫秒内
 
     async def test_config_error_recovery_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置错误恢复集成成功"""
+        """✅ 成功用例:配置错误恢复集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
@@ -420,7 +420,7 @@ class TestUtilsConfigIntegration:
                 pass
 
     async def test_config_hot_reload_integration_success(self, temp_config_file) -> None:
-        """✅ 成功用例：配置热重载集成成功"""
+        """✅ 成功用例:配置热重载集成成功"""
         if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 

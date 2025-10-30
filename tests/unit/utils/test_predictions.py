@@ -36,7 +36,7 @@ class TestGetMatchPrediction:
 
         mock_session.execute.side_effect = [
             mock_match_result,  # 第一次查询：match
-            mock_prediction_result,  # 第二次查询：prediction
+            mock_prediction_result,  # 第二次查询:prediction
         ]
 
         # 发送请求
@@ -63,7 +63,7 @@ class TestGetMatchPrediction:
 
         api_client_full.mock_session.execute.side_effect = [
             mock_match_result,  # 第一次查询：match
-            mock_prediction_result,  # 第二次查询：prediction (None)
+            mock_prediction_result,  # 第二次查询:prediction (None)
         ]
 
         # 模拟预测服务
@@ -125,7 +125,7 @@ class TestGetMatchPrediction:
 
         api_client_full.mock_session.execute.side_effect = [
             mock_match_result,  # 第一次查询：match
-            mock_prediction_result,  # 第二次查询：prediction (None)
+            mock_prediction_result,  # 第二次查询:prediction (None)
         ]
 
         # 发送请求
@@ -136,7 +136,7 @@ class TestGetMatchPrediction:
         _data = response.json()
         # Check if error message is in detail or message field
         error_msg = data.get("detail", data.get("message", ""))
-        assert "已结束，无法生成预测" in error_msg
+        assert "已结束,无法生成预测" in error_msg
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_server_error(self, api_client_full):
@@ -396,7 +396,7 @@ class TestGetMatchPredictionHistory:
 
         api_client_full.mock_session.execute.side_effect = [
             mock_match_result,  # 第一次查询：match
-            mock_history_result,  # 第二次查询：history
+            mock_history_result,  # 第二次查询:history
         ]
 
         # 发送请求

@@ -207,7 +207,7 @@ class TestTimeUtils:
 
     def test_parse_datetime_function_wrong_custom_format(self):
         """测试向后兼容的parse_datetime函数 - 错误的自定义格式"""
-        # 使用错误的格式，但应该能尝试其他格式
+        # 使用错误的格式,但应该能尝试其他格式
         _result = parse_datetime("2022-01-15", "%d/%m/%Y")
         assert _result is not None
         assert _result == datetime(2022, 1, 15)

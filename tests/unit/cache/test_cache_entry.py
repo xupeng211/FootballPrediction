@@ -48,7 +48,7 @@ class TestCacheEntry:
         if entry.expires_at is not None:
             # 零TTL意味着立即过期
             assert entry.expires_at <= time.time()
-        # 某些实现可能将零TTL视为无TTL，这也是可以接受的
+        # 某些实现可能将零TTL视为无TTL,这也是可以接受的
 
     def test_cache_entry_access(self):
         """测试访问缓存条目"""
@@ -89,7 +89,7 @@ class TestCacheEntry:
 
     def test_is_expired_with_past_ttl(self):
         """测试已过期的条目"""
-        ttl = 0.001  # 1毫秒，立即过期
+        ttl = 0.001  # 1毫秒,立即过期
         entry = CacheEntry("test_key", "test_value", ttl)
 
         # 等待过期
@@ -379,7 +379,7 @@ class TestCacheEntryIntegration:
         time.sleep(0.15)
         assert entry.is_expired()
 
-        # 即使过期，仍可访问值（但应用逻辑应该检查过期）
+        # 即使过期,仍可访问值（但应用逻辑应该检查过期）
         assert entry.access() == "temp_value"
 
     def test_performance_characteristics(self):

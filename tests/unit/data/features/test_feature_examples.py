@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""""""
+""""""""
 特征示例测试
 Tests for Feature Examples
 
 测试src.data.features.examples模块的特征示例功能
-"""""""
+""""""""
 
 from datetime import datetime, timedelta
 
@@ -49,7 +49,7 @@ class TestFeatureExamples:
 
     @patch("src.data.features.examples.os.getenv")
     def test_initialize_feature_store(self, mock_getenv):
-        """测试：初始化特征仓库"""
+        """测试:初始化特征仓库"""
         # 设置环境变量
         mock_getenv.side_effect = lambda key, default=None: {
             "DB_HOST": "localhost",
@@ -70,7 +70,7 @@ class TestFeatureExamples:
 
     @pytest.mark.asyncio
     async def test_write_match_features(self):
-        """测试：写入比赛特征"""
+        """测试:写入比赛特征"""
         if example_write_match_features:
             with patch("src.data.features.examples.get_feature_store") as mock_get_store:
                 mock_store = AsyncMock()
@@ -83,7 +83,7 @@ class TestFeatureExamples:
 
     @pytest.mark.asyncio
     async def test_get_online_features(self):
-        """测试：获取在线特征"""
+        """测试:获取在线特征"""
         if example_get_online_features:
             with patch("src.data.features.examples.get_feature_store") as mock_get_store:
                 mock_store = AsyncMock()
@@ -102,7 +102,7 @@ class TestFeatureExamples:
 
     @pytest.mark.asyncio
     async def test_get_historical_features(self):
-        """测试：获取历史特征"""
+        """测试:获取历史特征"""
         if example_get_historical_features:
             with patch("src.data.features.examples.get_feature_store") as mock_get_store:
                 mock_store = AsyncMock()
@@ -130,7 +130,7 @@ class TestFeatureExamples:
 
     @pytest.mark.asyncio
     async def test_feature_statistics(self):
-        """测试：特征统计"""
+        """测试:特征统计"""
         if example_feature_statistics:
             with patch("src.data.features.examples.get_feature_store") as mock_get_store:
                 mock_store = AsyncMock()
@@ -149,7 +149,7 @@ class TestFeatureExamples:
 
     @pytest.mark.asyncio
     async def test_batch_feature_extraction(self):
-        """测试：批量特征提取"""
+        """测试:批量特征提取"""
         if example_batch_feature_extraction:
             match_ids = ["match_1", "match_2", "match_3"]
 
@@ -174,7 +174,7 @@ class TestFeatureExamples:
 
     @pytest.mark.asyncio
     async def test_feature_validation(self):
-        """测试：特征验证"""
+        """测试:特征验证"""
         if example_feature_validation:
             test_features = {
                 "team_form": [1, 0, 1, 1, 0],
@@ -205,14 +205,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not FEATURE_EXAMPLES_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if FEATURE_EXAMPLES_AVAILABLE:
 from src.data.features.examples import (
             example_get_online_features,
@@ -230,7 +230,7 @@ class TestFeatureExamplesAdvanced:
     """特征示例高级测试"""
 
     def test_environment_configuration(self):
-        """测试：环境配置"""
+        """测试:环境配置"""
         env_vars = {
             "DB_HOST": "test_host",
             "DB_PORT": "5433",
@@ -253,7 +253,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_feature_persistence(self):
-        """测试：特征持久化"""
+        """测试:特征持久化"""
         if example_write_match_features and example_get_online_features:
             match_id = "test_match_persistence"
             features = {
@@ -277,7 +277,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_feature_time_travel(self):
-        """测试：特征时间旅行"""
+        """测试:特征时间旅行"""
         if example_get_historical_features:
             # 查询特定时间点的特征
             target_date = datetime(2024, 1, 15)
@@ -306,7 +306,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_feature_consistency(self):
-        """测试：特征一致性"""
+        """测试:特征一致性"""
         if example_feature_validation:
             # 测试特征一致性验证
             inconsistent_features = {
@@ -335,7 +335,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_feature_derivation(self):
-        """测试：特征派生"""
+        """测试:特征派生"""
         if example_batch_feature_extraction:
             match_ids = ["match_1", "match_2"]
 
@@ -371,7 +371,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_feature_caching(self):
-        """测试：特征缓存"""
+        """测试:特征缓存"""
         if example_get_online_features:
             match_id = "cached_match"
 
@@ -391,7 +391,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_feature_monitoring(self):
-        """测试：特征监控"""
+        """测试:特征监控"""
         if example_feature_statistics:
             with patch("src.data.features.examples.get_feature_store") as mock_get_store:
                 mock_store = AsyncMock()
@@ -411,7 +411,7 @@ class TestFeatureExamplesAdvanced:
 
     @pytest.mark.asyncio
     async def test_concurrent_feature_operations(self):
-        """测试：并发特征操作"""
+        """测试:并发特征操作"""
         if example_batch_feature_extraction:
             match_ids = [f"match_{i}" for i in range(10)]
 
@@ -438,7 +438,7 @@ class TestFeatureExamplesAdvanced:
                 assert total_extracted >= len(match_ids)
 
     def test_feature_schema_validation(self):
-        """测试：特征模式验证"""
+        """测试:特征模式验证"""
         if example_feature_validation:
             # 测试特征模式
             valid_schema = {

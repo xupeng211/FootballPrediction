@@ -49,7 +49,7 @@ class TestStrategyPredictionServiceSimple:
         return prediction
 
     def test_service_initialization(self):
-        """测试：服务初始化"""
+        """测试:服务初始化"""
         # Given
         strategy_factory = Mock()
         prediction_service = Mock()
@@ -75,7 +75,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_initialize(self, mock_service):
-        """测试：初始化服务"""
+        """测试:初始化服务"""
         # Given
         mock_service.initialize = AsyncMock()
 
@@ -87,7 +87,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_predict_match_basic(self, mock_service, sample_prediction):
-        """测试：基本预测功能"""
+        """测试:基本预测功能"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -100,7 +100,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_predict_match_with_strategy(self, mock_service):
-        """测试：指定策略预测"""
+        """测试:指定策略预测"""
         # Given
         mock_service.predict_match = AsyncMock()
 
@@ -115,7 +115,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_predict_match_with_confidence(self, mock_service):
-        """测试：带信心度的预测"""
+        """测试:带信心度的预测"""
         # Given
         mock_service.predict_match = AsyncMock()
 
@@ -129,7 +129,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_predict_match_with_notes(self, mock_service):
-        """测试：带备注的预测"""
+        """测试:带备注的预测"""
         # Given
         mock_service.predict_match = AsyncMock()
 
@@ -143,7 +143,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_predict_match_not_found(self, mock_service):
-        """测试：比赛不存在时的处理"""
+        """测试:比赛不存在时的处理"""
         # Given
         mock_service.predict_match = AsyncMock()
         mock_service.predict_match.side_effect = ValueError("比赛不存在")
@@ -154,7 +154,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_batch_predict_basic(self, mock_service):
-        """测试：批量预测基本功能"""
+        """测试:批量预测基本功能"""
         # Given
         predictions = [Mock(id=1), Mock(id=2), Mock(id=3)]
         mock_service.batch_predict = AsyncMock(return_value=predictions)
@@ -170,7 +170,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_batch_predict_with_strategy(self, mock_service):
-        """测试：批量预测指定策略"""
+        """测试:批量预测指定策略"""
         # Given
         mock_service.batch_predict = AsyncMock()
 
@@ -186,7 +186,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_batch_predict_empty_list(self, mock_service):
-        """测试：空批量预测列表"""
+        """测试:空批量预测列表"""
         # Given
         mock_service.batch_predict = AsyncMock(return_value=[])
 
@@ -199,7 +199,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_compare_strategies_basic(self, mock_service):
-        """测试：策略比较基本功能"""
+        """测试:策略比较基本功能"""
         # Given
         mock_service.compare_strategies = AsyncMock(return_value={})
 
@@ -212,7 +212,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_compare_strategies_with_list(self, mock_service):
-        """测试：指定策略列表比较"""
+        """测试:指定策略列表比较"""
         # Given
         mock_service.compare_strategies = AsyncMock(return_value={"strategy1": None})
         strategies = ["strategy1", "strategy2"]
@@ -228,7 +228,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_compare_strategies_match_not_found(self, mock_service):
-        """测试：策略比较时比赛不存在"""
+        """测试:策略比较时比赛不存在"""
         # Given
         mock_service.compare_strategies = AsyncMock()
         mock_service.compare_strategies.side_effect = ValueError("比赛不存在")
@@ -238,7 +238,7 @@ class TestStrategyPredictionServiceSimple:
             await mock_service.compare_strategies(match_id=999)
 
     def test_service_attributes(self, mock_service):
-        """测试：服务属性"""
+        """测试:服务属性"""
         # Then
         assert hasattr(mock_service, "_strategy_factory")
         assert hasattr(mock_service, "_prediction_domain_service")
@@ -248,7 +248,7 @@ class TestStrategyPredictionServiceSimple:
         assert hasattr(mock_service, "_default_strategy")
 
     def test_default_strategy_value(self):
-        """测试：默认策略值"""
+        """测试:默认策略值"""
         # Given & When
         service = StrategyPredictionService(
             strategy_factory=Mock(),
@@ -262,7 +262,7 @@ class TestStrategyPredictionServiceSimple:
         assert service._default_strategy == "custom_default"
 
     def test_default_strategy_default(self):
-        """测试：默认策略默认值"""
+        """测试:默认策略默认值"""
         # Given & When
         service = StrategyPredictionService(
             strategy_factory=Mock(),
@@ -275,7 +275,7 @@ class TestStrategyPredictionServiceSimple:
         assert service._default_strategy == "ensemble_predictor"
 
     def test_service_dependency_injection(self):
-        """测试：依赖注入"""
+        """测试:依赖注入"""
         # Given
         strategy_factory = Mock()
         prediction_service = Mock()
@@ -297,7 +297,7 @@ class TestStrategyPredictionServiceSimple:
         assert service._prediction_repository is prediction_repository
 
     def test_service_initialization_with_empty_current_strategies(self):
-        """测试：初始化时当前策略为空"""
+        """测试:初始化时当前策略为空"""
         # Given
         service = StrategyPredictionService(
             strategy_factory=Mock(),
@@ -310,7 +310,7 @@ class TestStrategyPredictionServiceSimple:
         assert service._current_strategies == {}
 
     def test_service_configuration(self):
-        """测试：服务配置"""
+        """测试:服务配置"""
         # Given & When
         service = StrategyPredictionService(
             strategy_factory=Mock(),
@@ -327,7 +327,7 @@ class TestStrategyPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_service_logging(self, mock_service):
-        """测试：服务日志记录"""
+        """测试:服务日志记录"""
         # Given
         mock_service.predict_match = AsyncMock()
 
@@ -338,7 +338,7 @@ class TestStrategyPredictionServiceSimple:
         mock_service.predict_match.assert_called_once()
 
     def test_service_inheritance(self):
-        """测试：服务继承关系"""
+        """测试:服务继承关系"""
         # When
         service = StrategyPredictionService(
             strategy_factory=Mock(),
@@ -351,7 +351,7 @@ class TestStrategyPredictionServiceSimple:
         assert isinstance(service, StrategyPredictionService)
 
     def test_service_is_mockable(self):
-        """测试：服务可以被Mock"""
+        """测试:服务可以被Mock"""
         # When & Then
         service = Mock()
         service._strategy_factory = Mock()

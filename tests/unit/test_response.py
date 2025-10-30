@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-# 由于这个模块依赖pydantic，我们需要模拟pydantic
+# 由于这个模块依赖pydantic,我们需要模拟pydantic
 with patch.dict("sys.modules", {"pydantic": __import__("types").ModuleType("pydantic")}):
     # 模拟BaseModel
     class MockBaseModel:

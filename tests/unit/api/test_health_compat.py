@@ -1,9 +1,9 @@
-"""""""
+""""""""
 健康API兼容性测试
 Tests for Health API Compatibility
 
 测试src.api.health模块的兼容性包装功能
-"""""""
+""""""""
 
 import warnings
 
@@ -26,20 +26,20 @@ class TestHealthCompatibility:
     """健康API兼容性测试"""
 
     def test_router_import(self):
-        """测试：路由导入"""
+        """测试:路由导入"""
         assert router is not None
         assert hasattr(router, "routes")
         # 验证是FastAPI路由器
         assert "APIRouter" in str(type(router))
 
     def test_module_exports(self):
-        """测试：模块导出"""
+        """测试:模块导出"""
         assert isinstance(__all__, list)
         assert "router" in __all__
         assert len(__all__) == 1
 
     def test_deprecation_warning(self):
-        """测试：弃用警告"""
+        """测试:弃用警告"""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             # 重新导入以触发警告
@@ -58,7 +58,7 @@ class TestHealthCompatibility:
             assert "api.health" in str(deprecation_warnings[0].message)
 
     def test_backward_compatibility(self):
-        """测试：向后兼容性"""
+        """测试:向后兼容性"""
         # 验证可以从旧的导入路径访问
 from src.api.health import router as old_router
 
@@ -66,14 +66,14 @@ from src.api.health import router as old_router
         try:
             from src.api.health.checks import router as new_router
 
-            # 注意：由于是重新导出，它们应该是同一个对象
+            # 注意:由于是重新导出，它们应该是同一个对象
             assert old_router is new_router
         except ImportError:
-            # 如果新路径不存在，至少确保旧路径可用
+            # 如果新路径不存在,至少确保旧路径可用
             assert old_router is not None
 
     def test_module_documentation(self):
-        """测试：模块文档"""
+        """测试:模块文档"""
         import src.api.health as health_module
 
         assert health_module.__doc__ is not None
@@ -81,7 +81,7 @@ from src.api.health import router as old_router
         assert "向后兼容" in health_module.__doc__
 
     def test_no_additional_exports(self):
-        """测试：没有额外的导出"""
+        """测试:没有额外的导出"""
         # 确保只导出预期中的内容
         import src.api.health as health_module
 
@@ -111,7 +111,7 @@ class TestHealthFunctionality:
     """健康功能测试"""
 
     def test_router_structure(self):
-        """测试：路由结构"""
+        """测试:路由结构"""
         # 验证路由器有基本的健康检查端点
         routes = list(router.routes)
         assert len(routes) > 0
@@ -121,7 +121,7 @@ class TestHealthFunctionality:
         assert any("/health" in path for path in route_paths)
 
     def test_router_tags(self):
-        """测试：路由标签"""
+        """测试:路由标签"""
         if hasattr(router, "tags"):
             assert isinstance(router.tags, (list, tuple))
 
@@ -131,7 +131,7 @@ class TestHealthFunctionality:
                 assert isinstance(route.tags, (list, tuple, set))
 
     def test_router_methods(self):
-        """测试：路由方法"""
+        """测试:路由方法"""
         for route in router.routes:
             if hasattr(route, "methods"):
                 assert isinstance(route.methods, (list, set, frozenset))
@@ -144,21 +144,21 @@ class TestHealthIntegration:
     """健康集成测试"""
 
     def test_integration_with_fastapi(self):
-        """测试：与FastAPI集成"""
+        """测试:与FastAPI集成"""
         # 尝试将路由器添加到FastAPI应用
         try:
             from fastapi import FastAPI
 
             app = FastAPI()
             app.include_router(router)
-            # 如果没有异常，说明集成成功
+            # 如果没有异常,说明集成成功
             assert True
         except Exception as e:
             pytest.fail(f"FastAPI integration failed: {e}")
 
     def test_health_check_flow(self):
-        """测试：健康检查流程"""
-        # 这是一个基础测试，实际的健康检查取决于实现
+        """测试:健康检查流程"""
+        # 这是一个基础测试,实际的健康检查取决于实现
         assert router is not None
 
         # 验证路由器已正确配置
@@ -167,12 +167,12 @@ class TestHealthIntegration:
             assert router.prefix is not None or len(router.routes) > 0
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not HEALTH_AVAILABLE
         assert True  # 表明测试意识到模块不可用

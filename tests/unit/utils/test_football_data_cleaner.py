@@ -302,7 +302,7 @@ class TestFootballDataCleaner:
 
     def test_standardize_bookmaker_name(self, cleaner):
         """测试标准化博彩公司名称"""
-        # 测试实际实现：转换为小写并用下划线替换空格
+        # 测试实际实现:转换为小写并用下划线替换空格
         result1 = cleaner._standardize_bookmaker_name("Bet365")
         _result2 = cleaner._standardize_bookmaker_name("William Hill")
         result3 = cleaner._standardize_bookmaker_name("BETFAIR")

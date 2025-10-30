@@ -139,7 +139,7 @@ class TestIdentifiableModel:
 
         assert isinstance(model.id, int)
         assert isinstance(model.name, str)
-        # description可以是各种类型，这里测试数字
+        # description可以是各种类型,这里测试数字
         assert model.description == 123
 
 

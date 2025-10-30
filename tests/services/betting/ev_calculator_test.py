@@ -9,7 +9,7 @@ from unittest.mock import Mock, AsyncMock, patch
 import asyncio
 from decimal import Decimal
 
-# 模拟导入，实际使用时替换为真实导入
+# 模拟导入,实际使用时替换为真实导入
 try:
     from ...services.betting.ev_calculator import *
 except ImportError:
@@ -590,7 +590,7 @@ class TestEv_CalculatorBusinessLogic:
                 result = calculate_ev(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -648,7 +648,7 @@ class TestEv_CalculatorBusinessLogic:
                 result = calculate_kelly_fraction(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -706,7 +706,7 @@ class TestEv_CalculatorBusinessLogic:
                 result = calculate_value_rating(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -764,7 +764,7 @@ class TestEv_CalculatorBusinessLogic:
                 result = calculate_expected_roi(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -822,7 +822,7 @@ class TestEv_CalculatorBusinessLogic:
                 result = calculate_bust_probability(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -880,7 +880,7 @@ class TestEv_CalculatorBusinessLogic:
                 result = calculate_comprehensive_ev(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 

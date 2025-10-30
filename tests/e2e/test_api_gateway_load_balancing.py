@@ -6,14 +6,14 @@ Phase 4A Week 3 - API网关和负载均衡测试
 
 API Gateway and Load Balancing Test Suite
 
-这个测试文件提供API网关和负载均衡的综合测试，包括：
+这个测试文件提供API网关和负载均衡的综合测试,包括：
 - API网关路由测试
 - 负载均衡算法测试
 - 服务发现和健康检查
 - 熔断和降级机制
 - 限流和防护机制
 
-测试覆盖率目标：>=95%
+测试覆盖率目标:>=95%
 """
 
 import asyncio

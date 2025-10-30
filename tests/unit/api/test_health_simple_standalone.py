@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-"""""""
+""""""""
 健康检查模块独立测试
 Standalone Health Check Module Test
 
-不依赖完整应用，直接测试健康检查功能。
+不依赖完整应用,直接测试健康检查功能。
 Does not depend on full application, directly tests health check functionality.
-"""""""
+""""""""
 
 import asyncio
 import os
@@ -104,7 +104,7 @@ class TestHealthCheckSimple:
         version = result["version"]
         assert isinstance(version, str)
         assert len(version) > 0
-        # 验证版本格式 (基本检查，应该是语义化版本)
+        # 验证版本格式 (基本检查,应该是语义化版本)
         assert any(char.isdigit() for char in version)
 
     # === 性能测试 ===
@@ -183,7 +183,7 @@ class TestHealthCheckSimple:
 
             # 验证响应时间计算 - 实际值应该是0.1ms（实际执行时间）
             actual_response_time = result["response_time_ms"]
-            # 由于mock的时间差没有实际生效，我们检查是否是一个合理的响应时间
+            # 由于mock的时间差没有实际生效,我们检查是否是一个合理的响应时间
             assert isinstance(
                 actual_response_time, (int, float)
             ), f"Response time should be numeric, got {actual_response_time}"

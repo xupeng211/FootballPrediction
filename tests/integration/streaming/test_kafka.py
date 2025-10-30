@@ -435,7 +435,7 @@ class TestKafkaIntegration:
         try:
             future = producer.send(topic, key="test_error", value={"error": "test"})
             _metadata = future.get(timeout=10)
-            # 如果主题不存在且设置了自动创建，这里可能成功
+            # 如果主题不存在且设置了自动创建,这里可能成功
         except KafkaError as e:
             # 预期的错误
             assert "topic" in str(e).lower() or "broker" in str(e).lower()

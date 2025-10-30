@@ -1,9 +1,9 @@
-"""""""
+""""""""
 增强测试文件 - api.cqrs
 P3重点突破生成
 目标覆盖率: 56.7% → 60%+
 生成时间: 2025-10-26 19:51:47
-"""""""
+""""""""
 
 
 import pytest
@@ -12,7 +12,7 @@ import pytest
 try:
 except ImportError as e:
     print(f"警告: 无法导入模块 api.cqrs: {e}")
-    # 如果导入失败，跳过测试
+    # 如果导入失败,跳过测试
     pytest.skip(f"无法导入模块 api.cqrs: {e}", allow_module_level=True)
 
 

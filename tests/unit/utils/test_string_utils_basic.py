@@ -214,7 +214,7 @@ class TestStringUtils:
                     utils.safe_process(case)
                     # 如果方法存在，应该不抛出异常
             except Exception:
-                # 某些输入可能抛出异常，这是可以接受的
+                # 某些输入可能抛出异常,这是可以接受的
                 pass
 
     def test_performance_considerations(self):
@@ -280,7 +280,7 @@ class TestStringUtils:
                 utils = StringUtils(**config)
                 assert utils is not None
             except Exception:
-                # 配置可能不支持，尝试默认构造函数
+                # 配置可能不支持,尝试默认构造函数
                 utils = StringUtils()
                 assert utils is not None
 

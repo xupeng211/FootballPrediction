@@ -41,7 +41,7 @@ class TestCoreConfig:
             config = CoreConfig(config_dict)
             assert config is not None
         except Exception:
-            # 配置可能需要不同的格式，这是可以接受的
+            # 配置可能需要不同的格式,这是可以接受的
             config = CoreConfig()
             assert config is not None
 
@@ -357,7 +357,7 @@ class TestCoreConfig:
                     new_config = CoreConfig(invalid_input)
                     assert new_config is not None
                 except Exception:
-                    # 某些输入可能抛出异常，这是可以接受的
+                    # 某些输入可能抛出异常,这是可以接受的
                     pass
 
             # 测试缺失配置文件

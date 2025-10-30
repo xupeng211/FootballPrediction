@@ -132,7 +132,7 @@ class TestDictUtils:
         assert _result == d
 
     def test_real_world_scenario_config_merge(self):
-        """测试真实场景：配置合并"""
+        """测试真实场景:配置合并"""
         default_config = {
             "database": {
                 "host": "localhost",
@@ -163,7 +163,7 @@ class TestDictUtils:
         assert _result == expected
 
     def test_real_world_scenario_flatten_for_env_vars(self):
-        """测试真实场景：为环境变量扁平化配置"""
+        """测试真实场景:为环境变量扁平化配置"""
         _config = {
             "database": {
                 "primary": {"host": "localhost", "port": 5432},
@@ -186,7 +186,7 @@ class TestDictUtils:
         assert env_vars["API_VERSION"] == "v1"
 
     def test_real_world_scenario_filter_optional_fields(self):
-        """测试真实场景：过滤可选字段"""
+        """测试真实场景:过滤可选字段"""
         api_response = {
             "id": 123,
             "name": "Test Item",
@@ -196,7 +196,7 @@ class TestDictUtils:
             "metadata": {"created": "2024-01-01", "updated": None},
         }
 
-        # 过滤掉None值，只保留有意义的字段
+        # 过滤掉None值,只保留有意义的字段
         cleaned = DictUtils.filter_none_values(api_response)
         expected = {
             "id": 123,
@@ -206,7 +206,7 @@ class TestDictUtils:
         assert cleaned == expected
 
     def test_edge_case_dict_with_list_values(self):
-        """测试边界情况：包含列表值的字典"""
+        """测试边界情况:包含列表值的字典"""
         dict1 = {"a": [1, 2], "b": {"c": [3, 4]}}
         dict2 = {"a": [5, 6], "b": {"d": [7, 8]}}
 
@@ -215,7 +215,7 @@ class TestDictUtils:
         assert _result == expected
 
     def test_edge_case_circular_reference_protection(self):
-        """测试边界情况：循环引用保护"""
+        """测试边界情况:循环引用保护"""
         # 创建有循环引用的字典
         dict1 = {"a": 1}
         dict1["self"] = dict1  # 循环引用
@@ -229,11 +229,11 @@ class TestDictUtils:
             assert "a" in result
             assert "b" in result
         except RecursionError:
-            # 如果出现递归错误，这也是可以接受的
+            # 如果出现递归错误,这也是可以接受的
             pass
 
     def test_performance_large_dict(self):
-        """测试性能：大字典处理"""
+        """测试性能:大字典处理"""
         # 创建一个较大的嵌套字典
         large_dict = {}
         for i in range(100):

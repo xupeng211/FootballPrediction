@@ -1,12 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-"""""""
+""""""""
 简化日志管理工具测试
 Simplified Logging Management Tool Tests
 
 测试src/core/logger_simple.py中定义的简化日志管理功能。
 Tests simplified logging management functionality defined in src/core/logger_simple.py.
-"""""""
+""""""""
 
 import io
 import logging
@@ -182,7 +182,7 @@ class TestSimpleLogger:
 
         logger = get_simple_logger("functionality_test", "DEBUG")
 
-        # 移除默认处理器，添加我们的测试处理器
+        # 移除默认处理器,添加我们的测试处理器
         logger.handlers.clear()
         logger.addHandler(handler)
 
@@ -323,7 +323,7 @@ from src.core.logger_simple import get_simple_logger
         # 测试None名称
         try:
             logger = get_simple_logger(None)  # type: ignore
-            # 某些情况下可能允许None，但我们测试异常处理
+            # 某些情况下可能允许None,但我们测试异常处理
             assert logger is not None
         except (TypeError, AttributeError):
             # 预期的异常

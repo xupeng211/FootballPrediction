@@ -41,7 +41,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_create_prediction_success(self, mock_get_service, client):
-        """测试：成功创建预测"""
+        """测试:成功创建预测"""
         # Given
         mock_service = Mock()
         mock_service.create_prediction = AsyncMock(
@@ -75,13 +75,13 @@ class TestCQRSAPI:
         assert _data["message"] == "预测创建成功"
 
     def test_create_prediction_invalid_data(self, client):
-        """测试：创建预测无效数据"""
+        """测试:创建预测无效数据"""
         # Given
         request_data = {
             "match_id": 123,
-            "predicted_home": -1,  # 无效：不能为负数
+            "predicted_home": -1,  # 无效:不能为负数
             "predicted_away": 1,
-            "confidence": 1.5,  # 无效：超出范围
+            "confidence": 1.5,  # 无效:超出范围
         }
 
         # When
@@ -92,7 +92,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_update_prediction_success(self, mock_get_service, client):
-        """测试：成功更新预测"""
+        """测试:成功更新预测"""
         # Given
         mock_service = Mock()
         mock_service.update_prediction = AsyncMock(
@@ -121,7 +121,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_delete_prediction_success(self, mock_get_service, client):
-        """测试：成功删除预测"""
+        """测试:成功删除预测"""
         # Given
         mock_service = Mock()
         mock_service.delete_prediction = AsyncMock(
@@ -142,7 +142,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_delete_prediction_not_found(self, mock_get_service, client):
-        """测试：删除不存在的预测"""
+        """测试:删除不存在的预测"""
         # Given
         mock_service = Mock()
         mock_service.delete_prediction = AsyncMock(
@@ -163,7 +163,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_get_prediction_success(self, mock_get_service, client):
-        """测试：成功获取预测"""
+        """测试:成功获取预测"""
         # Given
         mock_service = Mock()
         mock_service.get_prediction = AsyncMock(
@@ -187,7 +187,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_get_prediction_not_found(self, mock_get_service, client):
-        """测试：获取不存在的预测"""
+        """测试:获取不存在的预测"""
         # Given
         mock_service = Mock()
         mock_service.get_prediction = AsyncMock(return_value=None)
@@ -201,7 +201,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_list_predictions(self, mock_get_service, client):
-        """测试：列出预测"""
+        """测试:列出预测"""
         # Given
         mock_service = Mock()
         mock_service.list_predictions = AsyncMock(
@@ -224,7 +224,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_list_predictions_with_filters(self, mock_get_service, client):
-        """测试：带过滤器的预测列表"""
+        """测试:带过滤器的预测列表"""
         # Given
         mock_service = Mock()
         mock_service.list_predictions = AsyncMock(return_value=[])
@@ -244,7 +244,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_user_cqrs_service")
     def test_create_user_success(self, mock_get_service, client):
-        """测试：成功创建用户"""
+        """测试:成功创建用户"""
         # Given
         mock_service = Mock()
         mock_service.create_user = AsyncMock(
@@ -273,7 +273,7 @@ class TestCQRSAPI:
         assert "user_id" in _data["data"]
 
     def test_create_user_invalid_email(self, client):
-        """测试：创建用户无效邮箱"""
+        """测试:创建用户无效邮箱"""
         # Given
         request_data = {
             "username": "testuser",
@@ -288,7 +288,7 @@ class TestCQRSAPI:
         assert response.status_code == 422
 
     def test_create_user_short_username(self, client):
-        """测试：创建用户用户名过短"""
+        """测试:创建用户用户名过短"""
         # Given
         request_data = {
             "username": "ab",  # 少于3个字符
@@ -306,7 +306,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_match_cqrs_service")
     def test_create_match_success(self, mock_get_service, client):
-        """测试：成功创建比赛"""
+        """测试:成功创建比赛"""
         # Given
         mock_service = Mock()
         mock_service.create_match = AsyncMock(
@@ -337,7 +337,7 @@ class TestCQRSAPI:
         assert "match_id" in _data["data"]
 
     def test_create_match_invalid_date(self, client):
-        """测试：创建比赛无效日期"""
+        """测试:创建比赛无效日期"""
         # Given
         request_data = {
             "home_team": "Team A",
@@ -355,7 +355,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_analytics_cqrs_service")
     def test_get_prediction_analytics(self, mock_get_service, client):
-        """测试：获取预测分析"""
+        """测试:获取预测分析"""
         # Given
         mock_service = Mock()
         mock_service.get_analytics = AsyncMock(
@@ -382,7 +382,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_analytics_cqrs_service")
     def test_get_user_analytics(self, mock_get_service, client):
-        """测试：获取用户分析"""
+        """测试:获取用户分析"""
         # Given
         mock_service = Mock()
         mock_service.get_user_analytics = AsyncMock(
@@ -402,7 +402,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_analytics_cqrs_service")
     def test_get_match_analytics(self, mock_get_service, client):
-        """测试：获取比赛分析"""
+        """测试:获取比赛分析"""
         # Given
         mock_service = Mock()
         mock_service.get_match_analytics = AsyncMock(
@@ -424,7 +424,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_service_exception_handling(self, mock_get_service, client):
-        """测试：服务异常处理"""
+        """测试:服务异常处理"""
         # Given
         mock_service = Mock()
         mock_service.create_prediction = AsyncMock(side_effect=Exception("Service error"))
@@ -445,7 +445,7 @@ class TestCQRSAPI:
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_timeout_handling(self, mock_get_service, client):
-        """测试：超时处理"""
+        """测试:超时处理"""
         # Given
         mock_service = Mock()
         import asyncio
@@ -471,7 +471,7 @@ class TestCQRSAPI:
     # ==================== 验证测试 ====================
 
     def test_confidence_validation(self, client):
-        """测试：置信度验证"""
+        """测试:置信度验证"""
         # Test various confidence values
         test_cases = [
             (-0.1, 422),  # 负数
@@ -492,7 +492,7 @@ class TestCQRSAPI:
             assert response.status_code == expected_status
 
     def test_score_validation(self, client):
-        """测试：得分验证"""
+        """测试:得分验证"""
         # Test negative scores
         request_data = {
             "match_id": 123,
@@ -504,7 +504,7 @@ class TestCQRSAPI:
         assert response.status_code == 422
 
     def test_email_validation(self, client):
-        """测试：邮箱验证"""
+        """测试:邮箱验证"""
         invalid_emails = [
             "invalid-email",
             "@example.com",
@@ -523,7 +523,7 @@ class TestCQRSAPI:
             assert response.status_code == 422
 
     def test_username_validation(self, client):
-        """测试：用户名验证"""
+        """测试:用户名验证"""
         short_usernames = ["", "a", "ab"]
 
         for username in short_usernames:
@@ -538,7 +538,7 @@ class TestCQRSAPI:
     # ==================== 边界条件测试 ====================
 
     def test_empty_request_body(self, client):
-        """测试：空请求体"""
+        """测试:空请求体"""
         # When
         response = client.post("/cqrs/predictions", json={})
 
@@ -546,7 +546,7 @@ class TestCQRSAPI:
         assert response.status_code == 422
 
     def test_missing_required_fields(self, client):
-        """测试：缺少必填字段"""
+        """测试:缺少必填字段"""
         # Missing match_id
         request_data = {
             "predicted_home": 2,
@@ -557,7 +557,7 @@ class TestCQRSAPI:
         assert response.status_code == 422
 
     def test_extra_fields(self, client):
-        """测试：额外字段"""
+        """测试:额外字段"""
         request_data = {
             "match_id": 123,
             "predicted_home": 2,
@@ -566,5 +566,5 @@ class TestCQRSAPI:
             "extra_field": "should be ignored",
         }
         response = client.post("/cqrs/predictions", json=request_data)
-        # 额外字段应该被忽略，请求应该成功（如果有正确的mock）
+        # 额外字段应该被忽略,请求应该成功（如果有正确的mock）
         assert response.status_code in [200, 422]  # 取决于是否有mock

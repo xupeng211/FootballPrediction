@@ -4,9 +4,9 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-"""""""
+""""""""
 API事件模块测试
-"""""""
+""""""""
 
 
 import pytest
@@ -66,7 +66,7 @@ class TestEventAPIRoutes:
     async def test_event_health_check(self, mock_event_app):
         """测试事件系统健康检查"""
         with patch("src.api.events.get_event_application", return_value=mock_event_app):
-            # 由于是端点函数，直接调用逻辑
+            # 由于是端点函数,直接调用逻辑
             app = mock_event_app
             _result = await app.health_check()
 
@@ -115,7 +115,7 @@ class TestEventAPIRoutes:
 
     def test_find_handler_function(self):
         """测试查找处理器函数"""
-        # 由于_find_handler是内部函数，我们测试相关逻辑
+        # 由于_find_handler是内部函数,我们测试相关逻辑
         handlers = {
             "MetricsEventHandler": MagicMock(),
             "LoggingEventHandler": MagicMock(),
@@ -224,8 +224,8 @@ from src.api.events import MetricsEventHandler
 
 
 def _find_handler(handler_type):
-    """辅助函数：模拟查找处理器"""
-    # 这是原文件的内部函数，这里提供简化版本用于测试
+    """辅助函数:模拟查找处理器"""
+    # 这是原文件的内部函数,这里提供简化版本用于测试
     handlers = {
         "MetricsEventHandler": MagicMock(),
         "LoggingEventHandler": MagicMock(),

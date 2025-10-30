@@ -1,6 +1,6 @@
 """
 Issue #83 阶段2: database.repositories.match 综合测试
-优先级: MEDIUM - 比赛仓储，数据操作核心
+优先级: MEDIUM - 比赛仓储,数据操作核心
 """
 
 import pytest
@@ -46,7 +46,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip("模块导入失败")
 
         func_name = "get_by_date_range"
-        # 修复：异步函数测试需要使用pytest-asyncio
+        # 修复:异步函数测试需要使用pytest-asyncio
         try:
             # 创建模拟对象测试异步函数
             import asyncio
@@ -58,7 +58,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip(f"{func_name}函数调用失败")
 
     async def _test_async_function(self, func_name):
-        """辅助函数：测试异步函数"""
+        """辅助函数:测试异步函数"""
         # 这里可以添加更详细的异步函数测试逻辑
         return f"Mock {func_name} result"
 
@@ -68,7 +68,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip("模块导入失败")
 
         func_name = "get_by_status"
-        # 修复：异步函数测试需要使用pytest-asyncio
+        # 修复:异步函数测试需要使用pytest-asyncio
         try:
             # 创建模拟对象测试异步函数
             import asyncio
@@ -85,7 +85,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip("模块导入失败")
 
         func_name = "get_upcoming_matches"
-        # 修复：异步函数测试需要使用pytest-asyncio
+        # 修复:异步函数测试需要使用pytest-asyncio
         try:
             # 创建模拟对象测试异步函数
             import asyncio
@@ -102,7 +102,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip("模块导入失败")
 
         func_name = "get_live_matches"
-        # 修复：异步函数测试需要使用pytest-asyncio
+        # 修复:异步函数测试需要使用pytest-asyncio
         try:
             # 创建模拟对象测试异步函数
             import asyncio
@@ -119,7 +119,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip("模块导入失败")
 
         func_name = "get_finished_matches"
-        # 修复：异步函数测试需要使用pytest-asyncio
+        # 修复:异步函数测试需要使用pytest-asyncio
         try:
             # 创建模拟对象测试异步函数
             import asyncio
@@ -142,7 +142,7 @@ class TestDatabaseRepositoriesMatch:
             pytest.skip("模块导入失败")
 
         # TODO: 实现集成测试
-        # 模拟真实业务场景，测试组件协作
+        # 模拟真实业务场景,测试组件协作
         assert True  # 基础集成测试通过
 
     def test_error_handling(self):

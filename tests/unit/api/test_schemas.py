@@ -190,7 +190,7 @@ class TestParameterizedInput:
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入
-        # 修复：允许所有基本输入类型，包括None
+        # 修复:允许所有基本输入类型,包括None
         assert input_value is not None or input_value is None  # None也是有效输入
         assert input_value == "" or input_value != ""  # 字符串类型检查
         assert input_value == [] or input_value != []  # 列表类型检查
@@ -208,7 +208,7 @@ class TestParameterizedInput:
     def test_handle_dict_inputs(self, input_data, expected_data):
         """测试处理字典输入"""
         assert isinstance(input_data, dict)
-        # 修复：expected_data可以是字典或列表，检查具体类型
+        # 修复:expected_data可以是字典或列表,检查具体类型
         assert isinstance(expected_data, (dict, list))
 
     @pytest.mark.parametrize(

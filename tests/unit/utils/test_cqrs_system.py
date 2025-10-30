@@ -4,13 +4,13 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-"""""""
+""""""""
 CQRS系统单元测试
 CQRS System Unit Tests
 
 测试CQRS模式的核心功能。
 Tests core functionality of CQRS pattern.
-"""""""
+""""""""
 
 
 import pytest

@@ -1,7 +1,7 @@
 """
 数据验证器测试 - 符合严格测试规范
 
-完整覆盖src.utils.validators模块的所有功能，包含成功、异常和边界用例
+完整覆盖src.utils.validators模块的所有功能,包含成功,异常和边界用例
 """
 
 from typing import Any, Dict, List
@@ -23,7 +23,7 @@ class TestEmailValidator:
     """邮箱验证器测试 - 符合严格测试规范"""
 
     def test_valid_emails_success(self) -> None:
-        """✅ 成功用例：有效的邮箱地址"""
+        """✅ 成功用例:有效的邮箱地址"""
         valid_emails = [
             "test@example.com",
             "user.name@domain.co.uk",
@@ -39,7 +39,7 @@ class TestEmailValidator:
             assert is_valid_email(email) is True, f"应该验证通过: {email}"
 
     def test_invalid_emails_failure(self) -> None:
-        """❌ 失败用例：无效的邮箱地址"""
+        """❌ 失败用例:无效的邮箱地址"""
         invalid_emails = [
             "",  # 空字符串
             "plainaddress",  # 缺少@和域名
@@ -59,7 +59,7 @@ class TestEmailValidator:
             assert is_valid_email(email) is False, f"应该验证失败: {email}"
 
     def test_email_case_sensitivity(self) -> None:
-        """✅ 边界用例：大小写敏感性"""
+        """✅ 边界用例:大小写敏感性"""
         email_upper = "TEST@EXAMPLE.COM"
         email_mixed = "Test@Example.Com"
 
@@ -68,7 +68,7 @@ class TestEmailValidator:
         assert is_valid_email(email_mixed) is True
 
     def test_email_with_unicode_characters(self) -> None:
-        """✅ 边界用例：Unicode字符"""
+        """✅ 边界用例:Unicode字符"""
         unicode_emails = [
             "用户@example.com",  # 中文用户名
             "test@例子.公司",  # 中文域名
@@ -76,20 +76,20 @@ class TestEmailValidator:
         ]
 
         for email in unicode_emails:
-            # 当前正则可能不支持所有Unicode，但不应崩溃
+            # 当前正则可能不支持所有Unicode,但不应崩溃
             result = is_valid_email(email)
             assert isinstance(result, bool)
 
     @patch("re.match")
     def test_email_regex_exception(self, mock_match: Mock) -> None:
-        """❌ 异常用例：正则表达式异常"""
+        """❌ 异常用例:正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")
 
         with pytest.raises(Exception, match="Regex error"):
             is_valid_email("test@example.com")
 
     def test_email_none_input(self) -> None:
-        """❌ 异常用例：None输入"""
+        """❌ 异常用例:None输入"""
         with pytest.raises(TypeError):
             is_valid_email(None)
 
@@ -99,7 +99,7 @@ class TestPhoneValidator:
     """电话号码验证器测试 - 符合严格测试规范"""
 
     def test_valid_phones_success(self) -> None:
-        """✅ 成功用例：有效的电话号码"""
+        """✅ 成功用例:有效的电话号码"""
         valid_phones = [
             "+1234567890",  # 国际格式
             "1234567890",  # 纯数字
@@ -115,7 +115,7 @@ class TestPhoneValidator:
             assert is_valid_phone(phone) is True, f"应该验证通过: {phone}"
 
     def test_invalid_phones_failure(self) -> None:
-        """❌ 失败用例：无效的电话号码"""
+        """❌ 失败用例:无效的电话号码"""
         invalid_phones = [
             "",  # 空字符串
             "abc",  # 纯字母
@@ -131,7 +131,7 @@ class TestPhoneValidator:
             assert is_valid_phone(phone) is False, f"应该验证失败: {phone}"
 
     def test_phone_edge_cases(self) -> None:
-        """✅ 边界用例：边界条件"""
+        """✅ 边界用例:边界条件"""
         edge_cases = [
             "1",  # 单个数字
             "+",  # 只有加号
@@ -144,14 +144,14 @@ class TestPhoneValidator:
 
     @patch("re.match")
     def test_phone_regex_exception(self, mock_match: Mock) -> None:
-        """❌ 异常用例：正则表达式异常"""
+        """❌ 异常用例:正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")
 
         with pytest.raises(Exception, match="Regex error"):
             is_valid_phone("1234567890")
 
     def test_phone_none_input(self) -> None:
-        """❌ 异常用例：None输入"""
+        """❌ 异常用例:None输入"""
         with pytest.raises(TypeError):
             is_valid_phone(None)
 
@@ -161,7 +161,7 @@ class TestURLValidator:
     """URL验证器测试 - 符合严格测试规范"""
 
     def test_valid_urls_success(self) -> None:
-        """✅ 成功用例：有效的URL"""
+        """✅ 成功用例:有效的URL"""
         valid_urls = [
             "http://example.com",
             "https://example.com",
@@ -180,7 +180,7 @@ class TestURLValidator:
             assert is_valid_url(url) is True, f"应该验证通过: {url}"
 
     def test_invalid_urls_failure(self) -> None:
-        """❌ 失败用例：无效的URL"""
+        """❌ 失败用例:无效的URL"""
         invalid_urls = [
             "",  # 空字符串
             "example.com",  # 缺少协议
@@ -197,7 +197,7 @@ class TestURLValidator:
             assert is_valid_url(url) is False, f"应该验证失败: {url}"
 
     def test_url_edge_cases(self) -> None:
-        """✅ 边界用例：边界条件"""
+        """✅ 边界用例:边界条件"""
         edge_cases = [
             "http://a.co",  # 最短有效URL
             "https://example-with-very-long-subdomain-name.com",
@@ -211,14 +211,14 @@ class TestURLValidator:
 
     @patch("re.match")
     def test_url_regex_exception(self, mock_match: Mock) -> None:
-        """❌ 异常用例：正则表达式异常"""
+        """❌ 异常用例:正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")
 
         with pytest.raises(Exception, match="Regex error"):
             is_valid_url("https://example.com")
 
     def test_url_none_input(self) -> None:
-        """❌ 异常用例：None输入"""
+        """❌ 异常用例:None输入"""
         with pytest.raises(TypeError):
             is_valid_url(None)
 
@@ -228,7 +228,7 @@ class TestRequiredFieldsValidator:
     """必填字段验证器测试 - 符合严格测试规范"""
 
     def test_all_required_fields_present_success(self) -> None:
-        """✅ 成功用例：所有必填字段都存在"""
+        """✅ 成功用例:所有必填字段都存在"""
         data = {
             "name": "John Doe",
             "email": "john@example.com",
@@ -240,7 +240,7 @@ class TestRequiredFieldsValidator:
         assert missing == []
 
     def test_missing_required_fields_failure(self) -> None:
-        """❌ 失败用例：缺少必填字段"""
+        """❌ 失败用例:缺少必填字段"""
         data = {
             "name": "John Doe",
             # email 缺失
@@ -252,7 +252,7 @@ class TestRequiredFieldsValidator:
         assert missing == ["email"]
 
     def test_multiple_missing_fields_failure(self) -> None:
-        """❌ 失败用例：多个必填字段缺失"""
+        """❌ 失败用例:多个必填字段缺失"""
         data = {
             "name": "John Doe",
             # email 和 age 都缺失
@@ -263,7 +263,7 @@ class TestRequiredFieldsValidator:
         assert set(missing) == {"email", "age"}
 
     def test_null_values_as_missing(self) -> None:
-        """✅ 边界用例：None值被视为缺失"""
+        """✅ 边界用例:None值被视为缺失"""
         data = {
             "name": "John Doe",
             "email": None,
@@ -275,7 +275,7 @@ class TestRequiredFieldsValidator:
         assert missing == ["email"]
 
     def test_empty_string_as_missing(self) -> None:
-        """✅ 边界用例：空字符串被视为缺失"""
+        """✅ 边界用例:空字符串被视为缺失"""
         data = {
             "name": "John Doe",
             "email": "",
@@ -287,7 +287,7 @@ class TestRequiredFieldsValidator:
         assert missing == ["email"]
 
     def test_no_required_fields_success(self) -> None:
-        """✅ 边界用例：没有必填字段要求"""
+        """✅ 边界用例:没有必填字段要求"""
         data = {"name": "John Doe"}
         required_fields: List[str] = []
 
@@ -295,7 +295,7 @@ class TestRequiredFieldsValidator:
         assert missing == []
 
     def test_empty_data_with_requirements_failure(self) -> None:
-        """❌ 失败用例：空数据但有必填要求"""
+        """❌ 失败用例:空数据但有必填要求"""
         data: Dict[str, Any] = {}
         required_fields = ["name", "email"]
 
@@ -303,7 +303,7 @@ class TestRequiredFieldsValidator:
         assert set(missing) == {"name", "email"}
 
     def test_non_string_field_names(self) -> None:
-        """✅ 边界用例：非字符串字段名"""
+        """✅ 边界用例:非字符串字段名"""
         data = {"name": "John", 1: "value"}
         required_fields = ["name"]
 
@@ -311,7 +311,7 @@ class TestRequiredFieldsValidator:
         assert missing == []
 
     def test_validate_required_fields_type_errors(self) -> None:
-        """❌ 异常用例：类型错误"""
+        """❌ 异常用例:类型错误"""
         with pytest.raises((TypeError, AttributeError)):
             validate_required_fields(None, ["name"])  # type: ignore
 
@@ -324,7 +324,7 @@ class TestDataTypesValidator:
     """数据类型验证器测试 - 符合严格测试规范"""
 
     def test_all_valid_types_success(self) -> None:
-        """✅ 成功用例：所有数据类型都正确"""
+        """✅ 成功用例:所有数据类型都正确"""
         data = {
             "name": "John",  # str
             "age": 30,  # int
@@ -346,12 +346,12 @@ class TestDataTypesValidator:
         assert errors == []
 
     def test_type_mismatch_errors(self) -> None:
-        """❌ 失败用例：数据类型不匹配"""
+        """❌ 失败用例:数据类型不匹配"""
         data = {
             "name": "John",  # 正确
-            "age": "30",  # 应该是int，但提供了str
-            "height": "175.5",  # 应该是float，但提供了str
-            "is_active": "true",  # 应该是bool，但提供了str
+            "age": "30",  # 应该是int,但提供了str
+            "height": "175.5",  # 应该是float,但提供了str
+            "is_active": "true",  # 应该是bool,但提供了str
         }
         schema = {
             "name": str,
@@ -367,7 +367,7 @@ class TestDataTypesValidator:
         assert any("'is_active' should be bool" in error for error in errors)
 
     def test_extra_fields_in_data(self) -> None:
-        """✅ 边界用例：数据中有额外字段"""
+        """✅ 边界用例:数据中有额外字段"""
         data = {
             "name": "John",
             "age": 30,
@@ -379,11 +379,11 @@ class TestDataTypesValidator:
         }
 
         errors = validate_data_types(data, schema)
-        # 额外字段应该被忽略，没有错误
+        # 额外字段应该被忽略,没有错误
         assert errors == []
 
     def test_missing_fields_in_data(self) -> None:
-        """✅ 边界用例：数据中缺少字段"""
+        """✅ 边界用例:数据中缺少字段"""
         data = {
             "name": "John",
             # age 字段缺失
@@ -394,11 +394,11 @@ class TestDataTypesValidator:
         }
 
         errors = validate_data_types(data, schema)
-        # 缺失字段应该被忽略，没有错误
+        # 缺失字段应该被忽略,没有错误
         assert errors == []
 
     def test_complex_type_validation(self) -> None:
-        """✅ 成功用例：复杂类型验证"""
+        """✅ 成功用例:复杂类型验证"""
         # 测试继承关系
         data = {
             "number": 42,  # int 是 object 的子类
@@ -413,7 +413,7 @@ class TestDataTypesValidator:
         assert errors == []
 
     def test_none_values_validation(self) -> None:
-        """✅ 边界用例：None值验证"""
+        """✅ 边界用例:None值验证"""
         data = {
             "optional_field": None,
             "required_field": "value",
@@ -424,12 +424,12 @@ class TestDataTypesValidator:
         }
 
         errors = validate_data_types(data, schema)
-        # None值可能不匹配类型，这取决于实现
+        # None值可能不匹配类型,这取决于实现
         # 这里我们只验证函数能正常执行
         assert isinstance(errors, list)
 
     def test_empty_data_and_schema(self) -> None:
-        """✅ 边界用例：空数据和模式"""
+        """✅ 边界用例:空数据和模式"""
         data: Dict[str, Any] = {}
         schema: Dict[str, type] = {}
 
@@ -437,7 +437,7 @@ class TestDataTypesValidator:
         assert errors == []
 
     def test_validate_data_types_type_errors(self) -> None:
-        """❌ 异常用例：类型错误"""
+        """❌ 异常用例:类型错误"""
         with pytest.raises((TypeError, AttributeError)):
             validate_data_types(None, {"name": str})  # type: ignore
 
@@ -450,7 +450,7 @@ class TestValidatorsIntegration:
     """验证器集成测试 - 符合严格测试规范"""
 
     def test_complete_user_data_validation_success(self) -> None:
-        """✅ 集成用例：完整用户数据验证成功"""
+        """✅ 集成用例:完整用户数据验证成功"""
         user_data = {
             "name": "John Doe",
             "email": "john.doe@example.com",
@@ -481,7 +481,7 @@ class TestValidatorsIntegration:
         assert is_valid_url(user_data["website"])
 
     def test_invalid_user_data_validation_failure(self) -> None:
-        """❌ 集成用例：无效用户数据验证失败"""
+        """❌ 集成用例:无效用户数据验证失败"""
         user_data = {
             "name": "John Doe",
             "email": "invalid-email",  # 无效邮箱
@@ -511,7 +511,7 @@ class TestValidatorsIntegration:
         assert not is_valid_url(user_data["website"])
 
     def test_performance_large_dataset_validation(self) -> None:
-        """✅ 性能用例：大数据集验证性能"""
+        """✅ 性能用例:大数据集验证性能"""
         import time
 
         # 生成大量测试数据
@@ -548,6 +548,6 @@ class TestValidatorsIntegration:
 
 @pytest.fixture(autouse=True)
 def setup_validators_test():
-    """自动应用的fixture，设置验证器测试环境"""
+    """自动应用的fixture,设置验证器测试环境"""
     yield
     # 清理代码

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 数据库基础模型简化测试
 测试 src.database.base 模块的功能
-"""""""
+""""""""
 
 
 import pytest

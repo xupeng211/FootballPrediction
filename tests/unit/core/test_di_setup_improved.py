@@ -140,7 +140,7 @@ from src.core.di_setup import (
 
 
 
-            # 应该不会抛出异常，但不会调用注册方法
+            # 应该不会抛出异常,但不会调用注册方法
 
     # ========================================
     # 配置文件创建测试
@@ -212,11 +212,11 @@ from src.core.di_setup import (
 
 
             # 验证所有服务都被注册
-"""""""
+""""""""
 DI设置改进版测试
 Tests for improved DI setup module
 测试真实的依赖注入设置功能。
-"""""""
+""""""""
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
     DISetup,
@@ -235,7 +235,7 @@ class TestDISetupImproved:
     @pytest.fixture
     def temp_config_file(self):
         """创建临时配置文件"""
-        config_content = """""""
+        config_content = """"""""
 profiles:
   test:
     database:
@@ -244,7 +244,7 @@ profiles:
     redis:
       host: localhost
       port: 6379
-"""""""
+""""""""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(config_content)
             temp_file = f.name

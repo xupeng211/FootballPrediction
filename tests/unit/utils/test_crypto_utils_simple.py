@@ -1,7 +1,7 @@
 """
 测试加密工具 - 符合严格测试规范
 
-重构原有简单测试，添加异常用例、Mock和完整断言覆盖
+重构原有简单测试,添加异常用例,Mock和完整断言覆盖
 """
 
 import hashlib
@@ -18,7 +18,7 @@ class TestCryptoUtilsBasic:
     """测试CryptoUtils的基础功能 - 符合严格测试规范"""
 
     def test_generate_uuid_success(self) -> None:
-        """✅ 成功用例：正常生成UUID"""
+        """✅ 成功用例:正常生成UUID"""
         uuid_result = CryptoUtils.generate_uuid()
 
         assert isinstance(uuid_result, str)
@@ -31,14 +31,14 @@ class TestCryptoUtilsBasic:
 
     @patch("uuid.uuid4")
     def test_generate_uuid_exception(self, mock_uuid4: Mock) -> None:
-        """❌ 异常用例：UUID生成失败"""
+        """❌ 异常用例:UUID生成失败"""
         mock_uuid4.side_effect = Exception("UUID generation failed")
 
         with pytest.raises(Exception, match="UUID generation failed"):
             CryptoUtils.generate_uuid()
 
     def test_generate_short_id_success(self) -> None:
-        """✅ 成功用例：生成默认长度短ID"""
+        """✅ 成功用例:生成默认长度短ID"""
         short_id = CryptoUtils.generate_short_id()
 
         assert isinstance(short_id, str)
@@ -46,7 +46,7 @@ class TestCryptoUtilsBasic:
         assert short_id.isalnum()  # 仅包含字母和数字
 
     def test_generate_short_id_custom_length(self) -> None:
-        """✅ 成功用例：自定义长度短ID"""
+        """✅ 成功用例:自定义长度短ID"""
         for length in [4, 12, 16, 32]:
             short_id = CryptoUtils.generate_short_id(length)
             assert isinstance(short_id, str)
@@ -54,25 +54,25 @@ class TestCryptoUtilsBasic:
             assert short_id.isalnum()
 
     def test_generate_short_id_zero_length(self) -> None:
-        """✅ 边界用例：长度为0的短ID"""
+        """✅ 边界用例:长度为0的短ID"""
         short_id = CryptoUtils.generate_short_id(0)
         assert short_id == ""
 
     def test_generate_short_id_negative_length(self) -> None:
-        """✅ 边界用例：负数长度短ID"""
+        """✅ 边界用例:负数长度短ID"""
         short_id = CryptoUtils.generate_short_id(-5)
         assert short_id == ""
 
     @patch("uuid.uuid4")
     def test_generate_short_id_exception(self, mock_uuid4: Mock) -> None:
-        """❌ 异常用例：短ID生成失败"""
+        """❌ 异常用例:短ID生成失败"""
         mock_uuid4.side_effect = Exception("UUID generation failed")
 
         with pytest.raises(Exception, match="UUID generation failed"):
             CryptoUtils.generate_short_id()
 
     def test_hash_string_md5_success(self) -> None:
-        """✅ 成功用例：MD5字符串哈希"""
+        """✅ 成功用例:MD5字符串哈希"""
         text = "test data"
         hashed = CryptoUtils.hash_string(text, "md5")
 
@@ -83,7 +83,7 @@ class TestCryptoUtilsBasic:
         assert hashed != text
 
     def test_hash_string_sha256_success(self) -> None:
-        """✅ 成功用例：SHA256字符串哈希"""
+        """✅ 成功用例:SHA256字符串哈希"""
         text = "test data"
         hashed = CryptoUtils.hash_string(text, "sha256")
 
@@ -94,23 +94,23 @@ class TestCryptoUtilsBasic:
         assert hashed != text
 
     def test_hash_string_empty_input(self) -> None:
-        """✅ 边界用例：空字符串哈希"""
+        """✅ 边界用例:空字符串哈希"""
         hashed = CryptoUtils.hash_string("", "md5")
         expected = hashlib.md5(b"", usedforsecurity=False).hexdigest()
         assert hashed == expected
 
     def test_hash_string_unsupported_algorithm(self) -> None:
-        """❌ 异常用例：不支持的哈希算法"""
+        """❌ 异常用例:不支持的哈希算法"""
         with pytest.raises(ValueError, match="不支持的哈希算法"):
             CryptoUtils.hash_string("test", "unsupported_algo")
 
     def test_hash_string_none_input(self) -> None:
-        """❌ 异常用例：None输入"""
+        """❌ 异常用例:None输入"""
         with pytest.raises(AttributeError):
             CryptoUtils.hash_string(None, "md5")
 
     def test_generate_salt_if_exists(self) -> None:
-        """✅ 成功用例：生成盐值（如果方法存在）"""
+        """✅ 成功用例:生成盐值（如果方法存在）"""
         if hasattr(CryptoUtils, "generate_salt"):
             salt = CryptoUtils.generate_salt()
             assert isinstance(salt, str)
@@ -120,7 +120,7 @@ class TestCryptoUtilsBasic:
             assert salt != salt2
 
     def test_generate_token_if_exists(self) -> None:
-        """✅ 成功用例：生成令牌（如果方法存在）"""
+        """✅ 成功用例:生成令牌（如果方法存在）"""
         if hasattr(CryptoUtils, "generate_token"):
             token = CryptoUtils.generate_token()
             assert isinstance(token, str)
@@ -128,7 +128,7 @@ class TestCryptoUtilsBasic:
             assert token.isalnum()
 
     def test_hash_password_if_exists(self) -> None:
-        """✅ 成功用例：密码哈希（如果方法存在）"""
+        """✅ 成功用例:密码哈希（如果方法存在）"""
         if hasattr(CryptoUtils, "hash_password"):
             password = "my_secure_password"
             hashed = CryptoUtils.hash_password(password)
@@ -138,7 +138,7 @@ class TestCryptoUtilsBasic:
             assert len(hashed) > 0
 
     def test_verify_password_if_exists(self) -> None:
-        """✅ 成功用例：密码验证（如果方法存在）"""
+        """✅ 成功用例:密码验证（如果方法存在）"""
         if hasattr(CryptoUtils, "hash_password") and hasattr(CryptoUtils, "verify_password"):
             password = "my_secure_password"
             hashed = CryptoUtils.hash_password(password)
@@ -150,13 +150,13 @@ class TestCryptoUtilsBasic:
             assert CryptoUtils.verify_password("wrong_password", hashed) is False
 
     def test_verify_password_wrong_type_if_exists(self) -> None:
-        """❌ 异常用例：错误类型密码验证"""
+        """❌ 异常用例:错误类型密码验证"""
         if hasattr(CryptoUtils, "verify_password"):
             with pytest.raises((TypeError, AttributeError)):
                 CryptoUtils.verify_password(123, "some_hash")
 
     def test_salt_uniqueness_if_exists(self) -> None:
-        """✅ 成功用例：盐值唯一性（如果方法存在）"""
+        """✅ 成功用例:盐值唯一性（如果方法存在）"""
         if hasattr(CryptoUtils, "generate_salt"):
             salts = [CryptoUtils.generate_salt() for _ in range(10)]
             unique_salts = set(salts)
@@ -166,7 +166,7 @@ class TestCryptoUtilsBasic:
 
     @patch("secrets.token_hex")
     def test_generate_salt_exception_if_exists(self, mock_token_hex: Mock) -> None:
-        """❌ 异常用例：盐值生成异常（如果方法存在）"""
+        """❌ 异常用例:盐值生成异常（如果方法存在）"""
         mock_token_hex.side_effect = Exception("Random generation failed")
 
         if hasattr(CryptoUtils, "generate_salt"):
@@ -174,7 +174,7 @@ class TestCryptoUtilsBasic:
                 CryptoUtils.generate_salt()
 
     def test_integration_complete_workflow(self) -> None:
-        """✅ 集成用例：完整工作流测试"""
+        """✅ 集成用例:完整工作流测试"""
         # 生成UUID
         user_id = CryptoUtils.generate_uuid()
         assert len(user_id) == 36
@@ -195,7 +195,7 @@ class TestCryptoUtilsBasic:
         assert auth_hash == expected_hash
 
     def test_performance_large_data_hash(self) -> None:
-        """✅ 性能用例：大数据哈希性能"""
+        """✅ 性能用例:大数据哈希性能"""
         import time
 
         large_data = "a" * 100000  # 100KB数据
@@ -211,7 +211,7 @@ class TestCryptoUtilsBasic:
         assert processing_time < 1.0
 
     def test_concurrent_id_generation(self) -> None:
-        """✅ 并发用例：并发ID生成唯一性"""
+        """✅ 并发用例:并发ID生成唯一性"""
         import threading
 
         ids = []
@@ -224,7 +224,7 @@ class TestCryptoUtilsBasic:
             except Exception as e:
                 errors.append(e)
 
-        # 创建5个线程，每个生成20个ID
+        # 创建5个线程,每个生成20个ID
         threads = []
         for i in range(5):
             thread = threading.Thread(target=generate_ids, args=(20, i))
@@ -248,6 +248,6 @@ class TestCryptoUtilsBasic:
 
 @pytest.fixture(autouse=True)
 def setup_crypto_utils_test():
-    """自动应用的fixture，设置测试环境"""
+    """自动应用的fixture,设置测试环境"""
     yield
     # 清理代码

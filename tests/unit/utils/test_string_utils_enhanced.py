@@ -1,8 +1,8 @@
 """
 基于Issue #98智能Mock兼容修复模式的StringUtils增强测试
-复用Issue #98成功方法论，提升string_utils模块覆盖率
+复用Issue #98成功方法论,提升string_utils模块覆盖率
 
-基于Issue #98智能Mock兼容修复模式的成功实践：
+基于Issue #98智能Mock兼容修复模式的成功实践:
 - 标准化Mock策略
 - 完整的测试覆盖
 - 质量保障机制
@@ -36,7 +36,7 @@ class MockStringUtils:
         cleaned = text.strip()
 
         if remove_special_chars:
-            # 移除特殊字符，只保留字母数字和基本标点
+            # 移除特殊字符,只保留字母数字和基本标点
             cleaned = re.sub(r"[^\w\s\-.,!?]", "", cleaned)
 
         return cleaned
@@ -86,7 +86,7 @@ class MockStringUtils:
         if not isinstance(name, str):
             return ""
 
-        # 在大写字母前添加下划线，然后转为小写
+        # 在大写字母前添加下划线,然后转为小写
         snake = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
         return snake
 
@@ -177,7 +177,7 @@ class TestStringUtilsEnhanced:
     @pytest.fixture
     def sample_text(self):
         """示例文本fixture"""
-        return "这是一个测试字符串，包含一些特殊字符!@#$%^&*()"
+        return "这是一个测试字符串,包含一些特殊字符!@#$%^&*()"
 
     # 基础功能测试 - 基于Issue #98测试模式
     def test_clean_string_basic(self, string_utils):
@@ -286,7 +286,7 @@ class TestStringUtilsEnhanced:
 
     def test_extract_numbers(self, string_utils):
         """测试数字提取"""
-        text = "订单号：12345，价格：99.99，数量：5"
+        text = "订单号：12345，价格：99.99,数量:5"
         result = string_utils.extract_numbers(text)
         assert result == [12345, 99, 99, 5]
 
@@ -344,7 +344,7 @@ class TestStringUtilsEnhanced:
     # 集成测试 - 基于Issue #98集成测试模式
     def test_string_processing_workflow(self, string_utils):
         """测试字符串处理工作流"""
-        # 模拟实际使用场景：用户输入处理
+        # 模拟实际使用场景:用户输入处理
         raw_input = "  用户邮箱:Test.User@Example.COM  "
 
         # 清理输入
@@ -375,7 +375,7 @@ class TestStringUtilsEnhanced:
         end_time = time.time()
         execution_time = end_time - start_time
 
-        # 基于Issue #98性能标准：1000次操作应在1秒内完成
+        # 基于Issue #98性能标准:1000次操作应在1秒内完成
         assert execution_time < 1.0, f"Performance test failed: {execution_time:.3f}s"
 
     # 错误处理测试 - 基于Issue #98健壮性测试模式

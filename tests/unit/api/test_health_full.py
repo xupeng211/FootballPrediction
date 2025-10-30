@@ -1,6 +1,6 @@
-"""""""
+""""""""
 测试 src/api/health.py 模块
-"""""""
+""""""""
 
 import sys
 
@@ -40,7 +40,7 @@ class TestHealthModule:
         client = TestClient(app)
         response = client.get("/health/")
 
-        # 由于是mock环境，可能不会返回真实数据
+        # 由于是mock环境,可能不会返回真实数据
         # 但至少应该有响应
         assert response.status_code in [200, 404, 500]
 
@@ -59,7 +59,7 @@ class TestHealthModule:
         # 测试导入
 from src.api.health import get_health_status
 
-        # 如果函数存在，调用它
+        # 如果函数存在,调用它
         if hasattr(health, "get_health_status"):
             _result = get_health_status()
             assert isinstance(result, dict)

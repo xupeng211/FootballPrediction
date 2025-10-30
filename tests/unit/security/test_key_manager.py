@@ -30,8 +30,8 @@ def test_key_manager_set_key():
     """测试设置密钥"""
     manager = KeyManager()
 
-    # 注意：这里实际上不应该设置环境变量
-    # 在真实实现中，应该使用安全的密钥存储
+    # 注意:这里实际上不应该设置环境变量
+    # 在真实实现中,应该使用安全的密钥存储
     with patch("os.environ") as mock_env:
         pass
     with patch("os.environ") as mock_env:

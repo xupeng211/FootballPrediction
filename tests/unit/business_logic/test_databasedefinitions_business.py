@@ -388,7 +388,7 @@ class TestDatabaseFactoryFunctionsBusinessLogic:
     @pytest.mark.skipif(not MODULE_AVAILABLE, reason="数据库定义模块不可用")
     def test_initialize_test_database_business_logic(self):
         """测试初始化测试数据库工厂函数业务逻辑"""
-        # 当前实现是空的，但应该能调用
+        # 当前实现是空的,但应该能调用
         try:
             initialize_test_database()
             # 如果没有异常就算成功
@@ -627,6 +627,6 @@ class TestDatabaseIntegrationBusinessLogic:
 if __name__ == "__main__":
     print("数据库定义业务逻辑测试套件")
     if MODULE_AVAILABLE:
-        print("✅ 所有模块可用，测试已准备就绪")
+        print("✅ 所有模块可用,测试已准备就绪")
     else:
-        print("⚠️ 模块不可用，测试将被跳过")
+        print("⚠️ 模块不可用,测试将被跳过")

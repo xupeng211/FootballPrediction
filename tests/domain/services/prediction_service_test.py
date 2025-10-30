@@ -9,7 +9,7 @@ from unittest.mock import Mock, AsyncMock, patch
 import asyncio
 from decimal import Decimal
 
-# 模拟导入，实际使用时替换为真实导入
+# 模拟导入,实际使用时替换为真实导入
 try:
     from ...domain.services.prediction_service import *
 except ImportError:
@@ -158,7 +158,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = create_prediction(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -216,7 +216,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = update_prediction(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -274,7 +274,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = evaluate_prediction(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -332,7 +332,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = cancel_prediction(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -390,7 +390,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = expire_prediction(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -448,7 +448,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = adjust_prediction_points(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -506,7 +506,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = calculate_prediction_confidence(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -564,7 +564,7 @@ class TestPrediction_ServiceBusinessLogic:
                 result = validate_prediction_rules(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 

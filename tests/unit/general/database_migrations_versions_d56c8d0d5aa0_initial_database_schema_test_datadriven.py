@@ -3,7 +3,7 @@ import random
 Issue #83-C 数据驱动测试: database.migrations.versions.d56c8d0d5aa0_initial_database_schema
 覆盖率目标: 60% → 85%
 创建时间: 2025-10-25 14:44
-策略: 数据驱动测试，真实业务场景
+策略: 数据驱动测试,真实业务场景
 """
 
 import inspect
@@ -319,7 +319,7 @@ class TestD56C8D0D5Aa0InitialDatabaseSchemaDataDriven:
         end_time = time.time()
         processing_time = end_time - start_time
 
-        print(f"⚡ 性能测试完成，处理100个数据点耗时: {processing_time:.4f}秒")
+        print(f"⚡ 性能测试完成,处理100个数据点耗时: {processing_time:.4f}秒")
         assert processing_time < 1.0, "策略处理大数据集应该在1秒内完成"
 
     @pytest.mark.regression

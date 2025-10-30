@@ -105,7 +105,7 @@ class CollectionUtils:
 
     @staticmethod
     def invert_dict(dictionary: Dict[Any, Any]) -> Dict[Any, Any]:
-        """反转字典（值变键，键变值）"""
+        """反转字典（值变键,键变值）"""
         return {value: key for key, value in dictionary.items()}
 
     @staticmethod
@@ -484,7 +484,7 @@ class TestCollectionUtils:
         shuffled = CollectionUtils.shuffle(lst)
         assert len(shuffled) == 5
         assert set(shuffled) == set(lst)
-        # 由于固定了随机种子，结果应该是确定的
+        # 由于固定了随机种子,结果应该是确定的
         assert shuffled != lst
 
     def test_sort_by(self):

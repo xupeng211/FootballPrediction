@@ -3,7 +3,7 @@ from datetime import datetime
 Issue #83-C 数据驱动测试: database.repositories.prediction
 覆盖率目标: 60% → 85%
 创建时间: 2025-10-25 14:44
-策略: 数据驱动测试，真实数据场景
+策略: 数据驱动测试,真实数据场景
 """
 
 import inspect
@@ -259,7 +259,7 @@ class TestPredictionDataDriven:
         end_time = time.time()
         processing_time = end_time - start_time
 
-        print(f"⚡ 批量操作性能测试完成，处理100个数据点耗时: {processing_time:.4f}秒")
+        print(f"⚡ 批量操作性能测试完成,处理100个数据点耗时: {processing_time:.4f}秒")
         assert processing_time < 1.0, "批量操作应该在1秒内完成"
 
     @pytest.mark.regression

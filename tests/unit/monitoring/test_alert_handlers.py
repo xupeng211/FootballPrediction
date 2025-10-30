@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""""""
+""""""""
 警报处理器测试
 Tests for Alert Handlers
 
 测试src.monitoring.alert_handlers模块的警报处理功能
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -47,14 +47,14 @@ class TestAlertHandler:
     """警报处理器基础测试"""
 
     def test_alert_handler_creation(self):
-        """测试：警报处理器创建"""
+        """测试:警报处理器创建"""
         handler = AlertHandler()
         assert handler is not None
         assert hasattr(handler, "handle_alert")
         assert hasattr(handler, "is_active")
 
     def test_alert_handler_configuration(self):
-        """测试：警报处理器配置"""
+        """测试:警报处理器配置"""
         _config = {"enabled": True, "retry_attempts": 3, "timeout": 30}
 
         handler = AlertHandler(config)
@@ -63,7 +63,7 @@ class TestAlertHandler:
 
     @pytest.mark.asyncio
     async def test_handle_alert(self):
-        """测试：处理警报"""
+        """测试:处理警报"""
         handler = AlertHandler()
 
         alert = {
@@ -82,7 +82,7 @@ class TestEmailAlertHandler:
     """邮件警报处理器测试"""
 
     def test_email_handler_creation(self):
-        """测试：邮件处理器创建"""
+        """测试:邮件处理器创建"""
         _config = {
             "smtp_server": "smtp.example.com",
             "smtp_port": 587,
@@ -97,7 +97,7 @@ class TestEmailAlertHandler:
 
     @pytest.mark.asyncio
     async def test_send_email_alert(self):
-        """测试：发送邮件警报"""
+        """测试:发送邮件警报"""
         _config = {
             "smtp_server": "smtp.test.com",
             "smtp_port": 587,
@@ -121,7 +121,7 @@ class TestEmailAlertHandler:
             assert _result is True
 
     def test_email_formatting(self):
-        """测试：邮件格式化"""
+        """测试:邮件格式化"""
         _config = {"smtp_server": "smtp.test.com", "recipients": ["admin@test.com"]}
 
         handler = EmailAlertHandler(config)
@@ -146,7 +146,7 @@ class TestSlackAlertHandler:
     """Slack警报处理器测试"""
 
     def test_slack_handler_creation(self):
-        """测试：Slack处理器创建"""
+        """测试:Slack处理器创建"""
         _config = {
             "webhook_url": "https://hooks.slack.com/services/...",
             "channel": "#alerts",
@@ -159,7 +159,7 @@ class TestSlackAlertHandler:
 
     @pytest.mark.asyncio
     async def test_send_slack_alert(self):
-        """测试：发送Slack警报"""
+        """测试:发送Slack警报"""
         _config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
 
         handler = SlackAlertHandler(config)
@@ -180,7 +180,7 @@ class TestSlackAlertHandler:
             assert _result is True
 
     def test_slack_payload_format(self):
-        """测试：Slack载荷格式"""
+        """测试:Slack载荷格式"""
         _config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
 
         handler = SlackAlertHandler(config)
@@ -205,7 +205,7 @@ class TestWebhookAlertHandler:
     """Webhook警报处理器测试"""
 
     def test_webhook_handler_creation(self):
-        """测试：Webhook处理器创建"""
+        """测试:Webhook处理器创建"""
         _config = {
             "url": "https://api.example.com/alerts",
             "method": "POST",
@@ -221,7 +221,7 @@ class TestWebhookAlertHandler:
 
     @pytest.mark.asyncio
     async def test_send_webhook_alert(self):
-        """测试：发送Webhook警报"""
+        """测试:发送Webhook警报"""
         _config = {
             "url": "https://api.example.com/webhook",
             "method": "POST",
@@ -246,7 +246,7 @@ class TestWebhookAlertHandler:
             assert _result is True
 
     def test_webhook_retry_logic(self):
-        """测试：Webhook重试逻辑"""
+        """测试:Webhook重试逻辑"""
         _config = {
             "url": "https://api.example.com/webhook",
             "retry_attempts": 3,
@@ -264,7 +264,7 @@ class TestAlertManager:
     """警报管理器测试"""
 
     def test_alert_manager_creation(self):
-        """测试：警报管理器创建"""
+        """测试:警报管理器创建"""
         manager = AlertManager()
         assert manager is not None
         assert hasattr(manager, "register_handler")
@@ -272,7 +272,7 @@ class TestAlertManager:
         assert hasattr(manager, "get_active_handlers")
 
     def test_register_handler(self):
-        """测试：注册处理器"""
+        """测试:注册处理器"""
         manager = AlertManager()
         email_handler = EmailAlertHandler({})
         slack_handler = SlackAlertHandler({})
@@ -287,7 +287,7 @@ class TestAlertManager:
 
     @pytest.mark.asyncio
     async def test_handle_alert_with_multiple_handlers(self):
-        """测试：使用多个处理器处理警报"""
+        """测试:使用多个处理器处理警报"""
         manager = AlertManager()
 
         email_handler = Mock(spec=EmailAlertHandler)
@@ -314,7 +314,7 @@ class TestAlertManager:
         slack_handler.handle_alert.assert_called_once()
 
     def test_alert_severity_filtering(self):
-        """测试：警报严重性过滤"""
+        """测试:警报严重性过滤"""
         manager = AlertManager()
 
         # 只处理高严重性警报的处理器
@@ -351,14 +351,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not ALERT_HANDLERS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if ALERT_HANDLERS_AVAILABLE:
 from src.monitoring.alert_handlers import (
             AlertHandler,
@@ -381,7 +381,7 @@ class TestAlertHandlersIntegration:
 
     @pytest.mark.asyncio
     async def test_end_to_end_alert_flow(self):
-        """测试：端到端警报流程"""
+        """测试:端到端警报流程"""
         # 创建管理器
         manager = AlertManager()
 
@@ -424,7 +424,7 @@ class TestAlertHandlersIntegration:
                 assert all(results.values())
 
     def test_alert_deduplication(self):
-        """测试：警报去重"""
+        """测试:警报去重"""
         manager = AlertManager()
 
         # 模拟相同警报的多次发送
@@ -445,7 +445,7 @@ class TestAlertHandlersIntegration:
 
     @pytest.mark.asyncio
     async def test_alert_rate_limiting(self):
-        """测试：警报速率限制"""
+        """测试:警报速率限制"""
         manager = AlertManager()
         manager.rate_limit = {"max_alerts_per_minute": 5, "max_alerts_per_hour": 50}
 
@@ -467,7 +467,7 @@ class TestAlertHandlersIntegration:
         assert sent_count <= manager.rate_limit["max_alerts_per_minute"]
 
     def test_alert_aggregation(self):
-        """测试：警报聚合"""
+        """测试:警报聚合"""
         manager = AlertManager()
 
         # 相似类型的警报
@@ -486,7 +486,7 @@ class TestAlertHandlersIntegration:
         assert aggregated["max_value"] == 89
 
     def test_alert_templates(self):
-        """测试：警报模板"""
+        """测试:警报模板"""
         manager = AlertManager()
 
         # 注册模板
@@ -509,7 +509,7 @@ class TestAlertHandlersIntegration:
 
     @pytest.mark.asyncio
     async def test_alert_health_check(self):
-        """测试：警报系统健康检查"""
+        """测试:警报系统健康检查"""
         manager = AlertManager()
 
         # 添加处理器
@@ -531,7 +531,7 @@ class TestAlertHandlersIntegration:
         assert all("status" in h for h in health["handlers"].values())
 
     def test_alert_metrics(self):
-        """测试：警报指标"""
+        """测试:警报指标"""
         manager = AlertManager()
 
         # 模拟警报历史

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 API依赖注入测试
 测试 src.api.dependencies 模块的功能
-"""""""
+""""""""
 
 import os
 
@@ -164,7 +164,7 @@ from src.api.dependencies import JWTError
                 # 验证回退类存在
                 assert hasattr(src.api.dependencies, "JWTError")
             except ImportError:
-                # 预期的导入错误，这是正常的
+                # 预期的导入错误,这是正常的
                 pass
 
     def test_security_scheme(self):

@@ -3,10 +3,10 @@
 # TODO: Consider creating a fixture for 27 repeated Mock creations
 
 
-"""""""
+""""""""
 事件驱动预测服务测试
 Tests for Event-Driven Prediction Service
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -67,7 +67,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_service_initialization(self, mock_event_bus):
-        """测试：服务初始化"""
+        """测试:服务初始化"""
         with patch(
             "src.services.event_prediction_service.get_event_bus",
             return_value=mock_event_bus,
@@ -82,7 +82,7 @@ class TestEventDrivenPredictionService:
     async def test_predict_match_and_publish_event(
         self, service, sample_prediction, mock_event_bus
     ):
-        """测试：预测比赛并发布事件"""
+        """测试:预测比赛并发布事件"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
         strategy_name = "test_strategy"
@@ -110,7 +110,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_predict_match_without_optional_params(self, service, sample_prediction):
-        """测试：预测比赛（不提供可选参数）"""
+        """测试:预测比赛（不提供可选参数）"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -123,7 +123,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_update_prediction_and_publish_event(self, service, sample_prediction):
-        """测试：更新预测并发布事件"""
+        """测试:更新预测并发布事件"""
         # Given
         # Mock仓库返回原预测
         mock_repo = Mock()
@@ -157,7 +157,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_update_prediction_not_found(self, service):
-        """测试：更新不存在的预测"""
+        """测试:更新不存在的预测"""
         # Given
         mock_repo = Mock()
         mock_repo.get_by_id = AsyncMock(return_value=None)
@@ -169,7 +169,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_update_prediction_partial_update(self, service, sample_prediction):
-        """测试：部分更新预测"""
+        """测试:部分更新预测"""
         # Given
         mock_repo = Mock()
         mock_repo.get_by_id = AsyncMock(return_value=sample_prediction)
@@ -189,7 +189,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_batch_predict_and_publish_events(self, service):
-        """测试：批量预测并发布事件"""
+        """测试:批量预测并发布事件"""
         # Given
         predictions = [
             Mock(id=1, match_id=101, user_id=1001),
@@ -213,7 +213,7 @@ class TestEventDrivenPredictionService:
 
     @pytest.mark.asyncio
     async def test_batch_predict_without_strategy(self, service):
-        """测试：批量预测（不提供策略）"""
+        """测试:批量预测（不提供策略）"""
         # Given
         predictions = [Mock(id=1, match_id=101, user_id=1001)]
         service.batch_predict = AsyncMock(return_value=predictions)
@@ -226,7 +226,7 @@ class TestEventDrivenPredictionService:
         service._event_bus.publish.assert_called_once()
 
     def test_inheritance_from_strategy_service(self):
-        """测试：继承自策略预测服务"""
+        """测试:继承自策略预测服务"""
         # When
         with patch("src.services.event_prediction_service.StrategyPredictionService"):
             service = EventDrivenPredictionService()
@@ -239,7 +239,7 @@ from src.services.strategy_prediction_service import StrategyPredictionService
 
     @pytest.mark.asyncio
     async def test_event_source_is_consistent(self, service, sample_prediction):
-        """测试：事件源标识一致性"""
+        """测试:事件源标识一致性"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -253,7 +253,7 @@ from src.services.strategy_prediction_service import StrategyPredictionService
 
     @pytest.mark.asyncio
     async def test_prediction_made_event_data_structure(self, service, sample_prediction):
-        """测试：预测创建事件数据结构"""
+        """测试:预测创建事件数据结构"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
         strategy_name = "ml_strategy"
@@ -274,12 +274,12 @@ from src.services.strategy_prediction_service import StrategyPredictionService
 
     @pytest.mark.asyncio
     async def test_handle_event_publishing_error(self, service, sample_prediction):
-        """测试：处理事件发布错误"""
+        """测试:处理事件发布错误"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
         service._event_bus.publish = AsyncMock(side_effect=Exception("Event bus error"))
 
-        # When - 即使事件发布失败，预测仍应返回
+        # When - 即使事件发布失败,预测仍应返回
         _result = await service.predict_match(match_id=456, user_id=789)
 
         # Then

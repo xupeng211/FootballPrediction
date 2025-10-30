@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # =============================================================================
 
 
-# 只导入最基本的依赖，避免复杂的依赖链
+# 只导入最基本的依赖,避免复杂的依赖链
 @pytest.fixture(scope="session")
 def test_database_url():
     """测试数据库URL"""

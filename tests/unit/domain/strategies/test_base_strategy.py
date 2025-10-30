@@ -330,7 +330,7 @@ class TestPredictionStrategy:
             "config": {"param1": "value1"},
         }
 
-        # 注意：这需要在实际实现中支持
+        # 注意:这需要在实际实现中支持
         # strategy = PredictionStrategy.from_dict(strategy_data)
         # assert strategy.name == "deserialized_strategy"
 

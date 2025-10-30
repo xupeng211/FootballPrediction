@@ -1,9 +1,9 @@
 from datetime import datetime
-"""""""
+""""""""
 P3阶段预测模型测试: PredictionModel
 目标覆盖率: 64.94% → 90%
 策略: 真实模型验证 + 数据完整性测试
-"""""""
+""""""""
 
 import os
 import sys
@@ -80,7 +80,7 @@ from src.models import prediction
             "user_id": 1,
             "predicted_home": 2,
             "predicted_away": 1,
-            "confidence": 1.5,  # 无效：超过1.0
+            "confidence": 1.5,  # 无效:超过1.0
             "strategy_used": "test",
         }
 
@@ -219,7 +219,7 @@ from src.models import prediction
         if not PREDICTION_MODEL_AVAILABLE:
             pytest.skip("PredictionModel模块不可用")
 
-        # 测试业务规则：用户不能对同一比赛多次预测
+        # 测试业务规则:用户不能对同一比赛多次预测
         with patch(
             "src.models.prediction.check_duplicate_prediction", return_value=True
         ) as mock_check:
@@ -237,7 +237,7 @@ from src.models import prediction
                 Prediction(**data)
                 mock_check.assert_called_once_with(1, 1)
             except AttributeError:
-                # 如果没有重复检查函数，跳过测试
+                # 如果没有重复检查函数,跳过测试
                 pass
 
     def test_prediction_model_serialization(self):

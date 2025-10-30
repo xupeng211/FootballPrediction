@@ -3,10 +3,10 @@
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
 
-"""""""
+""""""""
 性能分析器测试
 Performance Profiler Tests
-"""""""
+""""""""
 
 import time
 
@@ -279,7 +279,7 @@ class TestMemoryProfiler:
 
         leak_detected = self.memory_profiler.detect_memory_leak()
 
-        # 由于内存持续增长，应该检测到泄漏
+        # 由于内存持续增长,应该检测到泄漏
         assert isinstance(leak_detected, dict)
         assert "leak_detected" in leak_detected
         assert "trend" in leak_detected

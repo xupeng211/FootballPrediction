@@ -222,7 +222,7 @@ class TestConfig:
 
             # 模拟权限错误
             with patch("builtins.open", side_effect=PermissionError("Permission denied")):
-                # 应该不抛出异常，只是静默失败
+                # 应该不抛出异常,只是静默失败
                 config.save()
                 # 配置仍然在内存中
                 assert config.config == {"test": "value"}

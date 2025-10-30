@@ -48,14 +48,14 @@ class TestEventDrivenPredictionServiceSimple:
         return prediction
 
     def test_service_has_event_bus(self, mock_service):
-        """测试：服务有事件总线"""
+        """测试:服务有事件总线"""
         assert hasattr(mock_service, "_event_bus")
         assert hasattr(mock_service, "_event_source")
         assert mock_service._event_source == "prediction_service"
 
     @pytest.mark.asyncio
     async def test_predict_match_workflow(self, mock_service, sample_prediction):
-        """测试：预测比赛工作流程"""
+        """测试:预测比赛工作流程"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -70,7 +70,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_update_prediction_workflow(self, mock_service, sample_prediction):
-        """测试：更新预测工作流程"""
+        """测试:更新预测工作流程"""
         # Given
         mock_service.update_prediction = AsyncMock(return_value=sample_prediction)
 
@@ -85,7 +85,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_batch_predict_workflow(self, mock_service):
-        """测试：批量预测工作流程"""
+        """测试:批量预测工作流程"""
         # Given
         predictions = [Mock(id=1), Mock(id=2), Mock(id=3)]
         mock_service.batch_predict = AsyncMock(return_value=predictions)
@@ -99,17 +99,17 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_event_bus_exists(self, mock_service):
-        """测试：事件总线存在"""
+        """测试:事件总线存在"""
         # Then
         assert mock_service._event_bus is not None
 
     def test_event_source_is_set(self, mock_service):
-        """测试：事件源已设置"""
+        """测试:事件源已设置"""
         assert mock_service._event_source == "prediction_service"
 
     @pytest.mark.asyncio
     async def test_prediction_with_minimal_params(self, mock_service, sample_prediction):
-        """测试：使用最小参数预测"""
+        """测试:使用最小参数预测"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -122,7 +122,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_prediction_with_all_params(self, mock_service, sample_prediction):
-        """测试：使用所有参数预测"""
+        """测试:使用所有参数预测"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -141,7 +141,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_handle_null_strategy(self, mock_service, sample_prediction):
-        """测试：处理空策略名称"""
+        """测试:处理空策略名称"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -153,7 +153,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_handle_zero_confidence(self, mock_service, sample_prediction):
-        """测试：处理零信心度"""
+        """测试:处理零信心度"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
@@ -164,7 +164,7 @@ class TestEventDrivenPredictionServiceSimple:
         assert _result == sample_prediction
 
     def test_service_attributes_exist(self, mock_service):
-        """测试：服务属性存在"""
+        """测试:服务属性存在"""
         # Check required attributes
         assert hasattr(mock_service, "_event_bus")
         assert hasattr(mock_service, "_event_source")
@@ -174,7 +174,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_multiple_predictions_publish_multiple_events(self, mock_service):
-        """测试：多个预测发布多个事件"""
+        """测试:多个预测发布多个事件"""
         # Given
         predictions = [Mock(id=i) for i in range(1, 6)]
         mock_service.batch_predict = AsyncMock(return_value=predictions)
@@ -188,7 +188,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_update_prediction_preserves_original(self, mock_service):
-        """测试：更新预测保留原始值"""
+        """测试:更新预测保留原始值"""
         # Given
         Mock(id=123, predicted_home=2, predicted_away=1)
         updated = Mock(id=123, predicted_home=3, predicted_away=1)
@@ -205,7 +205,7 @@ class TestEventDrivenPredictionServiceSimple:
 
     @pytest.mark.asyncio
     async def test_update_prediction_with_all_fields(self, mock_service):
-        """测试：更新所有预测字段"""
+        """测试:更新所有预测字段"""
         # Given
         updated = Mock(
             id=123,
@@ -232,7 +232,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.update_prediction.assert_called_once()
 
     def test_service_is_mockable(self):
-        """测试：服务可以被Mock"""
+        """测试:服务可以被Mock"""
         # Given & When
         service = Mock()
         service._event_bus = Mock()
@@ -257,7 +257,7 @@ class TestEventDrivenMatchServiceSimple:
         return service
 
     def test_match_service_has_attributes(self, mock_match_service):
-        """测试：比赛服务有必要的属性"""
+        """测试:比赛服务有必要的属性"""
         assert hasattr(mock_match_service, "_match_repository")
         assert hasattr(mock_match_service, "_event_bus")
         assert hasattr(mock_match_service, "_event_source")
@@ -265,7 +265,7 @@ class TestEventDrivenMatchServiceSimple:
 
     @pytest.mark.asyncio
     async def test_create_match_workflow(self, mock_match_service):
-        """测试：创建比赛工作流程"""
+        """测试:创建比赛工作流程"""
         # Given
         match = Mock(id=456)
         mock_match_service.create_match = AsyncMock(return_value=match)
@@ -295,7 +295,7 @@ class TestEventDrivenUserServiceSimple:
         return service
 
     def test_user_service_has_attributes(self, mock_user_service):
-        """测试：用户服务有必要的属性"""
+        """测试:用户服务有必要的属性"""
         assert hasattr(mock_user_service, "_user_repository")
         assert hasattr(mock_user_service, "_event_bus")
         assert hasattr(mock_user_service, "_event_source")
@@ -303,7 +303,7 @@ class TestEventDrivenUserServiceSimple:
 
     @pytest.mark.asyncio
     async def test_register_user_workflow(self, mock_user_service):
-        """测试：注册用户工作流程"""
+        """测试:注册用户工作流程"""
         # Given
         _user = {"id": 789, "username": "testuser"}
         mock_user_service.register_user = AsyncMock(return_value=user)

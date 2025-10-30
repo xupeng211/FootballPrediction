@@ -1,8 +1,8 @@
-"""""""
+""""""""
 P3阶段数据库集成测试: DatabaseDefinitions
 目标覆盖率: 50.00% → 80%
 策略: Mock数据库连接 + 真实ORM逻辑测试
-"""""""
+""""""""
 
 import os
 import sys

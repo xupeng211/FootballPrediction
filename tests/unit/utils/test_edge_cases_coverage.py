@@ -1,12 +1,12 @@
-"""""""
+""""""""
 Utils模块边界条件和业务逻辑测试
 
-重构说明：
+重构说明:
 - 移除所有模板代码和虚构的函数导入
 - 基于真实存在的模块编写高质量业务逻辑测试
-- 测试覆盖dict_utils、data_validator、helpers、validators等核心工具模块
-- 压缩文件大小，提高测试密度和质量
-"""""""
+- 测试覆盖dict_utils、data_validator、helpers,validators等核心工具模块
+- 压缩文件大小,提高测试密度和质量
+""""""""
 
 from __future__ import annotations
 
@@ -42,13 +42,13 @@ from src.utils.dict_utils import DictUtils
         dict2 = {
             "app": {
                 "config": {
-                    "database": {"port": 5433, "ssl": True},  # 覆盖port，添加ssl
+                    "database": {"port": 5433, "ssl": True},  # 覆盖port,添加ssl
                     "api": {"timeout": 30},  # 新增api配置
                 },
                 "features": {
                     "logging": True,
                     "monitoring": True,
-                },  # 覆盖logging，添加monitoring
+                },  # 覆盖logging,添加monitoring
             },
             "environment": "production",
         }
@@ -357,7 +357,7 @@ from src.utils.data_validator import DataValidator
         for json_str in valid_jsons:
             is_valid, data = validator.validate_json(json_str)
             assert is_valid is True
-            # 对于某些值（如null），data可能为None，但这是正确的解析结果
+            # 对于某些值（如null），data可能为None,但这是正确的解析结果
             if json_str != "null":
                 assert data is not None
 
@@ -422,7 +422,7 @@ from src.utils.helpers import (
         assert safe_get(data, "user.invalid.path", "default") == "default"
         assert safe_get(data, "invalid.path", "default") == "default"
         assert safe_get(None, "any.path", "default") == "default"
-        # safe_get在遇到None值时返回None，不是default值
+        # safe_get在遇到None值时返回None,不是default值
         assert safe_get(data, "null_value", "default") is None
 
         # 测试数组索引访问
@@ -435,7 +435,7 @@ from src.utils.helpers import (
         timestamp = format_timestamp()
         assert isinstance(timestamp, str)
         assert "T" in timestamp
-        # 时间戳可能包含时区信息，也可能不包含
+        # 时间戳可能包含时区信息,也可能不包含
 
         custom_time = datetime(2025, 1, 13, 10, 30, 0)
         custom_timestamp = format_timestamp(custom_time)
@@ -535,7 +535,7 @@ from src.utils.validators import (
         c1 = Counter(a=3, b=1)
         c2 = Counter(a=1, b=2)
         assert c1 + c2 == Counter(a=4, b=3)
-        assert c1 - c2 == Counter(a=2)  # b被减为0，不包含在结果中
+        assert c1 - c2 == Counter(a=2)  # b被减为0,不包含在结果中
         assert c1 & c2 == Counter(a=1, b=1)  # 最小值
         assert c1 | c2 == Counter(a=3, b=2)  # 最大值
 
@@ -749,7 +749,7 @@ from src.utils.validators import (
         for value in special_numbers:
             json_str = json.dumps({"number": value})
             parsed = json.loads(json_str)
-            # 特殊数值可能不完全相等，但应该是字符串表示
+            # 特殊数值可能不完全相等,但应该是字符串表示
             assert isinstance(parsed["number"], (str, float))
 
     def test_pathlib_operations(self):

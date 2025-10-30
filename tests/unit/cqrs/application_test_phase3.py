@@ -1,6 +1,6 @@
 """
 自动修复的测试文件 - application_test_phase3.py
-原文件存在语法错误，已重新生成
+原文件存在语法错误,已重新生成
 """
 
 import pytest

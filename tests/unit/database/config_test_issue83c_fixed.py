@@ -4,7 +4,7 @@ Issue #83-C 高级重构测试: database.config
 创建时间: 2025-10-25 14:31
 优先级: MEDIUM
 类别: database
-策略: 高级Mock策略，解决复杂模块依赖问题
+策略: 高级Mock策略,解决复杂模块依赖问题
 """
 
 import inspect
@@ -109,7 +109,7 @@ class MockContextManager:
         }
 
 
-MOCKS_AVAILABLE = True  # 直接设置为可用，因为我们内联了Mock实现
+MOCKS_AVAILABLE = True  # 直接设置为可用,因为我们内联了Mock实现
 
 
 class TestDatabaseConfigIssue83CFixed:
@@ -141,7 +141,7 @@ class TestDatabaseConfigIssue83CFixed:
             print("✅ 模块验证通过")
 
         except ImportError as e:
-            pytest.skip(f"模块导入失败，需要更高级的Mock: {e}")
+            pytest.skip(f"模块导入失败,需要更高级的Mock: {e}")
         except Exception as e:
             print(f"⚠️ 模块导入异常: {e}")
             pytest.skip(f"模块导入异常: {e}")
@@ -358,7 +358,7 @@ class TestDatabaseConfigIssue83CFixed:
         end_time = time.time()
         execution_time = end_time - start_time
 
-        print(f"⚡ Mock性能测试完成，耗时: {execution_time:.4f}秒")
+        print(f"⚡ Mock性能测试完成,耗时: {execution_time:.4f}秒")
         assert execution_time < 1.0, "Mock操作应该在1秒内完成"
 
     @pytest.mark.regression

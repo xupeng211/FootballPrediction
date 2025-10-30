@@ -38,7 +38,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_success(self):
-        """测试：成功获取当前用户"""
+        """测试:成功获取当前用户"""
         mock_credentials = Mock()
         mock_credentials.credentials = "valid_token"
 
@@ -57,7 +57,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_invalid_token(self):
-        """测试：无效令牌"""
+        """测试:无效令牌"""
         mock_credentials = Mock()
         mock_credentials.credentials = "invalid_token"
 
@@ -72,7 +72,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_missing_claims(self):
-        """测试：缺少声明"""
+        """测试:缺少声明"""
         mock_credentials = Mock()
         mock_credentials.credentials = "token_without_claims"
 
@@ -87,7 +87,7 @@ class TestGetCurrentUser:
 
     @pytest.mark.asyncio
     async def test_get_current_user_expired_token(self):
-        """测试：过期令牌"""
+        """测试:过期令牌"""
         mock_credentials = Mock()
         mock_credentials.credentials = "expired_token"
 
@@ -106,7 +106,7 @@ class TestGetPredictionEngine:
 
     @pytest.mark.asyncio
     async def test_get_prediction_engine_success(self):
-        """测试：成功获取预测引擎"""
+        """测试:成功获取预测引擎"""
         with patch("src.api.dependencies.PredictionEngine") as mock_engine_class:
             mock_engine = AsyncMock()
             mock_engine_class.return_value = mock_engine
@@ -118,7 +118,7 @@ class TestGetPredictionEngine:
 
     @pytest.mark.asyncio
     async def test_get_prediction_engine_initialization_error(self):
-        """测试：预测引擎初始化错误"""
+        """测试:预测引擎初始化错误"""
         with patch("src.api.dependencies.PredictionEngine") as mock_engine_class:
             mock_engine_class.side_effect = RuntimeError("Engine initialization failed")
 
@@ -132,20 +132,20 @@ class TestVerifyAdminPermission:
 
     @pytest.mark.asyncio
     async def test_verify_admin_success(self):
-        """测试：管理员权限验证成功"""
+        """测试:管理员权限验证成功"""
         admin_user = {"sub": "admin123", "username": "admin", "role": "admin"}
 
-        # 如果函数存在，测试它
+        # 如果函数存在,测试它
         if "verify_admin_permission" in globals():
             _result = await verify_admin_permission(admin_user)
             assert _result is admin_user
 
     @pytest.mark.asyncio
     async def test_verify_admin_non_admin(self):
-        """测试：非管理员用户"""
+        """测试:非管理员用户"""
         normal_user = {"sub": "user123", "username": "user", "role": "user"}
 
-        # 如果函数存在，测试它
+        # 如果函数存在,测试它
         if "verify_admin_permission" in globals():
             with pytest.raises(HTTPException) as exc_info:
                 await verify_admin_permission(normal_user)
@@ -153,10 +153,10 @@ class TestVerifyAdminPermission:
 
     @pytest.mark.asyncio
     async def test_verify_admin_missing_role(self):
-        """测试：缺少角色信息"""
+        """测试:缺少角色信息"""
         user_without_role = {"sub": "user123", "username": "user"}
 
-        # 如果函数存在，测试它
+        # 如果函数存在,测试它
         if "verify_admin_permission" in globals():
             with pytest.raises(HTTPException) as exc_info:
                 await verify_admin_permission(user_without_role)
@@ -169,27 +169,27 @@ class TestValidateRequestData:
 
     @pytest.mark.asyncio
     async def test_validate_valid_data(self):
-        """测试：验证有效数据"""
+        """测试:验证有效数据"""
         valid_data = {
             "name": "Test Prediction",
             "match_id": 123,
             "prediction_type": "win",
         }
 
-        # 如果函数存在，测试它
+        # 如果函数存在,测试它
         if "validate_request_data" in globals():
             _result = await validate_request_data(valid_data)
             assert _result == valid_data
 
     @pytest.mark.asyncio
     async def test_validate_invalid_data_missing_field(self):
-        """测试：验证无效数据（缺少字段）"""
+        """测试:验证无效数据（缺少字段）"""
         invalid_data = {
             "name": "Test Prediction"
             # 缺少必需字段
         }
 
-        # 如果函数存在，测试它
+        # 如果函数存在,测试它
         if "validate_request_data" in globals():
             with pytest.raises(HTTPException) as exc_info:
                 await validate_request_data(invalid_data)
@@ -197,14 +197,14 @@ class TestValidateRequestData:
 
     @pytest.mark.asyncio
     async def test_validate_invalid_data_wrong_type(self):
-        """测试：验证无效数据（错误类型）"""
+        """测试:验证无效数据（错误类型）"""
         invalid_data = {
             "name": "Test Prediction",
             "match_id": "not_a_number",  # 应该是数字
             "prediction_type": "win",
         }
 
-        # 如果函数存在，测试它
+        # 如果函数存在,测试它
         if "validate_request_data" in globals():
             with pytest.raises(HTTPException) as exc_info:
                 await validate_request_data(invalid_data)
@@ -217,7 +217,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_dependency_chain(self):
-        """测试：依赖链"""
+        """测试:依赖链"""
         # 模拟完整的认证和授权流程
         mock_credentials = Mock()
         mock_credentials.credentials = "admin_token"
@@ -234,14 +234,14 @@ class TestDependenciesIntegration:
             _user = await get_current_user(mock_credentials)
             assert user["role"] == "admin"
 
-            # 如果有验证管理员权限的函数，测试它
+            # 如果有验证管理员权限的函数,测试它
             if "verify_admin_permission" in globals():
                 verified_user = await verify_admin_permission(user)
                 assert verified_user is user
 
     @pytest.mark.asyncio
     async def test_dependency_error_propagation(self):
-        """测试：依赖错误传播"""
+        """测试:依赖错误传播"""
         mock_credentials = Mock()
         mock_credentials.credentials = "corrupted_token"
 
@@ -260,7 +260,7 @@ class TestDependenciesIntegration:
                     await get_current_user(mock_credentials)
 
     def test_security_bearer_configuration(self):
-        """测试：Bearer安全配置"""
+        """测试:Bearer安全配置"""
         # 测试HTTPBearer配置是否正确
         if "security" in globals():
             assert hasattr(security, "scheme_name")
@@ -268,7 +268,7 @@ class TestDependenciesIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_dependency_calls(self):
-        """测试：并发依赖调用"""
+        """测试:并发依赖调用"""
         import asyncio
 
         mock_credentials_list = [Mock(credentials=f"token_{i}") for i in range(5)]
@@ -291,12 +291,12 @@ class TestDependenciesIntegration:
                 assert _result["username"] == "testuser"
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DEPENDENCIES_AVAILABLE
         assert True  # 表明测试意识到模块不可用

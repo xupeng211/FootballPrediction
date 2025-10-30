@@ -3,9 +3,9 @@
 Monitoring and Health Check Integration Tests
 
 基于真实业务逻辑的监控和健康检查端到端集成测试。
-测试真实的监控模块、健康检查器、指标收集器和告警管理器。
+测试真实的监控模块、健康检查器,指标收集器和告警管理器。
 
-主要测试场景：
+主要测试场景:
 - 真实健康检查器集成测试
 - 指标收集和导出测试
 - 告警管理器功能测试
@@ -49,13 +49,13 @@ class TestMonitoringAndHealthCheckIntegration:
         try:
             return get_metrics_collector()
         except Exception:
-            # 如果无法获取真实实例，创建Mock
+            # 如果无法获取真实实例,创建Mock
             return Mock()
 
     @pytest.fixture
     def system_monitor(self):
         """系统监控器"""
-        # 由于循环导入，直接创建Mock
+        # 由于循环导入,直接创建Mock
         mock_monitor = Mock()
         mock_monitor.record_request = Mock()
         mock_monitor.record_database_query = Mock()
@@ -362,7 +362,7 @@ class TestMonitoringAndHealthCheckIntegration:
         """测试系统监控器模拟功能"""
         print("🧪 测试系统监控器模拟功能")
 
-        # 如果是Mock对象，测试基本调用
+        # 如果是Mock对象,测试基本调用
         if hasattr(system_monitor, "record_request"):
             system_monitor.record_request("GET", "/api/test", 200, 0.123)
             system_monitor.record_database_query("SELECT", "predictions", 0.045, False)
@@ -377,7 +377,7 @@ class TestMonitoringAndHealthCheckIntegration:
         """测试指标收集器集成"""
         print("🧪 测试指标收集器集成")
 
-        # 如果是真实实例，测试基本功能
+        # 如果是真实实例,测试基本功能
         if hasattr(metrics_collector, "start") and hasattr(metrics_collector, "stop"):
             try:
                 metrics_collector.start()
@@ -385,7 +385,7 @@ class TestMonitoringAndHealthCheckIntegration:
                 time.sleep(0.01)  # 短暂延迟
                 metrics_collector.stop()
             except Exception:
-                # 如果启动/停止失败，跳过测试
+                # 如果启动/停止失败,跳过测试
                 pass
 
         print("✅ 指标收集器集成测试通过")

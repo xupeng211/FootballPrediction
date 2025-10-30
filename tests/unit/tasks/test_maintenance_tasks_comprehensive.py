@@ -235,7 +235,7 @@ class TestMaintenanceTasks:
         cleanup_task = DatabaseCleanupTask()
         backup_task = BackupTask()
 
-        # 设置依赖：备份任务依赖清理任务
+        # 设置依赖:备份任务依赖清理任务
         backup_task.add_dependency(cleanup_task)
 
         assert cleanup_task in backup_task.dependencies
@@ -279,7 +279,7 @@ class TestMaintenanceTasks:
         task = DatabaseCleanupTask()
 
         with patch.object(task, "execute") as mock_execute:
-            # 前两次失败，第三次成功
+            # 前两次失败,第三次成功
             mock_execute.side_effect = [
                 Exception("First failure"),
                 Exception("Second failure"),

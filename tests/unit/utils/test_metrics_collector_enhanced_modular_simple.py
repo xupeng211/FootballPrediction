@@ -4,9 +4,9 @@
 
 from unittest.mock import Mock, patch
 
-"""""""
+""""""""
 增强指标收集器模块化简化测试
-"""""""
+""""""""
 
 from datetime import datetime
 

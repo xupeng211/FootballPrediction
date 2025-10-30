@@ -126,7 +126,7 @@ from starlette.responses import JSONResponse
         # 检查CORS头部
 
 
-        # 根据配置，可能允许或拒绝
+        # 根据配置,可能允许或拒绝
 
 
 
@@ -202,7 +202,7 @@ from starlette.responses import JSONResponse
 
 
 
-            # 在生产环境中，错误信息可能更加通用
+            # 在生产环境中,错误信息可能更加通用
 
 
 
@@ -223,9 +223,9 @@ from starlette.responses import JSONResponse
         # 正常请求
 
         # 短路请求
-"""""""
+""""""""
 API中间件测试
-"""""""
+""""""""
 pytest_plugins = "asyncio"
 try:
         AuthenticationMiddleware,

@@ -1,10 +1,10 @@
-"""""""
+""""""""
 模型训练模块测试
 Model Training Module Tests
 
-测试src/models/model_training.py中定义的模型训练功能，专注于实现100%覆盖率。
+测试src/models/model_training.py中定义的模型训练功能,专注于实现100%覆盖率。
 Tests model training functionality defined in src/models/model_training.py, focused on achieving 100% coverage.
-"""""""
+""""""""
 
 import pytest
 
@@ -61,7 +61,7 @@ class TestBaselineModelTrainer:
         )
 
         assert trainer.mlflow_tracking_uri == custom_uri
-        assert trainer.config == {}  # 注意：config在__init__中被重置为空字典
+        assert trainer.config == {}  # 注意:config在__init__中被重置为空字典
 
     def test_baseline_model_trainer_instantiation_positional_args(self):
         """测试BaselineModelTrainer位置参数实例化"""
@@ -175,7 +175,7 @@ class TestDependencyChecks:
 
     def test_dependency_flags_consistency(self):
         """测试依赖标志的一致性"""
-        # 如果HAS_XGB为True，xgb不应该为None
+        # 如果HAS_XGB为True,xgb不应该为None
         if HAS_XGB:
             assert xgb is not None
         else:
@@ -188,17 +188,17 @@ class TestDependencyChecks:
         """测试XGBoost依赖状态逻辑"""
         # 测试依赖状态的一致性
         if HAS_XGB:
-            # 如果XGBoost可用，应该能够导入相关功能
+            # 如果XGBoost可用,应该能够导入相关功能
             assert xgb is not None
             # 验证xgb模块有基本属性
             assert hasattr(xgb, "XGBClassifier") or hasattr(xgb, "__version__")
         else:
-            # 如果XGBoost不可用，xgb应该为None
+            # 如果XGBoost不可用,xgb应该为None
             assert xgb is None
 
     def test_mlflow_dependency_state(self):
         """测试MLflow依赖状态逻辑"""
-        # 无论MLflow是否实际安装，都应该有可用的对象
+        # 无论MLflow是否实际安装,都应该有可用的对象
         assert mlflow is not None
         assert MlflowClient is not None
 
@@ -380,7 +380,7 @@ class TestIntegration:
 
     def test_dependency_handling_scenarios(self):
         """测试依赖处理的各种场景"""
-        # 测试无论依赖是否安装，模块都能正常工作
+        # 测试无论依赖是否安装,模块都能正常工作
         trainer = BaselineModelTrainer()
 
         # 这些操作应该在任何依赖情况下都能工作
@@ -458,7 +458,7 @@ class TestEdgeCases:
         """测试训练器大配置处理"""
         large_config = {f"param_{i}": f"value_{i}" for i in range(1000)}
 
-        # 注意：config会被重置为空字典
+        # 注意:config会被重置为空字典
         trainer = BaselineModelTrainer(config=large_config)
         assert trainer.config == {}
 

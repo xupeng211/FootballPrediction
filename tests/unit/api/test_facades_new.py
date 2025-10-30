@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""""""
+""""""""
 门面模式API测试
 Tests for Facade Pattern API
 
 测试src.api.facades模块的功能
-"""""""
+""""""""
 
 
 import pytest
@@ -36,7 +36,7 @@ class TestListFacades:
 
     @pytest.mark.asyncio
     async def test_list_facades_success(self):
-        """测试：成功获取门面列表"""
+        """测试:成功获取门面列表"""
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = [
             "prediction",
@@ -64,7 +64,7 @@ class TestListFacades:
 
     @pytest.mark.asyncio
     async def test_list_facades_empty(self):
-        """测试：空门面列表"""
+        """测试:空门面列表"""
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = []
         mock_factory.list_configs.return_value = []
@@ -82,7 +82,7 @@ class TestListFacades:
 
     @pytest.mark.asyncio
     async def test_list_facades_factory_error(self):
-        """测试：工厂错误"""
+        """测试:工厂错误"""
         mock_factory = Mock()
         mock_factory.list_facade_types.side_effect = Exception("Factory error")
 
@@ -97,7 +97,7 @@ class TestInitializeFacade:
 
     @pytest.mark.asyncio
     async def test_initialize_facade_success(self):
-        """测试：成功初始化门面"""
+        """测试:成功初始化门面"""
         mock_facade = AsyncMock()
         mock_facade.initialize.return_value = {"status": "initialized"}
 
@@ -122,7 +122,7 @@ class TestInitializeFacade:
 
     @pytest.mark.asyncio
     async def test_initialize_facade_already_exists(self):
-        """测试：门面已存在"""
+        """测试:门面已存在"""
         existing_facade = Mock()
         existing_facade.is_initialized = True
         global_facades["existing_facade"] = existing_facade
@@ -138,7 +138,7 @@ class TestInitializeFacade:
 
     @pytest.mark.asyncio
     async def test_initialize_facade_no_auto_init(self):
-        """测试：不自动初始化"""
+        """测试:不自动初始化"""
         mock_facade = AsyncMock()
         mock_factory = Mock()
         mock_factory.create_facade.return_value = mock_facade
@@ -159,7 +159,7 @@ class TestInitializeFacade:
 
     @pytest.mark.asyncio
     async def test_initialize_facade_invalid_type(self):
-        """测试：无效门面类型"""
+        """测试:无效门面类型"""
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = ["prediction", "analytics"]
 
@@ -171,7 +171,7 @@ class TestInitializeFacade:
 
     @pytest.mark.asyncio
     async def test_initialize_facade_creation_error(self):
-        """测试：门面创建错误"""
+        """测试:门面创建错误"""
         mock_factory = Mock()
         mock_factory.create_facade.side_effect = RuntimeError("Creation failed")
 
@@ -183,7 +183,7 @@ class TestInitializeFacade:
 
     @pytest.mark.asyncio
     async def test_initialize_facade_init_error(self):
-        """测试：初始化错误"""
+        """测试:初始化错误"""
         mock_facade = AsyncMock()
         mock_facade.initialize.side_effect = Exception("Init failed")
 
@@ -204,14 +204,14 @@ class TestFacadesIntegration:
     """门面集成测试"""
 
     def test_router_configuration(self):
-        """测试：路由配置"""
+        """测试:路由配置"""
         assert router is not None
         assert router.prefix == "/facades"
         assert "门面模式" in router.tags
 
     @pytest.mark.asyncio
     async def test_full_facade_lifecycle(self):
-        """测试：完整门面生命周期"""
+        """测试:完整门面生命周期"""
         mock_facade = AsyncMock()
         mock_facade.initialize.return_value = {"status": "ready"}
         mock_facade.cleanup.return_value = {"status": "cleaned"}
@@ -242,7 +242,7 @@ class TestFacadesIntegration:
 
     @pytest.mark.asyncio
     async def test_multiple_facades(self):
-        """测试：多个门面"""
+        """测试:多个门面"""
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = ["type1", "type2", "type3"]
         mock_factory.create_facade.return_value = AsyncMock()
@@ -268,7 +268,7 @@ class TestFacadesIntegration:
 
     @pytest.mark.asyncio
     async def test_concurrent_facade_operations(self):
-        """测试：并发的门面操作"""
+        """测试:并发的门面操作"""
         import asyncio
 
         mock_facade = AsyncMock()
@@ -300,7 +300,7 @@ class TestFacadesIntegration:
 
     @pytest.mark.asyncio
     async def test_facade_error_recovery(self):
-        """测试：门面错误恢复"""
+        """测试:门面错误恢复"""
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = ["test_type"]
 
@@ -326,7 +326,7 @@ class TestFacadesIntegration:
             assert _result["status"] == "success"
 
     def test_global_facades_dict(self):
-        """测试：全局门面字典"""
+        """测试:全局门面字典"""
         # 验证global_facades是字典
         assert isinstance(global_facades, dict)
 
@@ -341,7 +341,7 @@ class TestFacadesIntegration:
 
     @pytest.mark.asyncio
     async def test_facade_types_validation(self):
-        """测试：门面类型验证"""
+        """测试:门面类型验证"""
         mock_factory = Mock()
         mock_factory.list_facade_types.return_value = ["valid_type1", "valid_type2"]
 
@@ -356,7 +356,7 @@ class TestFacadesIntegration:
                         facade_type=facade_type, facade_name=f"test_{facade_type}"
                     )
                 except Exception:
-                    pass  # 可能因为其他原因失败，但不是类型问题
+                    pass  # 可能因为其他原因失败,但不是类型问题
 
             # 测试无效类型
             invalid_types = ["invalid_type", "", None]
@@ -369,7 +369,7 @@ class TestFacadesIntegration:
 
     @pytest.mark.asyncio
     async def test_facade_name_handling(self):
-        """测试：门面名称处理"""
+        """测试:门面名称处理"""
         mock_facade = AsyncMock()
         mock_factory = Mock()
         mock_factory.create_facade.return_value = mock_facade
@@ -395,7 +395,7 @@ class TestFacadesIntegration:
                 assert name in global_facades
 
     def test_router_endpoints(self):
-        """测试：路由端点"""
+        """测试:路由端点"""
         # 检查路由是否正确配置
         routes = [route for route in router.routes if hasattr(route, "path")]
 
@@ -405,12 +405,12 @@ class TestFacadesIntegration:
         assert "/initialize" in paths  # initialize_facade
 
 
-# 如果模块不可用，添加一个占位测试
+# 如果模块不可用,添加一个占位测试
 @pytest.mark.skipif(True, reason="Module not available")
 class TestModuleNotAvailable:
     """模块不可用时的占位测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not FACADES_AVAILABLE
         assert True  # 表明测试意识到模块不可用

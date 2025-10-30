@@ -35,7 +35,7 @@ class TestComprehensiveAPI:
             ("/predictions/health", 200),
             ("/predictions/12345", 200),
             ("/predictions/54321/predict", 201),
-            ("/predictions/batch", 200),  # 注意：这个路由被/{match_id}捕获
+            ("/predictions/batch", 200),  # 注意:这个路由被/{match_id}捕获
             ("/predictions/history/12345", 200),
             # 验证端点使用POST
             # ("/predictions/12345/verify?actual_result=home", 200),
@@ -354,7 +354,7 @@ class TestComprehensiveAPI:
 
         # SQL注入尝试（应该被安全处理）
         response = client.get("/data/leagues?country=';DROP TABLE leagues;--")
-        # 应该返回200或422，但不应该崩溃
+        # 应该返回200或422,但不应该崩溃
         assert response.status_code in [200, 422]
 
     def test_empty_responses(self, client):

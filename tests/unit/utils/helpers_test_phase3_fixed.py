@@ -1,8 +1,8 @@
-"""""""
+""""""""
 Issue #83-B阶段3简化测试: utils.helpers
 覆盖率: 40.91% → 70%
 创建时间: 2025-10-25
-"""""""
+""""""""
 
 import inspect
 
@@ -39,7 +39,7 @@ class TestUtilsHelpersPhase3:
             pytest.skip("模块 utils.helpers 导入失败")
 
         assert len(imported_items) >= 0, "应该能导入模块内容"
-        print(f"✅ 模块验证通过，包含 {len(imported_items)} 个可测试项目")
+        print(f"✅ 模块验证通过,包含 {len(imported_items)} 个可测试项目")
 
     @pytest.mark.unit
     def test_basic_function_execution(self):
@@ -118,7 +118,7 @@ except Exception:
 
         end_time = time.time()
         execution_time = end_time - start_time
-        print(f"⚡ 性能测试完成，耗时: {execution_time:.4f}秒")
+        print(f"⚡ 性能测试完成,耗时: {execution_time:.4f}秒")
         assert execution_time < 2.0, "性能测试应该在2秒内完成"
 
     @pytest.mark.unit

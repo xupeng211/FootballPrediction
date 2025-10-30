@@ -393,11 +393,11 @@ def test_database_connection_health(endpoint, method, expected_codes, client):
             # 验证状态码在预期范围内
             assert response.status_code in expected_codes
         else:
-            # 如果无法导入，只验证端点格式
+            # 如果无法导入,只验证端点格式
             assert endpoint.startswith("/api/")
             assert endpoint.count("/") >= 2
     except Exception:
-        # 端点可能不存在，这是可接受的
+        # 端点可能不存在,这是可接受的
         pytest.skip(f"Endpoint {endpoint} not available")
 
 

@@ -1,9 +1,9 @@
-"""""""
+""""""""
 任务监控模块测试
 Tests for Task Monitoring
 
 测试src.tasks.monitoring模块的任务监控功能
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -28,7 +28,7 @@ class TestTaskMonitor:
     """任务监控器测试"""
 
     def test_task_monitor_creation_default(self):
-        """测试：创建任务监控器（默认注册表）"""
+        """测试:创建任务监控器（默认注册表）"""
         monitor = TaskMonitor()
         assert monitor is not None
         assert monitor.registry is not None
@@ -38,13 +38,13 @@ class TestTaskMonitor:
         assert hasattr(monitor, "active_tasks")
 
     def test_task_monitor_creation_custom_registry(self):
-        """测试：创建任务监控器（自定义注册表）"""
+        """测试:创建任务监控器（自定义注册表）"""
         custom_registry = CollectorRegistry()
         monitor = TaskMonitor(registry=custom_registry)
         assert monitor.registry is custom_registry
 
     def test_task_monitor_counters_exist(self):
-        """测试：监控计数器存在"""
+        """测试:监控计数器存在"""
         monitor = TaskMonitor()
 
         # 检查计数器是否创建
@@ -55,7 +55,7 @@ class TestTaskMonitor:
 
     @patch("src.tasks.monitoring.DatabaseManager")
     def test_database_connection(self, mock_db_manager):
-        """测试：数据库连接"""
+        """测试:数据库连接"""
         mock_db_manager.return_value = Mock()
 
         monitor = TaskMonitor()
@@ -65,7 +65,7 @@ class TestTaskMonitor:
 
     @patch("src.tasks.monitoring.DatabaseManager")
     def test_get_database_type(self, mock_db_manager):
-        """测试：获取数据库类型"""
+        """测试:获取数据库类型"""
         mock_connection = Mock()
         mock_connection.dialect.name = "postgresql"
         mock_db_manager.return_value.get_connection.return_value = mock_connection
@@ -76,7 +76,7 @@ class TestTaskMonitor:
         assert monitor._db_type == "postgresql"
 
     def test_task_counter_increment(self):
-        """测试：任务计数器增加"""
+        """测试:任务计数器增加"""
         monitor = TaskMonitor()
 
         # 创建计数器应该可以增加
@@ -85,7 +85,7 @@ class TestTaskMonitor:
             assert counter is not None
 
     def test_task_duration_observe(self):
-        """测试：任务持续时间观察"""
+        """测试:任务持续时间观察"""
         monitor = TaskMonitor()
 
         # 创建直方图应该可以观察
@@ -94,7 +94,7 @@ class TestTaskMonitor:
             assert histogram is not None
 
     def test_task_errors_increment(self):
-        """测试：任务错误计数器增加"""
+        """测试:任务错误计数器增加"""
         monitor = TaskMonitor()
 
         # 创建错误计数器应该可以增加
@@ -103,7 +103,7 @@ class TestTaskMonitor:
             assert counter is not None
 
     def test_active_tasks_gauge(self):
-        """测试：活跃任务仪表"""
+        """测试:活跃任务仪表"""
         monitor = TaskMonitor()
 
         # 创建仪表应该可以设置
@@ -117,22 +117,22 @@ class TestTaskMonitorMethods:
     """任务监控器方法测试"""
 
     def test_init_db_type(self):
-        """测试：初始化数据库类型"""
+        """测试:初始化数据库类型"""
         monitor = TaskMonitor()
         monitor._init_db_type()
-        # 由于没有实际的数据库连接，db_type应该保持None
+        # 由于没有实际的数据库连接,db_type应该保持None
         assert monitor._db_type is None
 
     def test_init_query_builder(self):
-        """测试：初始化查询构建器"""
+        """测试:初始化查询构建器"""
         monitor = TaskMonitor()
         monitor._init_query_builder()
-        # 由于没有数据库类型，query_builder应该保持None
+        # 由于没有数据库类型,query_builder应该保持None
         assert monitor._query_builder is None
 
     @patch("src.tasks.monitoring.datetime")
     def test_record_task_start(self, mock_datetime):
-        """测试：记录任务开始"""
+        """测试:记录任务开始"""
         mock_now = datetime(2023, 1, 1, 12, 0, 0)
         mock_datetime.now.return_value = mock_now
 
@@ -145,7 +145,7 @@ class TestTaskMonitorMethods:
 
     @patch("src.tasks.monitoring.datetime")
     def test_record_task_complete(self, mock_datetime):
-        """测试：记录任务完成"""
+        """测试:记录任务完成"""
         mock_now = datetime(2023, 1, 1, 12, 0, 0)
         mock_datetime.now.return_value = mock_now
 
@@ -157,7 +157,7 @@ class TestTaskMonitorMethods:
             # 应该不抛出异常
 
     def test_get_metrics_summary(self):
-        """测试：获取指标摘要"""
+        """测试:获取指标摘要"""
         monitor = TaskMonitor()
 
         # 如果有get_metrics_summary方法
@@ -171,7 +171,7 @@ class TestTaskMonitorIntegration:
     """任务监控器集成测试"""
 
     def test_multiple_task_monitors(self):
-        """测试：多个任务监控器"""
+        """测试:多个任务监控器"""
         registry1 = CollectorRegistry()
         registry2 = CollectorRegistry()
 
@@ -184,7 +184,7 @@ class TestTaskMonitorIntegration:
         assert monitor2.registry is registry2
 
     def test_monitor_with_different_db_types(self):
-        """测试：不同数据库类型的监控器"""
+        """测试:不同数据库类型的监控器"""
         db_types = ["postgresql", "mysql", "sqlite"]
 
         for db_type in db_types:
@@ -193,7 +193,7 @@ class TestTaskMonitorIntegration:
             assert monitor._db_type == db_type
 
     def test_monitor_error_handling(self):
-        """测试：监控器错误处理"""
+        """测试:监控器错误处理"""
         monitor = TaskMonitor()
 
         # 应该能够处理各种错误而不崩溃
@@ -218,14 +218,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not MONITORING_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if MONITORING_AVAILABLE:
 from src.tasks.monitoring import TaskMonitor, logger
 
@@ -234,14 +234,14 @@ from src.tasks.monitoring import TaskMonitor, logger
 
 
 def test_module_logger():
-    """测试：模块日志记录器"""
+    """测试:模块日志记录器"""
     if MONITORING_AVAILABLE:
         assert logger is not None
         assert "monitoring" in logger.name
 
 
 def test_class_exported():
-    """测试：类被导出"""
+    """测试:类被导出"""
     if MONITORING_AVAILABLE:
         import src.tasks.monitoring as monitoring_module
 
@@ -249,7 +249,7 @@ def test_class_exported():
 
 
 def test_prometheus_integration():
-    """测试：Prometheus集成"""
+    """测试:Prometheus集成"""
     if MONITORING_AVAILABLE:
         # 应该能够导入prometheus_client相关类
         from prometheus_client import CollectorRegistry
@@ -265,7 +265,7 @@ class TestTaskMonitorEdgeCases:
     """任务监控器边界情况测试"""
 
     def test_empty_task_name(self):
-        """测试：空任务名称"""
+        """测试:空任务名称"""
         monitor = TaskMonitor()
 
         # 应该能处理空任务名称
@@ -277,7 +277,7 @@ class TestTaskMonitorEdgeCases:
                 pass
 
     def test_none_task_name(self):
-        """测试：None任务名称"""
+        """测试:None任务名称"""
         monitor = TaskMonitor()
 
         # 应该能处理None任务名称
@@ -289,7 +289,7 @@ class TestTaskMonitorEdgeCases:
                 pass
 
     def test_very_long_task_name(self):
-        """测试：非常长的任务名称"""
+        """测试:非常长的任务名称"""
         monitor = TaskMonitor()
         long_name = "x" * 1000
 
@@ -302,7 +302,7 @@ class TestTaskMonitorEdgeCases:
                 pass
 
     def test_special_characters_in_task_name(self):
-        """测试：任务名称中的特殊字符"""
+        """测试:任务名称中的特殊字符"""
         monitor = TaskMonitor()
         special_names = [
             "task-with-dashes",

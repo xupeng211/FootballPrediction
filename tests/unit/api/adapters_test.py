@@ -32,7 +32,7 @@ class TestApiAdaptersBoost:
             pytest.skip("模块导入失败")
 
         # TODO: 实现所有函数的测试
-        # 目标：覆盖所有可调用的函数
+        # 目标:覆盖所有可调用的函数
         functions_covered = []
         assert len(functions_covered) >= 0  # 待实现
 
@@ -42,7 +42,7 @@ class TestApiAdaptersBoost:
             pytest.skip("模块导入失败")
 
         # TODO: 实现所有类的测试
-        # 目标：覆盖所有类的方法
+        # 目标:覆盖所有类的方法
         classes_covered = []
         assert len(classes_covered) >= 0  # 待实现
 
@@ -52,7 +52,7 @@ class TestApiAdaptersBoost:
             pytest.skip("模块导入失败")
 
         # TODO: 实现所有分支的测试
-        # 目标：覆盖所有if/else分支
+        # 目标:覆盖所有if/else分支
         branches_covered = []
         assert len(branches_covered) >= 0  # 待实现
 
@@ -62,7 +62,7 @@ class TestApiAdaptersBoost:
             pytest.skip("模块导入失败")
 
         # TODO: 实现异常处理的测试
-        # 目标：覆盖所有异常处理分支
+        # 目标:覆盖所有异常处理分支
         exceptions_tested = []
         assert len(exceptions_tested) >= 0  # 待实现
 
@@ -72,6 +72,6 @@ class TestApiAdaptersBoost:
             pytest.skip("模块导入失败")
 
         # TODO: 实现边界条件的测试
-        # 目标：覆盖所有边界条件
+        # 目标:覆盖所有边界条件
         edge_cases_tested = []
         assert len(edge_cases_tested) >= 0  # 待实现

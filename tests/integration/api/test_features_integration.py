@@ -2,7 +2,7 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-# 模拟 FeaturesService，因为实际类不存在
+# 模拟 FeaturesService,因为实际类不存在
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,7 +16,7 @@ class FeaturesService:
 
 """
 API集成测试 - Features模块集成测试
-测试Features API与数据库、缓存等服务的集成
+测试Features API与数据库,缓存等服务的集成
 """
 
 

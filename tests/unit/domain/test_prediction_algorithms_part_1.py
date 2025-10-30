@@ -118,7 +118,7 @@ class TestPredictionAlgorithmsComprehensive:
     def test_basic_prediction_algorithm_success(
         self, basic_prediction_algorithm, sample_features
     ) -> None:
-        """✅ 成功用例：基础预测算法正常工作"""
+        """✅ 成功用例:基础预测算法正常工作"""
         # Mock预测结果
         expected_probabilities = {"home_win": 0.45, "draw": 0.30, "away_win": 0.25}
 
@@ -141,7 +141,7 @@ class TestPredictionAlgorithmsComprehensive:
     def test_basic_prediction_algorithm_confidence_calculation(
         self, basic_prediction_algorithm
     ) -> None:
-        """✅ 成功用例：置信度计算"""
+        """✅ 成功用例:置信度计算"""
         probabilities = {"home_win": 0.55, "draw": 0.25, "away_win": 0.20}
         expected_confidence = 0.75  # 模拟计算结果
 
@@ -155,7 +155,7 @@ class TestPredictionAlgorithmsComprehensive:
     def test_basic_prediction_algorithm_feature_validation(
         self, basic_prediction_algorithm, sample_features
     ) -> None:
-        """✅ 成功用例：特征验证"""
+        """✅ 成功用例:特征验证"""
         basic_prediction_algorithm.validate_features.return_value = True
 
         result = basic_prediction_algorithm.validate_features(sample_features)

@@ -9,7 +9,7 @@ from unittest.mock import Mock, AsyncMock, patch
 import asyncio
 from decimal import Decimal
 
-# 模拟导入，实际使用时替换为真实导入
+# 模拟导入,实际使用时替换为真实导入
 try:
     from ...domain.services.scoring_service import *
 except ImportError:
@@ -158,7 +158,7 @@ class TestScoring_ServiceBusinessLogic:
                 result = calculate_prediction_points(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -216,7 +216,7 @@ class TestScoring_ServiceBusinessLogic:
                 result = calculate_leaderboard_position(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 
@@ -274,7 +274,7 @@ class TestScoring_ServiceBusinessLogic:
                 result = calculate_rank_percentile(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 

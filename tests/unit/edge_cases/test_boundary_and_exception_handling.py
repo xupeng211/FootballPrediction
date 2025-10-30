@@ -1,6 +1,6 @@
 """
 边界条件和异常处理全面测试
-Phase E: 优化提升阶段 - 专注于边界条件、异常处理、错误恢复
+Phase E: 优化提升阶段 - 专注于边界条件、异常处理,错误恢复
 确保系统在各种异常情况下的稳定性和正确性
 """
 
@@ -45,7 +45,7 @@ class TestBoundaryConditions:
         ]
 
         for value, expected_behavior, description in boundary_tests:
-            # 测试函数：计算预测置信度
+            # 测试函数:计算预测置信度
             def calculate_confidence(score):
                 try:
                     if not isinstance(score, (int, float)):
@@ -66,7 +66,7 @@ class TestBoundaryConditions:
             elif expected_behavior == "invalid":
                 assert result is None, f"Expected invalid result for {description}: {value}"
             elif expected_behavior in ["edge", "invalid_or_edge"]:
-                # 边界值可能有效也可能无效，取决于具体业务逻辑
+                # 边界值可能有效也可能无效,取决于具体业务逻辑
                 assert result is None or (0 <= result <= 1)
 
     def test_string_boundary_conditions(self):
@@ -87,7 +87,7 @@ class TestBoundaryConditions:
         ]
 
         for text, test_type, description in string_tests:
-            # 测试函数：验证团队名称
+            # 测试函数:验证团队名称
             def validate_team_name(name):
                 try:
                     if not isinstance(name, str):
@@ -287,7 +287,7 @@ class TestExceptionHandling:
         try:
             asyncio.run(test_network_errors())
         except Exception as e:
-            # 网络测试可能因为环境问题失败，这是正常的
+            # 网络测试可能因为环境问题失败,这是正常的
             logger.debug(f"Network test failed (expected): {e}")
 
     def test_database_operation_exceptions(self):
@@ -440,7 +440,7 @@ class TestExceptionHandling:
                     return self.value
 
             def increment_unsafe(self):
-                # 不安全的操作，可能导致竞态条件
+                # 不安全的操作,可能导致竞态条件
                 old_value = self.value
                 time.sleep(0.001)
                 self.value = old_value + 1
@@ -495,7 +495,7 @@ class TestExceptionHandling:
 
         # 不安全操作可能导致重复的结果
         assert len(unsafe_results) == 10
-        # 注意：由于竞态条件，unsafe_counter.value可能小于10
+        # 注意:由于竞态条件,unsafe_counter.value可能小于10
 
 
 @pytest.mark.unit
@@ -513,7 +513,7 @@ class TestErrorRecovery:
             async def fetch_data(self, endpoint):
                 self.attempt_count += 1
 
-                # 模拟前几次失败，最后成功
+                # 模拟前几次失败,最后成功
                 if self.attempt_count < self.max_retries:
                     if self.attempt_count == 1:
                         raise ConnectionError("Network timeout")
@@ -553,7 +553,7 @@ class TestErrorRecovery:
             import aiohttp
             asyncio.run(test_retry_logic())
         except ImportError:
-            # aiohttp不可用，跳过此测试
+            # aiohttp不可用,跳过此测试
             pass
 
     def test_cache_error_recovery(self):
@@ -581,7 +581,7 @@ class TestErrorRecovery:
                 try:
                     return self.get(key)
                 except ConnectionError:
-                    # 缓存失败，使用fallback函数
+                    # 缓存失败,使用fallback函数
                     try:
                         value = fallback_func()
                         # 尝试写入缓存
@@ -661,7 +661,7 @@ class TestErrorRecovery:
                 return db.commit()
 
             except Exception as e:
-                # 事务失败，尝试回滚
+                # 事务失败,尝试回滚
                 try:
                     rollback_result = db.rollback()
                     return {"error": str(e), "recovered": True, "rollback": rollback_result}
@@ -877,7 +877,7 @@ class TestDataCorruptionHandling:
         precision_tests = [
             (3.14159265359, float, 3.14159265359),
             (3.99999999999, int, 3),  # 不会丢失精度
-            (3.5, int, None),  # 会丢失精度，返回None
+            (3.5, int, None),  # 会丢失精度,返回None
             ("3.14", float, 3.14),
             ("invalid", float, None),
             (float('inf'), float, None),  # 无穷大返回None
@@ -943,7 +943,7 @@ def test_boundary_condition_coverage():
         try:
             # 尝试实例化测试类并运行一个简单测试
             if hasattr(test_func, '__name__') and 'test_' in test_func.__name__:
-                # 这是一个测试函数，不需要额外操作
+                # 这是一个测试函数,不需要额外操作
                 pass
         except Exception as e:
             pytest.fail(f"Boundary test function {test_func} failed: {e}")

@@ -3,13 +3,13 @@
 第三方服务集成测试 - Phase F核心组件
 External Services Integration Tests - Phase F Core Component
 
-这是Phase F: 企业级集成阶段的第三方服务测试文件，涵盖：
+这是Phase F: 企业级集成阶段的第三方服务测试文件，涵盖:
 - API客户端弹性测试
 - 网络故障处理测试
 - 服务降级和容错测试
 - 外部数据源集成测试
 
-基于Issue #149的成功经验，使用已验证的Fallback测试策略。
+基于Issue #149的成功经验,使用已验证的Fallback测试策略。
 """
 
 import pytest
@@ -128,7 +128,7 @@ class TestExternalServicesComprehensive:
                 self.retry_attempts = config["retry_attempts"]
 
             def get(self, endpoint: str, params: Dict = None) -> Dict[str, Any]:
-                """模拟GET请求，包含重试逻辑"""
+                """模拟GET请求,包含重试逻辑"""
                 for attempt in range(self.retry_attempts):
                     try:
                         # 模拟网络延迟和偶尔失败
@@ -198,7 +198,7 @@ class TestExternalServicesComprehensive:
                 self.failure_rate = 0.3  # 30%的失败率
 
             def simulate_request(self, endpoint: str) -> Dict[str, Any]:
-                """模拟请求，可能失败"""
+                """模拟请求,可能失败"""
                 import random
                 if random.random() < self.failure_rate:
                     # 随机选择一种故障类型
@@ -245,7 +245,7 @@ class TestExternalServicesComprehensive:
                 self.fallback_service_available = True
 
             def get_data(self, data_type: str) -> Dict[str, Any]:
-                """获取数据，包含降级策略"""
+                """获取数据,包含降级策略"""
                 try:
                     # 1. 尝试主服务
                     if self.primary_service_available:
@@ -323,19 +323,19 @@ class TestExternalServicesComprehensive:
         assert result["source"] == "primary"
         assert len(result["data"]) == 2
 
-        # 2. 主服务不可用，使用缓存
+        # 2. 主服务不可用,使用缓存
         degradation_manager.set_service_availability(False, True, True)
         result = degradation_manager.get_data("teams")
         assert result["source"] == "cache"
         assert len(result["data"]) == 2
 
-        # 3. 主服务和缓存不可用，使用备用服务
+        # 3. 主服务和缓存不可用,使用备用服务
         degradation_manager.set_service_availability(False, False, True)
         result = degradation_manager.get_data("teams")
         assert result["source"] == "fallback"
         assert len(result["data"]) == 1
 
-        # 4. 所有服务不可用，使用默认数据
+        # 4. 所有服务不可用,使用默认数据
         degradation_manager.set_service_availability(False, False, False)
         result = degradation_manager.get_data("teams")
         assert result["source"] == "default"
@@ -350,7 +350,7 @@ class TestExternalServicesComprehensive:
                 self.request_times = []
 
             def make_request(self, endpoint: str) -> Dict[str, Any]:
-                """发起请求，处理速率限制"""
+                """发起请求,处理速率限制"""
                 current_time = time.time()
 
                 # 清理1分钟前的请求记录
@@ -491,7 +491,7 @@ class TestExternalServicesComprehensive:
             assert result["status"] == "success"
             assert circuit_breaker.state == "CLOSED"  # 成功后应该重置
         except Exception:
-            # 如果还是失败，断路器应该重新打开
+            # 如果还是失败,断路器应该重新打开
             assert circuit_breaker.state == "OPEN"
 
     @pytest.mark.asyncio
@@ -726,7 +726,7 @@ class TestExternalServicesPerformance:
         avg_response_time = sum(response_times) / len(response_times)
         assert avg_response_time < 200, f"平均响应时间过长: {avg_response_time:.2f}ms"
 
-        # 并发效率：总时间应该显著小于串行执行时间
+        # 并发效率:总时间应该显著小于串行执行时间
         total_time = test_result["total_time"]
         expected_serial_time = sum(response_times)
         efficiency = expected_serial_time / total_time if total_time > 0 else 0
@@ -755,7 +755,7 @@ class TestExternalServicesPerformance:
                             "response_time": 0.001  # 缓存命中时间极短
                         }
 
-                # 2. 尝试请求，包含重试逻辑
+                # 2. 尝试请求,包含重试逻辑
                 for attempt, delay in enumerate(self.retry_delays):
                     try:
                         # 模拟网络请求
@@ -902,6 +902,6 @@ class PhaseFExternalServicesTestReporter:
 # 测试执行入口
 if __name__ == "__main__":
     print("🚀 Phase F: 第三方服务集成测试开始执行...")
-    print("📋 测试范围: API弹性、网络故障、服务降级、性能优化")
+    print("📋 测试范围: API弹性、网络故障、服务降级,性能优化")
     print("🎯 目标: 80%+ 第三方服务集成测试覆盖率")
     print("🔧 基于Issue #149的成功经验进行测试开发")

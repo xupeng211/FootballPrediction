@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 通用模型测试
 测试 src.models.common_models 模块的功能
-"""""""
+""""""""
 
 
 import pytest
@@ -72,7 +72,7 @@ class TestAPIResponse:
 
     def test_api_response_long_message(self):
         """测试长消息的API响应"""
-        long_message = "这是一个很长的消息，包含很多文字内容，用于测试API响应是否能正确处理长文本消息的情况，确保系统稳定性。"
+        long_message = "这是一个很长的消息，包含很多文字内容，用于测试API响应是否能正确处理长文本消息的情况,确保系统稳定性。"
         response = APIResponse(success=True, message=long_message)
 
         assert response.message == long_message
@@ -80,7 +80,7 @@ class TestAPIResponse:
 
     def test_api_response_special_characters(self):
         """测试特殊字符的API响应"""
-        special_message = "测试特殊字符：@#$%^&*()_+-=[]{}|\\;':\",./<>?"
+        special_message = "测试特殊字符:@#$%^&*()_+-=[]{}|\\;':\",./<>?"
         response = APIResponse(success=True, message=special_message)
 
         assert response.message == special_message
@@ -182,7 +182,7 @@ class TestErrorResponse:
     def test_error_response_long_messages(self):
         """测试长消息的错误响应"""
         long_error_message =
-    "这是一个非常长的错误消息，详细描述了系统中发生的错误情况，包括错误的原因、影响范围以及可能的解决方案。这个消息可能会被记录到日志中，用于后续的错误分析和系统改进工作。"
+    "这是一个非常长的错误消息，详细描述了系统中发生的错误情况，包括错误的原因,影响范围以及可能的解决方案。这个消息可能会被记录到日志中,用于后续的错误分析和系统改进工作。"
 
         error = ErrorResponse(
             error_code="DETAILED_ERROR", error_message=long_error_message

@@ -7,8 +7,8 @@
 策略预测服务测试（真实实现）
 Tests for Strategy Prediction Service (Real Implementation)
 
-这个测试文件专注于测试服务的核心逻辑，减少不必要的Mock使用，
-只在需要模拟外部依赖（如数据库、网络）时使用Mock。
+这个测试文件专注于测试服务的核心逻辑，减少不必要的Mock使用,
+只在需要模拟外部依赖（如数据库,网络）时使用Mock。
 """
 
 from datetime import datetime, timedelta
@@ -172,7 +172,7 @@ class TestStrategyPredictionServiceReal:
         match_repository,
         prediction_repository,
     ):
-        """测试：使用真实依赖初始化服务"""
+        """测试:使用真实依赖初始化服务"""
         # When
         service = StrategyPredictionService(
             strategy_factory=strategy_factory,
@@ -191,7 +191,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_initialize_service_success(self, service, strategy_factory):
-        """测试：成功初始化服务"""
+        """测试:成功初始化服务"""
         # When
         await service.initialize()
 
@@ -202,7 +202,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_predict_match_success(self, service):
-        """测试：成功预测比赛"""
+        """测试:成功预测比赛"""
         # Given
         await service.initialize()
 
@@ -224,7 +224,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_predict_match_with_default_strategy(self, service):
-        """测试：使用默认策略预测"""
+        """测试:使用默认策略预测"""
         # Given
         await service.initialize()
 
@@ -238,7 +238,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_predict_match_match_not_found(self, service):
-        """测试：比赛不存在"""
+        """测试:比赛不存在"""
         # Given
         await service.initialize()
 
@@ -248,7 +248,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_batch_predict_multiple_matches(self, service):
-        """测试：批量预测多个比赛"""
+        """测试:批量预测多个比赛"""
         # Given
         await service.initialize()
         # 添加更多测试比赛
@@ -270,7 +270,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_batch_predict_empty_list(self, service):
-        """测试：批量预测空列表"""
+        """测试:批量预测空列表"""
         # Given
         await service.initialize()
 
@@ -283,7 +283,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_get_or_create_strategy_existing(self, service):
-        """测试：获取已存在的策略"""
+        """测试:获取已存在的策略"""
         # Given
         await service.initialize()
         strategy = service._current_strategies["mock_strategy"]
@@ -298,7 +298,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_get_or_create_strategy_new(self, service):
-        """测试：获取新策略"""
+        """测试:获取新策略"""
         # Given
         await service.initialize()
         new_strategy = MockStrategy("new_test_strategy")
@@ -314,7 +314,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_prepare_prediction_input(self, service):
-        """测试：准备预测输入"""
+        """测试:准备预测输入"""
         # Given
         await service.initialize()
         match = await service._match_repository.get_by_id(123)
@@ -329,7 +329,7 @@ class TestStrategyPredictionServiceReal:
         assert _result.user_id is not None  # 应该在上下文中设置
 
     def test_service_attributes(self, service):
-        """测试：服务属性"""
+        """测试:服务属性"""
         # Then
         assert hasattr(service, "_strategy_factory")
         assert hasattr(service, "_prediction_domain_service")
@@ -339,7 +339,7 @@ class TestStrategyPredictionServiceReal:
         assert hasattr(service, "_default_strategy")
 
     def test_default_strategy_value(self):
-        """测试：默认策略值"""
+        """测试:默认策略值"""
         # When
         service = StrategyPredictionService(
             strategy_factory=Mock(),
@@ -354,7 +354,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_service_lifecycle(self, service, strategy_factory):
-        """测试：服务生命周期"""
+        """测试:服务生命周期"""
         # Given
         assert not service._initialized
         assert not strategy_factory.create_default_strategies_called
@@ -374,7 +374,7 @@ class TestStrategyPredictionServiceReal:
 
     @pytest.mark.asyncio
     async def test_concurrent_predictions(self, service):
-        """测试：并发预测"""
+        """测试:并发预测"""
         # Given
         await service.initialize()
 

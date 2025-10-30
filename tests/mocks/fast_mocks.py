@@ -1,6 +1,6 @@
 """
 高性能 Mock 对象
-提供预配置的高性能 Mock 对象，用于测试环境
+提供预配置的高性能 Mock 对象,用于测试环境
 """
 
 from typing import Any, Dict, List, Optional

@@ -1,6 +1,6 @@
 """
 Helper函数补充测试
-补充 src.utils.helpers 模块的测试覆盖，目标达到100%覆盖率
+补充 src.utils.helpers 模块的测试覆盖,目标达到100%覆盖率
 """
 
 import pytest
@@ -13,7 +13,7 @@ class TestHelpersEnhanced:
     """Helper函数增强测试"""
 
     def test_generate_hash_md5(self) -> None:
-        """✅ 成功用例：MD5哈希生成（覆盖第19行）"""
+        """✅ 成功用例:MD5哈希生成（覆盖第19行）"""
         data = "test_data"
         result = generate_hash(data, "md5")
 
@@ -27,7 +27,7 @@ class TestHelpersEnhanced:
         assert result == result2
 
     def test_generate_hash_sha1(self) -> None:
-        """✅ 成功用例：SHA1哈希生成（覆盖第21行）"""
+        """✅ 成功用例:SHA1哈希生成（覆盖第21行）"""
         data = "test_data"
         result = generate_hash(data, "sha1")
 
@@ -41,7 +41,7 @@ class TestHelpersEnhanced:
         assert result == result2
 
     def test_safe_get_list_index_valid(self) -> None:
-        """✅ 成功用例：列表索引处理 - 有效索引（覆盖第40-42行）"""
+        """✅ 成功用例:列表索引处理 - 有效索引（覆盖第40-42行）"""
         data = {"items": ["first", "second", "third"]}
 
         # 测试有效索引
@@ -57,7 +57,7 @@ class TestHelpersEnhanced:
         assert result == 20
 
     def test_safe_get_list_index_invalid(self) -> None:
-        """✅ 成功用例：列表索引处理 - 无效索引（覆盖第43-44行）"""
+        """✅ 成功用例:列表索引处理 - 无效索引（覆盖第43-44行）"""
         data = {"items": ["first", "second", "third"]}
 
         # 测试超出范围的索引
@@ -77,7 +77,7 @@ class TestHelpersEnhanced:
         assert result == "default"
 
     def test_safe_get_exception_handling(self) -> None:
-        """✅ 成功用例：异常处理（覆盖第48-49行）"""
+        """✅ 成功用例:异常处理（覆盖第48-49行）"""
         # 测试各种可能导致异常的情况
 
         # 测试KeyError
@@ -99,11 +99,11 @@ class TestHelpersEnhanced:
         assert result == "fallback"
 
     def test_safe_get_direct_exception_trigger(self) -> None:
-        """✅ 成功用例：直接触发异常处理（覆盖第48-49行）"""
+        """✅ 成功用例:直接触发异常处理（覆盖第48-49行）"""
         # 创建一个会导致KeyError的具体场景
         data = {"valid": {"key": "value"}}
 
-        # 尝试访问不存在的嵌套键，这应该触发try-except的except块
+        # 尝试访问不存在的嵌套键,这应该触发try-except的except块
         result = safe_get(data, "valid.nonexistent_key")
         assert result is None  # 应该返回默认值
 
@@ -118,7 +118,7 @@ class TestHelpersEnhanced:
         assert result is None  # 应该返回默认值
 
     def test_safe_get_edge_cases_comprehensive(self) -> None:
-        """✅ 边界用例：safe_get综合边界测试"""
+        """✅ 边界用例:safe_get综合边界测试"""
         # 空字典
         result = safe_get({}, "any.key", "default")
         assert result == "default"
@@ -140,7 +140,7 @@ class TestHelpersEnhanced:
         assert result == "default"
 
     def test_safe_get_mixed_data_structures(self) -> None:
-        """✅ 成功用例：混合数据结构处理"""
+        """✅ 成功用例:混合数据结构处理"""
         data = {
             "users": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}],
             "metadata": {"count": 2, "tags": ["admin", "user"]},
@@ -163,7 +163,7 @@ class TestHelpersEnhanced:
         assert result == "found"
 
     def test_generate_hash_edge_cases(self) -> None:
-        """✅ 边界用例：哈希生成边界情况"""
+        """✅ 边界用例:哈希生成边界情况"""
         # 空字符串
         result = generate_hash("", "md5")
         assert len(result) == 32
@@ -184,7 +184,7 @@ class TestHelpersEnhanced:
         assert len(result) == 40
 
     def test_generate_hash_unsupported_algorithm(self) -> None:
-        """✅ 成功用例：不支持的哈希算法（默认使用sha256）"""
+        """✅ 成功用例:不支持的哈希算法（默认使用sha256）"""
         data = "test_data"
         result = generate_hash(data, "unsupported_algo")
 
@@ -194,7 +194,7 @@ class TestHelpersEnhanced:
         assert len(result) == 64
 
     def test_integration_comprehensive(self) -> None:
-        """✅ 集成用例：综合功能集成测试"""
+        """✅ 集成用例:综合功能集成测试"""
         # 生成唯一ID和哈希的组合使用
         unique_id = generate_uuid()
         hash_result = generate_hash(unique_id, "md5")
@@ -223,7 +223,7 @@ class TestHelpersEnhanced:
         assert retrieved_hash == hash_result
 
     def test_performance_considerations(self) -> None:
-        """✅ 性能用例：性能考虑"""
+        """✅ 性能用例:性能考虑"""
         import time
 
         # 测试safe_get性能
@@ -249,7 +249,7 @@ class TestHelpersEnhanced:
         assert end_time - start_time < 1.0
 
     def test_thread_safety_considerations(self) -> None:
-        """✅ 并发用例：线程安全考虑"""
+        """✅ 并发用例:线程安全考虑"""
         import threading
 
         results = []

@@ -23,7 +23,7 @@ class TestPredictionsAPI:
     """预测API测试"""
 
     def test_import_router(self):
-        """测试：导入路由器"""
+        """测试:导入路由器"""
         if PREDICTIONS_AVAILABLE:
             assert router is not None
             assert hasattr(router, "routes")
@@ -31,16 +31,16 @@ class TestPredictionsAPI:
             pytest.skip("Predictions module not available")
 
     def test_router_structure(self):
-        """测试：路由器结构"""
+        """测试:路由器结构"""
         if not PREDICTIONS_AVAILABLE:
             pytest.skip("Predictions module not available")
 
         routes = list(router.routes)
-        # 路由器可能没有路由，这是正常的
+        # 路由器可能没有路由,这是正常的
         assert isinstance(routes, list)
 
     def test_module_type(self):
-        """测试：模块类型"""
+        """测试:模块类型"""
         if not PREDICTIONS_AVAILABLE:
             pytest.skip("Predictions module not available")
 

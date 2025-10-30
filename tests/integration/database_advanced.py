@@ -3,13 +3,13 @@
 数据库集成测试 - Phase F核心组件
 Database Integration Tests - Phase F Core Component
 
-这是Phase F: 企业级集成阶段的数据库测试文件，涵盖：
+这是Phase F: 企业级集成阶段的数据库测试文件，涵盖:
 - 复杂查询性能测试
 - 事务管理和并发测试
 - 数据迁移和备份测试
 - 数据一致性验证
 
-基于Issue #149的成功经验，使用已验证的Fallback测试策略。
+基于Issue #149的成功经验,使用已验证的Fallback测试策略。
 """
 
 import pytest
@@ -215,7 +215,7 @@ class TestDatabaseAdvanced:
                     })
                 connection.commit()
 
-            # 性能测试：复杂查询
+            # 性能测试:复杂查询
             complex_queries = [
                 # 1. 多表连接查询
                 "SELECT m.*, t1.name as home_team_name, t2.name as away_team_name FROM matches m JOIN teams t1 ON m.home_team_id = t1.id JOIN teams t2 ON m.away_team_id = t2.id WHERE m.league = 'League 0'",
@@ -246,7 +246,7 @@ class TestDatabaseAdvanced:
                     query_time = (end_time - start_time) * 1000
                     query_times.append(query_time)
                 except Exception:
-                    # 如果查询失败，记录较长的查询时间
+                    # 如果查询失败,记录较长的查询时间
                     query_time = 1000  # 1秒作为超时
                     query_times.append(query_time)
 
@@ -380,7 +380,7 @@ class TestDatabaseAdvanced:
             with self.engine.connect() as connection:
                 result = connection.execute(text("SELECT COUNT(*) FROM rollback_test WHERE status = 'pending'"))
                 count = result.fetchone()[0]
-                assert count == 0, "事务回滚失败，仍有pending状态的数据"
+                assert count == 0, "事务回滚失败,仍有pending状态的数据"
 
         except Exception as e:
             pytest.skip(f"事务回滚测试失败: {e}")
@@ -558,7 +558,7 @@ class TestDatabaseAdvanced:
                     WHERE match_date > datetime('now', '+1 year')
                 """))
                 future_matches = result.fetchone()[0]
-                # 允许一些未来比赛，但不能太多
+                # 允许一些未来比赛,但不能太多
                 assert future_matches <= 10, f"过多远期比赛: {future_matches}"
 
         except Exception as e:
@@ -641,7 +641,7 @@ class TestDatabasePerformanceAdvanced:
             start_time = time.time()
 
             with self.engine.connect() as connection:
-                # 分批插入，每批1000条
+                # 分批插入,每批1000条
                 batch_size = 1000
                 for i in range(0, len(test_data), batch_size):
                     batch = test_data[i:i + batch_size]
@@ -822,6 +822,6 @@ class PhaseFDatabaseTestReporter:
 # 测试执行入口
 if __name__ == "__main__":
     print("🚀 Phase F: 数据库集成测试开始执行...")
-    print("📋 测试范围: CRUD操作、复杂查询、并发事务、性能测试")
+    print("📋 测试范围: CRUD操作、复杂查询、并发事务,性能测试")
     print("🎯 目标: 70%+ 数据库集成测试覆盖率")
     print("🔧 基于Issue #149的成功经验进行测试开发")

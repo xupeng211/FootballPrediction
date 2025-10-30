@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
 
-"""""""
+""""""""
 数据收集核心测试（语法修复版）
 Tests for Data Collection Core (Syntax Fixed Version)
 
 测试src.tasks.data_collection_core模块的数据收集功能
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -41,21 +41,21 @@ class TestDataCollectionTask:
     """数据收集任务测试"""
 
     def test_task_creation(self):
-        """测试：任务创建"""
+        """测试:任务创建"""
         task = DataCollectionTask()
         assert task is not None
         assert hasattr(task, "db_manager")
         assert hasattr(task, "orchestrator")
 
     def test_task_initialization(self):
-        """测试：任务初始化"""
+        """测试:任务初始化"""
         task = DataCollectionTask()
         assert task.db_manager is None
         assert task.orchestrator is not None
 
     @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_set_database_manager(self, mock_db_manager):
-        """测试：设置数据库管理器"""
+        """测试:设置数据库管理器"""
         mock_db_instance = Mock()
         mock_db_manager.return_value = mock_db_instance
 
@@ -66,7 +66,7 @@ class TestDataCollectionTask:
 
     @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_set_database_manager_propagates_to_collectors(self, mock_db_manager):
-        """测试：数据库管理器传播到收集器"""
+        """测试:数据库管理器传播到收集器"""
         mock_db_instance = Mock()
         mock_db_manager.return_value = mock_db_instance
 
@@ -82,7 +82,7 @@ class TestDataCollectionTask:
         mock_collector.set_database_manager.assert_called_once_with(mock_db_instance)
 
     def test_on_failure(self):
-        """测试：任务失败回调"""
+        """测试:任务失败回调"""
         task = DataCollectionTask()
 
         # 模拟失败参数
@@ -96,7 +96,7 @@ class TestDataCollectionTask:
         task.on_failure(exc, task_id, args, kwargs, einfo)
 
     def test_on_success(self):
-        """测试：任务成功回调"""
+        """测试:任务成功回调"""
         task = DataCollectionTask()
 
         # 模拟成功参数
@@ -117,17 +117,17 @@ class TestCeleryApp:
     """Celery应用测试"""
 
     def test_celery_app_exists(self):
-        """测试：Celery应用存在"""
+        """测试:Celery应用存在"""
         assert celery_app is not None
         assert hasattr(celery_app, "main")
         assert celery_app.main == "data_collection"
 
     def test_celery_app_name(self):
-        """测试：Celery应用名称"""
+        """测试:Celery应用名称"""
         assert celery_app.main == "data_collection"
 
     def test_celery_app_configuration(self):
-        """测试：Celery应用配置"""
+        """测试:Celery应用配置"""
         # 应该有conf属性
         assert hasattr(celery_app, "conf")
         assert celery_app.conf is not None
@@ -142,7 +142,7 @@ class TestDataCollectionTaskAdvanced:
 
     @patch("src.tasks.data_collection_core.DataCollectionOrchestrator")
     def test_orchestrator_initialization(self, mock_orchestrator):
-        """测试：编排器初始化"""
+        """测试:编排器初始化"""
         mock_orch_instance = Mock()
         mock_orchestrator.return_value = mock_orch_instance
 
@@ -154,13 +154,13 @@ class TestDataCollectionTaskAdvanced:
 
     @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_database_manager_none_initially(self, mock_db_manager):
-        """测试：初始时数据库管理器为None"""
+        """测试:初始时数据库管理器为None"""
         task = DataCollectionTask()
         assert task.db_manager is None
 
     @patch("src.tasks.data_collection_core.DatabaseManager")
     def test_multiple_set_database_manager_calls(self, mock_db_manager):
-        """测试：多次设置数据库管理器"""
+        """测试:多次设置数据库管理器"""
         mock_db_instance = Mock()
         mock_db_manager.return_value = mock_db_instance
 
@@ -172,25 +172,25 @@ class TestDataCollectionTaskAdvanced:
         assert task.db_manager is mock_db_instance
 
     def test_on_failure_with_none_exception(self):
-        """测试：失败回调处理None异常"""
+        """测试:失败回调处理None异常"""
         task = DataCollectionTask()
 
         # 尝试传入None
         try:
             task.on_failure(None, "task_id", [], {}, None)
         except (TypeError, AttributeError):
-            # 可能抛出异常，这是预期的
+            # 可能抛出异常,这是预期的
             pass
 
     def test_on_success_with_none_return(self):
-        """测试：成功回调处理None返回"""
+        """测试:成功回调处理None返回"""
         task = DataCollectionTask()
 
         # 应该能处理None返回值
         task.on_success(None, "task_id", [], {})
 
     def test_on_failure_logging(self):
-        """测试：失败回调日志记录"""
+        """测试:失败回调日志记录"""
         task = DataCollectionTask()
 
         with patch.object(task, "logger") as mock_logger:
@@ -204,7 +204,7 @@ class TestDataCollectionTaskAdvanced:
             assert mock_logger.error.called
 
     def test_on_success_logging(self):
-        """测试：成功回调日志记录"""
+        """测试:成功回调日志记录"""
         task = DataCollectionTask()
 
         with patch.object(task, "logger") as mock_logger:
@@ -217,7 +217,7 @@ class TestDataCollectionTaskAdvanced:
             assert mock_logger.info.called
 
     def test_on_failure_with_complex_exception(self):
-        """测试：复杂异常的失败回调"""
+        """测试:复杂异常的失败回调"""
         task = DataCollectionTask()
 
         # 创建异常链（不使用from语法以避免语法问题）
@@ -235,7 +235,7 @@ class TestDataCollectionTaskAdvanced:
         task.on_failure(exc, task_id, [], {}, einfo)
 
     def test_on_success_with_complex_return(self):
-        """测试：复杂返回值的成功回调"""
+        """测试:复杂返回值的成功回调"""
         task = DataCollectionTask()
 
         # 复杂的返回值
@@ -251,7 +251,7 @@ class TestDataCollectionTaskAdvanced:
         task.on_success(complex_retval, task_id, [], {})
 
     def test_concurrent_callback_calls(self):
-        """测试：并发回调调用"""
+        """测试:并发回调调用"""
         import threading
 
         task = DataCollectionTask()
@@ -280,7 +280,7 @@ class TestDataCollectionTaskAdvanced:
         for t in threads:
             t.join()
 
-        # 应该有20个结果（10个成功，10个失败）
+        # 应该有20个结果（10个成功,10个失败）
         assert len(results) == 20
 
 
@@ -289,14 +289,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DATA_COLLECTION_CORE_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if DATA_COLLECTION_CORE_AVAILABLE:
 from src.tasks.data_collection_core import (
             DataCollectionTask,
@@ -310,14 +310,14 @@ from src.tasks.data_collection_core import (
 
 
 def test_module_logger():
-    """测试：模块日志记录器"""
+    """测试:模块日志记录器"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         assert logger is not None
         assert "data_collection_core" in logger.name
 
 
 def test_class_exported():
-    """测试：类被导出"""
+    """测试:类被导出"""
     if DATA_COLLECTION_CORE_AVAILABLE:
         import src.tasks.data_collection_core as core_module
 
@@ -326,7 +326,7 @@ def test_class_exported():
 
 
 def test_celery_app_isolation():
-    """测试：Celery应用隔离"""
+    """测试:Celery应用隔离"""
     if DATA_COLLECTION_CORE_AVAILABLE:
 from src.tasks.data_collection_core import celery_app as app1
 from src.tasks.data_collection_core import celery_app as app2
@@ -343,7 +343,7 @@ class TestDataCollectionTaskEdgeCases:
     """数据收集任务边界情况测试"""
 
     def test_task_with_no_collectors(self):
-        """测试：没有收集器的任务"""
+        """测试:没有收集器的任务"""
         task = DataCollectionTask()
         task.orchestrator.collectors = {}
 
@@ -354,7 +354,7 @@ class TestDataCollectionTaskEdgeCases:
         assert task.db_manager is mock_db_manager
 
     def test_task_with_multiple_collectors(self):
-        """测试：有多个收集器的任务"""
+        """测试:有多个收集器的任务"""
         task = DataCollectionTask()
 
         # 创建多个模拟收集器
@@ -376,7 +376,7 @@ class TestDataCollectionTaskEdgeCases:
                 collector.set_database_manager.assert_called_with(mock_db_manager)
 
     def test_collector_without_set_database_manager(self):
-        """测试：没有set_database_manager方法的收集器"""
+        """测试:没有set_database_manager方法的收集器"""
         task = DataCollectionTask()
 
         # 创建没有set_database_manager方法的收集器

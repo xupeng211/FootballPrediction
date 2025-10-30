@@ -428,7 +428,7 @@ class TestMatchAnalysis:
 
         form = analyzer.get_team_form(team)
         assert len(form) == 3
-        # 注意：最新的比赛在前面
+        # 注意:最新的比赛在前面
         # 0-2 (负), 1-1 (平), 2-0 (胜)
 
     def test_head_to_head(self):

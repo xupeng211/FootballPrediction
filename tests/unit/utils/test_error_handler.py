@@ -5,7 +5,7 @@ import pytest
 try:
     from src.core.error_handler import ErrorHandler, handle_error, log_error
 except ImportError:
-    # 如果 error_handler 模块不存在，创建基本的实现
+    # 如果 error_handler 模块不存在,创建基本的实现
     def handle_error(exception):
         return {"error": str(exception)}
 

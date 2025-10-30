@@ -334,14 +334,14 @@ class TestConfigManager:
         # 测试无效键类型
         try:
             manager.set(123, "invalid_key_type")
-            # 可能成功或失败，都是可以接受的
+            # 可能成功或失败,都是可以接受的
         except Exception:
             pass
 
         # 测试None键
         try:
             manager.set(None, "none_key")
-            # 可能成功或失败，都是可以接受的
+            # 可能成功或失败,都是可以接受的
         except Exception:
             pass
 

@@ -1,6 +1,6 @@
 """
 Issue #83 阶段2: api.monitoring 综合测试
-优先级: HIGH - API监控模块，系统关键功能
+优先级: HIGH - API监控模块,系统关键功能
 """
 
 import pytest
@@ -111,7 +111,7 @@ class TestApiMonitoring:
             pytest.skip("模块导入失败")
 
         # TODO: 实现集成测试
-        # 模拟真实业务场景，测试组件协作
+        # 模拟真实业务场景,测试组件协作
         assert True  # 基础集成测试通过
 
     def test_error_handling(self):

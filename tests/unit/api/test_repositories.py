@@ -3,7 +3,7 @@ from datetime import datetime
 仓储模式API端点测试
 Tests for Repository Pattern API Endpoints
 
-测试仓储模式的所有API端点，包括：
+测试仓储模式的所有API端点,包括:
 - 预测仓储（读和写）
 - 用户仓储（读和写）
 - 比赛仓储（读和写）
@@ -73,7 +73,7 @@ class MockMatch:
 
 
 class MockRepository:
-    """模拟仓储 - 智能Mock兼容修复模式：完全独立，避免任何原始仓储调用"""
+    """模拟仓储 - 智能Mock兼容修复模式:完全独立,避免任何原始仓储调用"""
 
     def __init__(self):
         self._data = {}
@@ -84,7 +84,7 @@ class MockRepository:
         return self._data.get(str(id))
 
     async def find_many(self, query_spec):
-        """查询多个 - 完全独立的实现，避免session调用"""
+        """查询多个 - 完全独立的实现,避免session调用"""
         # 简化的查询实现
         filters = query_spec.filters or {}
         results = list(self._data.values())
@@ -164,7 +164,7 @@ class TestPredictionRepository:
     """预测仓储测试"""
 
     def test_get_predictions(self, client):
-        """测试：获取预测列表 - 智能Mock兼容修复模式API版最终成功版"""
+        """测试:获取预测列表 - 智能Mock兼容修复模式API版最终成功版"""
         # Given - 基于服务层100%验证成功经验的完整解决方案
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -196,7 +196,7 @@ class TestPredictionRepository:
             assert len(_data["predictions"]) == 3
 
     def test_get_predictions_with_filters(self, client):
-        """测试：带过滤器的预测列表 - 智能Mock兼容修复模式"""
+        """测试:带过滤器的预测列表 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -222,7 +222,7 @@ class TestPredictionRepository:
             assert _data["total"] == 2  # 只有user_id=1的预测
 
     def test_get_predictions_with_match_filter(self, client):
-        """测试：按比赛ID过滤预测 - 智能Mock兼容修复模式"""
+        """测试:按比赛ID过滤预测 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -249,7 +249,7 @@ class TestPredictionRepository:
             assert _data["predictions"][0]["match_id"] == 124
 
     def test_get_predictions_pagination(self, client):
-        """测试：预测列表分页 - 智能Mock兼容修复模式"""
+        """测试:预测列表分页 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -276,7 +276,7 @@ class TestPredictionRepository:
             assert len(_data["predictions"]) == 2
 
     def test_get_prediction_success(self, client):
-        """测试：成功获取单个预测 - 智能Mock兼容修复模式"""
+        """测试:成功获取单个预测 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -306,7 +306,7 @@ class TestPredictionRepository:
             assert "strategy_used" in _data
 
     def test_get_prediction_not_found(self, client):
-        """测试：获取不存在的预测 - 智能Mock兼容修复模式"""
+        """测试:获取不存在的预测 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -331,7 +331,7 @@ class TestPredictionRepository:
             assert "预测不存在" in response.json()["detail"]
 
     def test_get_user_prediction_statistics(self, client):
-        """测试：获取用户预测统计 - 智能Mock兼容修复模式"""
+        """测试:获取用户预测统计 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -359,7 +359,7 @@ class TestPredictionRepository:
             assert "average_confidence" in _data
 
     def test_get_user_prediction_statistics_with_period(self, client):
-        """测试：获取用户预测统计（指定时间范围） - 智能Mock兼容修复模式"""
+        """测试:获取用户预测统计（指定时间范围） - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -385,21 +385,21 @@ class TestPredictionRepository:
             assert _data["period_days"] == 7
 
     def test_get_predictions_invalid_limit(self, client):
-        """测试：无效的限制参数 - 智能Mock兼容修复模式"""
+        """测试:无效的限制参数 - 智能Mock兼容修复模式"""
         # When
         response = client.get("/repositories/predictions?limit=0")
         # Then - FastAPI会自动验证
         assert response.status_code == 422
 
     def test_get_predictions_invalid_offset(self, client):
-        """测试：无效的偏移量参数 - 智能Mock兼容修复模式"""
+        """测试:无效的偏移量参数 - 智能Mock兼容修复模式"""
         # When
         response = client.get("/repositories/predictions?offset=-1")
         # Then - FastAPI会自动验证
         assert response.status_code == 422
 
     def test_get_predictions_invalid_period_days(self, client):
-        """测试：无效的统计天数 - 智能Mock兼容修复模式"""
+        """测试:无效的统计天数 - 智能Mock兼容修复模式"""
         # When
         response = client.get("/repositories/predictions/user/1/statistics?days=0")
         # Then - FastAPI会自动验证
@@ -410,7 +410,7 @@ class TestRepositoryEdgeCases:
     """仓储边界条件测试 - 智能Mock兼容修复模式"""
 
     def test_empty_predictions_list(self, client):
-        """测试：空的预测列表 - 智能Mock兼容修复模式"""
+        """测试:空的预测列表 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -438,7 +438,7 @@ class TestRepositoryEdgeCases:
             assert _data["predictions"] == []
 
     def test_predictions_with_no_filters(self, client):
-        """测试：没有过滤器的预测列表 - 智能Mock兼容修复模式"""
+        """测试:没有过滤器的预测列表 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -465,7 +465,7 @@ class TestRepositoryEdgeCases:
             assert "predictions" in _data
 
     def test_predictions_beyond_limit(self, client):
-        """测试：超出数据量的查询 - 智能Mock兼容修复模式"""
+        """测试:超出数据量的查询 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -491,7 +491,7 @@ class TestRepositoryEdgeCases:
             assert _data["total"] == 3  # 返回Mock数据中的数量
 
     def test_predictions_offset_beyond_data(self, client):
-        """测试：偏移量超出数据范围 - 智能Mock兼容修复模式"""
+        """测试:偏移量超出数据范围 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -517,7 +517,7 @@ class TestRepositoryEdgeCases:
             assert _data["total"] == 0  # 空列表
 
     def test_repository_exception_handling(self, client):
-        """测试：仓储异常处理 - 智能Mock兼容修复模式"""
+        """测试:仓储异常处理 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
@@ -542,7 +542,7 @@ class TestRepositoryEdgeCases:
             assert response.status_code == 500
 
     def test_statistics_for_user_with_no_predictions(self, client):
-        """测试：没有预测的用户统计 - 智能Mock兼容修复模式"""
+        """测试:没有预测的用户统计 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
         with (
             patch("src.database.definitions.get_database_manager") as mock_get_db_manager,

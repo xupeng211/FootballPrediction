@@ -157,7 +157,7 @@ class LeagueStandings:
         remaining_matches = 38 - team.played
         max_possible_points = team.points + remaining_matches * 3
 
-        # 简单预测：假设所有球队都赢下剩余比赛
+        # 简单预测:假设所有球队都赢下剩余比赛
         predicted_teams = []
         for t in self.standings:
             if t.id == team_id:
@@ -319,7 +319,7 @@ class TestLeagueStandings:
 
         standings.update_standings()
 
-        # 验证排序：积分 > 净胜球 > 进球数
+        # 验证排序:积分 > 净胜球 > 进球数
         assert standings.standings[0].name == "Team A"  # 40分, +15
         assert standings.standings[1].name == "Team B"  # 40分, +10
         assert standings.standings[2].name == "Team C"  # 35分, +5
@@ -521,7 +521,7 @@ class TestLeagueStandings:
         league = League(1, "Premier League")
         standings = LeagueStandings(league)
 
-        # 创建20支球队，每队38场比赛
+        # 创建20支球队,每队38场比赛
         for i in range(20):
             team = Team(i + 1, f"Team {i + 1}")
             team.played = 38

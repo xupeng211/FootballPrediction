@@ -76,7 +76,7 @@ class TestPredictionCacheManager:
         manager = PredictionCacheManager()
         test_data = {"prediction": "loss", "confidence": 0.25}
 
-        # 当前实现忽略TTL参数，但应该接受它
+        # 当前实现忽略TTL参数,但应该接受它
         manager.set("test_key", test_data, ttl=3600)
 
         assert manager._cache["test_key"] == test_data

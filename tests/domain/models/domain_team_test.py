@@ -9,7 +9,7 @@ from unittest.mock import Mock, AsyncMock, patch
 import asyncio
 from decimal import Decimal
 
-# 模拟导入，实际使用时替换为真实导入
+# 模拟导入,实际使用时替换为真实导入
 try:
     from ...domain.models.team import *
 except ImportError:
@@ -320,7 +320,7 @@ class TestTeamBusinessLogic:
                 result = calculate_strength(modified_data)
                 assert result is not None
         except:
-            # 函数可能不存在，这是正常的
+            # 函数可能不存在,这是正常的
             pass
 
 

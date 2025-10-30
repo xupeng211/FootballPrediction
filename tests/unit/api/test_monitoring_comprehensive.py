@@ -359,13 +359,13 @@ class TestMonitoringAPI:
 
         for endpoint in endpoints:
             response = client.get(endpoint)
-            # 应该返回200或适当的错误码，而不是500
+            # 应该返回200或适当的错误码,而不是500
             assert response.status_code in [200, 404, 422]
 
     def test_monitoring_error_recovery(self):
         """测试监控错误恢复"""
         with patch("src.api.monitoring._get_system_metrics") as mock_system:
-            # 第一次失败，第二次成功
+            # 第一次失败,第二次成功
             mock_system.side_effect = [
                 Exception("Temporary error"),
                 {"cpu_percent": 25.0},
@@ -375,7 +375,7 @@ class TestMonitoringAPI:
 
         client = TestClient(router)
 
-        # 第一次请求可能失败，但应用不应该崩溃
+        # 第一次请求可能失败,但应用不应该崩溃
         response1 = client.get("/monitoring/metrics")
 
         # 第二次请求应该成功
@@ -405,7 +405,7 @@ class TestMonitoringAPI:
         assert response1.json() == response2.json()
 
         # 系统指标函数应该只被调用一次（由于缓存）
-        # 这取决于具体的实现，我们主要验证功能正常
+        # 这取决于具体的实现,我们主要验证功能正常
 
 
 @pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring modules not available")

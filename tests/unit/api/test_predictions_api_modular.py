@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock, patch
 
-"""""""
+""""""""
 测试预测API的模块化拆分
-"""""""
+""""""""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -42,7 +42,7 @@ class TestPredictionsAPI:
         # 测试请求
         response = self.client.get("/api/v1/predictions/1")
 
-        # 由于路由可能不存在，我们检查是否返回404
+        # 由于路由可能不存在,我们检查是否返回404
         assert response.status_code in [200, 404]
 
     def test_prediction_models_import(self):

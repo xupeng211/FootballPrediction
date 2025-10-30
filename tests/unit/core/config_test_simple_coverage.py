@@ -1,7 +1,7 @@
-"""""""
+""""""""
 简单覆盖率提升测试 - core.config模块
 目标: 从36.5%提升到60%+
-"""""""
+""""""""
 
 import os
 import sys
@@ -42,7 +42,7 @@ class TestCoreConfigCoverage:
         except ImportError:
             pytest.skip("配置模块不可用")
         except Exception:
-            # 如果初始化失败，至少验证类存在
+            # 如果初始化失败,至少验证类存在
             assert True  # 类存在是基本的
 
     def test_database_config_functionality(self):
@@ -102,7 +102,7 @@ class TestCoreConfigCoverage:
                     try:
                         config.load_from_file("test.yml")
 except Exception:
-                        pass  # 可能失败，但方法被调用了
+                        pass  # 可能失败,但方法被调用了
 
             if hasattr(config, "load_from_env"):
                 # Mock环境变量
@@ -110,7 +110,7 @@ except Exception:
                     try:
                         config.load_from_env()
 except Exception:
-                        pass  # 可能失败，但方法被调用了
+                        pass  # 可能失败,但方法被调用了
 
         except ImportError:
             pytest.skip("配置管理器不可用")

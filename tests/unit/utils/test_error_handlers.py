@@ -6,7 +6,7 @@ except Exception:
     pass
     from src.core.error_handler import ErrorHandler
 except ImportError:
-    # 如果导入失败，创建简单的mock类用于测试
+    # 如果导入失败,创建简单的mock类用于测试
     class ErrorHandler:
         def handle_error(self, error):
             pass

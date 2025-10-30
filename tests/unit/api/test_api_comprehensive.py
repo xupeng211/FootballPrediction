@@ -132,7 +132,7 @@ def create_mock_comprehensive_app():
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock应用
-print("智能Mock兼容修复模式：强制使用Mock综合API应用以避免导入失败问题")
+print("智能Mock兼容修复模式:强制使用Mock综合API应用以避免导入失败问题")
 
 # 创建Mock应用
 app = create_mock_comprehensive_app()
@@ -231,7 +231,7 @@ class TestAPIComprehensive:
 
         # 测试验证错误（如果有的话）
         response = client.get("/api/v1/health?invalid_param=test")
-        # 可能返回 200 或 422，取决于实现
+        # 可能返回 200 或 422,取决于实现
         assert response.status_code in [200, 422]
 
     def test_cors_headers(self, client):
@@ -287,7 +287,7 @@ class TestAPIComprehensive:
         response = client.get("/")
         assert response.status_code == 200
         # 检查常见的安全头（如果有的话）
-        # 注意：这些头可能没有，取决于配置
+        # 注意:这些头可能没有,取决于配置
         # assert "x-content-type-options" in headers
         # assert "x-frame-options" in headers
 

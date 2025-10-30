@@ -10,7 +10,7 @@ from src.database.models.team import Team
 
 """
 数据库模型测试
-测试Match、Team、Prediction等核心模型的功能
+测试Match、Team,Prediction等核心模型的功能
 """
 
 
@@ -40,7 +40,7 @@ class TestMatchModel:
         assert sample_match.season == "2023-24"
         assert sample_match.home_score == 2
         assert sample_match.away_score == 1
-        # match_status有默认值，但在实例化时可能没有设置
+        # match_status有默认值,但在实例化时可能没有设置
         # assert sample_match.match_status == MatchStatus.SCHEDULED
         assert sample_match.venue == "Old Trafford"
 

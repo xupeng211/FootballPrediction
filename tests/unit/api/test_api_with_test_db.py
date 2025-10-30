@@ -1,12 +1,12 @@
-"""""""
+""""""""
 测试 API 使用测试数据库
 Test API with test database
-"""""""
+""""""""
 
 import pytest
 from sqlalchemy.orm import Session
 
-# 不使用 TestClient，直接测试路由函数
+# 不使用 TestClient,直接测试路由函数
 from src.database.dependencies import get_db
 
 
@@ -40,7 +40,7 @@ from src.main import app
         app.dependency_overrides[get_db] = override_get_db
 
         try:
-            # 直接调用路由函数，而不是通过 HTTP
+            # 直接调用路由函数,而不是通过 HTTP
             # 这避免了 TestClient 的启动问题
             import asyncio
 
@@ -92,7 +92,7 @@ from src.database.dependencies import get_async_db
             db_gen = get_async_db()
             await anext(db_gen)
             # 验证返回的是 AsyncSession 或 None
-            assert True  # 如果没有错误，说明生成器工作正常
+            assert True  # 如果没有错误,说明生成器工作正常
             try:
                 await anext(db_gen)
             except StopAsyncIteration:
@@ -106,7 +106,7 @@ from src.database.dependencies import get_async_db
         # 验证 mock fixtures 可以导入
         from tests.conftest import mock_kafka, mock_mlflow, mock_redis
 
-        # 这些应该返回 fixture 函数，而不是 mock 对象本身
+        # 这些应该返回 fixture 函数,而不是 mock 对象本身
         assert callable(mock_redis)
         assert callable(mock_mlflow)
         assert callable(mock_kafka)

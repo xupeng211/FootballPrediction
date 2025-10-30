@@ -11,13 +11,13 @@ from src.decorators.base import *
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-"""""""
+""""""""
 装饰器模式单元测试
 Unit Tests for Decorator Pattern
 
 测试装饰器模式的各个组件。
 Tests all components of the decorator pattern.
-"""""""
+""""""""
 
 import asyncio
 import time
@@ -200,7 +200,7 @@ class TestConcreteDecorators:
         mock_component = Mock(spec=Component)
         mock_component.get_name.return_value = "test_function"
 
-        # 前两次失败，第三次成功
+        # 前两次失败,第三次成功
         mock_component.execute = AsyncMock(
             side_effect=[
                 ValueError("First failure"),
@@ -444,7 +444,7 @@ class TestDecoratorFactory:
 
     def test_load_config_from_yaml(self, tmp_path):
         """测试从YAML文件加载配置"""
-        config_content = """""""
+        config_content = """"""""
 decorators:
   - name: test_logging
     decorator_type: logging
@@ -462,7 +462,7 @@ chains:
       - name: test_logging
         decorator_type: logging
         enabled: true
-"""""""
+""""""""
 
         config_file = tmp_path / "test_config.yaml"
         config_file.write_text(config_content)
@@ -528,7 +528,7 @@ class TestDecoratorService:
 
     def test_convenience_functions(self):
         """测试便捷函数"""
-        # 这些函数主要进行语法检查，不执行
+        # 这些函数主要进行语法检查,不执行
         assert callable(decorate)
         assert callable(with_logging)
         assert callable(with_retry)
@@ -555,7 +555,7 @@ class TestDecoratorIntegration:
             ]
         )
 
-        # 创建装饰器链：重试 -> 日志 -> 指标
+        # 创建装饰器链:重试 -> 日志 -> 指标
         retry_decorator = RetryDecorator(mock_component, max_attempts=3, delay=0.01)
         logging_decorator = LoggingDecorator(retry_decorator, name="chain_logger")
         metrics_decorator = MetricsDecorator(logging_decorator, name="chain_metrics")

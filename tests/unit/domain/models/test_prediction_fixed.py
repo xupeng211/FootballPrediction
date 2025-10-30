@@ -1,7 +1,7 @@
 from datetime import datetime
 """
 Prediction领域模型边界条件测试 - 修复版本
-基于实际Prediction模型API的完整测试覆盖，目标达到90%+覆盖率
+基于实际Prediction模型API的完整测试覆盖,目标达到90%+覆盖率
 """
 
 from decimal import Decimal
@@ -23,7 +23,7 @@ class TestConfidenceScore:
     """ConfidenceScore值对象边界条件测试"""
 
     def test_confidence_score_initialization_valid(self) -> None:
-        """✅ 成功用例：有效置信度初始化"""
+        """✅ 成功用例:有效置信度初始化"""
         # 中等置信度
         confidence = ConfidenceScore(Decimal("0.75"))
         assert confidence.value == Decimal("0.75")
@@ -40,7 +40,7 @@ class TestConfidenceScore:
         assert confidence.level == "low"
 
     def test_confidence_score_quantization(self) -> None:
-        """✅ 成功用例：置信度四舍五入"""
+        """✅ 成功用例:置信度四舍五入"""
         # 多位小数应该被四舍五入
         confidence = ConfidenceScore(Decimal("0.786"))
         assert confidence.value == Decimal("0.79")
@@ -52,7 +52,7 @@ class TestConfidenceScore:
         assert confidence.value == Decimal("0.78")  # 银行家舍入法
 
     def test_confidence_score_boundary_values(self) -> None:
-        """✅ 边界用例：边界值测试"""
+        """✅ 边界用例:边界值测试"""
         # 最小值
         confidence = ConfidenceScore(Decimal("0"))
         assert confidence.value == Decimal("0")
@@ -78,7 +78,7 @@ class TestConfidenceScore:
         assert confidence.level == "medium"  # 0.599四舍五入为0.60
 
     def test_confidence_score_negative_values(self) -> None:
-        """✅ 边界用例：负值验证"""
+        """✅ 边界用例:负值验证"""
         with pytest.raises(DomainError, match="置信度必须在 0 到 1 之间"):
             ConfidenceScore(Decimal("-0.1"))
 
@@ -89,7 +89,7 @@ class TestConfidenceScore:
             ConfidenceScore(Decimal("-10"))
 
     def test_confidence_score_over_limit_values(self) -> None:
-        """✅ 边界用例：超限值验证"""
+        """✅ 边界用例:超限值验证"""
         with pytest.raises(DomainError, match="置信度必须在 0 到 1 之间"):
             ConfidenceScore(Decimal("1.1"))
 
@@ -100,7 +100,7 @@ class TestConfidenceScore:
             ConfidenceScore(Decimal("10"))
 
     def test_confidence_score_string_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         confidence = ConfidenceScore(Decimal("0.85"))
         assert str(confidence) == "0.85 (high)"
 
@@ -111,7 +111,7 @@ class TestConfidenceScore:
         assert str(confidence) == "0.45 (low)"
 
     def test_confidence_score_edge_cases(self) -> None:
-        """✅ 边界用例：极端情况测试"""
+        """✅ 边界用例:极端情况测试"""
         # 极小正值
         confidence = ConfidenceScore(Decimal("0.001"))
         assert confidence.value == Decimal("0.00")
@@ -128,7 +128,7 @@ class TestPredictionScore:
     """PredictionScore值对象边界条件测试"""
 
     def test_prediction_score_initialization_valid(self) -> None:
-        """✅ 成功用例：有效比分初始化"""
+        """✅ 成功用例:有效比分初始化"""
         score = PredictionScore(predicted_home=2, predicted_away=1)
         assert score.predicted_home == 2
         assert score.predicted_away == 1
@@ -137,7 +137,7 @@ class TestPredictionScore:
         assert not score.is_evaluated
 
     def test_prediction_score_with_actual_results(self) -> None:
-        """✅ 成功用例：包含实际比分的初始化"""
+        """✅ 成功用例:包含实际比分的初始化"""
         score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=3, actual_away=1)
         assert score.predicted_home == 2
         assert score.predicted_away == 1
@@ -146,7 +146,7 @@ class TestPredictionScore:
         assert score.is_evaluated
 
     def test_prediction_score_negative_predicted_values(self) -> None:
-        """✅ 边界用例：负预测比分验证"""
+        """✅ 边界用例:负预测比分验证"""
         with pytest.raises(DomainError, match="预测比分不能为负数"):
             PredictionScore(predicted_home=-1, predicted_away=0)
 
@@ -157,7 +157,7 @@ class TestPredictionScore:
             PredictionScore(predicted_home=-1, predicted_away=-1)
 
     def test_prediction_score_negative_actual_values(self) -> None:
-        """✅ 边界用例：负实际比分验证"""
+        """✅ 边界用例:负实际比分验证"""
         with pytest.raises(DomainError, match="实际主队比分不能为负数"):
             PredictionScore(predicted_home=2, predicted_away=1, actual_home=-1, actual_away=1)
 
@@ -165,7 +165,7 @@ class TestPredictionScore:
             PredictionScore(predicted_home=2, predicted_away=1, actual_home=1, actual_away=-1)
 
     def test_prediction_score_zero_values(self) -> None:
-        """✅ 边界用例：零比分测试"""
+        """✅ 边界用例:零比分测试"""
         score = PredictionScore(predicted_home=0, predicted_away=0)
         assert score.predicted_home == 0
         assert score.predicted_away == 0
@@ -175,7 +175,7 @@ class TestPredictionScore:
         assert score.actual_away == 0
 
     def test_prediction_score_correct_score_check(self) -> None:
-        """✅ 成功用例：正确比分检查"""
+        """✅ 成功用例:正确比分检查"""
         # 完全正确的比分
         score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=2, actual_away=1)
         assert score.is_correct_score is True
@@ -189,7 +189,7 @@ class TestPredictionScore:
         assert score.is_correct_score is False
 
     def test_prediction_score_correct_result_check(self) -> None:
-        """✅ 成功用例：正确结果检查"""
+        """✅ 成功用例:正确结果检查"""
         # 主队获胜预测正确
         score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=3, actual_away=1)
         assert score.is_correct_result is True
@@ -211,7 +211,7 @@ class TestPredictionScore:
         assert score.is_correct_result is False
 
     def test_prediction_score_goal_difference_error(self) -> None:
-        """✅ 成功用例：净胜球误差计算"""
+        """✅ 成功用例:净胜球误差计算"""
         # 完全正确的比分
         score = PredictionScore(predicted_home=2, predicted_away=1, actual_home=2, actual_away=1)
         assert score.goal_difference_error == 0
@@ -220,7 +220,7 @@ class TestPredictionScore:
         score = PredictionScore(predicted_home=3, predicted_away=1, actual_home=2, actual_away=1)
         assert score.goal_difference_error == 1
 
-        # 预测客队胜，实际主队胜
+        # 预测客队胜,实际主队胜
         score = PredictionScore(predicted_home=1, predicted_away=3, actual_home=2, actual_away=1)
         assert score.goal_difference_error == 3
 
@@ -229,7 +229,7 @@ class TestPredictionScore:
         assert score.goal_difference_error == 0
 
     def test_prediction_score_string_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         # 未评估的比分
         score = PredictionScore(predicted_home=2, predicted_away=1)
         assert str(score) == "2-1"
@@ -239,7 +239,7 @@ class TestPredictionScore:
         assert str(score) == "2-1 (实际: 3-1)"
 
     def test_prediction_score_edge_cases(self) -> None:
-        """✅ 边界用例：极端比分测试"""
+        """✅ 边界用例:极端比分测试"""
         # 大比分预测
         score = PredictionScore(predicted_home=10, predicted_away=8)
         assert score.predicted_home == 10
@@ -260,7 +260,7 @@ class TestPredictionPoints:
     """PredictionPoints值对象边界条件测试"""
 
     def test_prediction_points_initialization_default(self) -> None:
-        """✅ 成功用例：默认初始化"""
+        """✅ 成功用例:默认初始化"""
         points = PredictionPoints()
         assert points.total == Decimal("0")
         assert points.score_bonus == Decimal("0")
@@ -268,7 +268,7 @@ class TestPredictionPoints:
         assert points.confidence_bonus == Decimal("0")
 
     def test_prediction_points_initialization_with_values(self) -> None:
-        """✅ 成功用例：指定值初始化"""
+        """✅ 成功用例:指定值初始化"""
         points = PredictionPoints(
             total=Decimal("15.5"),
             score_bonus=Decimal("10"),
@@ -281,7 +281,7 @@ class TestPredictionPoints:
         assert points.confidence_bonus == Decimal("2.5")
 
     def test_prediction_points_quantization(self) -> None:
-        """✅ 成功用例：四舍五入处理"""
+        """✅ 成功用例:四舍五入处理"""
         # 多位小数应该被四舍五入
         points = PredictionPoints(total=Decimal("15.786"))
         assert points.total == Decimal("15.79")
@@ -293,7 +293,7 @@ class TestPredictionPoints:
         assert points.result_bonus == Decimal("3.78")  # 银行家舍入法
 
     def test_prediction_points_breakdown_property(self) -> None:
-        """✅ 成功用例：积分明细属性"""
+        """✅ 成功用例:积分明细属性"""
         points = PredictionPoints(
             total=Decimal("15.5"),
             score_bonus=Decimal("10"),
@@ -308,7 +308,7 @@ class TestPredictionPoints:
         assert breakdown["total"] == Decimal("15.5")
 
     def test_prediction_points_string_representation(self) -> None:
-        """✅ 成功用例：字符串表示"""
+        """✅ 成功用例:字符串表示"""
         points = PredictionPoints(total=Decimal("15.5"))
         assert str(points) == "15.50 分"  # 两位小数格式
 
@@ -316,7 +316,7 @@ class TestPredictionPoints:
         assert str(points) == "0.00 分"
 
     def test_prediction_points_edge_cases(self) -> None:
-        """✅ 边界用例：极端积分情况"""
+        """✅ 边界用例:极端积分情况"""
         # 大积分
         points = PredictionPoints(total=Decimal("999.99"))
         assert points.total == Decimal("999.99")
@@ -344,7 +344,7 @@ class TestPrediction:
     """Prediction领域模型边界条件测试"""
 
     def test_prediction_initialization_minimal(self) -> None:
-        """✅ 成功用例：最小初始化"""
+        """✅ 成功用例:最小初始化"""
         prediction = Prediction(user_id=1, match_id=100)
 
         assert prediction.user_id == 1
@@ -358,7 +358,7 @@ class TestPrediction:
         assert prediction.cancelled_at is None
 
     def test_prediction_initialization_full(self) -> None:
-        """✅ 成功用例：完整初始化"""
+        """✅ 成功用例:完整初始化"""
         prediction_score = PredictionScore(
             predicted_home=2, predicted_away=1, actual_home=3, actual_away=1
         )
@@ -386,7 +386,7 @@ class TestPrediction:
         assert prediction.model_version == "v1.0"
 
     def test_prediction_validation_invalid_user_id(self) -> None:
-        """✅ 边界用例：无效用户ID验证"""
+        """✅ 边界用例:无效用户ID验证"""
         with pytest.raises(DomainError, match="用户ID必须大于0"):
             Prediction(user_id=0, match_id=100)
 
@@ -394,7 +394,7 @@ class TestPrediction:
             Prediction(user_id=-1, match_id=100)
 
     def test_prediction_validation_invalid_match_id(self) -> None:
-        """✅ 边界用例：无效比赛ID验证"""
+        """✅ 边界用例:无效比赛ID验证"""
         with pytest.raises(DomainError, match="比赛ID必须大于0"):
             Prediction(user_id=1, match_id=0)
 
@@ -402,7 +402,7 @@ class TestPrediction:
             Prediction(user_id=1, match_id=-1)
 
     def test_prediction_make_prediction_method(self) -> None:
-        """✅ 成功用例：创建预测方法"""
+        """✅ 成功用例:创建预测方法"""
         prediction = Prediction(user_id=1, match_id=100)
 
         prediction.make_prediction(
@@ -417,19 +417,19 @@ class TestPrediction:
         assert prediction.model_version == "v1.0"
 
     def test_prediction_make_prediction_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态创建预测"""
+        """✅ 边界用例:无效状态创建预测"""
         prediction = Prediction(user_id=1, match_id=100)
         prediction.status = PredictionStatus.EVALUATED
 
-        with pytest.raises(DomainError, match="预测状态为 evaluated，无法修改"):
+        with pytest.raises(DomainError, match="预测状态为 evaluated,无法修改"):
             prediction.make_prediction(predicted_home=2, predicted_away=1)
 
         prediction.status = PredictionStatus.CANCELLED
-        with pytest.raises(DomainError, match="预测状态为 cancelled，无法修改"):
+        with pytest.raises(DomainError, match="预测状态为 cancelled,无法修改"):
             prediction.make_prediction(predicted_home=2, predicted_away=1)
 
     def test_prediction_evaluate_method(self) -> None:
-        """✅ 成功用例：评估预测"""
+        """✅ 成功用例:评估预测"""
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
 
@@ -445,31 +445,31 @@ class TestPrediction:
         assert prediction.evaluated_at > prediction.created_at  # 评估时间应该晚于创建时间
 
     def test_prediction_evaluate_invalid_status(self) -> None:
-        """✅ 边界用例：无效状态评估"""
+        """✅ 边界用例:无效状态评估"""
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=2, predicted_away=1)
 
         # 设为已评估状态
         prediction.status = PredictionStatus.EVALUATED
 
-        with pytest.raises(DomainError, match="预测状态为 evaluated，无法评估"):
+        with pytest.raises(DomainError, match="预测状态为 evaluated,无法评估"):
             prediction.evaluate(actual_home=3, actual_away=1)
 
         # 设为已取消状态
         prediction.status = PredictionStatus.CANCELLED
 
-        with pytest.raises(DomainError, match="预测状态为 cancelled，无法评估"):
+        with pytest.raises(DomainError, match="预测状态为 cancelled,无法评估"):
             prediction.evaluate(actual_home=3, actual_away=1)
 
     def test_prediction_evaluate_without_score(self) -> None:
-        """✅ 边界用例：无比分评估"""
+        """✅ 边界用例:无比分评估"""
         prediction = Prediction(user_id=1, match_id=100)
 
         with pytest.raises(DomainError, match="预测必须包含比分才能评估"):
             prediction.evaluate(actual_home=3, actual_away=1)
 
     def test_prediction_cancel_method(self) -> None:
-        """✅ 成功用例：取消预测"""
+        """✅ 成功用例:取消预测"""
         prediction = Prediction(user_id=1, match_id=100)
 
         prediction.cancel(reason="用户主动取消")
@@ -479,7 +479,7 @@ class TestPrediction:
         assert prediction.cancellation_reason == "用户主动取消"
 
     def test_prediction_is_evaluated_property(self) -> None:
-        """✅ 成功用例：已评估属性"""
+        """✅ 成功用例:已评估属性"""
         prediction = Prediction(user_id=1, match_id=100)
 
         assert prediction.is_evaluated is False
@@ -491,7 +491,7 @@ class TestPrediction:
         assert prediction.is_evaluated is False
 
     def test_prediction_is_successful_property(self) -> None:
-        """✅ 成功用例：成功预测属性"""
+        """✅ 成功用例:成功预测属性"""
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
 
@@ -506,10 +506,10 @@ class TestPrediction:
         prediction2 = Prediction(user_id=2, match_id=101)
         prediction2.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
         prediction2.evaluate(actual_home=2, actual_away=1)
-        assert prediction2.accuracy_score == 1.0  # 精确预测，满分
+        assert prediction2.accuracy_score == 1.0  # 精确预测,满分
 
     def test_prediction_can_be_modified_property(self) -> None:
-        """✅ 成功用例：可修改属性"""
+        """✅ 成功用例:可修改属性"""
         prediction = Prediction(user_id=1, match_id=100)
 
         # 待处理状态可以修改
@@ -528,7 +528,7 @@ class TestPrediction:
         assert prediction.is_pending is False
 
     def test_prediction_domain_events(self) -> None:
-        """✅ 成功用例：领域事件"""
+        """✅ 成功用例:领域事件"""
         prediction = Prediction(user_id=1, match_id=100)
 
         # 初始状态无事件
@@ -541,7 +541,7 @@ class TestPrediction:
         assert len(events) > 0
 
     def test_prediction_edge_cases(self) -> None:
-        """✅ 边界用例：边界条件测试"""
+        """✅ 边界用例:边界条件测试"""
         # 最小ID
         prediction = Prediction(user_id=1, match_id=1)
         assert prediction.user_id == 1
@@ -563,7 +563,7 @@ class TestPrediction:
         assert prediction.confidence.level == "high"
 
     def test_prediction_comprehensive_workflow(self) -> None:
-        """✅ 综合用例：完整预测工作流"""
+        """✅ 综合用例:完整预测工作流"""
         # 创建预测
         prediction = Prediction(id=1, user_id=100, match_id=200)
 
@@ -603,7 +603,7 @@ class TestPrediction:
         assert len(events) > 0
 
     def test_prediction_performance_considerations(self) -> None:
-        """✅ 性能用例：性能考虑"""
+        """✅ 性能用例:性能考虑"""
         import time
 
         # 测试大量Prediction对象创建性能
@@ -619,7 +619,7 @@ class TestPrediction:
         assert end_time - start_time < 1.0
 
     def test_prediction_thread_safety_considerations(self) -> None:
-        """✅ 并发用例：线程安全考虑"""
+        """✅ 并发用例:线程安全考虑"""
         import threading
 
         results = []
@@ -649,7 +649,7 @@ class TestPrediction:
         assert len(results) == 10
 
     def test_prediction_boundary_scores_calculation(self) -> None:
-        """✅ 边界用例：边界积分计算"""
+        """✅ 边界用例:边界积分计算"""
         # 完全正确的预测
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.9)
@@ -669,7 +669,7 @@ class TestPrediction:
         assert prediction2.points.total >= Decimal("0")
 
     def test_prediction_zero_scores_edge_case(self) -> None:
-        """✅ 边界用例：零比分预测"""
+        """✅ 边界用例:零比分预测"""
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=0, predicted_away=0, confidence=0.8)
         prediction.evaluate(actual_home=0, actual_away=0)
@@ -680,7 +680,7 @@ class TestPrediction:
         assert prediction.points.total > Decimal("0")
 
     def test_prediction_model_version_handling(self) -> None:
-        """✅ 成功用例：模型版本处理"""
+        """✅ 成功用例:模型版本处理"""
         prediction = Prediction(user_id=1, match_id=100)
 
         # 不带模型版本

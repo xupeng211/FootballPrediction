@@ -1,9 +1,9 @@
-"""""""
+""""""""
 健康检查API测试
 Tests for Health Check API
 
 测试src.api.health模块的健康检查功能
-"""""""
+""""""""
 
 import asyncio
 import json
@@ -13,7 +13,7 @@ import pytest
 
 # 测试导入
 try:
-    # 智能Mock兼容修复模式：移除真实API导入
+    # 智能Mock兼容修复模式:移除真实API导入
     from src.api.health.utils import HealthChecker
 
     HEALTH_AVAILABLE = True
@@ -29,7 +29,7 @@ class TestHealthChecker:
     """健康检查器测试"""
 
     def test_health_checker_creation(self):
-        """测试：健康检查器创建"""
+        """测试:健康检查器创建"""
         checker = HealthChecker()
         assert checker is not None
         assert hasattr(checker, "check_all_services")
@@ -38,7 +38,7 @@ class TestHealthChecker:
         assert hasattr(checker, "check_prediction_service")
 
     async def test_check_all_services(self):
-        """测试：检查所有服务"""
+        """测试:检查所有服务"""
         checker = HealthChecker()
         health_status = await checker.check_all_services()
 
@@ -48,7 +48,7 @@ class TestHealthChecker:
         assert "timestamp" in health_status
 
     async def test_check_database(self):
-        """测试：检查数据库连接"""
+        """测试:检查数据库连接"""
         checker = HealthChecker()
         db_status = await checker.check_database()
 
@@ -57,7 +57,7 @@ class TestHealthChecker:
         assert db_status["status"] in ["healthy", "unhealthy"]
 
     async def test_check_redis(self):
-        """测试：检查Redis连接"""
+        """测试:检查Redis连接"""
         checker = HealthChecker()
         redis_status = await checker.check_redis()
 
@@ -66,7 +66,7 @@ class TestHealthChecker:
         assert redis_status["status"] in ["healthy", "unhealthy"]
 
     async def test_check_prediction_service(self):
-        """测试：检查预测服务"""
+        """测试:检查预测服务"""
         checker = HealthChecker()
         service_status = await checker.check_prediction_service()
 
@@ -75,7 +75,7 @@ class TestHealthChecker:
         assert service_status["status"] in ["healthy", "unhealthy"]
 
     def test_health_check_response_format(self):
-        """测试：健康检查响应格式"""
+        """测试:健康检查响应格式"""
         # 标准健康检查响应格式
         expected_fields = ["status", "timestamp", "version", "checks", "uptime"]
 
@@ -118,7 +118,7 @@ class TestHealthEndpoints:
         return TestClient(mock_app)
 
     def test_health_endpoint_exists(self, client):
-        """测试：健康检查端点存在"""
+        """测试:健康检查端点存在"""
         # 测试各种可能的健康检查路径
         health_paths = [
             "/health",
@@ -138,7 +138,7 @@ class TestHealthEndpoints:
             pytest.skip("No health endpoint found")
 
     def test_health_response_content(self, client):
-        """测试：健康检查响应内容"""
+        """测试:健康检查响应内容"""
         response = client.get("/health")
         if response.status_code == 200:
             _data = response.json()
@@ -146,21 +146,21 @@ class TestHealthEndpoints:
             assert _data["status"] in ["healthy", "unhealthy", "degraded"]
 
     def test_liveness_probe(self, client):
-        """测试：存活探针"""
+        """测试:存活探针"""
         response = client.get("/health/live")
         if response.status_code == 200:
             _data = response.json()
             assert "status" in _data
 
     def test_readiness_probe(self, client):
-        """测试：就绪探针"""
+        """测试:就绪探针"""
         response = client.get("/health/ready")
         if response.status_code == 200:
             _data = response.json()
             assert "status" in _data
 
     def test_startup_probe(self, client):
-        """测试：启动探针"""
+        """测试:启动探针"""
         response = client.get("/health/startup")
         if response.status_code == 200:
             _data = response.json()
@@ -171,7 +171,7 @@ class TestHealthCheckerAdvanced:
     """健康检查器高级测试"""
 
     async def test_service_dependency_check(self):
-        """测试：服务依赖检查"""
+        """测试:服务依赖检查"""
         checker = HealthChecker()
 
         # 模拟服务依赖
@@ -189,7 +189,7 @@ class TestHealthCheckerAdvanced:
                 assert isinstance(status, dict)
 
     async def test_health_check_with_timeout(self):
-        """测试：带超时的健康检查"""
+        """测试:带超时的健康检查"""
         checker = HealthChecker()
 
         # 设置短超时时间
@@ -198,7 +198,7 @@ class TestHealthCheckerAdvanced:
             assert isinstance(status, dict)
 
     async def test_circuit_breaker_pattern(self):
-        """测试：熔断器模式"""
+        """测试:熔断器模式"""
         checker = HealthChecker()
 
         # 模拟连续失败
@@ -208,11 +208,11 @@ class TestHealthCheckerAdvanced:
             if status["status"] == "unhealthy":
                 failures += 1
 
-        # 在真实环境中，应该实现熔断器逻辑
+        # 在真实环境中,应该实现熔断器逻辑
         assert isinstance(failures, int)
 
     async def test_health_check_caching(self):
-        """测试：健康检查缓存"""
+        """测试:健康检查缓存"""
         checker = HealthChecker()
 
         # 第一次检查
@@ -227,7 +227,7 @@ class TestHealthCheckerAdvanced:
         assert isinstance(status2, dict)
 
     async def test_detailed_health_report(self):
-        """测试：详细健康报告"""
+        """测试:详细健康报告"""
         checker = HealthChecker()
 
         # 获取详细报告
@@ -242,31 +242,31 @@ class TestHealthCheckerAdvanced:
                 assert isinstance(report[section], (dict, list, str))
 
     async def test_health_check_metrics(self):
-        """测试：健康检查指标"""
+        """测试:健康检查指标"""
         checker = HealthChecker()
 
         # 模拟指标收集
 
         status = await checker.check_all_services()
-        # 在真实环境中，应该包含这些指标
+        # 在真实环境中,应该包含这些指标
         assert isinstance(status, dict)
 
 
-@pytest.mark.skipif(HEALTH_AVAILABLE, reason="健康模块可用，跳过此测试")
+@pytest.mark.skipif(HEALTH_AVAILABLE, reason="健康模块可用,跳过此测试")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not HEALTH_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if HEALTH_AVAILABLE:
-        # 智能Mock兼容修复模式：移除真实API导入
+        # 智能Mock兼容修复模式:移除真实API导入
 from src.api.health.utils import HealthChecker
 
         assert HealthChecker is not None
@@ -274,7 +274,7 @@ from src.api.health.utils import HealthChecker
 
 
 def test_health_checker_class():
-    """测试：健康检查器类"""
+    """测试:健康检查器类"""
     if HEALTH_AVAILABLE:
 from src.api.health.utils import HealthChecker
 
@@ -287,7 +287,7 @@ class TestHealthCheckerErrorHandling:
     """健康检查器错误处理测试"""
 
     async def test_database_connection_error(self):
-        """测试：数据库连接错误处理"""
+        """测试:数据库连接错误处理"""
         checker = HealthChecker()
 
         with patch.object(checker, "check_database") as mock_check:
@@ -300,7 +300,7 @@ class TestHealthCheckerErrorHandling:
                 pass
 
     async def test_redis_connection_error(self):
-        """测试：Redis连接错误处理"""
+        """测试:Redis连接错误处理"""
         checker = HealthChecker()
 
         with patch.object(checker, "check_redis") as mock_check:
@@ -313,10 +313,10 @@ class TestHealthCheckerErrorHandling:
                 pass
 
     async def test_partial_service_failure(self):
-        """测试：部分服务失败"""
+        """测试:部分服务失败"""
         checker = HealthChecker()
 
-        # 模拟一个服务失败，其他正常
+        # 模拟一个服务失败,其他正常
         with patch.object(checker, "check_database") as mock_db:
             mock_db.return_value = {
                 "status": "unhealthy",
@@ -330,7 +330,7 @@ class TestHealthCheckerErrorHandling:
                 assert status["status"] in ["unhealthy", "degraded"]
 
     async def test_health_check_timeout_handling(self):
-        """测试：健康检查超时处理"""
+        """测试:健康检查超时处理"""
         HealthChecker()
 
         async def slow_check():
@@ -347,7 +347,7 @@ class TestHealthCheckerErrorHandling:
             pass
 
     def test_health_check_serialization(self):
-        """测试：健康检查序列化"""
+        """测试:健康检查序列化"""
         # 测试JSON序列化
         health_data = {
             "status": "healthy",
@@ -364,7 +364,7 @@ class TestHealthCheckerErrorHandling:
         assert parsed["status"] == "healthy"
 
     async def test_concurrent_health_checks(self):
-        """测试：并发健康检查"""
+        """测试:并发健康检查"""
         checker = HealthChecker()
 
         # 并发执行多个健康检查

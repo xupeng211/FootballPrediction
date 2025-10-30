@@ -1,6 +1,6 @@
 """
 自动修复的测试文件 - test_prediction_algorithms_part_5.py
-原文件存在语法错误，已重新生成
+原文件存在语法错误,已重新生成
 """
 
 import pytest

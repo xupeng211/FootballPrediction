@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-"""""""
+""""""""
 预测服务健康检查模块单元测试
 Unit Tests for Predictions Health Check Module
 
-这是质量提升计划的第一个测试文件，用于建立测试覆盖基础。
+这是质量提升计划的第一个测试文件,用于建立测试覆盖基础。
 This is the first test file in the quality improvement plan to establish test coverage foundation.
-"""""""
+""""""""
 
 import os
 import sys
@@ -120,7 +120,7 @@ class TestPredictionsHealthSimple:
         version = data["version"]
         assert isinstance(version, str)
         assert len(version) > 0
-        # 验证版本格式 (基本检查，应该是语义化版本)
+        # 验证版本格式 (基本检查,应该是语义化版本)
         assert any(char.isdigit() for char in version)
 
     # === 性能测试 ===

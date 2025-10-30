@@ -12,10 +12,10 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
-"""""""
+""""""""
 Monitoring模块pytest异步测试
 使用pytest-asyncio提升覆盖率
-"""""""
+""""""""
 
 
 # 添加项目根目录到路径
@@ -206,7 +206,7 @@ async def _get_business_metrics_test(db):
         _result["upcoming_matches_7d"] = int(um_v) if um_v is not None else None
         _result["model_accuracy_30d"] = float(ar_v) if ar_v is not None else None
     except Exception:
-        # 异常时保持None，并更新时间戳
+        # 异常时保持None,并更新时间戳
         _result["last_updated"] = datetime.utcnow().isoformat()
 
     return result

@@ -1,11 +1,11 @@
-"""""""
+""""""""
 Issue #83-C 高级重构测试: cqrs.base
 覆盖率: 71.05% → 85%
 创建时间: 2025-10-26 18:23
 优先级: LOW
 类别: cqrs
-策略: 高级Mock策略，解决复杂模块依赖问题
-"""""""
+策略: 高级Mock策略,解决复杂模块依赖问题
+""""""""
 
 import inspect
 import sys
@@ -58,7 +58,7 @@ class TestCqrsBaseIssue83C:
             print("✅ 模块验证通过")
 
         except ImportError as e:
-            pytest.skip(f"模块导入失败，需要更高级的Mock: {e}")
+            pytest.skip(f"模块导入失败,需要更高级的Mock: {e}")
         except Exception as e:
             print(f"⚠️ 模块导入异常: {e}")
             pytest.skip(f"模块导入异常: {e}")
@@ -280,7 +280,7 @@ class TestCqrsBaseIssue83C:
         end_time = time.time()
         execution_time = end_time - start_time
 
-        print(f"⚡ Mock性能测试完成，耗时: {execution_time:.4f}秒")
+        print(f"⚡ Mock性能测试完成,耗时: {execution_time:.4f}秒")
         assert execution_time < 1.0, "Mock操作应该在1秒内完成"
 
     @pytest.mark.regression

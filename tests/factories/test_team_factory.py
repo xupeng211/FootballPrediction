@@ -1,4 +1,4 @@
-"""Team 模型工厂，基于真实 SQLAlchemy 模型。"""
+"""Team 模型工厂,基于真实 SQLAlchemy 模型。"""
 
 import factory
 from faker import Faker

@@ -28,5 +28,5 @@ class TestQuickWins:
 
     def test_placeholder(self):
         """占位符测试"""
-        # 这个测试作为占位符，确保测试框架正常工作
+        # 这个测试作为占位符,确保测试框架正常工作
         assert True

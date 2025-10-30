@@ -1,10 +1,10 @@
 
-"""""""
+""""""""
 预测API路由器测试
 Tests for predictions API router
 
 测试预测API的各个端点功能。
-"""""""
+""""""""
 
 
 import pytest
@@ -108,7 +108,7 @@ class TestPredictionsRouter:
         response = client.get("/api/v1/predictions/12345?include_details=true")
 
         assert response.status_code == 200
-        # 这个端点目前不返回详细信息，但测试确保参数被正确接收
+        # 这个端点目前不返回详细信息,但测试确保参数被正确接收
 
     @patch("src.api.predictions.router.logger")
     def test_get_prediction_logging(self, mock_logger, client):
@@ -160,7 +160,7 @@ class TestPredictionsRouter:
 
     def test_create_prediction_with_empty_request(self, client):
         """测试空请求体的预测创建"""
-        # 发送空的JSON体，应该使用默认值
+        # 发送空的JSON体,应该使用默认值
         response = client.post("/api/v1/predictions/12345/predict", json={})
 
         assert response.status_code == 201
@@ -226,7 +226,7 @@ class TestPredictionsRouter:
     def test_batch_predict_too_many_matches(self, client):
         """测试超过限制的比赛数量"""
         request_data = {
-            "match_ids": list(range(101)),  # 101场比赛，超过限制
+            "match_ids": list(range(101)),  # 101场比赛,超过限制
             "model_version": "default",
         }
 
@@ -415,7 +415,7 @@ class TestPredictionsRouter:
         """测试验证预测时的日志记录"""
         client.post("/api/v1/predictions/12345/verify?actual_result=home")
 
-        mock_logger.info.assert_any_call("验证比赛 12345 的预测结果，实际结果: home")
+        mock_logger.info.assert_any_call("验证比赛 12345 的预测结果,实际结果: home")
         mock_logger.info.assert_any_call("验证完成: 正确, 准确度: 0.75")
 
     # ========================================
@@ -507,7 +507,7 @@ class TestPredictionsRouter:
     def test_negative_match_id(self, client):
         """测试负数比赛ID"""
         response = client.get("/api/v1/predictions/-1")
-        # FastAPI通常会处理负整数，但我们检查响应
+        # FastAPI通常会处理负整数,但我们检查响应
         assert response.status_code in [200, 422]
 
     def test_zero_match_id(self, client):

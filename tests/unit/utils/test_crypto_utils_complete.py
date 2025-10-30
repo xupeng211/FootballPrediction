@@ -2,7 +2,7 @@
 加密工具完整测试
 Crypto Utils Complete Tests
 
-基于Issue #98成功模式，创建完整的加密工具测试
+基于Issue #98成功模式,创建完整的加密工具测试
 """
 
 import pytest
@@ -166,7 +166,7 @@ class TestCryptoUtilsComplete:
         hashed1 = CryptoUtils.hash_password(password, salt)
         hashed2 = CryptoUtils.hash_password(password, salt)
 
-        # 注意：由于bcrypt的随机性，即使相同盐值也可能产生不同结果
+        # 注意:由于bcrypt的随机性,即使相同盐值也可能产生不同结果
         # 主要验证的是哈希都能正常工作
         assert isinstance(hashed1, str)
         assert isinstance(hashed2, str)
@@ -193,7 +193,7 @@ class TestCryptoUtilsComplete:
             invalid_bcrypt = "$2b$12$invalid_hash_format"
             CryptoUtils.verify_password("password", invalid_bcrypt)
         except ValueError:
-            # 预期的异常，验证函数正确处理了无效格式
+            # 预期的异常,验证函数正确处理了无效格式
             pass
 
     def test_generate_salt(self):
@@ -286,7 +286,7 @@ class TestCryptoUtilsComplete:
         for algorithm in algorithms:
             checksum = CryptoUtils.create_checksum(test_data, algorithm)
             assert isinstance(checksum, str)
-            assert len(checksum) == 16  # 格式：8字符哈希 + 8字符长度
+            assert len(checksum) == 16  # 格式:8字符哈希 + 8字符长度
 
             # 相同数据应该产生相同校验和
             checksum2 = CryptoUtils.create_checksum(test_data, algorithm)
@@ -330,7 +330,7 @@ class TestCryptoUtilsComplete:
             obfuscated = CryptoUtils.obfuscate(original_text)
             assert isinstance(obfuscated, str)
 
-            # 空字符串混淆后可能相同，这是正常的
+            # 空字符串混淆后可能相同,这是正常的
             if original_text != "":
                 assert obfuscated != original_text  # 非空字符串混淆后应该不同
 
@@ -493,7 +493,7 @@ class TestCryptoUtilsComplete:
                     CryptoUtils.encode_base64(input_data)
                     CryptoUtils.create_checksum(input_data)
             except Exception:
-                # 如果有异常，应该是预期的
+                # 如果有异常,应该是预期的
                 pass
 
     def test_consistency_and_reliability(self):

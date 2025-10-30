@@ -299,7 +299,7 @@ class TestLogUtils:
             for i in range(10):
                 logger.info(f"Message {i}")
 
-            # 模拟轮转：关闭当前处理器，创建新文件
+            # 模拟轮转:关闭当前处理器,创建新文件
             handler.close()
             logger.removeHandler(handler)
 

@@ -1,7 +1,7 @@
-"""""""
+""""""""
 智能Mock兼容修复模式 - Prediction模型测试修复
 解决SQLAlchemy关系映射和模型初始化问题
-"""""""
+""""""""
 
 from datetime import datetime
 from decimal import Decimal
@@ -106,16 +106,16 @@ class MockMatch:
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
-print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
+print("智能Mock兼容修复模式:强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
 
 # 强制使用Mock实现
 PredictedResult = MockPredictedResult
 Predictions = MockPredictions
 Match = MockMatch
 
-"""""""
+""""""""
 数据库模型测试 - Prediction模型
-"""""""
+""""""""
 
 
 @pytest.mark.unit
@@ -263,7 +263,7 @@ class TestPredictionModel:
         """测试预测的字符串表示"""
         actual = repr(sample_prediction)
 
-        # 如果没有自定义__repr__，测试默认行为
+        # 如果没有自定义__repr__,测试默认行为
         assert str(sample_prediction.id) in actual
         assert str(sample_prediction.match_id) in actual
 

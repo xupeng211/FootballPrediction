@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 国际化测试
 测试 src.utils.i18n 模块的功能
-"""""""
+""""""""
 
 
 import pytest
@@ -11,7 +11,7 @@ import pytest
 try:
     from src.utils.i18n import get_current_language, get_text, set_language
 except ImportError:
-    # 如果模块不存在，创建一个模拟测试
+    # 如果模块不存在,创建一个模拟测试
     def get_text(key, default=None):
         return default or key
 
@@ -65,7 +65,7 @@ class TestI18n:
         for lang in languages:
             set_language(lang)
             current = get_current_language()
-            # 验证语言设置（可能不立即反映，取决于实现）
+            # 验证语言设置（可能不立即反映,取决于实现）
             assert isinstance(current, str)
 
     def test_unicode_text(self):

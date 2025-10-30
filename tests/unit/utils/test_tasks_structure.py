@@ -180,7 +180,7 @@ def test_module_sizes():
 
     # 验证没有文件过大（比如超过500行）
     for file_name, line_count in file_sizes.items():
-        assert line_count < 500, f"文件 {file_name} 过大，有 {line_count} 行"
+        assert line_count < 500, f"文件 {file_name} 过大,有 {line_count} 行"
 
     # 打印文件大小信息
     print("\n模块文件行数统计:")

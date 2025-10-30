@@ -87,7 +87,7 @@ class MockMlflow:
 
     def active_run(self) -> Optional[SimpleNamespace]:
         """获取当前运行"""
-        # 简单实现：返回最后一个运行
+        # 简单实现:返回最后一个运行
         if self.runs:
             run_id = list(self.runs.keys())[-1]
             return self.runs[run_id]
@@ -143,11 +143,11 @@ def reset_mlflow_mocks() -> None:
         _global_mlflow_mock.logged_artifacts.clear()
 
 
-# 向后兼容的函数（现在只是返回 mock 实例，不使用 monkeypatch）
+# 向后兼容的函数（现在只是返回 mock 实例,不使用 monkeypatch）
 def apply_mlflow_mocks(*args, **kwargs) -> Dict[str, Any]:
     """
-    向后兼容：返回 MLflow mocks
-    不再使用 monkeypatch，而是返回 mock 实例供测试使用
+    向后兼容:返回 MLflow mocks
+    不再使用 monkeypatch,而是返回 mock 实例供测试使用
     """
     return {
         "mlflow": get_mock_mlflow(),

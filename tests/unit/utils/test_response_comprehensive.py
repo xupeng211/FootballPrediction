@@ -270,7 +270,7 @@ class TestAPIResponse:
         assert model.code is None
 
     def test_response_immutability(self):
-        """测试响应是否可修改（应该可以修改，因为返回的是字典）"""
+        """测试响应是否可修改（应该可以修改,因为返回的是字典）"""
         _result = APIResponse.success(_data={"initial": "value"})
 
         # 修改响应
@@ -306,7 +306,7 @@ class TestResponseUtils:
     """ResponseUtils别名测试"""
 
     def test_response_utils_is_alias(self):
-        """测试：ResponseUtils是APIResponse的别名"""
+        """测试:ResponseUtils是APIResponse的别名"""
         assert ResponseUtils is APIResponse
         assert hasattr(ResponseUtils, "success")
         assert hasattr(ResponseUtils, "error")
@@ -316,7 +316,7 @@ class TestResponseUtils:
         assert ResponseUtils.error_response == APIResponse.error_response
 
     def test_response_utils_functionality(self):
-        """测试：ResponseUtils功能与APIResponse一致"""
+        """测试:ResponseUtils功能与APIResponse一致"""
         test_data = {"test": "ResponseUtils"}
         success1 = APIResponse.success(_data=test_data, message="APIResponse成功")
         success2 = ResponseUtils.success(_data=test_data, message="ResponseUtils成功")
@@ -337,7 +337,7 @@ class TestResponseUtils:
         assert error2["message"] == "Utils错误"
 
     def test_response_utils_comprehensive(self):
-        """测试：ResponseUtils综合功能"""
+        """测试:ResponseUtils综合功能"""
         # 成功响应
         success = ResponseUtils.success_response(
             _data={"items": ["item1", "item2"]}, message="通过别名获取数据成功"

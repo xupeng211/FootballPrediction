@@ -26,7 +26,7 @@ class TestServiceConfig:
     """测试服务配置类"""
 
     def test_service_config_creation_minimal(self):
-        """测试：最小参数创建配置"""
+        """测试:最小参数创建配置"""
         # When
         _config = ServiceConfig(name="TestService")
 
@@ -39,7 +39,7 @@ class TestServiceConfig:
         assert isinstance(_config.created_at, datetime)
 
     def test_service_config_creation_full(self):
-        """测试：完整参数创建配置"""
+        """测试:完整参数创建配置"""
         # Given
         dependencies = ["service1", "service2"]
         config_dict = {"timeout": 30, "retries": 3}
@@ -61,7 +61,7 @@ class TestServiceConfig:
         assert _config._config == config_dict
 
     def test_service_config_empty_lists(self):
-        """测试：空列表参数"""
+        """测试:空列表参数"""
         # When
         _config = ServiceConfig(name="TestService", dependencies=[], _config={})
 
@@ -74,7 +74,7 @@ class TestServiceMetrics:
     """测试服务指标类"""
 
     def test_metrics_initialization(self):
-        """测试：指标初始化"""
+        """测试:指标初始化"""
         # When
         metrics = ServiceMetrics()
 
@@ -86,7 +86,7 @@ class TestServiceMetrics:
         assert metrics.metrics["last_call"] is None
 
     def test_record_call_success(self):
-        """测试：记录成功调用"""
+        """测试:记录成功调用"""
         # Given
         metrics = ServiceMetrics()
         duration = 0.5
@@ -102,7 +102,7 @@ class TestServiceMetrics:
         assert isinstance(metrics.metrics["last_call"], datetime)
 
     def test_record_call_error(self):
-        """测试：记录失败调用"""
+        """测试:记录失败调用"""
         # Given
         metrics = ServiceMetrics()
         duration = 0.3
@@ -117,7 +117,7 @@ class TestServiceMetrics:
         assert metrics.metrics["avg_time"] == 0.3
 
     def test_multiple_calls(self):
-        """测试：多次调用"""
+        """测试:多次调用"""
         # Given
         metrics = ServiceMetrics()
 
@@ -133,7 +133,7 @@ class TestServiceMetrics:
         assert abs(metrics.metrics["avg_time"] - 0.2) < 0.0001
 
     def test_get_metrics(self):
-        """测试：获取指标副本"""
+        """测试:获取指标副本"""
         # Given
         metrics = ServiceMetrics()
         metrics.record_call(1.0, True)
@@ -183,7 +183,7 @@ class TestEnhancedBaseService:
         return MockEnhancedService(config)
 
     def test_service_initialization(self, service):
-        """测试：服务初始化"""
+        """测试:服务初始化"""
         assert service.name == "TestService"
         assert service.version == "1.0.0"
         assert service.description == "Test service for unit tests"
@@ -195,7 +195,7 @@ class TestEnhancedBaseService:
         assert len(service._dependencies) == 0
 
     def test_service_initialization_without_config(self):
-        """测试：不带配置的服务初始化"""
+        """测试:不带配置的服务初始化"""
         # When
         service = MockEnhancedService()
 
@@ -205,7 +205,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_start_success(self, service):
-        """测试：成功启动服务"""
+        """测试:成功启动服务"""
         # When
         _result = await service.start()
 
@@ -219,7 +219,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_start_already_running(self, service):
-        """测试：启动已运行的服务"""
+        """测试:启动已运行的服务"""
         # Given
         await service.start()
 
@@ -235,7 +235,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_start_failure(self):
-        """测试：启动失败"""
+        """测试:启动失败"""
         # Given
         service = MockEnhancedService()
         service.initialize_error = RuntimeError("Initialization failed")
@@ -251,7 +251,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_stop_success(self, service):
-        """测试：成功停止服务"""
+        """测试:成功停止服务"""
         # Given
         await service.start()
 
@@ -267,7 +267,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_stop_not_running(self, service):
-        """测试：停止未运行的服务"""
+        """测试:停止未运行的服务"""
         # When
         _result = await service.stop()
 
@@ -277,7 +277,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_stop_failure(self, service):
-        """测试：停止失败"""
+        """测试:停止失败"""
         # Given
         await service.start()
         service.shutdown_error = RuntimeError("Shutdown failed")
@@ -291,7 +291,7 @@ class TestEnhancedBaseService:
         assert service._running is True
 
     def test_get_status_not_initialized(self, service):
-        """测试：获取未初始化状态"""
+        """测试:获取未初始化状态"""
         # When
         status = service.get_status()
 
@@ -299,7 +299,7 @@ class TestEnhancedBaseService:
         assert status == "not_initialized"
 
     def test_get_status_running(self, service):
-        """测试：获取运行状态"""
+        """测试:获取运行状态"""
         # Given
         service._initialized = True
         service._running = True
@@ -311,7 +311,7 @@ class TestEnhancedBaseService:
         assert status == "running"
 
     def test_get_status_stopped(self, service):
-        """测试：获取停止状态"""
+        """测试:获取停止状态"""
         # Given
         service._initialized = True
         service._running = False
@@ -323,7 +323,7 @@ class TestEnhancedBaseService:
         assert status == "stopped"
 
     def test_is_healthy(self, service):
-        """测试：健康检查"""
+        """测试:健康检查"""
         # Given
         service._health_status["status"] = "healthy"
 
@@ -334,7 +334,7 @@ class TestEnhancedBaseService:
         assert _result is True
 
     def test_is_unhealthy(self, service):
-        """测试：不健康检查"""
+        """测试:不健康检查"""
         # Given
         service._health_status["status"] = "unhealthy"
 
@@ -345,7 +345,7 @@ class TestEnhancedBaseService:
         assert _result is False
 
     def test_get_health_info(self, service):
-        """测试：获取健康信息"""
+        """测试:获取健康信息"""
         # Given
         service._startup_time = datetime.now() - timedelta(seconds=60)
         service._initialized = True
@@ -366,7 +366,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_health_check_with_dependencies(self, service):
-        """测试：带依赖的健康检查"""
+        """测试:带依赖的健康检查"""
         # Given
         service._initialized = True
         service._running = True
@@ -385,13 +385,13 @@ class TestEnhancedBaseService:
         _result = await service.health_check()
 
         # Then
-        # health_check返回get_health_info的结果，其中status来自get_status()
+        # health_check返回get_health_info的结果,其中status来自get_status()
         # 但_message_字段包含健康状态信息
         assert "unhealthy" in _result["message"]
 
     @pytest.mark.asyncio
     async def test_health_check_all_healthy(self, service):
-        """测试：所有依赖健康"""
+        """测试:所有依赖健康"""
         # Given
         service._initialized = True
         service._running = True
@@ -403,12 +403,12 @@ class TestEnhancedBaseService:
         _result = await service.health_check()
 
         # Then
-        # status来自get_status()，不是health_status
+        # status来自get_status(),不是health_status
         assert _result["status"] == "running"
 
     @pytest.mark.asyncio
     async def test_execute_with_metrics_success(self, service):
-        """测试：执行带指标（成功）"""
+        """测试:执行带指标（成功）"""
 
         # Given
         async def test_func():
@@ -425,7 +425,7 @@ class TestEnhancedBaseService:
 
     @pytest.mark.asyncio
     async def test_execute_with_metrics_error(self, service):
-        """测试：执行带指标（失败）"""
+        """测试:执行带指标（失败）"""
 
         # Given
         async def failing_func():
@@ -440,7 +440,7 @@ class TestEnhancedBaseService:
         assert metrics["errors"] == 1
 
     def test_add_dependency(self, service):
-        """测试：添加依赖"""
+        """测试:添加依赖"""
         # Given
         dep = Mock()
 
@@ -452,7 +452,7 @@ class TestEnhancedBaseService:
         assert service._dependencies["test_dep"] == dep
 
     def test_get_dependency(self, service):
-        """测试：获取依赖"""
+        """测试:获取依赖"""
         # Given
         dep = Mock()
         service.add_dependency("test_dep", dep)
@@ -464,7 +464,7 @@ class TestEnhancedBaseService:
         assert _result == dep
 
     def test_get_dependency_not_found(self, service):
-        """测试：获取不存在的依赖"""
+        """测试:获取不存在的依赖"""
         # When
         _result = service.get_dependency("nonexistent")
 
@@ -472,7 +472,7 @@ class TestEnhancedBaseService:
         assert _result is None
 
     def test_get_config(self, service):
-        """测试：获取配置"""
+        """测试:获取配置"""
         # Given
         service._config._config["test_key"] = "test_value"
 
@@ -483,7 +483,7 @@ class TestEnhancedBaseService:
         assert _result == "test_value"
 
     def test_get_config_default(self, service):
-        """测试：获取配置（默认值）"""
+        """测试:获取配置（默认值）"""
         # When
         _result = service.get_config("nonexistent", "default_value")
 
@@ -491,7 +491,7 @@ class TestEnhancedBaseService:
         assert _result == "default_value"
 
     def test_repr(self, service):
-        """测试：字符串表示"""
+        """测试:字符串表示"""
         # When
         _result = repr(service)
 
@@ -505,7 +505,7 @@ class TestBaseService:
     """测试向后兼容的基础服务类"""
 
     def test_base_service_creation(self):
-        """测试：创建基础服务"""
+        """测试:创建基础服务"""
         # When
         service = BaseService("TestBaseService")
 
@@ -515,7 +515,7 @@ class TestBaseService:
 
     @pytest.mark.asyncio
     async def test_base_service_initialize(self):
-        """测试：基础服务初始化"""
+        """测试:基础服务初始化"""
         # Given
         service = BaseService()
 
@@ -527,7 +527,7 @@ class TestBaseService:
 
     @pytest.mark.asyncio
     async def test_base_service_shutdown(self):
-        """测试：基础服务关闭"""
+        """测试:基础服务关闭"""
         # Given
         service = BaseService()
         service._running = True
@@ -545,7 +545,7 @@ class TestAbstractBaseService:
     """测试抽象基础服务类"""
 
     def test_abstract_base_service_creation(self):
-        """测试：抽象基础服务是抽象类"""
+        """测试:抽象基础服务是抽象类"""
         # When / Then
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             AbstractBaseService("TestAbstractService")

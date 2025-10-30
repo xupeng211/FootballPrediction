@@ -1,7 +1,7 @@
 """
 高复杂度业务逻辑模块测试
 Phase E: 优化提升阶段 - 深度覆盖核心业务逻辑
-专注于预测策略、领域服务、事件系统等复杂业务逻辑
+专注于预测策略、领域服务,事件系统等复杂业务逻辑
 """
 
 import pytest
@@ -471,7 +471,7 @@ class TestDomainEvents:
                     cascade_effects = event.process_cascade_effects()
                     if cascade_effects:
                         assert isinstance(cascade_effects, list)
-                        # 应该包含预测结算、排行榜更新等
+                        # 应该包含预测结算,排行榜更新等
             else:
                 # 简化级联效应模拟
                 cascade_effects = [
@@ -954,7 +954,7 @@ def test_domain_module_import():
         assert match is not None
         assert team is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_advanced_business_logic_coverage():

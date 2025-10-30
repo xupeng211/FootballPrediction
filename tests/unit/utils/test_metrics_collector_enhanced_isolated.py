@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 """
 增强指标收集器隔离测试
-测试各个模块的独立功能，避免导入依赖问题
+测试各个模块的独立功能,避免导入依赖问题
 """
 
 from datetime import datetime
@@ -13,7 +13,7 @@ import pytest
 @pytest.mark.unit
 def test_metric_types_isolated():
     """独立测试指标数据类型"""
-    # 直接定义测试，避免导入问题
+    # 直接定义测试,避免导入问题
     from dataclasses import dataclass, field
     from datetime import datetime
     from typing import Any, Dict

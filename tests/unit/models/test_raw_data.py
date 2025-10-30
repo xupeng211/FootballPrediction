@@ -1,10 +1,10 @@
-"""""""
+""""""""
 原始数据模型业务逻辑测试
 Raw Data Models Business Logic Tests
 
-测试原始数据模型在真实业务场景中的行为，包括数据验证、业务规则和边界条件。
-专注于业务逻辑测试，避免简单的属性验证。
-"""""""
+测试原始数据模型在真实业务场景中的行为，包括数据验证,业务规则和边界条件。
+专注于业务逻辑测试,避免简单的属性验证。
+""""""""
 
 import datetime
 
@@ -752,7 +752,7 @@ class TestRawDataIntegration:
             league="Test League",
             season="2023-2024",
             match_date=base_time,
-            # 缺少比分信息，但有默认状态
+            # 缺少比分信息,但有默认状态
         )
 
         # 验证默认值处理

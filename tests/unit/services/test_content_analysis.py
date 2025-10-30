@@ -32,7 +32,7 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_001",
             content_type="text",
-            _data={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"},
+            _data={"text": "曼联今天在英超比赛中取得了胜利,这是一场非常精彩的比赛。"},
         )
 
     @pytest.fixture
@@ -53,7 +53,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_service_initialization(self, service):
-        """测试：服务初始化"""
+        """测试:服务初始化"""
         # Then
         assert service.name == "ContentAnalysisService"
         assert service._models_loaded is False
@@ -61,7 +61,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_initialize_success(self, service):
-        """测试：成功初始化"""
+        """测试:成功初始化"""
         # When
         _result = await service.initialize()
 
@@ -72,7 +72,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_initialize_failure(self, service):
-        """测试：初始化失败"""
+        """测试:初始化失败"""
         # Given
         with patch.object(service, "_on_initialize", return_value=False):
             # When
@@ -84,7 +84,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_shutdown(self, service):
-        """测试：关闭服务"""
+        """测试:关闭服务"""
         # Given
         await service.initialize()
         assert service._models_loaded is True
@@ -97,7 +97,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_get_service_info(self, service):
-        """测试：获取服务信息"""
+        """测试:获取服务信息"""
         # Given
         await service.initialize()
 
@@ -113,7 +113,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_analyze_text_content(self, service, sample_text_content):
-        """测试：分析文本内容"""
+        """测试:分析文本内容"""
         # Given
         await service.initialize()
 
@@ -136,7 +136,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_analyze_non_text_content(self, service, sample_image_content):
-        """测试：分析非文本内容"""
+        """测试:分析非文本内容"""
         # Given
         await service.initialize()
 
@@ -152,14 +152,14 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_analyze_content_without_initialization(self, service, sample_text_content):
-        """测试：未初始化时分析内容"""
+        """测试:未初始化时分析内容"""
         # When / Then
         with pytest.raises(RuntimeError, match="服务未初始化"):
             await service.analyze_content(sample_text_content)
 
     @pytest.mark.asyncio
     async def test_batch_analyze(self, service, sample_text_content, sample_image_content):
-        """测试：批量分析内容"""
+        """测试:批量分析内容"""
         # Given
         await service.initialize()
         contents = [sample_text_content, sample_image_content]
@@ -175,7 +175,7 @@ class TestContentAnalysisService:
 
     @pytest.mark.asyncio
     async def test_batch_analyze_empty_list(self, service):
-        """测试：批量分析空列表"""
+        """测试:批量分析空列表"""
         # Given
         await service.initialize()
 
@@ -186,7 +186,7 @@ class TestContentAnalysisService:
         assert results == []
 
     def test_categorize_football_content(self, service):
-        """测试：足球内容分类"""
+        """测试:足球内容分类"""
         # When
         category = service._categorize_content("曼联今天在英超比赛中进了两个球")
 
@@ -194,32 +194,32 @@ class TestContentAnalysisService:
         assert category == "足球新闻"
 
     def test_categorize_prediction_content(self, service):
-        """测试：足球预测内容分类"""
+        """测试:足球预测内容分类"""
         # Given - 需要同时包含足球关键词和预测关键词
-        text = "曼联在英超比赛的预测，根据赔率分析曼联会赢"
+        text = "曼联在英超比赛的预测,根据赔率分析曼联会赢"
 
         # When
         category = service._categorize_content(text)
 
         # Then
-        # 同时包含足球关键词（曼联、英超）和预测关键词（预测、赔率）
+        # 同时包含足球关键词（曼联、英超）和预测关键词（预测,赔率）
         assert category == "足球预测"
 
     def test_categorize_general_content(self, service):
-        """测试：一般内容分类"""
+        """测试:一般内容分类"""
         # When
-        category = service._categorize_content("今天天气很好，适合出门散步")
+        category = service._categorize_content("今天天气很好,适合出门散步")
 
         # Then
         assert category == "一般内容"
 
     def test_calculate_quality_score_text(self, service):
-        """测试：计算文本内容质量分数"""
+        """测试:计算文本内容质量分数"""
         # Given
         content = Content(
             content_id="test",
             content_type="text",
-            _data={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"},
+            _data={"text": "这是一场关于足球比赛的详细分析,包含了多个关键因素。"},
         )
 
         # When
@@ -230,7 +230,7 @@ class TestContentAnalysisService:
         assert score > 0.3  # 包含关键词应该有基础分数以上
 
     def test_calculate_quality_score_non_text(self, service, sample_image_content):
-        """测试：计算非文本内容质量分数"""
+        """测试:计算非文本内容质量分数"""
         # When
         score = service._calculate_quality_score(sample_image_content)
 
@@ -238,7 +238,7 @@ class TestContentAnalysisService:
         assert score == 0.5
 
     def test_analyze_text_empty(self, service):
-        """测试：分析空文本"""
+        """测试:分析空文本"""
         # When
         _result = service.analyze_text("")
 
@@ -247,7 +247,7 @@ class TestContentAnalysisService:
         assert _result["error"] == "Empty text"
 
     def test_analyze_text_normal(self, service):
-        """测试：分析普通文本"""
+        """测试:分析普通文本"""
         # Given
         text = "曼联今天在英超比赛中取得了胜利"
 
@@ -266,9 +266,9 @@ class TestContentAnalysisService:
         assert _result["character_count"] == len(text)
 
     def test_extract_entities_teams(self, service):
-        """测试：提取球队实体"""
+        """测试:提取球队实体"""
         # Given
-        text = "曼联对阵切尔西，巴塞罗那对战皇家马德里"
+        text = "曼联对阵切尔西,巴塞罗那对战皇家马德里"
 
         # When
         entities = service.extract_entities(text)
@@ -280,7 +280,7 @@ class TestContentAnalysisService:
         assert all(e["confidence"] == 0.9 for e in team_entities)
 
     def test_extract_entities_persons(self, service):
-        """测试：提取人物实体"""
+        """测试:提取人物实体"""
         # Given
         text = "球员 C罗 在比赛中表现出色"
 
@@ -292,9 +292,9 @@ class TestContentAnalysisService:
         assert len(person_entities) >= 1
 
     def test_classify_content_match_report(self, service):
-        """测试：分类比赛报道内容"""
+        """测试:分类比赛报道内容"""
         # Given
-        content = "比赛结束，比分为3:1，曼联在主场取得了胜利"
+        content = "比赛结束，比分为3:1,曼联在主场取得了胜利"
 
         # When
         _result = service.classify_content(content)
@@ -305,9 +305,9 @@ class TestContentAnalysisService:
         assert "all_scores" in result
 
     def test_classify_content_transfer_news(self, service):
-        """测试：分类转会新闻内容"""
+        """测试:分类转会新闻内容"""
         # Given
-        content = "球员完成转会，签约新俱乐部"
+        content = "球员完成转会,签约新俱乐部"
 
         # When
         _result = service.classify_content(content)
@@ -317,7 +317,7 @@ class TestContentAnalysisService:
         assert _result["confidence"] > 0
 
     def test_classify_content_empty(self, service):
-        """测试：分类空内容"""
+        """测试:分类空内容"""
         # When
         _result = service.classify_content("")
 
@@ -326,9 +326,9 @@ class TestContentAnalysisService:
         assert _result["confidence"] == 0.0
 
     def test_analyze_sentiment_positive(self, service):
-        """测试：正面情感分析"""
+        """测试:正面情感分析"""
         # Given
-        text = "这是一场精彩的胜利，表现出色！"
+        text = "这是一场精彩的胜利,表现出色！"
 
         # When
         _result = service.analyze_sentiment(text)
@@ -341,9 +341,9 @@ class TestContentAnalysisService:
         assert _result["positive_count"] > 0
 
     def test_analyze_sentiment_negative(self, service):
-        """测试：负面情感分析"""
+        """测试:负面情感分析"""
         # Given
-        text = "糟糕的失败，令人失望"
+        text = "糟糕的失败,令人失望"
 
         # When
         _result = service.analyze_sentiment(text)
@@ -353,7 +353,7 @@ class TestContentAnalysisService:
         assert _result["score"] < 0
 
     def test_analyze_sentiment_neutral(self, service):
-        """测试：中性情感分析"""
+        """测试:中性情感分析"""
         # Given
         text = "今天进行了比赛"
 
@@ -365,7 +365,7 @@ class TestContentAnalysisService:
         assert _result["score"] == 0.0
 
     def test_analyze_sentiment_empty(self, service):
-        """测试：空文本情感分析"""
+        """测试:空文本情感分析"""
         # When
         _result = service.analyze_sentiment("")
 
@@ -374,7 +374,7 @@ class TestContentAnalysisService:
         assert _result["score"] == 0.0
 
     def test_generate_summary_short_text(self, service):
-        """测试：生成短文本摘要"""
+        """测试:生成短文本摘要"""
         # Given
         text = "这是一段短文本"
 
@@ -385,7 +385,7 @@ class TestContentAnalysisService:
         assert summary == text
 
     def test_generate_summary_long_text(self, service):
-        """测试：生成长文本摘要"""
+        """测试:生成长文本摘要"""
         # Given
         text = "这是一段很长的文本。包含了很多内容。需要进行摘要。超过了一百个字符的限制。" * 3
 
@@ -397,7 +397,7 @@ class TestContentAnalysisService:
         assert "..." in summary or summary.endswith("。")
 
     def test_generate_summary_empty(self, service):
-        """测试：生成空文本摘要"""
+        """测试:生成空文本摘要"""
         # When
         summary = service.generate_summary("", 100)
 
@@ -405,9 +405,9 @@ class TestContentAnalysisService:
         assert summary == ""
 
     def test_generate_summary_custom_max_length(self, service):
-        """测试：自定义最大长度摘要"""
+        """测试:自定义最大长度摘要"""
         # Given
-        text = "这是一段测试文本，用于验证自定义长度功能。"
+        text = "这是一段测试文本,用于验证自定义长度功能。"
 
         # When
         summary = service.generate_summary(text, 20)
@@ -420,7 +420,7 @@ class TestContentModel:
     """内容模型测试"""
 
     def test_content_creation(self):
-        """测试：创建内容对象"""
+        """测试:创建内容对象"""
         # Given & When
         content = Content(content_id="test_001", content_type="text", _data={"text": "测试内容"})
 
@@ -430,7 +430,7 @@ class TestContentModel:
         assert content._data["text"] == "测试内容"
 
     def test_user_profile_creation_default_preferences(self):
-        """测试：创建用户配置文件（默认偏好）"""
+        """测试:创建用户配置文件（默认偏好）"""
         # Given & When
         profile = UserProfile(user_id="user_123")
 
@@ -439,7 +439,7 @@ class TestContentModel:
         assert profile.preferences == {}
 
     def test_user_profile_creation_with_preferences(self):
-        """测试：创建用户配置文件（带偏好）"""
+        """测试:创建用户配置文件（带偏好）"""
         # Given
         preferences = {"language": "zh", "category": "football"}
 
@@ -451,7 +451,7 @@ class TestContentModel:
         assert profile.preferences == preferences
 
     def test_analysis_result_creation_default(self):
-        """测试：创建分析结果（默认值）"""
+        """测试:创建分析结果（默认值）"""
         # Given & When
         _result = AnalysisResult()
 
@@ -464,7 +464,7 @@ class TestContentModel:
         assert _result.content_id == ""
 
     def test_analysis_result_creation_with_values(self):
-        """测试：创建分析结果（带值）"""
+        """测试:创建分析结果（带值）"""
         # Given
         timestamp = datetime.now()
 
@@ -491,7 +491,7 @@ class TestContentTypeEnum:
     """内容类型枚举测试"""
 
     def test_content_type_values(self):
-        """测试：内容类型枚举值"""
+        """测试:内容类型枚举值"""
         assert ContentType.TEXT.value == "text"
         assert ContentType.IMAGE.value == "image"
         assert ContentType.VIDEO.value == "video"
@@ -499,7 +499,7 @@ class TestContentTypeEnum:
         assert ContentType.DOCUMENT.value == "document"
 
     def test_user_role_values(self):
-        """测试：用户角色枚举值"""
+        """测试:用户角色枚举值"""
         assert UserRole.ADMIN.value == "admin"
         assert UserRole.USER.value == "user"
         assert UserRole.GUEST.value == "guest"

@@ -7,8 +7,8 @@
 门面模式API端点测试
 Tests for Facade Pattern API Endpoints
 
-测试门面模式的所有API端点，包括：
-- 门面管理（初始化、关闭、状态查询）
+测试门面模式的所有API端点,包括:
+- 门面管理（初始化、关闭,状态查询）
 - 主系统门面演示
 - 预测门面演示
 - 数据收集门面演示
@@ -190,7 +190,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.facade_factory")
     def test_list_facades(self, mock_factory, client):
-        """测试：获取所有可用门面"""
+        """测试:获取所有可用门面"""
         # Given
         mock_factory.list_facade_types.return_value = ["main", "prediction"]
         mock_factory.list_configs.return_value = ["main_config", "pred_config"]
@@ -212,7 +212,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.facade_factory")
     def test_initialize_facade(self, mock_factory, client):
-        """测试：初始化门面"""
+        """测试:初始化门面"""
         # Given
         mock_facade = MockFacade()
         mock_factory.create_facade.return_value = mock_facade
@@ -230,7 +230,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.facade_factory")
     def test_initialize_facade_existing(self, mock_factory, client):
-        """测试：初始化已存在的门面"""
+        """测试:初始化已存在的门面"""
         # Given
         mock_facade = MockFacade()
         global_facades["existing_facade"] = mock_facade
@@ -246,7 +246,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.facade_factory")
     def test_initialize_facade_error(self, mock_factory, client):
-        """测试：初始化门面失败"""
+        """测试:初始化门面失败"""
         # Given
         mock_factory.create_facade.side_effect = ValueError("Invalid facade type")
 
@@ -257,7 +257,7 @@ class TestFacadesAPI:
         assert response.status_code == 400  # ValueError会被转换为400错误
 
     def test_shutdown_facade(self, client):
-        """测试：关闭门面"""
+        """测试:关闭门面"""
         # Given
         mock_facade = MockFacade()
         mock_facade.shutdown = AsyncMock()
@@ -273,7 +273,7 @@ class TestFacadesAPI:
         assert "test_facade" not in global_facades
 
     def test_shutdown_facade_not_found(self, client):
-        """测试：关闭不存在的门面"""
+        """测试:关闭不存在的门面"""
         # When
         response = client.post("/facades/shutdown?facade_name=nonexistent")
 
@@ -281,7 +281,7 @@ class TestFacadesAPI:
         assert response.status_code == 404
 
     def test_get_facade_status_specific(self, client):
-        """测试：获取特定门面状态"""
+        """测试:获取特定门面状态"""
         # Given
         mock_facade = MockFacade(name="test_facade")  # 设置正确的名称
         global_facades["test_facade"] = mock_facade
@@ -296,7 +296,7 @@ class TestFacadesAPI:
         assert _data["initialized"] is False  # Mock的默认值
 
     def test_get_facade_status_all(self, client):
-        """测试：获取所有门面状态"""
+        """测试:获取所有门面状态"""
         # Given
         facade1 = MockFacade("main", "main_facade")
         facade1.initialized = True
@@ -315,7 +315,7 @@ class TestFacadesAPI:
         assert len(_data["facades"]) == 2
 
     def test_get_facade_status_not_found(self, client):
-        """测试：获取不存在门面的状态"""
+        """测试:获取不存在门面的状态"""
         # When
         response = client.get("/facades/status?facade_name=nonexistent")
 
@@ -323,7 +323,7 @@ class TestFacadesAPI:
         assert response.status_code == 404
 
     def test_health_check_facade_specific(self, client):
-        """测试：检查特定门面健康状态"""
+        """测试:检查特定门面健康状态"""
         # Given
         mock_facade = MockFacade()
         mock_facade.initialized = True
@@ -338,7 +338,7 @@ class TestFacadesAPI:
         assert _data["overall_health"] is True
 
     def test_health_check_facade_all(self, client):
-        """测试：检查所有门面健康状态"""
+        """测试:检查所有门面健康状态"""
         # Given
         facade1 = MockFacade()
         facade1.initialized = True
@@ -360,7 +360,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_main_system_prediction(self, mock_init, client):
-        """测试：主系统门面预测演示"""
+        """测试:主系统门面预测演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["main"] = mock_facade
@@ -388,7 +388,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_batch_processing(self, mock_init, client):
-        """测试：批量处理演示"""
+        """测试:批量处理演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["main"] = mock_facade
@@ -410,7 +410,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_prediction_facade(self, mock_init, client):
-        """测试：预测门面演示"""
+        """测试:预测门面演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["prediction"] = mock_facade
@@ -435,7 +435,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_batch_prediction(self, mock_init, client):
-        """测试：批量预测演示"""
+        """测试:批量预测演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["prediction"] = mock_facade
@@ -457,7 +457,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_get_prediction_models(self, mock_init, client):
-        """测试：获取预测模型信息"""
+        """测试:获取预测模型信息"""
         # Given
         mock_facade = MockFacade()
         global_facades["prediction"] = mock_facade
@@ -476,7 +476,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_data_storage(self, mock_init, client):
-        """测试：数据存储演示"""
+        """测试:数据存储演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["data_collection"] = mock_facade
@@ -496,7 +496,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_data_query(self, mock_init, client):
-        """测试：数据查询演示"""
+        """测试:数据查询演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["data_collection"] = mock_facade
@@ -519,7 +519,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_event_tracking(self, mock_init, client):
-        """测试：事件跟踪演示"""
+        """测试:事件跟踪演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["analytics"] = mock_facade
@@ -542,7 +542,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_report_generation(self, mock_init, client):
-        """测试：报告生成演示"""
+        """测试:报告生成演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["analytics"] = mock_facade
@@ -567,7 +567,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_get_analytics_summary(self, mock_init, client):
-        """测试：获取分析摘要"""
+        """测试:获取分析摘要"""
         # Given
         mock_facade = MockFacade()
         global_facades["analytics"] = mock_facade
@@ -586,7 +586,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_send_notification(self, mock_init, client):
-        """测试：发送通知演示"""
+        """测试:发送通知演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["notification"] = mock_facade
@@ -611,7 +611,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_queue_notification(self, mock_init, client):
-        """测试：排队通知演示"""
+        """测试:排队通知演示"""
         # Given
         mock_facade = MockFacade()
         global_facades["notification"] = mock_facade
@@ -636,7 +636,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_get_notification_stats(self, mock_init, client):
-        """测试：获取通知统计"""
+        """测试:获取通知统计"""
         # Given
         mock_facade = MockFacade()
         global_facades["notification"] = mock_facade
@@ -655,7 +655,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.facade_factory")
     def test_get_facade_configs(self, mock_factory, client):
-        """测试：获取门面配置"""
+        """测试:获取门面配置"""
         # Given
         mock_config = Mock()
         mock_config.facade_type = "main"
@@ -682,7 +682,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.facade_factory")
     def test_reload_facade_configs(self, mock_factory, client):
-        """测试：重新加载门面配置"""
+        """测试:重新加载门面配置"""
         # When
         response = client.post("/facades/configs/reload")
 
@@ -697,7 +697,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_complete_workflow(self, mock_init, client):
-        """测试：完整工作流演示"""
+        """测试:完整工作流演示"""
         # Given
         data_facade = MockFacade()
         analytics_facade = MockFacade()
@@ -739,7 +739,7 @@ class TestFacadesAPI:
 
     @patch("src.api.facades.initialize_facade")
     def test_demo_complete_workflow_with_error(self, mock_init, client):
-        """测试：完整工作流演示（带错误）"""
+        """测试:完整工作流演示（带错误）"""
         # Given
         data_facade = MockFacade()
         # 让预测操作失败
@@ -770,7 +770,7 @@ class TestFacadesAPI:
     # ==================== 边界条件测试 ====================
 
     def test_get_facade_status_empty(self, client):
-        """测试：获取状态时没有门面"""
+        """测试:获取状态时没有门面"""
         # When
         response = client.get("/facades/status")
 
@@ -781,7 +781,7 @@ class TestFacadesAPI:
         assert _data["facades"] == {}
 
     def test_health_check_empty(self, client):
-        """测试：健康检查时没有门面"""
+        """测试:健康检查时没有门面"""
         # When
         response = client.post("/facades/health-check")
 

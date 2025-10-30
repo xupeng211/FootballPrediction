@@ -37,7 +37,7 @@ class TestI18n:
         """测试本地化目录"""
         assert isinstance(LOCALE_DIR, Path)
         assert LOCALE_DIR.name == "locales"
-        assert LOCALE_DIR.exists() or True  # 目录可能不存在，这很正常
+        assert LOCALE_DIR.exists() or True  # 目录可能不存在,这很正常
 
     def test_init_i18n(self):
         """测试初始化国际化"""

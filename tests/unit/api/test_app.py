@@ -1,7 +1,7 @@
-"""""""
+""""""""
 FastAPI主应用测试
 FastAPI Main Application Tests
-"""""""
+""""""""
 
 import time
 
@@ -161,25 +161,25 @@ class TestPredictionEngine:
     @pytest.mark.asyncio
     async def test_init_prediction_engine_basic(self):
         """测试预测引擎初始化基本功能"""
-        # 基本功能测试：验证函数可以调用
+        # 基本功能测试:验证函数可以调用
         try:
             await init_prediction_engine()
             # 如果没有抛出异常，则测试通过
             assert True
         except Exception:
-            # 如果有异常（比如PredictionEngine不可用），也是可以接受的
+            # 如果有异常（比如PredictionEngine不可用）,也是可以接受的
             assert True
 
     @pytest.mark.asyncio
     async def test_close_prediction_engine_basic(self):
         """测试预测引擎关闭基本功能"""
-        # 基本功能测试：验证函数可以调用
+        # 基本功能测试:验证函数可以调用
         try:
             await close_prediction_engine()
             # 如果没有抛出异常，则测试通过
             assert True
         except Exception:
-            # 如果有异常，也是可以接受的
+            # 如果有异常,也是可以接受的
             assert True
 
 
@@ -197,7 +197,7 @@ class TestExceptionHandlers:
                 general_exception_handler,
             )
 
-            # 如果能成功导入，测试通过
+            # 如果能成功导入,测试通过
             assert True
         except ImportError:
             pytest.skip("异常处理器导入失败")
@@ -214,7 +214,7 @@ class TestLifespan:
         try:
             from src.api.app import lifespan
 
-            # 如果能成功导入，测试通过
+            # 如果能成功导入,测试通过
             assert lifespan is not None
         except ImportError:
             pytest.skip("生命周期函数导入失败")

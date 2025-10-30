@@ -1,13 +1,13 @@
 from typing import Dict
 from typing import Any
 from datetime import datetime
-"""""""
+""""""""
 第四阶段直接覆盖率提升测试
 Phase 4 Direct Coverage Boost Tests
 
-专注于直接提升关键模块的测试覆盖率，避免复杂的依赖问题
-目标：30% → 40%覆盖率提升
-"""""""
+专注于直接提升关键模块的测试覆盖率,避免复杂的依赖问题
+目标:30% → 40%覆盖率提升
+""""""""
 
 import json
 
@@ -18,7 +18,7 @@ import pytest
 @pytest.mark.unit
 @pytest.mark.slow
 def test_imports_coverage():
-    """测试：模块导入覆盖率"""
+    """测试:模块导入覆盖率"""
     # 测试核心模块导入
     try:
 from src.core.config import Config
@@ -44,7 +44,7 @@ from src.api.schemas import APIResponse
 
 
 def test_config_class_coverage():
-    """测试：配置类覆盖率提升"""
+    """测试:配置类覆盖率提升"""
     try:
 from src.core.config import Config
 
@@ -70,7 +70,7 @@ from src.core.config import Config
 
 
 def test_exceptions_hierarchy_coverage():
-    """测试：异常层次结构覆盖率"""
+    """测试:异常层次结构覆盖率"""
     try:
 from src.core.exceptions import FootballPredictionError, ServiceError
 
@@ -103,7 +103,7 @@ from src.core.exceptions import FootballPredictionError, ServiceError
 
 
 def test_api_schemas_coverage():
-    """测试：API模式覆盖率"""
+    """测试:API模式覆盖率"""
     try:
 from src.api.schemas import APIResponse
 
@@ -145,7 +145,7 @@ from src.api.schemas import APIResponse
 
 
 def test_utils_modules_coverage():
-    """测试：工具模块覆盖率"""
+    """测试:工具模块覆盖率"""
     # 测试字符串工具
     try:
 from src.utils.string_utils import clean_string, format_currency
@@ -201,7 +201,7 @@ from src.utils.dict_utils import merge_dicts, safe_get
 
 
 def test_validation_utilities_coverage():
-    """测试：验证工具覆盖率"""
+    """测试:验证工具覆盖率"""
     # 测试邮箱验证
     try:
 from src.utils.validators import validate_email
@@ -246,7 +246,7 @@ from src.utils.validators import validate_phone
 
 
 def test_crypto_utilities_coverage():
-    """测试：加密工具覆盖率"""
+    """测试:加密工具覆盖率"""
     try:
 from src.utils.crypto_utils import hash_password, verify_password
 
@@ -271,7 +271,7 @@ from src.utils.crypto_utils import hash_password, verify_password
 
 
 def test_business_logic_coverage():
-    """测试：业务逻辑覆盖率"""
+    """测试:业务逻辑覆盖率"""
 
     # 测试赔率转概率
     def odds_to_probability(odds: Dict[str, float]) -> Dict[str, float]:
@@ -313,7 +313,7 @@ def test_business_logic_coverage():
 
 
 def test_data_validation_patterns_coverage():
-    """测试：数据验证模式覆盖率"""
+    """测试:数据验证模式覆盖率"""
 
     def validate_match_data(data: Dict[str, Any]) -> Dict[str, Any]:
         errors = []
@@ -363,9 +363,9 @@ def test_data_validation_patterns_coverage():
 
 
 def test_error_handling_patterns_coverage():
-    """测试：错误处理模式覆盖率"""
+    """测试:错误处理模式覆盖率"""
 
-    # 策略1：返回默认值
+    # 策略1:返回默认值
     def safe_divide(a, b, default=0):
         try:
             return a / b
@@ -376,7 +376,7 @@ def test_error_handling_patterns_coverage():
     assert safe_divide(10, 0) == 0
     assert safe_divide("10", 2) == 0
 
-    # 策略2：重试机制
+    # 策略2:重试机制
     def retry_operation(max_attempts=3):
         def decorator(func):
             def wrapper(*args, **kwargs):
@@ -408,7 +408,7 @@ def test_error_handling_patterns_coverage():
 
 
 def test_date_time_utilities_coverage():
-    """测试：日期时间工具覆盖率"""
+    """测试:日期时间工具覆盖率"""
 
     def parse_flexible_date(date_input):
         """灵活的日期解析"""
@@ -457,7 +457,7 @@ def test_date_time_utilities_coverage():
 
 
 def test_performance_monitoring_coverage():
-    """测试：性能监控覆盖率"""
+    """测试:性能监控覆盖率"""
 
     class PerformanceMonitor:
         def __init__(self):
@@ -510,7 +510,7 @@ def test_performance_monitoring_coverage():
 
 
 def test_data_serialization_coverage():
-    """测试：数据序列化覆盖率"""
+    """测试:数据序列化覆盖率"""
 
     # 测试复杂对象序列化
     test_data = {

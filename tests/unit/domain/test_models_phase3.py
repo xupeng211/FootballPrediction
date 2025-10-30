@@ -1,6 +1,6 @@
 """
 Phase G Week 3: Domain Models 单元测试
-自动生成的测试用例，覆盖src/domain/models模块
+自动生成的测试用例,覆盖src/domain/models模块
 """
 
 import pytest
@@ -215,7 +215,7 @@ class TestDomainModels:
                 status="completed"
             )
 
-            # 如果有计算结果的方法，测试它
+            # 如果有计算结果的方法,测试它
             if hasattr(match, 'get_result'):
                 result = match.get_result()
                 assert result == "home_win"
@@ -266,7 +266,7 @@ class TestDomainModels:
                 league_id=1
             )
 
-            # 如果有标准化方法，测试它
+            # 如果有标准化方法,测试它
             if hasattr(team, 'get_normalized_name'):
                 normalized = team.get_normalized_name()
                 assert normalized == expected
@@ -290,7 +290,7 @@ class TestDomainModels:
                     current_season=season
                 )
 
-                # 如果有验证方法，测试它
+                # 如果有验证方法,测试它
                 if hasattr(league, 'is_valid_season'):
                     assert league.is_valid_season()
         except Exception:
@@ -326,7 +326,7 @@ class TestDomainModels:
                 )
             ]
 
-            # 如果有计算准确率的方法，测试它
+            # 如果有计算准确率的方法,测试它
             correct_predictions = [p for p in predictions if p.actual_outcome == p.predicted_outcome]
             accuracy = len(correct_predictions) / len(predictions)
 

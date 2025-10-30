@@ -45,7 +45,7 @@ class TestTeamSimple:
 
     def test_team_creation(self):
         """测试球队创建"""
-        # 简单测试，不依赖复杂的基类初始化
+        # 简单测试,不依赖复杂的基类初始化
         team = Team()
 
         # 验证模型对象可以被创建

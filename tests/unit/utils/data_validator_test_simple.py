@@ -29,8 +29,8 @@ class TestUtilsDataValidatorReal:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块 utils.data_validator 导入失败")
 
-        # 基础验证：模块能够正常导入
-        assert True  # 如果能执行到这里，说明导入成功
+        # 基础验证:模块能够正常导入
+        assert True  # 如果能执行到这里,说明导入成功
 
     def test_basic_functionality(self):
         """测试基础功能"""
@@ -41,7 +41,7 @@ class TestUtilsDataValidatorReal:
             # 测试一些基础操作
             assert True  # 模块可以正常使用
 
-            # 如果有函数，测试它们
+            # 如果有函数,测试它们
             functions = [
                 name for name in dir() if not name.startswith("_") and callable(globals()[name])
             ]

@@ -26,7 +26,7 @@ class TestDatabaseConfig:
     """数据库配置类测试"""
 
     def test_config_initialization_minimal(self) -> None:
-        """✅ 成功用例：最小配置初始化"""
+        """✅ 成功用例:最小配置初始化"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -51,7 +51,7 @@ class TestDatabaseConfig:
         assert config.echo_pool is False
 
     def test_config_initialization_with_custom_values(self) -> None:
-        """✅ 成功用例：自定义配置值初始化"""
+        """✅ 成功用例:自定义配置值初始化"""
         config = DatabaseConfig(
             host="db.example.com",
             port=5433,
@@ -83,7 +83,7 @@ class TestDatabaseConfig:
         assert config.echo_pool is True
 
     def test_config_initialization_without_password(self) -> None:
-        """✅ 边界用例：无密码配置"""
+        """✅ 边界用例:无密码配置"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -95,7 +95,7 @@ class TestDatabaseConfig:
         assert config.password is None
 
     def test_is_sqlite_detection(self) -> None:
-        """✅ 成功用例：SQLite检测"""
+        """✅ 成功用例:SQLite检测"""
         # SQLite文件
         config1 = DatabaseConfig("localhost", 5432, "test.db", "user")
         assert config1._is_sqlite() is True
@@ -109,7 +109,7 @@ class TestDatabaseConfig:
         assert config3._is_sqlite() is False
 
     def test_postgresql_sync_url_property(self) -> None:
-        """✅ 成功用例：PostgreSQL同步URL"""
+        """✅ 成功用例:PostgreSQL同步URL"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -122,7 +122,7 @@ class TestDatabaseConfig:
         assert config.sync_url == expected_url
 
     def test_postgresql_sync_url_without_password(self) -> None:
-        """✅ 成功用例：无密码PostgreSQL同步URL"""
+        """✅ 成功用例:无密码PostgreSQL同步URL"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -135,7 +135,7 @@ class TestDatabaseConfig:
         assert config.sync_url == expected_url
 
     def test_postgresql_async_url_property(self) -> None:
-        """✅ 成功用例：PostgreSQL异步URL"""
+        """✅ 成功用例:PostgreSQL异步URL"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -148,35 +148,35 @@ class TestDatabaseConfig:
         assert config.async_url == expected_url
 
     def test_sqlite_sync_url_file_database(self) -> None:
-        """✅ 成功用例：SQLite文件同步URL"""
+        """✅ 成功用例:SQLite文件同步URL"""
         config = DatabaseConfig("localhost", 5432, "test.db", "user")
 
         expected_url = "sqlite:///test.db"
         assert config.sync_url == expected_url
 
     def test_sqlite_sync_url_memory_database(self) -> None:
-        """✅ 成功用例：SQLite内存同步URL"""
+        """✅ 成功用例:SQLite内存同步URL"""
         config = DatabaseConfig("localhost", 5432, ":memory:", "user")
 
         expected_url = "sqlite:///:memory:"
         assert config.sync_url == expected_url
 
     def test_sqlite_async_url_file_database(self) -> None:
-        """✅ 成功用例：SQLite文件异步URL"""
+        """✅ 成功用例:SQLite文件异步URL"""
         config = DatabaseConfig("localhost", 5432, "test.db", "user")
 
         expected_url = "sqlite+aiosqlite:///test.db"
         assert config.async_url == expected_url
 
     def test_sqlite_async_url_memory_database(self) -> None:
-        """✅ 成功用例：SQLite内存异步URL"""
+        """✅ 成功用例:SQLite内存异步URL"""
         config = DatabaseConfig("localhost", 5432, ":memory:", "user")
 
         expected_url = "sqlite+aiosqlite:///:memory:"
         assert config.async_url == expected_url
 
     def test_alembic_url_property(self) -> None:
-        """✅ 成功用例：Alembic URL属性"""
+        """✅ 成功用例:Alembic URL属性"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -193,7 +193,7 @@ class TestEnvironmentHelperFunctions:
     """环境变量辅助函数测试"""
 
     def test_get_env_bool_true_values(self) -> None:
-        """✅ 成功用例：环境布尔值真值"""
+        """✅ 成功用例:环境布尔值真值"""
         true_values = ["1", "true", "TRUE", "yes", "YES", "on", "ON"]
 
         for value in true_values:
@@ -202,7 +202,7 @@ class TestEnvironmentHelperFunctions:
                 assert result is True
 
     def test_get_env_bool_false_values(self) -> None:
-        """✅ 成功用例：环境布尔值假值"""
+        """✅ 成功用例:环境布尔值假值"""
         false_values = ["0", "false", "FALSE", "no", "NO", "off", "OFF", ""]
 
         for value in false_values:
@@ -211,7 +211,7 @@ class TestEnvironmentHelperFunctions:
                 assert result is False
 
     def test_get_env_bool_missing_environment(self) -> None:
-        """✅ 边界用例：缺失环境变量"""
+        """✅ 边界用例:缺失环境变量"""
         with patch.dict(os.environ, {}, clear=True):
             result = _get_env_bool("MISSING_VAR", True)
             assert result is True
@@ -220,7 +220,7 @@ class TestEnvironmentHelperFunctions:
             assert result is False
 
     def test_parse_int_valid_values(self) -> None:
-        """✅ 成功用例：有效整数解析"""
+        """✅ 成功用例:有效整数解析"""
         test_cases = [
             ("10", 10),
             ("0", 0),
@@ -234,7 +234,7 @@ class TestEnvironmentHelperFunctions:
                 assert result == expected
 
     def test_parse_int_invalid_values(self) -> None:
-        """✅ 边界用例：无效整数解析"""
+        """✅ 边界用例:无效整数解析"""
         invalid_values = ["not_a_number", "12.5", "abc123", ""]
 
         for value in invalid_values:
@@ -243,13 +243,13 @@ class TestEnvironmentHelperFunctions:
                 assert result == 42  # 返回默认值
 
     def test_parse_int_missing_environment(self) -> None:
-        """✅ 边界用例：缺失整数环境变量"""
+        """✅ 边界用例:缺失整数环境变量"""
         with patch.dict(os.environ, {}, clear=True):
             result = _parse_int("MISSING_INT", 100)
             assert result == 100
 
     def test_environment_prefix_mapping(self) -> None:
-        """✅ 成功用例：环境前缀映射"""
+        """✅ 成功用例:环境前缀映射"""
         expected_prefixes = {
             "development": "",
             "dev": "",
@@ -263,7 +263,7 @@ class TestEnvironmentHelperFunctions:
             assert _ENV_PREFIX.get(env, "") == prefix
 
     def test_environment_prefix_unknown_environment(self) -> None:
-        """✅ 边界用例：未知环境前缀"""
+        """✅ 边界用例:未知环境前缀"""
         unknown_env = "staging"
         prefix = _ENV_PREFIX.get(unknown_env, "")
         assert prefix == ""
@@ -274,9 +274,9 @@ class TestGetDatabaseConfig:
     """获取数据库配置函数测试"""
 
     def test_get_config_development_environment(self) -> None:
-        """✅ 成功用例：开发环境配置"""
+        """✅ 成功用例:开发环境配置"""
         with patch.dict(os.environ, {}, clear=True):
-            # 开发环境也需要密码，根据实际实现调整
+            # 开发环境也需要密码,根据实际实现调整
             with patch.dict(os.environ, {"DB_PASSWORD": "dev_pass"}):
                 config = get_database_config("development")
 
@@ -286,7 +286,7 @@ class TestGetDatabaseConfig:
                 assert config.username == "football_user"
 
     def test_get_config_test_environment(self) -> None:
-        """✅ 成功用例：测试环境配置"""
+        """✅ 成功用例:测试环境配置"""
         with patch.dict(os.environ, {}, clear=True):
             config = get_database_config("test")
 
@@ -297,7 +297,7 @@ class TestGetDatabaseConfig:
             assert config.password is None  # 测试环境不需要密码
 
     def test_get_config_production_environment_with_password(self) -> None:
-        """✅ 成功用例：生产环境配置（有密码）"""
+        """✅ 成功用例:生产环境配置（有密码）"""
         with patch.dict(
             os.environ,
             {
@@ -318,13 +318,13 @@ class TestGetDatabaseConfig:
             assert config.password == "super_secret_password"
 
     def test_get_config_production_environment_without_password(self) -> None:
-        """✅ 异常用例：生产环境无密码（应该抛出异常）"""
+        """✅ 异常用例:生产环境无密码（应该抛出异常）"""
         with patch.dict(os.environ, {}, clear=True):
             with pytest.raises(ValueError, match="数据库密码未配置"):
                 get_database_config("production")
 
     def test_get_config_custom_environment_variables(self) -> None:
-        """✅ 成功用例：自定义环境变量"""
+        """✅ 成功用例:自定义环境变量"""
         env_vars = {
             "TEST_DB_HOST": "custom.db.com",
             "TEST_DB_PORT": "3306",
@@ -359,7 +359,7 @@ class TestGetDatabaseConfig:
             assert config.echo_pool is False
 
     def test_get_config_from_environment_variable(self) -> None:
-        """✅ 成功用例：从环境变量获取环境"""
+        """✅ 成功用例:从环境变量获取环境"""
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}, clear=True):
             with patch.dict(os.environ, {"PROD_DB_PASSWORD": "env_pass"}):
                 config = get_database_config()
@@ -368,7 +368,7 @@ class TestGetDatabaseConfig:
                 assert config.username == "football_user"
 
     def test_get_config_environment_case_insensitive(self) -> None:
-        """✅ 成功用例：环境名称大小写不敏感"""
+        """✅ 成功用例:环境名称大小写不敏感"""
         test_cases = ["DEVELOPMENT", "DEV", "TEST", "PRODUCTION", "PROD"]
 
         for env_name in test_cases:
@@ -382,7 +382,7 @@ class TestGetDatabaseConfig:
                 assert isinstance(config, DatabaseConfig)
 
     def test_get_config_invalid_environment_defaults_to_development(self) -> None:
-        """✅ 边界用例：无效环境默认为开发环境"""
+        """✅ 边界用例:无效环境默认为开发环境"""
         with patch.dict(os.environ, {}, clear=True):
             config = get_database_config("invalid_environment")
 
@@ -390,7 +390,7 @@ class TestGetDatabaseConfig:
             assert config.host == "localhost"
 
     def test_config_urls_with_different_databases(self) -> None:
-        """✅ 成功用例：不同数据库类型的URL生成"""
+        """✅ 成功用例:不同数据库类型的URL生成"""
         # PostgreSQL配置
         pg_config = DatabaseConfig(
             host="pg.example.com",
@@ -421,7 +421,7 @@ class TestSpecializedConfigFunctions:
     """专门的配置函数测试"""
 
     def test_get_test_database_config(self) -> None:
-        """✅ 成功用例：获取测试数据库配置"""
+        """✅ 成功用例:获取测试数据库配置"""
         with patch.dict(os.environ, {}, clear=True):
             config = get_test_database_config()
 
@@ -430,7 +430,7 @@ class TestSpecializedConfigFunctions:
             assert config.password is None
 
     def test_get_production_database_config(self) -> None:
-        """✅ 成功用例：获取生产数据库配置"""
+        """✅ 成功用例:获取生产数据库配置"""
         with patch.dict(os.environ, {"PROD_DB_PASSWORD": "prod_secret"}, clear=True):
             config = get_production_database_config()
 
@@ -438,13 +438,13 @@ class TestSpecializedConfigFunctions:
             assert config.password == "prod_secret"
 
     def test_get_production_database_config_without_password(self) -> None:
-        """✅ 异常用例：生产配置无密码"""
+        """✅ 异常用例:生产配置无密码"""
         with patch.dict(os.environ, {}, clear=True):
             with pytest.raises(ValueError, match="数据库密码未配置"):
                 get_production_database_config()
 
     def test_get_database_url_function(self) -> None:
-        """✅ 成功用例：获取数据库URL函数"""
+        """✅ 成功用例:获取数据库URL函数"""
         with patch.dict(os.environ, {"TEST_DB_PASSWORD": "test_pass"}, clear=True):
             url = get_database_url("test")
 
@@ -453,7 +453,7 @@ class TestSpecializedConfigFunctions:
             assert "test_user" in url
 
     def test_get_database_url_uses_async_url(self) -> None:
-        """✅ 成功用例：数据库URL函数使用异步URL"""
+        """✅ 成功用例:数据库URL函数使用异步URL"""
         with patch.dict(os.environ, {}, clear=True):
             config = get_database_config("test")
             url = get_database_url("test")
@@ -461,7 +461,7 @@ class TestSpecializedConfigFunctions:
             assert url == config.async_url
 
     def test_get_database_url_with_sqlite(self) -> None:
-        """✅ 成功用例：SQLite数据库URL"""
+        """✅ 成功用例:SQLite数据库URL"""
         with patch.dict(os.environ, {}, clear=True):
             url = get_database_url("test")
 
@@ -473,7 +473,7 @@ class TestDatabaseConfigErrorHandling:
     """数据库配置错误处理测试"""
 
     def test_config_with_invalid_port_type(self) -> None:
-        """✅ 边界用例：无效端口类型处理"""
+        """✅ 边界用例:无效端口类型处理"""
         # 配置类应该接受整数端口
         config = DatabaseConfig(
             host="localhost", port=5432, database="test", username="user"  # 整数端口
@@ -481,7 +481,7 @@ class TestDatabaseConfigErrorHandling:
         assert config.port == 5432
 
     def test_config_with_special_characters_in_password(self) -> None:
-        """✅ 边界用例：密码中特殊字符"""
+        """✅ 边界用例:密码中特殊字符"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -494,7 +494,7 @@ class TestDatabaseConfigErrorHandling:
         assert "p@ssw0rd!@#$%^&*()" in url
 
     def test_config_with_unicode_characters(self) -> None:
-        """✅ 边界用例：Unicode字符"""
+        """✅ 边界用例:Unicode字符"""
         config = DatabaseConfig(
             host="测试主机",
             port=5432,
@@ -510,7 +510,7 @@ class TestDatabaseConfigErrorHandling:
         assert "测试密码" in url
 
     def test_config_with_extreme_values(self) -> None:
-        """✅ 边界用例：极值配置"""
+        """✅ 边界用例:极值配置"""
         config = DatabaseConfig(
             host="localhost",
             port=65535,  # 最大端口
@@ -535,7 +535,7 @@ class TestDatabaseConfigPerformance:
     """数据库配置性能测试"""
 
     def test_config_creation_performance(self) -> None:
-        """✅ 性能用例：配置创建性能"""
+        """✅ 性能用例:配置创建性能"""
         import time
 
         start_time = time.perf_counter()
@@ -556,7 +556,7 @@ class TestDatabaseConfigPerformance:
         assert duration < 1.0
 
     def test_url_generation_performance(self) -> None:
-        """✅ 性能用例：URL生成性能"""
+        """✅ 性能用例:URL生成性能"""
         config = DatabaseConfig(
             host="localhost",
             port=5432,
@@ -580,7 +580,7 @@ class TestDatabaseConfigPerformance:
         assert duration < 0.5
 
     def test_get_database_config_performance(self) -> None:
-        """✅ 性能用例：获取数据库配置性能"""
+        """✅ 性能用例:获取数据库配置性能"""
         with patch.dict(os.environ, {}, clear=True):
             import time
 
@@ -601,7 +601,7 @@ class TestDatabaseConfigIntegration:
     """数据库配置集成测试"""
 
     def test_complete_configuration_workflow(self) -> None:
-        """✅ 集成用例：完整配置工作流"""
+        """✅ 集成用例:完整配置工作流"""
         # 模拟不同的环境配置
         test_env_vars = {
             "TEST_DB_HOST": "test.db.com",
@@ -634,7 +634,7 @@ class TestDatabaseConfigIntegration:
             assert config.alembic_url == sync_url
 
     def test_environment_specific_configurations(self) -> None:
-        """✅ 集成用例：环境特定配置"""
+        """✅ 集成用例:环境特定配置"""
         environments = ["development", "dev", "test", "production", "prod"]
 
         for env in environments:
@@ -646,14 +646,14 @@ class TestDatabaseConfigIntegration:
                             config = get_database_config(env)
                             assert isinstance(config, DatabaseConfig)
                         except ValueError:
-                            # 如果密码检查失败，这是预期的
+                            # 如果密码检查失败,这是预期的
                             pass
                 else:
                     config = get_database_config(env)
                     assert isinstance(config, DatabaseConfig)
 
     def test_configuration_consistency_across_calls(self) -> None:
-        """✅ 集成用例：多次调用配置一致性"""
+        """✅ 集成用例:多次调用配置一致性"""
         with patch.dict(
             os.environ,
             {

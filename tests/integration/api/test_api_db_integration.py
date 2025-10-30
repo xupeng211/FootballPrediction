@@ -23,7 +23,7 @@ from src.database.models import (
 
 """预测API集成测试
 
-使用真实的 FastAPI 路由和内存 SQLite 数据库，验证预测接口在无外部依赖
+使用真实的 FastAPI 路由和内存 SQLite 数据库,验证预测接口在无外部依赖
 （Feast/Redis/MLflow）情况下的核心流程。
 """
 
@@ -62,7 +62,7 @@ async def predictions_app(
 ) -> AsyncGenerator[FastAPI, None]:
     """构建仅包含预测路由的 FastAPI 应用并覆盖依赖。"""
 
-    # 禁用队列依赖，确保预测服务以Mock实现运行
+    # 禁用队列依赖,确保预测服务以Mock实现运行
     monkeypatch.setenv("ENABLE_FEAST", "false")
     monkeypatch.setenv("ENABLE_METRICS", "false")
     monkeypatch.setenv("MINIMAL_API_MODE", "false")
@@ -106,7 +106,7 @@ async def integration_client(
 
 @pytest_asyncio.fixture
 async def cached_prediction(db_session: AsyncSession) -> Dict[str, int]:
-    """预置一场比赛及其缓存预测，返回相关ID。"""
+    """预置一场比赛及其缓存预测,返回相关ID。"""
 
     league = League(league_name="Integration League", country="Testland")
     db_session.add(league)
@@ -153,7 +153,7 @@ async def cached_prediction(db_session: AsyncSession) -> Dict[str, int]:
 async def test_get_match_prediction_returns_cached(
     integration_client: AsyncClient, cached_prediction: Dict[str, int]
 ) -> None:
-    """验证存在缓存预测时，API返回缓存结果。"""
+    """验证存在缓存预测时,API返回缓存结果。"""
 
     match_id = cached_prediction["match_id"]
 

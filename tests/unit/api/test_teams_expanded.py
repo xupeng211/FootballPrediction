@@ -16,7 +16,7 @@ def app():
     # from src.main import app
     # return app
 
-    # 模拟应用，实际使用时替换为真实导入
+    # 模拟应用,实际使用时替换为真实导入
     from fastapi import FastAPI
     app = FastAPI(title="Test API for teams")
 

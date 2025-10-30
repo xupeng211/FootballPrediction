@@ -1,10 +1,10 @@
-"""""""
+""""""""
 预测服务模块测试
 Prediction Service Module Tests
 
-测试src/models/prediction_service.py中定义的预测服务功能，专注于实现100%覆盖率。
+测试src/models/prediction_service.py中定义的预测服务功能,专注于实现100%覆盖率。
 Tests prediction service functionality defined in src/models/prediction_service.py, focused on achieving 100% coverage.
-"""""""
+""""""""
 
 import pytest
 
@@ -311,7 +311,7 @@ class TestErrorHandling:
     def test_import_error_handling(self):
         """测试导入错误处理"""
         # 如果原始prediction模块有问题，这个模块应该优雅地处理
-        # 但由于我们已经成功导入，说明错误处理正常工作
+        # 但由于我们已经成功导入,说明错误处理正常工作
         assert PREDICTION_SERVICE_AVAILABLE is True
 
     def test_missing_import_handling(self):
@@ -460,7 +460,7 @@ from src.models import prediction_service
     def test_deprecation_warnings(self):
         """测试弃用警告（如果有）"""
         # 当前模块提供向后兼容性，但不应该产生弃用警告
-        # 如果将来需要弃用，可以在这里添加警告测试
+        # 如果将来需要弃用,可以在这里添加警告测试
 
         import warnings
 

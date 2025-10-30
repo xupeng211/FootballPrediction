@@ -1,10 +1,10 @@
-"""""""
+""""""""
 警告过滤器简单测试
 Simple Warning Filters Tests
 
-测试src/utils/warning_filters.py中定义的警告过滤器功能，专注于实现100%覆盖率。
+测试src/utils/warning_filters.py中定义的警告过滤器功能,专注于实现100%覆盖率。
 Tests warning filtering functionality defined in src/utils/warning_filters.py, focused on achieving 100% coverage.
-"""""""
+""""""""
 
 import logging
 import sys

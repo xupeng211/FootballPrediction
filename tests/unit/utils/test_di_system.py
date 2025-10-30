@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 import pytest
 
-# 使用try-except导入，如果模块不存在则跳过测试
+# 使用try-except导入,如果模块不存在则跳过测试
 try:
     from src.core.auto_binding import AutoBinding
     from src.core.config_di import ConfigDI

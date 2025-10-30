@@ -47,7 +47,7 @@ class TestMemoryCache:
                 result = cache.get("test_key")
                 assert result == "test_value"
             else:
-                assert True  # 如果方法不存在，跳过测试
+                assert True  # 如果方法不存在,跳过测试
         except Exception as e:
             print(f"memory_cache_set_get测试跳过: {e}")
             assert True
@@ -120,7 +120,7 @@ class TestRedisCache:
             if hasattr(cache, 'set') and hasattr(cache, 'get'):
                 cache.set("redis_test_key", "redis_test_value")
                 cache.get("redis_test_key")
-                # Redis可能不可用，所以不强制断言具体值
+                # Redis可能不可用,所以不强制断言具体值
                 assert True
             else:
                 assert True
@@ -183,10 +183,10 @@ class TestCacheOperations:
             # 反序列化
             try:
                 deserialized = json.loads(serialized)
-                # 简单验证：某些类型可能不完全匹配，但基本结构应该保留
+                # 简单验证:某些类型可能不完全匹配，但基本结构应该保留
                 assert deserialized is not None
             except json.JSONDecodeError:
-                # 如果反序列化失败，至少序列化是成功的
+                # 如果反序列化失败,至少序列化是成功的
                 assert True
 
     def test_cache_key_generation(self):
@@ -275,7 +275,7 @@ class TestCacheOperations:
             get_from_cache(key)
         first_round_time = time.time() - start_time
 
-        # 第二轮：全部命中
+        # 第二轮:全部命中
         start_time = time.time()
         for key in keys:
             get_from_cache(key)
@@ -362,7 +362,7 @@ class TestCacheOperations:
         cache = {}
 
         def add_to_cache(key, value):
-            # LRU策略：如果达到最大大小，删除最旧的项
+            # LRU策略:如果达到最大大小,删除最旧的项
             if len(cache) >= max_size:
                 oldest_key = next(iter(cache))
                 del cache[oldest_key]
@@ -510,7 +510,7 @@ def test_cache_module_import():
         assert redis is not None
         assert cache_manager is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_cache_coverage_helper():

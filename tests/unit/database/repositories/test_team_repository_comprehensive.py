@@ -1,10 +1,10 @@
-"""""""
+""""""""
 综合测试文件 - src/database/repositories/team_repository.py
 路线图阶段1质量提升
 目标覆盖率: 65%
 生成时间: 2025-10-26 19:56:22
 优先级: HIGH
-"""""""
+""""""""
 
 
 import pytest

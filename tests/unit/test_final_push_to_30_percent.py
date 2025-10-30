@@ -1,9 +1,9 @@
 from datetime import datetime
-"""""""
+""""""""
 重构后的高质量工具模块测试
 将1500行模板代码重构为28个有深度的高质量测试
 每个测试包含具体的业务逻辑验证和边界条件测试
-"""""""
+""""""""
 
 import json
 import sys
@@ -166,7 +166,7 @@ from src.utils.data_validator import DataValidator
             result = validator.validate_email(email)
             assert result == expected, f"邮箱 {email} 在场景 {scenario} 中验证失败"
 
-            # 如果是有效邮箱，进一步验证格式细节
+            # 如果是有效邮箱,进一步验证格式细节
             if expected:
                 assert "@" in email
                 assert email.count("@") == 1
@@ -512,10 +512,10 @@ from src.utils.i18n import get_text
             ),
         ]
 
-        # 注意：如果i18n模块不支持占位符替换，这些测试会显示当前功能限制
+        # 注意:如果i18n模块不支持占位符替换，这些测试会显示当前功能限制
         for key, template, placeholders, expected in placeholder_tests:
             result = get_text(key, template)
-            # 当前实现可能不支持占位符，所以验证模板返回
+            # 当前实现可能不支持占位符,所以验证模板返回
             assert isinstance(result, str)
             assert len(result) > 0
 

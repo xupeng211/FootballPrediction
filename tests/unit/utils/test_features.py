@@ -4,10 +4,10 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-"""""""
+""""""""
 特征服务API测试
 
-测试 src/api/features.py 中的7个API端点：
+测试 src/api/features.py 中的7个API端点:
 - GET /features/{match_id} - 获取比赛特征
 - GET /features/teams/{team_id} - 获取球队特征
 - POST /features/calculate/{match_id} - 计算比赛特征
@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 - POST /features/batch/calculate - 批量计算特征
 - GET /features/historical/{match_id} - 获取历史特征
 - GET /features/health - 特征服务健康检查
-"""""""
+""""""""
 
 from datetime import datetime
 

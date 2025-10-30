@@ -4,10 +4,10 @@
 
 from unittest.mock import MagicMock, patch
 
-"""""""
+""""""""
 测试预测服务模块化拆分
 Test modular split of prediction service
-"""""""
+""""""""
 
 from datetime import datetime
 

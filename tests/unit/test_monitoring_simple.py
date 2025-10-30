@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 监控API简化测试
 测试 src.api.monitoring 模块的功能
-"""""""
+""""""""
 
 import time
 
@@ -141,7 +141,7 @@ class TestMonitoringAPI:
         # 验证多次执行数据库查询
         await _get_database_metrics(mock_db)
 
-        # 验证调用次数（应该是4次：SELECT 1, teams, matches, predictions, active）
+        # 验证调用次数（应该是4次:SELECT 1, teams, matches, predictions, active）
         assert mock_db.execute.call_count >= 3
 
     @pytest.mark.asyncio

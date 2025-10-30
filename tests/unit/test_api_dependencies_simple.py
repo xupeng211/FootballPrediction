@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 API依赖注入简化测试
 测试 src.api.dependencies 模块的核心功能
-"""""""
+""""""""
 
 import os
 
@@ -47,14 +47,14 @@ class TestAPIDependenciesSimple:
         with patch("src.api.dependencies.SECRET_KEY", "your-secret-key-here"):
             with patch("src.api.dependencies.logger") as mock_logger:
                 validate_secret_key()
-                mock_logger.warning.assert_called_with("⚠️ 使用默认JWT密钥，请立即更改！")
+                mock_logger.warning.assert_called_with("⚠️ 使用默认JWT密钥,请立即更改！")
 
     def test_validate_secret_key_short_warning(self):
         """测试短密钥警告"""
         with patch("src.api.dependencies.SECRET_KEY", "short"):
             with patch("src.api.dependencies.logger") as mock_logger:
                 validate_secret_key()
-                mock_logger.warning.assert_called_with("⚠️ JWT密钥长度不足32位，建议使用更强的密钥")
+                mock_logger.warning.assert_called_with("⚠️ JWT密钥长度不足32位,建议使用更强的密钥")
 
     def test_validate_secret_key_valid(self):
         """测试有效密钥无警告"""
@@ -134,7 +134,7 @@ from src.api.dependencies import JWTError
         """测试导入回退机制"""
         # 验证模块即使缺少python-jose也能导入
 
-        # 如果python-jose不存在，jwt函数会抛出ImportError
+        # 如果python-jose不存在,jwt函数会抛出ImportError
         # 而JWTError应该是一个自定义异常类
         assert JWTError is not None
 

@@ -251,7 +251,7 @@ class TestRedisIntegration:
             # 缓存未命中，从数据库获取
             user_data = await get_user_from_db(user_id)
             if user_data:
-                # 写入缓存，设置过期时间
+                # 写入缓存,设置过期时间
                 await test_redis.setex(
                     cache_key,
                     3600,  # 1小时

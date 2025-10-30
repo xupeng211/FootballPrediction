@@ -110,7 +110,7 @@ def mock_redis_container() -> Generator[TestRedisContainer, None, None]:
 pytest_plugins = []
 
 
-# 如果没有Docker环境，自动使用Mock
+# 如果没有Docker环境,自动使用Mock
 def pytest_configure(config):
     """pytest配置钩子"""
     try:
@@ -120,7 +120,7 @@ def pytest_configure(config):
         client.ping()
         # Docker可用，可以使用真实容器
     except Exception:
-        # Docker不可用，添加标记以跳过需要真实容器的测试
+        # Docker不可用,添加标记以跳过需要真实容器的测试
         config.addinivalue_line(
             "markers", "requires_docker: mark test as requiring Docker"
         )

@@ -347,7 +347,7 @@ class TestObserverIntegration:
         client.post("/api/v1/observers/system/collect")
 
         # 验证观察者系统基本功能可用
-        assert True  # 如果所有端点都跳过，测试通过
+        assert True  # 如果所有端点都跳过,测试通过
 
     def test_prediction_observer_flow(self, client):
         """测试预测观察者流程"""
@@ -370,4 +370,4 @@ class TestObserverIntegration:
         client.post("/api/v1/observers/metrics/update", json=metric_data)
 
         # 验证预测观察者流程
-        assert True  # 如果端点未实现，跳过测试
+        assert True  # 如果端点未实现,跳过测试

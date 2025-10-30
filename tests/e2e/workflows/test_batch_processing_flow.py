@@ -1,6 +1,6 @@
 """
 批量数据处理流程 E2E 测试
-测试批量导入预测、数据导出等批量处理功能
+测试批量导入预测,数据导出等批量处理功能
 """
 
 import asyncio
@@ -403,7 +403,7 @@ class TestBatchProcessingFlow:
         # 2. 创建批量通知
         notification_data = {
             "title": "系统维护通知",
-            "message": "系统将于今晚进行例行维护，预计耗时2小时",
+            "message": "系统将于今晚进行例行维护,预计耗时2小时",
             "type": "system",
             "priority": "normal",
             "channels": ["email", "in_app"],

@@ -1,8 +1,8 @@
 from datetime import datetime
-"""""""
+""""""""
 更多覆盖率测试 - 针对低覆盖率模块
 More Coverage Tests - Target Low Coverage Modules
-"""""""
+""""""""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,7 +28,7 @@ from src.api.dependencies import get_current_user
             with patch("src.api.dependencies.get_user_by_id") as mock_get_user:
                 mock_get_user.return_value = {"id": "user123", "username": "testuser"}
 
-                # 测试需要HTTP上下文，所以直接测试函数存在
+                # 测试需要HTTP上下文,所以直接测试函数存在
                 assert callable(get_current_user)
 
     def test_verify_password_function(self):

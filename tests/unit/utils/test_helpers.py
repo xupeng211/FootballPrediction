@@ -155,7 +155,7 @@ class TestHelpers:
 
     def test_sanitize_string(self):
         """测试清理字符串"""
-        # 测试基本清理（sanitize_string只做XSS防护，不做大小写转换）
+        # 测试基本清理（sanitize_string只做XSS防护,不做大小写转换）
         assert sanitize_string("  Hello World  ") == "Hello World"
         assert sanitize_string("   TEST   ") == "TEST"
 

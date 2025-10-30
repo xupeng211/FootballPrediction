@@ -3,7 +3,7 @@ Issue #83-C 扩展测试: core.exceptions
 覆盖率目标: 60% → 80%
 创建时间: 2025-10-25 14:45
 类别: core
-策略: 增强Mock策略，系统级依赖解决
+策略: 增强Mock策略,系统级依赖解决
 """
 
 import inspect
@@ -284,7 +284,7 @@ class TestCoreexceptions:
         end_time = time.time()
         execution_time = end_time - start_time
 
-        print(f"⚡ 增强Mock性能测试完成，耗时: {execution_time:.4f}秒")
+        print(f"⚡ 增强Mock性能测试完成,耗时: {execution_time:.4f}秒")
         assert execution_time < 2.0, "增强Mock操作应该在2秒内完成"
 
     @pytest.mark.regression

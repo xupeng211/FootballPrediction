@@ -2,7 +2,7 @@ from datetime import datetime
 """
 策略预测服务核心深度测试 - Phase 4A重点任务
 
-测试src/services/strategy_prediction_service.py的深度业务逻辑，包括：
+测试src/services/strategy_prediction_service.py的深度业务逻辑,包括：
 - 策略模式核心算法测试
 - 预测算法集成和选择机制
 - 批量预测和性能优化
@@ -19,7 +19,7 @@ from datetime import datetime
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
 
-目标：将services模块覆盖率从20%提升至50%
+目标:将services模块覆盖率从20%提升至50%
 """
 
 import asyncio
@@ -240,7 +240,7 @@ class TestStrategyPredictionCore:
     """策略预测服务核心深度测试 - Phase 4A重点任务"""
 
     def test_service_initialization_success(self) -> None:
-        """✅ 成功用例：服务初始化成功"""
+        """✅ 成功用例:服务初始化成功"""
         if StrategyPredictionService is not None:
             # Mock依赖
             mock_strategy_factory = Mock(spec=PredictionStrategyFactory)
@@ -280,7 +280,7 @@ class TestStrategyPredictionCore:
                             assert service._default_strategy == "ensemble_predictor"
 
     def test_service_initialization_failure(self) -> None:
-        """❌ 异常用例：服务初始化失败"""
+        """❌ 异常用例:服务初始化失败"""
         with patch(
             "src.services.strategy_prediction_service.PredictionStrategyFactory",
             side_effect=Exception("Factory init failed"),
@@ -290,7 +290,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_strategy_selection_and_loading_success(self) -> None:
-        """✅ 成功用例：策略选择和加载成功"""
+        """✅ 成功用例:策略选择和加载成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -321,7 +321,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_strategy_selection_invalid_strategy(self) -> None:
-        """❌ 异常用例：无效策略选择"""
+        """❌ 异常用例:无效策略选择"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -341,7 +341,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_single_prediction_success(self) -> None:
-        """✅ 成功用例：单个预测成功"""
+        """✅ 成功用例:单个预测成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -400,7 +400,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_single_prediction_invalid_match(self) -> None:
-        """❌ 异常用例：无效比赛ID"""
+        """❌ 异常用例:无效比赛ID"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -418,7 +418,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_batch_prediction_success(self) -> None:
-        """✅ 成功用例：批量预测成功"""
+        """✅ 成功用例:批量预测成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -476,7 +476,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_batch_prediction_no_matches(self) -> None:
-        """❌ 异常用例：批量预测无比赛数据"""
+        """❌ 异常用例:批量预测无比赛数据"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -493,7 +493,7 @@ class TestStrategyPredictionCore:
                 await service.batch_predict(match_ids=[404, 405], user_id=1)
 
     def test_prediction_context_creation_success(self) -> None:
-        """✅ 成功用例：预测上下文创建成功"""
+        """✅ 成功用例:预测上下文创建成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -526,7 +526,7 @@ class TestStrategyPredictionCore:
                 assert context.user_id == 1
 
     def test_prediction_input_preparation_success(self) -> None:
-        """✅ 成功用例：预测输入准备成功"""
+        """✅ 成功用例:预测输入准备成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -559,7 +559,7 @@ class TestStrategyPredictionCore:
                 assert "head_to_head" in input_data.historical_data
 
     def test_strategy_confidence_validation_success(self) -> None:
-        """✅ 成功用例：策略信心度验证成功"""
+        """✅ 成功用例:策略信心度验证成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -581,7 +581,7 @@ class TestStrategyPredictionCore:
             assert strategy.confidence_range[1] <= 0.98
 
     def test_strategy_confidence_validation_low(self) -> None:
-        """❌ 异常用例：策略信心度过低"""
+        """❌ 异常用例:策略信心度过低"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -600,7 +600,7 @@ class TestStrategyPredictionCore:
                     service._validate_strategy_confidence(MockPredictionStrategy("low", (0.3, 0.4)))
 
     def test_prediction_result_validation_success(self) -> None:
-        """✅ 成功用例：预测结果验证成功"""
+        """✅ 成功用例:预测结果验证成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -623,7 +623,7 @@ class TestStrategyPredictionCore:
             assert is_valid is True
 
     def test_prediction_result_validation_invalid_scores(self) -> None:
-        """❌ 异常用例：无效预测比分"""
+        """❌ 异常用例:无效预测比分"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -647,7 +647,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_prediction_logging_success(self) -> None:
-        """✅ 成功用例：预测记录成功"""
+        """✅ 成功用例:预测记录成功"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -686,7 +686,7 @@ class TestStrategyPredictionCore:
 
     @pytest.mark.asyncio
     async def test_concurrent_prediction_handling(self) -> None:
-        """✅ 成功用例：并发预测处理"""
+        """✅ 成功用例:并发预测处理"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -719,7 +719,7 @@ class TestStrategyPredictionCore:
                 assert mock_strategy.predict.call_count == 2
 
     def test_error_recovery_mechanism(self) -> None:
-        """✅ 成功用例：错误恢复机制"""
+        """✅ 成功用例:错误恢复机制"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,
@@ -757,7 +757,7 @@ class TestStrategyPredictionCore:
                 assert result2 is recovery_strategy
 
     def test_performance_optimization_features(self) -> None:
-        """✅ 成功用例：性能优化特性"""
+        """✅ 成功用例:性能优化特性"""
         if StrategyPredictionService is not None:
             service = StrategyPredictionService(
                 strategy_factory=mock_strategy_factory,

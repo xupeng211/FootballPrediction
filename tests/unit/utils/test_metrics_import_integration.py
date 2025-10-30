@@ -1,7 +1,7 @@
-"""""""
+""""""""
 测试增强指标收集器模块的导入集成
 验证各个模块可以正确导入和实例化
-"""""""
+""""""""
 
 import pytest
 
@@ -112,7 +112,7 @@ def test_import_prometheus_metrics():
 
         assert PrometheusMetricsManager is not None
         # 检查prometheus是否可用
-        # 如果不可用，PROMETHEUS_AVAILABLE应该是False
+        # 如果不可用,PROMETHEUS_AVAILABLE应该是False
     except ImportError as e:
         pytest.skip(f"Cannot import prometheus metrics: {e}")
 
@@ -121,7 +121,7 @@ def test_import_from_init():
     """测试从__init__.py导入（使用延迟导入避免依赖问题）"""
     # 这个测试可能会因为prometheus依赖而跳过
     try:
-        # 尝试导入，但不实际使用
+        # 尝试导入,但不实际使用
         import importlib
 
         module = importlib.import_module("src.monitoring.metrics_collector_enhanced")

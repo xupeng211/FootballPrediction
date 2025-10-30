@@ -93,7 +93,7 @@ class TestLoadSimulation:
                     }
                 )
 
-        assert len(sessions) >= 30, f"至少需要30个用户，当前只有{len(sessions)}个"
+        assert len(sessions) >= 30, f"至少需要30个用户,当前只有{len(sessions)}个"
         sessions = sessions[:30]  # 限制用户数以避免过载
 
         print(f"✅ 准备了 {len(sessions)} 个并发用户")
@@ -127,7 +127,7 @@ class TestLoadSimulation:
                 if response.status_code == 201:
                     success_count += 1
                 elif response.status_code == 400:
-                    # 可能是重复预测，继续下一个
+                    # 可能是重复预测,继续下一个
                     pass
 
             return {
@@ -456,8 +456,8 @@ class TestLoadSimulation:
     async def test_stress_load(
         self, api_client: AsyncClient, test_data_loader, performance_metrics
     ):
-        """压力测试：模拟高负载场景"""
-        print("\n🔥 压力测试：模拟高负载场景")
+        """压力测试:模拟高负载场景"""
+        print("\n🔥 压力测试:模拟高负载场景")
 
         # 准备测试数据
         _teams = await test_data_loader.create_teams()
@@ -499,7 +499,7 @@ class TestLoadSimulation:
             return response.status_code == 200
 
         async def write_operation(user):
-            """写操作：创建预测"""
+            """写操作:创建预测"""
             pred_data = {
                 "match_id": matches[user["username"][-1] % len(matches)]["id"],
                 "prediction": "HOME_WIN",
@@ -511,7 +511,7 @@ class TestLoadSimulation:
             return response.status_code in [201, 400]  # 400可能是重复
 
         async def auth_operation(user):
-            """认证操作：获取用户信息"""
+            """认证操作:获取用户信息"""
             response = await api_client.get("/api/v1/users/me", headers=user["headers"])
             return response.status_code == 200
 

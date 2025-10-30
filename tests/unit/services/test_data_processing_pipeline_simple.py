@@ -6,7 +6,7 @@ from datetime import datetime
 """
 数据处理管道测试 - Phase 4B高优先级任务
 
-测试src/services/data_processing_pipeline.py中的数据处理功能，包括：
+测试src/services/data_processing_pipeline.py中的数据处理功能,包括：
 - 数据提取和转换流程
 - 批量数据处理和优化
 - 数据验证和清洗机制
@@ -24,7 +24,7 @@ from datetime import datetime
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
 
-目标：将数据处理服务模块覆盖率提升至60%
+目标:将数据处理服务模块覆盖率提升至60%
 """
 
 import asyncio
@@ -228,7 +228,7 @@ class TestDataProcessingPipelineSimple:
     """数据处理管道测试 - Phase 4B高优先级任务"""
 
     def test_pipeline_initialization_success(self) -> None:
-        """✅ 成功用例：管道初始化成功"""
+        """✅ 成功用例:管道初始化成功"""
         pipeline = MockDataPipeline(
             name="test_pipeline", stages=["extraction", "transformation", "loading"]
         )
@@ -241,7 +241,7 @@ class TestDataProcessingPipelineSimple:
         assert "loading" in pipeline.stages
 
     def test_pipeline_config_customization_success(self) -> None:
-        """✅ 成功用例：管道配置自定义成功"""
+        """✅ 成功用例:管道配置自定义成功"""
         config = {
             "batch_size": 100,
             "timeout": 30.0,
@@ -260,7 +260,7 @@ class TestDataProcessingPipelineSimple:
         assert pipeline.config["quality_threshold"] == 0.8
 
     def test_data_record_creation_success(self) -> None:
-        """✅ 成功用例：数据记录创建成功"""
+        """✅ 成功用例:数据记录创建成功"""
         record = MockDataRecord(
             id=1,
             match_id=123,
@@ -282,7 +282,7 @@ class TestDataProcessingPipelineSimple:
         assert record.quality_score == 0.0
 
     def test_data_validation_success(self) -> None:
-        """✅ 成功用例：数据验证成功"""
+        """✅ 成功用例:数据验证成功"""
         valid_record = MockDataRecord(
             id=2,
             match_id=456,
@@ -301,7 +301,7 @@ class TestDataProcessingPipelineSimple:
         assert len(errors) == 0
 
     def test_data_validation_missing_fields_failure(self) -> None:
-        """❌ 异常用例：缺少必需字段验证失败"""
+        """❌ 异常用例:缺少必需字段验证失败"""
         invalid_record = MockDataRecord(
             id=None,  # 缺少ID
             match_id=789,
@@ -320,7 +320,7 @@ class TestDataProcessingPipelineSimple:
         assert any("Missing required field" in error for error in errors)
 
     def test_data_validation_score_range_failure(self) -> None:
-        """❌ 异常用例：比分超出范围验证失败"""
+        """❌ 异常用例:比分超出范围验证失败"""
         invalid_record = MockDataRecord(
             id=3,
             match_id=101,
@@ -340,7 +340,7 @@ class TestDataProcessingPipelineSimple:
         assert any("Away score out of range" in error for error in errors)
 
     def test_data_validation_quality_threshold_failure(self) -> None:
-        """❌ 异常用例：质量分数低于阈值验证失败"""
+        """❌ 异常用例:质量分数低于阈值验证失败"""
         invalid_record = MockDataRecord(
             id=4,
             match_id=202,
@@ -360,7 +360,7 @@ class TestDataProcessingPipelineSimple:
 
     @pytest.mark.asyncio
     async def test_single_record_processing_success(self) -> None:
-        """✅ 成功用例：单条记录处理成功"""
+        """✅ 成功用例:单条记录处理成功"""
         processor = mock_processors["transformation"]
         record = MockDataRecord(
             id=5,
@@ -384,7 +384,7 @@ class TestDataProcessingPipelineSimple:
 
     @pytest.mark.asyncio
     async def test_batch_processing_success(self) -> None:
-        """✅ 成功用例：批量处理成功"""
+        """✅ 成功用例:批量处理成功"""
         processor = mock_processors["loading"]
 
         # 创建测试记录
@@ -413,7 +413,7 @@ class TestDataProcessingPipelineSimple:
 
     @pytest.mark.asyncio
     async def test_pipeline_performance_monitoring_success(self) -> None:
-        """✅ 成功用例：管道性能监控成功"""
+        """✅ 成功用例:管道性能监控成功"""
         processor = mock_processors["extraction"]
 
         # 处理多个记录并监控性能
@@ -449,7 +449,7 @@ class TestDataProcessingPipelineSimple:
 
     @pytest.mark.asyncio
     async def test_concurrent_pipeline_processing_success(self) -> None:
-        """✅ 成功用例：并发管道处理成功"""
+        """✅ 成功用例:并发管道处理成功"""
         processors = [
             mock_processors["extraction"],
             mock_processors["transformation"],
@@ -486,7 +486,7 @@ class TestDataProcessingPipelineSimple:
 
     @pytest.mark.asyncio
     async def test_pipeline_error_recovery_success(self) -> None:
-        """✅ 成功用例：管道错误恢复成功"""
+        """✅ 成功用例:管道错误恢复成功"""
         processor = MockDataProcessor("recovery_test")
 
         # 模拟有失败风险的处理
@@ -511,7 +511,7 @@ class TestDataProcessingPipelineSimple:
         assert processor.success_count >= processor.error_count  # 成功数应大于失败数
 
     def test_pipeline_metrics_collection_success(self) -> None:
-        """✅ 成功用例：管道指标收集成功"""
+        """✅ 成功用例:管道指标收集成功"""
         pipeline = MockDataPipeline(
             name="metrics_test",
             stages=["extraction", "transformation"],
@@ -542,7 +542,7 @@ class TestDataProcessingPipelineSimple:
         assert pipeline.performance_metrics["throughput_per_second"] > 0
 
     def test_batch_validation_success(self) -> None:
-        """✅ 成功用例：批量验证成功"""
+        """✅ 成功用例:批量验证成功"""
         valid_records = [
             MockDataRecord(
                 id=400 + i,
@@ -564,7 +564,7 @@ class TestDataProcessingPipelineSimple:
         assert len(errors) == 0
 
     def test_batch_validation_partial_failure(self) -> None:
-        """❌ 异常用例：批量验证部分失败"""
+        """❌ 异常用例:批量验证部分失败"""
         mixed_records = [
             # 有效记录
             MockDataRecord(
@@ -597,7 +597,7 @@ class TestDataProcessingPipelineSimple:
 
     @pytest.mark.asyncio
     async def test_pipeline_data_quality_improvement(self) -> None:
-        """✅ 成功用例：管道数据质量改进"""
+        """✅ 成功用例:管道数据质量改进"""
         processor = mock_processors["transformation"]
 
         # 模拟低质量数据

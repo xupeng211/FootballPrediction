@@ -1,6 +1,6 @@
 """
 重构后的真实测试: utils.data_validator
-目标: 实际提升覆盖率，从0%提升
+目标: 实际提升覆盖率,从0%提升
 重构时间: 2025-10-25 13:28
 """
 
@@ -24,7 +24,7 @@ class TestUtilsDataValidatorReal:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
         # 测试模块级别的导入
-        assert True  # 如果能到这里，说明导入成功
+        assert True  # 如果能到这里,说明导入成功
 
     def test_is_valid_email_function(self):
         """测试is_valid_email函数"""
@@ -33,7 +33,7 @@ class TestUtilsDataValidatorReal:
             # 验证函数执行不抛出异常
             assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
-            # 函数可能需要特定参数，记录但不失败
+            # 函数可能需要特定参数,记录但不失败
             print(f"函数 {'is_valid_email'} 测试跳过: {e}")
             pytest.skip(f"需要正确的参数: {e}")
 
@@ -44,7 +44,7 @@ class TestUtilsDataValidatorReal:
             # 验证函数执行不抛出异常
             assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
-            # 函数可能需要特定参数，记录但不失败
+            # 函数可能需要特定参数,记录但不失败
             print(f"函数 {'is_valid_url'} 测试跳过: {e}")
             pytest.skip(f"需要正确的参数: {e}")
 
@@ -55,7 +55,7 @@ class TestUtilsDataValidatorReal:
             # 验证函数执行不抛出异常
             assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
-            # 函数可能需要特定参数，记录但不失败
+            # 函数可能需要特定参数,记录但不失败
             print(f"函数 {'validate_required_fields'} 测试跳过: {e}")
             pytest.skip(f"需要正确的参数: {e}")
 
@@ -66,7 +66,7 @@ class TestUtilsDataValidatorReal:
             # 验证函数执行不抛出异常
             assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
-            # 函数可能需要特定参数，记录但不失败
+            # 函数可能需要特定参数,记录但不失败
             print(f"函数 {'validate_data_types'} 测试跳过: {e}")
             pytest.skip(f"需要正确的参数: {e}")
 
@@ -77,7 +77,7 @@ class TestUtilsDataValidatorReal:
             # 验证函数执行不抛出异常
             assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
-            # 函数可能需要特定参数，记录但不失败
+            # 函数可能需要特定参数,记录但不失败
             print(f"函数 {'sanitize_input'} 测试跳过: {e}")
             pytest.skip(f"需要正确的参数: {e}")
 

@@ -72,9 +72,9 @@ def main():
         elif "Required test coverage of" in line and "reached" in line:
             print(f"✅ {line.strip()}")
 
-    # 如果失败，显示错误摘要
+    # 如果失败,显示错误摘要
     if returncode != 0:
-        print("\n⚠️  存在一些失败或错误，但覆盖率目标可能已达到")
+        print("\n⚠️  存在一些失败或错误,但覆盖率目标可能已达到")
 
         # 查找失败摘要
         for line in lines:

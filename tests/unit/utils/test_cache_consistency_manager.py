@@ -48,9 +48,9 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_sync_cache_with_db(self, consistency_manager):
         """测试同步缓存与数据库"""
-        # 由于是占位符实现，只需确保方法可以被调用
+        # 由于是占位符实现,只需确保方法可以被调用
         await consistency_manager.sync_cache_with_db("match", 123)
-        # 没有实际操作，所以不需要断言
+        # 没有实际操作,所以不需要断言
 
     @pytest.mark.asyncio
     async def test_invalidate_cache_single_key(self, consistency_manager, mock_redis_manager):
@@ -86,21 +86,21 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_warm_cache(self, consistency_manager):
         """测试缓存预热"""
-        # 由于是占位符实现，只需确保方法可以被调用
+        # 由于是占位符实现,只需确保方法可以被调用
         await consistency_manager.warm_cache("match", [123, 456, 789])
-        # 没有实际操作，所以不需要断言
+        # 没有实际操作,所以不需要断言
 
     @pytest.mark.asyncio
     async def test_warm_cache_empty_ids(self, consistency_manager):
         """测试预热空ID列表"""
         await consistency_manager.warm_cache("match", [])
-        # 没有实际操作，所以不需要断言
+        # 没有实际操作,所以不需要断言
 
     @pytest.mark.asyncio
     async def test_warm_cache_single_id(self, consistency_manager):
         """测试预热单个ID"""
         await consistency_manager.warm_cache("prediction", 123)
-        # 没有实际操作，所以不需要断言
+        # 没有实际操作,所以不需要断言
 
     def test_different_entity_types(self, consistency_manager):
         """测试不同实体类型"""
@@ -108,7 +108,7 @@ class TestCacheConsistencyManager:
 
         for entity_type in entity_types:
             # 这些都是占位符方法，不会抛出异常
-            assert True  # 如果能循环执行完，说明支持所有实体类型
+            assert True  # 如果能循环执行完,说明支持所有实体类型
 
     @pytest.mark.asyncio
     async def test_error_handling_in_invalidate_cache(
@@ -124,7 +124,7 @@ class TestCacheConsistencyManager:
     @pytest.mark.asyncio
     async def test_consistency_manager_with_none_managers(self):
         """测试传入None管理器"""
-        # 应该能够创建实例，即使传入None
+        # 应该能够创建实例,即使传入None
         manager = CacheConsistencyManager(None, None)
 
         # 调用方法时可能会有AttributeError

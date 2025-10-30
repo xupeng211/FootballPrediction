@@ -1,7 +1,7 @@
-"""""""
+""""""""
 核心功能测试 - 专注于测试已实现的核心功能
 Core Functionality Tests - Focus on testing implemented core functionality
-"""""""
+""""""""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -315,7 +315,7 @@ class TestSecurityFeatures:
         client.get("/")
 
         # 检查是否有安全相关的头
-        # 注意：这些可能没有实现
+        # 注意:这些可能没有实现
         # if "x-content-type-options" in headers:
         #     assert headers["x-content-type-options"] == "nosniff"
 

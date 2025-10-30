@@ -34,7 +34,7 @@ class TestRedisManager:
     def test_redis_manager_initialization(self, redis_manager):
         """测试Redis管理器初始化"""
         assert redis_manager.logger is not None
-        # RedisManager 在初始化时客户端为 None，需要在使用时初始化
+        # RedisManager 在初始化时客户端为 None,需要在使用时初始化
         assert redis_manager._sync_client is not None  # fixture 中设置的 mock
 
     # === CacheKeyManager测试 ===
@@ -116,7 +116,7 @@ class TestRedisManager:
         mock_client.get.assert_called_once_with("test_key")
 
     # === JSON操作测试 ===
-    # 注意：RedisManager 的 set/get 方法会自动处理 JSON 序列化/反序列化
+    # 注意:RedisManager 的 set/get 方法会自动处理 JSON 序列化/反序列化
 
     def test_set_json_sync(self, redis_manager):
         """测试同步设置JSON值（通过set方法）"""

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 数据库模型测试
 测试 src.database.models 模块的功能
-"""""""
+""""""""
 
 
 import pytest
@@ -84,7 +84,7 @@ class TestTeam:
             "updated_at",
         ]
 
-        # 这些是典型的球队模型属性，我们检查类是否可以设置这些属性
+        # 这些是典型的球队模型属性,我们检查类是否可以设置这些属性
         team = Team()
         for attr in team_attributes:
             # 验证属性可以被设置和获取
@@ -105,7 +105,7 @@ class TestTeam:
         # 测试可以设置球队状态
         Team()
 
-        # 由于我们没有具体的字段定义，这里主要测试枚举类型本身
+        # 由于我们没有具体的字段定义,这里主要测试枚举类型本身
         good_form = TeamForm.GOOD
         average_form = TeamForm.AVERAGE
         poor_form = TeamForm.POOR
@@ -118,7 +118,7 @@ class TestTeam:
         """测试球队转字典方法（如果存在）"""
         team = Team()
 
-        # 基础模型可能有to_dict方法，我们检查其是否存在
+        # 基础模型可能有to_dict方法,我们检查其是否存在
         if hasattr(team, "to_dict"):
             result = team.to_dict()
             assert isinstance(result, dict)

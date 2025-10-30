@@ -1,7 +1,7 @@
-"""""""
+""""""""
 测试 predictions 模块的覆盖率补充
 Test coverage supplement for predictions module
-"""""""
+""""""""
 
 import pytest
 
@@ -50,7 +50,7 @@ from src.api.predictions.router import router as new_router
         # 两个导入应该指向同一个对象（重新导出）
         assert old_router is new_router
     except ImportError:
-        # 如果新模块不存在，至少确保旧模块能导入
+        # 如果新模块不存在,至少确保旧模块能导入
 from src.api.predictions import router
 
         assert router is not None
@@ -84,14 +84,14 @@ def test_predictions_module_exports_count():
 
     # 确保导出数量合理
     assert len(predictions.__all__) >= 1
-    # predictions模块导出较多项目是正常的，因为它包含多个模式类
+    # predictions模块导出较多项目是正常的,因为它包含多个模式类
 
 
 def test_predictions_router_has_routes():
     """测试predictions路由器有路由定义"""
     from src.api.predictions import router
 
-    # 如果路由器有routes属性，验证其不为空
+    # 如果路由器有routes属性,验证其不为空
     if hasattr(router, "routes"):
         routes = router.routes
         # 路由器应该有至少一些路由定义

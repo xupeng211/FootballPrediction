@@ -1,9 +1,9 @@
-"""""""
+""""""""
 字符串工具测试（最终修复版）
 Tests for String Utils (Final Fixed Version)
 
 测试src.utils.string_utils模块的实际功能
-"""""""
+""""""""
 
 import pytest
 
@@ -24,65 +24,65 @@ class TestStringUtilsTruncate:
     """字符串截断测试"""
 
     def test_truncate_no_truncate(self):
-        """测试：不需要截断"""
+        """测试:不需要截断"""
         text = "Hello"
         _result = StringUtils.truncate(text, 10)
         assert _result == "Hello"
 
     def test_truncate_exact_length(self):
-        """测试：长度正好"""
+        """测试:长度正好"""
         text = "Hello"
         _result = StringUtils.truncate(text, 5)
         assert _result == "Hello"
 
     def test_truncate_with_suffix(self):
-        """测试：带后缀截断"""
+        """测试:带后缀截断"""
         text = "Hello World"
         _result = StringUtils.truncate(text, 8, "...")
-        # 实际实现：截取到长度8-3=5，然后加上...
+        # 实际实现:截取到长度8-3=5,然后加上...
         assert _result == "Hello..."
 
     def test_truncate_zero_length(self):
-        """测试：长度为0"""
+        """测试:长度为0"""
         text = "Hi"
         _result = StringUtils.truncate(text, 0, "...")
-        # 实际实现：当length为0时，负数索引会返回整个字符串
+        # 实际实现:当length为0时,负数索引会返回整个字符串
         assert _result == "Hi"
 
     def test_truncate_negative_length(self):
-        """测试：负长度"""
+        """测试:负长度"""
         text = "Hello"
         _result = StringUtils.truncate(text, -1, "...")
-        # 实际实现：负数索引会返回整个字符串
+        # 实际实现:负数索引会返回整个字符串
         assert _result == "Hello"
 
     def test_truncate_suffix_longer_than_length(self):
-        """测试：后缀比长度长"""
+        """测试:后缀比长度长"""
         text = "Hi"
         _result = StringUtils.truncate(text, 3, "...")
-        # 实际实现：当后缀长度大于length时，返回原始字符串
+        # 实际实现:当后缀长度大于length时,返回原始字符串
         assert _result == "Hi"
 
     def test_truncate_empty_string(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         _result = StringUtils.truncate("", 10)
         assert _result == ""
 
     def test_truncate_unicode_text(self):
-        """测试：Unicode文本"""
+        """测试:Unicode文本"""
         text = "你好世界"
         _result = StringUtils.truncate(text, 5, "...")
-        # 实际实现：中文字符也算作一个字符
+        # 实际实现:中文字符也算作一个字符
         assert _result == "你好..."
 
     def test_truncate_with_spaces(self):
-        """测试：带空格的文本"""
+        """测试:带空格的文本"""
         text = "Hello World"
         _result = StringUtils.truncate(text, 10, "[...]")
         assert _result == "Hello Wor[...]"
 
     def test_truncate_multiline_text(self):
-        """测试：多行文本"""
+        """测试:多行文本"""
         text = "Line 1\nLine 2\nLine 3"
         _result = StringUtils.truncate(text, 10, "...")
         assert _result == "Line 1\nL..."
@@ -93,63 +93,63 @@ class TestStringUtilsSlugify:
     """字符串slugify测试"""
 
     def test_slugify_simple(self):
-        """测试：简单的slugify"""
+        """测试:简单的slugify"""
         text = "Hello World"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world"
 
     def test_slugify_with_special_chars(self):
-        """测试：带特殊字符"""
+        """测试:带特殊字符"""
         text = "Hello @#$% World!"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world"
 
     def test_slugify_with_underscores(self):
-        """测试：带下划线"""
+        """测试:带下划线"""
         text = "hello_world_test"
         _result = StringUtils.slugify(text)
-        # 实际实现：下划线被转换为连字符
+        # 实际实现:下划线被转换为连字符
         assert _result == "hello-world-test"
 
     def test_slugify_with_hyphens(self):
-        """测试：带连字符"""
+        """测试:带连字符"""
         text = "hello-world-test"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world-test"
 
     def test_slugify_with_numbers(self):
-        """测试：带数字"""
+        """测试:带数字"""
         text = "Test 123 ABC"
         _result = StringUtils.slugify(text)
         assert _result == "test-123-abc"
 
     def test_slugify_empty_string(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         _result = StringUtils.slugify("")
         assert _result == ""
 
     def test_slugify_leading_trailing_spaces(self):
-        """测试：前后空格"""
+        """测试:前后空格"""
         text = "  hello world  "
         _result = StringUtils.slugify(text)
         assert _result == "hello-world"
 
     def test_slugify_multiple_spaces(self):
-        """测试：多个空格"""
+        """测试:多个空格"""
         text = "hello     world"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world"
 
     def test_slugify_mixed_separators(self):
-        """测试：混合分隔符"""
+        """测试:混合分隔符"""
         text = "hello-world_ test"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world-test"
 
     def test_slugify_unicode(self):
-        """测试：Unicode字符"""
+        """测试:Unicode字符"""
         text = "你好 世界"
-        # 实际实现：非ASCII字符会被移除
+        # 实际实现:非ASCII字符会被移除
         _result = StringUtils.slugify(text)
         assert _result == ""
 
@@ -159,43 +159,43 @@ class TestStringUtilsCamelToSnake:
     """驼峰转下划线测试"""
 
     def test_camel_to_snake_simple(self):
-        """测试：简单的驼峰转下划线"""
+        """测试:简单的驼峰转下划线"""
         _result = StringUtils.camel_to_snake("helloWorld")
         assert _result == "hello_world"
 
     def test_camel_to_snake_multiple_words(self):
-        """测试：多个单词的驼峰"""
+        """测试:多个单词的驼峰"""
         _result = StringUtils.camel_to_snake("helloWorldTest")
         assert _result == "hello_world_test"
 
     def test_camel_to_snake_all_caps(self):
-        """测试：全大写"""
+        """测试:全大写"""
         _result = StringUtils.camel_to_snake("API")
-        # 实际实现：全大写不会被转换
+        # 实际实现:全大写不会被转换
         assert _result == "api"
 
     def test_camel_to_snake_pascal_case(self):
-        """测试：帕斯卡命名"""
+        """测试:帕斯卡命名"""
         _result = StringUtils.camel_to_snake("HelloWorld")
         assert _result == "hello_world"
 
     def test_camel_to_snake_already_snake(self):
-        """测试：已经是下划线格式"""
+        """测试:已经是下划线格式"""
         _result = StringUtils.camel_to_snake("hello_world")
         assert _result == "hello_world"
 
     def test_camel_to_snake_with_numbers(self):
-        """测试：带数字"""
+        """测试:带数字"""
         _result = StringUtils.camel_to_snake("test123ABC")
         assert _result == "test123_abc"
 
     def test_camel_to_snake_single_letter(self):
-        """测试：单个字母"""
+        """测试:单个字母"""
         _result = StringUtils.camel_to_snake("A")
         assert _result == "a"
 
     def test_camel_to_snake_empty_string(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         _result = StringUtils.camel_to_snake("")
         assert _result == ""
 
@@ -205,45 +205,45 @@ class TestStringUtilsSnakeToCamel:
     """下划线转驼峰测试"""
 
     def test_snake_to_camel_simple(self):
-        """测试：简单的下划线转驼峰"""
+        """测试:简单的下划线转驼峰"""
         _result = StringUtils.snake_to_camel("hello_world")
         assert _result == "helloWorld"
 
     def test_snake_to_camel_leading_underscore(self):
-        """测试：前导下划线"""
+        """测试:前导下划线"""
         _result = StringUtils.snake_to_camel("_hello_world")
-        # 实际实现：前导下划线会被保留
+        # 实际实现:前导下划线会被保留
         assert _result == "_helloWorld"
 
     def test_snake_to_camel_trailing_underscore(self):
-        """测试：后置下划线"""
+        """测试:后置下划线"""
         _result = StringUtils.snake_to_camel("hello_world_")
-        # 实际实现：后置下划线会被保留（空组件被忽略）
+        # 实际实现:后置下划线会被保留（空组件被忽略）
         assert _result == "helloWorld"
 
     def test_snake_to_camel_multiple_underscores(self):
-        """测试：多个下划线"""
+        """测试:多个下划线"""
         _result = StringUtils.snake_to_camel("hello_world_test_case")
         assert _result == "helloWorldTestCase"
 
     def test_snake_to_camel_single_word(self):
-        """测试：单个单词"""
+        """测试:单个单词"""
         _result = StringUtils.snake_to_camel("hello")
         assert _result == "hello"
 
     def test_snake_to_camel_empty_string(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         _result = StringUtils.snake_to_camel("")
         assert _result == ""
 
     def test_snake_to_camel_all_underscores(self):
-        """测试：全是下划线"""
+        """测试:全是下划线"""
         _result = StringUtils.snake_to_camel("___")
-        # 实际实现：多个下划线会产生一个下划线
+        # 实际实现:多个下划线会产生一个下划线
         assert _result == "_"
 
     def test_snake_to_camel_with_numbers(self):
-        """测试：带数字"""
+        """测试:带数字"""
         _result = StringUtils.snake_to_camel("test_123_case")
         assert _result == "test123Case"
 
@@ -253,43 +253,43 @@ class TestStringUtilsCleanText:
     """文本清理测试"""
 
     def test_clean_text_extra_spaces(self):
-        """测试：多余空格"""
+        """测试:多余空格"""
         text = "Hello     World"
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_leading_trailing_spaces(self):
-        """测试：前后空格"""
+        """测试:前后空格"""
         text = "   Hello World   "
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World"
 
     def test_clean_text_mixed_whitespace(self):
-        """测试：混合空白字符"""
+        """测试:混合空白字符"""
         text = "Hello\t\nWorld  Test"
         _result = StringUtils.clean_text(text)
         assert _result == "Hello World Test"
 
     def test_clean_text_only_spaces(self):
-        """测试：只有空格"""
+        """测试:只有空格"""
         text = "     "
         _result = StringUtils.clean_text(text)
         assert _result == ""
 
     def test_clean_text_empty_string(self):
-        """测试：空字符串"""
+        """测试:空字符串"""
         _result = StringUtils.clean_text("")
         assert _result == ""
 
     def test_clean_text_unicode_spaces(self):
-        """测试：Unicode空格"""
+        """测试:Unicode空格"""
         text = "Hello\u00a0World"  # \u00A0是non-breaking space
         # 实现可能不处理Unicode空格
         _result = StringUtils.clean_text(text)
         assert _result in ["Hello World", "Hello\u00a0World"]
 
     def test_clean_text_multiple_lines(self):
-        """测试：多行文本"""
+        """测试:多行文本"""
         text = "Line 1\nLine 2\nLine 3"
         _result = StringUtils.clean_text(text)
         assert _result == "Line 1 Line 2 Line 3"
@@ -300,60 +300,60 @@ class TestStringUtilsExtractNumbers:
     """数字提取测试"""
 
     def test_extract_numbers_integers(self):
-        """测试：整数"""
+        """测试:整数"""
         text = "The price is 100 dollars"
         _result = StringUtils.extract_numbers(text)
         assert _result == [100.0]
 
     def test_extract_numbers_floats(self):
-        """测试：浮点数"""
+        """测试:浮点数"""
         text = "The value is 3.14"
         _result = StringUtils.extract_numbers(text)
         assert _result == [3.14]
 
     def test_extract_numbers_negative(self):
-        """测试：负数"""
+        """测试:负数"""
         text = "Temperature is -5 degrees"
         _result = StringUtils.extract_numbers(text)
         assert _result == [-5.0]
 
     def test_extract_numbers_multiple(self):
-        """测试：多个数字"""
+        """测试:多个数字"""
         text = "Values: 1, 2.5, -3, 4.56"
         _result = StringUtils.extract_numbers(text)
         assert _result == [1.0, 2.5, -3.0, 4.56]
 
     def test_extract_numbers_no_numbers(self):
-        """测试：没有数字"""
+        """测试:没有数字"""
         text = "No numbers here"
         _result = StringUtils.extract_numbers(text)
         assert _result == []
 
     def test_extract_numbers_with_hyphen(self):
-        """测试：带连字符的数字"""
+        """测试:带连字符的数字"""
         text = "Range: 10-20"
         _result = StringUtils.extract_numbers(text)
         # 实际的正则匹配10和20
         assert _result == [10.0, 20.0]
 
     def test_extract_numbers_decimal_points(self):
-        """测试：多个小数点"""
+        """测试:多个小数点"""
         text = "Values: .5 and 1."
         _result = StringUtils.extract_numbers(text)
-        # 实际实现：.5匹配0.5，1.匹配1.0
+        # 实际实现:.5匹配0.5,1.匹配1.0
         assert _result == [0.5, 1.0]
 
     def test_extract_numbers_currency_format(self):
-        """测试：货币格式"""
+        """测试:货币格式"""
         text = "Price: $123.45"
         _result = StringUtils.extract_numbers(text)
         assert _result == [123.45]
 
     def test_extract_numbers_scientific(self):
-        """测试：科学计数法"""
+        """测试:科学计数法"""
         text = "Value: 1.23e4"
         _result = StringUtils.extract_numbers(text)
-        # 实现不支持科学计数法，匹配1.23和4
+        # 实现不支持科学计数法,匹配1.23和4
         assert _result == [1.23, 4.0]
 
 
@@ -362,13 +362,13 @@ class TestStringUtilsEdgeCases:
     """边界情况测试"""
 
     def test_very_long_strings(self):
-        """测试：非常长的字符串"""
+        """测试:非常长的字符串"""
         text = "A" * 1000
         _result = StringUtils.truncate(text, 100)
         assert len(result) == 100
 
     def test_edge_case_inputs(self):
-        """测试：边界情况输入"""
+        """测试:边界情况输入"""
         # 测试None
         with pytest.raises(AttributeError):
             StringUtils.truncate(None, 10)
@@ -377,7 +377,7 @@ class TestStringUtilsEdgeCases:
             StringUtils.slugify(None)
 
     def test_non_string_input(self):
-        """测试：非字符串输入"""
+        """测试:非字符串输入"""
         with pytest.raises(AttributeError):
             StringUtils.truncate(123, 10)
 
@@ -390,14 +390,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not STRING_UTILS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if STRING_UTILS_AVAILABLE:
 from src.utils.string_utils import StringUtils
 
@@ -405,7 +405,7 @@ from src.utils.string_utils import StringUtils
 
 
 def test_class_methods():
-    """测试：类方法存在"""
+    """测试:类方法存在"""
     if STRING_UTILS_AVAILABLE:
 from src.utils.string_utils import StringUtils
 
@@ -425,7 +425,7 @@ from src.utils.string_utils import StringUtils
 
 @pytest.mark.asyncio
 async def test_async_context_usage():
-    """测试：异步上下文中的使用"""
+    """测试:异步上下文中的使用"""
     if STRING_UTILS_AVAILABLE:
         # 在异步上下文中使用字符串工具
         text = "Hello World"
@@ -433,7 +433,7 @@ async def test_async_context_usage():
         slugified = StringUtils.slugify(text)
         cleaned = StringUtils.clean_text(text)
 
-        # Hello World长度11 > 10，所以会被截断为10-3=7字符 + ...
+        # Hello World长度11 > 10,所以会被截断为10-3=7字符 + ...
         assert truncated == "Hello W..."
         assert slugified == "hello-world"
         assert cleaned == "Hello World"

@@ -2,7 +2,7 @@
 验证器简单测试
 Simple Validators Tests
 
-测试src/utils/validators.py中定义的数据验证功能，专注于实现100%覆盖率。
+测试src/utils/validators.py中定义的数据验证功能,专注于实现100%覆盖率。
 Tests data validation functionality defined in src/utils/validators.py, focused on achieving 100% coverage.
 """
 
@@ -72,7 +72,7 @@ class TestValidatorsSimple:
 
         for email in edge_cases:
             # 根据实际验证器实现调整期望
-            # 如果验证器允许，则测试应该为True
+            # 如果验证器允许,则测试应该为True
             result = is_valid_email(email)
             # 记录实际行为用于文档化
             print(f"is_valid_email('{email}') = {result}")
@@ -83,7 +83,7 @@ class TestValidatorsSimple:
 
     def test_is_valid_phone_valid_phones(self):
         """测试有效电话号码"""
-        # 注意：由于源代码的正则表达式有问题，我们测试它能正确处理的简单情况
+        # 注意:由于源代码的正则表达式有问题,我们测试它能正确处理的简单情况
         valid_phones = [
             "1234567890",
             "123-456-7890",
@@ -95,12 +95,12 @@ class TestValidatorsSimple:
             try:
                 assert is_valid_phone(phone), f"Should validate {phone} as valid"
             except re.error:
-                # 如果正则表达式有错误，跳过这个测试
+                # 如果正则表达式有错误,跳过这个测试
                 pytest.skip(f"Phone validation regex error for {phone}")
 
     def test_is_valid_phone_invalid_phones(self):
         """测试无效电话号码"""
-        # 注意：由于源代码的正则表达式有问题，我们测试基本功能
+        # 注意:由于源代码的正则表达式有问题,我们测试基本功能
         invalid_phones = [
             "",  # 空字符串
         ]
@@ -109,7 +109,7 @@ class TestValidatorsSimple:
             try:
                 assert not is_valid_phone(phone), f"Should reject {phone} as invalid"
             except re.error:
-                # 如果正则表达式有错误，跳过这个测试
+                # 如果正则表达式有错误,跳过这个测试
                 pytest.skip(f"Phone validation regex error for {phone}")
 
     def test_is_valid_url_function_exists(self):
@@ -269,7 +269,7 @@ class TestValidatorsSimple:
         schema = {"count": int, "flag": bool}
 
         result = validate_data_types(data, schema)
-        # count字段可能有类型检查问题，但flag应该正确
+        # count字段可能有类型检查问题,但flag应该正确
         assert "flag" not in " ".join(result)
 
     def test_validate_data_types_special_types(self):

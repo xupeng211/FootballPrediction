@@ -100,10 +100,10 @@ from src.features.feature_store import (
         # Then
 pytest.importorskip("feast", reason="feast not installed")
 pytest.importorskip("psycopg", reason="psycopg not installed")
-"""""""
+""""""""
 特征存储测试
 Tests for Feature Store
-"""""""
+""""""""
     Entity,
     FeatureStore,
     FeatureView,
@@ -144,16 +144,16 @@ class TestFeatureStore:
             features=sample_features,
         )
     def test_feature_store_initialization(self, mock_store):
-        """测试：特征存储初始化"""
+        """测试:特征存储初始化"""
         assert mock_store is not None
         assert hasattr(mock_store, "applied_objects")
         assert mock_store.applied_objects == []
     def test_entity_creation(self):
-        """测试：实体创建"""
+        """测试:实体创建"""
         entity = Entity(name="team", join_keys=["team_id"])
         assert entity.name == "team"
     def test_feature_view_creation(self, sample_entities, sample_features):
-        """测试：特征视图创建"""
+        """测试:特征视图创建"""
         feature_view = FeatureView(
             name="team_features",
             entities=sample_entities[:1],
@@ -163,17 +163,17 @@ class TestFeatureStore:
         assert len(feature_view.entities) == 1
         assert len(feature_view.entities[0].name) > 0
     def test_field_creation(self):
-        """测试：字段创建"""
+        """测试:字段创建"""
         field = Field(name="team:avg_goals", dtype=Float64)
         assert field.name == "team:avg_goals"
         assert field.dtype == Float64
     def test_apply_object(self, mock_store, sample_feature_view):
-        """测试：应用对象到存储"""
+        """测试:应用对象到存储"""
         mock_store.apply(sample_feature_view)
         assert len(mock_store.applied_objects) == 1
         assert mock_store.applied_objects[0] == sample_feature_view
     def test_apply_multiple_objects(self, mock_store, sample_entities, sample_features):
-        """测试：应用多个对象到存储"""
+        """测试:应用多个对象到存储"""
         feature_view1 = FeatureView(
             name="features1",
             entities=[sample_entities[0]],
@@ -190,7 +190,7 @@ class TestFeatureStore:
         assert mock_store.applied_objects[0] == feature_view1
         assert mock_store.applied_objects[1] == feature_view2
     def test_get_online_features(self, mock_store):
-        """测试：获取在线特征"""
+        """测试:获取在线特征"""
         features = ["team:avg_goals", "team:win_rate"]
         entity_rows = [{"team_id": 1}, {"team_id": 2}]
         _result = mock_store.get_online_features(features, entity_rows)
@@ -200,7 +200,7 @@ class TestFeatureStore:
         assert "avg_goals" in df.columns
         assert "win_rate" in df.columns
     def test_get_online_features_with_existing_data(self, mock_store):
-        """测试：获取在线特征 - 带有现有数据"""
+        """测试:获取在线特征 - 带有现有数据"""
         features = ["match:home_score", "match:away_score"]
         entity_rows = [
             {"match_id": 100, "home_score": 2},  # 预设值
@@ -212,7 +212,7 @@ class TestFeatureStore:
         assert df.iloc[0]["home_score"] == 2
         assert df.iloc[1]["home_score"] == 0.0
     def test_get_historical_features(self, mock_store):
-        """测试：获取历史特征"""
+        """测试:获取历史特征"""
         entity_df = pd.DataFrame({"team_id": [1, 2, 3]})
         features = ["team:avg_goals", "team:win_rate"]
         _result = mock_store.get_historical_features(
@@ -222,7 +222,7 @@ class TestFeatureStore:
         df = result.to_df()
         assert len(df) == 0  # Mock返回空结果
     def test_get_historical_features_with_full_names(self, mock_store):
-        """测试：获取历史特征 - 使用完整特征名"""
+        """测试:获取历史特征 - 使用完整特征名"""
         entity_df = pd.DataFrame({"match_id": [100, 101]})
         features = ["match:home_score", "match:away_score"]
         _result = mock_store.get_historical_features(
@@ -230,7 +230,7 @@ class TestFeatureStore:
         )
         assert isinstance(result, _MockFeastResult)
     def test_push_features(self, mock_store):
-        """测试：推送特征"""
+        """测试:推送特征"""
         test_data = pd.DataFrame(
             {
                 "team_id": [1, 2],
@@ -241,7 +241,7 @@ class TestFeatureStore:
         _result = mock_store.push(test_data)
         assert _result is None
     def test_mock_feast_result(self):
-        """测试：Mock Feast结果"""
+        """测试:Mock Feast结果"""
         rows = [{"team_id": 1, "avg_goals": 1.5}, {"team_id": 2, "avg_goals": 2.0}]
         _result = _MockFeastResult(rows)
         df = result.to_df()
@@ -250,16 +250,16 @@ class TestFeatureStore:
         assert df.iloc[0]["team_id"] == 1
         assert df.iloc[1]["avg_goals"] == 2.0
     def test_mock_feast_result_empty(self):
-        """测试：空的Mock Feast结果"""
+        """测试:空的Mock Feast结果"""
         _result = _MockFeastResult([])
         df = result.to_df()
         assert len(df) == 0
     def test_feature_types(self):
-        """测试：特征类型"""
+        """测试:特征类型"""
         assert Float64 is not None
         assert Int64 is not None
     def test_complex_feature_scenarios(self, mock_store):
-        """测试：复杂特征场景"""
+        """测试:复杂特征场景"""
         features = [
             "team:avg_goals",
             "team:win_rate",
@@ -279,7 +279,7 @@ class TestFeatureStore:
             short_name = feature.split(":")[-1]
             assert short_name in df.columns
     def test_feature_store_with_config(self):
-        """测试：使用配置创建特征存储"""
+        """测试:使用配置创建特征存储"""
         _config = {
             "offline_store": {"type": "postgres", "host": "localhost", "port": 5432},
             "online_store": {"type": "redis", "host": "localhost", "port": 6379},

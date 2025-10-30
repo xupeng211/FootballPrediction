@@ -10,7 +10,7 @@ API 依赖模块增强测试套件
 Enhanced API Dependencies Test Suite
 
 Phase 2 - 提升核心模块覆盖率至50%+
-目标：覆盖API依赖注入功能的各种场景
+目标:覆盖API依赖注入功能的各种场景
 """
 
 import os
@@ -319,7 +319,7 @@ class TestAPIDependenciesEnhanced:
         Mock()
 
         with patch("src.api.dependencies.SessionLocal") as mock_session_local:
-            # 前两次失败，第三次成功
+            # 前两次失败,第三次成功
             mock_session_local.side_effect = [
                 Exception("Connection failed"),
                 Exception("Connection failed"),
@@ -332,12 +332,12 @@ class TestAPIDependenciesEnhanced:
                 # 如果实现了重试，应该成功
                 assert session is not None
             except Exception:
-                # 如果没有重试，应该失败
+                # 如果没有重试,应该失败
                 pass
 
     def test_fallback_authentication(self):
         """测试后备认证机制"""
-        # 当主要认证失败时，应该有后备方案
+        # 当主要认证失败时,应该有后备方案
         with patch("src.api.dependencies.decode_token") as mock_decode:
             mock_decode.side_effect = Exception("Token decode failed")
 
@@ -353,7 +353,7 @@ class TestAPIDependenciesEnhanced:
                     # 如果实现了后备认证，应该成功
                     assert user is not None
                 except Exception:
-                    # 如果没有后备认证，应该失败
+                    # 如果没有后备认证,应该失败
                     pass
 
     # === 性能测试 ===

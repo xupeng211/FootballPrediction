@@ -3,13 +3,13 @@
 # TODO: Consider creating a fixture for 45 repeated Mock creations
 
 
-"""""""
+""""""""
 简化适配器工厂模块测试
 Simple Adapter Factory Module Tests
 
-测试src/adapters/factory_simple.py中定义的简化适配器工厂功能，专注于实现100%覆盖率。
+测试src/adapters/factory_simple.py中定义的简化适配器工厂功能,专注于实现100%覆盖率。
 Tests simple adapter factory functionality defined in src/adapters/factory_simple.py, focused on achieving 100% coverage.
-"""""""
+""""""""
 
 
 import pytest
@@ -389,7 +389,7 @@ class TestAdapterFactory:
         factory.register_adapter("test", mock_class, version="1.0")
 
         # 过滤不存在的键，应该不匹配任何项
-        # 源代码中的list方法只过滤存在的键，如果键不存在就认为匹配
+        # 源代码中的list方法只过滤存在的键,如果键不存在就认为匹配
         # 所以我们需要测试一个存在的键但值不匹配的情况
         result = factory.list(version="2.0")  # 版本不匹配
 

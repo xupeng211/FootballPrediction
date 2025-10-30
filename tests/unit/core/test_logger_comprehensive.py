@@ -21,41 +21,41 @@ class TestLogger:
     """日志管理类测试"""
 
     def test_setup_logger_default_level(self):
-        """测试：设置默认级别的日志器"""
+        """测试:设置默认级别的日志器"""
         test_logger = Logger.setup_logger("test_logger")
         assert isinstance(test_logger, logging.Logger)
         assert test_logger.name == "test_logger"
         assert test_logger.level == logging.INFO
 
     def test_setup_logger_debug_level(self):
-        """测试：设置DEBUG级别的日志器"""
+        """测试:设置DEBUG级别的日志器"""
         test_logger = Logger.setup_logger("test_logger_debug", "DEBUG")
         assert test_logger.level == logging.DEBUG
 
     def test_setup_logger_warning_level(self):
-        """测试：设置WARNING级别的日志器"""
+        """测试:设置WARNING级别的日志器"""
         test_logger = Logger.setup_logger("test_logger_warn", "WARNING")
         assert test_logger.level == logging.WARNING
 
     def test_setup_logger_error_level(self):
-        """测试：设置ERROR级别的日志器"""
+        """测试:设置ERROR级别的日志器"""
         test_logger = Logger.setup_logger("test_logger_error", "ERROR")
         assert test_logger.level == logging.ERROR
 
     def test_setup_logger_critical_level(self):
-        """测试：设置CRITICAL级别的日志器"""
+        """测试:设置CRITICAL级别的日志器"""
         test_logger = Logger.setup_logger("test_logger_critical", "CRITICAL")
         assert test_logger.level == logging.CRITICAL
 
     def test_setup_logger_with_same_name(self):
-        """测试：相同名称的日志器"""
+        """测试:相同名称的日志器"""
         logger1 = Logger.setup_logger("duplicate_test")
         logger2 = Logger.setup_logger("duplicate_test")
         # 应该返回同一个logger实例
         assert logger1 is logger2
 
     def test_setup_logger_adds_handler_once(self):
-        """测试：只添加一次处理器"""
+        """测试:只添加一次处理器"""
         test_logger = Logger.setup_logger("handler_test")
         initial_handler_count = len(test_logger.handlers)
 
@@ -64,7 +64,7 @@ class TestLogger:
         assert len(test_logger.handlers) == initial_handler_count
 
     def test_setup_logger_formatter(self):
-        """测试：日志器格式"""
+        """测试:日志器格式"""
         with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             test_logger = Logger.setup_logger("format_test")
             test_logger.info("Test message")
@@ -77,19 +77,19 @@ class TestLogger:
             assert "-" in output  # 时间分隔符
 
     def test_setup_logger_invalid_level(self):
-        """测试：无效的日志级别"""
+        """测试:无效的日志级别"""
         with pytest.raises(AttributeError):
             Logger.setup_logger("invalid_test", "INVALID_LEVEL")
 
     def test_setup_logger_empty_name(self):
-        """测试：空名称的日志器"""
+        """测试:空名称的日志器"""
         test_logger = Logger.setup_logger("")
         assert isinstance(test_logger, logging.Logger)
         # logging.getLogger("") 返回 root logger
         assert test_logger.name == "root"
 
     def test_setup_logger_none_name(self):
-        """测试：None名称的日志器"""
+        """测试:None名称的日志器"""
         test_logger = Logger.setup_logger(None)
         assert isinstance(test_logger, logging.Logger)
         # logging.getLogger(None) 返回 root logger
@@ -97,7 +97,7 @@ class TestLogger:
 
     @patch("logging.StreamHandler")
     def test_setup_logger_custom_handler(self, mock_stream_handler):
-        """测试：自定义处理器"""
+        """测试:自定义处理器"""
         mock_handler = MagicMock()
         mock_stream_handler.return_value = mock_handler
 
@@ -106,11 +106,11 @@ class TestLogger:
         # 验证处理器被创建和配置
         mock_stream_handler.assert_called_once()
         mock_handler.setFormatter.assert_called_once()
-        # addHandler是方法，不是属性
+        # addHandler是方法,不是属性
         assert mock_handler in test_logger.handlers
 
     def test_logger_levels_hierarchy(self):
-        """测试：日志级别层次"""
+        """测试:日志级别层次"""
         test_logger = Logger.setup_logger("level_test", "DEBUG")
 
         # DEBUG级别应该记录所有消息
@@ -126,7 +126,7 @@ class TestLogger:
         assert info_logger.isEnabledFor(logging.INFO)
 
     def test_logger_message_output(self):
-        """测试：日志消息输出"""
+        """测试:日志消息输出"""
         with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             test_logger = Logger.setup_logger("output_test", "DEBUG")
 
@@ -151,7 +151,7 @@ class TestLogger:
             assert "CRITICAL" in output
 
     def test_logger_with_exception(self):
-        """测试：记录异常信息"""
+        """测试:记录异常信息"""
         with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             test_logger = Logger.setup_logger("exception_test")
 
@@ -168,7 +168,7 @@ class TestLogger:
             assert "Traceback" in output
 
     def test_logger_multiple_loggers(self):
-        """测试：多个日志器"""
+        """测试:多个日志器"""
         logger1 = Logger.setup_logger("multi_test_1")
         logger2 = Logger.setup_logger("multi_test_2")
         logger3 = Logger.setup_logger("multi_test_3")
@@ -184,7 +184,7 @@ class TestLogger:
         assert logger3.name == "multi_test_3"
 
     def test_logger_handler_cleanup(self):
-        """测试：日志器处理器清理"""
+        """测试:日志器处理器清理"""
         test_logger = Logger.setup_logger("cleanup_test")
 
         # 记录初始处理器数量
@@ -204,19 +204,19 @@ class TestGetLoggerFunction:
     """全局日志函数测试"""
 
     def test_get_logger_default(self):
-        """测试：获取默认日志器"""
+        """测试:获取默认日志器"""
         test_logger = get_logger("function_test")
         assert isinstance(test_logger, logging.Logger)
         assert test_logger.name == "function_test"
         assert test_logger.level == logging.INFO
 
     def test_get_logger_with_level(self):
-        """测试：获取带级别的日志器"""
+        """测试:获取带级别的日志器"""
         test_logger = get_logger("function_test_debug", "DEBUG")
         assert test_logger.level == logging.DEBUG
 
     def test_get_logger_is_same_as_class_method(self):
-        """测试：函数与类方法返回相同的日志器"""
+        """测试:函数与类方法返回相同的日志器"""
         name = "comparison_test"
         logger1 = get_logger(name)
         logger2 = Logger.setup_logger(name)
@@ -225,7 +225,7 @@ class TestGetLoggerFunction:
         assert logger1 is logger2
 
     def test_get_logger_multiple_calls(self):
-        """测试：多次调用get_logger"""
+        """测试:多次调用get_logger"""
         name = "multiple_calls_test"
         logger1 = get_logger(name)
         logger2 = get_logger(name)
@@ -236,11 +236,11 @@ class TestGetLoggerFunction:
         assert logger2 is logger3
 
     def test_get_logger_case_sensitivity(self):
-        """测试：日志器名称大小写敏感性"""
+        """测试:日志器名称大小写敏感性"""
         logger1 = get_logger("CaseSensitive")
         logger2 = get_logger("casesensitive")
 
-        # 大小写不同，应该是不同的日志器
+        # 大小写不同,应该是不同的日志器
         assert logger1 is not logger2
         assert logger1.name != logger2.name
 
@@ -249,37 +249,37 @@ class TestDefaultLogger:
     """默认日志器测试"""
 
     def test_default_logger_exists(self):
-        """测试：默认日志器存在"""
+        """测试:默认日志器存在"""
         assert isinstance(logger, logging.Logger)
         assert logger.name == "footballprediction"
 
     def test_default_logger_level(self):
-        """测试：默认日志器级别"""
+        """测试:默认日志器级别"""
         assert logger.level == logging.INFO
 
     def test_default_logger_can_log(self):
-        """测试：默认日志器可以记录日志"""
-        # 默认日志器已经存在，直接测试
+        """测试:默认日志器可以记录日志"""
+        # 默认日志器已经存在,直接测试
         assert isinstance(logger, logging.Logger)
         assert logger.name == "footballprediction"
-        # 默认日志器已经设置了处理器，不需要重新测试输出
+        # 默认日志器已经设置了处理器,不需要重新测试输出
 
 
 class TestLoggerIntegration:
     """日志集成测试"""
 
     def test_logger_with_standard_logging(self):
-        """测试：与标准logging模块集成"""
+        """测试:与标准logging模块集成"""
         test_logger = Logger.setup_logger("integration_test")
 
         # 应该与标准logging模块兼容
         assert isinstance(test_logger, logging.Logger)
         root_logger = logging.getLogger()
-        # root logger是RootLogger类型，其他是Logger类型
+        # root logger是RootLogger类型,其他是Logger类型
         assert isinstance(root_logger, logging.Logger)
 
     def test_logger_propagation(self):
-        """测试：日志传播"""
+        """测试:日志传播"""
         # 创建子日志器
         parent = Logger.setup_logger("parent_test")
         child = Logger.setup_logger("parent_test.child")
@@ -290,7 +290,7 @@ class TestLoggerIntegration:
         assert child.parent == parent
 
     def test_logger_thread_safety(self):
-        """测试：日志器线程安全"""
+        """测试:日志器线程安全"""
         import threading
 
         loggers = []
@@ -322,7 +322,7 @@ class TestLoggerIntegration:
             assert isinstance(logger_instance, logging.Logger)
 
     def test_logger_performance(self):
-        """测试：日志器性能"""
+        """测试:日志器性能"""
         import time
 
         test_logger = Logger.setup_logger("performance_test")
@@ -339,7 +339,7 @@ class TestLoggerIntegration:
         assert duration < 1.0, f"日志记录耗时过长: {duration:.3f}秒"
 
     def test_logger_memory_usage(self):
-        """测试：日志器内存使用"""
+        """测试:日志器内存使用"""
         import gc
 
         # 获取初始对象计数
@@ -360,5 +360,5 @@ class TestLoggerIntegration:
 
         # 验证内存被正确清理（至少部分）
         final_count = len([obj for obj in gc.get_objects() if isinstance(obj, logging.Logger)])
-        # 允许一些差异，因为可能有其他日志器存在
+        # 允许一些差异,因为可能有其他日志器存在
         assert abs(final_count - initial_count) < 110

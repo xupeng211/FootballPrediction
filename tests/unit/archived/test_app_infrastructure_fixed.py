@@ -1,8 +1,8 @@
-"""""""
+""""""""
 FastAPI应用基础设施测试 - 符合严格测试规范
 
-测试src/api/app.py的核心基础设施功能，包括应用启动、路由注册、中间件等。
-符合7项严格测试规范：
+测试src/api/app.py的核心基础设施功能,包括应用启动、路由注册,中间件等。
+符合7项严格测试规范:
 1. ✅ 文件路径与模块层级对应
 2. ✅ 测试文件命名规范
 3. ✅ 每个函数包含成功和异常用例
@@ -10,7 +10,7 @@ FastAPI应用基础设施测试 - 符合严格测试规范
 5. ✅ 使用pytest标记
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
-"""""""
+""""""""
 
 import asyncio
 
@@ -30,7 +30,7 @@ class TestFastAPIAppInfrastructure:
     """FastAPI应用基础设施测试 - 严格测试规范"""
 
     def test_app_creation_success(self) -> None:
-        """✅ 成功用例：应用对象创建成功"""
+        """✅ 成功用例:应用对象创建成功"""
         if app is not None:
             assert app.title == "Football Prediction API"
             assert app.version is not None
@@ -38,13 +38,13 @@ class TestFastAPIAppInfrastructure:
             assert app.redoc_url is not None
 
     def test_app_creation_exception(self) -> None:
-        """❌ 异常用例：应用创建失败时的处理"""
+        """❌ 异常用例:应用创建失败时的处理"""
         # 这个测试主要验证异常情况的代码路径
-        # 在实际应用中，我们期望应用能够正常创建
+        # 在实际应用中,我们期望应用能够正常创建
 
     @pytest.mark.asyncio
     async def test_startup_configuration_success(self) -> None:
-        """✅ 成功用例：应用启动配置正确"""
+        """✅ 成功用例:应用启动配置正确"""
         if app is not None:
             # 模拟启动配置
             mock_config = {
@@ -66,7 +66,7 @@ class TestFastAPIAppInfrastructure:
 
     @pytest.mark.asyncio
     async def test_startup_configuration_exception(self) -> None:
-        """❌ 异常用例：启动配置失败"""
+        """❌ 异常用例:启动配置失败"""
         # 测试异常情况下的应用启动
         with pytest.raises(Exception):
             with patch("src.core.di.di_container") as mock_get_container:
@@ -77,7 +77,7 @@ class TestFastAPIAppInfrastructure:
                     with pytest.raises(Exception):
 
     def test_router_registration_success(self) -> None:
-        """✅ 成功用例：路由注册成功"""
+        """✅ 成功用例:路由注册成功"""
         if app is not None:
             # 验证路由器已注册
             registered_routes = [route.path for route in app.routes]
@@ -97,7 +97,7 @@ class TestFastAPIAppInfrastructure:
                 assert expected_route in registered_routes
 
     def test_middleware_configuration_success(self) -> None:
-        """✅ 成功用例：中间件配置正确"""
+        """✅ 成功用例:中间件配置正确"""
         if app is not None:
             # 验证CORS中间件
             cors_middlewares = [
@@ -122,14 +122,14 @@ class TestFastAPIAppInfrastructure:
             assert len(gzip_middlewares) > 0, "应该配置了Gzip中间件"
 
     def test_logging_configuration_success(self) -> None:
-        """✅ 成功用例：日志配置正确"""
+        """✅ 成功用例:日志配置正确"""
         if app is not None:
             # 验证应用有日志配置
             # 这主要验证应用可以启动和运行
             assert app is not None
 
     def test_error_handling_mechanisms_success(self) -> None:
-        """✅ 成功用例：错误处理机制正确"""
+        """✅ 成功用例:错误处理机制正确"""
         if app is not None:
             # 验证错误处理器
             assert hasattr(app, "exception_handlers")
@@ -140,21 +140,21 @@ class TestFastAPIAppInfrastructure:
 
     @pytest.mark.asyncio
     async def test_dependency_injection_success(self) -> None:
-        """✅ 成功用例：依赖注入正常工作"""
+        """✅ 成功用例:依赖注入正常工作"""
         if app is not None and get_container is not None:
             # 这个测试验证依赖注入容器的基本功能
             container = get_container()
             assert container is not None
 
     def test_dependency_injection_exception(self) -> None:
-        """❌ 异常用例：依赖注入失败处理"""
-        # 简化测试：模拟依赖注入失败的情况
+        """❌ 异常用例:依赖注入失败处理"""
+        # 简化测试:模拟依赖注入失败的情况
         with pytest.raises(Exception):
             # 模拟应用初始化失败
             raise Exception("Container initialization failed")
 
     def test_lifecycle_hooks_success(self) -> None:
-        """✅ 成功用例：应用生命周期钩子正确配置"""
+        """✅ 成功用例:应用生命周期钩子正确配置"""
         if app is not None:
             # 验证应用有startup和shutdown事件
             # 这主要验证应用结构支持生命周期管理
@@ -163,15 +163,15 @@ class TestFastAPIAppInfrastructure:
 
     @pytest.mark.asyncio
     async def test_production_features_success(self) -> None:
-        """✅ 成功用例：生产环境特性正确配置"""
+        """✅ 成功用例:生产环境特性正确配置"""
         if app is not None:
             # 验证生产环境下的特性
-            # 这包括安全头、错误处理等生产级别功能
+            # 这包括安全头,错误处理等生产级别功能
             assert app is not None
 
     @pytest.mark.asyncio
     async def test_concurrent_startup(self) -> None:
-        """✅ 边界用例：并发启动测试"""
+        """✅ 边界用例:并发启动测试"""
         if app is not None:
             # 测试应用可以处理并发启动场景
             tasks = []
@@ -186,21 +186,21 @@ class TestFastAPIAppInfrastructure:
             assert True
 
     def test_openapi_specification_success(self) -> None:
-        """✅ 成功用例：OpenAPI规范正确"""
+        """✅ 成功用例:OpenAPI规范正确"""
         if app is not None:
             # 验证OpenAPI规范
             assert app.openapi() is not None
             assert isinstance(app.openapi(), dict)
 
     def test_response_headers_configuration(self) -> None:
-        """✅ 成功用例：响应头配置正确"""
+        """✅ 成功用例:响应头配置正确"""
         if app is not None:
             # 验证响应头配置
             # 这主要验证应用可以正确设置响应头
             assert app is not None
 
     def test_request_validation_success(self) -> None:
-        """✅ 成功用例：请求验证正常工作"""
+        """✅ 成功用例:请求验证正常工作"""
         if app is not None:
             # 验证请求验证机制
             # 这主要验证FastAPI的内置请求验证功能
@@ -213,7 +213,7 @@ class TestFastAPIAppIntegration:
 
     @pytest.mark.asyncio
     async def test_full_request_response(self) -> None:
-        """✅ 集成用例：完整请求响应流程"""
+        """✅ 集成用例:完整请求响应流程"""
         if app is not None:
             from fastapi.testclient import TestClient
 
@@ -233,7 +233,7 @@ class TestFastAPIAppIntegration:
 
     @pytest.mark.asyncio
     async def test_error_responses_consistency(self) -> None:
-        """✅ 集成用例：错误响应一致性"""
+        """✅ 集成用例:错误响应一致性"""
         if app is not None:
             from fastapi.testclient import TestClient
 
@@ -261,7 +261,7 @@ class TestFastAPIAppIntegration:
 
     @pytest.mark.asyncio
     async def test_cors_functionality(self) -> None:
-        """✅ 集成用例：CORS功能正常工作"""
+        """✅ 集成用例:CORS功能正常工作"""
         if app is not None:
             from fastapi.testclient import TestClient
 

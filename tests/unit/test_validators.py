@@ -175,7 +175,7 @@ class TestValidators:
         schema = {"name": str, "age": int, "email": str, "active": bool}
 
         errors = validate_data_types(data, schema)
-        # 缺失字段不应该产生类型错误，因为它们不存在
+        # 缺失字段不应该产生类型错误,因为它们不存在
         assert errors == []
 
     def test_validate_data_types_empty_data(self):

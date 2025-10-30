@@ -36,7 +36,7 @@ class TestFeatureCalculator:
         return Mock(spec=AsyncSession)
 
     def test_initialization(self):
-        """测试：初始化特征计算器"""
+        """测试:初始化特征计算器"""
         # When
         calc = FeatureCalculator()
 
@@ -46,7 +46,7 @@ class TestFeatureCalculator:
         assert calc.features == []
 
     def test_initialization_with_config(self):
-        """测试：使用配置初始化特征计算器"""
+        """测试:使用配置初始化特征计算器"""
         # Given
         _config = {"cache_size": 1000, "timeout": 30}
 
@@ -60,7 +60,7 @@ class TestFeatureCalculator:
     async def test_calculate_recent_performance_features_with_no_matches(
         self, calculator, sample_date, mock_session
     ):
-        """测试：计算近期战绩特征 - 无比赛记录"""
+        """测试:计算近期战绩特征 - 无比赛记录"""
         # Given
         mock_result = Mock()
         mock_result.scalars.return_value.all.return_value = []
@@ -85,7 +85,7 @@ class TestFeatureCalculator:
     async def test_calculate_recent_performance_features_with_matches(
         self, calculator, sample_date, mock_session
     ):
-        """测试：计算近期战绩特征 - 有比赛记录"""
+        """测试:计算近期战绩特征 - 有比赛记录"""
         # Given
         mock_match1 = Mock()
         mock_match1.home_team_id = 1
@@ -122,7 +122,7 @@ class TestFeatureCalculator:
     async def test_calculate_historical_matchup_features(
         self, calculator, sample_date, mock_session
     ):
-        """测试：计算历史对战特征"""
+        """测试:计算历史对战特征"""
         # Given
         mock_match = Mock()
         mock_match.home_team_id = 1
@@ -148,7 +148,7 @@ class TestFeatureCalculator:
     async def test_calculate_features_with_session_provided(
         self, calculator, sample_date, mock_session
     ):
-        """测试：使用提供的数据库会话计算特征"""
+        """测试:使用提供的数据库会话计算特征"""
         # Given
         mock_result = Mock()
         mock_result.scalars.return_value.all.return_value = []
@@ -163,7 +163,7 @@ class TestFeatureCalculator:
         assert features is not None
 
     def test_config_property(self):
-        """测试：配置属性"""
+        """测试:配置属性"""
         # Given
         _config = {"test": "value"}
         calc = FeatureCalculator(config)
@@ -173,7 +173,7 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     async def test_database_manager_usage(self, calculator):
-        """测试：数据库管理器的使用"""
+        """测试:数据库管理器的使用"""
         # When
         with patch.object(calculator, "db_manager") as mock_db:
             mock_db.get_async_session.return_value.__aenter__ = AsyncMock()
@@ -185,7 +185,7 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     async def test_calculate_features_with_different_dates(self, calculator):
-        """测试：使用不同日期计算特征"""
+        """测试:使用不同日期计算特征"""
         # Given
         dates = [
             datetime(2024, 1, 1),
@@ -212,7 +212,7 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     async def test_calculate_features_multiple_teams(self, calculator, sample_date):
-        """测试：为多个球队计算特征"""
+        """测试:为多个球队计算特征"""
         # Given
         team_ids = [1, 2, 3, 4, 5]
 

@@ -34,7 +34,7 @@ class TestOddsCollector:
             collector = OddsCollector(config)
             assert collector is not None
         except Exception:
-            # 配置可能不支持，这是可以接受的
+            # 配置可能不支持,这是可以接受的
             collector = OddsCollector()
             assert collector is not None
 
@@ -118,7 +118,7 @@ class TestOddsCollector:
                 # 如果返回False，这是正确的
                 if result is False:
                     assert True
-                # 如果抛出异常，这也是可以接受的
+                # 如果抛出异常,这也是可以接受的
             except Exception:
                 pass
 
@@ -284,7 +284,7 @@ class TestOddsCollector:
         for source in data_sources:
             try:
                 collector.set_data_source(source)
-                # 如果方法存在且不抛出异常，测试通过
+                # 如果方法存在且不抛出异常,测试通过
                 if hasattr(collector, "set_data_source"):
                     assert True
             except Exception:

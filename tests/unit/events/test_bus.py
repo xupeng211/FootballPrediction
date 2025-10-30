@@ -1,10 +1,10 @@
-"""""""
+""""""""
 事件总线模块测试
 Event Bus Module Tests
 
-测试src/events/bus.py中定义的事件总线功能，专注于实现高覆盖率。
+测试src/events/bus.py中定义的事件总线功能,专注于实现高覆盖率。
 Tests event bus functionality defined in src/events/bus.py, focused on achieving high coverage.
-"""""""
+""""""""
 
 import asyncio
 
@@ -56,7 +56,7 @@ class TestEventBus:
             bus = EventBus(config=config)
             assert bus.config == config
         except (TypeError, ValueError):
-            # 如果不支持配置，使用默认创建
+            # 如果不支持配置,使用默认创建
             bus = EventBus()
             assert bus is not None
 
@@ -195,7 +195,7 @@ class TestEventBus:
             elif hasattr(bus, "emit"):
                 await bus.emit(event)
         except Exception:
-            # 某些实现可能会抛出异常，这是可以接受的
+            # 某些实现可能会抛出异常,这是可以接受的
             pass
 
     @pytest.mark.asyncio
@@ -250,7 +250,7 @@ class TestEventBus:
             try:
                 bus.subscribe("*", wildcard_handler)  # 通配符
             except ValueError:
-                # 如果不支持通配符，跳过测试
+                # 如果不支持通配符,跳过测试
                 pytest.skip("Wildcard events not supported")
         elif hasattr(bus, "add_handler"):
             try:
@@ -395,7 +395,7 @@ class TestEventHandler:
             await handler.handle(event)
             assert len(result) == 1
         except (AttributeError, TypeError):
-            # 如果API不同，直接调用函数
+            # 如果API不同,直接调用函数
             await test_handler_func(Event(type="test", data={"message": "test"}))
             assert len(result) == 1
 

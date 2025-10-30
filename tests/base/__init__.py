@@ -1,8 +1,8 @@
 from typing import Dict
 from typing import Any
-"""""""
+""""""""
 测试基础设施
-"""""""
+""""""""
 
 import pytest
 
@@ -46,7 +46,7 @@ class ServiceTestCase(BaseTestCase):
 
     def setup_method(self):
         """每个测试方法前的设置"""
-        # 不需要调用 super().setup_method()，因为 BaseTestCase 没有这个方法
+        # 不需要调用 super().setup_method(),因为 BaseTestCase 没有这个方法
         self.service_patches = []
 
     def teardown_method(self):

@@ -143,7 +143,7 @@ class TestScoresCollectorImproved:
         match_id = 12345
 
         with patch.object(collector, "_fetch_match_data") as mock_fetch:
-            # 前两次失败，第三次成功
+            # 前两次失败,第三次成功
             mock_fetch.side_effect = [
                 Exception("Network error"),
                 Exception("Timeout"),
@@ -270,7 +270,7 @@ class TestScoresCollectorImproved:
 
         # 验证清理效果
         await collector._get_cached_match_data(12345)
-        # 根据TTL设置，数据可能仍然存在或已清理
+        # 根据TTL设置,数据可能仍然存在或已清理
 
 
 @pytest.mark.skipif(not COLLECTOR_AVAILABLE, reason="ScoresCollector not available")

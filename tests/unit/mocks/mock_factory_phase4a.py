@@ -127,7 +127,7 @@ class MockConnectionPool:
             raise ConnectionError("Connection pool is shutdown")
 
         if len(self.active_connections) >= self.max_connections:
-            # 模拟连接池耗尽，等待或超时
+            # 模拟连接池耗尽,等待或超时
             await asyncio.sleep(0.001)  # 短暂等待
             if len(self.active_connections) >= self.max_connections:
                 raise TimeoutError("Connection pool exhausted")

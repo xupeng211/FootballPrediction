@@ -12,7 +12,7 @@ from src.core.config import Settings, get_config, get_settings
 @pytest.mark.unit
 @pytest.mark.external_api
 class TestConfigExtended:
-    """扩展的配置测试，覆盖未测试的代码路径"""
+    """扩展的配置测试,覆盖未测试的代码路径"""
 
     def test_settings_with_minimal_mode_true(self):
         """测试最小模式设置为true"""

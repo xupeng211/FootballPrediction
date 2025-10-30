@@ -3,7 +3,7 @@ from datetime import datetime
 数据库模型综合测试
 Database Models Comprehensive Tests
 
-重构说明：原文件为1010行的模板代码，现已重构为高质量的业务逻辑测试，
+重构说明:原文件为1010行的模板代码，现已重构为高质量的业务逻辑测试,
 专注于BaseModel核心功能和真实业务场景的测试。
 """
 
@@ -70,7 +70,7 @@ class TestBaseModel:
 
     def test_timestamp_mixin_functionality(self):
         """测试时间戳混入功能"""
-        # 直接测试BaseModel，因为它已经包含了TimestampMixin
+        # 直接测试BaseModel,因为它已经包含了TimestampMixin
         model = BaseModel()
 
         # 验证时间戳字段存在
@@ -160,7 +160,7 @@ class TestTimestampMixin:
 
     def test_timestamp_mixin_inheritance(self):
         """测试时间戳混入继承"""
-        # 直接测试BaseModel，因为它已经继承了TimestampMixin
+        # 直接测试BaseModel,因为它已经继承了TimestampMixin
         model = BaseModel()
 
         # 验证继承的时间戳属性
@@ -344,7 +344,7 @@ class TestModelErrorHandling:
         for attr_name in attributes_to_test:
             try:
                 getattr(model, attr_name)
-                # 属性应该存在，值可能为None
+                # 属性应该存在,值可能为None
                 assert True  # 如果能访问就是成功的
             except AttributeError:
                 pytest.fail(f"Attribute {attr_name} not found on BaseModel")

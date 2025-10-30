@@ -23,7 +23,7 @@ class TestEmailValidatorStrict:
     """邮箱验证器测试 - 严格规范"""
 
     def test_valid_emails_success(self) -> None:
-        """✅ 成功用例：有效邮箱地址"""
+        """✅ 成功用例:有效邮箱地址"""
         valid_emails = [
             "test@example.com",
             "user.name@domain.co.uk",
@@ -35,7 +35,7 @@ class TestEmailValidatorStrict:
             assert is_valid_email(email) is True, f"应该验证通过: {email}"
 
     def test_invalid_emails_failure(self) -> None:
-        """❌ 失败用例：无效邮箱地址"""
+        """❌ 失败用例:无效邮箱地址"""
         invalid_emails = [
             "",
             "plainaddress",
@@ -48,13 +48,13 @@ class TestEmailValidatorStrict:
             assert is_valid_email(email) is False, f"应该验证失败: {email}"
 
     def test_email_exception_handling(self) -> None:
-        """❌ 异常用例：异常处理"""
+        """❌ 异常用例:异常处理"""
         with pytest.raises((TypeError, AttributeError)):
             is_valid_email(None)
 
     @patch("re.match")
     def test_email_regex_exception(self, mock_match: Mock) -> None:
-        """❌ 异常用例：正则表达式异常"""
+        """❌ 异常用例:正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")
 
         with pytest.raises(Exception, match="Regex error"):
@@ -66,7 +66,7 @@ class TestPhoneValidatorStrict:
     """电话号码验证器测试 - 严格规范"""
 
     def test_valid_phones_success(self) -> None:
-        """✅ 成功用例：有效电话号码"""
+        """✅ 成功用例:有效电话号码"""
         valid_phones = [
             "+1234567890",
             "1234567890",
@@ -79,7 +79,7 @@ class TestPhoneValidatorStrict:
             assert is_valid_phone(phone) is True, f"应该验证通过: {phone}"
 
     def test_invalid_phones_failure(self) -> None:
-        """❌ 失败用例：无效电话号码"""
+        """❌ 失败用例:无效电话号码"""
         invalid_phones = [
             "",
             "abc",
@@ -91,7 +91,7 @@ class TestPhoneValidatorStrict:
             assert is_valid_phone(phone) is False, f"应该验证失败: {phone}"
 
     def test_phone_exception_handling(self) -> None:
-        """❌ 异常用例：异常处理"""
+        """❌ 异常用例:异常处理"""
         with pytest.raises((TypeError, AttributeError)):
             is_valid_phone(None)
 
@@ -101,7 +101,7 @@ class TestURLValidatorStrict:
     """URL验证器测试 - 严格规范"""
 
     def test_valid_urls_success(self) -> None:
-        """✅ 成功用例：有效URL"""
+        """✅ 成功用例:有效URL"""
         valid_urls = [
             "http://example.com",
             "https://example.com",
@@ -113,7 +113,7 @@ class TestURLValidatorStrict:
             assert is_valid_url(url) is True, f"应该验证通过: {url}"
 
     def test_invalid_urls_failure(self) -> None:
-        """❌ 失败用例：无效URL"""
+        """❌ 失败用例:无效URL"""
         invalid_urls = [
             "",
             "example.com",
@@ -125,7 +125,7 @@ class TestURLValidatorStrict:
             assert is_valid_url(url) is False, f"应该验证失败: {url}"
 
     def test_url_exception_handling(self) -> None:
-        """❌ 异常用例：异常处理"""
+        """❌ 异常用例:异常处理"""
         with pytest.raises((TypeError, AttributeError)):
             is_valid_url(None)
 
@@ -135,7 +135,7 @@ class TestRequiredFieldsValidatorStrict:
     """必填字段验证器测试 - 严格规范"""
 
     def test_all_required_fields_present_success(self) -> None:
-        """✅ 成功用例：所有必填字段都存在"""
+        """✅ 成功用例:所有必填字段都存在"""
         data = {"name": "John", "email": "john@example.com"}
         required_fields = ["name", "email"]
 
@@ -143,7 +143,7 @@ class TestRequiredFieldsValidatorStrict:
         assert missing == []
 
     def test_missing_required_fields_failure(self) -> None:
-        """❌ 失败用例：缺少必填字段"""
+        """❌ 失败用例:缺少必填字段"""
         data = {"name": "John"}
         required_fields = ["name", "email"]
 
@@ -151,7 +151,7 @@ class TestRequiredFieldsValidatorStrict:
         assert missing == ["email"]
 
     def test_null_and_empty_values_as_missing(self) -> None:
-        """✅ 边界用例：None和空值被视为缺失"""
+        """✅ 边界用例:None和空值被视为缺失"""
         data = {"name": "John", "email": None, "age": ""}
         required_fields = ["name", "email", "age"]
 
@@ -159,7 +159,7 @@ class TestRequiredFieldsValidatorStrict:
         assert set(missing) == {"email", "age"}
 
     def test_empty_data_with_requirements(self) -> None:
-        """❌ 失败用例：空数据但有要求"""
+        """❌ 失败用例:空数据但有要求"""
         data: Dict[str, Any] = {}
         required_fields = ["name", "email"]
 
@@ -172,7 +172,7 @@ class TestDataTypesValidatorStrict:
     """数据类型验证器测试 - 严格规范"""
 
     def test_all_valid_types_success(self) -> None:
-        """✅ 成功用例：所有数据类型正确"""
+        """✅ 成功用例:所有数据类型正确"""
         data = {"name": "John", "age": 30, "active": True}
         schema = {"name": str, "age": int, "active": bool}
 
@@ -180,7 +180,7 @@ class TestDataTypesValidatorStrict:
         assert errors == []
 
     def test_type_mismatch_errors(self) -> None:
-        """❌ 失败用例：数据类型不匹配"""
+        """❌ 失败用例:数据类型不匹配"""
         data = {"name": "John", "age": "thirty", "active": "true"}
         schema = {"name": str, "age": int, "active": bool}
 
@@ -190,7 +190,7 @@ class TestDataTypesValidatorStrict:
         assert any("'active' should be bool" in error for error in errors)
 
     def test_extra_fields_ignored(self) -> None:
-        """✅ 边界用例：额外字段被忽略"""
+        """✅ 边界用例:额外字段被忽略"""
         data = {"name": "John", "extra": "field"}
         schema = {"name": str}
 
@@ -203,7 +203,7 @@ class TestValidatorsIntegrationStrict:
     """验证器集成测试 - 严格规范"""
 
     def test_complete_user_validation_success(self) -> None:
-        """✅ 集成用例：完整用户验证成功"""
+        """✅ 集成用例:完整用户验证成功"""
         user_data = {
             "name": "John Doe",
             "email": "john.doe@example.com",
@@ -224,7 +224,7 @@ class TestValidatorsIntegrationStrict:
         assert is_valid_email(user_data["email"])
 
     def test_invalid_user_validation_failure(self) -> None:
-        """❌ 集成用例：无效用户验证失败"""
+        """❌ 集成用例:无效用户验证失败"""
         user_data = {
             "name": "John Doe",
             "email": "invalid-email",
@@ -240,7 +240,7 @@ class TestValidatorsIntegrationStrict:
         assert len(type_errors) > 0
 
     def test_performance_batch_validation(self) -> None:
-        """✅ 性能用例：批量验证性能"""
+        """✅ 性能用例:批量验证性能"""
         import time
 
         # 生成测试数据

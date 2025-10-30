@@ -141,7 +141,7 @@ class TestSettings:
     def test_settings_with_pydantic(self):
         """测试Pydantic集成"""
         settings = Settings()
-        # 如果Pydantic可用，应该有字段验证
+        # 如果Pydantic可用,应该有字段验证
         assert settings.database_url is not None
         assert len(settings.database_url) > 0
 

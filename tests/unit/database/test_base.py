@@ -19,7 +19,7 @@ class TestTimestampMixin:
     """时间戳混入测试"""
 
     def test_timestamp_mixin_attributes(self):
-        """测试：时间戳混入属性"""
+        """测试:时间戳混入属性"""
 
         # 创建一个使用TimestampMixin的临时模型
         class TestModel(Base, TimestampMixin):
@@ -50,7 +50,7 @@ class TestBaseModel:
     """基础模型测试"""
 
     def test_base_model_attributes(self):
-        """测试：基础模型属性"""
+        """测试:基础模型属性"""
 
         # 创建一个继承BaseModel的测试模型
         class TestModel(BaseModel):
@@ -71,7 +71,7 @@ class TestBaseModel:
         assert TestModel.__abstract__ is True
 
     def test_base_model_to_dict(self):
-        """测试：基础模型转字典"""
+        """测试:基础模型转字典"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_to_dict"
@@ -100,7 +100,7 @@ class TestBaseModel:
         assert _result["updated_at"] == "2023-01-01T12:00:00"
 
     def test_base_model_to_dict_exclude_fields(self):
-        """测试：基础模型转字典（排除字段）"""
+        """测试:基础模型转字典（排除字段）"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_to_dict_exclude"
@@ -126,7 +126,7 @@ class TestBaseModel:
         assert "updated_at" in result
 
     def test_base_model_from_dict(self):
-        """测试：从字典创建基础模型"""
+        """测试:从字典创建基础模型"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_from_dict"
@@ -139,7 +139,7 @@ class TestBaseModel:
             "name": "Test Item",
             "description": "Test Description",
             "invalid_field": "should be ignored",
-            "id": 999,  # 应该被忽略，因为是自动生成的
+            "id": 999,  # 应该被忽略,因为是自动生成的
         }
 
         # 从字典创建实例
@@ -148,11 +148,11 @@ class TestBaseModel:
         # 验证
         assert instance.name == "Test Item"
         assert instance.description == "Test Description"
-        # id会被设置，因为是从字典传入的
+        # id会被设置,因为是从字典传入的
         assert instance.id == 999
 
     def test_base_model_update_from_dict(self):
-        """测试：从字典更新基础模型"""
+        """测试:从字典更新基础模型"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_update_dict"
@@ -178,7 +178,7 @@ class TestBaseModel:
         assert instance.description == "Updated Description"
 
     def test_base_model_update_from_dict_exclude_fields(self):
-        """测试：从字典更新基础模型（排除字段）"""
+        """测试:从字典更新基础模型（排除字段）"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_update_exclude"
@@ -205,7 +205,7 @@ class TestBaseModel:
         assert instance.status == "active"  # 未被更新
 
     def test_base_model_inheritance(self):
-        """测试：基础模型继承"""
+        """测试:基础模型继承"""
 
         # 测试单继承关系
         class TestModel(BaseModel):
@@ -232,7 +232,7 @@ class TestBaseModel:
         assert columns["updated_at"].default is not None
 
     def test_base_model_with_none_values(self):
-        """测试：基础模型处理None值"""
+        """测试:基础模型处理None值"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_none_values"
@@ -251,7 +251,7 @@ class TestBaseModel:
         assert _result["optional_field"] is None
 
     def test_base_model_table_info(self):
-        """测试：基础模型表信息"""
+        """测试:基础模型表信息"""
 
         class TestModel(BaseModel):
             __tablename__ = "test_table_info"

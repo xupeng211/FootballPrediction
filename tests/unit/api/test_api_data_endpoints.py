@@ -23,7 +23,7 @@ class TestAPIData:
     @pytest.fixture
     def client(self):
         """创建测试客户端"""
-        # 智能Mock兼容修复模式：移除真实API导入
+        # 智能Mock兼容修复模式:移除真实API导入
         try:
             from src.api.app import app
 

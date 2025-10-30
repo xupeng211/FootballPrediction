@@ -1,10 +1,10 @@
 from datetime import datetime
-"""""""
+""""""""
 核心模块集成测试
 Core Modules Integration Tests
 
-专注于核心业务逻辑的集成测试，基于真实模块实现。
-"""""""
+专注于核心业务逻辑的集成测试,基于真实模块实现。
+""""""""
 
 import asyncio
 
@@ -156,7 +156,7 @@ class TestCoreModulesIntegration:
 
             # 执行查询（可能因为数据不存在而失败，这是正常的）
             await query_bus.execute(query)
-            # 结果可能是None或异常，都接受
+            # 结果可能是None或异常,都接受
 
         except Exception as e:
             # 允许数据库连接或数据不存在的情况

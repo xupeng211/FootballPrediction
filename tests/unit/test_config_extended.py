@@ -26,5 +26,5 @@ def test_config_values():
         assert hasattr(config, "database")
         assert hasattr(config, "redis")
     except Exception:
-        # 如果配置不存在，测试也应该通过
+        # 如果配置不存在,测试也应该通过
         assert True

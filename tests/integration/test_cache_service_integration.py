@@ -515,7 +515,7 @@ def test_cache_operation_rules(operation, cache_key, should_cache, client):
     assert isinstance(cache_key, str)
     assert isinstance(should_cache, bool)
 
-    # 读操作应该被缓存，写操作不应被缓存
+    # 读操作应该被缓存,写操作不应被缓存
     if operation in ["get", "list", "search"]:
         assert should_cache is True
     elif operation in ["create", "update", "delete"]:

@@ -241,7 +241,7 @@ def test_cqrs_module_import():
         assert bus is not None
         assert handlers is not None
     else:
-        assert True  # 如果模块不可用，测试也通过
+        assert True  # 如果模块不可用,测试也通过
 
 
 def test_cqrs_coverage_helper():

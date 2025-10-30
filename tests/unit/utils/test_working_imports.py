@@ -14,7 +14,7 @@ import sys
 
         from utils.crypto_utils import CryptoUtils
 
-        # 生成多个UUID，确保唯一性
+        # 生成多个UUID,确保唯一性
 
         # 验证UUID格式
 
@@ -208,11 +208,11 @@ import sys
         # 测试函数式API
 
         # 测试解析函数
-"""""""
+""""""""
 Utils模块集成测试 - 核心业务功能验证
-该文件测试utils包中所有关键模块的实际业务功能，
+该文件测试utils包中所有关键模块的实际业务功能,
 确保API的正确性和业务逻辑的有效性。
-"""""""
+""""""""
 src_path = Path(__file__).parent.parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 @pytest.mark.unit
@@ -330,7 +330,7 @@ class TestStringProcessing:
         assert isinstance(StringUtils.clean_string("test"), str)
     def test_text_truncation(self):
         """测试文本截断功能"""
-        long_text = "这是一个很长的文本，需要被截断处理以测试截断功能是否正常工作"
+        long_text = "这是一个很长的文本,需要被截断处理以测试截断功能是否正常工作"
         lengths = [10, 20, 50]
         for length in lengths:
             truncated = StringUtils.truncate(long_text, length)

@@ -30,49 +30,49 @@ class TestFormatDatetime:
     """日期时间格式化测试"""
 
     def test_format_datetime_default(self):
-        """测试：默认格式"""
+        """测试:默认格式"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         _result = format_datetime(dt)
         assert _result == "2023-01-01 12:30:45"
 
     def test_format_datetime_custom_format(self):
-        """测试：自定义格式"""
+        """测试:自定义格式"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         _result = format_datetime(dt, "%Y/%m/%d")
         assert _result == "2023/01/01"
 
     def test_format_datetime_iso_format(self):
-        """测试：ISO格式"""
+        """测试:ISO格式"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         _result = format_datetime(dt, "%Y-%m-%dT%H:%M:%S")
         assert _result == "2023-01-01T12:30:45"
 
     def test_format_datetime_with_microseconds(self):
-        """测试：带微秒"""
+        """测试:带微秒"""
         dt = datetime(2023, 1, 1, 12, 30, 45, 123456)
         _result = format_datetime(dt, "%Y-%m-%d %H:%M:%S.%f")
         assert _result == "2023-01-01 12:30:45.123456"
 
     def test_format_datetime_only_date(self):
-        """测试：仅日期"""
+        """测试:仅日期"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         _result = format_datetime(dt, "%d/%m/%Y")
         assert _result == "01/01/2023"
 
     def test_format_datetime_only_time(self):
-        """测试：仅时间"""
+        """测试:仅时间"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         _result = format_datetime(dt, "%H:%M")
         assert _result == "12:30"
 
     def test_format_datetime_leap_year(self):
-        """测试：闰年"""
+        """测试:闰年"""
         dt = datetime(2024, 2, 29, 0, 0, 0)
         _result = format_datetime(dt)
         assert _result == "2024-02-29 00:00:00"
 
     def test_format_datetime_different_separators(self):
-        """测试：不同分隔符"""
+        """测试:不同分隔符"""
         dt = datetime(2023, 1, 1, 12, 30, 45)
         _result = format_datetime(dt, "%H-%M-%S")
         assert _result == "12-30-45"
@@ -83,44 +83,44 @@ class TestFormatJSON:
     """JSON格式化测试"""
 
     def test_format_json_simple_dict(self):
-        """测试：简单字典"""
+        """测试:简单字典"""
         _data = {"key": "value", "number": 123}
         _result = format_json(data)
         assert _result == '{\n  "key": "value",\n  "number": 123\n}'
 
     def test_format_json_nested_dict(self):
-        """测试：嵌套字典"""
+        """测试:嵌套字典"""
         _data = {"outer": {"inner": "value"}}
         _result = format_json(data)
         assert '"outer": {' in result
         assert '"inner": "value"' in result
 
     def test_format_json_list(self):
-        """测试：列表"""
+        """测试:列表"""
         _data = [1, 2, 3]
         _result = format_json(data)
         assert _result == "[\n  1,\n  2,\n  3\n]"
 
     def test_format_json_no_indent(self):
-        """测试：无缩进"""
+        """测试:无缩进"""
         _data = {"key": "value"}
         _result = format_json(data, indent=None)
         assert _result == '{"key": "value"}'
 
     def test_format_json_custom_indent(self):
-        """测试：自定义缩进"""
+        """测试:自定义缩进"""
         _data = {"key": "value"}
         _result = format_json(data, indent=4)
         assert _result == '{\n    "key": "value"\n}'
 
     def test_format_json_unicode(self):
-        """测试：Unicode字符"""
+        """测试:Unicode字符"""
         _data = {"message": "你好世界"}
         _result = format_json(data)
         assert "你好世界" in result
 
     def test_format_json_special_numbers(self):
-        """测试：特殊数字"""
+        """测试:特殊数字"""
         _data = {"float": 3.14159, "exponential": 0.000123}
         _result = format_json(data)
         assert "3.14159" in result
@@ -128,7 +128,7 @@ class TestFormatJSON:
         assert "0.000123" in result or "1.23e-4" in result.lower()
 
     def test_format_json_boolean_and_none(self):
-        """测试：布尔值和None"""
+        """测试:布尔值和None"""
         _data = {"true": True, "false": False, "null": None}
         _result = format_json(data)
         assert "true" in result
@@ -141,47 +141,47 @@ class TestFormatCurrency:
     """货币格式化测试"""
 
     def test_format_currency_default(self):
-        """测试：默认格式"""
+        """测试:默认格式"""
         _result = format_currency(123.45)
         assert _result == "123.45 USD"
 
     def test_format_currency_custom_currency(self):
-        """测试：自定义货币"""
+        """测试:自定义货币"""
         _result = format_currency(123.45, "EUR")
         assert _result == "123.45 EUR"
 
     def test_format_currency_integer(self):
-        """测试：整数"""
+        """测试:整数"""
         _result = format_currency(123)
         assert _result == "123.00 USD"
 
     def test_format_currency_rounding(self):
-        """测试：四舍五入"""
+        """测试:四舍五入"""
         _result = format_currency(123.456)
         assert _result == "123.46 USD"
 
     def test_format_currency_small_amount(self):
-        """测试：小金额"""
+        """测试:小金额"""
         _result = format_currency(0.01)
         assert _result == "0.01 USD"
 
     def test_format_currency_large_amount(self):
-        """测试：大金额"""
+        """测试:大金额"""
         _result = format_currency(1234567.89)
         assert _result == "1234567.89 USD"
 
     def test_format_currency_negative(self):
-        """测试：负数"""
+        """测试:负数"""
         _result = format_currency(-123.45)
         assert _result == "-123.45 USD"
 
     def test_format_currency_zero(self):
-        """测试：零"""
+        """测试:零"""
         _result = format_currency(0)
         assert _result == "0.00 USD"
 
     def test_format_currency_precision(self):
-        """测试：精度"""
+        """测试:精度"""
         _result = format_currency(123.456789)
         assert _result == "123.46 USD"  # 应该四舍五入到2位小数
 
@@ -191,67 +191,67 @@ class TestFormatPercentage:
     """百分比格式化测试"""
 
     def test_format_percentage_default(self):
-        """测试：默认格式"""
+        """测试:默认格式"""
         _result = format_percentage(12.3456)
         assert _result == "12.35%"
 
     def test_format_percentage_custom_decimals(self):
-        """测试：自定义小数位数"""
+        """测试:自定义小数位数"""
         _result = format_percentage(12.3456, 3)
         assert _result == "12.346%"
 
     def test_format_percentage_no_decimals(self):
-        """测试：无小数"""
+        """测试:无小数"""
         _result = format_percentage(12.3456, 0)
         assert _result == "12%"
 
     def test_format_percentage_one_decimal(self):
-        """测试：一位小数"""
+        """测试:一位小数"""
         _result = format_percentage(12.3456, 1)
         assert _result == "12.3%"
 
     def test_format_percentage_integer(self):
-        """测试：整数输入"""
+        """测试:整数输入"""
         _result = format_percentage(25)
         assert _result == "25.00%"
 
     def test_format_percentage_small_value(self):
-        """测试：小数值"""
+        """测试:小数值"""
         _result = format_percentage(0.1234)
         assert _result == "0.12%"
 
     def test_format_percentage_zero(self):
-        """测试：零"""
+        """测试:零"""
         _result = format_percentage(0)
         assert _result == "0.00%"
 
     def test_format_percentage_hundred(self):
-        """测试：100%"""
+        """测试:100%"""
         _result = format_percentage(100)
         assert _result == "100.00%"
 
     def test_format_percentage_over_hundred(self):
-        """测试：超过100%"""
+        """测试:超过100%"""
         _result = format_percentage(123.45)
         assert _result == "123.45%"
 
     def test_format_percentage_negative(self):
-        """测试：负数"""
+        """测试:负数"""
         _result = format_percentage(-12.34)
         assert _result == "-12.34%"
 
     def test_format_percentage_rounding_up(self):
-        """测试：向上舍入"""
+        """测试:向上舍入"""
         _result = format_percentage(12.345, 2)
         assert _result == "12.35%"
 
     def test_format_percentage_rounding_down(self):
-        """测试：向下舍入"""
+        """测试:向下舍入"""
         _result = format_percentage(12.344, 2)
         assert _result == "12.34%"
 
     def test_format_percentage_many_decimals(self):
-        """测试：多位小数"""
+        """测试:多位小数"""
         _result = format_percentage(12.3456789, 5)
         assert _result == "12.34568%"
 
@@ -261,14 +261,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not FORMATTERS_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if FORMATTERS_AVAILABLE:
         from src.utils.formatters import (
             format_currency,
@@ -284,7 +284,7 @@ def test_module_imports():
 
 
 def test_function_signatures():
-    """测试：函数签名"""
+    """测试:函数签名"""
     if FORMATTERS_AVAILABLE:
         import inspect
 
@@ -302,7 +302,7 @@ def test_function_signatures():
 
 
 def test_combined_formatting():
-    """测试：组合格式化"""
+    """测试:组合格式化"""
     if FORMATTERS_AVAILABLE:
         # 组合使用多个格式化函数
         dt = datetime(2023, 1, 1, 12, 30, 45)
@@ -338,7 +338,7 @@ class TestParameterizedInput:
     @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert (
             input_value is not None or input_value == "" or input_value == [] or input_value == {}
         )

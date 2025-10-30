@@ -377,4 +377,4 @@ class TestRepositoryIntegration:
         client.get("/api/v1/repositories/users/user_123/statistics")
 
         # 验证仓储模式基本功能可用
-        assert True  # 如果所有端点都跳过，测试通过
+        assert True  # 如果所有端点都跳过,测试通过

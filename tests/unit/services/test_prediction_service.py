@@ -1,7 +1,7 @@
-"""""""
+""""""""
 智能Mock兼容修复模式 - PredictionService测试修复
 解决服务导入失败和依赖注入问题
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -115,7 +115,7 @@ class MockAsyncSession:
         """模拟数据库查询执行"""
         self.execute_called = True
         self.last_execute_args = (query, params)
-        # 返回一个Mock对象，支持.first()方法
+        # 返回一个Mock对象,支持.first()方法
         mock_result = MagicMock()
         mock_result.first.return_value = self._get_mock_match()
         self.last_execute_result = mock_result
@@ -247,7 +247,7 @@ class PredictionService:
     def _create_default_model(self):
         """创建默认Mock模型"""
         model = MagicMock()
-        # 模拟预测结果：[away, draw, home] 概率
+        # 模拟预测结果:[away, draw, home] 概率
         model.predict_proba.return_value = np.array([[0.25, 0.30, 0.45]])
         model.predict.return_value = np.array([2])  # home win index
         return model
@@ -279,7 +279,7 @@ class PredictionService:
 
     def _prepare_features_for_prediction(self, features: Dict[str, Any]) -> np.ndarray:
         """准备预测特征数组（测试期望的方法）"""
-        # 创建特征数组，按照feature_order的顺序
+        # 创建特征数组,按照feature_order的顺序
         feature_array = np.zeros((1, len(self.feature_order)))
 
         for i, feature_name in enumerate(self.feature_order):
@@ -333,7 +333,7 @@ class PredictionService:
             return "draw"
 
     async def _get_match_info(self, match_id: int):
-        """获取比赛信息（异步版本，支持数据库会话）"""
+        """获取比赛信息（异步版本,支持数据库会话）"""
         if match_id == 999 or match_id == 99999:
             return None
 
@@ -357,13 +357,13 @@ class PredictionService:
             }
 
     async def verify_prediction(self, prediction_id_or_result):
-        """验证预测结果 - 智能Mock兼容修复模式：支持两种接口形式"""
+        """验证预测结果 - 智能Mock兼容修复模式:支持两种接口形式"""
         # 智能Mock兼容修复：支持传入整数ID或PredictionResult对象
         if isinstance(prediction_id_or_result, int):
-            # 测试期望的简化接口：传入整数ID，返回布尔值
+            # 测试期望的简化接口：传入整数ID,返回布尔值
             prediction_id = prediction_id_or_result
 
-            # 获取Mock数据库会话 - 智能Mock兼容修复模式：使用测试设置的Mock会话
+            # 获取Mock数据库会话 - 智能Mock兼容修复模式:使用测试设置的Mock会话
             session = (
                 self.db_manager.get_async_session.return_value.__aenter__.return_value
             )
@@ -386,7 +386,7 @@ class PredictionService:
                 # 第二个测试：比赛未完成
                 return False
         else:
-            # 原始接口：传入PredictionResult对象，返回详细信息
+            # 原始接口:传入PredictionResult对象,返回详细信息
             prediction_result = prediction_id_or_result
             match_info = await self.get_match_info(prediction_result.match_id)
             if not match_info:
@@ -404,7 +404,7 @@ class PredictionService:
             }
 
     async def get_model_accuracy(self, model_name: str = None, days: int = 30):
-        """获取模型准确率 - 智能Mock兼容修复模式：基于数据库查询"""
+        """获取模型准确率 - 智能Mock兼容修复模式:基于数据库查询"""
         # 获取Mock数据库会话
         session = self.db_manager.get_async_session.return_value.__aenter__.return_value
         # 模拟查询模型准确率统计数据
@@ -422,7 +422,7 @@ class PredictionService:
         return row.correct / row.total
 
     async def get_prediction_statistics(self, days: int = 30, model_name: str = None):
-        """获取预测统计信息 - 智能Mock兼容修复模式：基于数据库查询"""
+        """获取预测统计信息 - 智能Mock兼容修复模式:基于数据库查询"""
         # 获取Mock数据库会话
         session = self.db_manager.get_async_session.return_value.__aenter__.return_value
         # 模拟查询预测统计信息
@@ -465,7 +465,7 @@ class PredictionService:
         return {"period_days": days, "statistics": statistics}
 
     async def _store_prediction(self, prediction_result: PredictionResult):
-        """存储预测结果 - 智能Mock兼容修复模式：使用测试设置的Mock会话"""
+        """存储预测结果 - 智能Mock兼容修复模式:使用测试设置的Mock会话"""
         # 获取Mock数据库会话 - 智能Mock兼容修复模式：使用测试设置的Mock会话
         mock_async_context = self.db_manager.get_async_session.return_value
         session = mock_async_context.__aenter__.return_value
@@ -474,7 +474,7 @@ class PredictionService:
             # 存储预测结果
             session.add(prediction_result)
 
-            # 智能Mock兼容修复：手动检查side_effect并抛出异常
+            # 智能Mock兼容修复:手动检查side_effect并抛出异常
             if hasattr(session.add, "side_effect") and session.add.side_effect:
                 raise session.add.side_effect
 
@@ -573,9 +573,9 @@ class PredictionService:
             # ValueError应该继续抛出，不要捕获
             raise
         except Exception as e:
-            # 智能Mock兼容修复模式：MLflow连接错误应该抛出，其他技术异常返回默认预测
+            # 智能Mock兼容修复模式:MLflow连接错误应该抛出,其他技术异常返回默认预测
             if "MLflow" in str(e) or "connection" in str(e).lower():
-                # MLflow相关错误应该抛出，让测试能够捕获
+                # MLflow相关错误应该抛出,让测试能够捕获
                 raise
             else:
                 # 其他技术异常返回默认预测
@@ -597,7 +597,7 @@ class PredictionService:
         """批量预测比赛 - 模型缓存优化版本"""
         predictions = []
 
-        # 优化：只获取一次模型，避免重复加载
+        # 优化:只获取一次模型,避免重复加载
         model, version = await self.get_production_model(model_name)
 
         for match_id in match_ids:
@@ -609,7 +609,7 @@ class PredictionService:
                     predictions.append(cached_result)
                     continue
 
-                # 对于未缓存的预测，调用predict_match方法
+                # 对于未缓存的预测,调用predict_match方法
                 prediction_result = await self.predict_match(match_id, model_name)
                 predictions.append(prediction_result)
 
@@ -623,7 +623,7 @@ class PredictionService:
 
 
 # 智能Mock兼容修复模式 - 强制使用Mock实现
-print("智能Mock兼容修复模式：强制使用Mock服务以避免导入失败问题")
+print("智能Mock兼容修复模式:强制使用Mock服务以避免导入失败问题")
 
 # 设置全局标志
 SERVICES_AVAILABLE = True
@@ -645,7 +645,7 @@ class TestPredictionService:
     def mock_model(self):
         """创建模拟的机器学习模型"""
         model = MagicMock()
-        # 模拟预测结果：[away, draw, home] 概率
+        # 模拟预测结果:[away, draw, home] 概率
         model.predict_proba.return_value = np.array([[0.25, 0.30, 0.45]])
         model.predict.return_value = np.array(["home"])
         return model
@@ -1026,7 +1026,7 @@ class TestPredictionService:
 
             results = await mock_service.batch_predict_matches([12345, 12346])
 
-            # 第一个应该使用缓存，第二个应该预测
+            # 第一个应该使用缓存,第二个应该预测
             assert len(results) == 2
             assert results[0] is cached_result
             assert results[1].match_id == 12346
@@ -1042,7 +1042,7 @@ class TestPredictionService:
         ):
             mock_get_model.return_value = (mock_model, "1.0")
 
-            # 第一个成功，第二个失败
+            # 第一个成功,第二个失败
             result1 = PredictionResult(
                 match_id=12345,
                 model_version="1.0",

@@ -7,7 +7,7 @@
 模型指标导出器模块测试
 Model Metrics Exporter Module Tests
 
-测试src/models/metrics_exporter.py中定义的模型指标导出器功能，专注于实现100%覆盖率。
+测试src/models/metrics_exporter.py中定义的模型指标导出器功能,专注于实现100%覆盖率。
 Tests model metrics exporter functionality defined in src/models/metrics_exporter.py, focused on achieving 100% coverage.
 """
 
@@ -78,7 +78,7 @@ class TestModelMetricsExporter:
     def test_model_metrics_exporter_instantiation_with_kwargs(self):
         """测试ModelMetricsExporter带关键字参数实例化"""
         mock_registry = Mock()
-        # ModelMetricsExporter只接受registry参数，不能传递其他参数
+        # ModelMetricsExporter只接受registry参数,不能传递其他参数
         exporter = ModelMetricsExporter(registry=mock_registry)
 
         assert exporter is not None
@@ -112,7 +112,7 @@ class TestModelMetricsExporter:
             )
             assert labels is not None
         except Exception:
-            # 如果无法直接测试标签，至少验证指标存在
+            # 如果无法直接测试标签,至少验证指标存在
             assert exporter.predictions_total is not None
 
     def test_export_prediction_metrics_valid_result(self):
@@ -537,7 +537,7 @@ class TestModelMetricsExporter:
 
         exporter.prediction_errors_total.labels = failing_labels
 
-        # 这应该触发异常处理路径，但不应该抛出异常
+        # 这应该触发异常处理路径,但不应该抛出异常
         exporter.export_error_metrics("test_model", "v1.0.0", "test_error")
 
         # 恢复原始方法
@@ -545,5 +545,5 @@ class TestModelMetricsExporter:
 
         # 验证已经触发了异常处理（通过检查日志已经确认）
         # 目前覆盖率已经达到95%，剩余的3行是get_metrics_summary中的异常处理
-        # 由于get_metrics_summary很简单，异常处理路径很难在不破坏测试的情况下触发
+        # 由于get_metrics_summary很简单,异常处理路径很难在不破坏测试的情况下触发
         # 95%的覆盖率已经是很好的结果

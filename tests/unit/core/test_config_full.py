@@ -53,7 +53,7 @@ class TestConfigModule:
 
         # 测试获取配置
         _config.get("debug")
-        # value可能是None，但方法应该存在
+        # value可能是None,但方法应该存在
         assert True  # 测试通过表示方法可调用
 
     def test_config_environment_override(self):

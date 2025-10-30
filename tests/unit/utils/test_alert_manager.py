@@ -272,7 +272,7 @@ class TestAlertManager:
                 message="Database error",
                 source="database",
             )
-            # 检查是否应该发送（使用告警类型作为key，限制10次，窗口60秒）
+            # 检查是否应该发送（使用告警类型作为key，限制10次,窗口60秒）
             should_send = alert_manager.check_rate_limit(key="database_error", limit=10, window=60)
             if should_send:
                 alert_manager._update_rate_limit("database_error", 60)
@@ -368,7 +368,7 @@ class TestAlertManager:
             source="test",
         )
 
-        # 设置抑制规则：低严重级别告警在维护窗口内被抑制
+        # 设置抑制规则:低严重级别告警在维护窗口内被抑制
         alert_manager.suppression_rules.append(
             {
                 "condition": lambda a: a["severity"] == AlertSeverity.LOW,

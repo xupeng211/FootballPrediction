@@ -1,9 +1,9 @@
-"""""""
+""""""""
 日期工具完整测试
 Date Utils Complete Tests
 
-基于Issue #98成功模式，创建完整的日期工具测试
-"""""""
+基于Issue #98成功模式,创建完整的日期工具测试
+""""""""
 
 from datetime import date, datetime, timedelta
 
@@ -200,7 +200,7 @@ class TestDateUtilsComplete:
 
     def test_add_business_days_cross_weekend(self):
         """测试跨周末的工作日计算"""
-        # 周五开始，添加3个工作日应该到下周三
+        # 周五开始,添加3个工作日应该到下周三
         friday = datetime(2025, 1, 24, 12, 0, 0)
         result = DateUtils.add_business_days(friday, 3)
         expected = datetime(2025, 1, 29, 12, 0, 0)  # 周三
@@ -578,5 +578,5 @@ from src.utils.date_utils import get_business_days_range, get_date_range_summary
                     if format_name == "date":
                         assert parsed.date() == dt.date()
 except Exception:
-                    # 某些格式可能不适合解析，这是正常的
+                    # 某些格式可能不适合解析,这是正常的
                     pass

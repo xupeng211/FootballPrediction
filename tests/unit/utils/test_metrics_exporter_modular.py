@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 
-"""""""
+""""""""
 测试模块化的指标导出器
 Test Modular Metrics Exporter
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -280,13 +280,13 @@ def test_utils():
     assert safe_cast_to_float(None, 1.0) == 1.0
 
     # 测试指标过滤
-    metrics_data = """# HELP football_test_metric Test metric""""
+    metrics_data = """# HELP football_test_metric Test metric"""""
 # TYPE football_test_metric counter
 football_test_metric{label="value"} 10
 other_metric 5
 # HELP football_another Another test
 football_another_metric 15
-"""""""
+""""""""
 
     filtered = filter_metrics_by_prefix(metrics_data, "football_test")
     assert "football_test_metric" in filtered

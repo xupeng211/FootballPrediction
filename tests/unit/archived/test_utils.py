@@ -1,10 +1,10 @@
-"""""""
+""""""""
 健康检查工具测试
 Health Check Utils Tests
 
 测试src/api/health/utils.py中定义的健康检查工具功能。
 Tests health check utility functionality defined in src/api/health/utils.py.
-"""""""
+""""""""
 
 import asyncio
 import time
@@ -37,7 +37,7 @@ class TestHealthChecker:
     def test_health_checker_custom_timeout(self):
         """测试HealthChecker自定义超时时间"""
         custom_checker = HealthChecker()
-        # 注意：当前的实现中timeout没有被使用，但我们测试默认值
+        # 注意:当前的实现中timeout没有被使用,但我们测试默认值
         assert hasattr(custom_checker, "timeout")
 
     @pytest.mark.asyncio
@@ -265,7 +265,7 @@ class TestHealthChecker:
         execution_time = end_time - start_time
 
         # 并发执行应该比串行执行快
-        # 单个检查大约0.01-0.02秒，三个并发应该大约0.02秒
+        # 单个检查大约0.01-0.02秒,三个并发应该大约0.02秒
         assert execution_time < 0.1
         assert result["status"] == "healthy"
 

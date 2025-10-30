@@ -3,7 +3,7 @@ from datetime import datetime
 格式化工具简单测试
 Simple Formatters Tests
 
-测试src/utils/formatters.py中定义的格式化功能，专注于实现100%覆盖率。
+测试src/utils/formatters.py中定义的格式化功能,专注于实现100%覆盖率。
 Tests formatting functionality defined in src/utils/formatters.py, focused on achieving 100% coverage.
 """
 

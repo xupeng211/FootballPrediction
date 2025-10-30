@@ -33,7 +33,7 @@ class TestQualityMonitor:
             result = monitor.check_data_freshness(data)
             assert result is not None
         except Exception:
-            # 方法可能需要特定格式，这是可以接受的
+            # 方法可能需要特定格式,这是可以接受的
             pass
 
     def test_check_data_completeness_basic(self):
@@ -47,7 +47,7 @@ class TestQualityMonitor:
             result = monitor.check_data_completeness(data)
             assert result is not None
         except Exception:
-            # 方法可能需要特定格式，这是可以接受的
+            # 方法可能需要特定格式,这是可以接受的
             pass
 
     def test_calculate_overall_quality_score(self):
@@ -61,7 +61,7 @@ class TestQualityMonitor:
             result = monitor.calculate_overall_quality_score(data)
             assert isinstance(result, (float, int))
         except Exception:
-            # 方法可能需要特定格式，这是可以接受的
+            # 方法可能需要特定格式,这是可以接受的
             pass
 
     def test_monitor_with_empty_data(self):
@@ -80,7 +80,7 @@ class TestQualityMonitor:
             result = monitor.check_data_freshness(None)
             assert result is not None
         except Exception:
-            # 处理None可能抛出异常，这是可以接受的
+            # 处理None可能抛出异常,这是可以接受的
             pass
 
     def test_quality_thresholds(self):
@@ -96,7 +96,7 @@ class TestQualityMonitor:
                 result = monitor.calculate_overall_quality_score(data)
                 assert isinstance(result, (float, int))
             except Exception:
-                # 某些分数可能不支持，这是可以接受的
+                # 某些分数可能不支持,这是可以接受的
                 pass
 
     def test_monitor_configuration(self):
@@ -107,7 +107,7 @@ class TestQualityMonitor:
             monitor = QualityMonitor(config)
             assert hasattr(monitor, "config")
         except Exception:
-            # 配置可能不支持，这是可以接受的
+            # 配置可能不支持,这是可以接受的
             monitor = QualityMonitor()
             assert monitor is not None
 
@@ -125,7 +125,7 @@ class TestQualityMonitor:
             results = monitor.batch_check(data_batch)
             assert isinstance(results, list)
         except Exception:
-            # 批量检查可能不支持，这是可以接受的
+            # 批量检查可能不支持,这是可以接受的
             pass
 
 
@@ -164,7 +164,7 @@ def test_exception_handling():
             # 如果成功，结果应该不为None
             assert result is not None
         except Exception:
-            # 如果抛出异常，这是可以接受的
+            # 如果抛出异常,这是可以接受的
             pass
 
 
@@ -191,7 +191,7 @@ class TestParameterizedInput:
             pytest.skip("Module import failed")
 
         QualityMonitor()
-        # 基础断言，确保测试能处理各种输入
+        # 基础断言,确保测试能处理各种输入
         assert isinstance(input_value, (str, int, bool, list, dict))
 
     @pytest.mark.parametrize("quality_score", [0.0, 0.5, 1.0, 0.95, 0.1])

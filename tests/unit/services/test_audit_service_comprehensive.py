@@ -28,20 +28,20 @@ class TestAuditSeverity:
     """审计严重程度测试"""
 
     def test_severity_values(self) -> None:
-        """✅ 成功用例：严重程度枚举值"""
+        """✅ 成功用例:严重程度枚举值"""
         assert AuditSeverity.LOW.value == "low"
         assert AuditSeverity.MEDIUM.value == "medium"
         assert AuditSeverity.HIGH.value == "high"
         assert AuditSeverity.CRITICAL.value == "critical"
 
     def test_severity_comparison(self) -> None:
-        """✅ 成功用例：严重程度比较"""
+        """✅ 成功用例:严重程度比较"""
         # 测试枚举的字符串表示
         assert str(AuditSeverity.LOW) == "AuditSeverity.LOW"
         assert str(AuditSeverity.CRITICAL) == "AuditSeverity.CRITICAL"
 
     def test_severity_iteration(self) -> None:
-        """✅ 成功用例：严重程度枚举迭代"""
+        """✅ 成功用例:严重程度枚举迭代"""
         severities = list(AuditSeverity)
         assert len(severities) == 4
         assert AuditSeverity.LOW in severities
@@ -53,7 +53,7 @@ class TestAuditAction:
     """审计动作测试"""
 
     def test_action_constants(self) -> None:
-        """✅ 成功用例：动作常量"""
+        """✅ 成功用例:动作常量"""
         assert AuditAction.CREATE == "create"
         assert AuditAction.READ == "read"
         assert AuditAction.UPDATE == "update"
@@ -68,7 +68,7 @@ class TestAuditContext:
     """审计上下文测试"""
 
     def test_context_creation_minimal(self) -> None:
-        """✅ 成功用例：最小上下文创建"""
+        """✅ 成功用例:最小上下文创建"""
         context = AuditContext(user_id="user123")
 
         assert context.user_id == "user123"
@@ -77,7 +77,7 @@ class TestAuditContext:
         assert isinstance(context.timestamp, datetime)
 
     def test_context_creation_full(self) -> None:
-        """✅ 成功用例：完整上下文创建"""
+        """✅ 成功用例:完整上下文创建"""
         context = AuditContext(user_id="user123", session_id="session456", ip_address="192.168.1.1")
 
         assert context.user_id == "user123"
@@ -86,7 +86,7 @@ class TestAuditContext:
         assert isinstance(context.timestamp, datetime)
 
     def test_context_timestamp_freshness(self) -> None:
-        """✅ 成功用例：上下文时间戳新鲜度"""
+        """✅ 成功用例:上下文时间戳新鲜度"""
         before = datetime.utcnow()
         context = AuditContext(user_id="test")
         after = datetime.utcnow()
@@ -94,7 +94,7 @@ class TestAuditContext:
         assert before <= context.timestamp <= after
 
     def test_context_with_different_data_types(self) -> None:
-        """✅ 边界用例：不同数据类型的上下文"""
+        """✅ 边界用例:不同数据类型的上下文"""
         # 测试各种用户ID格式
         contexts = [
             AuditContext(user_id="123"),  # 数字字符串
@@ -113,7 +113,7 @@ class TestAuditLog:
     """审计日志测试"""
 
     def test_log_creation(self) -> None:
-        """✅ 成功用例：审计日志创建"""
+        """✅ 成功用例:审计日志创建"""
         context = AuditContext(user_id="user123")
         details = {"action": "create", "target": "user_profile"}
 
@@ -131,7 +131,7 @@ class TestAuditLog:
         assert isinstance(log.timestamp, datetime)
 
     def test_log_with_different_severities(self) -> None:
-        """✅ 成功用例：不同严重程度的日志"""
+        """✅ 成功用例:不同严重程度的日志"""
         context = AuditContext(user_id="test")
         details = {"test": "data"}
 
@@ -147,7 +147,7 @@ class TestAuditLog:
             assert log.severity == severity
 
     def test_log_timestamp_consistency(self) -> None:
-        """✅ 成功用例：日志时间戳一致性"""
+        """✅ 成功用例:日志时间戳一致性"""
         context = AuditContext(user_id="test")
         details = {"test": "data"}
 
@@ -164,7 +164,7 @@ class TestDataSanitizer:
     """数据清理器测试"""
 
     def test_sanitize_password(self) -> None:
-        """✅ 成功用例：密码清理"""
+        """✅ 成功用例:密码清理"""
         sanitizer = DataSanitizer()
         data = {"username": "user", "password": "secret123"}
 
@@ -175,7 +175,7 @@ class TestDataSanitizer:
         assert "secret123" not in str(result)
 
     def test_sanitize_token(self) -> None:
-        """✅ 成功用例：令牌清理"""
+        """✅ 成功用例:令牌清理"""
         sanitizer = DataSanitizer()
         data = {"user_id": "123", "token": "jwt_token_here"}
 
@@ -186,7 +186,7 @@ class TestDataSanitizer:
         assert "jwt_token_here" not in str(result)
 
     def test_sanitize_both_password_and_token(self) -> None:
-        """✅ 成功用例：同时清理密码和令牌"""
+        """✅ 成功用例:同时清理密码和令牌"""
         sanitizer = DataSanitizer()
         data = {
             "username": "user",
@@ -203,7 +203,7 @@ class TestDataSanitizer:
         assert result["email"] == "user@example.com"
 
     def test_sanitize_no_sensitive_data(self) -> None:
-        """✅ 成功用例：无敏感数据的清理"""
+        """✅ 成功用例:无敏感数据的清理"""
         sanitizer = DataSanitizer()
         data = {"name": "test", "email": "test@example.com"}
 
@@ -212,7 +212,7 @@ class TestDataSanitizer:
         assert result == data  # 应该保持不变
 
     def test_sanitize_empty_data(self) -> None:
-        """✅ 边界用例：空数据清理"""
+        """✅ 边界用例:空数据清理"""
         sanitizer = DataSanitizer()
 
         # 空字典
@@ -221,21 +221,21 @@ class TestDataSanitizer:
 
         # 包含空字符串
         result = sanitizer.sanitize({"password": ""})
-        # 根据实际实现，空密码也会被清理
+        # 根据实际实现,空密码也会被清理
         assert result == {"password": "***"}
 
     def test_sanitize_nested_data(self) -> None:
-        """✅ 边界用例：嵌套数据清理（当前实现只处理顶层）"""
+        """✅ 边界用例:嵌套数据清理（当前实现只处理顶层）"""
         sanitizer = DataSanitizer()
         data = {"user": {"password": "nested_secret", "name": "test"}}
 
         result = sanitizer.sanitize(data)
-        # 当前实现可能不处理嵌套，这是预期的
+        # 当前实现可能不处理嵌套,这是预期的
         assert "user" in result
-        # 不强求嵌套清理，取决于实现
+        # 不强求嵌套清理,取决于实现
 
     def test_sanitize_case_sensitivity(self) -> None:
-        """✅ 边界用例：大小写敏感性"""
+        """✅ 边界用例:大小写敏感性"""
         sanitizer = DataSanitizer()
 
         # 测试不同大小写
@@ -256,7 +256,7 @@ class TestSeverityAnalyzer:
     """严重程度分析器测试"""
 
     def test_analyze_delete_action(self) -> None:
-        """✅ 成功用例：删除动作分析"""
+        """✅ 成功用例:删除动作分析"""
         analyzer = SeverityAnalyzer()
         event = Mock()
         event.action = "delete_user"
@@ -266,7 +266,7 @@ class TestSeverityAnalyzer:
         assert severity == AuditSeverity.HIGH
 
     def test_analyze_modify_action(self) -> None:
-        """✅ 成功用例：修改动作分析"""
+        """✅ 成功用例:修改动作分析"""
         analyzer = SeverityAnalyzer()
         event = Mock()
         event.action = "modify_profile"
@@ -276,7 +276,7 @@ class TestSeverityAnalyzer:
         assert severity == AuditSeverity.MEDIUM
 
     def test_analyze_read_action(self) -> None:
-        """✅ 成功用例：读取动作分析"""
+        """✅ 成功用例:读取动作分析"""
         analyzer = SeverityAnalyzer()
         event = Mock()
         event.action = "read_data"
@@ -286,7 +286,7 @@ class TestSeverityAnalyzer:
         assert severity == AuditSeverity.LOW
 
     def test_analyze_case_insensitive(self) -> None:
-        """✅ 成功用例：大小写不敏感分析"""
+        """✅ 成功用例:大小写不敏感分析"""
         analyzer = SeverityAnalyzer()
 
         delete_variants = ["DELETE", "Delete", "delete", "DeLeTe"]
@@ -305,7 +305,7 @@ class TestSeverityAnalyzer:
             assert severity == AuditSeverity.MEDIUM
 
     def test_analyze_edge_cases(self) -> None:
-        """✅ 边界用例：边界情况分析"""
+        """✅ 边界用例:边界情况分析"""
         analyzer = SeverityAnalyzer()
 
         # 空字符串
@@ -329,7 +329,7 @@ class TestAuditEvent:
     """审计事件测试"""
 
     def test_event_creation(self) -> None:
-        """✅ 成功用例：审计事件创建"""
+        """✅ 成功用例:审计事件创建"""
         details = {"target": "user_profile", "changes": ["email", "name"]}
 
         event = AuditEvent(
@@ -346,7 +346,7 @@ class TestAuditEvent:
         assert isinstance(event.timestamp, datetime)
 
     def test_event_with_complex_details(self) -> None:
-        """✅ 成功用例：复杂详情的事件"""
+        """✅ 成功用例:复杂详情的事件"""
         details = {
             "user_id": 123,
             "changes": {
@@ -361,7 +361,7 @@ class TestAuditEvent:
         assert event.details == details
 
     def test_event_timestamp_uniqueness(self) -> None:
-        """✅ 成功用例：事件时间戳唯一性"""
+        """✅ 成功用例:事件时间戳唯一性"""
         events = []
 
         for i in range(5):
@@ -373,7 +373,7 @@ class TestAuditEvent:
             assert events[i].timestamp >= events[i - 1].timestamp
 
     def test_event_with_different_severities(self) -> None:
-        """✅ 成功用例：不同严重程度的事件"""
+        """✅ 成功用例:不同严重程度的事件"""
         base_details = {"test": "data"}
 
         for severity in AuditSeverity:
@@ -386,7 +386,7 @@ class TestAuditService:
     """审计服务测试"""
 
     def test_service_initialization(self) -> None:
-        """✅ 成功用例：服务初始化"""
+        """✅ 成功用例:服务初始化"""
         service = AuditService()
 
         assert service.events == []
@@ -394,7 +394,7 @@ class TestAuditService:
         assert isinstance(service.analyzer, SeverityAnalyzer)
 
     def test_log_event_basic(self) -> None:
-        """✅ 成功用例：基本事件记录"""
+        """✅ 成功用例:基本事件记录"""
         service = AuditService()
         details = {"target": "user", "action": "create"}
 
@@ -407,7 +407,7 @@ class TestAuditService:
         assert event.details == details  # 应该是清理后的详情
 
     def test_log_event_with_sensitive_data(self) -> None:
-        """✅ 成功用例：包含敏感数据的事件记录"""
+        """✅ 成功用例:包含敏感数据的事件记录"""
         service = AuditService()
         details = {"username": "test", "password": "secret"}
 
@@ -418,7 +418,7 @@ class TestAuditService:
         assert "secret" not in str(event.details)
 
     def test_log_event_severity_analysis(self) -> None:
-        """✅ 成功用例：事件严重程度分析"""
+        """✅ 成功用例:事件严重程度分析"""
         service = AuditService()
         details = {"test": "data"}
 
@@ -435,7 +435,7 @@ class TestAuditService:
         assert read_event.severity == AuditSeverity.LOW
 
     def test_log_event_multiple(self) -> None:
-        """✅ 成功用例：多个事件记录"""
+        """✅ 成功用例:多个事件记录"""
         service = AuditService()
 
         events_data = [
@@ -455,7 +455,7 @@ class TestAuditService:
         assert service.events == logged_events
 
     def test_get_events_default_limit(self) -> None:
-        """✅ 成功用例：获取事件（默认限制）"""
+        """✅ 成功用例:获取事件（默认限制）"""
         service = AuditService()
 
         # 记录150个事件
@@ -470,7 +470,7 @@ class TestAuditService:
         assert events[-1].details["index"] == 149
 
     def test_get_events_custom_limit(self) -> None:
-        """✅ 成功用例：获取事件（自定义限制）"""
+        """✅ 成功用例:获取事件（自定义限制）"""
         service = AuditService()
 
         # 记录50个事件
@@ -487,7 +487,7 @@ class TestAuditService:
         assert len(events_all) == 50
 
     def test_get_events_empty(self) -> None:
-        """✅ 边界用例：获取空事件列表"""
+        """✅ 边界用例:获取空事件列表"""
         service = AuditService()
 
         events = service.get_events()
@@ -495,7 +495,7 @@ class TestAuditService:
         assert events == []
 
     def test_get_summary_empty(self) -> None:
-        """✅ 边界用例：获取空摘要"""
+        """✅ 边界用例:获取空摘要"""
         service = AuditService()
 
         summary = service.get_summary()
@@ -506,7 +506,7 @@ class TestAuditService:
         assert summary.by_action == {}
 
     def test_get_summary_with_events(self) -> None:
-        """✅ 成功用例：获取事件摘要"""
+        """✅ 成功用例:获取事件摘要"""
         service = AuditService()
 
         # 记录不同类型的事件
@@ -528,7 +528,7 @@ class TestAuditService:
         assert summary.by_action["delete_user"] == 1
 
     def test_get_summary_complex_statistics(self) -> None:
-        """✅ 成功用例：复杂统计摘要"""
+        """✅ 成功用例:复杂统计摘要"""
         service = AuditService()
 
         # 创建复杂的事件分布
@@ -556,7 +556,7 @@ class TestAuditServiceIntegration:
     """审计服务集成测试"""
 
     def test_end_to_end_audit_workflow(self) -> None:
-        """✅ 集成用例：端到端审计工作流"""
+        """✅ 集成用例:端到端审计工作流"""
         service = AuditService()
 
         # 1. 用户登录
@@ -601,7 +601,7 @@ class TestAuditServiceIntegration:
         assert summary.by_severity["high"] == 1
 
     def test_concurrent_event_logging(self) -> None:
-        """✅ 并发用例：并发事件记录"""
+        """✅ 并发用例:并发事件记录"""
         import threading
 
         service = AuditService()
@@ -637,7 +637,7 @@ class TestAuditServiceIntegration:
         assert len(results) == 100
 
     def test_performance_considerations(self) -> None:
-        """✅ 性能用例：性能考虑"""
+        """✅ 性能用例:性能考虑"""
         service = AuditService()
 
         import time
@@ -665,7 +665,7 @@ class TestAuditServiceIntegration:
         assert summary.total_logs == 1000
 
     def test_data_integrity_validation(self) -> None:
-        """✅ 集成用例：数据完整性验证"""
+        """✅ 集成用例:数据完整性验证"""
         service = AuditService()
 
         # 记录带有各种数据类型的事件
@@ -691,7 +691,7 @@ class TestAuditServiceIntegration:
         assert event.details["none"] is None
 
     def test_error_handling_and_recovery(self) -> None:
-        """✅ 集成用例：错误处理和恢复"""
+        """✅ 集成用例:错误处理和恢复"""
         service = AuditService()
 
         # 测试各种异常输入
@@ -713,7 +713,7 @@ class TestAuditServiceIntegration:
 
     @patch("src.services.audit_service.logger")
     def test_logging_integration(self, mock_logger: Mock) -> None:
-        """✅ 集成用例：日志集成"""
+        """✅ 集成用例:日志集成"""
         service = AuditService()
 
         service.log_event("test_action", "test_user", {"test": "data"})

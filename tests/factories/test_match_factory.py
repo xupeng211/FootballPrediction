@@ -1,4 +1,4 @@
-"""Match 模型工厂，产出持久化数据以便集成测试使用。"""
+"""Match 模型工厂,产出持久化数据以便集成测试使用。"""
 
 from __future__ import annotations
 

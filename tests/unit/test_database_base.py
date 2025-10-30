@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+""""""""
 数据库基础模型测试
 测试 src.database.base 模块的功能
-"""""""
+""""""""
 
 from datetime import datetime
 
@@ -29,7 +29,7 @@ class TestBase:
             __tablename__ = "test_table"
 
             def __init__(self):
-                # 不调用super()，因为我们只测试类结构
+                # 不调用super(),因为我们只测试类结构
                 pass
 
         # 验证继承关系
@@ -195,7 +195,7 @@ class TestTimestampMixin:
 from src.database.base import TimestampMixin
 
         # 验证时间戳字段使用mock的时间
-        # 注意：由于列定义在模块级别，这里我们主要验证结构
+        # 注意:由于列定义在模块级别,这里我们主要验证结构
         assert hasattr(TimestampMixin, "created_at")
         assert hasattr(TimestampMixin, "updated_at")
 

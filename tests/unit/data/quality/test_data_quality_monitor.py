@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""""""
+""""""""
 数据质量监控器测试
 Tests for Data Quality Monitor
 
 测试src.data.quality.data_quality_monitor模块的数据质量监控功能
-"""""""
+""""""""
 
 import logging
 from datetime import datetime, timedelta
@@ -36,7 +36,7 @@ class TestDataQualityMonitor:
     """数据质量监控器测试"""
 
     def test_monitor_creation(self):
-        """测试：监控器创建"""
+        """测试:监控器创建"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
             assert monitor is not None
@@ -47,7 +47,7 @@ class TestDataQualityMonitor:
             assert monitor.thresholds["odds_max_value"] == 100.0
 
     def test_monitor_custom_thresholds(self):
-        """测试：自定义阈值"""
+        """测试:自定义阈值"""
         with patch("src.data.quality.data_quality_monitor.DatabaseManager"):
             monitor = DataQualityMonitor()
 
@@ -60,7 +60,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_check_data_freshness(self):
-        """测试：检查数据新鲜度"""
+        """测试:检查数据新鲜度"""
         monitor = DataQualityMonitor()
 
         # 模拟数据库会话
@@ -89,7 +89,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_detect_anomalies(self):
-        """测试：检测异常"""
+        """测试:检测异常"""
         monitor = DataQualityMonitor()
 
         AsyncMock()
@@ -122,7 +122,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_check_fixtures_age_good(self):
-        """测试：检查比赛年龄（良好状态）"""
+        """测试:检查比赛年龄（良好状态）"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -141,7 +141,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_check_fixtures_age_stale(self):
-        """测试：检查比赛年龄（过期数据）"""
+        """测试:检查比赛年龄（过期数据）"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -160,7 +160,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_check_odds_age_warning(self):
-        """测试：检查赔率年龄（警告状态）"""
+        """测试:检查赔率年龄（警告状态）"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -178,7 +178,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_find_missing_matches(self):
-        """测试：查找缺失的比赛"""
+        """测试:查找缺失的比赛"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -198,7 +198,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_find_suspicious_odds(self):
-        """测试：查找可疑赔率"""
+        """测试:查找可疑赔率"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -232,7 +232,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_find_unusual_scores(self):
-        """测试：查找异常比分"""
+        """测试:查找异常比分"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -264,7 +264,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_check_data_consistency(self):
-        """测试：检查数据一致性"""
+        """测试:检查数据一致性"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -294,7 +294,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_generate_quality_report(self):
-        """测试：生成质量报告"""
+        """测试:生成质量报告"""
         monitor = DataQualityMonitor()
 
         with patch.object(monitor, "check_data_freshness") as mock_freshness:
@@ -321,7 +321,7 @@ class TestDataQualityMonitor:
                 assert report["quality_score"] <= 100
 
     def test_calculate_quality_score_perfect(self):
-        """测试：计算质量分数（完美）"""
+        """测试:计算质量分数（完美）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "good"}
@@ -332,7 +332,7 @@ class TestDataQualityMonitor:
         assert score == 100.0
 
     def test_calculate_quality_score_warning(self):
-        """测试：计算质量分数（警告）"""
+        """测试:计算质量分数（警告）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "warning"}
@@ -344,7 +344,7 @@ class TestDataQualityMonitor:
         assert score >= 70
 
     def test_calculate_quality_score_critical(self):
-        """测试：计算质量分数（严重）"""
+        """测试:计算质量分数（严重）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "critical"}
@@ -362,7 +362,7 @@ class TestDataQualityMonitor:
         assert score >= 0
 
     def test_determine_overall_status_good(self):
-        """测试：确定总体状态（良好）"""
+        """测试:确定总体状态（良好）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "good"}
@@ -373,7 +373,7 @@ class TestDataQualityMonitor:
         assert status == "good"
 
     def test_determine_overall_status_warning(self):
-        """测试：确定总体状态（警告）"""
+        """测试:确定总体状态（警告）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "good"}
@@ -384,7 +384,7 @@ class TestDataQualityMonitor:
         assert status == "warning"
 
     def test_determine_overall_status_critical(self):
-        """测试：确定总体状态（严重）"""
+        """测试:确定总体状态（严重）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "critical"}
@@ -395,7 +395,7 @@ class TestDataQualityMonitor:
         assert status == "critical"
 
     def test_generate_recommendations_good(self):
-        """测试：生成建议（良好状态）"""
+        """测试:生成建议（良好状态）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "good"}
@@ -408,7 +408,7 @@ class TestDataQualityMonitor:
             assert all(isinstance(r, str) for r in recommendations)
 
     def test_generate_recommendations_with_anomalies(self):
-        """测试：生成建议（有异常）"""
+        """测试:生成建议（有异常）"""
         monitor = DataQualityMonitor()
 
         freshness_check = {"overall_status": "warning"}
@@ -430,7 +430,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_quality_monitor_with_custom_config(self):
-        """测试：使用自定义配置的质量监控"""
+        """测试:使用自定义配置的质量监控"""
         monitor = DataQualityMonitor()
 
         # 更新配置
@@ -453,7 +453,7 @@ class TestDataQualityMonitor:
 
         _result = await monitor._check_fixtures_age(mock_session)
 
-        # 使用12小时阈值，10小时应该是好的
+        # 使用12小时阈值,10小时应该是好的
         assert _result["status"] == "good"
 
         # 使用48小时前的时间应该是严重的
@@ -464,7 +464,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_full_quality_check_workflow(self):
-        """测试：完整质量检查工作流"""
+        """测试:完整质量检查工作流"""
         monitor = DataQualityMonitor()
 
         with patch.object(monitor, "check_data_freshness") as mock_freshness:
@@ -497,7 +497,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_error_handling_in_checks(self):
-        """测试：检查中的错误处理"""
+        """测试:检查中的错误处理"""
         monitor = DataQualityMonitor()
 
         mock_session = AsyncMock()
@@ -513,7 +513,7 @@ class TestDataQualityMonitor:
         assert "error" in result
 
     def test_logging_configuration(self):
-        """测试：日志配置"""
+        """测试:日志配置"""
         monitor = DataQualityMonitor()
 
         assert monitor.logger is not None
@@ -522,7 +522,7 @@ class TestDataQualityMonitor:
         assert "DataQualityMonitor" in monitor.logger.name
 
     def test_threshold_validation(self):
-        """测试：阈值验证"""
+        """测试:阈值验证"""
         monitor = DataQualityMonitor()
 
         # 测试默认阈值
@@ -535,7 +535,7 @@ class TestDataQualityMonitor:
 
     @pytest.mark.asyncio
     async def test_monitor_performance(self):
-        """测试：监控器性能"""
+        """测试:监控器性能"""
         import time
 
         monitor = DataQualityMonitor()
@@ -568,7 +568,7 @@ class TestDataQualityMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_monitoring_pipeline(self):
-        """测试：监控管道"""
+        """测试:监控管道"""
         monitor = DataQualityMonitor()
 
         # 模拟完整的监控管道
@@ -595,7 +595,7 @@ class TestDataQualityMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_continuous_monitoring(self):
-        """测试：持续监控"""
+        """测试:持续监控"""
         monitor = DataQualityMonitor()
 
         # 模拟定期监控
@@ -614,7 +614,7 @@ class TestDataQualityMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_alert_generation(self):
-        """测试：告警生成"""
+        """测试:告警生成"""
         monitor = DataQualityMonitor()
 
         # 模拟需要告警的情况
@@ -643,7 +643,7 @@ class TestDataQualityMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_quality_trend_analysis(self):
-        """测试：质量趋势分析"""
+        """测试:质量趋势分析"""
         DataQualityMonitor()
 
         # 模拟历史质量数据
@@ -665,7 +665,7 @@ class TestDataQualityMonitorIntegration:
 
     @pytest.mark.asyncio
     async def test_multi_source_quality_check(self):
-        """测试：多源质量检查"""
+        """测试:多源质量检查"""
         monitor = DataQualityMonitor()
 
         # 模拟多个数据源的质量检查
@@ -695,14 +695,14 @@ class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
     def test_module_import_error(self):
-        """测试：模块导入错误"""
+        """测试:模块导入错误"""
         assert not DATA_QUALITY_MONITOR_AVAILABLE
         assert True  # 表明测试意识到模块不可用
 
 
 # 测试模块级别的功能
 def test_module_imports():
-    """测试：模块导入"""
+    """测试:模块导入"""
     if DATA_QUALITY_MONITOR_AVAILABLE:
 from src.data.quality.data_quality_monitor import DataQualityMonitor
 

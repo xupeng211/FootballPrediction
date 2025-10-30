@@ -4,14 +4,14 @@
 
 from unittest.mock import MagicMock
 
-"""""""
+""""""""
 数据API单元测试
 
-测试数据访问相关的API端点：
+测试数据访问相关的API端点:
 - 比赛特征数据
 - 球队统计数据
 - 仪表板数据
-"""""""
+""""""""
 
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -49,7 +49,7 @@ class TestGetMatchFeatures:
             mock_match_result,  # 第一次查询：match
             mock_features_result,  # 第二次查询：features
             mock_prediction_result,  # 第三次查询：prediction
-            mock_odds_result,  # 第四次查询：odds
+            mock_odds_result,  # 第四次查询:odds
         ]
 
         # 发送请求
@@ -182,7 +182,7 @@ class TestGetMatchFeatures:
         """测试服务器错误"""
         mock_session = api_client_full.mock_session
 
-        # 第一次查询成功，后续查询失败
+        # 第一次查询成功,后续查询失败
         mock_session.execute.side_effect = [
             MagicMock(scalar_one_or_none=MagicMock(return_value=sample_match)),
             Exception("Database connection failed"),
@@ -213,7 +213,7 @@ class TestGetTeamStats:
 
         # 创建模拟比赛（已结束）
         mock_matches = []
-        # 比赛1: 球队10作为主队，2:1获胜
+        # 比赛1: 球队10作为主队,2:1获胜
         match1 = MagicMock()
         match1.home_team_id = 10
         match1.away_team_id = 20
@@ -222,7 +222,7 @@ class TestGetTeamStats:
         match1.match_status = "finished"
         mock_matches.append(match1)
 
-        # 比赛2: 球队10作为客队，1:2获胜
+        # 比赛2: 球队10作为客队,1:2获胜
         match2 = MagicMock()
         match2.home_team_id = 30
         match2.away_team_id = 10
@@ -231,7 +231,7 @@ class TestGetTeamStats:
         match2.match_status = "finished"
         mock_matches.append(match2)
 
-        # 比赛3: 球队10作为主队，3:1获胜
+        # 比赛3: 球队10作为主队,3:1获胜
         match3 = MagicMock()
         match3.home_team_id = 10
         match3.away_team_id = 40
@@ -240,7 +240,7 @@ class TestGetTeamStats:
         match3.match_status = "finished"
         mock_matches.append(match3)
 
-        # 比赛4: 球队10作为客队，0:2失败
+        # 比赛4: 球队10作为客队,0:2失败
         match4 = MagicMock()
         match4.home_team_id = 50
         match4.away_team_id = 10
@@ -249,7 +249,7 @@ class TestGetTeamStats:
         match4.match_status = "finished"
         mock_matches.append(match4)
 
-        # 比赛5: 球队10作为主队，1:1平局
+        # 比赛5: 球队10作为主队,1:1平局
         match5 = MagicMock()
         match5.home_team_id = 10
         match5.away_team_id = 60

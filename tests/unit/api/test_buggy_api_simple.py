@@ -21,7 +21,7 @@ try:
     )
     buggy_api_module = importlib.util.module_from_spec(spec)
 
-    # 尝试执行模块（可能会失败，但至少能测试导入）
+    # 尝试执行模块（可能会失败,但至少能测试导入）
     BUGGY_API_EXISTS = True
 except Exception as e:
     print(f"Module load error: {e}")
@@ -34,7 +34,7 @@ class TestBuggyAPIBasic:
     """Buggy API基础测试"""
 
     def test_module_file_exists(self):
-        """测试：模块文件存在"""
+        """测试:模块文件存在"""
         import os
 
         file_path = "/home/user/projects/FootballPrediction/src/api/buggy_api.py"
@@ -42,7 +42,7 @@ class TestBuggyAPIBasic:
         assert os.path.isfile(file_path)
 
     def test_module_file_content(self):
-        """测试：模块文件内容"""
+        """测试:模块文件内容"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -54,7 +54,7 @@ class TestBuggyAPIBasic:
         assert len(content) > 100  # 文件有合理的内容
 
     def test_module_has_functions(self):
-        """测试：模块有预期的函数"""
+        """测试:模块有预期的函数"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -64,14 +64,14 @@ class TestBuggyAPIBasic:
         assert "async def buggy_async" in content
 
     def test_module_has_class(self):
-        """测试：模块有预期的类"""
+        """测试:模块有预期的类"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         assert "class SomeAsyncService" in content
 
     def test_module_docstrings(self):
-        """测试：模块有文档字符串"""
+        """测试:模块有文档字符串"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             lines = f.readlines()
 
@@ -80,7 +80,7 @@ class TestBuggyAPIBasic:
         assert docstring_count >= 2  # 至少有2个文档字符串
 
     def test_endpoint_decorators(self):
-        """测试：端点装饰器"""
+        """测试:端点装饰器"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -89,7 +89,7 @@ class TestBuggyAPIBasic:
         assert len(content.split("@router.get")) >= 3  # 至少3个端点
 
     def test_query_parameters(self):
-        """测试：查询参数定义"""
+        """测试:查询参数定义"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -100,7 +100,7 @@ class TestBuggyAPIBasic:
         assert "le=" in content  # less than or equal
 
     def test_async_patterns(self):
-        """测试：异步模式"""
+        """测试:异步模式"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -109,7 +109,7 @@ class TestBuggyAPIBasic:
         assert "await" in content
 
     def test_service_pattern(self):
-        """测试：服务模式"""
+        """测试:服务模式"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -118,16 +118,16 @@ class TestBuggyAPIBasic:
         assert "SomeAsyncService()" in content
 
     def test_type_annotations(self):
-        """测试：类型注解"""
+        """测试:类型注解"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
         # 检查类型注解
         assert ": int" in content
-        # 返回类型注解可能在docstring中，不要求必须
+        # 返回类型注解可能在docstring中,不要求必须
 
     def test_error_handling_patterns(self):
-        """测试：错误处理模式"""
+        """测试:错误处理模式"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -135,7 +135,7 @@ class TestBuggyAPIBasic:
         assert "修复后" in content or "fixed" in content.lower()
 
     def test_code_quality_indicators(self):
-        """测试：代码质量指标"""
+        """测试:代码质量指标"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             lines = f.readlines()
 
@@ -151,7 +151,7 @@ class TestBuggyAPIBasic:
         assert comment_lines > 0  # 应该有注释
 
     def test_function_return_patterns(self):
-        """测试：函数返回模式"""
+        """测试:函数返回模式"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
@@ -160,7 +160,7 @@ class TestBuggyAPIBasic:
         assert "await" in content  # 异步返回
 
     def test_validation_patterns(self):
-        """测试：验证模式"""
+        """测试:验证模式"""
         with open("/home/user/projects/FootballPrediction/src/api/buggy_api.py", "r") as f:
             content = f.read()
 
