@@ -28,7 +28,7 @@ from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
 from src.core.event_application import initialize_event_system, shutdown_event_system
 from src.cqrs.application import initialize_cqrs
-from src.database.connection import initialize_database
+from src.database.definitions import initialize_database
 from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import MetricsCollector
 from src.observers import ObserverManager
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Football Prediction API...")
 
     # 初始化各个系统
-    await initialize_database()
+    initialize_database()
     initialize_event_system()
     initialize_cqrs()
     ObserverManager.initialize()
