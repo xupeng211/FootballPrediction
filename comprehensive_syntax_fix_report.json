@@ -2,17 +2,17 @@
   "timestamp": "/home/user/projects/FootballPrediction",
   "statistics": {
     "total_files": 610,
-    "successful_fixes": 1033,
-    "failed_fixes": 119,
+    "successful_fixes": 1051,
+    "failed_fixes": 101,
     "total_fixes_applied": 0,
     "error_types_found": {
-      "unclosed_brackets": 118,
-      "missing_colons": 103,
-      "isinstance": 75,
-      "unclosed_strings": 118,
-      "syntax_cleaner": 105,
-      "indentation": 34,
-      "import_errors": 32
+      "unclosed_brackets": 101,
+      "missing_colons": 88,
+      "isinstance": 61,
+      "unclosed_strings": 100,
+      "syntax_cleaner": 91,
+      "indentation": 29,
+      "import_errors": 28
     }
   },
   "successful_files": [
@@ -35,13 +35,16 @@
     "src/api/buggy_api.py",
     "src/api/dependencies.py",
     "src/api/middleware.py",
+    "src/api/predictions_srs_simple.py",
     "src/api/data_router.py",
     "src/api/__init__.py",
+    "src/api/features.py",
     "src/api/facades.py",
     "src/api/predictions.py",
     "src/api/simple_auth.py",
     "src/api/batch_analytics.py",
     "src/api/app.py",
+    "src/api/predictions_enhanced.py",
     "src/api/data_integration.py",
     "src/api/decorators.py",
     "src/api/observers.py",
@@ -49,6 +52,7 @@
     "src/api/repositories.py",
     "src/api/events.py",
     "src/api/adapters.py",
+    "src/api/monitoring.py",
     "src/api/features_simple.py",
     "src/api/predictions/health.py",
     "src/api/predictions/__init__.py",
@@ -56,6 +60,7 @@
     "src/api/predictions/models.py",
     "src/api/predictions/router.py",
     "src/api/adapters/__init__.py",
+    "src/api/adapters/router.py",
     "src/api/schemas/data.py",
     "src/api/schemas/__init__.py",
     "src/api/facades/__init__.py",
@@ -69,6 +74,7 @@
     "src/api/health/checks.py",
     "src/api/health/__init__.py",
     "src/api/health/models.py",
+    "src/api/health/utils.py",
     "src/api/auth/dependencies.py",
     "src/api/auth/__init__.py",
     "src/api/auth/models.py",
@@ -80,7 +86,9 @@
     "src/api/data/models/__init__.py",
     "src/api/data/models/league_models.py",
     "src/api/data/models/team_models.py",
+    "src/utils/validators.py",
     "src/utils/response.py",
+    "src/utils/string_utils.py",
     "src/utils/__init__.py",
     "src/utils/formatters.py",
     "src/utils/time_utils.py",
@@ -180,6 +188,8 @@
     "src/domain/strategies/historical.py",
     "src/domain/strategies/ensemble.py",
     "src/domain/strategies/statistical.py",
+    "src/domain/strategies/ml_model.py",
+    "src/domain/strategies/factory.py",
     "src/domain/strategies/domain/strategies/config_ml.py",
     "src/domain/strategies/domain/strategies/config_ensemble.py",
     "src/domain/strategies/domain/strategies/historical_historical.py",
@@ -187,6 +197,7 @@
     "src/domain/strategies/domain/strategies/config_statistical.py",
     "src/domain/strategies/domain/strategies/config_historical.py",
     "src/domain/services/__init__.py",
+    "src/domain/services/prediction_service.py",
     "src/domain/services/match_service.py",
     "src/domain/services/scoring_service.py",
     "src/domain/services/team_service.py",
@@ -219,15 +230,20 @@
     "src/database/config.py",
     "src/database/sql_compatibility.py",
     "src/database/dependencies.py",
+    "src/database/base.py",
     "src/database/__init__.py",
     "src/database/definitions.py",
     "src/database/compatibility.py",
+    "src/database/types.py",
     "src/database/connection.py",
     "src/database/repositories/base.py",
     "src/database/repositories/__init__.py",
+    "src/database/repositories/prediction.py",
+    "src/database/repositories/user.py",
     "src/database/repositories/team_repository.py",
     "src/database/repositories/match.py",
     "src/database/repositories/match_repository/__init__.py",
+    "src/database/repositories/match_repository/match.py",
     "src/database/repositories/prediction_repository/__init__.py",
     "src/database/repositories/user_repository/__init__.py",
     "src/database/models/league.py",
@@ -318,6 +334,7 @@
     "src/services/enhanced_core.py",
     "src/services/audit_service.py",
     "src/services/data_quality_monitor.py",
+    "src/services/data_processing.py",
     "src/services/content_analysis.py",
     "src/services/__init__.py",
     "src/services/auth_service.py",
@@ -327,6 +344,7 @@
     "src/services/smart_data_validator.py",
     "src/services/base_unified.py",
     "src/services/manager.py",
+    "src/services/user_profile.py",
     "src/services/manager/manager.py",
     "src/services/manager/data_processing/__init__.py",
     "src/services/manager/base/__init__.py",
@@ -1061,47 +1079,15 @@
     },
     {
       "path": "src/adapters/factory.py",
-      "error": "invalid syntax (<unknown>, line 136)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 192)"
     },
     {
       "path": "src/config/config_manager.py",
       "error": "expected an indented block after class definition on line 111 (<unknown>, line 112)"
     },
     {
-      "path": "src/api/predictions_srs_simple.py",
-      "error": "unmatched ')' (<unknown>, line 424)"
-    },
-    {
-      "path": "src/api/features.py",
-      "error": "closing parenthesis '}' does not match opening parenthesis '(' (<unknown>, line 169)"
-    },
-    {
-      "path": "src/api/predictions_enhanced.py",
-      "error": "unmatched ')' (<unknown>, line 399)"
-    },
-    {
-      "path": "src/api/monitoring.py",
-      "error": "invalid syntax (<unknown>, line 22)"
-    },
-    {
-      "path": "src/api/adapters/router.py",
-      "error": "invalid syntax (<unknown>, line 2)"
-    },
-    {
-      "path": "src/api/health/utils.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '{' (<unknown>, line 55)"
-    },
-    {
-      "path": "src/utils/validators.py",
-      "error": "invalid syntax (<unknown>, line 44)"
-    },
-    {
-      "path": "src/utils/string_utils.py",
-      "error": "unmatched ')' (<unknown>, line 163)"
-    },
-    {
       "path": "src/utils/dict_utils.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 28)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 109)"
     },
     {
       "path": "src/utils/helpers.py",
@@ -1109,7 +1095,7 @@
     },
     {
       "path": "src/utils/crypto_utils.py",
-      "error": "unmatched ')' (<unknown>, line 97)"
+      "error": "unmatched ')' (<unknown>, line 96)"
     },
     {
       "path": "src/utils/data_validator.py",
@@ -1117,7 +1103,7 @@
     },
     {
       "path": "src/utils/date_utils.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 97)"
+      "error": "unmatched ')' (<unknown>, line 93)"
     },
     {
       "path": "src/timeseries/influxdb_client.py",
@@ -1141,7 +1127,7 @@
     },
     {
       "path": "src/stubs/mocks/confluent_kafka.py",
-      "error": "unmatched ')' (<unknown>, line 68)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 64)"
     },
     {
       "path": "src/facades/factory.py",
@@ -1169,7 +1155,7 @@
     },
     {
       "path": "src/monitoring/alert_manager.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 469 (<unknown>, line 470)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 465 (<unknown>, line 466)"
     },
     {
       "path": "src/performance/profiler.py",
@@ -1197,7 +1183,7 @@
     },
     {
       "path": "src/decorators/implementations/logging.py",
-      "error": "unmatched ')' (<unknown>, line 66)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 70 (<unknown>, line 71)"
     },
     {
       "path": "src/realtime/prediction_api.py",
@@ -1232,28 +1218,16 @@
       "error": "unexpected indent (<unknown>, line 8)"
     },
     {
-      "path": "src/domain/strategies/ml_model.py",
-      "error": "unmatched ')' (<unknown>, line 322)"
-    },
-    {
-      "path": "src/domain/strategies/factory.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 511)"
-    },
-    {
-      "path": "src/domain/services/prediction_service.py",
-      "error": "unmatched ')' (<unknown>, line 153)"
-    },
-    {
       "path": "src/cqrs/bus.py",
       "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 198)"
     },
     {
       "path": "src/streaming/stream_config_simple.py",
-      "error": "invalid syntax (<unknown>, line 84)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 219)"
     },
     {
       "path": "src/streaming/kafka_producer_simple.py",
-      "error": "invalid syntax (<unknown>, line 90)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 101)"
     },
     {
       "path": "src/streaming/kafka_components_simple.py",
@@ -1261,27 +1235,7 @@
     },
     {
       "path": "src/alerting/alert_engine.py",
-      "error": "invalid syntax (<unknown>, line 290)"
-    },
-    {
-      "path": "src/database/base.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 72)"
-    },
-    {
-      "path": "src/database/types.py",
-      "error": "unmatched ')' (<unknown>, line 52)"
-    },
-    {
-      "path": "src/database/repositories/prediction.py",
-      "error": "closing parenthesis '}' does not match opening parenthesis '(' (<unknown>, line 107)"
-    },
-    {
-      "path": "src/database/repositories/user.py",
-      "error": "invalid syntax (<unknown>, line 18)"
-    },
-    {
-      "path": "src/database/repositories/match_repository/match.py",
-      "error": "invalid syntax (<unknown>, line 13)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 307)"
     },
     {
       "path": "src/cache/consistency_manager.py",
@@ -1321,35 +1275,27 @@
     },
     {
       "path": "src/core/service_lifecycle.py",
-      "error": "invalid syntax (<unknown>, line 53)"
+      "error": "unterminated string literal (detected at line 118) (<unknown>, line 118)"
     },
     {
       "path": "src/observers/manager.py",
-      "error": "unmatched ')' (<unknown>, line 230)"
-    },
-    {
-      "path": "src/services/data_processing.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 113)"
-    },
-    {
-      "path": "src/services/user_profile.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 126)"
+      "error": "unmatched ')' (<unknown>, line 235)"
     },
     {
       "path": "src/services/processing/processors/match_processor.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 131)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' on line 203 (<unknown>, line 204)"
     },
     {
       "path": "src/services/processing/validators/data_validator.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 87 (<unknown>, line 88)"
+      "error": "unmatched ')' (<unknown>, line 112)"
     },
     {
       "path": "src/services/processing/caching/processing_cache.py",
-      "error": "invalid syntax (<unknown>, line 120)"
+      "error": "unmatched ')' (<unknown>, line 125)"
     },
     {
       "path": "src/services/betting/betting_service.py",
-      "error": "unexpected indent (<unknown>, line 21)"
+      "error": "unindent does not match any outer indentation level (<unknown>, line 36)"
     },
     {
       "path": "src/features/features/feature_calculator_calculators.py",
@@ -1373,11 +1319,11 @@
     },
     {
       "path": "src/data/processing/missing_data_handler.py",
-      "error": "unmatched ')' (<unknown>, line 251)"
+      "error": "unmatched ')' (<unknown>, line 254)"
     },
     {
       "path": "src/data/processing/football_data_cleaner.py",
-      "error": "invalid syntax (<unknown>, line 43)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 63)"
     },
     {
       "path": "src/data/quality/anomaly_detector.py",
@@ -1405,7 +1351,7 @@
     },
     {
       "path": "src/data/features/feature_store.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 412)"
+      "error": "unmatched ')' (<unknown>, line 342)"
     },
     {
       "path": "src/data/features/examples.py",
@@ -1529,12 +1475,12 @@
     }
   ],
   "error_types": {
-    "unclosed_brackets": 118,
-    "missing_colons": 103,
-    "isinstance": 75,
-    "unclosed_strings": 118,
-    "syntax_cleaner": 105,
-    "indentation": 34,
-    "import_errors": 32
+    "unclosed_brackets": 101,
+    "missing_colons": 88,
+    "isinstance": 61,
+    "unclosed_strings": 100,
+    "syntax_cleaner": 91,
+    "indentation": 29,
+    "import_errors": 28
   }
 }
