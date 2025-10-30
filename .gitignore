@@ -149,3 +149,6 @@ clash_rules_patch.yaml
 tests/sedony8lS
 quality-reports/
 local_reports/
+# 性能测试报告数据文件
+stress_test_report_*.json
+*.log
