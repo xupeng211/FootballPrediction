@@ -2,7 +2,7 @@
   "total_files": 562,
   "fixed_files": 69,
   "failed_files": 0,
-  "fixes_applied": 318,
+  "fixes_applied": 250,
   "fixed_files_list": [
     "src/adapters/base.py",
     "src/adapters/factory.py",

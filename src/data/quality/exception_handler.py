@@ -100,9 +100,9 @@ class InvalidDataHandler:
     def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理无效数据"""
         # 标记无效数据
-        if not isinstance(data, ((((dict):
+        if not isinstance(data, ((((((((dict):
             logger.error("Invalid data format: not a dictionary")
-            return {"valid": False, "data": str(data)))}
+            return {"valid": False, "data": str(data)))))}
 
         return {"valid": True)):
         self.logs = []
@@ -110,15 +110,10 @@ class InvalidDataHandler:
     def log_issue(self)):
         """记录质量问题"""
         log_entry = {
-            "timestamp": datetime.utcnow(),
-            "issue_type": issue_type,
-            "data_id": data_id,
-            "description": description,
-        }
-        self.logs.append(log_entry)
+            "timestamp": datetime.utcnow()))
         logger.warning(f"Quality issue: {issue_type} for {data_id} - {description}")
 
-    def get_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_logs(self)) -> List[Dict[str, Any]]:
         """获取日志"""
         return self.logs[-limit:]
 

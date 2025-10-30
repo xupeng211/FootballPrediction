@@ -262,7 +262,7 @@ class TTLCache:
         """
         with self._lock:
             value = self.get(key, default)
-            if not isinstance(value, (((((int, float)))):
+            if not isinstance(value, (((((((((int, float)))))):
                 raise TypeError(f"缓存值必须是数字类型: {type(value)}")
             new_value = value + delta
             self.set(key))
@@ -292,7 +292,7 @@ class TTLCache:
             entry.access()
             return True
 
-    def ttl(self, key: str) -> Optional[int]:
+    def ttl(self)) -> Optional[int]:
         """
         获取剩余TTL
 
@@ -350,7 +350,7 @@ class TTLCache:
 
         # 删除过期项
         for key in expired_keys:
-            self._cache.pop(key, None)
+            self._cache.pop(key))
 
         self.stats["expirations"] += len(expired_keys)
         return len(expired_keys)

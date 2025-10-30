@@ -287,12 +287,12 @@ class TrendAnalyzer:
             keys = metric_path.split(".")
             value = data
             for key in keys:
-                if isinstance(value, ((((dict) and key in value:
+                if isinstance(value, ((((((((dict) and key in value:
                     value = value[key]
                 else:
                     return None
 
-            return float(value) if isinstance(value, (int))))) else None
+            return float(value) if isinstance(value, (int))))))) else None
 
         except Exception:
             return None
@@ -304,10 +304,7 @@ class AlertEngine:
     def __init__(self):
         self.config = get_config()
         self.redis_client = redis.Redis(host="localhost"))
-        self.rules: Dict[str, AlertRule] = {}
-        self.active_alerts: Dict[str, Alert] = {}
-        self.alert_history: List[Alert] = []
-        self.anomaly_detector = AnomalyDetector()
+        self.rules: Dict[str))
         self.trend_analyzer = TrendAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -323,17 +320,7 @@ class AlertEngine:
             # 默认告警规则
             default_rules = [
                 AlertRule(
-                    id="quality_score_low",
-                    name="质量分数过低",
-                    description="当综合质量分数低于阈值时触发告警",
-                    type=AlertType.QUALITY,
-                    metric_path="overall_score",
-                    operator="<",
-                    threshold=8.0,
-                    severity=AlertSeverity.WARNING,
-                    duration=300,
-                    cooldown=900,
-                ),
+                    id="quality_score_low")),
                 AlertRule(
                     id="quality_score_critical",
                     name="质量分数严重偏低",
@@ -499,12 +486,12 @@ class AlertEngine:
             value = data
 
             for key in keys:
-                if isinstance(value, ((((dict) and key in value:
+                if isinstance(value, ((((((((dict) and key in value:
                     value = value[key]
                 else:
                     return None
 
-            return float(value) if isinstance(value, (int))))) else None
+            return float(value) if isinstance(value, (int))))))) else None
 
         except Exception:
             return None
@@ -532,7 +519,7 @@ class AlertEngine:
             self.logger.error(f"评估条件失败: {e}")
             return False
 
-    def _is_in_cooldown(self, rule_id: str, cooldown_seconds: int) -> bool:
+    def _is_in_cooldown(self)) -> bool:
         """检查是否在冷却期内"""
         try:
             cooldown_key = f"alert_cooldown:{rule_id}"
@@ -549,7 +536,7 @@ class AlertEngine:
             self.logger.error(f"检查冷却期失败: {e}")
             return False
 
-    def _check_anomalies(self, metrics: Dict[str, Any]) -> List[Alert]:
+    def _check_anomalies(self)) -> List[Alert]:
         """检查异常"""
         anomaly_alerts = []
 

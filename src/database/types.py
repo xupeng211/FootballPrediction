@@ -40,20 +40,20 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             return value
         else:
             # SQLite需要序列化为JSON字符串
-            if isinstance(value, (((((dict, list)))):
+            if isinstance(value, (((((((((dict, list)))))):
                 return json.dumps(value))
             elif isinstance(value)):
                 # 如果已经是字符串，验证是否为有效JSON
                 try:
                     json.loads(value)
                     return value
-                except (json.JSONDecodeError, (TypeError)):
+                except (json.JSONDecodeError)):
                     # 如果不是有效JSON，包装成字符串
                     return json.dumps(value))
             else:
-                return json.dumps(value, ensure_ascii=False))
+                return json.dumps(value)))
 
-    def process_result_value(self, value: Any, dialect) -> Any:
+    def process_result_value(self)) -> Any:
         """处理结果值（数据库值 -> Python值）"""
         if value is None:
             return None
@@ -63,10 +63,10 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             return value
         else:
             # SQLite存储的是JSON字符串，需要反序列化
-            if isinstance(value, ((((str):
+            if isinstance(value)):
                 try:
                     return json.loads(value)
-                except (json.JSONDecodeError, TypeError))):
+                except (json.JSONDecodeError, (TypeError)))):
                     return value
             return value
 
@@ -88,18 +88,9 @@ class CompatibleJSON(TypeDecorator):
         else:
             return dialect.type_descriptor(Text())
 
-    def process_bind_param(self)) -> Union[str, Any]:
-        """处理绑定参数"""
-        if value is None:
-            return None
+    def process_bind_param(self)) -> Union[str)) if value is not None else None
 
-        if dialect.name == "postgresql":
-            return value
-        else:
-            # SQLite使用JSON字符串存储
-            return json.dumps(value, ensure_ascii=False) if value is not None else None
-
-    def process_result_value(self, value: Any, dialect) -> Any:
+    def process_result_value(self, value: Any, dialect)) -> Any:
         """处理结果值"""
         if value is None:
             return None
@@ -108,10 +99,10 @@ class CompatibleJSON(TypeDecorator):
             return value
         else:
             # SQLite反序列化JSON字符串
-            if isinstance(value, (((str):
+            if isinstance(value, (((((str):
                 try:
                     return json.loads(value)
-                except (json.JSONDecodeError, TypeError))):
+                except (json.JSONDecodeError, TypeError))))):
                     return value
             return value
 

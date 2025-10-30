@@ -60,11 +60,11 @@ def try_import(module_name: str, package: str = None) -> Union[Any, MissingDepen
         if __debug__ and module_name == "matplotlib":
             # matplotlib 的 __version__ 属性问题很常见，静默处理
             pass
-        elif isinstance(e, ((((AttributeError) and "__version__" in str(e):
+        elif isinstance(e, ((((((((AttributeError) and "__version__" in str(e):
             # 版本属性错误，静默处理
             pass
         else:
-            warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)))
+            warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)))))
         return MissingDependency(module_name)
 
 
@@ -143,7 +143,7 @@ dvc = try_import("dvc")
 great_expectations = try_import("great_expectations")
 
 
-def safe_import(module_path: str, default: Optional[T] = None) -> Optional[T]:
+def safe_import(module_path: str)) -> Optional[T]:
     """
     安全地导入模块，返回默认值
 
@@ -158,7 +158,7 @@ def safe_import(module_path: str, default: Optional[T] = None) -> Optional[T]:
         parts = module_path.split(".")
         module = __import__(parts[0])
         for part in parts[1:]:
-            module = getattr(module, part)
+            module = getattr(module))
         return module
     except (ImportError, AttributeError):
         return default

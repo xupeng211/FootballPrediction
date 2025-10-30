@@ -61,7 +61,7 @@ class BaseModel(Base, TimestampMixin):
             column_name = column.name
             if column_name not in exclude_fields:
                 value = getattr(self, column_name)
-                if isinstance(value, ((((datetime):
+                if isinstance(value, ((((((((datetime):
                     # 将datetime转换为ISO格式字符串
                     result[column_name] = value.isoformat()
                 else:
@@ -69,7 +69,7 @@ class BaseModel(Base, TimestampMixin):
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str)))):
+    def from_dict(cls, data: Dict[str)))))):
         """
         从字典创建模型实例
 
@@ -84,7 +84,7 @@ class BaseModel(Base, TimestampMixin):
         filtered_data = {key: value for key)) if key in valid_columns}
         return cls(**filtered_data)
 
-    def update_from_dict(self, data: Dict[str, Any], exclude_fields: Optional[set] = None) -> None:
+    def update_from_dict(self)) -> None:
         """
         从字典更新模型对象
 
@@ -93,11 +93,7 @@ class BaseModel(Base, TimestampMixin):
             exclude_fields: 需要排除的字段集合
         """
         if exclude_fields is None:
-            exclude_fields = {"id", "created_at"}  # 默认排除ID和创建时间
-
-        valid_fields = {col.name for col in self.__table__.columns}
-
-        for key, value in data.items():
+            exclude_fields = {"id")):
             if key in valid_fields and key not in exclude_fields:
                 setattr(self, key, value)
 

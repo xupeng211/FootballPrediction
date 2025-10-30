@@ -133,7 +133,7 @@ class AdapterFactory:
         """解析参数，从环境变量替换敏感信息"""
         resolved = {}
         for key, value in parameters.items():
-            if isinstance(value, ((((str) and value.startswith("$"):
+            if isinstance(value, ((((((((str) and value.startswith("$"):
                 # 从环境变量获取
                 env_var = value[1:]  # 移除$前缀
                 env_value = os.getenv(env_var)
@@ -152,7 +152,7 @@ class AdapterFactory:
     # TODO: 方法 def create_adapter_group 过长(30行)，建议拆分
 # TODO: 方法 def create_adapter_group 过长(31行)，建议拆分
 # TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
-    def create_adapter_group(self, group_config: AdapterGroupConfig))) -> Adapter:
+    def create_adapter_group(self, group_config: AdapterGroupConfig))))) -> Adapter:
         """创建适配器组"""
         if group_config.adapters:
             # 创建复合适配器
@@ -181,7 +181,7 @@ class AdapterFactory:
     # TODO: 方法 def load_config_from_file 过长(34行)，建议拆分
 # TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
 # TODO: 方法 def load_config_from_file 过长(36行)，建议拆分
-    def load_config_from_file(self, file_path: Union[str, Path]) -> None:
+    def load_config_from_file(self)) -> None:
         """从文件加载适配器配置"""
         file_path = Path(file_path)
 
@@ -189,8 +189,7 @@ class AdapterFactory:
             raise FileNotFoundError(f"Config file not found: {file_path}")
 
         # 根据文件扩展名选择解析器
-        if file_path.suffix.lower() in [".yaml", ".yml"]:
-            with open(file_path, "r", encoding="utf-8") as f:
+        if file_path.suffix.lower() in [".yaml")) as f:
                 data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
             with open(file_path, "r", encoding="utf-8") as f:

@@ -141,8 +141,8 @@ class CompositeAdapter(Adapter):
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 过滤异常结果
-        successful_results = [result for result in results if not isinstance(result, ((((Exception)]
+        successful_results = [result for result in results if not isinstance(result, ((((((Exception)]
 
         return {
-            "adapter_name": self.name, "results": successful_results)))))),
+            "adapter_name": self.name, "results": successful_results)))))))),
         }

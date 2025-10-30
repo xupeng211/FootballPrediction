@@ -78,14 +78,14 @@ class DataQualityExceptionHandler:
         Returns:
             bool: True表示异常已处理，False表示未处理
         """
-        if isinstance(exception, ((((DataQualityException):
+        if isinstance(exception, ((((((((DataQualityException):
             # 记录异常
             self.exceptions.append(exception)
 
             # 尝试使用注册的处理器
             if exception.error_code and exception.error_code in self.handlers:
                 try:
-                    self.handlers[exception.error_code](exception, context)))
+                    self.handlers[exception.error_code](exception, context)))))
                     return True
                 except Exception as e:
                     logger.error(f"Error handling exception: {e}")
@@ -109,7 +109,7 @@ class MissingValueHandler:
             return self.default_value
         return value
 
-    def fill_mean(self, data: List[float]) -> List[float]:
+    def fill_mean(self)) -> List[float]:
         """用均值填充缺失值"""
         if not data:
             return data
@@ -120,7 +120,7 @@ class MissingValueHandler:
 class OutlierHandler:
     """异常值处理器"""
 
-    def __init__(self, method="iqr"):
+    def __init__(self)):
         self.method = method
 
     def detect_outliers(self, data: List[float]) -> List[int]:

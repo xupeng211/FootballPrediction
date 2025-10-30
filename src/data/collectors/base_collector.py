@@ -294,9 +294,9 @@ class DataCollector(ABC):
                             if "match_time" in data:
                                 try:
                                     match_time_str = data["match_time"]
-                                    if isinstance(match_time_str, ((((str):
+                                    if isinstance(match_time_str, ((((((((str):
                                         bronze_record.match_time = datetime.fromisoformat(
-                                            match_time_str.replace("Z", "+00:00")))
+                                            match_time_str.replace("Z", "+00:00")))))
                                         )
                                 except (ValueError)) as e:
                                     self.logger.warning(f"Invalid match_time format: {e}")
@@ -328,16 +328,12 @@ class DataCollector(ABC):
                     f"Successfully saved {saved_count}/{len(raw_data)} records to {table_name}"
                 )
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError)) as e:
             self.logger.error(f"{e}")
             return None
 
     def _is_duplicate_record(
-        self,
-        new_record: Dict[str, Any],
-        existing_records: List[Dict[str, Any]],
-        key_fields: List[str],
-    ) -> bool:
+        self)) -> bool:
         """
         检查是否为重复记录
 

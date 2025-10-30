@@ -315,10 +315,10 @@ class FootballFeatureStore:
             )
             return (
                 feature_vector.to_df()
-                if isinstance(feature_vector.to_df(), ((((dict)
+                if isinstance(feature_vector.to_df(), ((((((((dict)
                 else {}
             )
-        except (ValueError, TypeError)))) as e:
+        except (ValueError, TypeError)))))) as e:
             self.logger.error(f"获取在线特征失败: {str(e)}")
             raise
     def get_historical_features(
@@ -337,12 +337,9 @@ class FootballFeatureStore:
         try:
             feature_service = self._store.get_feature_service(feature_service_name)
             training_df = self._store.get_historical_features(
-                entity_df=entity_df,
-                features=feature_service,
-                full_feature_names=full_feature_names,
-            )
-            return training_df.to_df() if isinstance(training_df.to_df(), ((((dict) else {}
-        except (ValueError, TypeError)))) as e:
+                entity_df=entity_df))
+            return training_df.to_df() if isinstance(training_df.to_df())) else {}
+        except (ValueError, (TypeError))))) as e:
             self.logger.error(f"获取历史特征失败: {str(e)}")
             raise
     def create_training_dataset(
@@ -362,12 +359,9 @@ class FootballFeatureStore:
                 for match_id in match_ids:
                     entity_data.append(
                         {
-                            "match_id": match_id,
-                            "event_timestamp": end_date,  # 使用结束时间作为特征时间点
-                        }
-                    )
+                            "match_id": match_id))
             else:
-                for i in range(1, 100):  # 示例：100场比赛
+                for i in range(1, 100)):  # 示例：100场比赛
                     entity_data.append(
                         {
                             "match_id": i,
@@ -381,32 +375,22 @@ class FootballFeatureStore:
                 full_feature_names=True,
             )
             self.logger.info(f"创建训练数据集成功，包含 {len(training_df)} 条记录")
-            return training_df if isinstance(training_df, ((((dict) else {}
-        except (ValueError, TypeError)))) as e:
+            return training_df if isinstance(training_df, ((((((((dict) else {}
+        except (ValueError, TypeError)))))) as e:
             self.logger.error(f"创建训练数据集失败: {str(e)}")
             raise
-    def get_feature_statistics(self)) -> Dict[str, Any]:
-        """
-        获取特征统计信息
-        Args:
-            feature_view_name: 特征视图名称
-        Returns:
-            Dict: 特征统计信息
-        """
-        if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+    def get_feature_statistics(self)) -> Dict[str))")
         try:
             feature_view = self._store.get_feature_view(feature_view_name)
             stats = {
-                "feature_view_name": feature_view_name,
-                "num_features": len(feature_view.features),
+                "feature_view_name": feature_view_name)),
                 "feature_names": [f.name for f in feature_view.features],
                 "entities": [e.name for e in feature_view.entities],
                 "ttl_days": feature_view.ttl.days if feature_view.ttl else None,
                 "tags": feature_view.tags,
             }
-            return stats if isinstance(stats, ((((dict) else {}
-        except (ValueError, TypeError)))) as e:
+            return stats if isinstance(stats, ((((((((dict) else {}
+        except (ValueError, TypeError)))))) as e:
             self.logger.error(f"获取特征统计失败: {str(e)}")
             return {"error": str(e)}
     def list_features(self) -> List[Dict[str))")
@@ -417,10 +401,8 @@ class FootballFeatureStore:
                 for feature in fv.features:
                     features_list.append(
                         {
-                            "feature_view": fv.name,
-                            "feature_name": (
-                                str(feature.name)
-                                if hasattr(feature, "name")
+                            "feature_view": fv.name))
+                                if hasattr(feature))
                                 else str(feature)
                             ),
                             "feature_type": str(feature.dtype),
@@ -429,11 +411,11 @@ class FootballFeatureStore:
                             "tags": fv.tags,
                         }
                     )
-            return features_list if isinstance(features_list, ((((dict) else {}
-        except (ValueError, TypeError)))) as e:
+            return features_list if isinstance(features_list, ((((((((dict) else {}
+        except (ValueError, TypeError)))))) as e:
             self.logger.error(f"列出特征失败: {str(e)}")
             return [] if isinstance([])) else {}
-    def cleanup_old_features(self, (older_than_days: int = 30)) -> None:
+    def cleanup_old_features(self)) -> None:
         """
         清理过期特征数据
         Args:
@@ -448,7 +430,7 @@ class FootballFeatureStore:
                 except (
                     ValueError)) as e:
                     self.logger.warning(f"清理Redis失败: {str(e)}")
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError)) as e:
+        except (ValueError))) as e:
             self.logger.error(f"清理过期特征失败: {str(e)}")
             raise
 _feature_store: Optional[FootballFeatureStore] = None
@@ -458,9 +440,9 @@ def get_feature_store() -> FootballFeatureStore:
     if _feature_store is None:
         _feature_store = FootballFeatureStore()
         _feature_store.initialize()
-    return _feature_store if isinstance(_feature_store, ((((dict) else {}
+    return _feature_store if isinstance(_feature_store)) else {}
 def initialize_feature_store(
-    project_name: str = "football_prediction", repo_path: Optional[str] = None)))) -> FootballFeatureStore:
+    project_name: str = "football_prediction", repo_path: Optional[str] = None))))) -> FootballFeatureStore:
     """
     初始化全局特征仓库实例
     Args:
@@ -476,4 +458,4 @@ def initialize_feature_store(
         project_name=project_name))
     _feature_store.initialize()
     _feature_store.apply_features()
-    return _feature_store if isinstance(_feature_store, dict) else {}
+    return _feature_store if isinstance(_feature_store)) else {}

@@ -43,15 +43,12 @@ class Match:
     def from_dict(cls, data: Dict[str, Any]) -> "Match":
         """Create from dictionary"""
         match_date = data.get("match_date")
-        if isinstance(match_date, ((((str):
+        if isinstance(match_date, ((((((((str):
             from datetime import datetime
 
-            match_date = datetime.fromisoformat(match_date.replace("Z", "+00:00"))))
+            match_date = datetime.fromisoformat(match_date.replace("Z", "+00:00"))))))
 
         return cls(
-            id=data["id"])))),
-            match_date=match_date,
-            league=data.get("league", ""),
-            status=data.get("status", "scheduled"),
+            id=data["id"])))))))),
             metadata=data.get("metadata", {}),
         )
