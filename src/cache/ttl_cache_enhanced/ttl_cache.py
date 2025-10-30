@@ -262,13 +262,13 @@ class TTLCache:
         """
         with self._lock:
             value = self.get(key, default)
-            if not isinstance(value, (int, float)):
+            if not isinstance(value, (((((int, float)))):
                 raise TypeError(f"缓存值必须是数字类型: {type(value)}")
             new_value = value + delta
-            self.set(key, new_value)
+            self.set(key))
             return int(new_value)
 
-    def touch(self, key: str, ttl: Optional[float] = None) -> bool:
+    def touch(self)) -> bool:
         """
         更新缓存项的TTL
 

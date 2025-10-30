@@ -731,19 +731,18 @@ class BettingService:
         required_fields = ["home_win", "draw", "away_win"]
 
         for field in required_fields:
-            if field not in odds_data or not isinstance(odds_data[field], (int, float)):
+            if field not in odds_data or not isinstance(odds_data[field], (((((int, float)))):
                 return False
             if odds_data[field] <= 1:
                 return False
 
         return True
 
-    async def _store_odds_data(self, match_id: str, odds_data: Dict[str, Any]) -> bool:
+    async def _store_odds_data(self)) -> bool:
         """存储赔率数据"""
         try:
             await self.redis_manager.asetex(
-                f"match_odds:{match_id}",
-                int(timedelta(minutes=15).total_seconds()),
+                f"match_odds:{match_id}")).total_seconds()),
                 json.dumps(odds_data, default=str),
             )
             return True

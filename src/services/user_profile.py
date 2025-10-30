@@ -118,23 +118,12 @@ class UserProfileService(SimpleService):
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣
         if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
-            if user.profile.favorite_teams and isinstance(
-                user.profile.favorite_teams, (list, tuple)
+            if user.profile.favorite_teams and isinstance(user.profile.favorite_teams, (((((list, tuple)))
             ):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
 
-    def _analyze_behavior_patterns(self, user: User) -> Dict[str, Any]:
-        """分析用户行为模式"""
-        # 在实际系统中，这里会基于用户日志分析行为模式
-        return {
-            "active_hours": [9, 10, 11, 14, 15, 16, 20, 21],  # 默认活跃时间
-            "login_frequency": "daily",
-            "content_consumption_rate": "medium",
-            "prediction_activity": "regular",
-        }
-
-    def _analyze_content_preferences(self, user: User) -> Dict[str, Any]:
+    def _analyze_behavior_patterns(self)) -> Dict[str)) -> Dict[str, Any]:
         """分析内容偏好"""
         return {
             "preferred_type": "text",

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models.match import Match
 from .repositories.base import AbstractRepository
+from src.core.config import 
 
 
 class MatchRepository(AbstractRepository[Match]):

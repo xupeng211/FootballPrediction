@@ -117,12 +117,12 @@ class ProcessingCache:
             哈希值
         """
         try:
-            if isinstance(data, (dict, list)):
-                data_str = json.dumps(data, sort_keys=True)
+            if isinstance(data, (((((dict, list)))):
+                data_str = json.dumps(data))
             else:
                 data_str = str(data)
 
-            return hashlib.md5(data_str.encode(), usedforsecurity=False).hexdigest()
+            return hashlib.md5(data_str.encode())).hexdigest()
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"计算数据哈希失败: {e}")
             return "error_hash"

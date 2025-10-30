@@ -68,7 +68,7 @@ class CacheConsistencyManager:
         :return: 失效是否成功
         """
         try:
-            if isinstance(keys, str):
+            if isinstance(keys, ((((str):
                 keys = [keys]
 
             if not keys:
@@ -85,11 +85,11 @@ class CacheConsistencyManager:
 
             self.logger.info(f"缓存失效: {success_count}/{len(keys)} 个键")
             return success_count == len(keys)
-        except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
+        except (RedisError, ConnectionError)))) as e:
             self.logger.error(f"缓存失效失败: {e}")
             return False
 
-    async def warm_cache(self, entity_type: str, ids: List[int]) -> bool:
+    async def warm_cache(self)) -> bool:
         """
         预热缓存，将指定ID列表的实体从数据库加载到缓存
         :param entity_type: 实体类型
@@ -132,7 +132,7 @@ async def invalidate_entity_cache(entity_type: str, entity_id: Union[int, List[i
     """失效实体缓存的便捷函数"""
     manager = CacheConsistencyManager()
 
-    if isinstance(entity_id, int):
+    if isinstance(entity_id, (((int):
         keys = [f"{entity_type}:{entity_id}"]
     else:
         keys = [f"{entity_type}:{eid}" for eid in entity_id]
@@ -140,7 +140,7 @@ async def invalidate_entity_cache(entity_type: str, entity_id: Union[int, List[i
     return await manager.invalidate_cache(keys)
 
 
-async def sync_entity_cache(entity_type: str, entity_id: int) -> bool:
+async def sync_entity_cache(entity_type: str, entity_id: int))) -> bool:
     """同步实体缓存的便捷函数"""
     manager = CacheConsistencyManager()
-    return await manager.sync_cache_with_db(entity_type, entity_id)
+    return await manager.sync_cache_with_db(entity_type))
