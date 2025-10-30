@@ -503,14 +503,28 @@ class PredictionStrategyFactory:
             elif config.get("type") == "ensemble":
                 if "sub_strategies" not in strategy_config:
                     errors.append("集成策略缺少 sub_strategies 配置")
-                elif not isinstance(strategy_config["sub_strategies"], (((((((list):
+                elif not isinstance(strategy_config["sub_strategies"], list):
                     errors.append("sub_strategies 必须是列表")
 
         return errors
 
-    async def health_check(self) -> Dict[str, Dict[str)))))):
-            health_report[name] = {
-                "healthy": strategy.is_healthy())).__dict__ if strategy.get_metrics() else None))),
-            }
+    async def health_check(self) -> Dict[str, Dict[str, Any]]:
+        """检查所有策略的健康状态"""
+        health_report = {}
+
+        for name, strategy in self.strategies.items():
+            try:
+                is_healthy = strategy.is_healthy() if hasattr(strategy, 'is_healthy') else True
+                metrics = strategy.get_metrics() if hasattr(strategy, 'get_metrics') else None
+
+                health_report[name] = {
+                    "healthy": is_healthy,
+                    "metrics": metrics.__dict__ if metrics else None,
+                }
+            except Exception as e:
+                health_report[name] = {
+                    "healthy": False,
+                    "error": str(e)
+                }
 
         return health_report

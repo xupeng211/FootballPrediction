@@ -117,8 +117,8 @@ class ProcessingCache:
             哈希值
         """
         try:
-            if isinstance(data, (((((((((dict, list)))))):
-                data_str = json.dumps(data))
+            if isinstance(data, (dict, list)):
+                data_str = json.dumps(data)
             else:
                 data_str = str(data)
 

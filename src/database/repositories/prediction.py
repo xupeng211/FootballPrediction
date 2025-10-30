@@ -64,13 +64,15 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"match_id": match_id}
         if status:
-            filters["status"] = status if isinstance(status, ((((((((str) else str(status)
+            filters["status"] = status if isinstance(status, str) else str(status)
 
         return await self.find_by(
-            filters=filters, limit=limit))))))
+            filters=filters, limit=limit
+        )
 
     async def get_by_user(
-        self)) -> List[Prediction]:
+        self, user_id: str
+    ) -> List[Prediction]:
         """
         获取指定用户的预测
 
@@ -85,13 +87,15 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"user_id": user_id}
         if status:
-            filters["status"] = status if isinstance(status)) else str(status)
+            filters["status"] = status if isinstance(status, PredictionStatus) else str(status)
 
         return await self.find_by(
-            filters=filters))))
+            filters=filters
+        )
 
     async def get_by_status(
-        self)) -> List[Prediction]:
+        self, status: PredictionStatus
+    ) -> List[Prediction]:
         """
         根据状态获取预测
 
@@ -104,10 +108,13 @@ class PredictionRepository(BaseRepository[Predictions]):
             预测列表
         """
         return await self.find_by(
-            filters={"status": status if isinstance(status))) else str(status)}, (limit=limit))))
+            filters={"status": status if isinstance(status, PredictionStatus) else str(status)},
+            limit=limit
+        )
 
     async def get_pending_predictions(
-        self)) -> List[Prediction]:
+        self, limit: Optional[int] = None
+    ) -> List[Prediction]:
         """
         获取待处理的预测
 
@@ -119,12 +126,14 @@ class PredictionRepository(BaseRepository[Predictions]):
             待处理预测列表
         """
         return await self.get_by_status(
-            status=PredictionStatus.PENDING))
+            status=PredictionStatus.PENDING
+        )
 
     async def get_completed_predictions(
         self, days: int = 7,
         limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,)) -> List[Prediction]:
+        session: Optional[AsyncSession] = None
+    ) -> List[Prediction]:
         """
         获取已完成的预测
 

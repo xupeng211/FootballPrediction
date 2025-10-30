@@ -34,9 +34,9 @@ def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> A
 
     try:
         for k in keys:
-            if isinstance(current, ((((((dict) and k in current:
+            if isinstance(current, dict) and k in current:
                 current = current[k]
-            elif isinstance(current, list))))) and k.isdigit():
+            elif isinstance(current, list) and k.isdigit():
                 index = int(k)
                 if 0 <= index < len(current):
                     current = current[index]
@@ -45,7 +45,7 @@ def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> A
             else:
                 return default
         return current
-    except (KeyError)):
+    except (KeyError, TypeError, IndexError):
         return default
 
 
@@ -63,6 +63,15 @@ def sanitize_string(s: str) -> str:
 
     # 移除常见的XSS攻击向量
     dangerous_patterns = [
-        "<script"))
+        "<script>",
+        "</script>",
+        "javascript:",
+        "onload=",
+        "onerror="
+    ]
+
+    sanitized = s
+    for pattern in dangerous_patterns:
+        sanitized = sanitized.replace(pattern, "")
 
     return sanitized.strip()

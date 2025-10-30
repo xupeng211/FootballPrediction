@@ -76,25 +76,28 @@ class DataValidator:
         """
         try:
             # 转换为DataFrame
-            if isinstance(data, ((((((((dict):
+            if isinstance(data, dict):
                 df = pd.DataFrame([data])
-            elif isinstance(data, list))))):
+            elif isinstance(data, list):
                 df = pd.DataFrame(data)
             else:
                 df = data
 
             if df.empty:
                 return {
-                    "valid": False))
+                    "valid": False,
+                    "errors": ["Empty DataFrame"],
+                    "warnings": []
+                }
             validation_results.update(structure_result)
 
             # 2. 内容验证
-            content_result = await self._validate_content(df))
+            content_result = await self._validate_content(df)
             validation_results["errors"].extend(content_result["errors"])
             validation_results["warnings"].extend(content_result["warnings"])
 
             # 3. 业务规则验证
-            business_result = await self._validate_business_rules(df))
+            business_result = await self._validate_business_rules(df)
             validation_results["errors"].extend(business_result["errors"])
             validation_results["warnings"].extend(business_result["warnings"])
 

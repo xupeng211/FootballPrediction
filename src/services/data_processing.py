@@ -99,7 +99,7 @@ class AnomalyDetector:
         # 简化的异常检测逻辑
         if "value" in data:
             value = data["value"]
-            if not isinstance(value, (((((((((int, float)))))):
+            if not isinstance(value, (int, float)):
                 anomalies.append(f"Invalid value type: {type(value)}")
             elif abs(value) > 1000:  # 简单的阈值检查
                 anomalies.append(f"Value too large: {value}")
@@ -110,11 +110,6 @@ class AnomalyDetector:
 class MissingDataHandler:
     """缺失数据处理基类"""
 
-    def handle(self)) -> Dict[str)):
-    """缺失比分处理器"""
-
-    def handle(self)) -> Dict[str)):
-    """缺失球队处理器"""
 
     def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理缺失球队信息"""

@@ -411,7 +411,7 @@ async def predict_batch_simple(
     failed_predictions = 0
 
     for result in results:
-        if isinstance(result, ((((((((PredictionResponse):
+        if isinstance(result, PredictionResponse):
             successful_predictions.append(result)
         else:
             failed_predictions += 1
@@ -421,12 +421,16 @@ async def predict_batch_simple(
 
     # 构建响应
     response = BatchPredictionResponse(
-        success=len(successful_predictions) > 0, total_matches=len(request.matches)))))))))
-            <= 1000))
+        success=len(successful_predictions) > 0,
+        total_matches=len(request.matches),
+        successful_predictions=successful_predictions,
+        failed_predictions=failed_predictions,
+        avg_response_time=avg_response_time
+    )
 
     # 后台任务：记录批量预测日志
     background_tasks.add_task(
-        log_batch_prediction_simple)),
+        log_batch_prediction_simple,
         len(successful_predictions),
         batch_processing_time,
     )

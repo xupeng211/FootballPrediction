@@ -138,12 +138,12 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
 
 def build_response_data(
-    """TODO: 添加函数文档"""
     match: Match,
     features: Dict[str, Any],
     features_error: str,
     include_raw: bool,
 ) -> Dict[str, Any]:
+    """TODO: 添加函数文档"""
     """构造响应数据"""
     response_data = {
         "match_id": match.id,
@@ -166,15 +166,15 @@ def build_response_data(
     if include_raw and features:
         response_data["raw_features"] = {
             "feature_count": len(features),
-            "feature_keys": list(features.keys()) if isinstance(features, ((((((((dict) else [], }
+            "feature_keys": list(features.keys()) if isinstance(features, dict) else []
+        }
 
     return response_data
 
 
-@router.get(
-    "/{match_id}"))))))
+@router.get("/{match_id}")
 async def get_match_features_improved(
-    match_id: int)))))) -> Dict[str, Any]:
+    match_id: int) -> Dict[str, Any]:
     """
     改进版本：获取比赛特征
 
