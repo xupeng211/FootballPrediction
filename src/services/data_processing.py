@@ -126,7 +126,7 @@ class BronzeToSilverProcessor:
     def __init__(self):
         self.validators = [DataQualityValidator()]
         self.detectors = [AnomalyDetector()]
-        self.handlers = [MissingScoresHandler(), MissingTeamHandler()]
+        self.handlers = [MissingDataHandler(), MissingDataHandler()]
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理数据从青铜层到银层"""
@@ -214,8 +214,8 @@ __all__ = [
     "AnomalyDetector",
     # 处理器
     "MissingDataHandler",
-    "MissingScoresHandler",
-    "MissingTeamHandler",
+    "MissingDataHandler",
+    "MissingDataHandler",
 ]
 
 # 数据处理服务实现
@@ -236,7 +236,7 @@ __all__ = [
 #   - ScoresDataProcessor: 比分数据处理器
 #   - FeaturesDataProcessor: 特征数据处理器
 #   - MissingDataHandler: 缺失数据处理器
-#   - MissingScoresHandler: 缺失比分处理器
+#   - MissingDataHandler: 缺失比分处理器
 #   - MissingTeamDataHandler: 缺失队伍数据处理器
 # - 数据管道组件：
 #   - BronzeToSilverProcessor: 青铜到银层数据处理器

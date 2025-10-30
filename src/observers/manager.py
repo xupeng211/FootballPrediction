@@ -232,7 +232,7 @@ class ObserverManager:
                 await asyncio.sleep(5)
 
     # 便捷方法
-    def get_observer(self))) -> Optional[Observer]:
+    def get_observer(self) -> Optional[Observer]:
         """获取观察者"""
         return self._observers.get(name)
 
