@@ -8,7 +8,7 @@ from alembic import op
 # mypy: ignore-errors
 
 import sqlalchemy as sa
-from alembic import context, op
+from alembic import context
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
@@ -96,14 +96,22 @@ depends_on = None
 
 
 def upgrade():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """升级数据库架构 - 创建audit_logs表"""
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
     op.create_table(
         "audit_logs",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="审计日志ID"),
-        sa.Column("user_id", sa.String(length=100), nullable=False, comment="操作用户ID"),
-        sa.Column("username", sa.String(length=100), nullable=True, comment="操作用户名"),
+        sa.Column(
+            "id", sa.Integer(), autoincrement=True, nullable=False, comment="审计日志ID"
+        ),
+        sa.Column(
+            "user_id", sa.String(length=100), nullable=False, comment="操作用户ID"
+        ),
+        sa.Column(
+            "username", sa.String(length=100), nullable=True, comment="操作用户名"
+        ),
         sa.Column("user_role", sa.String(length=50), nullable=True, comment="用户角色"),
         sa.Column("session_id", sa.String(length=100), nullable=True, comment="会话ID"),
         sa.Column("action", sa.String(length=50), nullable=False, comment="操作类型"),
@@ -114,8 +122,12 @@ def upgrade():
             server_default="MEDIUM",
             comment="严重级别",
         ),
-        sa.Column("table_name", sa.String(length=100), nullable=True, comment="目标表名"),
-        sa.Column("column_name", sa.String(length=100), nullable=True, comment="目标列名"),
+        sa.Column(
+            "table_name", sa.String(length=100), nullable=True, comment="目标表名"
+        ),
+        sa.Column(
+            "column_name", sa.String(length=100), nullable=True, comment="目标列名"
+        ),
         sa.Column("record_id", sa.String(length=100), nullable=True, comment="记录ID"),
         sa.Column("old_value", sa.Text(), nullable=True, comment="操作前值"),
         sa.Column("new_value", sa.Text(), nullable=True, comment="操作后值"),
@@ -131,10 +143,16 @@ def upgrade():
             nullable=True,
             comment="新值哈希（敏感数据）",
         ),
-        sa.Column("ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"),
+        sa.Column(
+            "ip_address", sa.String(length=45), nullable=True, comment="客户端IP地址"
+        ),
         sa.Column("user_agent", sa.Text(), nullable=True, comment="用户代理"),
-        sa.Column("request_path", sa.String(length=500), nullable=True, comment="请求路径"),
-        sa.Column("request_method", sa.String(length=10), nullable=True, comment="HTTP方法"),
+        sa.Column(
+            "request_path", sa.String(length=500), nullable=True, comment="请求路径"
+        ),
+        sa.Column(
+            "request_method", sa.String(length=10), nullable=True, comment="HTTP方法"
+        ),
         sa.Column(
             "success",
             sa.Boolean(),
@@ -150,14 +168,22 @@ def upgrade():
             server_default=sa.func.now(),
             comment="操作时间戳",
         ),
-        sa.Column("duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"),
+        sa.Column(
+            "duration_ms", sa.Integer(), nullable=True, comment="操作耗时（毫秒）"
+        ),
         sa.Column(
             "metadata",
-            (sa.JSON() if db_dialect == "sqlite" else postgresql.JSONB(astext_type=sa.Text())),
+            (
+                sa.JSON()
+                if db_dialect == "sqlite"
+                else postgresql.JSONB(astext_type=sa.Text())
+            ),
             nullable=True,
             comment="扩展元数据",
         ),
-        sa.Column("tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"),
+        sa.Column(
+            "tags", sa.String(length=500), nullable=True, comment="标签（逗号分隔）"
+        ),
         sa.Column(
             "compliance_category",
             sa.String(length=100),
@@ -208,12 +234,18 @@ def upgrade():
         if db_dialect == "sqlite":
             logger.info("⚠️  SQLite环境:跳过PostgreSQL权限设置和函数创建")
             op.execute("-- SQLite environment: skipped PostgreSQL permission grants")
-            op.execute("-- SQLite environment: SQLite does not support GRANT statements")
+            op.execute(
+                "-- SQLite environment: SQLite does not support GRANT statements"
+            )
             op.execute("-- SQLite environment: skipped PostgreSQL function creation")
         else:
             connection.execute(text("GRANT SELECT ON audit_logs TO football_reader;"))
-            connection.execute(text("GRANT SELECT, INSERT ON audit_logs TO football_writer;"))
-            connection.execute(text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;"))
+            connection.execute(
+                text("GRANT SELECT, INSERT ON audit_logs TO football_writer;")
+            )
+            connection.execute(
+                text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;")
+            )
             connection.execute(
                 text(
                     "GRANT USAGE ON SEQUENCE audit_logs_id_seq TO football_writer, football_admin;"
@@ -241,7 +273,9 @@ def upgrade():
                 )
             )
             connection.execute(
-                text("GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;")
+                text(
+                    "GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;"
+                )
             )
             try:
                 connection.execute(
@@ -262,6 +296,8 @@ def upgrade():
 
 
 def downgrade():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """降级数据库架构 - 删除audit_logs表"""
     if not context.is_offline_mode():
         connection = op.get_bind()
@@ -277,7 +313,9 @@ def downgrade():
             )
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"Warning: Could not drop permission_audit_log table: {e}")
-        connection.execute(text("DROP FUNCTION IF EXISTS cleanup_expired_audit_logs();"))
+        connection.execute(
+            text("DROP FUNCTION IF EXISTS cleanup_expired_audit_logs();")
+        )
     else:
         op.execute("-- offline mode: skipped audit_logs cleanup function deletion")
         op.execute("-- offline mode: skipped audit_logs rollback logging")

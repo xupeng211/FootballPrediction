@@ -8,6 +8,8 @@ import logging
 
 
 class Logger:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """日志管理类"""
 
     @staticmethod
@@ -18,7 +20,9 @@ class Logger:
 
         if not logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 

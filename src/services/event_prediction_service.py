@@ -27,13 +27,15 @@ logger = logging.getLogger(__name__)
 
 
 class EventDrivenPredictionService(StrategyPredictionService):
-    """事件驱动的预测服务
+    """事件驱动的预测服务"
 
     继承自策略预测服务,添加事件发布功能.
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
     def __init__(self, *args, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
         self._event_bus = get_event_bus()
@@ -47,7 +49,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         confidence: Optional[float] = None,
         notes: Optional[str] = None,
     ) -> Prediction:
-        """预测单场比赛并发布事件
+        """预测单场比赛并发布事件"
 
         Args:
             match_id: 比赛ID
@@ -79,7 +81,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         new_notes: Optional[str] = None,
         update_reason: Optional[str] = None,
     ) -> Prediction:
-        """更新预测并发布事件
+        """更新预测并发布事件"
 
         Args:
             prediction_id: 预测ID
@@ -131,7 +133,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     async def batch_predict(
         self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
     ) -> List[Prediction]:
-        """批量预测并发布事件
+        """批量预测并发布事件"
 
         Args:
             match_ids: 比赛ID列表
@@ -153,7 +155,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     async def _publish_prediction_made_event(
         self, prediction: Prediction, strategy_name: Optional[str]
     ) -> None:
-        """发布预测创建事件
+        """发布预测创建事件"
 
         Args:
             prediction: 创建的预测
@@ -176,7 +178,9 @@ class EventDrivenPredictionService(StrategyPredictionService):
                     else None
                 ),
                 confidence=(
-                    float(prediction.confidence_score) if prediction.confidence_score else None
+                    float(prediction.confidence_score)
+                    if prediction.confidence_score
+                    else None
                 ),
                 strategy_used=strategy_name,
                 source=self._event_source,
@@ -203,7 +207,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         previous_prediction: Dict[str, Any],
         update_reason: Optional[str],
     ) -> None:
-        """发布预测更新事件
+        """发布预测更新事件"
 
         Args:
             prediction: 更新后的预测
@@ -227,7 +231,9 @@ class EventDrivenPredictionService(StrategyPredictionService):
                     else None
                 ),
                 confidence=(
-                    float(prediction.confidence_score) if prediction.confidence_score else None
+                    float(prediction.confidence_score)
+                    if prediction.confidence_score
+                    else None
                 ),
                 strategy_used=None,  # 更新时可能没有策略信息
                 previous_prediction=previous_prediction,
@@ -253,14 +259,18 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
 # 事件驱动的比赛服务
 class EventDrivenMatchService:
-    """事件驱动的比赛服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """事件驱动的比赛服务"
 
     处理比赛相关的事件发布.
     Handles match-related event publishing.
     """
 
     def __init__(self, match_repository):
-        """初始化比赛服务
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化比赛服务"
 
         Args:
             match_repository: 比赛仓储
@@ -280,7 +290,7 @@ class EventDrivenMatchService:
         created_by: Optional[int] = None,
         initial_odds: Optional[Dict[str, float]] = None,
     ) -> Match:
-        """创建比赛并发布事件
+        """创建比赛并发布事件"
 
         Args:
             home_team_id: 主队ID
@@ -308,7 +318,9 @@ class EventDrivenMatchService:
         await self._match_repository.create(match)
 
         # 发布比赛创建事件
-        await self._publish_match_created_event(match, created_by, initial_odds, weather)
+        await self._publish_match_created_event(
+            match, created_by, initial_odds, weather
+        )
 
         return match
 
@@ -355,14 +367,18 @@ class EventDrivenMatchService:
 
 # 事件驱动的用户服务
 class EventDrivenUserService:
-    """事件驱动的用户服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """事件驱动的用户服务"
 
     处理用户相关的事件发布.
     Handles user-related event publishing.
     """
 
     def __init__(self, user_repository):
-        """初始化用户服务
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化用户服务"
 
         Args:
             user_repository: 用户仓储
@@ -380,7 +396,7 @@ class EventDrivenUserService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> Any:
-        """注册用户并发布事件
+        """注册用户并发布事件"
 
         Args:
             username: 用户名
@@ -406,7 +422,9 @@ class EventDrivenUserService:
         # await self._user_repository.create(user)
 
         # 发布用户注册事件
-        await self._publish_user_registered_event(user, referral_code, ip_address, user_agent)
+        await self._publish_user_registered_event(
+            user, referral_code, ip_address, user_agent
+        )
 
         return user
 

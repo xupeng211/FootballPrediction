@@ -30,6 +30,8 @@ from src.core.exceptions import PerformanceError
 
 @dataclass
 class PerformanceMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """性能指标"""
     endpoint: str
     method: str
@@ -45,6 +47,8 @@ class PerformanceMetrics:
 
 @dataclass
 class CacheConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """缓存配置"""
     ttl_seconds: int = 300  # 5分钟默认TTL
     max_size: int = 1000
@@ -55,9 +59,13 @@ class CacheConfig:
 
 
 class APICache:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """API缓存管理器"""
 
     def __init__(self, redis_client: Optional[redis.Redis] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.redis_client = redis_client
         self.settings = get_settings()
         self._local_cache = {}  # 本地内存缓存作为后备
@@ -138,6 +146,8 @@ class APICache:
 
 
 class ResponseCompressor:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """响应压缩器"""
 
     @staticmethod
@@ -172,6 +182,8 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: ASGIApp):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(app)
         self.settings = get_settings()
         self.metrics: List[PerformanceMetrics] = []
@@ -272,6 +284,8 @@ limiter = Limiter(key_func=get_remote_address)
 
 
 def cache_response(config: Optional[CacheConfig] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     响应缓存装饰器
 
@@ -341,6 +355,8 @@ def cache_response(config: Optional[CacheConfig] = None):
 
 
 def performance_monitor(min_response_time_ms: float = 100.0):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     性能监控装饰器
 
@@ -377,6 +393,8 @@ def performance_monitor(min_response_time_ms: float = 100.0):
 
 
 def validate_response_size(max_size_mb: int = 10):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     响应大小验证装饰器
 
@@ -411,9 +429,13 @@ def validate_response_size(max_size_mb: int = 10):
 
 
 class ConnectionPoolManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """连接池管理器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.settings = get_settings()
         self._pool_stats = {
             "active_connections": 0,
@@ -443,6 +465,8 @@ class ConnectionPoolManager:
 
 
 class APIOptimizer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     API优化器
 
@@ -450,6 +474,8 @@ class APIOptimizer:
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.settings = get_settings()
         self.cache_manager = APICache()
         self.connection_manager = ConnectionPoolManager()

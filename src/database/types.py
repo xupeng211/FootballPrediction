@@ -24,6 +24,8 @@ class SQLiteCompatibleJSONB(TypeDecorator):
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB())
@@ -48,7 +50,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
                 try:
                     json.loads(value)
                     return value
-                except (json.JSONDecodeError):
+                except json.JSONDecodeError:
                     # 如果不是有效JSON,包装成字符串
                     return json.dumps(value)
             else:
@@ -83,6 +85,8 @@ class CompatibleJSON(TypeDecorator):
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSON())
@@ -91,6 +95,7 @@ class CompatibleJSON(TypeDecorator):
 
     def process_bind_param(self, value: Any, dialect: Dialect) -> Union[str, None]:
         return json.dumps(value) if value is not None else None
+
     def process_result_value(self, value: Any, dialect: Dialect) -> Any:
         """处理结果值"""
         if value is None:

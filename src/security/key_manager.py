@@ -13,6 +13,8 @@ from typing import Dict, Optional
 
 
 class KeyManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     密钥管理器（桩实现）
 
@@ -20,6 +22,8 @@ class KeyManager:
     """
 
     def __init__(self, key_file: Optional[str] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """
         初始化密钥管理器
 

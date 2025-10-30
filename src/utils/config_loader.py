@@ -1,7 +1,3 @@
-try:
-    import yaml
-except ImportError:
-    yaml = None
 """
 Configuration loader utilities
 """
@@ -9,6 +5,11 @@ Configuration loader utilities
 import json
 import os
 from typing import Any, Dict
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 def load_config_from_file(file_path: str) -> Dict[str, Any]:
@@ -21,13 +22,13 @@ def load_config_from_file(file_path: str) -> Dict[str, Any]:
             if file_path.endswith(".json"):
                 return json.load(f)
             elif file_path.endswith(".yaml") or file_path.endswith(".yml"):
-                import yaml
-
+                if yaml is None:
+                    raise ImportError("yaml library not available")
                 return yaml.safe_load(f) or {}
             else:
                 return {}
     except (ValueError, KeyError, RuntimeError, ImportError):
         return {}
-            except Exception:
+    except Exception:
         # 捕获YAML解析错误和其他可能的异常
         return {}

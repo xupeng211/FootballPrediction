@@ -15,6 +15,8 @@ except ImportError:
 
 
 class TimeUtils:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """时间处理工具类"""
 
     @staticmethod
@@ -58,7 +60,9 @@ class TimeUtils:
         return dt.strftime("%H:%M:%S")
 
     @staticmethod
-    def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
+    def parse_datetime(
+        date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
+    ) -> datetime:
         """解析日期时间字符串"""
         return datetime.strptime(date_str, format_str)
 

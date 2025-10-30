@@ -32,6 +32,8 @@ class ObservableEventType(Enum):
 
 @dataclass
 class ObservableEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """可观察的事件"""
 
     event_type: ObservableEventType
@@ -46,14 +48,16 @@ class ObservableEvent:
 
 
 class Observer(ABC):
-    """观察者抽象基类
+    """观察者抽象基类"
 
     定义观察者必须实现的接口.
     Defines the interface that all observers must implement.
     """
 
     def __init__(self, name: str):
-        """初始化观察者
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化观察者"
 
         Args:
             name: 观察者名称
@@ -64,7 +68,7 @@ class Observer(ABC):
 
     @abstractmethod
     async def update(self, event: ObservableEvent) -> None:
-        """接收并处理事件通知
+        """接收并处理事件通知"
 
         Args:
             event: 被通知的事件
@@ -73,7 +77,7 @@ class Observer(ABC):
 
     @abstractmethod
     def get_observed_event_types(self) -> List[ObservableEventType]:
-        """获取观察者感兴趣的事件类型
+        """获取观察者感兴趣的事件类型"
 
         Returns:
             List[ObservableEventType]: 事件类型列表
@@ -81,7 +85,7 @@ class Observer(ABC):
         pass
 
     def add_filter(self, filter_func: Callable[[ObservableEvent], bool]) -> None:
-        """添加事件过滤器
+        """添加事件过滤器"
 
         Args:
             filter_func: 过滤函数,返回True表示需要处理此事件
@@ -89,7 +93,7 @@ class Observer(ABC):
         self._subscription_filters.append(filter_func)
 
     def should_handle_event(self, event: ObservableEvent) -> bool:
-        """判断是否应该处理事件
+        """判断是否应该处理事件"
 
         Args:
             event: 事件
@@ -124,7 +128,7 @@ class Observer(ABC):
         return self._enabled
 
     def get_stats(self) -> Dict[str, Any]:
-        """获取观察者统计信息
+        """获取观察者统计信息"
 
         Returns:
             Dict[str, Any]: 统计信息
@@ -137,14 +141,16 @@ class Observer(ABC):
 
 
 class Subject(ABC):
-    """被观察者抽象基类
+    """被观察者抽象基类"
 
     定义被观察者必须实现的接口.
     Defines the interface that all subjects must implement.
     """
 
     def __init__(self, name: str):
-        """初始化被观察者
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化被观察者"
 
         Args:
             name: 被观察者名称
@@ -156,7 +162,7 @@ class Subject(ABC):
         self._enabled = True
 
     async def attach(self, observer: Observer) -> None:
-        """添加观察者
+        """添加观察者"
 
         Args:
             observer: 要添加的观察者
@@ -165,7 +171,7 @@ class Subject(ABC):
             self._observers.append(observer)
 
     async def detach(self, observer: Observer) -> None:
-        """移除观察者
+        """移除观察者"
 
         Args:
             observer: 要移除的观察者
@@ -174,14 +180,13 @@ class Subject(ABC):
             self._observers.remove(observer)
 
     async def notify(self, event: ObservableEvent) -> None:
-        """通知所有观察者
+        """通知所有观察者"
 
         Args:
             event: 要通知的事件
         """
         if not self._enabled:
-            return
-
+            return None
         # 记录事件历史
         self._record_event(event)
 
@@ -194,8 +199,10 @@ class Subject(ABC):
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _notify_observer(self, observer: Observer, event: ObservableEvent) -> None:
-        """通知单个观察者
+    async def _notify_observer(
+        self, observer: Observer, event: ObservableEvent
+    ) -> None:
+        """通知单个观察者"
 
         Args:
             observer: 观察者
@@ -209,7 +216,7 @@ class Subject(ABC):
             logger.info(f"Observer {observer.name} failed to handle event: {e}")
 
     def _record_event(self, event: ObservableEvent) -> None:
-        """记录事件到历史
+        """记录事件到历史"
 
         Args:
             event: 事件
@@ -220,7 +227,7 @@ class Subject(ABC):
             self._event_history = self._event_history[-self._max_history_size :]
 
     def get_observers_count(self) -> int:
-        """获取观察者数量
+        """获取观察者数量"
 
         Returns:
             int: 观察者数量
@@ -228,7 +235,7 @@ class Subject(ABC):
         return len(self._observers)
 
     def get_observers(self) -> List[Observer]:
-        """获取所有观察者
+        """获取所有观察者"
 
         Returns:
             List[Observer]: 观察者列表
@@ -241,7 +248,7 @@ class Subject(ABC):
         since: Optional[datetime] = None,
         limit: Optional[int] = None,
     ) -> List[ObservableEvent]:
-        """获取事件历史
+        """获取事件历史"
 
         Args:
             event_type: 过滤事件类型
@@ -284,14 +291,16 @@ class Subject(ABC):
         return self._enabled
 
     def get_stats(self) -> Dict[str, Any]:
-        """获取被观察者统计信息
+        """获取被观察者统计信息"
 
         Returns:
             Dict[str, Any]: 统计信息
         """
         event_counts = {}
         for event in self._event_history:
-            event_counts[event.event_type.value] = event_counts.get(event.event_type.value, 0) + 1
+            event_counts[event.event_type.value] = (
+                event_counts.get(event.event_type.value, 0) + 1
+            )
 
         return {
             "name": self.name,
@@ -303,14 +312,16 @@ class Subject(ABC):
 
 
 class CompositeObserver(Observer):
-    """组合观察者
+    """组合观察者"
 
     可以将多个观察器组合成一个.
     Combines multiple observers into one.
     """
 
     def __init__(self, name: str, observers: List[Observer] = None):
-        """初始化组合观察者
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化组合观察者"
 
         Args:
             name: 观察者名称

@@ -61,7 +61,7 @@ else:
     # 设置数据库连接URL
     config.set_main_option("sqlalchemy.url", db_config.alembic_url)
 
-# add your model's MetaData object here
+# add your model's MetaData object here'
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
@@ -78,7 +78,7 @@ def run_migrations_offline() -> None:
     This configures the context with just a URL
     and not an Engine, though an Engine is acceptable
     here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
+    we don't even need a DBAPI to be available.'
 
     Calls to context.execute() here emit the given string to the
     script output.
@@ -99,6 +99,8 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """运行迁移的辅助函数"""
     context.configure(
         connection=connection,
@@ -138,7 +140,7 @@ def run_migrations_online() -> None:
         # 如果当前已经有事件循环,使用异步方式
         asyncio.get_running_loop()
         asyncio.create_task(run_async_migrations())
-        return
+        return None
     except RuntimeError:
         # 没有运行中的事件循环,使用同步方式
         pass

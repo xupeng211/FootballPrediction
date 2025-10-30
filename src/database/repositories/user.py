@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 from ..models.user import User
 from .base import BaseRepository
 
+
 class UserRepository(BaseRepository[User]):
     """
     用户仓储类
@@ -26,6 +27,8 @@ class UserRepository(BaseRepository[User]):
     """
 
     def __init__(self, db_manager=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(User, db_manager)
 
     # ========================================
@@ -130,7 +133,9 @@ class UserRepository(BaseRepository[User]):
 
             stmt = (
                 select(User)
-                .where(and_(User.is_active is True, User.last_login_at >= thirty_days_ago))
+                .where(
+                    and_(User.is_active is True, User.last_login_at >= thirty_days_ago)
+                )
                 .order_by(desc(User.last_login_at))
             )
 
@@ -165,7 +170,9 @@ class UserRepository(BaseRepository[User]):
 
             stmt = (
                 select(User)
-                .where(or_(User.last_login_at < cutoff_date, User.last_login_at.is_(None)))
+                .where(
+                    or_(User.last_login_at < cutoff_date, User.last_login_at.is_(None))
+                )
                 .order_by(asc(User.last_login_at))
             )
 
@@ -414,7 +421,9 @@ class UserRepository(BaseRepository[User]):
             # 转换为字典列表
             growth_stats = []
             for row in rows:
-                growth_stats.append({"date": row.date.isoformat(), "new_users": row.new_users})
+                growth_stats.append(
+                    {"date": row.date.isoformat(), "new_users": row.new_users}
+                )
 
             return growth_stats
 
@@ -445,11 +454,23 @@ class UserRepository(BaseRepository[User]):
 
             # 根据关联名称加载不同的关联数据
             if relation_name == "predictions":
-                stmt = select(User).options(selectinload(User.predictions)).where(User.id == obj_id)
+                stmt = (
+                    select(User)
+                    .options(selectinload(User.predictions))
+                    .where(User.id == obj_id)
+                )
             elif relation_name == "profile":
-                stmt = select(User).options(selectinload(User.profile)).where(User.id == obj_id)
+                stmt = (
+                    select(User)
+                    .options(selectinload(User.profile))
+                    .where(User.id == obj_id)
+                )
             elif relation_name == "roles":
-                stmt = select(User).options(selectinload(User.roles)).where(User.id == obj_id)
+                stmt = (
+                    select(User)
+                    .options(selectinload(User.roles))
+                    .where(User.id == obj_id)
+                )
             else:
                 return None
 

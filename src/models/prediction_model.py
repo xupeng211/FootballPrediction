@@ -40,6 +40,8 @@ class PredictionType(Enum):
 
 
 class PredictionModel:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     预测模型基类（桩实现）
 
@@ -47,6 +49,8 @@ class PredictionModel:
     """
 
     def __init__(self, model_name: str, model_type: str = "classification"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """
         初始化预测模型
 
@@ -100,7 +104,9 @@ class PredictionModel:
         self.metadata["last_trained"] = datetime.now().isoformat()
         self.metadata["metrics"] = metrics
 
-        self.logger.info(f"Model trained successfully. Accuracy: {metrics['accuracy']:.3f}")
+        self.logger.info(
+            f"Model trained successfully. Accuracy: {metrics['accuracy']:.3f}"
+        )
         return metrics
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
@@ -288,6 +294,8 @@ class FootballPredictionModel(PredictionModel):
     """
 
     def __init__(self, model_name: str = "football_predictor"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(model_name, "classification")
         self.prediction_type = PredictionType.MATCH_RESULT
         self.target_classes = ["home_win", "draw", "away_win"]

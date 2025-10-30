@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EnhancedMLConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """增强ML模型配置"""
     model_type: str = "ensemble"
     feature_engineering: bool = True
@@ -44,6 +46,8 @@ class EnhancedMLConfig:
 
 @dataclass
 class PredictionCache:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测结果缓存"""
     cache: Dict[str, Any] = field(default_factory=dict)
     max_size: int = 1000
@@ -95,11 +99,14 @@ class PredictionCache:
 
 @dataclass
 class FeatureEngine:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """特征工程器"""
     enabled: bool = True
     feature_cache: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """初始化后设置"""
         self.setup_features()
 
     def setup_features(self) -> None:
@@ -162,9 +169,12 @@ class FeatureEngine:
 
         return features
 
-    def combine_features(self, home_features: Dict[str, float],
-                        away_features: Dict[str, float],
-                        match_features: Dict[str, float]) -> np.ndarray:
+    def combine_features(
+        self,
+        home_features: Dict[str, float],
+        away_features: Dict[str, float],
+        match_features: Dict[str, float]
+    ) -> np.ndarray:
         """组合所有特征"""
         all_features = {}
         all_features.update(home_features)
@@ -186,6 +196,8 @@ class FeatureEngine:
 
 @dataclass
 class PerformanceMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """性能指标收集器"""
     predictions_made: int = 0
     total_prediction_time: float = 0.0
@@ -214,13 +226,14 @@ class PerformanceMetrics:
 
 
 class EnhancedMLModelStrategy(PredictionStrategy):
-    """增强机器学习模型预测策略
+    """增强机器学习模型预测策略"
 
     Phase G Week 4 P2任务:智能预测增强
     专注于性能优化和预测准确性提升.
     """
 
     def __init__(self, model_name: str = "enhanced_ml_model"):
+        """初始化增强ML模型"""
         super().__init__(model_name, StrategyType.ML_MODEL)
 
         # 配置和组件
@@ -499,10 +512,13 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             self.logger.error(f"Ensemble prediction failed: {e}")
             return self._dummy_predict(feature_vector)
 
-    def _simple_predict(self, feature_vector: np.ndarray,
-                        home_features: Dict[str, float],
-                        away_features: Dict[str, float],
-                        match_features: Dict[str, float]) -> Dict[str, Any]:
+    def _simple_predict(
+            self,
+            feature_vector: np.ndarray,
+            home_features: Dict[str, float],
+            away_features: Dict[str, float],
+            match_features: Dict[str, float]
+        ) -> Dict[str, Any]:
         """简单预测"""
         try:
             # 使用简单的线性回归进行预测
@@ -569,7 +585,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             # 确保置信度在合理范围内
             return max(0.1, min(0.95, confidence))
 
-            except Exception:
+        except Exception:
             return 0.5
 
     def _update_performance_metrics(self, output: PredictionOutput, confidence: float) -> None:

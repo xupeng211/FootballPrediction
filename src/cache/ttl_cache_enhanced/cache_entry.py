@@ -10,7 +10,9 @@ from typing import Any, Optional
 
 
 class CacheEntry:
-    """缓存条目
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """缓存条目"
 
     存储缓存的值,过期时间,访问次数等信息.
     Stores cached value, expiration time, access count, etc.
@@ -85,6 +87,8 @@ class CacheEntry:
         return remaining if remaining > 0 else 0
 
     def __lt__(self, other):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """
         用于堆排序,比较过期时间
 
@@ -101,4 +105,6 @@ class CacheEntry:
     def __repr__(self) -> str:
         """字符串表示"""
         ttl_str = f"TTL={self.get_remaining_ttl()}s" if self.expires_at else "TTL=∞"
-        return f"CacheEntry(key={self.key}, value={type(self.value).__name__}, {ttl_str})"
+        return (
+            f"CacheEntry(key={self.key}, value={type(self.value).__name__}, {ttl_str})"
+        )

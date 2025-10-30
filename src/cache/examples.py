@@ -1,50 +1,50 @@
-""""
+"""
 缓存装饰器使用示例
 Cache Decorators Usage Examples
 
 展示如何在项目中使用各种缓存装饰器.
-""""
+"""
 
 import asyncio
 from typing import Any, Dict, List, Optional
 
 from .decorators import (
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
     cache_by_user,
     cache_invalidate,
     cache_match_data,
@@ -107,6 +107,8 @@ def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 
 # 示例5: 缓存失效装饰器
 def generate_invalidation_keys(func, args, kwargs, result):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """生成缓存失效键的函数"""
     # 如果是更新操作,失效相关缓存
     if "update" in func.__name__:
@@ -174,6 +176,8 @@ def calculate_team_statistics(team_id: int, season: str) -> Dict:
 
 # 示例7: 自定义键生成器
 def custom_key_generator(func, args, kwargs, user_id=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """自定义缓存键生成器"""
     func_name = func.__qualname__
     # 使用特定的参数组合生成键
@@ -207,6 +211,8 @@ def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict]:
 
 # 示例8: 组合使用装饰器
 class PredictionService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测服务类,展示装饰器的组合使用"""
 
     @cache_match_data(ttl_seconds=600)

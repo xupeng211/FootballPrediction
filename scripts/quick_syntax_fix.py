@@ -1,71 +1,59 @@
 #!/usr/bin/env python3
 """
-快速语法修复工具
-Quick Syntax Fix Tool
-
-修复测试文件中的重复参数问题
+快速语法错误修复工具
 """
 
 import os
 import re
 from pathlib import Path
 
+def fix_alert_engine_file():
+    """修复alert_engine.py文件的语法错误"""
+    file_path = Path("src/alerting/alert_engine.py")
+    if not file_path.exists():
+        print(f"❌ {file_path} 不存在")
+        return False
 
-def fix_duplicate_parameters(file_path):
-    """修复文件中的重复参数"""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
+        content = file_path.read_text(encoding='utf-8')
         original_content = content
 
-        # 修复重复的client参数
-        # 匹配形如: def test_func(param1, param2, client, client, client):
-        pattern = r"(def\s+\w+\([^)]*client)(?:,\s*client)+([^)]*\):)"
-        content = re.sub(pattern, r"\1\2", content)
+        # 修复1: isinstance参数错误
+        content = re.sub(
+            r'isinstance\(value, \(int\)\)',
+            'isinstance(value, int)',
+            content
+        )
 
-        # 修复空参数问题
-        # 匹配形如: def test_func(, client, client):
-        pattern = r"(def\s+\w+\s*\(\s*,)([^)]*\):)"
-        content = re.sub(pattern, r"(\2", content)
+        # 修复2: except语句缩进错误
+        content = re.sub(
+            r'return float\(value\) if isinstance\(value, int\) else None\s*\n\s+except Exception:\s*\n\s+return None',
+            'return float(value) if isinstance(value, int) else None\n    except Exception:\n        return None',
+            content,
+            flags=re.MULTILINE
+        )
 
         if content != original_content:
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(content)
+            file_path.write_text(content, encoding='utf-8')
             print(f"✅ 修复了 {file_path}")
             return True
         else:
-            print(f"⚪ 无需修复 {file_path}")
-            return False
+            print(f"ℹ️  {file_path} 无需修复")
+            return True
 
     except Exception as e:
-        print(f"❌ 修复失败 {file_path}: {e}")
+        print(f"❌ 修复 {file_path} 时出错: {e}")
         return False
-
 
 def main():
     """主函数"""
-    print("🔧 快速语法修复工具")
-    print("=" * 50)
+    print("🚀 快速语法错误修复工具")
+    print("=" * 40)
 
-    # 查找所有Python测试文件
-    test_files = []
-    for root, dirs, files in os.walk("tests"):
-        for file in files:
-            if file.endswith(".py"):
-                test_files.append(Path(root) / file)
-
-    print(f"📁 找到 {len(test_files)} 个测试文件")
-    print()
-
-    fixed_count = 0
-    for file_path in test_files:
-        if fix_duplicate_parameters(file_path):
-            fixed_count += 1
-
-    print()
-    print(f"🎉 完成！修复了 {fixed_count} 个文件")
-
+    if fix_alert_engine_file():
+        print("✅ 关键语法错误修复完成")
+    
+    return True
 
 if __name__ == "__main__":
     main()

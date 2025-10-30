@@ -20,9 +20,13 @@ from ..models.team import Team
 
 
 class MatchDomainService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛领域服务"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._events: List[Any] = []
 
     def schedule_match(
@@ -185,7 +189,10 @@ class MatchDomainService:
                 importance += 0.2
 
             # 升级/降级关键战（最后3名）
-            if home_team_position >= total_teams - 2 or away_team_position >= total_teams - 2:
+            if (
+                home_team_position >= total_teams - 2
+                or away_team_position >= total_teams - 2
+            ):
                 importance += 0.1
 
         return min(importance, 1.0)

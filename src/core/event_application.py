@@ -17,13 +17,17 @@ logger = logging.getLogger(__name__)
 
 
 class EventDrivenApplication:
-    """事件驱动应用程序
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """事件驱动应用程序"
 
     管理事件系统的生命周期.
     Manages the event system lifecycle.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化应用程序"""
         self._event_bus = get_event_bus()
         self._settings = get_settings()
@@ -32,8 +36,7 @@ class EventDrivenApplication:
     async def initialize(self) -> None:
         """初始化事件系统"""
         if self._initialized:
-            return
-
+            return None
         try:
             logger.info("初始化事件驱动应用程序...")
 
@@ -56,8 +59,7 @@ class EventDrivenApplication:
     async def shutdown(self) -> None:
         """关闭事件系统"""
         if not self._initialized:
-            return
-
+            return None
         try:
             logger.info("关闭事件驱动应用程序...")
 
@@ -82,6 +84,8 @@ class EventDrivenApplication:
             """简单统计处理器"""
 
             def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
                 super().__init__("SimpleStats")
                 self.stats = {}
 
@@ -115,7 +119,9 @@ class EventDrivenApplication:
         stats = self.get_event_stats()
 
         return {
-            "status": ("healthy" if self._initialized and stats["running"] else "unhealthy"),
+            "status": (
+                "healthy" if self._initialized and stats["running"] else "unhealthy"
+            ),
             "initialized": self._initialized,
             "event_bus_stats": stats,
             "handlers_count": stats["total_subscribers"],

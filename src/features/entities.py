@@ -13,6 +13,8 @@ from typing import Any, Dict, Optional
 
 @dataclass
 class FeatureEntity:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """基础特征实体类"""
 
     id: str
@@ -24,6 +26,8 @@ class FeatureEntity:
 
 @dataclass
 class MatchEntity:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     比赛实体
 
@@ -63,6 +67,8 @@ class MatchEntity:
 
 @dataclass
 class TeamEntity:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     球队实体
 
@@ -96,6 +102,8 @@ class TeamEntity:
 
 @dataclass
 class FeatureKey:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     特征键,用于唯一标识一个特征记录
     """

@@ -17,6 +17,7 @@ Base = declarative_base()
 
 class MarketType(Enum):
     """市场类型枚举"""
+
     HOME_WIN = "home_win"
     DRAW = "draw"
     AWAY_WIN = "away_win"
@@ -28,6 +29,7 @@ class MarketType(Enum):
 
 class BetType(Enum):
     """投注类型枚举"""
+
     HOME_WIN = "home_win"
     DRAW = "draw"
     AWAY_WIN = "away_win"
@@ -39,6 +41,7 @@ class BetType(Enum):
 
 class Odds(Base):
     """赔率模型"""
+
     __tablename__ = "odds"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -51,6 +54,8 @@ class Odds(Base):
     is_active = Column(Boolean, default=True)
 
     def __repr__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return f"<Odds(match_id={self.match_id}, bookmaker={self.bookmaker}, type={self.bet_type}, odds={self.odds_value})>"
 
     @property
@@ -66,6 +71,7 @@ class Odds(Base):
 
 class OddsHistory(Base):
     """赔率历史记录模型"""
+
     __tablename__ = "odds_history"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -76,11 +82,14 @@ class OddsHistory(Base):
     change_reason = Column(Text, nullable=True)
 
     def __repr__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return f"<OddsHistory(odds_id={self.odds_id}, change={self.old_odds_value}->{self.new_odds_value})>"
 
 
 class MarketAnalysis(Base):
     """市场分析模型"""
+
     __tablename__ = "market_analysis"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -94,6 +103,8 @@ class MarketAnalysis(Base):
     market_confidence = Column(Numeric(3, 2), default=0.5)  # 0-1之间的市场信心度
 
     def __repr__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return f"<MarketAnalysis(match_id={self.match_id}, type={self.bet_type}, avg_odds={self.average_odds})>"
 
     @property
@@ -110,9 +121,4 @@ class MarketAnalysis(Base):
 
 
 # 导出的类列表
-__all__ = [
-    "BetType",
-    "Odds",
-    "OddsHistory",
-    "MarketAnalysis"
-]
+__all__ = ["BetType", "Odds", "OddsHistory", "MarketAnalysis"]

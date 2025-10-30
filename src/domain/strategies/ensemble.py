@@ -12,24 +12,32 @@ ensemble 主模块
 
 # 占位符类定义
 class EnsembleMethod:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """集成方法 - 占位符实现"""
 
     pass
 
 
 class EnsembleResult:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """集成结果 - 占位符实现"""
 
     pass
 
 
 class EnsembleStrategy:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """集成策略 - 占位符实现"""
 
     pass
 
 
 class StrategyWeight:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """策略权重 - 占位符实现"""
 
     pass

@@ -17,9 +17,13 @@ class UserRole(Enum):
 
 
 class UserPreferences:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户偏好设置"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.favorite_teams: List[int] = []
         self.favorite_leagues: List[int] = []
         self.notification_enabled = True
@@ -50,9 +54,13 @@ class UserPreferences:
 
 
 class UserStatistics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户统计数据"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
         self.total_profit_loss = 0.0
@@ -105,6 +113,8 @@ class UserStatistics:
 
 
 class User:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户领域模型"""
 
     def __init__(
@@ -253,8 +263,12 @@ class User:
             pref = data["preferences"]
             _user.preferences.favorite_teams = pref.get("favorite_teams", [])
             _user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
-            _user.preferences.notification_enabled = pref.get("notification_enabled", True)
-            _user.preferences.email_notifications = pref.get("email_notifications", True)
+            _user.preferences.notification_enabled = pref.get(
+                "notification_enabled", True
+            )
+            _user.preferences.email_notifications = pref.get(
+                "email_notifications", True
+            )
             _user.preferences.language = pref.get("language", "zh-CN")
             _user.preferences.timezone = pref.get("timezone", "UTC+8")
             _user.preferences.odds_format = pref.get("odds_format", "decimal")
@@ -277,9 +291,13 @@ class User:
 
 
 class UserProfile:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户档案（扩展的用户信息）"""
 
     def __init__(self, user: User):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._user = user
         self.prediction_history: List[Dict[str, Any]] = []
         self.following: List[int] = []  # 关注的用户ID列表

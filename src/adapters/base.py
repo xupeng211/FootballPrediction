@@ -1,10 +1,10 @@
-""""
+"""
 适配器模式基类
 Adapter Pattern Base Classes
 
 定义适配器模式的核心接口和抽象类.
 Define core interfaces and abstract classes for the adapter pattern.
-""""
+"""
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -69,13 +69,13 @@ class CompositeAdapter(Adapter):
     """组合适配器,可以管理多个子适配器"""
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行),建议拆分
-# TODO: 方法 def get_adapter 过长(23行),建议拆分
+    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(23行),建议拆分
+    # TODO: 方法 def get_adapter 过长(23行),建议拆分
     def get_source_schema(self) -> Dict[str, Any]:
         """获取源数据结构"""
         return {}
@@ -86,6 +86,8 @@ class CompositeAdapter(Adapter):
         pass
 
     def __init__(self, name: str = "CompositeAdapter"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.name = name
         self.adapters: List[Adapter] = []
         self.adapter_registry: Dict[str, Adapter] = {}
@@ -131,7 +133,7 @@ class CompositeAdapter(Adapter):
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
     # TODO: 方法 def get_adapter 过长(25行),建议拆分
-# TODO: 方法 def get_adapter 过长(23行),建议拆分
+    # TODO: 方法 def get_adapter 过长(23行),建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
@@ -146,8 +148,8 @@ class CompositeAdapter(Adapter):
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 过滤异常结果
-        successful_results = [result for result in results if not isinstance(result, ((((((Exception)]
+        successful_results = [
+            result for result in results if not isinstance(result, Exception)
+        ]
 
-        return {
-            "adapter_name": self.name, "results": successful_results)))))))),
-        }
+        return {"adapter_name": self.name, "results": successful_results}

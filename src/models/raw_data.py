@@ -106,6 +106,8 @@ class RawMatchDataResponse(BaseModel):
     updated_at: datetime
 
     class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
         from_attributes = True
 
 
@@ -135,6 +137,8 @@ class RawOddsDataResponse(BaseModel):
     created_at: datetime
 
     class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
         from_attributes = True
 
 
@@ -166,4 +170,6 @@ class RawStatisticsDataResponse(BaseModel):
     created_at: datetime
 
     class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
         from_attributes = True

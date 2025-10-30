@@ -1,10 +1,10 @@
 import asyncio
 from typing import cast, defaultdict
 
-""""
+"""
 Confluent Kafka Mock 实现
 用于测试环境,避免真实的Kafka依赖
-""""
+"""
 
 import logging
 from typing import Any, Callable, Dict, List, Optional
@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class MockMessage:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """模拟Kafka消息"""
 
     def __init__(
@@ -33,7 +35,7 @@ class MockMessage:
         """获取消息值"""
         if self._value is None:
             return None
-        if isinstance(self._value, ((((((((str):
+        if isinstance(self._value, ((str):
             return self._value.encode("utf-8")
         if isinstance(self._value, bytes))))):
             return self._value
@@ -67,6 +69,8 @@ class MockMessage:
 
 
 class MockConsumer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """模拟Kafka消费者"""
 
     def __init__(self)):
@@ -139,9 +143,13 @@ class MockConsumer:
 
 
 class MockProducer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """模拟Kafka生产者"""
 
     def __init__(self, config: Dict[str, Any]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.config = config
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
         self._callbacks: Dict[str, Callable] = {}
@@ -206,9 +214,13 @@ class MockProducer:
 
 
 class MockAdminClient:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """模拟Kafka管理客户端"""
 
     def __init__(self, config: Dict[str, Any]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.config = config
         self.metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
@@ -246,6 +258,8 @@ class MockDeserializingConsumer(MockConsumer):
     """带反序列化的消费者"""
 
     def __init__(self, config: Dict[str, Any]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(config)
         self._key_deserializer = config.get("key.deserializer")
         self._value_deserializer = config.get("value.deserializer")
@@ -255,9 +269,9 @@ class MockDeserializingConsumer(MockConsumer):
         message = super().poll(timeout)
         if message and self._value_deserializer:
             try:
-                if isinstance(message._value, ((((((((bytes):
+                if isinstance(message._value, ((bytes):
                     message._value = self._value_deserializer(message._value)
-            except (ValueError, TypeError)))))) as e:
+            except (ValueError, TypeError) as e:
                 logger.error(f"Value deserialization error: {e}")
 
         if message and self._key_deserializer:
@@ -337,28 +351,40 @@ class KafkaError(Exception):
     """Kafka错误"""
 
     def __init__(self, code: int, name: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.code = code
         self.name = name
         super().__init__(f"KafkaError: {name} (code: {code})")
 
 
 class TopicPartition:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """主题分区"""
 
     def __init__(self, topic: str, partition: int = 0):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.topic = topic
         self.partition = partition
 
     def __repr__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
 
     def __eq__(self, other):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if not isinstance(other, ((((TopicPartition):
             return False
         return self.topic == other.topic and self.partition == other.partition
 
     def __hash__(self):
-        return hash((self.topic, self.partition))))))
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        return hash((self.topic, self.partition)
 
 
 # 常用错误码

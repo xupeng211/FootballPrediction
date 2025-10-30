@@ -346,3 +346,51 @@ class TestProviderRepository:
 
         # 验证状态
         assert repo_instance is not None
+
+
+
+
+class TestGet_repository_provider:
+    """get_repository_provider函数的测试类"""
+
+    def test_get_repository_provider_basic(self):
+        """测试get_repository_provider函数的基本功能"""
+        # TODO: 根据函数实际功能实现具体测试
+        from repositories.provider import get_repository_provider
+
+        # 基础存在性测试
+        assert callable(get_repository_provider)
+
+        # TODO: 添加更具体的测试逻辑
+        # 这里需要根据函数的实际功能来编写测试
+
+    def test_get_repository_provider_edge_cases(self):
+        """测试get_repository_provider函数的边界情况"""
+        from repositories.provider import get_repository_provider
+
+        # TODO: 测试边界情况、错误处理等
+        pass
+
+
+
+
+class TestSet_repository_provider:
+    """set_repository_provider函数的测试类"""
+
+    def test_set_repository_provider_basic(self):
+        """测试set_repository_provider函数的基本功能"""
+        # TODO: 根据函数实际功能实现具体测试
+        from repositories.provider import set_repository_provider
+
+        # 基础存在性测试
+        assert callable(set_repository_provider)
+
+        # TODO: 添加更具体的测试逻辑
+        # 这里需要根据函数的实际功能来编写测试
+
+    def test_set_repository_provider_edge_cases(self):
+        """测试set_repository_provider函数的边界情况"""
+        from repositories.provider import set_repository_provider
+
+        # TODO: 测试边界情况、错误处理等
+        pass

@@ -1,7 +1,7 @@
 """
 from typing import Dict, List
-from src.core.config import 
-from src.core.config import 
+from src.core.config import
+from src.core.config import
 数据质量监控器
 
 实现数据质量检查与异常检测功能。
@@ -24,6 +24,8 @@ from src.database.connection import DatabaseManager
 
 
 class DataQualityMonitor:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     数据质量监控器
 
@@ -32,6 +34,8 @@ class DataQualityMonitor:
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化数据质量监控器"""
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"quality.{self.__class__.__name__}")
@@ -67,7 +71,10 @@ class DataQualityMonitor:
                 fixtures_age = await self._check_fixtures_age(session)
                 freshness_report["details"]["fixtures"] = fixtures_age
 
-                if fixtures_age["hours_since_update"] > self.thresholds["data_freshness_hours"]:
+                if (
+                    fixtures_age["hours_since_update"]
+                    > self.thresholds["data_freshness_hours"]
+                ):
                     freshness_report["issues"].append(
                         f"赛程数据过期:{fixtures_age['hours_since_update']}小时未更新"
                     )
@@ -151,12 +158,16 @@ class DataQualityMonitor:
             result = latest_log.fetchone()
 
             if result and result.last_update:
-                hours_since = (datetime.now() - result.last_update).total_seconds() / 3600
+                hours_since = (
+                    datetime.now() - result.last_update
+                ).total_seconds() / 3600
                 return {
                     "last_update": result.last_update.isoformat(),
                     "hours_since_update": round(hours_since, 2),
                     "status": (
-                        "ok" if hours_since < self.thresholds["data_freshness_hours"] else "stale"
+                        "ok"
+                        if hours_since < self.thresholds["data_freshness_hours"]
+                        else "stale"
                     ),
                 }
             else:
@@ -184,7 +195,9 @@ class DataQualityMonitor:
             result = latest_odds.fetchone()
 
             if result and result.last_update:
-                hours_since = (datetime.now() - result.last_update).total_seconds() / 3600
+                hours_since = (
+                    datetime.now() - result.last_update
+                ).total_seconds() / 3600
                 return {
                     "last_update": result.last_update.isoformat(),
                     "hours_since_update": round(hours_since, 2),
@@ -355,20 +368,32 @@ class DataQualityMonitor:
 
             report: Dict[str, Any] = {
                 "report_time": datetime.now().isoformat(),
-                "overall_status": self._determine_overall_status(freshness_check, anomalies),
+                "overall_status": self._determine_overall_status(
+                    freshness_check, anomalies
+                ),
                 "quality_score": quality_score,
                 "freshness_check": freshness_check,
                 "anomalies": {
                     "count": len(anomalies),
-                    "high_severity": len([a for a in anomalies if a.get("severity") == "high"]),
-                    "medium_severity": len([a for a in anomalies if a.get("severity") == "medium"]),
-                    "low_severity": len([a for a in anomalies if a.get("severity") == "low"]),
+                    "high_severity": len(
+                        [a for a in anomalies if a.get("severity") == "high"]
+                    ),
+                    "medium_severity": len(
+                        [a for a in anomalies if a.get("severity") == "medium"]
+                    ),
+                    "low_severity": len(
+                        [a for a in anomalies if a.get("severity") == "low"]
+                    ),
                     "details": anomalies,
                 },
-                "recommendations": self._generate_recommendations(freshness_check, anomalies),
+                "recommendations": self._generate_recommendations(
+                    freshness_check, anomalies
+                ),
             }
 
-            self.logger.info(f"数据质量报告生成完成,总体状态: {report['overall_status']}")
+            self.logger.info(
+                f"数据质量报告生成完成,总体状态: {report['overall_status']}"
+            )
             return report
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -391,7 +416,9 @@ class DataQualityMonitor:
 
         # 根据异常数量扣分
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
-        medium_severity_count = len([a for a in anomalies if a.get("severity") == "medium"])
+        medium_severity_count = len(
+            [a for a in anomalies if a.get("severity") == "medium"]
+        )
         low_severity_count = len([a for a in anomalies if a.get("severity") == "low"])
 
         score -= high_severity_count * 15
@@ -411,7 +438,9 @@ class DataQualityMonitor:
         else:
             return "healthy"
 
-    def _generate_recommendations(self, freshness_check: Dict, anomalies: List) -> List[str]:
+    def _generate_recommendations(
+        self, freshness_check: Dict, anomalies: List
+    ) -> List[str]:
         """生成改进建议"""
         recommendations: List[Any] = []
 

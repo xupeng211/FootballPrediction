@@ -1,9 +1,9 @@
-""""
+"""
 数据收集核心
 Data Collection Core
 
 数据收集的核心逻辑和任务定义.
-""""
+"""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -23,9 +23,13 @@ celery_app = Celery("data_collection")
 
 
 class DataCollectionTask:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """数据收集任务基类"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化任务"""
         self.db_manager: Optional[DatabaseManager] = None
         self.orchestrator = DataCollectionOrchestrator()
@@ -128,12 +132,12 @@ def collect_scores_task(self) -> Dict[str, Any]:
 
 @celery_app.task
 def manual_collect_all_data() -> Dict[str, Any]:
-    """手动收集所有数据任务"""""
+    """手动收集所有数据任务"""
 
     手动触发所有数据收集
 
     这是一个同步任务,用于立即收集所有类型的数据.
-    """"
+    """
     task = DataCollectionTask()
 
     try:
@@ -156,11 +160,11 @@ def manual_collect_all_data() -> Dict[str, Any]:
 def emergency_data_collection_task(
     data_types: Optional[List[str]] = None, priority: int = 1
 ) -> Dict[str, Any]:
-    """"
+    """
     紧急数据收集任务
 
     用于在数据缺失时紧急收集关键数据.
-    """"
+    """
     task = DataCollectionTask()
 
     try:
@@ -196,6 +200,8 @@ def emergency_data_collection_task(
 # 定时任务定义
 @celery_app.task
 def collect_historical_data_task():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """定期收集历史数据任务"""
     task = DataCollectionTask()
 
@@ -278,12 +284,12 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     fixtures = data.get("fixtures", [])
     for i, fixture in enumerate(fixtures):
-        if not isinstance(fixture, ((((((((dict):
+        if not isinstance(fixture, ((dict):
             errors.append(f"Fixture {i} is not a dictionary")
             continue
 
         # 检查必要字段
-        required_fields = ["id", "date"))))))
+        required_fields = ["id", "date")
 
         # 检查日期格式
         if "date" in fixture:

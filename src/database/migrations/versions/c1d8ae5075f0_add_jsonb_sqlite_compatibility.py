@@ -34,7 +34,7 @@ from alembic import context, op
 # 在离线模式下执行注释,确保 SQL 生成正常
 
 logger = logging.getLogger(__name__)
-"""add_jsonb_sqlite_compatibility
+"""add_jsonb_sqlite_compatibility"
 添加JSONB与SQLite兼容性支持
 本迁移文件主要目的是确保数据库模型在不同数据库类型（PostgreSQL/SQLite）下的兼容性.
 主要变更:
@@ -53,6 +53,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def is_sqlite():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
         return False  # 离线模式下假设不是SQLite
@@ -61,6 +63,8 @@ def is_sqlite():
 
 
 def is_postgresql():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
         return True  # 离线模式下假设是PostgreSQL
@@ -77,7 +81,7 @@ def upgrade() -> None:
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过JSONB兼容性检查")
         op.execute("-- offline mode: skipped JSONB compatibility validation")
-        return
+        return None
     bind = op.get_bind()
     logger.info(f"当前数据库类型: {bind.dialect.name}")
     if is_sqlite():
@@ -92,6 +96,8 @@ def upgrade() -> None:
 
 
 def _configure_sqlite_compatibility():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """为SQLite配置兼容性设置"""
     tables_to_check = [
         "raw_match_data",
@@ -110,6 +116,8 @@ def _configure_sqlite_compatibility():
 
 
 def _verify_postgresql_jsonb_config():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """验证PostgreSQL的JSONB配置"""
     bind = op.get_bind()
     inspector = sa.inspect(bind)
@@ -122,7 +130,9 @@ def _verify_postgresql_jsonb_config():
         try:
             if table_name in inspector.get_table_names():
                 columns = inspector.get_columns(table_name)
-                jsonb_col = next((col for col in columns if col["name"] == jsonb_column), None)
+                jsonb_col = next(
+                    (col for col in columns if col["name"] == jsonb_column), None
+                )
                 if jsonb_col:
                     logger.info(f"  ✓ 表 {table_name} 的 {jsonb_column} 字段配置正确")
                     indexes = inspector.get_indexes(table_name)
@@ -130,14 +140,17 @@ def _verify_postgresql_jsonb_config():
                         (
                             idx
                             for idx in indexes
-                            if jsonb_column in idx["column_names"] and idx.get("type") == "gin"
+                            if jsonb_column in idx["column_names"]
+                            and idx.get("type") == "gin"
                         ),
                         None,
                     )
                     if gin_index:
                         logger.info(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
-                        print(f"    ⚠ {jsonb_column} 字段缺少GIN索引,查询性能可能受影响")
+                        print(
+                            f"    ⚠ {jsonb_column} 字段缺少GIN索引,查询性能可能受影响"
+                        )
                 else:
                     logger.info(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:
@@ -155,5 +168,5 @@ def downgrade() -> None:
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过JSONB兼容性降级")
         op.execute("-- offline mode: skipped JSONB compatibility downgrade")
-        return
+        return None
     logger.info("JSONB兼容性迁移降级 - 无需特殊操作")

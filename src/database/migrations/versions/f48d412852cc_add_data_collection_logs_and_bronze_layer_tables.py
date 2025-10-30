@@ -7,7 +7,7 @@ from alembic import op
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 logger = logging.getLogger(__name__)
-"""add_data_collection_logs_and_bronze_layer_tables
+"""add_data_collection_logs_and_bronze_layer_tables"
 
 Revision ID: f48d412852cc
 Revises: d56c8d0d5aa0
@@ -89,7 +89,9 @@ def upgrade() -> None:
         "data_collection_logs",
         ["data_source", "collection_type"],
     )
-    op.create_index("idx_collection_logs_start_time", "data_collection_logs", ["start_time"])
+    op.create_index(
+        "idx_collection_logs_start_time", "data_collection_logs", ["start_time"]
+    )
     op.create_index("idx_collection_logs_status", "data_collection_logs", ["status"])
 
     # 创建Bronze层原始比赛数据表
@@ -131,9 +133,13 @@ def upgrade() -> None:
 
     # 为Bronze层比赛数据表创建索引
     op.create_index("idx_raw_match_data_source", "raw_match_data", ["data_source"])
-    op.create_index("idx_raw_match_data_collected_at", "raw_match_data", ["collected_at"])
+    op.create_index(
+        "idx_raw_match_data_collected_at", "raw_match_data", ["collected_at"]
+    )
     op.create_index("idx_raw_match_data_processed", "raw_match_data", ["processed"])
-    op.create_index("idx_raw_match_data_external_id", "raw_match_data", ["external_match_id"])
+    op.create_index(
+        "idx_raw_match_data_external_id", "raw_match_data", ["external_match_id"]
+    )
     op.create_index("idx_raw_match_data_match_time", "raw_match_data", ["match_time"])
 
     # 创建Bronze层原始赔率数据表（分区表准备）
@@ -153,8 +159,12 @@ def upgrade() -> None:
             nullable=True,
             comment="外部比赛ID",
         ),
-        sa.Column("bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"),
-        sa.Column("market_type", sa.String(length=50), nullable=True, comment="市场类型"),
+        sa.Column(
+            "bookmaker", sa.String(length=100), nullable=True, comment="博彩公司"
+        ),
+        sa.Column(
+            "market_type", sa.String(length=50), nullable=True, comment="市场类型"
+        ),
         sa.Column("raw_data", sa.JSON(), nullable=False, comment="原始JSON数据"),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
@@ -205,7 +215,9 @@ def upgrade() -> None:
             try:
                 op.add_column(
                     "features",
-                    sa.Column(column_name, column_type, nullable=True, comment=column_comment),
+                    sa.Column(
+                        column_name, column_type, nullable=True, comment=column_comment
+                    ),
                 )
             except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
                 # 如果字段已存在,忽略错误

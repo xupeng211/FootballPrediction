@@ -65,7 +65,9 @@ async def get_current_active_user(
         HTTPException: 用户未激活
     """
     if not current_user.is_active:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="用户账户已被禁用")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="用户账户已被禁用"
+        )
     return current_user
 
 
@@ -85,7 +87,9 @@ async def get_current_verified_user(
         HTTPException: 用户未验证邮箱
     """
     if not current_user.is_verified:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请先验证您的邮箱地址")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="请先验证您的邮箱地址"
+        )
     return current_user
 
 
@@ -127,11 +131,15 @@ async def get_current_premium_user(
         HTTPException: 用户不是高级用户
     """
     if not current_user.is_premium:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="此功能需要高级用户权限")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="此功能需要高级用户权限"
+        )
     return current_user
 
 
 def require_permissions(required_roles: Optional[list] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     权限装饰器工厂函数
 
@@ -162,6 +170,8 @@ RequireAnalystOrAdmin = require_permissions(["analyst", "admin"])
 
 
 class OptionalAuth:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     可选认证依赖类
 
@@ -169,6 +179,8 @@ class OptionalAuth:
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         pass
 
     async def __call__(

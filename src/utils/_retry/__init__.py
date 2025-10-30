@@ -11,10 +11,13 @@ import time
 from typing import Callable, Optional, TypeVar
 
 import secrets
+
 T = TypeVar("T")
 
 
 class RetryConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """重试配置类"""
 
     def __init__(
@@ -64,7 +67,9 @@ def retry_with_exponential_backoff(
                             delay *= 0.5 + secrets.randbelow(100) / 100  # noqa: B311
                         time.sleep(delay)
 
-            raise RetryError(f"Max attempts ({max_attempts}) exceeded") from last_exception
+            raise RetryError(
+                f"Max attempts ({max_attempts}) exceeded"
+            ) from last_exception
 
         return wrapper
 
@@ -95,7 +100,9 @@ async def async_retry_with_exponential_backoff(
                             delay *= 0.5 + secrets.randbelow(100) / 100  # noqa: B311
                         await asyncio.sleep(delay)
 
-            raise RetryError(f"Max attempts ({max_attempts}) exceeded") from last_exception
+            raise RetryError(
+                f"Max attempts ({max_attempts}) exceeded"
+            ) from last_exception
 
         return wrapper
 
@@ -103,6 +110,8 @@ async def async_retry_with_exponential_backoff(
 
 
 def retry(config: Optional[RetryConfig] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """通用的重试装饰器"""
     if config is None:
         config = RetryConfig()
@@ -115,6 +124,8 @@ def retry(config: Optional[RetryConfig] = None):
 
 
 def async_retry(config: Optional[RetryConfig] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """通用的异步重试装饰器"""
     if config is None:
         config = RetryConfig()
@@ -137,6 +148,8 @@ retry_async = async_retry
 
 
 class CircuitState:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """熔断器状态枚举"""
 
     CLOSED = "closed"
@@ -145,6 +158,8 @@ class CircuitState:
 
 
 class CircuitBreaker:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """熔断器实现"""
 
     def __init__(

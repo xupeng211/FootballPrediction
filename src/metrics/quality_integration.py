@@ -17,9 +17,13 @@ logger = get_logger(__name__)
 
 
 class QualityMetricsIntegrator:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """质量度量集成器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.analyzer = AdvancedMetricsAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -35,11 +39,15 @@ class QualityMetricsIntegrator:
             enhanced_report["advanced_metrics"] = advanced_metrics
 
             # 重新计算综合分数（包含高级度量）
-            enhanced_overall_score = self._calculate_enhanced_overall_score(enhanced_report)
+            enhanced_overall_score = self._calculate_enhanced_overall_score(
+                enhanced_report
+            )
             enhanced_report["enhanced_overall_score"] = enhanced_overall_score
 
             # 添加高级度量摘要
-            enhanced_report["advanced_summary"] = self._create_advanced_summary(advanced_metrics)
+            enhanced_report["advanced_summary"] = self._create_advanced_summary(
+                advanced_metrics
+            )
 
             self.logger.info("高级度量集成完成")
             return enhanced_report
@@ -57,7 +65,9 @@ class QualityMetricsIntegrator:
         scores.append(original_score)
 
         # 高级度量分数
-        advanced_score = report.get("advanced_metrics", {}).get("overall_advanced_score", 0)
+        advanced_score = report.get("advanced_metrics", {}).get(
+            "overall_advanced_score", 0
+        )
         scores.append(advanced_score)
 
         # 代码质量分数
@@ -72,12 +82,16 @@ class QualityMetricsIntegrator:
         if scores:
             # 原始分数 30%，高级度量 40%,代码质量 15%,安全 15%
             weights = [0.3, 0.4, 0.15, 0.15]
-            weighted_score = sum(score * weight for score, weight in zip(scores, weights))
+            weighted_score = sum(
+                score * weight for score, weight in zip(scores, weights)
+            )
             return round(weighted_score, 2)
 
         return 0.0
 
-    def _create_advanced_summary(self, advanced_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_advanced_summary(
+        self, advanced_metrics: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """创建高级度量摘要"""
         summary = {}
 
@@ -85,9 +99,15 @@ class QualityMetricsIntegrator:
         complexity = advanced_metrics.get("complexity_metrics", {}).get("summary", {})
         if complexity:
             summary["complexity"] = {
-                "avg_cyclomatic_complexity": complexity.get("avg_cyclomatic_complexity", 0),
-                "avg_cognitive_complexity": complexity.get("avg_cognitive_complexity", 0),
-                "avg_maintainability_index": complexity.get("avg_maintainability_index", 0),
+                "avg_cyclomatic_complexity": complexity.get(
+                    "avg_cyclomatic_complexity", 0
+                ),
+                "avg_cognitive_complexity": complexity.get(
+                    "avg_cognitive_complexity", 0
+                ),
+                "avg_maintainability_index": complexity.get(
+                    "avg_maintainability_index", 0
+                ),
                 "max_nesting_depth": complexity.get("max_nesting_depth", 0),
                 "total_functions": complexity.get("total_functions", 0),
                 "total_classes": complexity.get("total_classes", 0),
@@ -161,7 +181,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "security",
                     "priority": "critical",
-                    "message": f'发现{debt["security_issues_count"]}个安全问题,需要立即处理',
+                    "message": f"发现{debt['security_issues_count']}个安全问题,需要立即处理",
                 }
             )
 
@@ -189,6 +209,8 @@ class QualityMetricsIntegrator:
 
 
 def enhance_quality_guardian():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """为质量守护系统添加高级度量功能"""
     # 这里可以修改 scripts/quality_guardian.py 来集成高级度量
     # 为了避免修改现有文件,我们创建一个包装器
@@ -196,6 +218,8 @@ def enhance_quality_guardian():
 
 
 def main():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """主函数,用于测试集成"""
     integrator = QualityMetricsIntegrator()
 
@@ -228,7 +252,9 @@ def main():
         complexity = summary["complexity"]
         print("\n📊 复杂度指标:")
         print(f"  平均圈复杂度: {complexity.get('avg_cyclomatic_complexity', 0):.1f}")
-        print(f"  平均可维护性指数: {complexity.get('avg_maintainability_index', 0):.1f}")
+        print(
+            f"  平均可维护性指数: {complexity.get('avg_maintainability_index', 0):.1f}"
+        )
 
     if "technical_debt" in summary:
         debt = summary["technical_debt"]

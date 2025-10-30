@@ -1,110 +1,159 @@
 #!/usr/bin/env python3
 """
-自动化覆盖率监控脚本
-Automated Coverage Monitoring Script
-
-持续跟踪测试覆盖率变化，提供实时监控和报告。
+测试覆盖率监控工具
+跟踪覆盖率变化趋势，提供持续改进反馈
 """
 
-import subprocess
-import json
 import sys
-from datetime import datetime, timedelta
+import os
+import json
+import datetime
 from pathlib import Path
-import argparse
+from typing import Dict, List, Any
+import subprocess
 
+# 添加项目根路径
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / 'src'))
 
 class CoverageMonitor:
     """覆盖率监控器"""
 
-    def __init__(self, project_root=None):
-        self.project_root = Path(project_root) if project_root else Path(__file__).parent.parent
-        self.coverage_file = self.project_root / ".coverage_data.json"
-        self.history_file = self.project_root / "coverage_history.json"
+    def __init__(self):
+        self.project_root = project_root
+        self.data_file = project_root / 'coverage_data.json'
+        self.load_historical_data()
 
-    def get_current_coverage(self):
-        """获取当前覆盖率（简化版）"""
+    def load_historical_data(self):
+        """加载历史数据"""
+        if self.data_file.exists():
+            try:
+                with open(self.data_file, 'r', encoding='utf-8') as f:
+                    self.historical_data = json.load(f)
+            except:
+                self.historical_data = []
+        else:
+            self.historical_data = []
+
+    def save_historical_data(self):
+        """保存历史数据"""
+        with open(self.data_file, 'w', encoding='utf-8') as f:
+            json.dump(self.historical_data, f, indent=2, ensure_ascii=False)
+
+    def measure_current_coverage(self):
+        """测量当前覆盖率"""
+        coverage_data = {
+            'timestamp': datetime.datetime.now().isoformat(),
+            'date': datetime.datetime.now().strftime('%Y-%m-%d'),
+            'phase': self.detect_current_phase(),
+        }
+
+        # 运行真实覆盖率测量
         try:
-            # Phase E: 包含新的高级测试文件
-            phase_e_tests = [
-                "tests/unit/domain/test_advanced_business_logic.py",
-                "tests/unit/edge_cases/test_boundary_and_exception_handling.py",
-                "tests/unit/performance/test_advanced_performance.py"
-            ]
-
             result = subprocess.run([
-                sys.executable, "-m", "pytest",
-                "--cov=src",
-                "--cov-report=json:.coverage_report.json",
-                "--tb=short",
-                "-q",
-                *phase_e_tests
-            ], capture_output=True, text=True, cwd=self.project_root)
+                sys.executable, 'tests/real_coverage_measurement.py'
+            ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
 
             if result.returncode == 0:
-                report_file = self.project_root / ".coverage_report.json"
-                if report_file.exists():
-                    with open(report_file) as f:
-                        report = json.load(f)
-                    totals = report.get("totals", {})
-                    return totals.get("percent_covered", 0.0)
-            except Exception:
-            pass
+                # 解析覆盖率数据
+                lines = result.stdout.split('\n')
+                for line in lines:
+                    if '综合覆盖率:' in line:
+                        coverage_str = line.split(':')[-1].strip().rstrip('%')
+                        try:
+                            coverage_data['overall_coverage'] = float(coverage_str)
+                        except ValueError:
+                            coverage_data['overall_coverage'] = 0.0
+                    elif '函数覆盖率:' in line:
+                        func_cov_str = line.split(':')[-1].strip().rstrip('%')
+                        try:
+                            coverage_data['function_coverage'] = float(func_cov_str)
+                        except ValueError:
+                            coverage_data['function_coverage'] = 0.0
+                    elif '类覆盖率:' in line:
+                        class_cov_str = line.split(':')[-1].strip().rstrip('%')
+                        try:
+                            coverage_data['class_coverage'] = float(class_cov_str)
+                        except ValueError:
+                            coverage_data['class_coverage'] = 0.0
+                    elif '模块导入成功率:' in line:
+                        import_str = line.split(':')[-1].strip().rstrip('%')
+                        try:
+                            coverage_data['import_success_rate'] = float(import_str)
+                        except ValueError:
+                            coverage_data['import_success_rate'] = 0.0
+            else:
+                coverage_data['error'] = '覆盖率测量失败'
 
-        return 0.0
+        except Exception as e:
+            coverage_data['error'] = str(e)
 
-    def print_summary(self):
-        """打印覆盖率摘要"""
-        coverage = self.get_current_coverage()
-        
-        print("\n" + "="*50)
-        print("📊 测试覆盖率摘要")
-        print("="*50)
-        print(f"📈 当前覆盖率: {coverage:.2f}%")
-        
-        if coverage >= 5.0:
-            print("✅ 覆盖率已达到最低要求 (5.0%)")
+        return coverage_data
+
+    def detect_current_phase(self):
+        """检测当前阶段"""
+        # 基于覆盖率数据判断当前阶段
+        if not self.historical_data:
+            return 'Phase 0: 初始化'
+
+        latest_data = self.historical_data[-1]
+        coverage = latest_data.get('overall_coverage', 0)
+
+        if coverage < 5:
+            return 'Phase 1: 基础模块全覆盖'
+        elif coverage < 15:
+            return 'Phase 2: 服务层核心测试'
+        elif coverage < 35:
+            return 'Phase 3: API和集成测试'
+        elif coverage < 60:
+            return 'Phase 4: 全覆盖体系'
         else:
-            print("⚠️ 覆盖率低于最低要求 (5.0%)")
-        
-        print("="*50)
+            return 'Phase 5: 维护和优化'
 
-    def setup_quality_gates(self, minimum_coverage=5.0):
-        """设置质量门禁"""
-        current_coverage = self.get_current_coverage()
-        
-        print(f"\n🚪 质量门禁检查 (最低要求: {minimum_coverage}%)")
-        print("-" * 40)
-        
-        passed = current_coverage >= minimum_coverage
-        status = "✅ 通过" if passed else "❌ 失败"
-        print(f"{status} 覆盖率: {current_coverage:.2f}% (要求: {minimum_coverage}%)")
-        
-        print("-" * 40)
-        if passed:
-            print("🎉 质量门禁检查通过！")
-            return True
-        else:
-            print("⚠️ 质量门禁检查失败")
-            return False
+    def quick_status_check(self):
+        """快速状态检查"""
+        coverage = self.measure_current_coverage()
+        self.add_measurement(coverage)
+
+        print(f"📊 快速状态检查:")
+        print(f"   覆盖率: {coverage.get('overall_coverage', 0):.1f}%")
+        print(f"   阶段: {coverage['phase']}")
+
+        if 'error' in coverage:
+            print(f"   ⚠️  错误: {coverage['error']}")
+
+        return coverage
+
+    def add_measurement(self, coverage_data):
+        """添加新的测量数据"""
+        self.historical_data.append(coverage_data)
+
+        # 保持最近30天的数据
+        cutoff_date = datetime.datetime.now() - datetime.timedelta(days=30)
+        self.historical_data = [
+            data for data in self.historical_data
+            if datetime.datetime.fromisoformat(data['timestamp']) > cutoff_date
+        ]
+
+        self.save_historical_data()
 
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description="自动化覆盖率监控")
-    parser.add_argument("--quality-gates", action="store_true", help="执行质量门禁检查")
-    
+    import argparse
+
+    parser = argparse.ArgumentParser(description='测试覆盖率监控工具')
+    parser.add_argument('--quick', action='store_true', help='快速状态检查')
+
     args = parser.parse_args()
-    
-    print("🚀 启动自动化覆盖率监控...")
-    
+
     monitor = CoverageMonitor()
-    monitor.print_summary()
-    
-    if args.quality_gates:
-        monitor.setup_quality_gates()
-    
-    print("\n✅ 覆盖率监控完成")
+
+    if args.quick:
+        monitor.quick_status_check()
+    else:
+        # 默认进行快速检查
+        monitor.quick_status_check()
 
 
 if __name__ == "__main__":

@@ -1,30 +1,28 @@
-""""
+"""
 适配器注册表
-""""
+"""
 
-from typing import Dict, Optional, Type, List
+from typing import Dict, Optional, List
 
 from src.core.exceptions import AdapterError
 from src.adapters.base import Adapter
 
 
 class AdapterRegistry:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """适配器注册表"""
 
-# 全局注册表实例
-_global_registry = AdapterRegistry()
-
-
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
     def __init__(self, factory=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.factory = factory or self._create_default_factory()
         self.adapters: Dict[str, Adapter] = {}
         self.groups: Dict[str, List[Adapter]] = {}
 
     def _create_default_factory(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """创建默认工厂"""
         # 简单的工厂实现
         return type(
@@ -33,7 +31,9 @@ _global_registry = AdapterRegistry()
             {"create_adapter": lambda self, cls, config=None: cls(config)},
         )()
 
-    def register(self, name: str, adapter: Adapter, group: Optional[str] = None):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def register(
+        self, name: str, adapter: Adapter, group: Optional[str] = None
+    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """注册适配器"""
         self.adapters[name] = adapter
         if group:
@@ -57,6 +57,9 @@ _global_registry = AdapterRegistry()
 
 
 # 全局注册表实例
+_global_registry = AdapterRegistry()
+
+
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表"""
     return _global_registry

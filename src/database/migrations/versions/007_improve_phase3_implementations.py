@@ -2,7 +2,7 @@
 import sqlalchemy as sa
 from alembic import op
 
-"""Phase 3 改进迁移
+"""Phase 3 改进迁移"
 Phase 3 improvements migration
 
 Revision ID: 007_improve_phase3_implementations
@@ -19,6 +19,8 @@ depends_on = None
 
 
 def upgrade():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """升级数据库架构"""
 
     # 检查是否在SQLite环境中（测试环境）
@@ -33,10 +35,14 @@ def upgrade():
     )
 
     # 创建预测验证索引
-    op.create_index("idx_predictions_verified", "predictions", ["is_correct", "verified_at"])
+    op.create_index(
+        "idx_predictions_verified", "predictions", ["is_correct", "verified_at"]
+    )
 
     # 创建比赛时间索引（优化即将开始比赛的查询）
-    op.create_index("idx_matches_time_status", "matches", ["match_date", "match_status"])
+    op.create_index(
+        "idx_matches_time_status", "matches", ["match_date", "match_status"]
+    )
 
     # 创建赔率复合索引
     op.create_index(
@@ -72,8 +78,7 @@ def upgrade():
             PARTITION OF raw_scores_data_partitioned
             FOR VALUES FROM ({current_year} +
         {year_offset}) TO ({current_year} +
-        {year_offset +
-        1});
+        {year_offset + 1});
         """
             )
 
@@ -87,7 +92,7 @@ def upgrade():
             DATE_TRUNC('day', created_at) as prediction_date,
             COUNT(*) as total_predictions,
             COUNT(CASE WHEN is_correct = true THEN 1 END) as correct_predictions,
-            ROUND(COUNT(CASE WHEN is_correct =
+            ROUND(COUNT(CASE WHEN is_correct = None
     true THEN 1 END) * 100.0 / COUNT(*), 2) as accuracy_percentage
         FROM predictions
         WHERE is_correct IS NOT NULL
@@ -105,7 +110,7 @@ def upgrade():
             model_version,
             COUNT(*) as total_predictions,
             COUNT(CASE WHEN is_correct = true THEN 1 END) as correct_predictions,
-            ROUND(COUNT(CASE WHEN is_correct =
+            ROUND(COUNT(CASE WHEN is_correct = None
     true THEN 1 END) * 100.0 / COUNT(*), 2) as accuracy_percentage,
             MIN(created_at) as first_prediction,
             MAX(created_at) as last_prediction
@@ -220,6 +225,8 @@ def upgrade():
 
 
 def downgrade():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """回滚数据库架构"""
 
     # 检查是否在SQLite环境中（测试环境）
@@ -231,7 +238,9 @@ def downgrade():
     op.drop_index("idx_predictions_verified", table_name="predictions")
     op.drop_index("idx_matches_time_status", table_name="matches")
     op.drop_index("idx_odds_match_bookmaker_market", table_name="odds")
-    op.drop_index("idx_data_collection_type_status_time", table_name="data_collection_logs")
+    op.drop_index(
+        "idx_data_collection_type_status_time", table_name="data_collection_logs"
+    )
 
     if db_dialect != "sqlite":
         # PostgreSQL环境:删除视图

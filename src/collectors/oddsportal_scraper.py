@@ -4,13 +4,13 @@ from typing import List
 from typing import Dict
 from datetime import datetime
 #!/usr/bin/env python3
-""""
+"""
 OddsPortal爬虫模块
 OddsPortal Scraper Module
 
 提供从OddsPortal网站抓取赔率数据的功能
 支持实时数据流和历史数据获取
-""""
+"""
 
 import asyncio
 import aiohttp
@@ -26,6 +26,8 @@ logger = get_logger(__name__)
 
 @dataclass
 class OddsPortalMatch:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """OddsPortal比赛数据结构"""
 
     match_id: str
@@ -45,15 +47,19 @@ class OddsPortalMatch:
 
 
 class OddsPortalScraper:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """OddsPortal爬虫类"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """"
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """
         初始化OddsPortal爬虫
 
         Args:
             config: 配置参数
-        """"
+        """
         self.config = config or {}
         self.base_url = "https://www.oddsportal.com"
         self.session = None
@@ -131,7 +137,7 @@ class OddsPortalScraper:
     async def _fetch_page(
         self, url: str, max_retries: Optional[int] = None
     ) -> Optional[str]:
-        """"
+        """
         获取网页内容
 
         Args:
@@ -140,7 +146,7 @@ class OddsPortalScraper:
 
         Returns:
             网页内容或None
-        """"
+        """
         if max_retries is None:
             max_retries = self.max_retries
 
@@ -179,7 +185,7 @@ class OddsPortalScraper:
         return None
 
     async def _check_robots_txt(self, path: str) -> bool:
-        """"
+        """
         检查robots.txt是否允许访问
 
         Args:
@@ -187,7 +193,7 @@ class OddsPortalScraper:
 
         Returns:
             是否允许访问
-        """"
+        """
         try:
             robots_url = urljoin(self.base_url, "/robots.txt")
             content = await self._fetch_page(robots_url, max_retries=1)
@@ -203,7 +209,7 @@ class OddsPortalScraper:
             return True  # 出错时默认允许访问
 
     def _parse_match_data(self, html: str, league: str) -> List[OddsPortalMatch]:
-        """"
+        """
         解析比赛数据
 
         Args:
@@ -212,7 +218,7 @@ class OddsPortalScraper:
 
         Returns:
             比赛数据列表
-        """"
+        """
         matches = []
 
         try:
@@ -417,7 +423,7 @@ class OddsPortalScraper:
     async def scrape_league_matches(
         self, league_url: str, league_name: str
     ) -> List[OddsPortalMatch]:
-        """"
+        """
         抓取联赛比赛数据
 
         Args:
@@ -426,7 +432,7 @@ class OddsPortalScraper:
 
         Returns:
             比赛数据列表
-        """"
+        """
         self.logger.info(f"Scraping league matches from: {league_url}")
 
         # 检查robots.txt
@@ -448,12 +454,12 @@ class OddsPortalScraper:
         return matches
 
     async def scrape_today_matches(self) -> List[OddsPortalMatch]:
-        """"
+        """
         抓取今日比赛数据
 
         Returns:
             今日比赛数据列表
-        """"
+        """
         datetime.now().strftime("%Y-%m-%d")
 
         # OddsPortal今日比赛URL（需要根据实际网站结构调整）
@@ -479,12 +485,12 @@ class OddsPortalScraper:
         return matches
 
     async def scrape_live_matches(self) -> List[OddsPortalMatch]:
-        """"
+        """
         抓取实时比赛数据
 
         Returns:
             实时比赛数据列表
-        """"
+        """
         # OddsPortal实时比赛URL（需要根据实际网站结构调整）
         live_url = f"{self.base_url}/football/live-matches"
 
@@ -497,7 +503,7 @@ class OddsPortalScraper:
     def convert_to_data_source_format(
         self, oddsportal_matches: List[OddsPortalMatch]
     ) -> List[MatchData]:
-        """"
+        """
         转换为标准数据源格式
 
         Args:
@@ -505,7 +511,7 @@ class OddsPortalScraper:
 
         Returns:
             标准格式比赛数据
-        """"
+        """
         matches = []
 
         for op_match in oddsportal_matches:
@@ -554,7 +560,7 @@ class OddsPortalScraper:
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
     ) -> List[MatchData]:
-        """"
+        """
         获取比赛列表（实现DataSourceAdapter接口）
 
         Args:
@@ -564,7 +570,7 @@ class OddsPortalScraper:
 
         Returns:
             比赛数据列表
-        """"
+        """
         try:
             # 确定要抓取的联赛
             if league_id == 39:  # 英超
@@ -609,7 +615,7 @@ class OddsPortalScraper:
             return []
 
     async def get_teams(self, league_id: Optional[int] = None) -> List[TeamData]:
-        """"
+        """
         获取球队列表（实现DataSourceAdapter接口）
 
         Args:
@@ -617,7 +623,7 @@ class OddsPortalScraper:
 
         Returns:
             球队数据列表
-        """"
+        """
         # OddsPortal球队数据抓取实现
         teams = []
 
@@ -651,7 +657,7 @@ class OddsPortalScraper:
         return teams
 
     async def get_odds(self, match_id: int) -> List[OddsData]:
-        """"
+        """
         获取赔率数据（实现DataSourceAdapter接口）
 
         Args:
@@ -659,7 +665,7 @@ class OddsPortalScraper:
 
         Returns:
             赔率数据列表
-        """"
+        """
         # OddsPortal赔率数据获取实现
         odds_list = []
 
@@ -682,7 +688,7 @@ class OddsPortalScraper:
 async def scrape_oddsportal_league(
     league_name: str, config: Optional[Dict[str, Any]] = None
 ) -> List[OddsPortalMatch]:
-    """"
+    """
     抓取指定联赛的赔率数据
 
     Args:
@@ -691,7 +697,7 @@ async def scrape_oddsportal_league(
 
     Returns:
         赔赛数据列表
-    """"
+    """
     async with OddsPortalScraper(config) as scraper:
         # 根据联赛名称确定URL
         league_urls = {

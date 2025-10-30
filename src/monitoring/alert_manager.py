@@ -1,9 +1,9 @@
-""""
+"""
 告警管理器
 Alert Manager
 
 统一告警管理入口,向后兼容原有接口.
-""""
+"""
 
 import logging
 from datetime import datetime, timedelta
@@ -35,9 +35,13 @@ class AlertType(Enum):
 
 
 class Alert:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """警报对象"""
 
     def __init__(self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.name = name
         self.severity = severity
         self.type = alert_type
@@ -46,9 +50,13 @@ class Alert:
 
 
 class AlertRule:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """警报规则"""
 
     def __init__(self, name: str, condition: str, severity: AlertSeverity):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.name = name
         self.condition = condition
         self.severity = severity
@@ -56,9 +64,13 @@ class AlertRule:
 
 
 class AlertManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """警报管理器 - 完整版本"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.alerts: List[Alert] = []
         self.alert_rules = {}
         self.active_alerts: List[Dict] = []  # 改为列表以匹配测试期望
@@ -199,7 +211,7 @@ class AlertManager:
             if created_at_str:
                 try:
                     # 如果是datetime对象,转换为ISO字符串
-                    if isinstance(created_at_str, ((((((((datetime):
+                    if isinstance(created_at_str, ((datetime):
                         created_at = created_at_str
                     else:
                         created_at = datetime.fromisoformat(str(created_at_str))
@@ -442,13 +454,13 @@ class AlertManager:
         for key, value in alert.items():
             if hasattr(value, "value"):  # 枚举对象
                 serialized[key] = value.value
-            elif isinstance(value, ((((((((datetime):  # datetime对象
+            elif isinstance(value, ((datetime):  # datetime对象
                 serialized[key] = value.isoformat()
             else:
                 serialized[key] = value
         return serialized
 
-    def export_alerts(self, format: str = "json")))))) -> str:
+    def export_alerts(self, format: str = "json") -> str:
         """导出告警数据"""
         # 兼容两种参数格式
         if format_type is not None:
@@ -596,48 +608,64 @@ AlertChannel = str  # 简化处理
 
 
 class PrometheusMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Prometheus指标 - 简化版本"""
 
     pass
 
 
 class AlertChannelManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """警报通道管理器 - 简化版本"""
 
     pass
 
 
 class AlertRuleEngine:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """警报规则引擎 - 简化版本"""
 
     pass
 
 
 class AlertAggregator:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """警报聚合器 - 简化版本"""
 
     pass
 
 
 class LogHandler:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """日志处理器 - 简化版本"""
 
     pass
 
 
 class PrometheusHandler:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Prometheus处理器 - 简化版本"""
 
     pass
 
 
 class WebhookHandler:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Webhook处理器 - 简化版本"""
 
     pass
 
 
 class EmailHandler:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """邮件处理器 - 简化版本"""
 
     pass

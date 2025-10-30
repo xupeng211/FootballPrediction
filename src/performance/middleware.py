@@ -60,7 +60,6 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """处理请求并收集性能指标"""
         # 采样检查
-        import random
 
         if secrets.randbelow(100) / 100 > self.sample_rate:
             return await call_next(request)
@@ -204,6 +203,8 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         return sorted_data[min(index, len(sorted_data) - 1)]
 
     def reset_stats(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """重置统计信息"""
         self.total_requests = 0
         self.max_concurrent_requests = 0
@@ -212,9 +213,13 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
 
 
 class DatabasePerformanceMiddleware:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """数据库性能监控中间件"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.query_stats: Dict[str, Dict] = {}
         self.slow_queries: List[Dict] = []
         self.total_queries = 0
@@ -270,10 +275,14 @@ class DatabasePerformanceMiddleware:
         for query_type, data in self.query_stats.items():
             stats["query_types"][query_type] = {
                 "count": data["count"],
-                "average_time": (data["total_time"] / data["count"] if data["count"] > 0 else 0),
+                "average_time": (
+                    data["total_time"] / data["count"] if data["count"] > 0 else 0
+                ),
                 "total_time": data["total_time"],
                 "rows_total": data["rows_total"],
-                "error_rate": (data["error_count"] / data["count"] if data["count"] > 0 else 0),
+                "error_rate": (
+                    data["error_count"] / data["count"] if data["count"] > 0 else 0
+                ),
             }
 
         stats["slow_queries"] = self.slow_queries[-10:]  # 最近10个慢查询
@@ -282,9 +291,13 @@ class DatabasePerformanceMiddleware:
 
 
 class CachePerformanceMiddleware:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """缓存性能监控中间件"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.cache_stats = {
             "hits": 0,
             "misses": 0,
@@ -295,6 +308,8 @@ class CachePerformanceMiddleware:
         }
 
     def record_cache_hit(self, duration: float):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """记录缓存命中"""
         self.cache_stats["hits"] += 1
         self.cache_stats["hit_times"].append(duration)
@@ -302,10 +317,14 @@ class CachePerformanceMiddleware:
             self.cache_stats["hit_times"] = self.cache_stats["hit_times"][-1000:]
 
     def record_cache_miss(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """记录缓存未命中"""
         self.cache_stats["misses"] += 1
 
     def record_cache_set(self, duration: float):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """记录缓存设置"""
         self.cache_stats["sets"] += 1
         self.cache_stats["set_times"].append(duration)
@@ -313,13 +332,17 @@ class CachePerformanceMiddleware:
             self.cache_stats["set_times"] = self.cache_stats["set_times"][-1000:]
 
     def record_cache_delete(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """记录缓存删除"""
         self.cache_stats["deletes"] += 1
 
     def get_cache_stats(self) -> Dict:
         """获取缓存统计信息"""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
-        hit_rate = self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
+        hit_rate = (
+            self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
+        )
 
         stats = {
             "hit_rate": hit_rate,
@@ -344,22 +367,29 @@ class CachePerformanceMiddleware:
 
 
 class BackgroundTaskPerformanceMonitor:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """后台任务性能监控器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.task_stats: Dict[str, Dict] = {}
         self.active_tasks: Dict[str, float] = {}
         self.failed_tasks: List[Dict] = []
 
     def start_task(self, task_id: str, task_name: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """开始任务跟踪"""
         self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}
 
     def end_task(self, task_id: str, success: bool = True, error: Optional[str] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """结束任务跟踪"""
         if task_id not in self.active_tasks:
-            return
-
+            return None
         task = self.active_tasks[task_id]
         duration = time.time() - task["start_time"]
         task_name = task["name"]
@@ -410,10 +440,14 @@ class BackgroundTaskPerformanceMonitor:
                 "success_count": data["success_count"],
                 "failure_count": data["failure_count"],
                 "success_rate": (
-                    data["success_count"] / data["total_count"] if data["total_count"] > 0 else 0
+                    data["success_count"] / data["total_count"]
+                    if data["total_count"] > 0
+                    else 0
                 ),
                 "average_time": (
-                    data["total_time"] / data["total_count"] if data["total_count"] > 0 else 0
+                    data["total_time"] / data["total_count"]
+                    if data["total_count"] > 0
+                    else 0
                 ),
                 "min_time": data["min_time"] if data["min_time"] != float("inf") else 0,
                 "max_time": data["max_time"],

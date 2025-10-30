@@ -1,4 +1,5 @@
 from datetime import datetime
+
 """
 增强版预测API - 符合SRS规范
 SRS Compliant Enhanced Prediction API
@@ -45,6 +46,8 @@ class PredictionResult(str, Enum):
 
 @dataclass
 class PredictionMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测性能指标"""
 
     accuracy: float = 0.0
@@ -87,13 +90,17 @@ class PredictionResponse(BaseModel):
     model_info: Dict[str, str] = Field(..., description="模型信息")
     processing_time_ms: float = Field(..., description="处理时间(毫秒)")
     timestamp: datetime = Field(default_factory=datetime.now, description="预测时间")
-    srs_compliance: Dict[str, Union[str, float, bool]] = Field(..., description="SRS合规性信息")
+    srs_compliance: Dict[str, Union[str, float, bool]] = Field(
+        ..., description="SRS合规性信息"
+    )
 
 
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
 
-    matches: List[MatchInfo] = Field(..., description="比赛列表", min_items=1, max_items=1000)
+    matches: List[MatchInfo] = Field(
+        ..., description="比赛列表", min_items=1, max_items=1000
+    )
     include_confidence: bool = Field(True, description="是否包含置信度")
     max_concurrent: int = Field(100, description="最大并发数", ge=1, le=1000)
 
@@ -108,13 +115,19 @@ class BatchPredictionResponse(BaseModel):
     predictions: List[PredictionResponse] = Field(..., description="预测结果列表")
     batch_processing_time_ms: float = Field(..., description="批量处理时间")
     average_response_time_ms: float = Field(..., description="平均响应时间")
-    srs_compliance: Dict[str, Union[str, float, bool]] = Field(..., description="SRS合规性信息")
+    srs_compliance: Dict[str, Union[str, float, bool]] = Field(
+        ..., description="SRS合规性信息"
+    )
 
 
 class EnhancedPredictionService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """增强版预测服务"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.model_trainer = AdvancedModelTrainer()
         self.automl_pipeline = AutoMLPipeline()
         self.metrics = PredictionMetrics()
@@ -233,7 +246,9 @@ class EnhancedPredictionService:
         home_prob = home_strength / (home_strength + away_strength)
 
         # 添加随机性和其他因素
-        home_prob += features["recent_form_diff"] * 0.1 + features["h2h_advantage"] * 0.05
+        home_prob += (
+            features["recent_form_diff"] * 0.1 + features["h2h_advantage"] * 0.05
+        )
         home_prob = max(0.1, min(0.9, home_prob))  # 限制在0.1-0.9之间
 
         # 计算平局和客胜概率
@@ -311,7 +326,9 @@ async def predict_match(
         match_id=request.match_info.match_id,
         prediction=PredictionResult(prediction_data["prediction"]),
         probabilities=prediction_data["probabilities"],
-        confidence=(prediction_data["confidence"] if request.include_confidence else None),
+        confidence=(
+            prediction_data["confidence"] if request.include_confidence else None
+        ),
         feature_analysis=None,  # 可选实现
         model_info=prediction_data["model_info"],
         processing_time_ms=prediction_data["processing_time_ms"],
@@ -360,14 +377,18 @@ async def predict_batch(
     async def predict_single(match_info: MatchInfo) -> Optional[PredictionResponse]:
         async with semaphore:
             try:
-                prediction_data = await prediction_service.generate_prediction(match_info)
+                prediction_data = await prediction_service.generate_prediction(
+                    match_info
+                )
                 return PredictionResponse(
                     success=True,
                     match_id=match_info.match_id,
                     prediction=PredictionResult(prediction_data["prediction"]),
                     probabilities=prediction_data["probabilities"],
                     confidence=(
-                        prediction_data["confidence"] if request.include_confidence else None
+                        prediction_data["confidence"]
+                        if request.include_confidence
+                        else None
                     ),
                     model_info=prediction_data["model_info"],
                     processing_time_ms=prediction_data["processing_time_ms"],
@@ -400,7 +421,7 @@ async def predict_batch(
         total_matches=len(request.matches),
         successful_predictions=successful_predictions,
         failed_predictions=failed_predictions,
-        avg_response_time=avg_response_time
+        avg_response_time=avg_response_time,
     )
 
     # 后台任务:记录批量预测日志

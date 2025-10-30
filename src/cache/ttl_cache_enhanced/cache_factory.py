@@ -13,7 +13,9 @@ from .ttl_cache import TTLCache
 
 
 class CacheFactory:
-    """缓存工厂类
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """缓存工厂类"
 
     提供创建不同类型缓存的静态方法.
     Provides static methods for creating different types of caches.

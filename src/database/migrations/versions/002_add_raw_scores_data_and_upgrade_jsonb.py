@@ -68,7 +68,7 @@ from alembic import op
 # ALTER TABLE raw_match_data ALTER COLUMN raw_data TYPE JSON;
 # ALTER TABLE raw_odds_data ALTER COLUMN raw_data TYPE JSON;
 logger = logging.getLogger(__name__)
-"""add_raw_scores_data_and_upgrade_jsonb
+"""add_raw_scores_data_and_upgrade_jsonb"
 Revision ID: 002_add_raw_scores_data_and_upgrade_jsonb
 Revises: f48d412852cc
 Create Date: 2025-09-10 18:20:30.000000
@@ -101,7 +101,11 @@ def upgrade() -> None:
         ),
         sa.Column(
             "raw_data",
-            (sa.JSON() if db_dialect == "sqlite" else postgresql.JSONB(astext_type=sa.Text())),
+            (
+                sa.JSON()
+                if db_dialect == "sqlite"
+                else postgresql.JSONB(astext_type=sa.Text())
+            ),
             nullable=False,
             comment="原始JSON数据",
         ),
@@ -134,11 +138,17 @@ def upgrade() -> None:
         comment="Bronze层原始比分数据表",
     )
     op.create_index("idx_raw_scores_data_source", "raw_scores_data", ["data_source"])
-    op.create_index("idx_raw_scores_data_collected_at", "raw_scores_data", ["collected_at"])
+    op.create_index(
+        "idx_raw_scores_data_collected_at", "raw_scores_data", ["collected_at"]
+    )
     op.create_index("idx_raw_scores_data_processed", "raw_scores_data", ["processed"])
-    op.create_index("idx_raw_scores_data_external_match", "raw_scores_data", ["external_match_id"])
+    op.create_index(
+        "idx_raw_scores_data_external_match", "raw_scores_data", ["external_match_id"]
+    )
     op.create_index("idx_raw_scores_data_status", "raw_scores_data", ["match_status"])
-    op.create_index("idx_raw_scores_data_score", "raw_scores_data", ["home_score", "away_score"])
+    op.create_index(
+        "idx_raw_scores_data_score", "raw_scores_data", ["home_score", "away_score"]
+    )
     if db_dialect != "sqlite":
         op.create_index(
             "idx_raw_scores_data_jsonb_gin",
@@ -186,8 +196,8 @@ def upgrade() -> None:
             start_date := (year_month || '-01')::DATE;
             end_date := start_date + INTERVAL '1 month';
             -- 创建分区表（仅作为示例,实际实现需要根据具体需求调整）
-            EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I
-                            FOR VALUES FROM (%L) TO (%L)',
+            EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I'
+                            FOR VALUES FROM (%L) TO (%L)','
                            partition_name, table_name, start_date, end_date);
         END;
         $$ LANGUAGE plpgsql;
@@ -235,7 +245,9 @@ def downgrade() -> None:
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
     if db_dialect != "sqlite":
-        op.execute("DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data")
+        op.execute(
+            "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
+        )
         op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
         op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
     else:

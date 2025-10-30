@@ -15,7 +15,9 @@ INT64 = "INT64"
 
 # 类定义
 class FootballFeatureStore:
-    """足球特征存储管理器
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """足球特征存储管理器"
 
     基于 Feast 实现的特征存储,支持:
     - 在线特征查询（Redis）
@@ -27,6 +29,8 @@ class FootballFeatureStore:
 
 
 class MockFeatureStore:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """测试友好的Feast替代实现."""
 
     pass  # TODO: 实现类逻辑

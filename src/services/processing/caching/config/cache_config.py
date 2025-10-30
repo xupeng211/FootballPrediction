@@ -9,6 +9,8 @@ from typing import Dict, Optional
 
 @dataclass
 class CacheConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """缓存配置类"""
 
     # 默认TTL（秒）
@@ -27,6 +29,8 @@ class CacheConfig:
     serializer: str = "json"
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化后处理"""
         if self.ttl_config is None:
             self.ttl_config = {
@@ -43,7 +47,7 @@ CACHE_CONFIG = CacheConfig()
 
 
 def get_cache_ttl(cache_type: str) -> int:
-    """获取指定类型的缓存TTL
+    """获取指定类型的缓存TTL"
 
     Args:
         cache_type: 缓存类型

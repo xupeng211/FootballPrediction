@@ -48,7 +48,9 @@ class PredictionResult(BaseModel):
 class BatchPredictionRequest(BaseModel):
     """批量预测请求"""
 
-    match_ids: List[int] = Field(..., min_length=1, max_length=100, description="比赛ID列表")
+    match_ids: List[int] = Field(
+        ..., min_length=1, max_length=100, description="比赛ID列表"
+    )
     model_version: Optional[str] = Field("default", description="模型版本")
 
 
@@ -279,7 +281,9 @@ async def batch_predict(request: BatchPredictionRequest):
             failed_match_ids=failed_ids,
         )
 
-        logger.info(f"批量预测完成: 成功 {response.success_count}, 失败 {response.failed_count}")
+        logger.info(
+            f"批量预测完成: 成功 {response.success_count}, 失败 {response.failed_count}"
+        )
         return response
 
     except Exception as e:
@@ -334,7 +338,9 @@ async def get_prediction_history(
 @router.post("/{match_id}/verify", response_model=PredictionVerification)
 async def verify_prediction(
     match_id: int,
-    actual_result: str = Query(..., regex="^(home|draw|away)$", description="实际比赛结果"),
+    actual_result: str = Query(
+        ..., regex="^(home|draw|away)$", description="实际比赛结果"
+    ),
 ):
     """
     验证预测结果的准确性
@@ -359,7 +365,9 @@ async def verify_prediction(
         )
 
         is_correct = prediction.predicted_outcome == actual_result
-        accuracy_score = prediction.confidence if is_correct else 1.0 - prediction.confidence
+        accuracy_score = (
+            prediction.confidence if is_correct else 1.0 - prediction.confidence
+        )
 
         verification = PredictionVerification(
             match_id=match_id,
@@ -369,7 +377,9 @@ async def verify_prediction(
             accuracy_score=accuracy_score,
         )
 
-        logger.info(f"验证完成: {'正确' if is_correct else '错误'}, 准确度: {accuracy_score:.2f}")
+        logger.info(
+            f"验证完成: {'正确' if is_correct else '错误'}, 准确度: {accuracy_score:.2f}"
+        )
         return verification
 
     except Exception as e:

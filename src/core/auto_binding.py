@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BindingRule:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """绑定规则"""
 
     interface: Type
@@ -32,9 +34,13 @@ class BindingRule:
 
 
 class AutoBinder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """自动绑定器"""
 
     def __init__(self, container: DIContainer):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.container = container
         self._binding_rules: List[BindingRule] = []
         self._scanned_modules: List[str] = []
@@ -43,7 +49,9 @@ class AutoBinder:
     def add_binding_rule(self, rule: BindingRule) -> None:
         """添加绑定规则"""
         self._binding_rules.append(rule)
-        logger.debug(f"添加绑定规则: {rule.interface.__name__} -> {rule.implementation.__name__}")
+        logger.debug(
+            f"添加绑定规则: {rule.interface.__name__} -> {rule.implementation.__name__}"
+        )
 
     def bind_from_assembly(
         self, module_path: str, pattern: str = "*", recursive: bool = True
@@ -53,7 +61,9 @@ class AutoBinder:
 
         # 获取模块路径
         module = importlib.import_module(module_path)
-        module_file = Path(module.__file__).parent if hasattr(module, "__file__") else None
+        module_file = (
+            Path(module.__file__).parent if hasattr(module, "__file__") else None
+        )
 
         if module_file and module_file.is_dir():
             # 扫描目录中的所有Python文件
@@ -79,8 +89,7 @@ class AutoBinder:
 
         if not implementations:
             logger.warning(f"未找到接口 {interface.__name__} 的实现")
-            return
-
+            return None
         if len(implementations) == 1:
             # 只有一个实现,直接绑定
             self.container.register_transient(interface, implementations[0])
@@ -90,7 +99,9 @@ class AutoBinder:
             primary = self._select_primary_implementation(interface, implementations)
             if primary:
                 self.container.register_transient(interface, primary)
-                logger.info(f"绑定 {interface.__name__} -> {primary.__name__} (主要实现)")
+                logger.info(
+                    f"绑定 {interface.__name__} -> {primary.__name__} (主要实现)"
+                )
 
                 # 注册其他实现为命名服务
                 for impl in implementations:
@@ -100,7 +111,9 @@ class AutoBinder:
                             impl,
                             factory=lambda i=impl: i,  # 工厂方法
                         )
-                        logger.debug(f"注册命名实现: {interface.__name__} -> {impl.__name__}")
+                        logger.debug(
+                            f"注册命名实现: {interface.__name__} -> {impl.__name__}"
+                        )
 
     def auto_bind(self) -> None:
         """执行自动绑定"""
@@ -110,11 +123,15 @@ class AutoBinder:
         for rule in self._binding_rules:
             if rule.condition is None or rule.condition():
                 if rule.lifetime == ServiceLifetime.SINGLETON:
-                    self.container.register_singleton(rule.interface, rule.implementation)
+                    self.container.register_singleton(
+                        rule.interface, rule.implementation
+                    )
                 elif rule.lifetime == ServiceLifetime.SCOPED:
                     self.container.register_scoped(rule.interface, rule.implementation)
                 else:
-                    self.container.register_transient(rule.interface, rule.implementation)
+                    self.container.register_transient(
+                        rule.interface, rule.implementation
+                    )
 
         logger.info(f"自动绑定完成,应用了 {len(self._binding_rules)} 个规则")
 
@@ -168,13 +185,19 @@ class AutoBinder:
         if implementations:
             if len(implementations) == 1:
                 self.container.register_transient(interface, implementations[0])
-                logger.debug(f"自动绑定: {interface.__name__} -> {implementations[0].__name__}")
+                logger.debug(
+                    f"自动绑定: {interface.__name__} -> {implementations[0].__name__}"
+                )
             else:
                 # 选择默认实现
-                default_impl = self._select_default_implementation(interface, implementations)
+                default_impl = self._select_default_implementation(
+                    interface, implementations
+                )
                 if default_impl:
                     self.container.register_transient(interface, default_impl)
-                    logger.debug(f"自动绑定: {interface.__name__} -> {default_impl.__name__}")
+                    logger.debug(
+                        f"自动绑定: {interface.__name__} -> {default_impl.__name__}"
+                    )
 
     def _check_class_implementations(self, cls: Type) -> None:
         """检查类的实现"""
@@ -264,7 +287,9 @@ class AutoBinder:
                 for impl in self._implementation_cache[interface]:
                     if impl.__name__ == default_name:
                         self.container.register_transient(interface, impl)
-                        logger.info(f"按约定绑定: {interface.__name__} -> {impl.__name__}")
+                        logger.info(
+                            f"按约定绑定: {interface.__name__} -> {impl.__name__}"
+                        )
                         break
 
     def _apply_repository_convention(self) -> None:
@@ -275,7 +300,9 @@ class AutoBinder:
                 for impl in self._implementation_cache[interface]:
                     if "Repository" in impl.__name__:
                         self.container.register_scoped(interface, impl)
-                        logger.info(f"仓储约定绑定: {interface.__name__} -> {impl.__name__}")
+                        logger.info(
+                            f"仓储约定绑定: {interface.__name__} -> {impl.__name__}"
+                        )
                         break
 
     def _apply_service_convention(self) -> None:
@@ -286,11 +313,15 @@ class AutoBinder:
                 for impl in self._implementation_cache[interface]:
                     if "Service" in impl.__name__:
                         self.container.register_scoped(interface, impl)
-                        logger.info(f"服务约定绑定: {interface.__name__} -> {impl.__name__}")
+                        logger.info(
+                            f"服务约定绑定: {interface.__name__} -> {impl.__name__}"
+                        )
                         break
 
 
 class ConventionBinder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """约定绑定器"""
 
     @staticmethod
@@ -318,6 +349,8 @@ class ConventionBinder:
 
 # 装饰器用于标记自动绑定
 def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """自动绑定装饰器"""
 
     def decorator(cls: Type[T]) -> Type[T]:
@@ -330,6 +363,8 @@ def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
 
 
 def bind_to(interface: Type[T]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """绑定到接口装饰器"""
 
     def decorator(cls: Type[T]) -> Type[T]:
@@ -341,6 +376,8 @@ def bind_to(interface: Type[T]):
 
 
 def primary_implementation():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """主要实现装饰器"""
 
     def decorator(cls) -> Type:

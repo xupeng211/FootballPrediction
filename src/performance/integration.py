@@ -21,15 +21,23 @@ logger = get_logger(__name__)
 
 
 class PerformanceMonitoringIntegration:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """性能监控集成器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化性能监控集成"""
         self.settings = get_settings()
         # 使用getattr访问Pydantic Settings属性,提供默认值
         self.enabled = getattr(self.settings, "PERFORMANCE_MONITORING_ENABLED", True)
-        self.sample_rate = float(getattr(self.settings, "PERFORMANCE_MONITORING_SAMPLE_RATE", 1.0))
-        self.profiling_enabled = getattr(self.settings, "PERFORMANCE_PROFILING_ENABLED", False)
+        self.sample_rate = float(
+            getattr(self.settings, "PERFORMANCE_MONITORING_SAMPLE_RATE", 1.0)
+        )
+        self.profiling_enabled = getattr(
+            self.settings, "PERFORMANCE_PROFILING_ENABLED", False
+        )
 
         self._monitoring_middleware = None
         self._db_monitor = None
@@ -40,8 +48,7 @@ class PerformanceMonitoringIntegration:
         """集成性能监控到FastAPI应用"""
         if not self.enabled:
             logger.info("Performance monitoring is disabled")
-            return
-
+            return None
         try:
             # 导入中间件
             from .api import router as performance_router
@@ -66,8 +73,7 @@ class PerformanceMonitoringIntegration:
     def initialize_database_monitoring(self) -> None:
         """初始化数据库监控"""
         if not self.enabled:
-            return
-
+            return None
         try:
             from .profiler import DatabaseQueryProfiler, get_profiler
 
@@ -85,8 +91,7 @@ class PerformanceMonitoringIntegration:
     def initialize_cache_monitoring(self) -> None:
         """初始化缓存监控"""
         if not self.enabled:
-            return
-
+            return None
         try:
             # self._cache_monitor = CachePerformanceMiddleware()
 
@@ -98,8 +103,7 @@ class PerformanceMonitoringIntegration:
     def initialize_task_monitoring(self) -> None:
         """初始化任务监控"""
         if not self.enabled:
-            return
-
+            return None
         try:
             # self._task_monitor = BackgroundTaskPerformanceMonitor()
 
@@ -112,8 +116,7 @@ class PerformanceMonitoringIntegration:
         """启动性能分析"""
         if not self.profiling_enabled:
             logger.warning("Performance profiling is disabled")
-            return
-
+            return None
         try:
             from .profiler import start_profiling
 
@@ -220,8 +223,7 @@ class PerformanceMonitoringIntegration:
     def setup_alerting(self) -> None:
         """设置告警"""
         if not self.enabled:
-            return
-
+            return None
         try:
             # Note: 需要实现告警设置
             # 实现内容:

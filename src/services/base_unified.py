@@ -23,7 +23,9 @@ class BaseService(ABC):
     - 操作追踪
     """
 
-    def __init__(self, name: Optional[str] = None, db_manager: Optional[DatabaseManager] = None):
+    def __init__(
+        self, name: Optional[str] = None, db_manager: Optional[DatabaseManager] = None
+    ):
         """
         初始化基础服务
 
@@ -76,8 +78,7 @@ class BaseService(ABC):
         子类可以重写此方法来实现自定义清理逻辑
         """
         if not self._initialized:
-            return
-
+            return None
         self.logger.info(f"正在关闭服务: {self.name}")
         try:
             # 停止服务
@@ -121,8 +122,7 @@ class BaseService(ABC):
     async def stop(self) -> None:
         """停止服务"""
         if not self._running:
-            return
-
+            return None
         self.logger.info(f"正在停止服务: {self.name}")
         try:
             # 执行自定义停止逻辑
@@ -141,6 +141,8 @@ class BaseService(ABC):
         return self.db_manager.get_async_session()
 
     def get_sync_session(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """获取同步数据库会话"""
         return self.db_manager.get_session()
 

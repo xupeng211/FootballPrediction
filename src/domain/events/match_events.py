@@ -16,6 +16,8 @@ class MatchStartedEvent(DomainEvent):
     """比赛开始事件"""
 
     def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.home_team_id = home_team_id
@@ -65,6 +67,8 @@ class MatchCancelledEvent(DomainEvent):
     """比赛取消事件"""
 
     def __init__(self, match_id: int, reason: str, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.reason = reason
@@ -77,6 +81,8 @@ class MatchPostponedEvent(DomainEvent):
     """比赛延期事件"""
 
     def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.new_date = new_date

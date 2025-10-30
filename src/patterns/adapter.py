@@ -1,8 +1,8 @@
-""""
+"""
 适配器模式实现
 
 用于集成外部系统和API
-""""
+"""
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -17,6 +17,8 @@ from src.core.logging import get_logger
 
 @dataclass
 class ExternalData:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """外部数据通用格式"""
 
     source: str
@@ -43,6 +45,8 @@ class APIAdapter(ABC):
     """API适配器抽象基类"""
 
     def __init__(self, external_api: ExternalAPI):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.external_api = external_api
         self.logger = get_logger(f"adapter.{self.__class__.__name__}")
 
@@ -66,6 +70,8 @@ class FootballAPIImpl(ExternalAPI):
     """足球API实现示例"""
 
     def __init__(self, api_key: str, base_url: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.football")
@@ -122,6 +128,8 @@ class WeatherAPIImpl(ExternalAPI):
     """天气API实现示例"""
 
     def __init__(self, api_key: str, base_url: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.weather")
@@ -164,6 +172,8 @@ class OddsAPIImpl(ExternalAPI):
     """赔率API实现示例"""
 
     def __init__(self, api_key: str, base_url: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.odds")
@@ -255,9 +265,9 @@ class FootballApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换足球数据格式"""
-        if isinstance(raw_data, ((((((((dict):
+        if isinstance(raw_data, ((dict):
             return {
-                "id": raw_data.get("id"), "name": raw_data.get("name"))))))))))).get("fullTime")).get("home"),
+                "id": raw_data.get("id"), "name": raw_data.get("name")))))).get("fullTime")).get("home"),
                     "away": raw_data.get("score", {}).get("fullTime", {}).get("away"),
                 },
                 "status": raw_data.get("status"),
@@ -299,7 +309,7 @@ class WeatherApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换天气数据格式"""
-        if isinstance(raw_data, ((((((((dict):
+        if isinstance(raw_data, ((dict):
             main = raw_data.get("main", {})))))
             weather = raw_data.get("weather"))[0]
             wind = raw_data.get("wind"))
@@ -355,7 +365,7 @@ class OddsApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换赔率数据格式"""
-        if isinstance(raw_data, ((((((((dict):
+        if isinstance(raw_data, ((dict):
             bookmakers = raw_data.get("bookmakers", [])))))
             odds_data = {}
 
@@ -381,6 +391,8 @@ class OddsApiAdapter(APIAdapter):
 
 
 class AdapterFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """适配器工厂"""
 
     _adapters: Dict[str, type] = {
@@ -399,18 +411,26 @@ class AdapterFactory:
 
     @classmethod
     def register_adapter(cls, adapter_type: str, adapter_class: type):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """注册新的适配器类型"""
         cls._adapters[adapter_type] = adapter_class
 
 
 class UnifiedDataCollector:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """统一数据收集器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.adapters: Dict[str, APIAdapter] = {}
         self.logger = get_logger("collector.unified")
 
     def add_adapter(self, name: str, adapter: APIAdapter):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """添加适配器"""
         self.adapters[name] = adapter
         self.logger.info(f"Added adapter: {name}")
@@ -423,7 +443,7 @@ class UnifiedDataCollector:
         adapter_names = []
 
         for name, adapter in self.adapters.items():
-            if isinstance(adapter, ((((((((FootballApiAdapter):
+            if isinstance(adapter, ((FootballApiAdapter):
                 tasks.append(adapter.get_match_data(match_id))
                 adapter_names.append(name)
             elif isinstance(adapter, OddsApiAdapter))))):
@@ -455,7 +475,7 @@ class UnifiedDataCollector:
     async def collect_weather_data(self)))) -> Optional[ExternalData]:
         """收集天气数据"""
         for name)):
-            if isinstance(adapter, ((((((((WeatherApiAdapter):
+            if isinstance(adapter, ((WeatherApiAdapter):
                 try:
                     return await adapter.get_weather_data(location, date)))))
                 except (

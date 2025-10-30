@@ -2,6 +2,7 @@ from typing import List
 from typing import Optional
 from typing import Dict
 from typing import Any
+
 #!/usr/bin/env python3
 """
 EV计算和投注策略模块
@@ -64,6 +65,8 @@ class RiskLevel(Enum):
 
 @dataclass
 class BettingOdds:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """赔率数据结构"""
 
     home_win: float
@@ -85,6 +88,8 @@ class BettingOdds:
 
 @dataclass
 class PredictionProbabilities:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测概率数据结构"""
 
     home_win: float
@@ -101,6 +106,8 @@ class PredictionProbabilities:
     prediction_time: datetime = None
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.prediction_time is None:
             self.prediction_time = datetime.now()
         # 确保概率总和为1（针对主要结果）
@@ -114,6 +121,8 @@ class PredictionProbabilities:
 
 @dataclass
 class EVCalculation:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """EV计算结果"""
 
     bet_type: BetType
@@ -134,6 +143,8 @@ class EVCalculation:
 
 @dataclass
 class BettingStrategy:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """投注策略配置"""
 
     name: str
@@ -152,9 +163,13 @@ class BettingStrategy:
 
 
 class EVCalculator:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """期望价值计算器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.config = get_config()
         self.redis_manager = get_redis_manager()
         self.logger = logger
@@ -178,7 +193,7 @@ class EVCalculator:
     def calculate_kelly_fraction(
         self, ev: float, odds: float, probability: float, max_fraction: float = 0.25
     ) -> float:
-        """计算Kelly准则投注比例
+        """计算Kelly准则投注比例"
 
         Kelly公式: f* = (bp - q) / b
         其中: b = 赔率 - 1, p = 胜率, q = 败率
@@ -199,7 +214,9 @@ class EVCalculator:
 
         return kelly
 
-    def assess_risk_level(self, probability: float, odds: float, ev: float) -> RiskLevel:
+    def assess_risk_level(
+        self, probability: float, odds: float, ev: float
+    ) -> RiskLevel:
         """评估风险等级"""
         if ev < 0:
             return RiskLevel.VERY_HIGH
@@ -214,7 +231,9 @@ class EVCalculator:
         else:
             return RiskLevel.VERY_HIGH
 
-    def calculate_value_rating(self, ev: float, probability: float, odds: float) -> float:
+    def calculate_value_rating(
+        self, ev: float, probability: float, odds: float
+    ) -> float:
         """计算价值评级 (0-10分)"""
         if ev < 0:
             return 0.0
@@ -234,7 +253,9 @@ class EVCalculator:
             return 0.0
         return ev * kelly_fraction * 100  # 转换为百分比
 
-    def calculate_bust_probability(self, kelly_fraction: float, probability: float) -> float:
+    def calculate_bust_probability(
+        self, kelly_fraction: float, probability: float
+    ) -> float:
         """计算破产概率（简化版本）"""
         if kelly_fraction <= 0:
             return 0.0
@@ -319,9 +340,13 @@ class EVCalculator:
 
 
 class BettingStrategyOptimizer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """投注策略优化器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.logger = logger
         self.strategies = self._initialize_strategies()
 
@@ -430,10 +455,14 @@ class BettingStrategyOptimizer:
                 total_stake += adjusted_stake
 
         # 计算组合指标
-        expected_return = sum(bet.suggested_stake * (1 + bet.ev) for bet in optimized_bets)
+        expected_return = sum(
+            bet.suggested_stake * (1 + bet.ev) for bet in optimized_bets
+        )
 
         portfolio_risk = self._assess_portfolio_risk(optimized_bets)
-        optimization_score = self._calculate_optimization_score(optimized_bets, strategy)
+        optimization_score = self._calculate_optimization_score(
+            optimized_bets, strategy
+        )
 
         return {
             "recommended_bets": [asdict(bet) for bet in optimized_bets],
@@ -484,9 +513,13 @@ class BettingStrategyOptimizer:
 
 
 class BettingRecommendationEngine:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """投注建议引擎"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.ev_calculator = EVCalculator()
         self.optimizer = BettingStrategyOptimizer()
         self.logger = logger
@@ -517,10 +550,14 @@ class BettingRecommendationEngine:
 
         # 大小球投注（如果有数据）
         if probabilities.over_2_5 and odds.over_2_5:
-            calculations.append((BetType.OVER_2_5, probabilities.over_2_5, odds.over_2_5))
+            calculations.append(
+                (BetType.OVER_2_5, probabilities.over_2_5, odds.over_2_5)
+            )
 
         if probabilities.under_2_5 and odds.under_2_5:
-            calculations.append((BetType.UNDER_2_5, probabilities.under_2_5, odds.under_2_5))
+            calculations.append(
+                (BetType.UNDER_2_5, probabilities.under_2_5, odds.under_2_5)
+            )
 
         # BTTS投注（如果有数据）
         if probabilities.btts_yes and odds.btts_yes:
@@ -528,14 +565,18 @@ class BettingRecommendationEngine:
 
         # 计算每个投注类型的EV
         for bet_type, prob, odd in calculations:
-            ev_calc = self.ev_calculator.calculate_comprehensive_ev(bet_type, prob, odd, strategy)
+            ev_calc = self.ev_calculator.calculate_comprehensive_ev(
+                bet_type, prob, odd, strategy
+            )
             ev_calculations.append(ev_calc)
 
         # 优化投注组合
         portfolio = self.optimizer.optimize_portfolio(ev_calculations, strategy)
 
         # 生成综合建议
-        overall_recommendation = self._generate_overall_recommendation(portfolio, strategy)
+        overall_recommendation = self._generate_overall_recommendation(
+            portfolio, strategy
+        )
 
         result = {
             "match_id": match_id,
@@ -598,7 +639,9 @@ class BettingRecommendationEngine:
         """检查SRS合规性"""
         srs_requirements = {
             "min_ev_threshold_met": all(
-                calc.ev >= 0.05 for calc in ev_calculations if calc.recommendation != "avoid"
+                calc.ev >= 0.05
+                for calc in ev_calculations
+                if calc.recommendation != "avoid"
             ),
             "max_risk_level_met": all(
                 calc.risk_level.value <= 2
@@ -606,7 +649,9 @@ class BettingRecommendationEngine:
                 if calc.recommendation != "avoid"
             ),
             "min_confidence_met": all(
-                calc.confidence >= 0.6 for calc in ev_calculations if calc.recommendation != "avoid"
+                calc.confidence >= 0.6
+                for calc in ev_calculations
+                if calc.recommendation != "avoid"
             ),
             "kelly_criterion_used": portfolio["strategy_used"] != "unknown",
             "risk_management_enabled": True,
@@ -625,7 +670,9 @@ class BettingRecommendationEngine:
 
         return srs_requirements
 
-    def _generate_risk_summary(self, ev_calculations: List[EVCalculation]) -> Dict[str, Any]:
+    def _generate_risk_summary(
+        self, ev_calculations: List[EVCalculation]
+    ) -> Dict[str, Any]:
         """生成风险摘要"""
         if not ev_calculations:
             return {"overall_risk": "low", "risk_factors": []}
@@ -652,7 +699,9 @@ class BettingRecommendationEngine:
             "total_bets_analyzed": len(ev_calculations),
         }
 
-    async def _cache_recommendations(self, match_id: str, recommendations: Dict[str, Any]):
+    async def _cache_recommendations(
+        self, match_id: str, recommendations: Dict[str, Any]
+    ):
         """缓存投注建议"""
         try:
             cache_key = f"betting_recommendations:{match_id}"

@@ -13,7 +13,6 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..cqrs.application import CQRSServiceFactory
-from src.core.config import Config 
 
 router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 
@@ -97,7 +96,9 @@ async def create_prediction(
     )
 
 
-@router.put("/predictions/{prediction_id}", response_model=CommandResponse, summary="更新预测")
+@router.put(
+    "/predictions/{prediction_id}", response_model=CommandResponse, summary="更新预测"
+)
 async def update_prediction(
     prediction_id: int,
     request: UpdatePredictionRequest,
@@ -121,8 +122,12 @@ async def update_prediction(
     )
 
 
-@router.delete("/predictions/{prediction_id}", response_model=CommandResponse, summary="删除预测")
-async def delete_prediction(prediction_id: int, service=Depends(get_prediction_cqrs_service)):
+@router.delete(
+    "/predictions/{prediction_id}", response_model=CommandResponse, summary="删除预测"
+)
+async def delete_prediction(
+    prediction_id: int, service=Depends(get_prediction_cqrs_service)
+):
     """删除预测"""
     result = await service.delete_prediction(prediction_id)
 
@@ -163,12 +168,15 @@ async def get_cqrs_root():
 
 # 预测查询端点
 @router.get("/predictions/{prediction_id}", summary="获取预测详情")
-async def get_prediction(prediction_id: int, service=Depends(get_prediction_cqrs_service)):
+async def get_prediction(
+    prediction_id: int, service=Depends(get_prediction_cqrs_service)
+):
     """获取预测详情"""
     prediction = await service.get_prediction_by_id(prediction_id)
     if not prediction:
         raise HTTPException(
-            status_code=404, detail="预测不存在"  # TODO: 将魔法数字 404 提取为常量
+            status_code=404,
+            detail="预测不存在",  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
     return prediction.to_dict()
@@ -210,7 +218,8 @@ async def get_user_statistics(
     stats = await service.get_user_stats(user_id, include_predictions)
     if not stats:
         raise HTTPException(
-            status_code=404, detail="用户统计不存在"  # TODO: 将魔法数字 404 提取为常量
+            status_code=404,
+            detail="用户统计不存在",  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
     return stats.to_dict()
@@ -218,7 +227,9 @@ async def get_user_statistics(
 
 # 比赛命令端点
 @router.post("/matches", response_model=CommandResponse, summary="创建比赛")
-async def create_match(request: CreateMatchRequest, service=Depends(get_match_cqrs_service)):
+async def create_match(
+    request: CreateMatchRequest, service=Depends(get_match_cqrs_service)
+):
     """创建新的比赛"""
     result = await service.create_match(
         home_team=request.home_team,
@@ -247,7 +258,8 @@ async def get_match(
     match = await service.get_match_by_id(match_id, include_predictions)
     if not match:
         raise HTTPException(
-            status_code=404, detail="比赛不存在"  # TODO: 将魔法数字 404 提取为常量
+            status_code=404,
+            detail="比赛不存在",  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
     return match.to_dict()
@@ -275,7 +287,9 @@ async def get_upcoming_matches(
 
 # 用户命令端点
 @router.post("/users", response_model=CommandResponse, summary="创建用户")
-async def create_user(request: CreateUserRequest, service=Depends(get_user_cqrs_service)):
+async def create_user(
+    request: CreateUserRequest, service=Depends(get_user_cqrs_service)
+):
     """创建新用户"""
     result = await service.create_user(
         username=request.username,
@@ -321,6 +335,7 @@ async def get_cqrs_system_status():
 # 预测命令端点
 # 预测命令端点
 # 预测命令端点
+
 
 # 预测命令端点
 # 预测命令端点

@@ -1,5 +1,5 @@
 from datetime import datetime
-from src.core.config import get_config 
+
 """
 适配器API路由
 Adapter API Router
@@ -23,6 +23,8 @@ adapter_factory = None
 
 
 def get_registry():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """获取适配器注册表实例 - 支持测试mock"""
     global adapter_registry
     if adapter_registry is None:
@@ -31,6 +33,8 @@ def get_registry():
 
 
 def get_factory():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """获取适配器工厂实例 - 支持测试mock"""
     global adapter_factory
     if adapter_factory is None:
@@ -379,7 +383,9 @@ async def get_adapter_configs():
                     "config": {"feed_url": "https://opta feeds"},
                 },
             },
-            "groups": {"group1": {"primary": "adapter1", "fallback_strategy": "round_robin"}},
+            "groups": {
+                "group1": {"primary": "adapter1", "fallback_strategy": "round_robin"}
+            },
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -585,7 +591,9 @@ async def get_football_teams(
 
 
 @router.get("/football/teams/{team_id}/players")
-async def get_team_players(team_id: int, season: Optional[int] = Query(None, description="赛季")):
+async def get_team_players(
+    team_id: int, season: Optional[int] = Query(None, description="赛季")
+):
     """获取球队球员列表"""
     try:
         # 模拟球员数据
@@ -651,7 +659,9 @@ async def demo_data_transformation():
     """演示数据转换功能"""
     try:
         return DemoTransformationResponse(
-            input_data={"raw_match": {"home": "Man Utd", "away": "LFC", "score": "3-0"}},
+            input_data={
+                "raw_match": {"home": "Man Utd", "away": "LFC", "score": "3-0"}
+            },
             transformed_data={
                 "match_id": 123,
                 "home_team": "Manchester United",

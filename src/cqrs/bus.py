@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class CommandBus:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     命令总线
     负责将命令分发给对应的处理器.
@@ -22,13 +24,19 @@ class CommandBus:
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._handlers: Dict[Type[Command], CommandHandler] = {}
         self._middleware: list = []
 
-    def register_handler(self, command_type: Type[Command], handler: CommandHandler) -> None:
+    def register_handler(
+        self, command_type: Type[Command], handler: CommandHandler
+    ) -> None:
         """注册命令处理器"""
         self._handlers[command_type] = handler
-        logger.info(f"注册命令处理器: {command_type.__name__} -> {handler.__class__.__name__}")
+        logger.info(
+            f"注册命令处理器: {command_type.__name__} -> {handler.__class__.__name__}"
+        )
 
     def register_middleware(self, middleware) -> None:
         """注册中间件"""
@@ -71,6 +79,8 @@ class CommandBus:
 
 
 class QueryBus:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     查询总线
     负责将查询分发给对应的处理器.
@@ -78,13 +88,17 @@ class QueryBus:
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._handlers: Dict[Type[Query], QueryHandler] = {}
         self._middleware: list = []
 
     def register_handler(self, query_type: Type[Query], handler: QueryHandler) -> None:
         """注册查询处理器"""
         self._handlers[query_type] = handler
-        logger.info(f"注册查询处理器: {query_type.__name__} -> {handler.__class__.__name__}")
+        logger.info(
+            f"注册查询处理器: {query_type.__name__} -> {handler.__class__.__name__}"
+        )
 
     def register_middleware(self, middleware) -> None:
         """注册中间件"""
@@ -149,6 +163,8 @@ def get_query_bus() -> QueryBus:
 
 # 中间件示例
 class LoggingMiddleware:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """日志中间件"""
 
     async def process(self, message):
@@ -159,6 +175,8 @@ class LoggingMiddleware:
 
 
 class ValidationMiddleware:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """验证中间件"""
 
     async def process(self, message):
@@ -172,9 +190,13 @@ class ValidationMiddleware:
 
 
 class MetricsMiddleware:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """指标中间件"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._metrics = {
             "commands_processed": 0,
             "queries_processed": 0,

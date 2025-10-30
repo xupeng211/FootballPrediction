@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..models.predictions import Predictions
-from .base import BaseRepository 
+from .base import BaseRepository
 
 # 类型别名
 Prediction = Predictions
@@ -22,6 +22,8 @@ Prediction = Predictions
 
 # 预测状态常量
 class PredictionStatus:
+    """类文档字符串"""
+    pass  # 添加pass语句
     PENDING = "pending"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
@@ -37,6 +39,8 @@ class PredictionRepository(BaseRepository[Predictions]):
     """
 
     def __init__(self, db_manager=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(Predictions, db_manager)
 
     # ========================================
@@ -66,13 +70,9 @@ class PredictionRepository(BaseRepository[Predictions]):
         if status:
             filters["status"] = status if isinstance(status, str) else str(status)
 
-        return await self.find_by(
-            filters=filters, limit=limit
-        )
+        return await self.find_by(filters=filters, limit=limit)
 
-    async def get_by_user(
-        self, user_id: str
-    ) -> List[Prediction]:
+    async def get_by_user(self, user_id: str) -> List[Prediction]:
         """
         获取指定用户的预测
 
@@ -87,15 +87,13 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"user_id": user_id}
         if status:
-            filters["status"] = status if isinstance(status, PredictionStatus) else str(status)
+            filters["status"] = (
+                status if isinstance(status, PredictionStatus) else str(status)
+            )
 
-        return await self.find_by(
-            filters=filters
-        )
+        return await self.find_by(filters=filters)
 
-    async def get_by_status(
-        self, status: PredictionStatus
-    ) -> List[Prediction]:
+    async def get_by_status(self, status: PredictionStatus) -> List[Prediction]:
         """
         根据状态获取预测
 
@@ -108,8 +106,12 @@ class PredictionRepository(BaseRepository[Predictions]):
             预测列表
         """
         return await self.find_by(
-            filters={"status": status if isinstance(status, PredictionStatus) else str(status)},
-            limit=limit
+            filters={
+                "status": status
+                if isinstance(status, PredictionStatus)
+                else str(status)
+            },
+            limit=limit,
         )
 
     async def get_pending_predictions(
@@ -125,14 +127,13 @@ class PredictionRepository(BaseRepository[Predictions]):
         Returns:
             待处理预测列表
         """
-        return await self.get_by_status(
-            status=PredictionStatus.PENDING
-        )
+        return await self.get_by_status(status=PredictionStatus.PENDING)
 
     async def get_completed_predictions(
-        self, days: int = 7,
+        self,
+        days: int = 7,
         limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None
+        session: Optional[AsyncSession] = None,
     ) -> List[Prediction]:
         """
         获取已完成的预测
@@ -264,7 +265,9 @@ class PredictionRepository(BaseRepository[Predictions]):
         if points_earned is not None:
             update_data["points_earned"] = points_earned
 
-        return await self.update(obj_id=prediction_id, obj_data=update_data, session=session)
+        return await self.update(
+            obj_id=prediction_id, obj_data=update_data, session=session
+        )
 
     async def cancel_prediction(
         self,
@@ -291,7 +294,9 @@ class PredictionRepository(BaseRepository[Predictions]):
         if reason:
             update_data["cancellation_reason"] = reason
 
-        return await self.update(obj_id=prediction_id, obj_data=update_data, session=session)
+        return await self.update(
+            obj_id=prediction_id, obj_data=update_data, session=session
+        )
 
     # ========================================
     # 统计方法
@@ -372,7 +377,9 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 计算准确率
             if stats["completed"] > 0 and (stats["correct"] + stats["wrong"]) > 0:
-                stats["accuracy"] = stats["correct"] / (stats["correct"] + stats["wrong"])
+                stats["accuracy"] = stats["correct"] / (
+                    stats["correct"] + stats["wrong"]
+                )
 
             # 计算平均置信度
             if confidence_count > 0:
@@ -447,8 +454,12 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 计算平均值
             if len(predictions) > 0:
-                summary["avg_predicted_home_score"] = total_home_score / len(predictions)
-                summary["avg_predicted_away_score"] = total_away_score / len(predictions)
+                summary["avg_predicted_home_score"] = total_home_score / len(
+                    predictions
+                )
+                summary["avg_predicted_away_score"] = total_away_score / len(
+                    predictions
+                )
 
             if confidence_count > 0:
                 summary["avg_confidence"] = total_confidence / confidence_count
@@ -480,9 +491,9 @@ class PredictionRepository(BaseRepository[Predictions]):
                 select(
                     Prediction.user_id,
                     func.count(Prediction.id).label("total_predictions"),
-                    func.sum(func.case([(Prediction.is_correct is True, 1)], else_=0)).label(
-                        "correct_predictions"
-                    ),
+                    func.sum(
+                        func.case([(Prediction.is_correct is True, 1)], else_=0)
+                    ).label("correct_predictions"),
                     func.sum(Prediction.points_earned).label("total_points"),
                     func.avg(Prediction.confidence).label("avg_confidence"),
                 )

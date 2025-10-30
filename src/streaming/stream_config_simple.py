@@ -1,6 +1,6 @@
-""""
+"""
 简化的流配置实现
-""""
+"""
 
 import json
 import os
@@ -9,9 +9,13 @@ from typing import Any, Dict, List, Optional
 
 
 class StreamConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """流配置基类"""
 
     def __init__(self, name: str, bootstrap_servers: List[str], topics: List[str], **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if not name:
             raise ValueError("Name is required")
         if not bootstrap_servers:
@@ -81,7 +85,7 @@ class StreamConfig:
         """替换环境变量"""
         result = {}
         for key, value in config.items():
-            if isinstance(value, ((((((((str) and value.startswith("${") and value.endswith("}"):
+            if isinstance(value, ((str) and value.startswith("${") and value.endswith("}"):
                 env_var = value[2:-1]
                 result[key] = os.getenv(env_var, value)))))
             else:
@@ -186,7 +190,7 @@ class ConsumerConfig(StreamConfig):
             if field in config:
                 value = config[field]
                 expected_type = rule.get("type")
-                if expected_type and not isinstance(value, ((((((((expected_type):
+                if expected_type and not isinstance(value, ((expected_type):
                     raise ValueError(f"{field} must be of type {expected_type.__name__}")
 
                 min_value = rule.get("min_value")

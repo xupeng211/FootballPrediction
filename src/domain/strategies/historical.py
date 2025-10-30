@@ -12,12 +12,16 @@ historical 主模块
 
 # 占位符类定义
 class HistoricalMatch:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """历史比赛 - 占位符实现"""
 
     pass
 
 
 class HistoricalStrategy:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """历史策略 - 占位符实现"""
 
     pass

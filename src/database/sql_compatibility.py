@@ -11,6 +11,8 @@ from sqlalchemy.engine import Engine
 
 
 class Compatibility:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """SQL兼容性支持"""
 
     @staticmethod
@@ -27,9 +29,13 @@ class Compatibility:
 
 
 class CompatibleQueryBuilder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """兼容的SQL查询构建器"""
 
     def __init__(self, dialect: str = "sqlite"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.dialect = dialect
 
     def build_insert_query(self, table: str, data: Dict[str, Any]) -> str:
@@ -38,16 +44,22 @@ class CompatibleQueryBuilder:
         placeholders = ", ".join([f":{key}" for key in data.keys()])
         return f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
 
-    def build_update_query(self, table: str, data: Dict[str, Any], where_clause: str) -> str:
+    def build_update_query(
+        self, table: str, data: Dict[str, Any], where_clause: str
+    ) -> str:
         """构建更新查询"""
         set_clause = ", ".join([f"{key} = :{key}" for key in data.keys()])
         return f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
 
 
 class SQLCompatibilityHelper:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """SQL兼容性助手"""
 
     def __init__(self, engine: Engine):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.engine = engine
         self.db_type = get_db_type_from_engine(engine)
 

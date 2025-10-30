@@ -2,14 +2,14 @@ from typing import Optional
 from typing import Dict
 from typing import Union
 from typing import Any
-""""
+"""
 实时事件定义 - 足球预测系统
 
 Realtime Events Definition - Football Prediction System
 
 定义所有实时事件的类型和数据结构
 Define all realtime event types and data structures
-""""
+"""
 
 from datetime import datetime
 from enum import Enum
@@ -53,6 +53,8 @@ class EventType(str, Enum):
 
 @dataclass
 class PredictionEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测事件数据"""
 
     prediction_id: int
@@ -75,6 +77,8 @@ class PredictionEvent:
 
 @dataclass
 class MatchEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛事件数据"""
 
     match_id: int
@@ -103,6 +107,8 @@ class MatchEvent:
 
 @dataclass
 class OddsEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """赔率事件数据"""
 
     match_id: int
@@ -127,6 +133,8 @@ class OddsEvent:
 
 @dataclass
 class SystemAlertEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """系统告警事件数据"""
 
     alert_type: str  # error, warning, info
@@ -149,6 +157,8 @@ class SystemAlertEvent:
 
 @dataclass
 class AnalyticsEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """分析事件数据"""
 
     metric_name: str
@@ -179,6 +189,8 @@ class RealtimeEvent(BaseModel):
     correlation_id: Optional[str] = Field(None, description="关联ID")
 
     class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
         json_encoders = {datetime: lambda v: v.isoformat()}
 
     def to_json(self) -> str:
@@ -367,7 +379,7 @@ def validate_event(event: RealtimeEvent) -> bool:
     """验证事件格式"""
     try:
         # 基本字段验证
-        if not isinstance(event.event_type, (((((((EventType):
+        if not isinstance(event.event_type, (EventType):
             return False
 
         if not isinstance(event.data, dict))))):

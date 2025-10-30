@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsExporter:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     监控指标导出器
 
@@ -163,7 +165,9 @@ class MetricsExporter:
         )
 
         # 系统健康指标
-        self.system_info = Info("football_system_info", "系统信息", registry=self.registry)
+        self.system_info = Info(
+            "football_system_info", "系统信息", registry=self.registry
+        )
 
         self.last_update_timestamp = Gauge(
             "football_metrics_last_update_timestamp",
@@ -249,9 +253,13 @@ class MetricsExporter:
 
         # 记录错误（如果失败）
         if not success and error_type:
-            self.data_cleaning_errors.labels(data_type=data_type, error_type=error_type).inc()
+            self.data_cleaning_errors.labels(
+                data_type=data_type, error_type=error_type
+            ).inc()
 
-    def record_data_collection_success(self, data_source: str, records_count: int = 1) -> None:
+    def record_data_collection_success(
+        self, data_source: str, records_count: int = 1
+    ) -> None:
         """
         记录数据采集成功 - 兼容测试接口
 
@@ -267,7 +275,9 @@ class MetricsExporter:
             records_count=records_count,
         )
 
-    def record_data_collection_failure(self, data_source: str, error_message: str) -> None:
+    def record_data_collection_failure(
+        self, data_source: str, error_message: str
+    ) -> None:
         """
         记录数据采集失败 - 兼容测试接口
 
@@ -330,7 +340,9 @@ class MetricsExporter:
                 task_name=task_name, failure_reason=failure_reason
             ).inc()
 
-    def record_scheduler_task_simple(self, task_name: str, status: str, duration: float) -> None:
+    def record_scheduler_task_simple(
+        self, task_name: str, status: str, duration: float
+    ) -> None:
         """
         记录调度任务指标 - 简化接口,兼容测试
 
@@ -379,8 +391,7 @@ class MetricsExporter:
             async with get_async_session() as session:
                 if not self._tables_to_monitor:
                     logger.debug("未配置数据库表监控列表,跳过行数统计")
-                    return
-
+                    return None
                 for table_name in self._tables_to_monitor:
                     try:
                         # 使用参数化查询避免SQL注入风险
@@ -396,9 +407,7 @@ class MetricsExporter:
 
                         safe_table_name = quoted_name(table_name, quote=True)
                         result = await session.execute(
-                            text(
-                                f"SELECT COUNT(*) FROM {safe_table_name}"
-                            )  # nosec B608 - using quoted_name for safety
+                            text(f"SELECT COUNT(*) FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
                         )
                         row_count = result.scalar()
                         self.table_row_count.labels(table_name=table_name).set(
@@ -438,7 +447,9 @@ class MetricsExporter:
 
                 for state, count in result.fetchall():
                     if state:
-                        self.database_connections.labels(connection_state=state).set(count)
+                        self.database_connections.labels(connection_state=state).set(
+                            count
+                        )
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"更新数据库指标失败: {e}")
@@ -559,6 +570,8 @@ def get_metrics_exporter(
 
 
 def reset_metrics_exporter():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     重置全局指标导出器实例 - 主要用于测试清理
 

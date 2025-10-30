@@ -4,21 +4,21 @@ Football Prediction FastAPI Application
 """
 
 import logging
-import os
 from contextlib import asynccontextmanager
 
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 # 可选的速率限制功能
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
     from slowapi.errors import RateLimitExceeded
     from slowapi.util import get_remote_address
+
     SLOWAPI_AVAILABLE = True
 except ImportError:
     SLOWAPI_AVAILABLE = False
@@ -36,8 +36,7 @@ from src.performance.integration import setup_performance_monitoring
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -103,9 +102,7 @@ if SLOWAPI_AVAILABLE:
 async def root():
     """根端点"""
     return RootResponse(
-        message="Football Prediction API",
-        version="2.0.0",
-        status="healthy"
+        message="Football Prediction API", version="2.0.0", status="healthy"
     )
 
 
@@ -117,10 +114,11 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=8000,  # TODO: 将魔法数字 8000 提取为常量
         reload=True,
-        log_level="info"
+        log_level="info",
     )

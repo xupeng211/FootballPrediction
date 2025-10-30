@@ -19,9 +19,13 @@ logger = get_logger(__name__)
 
 
 class EnhancedFixturesCollector:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """增强版比赛赛程收集器"""
 
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.db_session = db_session
         self.redis_client = redis_client
         self.cache_timeout = 3600  # 1小时缓存
@@ -64,7 +68,9 @@ class EnhancedFixturesCollector:
             date_from = datetime.now()
             date_to = date_from + timedelta(days=days_ahead)
 
-            matches_data = await adapter.get_matches(date_from=date_from, date_to=date_to)
+            matches_data = await adapter.get_matches(
+                date_from=date_from, date_to=date_to
+            )
 
             # 转换为数据库模型并保存
             fixtures = []
@@ -83,7 +89,9 @@ class EnhancedFixturesCollector:
                     continue
 
             # 缓存结果
-            await self.redis_client.set_cache_value(cache_key, fixtures, expire=self.cache_timeout)
+            await self.redis_client.set_cache_value(
+                cache_key, fixtures, expire=self.cache_timeout
+            )
 
             logger.info(f"从数据源 {preferred_source} 收集到 {len(fixtures)} 场比赛")
             return fixtures
@@ -131,7 +139,9 @@ class EnhancedFixturesCollector:
             date_from = datetime.now()
             date_to = date_from + timedelta(days=days_ahead)
 
-            matches_data = await adapter.get_matches(date_from=date_from, date_to=date_to)
+            matches_data = await adapter.get_matches(
+                date_from=date_from, date_to=date_to
+            )
 
             # 过滤指定球队的比赛
             team_fixtures = []
@@ -140,7 +150,6 @@ class EnhancedFixturesCollector:
                     match_data.home_team.lower() == team_name.lower()
                     or match_data.away_team.lower() == team_name.lower()
                 ):
-
                     # 转换为字典格式
                     fixture_dict = self._convert_match_data_to_dict(match_data)
 
@@ -200,13 +209,14 @@ class EnhancedFixturesCollector:
             date_from = datetime.now()
             date_to = date_from + timedelta(days=days_ahead)
 
-            matches_data = await adapter.get_matches(date_from=date_from, date_to=date_to)
+            matches_data = await adapter.get_matches(
+                date_from=date_from, date_to=date_to
+            )
 
             # 过滤指定联赛的比赛
             league_fixtures = []
             for match_data in matches_data:
                 if match_data.league.lower() == league_name.lower():
-
                     # 转换为字典格式
                     fixture_dict = self._convert_match_data_to_dict(match_data)
 
@@ -275,7 +285,9 @@ class EnhancedFixturesCollector:
 
             # 缓存结果
             await self.redis_client.set_cache_value(
-                cache_key, teams, expire=self.cache_timeout * 2  # 球队数据缓存更久
+                cache_key,
+                teams,
+                expire=self.cache_timeout * 2,  # 球队数据缓存更久
             )
 
             logger.info(f"收集到 {len(teams)} 支球队信息")
@@ -293,7 +305,9 @@ class EnhancedFixturesCollector:
             "away_team": match_data.away_team,
             "home_team_id": match_data.home_team_id,
             "away_team_id": match_data.away_team_id,
-            "match_date": (match_data.match_date.isoformat() if match_data.match_date else None),
+            "match_date": (
+                match_data.match_date.isoformat() if match_data.match_date else None
+            ),
             "league": match_data.league,
             "league_id": match_data.league_id,
             "status": match_data.status,

@@ -16,9 +16,8 @@ from ..base import BaseModel
 基于 DATA_DESIGN.md 第1.3节设计.
 """
 
-from typing import Any, Dict, Optional
 
-from sqlalchemy import DateTime, Enum, Integer, String, Text
+from sqlalchemy import Enum
 from sqlalchemy.orm import validates
 
 from src.database.base import BaseModel
@@ -72,7 +71,9 @@ class DataCollectionLog(BaseModel):
     error_message = Column(Text, nullable=True, comment="错误信息")
 
     # 元数据字段
-    created_at = Column(DateTime, nullable=False, default=func.now(), comment="创建时间")
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="创建时间"
+    )
 
     @validates("collection_type")
     def validate_collection_type(self, key: str, collection_type: str) -> str:
@@ -89,7 +90,9 @@ class DataCollectionLog(BaseModel):
         """验证采集状态"""
         valid_statuses = [cs.value for cs in CollectionStatus]
         if status not in valid_statuses:
-            raise ValueError(f"Invalid status: {status}. Must be one of: {valid_statuses}")
+            raise ValueError(
+                f"Invalid status: {status}. Must be one of: {valid_statuses}"
+            )
         return status
 
     @property

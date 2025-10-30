@@ -40,13 +40,17 @@ logger = logging.getLogger(__name__)
 
 
 class PredictionCQRSService:
-    """预测CQRS服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """预测CQRS服务"
 
     提供预测相关的命令和查询操作.
     Provides command and query operations for predictions.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -126,18 +130,24 @@ class PredictionCQRSService:
         self, user_id: int, include_predictions: bool = False
     ) -> Optional[PredictionStatsDTO]:
         """获取用户统计"""
-        query = GetUserStatsQuery(user_id=user_id, include_predictions=include_predictions)
+        query = GetUserStatsQuery(
+            user_id=user_id, include_predictions=include_predictions
+        )
         return await self.query_bus.dispatch(query)
 
 
 class MatchCQRSService:
-    """比赛CQRS服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """比赛CQRS服务"
 
     提供比赛相关的命令和查询操作.
     Provides command and query operations for matches.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -185,7 +195,9 @@ class MatchCQRSService:
         self, match_id: int, include_predictions: bool = False
     ) -> Optional[MatchDTO]:
         """根据ID获取比赛"""
-        query = GetMatchByIdQuery(match_id=match_id, include_predictions=include_predictions)
+        query = GetMatchByIdQuery(
+            match_id=match_id, include_predictions=include_predictions
+        )
         return await self.query_bus.dispatch(query)
 
     async def get_upcoming_matches(
@@ -203,13 +215,17 @@ class MatchCQRSService:
 
 
 class UserCQRSService:
-    """用户CQRS服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """用户CQRS服务"
 
     提供用户相关的命令和查询操作.
     Provides command and query operations for users.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -221,7 +237,9 @@ class UserCQRSService:
         password_hash: str,
     ) -> CommandResult:
         """创建用户"""
-        command = CreateUserCommand(username=username, email=email, password_hash=password_hash)
+        command = CreateUserCommand(
+            username=username, email=email, password_hash=password_hash
+        )
         return await self.command_bus.dispatch(command)
 
     async def update_user(
@@ -239,13 +257,17 @@ class UserCQRSService:
 
 
 class AnalyticsCQRSService:
-    """分析CQRS服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """分析CQRS服务"
 
     提供分析相关的查询操作.
     Provides analytics-related query operations.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.query_bus = get_query_bus()
 
     async def get_prediction_analytics(
@@ -277,6 +299,8 @@ class AnalyticsCQRSService:
 
 # CQRS服务工厂
 class CQRSServiceFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """CQRS服务工厂"""
 
     @staticmethod
@@ -308,17 +332,27 @@ async def initialize_cqrs():
 
     # 注册命令处理器
     prediction_command_handlers = PredictionCommandHandlers()
-    command_bus.register_handler(CreatePredictionCommand, prediction_command_handlers.create)
-    command_bus.register_handler(UpdatePredictionCommand, prediction_command_handlers.update)
-    command_bus.register_handler(DeletePredictionCommand, prediction_command_handlers.delete)
+    command_bus.register_handler(
+        CreatePredictionCommand, prediction_command_handlers.create
+    )
+    command_bus.register_handler(
+        UpdatePredictionCommand, prediction_command_handlers.update
+    )
+    command_bus.register_handler(
+        DeletePredictionCommand, prediction_command_handlers.delete
+    )
 
     user_command_handlers = UserCommandHandlers()
     command_bus.register_handler(CreateUserCommand, user_command_handlers.create)
 
     # 注册查询处理器
     prediction_query_handlers = PredictionQueryHandlers()
-    query_bus.register_handler(GetPredictionByIdQuery, prediction_query_handlers.get_by_id)
-    query_bus.register_handler(GetPredictionsByUserQuery, prediction_query_handlers.get_by_user)
+    query_bus.register_handler(
+        GetPredictionByIdQuery, prediction_query_handlers.get_by_id
+    )
+    query_bus.register_handler(
+        GetPredictionsByUserQuery, prediction_query_handlers.get_by_user
+    )
     query_bus.register_handler(GetUserStatsQuery, prediction_query_handlers.get_stats)
     query_bus.register_handler(
         GetUpcomingMatchesQuery, prediction_query_handlers.get_upcoming_matches

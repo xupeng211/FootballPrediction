@@ -12,7 +12,11 @@ from .base_unified import SimpleService
 
 # 简化的UserProfile类定义
 class UserProfile:
-    def __init__(self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]):
+    """类文档字符串"""
+    pass  # 添加pass语句
+    def __init__(
+        self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]
+    ):
         self.user_id = user_id
         self.display_name = display_name
         self.email = email
@@ -30,7 +34,11 @@ class UserProfile:
 
 # 简化的User类定义
 class User:
+    """类文档字符串"""
+    pass  # 添加pass语句
     def __init__(self, id: str, username: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.id = id
         self.username = username
 
@@ -80,7 +88,9 @@ class UserProfileService(SimpleService):
         profile = UserProfile(
             user_id=user.id,
             display_name=getattr(user, "display_name", user.username),
-            email=(getattr(user.profile, "email", "") if hasattr(user, "profile") else ""),
+            email=(
+                getattr(user.profile, "email", "") if hasattr(user, "profile") else ""
+            ),
             preferences={
                 "interests": interests,
                 "content_type": content_preferences.get(str("preferred_type"), "text"),
@@ -97,7 +107,9 @@ class UserProfileService(SimpleService):
         """获取用户画像"""
         return self._user_profiles.get(user_id)
 
-    async def update_profile(self, user_id: str, updates: Dict[str, Any]) -> Optional[UserProfile]:
+    async def update_profile(
+        self, user_id: str, updates: Dict[str, Any]
+    ) -> Optional[UserProfile]:
         """更新用户画像"""
         profile = await self.get_profile(user_id)
         if not profile:
@@ -118,7 +130,9 @@ class UserProfileService(SimpleService):
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣
         if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
-            if user.profile.favorite_teams and isinstance(user.profile.favorite_teams, (list, tuple)):
+            if user.profile.favorite_teams and isinstance(
+                user.profile.favorite_teams, (list, tuple)
+            ):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
 

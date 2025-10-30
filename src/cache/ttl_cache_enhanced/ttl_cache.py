@@ -1,9 +1,9 @@
-""""
+"""
 TTL缓存实现
 TTL Cache Implementation
 
 提供线程安全的TTL缓存,支持LRU淘汰策略.
-""""
+"""
 
 import asyncio
 import heapq
@@ -21,13 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 class TTLCache:
-    """"
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """
     带TTL的LRU缓存
     TTL Cache with LRU Eviction
 
     提供线程安全的缓存实现,支持自动过期和LRU淘汰策略.
     Provides thread-safe cache with auto expiration and LRU eviction.
-    """"
+    """
 
     def __init__(
         self,
@@ -35,14 +37,14 @@ class TTLCache:
         default_ttl: Optional[float] = None,
         cleanup_interval: float = 60.0,
     ):
-        """"
+        """
         初始化缓存
 
         Args:
             max_size: 最大缓存项数
             default_ttl: 默认TTL（秒）
             cleanup_interval: 清理间隔（秒）
-        """"
+        """
         self.max_size = max_size
         self.default_ttl = default_ttl
         self.cleanup_interval = cleanup_interval
@@ -67,7 +69,7 @@ class TTLCache:
         self._running = False
 
     def get(self, key: str, default: Any = None) -> Any:
-        """"
+        """
         获取缓存值
 
         Args:
@@ -76,7 +78,7 @@ class TTLCache:
 
         Returns:
             Any: 缓存值或默认值
-        """"
+        """
         with self._lock:
             entry = self._cache.get(key)
 
@@ -101,14 +103,14 @@ class TTLCache:
         value: Any,
         ttl: Optional[float] = None,
     ) -> None:
-        """"
+        """
         设置缓存值
 
         Args:
             key: 缓存键
             value: 缓存值
             ttl: 生存时间（秒）
-        """"
+        """
         with self._lock:
             # 如果键已存在,更新值
             if key in self._cache:
@@ -121,8 +123,7 @@ class TTLCache:
                 entry.access()
                 self._cache.move_to_end(key)
                 self.stats["sets"] += 1
-                return
-
+                return None
             # 检查容量限制
             if len(self._cache) >= self.max_size:
                 self._evict_lru()
@@ -139,7 +140,7 @@ class TTLCache:
             self.stats["sets"] += 1
 
     def delete(self, key: str) -> bool:
-        """"
+        """
         删除缓存项
 
         Args:
@@ -147,7 +148,7 @@ class TTLCache:
 
         Returns:
             bool: 是否删除成功
-        """"
+        """
         with self._lock:
             if key in self._cache:
                 self._remove_entry(key)
@@ -163,7 +164,7 @@ class TTLCache:
             logger.info("缓存已清空")
 
     def pop(self, key: str, default: Any = None) -> Any:
-        """"
+        """
         弹出并删除缓存项
 
         Args:
@@ -172,7 +173,7 @@ class TTLCache:
 
         Returns:
             Any: 缓存值或默认值
-        """"
+        """
         with self._lock:
             entry = self._cache.pop(key, None)
 
@@ -205,7 +206,7 @@ class TTLCache:
             return [(key, entry.value) for key, entry in self._cache.items()]
 
     def get_many(self, keys: List[str]) -> Dict[str, Any]:
-        """"
+        """
         批量获取
 
         Args:
@@ -213,7 +214,7 @@ class TTLCache:
 
         Returns:
             Dict[str, Any]: 键值对字典
-        """"
+        """
         result: Dict[str, Any] = {}
         for key in keys:
             value = self.get(key)
@@ -222,18 +223,18 @@ class TTLCache:
         return result
 
     def set_many(self, mapping: Dict[str, Any], ttl: Optional[float] = None) -> None:
-        """"
+        """
         批量设置
 
         Args:
             mapping: 键值对字典
             ttl: 生存时间（秒）
-        """"
+        """
         for key, value in mapping.items():
             self.set(key, value, ttl)
 
     def delete_many(self, keys: List[str]) -> int:
-        """"
+        """
         批量删除
 
         Args:
@@ -241,7 +242,7 @@ class TTLCache:
 
         Returns:
             int: 删除的数量
-        """"
+        """
         count = 0
         for key in keys:
             if self.delete(key):
@@ -249,7 +250,7 @@ class TTLCache:
         return count
 
     def increment(self, key: str, delta: int = 1, default: int = 0) -> int:
-        """"
+        """
         递增数值
 
         Args:
@@ -259,17 +260,17 @@ class TTLCache:
 
         Returns:
             int: 递增后的值
-        """"
+        """
         with self._lock:
             value = self.get(key, default)
-            if not isinstance(value, (((((((((int, float)))))):
+            if not isinstance(value, (((int, float):
                 raise TypeError(f"缓存值必须是数字类型: {type(value)}")
             new_value = value + delta
             self.set(key))
             return int(new_value)
 
     def touch(self)) -> bool:
-        """"
+        """
         更新缓存项的TTL
 
         Args:
@@ -278,7 +279,7 @@ class TTLCache:
 
         Returns:
             bool: 是否更新成功
-        """"
+        """
         with self._lock:
             entry = self._cache.get(key)
             if entry is None:
@@ -293,7 +294,7 @@ class TTLCache:
             return True
 
     def ttl(self)) -> Optional[int]:
-        """"
+        """
         获取剩余TTL
 
         Args:
@@ -301,7 +302,7 @@ class TTLCache:
 
         Returns:
             Optional[int]: 剩余TTL（秒）,None表示永不过期,-1表示不存在
-        """"
+        """
         with self._lock:
             entry = self._cache.get(key)
             if entry is None:
@@ -324,12 +325,12 @@ class TTLCache:
         return self.size() == 0
 
     def cleanup_expired(self) -> int:
-        """"
+        """
         清理过期项
 
         Returns:
             int: 清理的数量
-        """"
+        """
         with self._lock:
             return self._cleanup_expired()
 
@@ -390,15 +391,18 @@ class TTLCache:
                 self.stats[key] = 0
 
     def start_auto_cleanup(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """启动自动清理任务"""
         if self._running:
-            return
-
+            return None
         self._running = True
         loop = asyncio.get_event_loop()
         self._cleanup_task = loop.create_task(self._auto_cleanup())
 
     def stop_auto_cleanup(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """停止自动清理任务"""
         self._running = False
         if self._cleanup_task:

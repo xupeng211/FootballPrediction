@@ -30,7 +30,11 @@ class GetPredictionByIdQuery(ValidatableQuery):
         if self.prediction_id <= 0:
             errors.append("预测ID必须为正数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetPredictionsByUserQuery(ValidatableQuery):
@@ -68,7 +72,11 @@ class GetPredictionsByUserQuery(ValidatableQuery):
         if self.start_date and self.end_date and self.start_date > self.end_date:
             errors.append("开始日期不能晚于结束日期")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetMatchPredictionsQuery(ValidatableQuery):
@@ -91,7 +99,11 @@ class GetMatchPredictionsQuery(ValidatableQuery):
         if self.match_id <= 0:
             errors.append("比赛ID必须为正数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetUserStatsQuery(ValidatableQuery):
@@ -114,7 +126,11 @@ class GetUserStatsQuery(ValidatableQuery):
         if self.user_id <= 0:
             errors.append("用户ID必须为正数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetMatchByIdQuery(ValidatableQuery):
@@ -137,7 +153,11 @@ class GetMatchByIdQuery(ValidatableQuery):
         if self.match_id <= 0:
             errors.append("比赛ID必须为正数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetUpcomingMatchesQuery(ValidatableQuery):
@@ -170,7 +190,11 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
         if self.offset is not None and self.offset < 0:
             errors.append("偏移量不能为负数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetPredictionAnalyticsQuery(ValidatableQuery):
@@ -200,7 +224,11 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
         if self.user_id is not None and self.user_id <= 0:
             errors.append("用户ID必须为正数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
 
 
 class GetLeaderboardQuery(ValidatableQuery):
@@ -232,4 +260,8 @@ class GetLeaderboardQuery(ValidatableQuery):
         if self.offset is not None and self.offset < 0:
             errors.append("偏移量不能为负数")
 
-        return ValidationResult.success() if not errors else ValidationResult.failure(errors)
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )

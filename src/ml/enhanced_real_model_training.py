@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""""
+"""
 Enhanced Real Model Training for Football Prediction
 增强真实模型训练脚本 - 符合SRS要求
 
@@ -12,7 +12,7 @@ Enhanced Real Model Training for Football Prediction
 - AUC ≥ 0.70 验证
 
 生成时间: 2025-10-29 04:05:00
-""""
+"""
 
 import asyncio
 import json
@@ -70,7 +70,9 @@ logger = get_logger(__name__)
 
 
 class SRSCompliantModelTrainer:
-    """SRS符合性模型训练器"""""
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """SRS符合性模型训练器"""
 
     严格按照SRS要求实现的模型训练系统:
     - 目标准确率: ≥ 65%
@@ -78,9 +80,11 @@ class SRSCompliantModelTrainer:
     - 支持XGBoost/LightGBM
     - 完整的特征工程
     - 自动模型保存和日志记录
-    """"
+    """
 
     def __init__(self, model_save_dir: str = "models"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
         self.model_save_dir = Path(model_save_dir)
         self.model_save_dir.mkdir(exist_ok=True)
@@ -103,7 +107,7 @@ class SRSCompliantModelTrainer:
         self.srs_compliance_records = []
 
     def generate_srs_compliant_training_data(self, n_matches: int = 2000) -> List[Dict]:
-        """生成SRS符合性训练数据"""""
+        """生成SRS符合性训练数据"""
 
         生成包含所有SRS要求特征的比赛数据:
         - 基础比赛信息
@@ -111,7 +115,7 @@ class SRSCompliantModelTrainer:
         - 主客场状态
         - 赔率数据
         - 球队实力评估
-        """"
+        """
         self.logger.info(f"生成 {n_matches} 场SRS符合性训练数据...")
 
         # 模拟50支球队的实力数据

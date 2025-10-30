@@ -1,4 +1,4 @@
-""""
+"""
 数据采集器抽象基类
 
 定义足球数据采集的统一接口和基础功能。
@@ -6,7 +6,7 @@
 集成新的重试机制以提高外部API调用的可靠性。
 
 基于 DATA_DESIGN.md 第1.2节设计.
-""""
+"""
 
 import asyncio
 import logging
@@ -34,6 +34,8 @@ EXTERNAL_API_RETRY_CONFIG = RetryConfig(
 
 @dataclass
 class CollectionResult:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """采集结果数据结构"""
 
     data_source: str
@@ -47,7 +49,7 @@ class CollectionResult:
 
 
 class DataCollector(ABC):
-    """"
+    """
     数据采集器抽象基类
 
     定义了数据采集的标准接口和通用功能:
@@ -55,7 +57,7 @@ class DataCollector(ABC):
     - 防重复机制
     - 防丢失策略
     - 错误处理和重试
-    """"
+    """
 
     def __init__(
         self,
@@ -64,7 +66,7 @@ class DataCollector(ABC):
         retry_delay: int = 5,
         timeout: int = 30,
     ):
-        """"
+        """
         初始化采集器
 
         Args:
@@ -72,7 +74,7 @@ class DataCollector(ABC):
             max_retries: 最大重试次数
             retry_delay: 重试延迟（秒）
             timeout: 请求超时时间（秒）
-        """"
+        """
         self.data_source = data_source
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -82,7 +84,7 @@ class DataCollector(ABC):
 
     @abstractmethod
     async def collect_fixtures(self, **kwargs) -> CollectionResult:
-        """"
+        """
         采集赛程数据
 
         实现防重复,防丢失策略:
@@ -91,11 +93,11 @@ class DataCollector(ABC):
 
         Returns:
             CollectionResult: 采集结果
-        """"
+        """
 
     @abstractmethod
     async def collect_odds(self, **kwargs) -> CollectionResult:
-        """"
+        """
         采集赔率数据
 
         高频采集策略:
@@ -105,11 +107,11 @@ class DataCollector(ABC):
 
         Returns:
             CollectionResult: 采集结果
-        """"
+        """
 
     @abstractmethod
     async def collect_live_scores(self, **kwargs) -> CollectionResult:
-        """"
+        """
         采集实时比分数据
 
         实时采集策略:
@@ -119,7 +121,7 @@ class DataCollector(ABC):
 
         Returns:
             CollectionResult: 采集结果
-        """"
+        """
 
     @retry(EXTERNAL_API_RETRY_CONFIG)
     async def _make_request_with_retry(
@@ -130,7 +132,7 @@ class DataCollector(ABC):
         params: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """"
+        """
         发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
 
         使用新的重试装饰器发起HTTP请求,包含指数退避和抖动.
@@ -166,7 +168,7 @@ class DataCollector(ABC):
         Note:
             该方法包含自动重试机制,使用指数退避和抖动.
             This method includes an automatic retry mechanism with exponential backoff and jitter.
-        """"
+        """
         timeout = aiohttp.ClientTimeout(total=self.timeout)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.request(
@@ -190,7 +192,7 @@ class DataCollector(ABC):
         params: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """"
+        """
         发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
 
         Args:
@@ -223,7 +225,7 @@ class DataCollector(ABC):
         Note:
             该方法包含自动重试机制,最大尝试3次.
             This method includes an automatic retry mechanism with up to 3 attempts.
-        """"
+        """
         for attempt in range(self.max_retries):
             try:
                 # 使用新的带重试机制的方法
@@ -242,17 +244,16 @@ class DataCollector(ABC):
                     raise e
 
     async def _save_to_bronze_layer(self, table_name: str, raw_data: List[Dict[str, Any]]) -> None:
-        """"
+        """
         保存原始数据到Bronze层
 
         Args:
             table_name: 目标表名（raw_match_data,raw_odds_data,raw_scores_data）
             raw_data: 原始数据列表
-        """"
+        """
         if not raw_data:
             self.logger.info(f"No data to save to {table_name}")
-            return
-
+            return None
         try:
             # 导入相应的Bronze层模型
 
@@ -294,7 +295,7 @@ class DataCollector(ABC):
                             if "match_time" in data:
                                 try:
                                     match_time_str = data["match_time"]
-                                    if isinstance(match_time_str, ((((((((str):
+                                    if isinstance(match_time_str, ((str):
                                         bronze_record.match_time = datetime.fromisoformat(
                                             match_time_str.replace("Z", "+00:00")))))
                                         )
@@ -334,7 +335,7 @@ class DataCollector(ABC):
 
     def _is_duplicate_record(
         self)) -> bool:
-        """"
+        """
         检查是否为重复记录
 
         Args:
@@ -344,7 +345,7 @@ class DataCollector(ABC):
 
         Returns:
             bool: 是否重复
-        """"
+        """
         for existing in existing_records:
             if all(
                 new_record.get(field) == existing.get(field)
@@ -355,7 +356,7 @@ class DataCollector(ABC):
         return False
 
     async def _create_collection_log(self, collection_type: str) -> int:
-        """"
+        """
         创建采集日志记录（开始时调用）
 
         Args:
@@ -363,7 +364,7 @@ class DataCollector(ABC):
 
         Returns:
             int: 日志记录ID
-        """"
+        """
         try:
             from .models.data_collection_log import DataCollectionLog
 
@@ -383,20 +384,19 @@ class DataCollector(ABC):
             return 0
 
     async def _update_collection_log(self, log_id: int, result: CollectionResult) -> None:
-        """"
+        """
         更新采集日志记录（结束时调用）
 
         Args:
             log_id: 日志记录ID
             result: 采集结果
-        """"
+        """
         try:
             from .models.data_collection_log import CollectionStatus, DataCollectionLog
 
             if log_id == 0:
                 self.logger.warning("Invalid log_id (0), cannot update collection log.")
-                return
-
+                return None
             async with self.db_manager.get_async_session() as session:
                 log_entry = await session.get(str(DataCollectionLog), log_id)
                 if log_entry:
@@ -423,12 +423,12 @@ class DataCollector(ABC):
             self.logger.error(f"Failed to update collection log: {str(e)}")
 
     async def collect_all_data(self) -> Dict[str, CollectionResult]:
-        """"
+        """
         执行完整的数据采集流程
 
         Returns:
             Dict[str, CollectionResult]: 各类型数据的采集结果
-        """"
+        """
         results = {}
 
         # 按顺序采集各类型数据

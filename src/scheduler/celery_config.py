@@ -1,6 +1,7 @@
 import redis
 import os
 from datetime import datetime
+
 # mypy: ignore-errors
 """
 from datetime import datetime, timezone
@@ -137,6 +138,8 @@ app.conf.task_queues = {
 
 
 def get_redis_connection():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """获取Redis连接"""
     return redis.from_url(REDIS_URL)
 
@@ -155,7 +158,7 @@ def is_match_day() -> bool:
         #     query = text("""
         #         SELECT COUNT(*) as match_count FROM matches
         #         WHERE DATE(match_date) = :today
-        #     """)
+        #     """)"
         #     result = await session.execute(query, {"today": today})
         #     match_count = result.scalar()
         #     return match_count > 0
@@ -183,7 +186,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
         #         FROM matches
         #         WHERE match_date BETWEEN :now AND :end_time
         #         ORDER BY match_date
-        #     """)
+        #     """)"
         #     result = await session.execute(query, {"now": now, "end_time": end_time})
         #     _matches = [{
         #         "match_id": row.match_id,
@@ -215,6 +218,8 @@ def should_collect_live_scores() -> bool:
 
 # 任务重试配置
 class TaskRetryConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """任务重试配置"""
 
     DEFAULT_RETRY_DELAY = 60  # 默认重试延迟（秒）
@@ -242,6 +247,8 @@ class TaskRetryConfig:
 
 # 监控配置
 class MonitoringConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """监控配置"""
 
     # 任务执行时间阈值（秒）

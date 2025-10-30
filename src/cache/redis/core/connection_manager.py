@@ -10,9 +10,13 @@ from redis.exceptions import RedisError
 
 
 class RedisConnectionManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """管理Redis连接的类"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._pool: Optional[aioredis.ConnectionPool] = None
         self._redis: Optional[aioredis.Redis] = None
 

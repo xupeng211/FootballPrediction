@@ -13,7 +13,6 @@ Performance Monitoring API Endpoints
 
 import asyncio
 from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field

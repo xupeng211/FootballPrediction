@@ -122,8 +122,12 @@ async def get_detailed_metrics() -> Dict[str, Any]:
     metrics_handler = _find_handler(MetricsEventHandler)
     if metrics_handler:
         metrics["event_counts"] = metrics_handler.get_metrics().get("event_counts", {})
-        metrics["total_events"] = metrics_handler.get_metrics().get("events_processed", 0)
-        metrics["last_event_time"] = metrics_handler.get_metrics().get("last_event_time")
+        metrics["total_events"] = metrics_handler.get_metrics().get(
+            "events_processed", 0
+        )
+        metrics["last_event_time"] = metrics_handler.get_metrics().get(
+            "last_event_time"
+        )
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if analytics_handler:
         analytics_data = analytics_handler.get_analytics_data()
@@ -194,6 +198,8 @@ async def get_user_activity_stats(
 
 
 def _find_handler(handler_type):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """查找特定类型的处理器"""
     bus = get_event_bus()
     for handlers in bus._subscribers.values():

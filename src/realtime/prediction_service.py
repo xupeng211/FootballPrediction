@@ -1,11 +1,11 @@
-""""
+"""
 实时预测推送服务
 
 Realtime Prediction Push Service
 
 将预测服务与WebSocket系统集成,提供实时预测结果推送功能
 Integrates prediction service with WebSocket system to provide real-time prediction result push functionality
-""""
+"""
 
 import asyncio
 import logging
@@ -36,6 +36,8 @@ class PredictionStatus(str, Enum):
 
 @dataclass
 class PredictionTask:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测任务"""
 
     task_id: str
@@ -49,14 +51,20 @@ class PredictionTask:
     error: Optional[str] = None
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.created_at is None:
             self.created_at = datetime.now()
 
 
 class RealtimePredictionService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """实时预测服务"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.websocket_manager = get_websocket_manager()
         self.subscription_manager = get_subscription_manager()
         self.logger = logging.getLogger(f"{__name__}.RealtimePredictionService")
@@ -85,7 +93,7 @@ class RealtimePredictionService:
         model_version: str = "default",
         priority: bool = False,
     ) -> str:
-        """"
+        """
         提交预测请求
 
         Args:
@@ -96,7 +104,7 @@ class RealtimePredictionService:
 
         Returns:
             任务ID
-        """"
+        """
         task_id = (
             f"pred_{match_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{id(self)}"
         )
@@ -169,8 +177,7 @@ class RealtimePredictionService:
     async def _process_prediction_task(self, task_id: str) -> None:
         """处理预测任务"""
         if task_id not in self.prediction_tasks:
-            return
-
+            return None
         task = self.prediction_tasks[task_id]
 
         try:
@@ -278,16 +285,14 @@ class RealtimePredictionService:
                 source="prediction_service",
             )
         else:
-            return
-
+            return None
         # 发布事件
         await self.websocket_manager.publish_event(real_event)
 
     async def _emit_prediction_completed_event(self, task: PredictionTask) -> None:
         """发送预测完成事件"""
         if not task.result:
-            return
-
+            return None
         # 创建预测完成事件
         prediction_event = RealtimeEvent(
             event_type=EventType.PREDICTION_COMPLETED,

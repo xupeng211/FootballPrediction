@@ -18,14 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsObserver(Observer):
-    """指标收集观察者
+    """指标收集观察者"
 
     收集和聚合系统指标数据.
     Collects and aggregates system metrics.
     """
 
     def __init__(self, aggregation_window: int = 60):
-        """初始化指标观察者
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化指标观察者"
 
         Args:
             aggregation_window: 聚合窗口大小（秒）
@@ -66,8 +68,7 @@ class MetricsObserver(Observer):
         metric_type = event.data.get("metric_type", "gauge")
 
         if not metric_name or metric_value is None:
-            return
-
+            return None
         timestamp = event.timestamp.timestamp()
 
         if metric_type == "counter":
@@ -155,7 +156,9 @@ class MetricsObserver(Observer):
         stats = super().get_stats()
         stats.update(
             {
-                "metrics_count": len(self._metrics) + len(self._counters) + len(self._gauges),
+                "metrics_count": len(self._metrics)
+                + len(self._counters)
+                + len(self._gauges),
                 "total_data_points": sum(len(v) for v in self._metrics.values()),
             }
         )
@@ -163,14 +166,16 @@ class MetricsObserver(Observer):
 
 
 class LoggingObserver(Observer):
-    """日志记录观察者
+    """日志记录观察者"
 
     将事件记录到日志系统.
     Logs events to the logging system.
     """
 
     def __init__(self, log_level: int = logging.INFO):
-        """初始化日志观察者
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化日志观察者"
 
         Args:
             log_level: 日志级别
@@ -250,13 +255,15 @@ class LoggingObserver(Observer):
 
 
 class AlertingObserver(Observer):
-    """告警通知观察者
+    """告警通知观察者"
 
     监控事件并触发告警.
     Monitors events and triggers alerts.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
         self._alert_rules: Dict[str, Dict[str, Any]] = {}
@@ -272,7 +279,7 @@ class AlertingObserver(Observer):
         message_template: str = None,
         cooldown_minutes: int = 5,
     ) -> None:
-        """添加告警规则
+        """添加告警规则"
 
         Args:
             name: 规则名称
@@ -302,8 +309,7 @@ class AlertingObserver(Observer):
         # 检查冷却时间
         if rule_name in self._alert_cooldown:
             if datetime.utcnow() < self._alert_cooldown[rule_name]:
-                return
-
+                return None
         # 检查触发条件
         if rule["condition"](event):
             await self._trigger_alert(rule_name, rule, event)
@@ -415,14 +421,16 @@ class AlertingObserver(Observer):
 
 
 class PerformanceObserver(Observer):
-    """性能监控观察者
+    """性能监控观察者"
 
     监控系统性能指标.
     Monitors system performance metrics.
     """
 
     def __init__(self, window_size: int = 100):
-        """初始化性能观察者
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化性能观察者"
 
         Args:
             window_size: 滑动窗口大小
@@ -431,7 +439,9 @@ class PerformanceObserver(Observer):
         self._window_size = window_size
         self._response_times: deque = deque(maxlen=window_size)
         self._throughput_data: deque = deque(maxlen=window_size)
-        self._error_rates: Dict[str, deque] = defaultdict(lambda: deque(maxlen=window_size))
+        self._error_rates: Dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=window_size)
+        )
         self._last_throughput_calc = time.time()
         self._request_count = 0
 

@@ -7,7 +7,7 @@ from alembic import op
 # mypy: ignore-errors
 
 logger = logging.getLogger(__name__)
-"""add_business_constraints
+"""add_business_constraints"
 
 Revision ID: a20f91c49306
 Revises: d82ea26f05d0
@@ -37,9 +37,10 @@ def upgrade() -> None:
     if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境:跳过业务约束和触发器创建")
         op.execute("-- SQLite environment: skipped business constraints and triggers")
-        op.execute("-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT")
-        return
-
+        op.execute(
+            "-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT"
+        )
+        return None
     # 1. 添加比分字段CHECK约束（0-99）
     op.create_check_constraint(
         "ck_matches_home_score_range",
@@ -138,8 +139,8 @@ def upgrade() -> None:
         BEGIN
             -- 检查主队和客队不能相同
             IF NEW.home_team_id = NEW.away_team_id THEN
-                RAISE EXCEPTION 'Home team and away team cannot be the same: team_id =
-    %', NEW.home_team_id;
+                RAISE EXCEPTION 'Home team and away team cannot be the same: team_id ='
+    %', NEW.home_team_id;'
             END IF;
 
             -- 检查主队和客队都必须存在于teams表中
@@ -209,10 +210,11 @@ def downgrade() -> None:
 
     if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境:跳过业务约束和触发器移除")
-        op.execute("-- SQLite environment: skipped business constraints and triggers removal")
+        op.execute(
+            "-- SQLite environment: skipped business constraints and triggers removal"
+        )
         op.execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
-        return
-
+        return None
     # 移除触发器
     op.execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;")
     op.execute("DROP TRIGGER IF EXISTS tr_check_match_teams_consistency ON matches;")

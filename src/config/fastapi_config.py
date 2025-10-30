@@ -47,7 +47,9 @@ def create_chinese_app() -> FastAPI:
 
     app = FastAPI(
         title=I18nUtils.translate("Football Prediction API"),
-        description=I18nUtils.translate("Machine Learning Based Football Match Prediction System"),
+        description=I18nUtils.translate(
+            "Machine Learning Based Football Match Prediction System"
+        ),
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
@@ -63,8 +65,8 @@ def create_chinese_app() -> FastAPI:
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-# TODO: 方法 def custom_openapi 过长(29行),建议拆分
-# TODO: 方法 def custom_openapi 过长(29行),建议拆分
+    # TODO: 方法 def custom_openapi 过长(29行),建议拆分
+    # TODO: 方法 def custom_openapi 过长(29行),建议拆分
     def custom_openapi():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """TODO: 添加函数文档"""
         if app.openapi_schema:

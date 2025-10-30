@@ -45,6 +45,8 @@ class RepositoryFactory(Protocol):
 
 
 class DefaultRepositoryFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """默认仓储工厂实现"""
 
     @staticmethod
@@ -76,13 +78,17 @@ class DefaultRepositoryFactory:
 
 
 class RepositoryProvider:
-    """仓储提供者
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """仓储提供者"
 
     管理仓储实例的创建和生命周期.
     Manages creation and lifecycle of repository instances.
     """
 
     def __init__(self, factory: RepositoryFactory = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._factory = factory or DefaultRepositoryFactory()
         self._repositories = {}
 
@@ -92,7 +98,9 @@ class RepositoryProvider:
         """获取预测仓储实例"""
         key = f"prediction_{id(session)}_{read_only}"
         if key not in self._repositories:
-            self._repositories[key] = self._factory.create_prediction_repository(session, read_only)
+            self._repositories[key] = self._factory.create_prediction_repository(
+                session, read_only
+            )
         return self._repositories[key]
 
     def get_user_repository(
@@ -101,7 +109,9 @@ class RepositoryProvider:
         """获取用户仓储实例"""
         key = f"user_{id(session)}_{read_only}"
         if key not in self._repositories:
-            self._repositories[key] = self._factory.create_user_repository(session, read_only)
+            self._repositories[key] = self._factory.create_user_repository(
+                session, read_only
+            )
         return self._repositories[key]
 
     def get_match_repository(
@@ -110,14 +120,20 @@ class RepositoryProvider:
         """获取比赛仓储实例"""
         key = f"match_{id(session)}_{read_only}"
         if key not in self._repositories:
-            self._repositories[key] = self._factory.create_match_repository(session, read_only)
+            self._repositories[key] = self._factory.create_match_repository(
+                session, read_only
+            )
         return self._repositories[key]
 
     def clear_cache(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """清除仓储缓存"""
         self._repositories.clear()
 
     def set_factory(self, factory: RepositoryFactory):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """设置仓储工厂"""
         self._factory = factory
         self.clear_cache()
@@ -136,6 +152,8 @@ def get_repository_provider() -> RepositoryProvider:
 
 
 def set_repository_provider(provider: RepositoryProvider):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """设置全局仓储提供者"""
     global _provider
     _provider = provider
@@ -164,11 +182,15 @@ def get_prediction_repository(
     return get_repository_provider().get_prediction_repository(session, read_only)
 
 
-def get_user_repository(session: AsyncSession, read_only: bool = False) -> Repository[User, int]:
+def get_user_repository(
+    session: AsyncSession, read_only: bool = False
+) -> Repository[User, int]:
     """便捷函数:获取用户仓储"""
     return get_repository_provider().get_user_repository(session, read_only)
 
 
-def get_match_repository(session: AsyncSession, read_only: bool = False) -> Repository[Match, int]:
+def get_match_repository(
+    session: AsyncSession, read_only: bool = False
+) -> Repository[Match, int]:
     """便捷函数:获取比赛仓储"""
     return get_repository_provider().get_match_repository(session, read_only)

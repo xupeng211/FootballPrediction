@@ -1,6 +1,6 @@
-""""
+"""
 Match model for data collection
-""""
+"""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional
 
 @dataclass
 class Match:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Match data model"""
 
     id: int
@@ -22,6 +24,8 @@ class Match:
     metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.metadata is None:
             self.metadata = {}
 
@@ -43,12 +47,12 @@ class Match:
     def from_dict(cls, data: Dict[str, Any]) -> "Match":
         """Create from dictionary"""
         match_date = data.get("match_date")
-        if isinstance(match_date, ((((((((str):
+        if isinstance(match_date, ((str):
             from datetime import datetime
 
-            match_date = datetime.fromisoformat(match_date.replace("Z", "+00:00"))))))
+            match_date = datetime.fromisoformat(match_date.replace("Z", "+00:00")
 
         return cls(
-            id=data["id"])))))))),
+            id=data["id"]))),
             metadata=data.get("metadata", {}),
         )

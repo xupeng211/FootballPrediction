@@ -1,6 +1,6 @@
 from typing import Set
 
-""""
+"""
 
 # mypy: ignore-errors
 # 该文件包含复杂的机器学习逻辑,类型检查已忽略
@@ -16,7 +16,7 @@ from typing import Set
 - 多博彩公司数据聚合
 
 基于 DATA_DESIGN.md 第1.1节设计.
-""""
+"""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -25,12 +25,12 @@ from typing import Any, Dict, List, Optional
 
 
 class OddsCollector(DataCollector):
-    """"
+    """
     赔率数据采集器
 
     负责从多个博彩公司API采集赔率数据,
     实现高频更新和变化检测机制.
-    """"
+    """
 
     def __init__(
         self,
@@ -40,7 +40,7 @@ class OddsCollector(DataCollector):
         time_window_minutes: int = 5,
         **kwargs,
     ):
-        """"
+        """
         初始化赔率采集器
 
         Args:
@@ -48,7 +48,7 @@ class OddsCollector(DataCollector):
             api_key: API密钥
             base_url: API基础URL
             time_window_minutes: 去重时间窗口（分钟）
-        """"
+        """
         super().__init__(data_source, **kwargs)
         self.api_key = api_key
         self.base_url = base_url
@@ -77,7 +77,7 @@ class OddsCollector(DataCollector):
         markets: Optional[List[str]] = None,
         **kwargs,
     ) -> CollectionResult:
-        """"
+        """
         采集赔率数据
 
         去重策略:
@@ -92,7 +92,7 @@ class OddsCollector(DataCollector):
 
         Returns:
             CollectionResult: 采集结果
-        """"
+        """
         collected_data = []
         success_count = 0
         error_count = 0
@@ -228,12 +228,12 @@ class OddsCollector(DataCollector):
         )
 
     async def _get_active_bookmakers(self) -> List[str]:
-        """"
+        """
         获取活跃的博彩公司列表
 
         Returns:
             List[str]: 博彩公司代码列表
-        """"
+        """
         try:
             # 目前返回主要博彩公司作为示例
             return [
@@ -249,12 +249,12 @@ class OddsCollector(DataCollector):
             return ["bet365", "pinnacle"]  # 默认返回主要的两家
 
     async def _get_upcoming_matches(self) -> List[str]:
-        """"
+        """
         获取即将开始的比赛列表
 
         Returns:
             List[str]: 比赛ID列表
-        """"
+        """
         try:
             # 目前返回空列表作为占位符
             return []
@@ -273,7 +273,7 @@ class OddsCollector(DataCollector):
     async def _collect_match_odds(
         self, match_id: str, bookmakers: List[str], markets: List[str]
     ) -> List[Dict[str, Any]]:
-        """"
+        """
         采集指定比赛的赔率数据
 
         Args:
@@ -283,7 +283,7 @@ class OddsCollector(DataCollector):
 
         Returns:
             List[Dict]: 赔率数据列表
-        """"
+        """
         all_odds = []
 
         try:
@@ -318,7 +318,7 @@ class OddsCollector(DataCollector):
         return all_odds
 
     def _generate_odds_key(self, odds_data: Dict[str, Any]) -> str:
-        """"
+        """
         生成赔率唯一键（时间窗口去重）
 
         Args:
@@ -326,7 +326,7 @@ class OddsCollector(DataCollector):
 
         Returns:
             str: 赔率唯一键
-        """"
+        """
         # 基于比赛、博彩公司,市场类型,时间窗口生成键
         timestamp = datetime.now()
         time_window = timestamp.replace(
@@ -347,7 +347,7 @@ class OddsCollector(DataCollector):
         return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
     async def _has_odds_changed(self, odds_data: Dict[str, Any]) -> bool:
-        """"
+        """
         检查赔率是否发生变化
 
         Args:
@@ -355,9 +355,9 @@ class OddsCollector(DataCollector):
 
         Returns:
             bool: 是否有变化
-        """"
+        """
         try:
-            odds_id =
+            odds_id = None
     f"{odds_data.get('match_id')}:{odds_data.get('bookmaker')}:{odds_data.get('market_type')}"
 
             # 提取当前赔率值
@@ -390,7 +390,7 @@ class OddsCollector(DataCollector):
     async def _clean_odds_data(
         self, raw_odds: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        """"
+        """
         清洗和标准化赔率数据
 
         Args:
@@ -398,7 +398,7 @@ class OddsCollector(DataCollector):
 
         Returns:
             Optional[Dict]: 清洗后的数据,无效则返回None
-        """"
+        """
         try:
             # 基础字段验证
             required_fields = ["match_id", "bookmaker", "market_type", "outcomes"]

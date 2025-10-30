@@ -12,15 +12,21 @@ logger = get_logger(__name__)
 
 
 class WarmupManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Redis cache warmup manager"""
 
     def __init__(self, redis_manager=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """Initialize warmup manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.redis_manager = redis_manager
         self.is_warming_up = False
 
-    async def warmup_cache(self, patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def warmup_cache(
+        self, patterns: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Warm up cache with common data"""
         if self.is_warming_up:
             return {"status": "already_warming"}

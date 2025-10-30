@@ -1,10 +1,10 @@
-""""
+"""
 门面工厂
 Facade Factory
 
 用于创建和配置门面实例.
 Used to create and configure facade instances.
-""""
+"""
 
 import json
 import os
@@ -26,6 +26,8 @@ from .facades import (
 
 @dataclass
 class FacadeConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """门面配置"""
 
     name: str
@@ -38,6 +40,8 @@ class FacadeConfig:
 
 
 class FacadeFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """门面工厂类"""
 
     # 注册的门面类型
@@ -50,6 +54,8 @@ class FacadeFactory:
     }
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._config_cache: Dict[str, FacadeConfig] = {}
         self._instance_cache: Dict[str, SystemFacade] = {}
         self.default_environment = os.getenv("ENVIRONMENT", "development")
@@ -167,7 +173,7 @@ class FacadeFactory:
         # 解析参数中的环境变量
         resolved_params = {}
         for key, value in config.parameters.items():
-            if isinstance(value, ((((((((str) and value.startswith("$"):
+            if isinstance(value, ((str) and value.startswith("$"):
                 env_var = value[1:]
                 env_value = os.getenv(env_var)
                 if env_value is not None:

@@ -19,33 +19,6 @@ from src.database.dependencies import get_db
 
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
-from src.core.config import get_config 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # mypy: ignore-errors
@@ -80,7 +53,7 @@ router = APIRouter(tags=["monitoring"])
 
 
 async def _get_database_metrics(db: Session) -> Dict[str, Any]:
-    """获取数据库健康与统计指标.
+    """获取数据库健康与统计指标."
     返回结构:
     {
         "healthy": bool,
@@ -103,7 +76,9 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         _teams = db.execute(text("SELECT COUNT(*) FROM teams"))
         _matches = db.execute(text("SELECT COUNT(*) FROM matches"))
         predictions = db.execute(text("SELECT COUNT(*) FROM predictions"))
-        active = db.execute(text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'"))
+        active = db.execute(
+            text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")
+        )
 
         def _val(res: Any) -> int:
             try:
@@ -129,7 +104,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
 
 
 async def _get_business_metrics(db: Session) -> Dict[str, Any]:
-    """获取业务层关键指标。异常时各项返回 None.
+    """获取业务层关键指标。异常时各项返回 None."
     返回结构:
     {
         "24h_predictions": Optional[int],

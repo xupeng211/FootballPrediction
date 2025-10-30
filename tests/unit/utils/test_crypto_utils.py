@@ -175,7 +175,7 @@ class TestCryptoUtils:
                 if result is not None:
                     assert isinstance(result, int)
                     assert 1000 <= result <= 9999
-            except Exception:
+        except Exception:
             pass
 
     def test_token_generation(self):

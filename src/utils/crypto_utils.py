@@ -8,10 +8,11 @@ CryptoUtils
 import hashlib
 import secrets
 import uuid
-from typing import Optional
 
 
 class CryptoUtils:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """加密工具类"""
 
     @staticmethod
@@ -29,12 +30,15 @@ class CryptoUtils:
         """密码哈希"""
         try:
             import bcrypt
+
             HAS_BCRYPT = True
         except ImportError:
             HAS_BCRYPT = False
 
         if HAS_BCRYPT:
-            password_bytes = password.encode("utf-8") if isinstance(password, str) else password
+            password_bytes = (
+                password.encode("utf-8") if isinstance(password, str) else password
+            )
             return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
         else:
             salt = CryptoUtils.generate_short_id()
@@ -47,6 +51,7 @@ class CryptoUtils:
         """验证密码"""
         try:
             import bcrypt
+
             HAS_BCRYPT = True
         except ImportError:
             HAS_BCRYPT = False
@@ -54,9 +59,19 @@ class CryptoUtils:
         if password == "" and hashed_password == "":
             return True
 
-        if HAS_BCRYPT and hashed_password.startswith("$2b$") and hashed_password.count("$") == 3:
-            password_bytes = password.encode("utf-8") if isinstance(password, str) else password
-            hashed_bytes = hashed_password.encode("utf-8") if isinstance(hashed_password, str) else hashed_password
+        if (
+            HAS_BCRYPT
+            and hashed_password.startswith("$2b$")
+            and hashed_password.count("$") == 3
+        ):
+            password_bytes = (
+                password.encode("utf-8") if isinstance(password, str) else password
+            )
+            hashed_bytes = (
+                hashed_password.encode("utf-8")
+                if isinstance(hashed_password, str)
+                else hashed_password
+            )
             return bcrypt.checkpw(password_bytes, hashed_bytes)
         elif hashed_password.startswith("$2b$") and hashed_password.count("$") > 3:
             try:
@@ -65,7 +80,9 @@ class CryptoUtils:
                     salt = parts[3]
                     expected_hash = parts[4]
                     salted_password = f"{password}{salt}"
-                    actual_hash = hashlib.sha256(salted_password.encode("utf-8")).hexdigest()
+                    actual_hash = hashlib.sha256(
+                        salted_password.encode("utf-8")
+                    ).hexdigest()
                     return actual_hash == expected_hash
             except IndexError:
                 pass
@@ -77,7 +94,9 @@ class CryptoUtils:
                     salt = parts[1]
                     expected_hash = parts[2]
                     salted_password = f"{password}{salt}"
-                    actual_hash = hashlib.sha256(salted_password.encode("utf-8")).hexdigest()
+                    actual_hash = hashlib.sha256(
+                        salted_password.encode("utf-8")
+                    ).hexdigest()
                     return actual_hash == expected_hash
             except IndexError:
                 pass
@@ -93,9 +112,10 @@ class CryptoUtils:
 
         try:
             import base64
+
             encoded_bytes = base64.b64encode(text.encode("utf-8"))
             return encoded_bytes.decode("utf-8")
-            except Exception:
+        except Exception:
             return ""
 
     @staticmethod
@@ -106,9 +126,10 @@ class CryptoUtils:
 
         try:
             import base64
+
             decoded_bytes = base64.b64decode(encoded_text.encode("utf-8"))
             return decoded_bytes.decode("utf-8")
-            except Exception:
+        except Exception:
             return ""
 
     @staticmethod
@@ -118,8 +139,9 @@ class CryptoUtils:
             return ""
         try:
             import urllib.parse
+
             return urllib.parse.quote(text.encode("utf-8"))
-            except Exception:
+        except Exception:
             return ""
 
     @staticmethod
@@ -129,8 +151,9 @@ class CryptoUtils:
             return ""
         try:
             import urllib.parse
+
             return urllib.parse.unquote(encoded_text)
-            except Exception:
+        except Exception:
             return ""
 
     @staticmethod

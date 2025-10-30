@@ -20,7 +20,9 @@ SKIP_AND_CONTINUE = "skip_and_continue"
 
 # 类定义
 class RecoveryHandler:
-    """恢复处理器主类
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """恢复处理器主类"
 
     负责处理任务失败和恢复,提供以下功能:
     - 失败分类和分析

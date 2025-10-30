@@ -32,6 +32,8 @@ class AuditSeverity(Enum):
 
 @dataclass
 class AuditEvent:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """审计事件"""
 
     id: str
@@ -45,5 +47,7 @@ class AuditEvent:
     metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.metadata is None:
             self.metadata = {}

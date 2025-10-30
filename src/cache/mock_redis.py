@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional, Union
 
 
 class MockRedisManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """模拟Redis管理器"""
 
     _instance: Optional["MockRedisManager"] = None
@@ -131,6 +133,8 @@ class MockRedisManager:
 
 
 class CacheKeyManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """缓存键管理器"""
 
     @staticmethod

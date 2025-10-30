@@ -8,9 +8,13 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 class ValidationResult:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """验证结果"""
 
     def __init__(self, is_valid: bool = True, message: str = ""):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.is_valid = is_valid
         self.message = message
         self.errors: List[str] = []
@@ -49,6 +53,8 @@ class Rule(ABC):
     """规则抽象基类"""
 
     def __init__(self, name: str, description: str = ""):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.name = name
         self.description = description
         self.enabled = True
@@ -91,9 +97,13 @@ class BusinessRule(Rule):
 
 
 class ValidationEngine:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """验证引擎"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._rules: Dict[str, List[Rule]] = {}
         self._global_rules: List[Rule] = []
 
@@ -198,6 +208,8 @@ class ValidationEngine:
 
 
 class BusinessRules:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预定义的业务规则集合"""
 
     @staticmethod
@@ -287,7 +299,9 @@ class BusinessRules:
         rules.append(
             BusinessRule(
                 name="non_empty_name",
-                condition=lambda t: hasattr(t, "name") and t.name and len(t.name.strip()) > 0,
+                condition=lambda t: hasattr(t, "name")
+                and t.name
+                and len(t.name.strip()) > 0,
                 error_message="Team name cannot be empty",
                 description="Ensures team has a valid name",
             )
@@ -297,7 +311,8 @@ class BusinessRules:
         rules.append(
             BusinessRule(
                 name="valid_founding_year",
-                condition=lambda t: t.founded_year is None or t.founded_year <= datetime.now().year,
+                condition=lambda t: t.founded_year is None
+                or t.founded_year <= datetime.now().year,
                 error_message="Founding year cannot be in the future",
                 description="Ensures founding year is valid",
             )

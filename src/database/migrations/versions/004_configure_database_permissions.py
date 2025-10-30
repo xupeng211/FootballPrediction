@@ -6,7 +6,6 @@ from alembic import context, op
 from sqlalchemy import text
 
 
-from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -126,7 +125,7 @@ from alembic import op
 
 # 删除用户（注意:在生产环境中可能不希望删除用户）
 logger = logging.getLogger(__name__)
-"""配置数据库权限
+"""配置数据库权限"
 配置三类数据库用户的权限:
 - football_reader: 只读用户（分析,前端）
 - football_writer: 写入用户（数据采集）
@@ -148,13 +147,13 @@ def upgrade() -> None:
         logger.info("⚠️  离线模式:跳过数据库权限配置")
         op.execute("-- offline mode: skipped database user creation")
         op.execute("-- offline mode: skipped database permission configuration")
-        return
+        return None
     connection = op.get_bind()
     db_dialect = connection.dialect.name.lower()
     if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境:跳过PostgreSQL权限配置")
         op.execute("-- SQLite environment: skipped PostgreSQL permission configuration")
-        return
+        return None
     connection = op.get_bind()
     db_name = os.getenv("TEST_DB_NAME", "football_prediction")
     if os.getenv("ENVIRONMENT") == "test":
@@ -200,10 +199,16 @@ def upgrade() -> None:
     )
     connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_reader;"))
     connection.execute(text("GRANT USAGE ON SCHEMA public TO football_reader;"))
-    connection.execute(text("GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_reader;"))
-    connection.execute(text("GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO football_reader;"))
     connection.execute(
-        text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO football_reader;")
+        text("GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_reader;")
+    )
+    connection.execute(
+        text("GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO football_reader;")
+    )
+    connection.execute(
+        text(
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO football_reader;"
+        )
     )
     connection.execute(
         text(
@@ -213,10 +218,14 @@ def upgrade() -> None:
     connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_writer;"))
     connection.execute(text("GRANT USAGE ON SCHEMA public TO football_writer;"))
     connection.execute(
-        text("GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO football_writer;")
+        text(
+            "GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO football_writer;"
+        )
     )
     connection.execute(
-        text("GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA public TO football_writer;")
+        text(
+            "GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA public TO football_writer;"
+        )
     )
     connection.execute(
         text(
@@ -236,19 +245,29 @@ def upgrade() -> None:
     for table in tables_with_delete_permission:
         connection.execute(text(f"GRANT DELETE ON {table} TO football_writer;"))
     connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_admin;"))
-    connection.execute(text(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO football_admin;"))
+    connection.execute(
+        text(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO football_admin;")
+    )
     connection.execute(
         text("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO football_admin;")
     )
     connection.execute(
-        text("GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO football_admin;")
-    )
-    connection.execute(text("GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO football_admin;"))
-    connection.execute(
-        text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO football_admin;")
+        text(
+            "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO football_admin;"
+        )
     )
     connection.execute(
-        text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO football_admin;")
+        text("GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO football_admin;")
+    )
+    connection.execute(
+        text(
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO football_admin;"
+        )
+    )
+    connection.execute(
+        text(
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO football_admin;"
+        )
     )
     connection.execute(
         text(
@@ -345,8 +364,12 @@ def upgrade() -> None:
         )
     )
     connection.execute(text("GRANT SELECT ON permission_audit_log TO football_reader;"))
-    connection.execute(text("GRANT SELECT, INSERT ON permission_audit_log TO football_writer;"))
-    connection.execute(text("GRANT ALL PRIVILEGES ON permission_audit_log TO football_admin;"))
+    connection.execute(
+        text("GRANT SELECT, INSERT ON permission_audit_log TO football_writer;")
+    )
+    connection.execute(
+        text("GRANT ALL PRIVILEGES ON permission_audit_log TO football_admin;")
+    )
     connection.execute(
         text(
             "GRANT USAGE ON SEQUENCE permission_audit_log_id_seq TO football_writer, football_admin;"
@@ -371,13 +394,13 @@ def downgrade() -> None:
         logger.info("⚠️  离线模式:跳过数据库权限回滚")
         op.execute("-- offline mode: skipped database permission rollback")
         op.execute("-- offline mode: skipped database user deletion")
-        return
+        return None
     connection = op.get_bind()
     db_dialect = connection.dialect.name.lower()
     if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境:跳过PostgreSQL权限回滚")
         op.execute("-- SQLite environment: skipped PostgreSQL permission rollback")
-        return
+        return None
     connection = op.get_bind()
     db_name = os.getenv("TEST_DB_NAME", "football_prediction")
     if os.getenv("ENVIRONMENT") == "test":
@@ -386,26 +409,44 @@ def downgrade() -> None:
     connection.execute(text("DROP VIEW IF EXISTS table_permissions;"))
     connection.execute(text("DROP FUNCTION IF EXISTS check_user_permissions(TEXT);"))
     connection.execute(text("DROP TABLE IF EXISTS permission_audit_log;"))
-    connection.execute(text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_reader;"))
     connection.execute(
-        text("REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_reader;")
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_reader;")
     )
     connection.execute(
-        text("REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_reader;")
-    )
-    connection.execute(text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_writer;"))
-    connection.execute(
-        text("REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_writer;")
+        text(
+            "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_reader;"
+        )
     )
     connection.execute(
-        text("REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_writer;")
-    )
-    connection.execute(text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_admin;"))
-    connection.execute(
-        text("REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_admin;")
+        text(
+            "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_reader;"
+        )
     )
     connection.execute(
-        text("REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_admin;")
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_writer;")
+    )
+    connection.execute(
+        text(
+            "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_writer;"
+        )
+    )
+    connection.execute(
+        text(
+            "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_writer;"
+        )
+    )
+    connection.execute(
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_admin;")
+    )
+    connection.execute(
+        text(
+            "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_admin;"
+        )
+    )
+    connection.execute(
+        text(
+            "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_admin;"
+        )
     )
     connection.execute(text("DROP USER IF EXISTS football_reader;"))
     connection.execute(text("DROP USER IF EXISTS football_writer;"))

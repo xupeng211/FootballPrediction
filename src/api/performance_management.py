@@ -6,17 +6,15 @@ Performance Management API
 """
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, status, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 
 from src.database.base import get_db_session
 from src.optimizations.database_optimizations import DatabaseOptimizerFactory
-from src.optimizations.api_optimizations import APIOptimizer, PerformanceMiddleware
+from src.optimizations.api_optimizations import APIOptimizer
 from src.middleware.tenant_middleware import require_permission
-from src.core.config import get_settings
 
 
 router = APIRouter(prefix="/api/v1/performance", tags=["性能管理"])
@@ -27,14 +25,17 @@ api_optimizer = APIOptimizer()
 
 # ==================== 请求/响应模型 ====================
 
+
 class OptimizationRequestModel(BaseModel):
     """优化请求模型"""
+
     optimization_type: str = Field(..., description="优化类型")
     parameters: Optional[Dict[str, Any]] = Field(None, description="优化参数")
 
 
 class CacheOperationModel(BaseModel):
     """缓存操作模型"""
+
     operation: str = Field(..., description="操作类型: clear, warm, analyze")
     pattern: Optional[str] = Field(None, description="缓存模式")
     keys: Optional[List[str]] = Field(None, description="特定键列表")
@@ -42,12 +43,16 @@ class CacheOperationModel(BaseModel):
 
 class PerformanceAnalysisModel(BaseModel):
     """性能分析模型"""
-    time_range_minutes: int = Field(60, ge=1, le=1440, description="分析时间范围（分钟）")
+
+    time_range_minutes: int = Field(
+        60, ge=1, le=1440, description="分析时间范围（分钟）"
+    )
     include_details: bool = Field(True, description="是否包含详细信息")
 
 
 class DatabaseOptimizationModel(BaseModel):
     """数据库优化模型"""
+
     optimize_indexes: bool = Field(True, description="优化索引")
     cleanup_data: bool = Field(True, description="清理数据")
     analyze_tables: bool = Field(True, description="分析表")
@@ -56,11 +61,12 @@ class DatabaseOptimizationModel(BaseModel):
 
 # ==================== 性能监控端点 ====================
 
+
 @router.get("/metrics")
 @require_permission("performance.view")
 async def get_performance_metrics(
     time_range_minutes: int = Query(60, ge=1, le=1440, description="时间范围（分钟）"),
-    endpoint_filter: Optional[str] = Query(None, description="端点过滤")
+    endpoint_filter: Optional[str] = Query(None, description="端点过滤"),
 ):
     """
     获取性能指标
@@ -83,29 +89,30 @@ async def get_performance_metrics(
                 "endpoint": "/api/v1/predictions/analyze",
                 "method": "POST",
                 "avg_response_time_ms": 1250.5,
-                "request_count": 45
+                "request_count": 45,
             },
             {
                 "endpoint": "/api/v1/matches/history",
                 "method": "GET",
                 "avg_response_time_ms": 890.3,
-                "request_count": 120
-            }
+                "request_count": 120,
+            },
         ],
         "top_error_endpoints": [
             {
                 "endpoint": "/api/v1/users/profile",
                 "method": "PUT",
                 "error_rate": 12.5,
-                "error_count": 8
+                "error_count": 8,
             }
-        ]
+        ],
     }
 
     if endpoint_filter:
         # 应用端点过滤
         metrics_summary["filtered_endpoints"] = [
-            ep for ep in metrics_summary.get("top_slow_endpoints", [])
+            ep
+            for ep in metrics_summary.get("top_slow_endpoints", [])
             if endpoint_filter in ep["endpoint"]
         ]
 
@@ -125,40 +132,40 @@ async def get_performance_dashboard():
             "system_health": "good",
             "overall_performance_score": 85.2,
             "active_alerts": 2,
-            "last_optimization": "2025-10-30T14:30:00Z"
+            "last_optimization": "2025-10-30T14:30:00Z",
         },
         "response_time_trend": [
             {"timestamp": "2025-10-30T14:00:00Z", "avg_ms": 230.5},
             {"timestamp": "2025-10-30T14:15:00Z", "avg_ms": 245.8},
             {"timestamp": "2025-10-30T14:30:00Z", "avg_ms": 251.2},
             {"timestamp": "2025-10-30T14:45:00Z", "avg_ms": 238.9},
-            {"timestamp": "2025-10-30T15:00:00Z", "avg_ms": 245.6}
+            {"timestamp": "2025-10-30T15:00:00Z", "avg_ms": 245.6},
         ],
         "error_rate_trend": [
             {"timestamp": "2025-10-30T14:00:00Z", "rate": 2.1},
             {"timestamp": "2025-10-30T14:15:00Z", "rate": 2.5},
             {"timestamp": "2025-10-30T14:30:00Z", "rate": 1.8},
             {"timestamp": "2025-10-30T14:45:00Z", "rate": 2.3},
-            {"timestamp": "2025-10-30T15:00:00Z", "rate": 2.3}
+            {"timestamp": "2025-10-30T15:00:00Z", "rate": 2.3},
         ],
         "resource_usage": {
             "cpu_usage": 45.8,
             "memory_usage": 67.2,
             "disk_usage": 78.5,
-            "network_io": 12.3
+            "network_io": 12.3,
         },
         "cache_performance": {
             "hit_rate": 78.5,
             "miss_rate": 21.5,
             "total_keys": 1250,
-            "memory_usage_mb": 245.6
+            "memory_usage_mb": 245.6,
         },
         "database_performance": {
             "connection_pool_usage": 65.2,
             "avg_query_time_ms": 125.4,
             "slow_queries": 3,
-            "index_usage_rate": 89.5
-        }
+            "index_usage_rate": 89.5,
+        },
     }
 
     return dashboard_data
@@ -168,7 +175,7 @@ async def get_performance_dashboard():
 @require_permission("performance.view")
 async def get_performance_alerts(
     severity: Optional[str] = Query(None, description="严重级别过滤"),
-    status_filter: Optional[str] = Query(None, description="状态过滤")
+    status_filter: Optional[str] = Query(None, description="状态过滤"),
 ):
     """
     获取性能告警
@@ -185,7 +192,7 @@ async def get_performance_alerts(
             "created_at": "2025-10-30T14:45:00Z",
             "endpoint": "/api/v1/predictions/analyze",
             "metric_value": 1250.5,
-            "threshold": 1000.0
+            "threshold": 1000.0,
         },
         {
             "id": "alert_002",
@@ -196,7 +203,7 @@ async def get_performance_alerts(
             "created_at": "2025-10-30T14:30:00Z",
             "endpoint": "/api/v1/users/profile",
             "metric_value": 12.5,
-            "threshold": 10.0
+            "threshold": 10.0,
         },
         {
             "id": "alert_003",
@@ -207,8 +214,8 @@ async def get_performance_alerts(
             "created_at": "2025-10-30T13:15:00Z",
             "resolved_at": "2025-10-30T14:00:00Z",
             "metric_value": 68.5,
-            "threshold": 70.0
-        }
+            "threshold": 70.0,
+        },
     ]
 
     # 应用过滤
@@ -222,17 +229,17 @@ async def get_performance_alerts(
         "alerts": filtered_alerts,
         "total_count": len(alerts),
         "active_count": len([a for a in alerts if a["status"] == "active"]),
-        "critical_count": len([a for a in alerts if a["severity"] == "critical"])
+        "critical_count": len([a for a in alerts if a["severity"] == "critical"]),
     }
 
 
 # ==================== 数据库优化端点 ====================
 
+
 @router.post("/database/optimize")
 @require_permission("performance.optimize")
 async def optimize_database(
-    optimization_config: DatabaseOptimizationModel,
-    background_tasks: BackgroundTasks
+    optimization_config: DatabaseOptimizationModel, background_tasks: BackgroundTasks
 ):
     """
     优化数据库性能
@@ -243,9 +250,7 @@ async def optimize_database(
     optimization_id = f"db_opt_{int(datetime.utcnow().timestamp())}"
 
     background_tasks.add_task(
-        _run_database_optimization,
-        optimization_id,
-        optimization_config.dict()
+        _run_database_optimization, optimization_id, optimization_config.dict()
     )
 
     return {
@@ -256,8 +261,8 @@ async def optimize_database(
             "索引优化" if optimization_config.optimize_indexes else None,
             "数据清理" if optimization_config.cleanup_data else None,
             "表分析" if optimization_config.analyze_tables else None,
-            "物化视图刷新" if optimization_config.refresh_views else None
-        ]
+            "物化视图刷新" if optimization_config.refresh_views else None,
+        ],
     }
 
 
@@ -288,10 +293,12 @@ async def get_database_analysis():
                 "index_analysis": {
                     "total_indexes": index_usage.get("total_indexes", 0),
                     "unused_indexes": index_usage.get("unused_count", 0),
-                    "unused_details": index_usage.get("unused_indexes", [])[:5]
+                    "unused_details": index_usage.get("unused_indexes", [])[:5],
                 },
                 "connection_pool": connection_pool,
-                "recommendations": _generate_database_recommendations(table_sizes, index_usage, connection_pool)
+                "recommendations": _generate_database_recommendations(
+                    table_sizes, index_usage, connection_pool
+                ),
             }
 
         finally:
@@ -316,29 +323,31 @@ async def get_optimization_status(optimization_id: str):
         "estimated_completion": "2025-10-30T15:15:00Z",
         "completed_operations": [
             {"operation": "索引创建", "status": "completed", "duration_ms": 1250},
-            {"operation": "表分析", "status": "completed", "duration_ms": 890}
+            {"operation": "表分析", "status": "completed", "duration_ms": 890},
         ],
         "remaining_operations": [
             {"operation": "数据清理", "status": "pending"},
-            {"operation": "视图刷新", "status": "pending"}
-        ]
+            {"operation": "视图刷新", "status": "pending"},
+        ],
     }
 
 
 # ==================== 缓存管理端点 ====================
 
+
 @router.post("/cache/manage")
 @require_permission("performance.manage")
 async def manage_cache(
-    cache_operation: CacheOperationModel,
-    background_tasks: BackgroundTasks
+    cache_operation: CacheOperationModel, background_tasks: BackgroundTasks
 ):
     """
     管理缓存
 
     需要权限: performance.manage
     """
-    operation_id = f"cache_{cache_operation.operation}_{int(datetime.utcnow().timestamp())}"
+    operation_id = (
+        f"cache_{cache_operation.operation}_{int(datetime.utcnow().timestamp())}"
+    )
 
     if cache_operation.operation == "clear":
         if cache_operation.pattern:
@@ -351,7 +360,7 @@ async def manage_cache(
         return {
             "message": "缓存清理任务已启动",
             "operation_id": operation_id,
-            "operation_type": "clear"
+            "operation_type": "clear",
         }
 
     elif cache_operation.operation == "warm":
@@ -359,7 +368,7 @@ async def manage_cache(
         return {
             "message": "缓存预热任务已启动",
             "operation_id": operation_id,
-            "operation_type": "warm"
+            "operation_type": "warm",
         }
 
     elif cache_operation.operation == "analyze":
@@ -368,13 +377,13 @@ async def manage_cache(
             "message": "缓存分析完成",
             "operation_id": operation_id,
             "operation_type": "analyze",
-            "analysis": analysis_result
+            "analysis": analysis_result,
         }
 
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"不支持的操作类型: {cache_operation.operation}"
+            detail=f"不支持的操作类型: {cache_operation.operation}",
         )
 
 
@@ -393,30 +402,30 @@ async def get_cache_statistics():
             "hit_rate": 78.5,
             "miss_rate": 21.5,
             "evictions": 15,
-            "connections": 8
+            "connections": 8,
         },
         "performance_metrics": {
             "avg_get_time_ms": 2.5,
             "avg_set_time_ms": 3.2,
-            "ops_per_second": 1500.5
+            "ops_per_second": 1500.5,
         },
         "key_distribution": {
             "api_cache": 450,
             "user_cache": 320,
             "prediction_cache": 280,
-            "match_cache": 200
+            "match_cache": 200,
         },
         "memory_breakdown": {
             "api_responses": 125.5,
             "user_sessions": 45.2,
             "prediction_data": 75.8,
-            "other": 99.1
+            "other": 99.1,
         },
         "recommendations": [
             "考虑增加缓存大小以提高命中率",
             "部分键的TTL设置过短,建议适当延长",
-            "监控内存使用情况,避免达到内存上限"
-        ]
+            "监控内存使用情况,避免达到内存上限",
+        ],
     }
 
     return cache_stats
@@ -424,11 +433,10 @@ async def get_cache_statistics():
 
 # ==================== API优化端点 ====================
 
+
 @router.post("/api/optimize")
 @require_permission("performance.optimize")
-async def optimize_api_performance(
-    optimization_request: OptimizationRequestModel
-):
+async def optimize_api_performance(optimization_request: OptimizationRequestModel):
     """
     优化API性能
 
@@ -441,7 +449,7 @@ async def optimize_api_performance(
         if not endpoint:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="端点优化需要指定endpoint参数"
+                detail="端点优化需要指定endpoint参数",
             )
 
         result = await api_optimizer.optimize_endpoint(endpoint, method)
@@ -453,13 +461,13 @@ async def optimize_api_performance(
         return {
             "message": "全局性能优化完成",
             "optimization_type": "global",
-            "performance_report": report
+            "performance_report": report,
         }
 
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"不支持的优化类型: {optimization_request.optimization_type}"
+            detail=f"不支持的优化类型: {optimization_request.optimization_type}",
         )
 
 
@@ -477,9 +485,9 @@ async def get_api_performance_analysis():
 
 # ==================== 后台任务函数 ====================
 
+
 async def _run_database_optimization(
-    optimization_id: str,
-    optimization_config: Dict[str, Any]
+    optimization_id: str, optimization_config: Dict[str, Any]
 ):
     """运行数据库优化后台任务"""
     async with get_db_session() as db:
@@ -513,6 +521,7 @@ async def _run_database_optimization(
 async def _clear_cache_by_pattern(pattern: str):
     """按模式清理缓存"""
     from src.optimizations.api_optimizations import clear_cache
+
     result = await clear_cache(pattern)
     print(f"缓存清理完成: {result}")
 
@@ -520,6 +529,7 @@ async def _clear_cache_by_pattern(pattern: str):
 async def _clear_cache_by_keys(keys: List[str]):
     """按键清理缓存"""
     from src.optimizations.api_optimizations import APICache
+
     cache_manager = APICache()
 
     cleared_count = 0
@@ -548,23 +558,22 @@ async def _analyze_cache_performance() -> Dict[str, Any]:
         "hit_rate": 78.5,
         "miss_rate": 21.5,
         "memory_efficiency": 85.2,
-        "key_distribution": {
-            "frequently_accessed": 450,
-            "rarely_accessed": 800
-        }
+        "key_distribution": {"frequently_accessed": 450, "rarely_accessed": 800},
     }
 
 
 def _generate_database_recommendations(
     table_sizes: List[Dict[str, Any]],
     index_usage: Dict[str, Any],
-    connection_pool: Dict[str, Any]
+    connection_pool: Dict[str, Any],
 ) -> List[str]:
     """生成数据库优化建议"""
     recommendations = []
 
     # 表大小建议
-    large_tables = [t for t in table_sizes if "total_size" in t and "GB" in t["total_size"]]
+    large_tables = [
+        t for t in table_sizes if "total_size" in t and "GB" in t["total_size"]
+    ]
     if large_tables:
         recommendations.append(f"发现 {len(large_tables)} 个大表,建议考虑分区或归档")
 
@@ -583,6 +592,7 @@ def _generate_database_recommendations(
 
 # ==================== 健康检查端点 ====================
 
+
 @router.get("/health", tags=["健康检查"])
 async def performance_management_health():
     """性能管理健康检查"""
@@ -593,6 +603,6 @@ async def performance_management_health():
         "components": {
             "database_optimizer": "healthy",
             "api_optimizer": "healthy",
-            "cache_manager": "healthy"
-        }
+            "cache_manager": "healthy",
+        },
     }

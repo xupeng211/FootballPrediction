@@ -6,10 +6,12 @@ DataValidator
 """
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 
 class DataValidator:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """数据验证工具类"""
 
     @staticmethod
@@ -18,7 +20,7 @@ class DataValidator:
         if not isinstance(email, str):
             return False
 
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, email))
 
     @staticmethod
@@ -33,7 +35,7 @@ class DataValidator:
         # 支持多种手机号格式
         patterns = [
             r"^1[3-9]\d{9}$",  # 中国手机号
-            r"^\+\d{10,15}$"   # 国际号码
+            r"^\+\d{10,15}$",  # 国际号码
         ]
 
         return any(bool(re.match(pattern, clean_phone)) for pattern in patterns)
@@ -44,7 +46,7 @@ class DataValidator:
         if not isinstance(url, str):
             return False
 
-        pattern = r'^https?://[^\s/$.?#].[^\s]*$'
+        pattern = r"^https?://[^\s/$.?#].[^\s]*$"
         return bool(re.match(pattern, url))
 
     @staticmethod
@@ -54,9 +56,11 @@ class DataValidator:
             return False
 
         # 18位身份证
-        pattern18 = r'^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$'
+        pattern18 = (
+            r"^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$"
+        )
         # 15位身份证
-        pattern15 = r'^[1-9]\d{5}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}$'
+        pattern15 = r"^[1-9]\d{5}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}$"
 
         return bool(re.match(pattern18, id_card) or re.match(pattern15, id_card))
 
@@ -70,7 +74,7 @@ class DataValidator:
         text = str(input_data)
 
         # 移除危险字符
-        dangerous_chars = ["<", ">", "&", "\"", "'"]
+        dangerous_chars = ["<", ">", "&", """, """]
         for char in dangerous_chars:
             text = text.replace(char, "")
 
@@ -87,7 +91,7 @@ class DataValidator:
             return False
 
         # 用户名长度4-20位,只能包含字母,数字,下划线
-        pattern = r'^[a-zA-Z0-9_]{4,20}$'
+        pattern = r"^[a-zA-Z0-9_]{4,20}$"
         return bool(re.match(pattern, username))
 
     @staticmethod
@@ -104,17 +108,17 @@ class DataValidator:
         else:
             strength += 1
 
-        if not re.search(r'[a-z]', password):
+        if not re.search(r"[a-z]", password):
             issues.append("密码必须包含小写字母")
         else:
             strength += 1
 
-        if not re.search(r'[A-Z]', password):
+        if not re.search(r"[A-Z]", password):
             issues.append("密码必须包含大写字母")
         else:
             strength += 1
 
-        if not re.search(r'\d', password):
+        if not re.search(r"\d", password):
             issues.append("密码必须包含数字")
         else:
             strength += 1
@@ -124,11 +128,7 @@ class DataValidator:
         else:
             strength += 1
 
-        return {
-            "valid": len(issues) == 0,
-            "strength": strength,
-            "issues": issues
-        }
+        return {"valid": len(issues) == 0, "strength": strength, "issues": issues}
 
     @staticmethod
     def validate_positive_number(value: Any) -> bool:
@@ -150,7 +150,4 @@ class DataValidator:
             if field not in data or data[field] is None or data[field] == "":
                 missing.append(field)
 
-        return {
-            "valid": len(missing) == 0,
-            "missing": missing
-        }
+        return {"valid": len(missing) == 0, "missing": missing}
