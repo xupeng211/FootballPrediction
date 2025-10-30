@@ -13,6 +13,7 @@ Performance Monitoring Middleware
 import time
 from typing import Callable, Dict, List, Optional
 
+import secrets
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -61,7 +62,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         # 采样检查
         import random
 
-        if random.random() > self.sample_rate:
+        if secrets.randbelow(100) / 100 > self.sample_rate:
             return await call_next(request)
 
         # 生成请求ID

@@ -10,6 +10,7 @@ import random
 import time
 from typing import Callable, Optional, TypeVar
 
+import secrets
 T = TypeVar("T")
 
 
@@ -59,8 +60,8 @@ def retry_with_exponential_backoff(
                     last_exception = e
                     if attempt < max_attempts - 1:
                         delay = min(base_delay * (2**attempt), max_delay)
-                        if random.random() < 0.1:  # 添加抖动  # noqa: B311
-                            delay *= 0.5 + random.random()  # noqa: B311
+                        if secrets.randbelow(100) / 100 < 0.1:  # 添加抖动  # noqa: B311
+                            delay *= 0.5 + secrets.randbelow(100) / 100  # noqa: B311
                         time.sleep(delay)
 
             raise RetryError(f"Max attempts ({max_attempts}) exceeded") from last_exception
@@ -90,8 +91,8 @@ async def async_retry_with_exponential_backoff(
                     last_exception = e
                     if attempt < max_attempts - 1:
                         delay = min(base_delay * (2**attempt), max_delay)
-                        if random.random() < 0.1:  # 添加抖动  # noqa: B311
-                            delay *= 0.5 + random.random()  # noqa: B311
+                        if secrets.randbelow(100) / 100 < 0.1:  # 添加抖动  # noqa: B311
+                            delay *= 0.5 + secrets.randbelow(100) / 100  # noqa: B311
                         await asyncio.sleep(delay)
 
             raise RetryError(f"Max attempts ({max_attempts}) exceeded") from last_exception

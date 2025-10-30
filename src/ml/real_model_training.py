@@ -11,6 +11,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
+import secrets
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -155,19 +156,19 @@ class RealModelTrainingPipeline:
 
         # 为每个球队生成随机积分
         for i, team in enumerate(teams):
-            points = np.random.randint(20, 80)  # 随机积分
-            goal_diff = np.random.randint(-20, 40)  # 随机净胜球
+            points = np.secrets.randbelow(61) + 20  # 随机积分
+            goal_diff = np.secrets.randbelow(61) + -20  # 随机净胜球
 
             league_table.append(
                 {
                     "position": i + 1,
                     "team": team,
-                    "played": np.random.randint(25, 38),
-                    "won": np.random.randint(5, 25),
-                    "drawn": np.random.randint(3, 15),
-                    "lost": np.random.randint(3, 20),
-                    "goals_for": np.random.randint(20, 80),
-                    "goals_against": np.random.randint(20, 70),
+                    "played": np.secrets.randbelow(14) + 25,
+                    "won": np.secrets.randbelow(21) + 5,
+                    "drawn": np.secrets.randbelow(13) + 3,
+                    "lost": np.secrets.randbelow(18) + 3,
+                    "goals_for": np.secrets.randbelow(61) + 20,
+                    "goals_against": np.secrets.randbelow(51) + 20,
                     "goal_difference": goal_diff,
                     "points": points,
                 }

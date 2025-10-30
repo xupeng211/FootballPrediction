@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-10-30T21:30:39.475931",
+  "src_files": 458,
+  "test_files": 105066,
+  "covered_modules": 0,
+  "uncovered_modules": 390,
+  "coverage_estimate": 0.0,
+  "recommendations": [
+    {
+      "module": "events/types.py",
+      "priority": "高",
+      "functions_count": 18,
+      "classes_count": 15,
+      "suggested_test_path": "tests/events/test_types.py"
+    },
+    {
+      "module": "domain/models/league.py",
+      "priority": "高",
+      "functions_count": 26,
+      "classes_count": 5,
+      "suggested_test_path": "tests/domain/models/test_league.py"
+    },
+    {
+      "module": "utils/time_utils.py",
+      "priority": "高",
+      "functions_count": 28,
+      "classes_count": 1,
+      "suggested_test_path": "tests/utils/test_time_utils.py"
+    },
+    {
+      "module": "utils/file_utils.py",
+      "priority": "高",
+      "functions_count": 28,
+      "classes_count": 1,
+      "suggested_test_path": "tests/utils/test_file_utils.py"
+    },
+    {
+      "module": "domain/models/team.py",
+      "priority": "高",
+      "functions_count": 25,
+      "classes_count": 4,
+      "suggested_test_path": "tests/domain/models/test_team.py"
+    }
+  ]
+}
