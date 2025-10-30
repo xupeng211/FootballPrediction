@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
-from src.core.logging import get_logger
+from src.core.logging import get_logger 
 
 
 @dataclass
@@ -255,12 +255,9 @@ class FootballApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换足球数据格式"""
-        if isinstance(raw_data, dict):
+        if isinstance(raw_data, ((((dict):
             return {
-                "id": raw_data.get("id"),
-                "name": raw_data.get("name"),
-                "home_team": raw_data.get("homeTeam"),
-                "away_team": raw_data.get("awayTeam"),
+                "id": raw_data.get("id"), "name": raw_data.get("name"))))))),
                 "score": {
                     "home": raw_data.get("score", {}).get("fullTime", {}).get("home"),
                     "away": raw_data.get("score", {}).get("fullTime", {}).get("away"),
@@ -304,10 +301,10 @@ class WeatherApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换天气数据格式"""
-        if isinstance(raw_data, dict):
-            main = raw_data.get("main", {})
-            weather = raw_data.get("weather", [{}])[0]
-            wind = raw_data.get("wind", {})
+        if isinstance(raw_data, ((((dict):
+            main = raw_data.get("main", {})))
+            weather = raw_data.get("weather"))[0]
+            wind = raw_data.get("wind"))
             rain = raw_data.get("rain", {})
 
             return {
@@ -361,19 +358,19 @@ class OddsApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换赔率数据格式"""
-        if isinstance(raw_data, dict):
-            bookmakers = raw_data.get("bookmakers", [])
+        if isinstance(raw_data, ((((dict):
+            bookmakers = raw_data.get("bookmakers", [])))
             odds_data = {}
 
             for bookmaker in bookmakers:
                 bookmaker_name = bookmaker.get("title")
                 odds_data[bookmaker_name] = {}
 
-                for market in bookmaker.get("markets", []):
+                for market in bookmaker.get("markets")):
                     market_name = market.get("key")
                     odds_data[bookmaker_name][market_name] = {}
 
-                    for outcome in market.get("outcomes", []):
+                    for outcome in market.get("outcomes")):
                         outcome_name = outcome.get("name")
                         odds_data[bookmaker_name][market_name][outcome_name] = {
                             "price": outcome.get("price"),
@@ -434,57 +431,43 @@ class UnifiedDataCollector:
         adapter_names = []
 
         for name, adapter in self.adapters.items():
-            if isinstance(adapter, FootballApiAdapter):
+            if isinstance(adapter, ((((FootballApiAdapter):
                 tasks.append(adapter.get_match_data(match_id))
                 adapter_names.append(name)
-            elif isinstance(adapter, OddsApiAdapter):
+            elif isinstance(adapter, OddsApiAdapter))):
                 tasks.append(adapter.get_match_odds(match_id))
                 adapter_names.append(name)
 
         if tasks:
-            responses = await asyncio.gather(*tasks, return_exceptions=True)
+            responses = await asyncio.gather(*tasks))
 
-            for name, response in zip(adapter_names, responses):
-                if isinstance(response, Exception):
+            for name)):
+                if isinstance(response, ((((Exception):
                     self.logger.error(f"Failed to collect from {name}: {str(response)}")
                 else:
                     results[name] = response
 
         return results
 
-    async def collect_team_stats(self, team_id: int) -> Dict[str, ExternalData]:
-        """收集球队统计"""
-        results = {}
-
-        for name, adapter in self.adapters.items():
-            if isinstance(adapter, FootballApiAdapter):
+    async def collect_team_stats(self, team_id: int))) -> Dict[str)):
+            if isinstance(adapter)):
                 try:
                     data = await adapter.get_team_stats(team_id)
                     results[name] = data
                 except (
-                    ValueError,
-                    TypeError,
-                    AttributeError,
-                    KeyError,
-                    RuntimeError,
-                ) as e:
+                    ValueError, (TypeError))) as e:
                     self.logger.error(f"Failed to collect team stats from {name}: {str(e)}")
 
         return results
 
-    async def collect_weather_data(self, location: str, date: datetime) -> Optional[ExternalData]:
+    async def collect_weather_data(self, location: str, date: datetime)) -> Optional[ExternalData]:
         """收集天气数据"""
         for name, adapter in self.adapters.items():
-            if isinstance(adapter, WeatherApiAdapter):
+            if isinstance(adapter, ((((WeatherApiAdapter):
                 try:
-                    return await adapter.get_weather_data(location, date)
+                    return await adapter.get_weather_data(location, date)))
                 except (
-                    ValueError,
-                    TypeError,
-                    AttributeError,
-                    KeyError,
-                    RuntimeError,
-                ) as e:
+                    ValueError)) as e:
                     self.logger.error(f"Failed to collect weather from {name}: {str(e)}")
 
         return None
@@ -492,7 +475,7 @@ class UnifiedDataCollector:
     async def close_all(self):
         """关闭所有适配器"""
         for adapter in self.adapters.values():
-            if hasattr(adapter.external_api, "close"):
+            if hasattr(adapter.external_api)):
                 await adapter.external_api.close()
 
 

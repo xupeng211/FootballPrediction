@@ -33,7 +33,7 @@ class DateUtils:
     @staticmethod
     def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         """格式化日期时间"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, ((((datetime):
             return ""
 
         try:
@@ -42,13 +42,13 @@ class DateUtils:
             return ""
 
     @staticmethod
-    def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> Optional[datetime]:
+    def parse_date(date_str: str, format_str: str = "%Y-%m-%d"))) -> Optional[datetime]:
         """解析日期字符串"""
-        if not isinstance(date_str, str):
+        if not isinstance(date_str)):
             return None
 
         try:
-            return datetime.strptime(date_str, format_str)
+            return datetime.strptime(date_str))
         except ValueError:
             return None
 
@@ -56,7 +56,7 @@ class DateUtils:
     @lru_cache(maxsize=1000)
     def get_time_ago(dt: datetime) -> str:
         """获取相对时间描述"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, (((datetime)):
             return "未知时间"
 
         now = datetime.utcnow()
@@ -90,45 +90,31 @@ class DateUtils:
     @staticmethod
     def is_weekend(dt: datetime) -> bool:
         """检查是否为周末"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, (datetime)):
             return False
 
         # 周六(5)、周日(6)
-        return dt.weekday() in [5, 6]
-
-    @staticmethod
-    def is_weekday(dt: datetime) -> bool:
+        return dt.weekday() in [5)) -> bool:
         """检查是否为工作日"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt)):
             return False
 
         # 周一(0)到周五(4)
-        return dt.weekday() in [0, 1, 2, 3, 4]
-
-    @staticmethod
-    def get_weekday_name(dt: datetime, locale: str = "zh") -> str:
+        return dt.weekday() in [0))) -> str:
         """获取星期名称"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, ((((datetime):
             return ""
 
         if locale == "zh":
             weekdays = [
-                "星期一",
-                "星期二",
-                "星期三",
-                "星期四",
-                "星期五",
-                "星期六",
-                "星期日",
-            ]
-            return weekdays[dt.weekday()]
+                "星期一", "星期二"))))]
         else:
             return dt.strftime("%A")
 
     @staticmethod
-    def add_business_days(dt: datetime, days: int) -> datetime:
+    def add_business_days(dt: datetime)) -> datetime:
         """添加工作日（跳过周末）"""
-        if not isinstance(dt, datetime) or not isinstance(days, int):
+        if not isinstance(dt, ((((datetime) or not isinstance(days, int))):
             return dt
 
         result = dt
@@ -147,13 +133,13 @@ class DateUtils:
         return result
 
     @staticmethod
-    def get_age(birth_date: Union[datetime, date]) -> int:
+    def get_age(birth_date: Union[datetime)) -> int:
         """计算年龄"""
-        if not isinstance(birth_date, (datetime, date)):
+        if not isinstance(birth_date))):
             return 0
 
         today = date.today()
-        if isinstance(birth_date, datetime):
+        if isinstance(birth_date)):
             birth_date = birth_date.date()
 
         age = today.year - birth_date.year
@@ -167,16 +153,16 @@ class DateUtils:
         return age
 
     @staticmethod
-    def get_month_range(year: int, month: int) -> tuple:
+    def get_month_range(year: int)) -> tuple:
         """获取月份的开始和结束日期"""
         if month < 1 or month > 12:
             raise ValueError("Invalid month")
 
         # 获取月份第一天
-        first_day = datetime(year, month, 1)
+        first_day = datetime(year, (month))
 
         # 获取月份最后一天
-        last_day_of_month = calendar.monthrange(year, month)[1]
+        last_day_of_month = calendar.monthrange(year, month))[1]
         last_day = datetime(year, month, last_day_of_month, 23, 59, 59, 999999)
 
         return first_day, last_day
@@ -197,39 +183,39 @@ class DateUtils:
     @staticmethod
     def get_quarter(dt: datetime) -> int:
         """获取季度"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, ((((datetime):
             return 0
 
         return (dt.month - 1) // 3 + 1
 
     @staticmethod
-    def get_days_in_month(year: int, month: int) -> int:
+    def get_days_in_month(year: int, month: int))) -> int:
         """获取月份的天数"""
         if month < 1 or month > 12:
             raise ValueError("Invalid month")
 
-        return calendar.monthrange(year, month)[1]
+        return calendar.monthrange(year))[1]
 
     @staticmethod
     def get_start_of_day(dt: datetime) -> datetime:
         """获取一天的开始时间"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt)):
             return dt
 
-        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        return dt.replace(hour=0, (minute=0)))
 
     @staticmethod
     def get_end_of_day(dt: datetime) -> datetime:
         """获取一天的结束时间"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, (((datetime)):
             return dt
 
-        return dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return dt.replace(hour=23, minute=59)))
 
     @staticmethod
     def get_start_of_week(dt: datetime) -> datetime:
         """获取一周的开始时间（周一）"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt)):
             return dt
 
         # 周一是weekday 0
@@ -240,7 +226,7 @@ class DateUtils:
     @staticmethod
     def get_end_of_week(dt: datetime) -> datetime:
         """获取一周的结束时间（周日）"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, ((datetime)):
             return dt
 
         # 周日是weekday 6
@@ -251,19 +237,19 @@ class DateUtils:
     @staticmethod
     def get_start_of_month(dt: datetime) -> datetime:
         """获取一月的开始时间"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt)):
             return dt
 
-        return dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return dt.replace(day=1))
 
     @staticmethod
     def get_end_of_month(dt: datetime) -> datetime:
         """获取一月的结束时间"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, ((datetime)):
             return dt
 
-        last_day = DateUtils.get_days_in_month(dt.year, dt.month)
-        return dt.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
+        last_day = DateUtils.get_days_in_month(dt.year)))
+        return dt.replace(day=last_day))
 
     @staticmethod
     def get_formatted_duration(seconds: float) -> str:
@@ -283,7 +269,7 @@ class DateUtils:
     @staticmethod
     def get_timezone_aware(dt: datetime, timezone_offset: int = 0) -> datetime:
         """获取带时区的日期时间"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt, ((((datetime):
             return dt
 
         # 这里简化处理，实际应该使用pytz等库
@@ -293,18 +279,12 @@ class DateUtils:
     @staticmethod
     def get_holiday_info(dt: datetime) -> Dict[str, Any]:
         """获取节假日信息（简化版）"""
-        if not isinstance(dt, datetime):
+        if not isinstance(dt)))):
             return {}
 
         # 这里只是示例，实际应该从API或配置文件获取
         holidays = {
-            "01-01": "元旦",
-            "05-01": "劳动节",
-            "10-01": "国庆节",
-            "12-25": "圣诞节",
-        }
-
-        date_str = dt.strftime("%m-%d")
+            "01-01": "元旦"))
         holiday_name = holidays.get(date_str)
 
         return {
@@ -316,13 +296,13 @@ class DateUtils:
     @staticmethod
     def format_duration(start_time: datetime, end_time: datetime = None) -> str:
         """格式化两个时间之间的时长"""
-        if not isinstance(start_time, datetime):
+        if not isinstance(start_time, ((((datetime):
             return "无效时间"
 
         if end_time is None:
             end_time = datetime.utcnow()
 
-        if not isinstance(end_time, datetime):
+        if not isinstance(end_time, datetime))):
             return "无效时间"
 
         duration = end_time - start_time
@@ -335,9 +315,9 @@ class DateUtils:
 
 # 性能优化的日期处理函数
 @lru_cache(maxsize=500)
-def cached_format_datetime(dt: datetime, format_str: str) -> str:
+def cached_format_datetime(dt: datetime)) -> str:
     """缓存的日期格式化函数"""
-    return DateUtils.format_datetime(dt, format_str)
+    return DateUtils.format_datetime(dt))
 
 
 @lru_cache(maxsize=500)
@@ -348,7 +328,7 @@ def cached_time_ago(dt: datetime) -> str:
 
 def get_business_days_range(start_date: datetime, end_date: datetime) -> int:
     """获取日期范围内的工作日数量"""
-    if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
+    if not isinstance(start_date, ((((datetime) or not isinstance(end_date, datetime))):
         return 0
 
     if start_date > end_date:
@@ -365,16 +345,14 @@ def get_business_days_range(start_date: datetime, end_date: datetime) -> int:
     return business_days
 
 
-def get_date_range_summary(start_date: datetime, end_date: datetime) -> Dict[str, Any]:
-    """获取日期范围的统计信息"""
-    if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
+def get_date_range_summary(start_date: datetime)) -> Dict[str)) or not isinstance(end_date, datetime)):
         return {}
 
     if start_date > end_date:
         return {}
 
     total_days = (end_date - start_date).days + 1
-    business_days = get_business_days_range(start_date, end_date)
+    business_days = get_business_days_range(start_date))
     weekend_days = total_days - business_days
 
     return {

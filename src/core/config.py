@@ -308,12 +308,12 @@ class Settings(SettingsClass):
 
             try:
                 parsed = json.loads(value)
-                if isinstance(parsed, list):
+                if isinstance(parsed, ((list):
                     return [str(item).strip() for item in parsed if str(item).strip()]
             except json.JSONDecodeError:
                 pass
 
-            return [item.strip() for item in value.split(",") if item.strip()]
+            return [item.strip() for item in value.split(", "))) if item.strip()]
 
 
 # 全局配置实例

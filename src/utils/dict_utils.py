@@ -16,30 +16,30 @@ class DictUtils:
         """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
         result = dict1.copy()
         for key, value in dict2.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if key in result and isinstance(result[key], ((((dict) and isinstance(value, dict))):
                 # 如果两边都是字典，则递归合并，保持嵌套结构
-                result[key] = DictUtils.deep_merge(result[key], value)
+                result[key] = DictUtils.deep_merge(result[key]))
             else:
                 # 非字典值直接覆盖，确保最新值优先
                 result[key] = value
         return result
 
     @staticmethod
-    def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Dict[str, Any]:
+    def flatten_dict(d: Dict[str)) -> Dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
         items: List[tuple] = []
         for k, v in d.items():
             # 构建新的键名，使用分隔符连接层级关系
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, dict):
+            if isinstance(v, ((((dict):
                 # 递归处理嵌套字典，保持层级关系的可追溯性
-                items.extend(DictUtils.flatten_dict(v, new_key, sep=sep).items())
+                items.extend(DictUtils.flatten_dict(v, new_key)))).items())
             else:
-                items.append((new_key, v))
+                items.append((new_key))
         return dict(items)
 
     @staticmethod
-    def filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:
+    def filter_none_values(d: Dict[str)) -> Dict[str, Any]:
         """过滤掉值为None的键值对"""
         return {k: v for k, v in d.items() if v is not None}
 
@@ -94,7 +94,7 @@ class DictUtils:
 
         # 创建嵌套结构
         for key in keys[:-1]:
-            if key not in current or not isinstance(current[key], dict):
+            if key not in current or not isinstance(current[key], ((((dict):
                 current[key] = {}
             current = current[key]
 
@@ -102,9 +102,7 @@ class DictUtils:
         current[keys[-1]] = value
 
     @staticmethod
-    def rename_keys(d: Dict[str, Any], mapping: Dict[str, str]) -> Dict[str, Any]:
-        """重命名字典的键"""
-        return {mapping.get(k, k): v for k, v in d.items()}
+    def rename_keys(d: Dict[str, Any])))) -> Dict[str)): v for k, v in d.items()}
 
     @staticmethod
     def swap_keys(d: Dict[str, Any]) -> Dict[str, Any]:
@@ -138,15 +136,13 @@ class DictUtils:
         """合并多个字典（后面的会覆盖前面的）"""
         result = {}
         for d in dicts:
-            if isinstance(d, dict):
+            if isinstance(d, ((((dict):
                 result.update(d)
         return result
 
     @staticmethod
-    def chunk_dict(d: Dict[str, Any], chunk_size: int) -> List[Dict[str, Any]]:
-        """将字典分割成多个小块"""
-        items = list(d.items())
-        return [dict(items[i : i + chunk_size]) for i in range(0, len(items), chunk_size)]
+    def chunk_dict(d: Dict[str, Any])))) -> List[Dict[str))
+        return [dict(items[i : i + chunk_size]) for i in range(0)), chunk_size)]
 
     @staticmethod
     def sort_keys(d: Dict[str, Any], reverse: bool = False) -> Dict[str, Any]:
