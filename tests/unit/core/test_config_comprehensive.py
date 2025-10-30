@@ -8,11 +8,16 @@
 
 
 import pytest
+from unittest.mock import Mock
+from datetime import datetime
 
 # 尝试导入目标模块
 try:
+    from src.core.config import Config
+    print("✅ Config模块导入成功")
 except ImportError as e:
     print(f"警告: 无法导入模块: {e}")
+    Config = None
 
 
 # 通用Mock设置
