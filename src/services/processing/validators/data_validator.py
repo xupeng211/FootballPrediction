@@ -1,435 +1,358 @@
-""""
-数据验证器
+"""
+数据验证器 - 重写版本
 
-验证处理后的数据质量和完整性.
-""""
+验证处理后的数据质量和完整性
+Data Validator - Rewritten Version
+"""
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-# from .processing.missing_data_handler import MissingDataHandler
-
 
 class DataValidator:
-    """数据验证器"""
+    """数据验证器 - 简化版本
+
+    提供数据质量和完整性验证功能
+    """
 
     def __init__(self):
         """初始化验证器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
-        # self.missing_handler = MissingDataHandler()
 
         # 验证规则配置
         self.validation_rules = {
             "match_data": {
-                "required_fields": [
-                    "match_id",
-                    "home_team",
-                    "away_team",
-                    "match_date",
-                ],
-                "date_fields": ["match_date"],
+                "required_fields": ["match_id", "home_team", "away_team", "match_date"],
                 "numeric_fields": ["home_score", "away_score"],
-                "string_fields": ["home_team", "away_team", "venue", "competition"],
+                "date_fields": ["match_date"],
+                "string_fields": ["home_team", "away_team", "venue", "competition"]
             },
-            "odds_data": {
-                "required_fields": [
-                    "match_id",
-                    "bookmaker",
-                    "home_win",
-                    "draw",
-                    "away_win",
-                ],
-                "numeric_fields": [
-                    "home_win",
-                    "draw",
-                    "away_win",
-                    "bookmaker_margin",
-                ],
-                "float_fields": ["home_win", "draw", "away_win"],
+            "team_data": {
+                "required_fields": ["team_id", "team_name"],
+                "string_fields": ["team_name", "league", "country"]
             },
-            "features_data": {
-                "numeric_range": {
-                    "form": (0, 1),
-                    "win_rate": (0, 1),
-                    "goals_avg": (0, 10),
-                },
-            },
+            "prediction_data": {
+                "required_fields": ["match_id", "prediction_type", "confidence"],
+                "numeric_fields": ["confidence"],
+                "range_fields": {
+                    "confidence": {"min": 0.0, "max": 1.0}
+                }
+            }
         }
 
-    async def validate_data_quality(
-        self,
-        data: Union[Dict[str, Any], List[Dict[str, Any]], pd.DataFrame],
-        data_type: str = "match_data",
-    ) -> Dict[str, Any]:
-        """"
-        验证数据质量
-
-        Args:
-            data: 要验证的数据
-            data_type: 数据类型
-
-        Returns:
-            验证结果报告
-        """"
+    async def validate_data(self, data: Union[Dict, List[Dict]], data_type: str = "match_data") -> Dict[str, Any]:
+        """验证数据"""
         try:
-            # 转换为DataFrame
             if isinstance(data, dict):
-                df = pd.DataFrame([data])
+                return await self._validate_single_record(data, data_type)
             elif isinstance(data, list):
-                df = pd.DataFrame(data)
+                return await self._validate_multiple_records(data, data_type)
             else:
-                df = data
+                return self._create_result(False, "不支持的数据格式", {})
 
-            if df.empty:
-                return {
-                    "valid": False,
-                    "errors": ["Empty DataFrame"],
-                    "warnings": []
-                }
-            validation_results.update(structure_result)
+        except Exception as e:
+            self.logger.error(f"数据验证失败: {e}")
+            return self._create_result(False, f"验证过程中发生错误: {str(e)}", {})
 
-            # 2. 内容验证
-            content_result = await self._validate_content(df)
-            validation_results["errors"].extend(content_result["errors"])
-            validation_results["warnings"].extend(content_result["warnings"])
-
-            # 3. 业务规则验证
-            business_result = await self._validate_business_rules(df)
-            validation_results["errors"].extend(business_result["errors"])
-            validation_results["warnings"].extend(business_result["warnings"])
-
-            # 4. 统计信息
-            validation_results["statistics"] = await self._generate_statistics(df)
-
-            # 5. 总体评估
-            if validation_results["errors"]:
-                validation_results["valid"] = False
-
-            # 记录验证结果
-            await self._log_validation_results(validation_results))
-
-            return validation_results
-
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"数据验证失败: {e}", exc_info=True)
-            return {
-                "valid": False,
-                "errors": [f"验证过程出错: {str(e)}"],
-                "warnings": [],
-                "statistics": {},
-            }
-
-    async def _validate_structure(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
-        """"
-        验证数据结构
-
-        Args:
-            df: 数据DataFrame
-            data_type: 数据类型
-
-        Returns:
-            结构验证结果
-        """"
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+    async def _validate_single_record(self, record: Dict[str, Any], data_type: str) -> Dict[str, Any]:
+        """验证单条记录"""
+        errors = []
+        warnings = []
+        validation_stats = {}
 
         rules = self.validation_rules.get(data_type, {})
-        required_fields = rules.get("required_fields", [])
 
-        # 检查必需字段
-        missing_fields = set(required_fields) - set(df.columns)
-        if missing_fields:
-            result["errors"].append(f"缺少必需字段: {missing_fields}")
+        # 验证必需字段
+        if "required_fields" in rules:
+            missing_fields = await self._check_required_fields(record, rules["required_fields"])
+            if missing_fields:
+                errors.extend([f"缺少必需字段: {', '.join(missing_fields)}"])
 
-        # 检查字段类型
-        date_fields = rules.get("date_fields", [])
-        for field in date_fields:
-            if field in df.columns:
-                if not pd.api.types.is_datetime64_any_dtype(df[field]):
-                    try:
-                        pd.to_datetime(df[field])
-                    except (
-                        ValueError,
-                        TypeError,
-                        AttributeError,
-                        KeyError,
-                        RuntimeError,
-                    ):
-                        result["errors"].append(f"字段 {field} 不是有效的日期格式")
+        # 验证数值字段
+        if "numeric_fields" in rules:
+            numeric_errors = await self._validate_numeric_fields(record, rules["numeric_fields"])
+            errors.extend(numeric_errors)
 
-        numeric_fields = rules.get("numeric_fields", [])
+        # 验证日期字段
+        if "date_fields" in rules:
+            date_errors = await self._validate_date_fields(record, rules["date_fields"])
+            errors.extend(date_errors)
+
+        # 验证范围字段
+        if "range_fields" in rules:
+            range_errors = await self._validate_range_fields(record, rules["range_fields"])
+            errors.extend(range_errors)
+
+        # 验证字符串字段
+        if "string_fields" in rules:
+            string_warnings = await self._validate_string_fields(record, rules["string_fields"])
+            warnings.extend(string_warnings)
+
+        validation_stats = {
+            "total_fields": len(record),
+            "error_count": len(errors),
+            "warning_count": len(warnings),
+            "validated_at": datetime.utcnow()
+        }
+
+        is_valid = len(errors) == 0
+        result_type = "success" if is_valid else "error"
+
+        return {
+            "is_valid": is_valid,
+            "result_type": result_type,
+            "errors": errors,
+            "warnings": warnings,
+            "validation_stats": validation_stats
+        }
+
+    async def _validate_multiple_records(self, records: List[Dict[str, Any]], data_type: str) -> Dict[str, Any]:
+        """验证多条记录"""
+        total_errors = []
+        total_warnings = []
+        valid_records = 0
+        invalid_records = 0
+
+        for i, record in enumerate(records):
+            result = await self._validate_single_record(record, data_type)
+
+            if result["is_valid"]:
+                valid_records += 1
+            else:
+                invalid_records += 1
+
+            # 添加记录标识到错误和警告
+            record_errors = [f"记录{i+1}: {error}" for error in result["errors"]]
+            record_warnings = [f"记录{i+1}: {warning}" for warning in result["warnings"]]
+
+            total_errors.extend(record_errors)
+            total_warnings.extend(record_warnings)
+
+        validation_stats = {
+            "total_records": len(records),
+            "valid_records": valid_records,
+            "invalid_records": invalid_records,
+            "success_rate": round((valid_records / len(records) * 100) if records else 0, 2),
+            "total_errors": len(total_errors),
+            "total_warnings": len(total_warnings),
+            "validated_at": datetime.utcnow()
+        }
+
+        is_valid = invalid_records == 0
+        result_type = "success" if is_valid else "error"
+
+        return {
+            "is_valid": is_valid,
+            "result_type": result_type,
+            "errors": total_errors,
+            "warnings": total_warnings,
+            "validation_stats": validation_stats
+        }
+
+    async def _check_required_fields(self, record: Dict[str, Any], required_fields: List[str]) -> List[str]:
+        """检查必需字段"""
+        missing_fields = []
+        for field in required_fields:
+            if field not in record or record[field] is None or record[field] == "":
+                missing_fields.append(field)
+        return missing_fields
+
+    async def _validate_numeric_fields(self, record: Dict[str, Any], numeric_fields: List[str]) -> List[str]:
+        """验证数值字段"""
+        errors = []
         for field in numeric_fields:
-            if field in df.columns:
-                if not pd.api.types.is_numeric_dtype(df[field]):
+            if field in record and record[field] is not None:
+                try:
+                    float(record[field])
+                except (ValueError, TypeError):
+                    errors.append(f"字段 {field} 不是有效的数值: {record[field]}")
+        return errors
+
+    async def _validate_date_fields(self, record: Dict[str, Any], date_fields: List[str]) -> List[str]:
+        """验证日期字段"""
+        errors = []
+        for field in date_fields:
+            if field in record and record[field] is not None:
+                if not isinstance(record[field], datetime):
                     try:
-                        pd.to_numeric(df[field])
-                    except (
-                        ValueError,
-                        TypeError,
-                        AttributeError,
-                        KeyError,
-                        RuntimeError,
-                    ):
-                        result["warnings"].append(f"字段 {field} 包含非数值数据")
+                        # 尝试解析字符串日期
+                        if isinstance(record[field], str):
+                            datetime.strptime(record[field], "%Y-%m-%d")
+                        else:
+                            errors.append(f"字段 {field} 不是有效的日期格式: {record[field]}")
+                    except ValueError:
+                        errors.append(f"字段 {field} 日期格式无效: {record[field]}")
+        return errors
 
-        return result
+    async def _validate_range_fields(self, record: Dict[str, Any], range_fields: Dict[str, Dict]) -> List[str]:
+        """验证字段值范围"""
+        errors = []
+        for field, range_config in range_fields.items():
+            if field in record and record[field] is not None:
+                try:
+                    value = float(record[field])
+                    min_val = range_config.get("min", float("-inf"))
+                    max_val = range_config.get("max", float("inf"))
 
-    async def _validate_content(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
-        """"
-        验证数据内容
-
-        Args:
-            df: 数据DataFrame
-            data_type: 数据类型
-
-        Returns:
-            内容验证结果
-        """"
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
-
-        # 检查重复记录
-        duplicates = df.duplicated()
-        if duplicates.any():
-            result["warnings"].append(f"发现 {duplicates.sum()} 条重复记录")
-
-        # 检查缺失值
-        # missing_report = self.missing_handler.analyze_missing_data(df)
-        missing_report = {"missing_percentage": 0}
-        if missing_report["missing_percentage"] > 50:
-            result["errors"].append(f"数据缺失率过高: {missing_report['missing_percentage']:.1%}")
-        elif missing_report["missing_percentage"] > 20:
-            result["warnings"].append(f"数据缺失率较高: {missing_report['missing_percentage']:.1%}")
-
-        # 检查异常值
-        numeric_cols = df.select_dtypes(include=["number"]).columns
-        for col in numeric_cols:
-            if df[col].dtype in ["float64", "int64"]:
-                # 使用IQR方法检测异常值
-                Q1 = df[col].quantile(0.25)
-                Q3 = df[col].quantile(0.75)
-                IQR = Q3 - Q1
-                lower_bound = Q1 - 1.5 * IQR
-                upper_bound = Q3 + 1.5 * IQR
-
-                outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
-                if not outliers.empty:
-                    outlier_percentage = len(outliers) / len(df) * 100
-                    if outlier_percentage > 10:
-                        result["warnings"].append(
-                            f"字段 {col} 异常值比例过高: {outlier_percentage:.1%}"
+                    if value < min_val or value > max_val:
+                        errors.append(
+                            f"字段 {field} 值 {value} 超出范围 [{min_val}, {max_val}]"
                         )
+                except (ValueError, TypeError):
+                    errors.append(f"字段 {field} 不是有效数值: {record[field]}")
+        return errors
 
-        return result
+    async def _validate_string_fields(self, record: Dict[str, Any], string_fields: List[str]) -> List[str]:
+        """验证字符串字段"""
+        warnings = []
+        for field in string_fields:
+            if field in record and record[field] is not None:
+                str_value = str(record[field])
+                if len(str_value.strip()) == 0:
+                    warnings.append(f"字段 {field} 为空字符串")
+                elif len(str_value) > 255:
+                    warnings.append(f"字段 {field} 长度超过255字符")
+        return warnings
 
-    async def _validate_business_rules(self, df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
-        """"
-        验证业务规则
-
-        Args:
-            df: 数据DataFrame
-            data_type: 数据类型
-
-        Returns:
-            业务规则验证结果
-        """"
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
-
-        if data_type == "match_data":
-            result = await self._validate_match_business_rules(df)
-        elif data_type == "odds_data":
-            result = await self._validate_odds_business_rules(df)
-        elif data_type == "features_data":
-            result = await self._validate_features_business_rules(df)
-
-        return result
-
-    async def _validate_match_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """验证比赛数据业务规则"""
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
-
-        # 检查同一日期的重复比赛
-        if "match_date" in df.columns and "home_team" in df.columns and "away_team" in df.columns:
-            date_team_pairs = df.groupby("match_date").apply(
-                lambda x: x.duplicated(subset=["home_team", "away_team"]).any()
-            )
-            if date_team_pairs.any():
-                result["errors"].append("发现同一日期的重复比赛")
-
-        # 检查比分合理性
-        if "home_score" in df.columns and "away_score" in df.columns:
-            # 检查负分
-            negative_scores = (df["home_score"] < 0) | (df["away_score"] < 0)
-            if negative_scores.any():
-                result["errors"].append("发现负分")
-
-            # 检查异常高比分
-            high_scores = (df["home_score"] > 20) | (df["away_score"] > 20)
-            if high_scores.any():
-                result["warnings"].append("发现异常高比分（>20）")
-
-        # 检查日期范围
-        if "match_date" in df.columns:
-            df["match_date"] = pd.to_datetime(df["match_date"])
-            future_matches = df["match_date"] > datetime.now() + timedelta(days=7)
-            if future_matches.any():
-                result["warnings"].append("发现超过7天的未来比赛")
-
-            old_matches = df["match_date"] < datetime.now() - timedelta(days=365)
-            if old_matches.any():
-                result["warnings"].append("发现超过1年的历史比赛")
-
-        return result
-
-    async def _validate_odds_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """验证赔率数据业务规则"""
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
-
-        # 检查赔率值
-        for outcome in ["home_win", "draw", "away_win"]:
-            if outcome in df.columns:
-                # 检查赔率小于等于1
-                invalid_odds = df[outcome] <= 1
-                if invalid_odds.any():
-                    result["errors"].append(f"{outcome} 赔率值不能小于等于1")
-
-                # 检查过高的赔率
-                high_odds = df[outcome] > 1000
-                if high_odds.any():
-                    result["warnings"].append(f"{outcome} 赔率值异常高（>1000）")
-
-        # 检查隐含概率
-        if all(x in df.columns for x in ["home_win", "draw", "away_win"]):
-            implied_probs = 1 / df["home_win"] + 1 / df["draw"] + 1 / df["away_win"]
-            # 检查隐含概率过低（套利机会）
-            arbitrage = implied_probs < 1
-            if arbitrage.any():
-                result["warnings"].append("发现可能的套利机会")
-
-            # 检查隐含概率过高
-            excessive_margin = implied_probs > 1.5
-            if excessive_margin.any():
-                result["warnings"].append("庄家优势过高（>50%）")
-
-        return result
-
-    async def _validate_features_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """验证特征数据业务规则"""
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
-
-        # 检查标准化特征的范围
-        for col in df.columns:
-            if col.endswith("_standardized"):
-                # 标准化后的值应该在[-3, 3]范围内
-                out_of_range = (df[col] < -3) | (df[col] > 3)
-                if out_of_range.any():
-                    result["warnings"].append(f"标准化特征 {col} 存在超出±3标准差的值")
-
-        # 检查比率型特征
-        ratio_features = [
-            col for col in df.columns if "rate" in col.lower() or "ratio" in col.lower()
-        ]
-        for col in ratio_features:
-            if df[col].dtype in ["float64", "int64"]:
-                invalid_ratios = (df[col] < 0) | (df[col] > 1)
-                if invalid_ratios.any():
-                    result["errors"].append(f"比率特征 {col} 的值必须在[0, 1]范围内")
-
-        return result
-
-    async def _generate_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """"
-        生成数据统计信息
-
-        Args:
-            df: 数据DataFrame
-
-        Returns:
-            统计信息
-        """"
-        stats = {
-            "total_records": len(df),
-            "total_columns": len(df.columns),
-            "missing_values": df.isnull().sum().to_dict(),
-            "data_types": df.dtypes.astype(str).to_dict(),
+    def _create_result(self, is_valid: bool, message: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """创建验证结果"""
+        return {
+            "is_valid": is_valid,
+            "result_type": "success" if is_valid else "error",
+            "message": message,
+            "data": data,
+            "validated_at": datetime.utcnow()
         }
 
-        # 数值列统计
-        numeric_cols = df.select_dtypes(include=["number"]).columns
-        if not numeric_cols.empty:
-            numeric_stats = df[numeric_cols].describe().to_dict()
-            stats["numeric_statistics"] = numeric_stats
+    async def validate_dataframe(self, df: pd.DataFrame, data_type: str = "match_data") -> Dict[str, Any]:
+        """验证DataFrame数据"""
+        try:
+            # 转换为字典列表
+            records = df.to_dict('records')
+            return await self._validate_multiple_records(records, data_type)
 
-        # 时间范围统计
-        date_cols = df.select_dtypes(include=["datetime64"]).columns
-        if not date_cols.empty:
-            date_stats = {}
-            for col in date_cols:
-                date_stats[col] = {
-                    "min": df[col].min(),
-                    "max": df[col].max(),
-                    "range_days": (df[col].max() - df[col].min()).days,
-                }
-            stats["date_statistics"] = date_stats
+        except Exception as e:
+            self.logger.error(f"DataFrame验证失败: {e}")
+            return self._create_result(False, f"DataFrame验证失败: {str(e)}", {})
 
-        return stats
+    async def validate_data_quality(self, data: Union[Dict, List[Dict]]) -> Dict[str, Any]:
+        """评估数据质量"""
+        try:
+            if isinstance(data, dict):
+                data = [data]
 
-    async def _log_validation_results(self, results: Dict[str, Any], data_type: str) -> None:
-        """记录验证结果"""
-        if results["valid"]:
-            self.logger.info(f"{data_type} 数据验证通过")
+            quality_metrics = {
+                "completeness": await self._calculate_completeness(data),
+                "consistency": await self._calculate_consistency(data),
+                "accuracy": await self._calculate_accuracy(data),
+                "timeliness": await self._calculate_timeliness(data)
+            }
+
+            overall_quality = sum(quality_metrics.values()) / len(quality_metrics)
+
+            return {
+                "overall_quality_score": round(overall_quality, 2),
+                "quality_metrics": quality_metrics,
+                "quality_grade": self._get_quality_grade(overall_quality),
+                "evaluated_at": datetime.utcnow()
+            }
+
+        except Exception as e:
+            self.logger.error(f"数据质量评估失败: {e}")
+            return {
+                "overall_quality_score": 0.0,
+                "quality_grade": "F",
+                "error": str(e),
+                "evaluated_at": datetime.utcnow()
+            }
+
+    async def _calculate_completeness(self, data: List[Dict]) -> float:
+        """计算完整性得分"""
+        if not data:
+            return 0.0
+
+        total_fields = sum(len(record) for record in data)
+        non_null_fields = sum(
+            sum(1 for value in record.values() if value is not None and value != "")
+            for record in data
+        )
+
+        return (non_null_fields / total_fields * 100) if total_fields > 0 else 0.0
+
+    async def _calculate_consistency(self, data: List[Dict]) -> float:
+        """计算一致性得分"""
+        if not data:
+            return 0.0
+
+        # 检查字段一致性
+        first_record_fields = set(data[0].keys())
+        consistent_records = 0
+
+        for record in data:
+            if set(record.keys()) == first_record_fields:
+                consistent_records += 1
+
+        return (consistent_records / len(data) * 100) if data else 0.0
+
+    async def _calculate_accuracy(self, data: List[Dict]) -> float:
+        """计算准确性得分 (简化版本)"""
+        # 这里可以实现更复杂的准确性检查逻辑
+        # 现在返回基于数据格式的准确性评估
+        if not data:
+            return 0.0
+
+        format_issues = 0
+        total_checks = 0
+
+        for record in data:
+            for key, value in record.items():
+                total_checks += 1
+                if value is None or value == "":
+                    format_issues += 1
+
+        return ((total_checks - format_issues) / total_checks * 100) if total_checks > 0 else 0.0
+
+    async def _calculate_timeliness(self, data: List[Dict]) -> float:
+        """计算时效性得分"""
+        if not data:
+            return 0.0
+
+        # 假设数据中有时间戳字段
+        timely_records = 0
+        total_records_with_timestamp = 0
+
+        for record in data:
+            timestamp_fields = ["created_at", "updated_at", "timestamp", "date"]
+            for field in timestamp_fields:
+                if field in record and record[field] is not None:
+                    total_records_with_timestamp += 1
+                    try:
+                        if isinstance(record[field], str):
+                            timestamp = datetime.strptime(record[field], "%Y-%m-%d %H:%M:%S")
+                        else:
+                            timestamp = record[field]
+
+                        # 假设30天内的数据是及时的
+                        if datetime.utcnow() - timestamp <= timedelta(days=30):
+                            timely_records += 1
+                        break
+                    except (ValueError, TypeError):
+                        continue
+
+        return (timely_records / total_records_with_timestamp * 100) if total_records_with_timestamp > 0 else 80.0
+
+    def _get_quality_grade(self, score: float) -> str:
+        """获取质量等级"""
+        if score >= 90:
+            return "A"
+        elif score >= 80:
+            return "B"
+        elif score >= 70:
+            return "C"
+        elif score >= 60:
+            return "D"
         else:
-            self.logger.error(f"{data_type} 数据验证失败,错误数: {len(results['errors'])}")
-
-        if results["warnings"]:
-            self.logger.warning(f"{data_type} 数据验证警告数: {len(results['warnings'])}")
-
-        # 记录统计信息
-        stats = results.get("statistics", {})
-        if "total_records" in stats:
-            self.logger.info(f"验证记录数: {stats['total_records']}")
-
-    async def validate_batch_consistency(self, batches: List[pd.DataFrame]) -> Dict[str, Any]:
-        """"
-        验证批次数据的一致性
-
-        Args:
-            batches: 批次数据列表
-
-        Returns:
-            一致性验证结果
-        """"
-        result: Dict[str, Any] = {
-            "consistent": True,
-            "issues": [],
-            "statistics": {
-                "total_batches": len(batches),
-                "total_records": sum(len(batch) for batch in batches),
-            },
-        }
-
-        if not batches:
-            result["consistent"] = False
-            result["issues"].append("没有批次数据")
-            return result
-
-        # 检查列一致性
-        first_batch_cols = set(batches[0].columns)
-        for i, batch in enumerate(batches[1:], 1):
-            batch_cols = set(batch.columns)
-            if batch_cols != first_batch_cols:
-                result["consistent"] = False
-                result["issues"].append(f"批次 {i} 的列与批次 0 不一致")
-
-        # 检查数据类型一致性
-        for col in first_batch_cols:
-            col_types = []
-            for batch in batches:
-                if col in batch.columns:
-                    col_types.append(str(batch[col].dtype))
-
-            if len(set(col_types)) > 1:
-                result["issues"].append(f"列 {col} 在不同批次中有不同的数据类型: {set(col_types)}")
-
-        return result
+            return "F"
