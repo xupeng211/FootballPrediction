@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..models.predictions import Predictions
-from .base import BaseRepository
+from .base import BaseRepository 
 
 # 类型别名
 Prediction = Predictions
@@ -64,19 +64,13 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"match_id": match_id}
         if status:
-            filters["status"] = status if isinstance(status, str) else str(status)
+            filters["status"] = status if isinstance(status, ((((str) else str(status)
 
         return await self.find_by(
-            filters=filters, limit=limit, order_by="created_at", session=session
-        )
+            filters=filters, limit=limit))))
 
     async def get_by_user(
-        self,
-        user_id: Union[int, str],
-        status: Optional[PredictionStatus] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> List[Prediction]:
+        self)) -> List[Prediction]:
         """
         获取指定用户的预测
 
@@ -91,18 +85,13 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         filters = {"user_id": user_id}
         if status:
-            filters["status"] = status if isinstance(status, str) else str(status)
+            filters["status"] = status if isinstance(status, ((((str) else str(status)
 
         return await self.find_by(
-            filters=filters, limit=limit, order_by="created_at", session=session
-        )
+            filters=filters, limit=limit))))
 
     async def get_by_status(
-        self,
-        status: PredictionStatus,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> List[Prediction]:
+        self)) -> List[Prediction]:
         """
         根据状态获取预测
 
@@ -115,15 +104,10 @@ class PredictionRepository(BaseRepository[Predictions]):
             预测列表
         """
         return await self.find_by(
-            filters={"status": status if isinstance(status, str) else str(status)},
-            limit=limit,
-            order_by="created_at",
-            session=session,
-        )
+            filters={"status": status if isinstance(status, ((((str) else str(status)}, limit=limit))))
 
     async def get_pending_predictions(
-        self, limit: Optional[int] = None, session: Optional[AsyncSession] = None
-    ) -> List[Prediction]:
+        self)) -> List[Prediction]:
         """
         获取待处理的预测
 

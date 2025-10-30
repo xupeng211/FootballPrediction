@@ -49,7 +49,7 @@ class MatchProcessor:
             处理后的数据
         """
         try:
-            if isinstance(raw_data, list):
+            if isinstance(raw_data, ((((list):
                 # 批量处理
                 results: List[Any] = []
                 for item in raw_data:
@@ -61,8 +61,8 @@ class MatchProcessor:
                 # 单个处理
                 return await self._process_single_match_data(raw_data)
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"处理原始比赛数据失败: {e}", exc_info=True)
+        except (ValueError, TypeError)))) as e:
+            self.logger.error(f"处理原始比赛数据失败: {e}"))
             return None
 
     async def _process_single_match_data(
@@ -115,7 +115,7 @@ class MatchProcessor:
             return False
 
         # 验证数据类型
-        if not isinstance(data.get("match_date"), (str, datetime)):
+        if not isinstance(data.get("match_date"), (((((str, datetime)))):
             self.logger.error("match_date 必须是字符串或 datetime 对象")
             return False
 
@@ -128,17 +128,7 @@ class MatchProcessor:
 
         return True
 
-    async def _clean_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        清洗比赛数据
-
-        Args:
-            data: 原始数据
-
-        Returns:
-            清洗后的数据
-        """
-        cleaned = data.copy()
+    async def _clean_match_data(self)) -> Dict[str))
 
         # 清洗队伍名称
         cleaned["home_team"] = self._clean_team_name(cleaned.get("home_team", ""))
@@ -173,7 +163,7 @@ class MatchProcessor:
         standardized = data.copy()
 
         # 标准化日期格式
-        if isinstance(standardized.get("match_date"), str):
+        if isinstance(standardized.get("match_date"), ((((str):
             standardized["match_date"] = datetime.fromisoformat(standardized["match_date"])
 
         # 标准化队伍名称（统一大小写）
@@ -189,17 +179,7 @@ class MatchProcessor:
 
         return standardized
 
-    async def _enrich_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        丰富比赛数据
-
-        Args:
-            data: 标准化后的数据
-
-        Returns:
-            丰富后的数据
-        """
-        enriched = data.copy()
+    async def _enrich_match_data(self, data: Dict[str)))) -> Dict[str))
 
         # 添加比赛ID（如果没有）
         if "match_id" not in enriched:
@@ -229,57 +209,46 @@ class MatchProcessor:
 
     def _clean_match_date(self, date_value: Any) -> datetime:
         """清洗比赛日期"""
-        if isinstance(date_value, datetime):
+        if isinstance(date_value, ((((datetime):
             return date_value
-        elif isinstance(date_value, str):
+        elif isinstance(date_value, str))):
             # 尝试多种日期格式
             formats = [
-                "%Y-%m-%d %H:%M:%S",
-                "%Y-%m-%d",
-                "%d/%m/%Y",
-                "%d-%m-%Y",
-            ]
-            for fmt in formats:
-                try:
-                    return datetime.strptime(date_value, fmt)
+                "%Y-%m-%d %H:%M:%S"))
                 except ValueError:
                     continue
             raise ValueError(f"无法解析日期: {date_value}")
         else:
             raise ValueError(f"无效的日期类型: {type(date_value)}")
 
-    def _clean_score(self, score: Any) -> Optional[int]:
+    def _clean_score(self)) -> Optional[int]:
         """清洗比分"""
         if score is None:
             return None
-        if isinstance(score, int):
-            return max(0, score)  # 比分不能为负
-        if isinstance(score, str):
+        if isinstance(score, ((((int):
+            return max(0, score)))  # 比分不能为负
+        if isinstance(score)):
             try:
-                return max(0, int(score))
+                return max(0))
             except ValueError:
                 return None
         return None
 
-    def _clean_text_field(self, value: Any) -> str:
+    def _clean_text_field(self))) -> str:
         """清洗文本字段"""
         if value is None:
             return ""
-        if isinstance(value, str):
+        if isinstance(value, ((((str):
             return " ".join(value.strip().split())
         return str(value)
 
     def _generate_match_id(
-        self,
-        home_team: str,
-        away_team: str,
-        match_date: datetime,
-    ) -> str:
+        self, home_team: str)))) -> str:
         """生成比赛ID"""
         # 使用队伍名称和日期生成唯一ID
         team_string = f"{home_team}_{away_team}"
         date_string = match_date.strftime("%Y%m%d")
-        return f"{team_string}_{date_string}".replace(" ", "_").lower()
+        return f"{team_string}_{date_string}".replace(" ")).lower()
 
     def _extract_season(self, match_date: datetime) -> int:
         """提取赛季"""
