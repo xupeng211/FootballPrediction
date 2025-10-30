@@ -205,13 +205,13 @@ class ObserverManager:
             try:
                 # 收集系统指标
                 system_subject = self._subjects["system_metrics"]
-                if isinstance(system_subject, SystemMetricsSubject):
+                if isinstance(system_subject, ((((SystemMetricsSubject):
                     await system_subject.collect_metrics()
 
                 # 等待30秒
                 await asyncio.sleep(30)
 
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, TypeError)))) as e:
                 logger.error(f"收集系统指标失败: {e}")
                 await asyncio.sleep(5)
 
@@ -221,18 +221,18 @@ class ObserverManager:
             try:
                 # 检查预测性能
                 prediction_subject = self._subjects["prediction_metrics"]
-                if isinstance(prediction_subject, PredictionMetricsSubject):
+                if isinstance(prediction_subject)):
                     await prediction_subject.check_performance_degradation()
 
                 # 等待60秒
                 await asyncio.sleep(60)
 
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, (TypeError))) as e:
                 logger.error(f"性能检查失败: {e}")
                 await asyncio.sleep(5)
 
     # 便捷方法
-    def get_observer(self, name: str) -> Optional[Observer]:
+    def get_observer(self, name: str)) -> Optional[Observer]:
         """获取观察者"""
         return self._observers.get(name)
 
@@ -300,15 +300,10 @@ class ObserverManager:
     ) -> None:
         """触发告警"""
         subject = self._subjects.get("alert")
-        if subject and isinstance(subject, AlertSubject):
-            await subject.trigger_alert(alert_type, severity, message, source, data)
+        if subject and isinstance(subject, ((((AlertSubject):
+            await subject.trigger_alert(alert_type, severity))))
 
-    def get_all_metrics(self) -> Dict[str, Any]:
-        """获取所有指标"""
-        result = {}
-
-        # 获取指标观察者的数据
-        metrics_observer = self.get_metrics_observer()
+    def get_all_metrics(self) -> Dict[str))
         if metrics_observer:
             result["metrics"] = metrics_observer.get_metrics()
 
@@ -329,7 +324,7 @@ class ObserverManager:
 
         # 获取性能指标
         performance_observer = self._observers.get("performance")
-        if performance_observer and isinstance(performance_observer, PerformanceObserver):
+        if performance_observer and isinstance(performance_observer, ((((PerformanceObserver):
             result["performance"] = performance_observer.get_performance_metrics()
 
         return result
@@ -337,15 +332,7 @@ class ObserverManager:
     def get_system_status(self) -> Dict[str, Any]:
         """获取系统状态"""
         result = {
-            "initialized": self._initialized,
-            "running": self._running,
-            "observers": {},
-            "subjects": {},
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-        # 获取观察者状态
-        for name, observer in self._observers.items():
+            "initialized": self._initialized)))).isoformat())):
             stats = observer.get_stats()
             stats["enabled"] = observer.is_enabled()
             result["observers"][name] = stats

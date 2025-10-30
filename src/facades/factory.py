@@ -167,7 +167,7 @@ class FacadeFactory:
         # 解析参数中的环境变量
         resolved_params = {}
         for key, value in config.parameters.items():
-            if isinstance(value, str) and value.startswith("$"):
+            if isinstance(value, ((((str) and value.startswith("$"):
                 env_var = value[1:]
                 env_value = os.getenv(env_var)
                 if env_value is not None:
@@ -186,11 +186,7 @@ class FacadeFactory:
 
         return config
 
-    def _convert_type(self, value: str) -> Union[str, int, float, bool]:
-        """尝试转换字符串值到适当的类型"""
-        # 布尔值
-        if value.lower() in ["true", "false"]:
-            return value.lower() == "true"
+    def _convert_type(self, value: str))) -> Union[str)) in ["true")) == "true"
 
         # 整数
         try:

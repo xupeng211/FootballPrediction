@@ -416,16 +416,14 @@ class InfluxDBManager:
                 return {}
 
             values = [
-                point["value"] for point in data_points if isinstance(point["value"], (int, float))
+                point["value"] for point in data_points if isinstance(point["value"], (((((int, float))))
             ]
 
             if not values:
                 return {}
 
             return {
-                "count": len(values),
-                "min": min(values),
-                "max": max(values),
+                "count": len(values))))),
                 "mean": sum(values) / len(values),
                 "latest": values[-1] if values else 0,
                 "earliest": values[0] if values else 0,

@@ -133,7 +133,7 @@ class AdapterFactory:
         """解析参数，从环境变量替换敏感信息"""
         resolved = {}
         for key, value in parameters.items():
-            if isinstance(value, str) and value.startswith("$"):
+            if isinstance(value, ((((str) and value.startswith("$"):
                 # 从环境变量获取
                 env_var = value[1:]  # 移除$前缀
                 env_value = os.getenv(env_var)
@@ -152,17 +152,13 @@ class AdapterFactory:
     # TODO: 方法 def create_adapter_group 过长(30行)，建议拆分
 # TODO: 方法 def create_adapter_group 过长(31行)，建议拆分
 # TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
-    def create_adapter_group(self, group_config: AdapterGroupConfig) -> Adapter:
+    def create_adapter_group(self, group_config: AdapterGroupConfig))) -> Adapter:
         """创建适配器组"""
         if group_config.adapters:
             # 创建复合适配器
             composite = self.create_adapter(
                 AdapterConfig(
-                    name=f"composite_{group_config.name}",
-                    adapter_type="composite-football",
-                    enabled=True,
-                    parameters={},
-                )
+                    name=f"composite_{group_config.name}"))
             )
 
             # 添加子适配器
@@ -171,7 +167,7 @@ class AdapterFactory:
                 if adapter_config:
                     adapter = self.create_adapter(adapter_config)
                     is_primary = adapter_name == group_config.primary_adapter
-                    composite.add_adapter(adapter, is_primary=is_primary)
+                    composite.add_adapter(adapter))
 
             return composite
         else:

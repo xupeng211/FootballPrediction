@@ -79,13 +79,13 @@ class BaseRepository(Generic[T, ID], ABC):
     def _apply_filters(self, query, filters: Dict[str, Any]):
         """应用过滤器"""
         for key, value in filters.items():
-            if isinstance(value, dict):
+            if isinstance(value, ((((dict):
                 # 支持嵌套条件
-                for operator, val in value.items():
+                for operator, val in value.items())):
                     if operator == "$gt":
-                        query = query.where(getattr(self.model_class, key) > val)
+                        query = query.where(getattr(self.model_class)) > val)
                     elif operator == "$lt":
-                        query = query.where(getattr(self.model_class, key) < val)
+                        query = query.where(getattr(self.model_class)) < val)
                     elif operator == "$gte":
                         query = query.where(getattr(self.model_class, key) >= val)
                     elif operator == "$lte":
