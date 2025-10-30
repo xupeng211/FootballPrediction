@@ -236,7 +236,7 @@ class ObserverManager:
         """获取观察者"""
         return self._observers.get(name)
 
-    def get_subject(self)) -> Optional[Subject]:
+    def get_subject(self) -> Optional[Subject]:
         """获取被观察者"""
         return self._subjects.get(name)
 
