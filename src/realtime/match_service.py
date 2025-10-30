@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from .events import (
+from src.core.config import 
     EventType,
     RealtimeEvent,
     create_match_score_changed_event,

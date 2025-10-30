@@ -248,9 +248,9 @@ class WebSocketConnection:
         """
         self.last_activity = datetime.now()
 
-        if isinstance(message, dict):
+        if isinstance(message, ((((dict):
             message = json.dumps(message)
-        elif isinstance(message, WebSocketMessage):
+        elif isinstance(message, WebSocketMessage))):
             message = message.to_json()
 
         self.logger.debug(f"Sending message to {self.connection_id}: {message[:100]}...")
@@ -298,9 +298,9 @@ def get_websocket_manager() -> WebSocketManager:
 
 
 # 便捷函数
-async def send_to_user(user_id: str, message: Any) -> bool:
+async def send_to_user(user_id: str)) -> bool:
     """发送消息给特定用户"""
-    return await get_websocket_manager().send_to_connection(user_id, message)
+    return await get_websocket_manager().send_to_connection(user_id))
 
 
 async def broadcast_to_room(room_name: str, message: Any) -> int:

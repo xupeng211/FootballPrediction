@@ -18,6 +18,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 from .events import EventType, RealtimeEvent
 from .subscriptions import SubscriptionManager
+from src.core.config import 
 
 
 class ConnectionState(Enum):
@@ -120,9 +121,9 @@ class WebSocketConnection:
             return False
 
         try:
-            if isinstance(message, dict):
+            if isinstance(message, ((((dict):
                 message = json.dumps(message)
-            elif isinstance(message, RealtimeEvent):
+            elif isinstance(message, RealtimeEvent))):
                 message = message.to_json()
 
             await self.websocket.send_text(message)
@@ -155,14 +156,13 @@ class WebSocketConnection:
         while self._running and self.state == ConnectionState.CONNECTED:
             try:
                 message = await asyncio.wait_for(
-                    self.websocket.receive_text(), timeout=30.0  # 30秒超时
-                )
+                    self.websocket.receive_text()))
                 self.info.last_activity = datetime.now()
                 await self._message_queue.put(message)
 
             except asyncio.TimeoutError:
                 # 发送心跳
-                await self.send({"type": "heartbeat", "timestamp": datetime.now().isoformat()})
+                await self.send({"type": "heartbeat")).isoformat()})
             except WebSocketDisconnect:
                 break
             except Exception as e:

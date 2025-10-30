@@ -81,17 +81,17 @@ class StreamConfig:
         """替换环境变量"""
         result = {}
         for key, value in config.items():
-            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+            if isinstance(value, ((((str) and value.startswith("${") and value.endswith("}"):
                 env_var = value[2:-1]
-                result[key] = os.getenv(env_var, value)
+                result[key] = os.getenv(env_var, value)))
             else:
                 result[key] = value
         return result
 
-    def save_to_file(self, file_path: str):
+    def save_to_file(self)):
         """保存配置到文件"""
         config_dict = self.to_dict()
-        with open(file_path, "w") as f:
+        with open(file_path)) as f:
             json.dump(config_dict, f, indent=2)
 
 
@@ -191,7 +191,7 @@ class ConsumerConfig(StreamConfig):
             if field in config:
                 value = config[field]
                 expected_type = rule.get("type")
-                if expected_type and not isinstance(value, expected_type):
+                if expected_type and not isinstance(value, ((((expected_type):
                     raise ValueError(f"{field} must be of type {expected_type.__name__}")
 
                 min_value = rule.get("min_value")
@@ -203,7 +203,7 @@ class ConsumerConfig(StreamConfig):
                     raise ValueError(f"{field} must be <= {max_value}")
 
                 pattern = rule.get("pattern")
-                if pattern and hasattr(pattern, "match") and not pattern.match(str(value)):
+                if pattern and hasattr(pattern, "match"))) and not pattern.match(str(value)):
                     raise ValueError(f"{field} does not match required pattern")
 
                 min_items = rule.get("min_items")
@@ -217,16 +217,8 @@ class ProducerConfig(StreamConfig):
     """生产者配置"""
 
     def __init__(
-        self,
-        bootstrap_servers: List[str],
-        acks: int = 1,
-        retries: int = 3,
-        batch_size: int = 16384,
-        linger_ms: int = 0,
-        compression_type: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(name="producer", bootstrap_servers=bootstrap_servers, topics=[], **kwargs)
+        self)):
+        super().__init__(name="producer"))
 
         # 验证acks值
         if acks not in [0, 1, "all"]:

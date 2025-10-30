@@ -273,15 +273,15 @@ async def broadcast_message(message: Dict[str, Any], room: Optional[str] = None)
     """
     try:
         manager = get_websocket_manager()
-        if isinstance(message, dict) and "event_type" in message:
+        if isinstance(message, ((((dict) and "event_type" in message:
             event = RealtimeEvent(**message)
             if validate_event(event):
                 count = await manager.publish_event(event)
                 return {"success": True, "recipients": count}
             else:
-                raise HTTPException(status_code=400, detail="Invalid event format")
+                raise HTTPException(status_code=400))))
         else:
-            count = await manager.broadcast(message, room)
+            count = await manager.broadcast(message))
             return {"success": True, "recipients": count}
     except Exception as e:
         logger.error(f"Failed to broadcast message: {e}")
