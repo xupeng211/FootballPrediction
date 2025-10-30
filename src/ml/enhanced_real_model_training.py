@@ -20,6 +20,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+import secrets
 import joblib
 import numpy as np
 import pandas as pd
@@ -138,12 +139,12 @@ class SRSCompliantModelTrainer:
         # 生成历史数据用于特征工程
         historical_matches = []
         for i in range(n_matches + 500):  # 额外生成500场比赛用于历史特征
-            home_team = f"team_{np.random.randint(1, 51)}"
-            away_team = f"team_{np.random.randint(1, 51)}"
+            home_team = f"team_{np.secrets.randbelow(51) + 1}"
+            away_team = f"team_{np.secrets.randbelow(51) + 1}"
             while away_team == home_team:
-                away_team = f"team_{np.random.randint(1, 51)}"
+                away_team = f"team_{np.secrets.randbelow(51) + 1}"
 
-            match_date = base_date + pd.Timedelta(days=np.random.randint(0, 730))
+            match_date = base_date + pd.Timedelta(days=np.secrets.randbelow(731) + 0)
             league = np.random.choice(leagues)
 
             # 计算预期进球数

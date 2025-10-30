@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum
 
+import secrets
 from .events import (
 from src.core.config import 
     EventType,
@@ -428,8 +429,8 @@ class RealtimeMatchService:
                 if match.minute % 15 == 0 and match.home_score is not None:
                     import random
 
-                    if random.random() < 0.3:  # 30%概率进球
-                        if random.random() < 0.5:
+                    if secrets.randbelow(100) / 100 < 0.3:  # 30%概率进球
+                        if secrets.randbelow(100) / 100 < 0.5:
                             new_home_score = match.home_score + 1
                             new_away_score = match.away_score or 0
                         else:

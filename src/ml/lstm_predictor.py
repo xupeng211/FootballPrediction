@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 
+import secrets
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -535,7 +536,7 @@ if __name__ == "__main__":
                     "field": "overall_score",
                     "cpu_usage": 40 + 20 * np.sin(i * 0.05) + np.random.normal(0, 5),
                     "memory_usage": 60 + 15 * np.cos(i * 0.08) + np.random.normal(0, 3),
-                    "active_connections": 10 + 5 * np.sin(i * 0.03) + np.random.randint(-2, 3),
+                    "active_connections": 10 + 5 * np.sin(i * 0.03) + np.secrets.randbelow(6) + -2,
                 }
             )
 
