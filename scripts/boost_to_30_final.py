@@ -38,12 +38,6 @@ def test_api_module_import(module):
         pytest.skip(f"Module {module} not available")
 """,
         ),
-        (
-            "test_api_models_simple.py",
-            """
-from src.api.models import APIResponse, PredictionRequest
-
-def test_api_response():
     response = APIResponse(success=True)
     assert response.success is True
 
@@ -53,18 +47,6 @@ def test_prediction_request():
 """,
         ),
         # 数据库模型测试
-        (
-            "test_db_models_all.py",
-            """
-import pytest
-from src.database.models.league import League
-from src.database.models.team import Team
-from src.database.models.match import Match
-from src.database.models.odds import Odds
-from src.database.models.predictions import Prediction
-from src.database.models.user import User
-
-def test_league_model():
     league = League(name="Test League")
     assert league.name == "Test League"
 
@@ -147,12 +129,6 @@ def test_celery_app():
 """,
         ),
         # 流处理测试
-        (
-            "test_streaming_all.py",
-            """
-import pytest
-
-def test_streaming_imports():
     modules = [
         "src.streaming.kafka_components",
         "src.streaming.kafka_producer",
@@ -175,15 +151,6 @@ def test_stream_config():
 """,
         ),
         # 数据收集器测试
-        (
-            "test_collectors_all.py",
-            """
-from src.collectors.fixtures_collector import FixturesCollector
-from src.collectors.odds_collector import OddsCollector
-from src.collectors.scores_collector import ScoresCollector
-from src.data.collectors.base_collector import BaseCollector
-
-def test_all_collectors():
     fixtures = FixturesCollector()
     odds = OddsCollector()
     scores = ScoresCollector()
@@ -199,13 +166,6 @@ def test_base_collector():
 """,
         ),
         # 数据处理测试
-        (
-            "test_data_processing_all.py",
-            """
-from src.data.processing.football_data_cleaner import FootballDataCleaner
-from src.data.processing.missing_data_handler import MissingDataHandler
-
-def test_data_cleaner():
     cleaner = FootballDataCleaner()
     assert cleaner is not None
     assert hasattr(cleaner, 'clean_data')
@@ -222,13 +182,6 @@ def test_feature_store():
 """,
         ),
         # 缓存测试
-        (
-            "test_cache_extended.py",
-            """
-from src.cache.ttl_cache import TTLCache
-from src.cache.redis_manager import RedisManager
-
-def test_ttl_cache_extended():
     cache = TTLCache(maxsize=100, ttl=60)
 
     # 测试基本操作
@@ -258,14 +211,6 @@ def test_cache_size_limit():
 """,
         ),
         # 监控测试
-        (
-            "test_monitoring_extended.py",
-            """
-from src.monitoring.metrics_collector import MetricsCollector
-from src.monitoring.system_monitor import SystemMonitor
-from src.monitoring.alert_manager import AlertManager
-
-def test_metrics_collector_extended():
     collector = MetricsCollector()
 
     # 测试指标记录
@@ -293,14 +238,6 @@ def test_alert_manager():
 """,
         ),
         # 数据质量测试
-        (
-            "test_data_quality_extended.py",
-            """
-from src.data.quality.data_quality_monitor import DataQualityMonitor
-from src.data.quality.anomaly_detector import AnomalyDetector
-from src.data.quality.exception_handler import DataQualityExceptionHandler
-
-def test_data_quality_monitor():
     monitor = DataQualityMonitor()
     assert monitor is not None
 
@@ -320,13 +257,6 @@ def test_exception_handler():
 """,
         ),
         # 核心配置测试
-        (
-            "test_core_config_extended.py",
-            """
-from src.core.config import get_config
-from src.core.error_handler import ErrorHandler
-
-def test_get_config():
     try:
         config = get_config()
         assert config is not None
@@ -348,16 +278,6 @@ def test_config_values():
 """,
         ),
         # 工具模块扩展测试
-        (
-            "test_utils_extended_final.py",
-            """
-from src.utils.crypto_utils import CryptoUtils
-from src.utils.dict_utils import DictUtils
-from src.utils.string_utils import StringUtils
-from src.utils.time_utils import TimeUtils
-from src.utils.file_utils import FileUtils
-
-def test_crypto_utils_extended():
     # 测试加密功能
     password = "test123"
     hashed = CryptoUtils.hash_password(password)

@@ -160,17 +160,11 @@ def fix_type_mismatches():
 
     fixes = [
         # 修复 utils/string_utils.py 中的类型不匹配
-        ("src/utils/string_utils.py", r"(\w+):\s*int\s*=\s*.*\.\d+", r"\1: float ="),
         # 修复 domain_simple 中的类型不匹配
-        ("src/domain_simple/odds.py", r'(\w+):\s*float\s*=\s*"', r'\1: str = "'),
         # 修复 domain_simple/match.py 中的 None 赋值
-        (
-            "src/domain_simple/match.py",
-            r"(\w+):\s*None\s*=.*Result\(",
             r"\1: Optional[MatchResult] = ",
         ),
         # 修复 domain_simple/prediction.py 中的 None 赋值
-        ("src/domain_simple/prediction.py", r'(\w+):\s*None\s*=\s*"', r'\1: Optional[str] = "'),
     ]
 
     for file_path, pattern, replacement in fixes:

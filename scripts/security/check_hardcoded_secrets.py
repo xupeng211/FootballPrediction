@@ -28,9 +28,6 @@ SECRET_PATTERNS: List[Tuple[str, Pattern[str]]] = [
         "DB Password",
         re.compile(r'db_password\s*=\s*["\']([^"\']{8,})["\']', re.IGNORECASE),
     ),
-    (
-        "Database URL",
-        re.compile(r"(?:mysql|postgresql)://(?!{.*})([^:@\s]+):([^@]+)@", re.IGNORECASE),
     ),
     # Secrets
     (

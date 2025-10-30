@@ -11,6 +11,10 @@ from src.adapters.base import Adapter
 class AdapterRegistry:
     """适配器注册表"""
 
+# 全局注册表实例
+_global_registry = AdapterRegistry()
+
+
     def __init__(self, factory=None):
         self.factory = factory or self._create_default_factory()
         self.adapters: Dict[str, Adapter] = {}
@@ -25,7 +29,7 @@ class AdapterRegistry:
             {"create_adapter": lambda self, cls, config=None: cls(config)},
         )()
 
-    def register(self, name: str, adapter: Adapter, group: Optional[str] = None):
+    def register(self, name: str, adapter: Adapter, group: Optional[str] = None):  # TODO: 添加返回类型注解
         """注册适配器"""
         self.adapters[name] = adapter
         if group:
@@ -49,9 +53,6 @@ class AdapterRegistry:
 
 
 # 全局注册表实例
-_global_registry = AdapterRegistry()
-
-
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表"""
     return _global_registry

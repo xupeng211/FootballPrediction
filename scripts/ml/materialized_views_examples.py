@@ -81,7 +81,6 @@ class MaterializedViewExamples:
             (recent_home_goals_for + recent_away_goals_for) as total_goals_scored,
             (recent_home_goals_against + recent_away_goals_against) as total_goals_conceded,
             ROUND(
-                (recent_home_wins + recent_away_wins)::decimal /
                 NULLIF(recent_home_matches + recent_away_matches, 0) * 100, 2
             ) as win_percentage
         FROM mv_team_recent_performance
@@ -142,14 +141,12 @@ class MaterializedViewExamples:
             CASE
                 WHEN (recent_home_matches + recent_away_matches) = 0 THEN 0
                 ELSE ROUND(
-                    ((recent_home_goals_for + recent_away_goals_for)::decimal /
                      (recent_home_matches + recent_away_matches)), 2
                 )
             END as avg_goals_scored,
             CASE
                 WHEN (recent_home_matches + recent_away_matches) = 0 THEN 0
                 ELSE ROUND(
-                    ((recent_home_goals_against + recent_away_goals_against)::decimal /
                      (recent_home_matches + recent_away_matches)), 2
                 )
             END as avg_goals_conceded

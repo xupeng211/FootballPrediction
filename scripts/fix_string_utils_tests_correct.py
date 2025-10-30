@@ -33,9 +33,6 @@ def main():
             'assert _result == "..."  # Unicode字符也被截断',
             'assert _result == "测试文本"  # 长度5 >= "测试文本"长度4，不需要截断',
         ),
-        (
-            'assert _result == "Hello World..."',
-            'assert _result == "Hello Wor..."  # 保留10个字符长度(含空格): "Hello World" -> "Hello Wor..."',
         ),
         (
             'assert _result == "Line 1\\nLine 2..."',

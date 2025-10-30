@@ -205,7 +205,6 @@ def fix_type_mismatches():
         # 修复 sklearn 赋值问题
         ("src/models/model_training.py", r"(\w+)\s*=\s*sklearn", r"\1: Any = sklearn"),
         # 修复 config_manager 中的 None 赋值问题
-        ("src/config/config_manager.py", r"(\w+_cache):\s*None\s*=", r"\1: Optional[float] ="),
         # 修复 prediction_model 中的类型不匹配
         (
             "src/models/prediction_model.py",

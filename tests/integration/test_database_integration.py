@@ -230,7 +230,7 @@ class TestDatabaseConfig:
         """测试：从环境变量获取数据库URL"""
         if get_database_url:
             url = get_database_url()
-            assert url   == "sqlite+aiosqlite:///test.db"
+            assert url    == "sqlite+aiosqlite:///test.db"
 
 
 @pytest.mark.skipif(not DATABASE_AVAILABLE, reason="Database modules not available")
@@ -327,7 +327,7 @@ class TestDatabasePerformance:
         # 所有查询都应该成功
         assert len(results) == 10
         for i, result in enumerate(results):
-            assert _result   == f"session_{i}"
+            assert _result    == f"session_{i}"
 
 
 @pytest.mark.skipif(DATABASE_AVAILABLE, reason="Database modules should be available")

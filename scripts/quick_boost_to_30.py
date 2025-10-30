@@ -17,14 +17,6 @@ def analyze_low_coverage_modules():
     test_modules = {
         # API模块 - 主要是类定义和简单方法
         "api": [
-            (
-                "test_api_models_simple.py",
-                """
-# API模型简单测试
-from src.api.models import APIResponse
-from src.api.schemas import HealthResponse
-
-def test_api_response_creation():
     response = APIResponse(success=True)
     assert response.success is True
 
@@ -33,11 +25,6 @@ def test_health_response():
     assert health.status == "healthy"
 """,
             ),
-            (
-                "test_api_schemas_simple.py",
-                """
-# API Schema测试
-def test_schema_imports():
     # 只测试导入是否成功
     try:
         from src.api.schemas import PredictionRequest
@@ -50,14 +37,6 @@ def test_schema_imports():
         ],
         # 核心模块 - 简单的工具类
         "core": [
-            (
-                "test_core_error_handler.py",
-                """
-# 错误处理器简单测试
-from src.core.error_handler import ErrorHandler
-from src.core.exceptions import ServiceError
-
-def test_error_handler():
     handler = ErrorHandler()
     assert handler is not None
 
@@ -69,13 +48,6 @@ def test_service_error():
         ],
         # 数据模型 - 大部分是SQLAlchemy模型
         "database_models": [
-            (
-                "test_models_prediction.py",
-                """
-# 预测模型测试
-from src.database.models.predictions import Prediction
-
-def test_prediction_model():
     pred = Prediction(match_id=1, predicted_home_win=0.5)
     assert pred.match_id == 1
     assert pred.predicted_home_win == 0.5
@@ -85,13 +57,6 @@ def test_prediction_repr():
     assert "Prediction" in repr(pred)
 """,
             ),
-            (
-                "test_models_raw_data.py",
-                """
-# 原始数据模型测试
-from src.database.models.raw_data import RawData
-
-def test_raw_data_model():
     data = RawData(source="api", data_type="fixtures")
     assert data.source == "api"
     assert data.data_type == "fixtures"
@@ -100,13 +65,6 @@ def test_raw_data_model():
         ],
         # 特征模块
         "features": [
-            (
-                "test_feature_entities.py",
-                """
-# 特征实体测试
-from src.features.entities import FeatureEntity
-
-def test_feature_entity():
     entity = FeatureEntity(entity_id="test", entity_type="team")
     assert entity.entity_id == "test"
     assert entity.entity_type == "team"
@@ -115,13 +73,6 @@ def test_feature_entity():
         ],
         # 工具模块
         "utils": [
-            (
-                "test_utils_crypto_advanced.py",
-                """
-# 加密工具高级测试
-from src.utils.crypto_utils import CryptoUtils
-
-def test_hash_password():
     password = "test123"
     hashed = CryptoUtils.hash_password(password)
     assert hashed != password
@@ -151,13 +102,6 @@ def test_generate_id():
     assert len(id1) > 0
 """,
             ),
-            (
-                "test_utils_dict_advanced.py",
-                """
-# 字典工具高级测试
-from src.utils.dict_utils import DictUtils
-
-def test_flatten_dict():
     nested = {"a": {"b": {"c": 1}}}
     flat = DictUtils.flatten(nested)
     assert "a.b.c" in flat
@@ -180,13 +124,6 @@ def test_omit_keys():
     assert omitted == {"a": 1, "c": 3}
 """,
             ),
-            (
-                "test_utils_i18n_full.py",
-                """
-# 国际化工具测试
-from src.utils.i18n import I18nUtils
-
-def test_get_translation():
     text = I18nUtils.get_translation("hello", "zh")
     assert isinstance(text, str)
     assert len(text) > 0
@@ -206,14 +143,6 @@ def test_format_date():
         ],
         # 缓存模块 - 已有一些基础，补充更多
         "cache": [
-            (
-                "test_cache_simple.py",
-                """
-# 缓存简单测试
-from src.cache.ttl_cache import TTLCache
-from src.cache.consistency_manager import ConsistencyManager
-
-def test_ttl_cache_basic():
     cache = TTLCache(maxsize=10, ttl=60)
     cache.set("key", "value")
     assert cache.get("key") == "value"
@@ -235,15 +164,6 @@ def test_cache_size_limit():
         ],
         # 数据收集器
         "collectors": [
-            (
-                "test_collectors_simple.py",
-                """
-# 数据收集器简单测试
-from src.collectors.fixtures_collector import FixturesCollector
-from src.collectors.odds_collector import OddsCollector
-from src.collectors.scores_collector import ScoresCollector
-
-def test_collector_instances():
     fixtures = FixturesCollector()
     odds = OddsCollector()
     scores = ScoresCollector()
@@ -261,14 +181,6 @@ def test_collector_configs():
         ],
         # 数据处理
         "data_processing": [
-            (
-                "test_data_quality_simple.py",
-                """
-# 数据质量简单测试
-from src.data.quality.anomaly_detector import AnomalyDetector
-from src.data.quality.data_quality_monitor import DataQualityMonitor
-
-def test_anomaly_detector():
     detector = AnomalyDetector()
     assert detector is not None
 
@@ -285,15 +197,6 @@ def test_quality_checks():
         ],
         # 监控模块
         "monitoring": [
-            (
-                "test_monitoring_extended.py",
-                """
-# 监控扩展测试
-from src.monitoring.metrics_collector import MetricsCollector
-from src.monitoring.system_monitor import SystemMonitor
-from src.monitoring.metrics_exporter import MetricsExporter
-
-def test_metrics_collector_extended():
     collector = MetricsCollector()
     collector.record_metric("test_metric", 100)
     collector.record_metric("test_metric", 200)
@@ -315,14 +218,6 @@ def test_metrics_exporter():
         ],
         # 配置模块
         "config": [
-            (
-                "test_config_extended.py",
-                """
-# 配置扩展测试
-from src.core.config import get_config
-from src.config.openapi_config import OpenAPIConfig
-
-def test_get_config():
     config = get_config()
     assert config is not None
 
@@ -347,14 +242,6 @@ def test_config_values():
         ],
         # 中间件
         "middleware": [
-            (
-                "test_middleware_extended.py",
-                """
-# 中间件扩展测试
-from src.middleware.i18n import I18nMiddleware
-from src.middleware.performance_monitoring import PerformanceMiddleware
-
-def test_i18n_middleware():
     middleware = I18nMiddleware()
     assert middleware is not None
 
@@ -415,11 +302,6 @@ def create_batch_coverage_tests():
 
     # 为0覆盖率的模块创建最基础的测试
     zero_coverage_tests = [
-        (
-            "test_tasks_basic.py",
-            """
-# 任务模块基础测试
-def test_import_tasks():
     # 只测试导入，即使失败也没关系
     try:
         from src.tasks.backup_tasks import BackupTasks
@@ -438,11 +320,6 @@ def test_task_creation():
         assert True
 """,
         ),
-        (
-            "test_streaming_basic.py",
-            """
-# 流处理基础测试
-def test_stream_imports():
     try:
         from src.streaming.kafka_producer import KafkaProducer
         from src.streaming.kafka_consumer import KafkaConsumer
@@ -459,11 +336,6 @@ def test_stream_config():
         assert True
 """,
         ),
-        (
-            "test_lineage_basic.py",
-            """
-# 数据血缘基础测试
-def test_lineage_imports():
     try:
         from src.lineage.lineage_reporter import LineageReporter
         from src.lineage.metadata_manager import MetadataManager
@@ -472,11 +344,6 @@ def test_lineage_imports():
         assert True
 """,
         ),
-        (
-            "test_api_endpoints_basic.py",
-            """
-# API端点基础测试
-def test_api_imports():
     # 测试所有API模块的导入
     apis = [
         'src.api.app',
@@ -495,11 +362,6 @@ def test_api_imports():
             assert True  # 仍然算测试通过
 """,
         ),
-        (
-            "test_database_connections.py",
-            """
-# 数据库连接基础测试
-def test_database_imports():
     try:
         from src.database.connection import DatabaseManager
         from src.database.config import DatabaseConfig
@@ -516,11 +378,6 @@ def test_database_manager():
         assert True
 """,
         ),
-        (
-            "test_models_imports.py",
-            """
-# 模型导入批量测试
-def test_import_all_models():
     models = [
         'src.database.models.league',
         'src.database.models.team',
@@ -538,11 +395,6 @@ def test_import_all_models():
             assert True
 """,
         ),
-        (
-            "test_services_all.py",
-            """
-# 所有服务基础测试
-def test_service_imports():
     services = [
         'src.services.audit_service',
         'src.services.base',
@@ -560,11 +412,6 @@ def test_service_imports():
             assert True
 """,
         ),
-        (
-            "test_utils_complete.py",
-            """
-# 工具模块完整测试
-def test_all_utils():
     utils = [
         'src.utils.crypto_utils',
         'src.utils.data_validator',
@@ -597,11 +444,6 @@ def test_util_functions():
     assert hasattr(DictUtils, 'get_nested_value')
 """,
         ),
-        (
-            "test_monitoring_complete.py",
-            """
-# 监控模块完整测试
-def test_monitoring_components():
     components = [
         'src.monitoring.alert_manager',
         'src.monitoring.anomaly_detector',
@@ -630,11 +472,6 @@ def test_monitoring_initialization():
     assert monitor is not None
 """,
         ),
-        (
-            "test_cache_complete.py",
-            """
-# 缓存模块完整测试
-def test_cache_components():
     try:
         from src.cache.redis_manager import RedisManager
         from src.cache.ttl_cache import TTLCache
@@ -665,11 +502,6 @@ def test_cache_operations():
     assert cache.get("test") is None
 """,
         ),
-        (
-            "test_data_collectors_all.py",
-            """
-# 所有数据收集器测试
-def test_all_collectors():
     collectors = [
         'src.collectors.fixtures_collector',
         'src.collectors.odds_collector',
