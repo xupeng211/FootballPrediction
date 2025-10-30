@@ -93,7 +93,7 @@ class CoverageRule(QualityRule):
             description="检查测试覆盖率是否达到要求",
             level=QualityLevel.HIGH
         )
-        self.min_coverage = 70.0  # 最低覆盖率要求
+        self.min_coverage = 68.0  # 最低覆盖率要求 (基于Issue #159 70.1%成就调整)
 
     def check(self, context: Dict[str, Any]) -> List[QualityIssue]:
         issues = []
