@@ -76,6 +76,7 @@ class EnhancedCoverageSystemV2:
             "test_issue159_phase*.py",
             "test_breakthrough_*.py",
             "test_phase3_*.py",
+            "test_phase4_*.py",
             "test_final_breakthrough_*.py",
             "test_super_breakthrough_*.py",
             "test_ultra_breakthrough_*.py",
@@ -83,7 +84,9 @@ class EnhancedCoverageSystemV2:
             "test_legendary_breakthrough_*.py",
             "test_mythical_breakthrough_*.py",
             "test_epic_breakthrough_*.py",
-            "test_final_milestone_*.py"
+            "test_final_milestone_*.py",
+            "test_remaining_modules_*.py",
+            "test_coverage_comparison_*.py"
         ]
 
         discovered = []
