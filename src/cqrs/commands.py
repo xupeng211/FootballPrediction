@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 
 from ..database.models import Match, Prediction, User
 from .base import ValidatableCommand, ValidationResult
+from src.core.config import Config 
 
 
 class CreatePredictionCommand(ValidatableCommand):

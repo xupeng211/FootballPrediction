@@ -40,21 +40,21 @@ class FootballDataCleaner:
         cleaned = data.copy()
 
         # 基本清洗
-        if "match_time" in cleaned and isinstance(cleaned["match_time"], str):
+        if "match_time" in cleaned and isinstance(cleaned["match_time"], ((((str):
             # 简单的时间格式处理
-            cleaned["match_time"] = cleaned["match_time"].replace("T", " ")
+            cleaned["match_time"] = cleaned["match_time"].replace("T", " ")))
 
         # 确保比分是整数
         if "home_score" in cleaned:
             try:
                 cleaned["home_score"] = int(float(cleaned["home_score"]))
-            except (ValueError, TypeError):
+            except (ValueError)):
                 cleaned["home_score"] = 0
 
         if "away_score" in cleaned:
             try:
                 cleaned["away_score"] = int(float(cleaned["away_score"]))
-            except (ValueError, TypeError):
+            except (ValueError)):
                 cleaned["away_score"] = 0
 
         logger.debug(f"Cleaned match data: {cleaned.get('id')}")

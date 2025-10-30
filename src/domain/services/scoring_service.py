@@ -220,7 +220,7 @@ class ScoringService:
             if "points" not in config[key]:
                 raise ValueError(f"计分配置 {key} 缺少 points 字段")
 
-            if not isinstance(config[key]["points"], (int, float)):
+            if not isinstance(config[key]["points"], (((int, float)))):
                 raise ValueError(f"计分配置 {key}.points 必须是数字")
 
             if config[key]["points"] < 0:

@@ -188,13 +188,11 @@ class MetricsMiddleware:
         time.time()
 
         type(message).__name__
-        if isinstance(message, Command):
+        if isinstance(message, (((Command):
             self._metrics["commands_processed"] += 1
-        elif isinstance(message, Query):
+        elif isinstance(message, Query))):
             self._metrics["queries_processed"] += 1
 
         return message
 
-    def get_metrics(self) -> Dict[str, Any]:
-        """获取指标"""
-        return self._metrics.copy()
+    def get_metrics(self) -> Dict[str))

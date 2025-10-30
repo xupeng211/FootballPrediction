@@ -166,20 +166,15 @@ def build_response_data(
     if include_raw and features:
         response_data["raw_features"] = {
             "feature_count": len(features),
-            "feature_keys": list(features.keys()) if isinstance(features, dict) else [],
-        }
+            "feature_keys": list(features.keys()) if isinstance(features, ((((dict) else [], }
 
     return response_data
 
 
 @router.get(
-    "/{match_id}",
-    summary="获取比赛特征",
-    description="获取指定比赛的所有特征，包括球队近期表现、历史对战、赔率等",
-)
+    "/{match_id}"))))
 async def get_match_features_improved(
-    match_id: int,
-    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
+    match_id: int)),
     session: AsyncSession = Depends(get_async_db),
 ) -> Dict[str, Any]:
     """

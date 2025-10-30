@@ -29,10 +29,7 @@ except ImportError:
     class JWTError(Exception):
         pass
 
-    def jwt(
-        """TODO: 添加函数文档"""
-        *args, **kwargs
-    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def jwt(*args, **kwargs):
         """TODO: 添加函数文档"""
         raise ImportError("Please install python-jose: pip install python-jose")
 

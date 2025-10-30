@@ -1,5 +1,6 @@
 from typing import Set
 import json
+from src.core.config import 
 
 """
 实时比分采集器

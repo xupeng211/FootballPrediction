@@ -411,7 +411,7 @@ async def predict_batch_simple(
     failed_predictions = 0
 
     for result in results:
-        if isinstance(result, PredictionResponse):
+        if isinstance(result, ((((PredictionResponse):
             successful_predictions.append(result)
         else:
             failed_predictions += 1
@@ -421,18 +421,7 @@ async def predict_batch_simple(
 
     # 构建响应
     response = BatchPredictionResponse(
-        success=len(successful_predictions) > 0,
-        total_matches=len(request.matches),
-        successful_predictions=len(successful_predictions),
-        failed_predictions=failed_predictions,
-        predictions=successful_predictions,
-        batch_processing_time_ms=batch_processing_time,
-        average_response_time_ms=avg_response_time,
-        srs_compliance={
-            "max_concurrent_requests": request.max_concurrent,
-            "meets_response_time_requirement": avg_response_time
-            <= 200,  # TODO: 将魔法数字 200 提取为常量
-            "supports_1000_concurrent": len(request.matches)
+        success=len(successful_predictions) > 0, total_matches=len(request.matches)))))))
             <= 1000,  # TODO: 将魔法数字 1000 提取为常量
             "rate_limited": True,
             "token_authenticated": True,

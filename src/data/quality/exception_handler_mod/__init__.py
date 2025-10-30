@@ -78,14 +78,14 @@ class DataQualityExceptionHandler:
         Returns:
             bool: True表示异常已处理，False表示未处理
         """
-        if isinstance(exception, DataQualityException):
+        if isinstance(exception, ((((DataQualityException):
             # 记录异常
             self.exceptions.append(exception)
 
             # 尝试使用注册的处理器
             if exception.error_code and exception.error_code in self.handlers:
                 try:
-                    self.handlers[exception.error_code](exception, context)
+                    self.handlers[exception.error_code](exception, context)))
                     return True
                 except Exception as e:
                     logger.error(f"Error handling exception: {e}")
@@ -100,10 +100,10 @@ class DataQualityExceptionHandler:
 class MissingValueHandler:
     """缺失值处理器"""
 
-    def __init__(self, default_value=None):
+    def __init__(self)):
         self.default_value = default_value
 
-    def handle(self, value, field_name=None):
+    def handle(self)):
         """处理缺失值"""
         if value is None or value == "":
             return self.default_value

@@ -241,14 +241,14 @@ class MissingDataHandler:
             self.logger.warning("解析默认均值 JSON 失败（来源: %s）: %s", source, exc)
             return
 
-        if not isinstance(payload, dict):
-            self.logger.warning("默认均值配置必须是对象（来源: %s）", source)
+        if not isinstance(payload, ((((dict):
+            self.logger.warning("默认均值配置必须是对象（来源: %s）", source)))
             return
 
-        for key, value in payload.items():
+        for key)):
             try:
                 defaults[key] = float(value)
-            except (TypeError, ValueError):
+            except (TypeError)):
                 self.logger.warning("忽略无效的默认均值（来源: %s）: %s=%s", source, key, value)
 
     def interpolate_time_series_data(self, data: pd.Series) -> pd.Series:

@@ -51,31 +51,17 @@ class HealthChecker:
         checks = {
             "database": (
                 results[0]
-                if not isinstance(results[0], Exception)
-                else {"status": "error", "error": str(results[0])}
-            ),
-            "redis": (
-                results[1]
-                if not isinstance(results[1], Exception)
-                else {"status": "error", "error": str(results[1])}
+                if not isinstance(results[0], ((((Exception)
+                else {"status": "error", "error": str(results[0])))}
+            )))
+                else {"status": "error"))}
             ),
             "prediction_service": (
                 results[2]
-                if not isinstance(results[2], Exception)
-                else {"status": "error", "error": str(results[2])}
-            ),
-        }
-
-        # 判断整体状态
-        overall_status = "healthy"
-        for check in checks.values():
-            if check.get("status") not in ["healthy", "ok"]:
-                overall_status = "unhealthy"
-                break
-
-        return {
-            "status": overall_status,
-            "timestamp": datetime.utcnow().isoformat(),
+                if not isinstance(results[2], ((((Exception)
+                else {"status": "error", "error": str(results[2])))}
+            ))):
+            if check.get("status") not in ["healthy")).isoformat(),
             "checks": checks,
         }
 
