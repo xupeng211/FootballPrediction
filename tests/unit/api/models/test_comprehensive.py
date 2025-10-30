@@ -8,9 +8,11 @@
 
 
 import pytest
+from unittest.mock import Mock
 
 # 尝试导入目标模块
 try:
+    from src.api.models import *
 except ImportError as e:
     print(f"警告: 无法导入模块 api.models: {e}")
     # 如果导入失败，跳过测试
