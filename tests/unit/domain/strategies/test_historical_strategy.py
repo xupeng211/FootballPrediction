@@ -61,9 +61,6 @@ def test_historical_strategy_provides_stable_predictions():
     strategy._historical_matches[1] = [match_a, match_b]
     strategy._historical_matches[2] = [match_c]
     strategy._score_patterns = {
-        (2, 1): [match_a],
-        (1, 0): [match_b],
-        (0, 2): [match_c],
     }
     strategy._season_patterns = {"2022/2023": [match_a, match_b, match_c]}
 

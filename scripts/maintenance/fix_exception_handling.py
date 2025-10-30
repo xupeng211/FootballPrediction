@@ -54,7 +54,6 @@ def fix_file_exceptions(file_path):
                     "except Exception as e:",
                     "except (ValueError, KeyError, AttributeError, HTTPError) as e:",
                 ),
-                ("except Exception:", "except (ValueError, KeyError, AttributeError):"),
             ]
         elif "database" in file_path or "cache" in file_path:
             # 数据库和缓存相关
@@ -63,7 +62,6 @@ def fix_file_exceptions(file_path):
                     "except Exception as e:",
                     "except (ConnectionError, TimeoutError, ValueError) as e:",
                 ),
-                ("except Exception:", "except (ConnectionError, TimeoutError):"),
             ]
         elif "crypto" in file_path:
             # 加密相关
@@ -72,7 +70,6 @@ def fix_file_exceptions(file_path):
                     "except Exception as e:",
                     "except (ValueError, TypeError, OSError) as e:",
                 ),
-                ("except Exception:", "except (ValueError, TypeError):"),
             ]
         else:
             # 通用
@@ -81,9 +78,6 @@ def fix_file_exceptions(file_path):
                     "except Exception as e:",
                     "except (ValueError, TypeError, AttributeError, KeyError) as e:",
                 ),
-                (
-                    "except Exception:",
-                    "except (ValueError, TypeError, AttributeError):",
                 ),
             ]
 

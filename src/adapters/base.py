@@ -70,6 +70,8 @@ class CompositeAdapter(Adapter):
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
+# TODO: 方法 def get_adapter 过长(23行)，建议拆分
+# TODO: 方法 def get_adapter 过长(23行)，建议拆分
     def get_source_schema(self) -> Dict[str, Any]:
         """获取源数据结构"""
         return {}
@@ -125,7 +127,6 @@ class CompositeAdapter(Adapter):
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""

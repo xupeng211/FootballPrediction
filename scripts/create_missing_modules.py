@@ -18,18 +18,6 @@ def create_module_file(path, content):
 # 需要创建的模块列表
 modules_to_create = [
     # Monitoring modules
-    (
-        "src/monitoring/metrics_collector_enhanced_mod.py",
-        '''
-"""Enhanced Metrics Collector - 简化版本"""
-
-from typing import Dict, Any
-from datetime import datetime
-
-class EnhancedMetricsCollector:
-    """简化的增强指标收集器"""
-
-    def __init__(self):
         self.metrics = {}
 
     def collect(self) -> Dict[str, Any]:
@@ -44,16 +32,6 @@ class EnhancedMetricsCollector:
         self.metrics[name] = value
 ''',
     ),
-    (
-        "src/monitoring/alert_manager_mod.py",
-        '''
-"""Alert Manager - 简化版本"""
-
-from enum import Enum
-from typing import Dict, List, Optional
-from datetime import datetime
-
-class AlertSeverity(Enum):
     """警报严重程度"""
     LOW = "low"
     MEDIUM = "medium"
@@ -95,16 +73,6 @@ class AlertManager:
 ''',
     ),
     # Services modules
-    (
-        "src/services/audit_service_mod.py",
-        '''
-"""Audit Service - 简化版本"""
-
-from typing import Dict, Any, Optional
-from datetime import datetime
-from enum import Enum
-
-class AuditSeverity(Enum):
     """审计严重程度"""
     LOW = "low"
     MEDIUM = "medium"

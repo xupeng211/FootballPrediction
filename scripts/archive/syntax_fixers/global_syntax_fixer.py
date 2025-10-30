@@ -31,13 +31,11 @@ class GlobalSyntaxFixer:
             # 模式4: 函数定义后多余冒号 def method():""" -> def method():"""
             (r'def\s+(\w+)\([^)]*\):"""', r'def \1(\n    """'),
             # 模式5: assert语句后多余冒号 assert condition: -> assert condition
-            (r"assert\s+([^:\n]+):", r"assert \1"),
             # 模式6: 修复简单的括号不匹配
             (r"(\w+)\s*\[\s*([^\]]+)(?<!])$", r"\1[\2]"),
             # 模式7: 修复未闭合的字符串
             (r'"([^"]*?)(?=\n)', r'"\1"'),
             # 模式8: 修复常见的类型注解错误
-            (r"(\w+):\s*([a-zA-Z_]\w*)\s*=", r"\1 = \2"),  # 简化类型注解
         ]
 
     def fix_file(self, file_path: Path) -> Tuple[bool, int]:

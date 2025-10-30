@@ -46,9 +46,6 @@ def test_examples_functions():
     elif "test_scripts_generate-passwords.py" in file_path:
         # Handle multiple TODO patterns in generate-passwords test
         replacements = [
-            (
-                r"# TODO: Add minimal functional tests for key functions/classes in scripts/generate-passwords\.py\.",
-                """def test_generate_passwords_basic():
     \"\"\"Test basic password generation functionality\"\"\"
     if hasattr(module, 'generate_password'):
         result = module.generate_password()
@@ -60,10 +57,6 @@ def test_examples_functions():
                 """    assert result is not None
     assert isinstance(result, (str, list, dict))""",
             ),
-            (
-                r"# TODO: 根据逻辑断言正确性",
-                """    assert result is not None
-    if isinstance(result, bool):
         assert result is True or result is False""",
             ),
             (
@@ -71,13 +64,6 @@ def test_examples_functions():
                 """    # Assuming function returns a meaningful result
     assert result is not None""",
             ),
-            (
-                r"# TODO: 替换参数为更贴近业务场景的值",
-                """    # Using reasonable default parameters
-    test_params = {'length': 12, 'complexity': 'medium'}
-    result = None
-    try:
-        if hasattr(module, 'generate_password'):
             result = module.generate_password(**test_params)
     except Exception as e:
         assert isinstance(e, Exception)

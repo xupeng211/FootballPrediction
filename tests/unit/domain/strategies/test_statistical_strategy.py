@@ -51,7 +51,6 @@ def statistical_strategy():
     }
 
     strategy._head_to_head_stats = {
-        (1, 2): {
             "home_wins": 4,
             "away_wins": 2,
             "draws": 4,

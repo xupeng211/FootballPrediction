@@ -12,20 +12,6 @@ def create_simple_utils_tests():
 
     # 测试文件列表
     test_files = [
-        (
-            "test_cache_utils.py",
-            """
-\"\"\"缓存工具测试\"\"\"
-import pytest
-from unittest.mock import Mock, patch
-from src.cache.redis_manager import RedisManager
-from src.cache.ttl_cache import TTLCache
-
-
-class TestCacheUtils:
-    \"\"\"测试缓存工具\"\"\"
-
-    def test_redis_manager_creation(self):
         \"\"\"测试Redis管理器创建\"\"\"
         manager = RedisManager()
         assert manager is not None
@@ -67,20 +53,6 @@ class TestCacheUtils:
         assert cache.get("key3") == "value3"
 """,
         ),
-        (
-            "test_monitoring_utils.py",
-            """
-\"\"\"监控工具测试\"\"\"
-import pytest
-from unittest.mock import Mock
-from src.monitoring.metrics_collector import MetricsCollector
-from src.monitoring.system_monitor import SystemMonitor
-
-
-class TestMonitoringUtils:
-    \"\"\"测试监控工具\"\"\"
-
-    def test_metrics_collector_creation(self):
         \"\"\"测试指标收集器创建\"\"\"
         collector = MetricsCollector()
         assert collector is not None
@@ -141,21 +113,6 @@ class TestMonitoringUtils:
         assert json_data == {"metrics": []}
 """,
         ),
-        (
-            "test_data_collectors.py",
-            """
-\"\"\"数据收集器测试\"\"\"
-import pytest
-from unittest.mock import Mock, AsyncMock
-from src.collectors.fixtures_collector import FixturesCollector
-from src.collectors.odds_collector import OddsCollector
-from src.collectors.scores_collector import ScoresCollector
-
-
-class TestDataCollectors:
-    \"\"\"测试数据收集器\"\"\"
-
-    def test_fixtures_collector_creation(self):
         \"\"\"测试赛程收集器创建\"\"\"
         collector = FixturesCollector()
         assert collector is not None
@@ -229,20 +186,6 @@ class TestDataCollectors:
         assert "last_collection" in metrics
 """,
         ),
-        (
-            "test_config_utils.py",
-            """
-\"\"\"配置工具测试\"\"\"
-import pytest
-from unittest.mock import Mock, patch
-from src.core.config import Config
-from src.config.fastapi_config import FastAPIConfig
-
-
-class TestConfigUtils:
-    \"\"\"测试配置工具\"\"\"
-
-    def test_config_creation(self):
         \"\"\"测试配置创建\"\"\"
         config = Config()
         assert config is not None
@@ -300,20 +243,6 @@ class TestConfigUtils:
         assert hasattr(config, 'debug')
 """,
         ),
-        (
-            "test_middleware_utils.py",
-            """
-\"\"\"中间件工具测试\"\"\"
-import pytest
-from unittest.mock import Mock
-from src.middleware.i18n import I18nMiddleware
-from src.middleware.performance_monitoring import PerformanceMonitoringMiddleware
-
-
-class TestMiddlewareUtils:
-    \"\"\"测试中间件工具\"\"\"
-
-    def test_i18n_middleware_creation(self):
         \"\"\"测试国际化中间件创建\"\"\"
         middleware = I18nMiddleware()
         assert middleware is not None

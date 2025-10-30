@@ -124,15 +124,8 @@ def fix_duplicate_function_args(file_path: Path) -> bool:
 
         # 修复重复的client参数
         patterns = [
-            (r"def test_db\(,\s*client,\s*client\):", "def test_db(client):"),
-            (r"def test_client\(,\s*client,\s*client\):", "def test_client(client):"),
-            (r"def test_env\(,\s*client,\s*client\):", "def test_env(client):"),
-            (
-                r"def test_intentional_failure\(client,\s*client,\s*client,\s*client,\s*client,\s*client\):",
                 "def test_intentional_failure(client):",
             ),
-            (
-                r"def test_db_session\(test_database_engine,\s*client,\s*client\):",
                 "def test_db_session(test_database_engine, client):",
             ),
         ]

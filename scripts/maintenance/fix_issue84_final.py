@@ -138,17 +138,12 @@ def fix_duplicate_parameters(content):
     """修复重复参数问题"""
     # 修复 def test_func(client, client): 类型的错误
     patterns = [
-        (r"def test_match_data\(\s*,\s*client,\s*client\s*\):", "def test_match_data(client):"),
-        (
-            r"def test_environment_setup\(\s*,\s*client,\s*client\s*\):",
             "def test_environment_setup(client):",
         ),
         (
             r"def test_client\(db_session:\s*Session,\s*client,\s*client\s*\)",
             "def test_client(db_session: Session, client)",
         ),
-        (
-            r"def test_redis_client\(redis_container,\s*client,\s*client\s*\):",
             "def test_redis_client(redis_container, client):",
         ),
     ]
