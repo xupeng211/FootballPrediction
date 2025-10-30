@@ -17,9 +17,13 @@ logger = get_logger(__name__)
 
 
 class DecoratorService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """装饰器服务,管理和应用装饰器"""
 
     def __init__(self, factory: Optional[DecoratorFactory] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.factory = factory or DecoratorFactory()
         self._decorated_functions: Dict[str, DecoratorComponent] = {}
         self._global_decorators: List[DecoratorConfig] = []
@@ -39,7 +43,9 @@ class DecoratorService:
         self._global_decorators.append(config)
         self.factory._config_cache[config.name] = config
 
-    def register_function_decorator(self, function_name: str, config: DecoratorConfig) -> None:
+    def register_function_decorator(
+        self, function_name: str, config: DecoratorConfig
+    ) -> None:
         """为特定函数注册装饰器"""
         if function_name not in self._function_decorators:
             self._function_decorators[function_name] = []
@@ -85,7 +91,9 @@ class DecoratorService:
         decorators = self.factory.create_chain(configs_to_apply, component)
 
         # 创建装饰器组件
-        decorator_component = DecoratorComponent(func, decorators, name=f"decorated_{func_name}")
+        decorator_component = DecoratorComponent(
+            func, decorators, name=f"decorated_{func_name}"
+        )
 
         # 保存装饰后的函数
         self._decorated_functions[func_name] = decorator_component
@@ -180,7 +188,9 @@ class DecoratorService:
 
 
 # 便捷装饰器函数
-def decorate(decorator_names: Optional[List[str]] = None, **decorator_kwargs) -> Callable:
+def decorate(
+    decorator_names: Optional[List[str]] = None, **decorator_kwargs
+) -> Callable:
     """装饰器工厂函数,用于装饰其他函数"""
 
     def decorator(func: Callable) -> Callable:
@@ -188,7 +198,9 @@ def decorate(decorator_names: Optional[List[str]] = None, **decorator_kwargs) ->
         service = DecoratorService()
 
         # 应用装饰器
-        return service.apply_decorators(func, decorator_names=decorator_names, **decorator_kwargs)
+        return service.apply_decorators(
+            func, decorator_names=decorator_names, **decorator_kwargs
+        )
 
     return decorator
 
@@ -238,7 +250,9 @@ def with_cache(ttl: Optional[int] = None, **kwargs) -> Callable:
 
 def with_timeout(timeout_seconds: float = 30.0, **kwargs) -> Callable:
     """添加超时装饰器"""
-    return decorate(decorator_names=["default_timeout"], timeout_seconds=timeout_seconds, **kwargs)
+    return decorate(
+        decorator_names=["default_timeout"], timeout_seconds=timeout_seconds, **kwargs
+    )
 
 
 def with_all(

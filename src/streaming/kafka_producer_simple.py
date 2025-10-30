@@ -1,6 +1,6 @@
-""""
+"""
 简化的Kafka生产者实现
-""""
+"""
 
 import asyncio
 import json
@@ -10,9 +10,13 @@ from src.core.exceptions import StreamingError
 
 
 class KafkaMessageProducer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka消息生产者（简化版）"""
 
     def __init__(self, config: Dict[str, Any]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if "bootstrap_servers" not in config:
             raise StreamingError("Missing required config: bootstrap_servers")
         if "topic" not in config:
@@ -87,7 +91,7 @@ class KafkaMessageProducer:
 
     def _serialize_value(self, value: Any) -> bytes:
         """序列化值"""
-        if isinstance(value, ((((((((bytes):
+        if isinstance(value, ((bytes):
             return value
         elif isinstance(value, str))))):
             return value.encode("utf-8")

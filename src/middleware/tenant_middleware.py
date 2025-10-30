@@ -5,7 +5,6 @@ Multi-Tenant Permission Management Middleware
 提供HTTP层面的多租户权限控制和访问管理.
 """
 
-import json
 from typing import Optional, Dict, Any, List, Callable
 from functools import wraps
 
@@ -15,7 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from src.database.models.tenant import Tenant
-from src.services.tenant_service import TenantService, PermissionCheckResult
+from src.services.tenant_service import TenantService
 from src.services.auth_service import AuthService
 
 
@@ -23,6 +22,8 @@ security = HTTPBearer(auto_error=False)
 
 
 class TenantContext:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """租户上下文"""
 
     def __init__(
@@ -30,7 +31,7 @@ class TenantContext:
         tenant: Optional[Tenant] = None,
         user_id: Optional[int] = None,
         permissions: Optional[List[str]] = None,
-        restrictions: Optional[Dict[str, Any]] = None
+        restrictions: Optional[Dict[str, Any]] = None,
     ):
         self.tenant = tenant
         self.user_id = user_id
@@ -58,6 +59,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app, tenant_service: TenantService, auth_service: AuthService):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(app)
         self.tenant_service = tenant_service
         self.auth_service = auth_service
@@ -71,15 +74,13 @@ class TenantMiddleware(BaseHTTPMiddleware):
             tenant = await self._extract_tenant(request)
             if not tenant:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="租户不存在"
+                    status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
                 )
 
             # 验证租户状态
             if not self._validate_tenant_status(tenant):
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="租户状态异常"
+                    status_code=status.HTTP_403_FORBIDDEN, detail="租户状态异常"
                 )
 
             # 提取用户信息
@@ -90,7 +91,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 tenant=tenant,
                 user_id=user_context.get("user_id"),
                 permissions=user_context.get("permissions", []),
-                restrictions=user_context.get("restrictions", {})
+                restrictions=user_context.get("restrictions", {}),
             )
 
             # 将上下文添加到请求状态
@@ -110,7 +111,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             # 记录错误并返回500
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="内部服务器错误"
+                detail="内部服务器错误",
             ) from e
 
     async def _extract_tenant(self, request: Request) -> Optional[Tenant]:
@@ -170,31 +171,35 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         return True
 
-    async def _extract_user_context(self, request: Request, tenant: Tenant) -> Dict[str, Any]:
+    async def _extract_user_context(
+        self, request: Request, tenant: Tenant
+    ) -> Dict[str, Any]:
         """
         从请求中提取用户上下文
         """
-        context = {
-            "user_id": None,
-            "permissions": [],
-            "restrictions": {}
-        }
+        context = {"user_id": None, "permissions": [], "restrictions": {}}
 
         # 尝试从Authorization header获取用户信息
         authorization = request.headers.get("Authorization")
         if authorization:
             try:
-                credentials: Optional[HTTPAuthorizationCredentials] = await security(request)
+                credentials: Optional[HTTPAuthorizationCredentials] = await security(
+                    request
+                )
                 if credentials:
-                    user = await self.auth_service.get_current_user(credentials.credentials)
+                    user = await self.auth_service.get_current_user(
+                        credentials.credentials
+                    )
                     if user:
                         context["user_id"] = user.id
 
                         # 获取用户权限
-                        permission_result = await self.tenant_service.check_user_permission(
-                            user_id=user.id,
-                            tenant_id=tenant.id,
-                            permission_code="basic_access"  # 基础访问权限
+                        permission_result = (
+                            await self.tenant_service.check_user_permission(
+                                user_id=user.id,
+                                tenant_id=tenant.id,
+                                permission_code="basic_access",  # 基础访问权限
+                            )
                         )
 
                         if permission_result.granted:
@@ -215,7 +220,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         return context
 
-    def _add_tenant_headers(self, response: Response, tenant_context: TenantContext) -> None:
+    def _add_tenant_headers(
+        self, response: Response, tenant_context: TenantContext
+    ) -> None:
         """添加租户相关的响应头"""
         if tenant_context.tenant:
             response.headers["X-Tenant-ID"] = str(tenant_context.tenant_id)
@@ -225,7 +232,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
 # ==================== 权限装饰器 ====================
 
-def require_permission(permission_code: str, resource_context: Optional[Dict[str, Any]] = None):
+
+def require_permission(
+    permission_code: str, resource_context: Optional[Dict[str, Any]] = None
+):
     """
     权限检查装饰器
 
@@ -233,6 +243,7 @@ def require_permission(permission_code: str, resource_context: Optional[Dict[str
         permission_code: 需要的权限代码
         resource_context: 资源上下文信息
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -250,14 +261,15 @@ def require_permission(permission_code: str, resource_context: Optional[Dict[str
             if not request:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="无法获取请求上下文"
+                    detail="无法获取请求上下文",
                 )
 
-            tenant_context: Optional[TenantContext] = getattr(request.state, "tenant_context", None)
+            tenant_context: Optional[TenantContext] = getattr(
+                request.state, "tenant_context", None
+            )
             if not tenant_context or not tenant_context.is_authenticated:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="未认证的访问"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证的访问"
                 )
 
             # 如果需要特定权限,进行检查
@@ -272,29 +284,33 @@ def require_permission(permission_code: str, resource_context: Optional[Dict[str
                         user_id=tenant_context.user_id,
                         tenant_id=tenant_context.tenant_id,
                         permission_code=permission_code,
-                        resource_context=resource_context
+                        resource_context=resource_context,
                     )
 
                     if not permission_result.granted:
                         raise HTTPException(
                             status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"权限不足: {permission_result.reason or '无权限'}"
+                            detail=f"权限不足: {permission_result.reason or '无权限'}",
                         )
 
             # 执行原函数
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def require_tenant_role(role_code: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     租户角色检查装饰器
 
     Args:
         role_code: 需要的角色代码
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -311,14 +327,15 @@ def require_tenant_role(role_code: str):
             if not request:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="无法获取请求上下文"
+                    detail="无法获取请求上下文",
                 )
 
-            tenant_context: Optional[TenantContext] = getattr(request.state, "tenant_context", None)
+            tenant_context: Optional[TenantContext] = getattr(
+                request.state, "tenant_context", None
+            )
             if not tenant_context or not tenant_context.is_authenticated:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="未认证的访问"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证的访问"
                 )
 
             # 检查用户角色
@@ -327,29 +344,33 @@ def require_tenant_role(role_code: str):
             async with get_db_session() as db:
                 tenant_service = TenantService(db)
                 user_roles = await tenant_service._get_user_roles(
-                    tenant_context.user_id,
-                    tenant_context.tenant_id
+                    tenant_context.user_id, tenant_context.tenant_id
                 )
 
                 has_role = any(
-                    role.role.code == role_code and role.is_active and not role.is_expired
+                    role.role.code == role_code
+                    and role.is_active
+                    and not role.is_expired
                     for role in user_roles
                 )
 
                 if not has_role:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
-                        detail=f"需要角色: {role_code}"
+                        detail=f"需要角色: {role_code}",
                     )
 
             # 执行原函数
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def check_resource_quota(resource_type: str, amount: int = 1):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     资源配额检查装饰器
 
@@ -357,6 +378,7 @@ def check_resource_quota(resource_type: str, amount: int = 1):
         resource_type: 资源类型
         amount: 需要的资源量
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -373,14 +395,15 @@ def check_resource_quota(resource_type: str, amount: int = 1):
             if not request:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="无法获取请求上下文"
+                    detail="无法获取请求上下文",
                 )
 
-            tenant_context: Optional[TenantContext] = getattr(request.state, "tenant_context", None)
+            tenant_context: Optional[TenantContext] = getattr(
+                request.state, "tenant_context", None
+            )
             if not tenant_context or not tenant_context.is_authenticated:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="未认证的访问"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证的访问"
                 )
 
             # 检查资源配额
@@ -391,23 +414,25 @@ def check_resource_quota(resource_type: str, amount: int = 1):
                 quota_check = await tenant_service.check_resource_quota(
                     tenant_id=tenant_context.tenant_id,
                     resource_type=resource_type,
-                    additional_amount=amount
+                    additional_amount=amount,
                 )
 
                 if not quota_check.can_access:
                     raise HTTPException(
                         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail=f"资源配额不足: {quota_check.reason}"
+                        detail=f"资源配额不足: {quota_check.reason}",
                     )
 
             # 执行原函数
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 # ==================== 辅助函数 ====================
+
 
 def get_tenant_context(request: Request) -> Optional[TenantContext]:
     """从请求中获取租户上下文"""

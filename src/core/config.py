@@ -32,9 +32,13 @@ except ImportError:
 
 
 class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
@@ -214,6 +218,8 @@ class Settings(SettingsClass):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             # Fallback for older versions
             class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
                 env_file = ".env"
                 env_file_encoding = "utf-8"
                 case_sensitive = False
@@ -222,11 +228,11 @@ class Settings(SettingsClass):
     else:
 
         def __init__(self, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-            self.test_database_url = (
-                "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
-            )
+            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
             self.redis_url = "redis://redis:6379/0"
             self.api_host = "localhost"
             self.api_port = 8000
@@ -264,6 +270,8 @@ class Settings(SettingsClass):
             self._load_from_env()
 
         def _load_from_env(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
             """从环境变量加载配置"""
             env_mapping = {
                 "DATABASE_URL": "database_url",

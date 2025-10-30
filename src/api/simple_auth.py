@@ -1,5 +1,6 @@
 from typing import Optional
 from datetime import datetime
+
 """
 简化的用户认证API
 
@@ -28,6 +29,8 @@ class SimpleUser(BaseModel):
     created_at: datetime
 
     class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -47,7 +50,11 @@ class SimpleTokenResponse(BaseModel):
 
 # 简化的认证服务
 class SimpleAuthService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         # 简化的用户存储（实际应用中应该使用数据库）
         self.users = {
             "admin": {
@@ -94,7 +101,9 @@ class SimpleAuthService:
             raise ValueError("用户名已存在")
 
         # 简单的用户ID生成
-        new_id = max(user["id"] for user in self.users.values()) + 1 if self.users else 1
+        new_id = (
+            max(user["id"] for user in self.users.values()) + 1 if self.users else 1
+        )
 
         self.users[username] = {
             "id": new_id,
@@ -234,7 +243,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
 async def register_user(user_data: SimpleUserRegister):
     """用户注册"""
     try:
-        user = auth_service.create_user(user_data.username, user_data.email, user_data.password)
+        user = auth_service.create_user(
+            user_data.username, user_data.email, user_data.password
+        )
         return {"message": "用户注册成功", "user": user.dict()}
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

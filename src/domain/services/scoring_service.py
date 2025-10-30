@@ -16,6 +16,7 @@ class ScoringService:
     """计分服务"""
 
     def __init__(self, scoring_config: Optional[Dict[str, Any]] = None):
+        """初始化计分服务"""
         self.config = scoring_config or self._default_scoring_config()
 
     def _default_scoring_config(self) -> Dict[str, Any]:
@@ -220,7 +221,7 @@ class ScoringService:
             if "points" not in config[key]:
                 raise ValueError(f"计分配置 {key} 缺少 points 字段")
 
-            if not isinstance(config[key]["points"], (((((int, float)))))):
+            if not isinstance(config[key]["points"], (int, float)):
                 raise ValueError(f"计分配置 {key}.points 必须是数字")
 
             if config[key]["points"] < 0:

@@ -19,10 +19,14 @@ class Compatibility(Enum):
 
 
 class CompatibleQueryBuilder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """兼容性查询构建器"""
 
     def __init__(self, dialect: str = "postgresql"):
-        """初始化查询构建器
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化查询构建器"
 
         Args:
             dialect: 数据库方言（postgresql, mysql, sqlite）
@@ -55,7 +59,7 @@ class CompatibleQueryBuilder:
         return rules.get(self.dialect, rules["postgresql"])
 
     def build_limit_query(self, base_query: str, limit: int, offset: int = 0) -> str:
-        """构建带限制的查询
+        """构建带限制的查询"
 
         Args:
             base_query: 基础查询
@@ -69,11 +73,13 @@ class CompatibleQueryBuilder:
         if limit is not None:
             query += f" {self.compatibility_rules['limit_syntax'].format(limit=limit)}"
         if offset is not None and offset > 0:
-            query += f" {self.compatibility_rules['offset_syntax'].format(offset=offset)}"
+            query += (
+                f" {self.compatibility_rules['offset_syntax'].format(offset=offset)}"
+            )
         return query
 
     def build_json_query(self, column: str, path: str) -> str:
-        """构建JSON查询
+        """构建JSON查询"
 
         Args:
             column: JSON列名
@@ -89,10 +95,14 @@ class CompatibleQueryBuilder:
 
 
 class SQLCompatibilityHelper:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """SQL兼容性助手"""
 
     def __init__(self, source_dialect: str, target_dialect: str):
-        """初始化兼容性助手
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化兼容性助手"
 
         Args:
             source_dialect: 源数据库方言
@@ -123,13 +133,13 @@ class SQLCompatibilityHelper:
                 "INT AUTO_INCREMENT": "SERIAL",
                 "DATETIME": "TIMESTAMP",
                 "JSON": "JSONB",
-                "`": '"',
+                "`": '"',"
             },
             "mysql_to_sqlite": {
                 "INT AUTO_INCREMENT": "INTEGER PRIMARY KEY AUTOINCREMENT",
                 "DATETIME": "DATETIME",
                 "JSON": "TEXT",
-                "`": '"',
+                "`": '"',"
             },
             "sqlite_to_postgresql": {
                 "INTEGER PRIMARY KEY AUTOINCREMENT": "SERIAL",
@@ -143,12 +153,12 @@ class SQLCompatibilityHelper:
                 "TEXT": "TEXT",
                 "TRUE": "1",
                 "FALSE": "0",
-                '"': "`",
+                '"': "`","
             },
         }
 
     def convert_datatype(self, datatype: str) -> str:
-        """转换数据类型
+        """转换数据类型"
 
         Args:
             datatype: 源数据类型
@@ -171,7 +181,7 @@ class SQLCompatibilityHelper:
         return datatype
 
     def convert_sql(self, sql: str) -> str:
-        """转换SQL语句
+        """转换SQL语句"
 
         Args:
             sql: 源SQL语句
@@ -195,7 +205,7 @@ class SQLCompatibilityHelper:
         return converted
 
     def check_compatibility(self, sql: str) -> Compatibility:
-        """检查SQL兼容性
+        """检查SQL兼容性"
 
         Args:
             sql: SQL语句
@@ -221,7 +231,7 @@ class SQLCompatibilityHelper:
             return Compatibility.NONE
 
     def get_migration_script(self, source_ddl: str) -> str:
-        """获取迁移脚本
+        """获取迁移脚本"
 
         Args:
             source_ddl: 源DDL语句
@@ -231,7 +241,7 @@ class SQLCompatibilityHelper:
         """
         converted_ddl = self.convert_sql(source_ddl)
 
-        script = f"""-- Migration from {self.source_dialect} to {self.target_dialect}
+        script = f"""-- Migration from {self.source_dialect} to {self.target_dialect}"
 -- Source DDL:
 -- {source_ddl}
 

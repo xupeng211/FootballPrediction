@@ -9,43 +9,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import asyncio
 
 # 检查比赛ID
@@ -93,6 +56,8 @@ class SubscriptionType(str, Enum):
 
 @dataclass
 class SubscriptionFilter:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """订阅过滤器"""
 
     match_ids: Optional[List[int]] = field(default_factory=list)  # 特定比赛ID
@@ -100,7 +65,9 @@ class SubscriptionFilter:
     users: Optional[List[str]] = field(default_factory=list)  # 特定用户
     min_confidence: Optional[float] = None  # 最小置信度
     event_sources: Optional[List[str]] = field(default_factory=list)  # 事件源
-    custom_filters: Optional[Dict[str, Any]] = field(default_factory=dict)  # 自定义过滤器
+    custom_filters: Optional[Dict[str, Any]] = field(
+        default_factory=dict
+    )  # 自定义过滤器
 
     def matches(self, event_data: Dict[str, Any]) -> bool:
         """检查事件是否匹配过滤器"""
@@ -125,6 +92,8 @@ class SubscriptionFilter:
 
 @dataclass
 class Subscription:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """订阅信息"""
 
     connection_id: str
@@ -149,11 +118,19 @@ class Subscription:
 
 
 class SubscriptionManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """订阅管理器"""
 
     def __init__(self):
-        self.subscriptions: Dict[str, List[Subscription]] = {}  # connection_id -> subscriptions
-        self.event_subscribers: Dict[EventType, Set[str]] = {}  # event_type -> connection_ids
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        self.subscriptions: Dict[
+            str, List[Subscription]
+        ] = {}  # connection_id -> subscriptions
+        self.event_subscribers: Dict[
+            EventType, Set[str]
+        ] = {}  # event_type -> connection_ids
         self.logger = logging.getLogger(f"{__name__}.SubscriptionManager")
         asyncio.create_task(self._cleanup_inactive_subscriptions())
         self.logger.info("SubscriptionManager initialized")
@@ -192,7 +169,9 @@ class SubscriptionManager:
             return False
         original_count = len(self.subscriptions[connection_id])
         self.subscriptions[connection_id] = [
-            sub for sub in self.subscriptions[connection_id] if event_type not in sub.event_types
+            sub
+            for sub in self.subscriptions[connection_id]
+            if event_type not in sub.event_types
         ]
         if event_type in self.event_subscribers:
             self.event_subscribers[event_type].discard(connection_id)
@@ -209,7 +188,7 @@ class SubscriptionManager:
     def remove_all_subscriptions(self, connection_id: str) -> None:
         """移除连接的所有订阅"""
         if connection_id not in self.subscriptions:
-            return
+            return None
         for subscription in self.subscriptions[connection_id]:
             for event_type in subscription.event_types:
                 if event_type in self.event_subscribers:
@@ -217,7 +196,9 @@ class SubscriptionManager:
         del self.subscriptions[connection_id]
         self.logger.info(f"Removed all subscriptions for connection {connection_id}")
 
-    def get_subscribers(self, event_type: EventType, event_data: Dict[str, Any]) -> List[str]:
+    def get_subscribers(
+        self, event_type: EventType, event_data: Dict[str, Any]
+    ) -> List[str]:
         """获取事件的订阅者"""
         if event_type not in self.event_subscribers:
             return []

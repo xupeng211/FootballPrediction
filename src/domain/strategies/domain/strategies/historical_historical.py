@@ -7,13 +7,17 @@
 
 # 类定义
 class HistoricalMatch:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """历史比赛数据结构"""
 
     pass  # TODO: 实现类逻辑
 
 
 class HistoricalStrategy:
-    """历史数据预测策略
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """历史数据预测策略"
 
     基于以下历史数据进行预测:
     - 相同对战的历史记录

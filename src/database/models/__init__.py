@@ -16,8 +16,15 @@ from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
 from .user import User
 from .tenant import (
-    Tenant, TenantRole, TenantPermission, RolePermission, UserRoleAssignment,
-    TenantStatus, TenantPlan, PermissionScope, ResourceType
+    Tenant,
+    TenantRole,
+    TenantPermission,
+    RolePermission,
+    UserRoleAssignment,
+    TenantStatus,
+    TenantPlan,
+    PermissionScope,
+    ResourceType,
 )
 
 # 为API兼容性创建别名

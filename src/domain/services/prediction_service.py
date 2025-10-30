@@ -23,9 +23,13 @@ from ..models.prediction import Prediction, PredictionPoints, PredictionStatus
 
 
 class PredictionDomainService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测领域服务"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._events: List[Any] = []
 
     def create_prediction(
@@ -108,7 +112,9 @@ class PredictionDomainService:
         old_away = prediction.score.predicted_away if prediction.score else None
 
         # 更新预测
-        prediction.make_prediction(new_predicted_home, new_predicted_away, new_confidence)
+        prediction.make_prediction(
+            new_predicted_home, new_predicted_away, new_confidence
+        )
 
         # 记录领域事件
         if prediction.id is None:
@@ -153,13 +159,11 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             actual_home=actual_home,
             actual_away=actual_away,
-            points_earned=points_earned
+            points_earned=points_earned,
         )
         self._events.append(event)
 
-    def cancel_prediction(
-        self, prediction: Prediction
-    ) -> None:
+    def cancel_prediction(self, prediction: Prediction) -> None:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能取消待处理的预测")
@@ -170,9 +174,7 @@ class PredictionDomainService:
         if prediction.id is None:
             raise ValueError("预测ID不能为空")
 
-        event = PredictionCancelledEvent(
-            prediction_id=prediction.id
-        )
+        event = PredictionCancelledEvent(prediction_id=prediction.id)
         self._events.append(event)
 
     def expire_prediction(self, prediction: Prediction) -> None:
@@ -260,7 +262,10 @@ class PredictionDomainService:
 
         # 检查预测内容
         if prediction.score:
-            if prediction.score.predicted_home < 0 or prediction.score.predicted_away < 0:
+            if (
+                prediction.score.predicted_home < 0
+                or prediction.score.predicted_away < 0
+            ):
                 errors.append("预测比分不能为负数")
 
         # 检查信心度

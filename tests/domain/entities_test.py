@@ -493,3 +493,51 @@ class TestEntitiesBusinessLogic:
 
         assert execution_time < 0.01  # 应该在10ms内完成
         assert isinstance(result, int)
+
+
+
+
+class TestCreate_test_team:
+    """create_test_team函数的测试类"""
+
+    def test_create_test_team_basic(self):
+        """测试create_test_team函数的基本功能"""
+        # TODO: 根据函数实际功能实现具体测试
+        from domain.entities import create_test_team
+
+        # 基础存在性测试
+        assert callable(create_test_team)
+
+        # TODO: 添加更具体的测试逻辑
+        # 这里需要根据函数的实际功能来编写测试
+
+    def test_create_test_team_edge_cases(self):
+        """测试create_test_team函数的边界情况"""
+        from domain.entities import create_test_team
+
+        # TODO: 测试边界情况、错误处理等
+        pass
+
+
+
+
+class TestCreate_test_match:
+    """create_test_match函数的测试类"""
+
+    def test_create_test_match_basic(self):
+        """测试create_test_match函数的基本功能"""
+        # TODO: 根据函数实际功能实现具体测试
+        from domain.entities import create_test_match
+
+        # 基础存在性测试
+        assert callable(create_test_match)
+
+        # TODO: 添加更具体的测试逻辑
+        # 这里需要根据函数的实际功能来编写测试
+
+    def test_create_test_match_edge_cases(self):
+        """测试create_test_match函数的边界情况"""
+        from domain.entities import create_test_match
+
+        # TODO: 测试边界情况、错误处理等
+        pass

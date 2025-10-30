@@ -54,7 +54,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """简单的速率限制中间件"""
 
     def __init__(
-        self, app, calls: int = 100, period: int = 60  # TODO: 将魔法数字 100 提取为常量
+        self,
+        app,
+        calls: int = 100,
+        period: int = 60,  # TODO: 将魔法数字 100 提取为常量
     ):  # TODO: 将魔法数字 100 提取为常量
         super().__init__(app)
         self.calls = calls
@@ -91,6 +94,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     """简单的认证中间件"""
 
     def __init__(self, app, public_paths: list = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(app)
         self.public_paths = public_paths or ["/health", "/docs", "/openapi.json"]
 
@@ -119,6 +124,8 @@ class CORSMiddleware(BaseHTTPMiddleware):
     """CORS中间件"""
 
     def __init__(self, app, allow_origins: list = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(app)
         self.allow_origins = allow_origins or ["*"]
 
@@ -128,8 +135,12 @@ class CORSMiddleware(BaseHTTPMiddleware):
         origin = request.headers.get("origin")
         if origin and (origin in self.allow_origins or "*" in self.allow_origins):
             response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            response.headers["Access-Control-Allow-Methods"] = (
+                "GET, POST, PUT, DELETE, OPTIONS"
+            )
+            response.headers["Access-Control-Allow-Headers"] = (
+                "Content-Type, Authorization"
+            )
             response.headers["Access-Control-Allow-Credentials"] = "true"
 
         return response
@@ -156,7 +167,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
     """简单的缓存中间件"""
 
     def __init__(
-        self, app, cache_timeout: int = 300  # TODO: 将魔法数字 300 提取为常量
+        self,
+        app,
+        cache_timeout: int = 300,  # TODO: 将魔法数字 300 提取为常量
     ):  # TODO: 将魔法数字 300 提取为常量
         super().__init__(app)
         self.cache: Dict[str, Dict[str, Any]] = {}

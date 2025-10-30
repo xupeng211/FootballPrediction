@@ -12,6 +12,8 @@ from typing import Dict, List, Optional
 
 
 class FeatureDefinitions:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """特征定义类,包含所有特征相关的定义"""
 
     # 实体定义
@@ -66,6 +68,8 @@ class FeatureDefinitions:
 
 # 为了兼容性,提供简化的模拟对象
 class MockEntity:
+    """类文档字符串"""
+    pass  # 添加pass语句
     def __init__(self, name: str, description: str, join_keys: List[str]) -> None:
         self.name = name
         self.description = description
@@ -73,6 +77,8 @@ class MockEntity:
 
 
 class MockFeatureView:
+    """类文档字符串"""
+    pass  # 添加pass语句
     def __init__(
         self,
         name: str,
@@ -89,6 +95,8 @@ class MockFeatureView:
 
 
 class MockFileSource:
+    """类文档字符串"""
+    pass  # 添加pass语句
     def __init__(self, name: str, path: str, timestamp_field: str) -> None:
         self.name = name
         self.path = path
@@ -96,11 +104,17 @@ class MockFileSource:
 
 
 # 实体定义
-match_entity = MockEntity(name="match_id", description="比赛唯一标识符", join_keys=["match_id"])
+match_entity = MockEntity(
+    name="match_id", description="比赛唯一标识符", join_keys=["match_id"]
+)
 
-team_entity = MockEntity(name="team_id", description="球队唯一标识符", join_keys=["team_id"])
+team_entity = MockEntity(
+    name="team_id", description="球队唯一标识符", join_keys=["team_id"]
+)
 
-league_entity = MockEntity(name="league_id", description="联赛唯一标识符", join_keys=["league_id"])
+league_entity = MockEntity(
+    name="league_id", description="联赛唯一标识符", join_keys=["league_id"]
+)
 
 # 数据源定义
 match_features_source = MockFileSource(
@@ -157,6 +171,8 @@ head_to_head_features_view = MockFeatureView(
 
 # 特征服务定义（简化版本）
 class FeatureServices:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """特征服务定义类"""
 
     MATCH_PREDICTION = {

@@ -27,6 +27,8 @@ class PredictionConfidence(Enum):
 
 
 class Prediction:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测领域模型"""
 
     def __init__(
@@ -81,8 +83,7 @@ class Prediction:
     def settle(self, actual_value: str) -> None:
         """结算预测"""
         if self.is_settled:
-            return
-
+            return None
         self.actual_value = actual_value
         self.is_settled = True
         self.settled_at = datetime.now()

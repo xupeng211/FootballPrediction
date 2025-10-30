@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 class StrategyPredictionService:
-    """基于策略模式的预测服务
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """基于策略模式的预测服务"
 
     使用策略模式管理多种预测算法,提供灵活的预测服务.
     Uses strategy pattern to manage multiple prediction algorithms.
@@ -40,7 +42,7 @@ class StrategyPredictionService:
         prediction_repository: PredictionRepository,
         default_strategy: str = "ensemble_predictor",
     ):
-        """初始化预测服务
+        """初始化预测服务"
 
         Args:
             strategy_factory: 策略工厂
@@ -77,7 +79,7 @@ class StrategyPredictionService:
         confidence: Optional[float] = None,
         notes: Optional[str] = None,
     ) -> Prediction:
-        """预测单场比赛
+        """预测单场比赛"
 
         Args:
             match_id: 比赛ID
@@ -132,14 +134,16 @@ class StrategyPredictionService:
         # 记录预测详情
         await self._log_prediction_details(prediction, prediction_output, strategy_name)
 
-        logger.info(f"用户 {user_id} 对比赛 {match_id} 完成预测,使用策略: {strategy_name}")
+        logger.info(
+            f"用户 {user_id} 对比赛 {match_id} 完成预测,使用策略: {strategy_name}"
+        )
 
         return prediction
 
     async def batch_predict(
         self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
     ) -> List[Prediction]:
-        """批量预测比赛
+        """批量预测比赛"
 
         Args:
             match_ids: 比赛ID列表
@@ -199,7 +203,7 @@ class StrategyPredictionService:
     async def compare_strategies(
         self, match_id: int, strategy_names: Optional[List[str]] = None
     ) -> Dict[str, PredictionOutput]:
-        """比较不同策略的预测结果
+        """比较不同策略的预测结果"
 
         Args:
             match_id: 比赛ID
@@ -248,7 +252,7 @@ class StrategyPredictionService:
     async def get_strategy_performance(
         self, strategy_name: str, days: int = 30
     ) -> Optional[Dict[str, Any]]:
-        """获取策略性能指标
+        """获取策略性能指标"
 
         Args:
             strategy_name: 策略名称
@@ -271,7 +275,9 @@ class StrategyPredictionService:
         )
 
         # 计算实际性能（需要比赛结果）
-        actual_performance = await self._calculate_actual_performance(recent_predictions)
+        actual_performance = await self._calculate_actual_performance(
+            recent_predictions
+        )
 
         return {
             "strategy_name": strategy_name,
@@ -289,7 +295,7 @@ class StrategyPredictionService:
         }
 
     async def update_strategy_weights(self, strategy_weights: Dict[str, float]) -> None:
-        """更新集成策略的权重
+        """更新集成策略的权重"
 
         Args:
             strategy_weights: 策略权重字典
@@ -301,7 +307,7 @@ class StrategyPredictionService:
             logger.info("更新集成策略权重")
 
     async def switch_default_strategy(self, strategy_name: str) -> None:
-        """切换默认策略
+        """切换默认策略"
 
         Args:
             strategy_name: 新的默认策略名称
@@ -325,7 +331,9 @@ class StrategyPredictionService:
                 "type": strategy.strategy_type.value,
                 "healthy": strategy.is_healthy(),
                 "is_default": name == self._default_strategy,
-                "metrics": (strategy.get_metrics().__dict__ if strategy.get_metrics() else None),
+                "metrics": (
+                    strategy.get_metrics().__dict__ if strategy.get_metrics() else None
+                ),
                 "health": health_report.get(name, {}),
             }
 
@@ -347,7 +355,9 @@ class StrategyPredictionService:
         # 这里返回模拟数据
         return Team(id=team_id, name=f"Team_{team_id}", league_id=1)
 
-    async def _prepare_prediction_input(self, context: PredictionContext) -> PredictionInput:
+    async def _prepare_prediction_input(
+        self, context: PredictionContext
+    ) -> PredictionInput:
         """准备预测输入数据"""
         # 收集历史数据
         historical_data = await self._collect_historical_data(context)
@@ -364,7 +374,9 @@ class StrategyPredictionService:
             },
         )
 
-    async def _collect_historical_data(self, context: PredictionContext) -> Dict[str, Any]:
+    async def _collect_historical_data(
+        self, context: PredictionContext
+    ) -> Dict[str, Any]:
         """收集历史数据"""
         # 这里应该从数据库或缓存获取历史数据
         # 简化实现,返回模拟数据
@@ -411,7 +423,9 @@ class StrategyPredictionService:
 
         logger.info(f"预测详情: {details}")
 
-    async def _calculate_actual_performance(self, predictions: List[Prediction]) -> Dict[str, Any]:
+    async def _calculate_actual_performance(
+        self, predictions: List[Prediction]
+    ) -> Dict[str, Any]:
         """计算实际性能"""
         if not predictions:
             return {}
@@ -426,7 +440,10 @@ class StrategyPredictionService:
             actual_home = 2  # 应该从match获取
             actual_away = 1
 
-            if pred.predicted_home == actual_home and pred.predicted_away == actual_away:
+            if (
+                pred.predicted_home == actual_home
+                and pred.predicted_away == actual_away
+            ):
                 correct_predictions += 1
 
             score_diff = abs(pred.predicted_home - actual_home) + abs(
@@ -434,8 +451,12 @@ class StrategyPredictionService:
             )
             score_differences.append(score_diff)
 
-        accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
-        avg_score_diff = sum(score_differences) / len(score_differences) if score_differences else 0
+        accuracy = (
+            correct_predictions / total_predictions if total_predictions > 0 else 0
+        )
+        avg_score_diff = (
+            sum(score_differences) / len(score_differences) if score_differences else 0
+        )
 
         return {
             "accuracy": accuracy,

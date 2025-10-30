@@ -12,7 +12,6 @@ from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 
-import secrets
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -36,6 +35,8 @@ logger = get_logger(__name__)
 
 @dataclass
 class PredictionResult:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测结果数据模型"""
 
     timestamp: datetime
@@ -59,6 +60,8 @@ class PredictionResult:
 
 @dataclass
 class TrainingConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """LSTM训练配置"""
 
     sequence_length: int = 24  # 使用过去24个时间点
@@ -73,9 +76,13 @@ class TrainingConfig:
 
 
 class LSTMPredictor:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """LSTM时间序列预测器"""
 
     def __init__(self, config: Optional[TrainingConfig] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.config = config or TrainingConfig()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -128,7 +135,9 @@ class LSTMPredictor:
             # 创建序列数据
             X, y = self._create_sequences(features_scaled, target_scaled)
 
-            self.logger.info(f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}")
+            self.logger.info(
+                f"数据准备完成: 特征维度={features.shape}, 序列数量={len(X)}"
+            )
             return X, y
 
         except Exception as e:
@@ -142,15 +151,17 @@ class LSTMPredictor:
         X, y = [], []
 
         for i in range(
-            len(features) - self.config.sequence_length - self.config.prediction_horizon + 1
+            len(features)
+            - self.config.sequence_length
+            - self.config.prediction_horizon
+            + 1
         ):
             # 输入序列
             X.append(features[i : i + self.config.sequence_length])
             # 目标序列
             y.append(
                 target[
-                    i
-                    + self.config.sequence_length : i
+                    i + self.config.sequence_length : i
                     + self.config.sequence_length
                     + self.config.prediction_horizon
                 ]
@@ -349,15 +360,29 @@ class LSTMPredictor:
             )
 
             if len(recent_data) < self.config.sequence_length:
-                raise ValueError(f"历史数据不足,需要至少 {self.config.sequence_length} 个数据点")
+                raise ValueError(
+                    f"历史数据不足,需要至少 {self.config.sequence_length} 个数据点"
+                )
 
             # 提取特征数据
             features_data = []
             for point in recent_data:
                 feature_vector = [
-                    (point.get("value", 0) if point.get("field") == "overall_score" else 0),
-                    (point.get("cpu_usage", 0) if point.get("field") == "cpu_usage" else 0),
-                    (point.get("memory_usage", 0) if point.get("field") == "memory_usage" else 0),
+                    (
+                        point.get("value", 0)
+                        if point.get("field") == "overall_score"
+                        else 0
+                    ),
+                    (
+                        point.get("cpu_usage", 0)
+                        if point.get("field") == "cpu_usage"
+                        else 0
+                    ),
+                    (
+                        point.get("memory_usage", 0)
+                        if point.get("field") == "memory_usage"
+                        else 0
+                    ),
                     (
                         point.get("active_connections", 0)
                         if point.get("field") == "active_connections"
@@ -383,7 +408,9 @@ class LSTMPredictor:
             self.logger.error(f"未来预测失败: {e}")
             raise
 
-    def evaluate_model(self, test_X: np.ndarray, test_y: np.ndarray) -> Dict[str, float]:
+    def evaluate_model(
+        self, test_X: np.ndarray, test_y: np.ndarray
+    ) -> Dict[str, float]:
         """评估模型性能"""
         try:
             # 预测
@@ -467,7 +494,9 @@ class LSTMPredictor:
             self.logger.info(f"开始使用历史数据训练模型 (过去{days}天)")
 
             # 获取历史数据
-            historical_data = await influxdb_manager.get_quality_metrics_history(hours=days * 24)
+            historical_data = await influxdb_manager.get_quality_metrics_history(
+                hours=days * 24
+            )
 
             if len(historical_data) < 100:
                 raise ValueError(f"历史数据不足,只有 {len(historical_data)} 个数据点")
@@ -521,7 +550,9 @@ if __name__ == "__main__":
         # 生成模拟历史数据
         np.random.seed(42)
         n_points = 200
-        timestamps = [datetime.now() - timedelta(hours=i) for i in range(n_points, 0, -1)]
+        timestamps = [
+            datetime.now() - timedelta(hours=i) for i in range(n_points, 0, -1)
+        ]
 
         mock_data = []
         for i, timestamp in enumerate(timestamps):
@@ -536,7 +567,10 @@ if __name__ == "__main__":
                     "field": "overall_score",
                     "cpu_usage": 40 + 20 * np.sin(i * 0.05) + np.random.normal(0, 5),
                     "memory_usage": 60 + 15 * np.cos(i * 0.08) + np.random.normal(0, 3),
-                    "active_connections": 10 + 5 * np.sin(i * 0.03) + np.secrets.randbelow(6) + -2,
+                    "active_connections": 10
+                    + 5 * np.sin(i * 0.03)
+                    + np.secrets.randbelow(6)
+                    + -2,
                 }
             )
 

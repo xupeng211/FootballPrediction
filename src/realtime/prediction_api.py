@@ -1,11 +1,11 @@
-""""
+"""
 实时预测API端点
 
 Realtime Prediction API Endpoints
 
 提供实时预测相关的HTTP API接口
 Provides HTTP API endpoints for real-time prediction functionality
-""""
+"""
 
 import logging
 from datetime import datetime
@@ -13,18 +13,17 @@ from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
 from .manager import get_websocket_manager
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
 router = APIRouter(prefix="/predictions", tags=["realtime-predictions"])
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,7 @@ class ServiceStatsResponse(BaseModel):
 
 @router.post("/request", response_model=PredictionResponse, summary="提交预测请求")
 async def request_prediction(request: PredictionRequest, background_tasks: BackgroundTasks):
-    """"
+    """
     提交实时预测请求
 
     Args:
@@ -110,7 +109,7 @@ async def request_prediction(request: PredictionRequest, background_tasks: Backg
 
     Returns:
         预测任务信息
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
 
@@ -147,7 +146,7 @@ async def request_prediction(request: PredictionRequest, background_tasks: Backg
 async def request_batch_predictions(
     request: BatchPredictionRequest, background_tasks: BackgroundTasks
 ):
-    """"
+    """
     批量提交预测请求
 
     Args:
@@ -156,7 +155,7 @@ async def request_batch_predictions(
 
     Returns:
         批量任务信息
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
         task_ids = []
@@ -194,7 +193,7 @@ async def request_batch_predictions(
 
 @router.get("/status/{task_id}", response_model=PredictionStatusResponse, summary="获取预测状态")
 async def get_prediction_status(task_id: str):
-    """"
+    """
     获取预测任务状态
 
     Args:
@@ -202,7 +201,7 @@ async def get_prediction_status(task_id: str):
 
     Returns:
         预测任务状态
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
         status = await service.get_prediction_status(task_id)
@@ -243,7 +242,7 @@ async def get_match_predictions(
     limit: int = Query(10, ge=1, le=100, description="返回数量限制"),
     user_id: Optional[str] = Query(None, description="用户ID过滤"),
 ):
-    """"
+    """
     获取指定比赛的所有预测
 
     Args:
@@ -253,7 +252,7 @@ async def get_match_predictions(
 
     Returns:
         比赛预测列表
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
         predictions = await service.get_match_predictions(match_id)
@@ -280,12 +279,12 @@ async def get_match_predictions(
 
 @router.get("/stats", response_model=ServiceStatsResponse, summary="获取服务统计")
 async def get_prediction_service_stats():
-    """"
+    """
     获取实时预测服务统计信息
 
     Returns:
         服务统计信息
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
         stats = await service.get_service_stats()
@@ -301,7 +300,7 @@ async def get_prediction_service_stats():
 async def cleanup_old_tasks(
     max_age_hours: int = Query(24, ge=1, le=168, description="最大年龄（小时）")
 ):
-    """"
+    """
     清理旧的预测任务
 
     Args:
@@ -309,7 +308,7 @@ async def cleanup_old_tasks(
 
     Returns:
         清理结果
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
         cleaned_count = await service.cleanup_old_tasks(max_age_hours)
@@ -333,7 +332,7 @@ async def broadcast_system_alert(
     severity: str = "low",
     component: str = "prediction_api",
 ):
-    """"
+    """
     广播系统告警消息
 
     Args:
@@ -344,7 +343,7 @@ async def broadcast_system_alert(
 
     Returns:
         广播结果
-    """"
+    """
     try:
         service = get_realtime_prediction_service()
         await service.broadcast_system_alert(message, alert_type, severity, component)

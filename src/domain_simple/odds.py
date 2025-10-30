@@ -28,9 +28,13 @@ class OddsFormat(Enum):
 
 
 class OddsMovement:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """赔率变化"""
 
     def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.old_odds = old_odds
         self.new_odds = new_odds
         self.timestamp = timestamp
@@ -43,9 +47,13 @@ class OddsMovement:
 
 
 class ValueBet:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """价值投注"""
 
     def __init__(self, odds: float, probability: float, threshold: float = 1.0):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.odds = odds
         self.probability = probability
         self.threshold = threshold
@@ -63,6 +71,8 @@ class ValueBet:
 
 
 class Odds:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """赔率领域模型"""
 
     def __init__(
@@ -113,13 +123,19 @@ class Odds:
         """更新赔率"""
         # 记录变化
         if home_odds and self.home_odds and home_odds != self.home_odds:
-            self.movements.append(OddsMovement(self.home_odds, home_odds, datetime.now()))
+            self.movements.append(
+                OddsMovement(self.home_odds, home_odds, datetime.now())
+            )
 
         if draw_odds and self.draw_odds and draw_odds != self.draw_odds:
-            self.movements.append(OddsMovement(self.draw_odds, draw_odds, datetime.now()))
+            self.movements.append(
+                OddsMovement(self.draw_odds, draw_odds, datetime.now())
+            )
 
         if away_odds and self.away_odds and away_odds != self.away_odds:
-            self.movements.append(OddsMovement(self.away_odds, away_odds, datetime.now()))
+            self.movements.append(
+                OddsMovement(self.away_odds, away_odds, datetime.now())
+            )
 
         # 更新值
         if home_odds:
@@ -178,17 +194,23 @@ class Odds:
         value_bets = []
 
         if self.home_odds and "home" in predicted_probs:
-            value_bet = ValueBet(self.home_odds, predicted_probs["home"] / 100, threshold)
+            value_bet = ValueBet(
+                self.home_odds, predicted_probs["home"] / 100, threshold
+            )
             if value_bet.is_value():
                 value_bets.append(value_bet)
 
         if self.draw_odds and "draw" in predicted_probs:
-            value_bet = ValueBet(self.draw_odds, predicted_probs["draw"] / 100, threshold)
+            value_bet = ValueBet(
+                self.draw_odds, predicted_probs["draw"] / 100, threshold
+            )
             if value_bet.is_value():
                 value_bets.append(value_bet)
 
         if self.away_odds and "away" in predicted_probs:
-            value_bet = ValueBet(self.away_odds, predicted_probs["away"] / 100, threshold)
+            value_bet = ValueBet(
+                self.away_odds, predicted_probs["away"] / 100, threshold
+            )
             if value_bet.is_value():
                 value_bets.append(value_bet)
 
@@ -284,7 +306,9 @@ class Odds:
             "is_suspended": self.is_suspended,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "last_movement": (self.last_movement.isoformat() if self.last_movement else None),
+            "last_movement": (
+                self.last_movement.isoformat() if self.last_movement else None
+            ),
         }
 
     @classmethod

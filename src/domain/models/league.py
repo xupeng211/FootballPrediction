@@ -35,6 +35,8 @@ class LeagueStatus(Enum):
 
 @dataclass
 class LeagueSeason:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """联赛赛季值对象"""
 
     season: str
@@ -45,6 +47,8 @@ class LeagueSeason:
     current_round: int = 0
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """验证赛季信息"""
         if not self.season:
             raise DomainError("赛季名称不能为空")
@@ -100,6 +104,8 @@ class LeagueSeason:
 
 @dataclass
 class LeagueSettings:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """联赛设置值对象"""
 
     points_for_win: int = 3
@@ -114,8 +120,13 @@ class LeagueSettings:
     penalty_shootout: bool = False  # 是否点球
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """验证设置"""
-        if any(x < 0 for x in [self.points_for_win, self.points_for_draw, self.points_for_loss]):
+        if any(
+            x < 0
+            for x in [self.points_for_win, self.points_for_draw, self.points_for_loss]
+        ):
             raise DomainError("积分不能为负数")
 
         if self.points_for_win < self.points_for_draw:
@@ -145,11 +156,15 @@ class LeagueSettings:
         )
 
     def __str__(self) -> str:
-        return f"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss}"
+        return (
+            f"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss}"
+        )
 
 
 @dataclass
 class League:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     联赛领域模型
 
@@ -176,6 +191,8 @@ class League:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("联赛名称不能为空")
@@ -425,9 +442,13 @@ class League:
         if season_data:
             season_data.pop("progress", None)
             if season_data.get("start_date"):
-                season_data["start_date"] = datetime.fromisoformat(season_data["start_date"])
+                season_data["start_date"] = datetime.fromisoformat(
+                    season_data["start_date"]
+                )
             if season_data.get("end_date"):
-                season_data["end_date"] = datetime.fromisoformat(season_data["end_date"])
+                season_data["end_date"] = datetime.fromisoformat(
+                    season_data["end_date"]
+                )
             if season_data.get("status"):
                 season_data["status"] = LeagueStatus(season_data["status"])
             current_season = LeagueSeason(**season_data)

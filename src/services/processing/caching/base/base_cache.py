@@ -12,6 +12,8 @@ class BaseCache(ABC):
     """缓存基础类"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化缓存"""
         self.logger = logging.getLogger(f"cache.{self.__class__.__name__}")
         self.cache_enabled = True
@@ -38,10 +40,14 @@ class BaseCache(ABC):
 
 
 class CacheKeyManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """缓存键管理器"""
 
     def __init__(self, prefix: str = "fp"):
-        """初始化键管理器
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化键管理器"
 
         Args:
             prefix: 键前缀
@@ -49,7 +55,7 @@ class CacheKeyManager:
         self.prefix = prefix
 
     def make_key(self, *parts: str) -> str:
-        """生成缓存键
+        """生成缓存键"
 
         Args:
             *parts: 键的组成部分
@@ -60,7 +66,7 @@ class CacheKeyManager:
         return f"{self.prefix}:" + ":".join(parts)
 
     def parse_key(self, key: str) -> List[str]:
-        """解析缓存键
+        """解析缓存键"
 
         Args:
             key: 缓存键

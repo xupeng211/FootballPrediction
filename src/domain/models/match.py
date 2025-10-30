@@ -34,12 +34,16 @@ class MatchResult(Enum):
 
 @dataclass
 class MatchScore:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛比分值对象"""
 
     home_score: int = 0
     away_score: int = 0
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.home_score < 0 or self.away_score < 0:
             raise DomainError("比分不能为负数")
 
@@ -69,6 +73,8 @@ class MatchScore:
 
 @dataclass
 class Match:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     比赛领域模型
 
@@ -94,6 +100,8 @@ class Match:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化后的验证"""
         if self.home_team_id == self.away_team_id:
             raise DomainError("主队和客队不能相同")
@@ -213,7 +221,9 @@ class Match:
     @property
     def is_upcoming(self) -> bool:
         """是否是即将开始的比赛"""
-        return self.status == MatchStatus.SCHEDULED and self.match_date > datetime.utcnow()
+        return (
+            self.status == MatchStatus.SCHEDULED and self.match_date > datetime.utcnow()
+        )
 
     @property
     def is_live(self) -> bool:

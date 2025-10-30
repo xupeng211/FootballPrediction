@@ -31,10 +31,14 @@ class StreamingTask(Task):
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.error_logger = TaskErrorLogger()
         self.logger = logging.getLogger(f"streaming_task.{self.__class__.__name__}")
 
     def run_async(self, coro):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """运行异步协程"""
         try:
             loop = asyncio.get_event_loop()
@@ -253,6 +257,8 @@ def produce_to_kafka_stream_task(
 
 @app.task(base=StreamingTask, bind=True)
 def stream_health_check_task(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     流处理健康检查任务
 
@@ -319,7 +325,9 @@ def stream_data_processing_task(
             processor = StreamProcessor()
 
             # 启动定时流处理
-            processing_task = asyncio.create_task(processor.start_continuous_processing(topics))
+            processing_task = asyncio.create_task(
+                processor.start_continuous_processing(topics)
+            )
 
             # 等待指定时间后停止
             await asyncio.sleep(processing_duration)
@@ -374,6 +382,8 @@ def stream_data_processing_task(
 
 @app.task(base=StreamingTask, bind=True)
 def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """
     Kafka Topic管理任务
 

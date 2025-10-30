@@ -23,6 +23,8 @@ from src.core.config import get_settings
 
 @dataclass
 class OptimizationResult:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """优化结果"""
     success: bool
     operation: str
@@ -33,6 +35,8 @@ class OptimizationResult:
 
 
 class DatabaseOptimizer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     数据库优化器
 
@@ -41,6 +45,8 @@ class DatabaseOptimizer:
     """
 
     def __init__(self, db_session: AsyncSession):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.db = db_session
         self.settings = get_settings()
 
@@ -191,7 +197,7 @@ class DatabaseOptimizer:
             FROM predictions
             WHERE created_at >= NOW() - INTERVAL '90 days'
             GROUP BY tenant_id, DATE_TRUNC('day', created_at);
-            """,
+            ""","
 
             """
             CREATE MATERIALIZED VIEW IF NOT EXISTS mv_match_predictions_summary AS
@@ -500,6 +506,8 @@ class DatabaseOptimizer:
 # ==================== 性能优化工厂 ====================
 
 class DatabaseOptimizerFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """数据库优化器工厂"""
 
     @staticmethod

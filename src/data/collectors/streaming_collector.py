@@ -12,7 +12,8 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 streaming_collector 导入已弃用." "请从 src/data/collectors/streaming 导入相关类.",
+    "直接从 streaming_collector 导入已弃用."
+    "请从 src/data/collectors/streaming 导入相关类.",
     DeprecationWarning,
     stacklevel=2,
 )

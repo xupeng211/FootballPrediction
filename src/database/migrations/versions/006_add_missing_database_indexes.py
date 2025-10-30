@@ -66,7 +66,7 @@ from sqlalchemy import text
 
 
 logger = logging.getLogger(__name__)
-"""add_missing_database_indexes
+"""add_missing_database_indexes"
 补充缺失的数据库索引,提高查询性能.
 基于数据架构优化工程师要求,添加以下缺失的索引:
 - idx_recent_matches: 支持按日期降序和联赛查询最近比赛
@@ -88,7 +88,7 @@ def upgrade() -> None:
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过索引创建")
         op.execute("-- offline mode: skipped database indexes creation")
-        return
+        return None
     conn = op.get_bind()
     logger.info("开始添加缺失的数据库索引...")
     logger.info("1. 创建 idx_recent_matches 索引...")
@@ -232,7 +232,7 @@ def downgrade() -> None:
     if context.is_offline_mode():
         logger.info("⚠️  离线模式:跳过索引回滚")
         op.execute("-- offline mode: skipped database indexes rollback")
-        return
+        return None
     conn = op.get_bind()
     logger.info("开始回滚数据库索引...")
     indexes_to_drop = [

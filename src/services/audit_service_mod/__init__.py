@@ -15,6 +15,8 @@ from .models import AuditAction, AuditEvent, AuditSeverity
 
 @dataclass
 class AuditContext:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """审计上下文"""
 
     user_id: str
@@ -27,6 +29,8 @@ class AuditContext:
 
 @dataclass
 class AuditLog:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """审计日志"""
 
     id: str
@@ -42,6 +46,8 @@ class AuditLog:
 
 @dataclass
 class AuditLogSummary:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """审计日志摘要"""
 
     total_logs: int

@@ -7,7 +7,7 @@
 - 批量预测接口
 
 Provides API endpoints for match prediction:
-- Get match prediction results
+    - Get match prediction results
 - Generate real-time predictions
 - Batch prediction interface
 
@@ -24,12 +24,12 @@ Provides API endpoints for match prediction:
     import requests
 
     # 获取比赛预测
-    response =
+    response = None
     requests.get("http://localhost:8000/api/v1/predictions/12345")  # TODO: 将魔法数字 8000 提取为常量
     _prediction = response.json()
 
     # 实时预测
-    response =
+    response = None
     requests.post("http://localhost:8000/api/v1/predictions/12345/predict")  # TODO: 将魔法数字 8000 提取为常量
     result = response.json()
     ```

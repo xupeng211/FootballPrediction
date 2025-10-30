@@ -27,6 +27,8 @@ __all__ = [
 
 # 提供占位符函数以保持向后兼容
 def cache_result(*args, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """缓存结果装饰器 - 占位符实现"""
     if args and callable(args[0]):
         # 直接作为装饰器使用: @cache_result
@@ -34,34 +36,46 @@ def cache_result(*args, **kwargs):
     else:
         # 带参数使用: @cache_result(ttl=3600)
         def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
             return func
 
         return decorator
 
 
 def cache_with_ttl(ttl_seconds, prefix=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """带TTL的缓存装饰器 - 占位符实现"""
 
     def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return func
 
     return decorator
 
 
 def cache_by_user(user_id_param="user_id", user_param=None, ttl=None, prefix=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """按用户缓存的装饰器 - 占位符实现"""
     # 支持两种参数名称以保持兼容性
     if user_param is not None:
         user_id_param = user_param  # noqa: F841  # 占位符实现中暂时未使用
 
     def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return func
 
     return decorator
 
 
-def _make_cache_key(func_or_name, args, kwargs, prefix=None, user_id=None, exclude_args=None):
-    """智能Mock兼容修复模式 - 生成缓存键的辅助函数
+def _make_cache_key(
+    func_or_name, args, kwargs, prefix=None, user_id=None, exclude_args=None
+):
+    """智能Mock兼容修复模式 - 生成缓存键的辅助函数"
 
     Args:
         func_or_name: 函数对象或函数名字符串
@@ -119,37 +133,53 @@ def _make_cache_key(func_or_name, args, kwargs, prefix=None, user_id=None, exclu
 
 
 def cache_invalidate(pattern_func=None, pattern=None, key_generator=None, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """缓存失效装饰器 - 占位符实现"""
 
     # 支持多种参数名称以保持兼容性
     def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return func
 
     return decorator
 
 
 def cache_user_predictions(ttl_seconds=None, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """用户预测缓存装饰器 - 占位符实现"""
 
     def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return func
 
     return decorator
 
 
 def cache_match_data(ttl_seconds=None, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """比赛数据缓存装饰器 - 占位符实现"""
 
     def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return func
 
     return decorator
 
 
 def cache_team_stats(ttl_seconds=None, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """队伍统计缓存装饰器 - 占位符实现"""
 
     def decorator(func):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return func
 
     return decorator

@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..models.match import Match, MatchResult, MatchStatus
-from .base import BaseRepository 
+from .base import BaseRepository
 
 
 class MatchRepository(BaseRepository[Match]):
@@ -27,6 +27,8 @@ class MatchRepository(BaseRepository[Match]):
     """
 
     def __init__(self, db_manager=None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(Match, db_manager)
 
     # ========================================
@@ -58,7 +60,9 @@ class MatchRepository(BaseRepository[Match]):
 
             stmt = (
                 select(Match)
-                .where(and_(Match.match_date >= start_date, Match.match_date <= end_date))
+                .where(
+                    and_(Match.match_date >= start_date, Match.match_date <= end_date)
+                )
                 .order_by(Match.match_date)
             )
 
@@ -85,7 +89,9 @@ class MatchRepository(BaseRepository[Match]):
         Returns:
             比赛列表
         """
-        return await self.find_by(filters={"status": status.value}, limit=limit, session=session)
+        return await self.find_by(
+            filters={"status": status.value}, limit=limit, session=session
+        )
 
     async def get_upcoming_matches(
         self,
@@ -417,17 +423,27 @@ class MatchRepository(BaseRepository[Match]):
             # 根据关联名称加载不同的关联数据
             if relation_name == "predictions":
                 stmt = (
-                    select(Match).options(selectinload(Match.predictions)).where(Match.id == obj_id)
+                    select(Match)
+                    .options(selectinload(Match.predictions))
+                    .where(Match.id == obj_id)
                 )
             elif relation_name == "odds":
-                stmt = select(Match).options(selectinload(Match.odds)).where(Match.id == obj_id)
+                stmt = (
+                    select(Match)
+                    .options(selectinload(Match.odds))
+                    .where(Match.id == obj_id)
+                )
             elif relation_name == "home_team":
                 stmt = (
-                    select(Match).options(selectinload(Match.home_team)).where(Match.id == obj_id)
+                    select(Match)
+                    .options(selectinload(Match.home_team))
+                    .where(Match.id == obj_id)
                 )
             elif relation_name == "away_team":
                 stmt = (
-                    select(Match).options(selectinload(Match.away_team)).where(Match.id == obj_id)
+                    select(Match)
+                    .options(selectinload(Match.away_team))
+                    .where(Match.id == obj_id)
                 )
             else:
                 return None
@@ -460,7 +476,9 @@ class MatchRepository(BaseRepository[Match]):
         Returns:
             包含胜负平统计的字典
         """
-        _matches = await self.get_by_team(team_id=team_id, limit=last_matches, session=session)
+        _matches = await self.get_by_team(
+            team_id=team_id, limit=last_matches, session=session
+        )
 
         stats = {
             "played": 0,

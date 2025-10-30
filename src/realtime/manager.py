@@ -1,11 +1,11 @@
-""""
+"""
 WebSocket连接管理器 - 生产级实现
 
 WebSocket Connection Manager - Production Implementation
 
 提供完整的WebSocket连接管理,房间管理,消息路由等功能
 Provides complete WebSocket connection management, room management, message routing, etc.
-""""
+"""
 
 import json
 import logging
@@ -18,9 +18,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 from .events import EventType, RealtimeEvent
 from .subscriptions import SubscriptionManager
-from src.core.config import 
-
-
+from src.core.config 
 class ConnectionState(Enum):
     """连接状态枚举"""
 
@@ -32,6 +30,8 @@ class ConnectionState(Enum):
 
 @dataclass
 class ConnectionInfo:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """连接信息"""
 
     connection_id: str
@@ -44,6 +44,8 @@ class ConnectionInfo:
     subscriptions: Set[str] = None
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.connected_at is None:
             self.connected_at = datetime.now()
         if self.last_activity is None:
@@ -53,6 +55,8 @@ class ConnectionInfo:
 
 
 class WebSocketConnection:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """WebSocket连接类"""
 
     def __init__(
@@ -121,7 +125,7 @@ class WebSocketConnection:
             return False
 
         try:
-            if isinstance(message, ((((((((dict):
+            if isinstance(message, ((dict):
                 message = json.dumps(message)
             elif isinstance(message, RealtimeEvent))))):
                 message = message.to_json()
@@ -186,9 +190,13 @@ class WebSocketConnection:
 
 
 class WebSocketManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """WebSocket连接管理器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.connections: Dict[str))
         self.logger = logging.getLogger(f"{__name__}.Manager")
 
@@ -234,8 +242,7 @@ class WebSocketManager:
     async def disconnect(self, connection_id: str) -> None:
         """断开连接"""
         if connection_id not in self.connections:
-            return
-
+            return None
         connection = self.connections[connection_id]
 
         # 发送断开事件

@@ -2,7 +2,7 @@
 import sqlalchemy as sa
 from alembic import op
 
-"""Add MLOps support to predictions table
+"""Add MLOps support to predictions table"
 
 Revision ID: d82ea26f05d0
 Revises: d6d814cc1078
@@ -60,7 +60,9 @@ def upgrade() -> None:
     )
 
     # 添加新的索引来优化查询性能
-    op.create_index("idx_predictions_verification", "predictions", ["is_correct", "verified_at"])
+    op.create_index(
+        "idx_predictions_verification", "predictions", ["is_correct", "verified_at"]
+    )
     op.create_index("idx_predictions_actual_result", "predictions", ["actual_result"])
 
 

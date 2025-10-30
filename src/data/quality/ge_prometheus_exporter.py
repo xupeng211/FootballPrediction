@@ -18,7 +18,8 @@ This file has been split into multiple modules for better organization.
 For backward compatibility, this file re-exports all classes from the modules.
 """
 warnings.warn(
-    "直接从 ge_prometheus_exporter 导入已弃用." "请从 src/data/quality/prometheus 导入相关类.",
+    "直接从 ge_prometheus_exporter 导入已弃用."
+    "请从 src/data/quality/prometheus 导入相关类.",
     DeprecationWarning,
     stacklevel=2,
 )

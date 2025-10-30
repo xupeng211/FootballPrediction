@@ -1,11 +1,11 @@
-""""
+"""
 WebSocket处理器 - 实时通信接口
 
 WebSocket Handlers - Real-time Communication Interface
 
 处理WebSocket连接,消息路由和订阅管理
 Handles WebSocket connections, message routing, and subscription management
-""""
+"""
 
 import json
 import logging
@@ -14,21 +14,21 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .subscriptions import (
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
+from src.core.config 
     get_subscription_manager,
     subscribe_to_predictions,
     subscribe_to_matches,
@@ -53,9 +53,13 @@ async def get_current_user(
 
 
 class WebSocketHandler:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """WebSocket处理器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.manager = get_websocket_manager()
         self.subscription_manager = get_subscription_manager()
         self.logger = logging.getLogger(f"{__name__}.WebSocketHandler")
@@ -241,9 +245,13 @@ class WebSocketHandler:
 
 
 class WebSocketEndpoint:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """WebSocket端点"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.handler = WebSocketHandler()
         self.logger = logging.getLogger(f"{__name__}.WebSocketEndpoint")
 

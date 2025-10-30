@@ -1,6 +1,7 @@
 from typing import Set
 from typing import Dict
 from typing import List
+
 #!/usr/bin/env python3
 """
 实时质量监控WebSocket服务器
@@ -25,9 +26,13 @@ logger = get_logger(__name__)
 
 
 class QualityMonitorServer:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """实时质量监控服务器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.app = FastAPI(
             title="实时质量监控服务",
             description="Real-time Quality Monitoring WebSocket Server",
@@ -47,7 +52,9 @@ class QualityMonitorServer:
         self.active_connections: Set[WebSocket] = set()
 
         # 数据存储
-        self.redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+        self.redis_client = redis.Redis(
+            host="localhost", port=6379, db=0, decode_responses=True
+        )
 
         # 分析器
         self.metrics_analyzer = AdvancedMetricsAnalyzer()
@@ -62,6 +69,8 @@ class QualityMonitorServer:
         self.logger = get_logger(self.__class__.__name__)
 
     def _setup_routes(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """设置路由"""
 
         @self.app.websocket("/ws/quality")
@@ -98,7 +107,9 @@ class QualityMonitorServer:
         self.active_connections.add(websocket)
 
         client_id = f"client_{len(self.active_connections)}"
-        self.logger.info(f"新客户端连接: {client_id}, 总连接数: {len(self.active_connections)}")
+        self.logger.info(
+            f"新客户端连接: {client_id}, 总连接数: {len(self.active_connections)}"
+        )
 
         try:
             # 发送初始数据
@@ -147,7 +158,9 @@ class QualityMonitorServer:
                 )
             elif message_type == "ping":
                 await websocket.send_text(
-                    json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()})
+                    json.dumps(
+                        {"type": "pong", "timestamp": datetime.now().isoformat()}
+                    )
                 )
 
         except json.JSONDecodeError:
@@ -187,7 +200,9 @@ class QualityMonitorServer:
                 "system_health": {
                     "server_status": "healthy",
                     "database_status": "healthy",
-                    "redis_status": ("healthy" if self.redis_client.ping() else "unhealthy"),
+                    "redis_status": (
+                        "healthy" if self.redis_client.ping() else "unhealthy"
+                    ),
                 },
             }
 
@@ -296,8 +311,7 @@ class QualityMonitorServer:
     async def broadcast_quality_update(self, data: Dict):
         """广播质量更新给所有连接的客户端"""
         if not self.active_connections:
-            return
-
+            return None
         message = json.dumps(
             {
                 "type": "quality_update",
@@ -387,12 +401,16 @@ class QualityMonitorServer:
             # 保存告警到Redis
             for alert in alerts:
                 self.redis_client.setex(
-                    f"alert:{alert['id']}", 3600, json.dumps(alert)  # 1小时过期
+                    f"alert:{alert['id']}",
+                    3600,
+                    json.dumps(alert),  # 1小时过期
                 )
 
             # 如果有新告警,立即广播
             if alerts:
-                await self.broadcast_quality_update({"type": "new_alerts", "alerts": alerts})
+                await self.broadcast_quality_update(
+                    {"type": "new_alerts", "alerts": alerts}
+                )
 
         except Exception as e:
             self.logger.error(f"检查告警条件失败: {e}")
@@ -407,6 +425,8 @@ class QualityMonitorServer:
         self.logger.info("实时质量监控服务器启动完成")
 
     def stop_server(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """停止服务器"""
         if self.background_task:
             self.background_task.cancel()

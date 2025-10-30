@@ -83,10 +83,14 @@ ReadOnlyPredictionRepoDep = Annotated[
 ]
 
 UserRepoDep = Annotated[UserRepository, Depends(get_user_repository)]
-ReadOnlyUserRepoDep = Annotated[ReadOnlyUserRepository, Depends(get_read_only_user_repository)]
+ReadOnlyUserRepoDep = Annotated[
+    ReadOnlyUserRepository, Depends(get_read_only_user_repository)
+]
 
 MatchRepoDep = Annotated[MatchRepository, Depends(get_match_repository)]
-ReadOnlyMatchRepoDep = Annotated[ReadOnlyMatchRepository, Depends(get_read_only_match_repository)]
+ReadOnlyMatchRepoDep = Annotated[
+    ReadOnlyMatchRepository, Depends(get_read_only_match_repository)
+]
 
 # 通用仓储依赖类型
 RepositoryDep = Annotated[Repository, Depends(get_prediction_repository)]

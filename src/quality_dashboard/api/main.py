@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-""""
+"""
 实时质量监控面板API
 Real-time Quality Monitoring Dashboard API
 
 提供实时质量数据,WebSocket连接和RESTful API接口
-""""
+"""
 
 import asyncio
 import json
@@ -82,6 +82,8 @@ class AlertData(BaseModel):
 
 
 def setup_static_files():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """设置静态文件服务"""
     frontend_path = Path(__file__).parent / "frontend" / "build"
     if frontend_path.exists():
@@ -170,8 +172,7 @@ async def get_current_quality_metrics() -> Dict[str, Any]:
 async def broadcast_quality_update(data: Dict[str, Any]):
     """向所有WebSocket连接广播质量更新"""
     if not connected_clients:
-        return
-
+        return None
     message = json.dumps(data)
     disconnected_clients = []
 

@@ -42,7 +42,9 @@ async def should_collect_live_scores() -> bool:
             """
             )
 
-            result = await session.execute(query, {"start_time": start_time, "end_time": end_time})
+            result = await session.execute(
+                query, {"start_time": start_time, "end_time": end_time}
+            )
 
             match_count = result.scalar() or 0
             return match_count > 0
@@ -156,7 +158,9 @@ async def get_active_leagues() -> List[str]:
         return ["Premier League", "La Liga", "Serie A", "Bundesliga"]
 
 
-def calculate_next_collection_time(task_name: str, interval_minutes: int = None) -> datetime:
+def calculate_next_collection_time(
+    task_name: str, interval_minutes: int = None
+) -> datetime:
     """
     计算下次采集时间
 

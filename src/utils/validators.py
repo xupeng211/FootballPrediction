@@ -20,9 +20,7 @@ def is_valid_phone(phone: str) -> bool:
 
 def is_valid_url(url: str) -> bool:
     """Validate URL"""
-    pattern = (
-        r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
-    )
+    pattern = r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
     return bool(re.match(pattern, url))
 
 

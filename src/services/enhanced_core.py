@@ -13,6 +13,8 @@ from src.core.logging import get_logger
 
 
 class ServiceConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """服务配置类"""
 
     def __init__(
@@ -32,9 +34,13 @@ class ServiceConfig:
 
 
 class ServiceMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """服务指标收集器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.metrics = {
             "calls": 0,
             "errors": 0,
@@ -44,6 +50,8 @@ class ServiceMetrics:
         }
 
     def record_call(self, duration: float, success: bool = True):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """记录调用"""
         self.metrics["calls"] += 1
         self.metrics["total_time"] += duration
@@ -58,14 +66,16 @@ class ServiceMetrics:
 
 
 class EnhancedBaseService(ABC):
-    """增强的基础服务类
+    """增强的基础服务类"
 
     整合了原有BaseService和AbstractBaseService的功能,
     并添加了指标收集,配置管理,健康检查等功能.
     """
 
     def __init__(self, config: Optional[ServiceConfig] = None):
-        """初始化服务
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化服务"
 
         Args:
             config: 服务配置
@@ -200,9 +210,13 @@ class EnhancedBaseService(ABC):
         finally:
             duration = time.time() - start_time
             self.metrics.record_call(duration, success)
-            self.logger.debug(f"Operation {operation_name} completed in {duration:.3f}s")
+            self.logger.debug(
+                f"Operation {operation_name} completed in {duration:.3f}s"
+            )
 
     def add_dependency(self, name: str, service: "EnhancedBaseService"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """添加依赖服务"""
         self._dependencies[name] = service
         self.logger.debug(f"Added dependency: {name}")
@@ -235,7 +249,9 @@ class EnhancedBaseService(ABC):
         return None
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
+        return (
+            f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
+        )
 
 
 # 为了向后兼容,保留原有的BaseService类
@@ -243,6 +259,8 @@ class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
 
     def __init__(self, name: str = "BaseService"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)
 
@@ -260,6 +278,8 @@ class AbstractBaseService(EnhancedBaseService):
     """抽象基础服务类 - 强制子类实现所有方法"""
 
     def __init__(self, name: str):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)
 

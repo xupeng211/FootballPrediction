@@ -28,6 +28,8 @@ class StrategyType(Enum):
 
 @dataclass
 class PredictionInput:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测输入数据"""
 
     match: Match
@@ -40,6 +42,8 @@ class PredictionInput:
 
 @dataclass
 class PredictionOutput:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测输出结果"""
 
     predicted_home_score: int
@@ -54,6 +58,8 @@ class PredictionOutput:
 
 @dataclass
 class StrategyMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """策略性能指标"""
 
     accuracy: float
@@ -68,6 +74,8 @@ class PredictionStrategy(ABC):
     """预测策略抽象基类"""
 
     def __init__(self, name: str, strategy_type: StrategyType):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.name = name
         self.strategy_type = strategy_type
         self._metrics: Optional[StrategyMetrics] = None
@@ -76,7 +84,7 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def initialize(self, config: Dict[str, Any]) -> None:
-        """初始化策略
+        """初始化策略"
 
         Args:
             config: 策略配置参数
@@ -85,7 +93,7 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
-        """执行预测
+        """执行预测"
 
         Args:
             input_data: 预测输入数据
@@ -96,8 +104,10 @@ class PredictionStrategy(ABC):
         pass
 
     @abstractmethod
-    async def batch_predict(self, inputs: List[PredictionInput]) -> List[PredictionOutput]:
-        """批量预测
+    async def batch_predict(
+        self, inputs: List[PredictionInput]
+    ) -> List[PredictionOutput]:
+        """批量预测"
 
         Args:
             inputs: 预测输入数据列表
@@ -108,8 +118,10 @@ class PredictionStrategy(ABC):
         pass
 
     @abstractmethod
-    async def update_metrics(self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]) -> None:
-        """更新策略性能指标
+    async def update_metrics(
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+    ) -> None:
+        """更新策略性能指标"
 
         Args:
             actual_results: 实际结果列表,包含预测和实际比赛结果
@@ -133,7 +145,7 @@ class PredictionStrategy(ABC):
         self.config.update(new_config)
 
     async def validate_input(self, input_data: PredictionInput) -> bool:
-        """验证输入数据有效性
+        """验证输入数据有效性"
 
         Args:
             input_data: 预测输入数据
@@ -153,7 +165,7 @@ class PredictionStrategy(ABC):
         return True
 
     async def pre_process(self, input_data: PredictionInput) -> PredictionInput:
-        """预处理输入数据
+        """预处理输入数据"
 
         Args:
             input_data: 原始输入数据
@@ -165,7 +177,7 @@ class PredictionStrategy(ABC):
         return input_data
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:
-        """后处理预测结果
+        """后处理预测结果"
 
         Args:
             output: 原始预测结果
@@ -185,7 +197,9 @@ class PredictionStrategy(ABC):
 
 @dataclass
 class PredictionContext:
-    """预测上下文
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """预测上下文"
 
     包含预测过程中需要的所有上下文信息.
     """

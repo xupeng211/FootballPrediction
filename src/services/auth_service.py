@@ -27,9 +27,13 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
 class AuthService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户认证服务"""
 
     def __init__(self, db: AsyncSession):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.db = db
         self.user_repo = AuthUserRepository(db)
 
@@ -71,7 +75,9 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def verify_token(self, token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
+    def verify_token(
+        self, token: str, token_type: str = "access"
+    ) -> Optional[Dict[str, Any]]:
         """验证令牌"""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -157,7 +163,9 @@ class AuthService:
 
         return user
 
-    async def login_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+    async def login_user(
+        self, username: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         """用户登录,返回令牌信息"""
         user = await self.authenticate_user(username, password)
         if not user:
@@ -222,7 +230,9 @@ class AuthService:
 
         return user
 
-    async def change_password(self, user: User, current_password: str, new_password: str) -> bool:
+    async def change_password(
+        self, user: User, current_password: str, new_password: str
+    ) -> bool:
         """修改密码"""
         if not self.verify_password(current_password, user.password_hash):
             return False

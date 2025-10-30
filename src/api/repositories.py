@@ -7,12 +7,9 @@ Repository Pattern API Endpoints
 Demonstrates query and management features of the repository pattern.
 """
 
-from datetime import date
-from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter
 
-from src.core.config import Config
 
 router = APIRouter(prefix="/repositories", tags=["Repositories"])
 

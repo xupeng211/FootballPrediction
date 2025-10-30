@@ -17,6 +17,8 @@ from typing import List
 
 
 class StringUtils:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """字符串处理工具类"""
 
     # 编译正则表达式以提高性能
@@ -33,11 +35,13 @@ class StringUtils:
         cleaned = text.strip()
 
         # 移除Unicode控制字符
-        cleaned = "".join(char for char in cleaned if unicodedata.category(char)[0] != "C")
+        cleaned = "".join(
+            char for char in cleaned if unicodedata.category(char)[0] != "C"
+        )
 
         if remove_special_chars:
             # 移除特殊字符,保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', '', cleaned)
+            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', "", cleaned)"'
 
         # 规范化空白字符
         cleaned = " ".join(cleaned.split())
@@ -168,7 +172,9 @@ class StringUtils:
         return [float(num) for num in numbers if num]
 
     @staticmethod
-    def mask_sensitive_data(text: str, visible_chars: int = 4, mask_char: str = "*") -> str:
+    def mask_sensitive_data(
+        text: str, visible_chars: int = 4, mask_char: str = "*"
+    ) -> str:
         """遮蔽敏感数据"""
         if not isinstance(text, str) or len(text) <= visible_chars:
             return text
@@ -217,8 +223,8 @@ class StringUtils:
             "&": "&amp;",
             "<": "&lt;",
             ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
+            '"': "&quot;","
+            "'": "&#39;",'
         }
         return "".join(html_escape_map.get(char, char) for char in text)
 
@@ -232,8 +238,8 @@ class StringUtils:
             "&amp;": "&",
             "&lt;": "<",
             "&gt;": ">",
-            "&quot;": '"',
-            "&#39;": "'"
+            "&quot;": '"',"
+            "&#39;": "'",'
         }
 
         for html_char, char in html_unescape_map.items():
@@ -251,7 +257,9 @@ class StringUtils:
             r"^https?://"  # http:// or https://
             r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61})?[A-Z0-9])?\.)+[A-Z]{2,6}"  # ...or ip
             r"(?::\d+)?"  # optional port
-            r"(?:/?|[/?]\S+)$", re.IGNORECASE)
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
         return url_pattern.match(text.strip()) is not None
 
     @staticmethod
@@ -279,7 +287,9 @@ class StringUtils:
 
     @staticmethod
     def random_string(
-        length: int = 10, chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") -> str:
+        length: int = 10,
+        chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    ) -> str:
         """生成随机字符串"""
         import random
 
@@ -290,7 +300,7 @@ class StringUtils:
     @staticmethod
     def remove_duplicates(text: str) -> str:
         """移除重复的字符"""
-        if not isinstance(text, (((str)))):
+        if not isinstance(text, (str)):
             return ""
         seen = set()
         return "".join(char for char in text if not (char in seen or seen.add(char)))

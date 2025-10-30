@@ -1,5 +1,3 @@
-
-
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -26,16 +24,16 @@ from src.core.prediction import PredictionEngine
 # 全局预测引擎实例
 
 
-        # 不抛出异常,允许应用继续启动
+# 不抛出异常,允许应用继续启动
 
 
-            # 如果预测引擎有清理方法,在这里调用
+# 如果预测引擎有清理方法,在这里调用
 
 
-    # 启动时初始化
+# 启动时初始化
 
 
-    # 关闭时清理
+# 关闭时清理
 
 
 # 创建FastAPI应用
@@ -45,18 +43,16 @@ from src.core.prediction import PredictionEngine
 # 中间件配置
 
 
+# 记录请求开始
+
+# 处理请求
+
+# 记录请求完成
+
+# 添加处理时间到响应头
 
 
-            # 记录请求开始
-
-            # 处理请求
-
-            # 记录请求完成
-
-            # 添加处理时间到响应头
-
-
-            # 记录错误
+# 记录错误
 
 
 # 添加请求日志中间件
@@ -75,15 +71,7 @@ from src.api.predictions_enhanced import router as predictions_enhanced_router
 from src.api.predictions_srs_simple import router as predictions_srs_simple_router
 
 
-
 # 全局异常处理
-
-
-
-
-
-
-
 
 
 # 根路径
@@ -93,7 +81,7 @@ from src.api.predictions_srs_simple import router as predictions_srs_simple_rout
 
 
 # Metrics 端点
-    # 简单的占位符指标
+# 简单的占位符指标
 # TYPE http_requests_total counter
 
 # HELP request_duration_seconds Request duration in seconds
@@ -105,7 +93,6 @@ from src.api.predictions_srs_simple import router as predictions_srs_simple_rout
 
 # 测试端点
 
-from datetime import datetime
 import uvicorn
 
 # 开发环境配置
@@ -117,6 +104,8 @@ Integrates all API routes and middleware.
 """
 logger = get_logger(__name__)
 prediction_engine: Union[PredictionEngine, None] = None
+
+
 async def init_prediction_engine():
     """初始化预测引擎"""
     global prediction_engine
@@ -125,6 +114,8 @@ async def init_prediction_engine():
         logger.info("预测引擎初始化成功")
     except (ValueError, KeyError, AttributeError, HTTPError) as e:
         logger.error(f"预测引擎初始化失败: {e}")
+
+
 async def close_prediction_engine():
     """关闭预测引擎"""
     global prediction_engine
@@ -134,6 +125,8 @@ async def close_prediction_engine():
             logger.info("预测引擎已关闭")
         except (ValueError, KeyError, AttributeError, HTTPError) as e:
             logger.error(f"关闭预测引擎时出错: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
@@ -144,6 +137,8 @@ async def lifespan(app: FastAPI):
     logger.info("关闭足球预测API服务...")
     await close_prediction_engine()
     logger.info("服务已关闭")
+
+
 app = FastAPI(
     title="Football Prediction API",
     description="足球预测系统API - 提供比赛预测,数据查询和统计分析功能",
@@ -164,8 +159,11 @@ app.add_middleware(
 app.add_middleware(
     GZipMiddleware, minimum_size=1000
 )  # TODO: 将魔法数字 1000 提取为常量
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """请求日志中间件"""
+
     async def dispatch(self, request: Request, call_next):
         start_time = None
         try:
@@ -191,6 +189,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 f"duration={process_time:.3f}s"
             )
             raise
+
+
 app.add_middleware(RequestLoggingMiddleware)
 app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
 app.include_router(predictions_router)
@@ -203,6 +203,8 @@ app.include_router(
 app.include_router(
     predictions_srs_simple_router, prefix="/api/v1", tags=["predictions-srs-simple"]
 )
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """HTTP异常处理"""
@@ -220,6 +222,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             }
         },
     )
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """请求验证异常处理"""
@@ -237,6 +241,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             }
         },
     )
+
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """通用异常处理"""
@@ -254,6 +260,8 @@ async def general_exception_handler(request: Request, exc: Exception):
             }
         },
     )
+
+
 @app.get("/")
 async def root():
     """根路径"""
@@ -263,6 +271,8 @@ async def root():
         "docs": "/docs",
         "health": "/api/health",
     }
+
+
 @app.get("/api/health")
 async def health_check():
     """健康检查端点"""
@@ -271,10 +281,12 @@ async def health_check():
         "timestamp": time.time(),
         "service": "football-prediction-api",
     }
+
+
 @app.get("/metrics")
 async def metrics_endpoint():
     """Prometheus 格式的指标端点"""
-    metrics_data = """# HELP http_requests_total Total number of HTTP requests
+    metrics_data = """# HELP http_requests_total Total number of HTTP requests"
 http_requests_total{method="GET",endpoint="/api/health"} 1
 request_duration_seconds_bucket{le="0.1"} 1
 request_duration_seconds_bucket{le="1.0"} 1
@@ -282,6 +294,8 @@ request_duration_seconds_bucket{le="+Inf"} 1
 api_health_status 1
 """
     return Response(content=metrics_data, media_type="text/plain")
+
+
 @app.get("/api/test")
 async def test_endpoint():
     """测试端点"""
@@ -289,6 +303,8 @@ async def test_endpoint():
         "message": "API is working!",
         "timestamp": datetime.now().isoformat(),
     }
+
+
 if __name__ == "__main__":
     uvicorn.run(
         "app:app",

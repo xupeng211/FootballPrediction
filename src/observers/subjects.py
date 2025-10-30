@@ -16,13 +16,15 @@ from .base import ObservableEvent, ObservableEventType, Subject
 
 
 class SystemMetricsSubject(Subject):
-    """系统指标被观察者
+    """系统指标被观察者"
 
     监控系统级别的指标变化.
     Monitors system-level metric changes.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
         self._metrics: Dict[str, float] = {}
@@ -31,7 +33,7 @@ class SystemMetricsSubject(Subject):
         self._notification_interval = 60  # 秒
 
     def set_metric(self, name: str, value: float) -> None:
-        """设置指标值
+        """设置指标值"
 
         Args:
             name: 指标名称
@@ -50,7 +52,7 @@ class SystemMetricsSubject(Subject):
         critical: Optional[float] = None,
         direction: str = "above",
     ) -> None:
-        """设置指标阈值
+        """设置指标阈值"
 
         Args:
             metric_name: 指标名称
@@ -69,15 +71,13 @@ class SystemMetricsSubject(Subject):
     ) -> None:
         """检查指标是否超过阈值"""
         if metric_name not in self._thresholds:
-            return
-
+            return None
         threshold = self._thresholds[metric_name]
         last_notified = self._last_notification.get(metric_name, 0)
 
         # 检查通知间隔
         if time.time() - last_notified < self._notification_interval:
-            return
-
+            return None
         # 检查严重阈值
         if threshold["critical"] is not None:
             if self._is_threshold_exceeded(
@@ -99,8 +99,7 @@ class SystemMetricsSubject(Subject):
                 )
                 await self.notify(event)
                 self._last_notification[metric_name] = time.time()
-                return
-
+                return None
         # 检查警告阈值
         if threshold["warning"] is not None:
             if self._is_threshold_exceeded(
@@ -123,7 +122,9 @@ class SystemMetricsSubject(Subject):
                 await self.notify(event)
                 self._last_notification[metric_name] = time.time()
 
-    def _is_threshold_exceeded(self, value: float, threshold: float, direction: str) -> bool:
+    def _is_threshold_exceeded(
+        self, value: float, threshold: float, direction: str
+    ) -> bool:
         """检查是否超过阈值"""
         if direction == "above":
             return value > threshold
@@ -154,13 +155,15 @@ class SystemMetricsSubject(Subject):
 
 
 class PredictionMetricsSubject(Subject):
-    """预测指标被观察者
+    """预测指标被观察者"
 
     监控预测相关的指标.
     Monitors prediction-related metrics.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化预测指标被观察者"""
         super().__init__("PredictionMetrics")
         self._prediction_counts: Dict[str, int] = defaultdict(int)
@@ -176,7 +179,7 @@ class PredictionMetricsSubject(Subject):
         confidence: Optional[float] = None,
         actual_result: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """记录预测事件
+        """记录预测事件"
 
         Args:
             strategy_name: 策略名称
@@ -200,7 +203,9 @@ class PredictionMetricsSubject(Subject):
             self._response_times = self._response_times[-500:]
 
         # 更新策略性能
-        self._update_strategy_performance(strategy_name, success, confidence, actual_result)
+        self._update_strategy_performance(
+            strategy_name, success, confidence, actual_result
+        )
 
         # 发送事件
         event = ObservableEvent(
@@ -309,13 +314,15 @@ class PredictionMetricsSubject(Subject):
 
 
 class AlertSubject(Subject):
-    """告警被观察者
+    """告警被观察者"
 
     管理告警事件.
     Manages alert events.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化告警被观察者"""
         super().__init__("AlertManager")
         self._alert_counts: Dict[str, int] = defaultdict(int)
@@ -330,7 +337,7 @@ class AlertSubject(Subject):
         source: Optional[str] = None,
         data: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """触发告警
+        """触发告警"
 
         Args:
             alert_type: 告警类型
@@ -341,8 +348,7 @@ class AlertSubject(Subject):
         """
         # 检查抑制规则
         if await self._is_suppressed(alert_type, severity, source):
-            return
-
+            return None
         # 更新计数
         self._alert_counts[alert_type] += 1
         self._alert_levels[severity].append(datetime.utcnow())
@@ -364,7 +370,9 @@ class AlertSubject(Subject):
         )
         await self.notify(event)
 
-    async def _is_suppressed(self, alert_type: str, severity: str, source: Optional[str]) -> bool:
+    async def _is_suppressed(
+        self, alert_type: str, severity: str, source: Optional[str]
+    ) -> bool:
         """检查告警是否被抑制"""
         key = f"{alert_type}:{severity}:{source or 'default'}"
 
@@ -376,7 +384,9 @@ class AlertSubject(Subject):
         # 检查时间窗口
         if "time_window" in rule:
             window_start = datetime.utcnow() - timedelta(seconds=rule["time_window"])
-            recent_alerts = [t for t in self._alert_levels.get(severity, []) if t > window_start]
+            recent_alerts = [
+                t for t in self._alert_levels.get(severity, []) if t > window_start
+            ]
             if len(recent_alerts) >= rule.get("max_alerts", 5):
                 return True
 
@@ -390,7 +400,7 @@ class AlertSubject(Subject):
         max_alerts: int = 5,
         time_window: int = 300,
     ) -> None:
-        """添加告警抑制规则
+        """添加告警抑制规则"
 
         Args:
             alert_type: 告警类型
@@ -409,19 +419,23 @@ class AlertSubject(Subject):
         """获取告警统计"""
         return {
             "alert_counts": dict(self._alert_counts),
-            "alert_levels": {level: len(alerts) for level, alerts in self._alert_levels.items()},
+            "alert_levels": {
+                level: len(alerts) for level, alerts in self._alert_levels.items()
+            },
             "suppression_rules": len(self._suppression_rules),
         }
 
 
 class CacheSubject(Subject):
-    """缓存被观察者
+    """缓存被观察者"
 
     监控缓存相关事件.
     Monitors cache-related events.
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化缓存被观察者"""
         super().__init__("CacheMonitor")
         self._cache_stats = {
@@ -463,7 +477,9 @@ class CacheSubject(Subject):
         )
         await self.notify(event)
 
-    async def record_cache_set(self, cache_name: str, key: str, ttl: Optional[int] = None) -> None:
+    async def record_cache_set(
+        self, cache_name: str, key: str, ttl: Optional[int] = None
+    ) -> None:
         """记录缓存设置"""
         self._cache_stats["sets"] += 1
 
@@ -483,7 +499,9 @@ class CacheSubject(Subject):
     def get_cache_statistics(self) -> Dict[str, Any]:
         """获取缓存统计"""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = self._cache_stats["hits"] / total_requests if total_requests > 0 else 0
+        hit_rate = (
+            self._cache_stats["hits"] / total_requests if total_requests > 0 else 0
+        )
 
         return {
             "stats": dict(self._cache_stats),

@@ -1,66 +1,66 @@
 """
 from typing import Dict, Optional, Any
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
+from src.core.config import
 命令和查询处理器
 Command and Query Handlers
 
@@ -99,6 +99,8 @@ class CreatePredictionHandler(CommandHandler):
 
     @property
     def command_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return CreatePredictionCommand
 
     async def handle(self, command: CreatePredictionCommand) -> CommandResult:
@@ -158,6 +160,8 @@ class UpdatePredictionHandler(CommandHandler):
 
     @property
     def command_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return UpdatePredictionCommand
 
     async def handle(self, command: UpdatePredictionCommand) -> CommandResult:
@@ -213,6 +217,8 @@ class DeletePredictionHandler(CommandHandler):
 
     @property
     def command_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return DeletePredictionCommand
 
     async def handle(self, command: DeletePredictionCommand) -> CommandResult:
@@ -243,6 +249,8 @@ class CreateUserHandler(CommandHandler):
 
     @property
     def command_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return CreateUserCommand
 
     async def handle(self, command: CreateUserCommand) -> CommandResult:
@@ -289,6 +297,8 @@ class GetPredictionByIdHandler(QueryHandler):
 
     @property
     def query_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return GetPredictionByIdQuery
 
     async def handle(self, query: GetPredictionByIdQuery) -> Optional[PredictionDTO]:
@@ -324,6 +334,8 @@ class GetPredictionsByUserHandler(QueryHandler):
 
     @property
     def query_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return GetPredictionsByUserQuery
 
     async def handle(self, query: GetPredictionsByUserQuery) -> List[PredictionDTO]:
@@ -387,6 +399,8 @@ class GetUserStatsHandler(QueryHandler):
 
     @property
     def query_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return GetUserStatsQuery
 
     async def handle(self, query: GetUserStatsQuery) -> Optional[PredictionStatsDTO]:
@@ -403,7 +417,9 @@ class GetUserStatsHandler(QueryHandler):
                 FROM predictions p
                 WHERE p.user_id = :user_id
                 """
-                stats_result = await session.execute(stats_sql, {"user_id": query.user_id})
+                stats_result = await session.execute(
+                    stats_sql, {"user_id": query.user_id}
+                )
                 stats = stats_result.fetchone()
 
                 if not stats or stats.total_predictions == 0:
@@ -431,7 +447,9 @@ class GetUserStatsHandler(QueryHandler):
                 WHERE user_id = :user_id AND strategy_used IS NOT NULL
                 GROUP BY strategy_used
                 """
-                strategy_result = await session.execute(strategy_sql, {"user_id": query.user_id})
+                strategy_result = await session.execute(
+                    strategy_sql, {"user_id": query.user_id}
+                )
                 strategy_rows = strategy_result.fetchall()
 
                 strategy_breakdown: Dict[str, Any] = {}
@@ -458,7 +476,9 @@ class GetUserStatsHandler(QueryHandler):
                 ORDER BY m.match_date DESC
                 LIMIT 10
                 """
-                recent_result = await session.execute(recent_sql, {"user_id": query.user_id})
+                recent_result = await session.execute(
+                    recent_sql, {"user_id": query.user_id}
+                )
                 recent_rows = recent_result.fetchall()
 
                 recent_performance: List[Any] = []
@@ -472,7 +492,9 @@ class GetUserStatsHandler(QueryHandler):
                             "actual_away": row.away_score,
                             "points_earned": row.points_earned,
                             "accuracy_score": (
-                                float(row.accuracy_score) if row.accuracy_score else None
+                                float(row.accuracy_score)
+                                if row.accuracy_score
+                                else None
                             ),
                         }
                     )
@@ -498,6 +520,8 @@ class GetUpcomingMatchesHandler(QueryHandler):
 
     @property
     def query_type(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         return GetUpcomingMatchesQuery
 
     async def handle(self, query: GetUpcomingMatchesQuery) -> List[MatchDTO]:
@@ -553,18 +577,26 @@ class GetUpcomingMatchesHandler(QueryHandler):
 
 # 处理器集合类
 class PredictionCommandHandlers:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测命令处理器集合"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
         self.delete = DeletePredictionHandler()
 
 
 class PredictionQueryHandlers:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测查询处理器集合"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.get_by_id = GetPredictionByIdHandler()
         self.get_by_user = GetPredictionsByUserHandler()
         self.get_stats = GetUserStatsHandler()
@@ -572,34 +604,50 @@ class PredictionQueryHandlers:
 
 
 class UserCommandHandlers:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户命令处理器集合"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.create = CreateUserHandler()
         # TODO: 实现UpdateUserHandler - 临时注释以解决启动问题
         # self.update = UpdateUserHandler()
 
 
 class UserQueryHandlers:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """用户查询处理器集合"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
 
 
 class MatchCommandHandlers:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛命令处理器集合"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
 
 
 class MatchQueryHandlers:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛查询处理器集合"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.get_by_id = GetMatchByIdHandler()
         self.get_upcoming = GetUpcomingMatchesHandler()
         self.get_predictions = GetMatchPredictionsHandler()

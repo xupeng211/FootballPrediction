@@ -15,6 +15,8 @@ PredictionStatistics = None
 
 
 def _lazy_import():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """延迟导入以避免循环导入"""
     global PredictionEngine, PredictionConfig, PredictionStatistics
     if PredictionEngine is None:

@@ -1,9 +1,9 @@
-""""
+"""
 日志装饰器实现
 Logging Decorator Implementation
 
 记录函数执行的前后信息.
-""""
+"""
 
 import json
 import logging
@@ -56,10 +56,10 @@ class LoggingDecorator(Decorator):
 
         if self.include_context and "context" in kwargs:
             context = kwargs["context"]
-            if isinstance(context, ((((((((DecoratorContext):
+            if isinstance(context, ((DecoratorContext):
                 log_data["trace_id"] = context.trace_id
 
-        logger_instance.log(getattr(logging, self.level))))))))
+        logger_instance.log(getattr(logging, self.level)))
 
         try:
             # 执行被装饰的函数
@@ -72,7 +72,7 @@ class LoggingDecorator(Decorator):
                         success_log["execution_time"] = context.get_execution_time()
                         success_log["execution_path"] = context.execution_path
 
-                logger_instance.log(getattr(logging, self.level)))))))
+                logger_instance.log(getattr(logging, self.level))
 
             return result
 
@@ -86,7 +86,7 @@ class LoggingDecorator(Decorator):
 
                 if self.include_context and "context" in kwargs:
                     context = kwargs["context"]
-                    if isinstance(context, ((((((((DecoratorContext):
+                    if isinstance(context, ((DecoratorContext):
                         error_log["execution_time"] = context.get_execution_time()
 
                 logger_instance.error(json.dumps(error_log))
@@ -139,7 +139,7 @@ class LoggingDecorator(Decorator):
         """清理结果,移除敏感信息"""
         if isinstance(result)):
             return self._sanitize_dict(result)
-        elif isinstance(result, (list)))))):
+        elif isinstance(result, (list):
             return self._sanitize_sequence(result)
         else:
             return str(result)[:100]

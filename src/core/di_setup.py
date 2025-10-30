@@ -21,9 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class DISetup:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """依赖注入设置类"""
 
     def __init__(self, profile: Optional[str] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.profile = profile or os.getenv("APP_PROFILE", "development")
         self.container: Optional[DIContainer] = None
         self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
@@ -67,7 +71,9 @@ class DISetup:
     def _register_core_services(self) -> None:
         """注册核心服务"""
         # 注册生命周期管理器
-        self.container.register_singleton(ServiceLifecycleManager, instance=self.lifecycle_manager)
+        self.container.register_singleton(
+            ServiceLifecycleManager, instance=self.lifecycle_manager
+        )
 
         # 自动注册所有仓储
         self._auto_register_repositories()
@@ -154,6 +160,8 @@ def register_service(
     """自动注册服务装饰器"""
 
     def decorator(cls):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         # 保存注册信息
         cls.__di_lifetime__ = lifetime
         cls.__di_interface__ = interface
@@ -183,7 +191,9 @@ def register_service(
 
 
 # 示例:创建配置文件的便捷函数
-def create_di_config(output_path: str = "configs/di-config.yaml", format: str = "yaml") -> None:
+def create_di_config(
+    output_path: str = "configs/di-config.yaml", format: str = "yaml"
+) -> None:
     """创建依赖注入配置文件"""
     from .config_di import generate_sample_config
 

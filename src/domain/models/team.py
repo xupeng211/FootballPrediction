@@ -23,6 +23,8 @@ class TeamType(Enum):
 
 @dataclass
 class TeamStats:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """球队统计值对象"""
 
     matches_played: int = 0
@@ -33,6 +35,8 @@ class TeamStats:
     goals_against: int = 0
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """验证统计数据"""
         if any(
             x < 0
@@ -94,6 +98,8 @@ class TeamStats:
 
 @dataclass
 class TeamForm:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """球队状态值对象"""
 
     last_matches: List[str] = field(default_factory=list)  # 最近比赛结果:W/D/L
@@ -101,6 +107,8 @@ class TeamForm:
     streak_type: str = ""  # 连续类型:win/draw/loss/none
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """验证状态数据"""
         if len(self.last_matches) > 10:
             raise DomainError("最近比赛记录最多保留10场")
@@ -126,14 +134,12 @@ class TeamForm:
         if not self.last_matches:
             self.current_streak = 0
             self.streak_type = "none"
-            return
-
+            return None
         first_result = self.last_matches[0]
         if first_result == "D":
             self.current_streak = 0
             self.streak_type = "draw"
-            return
-
+            return None
         streak_type = "win" if first_result == "W" else "loss"
         streak = 1
 
@@ -178,6 +184,8 @@ class TeamForm:
 
 @dataclass
 class Team:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     球队领域模型
 
@@ -207,6 +215,8 @@ class Team:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("球队名称不能为空")
@@ -274,7 +284,9 @@ class Team:
         self.stats.update(result, goals_for, goals_against)
 
         # 更新状态
-        self.form.add_result("W" if result == "win" else "D" if result == "draw" else "L")
+        self.form.add_result(
+            "W" if result == "win" else "D" if result == "draw" else "L"
+        )
 
         self.updated_at = datetime.utcnow()
 

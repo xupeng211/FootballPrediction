@@ -9,7 +9,7 @@ TTL cache module - 使用增强版TTL缓存实现
 - 统计监控
 
 Provides high-performance in-memory cache with:
-- Auto expiration
+    - Auto expiration
 - LRU eviction
 - Batch operations
 - Async support

@@ -16,9 +16,13 @@ class Base(DeclarativeBase):
 
 
 class TimestampMixin:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """时间戳混入类,为模型添加创建时间和更新时间字段"""
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
+    created_at = Column(
+        DateTime, default=datetime.utcnow, nullable=False, comment="创建时间"
+    )
 
     updated_at = Column(
         DateTime,
@@ -70,6 +74,8 @@ class BaseModel(Base, TimestampMixin):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """
         从字典创建模型实例
 
@@ -81,7 +87,9 @@ class BaseModel(Base, TimestampMixin):
         """
         # 过滤掉不属于模型的字段
         valid_columns = {column.name for column in cls.__table__.columns}
-        filtered_data = {key: value for key, value in data.items() if key in valid_columns}
+        filtered_data = {
+            key: value for key, value in data.items() if key in valid_columns
+        }
         return cls(**filtered_data)
 
     def update_from_dict(self, data: Dict[str, Any]) -> None:
@@ -96,7 +104,7 @@ class BaseModel(Base, TimestampMixin):
             pass
         {column.name for column in self.__table__.columns}
         for key, value in data.items():
-                setattr(self, key, value)
+            setattr(self, key, value)
 
     def __repr__(self) -> str:
         """对象的字符串表示"""

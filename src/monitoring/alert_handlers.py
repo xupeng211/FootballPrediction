@@ -14,6 +14,8 @@ from .alert_manager_mod.models import Alert, AlertChannel
 
 
 class PrometheusMetrics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Prometheus 指标管理"""
 
     def __init__(self, registry: Optional[CollectorRegistry] = None) -> None:
@@ -55,7 +57,9 @@ class PrometheusMetrics:
         # 按严重程度和来源分组
         for alert in alerts:
             if alert.status.value == "active":
-                self.active_alerts.labels(severity=alert.severity.value, source=alert.source).set(1)
+                self.active_alerts.labels(
+                    severity=alert.severity.value, source=alert.source
+                ).set(1)
 
     def observe_resolution_time(self, alert: Alert, duration: float) -> None:
         """记录告警解决时间"""
@@ -63,6 +67,8 @@ class PrometheusMetrics:
 
 
 class AlertHandler:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """告警处理器基类"""
 
     def __init__(self, channel: AlertChannel) -> None:
@@ -98,7 +104,9 @@ class LogHandler(AlertHandler):
             log_level = level_map.get(alert.severity.value, logging.INFO)
 
             # 格式化日志消息
-            message = f"[{alert.severity.value.upper()}] {alert.title} - {alert.message}"
+            message = (
+                f"[{alert.severity.value.upper()}] {alert.title} - {alert.message}"
+            )
             if alert.context:
                 message += f" | Context: {alert.context}"
 
@@ -199,11 +207,15 @@ class EmailHandler(AlertHandler):
             msg.attach(MIMEText(body, "plain"))
 
             # 发送邮件
-            with smtplib.SMTP(self.smtp_config["host"], self.smtp_config["port"]) as server:
+            with smtplib.SMTP(
+                self.smtp_config["host"], self.smtp_config["port"]
+            ) as server:
                 if self.smtp_config.get("use_tls"):
                     server.starttls()
                 if self.smtp_config.get("username"):
-                    server.login(self.smtp_config["username"], self.smtp_config["password"])
+                    server.login(
+                        self.smtp_config["username"], self.smtp_config["password"]
+                    )
                 server.send_message(msg)
 
             return True

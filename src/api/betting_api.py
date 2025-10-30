@@ -1,4 +1,5 @@
 from datetime import datetime
+
 #!/usr/bin/env python3
 """
 投注API模块
@@ -46,7 +47,9 @@ class BettingOddsRequest(BaseModel):
 class PortfolioRequest(BaseModel):
     """组合投注请求模型"""
 
-    match_ids: List[str] = Field(..., min_items=1, max_items=10, description="比赛ID列表")
+    match_ids: List[str] = Field(
+        ..., min_items=1, max_items=10, description="比赛ID列表"
+    )
     strategy_name: str = Field("srs_compliant", description="策略名称")
     max_total_stake: float = Field(0.1, ge=0.01, le=0.5, description="最大总投注比例")
 
@@ -62,7 +65,10 @@ class PerformanceAnalysisRequest(BaseModel):
     """表现分析请求模型"""
 
     days_back: int = Field(
-        30, ge=1, le=365, description="分析天数"  # TODO: 将魔法数字 30 提取为常量
+        30,
+        ge=1,
+        le=365,
+        description="分析天数",  # TODO: 将魔法数字 30 提取为常量
     )  # TODO: 将魔法数字 30 提取为常量
     strategy_name: str = Field("srs_compliant", description="策略名称")
 
@@ -218,7 +224,9 @@ async def get_portfolio_recommendations(
             valid_matches=recommendations.get("valid_matches", []),
             portfolio_optimization=recommendations.get("portfolio_optimization", {}),
             risk_assessment=recommendations.get("risk_assessment", {}),
-            srs_portfolio_compliance=recommendations.get("srs_portfolio_compliance", {}),
+            srs_portfolio_compliance=recommendations.get(
+                "srs_portfolio_compliance", {}
+            ),
             summary=recommendations.get("summary", {}),
         )
 
@@ -240,7 +248,10 @@ async def get_portfolio_recommendations(
 )
 async def get_performance_analysis(
     days_back: int = Query(
-        30, ge=1, le=365, description="分析天数"  # TODO: 将魔法数字 30 提取为常量
+        30,
+        ge=1,
+        le=365,
+        description="分析天数",  # TODO: 将魔法数字 30 提取为常量
     ),  # TODO: 将魔法数字 30 提取为常量
     strategy_name: str = Query("srs_compliant", description="策略名称"),
     betting_service: BettingService = Depends(get_betting_service),
@@ -441,7 +452,9 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         srs_status = "configured" if betting_service.srs_config else "not_configured"
 
         overall_status = (
-            "healthy" if redis_status == "healthy" and srs_status == "configured" else "degraded"
+            "healthy"
+            if redis_status == "healthy" and srs_status == "configured"
+            else "degraded"
         )
 
         return {
@@ -465,7 +478,9 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         }
 
 
-@router.get("/metrics", summary="获取投注服务指标", description="获取投注服务的性能和使用指标")
+@router.get(
+    "/metrics", summary="获取投注服务指标", description="获取投注服务的性能和使用指标"
+)
 async def get_metrics(betting_service: BettingService = Depends(get_betting_service)):
     """获取服务指标"""
     try:
@@ -539,7 +554,9 @@ __all__ = [
 ]
 
 
-def register_betting_api(app):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def register_betting_api(
+    app,
+):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """注册投注API路由"""
     app.include_router(router)
     logger.info("投注API路由注册完成")

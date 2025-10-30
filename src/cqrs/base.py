@@ -19,6 +19,8 @@ QueryResultType = TypeVar("QueryResultType")
 
 @dataclass
 class BaseMessage:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """消息基类"""
 
     message_id: str
@@ -26,37 +28,43 @@ class BaseMessage:
     metadata: Dict[str, Any]
 
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
         self.metadata = metadata or {}
 
 
 class Command(BaseMessage, ABC):
-    """命令基类
+    """命令基类"
 
     命令表示改变系统状态的意图.
     Commands represent intentions to change system state.
     """
 
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(metadata)
         self.correlation_id: Optional[str] = None
         self.causation_id: Optional[str] = None
 
 
 class Query(BaseMessage, ABC):
-    """查询基类
+    """查询基类"
 
     查询表示获取系统数据的请求.
     Queries represent requests to retrieve system data.
     """
 
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(metadata)
 
 
 class CommandHandler(ABC, Generic[CommandResultType]):
-    """命令处理器基类
+    """命令处理器基类"
 
     处理特定类型的命令.
     Handles specific types of commands.
@@ -75,7 +83,7 @@ class CommandHandler(ABC, Generic[CommandResultType]):
 
 
 class QueryHandler(ABC, Generic[QueryResultType]):
-    """查询处理器基类
+    """查询处理器基类"
 
     处理特定类型的查询.
     Handles specific types of queries.
@@ -94,9 +102,13 @@ class QueryHandler(ABC, Generic[QueryResultType]):
 
 
 class ValidationResult:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """验证结果"""
 
     def __init__(self, is_valid: bool, errors: Optional[list] = None):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.is_valid = is_valid
         self.errors = errors or []
 

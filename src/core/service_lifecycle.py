@@ -8,7 +8,6 @@ ServiceLifecycleManager
 import asyncio
 import logging
 import threading
-import time
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
@@ -19,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ServiceState(Enum):
     """服务状态枚举"""
+
     INITIALIZED = "initialized"
     READY = "ready"
     STARTING = "starting"
@@ -30,7 +30,10 @@ class ServiceState(Enum):
 
 @dataclass
 class ServiceInfo:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """服务信息"""
+
     name: str
     service: Any
     state: ServiceState
@@ -44,13 +47,18 @@ class ServiceInfo:
 
 class ServiceLifecycleError(Exception):
     """服务生命周期错误"""
+
     pass
 
 
 class ServiceLifecycleManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """服务生命周期管理器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._services: Dict[str, ServiceInfo] = {}
         self._lock = threading.RLock()
         self._shutdown_event = threading.Event()
@@ -64,14 +72,13 @@ class ServiceLifecycleManager:
         dependencies: Optional[List[str]] = None,
         health_check: Optional[Callable] = None,
         startup_timeout: float = 30.0,
-        shutdown_timeout: float = 10.0
+        shutdown_timeout: float = 10.0,
     ) -> None:
         """注册服务"""
         with self._lock:
             if name in self._services:
                 logger.warning(f"服务已存在: {name}")
-                return
-
+                return None
             service_info = ServiceInfo(
                 name=name,
                 service=service,
@@ -80,7 +87,7 @@ class ServiceLifecycleManager:
                 dependents=[],
                 health_check=health_check,
                 startup_timeout=startup_timeout,
-                shutdown_timeout=shutdown_timeout
+                shutdown_timeout=shutdown_timeout,
             )
 
             self._services[name] = service_info
@@ -122,10 +129,11 @@ class ServiceLifecycleManager:
 
             if service_info.state == ServiceState.RUNNING:
                 logger.debug(f"服务已在运行: {name}")
-                return
-
+                return None
             if service_info.state not in [ServiceState.READY, ServiceState.STOPPED]:
-                raise ServiceLifecycleError(f"服务状态不允许启动: {name} - {service_info.state.value}")
+                raise ServiceLifecycleError(
+                    f"服务状态不允许启动: {name} - {service_info.state.value}"
+                )
 
             service_info.state = ServiceState.STARTING
 
@@ -137,7 +145,7 @@ class ServiceLifecycleManager:
                 self.start_service(dep)
 
             # 启动当前服务
-            if hasattr(service_info.service, 'start'):
+            if hasattr(service_info.service, "start"):
                 if asyncio.iscoroutinefunction(service_info.service.start):
                     # 异步启动
                     self._start_service_async(name)
@@ -163,8 +171,7 @@ class ServiceLifecycleManager:
 
             if service_info.state != ServiceState.RUNNING:
                 logger.debug(f"服务未运行: {name}")
-                return
-
+                return None
             self._stop_service_sync(name)
 
     def _stop_service_sync(self, name: str) -> None:
@@ -181,7 +188,7 @@ class ServiceLifecycleManager:
                     self._stop_service_sync(dependent)
 
             # 停止当前服务
-            if hasattr(service_info.service, 'stop'):
+            if hasattr(service_info.service, "stop"):
                 if asyncio.iscoroutinefunction(service_info.service.stop):
                     # 异步停止
                     self._stop_service_async(name)
@@ -202,8 +209,7 @@ class ServiceLifecycleManager:
         service_info = self._services[name]
         try:
             await asyncio.wait_for(
-                service_info.service.start(),
-                timeout=service_info.startup_timeout
+                service_info.service.start(), timeout=service_info.startup_timeout
             )
         except asyncio.TimeoutError:
             raise ServiceLifecycleError(f"服务启动超时: {name}")
@@ -213,8 +219,7 @@ class ServiceLifecycleManager:
         service_info = self._services[name]
         try:
             await asyncio.wait_for(
-                service_info.service.stop(),
-                timeout=service_info.shutdown_timeout
+                service_info.service.stop(), timeout=service_info.shutdown_timeout
             )
         except asyncio.TimeoutError:
             logger.warning(f"服务停止超时: {name}")
@@ -229,9 +234,13 @@ class ServiceLifecycleManager:
                     try:
                         if service_info.health_check:
                             if asyncio.iscoroutinefunction(service_info.health_check):
-                                healthy = await service_info.health_check(service_info.service)
+                                healthy = await service_info.health_check(
+                                    service_info.service
+                                )
                             else:
-                                healthy = service_info.health_check(service_info.service)
+                                healthy = service_info.health_check(
+                                    service_info.service
+                                )
                         else:
                             # 默认健康检查:检查服务是否有严重错误
                             healthy = service_info.state != ServiceState.ERROR
@@ -262,8 +271,7 @@ class ServiceLifecycleManager:
         """启动监控"""
         if self._monitoring_task is not None:
             logger.warning("监控已在运行")
-            return
-
+            return None
         try:
             self._loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -276,8 +284,7 @@ class ServiceLifecycleManager:
     def stop_monitoring(self) -> None:
         """停止监控"""
         if self._monitoring_task is None:
-            return
-
+            return None
         self._shutdown_event.set()
 
         if self._monitoring_task:
@@ -322,7 +329,8 @@ class ServiceLifecycleManager:
         # 停止所有服务
         with self._lock:
             running_services = [
-                name for name, info in self._services.items()
+                name
+                for name, info in self._services.items()
                 if info.state == ServiceState.RUNNING
             ]
 

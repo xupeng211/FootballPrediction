@@ -1,6 +1,6 @@
-""""
+"""
 简化的适配器工厂
-""""
+"""
 
 from typing import Any, Dict, Optional, Type
 
@@ -8,7 +8,10 @@ from src.core.exceptions import AdapterError
 
 
 class AdapterFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """适配器工厂"""
+
 
 # 全局工厂实例
 _global_factory = AdapterFactory()
@@ -24,15 +27,22 @@ _global_factory = AdapterFactory()
 # 全局工厂实例
 # TODO: 方法 def create_adapter 过长(23行)，建议拆分
 # TODO: 方法 def create_adapter 过长(23行)，建议拆分
-# 全局工厂实例
+
+
+class AdapterFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """全局工厂实例"""
+
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._adapters: Dict[str, Type] = {}
         self._instances: Dict[str, Any] = {}
 
-# TODO: 方法 def create_adapter 过长(23行),建议拆分
-# TODO: 方法 def create_adapter 过长(23行),建议拆分
+    # TODO: 方法 def create_adapter 过长(23行),建议拆分
+    # TODO: 方法 def create_adapter 过长(23行),建议拆分
     def create_adapter(
-        """TODO: 添加函数文档"""
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
     ) -> Any:
         """创建适配器实例"""
@@ -54,6 +64,7 @@ _global_factory = AdapterFactory()
 
         return instance
 
+
 def register_adapter(name: str, adapter_class: Type, **kwargs) -> None:
     """注册适配器类（便捷函数）"""
     _global_factory.register_adapter(name, adapter_class, **kwargs)
@@ -63,14 +74,15 @@ def get_adapter_names() -> list[str]:
     """获取已注册的适配器名称（全局工厂）"""
     return _global_factory.get_adapter_names()
 
-
     def clear_instances(self) -> None:
         """清除所有实例"""
         self._instances.clear()
 
 
 # 全局工厂实例
-def get_adapter(name: str, config: Optional[Dict] = None, singleton: bool = False) -> Any:
+def get_adapter(
+    name: str, config: Optional[Dict] = None, singleton: bool = False
+) -> Any:
     """获取适配器实例（便捷函数）"""
     return _global_factory.create_adapter(name, config, singleton)
 

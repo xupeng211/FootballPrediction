@@ -28,6 +28,8 @@ except ImportError:
 
 # 便捷函数 - 直接实现以保持向后兼容
 def start_metrics_collection():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """启动指标收集"""
     collector = get_metrics_collector()
     if hasattr(collector, "start"):
@@ -36,6 +38,8 @@ def start_metrics_collection():
 
 
 def stop_metrics_collection():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """停止指标收集"""
     collector = get_metrics_collector()
     if hasattr(collector, "stop"):

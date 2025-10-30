@@ -37,13 +37,17 @@ class StrategyConfigurationError(Exception):
 
 
 class PredictionStrategyFactory:
-    """预测策略工厂类
+    """类文档字符串"""
+    pass  # 添加pass语句
+    """预测策略工厂类"
 
     负责根据配置创建和管理各种预测策略实例.
     """
 
     def __init__(self, config_path: Optional[Union[str, Path]] = None):
-        """初始化策略工厂
+    """函数文档字符串"""
+    pass  # 添加pass语句
+        """初始化策略工厂"
 
         Args:
             config_path: 策略配置文件路径
@@ -68,7 +72,7 @@ class PredictionStrategyFactory:
     def register_strategy(
         self, strategy_type: str, strategy_class: Type[PredictionStrategy]
     ) -> None:
-        """注册新的策略类型
+        """注册新的策略类型"
 
         Args:
             strategy_type: 策略类型名称
@@ -78,7 +82,7 @@ class PredictionStrategyFactory:
         logger.info(f"注册策略类型: {strategy_type} -> {strategy_class.__name__}")
 
     def unregister_strategy(self, strategy_type: str) -> None:
-        """注销策略类型
+        """注销策略类型"
 
         Args:
             strategy_type: 策略类型名称
@@ -94,7 +98,7 @@ class PredictionStrategyFactory:
         config: Optional[Dict[str, Any]] = None,
         overwrite: bool = False,
     ) -> PredictionStrategy:
-        """创建策略实例
+        """创建策略实例"
 
         Args:
             strategy_name: 策略实例名称
@@ -187,7 +191,7 @@ class PredictionStrategyFactory:
         return ensemble
 
     def get_strategy(self, strategy_name: str) -> Optional[PredictionStrategy]:
-        """获取策略实例
+        """获取策略实例"
 
         Args:
             strategy_name: 策略名称
@@ -201,8 +205,10 @@ class PredictionStrategyFactory:
         """获取所有策略实例"""
         return self._strategies.copy()
 
-    def get_strategies_by_type(self, strategy_type: StrategyType) -> List[PredictionStrategy]:
-        """根据类型获取策略列表
+    def get_strategies_by_type(
+        self, strategy_type: StrategyType
+    ) -> List[PredictionStrategy]:
+        """根据类型获取策略列表"
 
         Args:
             strategy_type: 策略类型
@@ -219,7 +225,7 @@ class PredictionStrategyFactory:
     async def create_multiple_strategies(
         self, strategy_configs: List[Dict[str, Any]]
     ) -> Dict[str, PredictionStrategy]:
-        """批量创建策略
+        """批量创建策略"
 
         Args:
             strategy_configs: 策略配置列表
@@ -236,7 +242,9 @@ class PredictionStrategyFactory:
                 continue
 
             try:
-                strategy = await self.create_strategy(strategy_name=strategy_name, config=config)
+                strategy = await self.create_strategy(
+                    strategy_name=strategy_name, config=config
+                )
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"创建策略 '{strategy_name}' 失败: {e}")
@@ -251,7 +259,9 @@ class PredictionStrategyFactory:
             strategy_name = config.get("name")
             if strategy_name and strategy_name not in self._strategies:
                 try:
-                    await self.create_strategy(strategy_name=strategy_name, config=config)
+                    await self.create_strategy(
+                        strategy_name=strategy_name, config=config
+                    )
                 except (
                     ValueError,
                     TypeError,
@@ -262,7 +272,7 @@ class PredictionStrategyFactory:
                     logger.error(f"初始化默认策略 '{strategy_name}' 失败: {e}")
 
     def remove_strategy(self, strategy_name: str) -> None:
-        """移除策略
+        """移除策略"
 
         Args:
             strategy_name: 策略名称
@@ -283,8 +293,7 @@ class PredictionStrategyFactory:
         if not config_path.exists():
             logger.warning(f"策略配置文件不存在: {config_path}")
             self._create_default_config()
-            return
-
+            return None
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
@@ -394,7 +403,9 @@ class PredictionStrategyFactory:
 
         try:
             with open(config_path, "w", encoding="utf-8") as f:
-                yaml.dump(default_config, f, default_flow_style=False, allow_unicode=True)
+                yaml.dump(
+                    default_config, f, default_flow_style=False, allow_unicode=True
+                )
             logger.info(f"创建默认策略配置文件: {config_path}")
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"保存默认配置失败: {e}")
@@ -422,7 +433,7 @@ class PredictionStrategyFactory:
                 logger.debug(f"环境变量覆盖: {config_key} = {parsed_value}")
 
     def _get_strategy_config(self, strategy_name: str) -> Dict[str, Any]:
-        """获取策略配置
+        """获取策略配置"
 
         Args:
             strategy_name: 策略名称
@@ -470,7 +481,7 @@ class PredictionStrategyFactory:
         return list(self._strategy_configs.keys())
 
     def validate_strategy_config(self, config: Dict[str, Any]) -> List[str]:
-        """验证策略配置
+        """验证策略配置"
 
         Args:
             config: 策略配置
@@ -514,17 +525,18 @@ class PredictionStrategyFactory:
 
         for name, strategy in self.strategies.items():
             try:
-                is_healthy = strategy.is_healthy() if hasattr(strategy, 'is_healthy') else True
-                metrics = strategy.get_metrics() if hasattr(strategy, 'get_metrics') else None
+                is_healthy = (
+                    strategy.is_healthy() if hasattr(strategy, "is_healthy") else True
+                )
+                metrics = (
+                    strategy.get_metrics() if hasattr(strategy, "get_metrics") else None
+                )
 
                 health_report[name] = {
                     "healthy": is_healthy,
                     "metrics": metrics.__dict__ if metrics else None,
                 }
             except Exception as e:
-                health_report[name] = {
-                    "healthy": False,
-                    "error": str(e)
-                }
+                health_report[name] = {"healthy": False, "error": str(e)}
 
         return health_report

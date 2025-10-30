@@ -1,5 +1,4 @@
 from typing import Set
-from src.core.config import Config 
 
 """
 
@@ -124,18 +123,24 @@ class FixturesCollector(DataCollector):
                             # 防重复检查
                             match_key = self._generate_match_key(fixture_data)
                             if match_key in self._processed_matches:
-                                self.logger.debug(f"Skipping duplicate match: {match_key}")
+                                self.logger.debug(
+                                    f"Skipping duplicate match: {match_key}"
+                                )
                                 continue
 
                             # 数据清洗和标准化
-                            cleaned_fixture = await self._clean_fixture_data(fixture_data)
+                            cleaned_fixture = await self._clean_fixture_data(
+                                fixture_data
+                            )
                             if cleaned_fixture:
                                 collected_data.append(cleaned_fixture)
                                 self._processed_matches.add(match_key)
                                 success_count += 1
                             else:
                                 error_count += 1
-                                error_messages.append(f"Invalid fixture data: {fixture_data}")
+                                error_messages.append(
+                                    f"Invalid fixture data: {fixture_data}"
+                                )
 
                         except (
                             ValueError,
@@ -156,8 +161,12 @@ class FixturesCollector(DataCollector):
                     RuntimeError,
                 ) as e:
                     error_count += 1
-                    error_messages.append(f"Error collecting league {league_code}: {str(e)}")
-                    self.logger.error(f"Error collecting league {league_code}: {str(e)}")
+                    error_messages.append(
+                        f"Error collecting league {league_code}: {str(e)}"
+                    )
+                    self.logger.error(
+                        f"Error collecting league {league_code}: {str(e)}"
+                    )
 
             # 检测并处理缺失的比赛（防丢失）
             await self._detect_missing_matches(collected_data, date_from, date_to)
@@ -255,7 +264,9 @@ class FixturesCollector(DataCollector):
             self.logger.error(f"Failed to get active leagues: {str(e)}")
             return ["PL", "PD"]  # 默认返回英超和西甲
 
-    async def _load_existing_matches(self, date_from: datetime, date_to: datetime) -> None:
+    async def _load_existing_matches(
+        self, date_from: datetime, date_to: datetime
+    ) -> None:
         """
         加载已存在的比赛ID（防重复机制）
 
@@ -275,7 +286,7 @@ class FixturesCollector(DataCollector):
             #     query = text("""
             #         SELECT match_id FROM matches
             #         WHERE match_date BETWEEN :date_from AND :date_to
-            #     """)
+            #     """)"
             #     result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
             #     self._processed_matches = {row.match_id for row in result}
 
@@ -312,7 +323,9 @@ class FixturesCollector(DataCollector):
             return response.get(str("matches"), [])
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Failed to collect fixtures for league {league_code}: {str(e)}")
+            self.logger.error(
+                f"Failed to collect fixtures for league {league_code}: {str(e)}"
+            )
             return []
 
     def _generate_match_key(self, fixture_data: Dict[str, Any]) -> str:
@@ -336,7 +349,9 @@ class FixturesCollector(DataCollector):
         key_string = "|".join(key_components)
         return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
-    async def _clean_fixture_data(self, raw_fixture: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def _clean_fixture_data(
+        self, raw_fixture: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """
         清洗和标准化赛程数据
 
@@ -348,11 +363,15 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 基础字段验证
-            if not all(key in raw_fixture for key in ["id", "homeTeam", "awayTeam", "utcDate"]):
+            if not all(
+                key in raw_fixture for key in ["id", "homeTeam", "awayTeam", "utcDate"]
+            ):
                 return None
 
             # 时间标准化为UTC
-            match_time = datetime.fromisoformat(raw_fixture["utcDate"].replace("Z", "+00:00"))
+            match_time = datetime.fromisoformat(
+                raw_fixture["utcDate"].replace("Z", "+00:00")
+            )
 
             cleaned_data = {
                 "external_match_id": str(raw_fixture["id"]),

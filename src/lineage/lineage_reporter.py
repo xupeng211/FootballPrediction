@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 class LineageReporter:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     数据血缘报告器
 
@@ -82,8 +84,10 @@ class LineageReporter:
         if description:
             job_facets["description"] = {"description": description}
         if source_location:
-            job_facets["sourceCodeLocation"] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="git", url=source_location
+            job_facets["sourceCodeLocation"] = (
+                source_code_location_job.SourceCodeLocationJobFacet(
+                    type="git", url=source_location
+                )
             )
         if transformation_sql:
             job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)
@@ -226,7 +230,9 @@ class LineageReporter:
             logger.error(f"Failed to emit complete event for job {job_name}: {e}")
             return False
 
-    def fail_job_run(self, job_name: str, error_message: str, run_id: Optional[str] = None) -> bool:
+    def fail_job_run(
+        self, job_name: str, error_message: str, run_id: Optional[str] = None
+    ) -> bool:
         """
         标记作业运行失败
 
@@ -265,7 +271,9 @@ class LineageReporter:
 
         try:
             self.client.emit(event)
-            logger.info(f"Failed job run: {job_name} with run_id: {run_id}, error: {error_message}")
+            logger.info(
+                f"Failed job run: {job_name} with run_id: {run_id}, error: {error_message}"
+            )
 
             # 清理活跃运行记录
             if job_name in self._active_runs:
@@ -366,7 +374,10 @@ class LineageReporter:
         job_name = f"data_transformation_{target_table}"
 
         # 输入数据集
-        inputs = [{"name": table, "namespace": "football_prediction_db"} for table in source_tables]
+        inputs = [
+            {"name": table, "namespace": "football_prediction_db"}
+            for table in source_tables
+        ]
 
         # 开始作业
         run_id = self.start_job_run(

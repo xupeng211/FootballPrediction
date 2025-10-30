@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def setup_warning_filters():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """设置警告过滤器"""
     # 忽略一些常见的警告
     warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow.*")

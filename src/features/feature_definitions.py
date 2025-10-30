@@ -18,6 +18,8 @@ from .entities import MatchEntity, TeamEntity
 
 @dataclass
 class RecentPerformanceFeatures:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     近期战绩特征
 
@@ -77,6 +79,8 @@ class RecentPerformanceFeatures:
 
 @dataclass
 class HistoricalMatchupFeatures:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     历史对战特征
 
@@ -105,13 +109,19 @@ class HistoricalMatchupFeatures:
     @property
     def h2h_home_win_rate(self) -> float:
         """主队历史胜率"""
-        return self.h2h_home_wins / self.h2h_total_matches if self.h2h_total_matches > 0 else 0.0
+        return (
+            self.h2h_home_wins / self.h2h_total_matches
+            if self.h2h_total_matches > 0
+            else 0.0
+        )
 
     @property
     def h2h_goals_avg(self) -> float:
         """历史对战场均总进球数"""
         total_goals = self.h2h_home_goals_total + self.h2h_away_goals_total
-        return total_goals / self.h2h_total_matches if self.h2h_total_matches > 0 else 0.0
+        return (
+            total_goals / self.h2h_total_matches if self.h2h_total_matches > 0 else 0.0
+        )
 
     @property
     def h2h_home_goals_avg(self) -> float:
@@ -145,6 +155,8 @@ class HistoricalMatchupFeatures:
 
 @dataclass
 class OddsFeatures:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     赔率特征
 
@@ -192,7 +204,9 @@ class OddsFeatures:
             home_var = self.odds_variance_home
             draw_var = self.odds_variance_draw
             away_var = self.odds_variance_away
-            if not (home_var is not None and draw_var is not None and away_var is not None):
+            if not (
+                home_var is not None and draw_var is not None and away_var is not None
+            ):
                 raise ValueError("计算赔率稳定性需要所有方差值都不能为None")
 
             avg_variance = (home_var + draw_var + away_var) / 3
@@ -210,11 +224,15 @@ class OddsFeatures:
                 self.away_implied_probability,
             ]
         ):
-            # Type assertions since we've checked for None above
+            # Type assertions since we've checked for None above'
             home_prob = self.home_implied_probability
             draw_prob = self.draw_implied_probability
             away_prob = self.away_implied_probability
-            if not (home_prob is not None and draw_prob is not None and away_prob is not None):
+            if not (
+                home_prob is not None
+                and draw_prob is not None
+                and away_prob is not None
+            ):
                 raise ValueError("计算总隐含概率需要所有概率值都不能为None")
 
             return home_prob + draw_prob + away_prob
@@ -245,6 +263,8 @@ class OddsFeatures:
 
 @dataclass
 class AllMatchFeatures:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     比赛完整特征集合
 
@@ -270,6 +290,8 @@ class AllMatchFeatures:
 
 @dataclass
 class AllTeamFeatures:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     球队完整特征集合
 

@@ -62,13 +62,7 @@ def sanitize_string(s: str) -> str:
         return ""
 
     # 移除常见的XSS攻击向量
-    dangerous_patterns = [
-        "<script>",
-        "</script>",
-        "javascript:",
-        "onload=",
-        "onerror="
-    ]
+    dangerous_patterns = ["<script>", "</script>", "javascript:", "onload=", "onerror="]
 
     sanitized = s
     for pattern in dangerous_patterns:

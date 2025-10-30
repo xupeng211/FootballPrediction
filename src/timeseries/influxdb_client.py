@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-""""
+"""
 InfluxDB时序数据库客户端
 InfluxDB Time Series Database Client
 
 提供高质量指标数据的时序存储,查询和分析功能
-""""
+"""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -27,6 +27,8 @@ logger = get_logger(__name__)
 
 @dataclass
 class TimeSeriesMetric:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """时序指标数据模型"""
 
     measurement: str  # 测量名称,如 "quality_metrics"
@@ -57,6 +59,8 @@ class TimeSeriesMetric:
 
 @dataclass
 class MetricQuery:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """指标查询配置"""
 
     measurement: str
@@ -70,9 +74,13 @@ class MetricQuery:
 
 
 class InfluxDBManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """InfluxDB管理器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.config = get_config()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -136,6 +144,8 @@ class InfluxDBManager:
             self.logger.info("InfluxDB连接已断开")
 
     def _ensure_connection(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """确保连接可用"""
         if not self.is_connected or not self.client:
             raise ConnectionError("InfluxDB未连接")
@@ -416,14 +426,14 @@ class InfluxDBManager:
                 return {}
 
             values = [
-                point["value"] for point in data_points if isinstance(point["value"], (((((((((int, float))))))
+                point["value"] for point in data_points if isinstance(point["value"], (((int, float)
             ]
 
             if not values:
                 return {}
 
             return {
-                "count": len(values))))))) / len(values)))
+                "count": len(values)) / len(values)))
             return {}
 
     async def cleanup_old_data(self, days_to_keep: int = 30):
@@ -437,11 +447,11 @@ class InfluxDBManager:
             )
 
             # 构建删除查询
-            delete_query = f""""
+            delete_query = f"""
             from(bucket: "{self.influx_bucket}")
                 |> range(start: -365d, stop: {delete_time})
                 |> drop()
-            """"
+            """
             # 记录删除查询（用于调试）
             logger.debug(
                 f"Generated delete query for data older than {delete_time}: {delete_query.strip()}"
@@ -540,8 +550,7 @@ if __name__ == "__main__":
         connected = await initialize_influxdb()
         if not connected:
             print("❌ InfluxDB连接失败")
-            return
-
+            return None
         print("✅ InfluxDB连接成功")
 
         # 写入测试数据
@@ -564,8 +573,7 @@ if __name__ == "__main__":
             print("✅ 测试数据写入成功")
         else:
             print("❌ 测试数据写入失败")
-            return
-
+            return None
         # 查询测试数据
         history = await get_quality_history(1)  # 查询最近1小时
         print(f"✅ 查询到 {len(history)} 条历史数据")

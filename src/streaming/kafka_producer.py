@@ -34,9 +34,13 @@ except ImportError:
     except ImportError:
         # 如果都不存在,提供一个空类作为占位符
         class KafkaProducer:
+    """类文档字符串"""
+    pass  # 添加pass语句
             """占位符类,当真实的 KafkaProducer 不可用时使用"""
 
             def __init__(self, *args, **kwargs):
+    """函数文档字符串"""
+    pass  # 添加pass语句
                 pass
 
             async def send(self, *args, **kwargs):

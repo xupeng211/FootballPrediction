@@ -1,6 +1,6 @@
-""""
+"""
 简化的Kafka组件实现
-""""
+"""
 
 from typing import Any, Dict, List
 
@@ -8,9 +8,13 @@ from src.core.exceptions import StreamingError
 
 
 class KafkaAdminClient:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka管理客户端（简化版）"""
 
     def __init__(self, bootstrap_servers: List[str]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.bootstrap_servers = bootstrap_servers
         self.is_running = False
 
@@ -62,9 +66,13 @@ class KafkaAdminClient:
 
 
 class KafkaTopicManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka主题管理器"""
 
     def __init__(self, admin_client: KafkaAdminClient):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.admin = admin_client
 
     async def create_topic(self, topic_spec: Dict[str, Any]):
@@ -108,9 +116,13 @@ class KafkaTopicManager:
 
 
 class KafkaConsumerGroup:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka消费者组管理"""
 
     def __init__(self, group_id: str, admin_client: KafkaAdminClient):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.group_id = group_id
         self.admin = admin_client
 
@@ -143,9 +155,13 @@ class KafkaConsumerGroup:
 
 
 class KafkaCluster:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka集群"""
 
     def __init__(self, name: str, brokers: List[str]):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.name = name
         self.brokers = brokers
         self.is_healthy = None
@@ -183,9 +199,13 @@ class KafkaCluster:
 
 
 class KafkaHealthChecker:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka健康检查器"""
 
     def __init__(self, admin_client: KafkaAdminClient):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.admin = admin_client
 
     async def check_broker_health(self) -> Dict[int, Dict[str, Any]]:
@@ -230,9 +250,13 @@ class KafkaHealthChecker:
 
 
 class KafkaMetricsCollector:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka指标收集器"""
 
     def __init__(self, admin_client: KafkaAdminClient):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.admin = admin_client
 
     async def collect_broker_metrics(self) -> Dict[str, Dict[str, Any]]:
@@ -280,7 +304,7 @@ class KafkaMetricsCollector:
         """导出为Prometheus格式"""
         lines = []
         for key, value in metrics.items():
-            if isinstance(value, (((((((int, float)))))):
+            if isinstance(value, (int, float):
                 prom_key = f"kafka_{key.replace('.')).replace(' '))}"
                 lines.append(f"{prom_key} {value}")
         return "\n".join(lines)

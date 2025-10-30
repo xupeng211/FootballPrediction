@@ -15,6 +15,8 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class KafkaConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Kafka基础配置"""
 
     # 连接配置
@@ -44,6 +46,8 @@ class KafkaConfig:
 
 @dataclass
 class TopicConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """Topic配置"""
 
     name: str
@@ -55,6 +59,8 @@ class TopicConfig:
 
 
 class StreamConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     流式处理配置管理器
 
@@ -63,6 +69,8 @@ class StreamConfig:
     """
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()
 
@@ -76,11 +84,15 @@ class StreamConfig:
             ),
             producer_acks=os.getenv("KAFKA_PRODUCER_ACKS", "all"),
             producer_retries=int(os.getenv("KAFKA_PRODUCER_RETRIES", "3")),
-            consumer_group_id=os.getenv("KAFKA_CONSUMER_GROUP_ID", "football-prediction-consumers"),
+            consumer_group_id=os.getenv(
+                "KAFKA_CONSUMER_GROUP_ID", "football-prediction-consumers"
+            ),
             consumer_client_id=os.getenv(
                 "KAFKA_CONSUMER_CLIENT_ID", "football-prediction-consumer"
             ),
-            consumer_auto_offset_reset=os.getenv("KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest"),
+            consumer_auto_offset_reset=os.getenv(
+                "KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest"
+            ),
         )
 
     def _init_topics(self) -> Dict[str, TopicConfig]:
@@ -127,7 +139,9 @@ class StreamConfig:
             "max.in.flight.requests.per.connection": 1,  # 保证消息顺序
         }
 
-    def get_consumer_config(self, consumer_group_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_consumer_config(
+        self, consumer_group_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """获取消费者配置"""
         group_id = consumer_group_id or self.kafka_config.consumer_group_id
 

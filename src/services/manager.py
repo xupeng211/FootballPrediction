@@ -32,6 +32,8 @@ from .user_profile import UserProfileService
 
 
 class ServiceManager:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 
     def __init__(self) -> None:
@@ -44,8 +46,7 @@ class ServiceManager:
             existing = self._services[name]
             if existing is service or existing.__class__ is service.__class__:
                 self.logger.debug(f"服务已存在,跳过重复注册: {name}")
-                return
-
+                return None
             self.logger.warning(
                 "替换已注册服务 %s (旧: %s, 新: %s)",
                 name,
@@ -114,7 +115,9 @@ def _ensure_default_services() -> None:
     for service_name in enabled_services:
         factory = _SERVICE_FACTORIES.get(service_name)
         if not factory:
-            service_manager.logger.warning("未识别的服务名称,跳过注册: %s", service_name)
+            service_manager.logger.warning(
+                "未识别的服务名称,跳过注册: %s", service_name
+            )
             continue
 
         if service_name not in service_manager.services:

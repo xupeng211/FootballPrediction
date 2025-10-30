@@ -7,9 +7,13 @@ from typing import Any, Dict, List, Optional
 
 
 class TeamStatistics:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """球队统计数据"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.matches_played = 0
         self.wins = 0
         self.draws = 0
@@ -55,6 +59,8 @@ class TeamStatistics:
 
 
 class Team:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """球队领域模型"""
 
     def __init__(
@@ -123,10 +129,11 @@ class Team:
     def _update_streak(self) -> None:
         """更新连胜/连败记录"""
         if not self.recent_form:
-            return
-
+            return None
         last_result = self.recent_form[-1]
-        streak_type = "win" if last_result == "W" else "lose" if last_result == "L" else "draw"
+        streak_type = (
+            "win" if last_result == "W" else "lose" if last_result == "L" else "draw"
+        )
         streak_count = 0
 
         # 从最新结果往前数

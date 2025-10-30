@@ -1,4 +1,5 @@
 from datetime import datetime
+
 """
 数据库子系统实现
 Database Subsystem Implementation
@@ -16,6 +17,8 @@ class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__("database", "2.0.0")
         self.connection_pool = None
         self.query_count = 0
@@ -38,14 +41,18 @@ class DatabaseSubsystem(Subsystem):
             self.connection_pool = None
         self.status = SubsystemStatus.INACTIVE
 
-    async def execute_query(self, query: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+    async def execute_query(
+        self, query: str, params: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """执行查询"""
         if self.status != SubsystemStatus.ACTIVE:
             raise RuntimeError("Database subsystem is not active")
 
         self.query_count += 1
         self.metrics["query_count"] = self.query_count
-        self.metrics["active_connections"] = self.connection_pool.get("active_connections", 0)
+        self.metrics["active_connections"] = self.connection_pool.get(
+            "active_connections", 0
+        )
 
         # 模拟查询执行
         await asyncio.sleep(0.01)

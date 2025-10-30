@@ -28,6 +28,8 @@ class TeamStatus(Enum):
 
 @dataclass
 class Team:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """队伍实体"""
 
     id: int
@@ -39,6 +41,8 @@ class Team:
 
 @dataclass
 class Match:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛实体"""
 
     id: int
@@ -55,6 +59,8 @@ class Match:
 
 @dataclass
 class League:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """联赛实体"""
 
     id: int
@@ -66,6 +72,8 @@ class League:
 
 @dataclass
 class Prediction:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测实体"""
 
     id: int

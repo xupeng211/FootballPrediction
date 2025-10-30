@@ -1,4 +1,3 @@
-from typing import Optional, Union, Callable, Any, List, Dict
 """
 配置管理器模块 - Phase 4B实现
 
@@ -6,12 +5,8 @@ from typing import Optional, Union, Callable, Any, List, Dict
 - 配置文件加载和解析
 - 环境变量管理和验证
 - 配置值类型转换和验证
-- 配置缓存和热重载
 - 多环境配置支持
-- 配置安全加密
-- 配置依赖注入集成
-- 配置变更通知机制
-""""
+"""
 
 import base64
 import logging
@@ -20,7 +15,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-
+from typing import Optional, Union, Callable, Any, List, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -42,15 +37,48 @@ class ConfigSource(ABC):
 class FileConfigSource(ConfigSource):
     """文件配置源"""
 
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+
+    async def load(self) -> Dict[str, Any]:
+        """从文件加载配置"""
+        try:
+            with open(self.file_path, 'r') as f:
+                content = f.read()
+            # 简化处理：假设文件包含有效的Python字典
+            return eval(content)  # 在实际环境中应该使用更安全的方法
+        except Exception as e:
+            logger.error(f"Failed to load config from {self.file_path}: {e}")
+            return {}
+
+    async def save(self, config: Dict[str, Any]) -> bool:
+        """保存配置到文件"""
+        try:
+            with open(self.file_path, 'w') as f:
+                f.write(str(config))
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save config to {self.file_path}: {e}")
+            return False
+
 
 class EnvironmentConfigSource(ConfigSource):
     """环境变量配置源"""
+
+    async def load(self) -> Dict[str, Any]:
+        """从环境变量加载配置"""
+        return {
+            key: value for key, value in os.environ.items()
+        }
+
+    async def save(self, config: Dict[str, Any]) -> bool:
+        """保存配置到环境变量（只读）"""
+        return False
 
 
 @dataclass
 class ConfigCache:
     """配置缓存"""
-
     data: Dict[str, Any] = None
     timestamp: datetime = None
     ttl: int = 300  # 5分钟缓存
@@ -59,91 +87,9 @@ class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
 
-class ConfigManager:
-    """配置管理器"""
-
-    pass
-
-
-# TODO: 方法 def _convert_value 过长(50行),建议拆分
-# 全局配置管理器实例
-_global_config_manager = None
-
-
-class ConfigCache:
-    """配置缓存类"""
-
-    pass
-
-
-class ConfigValidator:
-    """配置验证器"""
-
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行),建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
-class ConfigCache:
-    """配置缓存类 - 第二个定义"""
-
-    pass
-
-
-class ConfigValidator:
-    """配置验证器"""
-
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
-class ConfigCache:
-    """配置验证器 - 第二个定义"""
-
-    pass
-
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行),建议拆分
-class ConfigCache:
-class ConfigValidator:
-    """配置验证器"""
-
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
-class ConfigCache:
-class ConfigValidator:
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
-class ConfigCache:
-class ConfigValidator:
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
-class ConfigCache:
-class ConfigValidator:
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
-class ConfigCache:
-class ConfigValidator:
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行),建议拆分
-class ConfigCache:
-class ConfigValidator:
     def __init__(self):
-        pass
+        self._rules: Dict[str, Callable[[Any], bool]] = {}
+
     def add_rule(self, key: str, validator: Callable[[Any], bool]) -> None:
         """添加验证规则"""
         self._rules[key] = validator
@@ -156,57 +102,63 @@ class ConfigValidator:
                 errors.append(f"Invalid value for {key}")
         return errors
 
+
+class ConfigManager:
+    """配置管理器"""
+
+    def __init__(self):
+        self.sources: List[ConfigSource] = []
+        self._config: Dict[str, Any] = {}
+        self._validator = ConfigValidator()
+        self._encryption_key = self._generate_encryption_key()
+
     def add_source(self, source: ConfigSource) -> None:
         """添加配置源"""
         self.sources.append(source)
 
     def get(self, key: str) -> Optional[Any]:
-        """获取缓存值"""
-        if key in self._cache:
-            if time.time() - self._timestamps[key] < self._ttl:
-                return self._cache[key]
-            else:
-                del self._cache[key]
-                del self._timestamps[key]
-        return None
+        """获取配置值"""
+        return self._config.get(key)
 
     def set(self, key: str, value: Any) -> None:
-        """设置缓存值"""
-        self._cache[key] = value
-        self._timestamps[key] = time.time()
+        """设置配置值"""
+        self._config[key] = value
 
     def _generate_encryption_key(self) -> str:
         """生成加密密钥"""
         return base64.b64encode(
             os.urandom(32)  # TODO: 将魔法数字 32 提取为常量
-        ).decode()  # TODO: 将魔法数字 32 提取为常量
+        ).decode()
 
-    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-    # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行),建议拆分
-# TODO: 方法 def _convert_value 过长(50行),建议拆分
-    def _convert_value(self, value: str) -> Union[str, int, float, bool]:
-        """尝试转换值的类型"""
-        # 布尔值
-        if value.lower() in ("true", "false"):
-            return value.lower() == "true"
-
-        # 整数
+    def encrypt_value(self, value: str) -> str:
+        """加密配置值"""
         try:
-            return int(value)
-        except ValueError:
-            pass
+            encoded = value.encode()
+            key_bytes = self._encryption_key.encode()
 
-        # 浮点数
+            encrypted = bytearray()
+            for i, byte in enumerate(encoded):
+                key_byte = key_bytes[i % len(key_bytes)]
+                encrypted.append(byte ^ key_byte)
+
+            return base64.b64encode(encrypted).decode()
+        except Exception:
+            return ""
+
+    def decrypt_value(self, encrypted_value: str) -> str:
+        """解密配置值"""
         try:
-            return float(value)
-        except ValueError:
-            pass
+            decoded = base64.b64decode(encrypted_value)
+            key_bytes = self._encryption_key.encode()
 
-        # 默认返回字符串
-        return value
+            decrypted = bytearray()
+            for i, byte in enumerate(decoded):
+                key_byte = key_bytes[i % len(key_bytes)]
+                decrypted.append(byte ^ key_byte)
+
+            return decrypted.decode()
+        except Exception:
+            return ""
 
     async def load_all(self) -> Dict[str, Any]:
         """加载所有配置源"""
@@ -237,38 +189,11 @@ class ConfigValidator:
 
         return success_count > 0
 
-    def encrypt_value(self, value: str) -> str:
-        """加密配置值"""
-        try:
-            encoded = value.encode()
-            key_bytes = self._encryption_key.encode()
-
-            encrypted = bytearray()
-            for i, byte in enumerate(encoded):
-                key_byte = key_bytes[i % len(key_bytes)]
-                encrypted.append(byte ^ key_byte)
-
-            return base64.b64encode(encrypted).decode()
-            except Exception:
-            return ""
-
-    def decrypt_value(self, encrypted_value: str) -> str:
-        """解密配置值"""
-        try:
-            decoded = base64.b64decode(encrypted_value)
-            key_bytes = self._encryption_key.encode()
-
-            decrypted = bytearray()
-            for i, byte in enumerate(decoded):
-                key_byte = key_bytes[i % len(key_bytes)]
-                decrypted.append(byte ^ key_byte)
-
-            return decrypted.decode()
-            except Exception:
-            return ""
-
 
 # 全局配置管理器实例
+_global_config_manager = None
+
+
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
     global _global_config_manager
@@ -282,8 +207,6 @@ def get_default_config_manager() -> ConfigManager:
     return get_config_manager()
 
 
-# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行),建议拆分
 def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
     """根据环境获取配置"""
     if env is None:
@@ -305,7 +228,7 @@ def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
             ),
             "redis_url": os.getenv(
                 "REDIS_URL", "redis://localhost:6379/0"  # TODO: 将魔法数字 6379 提取为常量
-            ),  # TODO: 将魔法数字 6379 提取为常量
+            ),
             "log_level": "INFO",
             "debug": False,
         }
@@ -317,7 +240,7 @@ def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
             ),
             "redis_url": os.getenv(
                 "REDIS_URL", "redis://localhost:6379/1"  # TODO: 将魔法数字 6379 提取为常量
-            ),  # TODO: 将魔法数字 6379 提取为常量
+            ),
             "log_level": "DEBUG",
             "debug": True,
         }
@@ -329,17 +252,7 @@ def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
             ),
             "redis_url": os.getenv(
                 "REDIS_URL", "redis://localhost:6379/0"  # TODO: 将魔法数字 6379 提取为常量
-            ),  # TODO: 将魔法数字 6379 提取为常量
+            ),
             "log_level": "DEBUG",
             "debug": True,
         }
-
-
-class ConfigCache:
-    def clear(self) -> None:
-        """清空缓存"""
-        self._cache.clear()
-        self._timestamps.clear()
-
-
-class ConfigValidator:

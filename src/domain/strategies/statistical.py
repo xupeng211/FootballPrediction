@@ -26,7 +26,7 @@ from .base import (
 
 
 class StatisticalStrategy(PredictionStrategy):
-    """统计分析预测策略
+    """统计分析预测策略"
 
     基于历史数据的统计分析进行预测,包括:
     - 进球率统计
@@ -37,6 +37,8 @@ class StatisticalStrategy(PredictionStrategy):
     """
 
     def __init__(self, name: str = "statistical_analyzer"):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__(name, StrategyType.STATISTICAL)
         self._team_stats = {}
         self._head_to_head_stats = {}
@@ -46,7 +48,7 @@ class StatisticalStrategy(PredictionStrategy):
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
-        """初始化统计策略
+        """初始化统计策略"
 
         Args:
             config: 配置参数,包含:
@@ -139,7 +141,9 @@ class StatisticalStrategy(PredictionStrategy):
 
         return output
 
-    async def batch_predict(self, inputs: List[PredictionInput]) -> List[PredictionOutput]:
+    async def batch_predict(
+        self, inputs: List[PredictionInput]
+    ) -> List[PredictionOutput]:
         """批量预测"""
         outputs = []
         for input_data in inputs:
@@ -181,12 +185,12 @@ class StatisticalStrategy(PredictionStrategy):
         for home_goals in range(0, 6):
             for away_goals in range(0, 6):
                 # 泊松概率公式
-                prob_home = (math.exp(-lambda_home) * lambda_home**home_goals) / math.factorial(
-                    home_goals
-                )
-                prob_away = (math.exp(-lambda_away) * lambda_away**away_goals) / math.factorial(
-                    away_goals
-                )
+                prob_home = (
+                    math.exp(-lambda_home) * lambda_home**home_goals
+                ) / math.factorial(home_goals)
+                prob_away = (
+                    math.exp(-lambda_away) * lambda_away**away_goals
+                ) / math.factorial(away_goals)
                 prob = prob_home * prob_away
 
                 if prob > max_prob:
@@ -195,7 +199,9 @@ class StatisticalStrategy(PredictionStrategy):
 
         return best_score
 
-    async def _historical_average_prediction(self, input_data: PredictionInput) -> Tuple[int, int]:
+    async def _historical_average_prediction(
+        self, input_data: PredictionInput
+    ) -> Tuple[int, int]:
         """基于历史平均得分预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -217,7 +223,9 @@ class StatisticalStrategy(PredictionStrategy):
 
         return (int(round(avg_home)), int(round(avg_away)))
 
-    async def _team_form_prediction(self, input_data: PredictionInput) -> Tuple[int, int]:
+    async def _team_form_prediction(
+        self, input_data: PredictionInput
+    ) -> Tuple[int, int]:
         """基于球队近期状态预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -262,7 +270,9 @@ class StatisticalStrategy(PredictionStrategy):
 
         return (int(round(home_avg)), int(round(away_avg)))
 
-    async def _head_to_head_prediction(self, input_data: PredictionInput) -> Tuple[int, int]:
+    async def _head_to_head_prediction(
+        self, input_data: PredictionInput
+    ) -> Tuple[int, int]:
         """基于对战历史预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -372,12 +382,12 @@ class StatisticalStrategy(PredictionStrategy):
 
         for home_goals in range(0, 10):
             for away_goals in range(0, 10):
-                prob_home = (math.exp(-home_avg) * home_avg**home_goals) / math.factorial(
-                    home_goals
-                )
-                prob_away = (math.exp(-away_avg) * away_avg**away_goals) / math.factorial(
-                    away_goals
-                )
+                prob_home = (
+                    math.exp(-home_avg) * home_avg**home_goals
+                ) / math.factorial(home_goals)
+                prob_away = (
+                    math.exp(-away_avg) * away_avg**away_goals
+                ) / math.factorial(away_goals)
                 prob = prob_home * prob_away
 
                 if home_goals > away_goals:
@@ -405,7 +415,9 @@ class StatisticalStrategy(PredictionStrategy):
         # 模拟数据
         return [(1, 2), (0, 1), (2, 2), (1, 3), (0, 0)]
 
-    async def _get_recent_games(self, team_id: int, limit: int) -> List[Tuple[int, int, bool]]:
+    async def _get_recent_games(
+        self, team_id: int, limit: int
+    ) -> List[Tuple[int, int, bool]]:
         """获取最近比赛"""
         # 模拟数据,返回(主场得分, 客场得分, 是否主场)
         return [(2, 1, True), (1, 2, False), (3, 0, True), (0, 0, False), (2, 1, True)]
@@ -435,11 +447,12 @@ class StatisticalStrategy(PredictionStrategy):
             },
         ]
 
-    async def update_metrics(self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]) -> None:
+    async def update_metrics(
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+    ) -> None:
         """更新策略性能指标"""
         if not actual_results:
-            return
-
+            return None
         total_predictions = len(actual_results)
         correct_predictions = 0
         score_errors = []
@@ -449,20 +462,29 @@ class StatisticalStrategy(PredictionStrategy):
             actual_away = actual.get("actual_away_score", 0)
 
             # 精确匹配
-            if pred.predicted_home == actual_home and pred.predicted_away == actual_away:
+            if (
+                pred.predicted_home == actual_home
+                and pred.predicted_away == actual_away
+            ):
                 correct_predictions += 1
 
             # 计算得分误差
-            error = abs(pred.predicted_home - actual_home) + abs(pred.predicted_away - actual_away)
+            error = abs(pred.predicted_home - actual_home) + abs(
+                pred.predicted_away - actual_away
+            )
             score_errors.append(error)
 
         # 计算指标
-        accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0
+        accuracy = (
+            correct_predictions / total_predictions if total_predictions > 0 else 0
+        )
         mean_error = np.mean(score_errors) if score_errors else 0
         precision = max(0, 1 - mean_error / 5)  # 简化的精确率
         recall = accuracy  # 简化处理
         f1_score = (
-            2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+            2 * (precision * recall) / (precision + recall)
+            if (precision + recall) > 0
+            else 0
         )
 
         self._metrics = StrategyMetrics(

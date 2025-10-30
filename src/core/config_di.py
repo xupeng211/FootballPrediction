@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ServiceConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """服务配置"""
 
     name: str
@@ -38,6 +40,8 @@ class ServiceConfig:
 
 @dataclass
 class DIConfiguration:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """依赖注入配置"""
 
     services: Dict[str, ServiceConfig] = field(default_factory=dict)
@@ -48,9 +52,13 @@ class DIConfiguration:
 
 
 class ConfigurationBinder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """配置绑定器"""
 
     def __init__(self, container: DIContainer):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.container = container
         self.auto_binder = AutoBinder(container)
         self.config: Optional[DIConfiguration] = None
@@ -70,7 +78,9 @@ class ConfigurationBinder:
                 elif config_path.suffix.lower() == ".json":
                     data = json.load(f)
                 else:
-                    raise DependencyInjectionError(f"不支持的配置文件格式: {config_path.suffix}")
+                    raise DependencyInjectionError(
+                        f"不支持的配置文件格式: {config_path.suffix}"
+                    )
 
             # 处理空文件情况
             if data is None:
@@ -207,11 +217,15 @@ class ConfigurationBinder:
                 lifetime = self._parse_lifetime(config.lifetime)
 
                 if lifetime == ServiceLifetime.SINGLETON:
-                    self.container.register_singleton(service_type, factory=factory_func)
+                    self.container.register_singleton(
+                        service_type, factory=factory_func
+                    )
                 elif lifetime == ServiceLifetime.SCOPED:
                     self.container.register_scoped(service_type, factory=factory_func)
                 else:
-                    self.container.register_transient(service_type, factory=factory_func)
+                    self.container.register_transient(
+                        service_type, factory=factory_func
+                    )
 
                 logger.debug(f"注册工厂服务: {service_name}")
 
@@ -256,7 +270,7 @@ class ConfigurationBinder:
         try:
             # 这里可以实现更复杂的条件评估逻辑
             if condition.startswith("profile =="):
-                profile_name = condition.split("'")[1]
+                profile_name = condition.split("'")[1]'
                 return self._active_profile == profile_name
 
             # 添加更多条件评估...
@@ -269,9 +283,13 @@ class ConfigurationBinder:
 
 
 class ConfigurationBuilder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """配置构建器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.config = DIConfiguration()
 
     def add_service(
@@ -326,7 +344,7 @@ def create_config_from_dict(config_data: Dict[str, Any]) -> DIConfiguration:
 def generate_sample_config(format: str = "yaml") -> str:
     """生成示例配置"""
     if format.lower() == "yaml":
-        return """# 依赖注入配置
+        return """# 依赖注入配置"
 services:
   # 数据库服务
   database_service:
@@ -382,7 +400,7 @@ imports:
   - configs/di-repositories.yaml
 """
     else:  # JSON
-        return """{
+        return """{"
   "services": {
     "database_service": {
       "implementation": "src.services.database.DatabaseService",

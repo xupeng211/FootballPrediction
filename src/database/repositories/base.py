@@ -29,7 +29,9 @@ class BaseRepository(ABC, Generic[T]):
     Provides standard CRUD operations, all concrete repositories should inherit from this class.
     """
 
-    def __init__(self, model_class: Type[T], db_manager: Optional[DatabaseManager] = None):
+    def __init__(
+        self, model_class: Type[T], db_manager: Optional[DatabaseManager] = None
+    ):
         """
         初始化仓储
 
@@ -45,7 +47,9 @@ class BaseRepository(ABC, Generic[T]):
     # CRUD 基础操作
     # ========================================
 
-    async def create(self, obj_data: Dict[str, Any], session: Optional[AsyncSession] = None) -> T:
+    async def create(
+        self, obj_data: Dict[str, Any], session: Optional[AsyncSession] = None
+    ) -> T:
         """
         创建新记录
 
@@ -83,7 +87,9 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = select(self.model_class).where(getattr(self.model_class, "id") == obj_id)
+            stmt = select(self.model_class).where(
+                getattr(self.model_class, "id") == obj_id
+            )
             result = await sess.execute(stmt)
             return result.scalar_one_or_none()
 
@@ -151,7 +157,9 @@ class BaseRepository(ABC, Generic[T]):
 
             return result.scalar_one_or_none()
 
-    async def delete(self, obj_id: Union[int, str], session: Optional[AsyncSession] = None) -> bool:
+    async def delete(
+        self, obj_id: Union[int, str], session: Optional[AsyncSession] = None
+    ) -> bool:
         """
         删除记录
 
@@ -166,7 +174,9 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(getattr(self.model_class, "id") == obj_id)
+            stmt = delete(self.model_class).where(
+                getattr(self.model_class, "id") == obj_id
+            )
             result = await sess.execute(stmt)
             await sess.commit()
 
@@ -267,7 +277,9 @@ class BaseRepository(ABC, Generic[T]):
             result = await sess.execute(stmt)
             return len(result.scalars().all())
 
-    async def exists(self, filters: Dict[str, Any], session: Optional[AsyncSession] = None) -> bool:
+    async def exists(
+        self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
+    ) -> bool:
         """
         检查记录是否存在
 
@@ -362,7 +374,9 @@ class BaseRepository(ABC, Generic[T]):
             if session:
                 sess = session
 
-            stmt = delete(self.model_class).where(getattr(self.model_class, "id").in_(ids))
+            stmt = delete(self.model_class).where(
+                getattr(self.model_class, "id").in_(ids)
+            )
             result = await sess.execute(stmt)
             await sess.commit()
 

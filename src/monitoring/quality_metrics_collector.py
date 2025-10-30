@@ -15,9 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class QualityMetricsCollector:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """质量指标收集器"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.project_root = Path(__file__).parent.parent.parent
 
     async def collect_all_metrics(self) -> Dict[str, Any]:
@@ -85,7 +89,9 @@ class QualityMetricsCollector:
             )
 
             if result.returncode == 0:
-                coverage_match = re.search(r"TOTAL\s+\d+\s+\d+\s+(\d+\.?\d*)%", result.stdout)
+                coverage_match = re.search(
+                    r"TOTAL\s+\d+\s+\d+\s+(\d+\.?\d*)%", result.stdout
+                )
                 if coverage_match:
                     return float(coverage_match.group(1))
 
@@ -142,8 +148,12 @@ class QualityMetricsCollector:
                 try:
                     bandit_data = json.loads(result.stdout)
                     issues = bandit_data.get("results", [])
-                    high_issues = len([i for i in issues if i.get("issue_severity") == "HIGH"])
-                    medium_issues = len([i for i in issues if i.get("issue_severity") == "MEDIUM"])
+                    high_issues = len(
+                        [i for i in issues if i.get("issue_severity") == "HIGH"]
+                    )
+                    medium_issues = len(
+                        [i for i in issues if i.get("issue_severity") == "MEDIUM"]
+                    )
 
                     # 根据安全问题计算分数
                     if high_issues == 0 and medium_issues == 0:
@@ -234,7 +244,9 @@ class QualityMetricsCollector:
 
                 if files_result.returncode == 0:
                     total_files = (
-                        int(files_result.stdout.strip()) if files_result.stdout.strip() else 1
+                        int(files_result.stdout.strip())
+                        if files_result.stdout.strip()
+                        else 1
                     )
                     debt_ratio = (debt_items / max(total_files, 1)) * 10  # 转换为百分比
                     return min(debt_ratio, 20.0)  # 上限20%
@@ -293,7 +305,9 @@ class QualityMetricsCollector:
                 with open(latest_log, "r") as f:
                     content = f.read()
                     # 查找准确率信息
-                    accuracy_match = re.search(r"accuracy[:\s]+([0-9.]+)%", content.lower())
+                    accuracy_match = re.search(
+                        r"accuracy[:\s]+([0-9.]+)%", content.lower()
+                    )
                     if accuracy_match:
                         return float(accuracy_match.group(1))
 

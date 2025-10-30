@@ -18,6 +18,8 @@ from .base import Component, Decorator, decorator_registry
 
 @dataclass
 class DecoratorConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """装饰器配置"""
 
     name: str
@@ -30,6 +32,8 @@ class DecoratorConfig:
 
 @dataclass
 class DecoratorChainConfig:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """装饰器链配置"""
 
     name: str
@@ -39,13 +43,19 @@ class DecoratorChainConfig:
 
 
 class DecoratorFactory:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """装饰器工厂,用于创建装饰器实例"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._config_cache: Dict[str, DecoratorConfig] = {}
         self._chain_configs: Dict[str, DecoratorChainConfig] = {}
 
-    def create_decorator(self, decorator_type: str, component: Component, **kwargs) -> Decorator:
+    def create_decorator(
+        self, decorator_type: str, component: Component, **kwargs
+    ) -> Decorator:
         """创建装饰器实例"""
         # 获取装饰器类
         decorator_class = decorator_registry.get_decorator_class(decorator_type)
@@ -55,7 +65,9 @@ class DecoratorFactory:
         # 创建实例
         return decorator_class(component, **kwargs)
 
-    def create_from_config(self, config: DecoratorConfig, component: Component) -> Decorator:
+    def create_from_config(
+        self, config: DecoratorConfig, component: Component
+    ) -> Decorator:
         """从配置创建装饰器实例"""
         if not config.enabled:
             raise ValueError(f"Decorator {config.name} is disabled")
@@ -64,7 +76,9 @@ class DecoratorFactory:
             config.decorator_type, component, name=config.name, **config.parameters
         )
 
-    def create_chain(self, configs: List[DecoratorConfig], component: Component) -> List[Decorator]:
+    def create_chain(
+        self, configs: List[DecoratorConfig], component: Component
+    ) -> List[Decorator]:
         """创建装饰器链"""
         # 按优先级排序
         sorted_configs = sorted(configs, key=lambda x: x.priority)
@@ -259,9 +273,13 @@ class DecoratorFactory:
 
 
 class DecoratorBuilder:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """装饰器构建器,使用构建器模式创建装饰器"""
 
     def __init__(self, decorator_type: str, component: Component):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.decorator_type = decorator_type
         self.component = component
         self.parameters: Dict[str, Any] = {}

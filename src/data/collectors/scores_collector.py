@@ -1,8 +1,7 @@
 from typing import Set
 import json
-from src.core.config import 
-
-""""
+from src.core.config 
+"""
 实时比分采集器
 
 实现足球比赛实时比分和事件数据的采集逻辑。
@@ -15,7 +14,7 @@ from src.core.config import
 - 关键事件记录（进球,红牌,换人等）
 
 基于 DATA_DESIGN.md 第1.1节设计.
-""""
+"""
 
 import asyncio
 from datetime import datetime
@@ -50,12 +49,12 @@ class EventType(Enum):
 
 
 class ScoresCollector(DataCollector):
-    """"
+    """
     实时比分采集器
 
     负责采集比赛的实时比分,状态变化和关键事件,
     支持WebSocket实时推送和HTTP轮询两种模式.
-    """"
+    """
 
     def __init__(
         self,
@@ -66,7 +65,7 @@ class ScoresCollector(DataCollector):
         polling_interval: int = 120,  # 轮询间隔（秒）
         **kwargs,
     ):
-        """"
+        """
         初始化实时比分采集器
 
         Args:
@@ -75,7 +74,7 @@ class ScoresCollector(DataCollector):
             base_url: HTTP API基础URL
             websocket_url: WebSocket连接URL
             polling_interval: 轮询间隔（秒）
-        """"
+        """
         super().__init__(data_source, **kwargs)
         self.api_key = api_key
         self.base_url = base_url
@@ -117,7 +116,7 @@ class ScoresCollector(DataCollector):
         use_websocket: bool = True,
         **kwargs,
     ) -> CollectionResult:
-        """"
+        """
         采集实时比分数据
 
         实时采集策略:
@@ -132,7 +131,7 @@ class ScoresCollector(DataCollector):
 
         Returns:
             CollectionResult: 采集结果
-        """"
+        """
         collected_data = []
         success_count = 0
         error_count = 0
@@ -232,7 +231,7 @@ class ScoresCollector(DataCollector):
             )
 
     async def _collect_websocket_scores(self, match_ids: List[str]) -> List[Dict[str, Any]]:
-        """"
+        """
         通过WebSocket采集实时比分数据
 
         Args:
@@ -240,16 +239,16 @@ class ScoresCollector(DataCollector):
 
         Returns:
             List[Dict[str, Any]]: 比分数据列表
-        """"
+        """
         return await self._collect_via_websocket(match_ids)
 
     async def _get_live_matches(self) -> List[str]:
-        """"
+        """
         获取当前进行中的比赛列表
 
         Returns:
             List[str]: 进行中的比赛ID列表
-        """"
+        """
         try:
             # 目前返回空列表作为占位符
             return []
@@ -262,7 +261,7 @@ class ScoresCollector(DataCollector):
         match_ids: List[str],
         duration: int = 3600,  # 连接持续时间（秒）
     ) -> List[Dict[str, Any]]:
-        """"
+        """
         通过WebSocket采集实时数据
 
         Args:
@@ -271,7 +270,7 @@ class ScoresCollector(DataCollector):
 
         Returns:
             List[Dict]: 采集到的实时数据
-        """"
+        """
         collected_data = []
 
         try:
@@ -322,7 +321,7 @@ class ScoresCollector(DataCollector):
         return collected_data
 
     async def _collect_via_polling(self, match_ids: List[str]) -> List[Dict[str, Any]]:
-        """"
+        """
         通过HTTP轮询采集实时数据
 
         Args:
@@ -330,7 +329,7 @@ class ScoresCollector(DataCollector):
 
         Returns:
             List[Dict]: 采集到的实时数据
-        """"
+        """
         collected_data = []
 
         try:
@@ -359,7 +358,7 @@ class ScoresCollector(DataCollector):
         return collected_data
 
     async def _get_match_live_data(self, match_id: str) -> Optional[Dict[str, Any]]:
-        """"
+        """
         获取指定比赛的实时数据
 
         Args:
@@ -367,7 +366,7 @@ class ScoresCollector(DataCollector):
 
         Returns:
             Optional[Dict]: 比赛实时数据,失败返回None
-        """"
+        """
         try:
             url = f"{self.base_url}/matches/{match_id}"
             headers = {"X-Auth-Token": self.api_key} if self.api_key else {}
@@ -380,7 +379,7 @@ class ScoresCollector(DataCollector):
             return None
 
     async def _clean_live_data(self, raw_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """"
+        """
         清洗和标准化实时比分数据
 
         Args:
@@ -388,7 +387,7 @@ class ScoresCollector(DataCollector):
 
         Returns:
             Optional[Dict]: 清洗后的数据,无效则返回None
-        """"
+        """
         try:
             # 基础字段验证
             if not raw_data.get("id"):
@@ -437,7 +436,7 @@ class ScoresCollector(DataCollector):
             return None
 
     def _is_match_finished(self, status: str) -> bool:
-        """"
+        """
         检查比赛是否已结束
 
         Args:
@@ -445,20 +444,20 @@ class ScoresCollector(DataCollector):
 
         Returns:
             bool: 是否已结束
-        """"
+        """
         finished_statuses = ["FINISHED", "COMPLETED", "CANCELLED", "POSTPONED"]
         return status.upper() in finished_statuses
 
     async def start_continuous_monitoring(
         self, match_ids: Optional[List[str]] = None, use_websocket: bool = True
     ) -> None:
-        """"
+        """
         启动持续监控模式（后台任务）
 
         Args:
             match_ids: 需要监控的比赛ID列表
             use_websocket: 是否使用WebSocket连接
-        """"
+        """
         self.logger.info("Starting continuous live scores monitoring...")
 
         while True:

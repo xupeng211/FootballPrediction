@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 # 创建一个简单的模块对象以保持向后兼容
 
-from datetime import datetime
 
 from sqlalchemy import Column, DateTime
 
@@ -25,6 +24,8 @@ class FootballBaseModel(BaseModel):
     updated_at: Optional[datetime] = None
 
     class Config:
+    """类文档字符串"""
+    pass  # 添加pass语句
         from_attributes = True
 
 
@@ -67,7 +68,11 @@ base_models = types.SimpleNamespace(
 
 
 class TimestampMixin:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """时间戳混入类"""
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )

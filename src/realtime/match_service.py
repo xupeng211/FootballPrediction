@@ -1,11 +1,11 @@
-""""
+"""
 实时比赛状态监控服务
 
 Realtime Match Status Monitoring Service
 
 监控比赛状态变化并提供实时更新推送
 Monitors match status changes and provides real-time update push functionality
-""""
+"""
 
 import asyncio
 import logging
@@ -16,7 +16,7 @@ from enum import Enum
 
 import secrets
 from .events import (
-from src.core.config import 
+from src.core.config 
     EventType,
     RealtimeEvent,
     create_match_score_changed_event,
@@ -40,6 +40,8 @@ class MatchStatus(str, Enum):
 
 @dataclass
 class MatchInfo:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """比赛信息"""
 
     match_id: int
@@ -56,6 +58,8 @@ class MatchInfo:
     subscribers: Set[str] = field(default_factory=set)
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         if self.last_update is None:
             self.last_update = datetime.now()
 
@@ -100,9 +104,13 @@ class MatchInfo:
 
 
 class RealtimeMatchService:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """实时比赛服务"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.websocket_manager = get_websocket_manager()
         self.subscription_manager = get_subscription_manager()
         self.logger = logging.getLogger(f"{__name__}.RealtimeMatchService")
@@ -152,7 +160,7 @@ class RealtimeMatchService:
         status: MatchStatus = MatchStatus.UPCOMING,
         start_time: Optional[datetime] = None,
     ) -> bool:
-        """"
+        """
         添加比赛到监控列表
 
         Args:
@@ -165,7 +173,7 @@ class RealtimeMatchService:
 
         Returns:
             是否添加成功
-        """"
+        """
         if len(self.matches) >= self.max_matches:
             await self._cleanup_old_matches()
 
@@ -211,7 +219,7 @@ class RealtimeMatchService:
         away_score: int,
         minute: Optional[int] = None,
     ) -> bool:
-        """"
+        """
         更新比赛比分
 
         Args:
@@ -222,7 +230,7 @@ class RealtimeMatchService:
 
         Returns:
             是否更新成功
-        """"
+        """
         if match_id not in self.matches:
             return False
 
@@ -252,7 +260,7 @@ class RealtimeMatchService:
         status: MatchStatus,
         current_time: Optional[datetime] = None,
     ) -> bool:
-        """"
+        """
         更新比赛状态
 
         Args:
@@ -262,7 +270,7 @@ class RealtimeMatchService:
 
         Returns:
             是否更新成功
-        """"
+        """
         if match_id not in self.matches:
             return False
 

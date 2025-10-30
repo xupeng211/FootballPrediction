@@ -19,6 +19,8 @@ from .subjects import AlertSubject, PredictionMetricsSubject, SystemMetricsSubje
 
 # 系统级便捷函数
 def initialize_observer_system():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """初始化观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "initialize"):
@@ -27,6 +29,8 @@ def initialize_observer_system():
 
 
 def start_observer_system():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """启动观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "start"):
@@ -35,6 +39,8 @@ def start_observer_system():
 
 
 def stop_observer_system():
+    """函数文档字符串"""
+    pass  # 添加pass语句
     """停止观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "stop"):

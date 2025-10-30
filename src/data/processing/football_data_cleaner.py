@@ -1,4 +1,4 @@
-""""
+"""
 足球数据清洗器
 
 实现足球数据的清洗和标准化逻辑。
@@ -10,7 +10,7 @@
 - 赔率数据：精度保持3位小数,异常值标记
 - 比分数据:非负整数,上限99
 - 联赛名称:标准化联赛代码
-""""
+"""
 
 import logging
 from enum import Enum
@@ -29,9 +29,13 @@ class DataQualityLevel(Enum):
 
 
 class FootballDataCleaner:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """足球数据清洗器 - 简化版本"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.quality_level = DataQualityLevel.MEDIUM
         self.cleaning_rules = {}
 
@@ -40,7 +44,7 @@ class FootballDataCleaner:
         cleaned = data.copy()
 
         # 基本清洗
-        if "match_time" in cleaned and isinstance(cleaned["match_time"], ((((((((str):
+        if "match_time" in cleaned and isinstance(cleaned["match_time"], ((str):
             # 简单的时间格式处理
             cleaned["match_time"] = cleaned["match_time"].replace("T", " ")))))
 

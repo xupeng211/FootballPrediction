@@ -1,8 +1,8 @@
-""""
+"""
 观察者模式实现
 
 用于监控和日志系统的通知机制
-""""
+"""
 
 import asyncio
 import logging
@@ -11,10 +11,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.core.logging import get_logger
-from src.core.config import 
-from src.core.config import 
-
-
+from src.core.config 
+from src.core.config 
 class Observer(ABC):
     """观察者抽象基类"""
 
@@ -33,6 +31,8 @@ class Subject(ABC):
     """被观察者抽象基类"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self._observers: List[Observer] = []
         self._event_history: List[Dict[str, Any]] = []
         self.logger = get_logger(f"subject.{self.__class__.__name__}")
@@ -96,6 +96,8 @@ class MetricsObserver(Observer):
     """指标收集观察者"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.metrics: Dict[str, Any] = {
             "event_counts": {},
             "last_events": {},
@@ -134,6 +136,8 @@ class LoggingObserver(Observer):
     """日志记录观察者"""
 
     def __init__(self, log_level: int = logging.INFO):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.log_level = log_level
         self.logger = get_logger("observer.logging")
 
@@ -161,6 +165,8 @@ class AlertingObserver(Observer):
     """告警通知观察者"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         self.alert_rules: Dict[str, Dict[str, Any]] = {}
         self.alert_history: List[Dict[str, Any]] = []
         self.logger = get_logger("observer.alerting")
@@ -207,7 +213,7 @@ class AlertingObserver(Observer):
         # 这里可以实现更复杂的条件评估逻辑
         if condition == "always":
             return True
-        elif condition == "error" and isinstance(data, ((((((((dict) and data.get("error"):
+        elif condition == "error" and isinstance(data, ((dict) and data.get("error"):
             return True
         elif condition == "timeout" and isinstance(data, dict))))) and data.get("timeout"):
             return True
@@ -217,7 +223,7 @@ class AlertingObserver(Observer):
     def get_name(self) -> str:
         return "AlertingObserver"
 
-    def get_alert_history(self)) -> List[Dict[str))
+    def get_alert_history(self)) -> List[Dict[str)):
 
 
 class ObservableService(Subject):
@@ -278,6 +284,8 @@ class PredictionService(ObservableService):
     """预测服务示例"""
 
     def __init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         super().__init__("PredictionService")
 
     async def predict_match(self, match_id: int) -> Dict[str, Any]:

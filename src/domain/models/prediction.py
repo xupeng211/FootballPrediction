@@ -26,11 +26,15 @@ class PredictionStatus(Enum):
 
 @dataclass
 class ConfidenceScore:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """置信度值对象"""
 
     value: Decimal
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """验证置信度范围"""
         if self.value < 0 or self.value > 1:
             raise DomainError("置信度必须在 0 到 1 之间")
@@ -53,6 +57,8 @@ class ConfidenceScore:
 
 @dataclass
 class PredictionScore:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测比分值对象"""
 
     predicted_home: int
@@ -61,6 +67,8 @@ class PredictionScore:
     actual_away: Optional[int] = None
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
             raise DomainError("预测比分不能为负数")
@@ -80,7 +88,10 @@ class PredictionScore:
         """是否预测正确比分"""
         if not self.is_evaluated:
             return False
-        return self.predicted_home == self.actual_home and self.predicted_away == self.actual_away
+        return (
+            self.predicted_home == self.actual_home
+            and self.predicted_away == self.actual_away
+        )
 
     @property
     def is_correct_result(self) -> bool:
@@ -117,6 +128,8 @@ class PredictionScore:
 
 @dataclass
 class PredictionPoints:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """预测积分值对象"""
 
     total: Decimal = Decimal("0")
@@ -125,6 +138,8 @@ class PredictionPoints:
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
@@ -147,6 +162,8 @@ class PredictionPoints:
 
 @dataclass
 class Prediction:
+    """类文档字符串"""
+    pass  # 添加pass语句
     """
     预测领域模型
 
@@ -170,6 +187,8 @@ class Prediction:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
+    """函数文档字符串"""
+    pass  # 添加pass语句
         """初始化后的验证"""
         if self.user_id <= 0:
             raise DomainError("用户ID必须大于0")
@@ -191,7 +210,9 @@ class Prediction:
         if self.status != PredictionStatus.PENDING:
             raise DomainError(f"预测状态为 {self.status.value},无法修改")
 
-        self.score = PredictionScore(predicted_home=predicted_home, predicted_away=predicted_away)
+        self.score = PredictionScore(
+            predicted_home=predicted_home, predicted_away=predicted_away
+        )
 
         if confidence is not None:
             self.confidence = ConfidenceScore(Decimal(str(confidence)))
@@ -233,7 +254,9 @@ class Prediction:
         self.evaluated_at = datetime.utcnow()
 
         # 计算积分
-        self.points = self._calculate_points(scoring_rules or self._default_scoring_rules())
+        self.points = self._calculate_points(
+            scoring_rules or self._default_scoring_rules()
+        )
 
         # 发布领域事件
         from ..events import PredictionEvaluatedEvent
@@ -244,7 +267,9 @@ class Prediction:
                 actual_home=actual_home,
                 actual_away=actual_away,
                 is_correct=self.score.is_correct_score,
-                points_earned=(int(self.points.total) if self.points is not None else None),
+                points_earned=(
+                    int(self.points.total) if self.points is not None else None
+                ),
                 accuracy_score=self.accuracy_score,
             )
         )
@@ -290,13 +315,16 @@ class Prediction:
             base_points = points.score_bonus + points.result_bonus
             confidence_multiplier = (
                 Decimal("1")
-                + (self.confidence.value - Decimal("0.5")) * rules["confidence_multiplier"]
+                + (self.confidence.value - Decimal("0.5"))
+                * rules["confidence_multiplier"]
             )
             confidence_bonus = base_points * confidence_multiplier - base_points
             points.confidence_bonus = confidence_bonus.quantize(Decimal("0.01"))
 
         # 计算总积分
-        points.total = points.score_bonus + points.result_bonus + points.confidence_bonus
+        points.total = (
+            points.score_bonus + points.result_bonus + points.confidence_bonus
+        )
         points.total = points.total.quantize(Decimal("0.01"))
 
         return points
@@ -351,7 +379,9 @@ class Prediction:
             ),
             "confidence": str(self.confidence) if self.confidence else None,
             "points": float(self.points.total) if self.points else None,
-            "is_correct_score": (self.score.is_correct_score if self.score.is_evaluated else None),
+            "is_correct_score": (
+                self.score.is_correct_score if self.score.is_evaluated else None
+            ),
             "is_correct_result": (
                 self.score.is_correct_result if self.score.is_evaluated else None
             ),
@@ -400,14 +430,20 @@ class Prediction:
             "points": (
                 {
                     "total": float(self.points.total),
-                    "breakdown": {k: float(v) for k, v in self.points.breakdown.items()},
+                    "breakdown": {
+                        k: float(v) for k, v in self.points.breakdown.items()
+                    },
                 }
                 if self.points
                 else None
             ),
             "created_at": self.created_at.isoformat(),
-            "evaluated_at": (self.evaluated_at.isoformat() if self.evaluated_at else None),
-            "cancelled_at": (self.cancelled_at.isoformat() if self.cancelled_at else None),
+            "evaluated_at": (
+                self.evaluated_at.isoformat() if self.evaluated_at else None
+            ),
+            "cancelled_at": (
+                self.cancelled_at.isoformat() if self.cancelled_at else None
+            ),
             "cancellation_reason": self.cancellation_reason,
         }
 
@@ -418,7 +454,9 @@ class Prediction:
         score = PredictionScore(**score_data) if score_data else None
 
         confidence_data = data.pop("confidence", None)
-        confidence = ConfidenceScore(Decimal(str(confidence_data))) if confidence_data else None
+        confidence = (
+            ConfidenceScore(Decimal(str(confidence_data))) if confidence_data else None
+        )
 
         points_data = data.pop("points", None)
         points = (
@@ -426,7 +464,9 @@ class Prediction:
                 total=Decimal(str(points_data["total"])),
                 score_bonus=Decimal(str(points_data["breakdown"]["score_bonus"])),
                 result_bonus=Decimal(str(points_data["breakdown"]["result_bonus"])),
-                confidence_bonus=Decimal(str(points_data["breakdown"]["confidence_bonus"])),
+                confidence_bonus=Decimal(
+                    str(points_data["breakdown"]["confidence_bonus"])
+                ),
             )
             if points_data
             else None
