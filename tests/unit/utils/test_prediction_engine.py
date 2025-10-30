@@ -23,7 +23,7 @@ class TestPredictionEngine:
         try:
             engine = PredictionEngine()
             assert engine is not None
-        except Exception:
+            except Exception:
             pytest.skip("Cannot create PredictionEngine")
 
     def test_predict_match(self):
@@ -36,5 +36,5 @@ class TestPredictionEngine:
                     home_team="Team A", away_team="Team B", league="Test League"
                 )
                 assert _result is not None
-        except Exception:
+            except Exception:
             pytest.skip("predict_match method not available")

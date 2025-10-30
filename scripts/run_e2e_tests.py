@@ -269,7 +269,7 @@ def generate_report(summary):
         import webbrowser
 
         webbrowser.open(f"file://{os.path.abspath(summary['html_report'])}")
-    except Exception:
+            except Exception:
         pass
 
 

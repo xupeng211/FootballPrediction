@@ -36,7 +36,7 @@ def fix_docstring_indentation(filepath):
             f.write(fixed_content)
 
         return True
-    except Exception:
+            except Exception:
         return False
 
 

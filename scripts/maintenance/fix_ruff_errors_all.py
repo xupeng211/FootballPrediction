@@ -131,7 +131,7 @@ def main():
         try:
             os.remove("fix_unused_vars.py")
             print("🗑️ 已清理临时脚本: fix_unused_vars.py")
-        except Exception:
+            except Exception:
             pass
 
     # 运行 ruff 自动修复

@@ -43,7 +43,7 @@ class TestMarketType:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate MarketType")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating MarketType instance")
 
     def test_class_exists(self):
@@ -97,7 +97,7 @@ class TestOddsFormat:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate OddsFormat")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating OddsFormat instance")
 
     def test_class_exists(self):
@@ -151,7 +151,7 @@ class TestOddsMovement:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate OddsMovement")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating OddsMovement instance")
 
     def test_class_exists(self):
@@ -215,7 +215,7 @@ class TestValueBet:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate ValueBet")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating ValueBet instance")
 
     def test_class_exists(self):
@@ -289,7 +289,7 @@ class TestOdds:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate Odds")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating Odds instance")
 
     def test_class_exists(self):

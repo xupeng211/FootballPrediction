@@ -32,7 +32,7 @@ def generate_final_summary():
             text=True,
             timeout=180,
         )
-    except Exception:
+            except Exception:
         pass
 
     # 读取覆盖率数据

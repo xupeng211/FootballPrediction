@@ -577,6 +577,6 @@ from src.utils.date_utils import get_business_days_range, get_date_range_summary
                     parsed = DateUtils.parse_date(formatted, format_str)
                     if format_name == "date":
                         assert parsed.date() == dt.date()
-except Exception:
+            except Exception:
                     # 某些格式可能不适合解析,这是正常的
                     pass

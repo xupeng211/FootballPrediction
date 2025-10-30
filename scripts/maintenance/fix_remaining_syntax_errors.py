@@ -34,7 +34,7 @@ def fix_broken_try_except_blocks(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -68,7 +68,7 @@ def fix_extra_indented_imports(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -115,7 +115,7 @@ def fix_unterminated_string(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 

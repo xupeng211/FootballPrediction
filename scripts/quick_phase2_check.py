@@ -51,7 +51,7 @@ def count_skipif_by_file():
                         matches = re.findall(pattern, content)
                         conditional_skip_count += len(matches)
 
-                except Exception:
+            except Exception:
                     pass
 
     print("分析结果:")
@@ -76,7 +76,7 @@ def count_skipif_by_file():
             __import__(module)
             print(f"  ✓ {module} - 可用")
             available_modules += 1
-        except Exception:
+            except Exception:
             print(f"  ✗ {module} - 不可用")
 
     # 估算实际会跳过的数量

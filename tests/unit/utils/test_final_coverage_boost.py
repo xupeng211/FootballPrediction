@@ -16,7 +16,7 @@ class TestFinalCoverageBoost:
             assert app is not None
         except ImportError:
             pytest.skip("create_app not available")
-        except Exception:
+            except Exception:
             pytest.skip("create_app failed")
 
     def test_config_function(self):

@@ -355,7 +355,7 @@ class TestFacadesIntegration:
                     await initialize_facade(
                         facade_type=facade_type, facade_name=f"test_{facade_type}"
                     )
-                except Exception:
+            except Exception:
                     pass  # 可能因为其他原因失败,但不是类型问题
 
             # 测试无效类型

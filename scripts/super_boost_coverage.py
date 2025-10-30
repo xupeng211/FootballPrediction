@@ -361,7 +361,7 @@ class Test{class_name}:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip(f"Cannot instantiate {class_name}")
-        except Exception:
+            except Exception:
             pytest.skip(f"Error creating {class_name} instance")
 
     def test_class_exists(self):
@@ -482,7 +482,7 @@ def test_{func_name}_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 '''
@@ -504,7 +504,7 @@ async def test_{func_name}_async(self):
         try:
             result = await func()
             assert result is not None
-        except Exception:
+            except Exception:
             # Function might require specific arguments
             pass
 '''
@@ -526,7 +526,7 @@ async def test_{func_name}_async(self):
                 text=True,
                 timeout=180,
             )
-        except Exception:
+            except Exception:
             pass
 
     def boost_coverage(self):

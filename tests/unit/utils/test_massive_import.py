@@ -256,5 +256,5 @@ class TestMassiveImport:
             assert True
         except ImportError:
             pytest.skip("Main module not available")
-        except Exception:
+            except Exception:
             pass

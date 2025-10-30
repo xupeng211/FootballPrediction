@@ -272,7 +272,7 @@ class SeedUserTester:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get("http://localhost:8000/")
                 return response.status_code == 200
-except Exception:
+            except Exception:
             return False
 
     async def _visit_docs(self) -> bool:
@@ -281,7 +281,7 @@ except Exception:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get("http://localhost:8000/docs")
                 return response.status_code == 200
-except Exception:
+            except Exception:
             return False
 
     async def _check_health(self) -> bool:
@@ -290,7 +290,7 @@ except Exception:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get(HEALTH_URL)
                 return response.status_code == 200
-except Exception:
+            except Exception:
             return False
 
     async def _browse_data(self) -> bool:
@@ -304,7 +304,7 @@ except Exception:
                     if response.status_code == 200:
                         success_count += 1
                 return success_count > 0
-except Exception:
+            except Exception:
             return False
 
     async def _view_metrics(self) -> bool:
@@ -313,7 +313,7 @@ except Exception:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get(f"{API_BASE_URL}/monitoring/metrics")
                 return response.status_code == 200
-except Exception:
+            except Exception:
             return False
 
     async def run_seed_user_test(self):

@@ -32,7 +32,7 @@ class TestQualityMonitor:
         try:
             result = monitor.check_data_freshness(data)
             assert result is not None
-        except Exception:
+            except Exception:
             # 方法可能需要特定格式,这是可以接受的
             pass
 
@@ -46,7 +46,7 @@ class TestQualityMonitor:
         try:
             result = monitor.check_data_completeness(data)
             assert result is not None
-        except Exception:
+            except Exception:
             # 方法可能需要特定格式,这是可以接受的
             pass
 
@@ -60,7 +60,7 @@ class TestQualityMonitor:
         try:
             result = monitor.calculate_overall_quality_score(data)
             assert isinstance(result, (float, int))
-        except Exception:
+            except Exception:
             # 方法可能需要特定格式,这是可以接受的
             pass
 
@@ -79,7 +79,7 @@ class TestQualityMonitor:
         try:
             result = monitor.check_data_freshness(None)
             assert result is not None
-        except Exception:
+            except Exception:
             # 处理None可能抛出异常,这是可以接受的
             pass
 
@@ -106,7 +106,7 @@ class TestQualityMonitor:
         try:
             monitor = QualityMonitor(config)
             assert hasattr(monitor, "config")
-        except Exception:
+            except Exception:
             # 配置可能不支持,这是可以接受的
             monitor = QualityMonitor()
             assert monitor is not None
@@ -124,7 +124,7 @@ class TestQualityMonitor:
         try:
             results = monitor.batch_check(data_batch)
             assert isinstance(results, list)
-        except Exception:
+            except Exception:
             # 批量检查可能不支持,这是可以接受的
             pass
 
@@ -142,7 +142,7 @@ async def test_async_functionality():
         try:
             result = await monitor.async_check({})
             assert result is not None
-        except Exception:
+            except Exception:
             pass
 
     assert True  # 基础断言
@@ -163,7 +163,7 @@ def test_exception_handling():
             result = monitor.check_data_freshness(test_data)
             # 如果成功，结果应该不为None
             assert result is not None
-        except Exception:
+            except Exception:
             # 如果抛出异常,这是可以接受的
             pass
 
@@ -206,7 +206,7 @@ class TestParameterizedInput:
         try:
             result = monitor.calculate_overall_quality_score(data)
             assert isinstance(result, (float, int))
-        except Exception:
+            except Exception:
             pass
 
 
@@ -308,7 +308,7 @@ class TestEdgeCases:
         try:
             result = monitor.check_data_freshness(data)
             assert result is not None
-        except Exception:
+            except Exception:
             pass
 
 

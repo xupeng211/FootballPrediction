@@ -225,7 +225,7 @@ class TestDatabaseModelsFixed:
             # 至少应该有一些模型可用
             assert len(available_models) > 0
 
-        except Exception:
+            except Exception:
             pytest.skip("Database models test failed")
 
 

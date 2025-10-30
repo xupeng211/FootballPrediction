@@ -168,7 +168,7 @@ class NightlySetupTester:
                 self.log("passed", f"Docker Compose已安装: {result.stdout.strip()}")
             else:
                 self.log("warnings", "Docker Compose未安装（可选）")
-        except Exception:
+            except Exception:
             self.log("warnings", "Docker Compose未安装（可选）")
 
     async def test_environment_variables(self):

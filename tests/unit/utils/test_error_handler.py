@@ -35,7 +35,7 @@ class TestErrorHandler:
         try:
             log_error("Test error message", {"context": "test"})
             assert True  # 如果没有抛出异常就算成功
-        except Exception:
+            except Exception:
             pytest.skip("Logger not available")
 
     def test_error_handler_class(self):

@@ -23,7 +23,7 @@ class TestConsistencyManager:
 
             manager = ConsistencyManager()
             assert manager is not None
-        except Exception:
+            except Exception:
             pytest.skip("Cannot create ConsistencyManager")
 
     def test_consistency_manager_methods(self):
@@ -34,5 +34,5 @@ class TestConsistencyManager:
             manager = ConsistencyManager()
             # 检查基本方法
             assert hasattr(manager, "validate_cache") or hasattr(manager, "ensure_consistency")
-        except Exception:
+            except Exception:
             pytest.skip("ConsistencyManager methods not testable")

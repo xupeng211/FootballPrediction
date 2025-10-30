@@ -133,7 +133,7 @@ class TestRepositoryIntegration:
             assert hasattr(base_class, "get") or hasattr(base_class, "find")
             assert hasattr(base_class, "update") or hasattr(base_class, "modify")
             assert hasattr(base_class, "delete") or hasattr(base_class, "remove")
-        except Exception:
+            except Exception:
             pytest.skip("BaseRepository类结构检查失败")
 
     def test_repository_class_inheritance(self):
@@ -149,7 +149,7 @@ class TestRepositoryIntegration:
             for repo_class in repository_classes:
                 assert issubclass(repo_class, BaseRepository), f"{repo_class}未继承BaseRepository"
 
-        except Exception:
+            except Exception:
             pytest.skip("Repository继承关系检查失败")
 
     def test_type_variable_usage(self):

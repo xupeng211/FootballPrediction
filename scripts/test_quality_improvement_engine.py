@@ -219,7 +219,7 @@ class TestQualityImprovementEngine:
                 "issues": issues,
             }
 
-        except Exception:
+            except Exception:
             return None
 
     def generate_improvement_plan(

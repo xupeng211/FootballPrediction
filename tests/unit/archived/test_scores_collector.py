@@ -14,7 +14,7 @@ def test_imports_work():
     """Test that basic imports work correctly"""
     try:
         pass
-    except Exception:
+            except Exception:
         pass
 
         assert True

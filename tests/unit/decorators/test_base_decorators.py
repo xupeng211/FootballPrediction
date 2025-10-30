@@ -282,7 +282,7 @@ class TestBaseDecorators:
         try:
             result3 = limited_function()
             assert result3 == 3
-        except Exception:
+            except Exception:
             pass  # 速率限制可能抛出异常
 
     def test_rate_limit_decorator_reset(self):
@@ -386,7 +386,7 @@ class TestBaseDecorators:
             if hasattr(async_function, "__await__"):
                 result = asyncio.run(async_function(5))
                 assert result == 10
-        except Exception:
+            except Exception:
             pass
 
     def test_decorator_with_optional_params(self):
@@ -529,7 +529,7 @@ class TestBaseDecorators:
 
             assert test_function.__name__ == "test_function"
             assert "Test function" in test_function.__doc__
-        except Exception:
+            except Exception:
             pass
 
     def test_decorator_edge_cases(self):

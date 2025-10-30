@@ -41,7 +41,7 @@ class TestCoreConfigCoverage:
 
         except ImportError:
             pytest.skip("配置模块不可用")
-        except Exception:
+            except Exception:
             # 如果初始化失败,至少验证类存在
             assert True  # 类存在是基本的
 
@@ -62,7 +62,7 @@ class TestCoreConfigCoverage:
 
         except ImportError:
             pytest.skip("数据库配置模块不可用")
-        except Exception:
+            except Exception:
             assert True  # 基本存在性测试
 
     def test_app_config_functionality(self):
@@ -82,7 +82,7 @@ class TestCoreConfigCoverage:
 
         except ImportError:
             pytest.skip("应用配置模块不可用")
-        except Exception:
+            except Exception:
             assert True  # 基本存在性测试
 
     def test_config_loading_methods(self):
@@ -101,7 +101,7 @@ class TestCoreConfigCoverage:
                     )
                     try:
                         config.load_from_file("test.yml")
-except Exception:
+            except Exception:
                         pass  # 可能失败,但方法被调用了
 
             if hasattr(config, "load_from_env"):
@@ -109,7 +109,7 @@ except Exception:
                 with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
                     try:
                         config.load_from_env()
-except Exception:
+            except Exception:
                         pass  # 可能失败,但方法被调用了
 
         except ImportError:
@@ -127,14 +127,14 @@ except Exception:
                 try:
                     is_valid = config.validate()
                     assert isinstance(is_valid, bool)
-except Exception:
+            except Exception:
                     assert True  # 验证方法存在
 
             if hasattr(config, "is_valid"):
                 try:
                     is_valid = config.is_valid()
                     assert isinstance(is_valid, bool)
-except Exception:
+            except Exception:
                     assert True  # 验证方法存在
 
         except ImportError:
@@ -153,7 +153,7 @@ except Exception:
             try:
                 invalid_config = ConfigManager(config_file="nonexistent.yml")
                 assert invalid_config is not None
-except Exception:
+            except Exception:
                 assert True  # 应该能处理无效文件
 
         except ImportError:
@@ -180,10 +180,10 @@ except Exception:
                 try:
                     value = config.get("DATABASE_URL")
                     assert value is not None
-except Exception:
+            except Exception:
                     assert True  # get方法存在
 
         except ImportError:
             pytest.skip("配置管理器不可用")
-        except Exception:
+            except Exception:
             assert True  # Mock测试基本通过

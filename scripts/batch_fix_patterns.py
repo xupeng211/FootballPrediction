@@ -114,7 +114,7 @@ def find_files_with_indentation_errors() -> list:
                     elif re.search(r'=\s+.*?"""', content):
                         files_with_errors.append(file_path)
 
-                except Exception:
+            except Exception:
                     continue
 
     return files_with_errors

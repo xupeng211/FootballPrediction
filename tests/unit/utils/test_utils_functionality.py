@@ -30,7 +30,7 @@ class TestUtilsFunctionality:
             assert _result <= datetime.now()
         except ImportError:
             pytest.skip("Time utils not available")
-        except Exception:
+            except Exception:
             # 如果函数不存在或调用失败,跳过
             pytest.skip("Time utils function not callable")
 
@@ -46,7 +46,7 @@ class TestUtilsFunctionality:
             assert "hour" in result.lower() or "min" in result.lower() or "sec" in result.lower()
         except ImportError:
             pytest.skip("Format duration not available")
-        except Exception:
+            except Exception:
             pytest.skip("Format duration function not callable")
 
     def test_dict_utils_merge(self):
@@ -63,7 +63,7 @@ class TestUtilsFunctionality:
             assert "c" in result
         except ImportError:
             pytest.skip("Dict utils not available")
-        except Exception:
+            except Exception:
             pytest.skip("Dict utils function not callable")
 
     def test_dict_utils_flatten(self):
@@ -78,7 +78,7 @@ class TestUtilsFunctionality:
             assert len(result) >= 1
         except ImportError:
             pytest.skip("Dict utils not available")
-        except Exception:
+            except Exception:
             pytest.skip("Dict utils function not callable")
 
     def test_crypto_utils_encrypt_decrypt(self):
@@ -99,7 +99,7 @@ class TestUtilsFunctionality:
             assert decrypted == data
         except ImportError:
             pytest.skip("Crypto utils not available")
-        except Exception:
+            except Exception:
             pytest.skip("Crypto utils functions not callable")
 
     def test_retry_mechanism(self):
@@ -122,7 +122,7 @@ class TestUtilsFunctionality:
             assert call_count == 3
         except ImportError:
             pytest.skip("Retry utils not available")
-        except Exception:
+            except Exception:
             pytest.skip("Retry utils function not callable")
 
     def test_warning_filters(self):
@@ -135,7 +135,7 @@ class TestUtilsFunctionality:
             assert True  # 如果没有异常就算成功
         except ImportError:
             pytest.skip("Warning filters not available")
-        except Exception:
+            except Exception:
             pytest.skip("Warning filters function not callable")
 
     def test_data_validator_validate_email(self):
@@ -149,7 +149,7 @@ class TestUtilsFunctionality:
             assert validate_email("invalid-email") is False
         except ImportError:
             pytest.skip("Data validator not available")
-        except Exception:
+            except Exception:
             pytest.skip("Data validator function not callable")
 
     def test_string_utils_slugify(self):
@@ -162,5 +162,5 @@ class TestUtilsFunctionality:
             assert "hello-world" in result.lower()
         except ImportError:
             pytest.skip("String utils not available")
-        except Exception:
+            except Exception:
             pytest.skip("String utils function not callable")

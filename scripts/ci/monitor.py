@@ -66,7 +66,7 @@ class GitHubCIMonitor:
             )
             if result.returncode == 0 and result.stdout.strip():
                 return result.stdout.strip()
-        except Exception:
+            except Exception:
             pass
 
         print("⚠️  未找到GitHub访问令牌")

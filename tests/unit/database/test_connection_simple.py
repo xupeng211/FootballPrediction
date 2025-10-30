@@ -162,7 +162,7 @@ from src.database.connection import get_db_session
         try:
             session = get_db_session()
             assert isinstance(session, Session)
-        except Exception:
+            except Exception:
             # 如果数据库未配置，可能会失败,这是可以接受的
             pass
 
@@ -175,7 +175,7 @@ from src.database.connection import get_async_session
         try:
             session = get_async_session()
             assert isinstance(session, AsyncSession)
-        except Exception:
+            except Exception:
             # 如果数据库未配置，可能会失败,这是可以接受的
             pass
 

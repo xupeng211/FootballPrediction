@@ -36,7 +36,7 @@ class TestDataAPI:
 
             # 检查是否是FastAPI路由器
             assert hasattr(router, "routes")
-        except Exception:
+            except Exception:
             pytest.skip("router not available")
 
     def test_data_api_endpoints(self):
@@ -48,5 +48,5 @@ class TestDataAPI:
             routes = list(router.routes)
             # 可能没有路由,但不应该抛出异常
             assert isinstance(routes, list)
-        except Exception:
+            except Exception:
             pytest.skip("endpoints not testable")

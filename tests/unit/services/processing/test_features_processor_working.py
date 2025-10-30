@@ -243,7 +243,7 @@ class TestFeaturesProcessorIntegration:
 
                     # 验证性能（应该在合理时间内完成）
                     assert processing_time < 5.0
-                except Exception:
+            except Exception:
                     pytest.skip(
                         f"Component {component.__name__} performance test requires dependencies"
                     )

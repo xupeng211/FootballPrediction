@@ -550,7 +550,7 @@ class TestDIContainerAdvanced:
         try:
             # 尝试一个可能失败的操作
             pass
-        except Exception:
+            except Exception:
             pass
 
 
@@ -621,7 +621,7 @@ class TestParameterizedInput:
                 _result = str(invalid_data)
             # 确保没有崩溃
             assert _result is not None
-        except Exception:
+            except Exception:
             # 期望的错误处理
             pass
 

@@ -37,7 +37,7 @@ class TestDateUtils:
             if hasattr(utils, "today"):
                 result = utils.today()
                 assert isinstance(result, (datetime, date))
-        except Exception:
+            except Exception:
             pass
 
     def test_date_parsing(self):
@@ -102,7 +102,7 @@ class TestDateUtils:
                 result = utils.add_months(base_date, 1)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
-        except Exception:
+            except Exception:
             pass
 
     def test_date_comparison(self):
@@ -125,7 +125,7 @@ class TestDateUtils:
             if hasattr(utils, "is_equal"):
                 assert utils.is_equal(date1, date3) is True
                 assert utils.is_equal(date1, date2) is False
-        except Exception:
+            except Exception:
             pass
 
     def test_date_difference(self):
@@ -150,7 +150,7 @@ class TestDateUtils:
                 result = utils.months_between(date1, date2)
                 if result is not None:
                     assert isinstance(result, (int, float))
-        except Exception:
+            except Exception:
             pass
 
     def test_timezone_operations(self):
@@ -167,7 +167,7 @@ class TestDateUtils:
                 result = utils.from_utc(datetime.utcnow())
                 if result is not None:
                     assert isinstance(result, datetime)
-        except Exception:
+            except Exception:
             pass
 
     def test_weekday_operations(self):
@@ -255,7 +255,7 @@ class TestDateUtils:
                 result = utils.is_in_range(test_date, start_date, end_date)
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_business_day_operations(self):
@@ -279,7 +279,7 @@ class TestDateUtils:
                 result = utils.previous_business_day(test_date)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
-        except Exception:
+            except Exception:
             pass
 
     def test_date_truncation(self):
@@ -303,7 +303,7 @@ class TestDateUtils:
                 result = utils.truncate_to_year(test_datetime)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
-        except Exception:
+            except Exception:
             pass
 
     def test_edge_cases(self):
@@ -355,7 +355,7 @@ class TestDateUtils:
                 result = utils.batch_process(date_list)
                 if result is not None:
                     assert isinstance(result, list)
-        except Exception:
+            except Exception:
             pass
 
     @patch("src.utils.date_utils.datetime")
@@ -370,7 +370,7 @@ class TestDateUtils:
             if hasattr(utils, "now"):
                 result = utils.now()
                 assert result == mock_now
-        except Exception:
+            except Exception:
             pass
 
     def test_configuration_options(self):
@@ -407,7 +407,7 @@ class TestDateUtils:
                     for key in possible_keys:
                         if key in stats:
                             assert isinstance(stats[key], (int, float, datetime, date))
-        except Exception:
+            except Exception:
             pass
 
 

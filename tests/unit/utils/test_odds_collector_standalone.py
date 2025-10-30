@@ -63,7 +63,7 @@ class MockOddsCollector:
 
             return all_odds
 
-        except Exception:
+            except Exception:
             return {}
 
     async def _get_match_by_id(self, match_id):

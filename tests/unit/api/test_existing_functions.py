@@ -184,7 +184,7 @@ from src.api.decorators import rate_limit_check
         try:
             rate_limit_check(request, "test_endpoint", 10, 60)
             assert True  # 如果不抛出异常则通过
-        except Exception:
+            except Exception:
             # 如果抛出异常也是可以接受的
             pass
 

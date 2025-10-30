@@ -80,7 +80,7 @@ class CorrectedRouteTester:
                         error_info = response.json()
                         if isinstance(error_info, dict) and "detail" in error_info:
                             details += f" - {error_info['detail']}"
-except Exception:
+            except Exception:
                         pass
 
                     self.log_test(name, False, details, duration)

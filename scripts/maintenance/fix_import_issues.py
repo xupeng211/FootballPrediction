@@ -202,7 +202,7 @@ def check_file_syntax(filepath: str) -> bool:
             content = f.read()
         ast.parse(content)
         return True
-    except Exception:
+            except Exception:
         return False
 
 

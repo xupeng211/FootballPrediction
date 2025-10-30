@@ -55,7 +55,7 @@ def check_imports(file_path: Path) -> Tuple[bool, List[str]]:
                     imports.append(f"from {module} import {alias.name}")
 
         return len(imports) > 0, imports
-    except Exception:
+            except Exception:
         return False, []
 
 

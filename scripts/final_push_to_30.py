@@ -43,7 +43,7 @@ def test_api_models_creation():
         from src.api.models import APIResponse
         response = APIResponse(success=True)
         assert response.success is True
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -70,7 +70,7 @@ def test_db_model_creation():
         from src.database.models.league import League
         league = League(name="Test League")
         assert league.name == "Test League"
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -97,7 +97,7 @@ def test_base_service_methods():
         service = BaseService()
         assert service is not None
         assert hasattr(service, 'execute')
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -142,7 +142,7 @@ def test_stream_config():
         from src.streaming.stream_config import StreamConfig
         config = StreamConfig()
         assert config is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -164,7 +164,7 @@ def test_ttl_cache_basic():
         result = cache.get("key")
 
         assert result == "value"
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -190,7 +190,7 @@ def test_monitoring_creation():
         from src.monitoring.metrics_collector import MetricsCollector
         collector = MetricsCollector()
         assert collector is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -242,7 +242,7 @@ def test_database_connection():
         from src.database.connection import DatabaseManager
         manager = DatabaseManager()
         assert manager is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -266,7 +266,7 @@ def test_prediction_service():
         from src.models.prediction_service import PredictionService
         service = PredictionService()
         assert service is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -297,14 +297,14 @@ def test_utils_functionality():
         from src.utils.string_utils import StringUtils
         result = StringUtils.truncate("Hello World", 5)
         assert "Hello" in result
-    except Exception:
+            except Exception:
         assert True
 
     try:
         from src.utils.crypto_utils import CryptoUtils
         token = CryptoUtils.generate_id()
         assert isinstance(token, str)
-    except Exception:
+            except Exception:
         assert True
 
     try:
@@ -312,7 +312,7 @@ def test_utils_functionality():
         from datetime import datetime
         formatted = TimeUtils.format_datetime(datetime.now())
         assert formatted is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -338,14 +338,14 @@ def test_core_functionality():
         from src.core.error_handler import ErrorHandler
         handler = ErrorHandler()
         assert handler is not None
-    except Exception:
+            except Exception:
         assert True
 
     try:
         from src.core.logging_system import get_logger
         logger = get_logger("test")
         assert logger is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -368,7 +368,7 @@ def test_collector_creation():
         from src.collectors.fixtures_collector import FixturesCollector
         collector = FixturesCollector()
         assert collector is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -393,7 +393,7 @@ def test_quality_creation():
         from src.data.quality.data_quality_monitor import DataQualityMonitor
         monitor = DataQualityMonitor()
         assert monitor is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -417,7 +417,7 @@ def test_feature_creation():
         from src.features.entities import FeatureEntity
         entity = FeatureEntity(entity_id="test", entity_type="team")
         assert entity.entity_id == "test"
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -439,7 +439,7 @@ def test_middleware_creation():
         from src.middleware.i18n import I18nMiddleware
         middleware = I18nMiddleware()
         assert middleware is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -462,7 +462,7 @@ def test_config_creation():
         from src.core.config import get_config
         config = get_config()
         assert config is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -485,7 +485,7 @@ def test_key_manager():
         from src.security.key_manager import KeyManager
         manager = KeyManager()
         assert manager is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -509,7 +509,7 @@ def test_ml_training():
         from src.ml.model_training import ModelTrainer
         trainer = ModelTrainer()
         assert trainer is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),
@@ -532,7 +532,7 @@ def test_websocket():
         from src.realtime.websocket import WebSocketHandler
         handler = WebSocketHandler()
         assert handler is not None
-    except Exception:
+            except Exception:
         assert True
 """,
         ),

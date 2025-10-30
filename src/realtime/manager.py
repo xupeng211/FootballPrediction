@@ -110,7 +110,7 @@ class WebSocketConnection:
         self._running = False
         try:
             await self.websocket.close()
-        except Exception:
+            except Exception:
             pass  # 连接可能已经关闭
         self.state = ConnectionState.DISCONNECTED
         self.logger.info(f"WebSocket connection closed: {self.connection_id}")

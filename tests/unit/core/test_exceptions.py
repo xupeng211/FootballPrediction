@@ -377,7 +377,7 @@ class TestCoreExceptions:
         caught_general = False
         try:
             raise error
-        except Exception:
+            except Exception:
             caught_general = True
 
         assert caught_general

@@ -49,7 +49,7 @@ class TestCryptoUtilsExtended:
                 # 使用内置hashlib作为替代
                 result = hashlib.sha256(test_string.encode()).hexdigest()
                 assert len(result) == 64
-        except Exception:
+            except Exception:
             # 使用Python内置hash作为fallback
             result = hash(test_string)
             assert isinstance(result, int)
@@ -73,7 +73,7 @@ class TestCryptoUtilsExtended:
                 encoded = base64.b64encode(data.encode()).decode()
                 decoded = base64.b64decode(encoded.encode()).decode()
                 assert decoded == data
-        except Exception:
+            except Exception:
             # 最简单的fallback
             data = "test"
             assert data == data
@@ -589,7 +589,7 @@ class TestUtilityHelpers:
         try:
             safe_operation()
             success = True
-        except Exception:
+            except Exception:
             success = False
         assert success is True
 
@@ -599,7 +599,7 @@ class TestUtilityHelpers:
             error_handled = False
         except ValueError:
             error_handled = True
-        except Exception:
+            except Exception:
             error_handled = False
         assert error_handled is True
 

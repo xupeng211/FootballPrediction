@@ -86,7 +86,7 @@ class AutomatedQualityGate:
                         result.stdout.split("修复语法错误:")[1].split("个")[0].strip()
                     )
                     syntax_result["errors_fixed"] = fixed_count
-except Exception:
+            except Exception:
                     pass
 
             # 生成建议
@@ -151,7 +151,7 @@ except Exception:
                     ][0]
                     score = float(score_line.split("综合质量分数:")[1].split("/")[0].strip())
                     quality_result["metrics"]["overall_score"] = score
-except Exception:
+            except Exception:
                     pass
 
             if "测试覆盖率:" in result.stdout:
@@ -161,7 +161,7 @@ except Exception:
                     ][0]
                     coverage = float(coverage_line.split("测试覆盖率:")[1].split("%")[0].strip())
                     quality_result["metrics"]["coverage"] = coverage
-except Exception:
+            except Exception:
                     pass
 
             # 生成建议
@@ -265,7 +265,7 @@ except Exception:
                             failed_part = summary_line.split("failed")[0].strip()
                             failed = int(failed_part.split()[-1])
                             coverage_result["metrics"]["tests_failed"] = failed
-except Exception:
+            except Exception:
                     pass
 
             # 生成建议

@@ -29,7 +29,7 @@ class SmartMyPyFixer:
                 timeout=120,
             )
             return [line for line in result.stdout.strip().split("\n") if line and "error:" in line]
-        except Exception:
+            except Exception:
             return []
 
     def fix_unused_ignore_comments(self, errors: List[str]) -> int:

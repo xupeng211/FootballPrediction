@@ -42,7 +42,7 @@ def verify_coverage_config():
 
             if omit_patterns:
                 print(f"✓ omit 配置了 {len(omit_patterns)} 个排除模式")
-    except Exception:
+            except Exception:
         print("✗ 无法读取 .coveragerc")
         return False
 
@@ -125,7 +125,7 @@ def verify_coverage_config():
         with open(".coveragerc", "w") as f:
             f.write(config)
         print("✓ .coveragerc 已优化")
-    except Exception:
+            except Exception:
         print("✗ 无法更新 .coveragerc")
 
     print("\n" + "=" * 60)

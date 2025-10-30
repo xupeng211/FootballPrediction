@@ -34,7 +34,7 @@ def analyze_module(file_path):
             "has_async": any("async def" in content for _ in content.split("\n")),
             "has_exceptions": "Exception" in content or "raise" in content,
         }
-    except Exception:
+            except Exception:
         return None
 
 

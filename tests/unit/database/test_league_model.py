@@ -47,7 +47,7 @@ class TestLeagueModel:
         try:
             assert hasattr(League, "__tablename__")
             assert League.__tablename__ == "leagues"
-        except Exception:
+            except Exception:
             pytest.skip("表名配置检查失败")
 
     def test_league_table_options(self):
@@ -57,7 +57,7 @@ class TestLeagueModel:
             table_args = League.__table_args__
             assert isinstance(table_args, dict)
             assert table_args.get("extend_existing") is True
-        except Exception:
+            except Exception:
             pytest.skip("表选项配置检查失败")
 
     def test_league_instantiation(self):
@@ -66,7 +66,7 @@ class TestLeagueModel:
             league = League()
             assert league is not None
             assert isinstance(league, League)
-        except Exception:
+            except Exception:
             pytest.skip("League实例化失败")
 
     def test_league_class_attributes(self):
@@ -78,7 +78,7 @@ class TestLeagueModel:
             # 应该有id字段（从BaseModel继承）
             assert hasattr(league_class, "id") or hasattr(league_class, "__annotations__")
 
-        except Exception:
+            except Exception:
             pytest.skip("League类属性检查失败")
 
     def test_league_module_docstring(self):
@@ -100,7 +100,7 @@ class TestLeagueModel:
             league = League()
             # 检查是否有__str__或__repr__方法
             assert hasattr(league, "__str__") or hasattr(league, "__repr__")
-        except Exception:
+            except Exception:
             pytest.skip("League字符串表示检查失败")
 
 
@@ -124,7 +124,7 @@ class TestLeagueModelAdvanced:
 
         except ImportError:
             pytest.skip("SQLAlchemy检查失败")
-        except Exception:
+            except Exception:
             pytest.skip("元数据检查失败")
 
     def test_league_table_metadata(self):
@@ -137,5 +137,5 @@ class TestLeagueModelAdvanced:
                 assert table.name == "leagues"
                 assert len(table.columns) > 0  # 至少有id列
 
-        except Exception:
+            except Exception:
             pytest.skip("表元数据检查失败")

@@ -328,7 +328,7 @@ class TargetedFixer:
             )
             error_lines = [line for line in result.stdout.split("\n") if ": error:" in line]
             return len(error_lines)
-        except Exception:
+            except Exception:
             return -1
 
 

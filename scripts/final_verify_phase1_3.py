@@ -93,7 +93,7 @@ try:
     from src.database.connection import DatabaseManager
     db = DatabaseManager()
     print("✓ 数据库模块Mock成功")
-except Exception:
+            except Exception:
     print("✗ 数据库模块Mock失败")
     sys.exit(1)
 
@@ -102,7 +102,7 @@ try:
     r = redis.Redis()
     r.ping()
     print("✓ Redis Mock成功")
-except Exception:
+            except Exception:
     print("✗ Redis Mock失败")
     sys.exit(1)
 
@@ -110,7 +110,7 @@ try:
     import mlflow
     mlflow.start_run()
     print("✓ MLflow Mock成功")
-except Exception:
+            except Exception:
     print("✗ MLflow Mock失败")
     sys.exit(1)
 

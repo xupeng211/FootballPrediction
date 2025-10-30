@@ -188,7 +188,7 @@ async def _get_business_metrics_test(db):
                     return None
                 try:
                     return float(v)
-                except Exception:
+            except Exception:
                     return None
             except Exception:
                 return None
@@ -205,7 +205,7 @@ async def _get_business_metrics_test(db):
         _result["24h_predictions"] = int(rp_v) if rp_v is not None else None
         _result["upcoming_matches_7d"] = int(um_v) if um_v is not None else None
         _result["model_accuracy_30d"] = float(ar_v) if ar_v is not None else None
-    except Exception:
+            except Exception:
         # 异常时保持None,并更新时间戳
         _result["last_updated"] = datetime.utcnow().isoformat()
 

@@ -249,7 +249,7 @@ class ConfigValidator:
                 encrypted.append(byte ^ key_byte)
 
             return base64.b64encode(encrypted).decode()
-        except Exception:
+            except Exception:
             return ""
 
     def decrypt_value(self, encrypted_value: str) -> str:
@@ -264,7 +264,7 @@ class ConfigValidator:
                 decrypted.append(byte ^ key_byte)
 
             return decrypted.decode()
-        except Exception:
+            except Exception:
             return ""
 
 

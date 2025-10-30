@@ -377,7 +377,7 @@ class EnvironmentChecker:
                     else:
                         missing_tools.append(tool_name)
 
-                except Exception:
+            except Exception:
                     missing_tools.append(tool_name)
 
             if not missing_tools:

@@ -95,7 +95,7 @@ class CorsConfig:
 
             return True
 
-        except Exception:
+            except Exception:
             return False
 
     def _is_valid_origin(self)) -> bool:

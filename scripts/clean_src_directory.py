@@ -94,7 +94,7 @@ def clean_src_directory():
                     content = py_file.read_text(encoding="utf-8")
                     if pattern in content:
                         files.append(py_file.relative_to(src_path))
-                except Exception:
+            except Exception:
                     pass
         if files:
             files_with_debug[description] = files

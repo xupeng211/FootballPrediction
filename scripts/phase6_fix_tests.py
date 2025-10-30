@@ -33,7 +33,7 @@ def analyze_failed_tests():
     try:
         # 检查是否安装了 pytest-json-report
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
-    except Exception:
+            except Exception:
         # 如果没有安装，使用普通方式
         cmd = ["pytest", "-v", "--disable-warnings", "--tb=short"]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)

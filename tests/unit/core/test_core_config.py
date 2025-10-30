@@ -40,7 +40,7 @@ class TestCoreConfig:
         try:
             config = CoreConfig(config_dict)
             assert config is not None
-        except Exception:
+            except Exception:
             # 配置可能需要不同的格式,这是可以接受的
             config = CoreConfig()
             assert config is not None
@@ -59,7 +59,7 @@ class TestCoreConfig:
                 result = config.is_valid()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_database_config(self):
@@ -86,7 +86,7 @@ class TestCoreConfig:
 
             if hasattr(config, "database_url"):
                 assert config.database_url is not None
-        except Exception:
+            except Exception:
             pass
 
     def test_redis_config(self):
@@ -101,7 +101,7 @@ class TestCoreConfig:
 
             if hasattr(config, "redis_url"):
                 assert config.redis_url is not None
-        except Exception:
+            except Exception:
             pass
 
     def test_environment_detection(self):
@@ -125,7 +125,7 @@ class TestCoreConfig:
                 result = config.is_production()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_debug_mode(self):
@@ -141,7 +141,7 @@ class TestCoreConfig:
                 result = config.is_debug()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_logging_config(self):
@@ -160,7 +160,7 @@ class TestCoreConfig:
                     assert isinstance(log_level, str)
                     possible_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
                     assert log_level in possible_levels
-        except Exception:
+            except Exception:
             pass
 
     def test_security_config(self):
@@ -178,7 +178,7 @@ class TestCoreConfig:
                 if secret_key is not None:
                     assert isinstance(secret_key, str)
                     assert len(secret_key) > 0
-        except Exception:
+            except Exception:
             pass
 
     def test_api_config(self):
@@ -200,7 +200,7 @@ class TestCoreConfig:
                 version = config.api_version
                 if version is not None:
                     assert isinstance(version, str)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_from_file(self):
@@ -222,7 +222,7 @@ class TestCoreConfig:
 
             # 清理临时文件
             os.unlink(temp_file)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_from_env(self):
@@ -235,7 +235,7 @@ class TestCoreConfig:
                     result = config.load_from_env()
                     if result is not None:
                         assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_merge(self):
@@ -252,7 +252,7 @@ class TestCoreConfig:
             if hasattr(config, "update"):
                 override_config = {"environment": "test"}
                 config.update(override_config)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_serialization(self):
@@ -269,7 +269,7 @@ class TestCoreConfig:
                 json_str = config.to_json()
                 if json_str is not None:
                     assert isinstance(json_str, str)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_defaults(self):
@@ -284,7 +284,7 @@ class TestCoreConfig:
                 if hasattr(config, default):
                     value = getattr(config, default)
                     assert value is not None
-        except Exception:
+            except Exception:
             pass
 
     def test_config_validation_rules(self):
@@ -306,9 +306,9 @@ class TestCoreConfig:
                         result = new_config.validate()
                         if result is not None:
                             assert result is False  # 应该验证失败
-                except Exception:
+            except Exception:
                     pass  # 创建失败也是可以接受的
-        except Exception:
+            except Exception:
             pass
 
     def test_config_reload(self):
@@ -325,7 +325,7 @@ class TestCoreConfig:
                 result = config.refresh()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_sections(self):
@@ -356,7 +356,7 @@ class TestCoreConfig:
                 try:
                     new_config = CoreConfig(invalid_input)
                     assert new_config is not None
-                except Exception:
+            except Exception:
                     # 某些输入可能抛出异常,这是可以接受的
                     pass
 
@@ -365,7 +365,7 @@ class TestCoreConfig:
                 config.from_file("non_existent_file.json")
             except Exception:
                 pass  # 应该优雅地处理文件不存在
-        except Exception:
+            except Exception:
             pass
 
     def test_config_performance(self):
@@ -382,7 +382,7 @@ class TestCoreConfig:
             if hasattr(config, "to_dict"):
                 for _ in range(10):
                     _ = config.to_dict()
-        except Exception:
+            except Exception:
             pass
 
     def test_config_thread_safety(self):
@@ -411,7 +411,7 @@ class TestCoreConfig:
                 thread.join()
 
             assert len(results) > 0
-        except Exception:
+            except Exception:
             pass
 
     def test_config_inheritance(self):
@@ -429,7 +429,7 @@ class TestCoreConfig:
                 if hasattr(config, "update"):
                     config.update(base_config)
                     config.update(child_config)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_hot_reload(self):
@@ -447,7 +447,7 @@ class TestCoreConfig:
                 result = config.is_hot_reload_enabled()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_schema_validation(self):
@@ -465,7 +465,7 @@ class TestCoreConfig:
                 result = config.validate_against_schema(valid_config)
                 if result is not None:
                     assert isinstance(result, (bool, dict))
-        except Exception:
+            except Exception:
             pass
 
     def test_config_environment_specific(self):
@@ -505,7 +505,7 @@ class TestCoreConfig:
 
             if hasattr(config, "clear_cache"):
                 config.clear_cache()
-        except Exception:
+            except Exception:
             pass
 
     def test_config_backup_restore(self):
@@ -525,7 +525,7 @@ class TestCoreConfig:
                     result = config.restore(backup)
                     if result is not None:
                         assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_config_compliance(self):
@@ -542,7 +542,7 @@ class TestCoreConfig:
                 report = config.get_compliance_report()
                 if report is not None:
                     assert isinstance(report, dict)
-        except Exception:
+            except Exception:
             pass
 
 

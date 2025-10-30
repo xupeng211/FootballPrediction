@@ -51,7 +51,7 @@ def fix_future_import_placement(file_path: Path) -> bool:
                 return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -110,7 +110,7 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -139,7 +139,7 @@ def fix_duplicate_function_args(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -189,7 +189,7 @@ def fix_missing_except_block(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -230,7 +230,7 @@ def fix_async_function_error(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -263,7 +263,7 @@ def fix_missing_comma(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 
@@ -312,7 +312,7 @@ def fix_indentation_errors(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 

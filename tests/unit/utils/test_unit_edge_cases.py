@@ -62,7 +62,7 @@ class TestEdgeCasesAndErrorHandling:
 
             with pytest.raises(PermissionError):
                 mock_file.read()
-        except Exception:
+            except Exception:
             pass  # 在某些环境中可能无法测试
 
     def test_network_timeout_errors(self):

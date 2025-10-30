@@ -48,7 +48,7 @@ class TestMonitoringAndHealthCheckIntegration:
         """真实指标收集器"""
         try:
             return get_metrics_collector()
-        except Exception:
+            except Exception:
             # 如果无法获取真实实例,创建Mock
             return Mock()
 

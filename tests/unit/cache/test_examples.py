@@ -295,7 +295,7 @@ class TestCacheExamplesAdvanced:
             _result = expensive_computation(0, 0)
             # 某些实现可能缓存None值
             assert _result is not None or result is None
-        except Exception:
+            except Exception:
             pass
 
     def test_cache_statistics(self):
@@ -317,6 +317,6 @@ class TestCacheExamplesAdvanced:
             _result = await fetch_user_data(user_id)
             # 应该能处理无效ID
             assert isinstance(result, dict)
-        except Exception:
+            except Exception:
             # 或者抛出适当的异常
             pass

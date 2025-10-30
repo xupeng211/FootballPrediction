@@ -145,7 +145,7 @@ class NightlyTestScheduler:
         try:
             subprocess.run(["docker", "info"], capture_output=True, timeout=10)
             return result.returncode == 0
-        except Exception:
+            except Exception:
             return False
 
     def _check_command(self, command: str) -> bool:
@@ -153,7 +153,7 @@ class NightlyTestScheduler:
         try:
             subprocess.run(command.split(), capture_output=True, timeout=5)
             return True
-        except Exception:
+            except Exception:
             return False
 
     def _check_disk_space(self, required_mb: int) -> bool:
@@ -162,7 +162,7 @@ class NightlyTestScheduler:
             stat = os.statvfs(".")
             free_mb = (stat.f_bavail * stat.f_frsize) // (1024 * 1024)
             return free_mb >= required_mb
-        except Exception:
+            except Exception:
             return False
 
     async def _prepare_environment(self):

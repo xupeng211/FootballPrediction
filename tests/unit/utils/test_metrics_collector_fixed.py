@@ -159,7 +159,7 @@ class TestMetricsCollectorFixed:
             time_windows = aggregator.aggregate_by_time_window("cpu_usage", window_size=300)
             assert isinstance(time_windows, dict)
 
-        except Exception:
+            except Exception:
             pytest.skip("Metrics aggregator not available")
 
     def test_alert_manager_fixed(self):
@@ -410,7 +410,7 @@ class TestMetricsCollectorFixed:
             assert len(store.metrics) == 2
             assert all(m["timestamp"] > now - timedelta(hours=24) for m in store.metrics)
 
-        except Exception:
+            except Exception:
             pytest.skip("Remove old metrics test not available")
 
     def test_get_aggregated_summary(self):
@@ -474,5 +474,5 @@ class TestMetricsCollectorFixed:
             assert summary["cpu"]["max"] == 49
             assert summary["memory"]["avg"] == 69
 
-        except Exception:
+            except Exception:
             pytest.skip("Aggregated summary test not available")

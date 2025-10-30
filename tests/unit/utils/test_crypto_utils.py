@@ -175,7 +175,7 @@ class TestCryptoUtils:
                 if result is not None:
                     assert isinstance(result, int)
                     assert 1000 <= result <= 9999
-        except Exception:
+            except Exception:
             pass
 
     def test_token_generation(self):
@@ -195,7 +195,7 @@ class TestCryptoUtils:
                 if result is not None:
                     assert isinstance(result, str)
                     assert len(result) >= 32
-        except Exception:
+            except Exception:
             pass
 
     def test_salt_generation(self):
@@ -215,7 +215,7 @@ class TestCryptoUtils:
                     result = utils.generate_salt(length)
                     if result is not None:
                         assert len(result) >= length
-        except Exception:
+            except Exception:
             pass
 
     def test_checksum_operations(self):
@@ -258,7 +258,7 @@ class TestCryptoUtils:
                         if result is not None:
                             assert isinstance(result, (str, bytes))
                             assert len(result) > 0
-                except Exception:
+            except Exception:
                     pass
 
     def test_secure_comparison(self):
@@ -330,7 +330,7 @@ class TestCryptoUtils:
                 result = utils.hash(large_data)
                 if result is not None:
                     assert isinstance(result, str)
-        except Exception:
+            except Exception:
             pass
 
         # Test batch operations
@@ -342,7 +342,7 @@ class TestCryptoUtils:
                 if result is not None:
                     assert isinstance(result, list)
                     assert len(result) == len(data_list)
-        except Exception:
+            except Exception:
             pass
 
     def test_configuration_options(self):
@@ -373,7 +373,7 @@ class TestCryptoUtils:
                 result = utils.random_string(16)
                 assert result is not None
                 assert len(result) == 16
-        except Exception:
+            except Exception:
             pass
 
     def test_security_features(self):
@@ -398,7 +398,7 @@ class TestCryptoUtils:
                     decrypted = utils.decrypt(encrypted, key)
                     if decrypted is not None:
                         assert decrypted == original
-        except Exception:
+            except Exception:
             pass
 
     def test_unicode_handling(self):

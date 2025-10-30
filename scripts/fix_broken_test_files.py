@@ -179,7 +179,7 @@ if __name__ == "__main__":
             except SyntaxError:
                 return True
 
-        except Exception:
+            except Exception:
             return True
 
         return False
@@ -216,7 +216,7 @@ if __name__ == "__main__":
                 "file_name": file_path.name,
                 "created_time": "2025-10-26",
             }
-        except Exception:
+            except Exception:
             # 默认元数据
             return {
                 "module_name": file_path.stem,

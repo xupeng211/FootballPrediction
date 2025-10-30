@@ -569,7 +569,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             # 确保置信度在合理范围内
             return max(0.1, min(0.95, confidence))
 
-        except Exception:
+            except Exception:
             return 0.5
 
     def _update_performance_metrics(self, output: PredictionOutput, confidence: float) -> None:

@@ -55,7 +55,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
@@ -90,7 +90,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
@@ -125,7 +125,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
@@ -160,7 +160,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
@@ -195,7 +195,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_prediction_service()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_prediction_service("test")
@@ -230,7 +230,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_match_service()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_match_service("test")
@@ -265,7 +265,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_user_service()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_user_service("test")
@@ -300,7 +300,7 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_analytics_service()
             assert result is not None
-        except Exception:
+            except Exception:
             # 对于需要参数的函数,提供测试数据
             if "environment" in func["args"]:
                 result = cqrs.application.create_analytics_service("test")
@@ -348,7 +348,7 @@ class TestCQRSApplicationBusinessLogic:
                         if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
-                    except Exception:
+            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 
@@ -375,7 +375,7 @@ class TestCQRSApplicationBusinessLogic:
                         if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
-                    except Exception:
+            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 
@@ -402,7 +402,7 @@ class TestCQRSApplicationBusinessLogic:
                         if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
-                    except Exception:
+            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 
@@ -429,7 +429,7 @@ class TestCQRSApplicationBusinessLogic:
                         if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
-                    except Exception:
+            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 
@@ -456,7 +456,7 @@ class TestCQRSApplicationBusinessLogic:
                         if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
-                    except Exception:
+            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 

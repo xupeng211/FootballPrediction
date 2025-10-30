@@ -83,7 +83,7 @@ async def test_db():
             async with engine.begin() as conn:
                 await conn.execute(text("SELECT 1"))
             break
-        except Exception:
+            except Exception:
             if i == max_retries - 1:
                 raise
             logger.info(f"Waiting for database... ({i + 1}/{max_retries})")

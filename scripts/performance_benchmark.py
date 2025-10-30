@@ -86,7 +86,7 @@ class PerformanceBenchmark:
                     if response.status_code == 200:
                         logger.info(f"Health check successful via {endpoint}")
                         return True
-                except Exception:
+            except Exception:
                     continue
             return False
         except Exception as e:

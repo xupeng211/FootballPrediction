@@ -112,7 +112,7 @@ from src.database.models import Team
                     async with test_db() as session:
                         _result = await session.execute(text("SELECT 1"))
                         return result.scalar()
-                except Exception:
+            except Exception:
                     retry_count += 1
                     if retry_count >= max_retries:
                         raise

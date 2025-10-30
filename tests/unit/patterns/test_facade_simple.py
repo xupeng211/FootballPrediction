@@ -45,7 +45,7 @@ class TestPredictionRequest:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate PredictionRequest")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating PredictionRequest instance")
 
     def test_class_exists(self):
@@ -143,7 +143,7 @@ class TestPredictionResult:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate PredictionResult")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating PredictionResult instance")
 
     def test_class_exists(self):
@@ -241,7 +241,7 @@ class TestDataCollectionConfig:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate DataCollectionConfig")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating DataCollectionConfig instance")
 
     def test_class_exists(self):
@@ -328,7 +328,7 @@ class TestPredictionFacade:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate PredictionFacade")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating PredictionFacade instance")
 
     def test_class_exists(self):
@@ -382,7 +382,7 @@ class TestDataCollectionFacade:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate DataCollectionFacade")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating DataCollectionFacade instance")
 
     def test_class_exists(self):
@@ -436,7 +436,7 @@ class TestAnalyticsFacade:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate AnalyticsFacade")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating AnalyticsFacade instance")
 
     def test_class_exists(self):
@@ -490,7 +490,7 @@ class TestFacadeFactory:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate FacadeFactory")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating FacadeFactory instance")
 
     def test_class_exists(self):
@@ -574,7 +574,7 @@ class TestSystemFacade:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate SystemFacade")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating SystemFacade instance")
 
     def test_class_exists(self):

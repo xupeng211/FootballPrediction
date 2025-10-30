@@ -818,6 +818,6 @@ class TestDataProcessingErrorHandling:
             # 正常数据应该被正确处理
             assert results[0]["type"] == "match"
             assert results[2]["type"] == "match"
-        except Exception:
+            except Exception:
             # 如果整个批次失败,这也是合理的
             pass

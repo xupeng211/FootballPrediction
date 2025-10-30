@@ -262,7 +262,7 @@ from src.utils.i18n import LOCALE_DIR
             from src.utils.i18n import init_i18n
 
             init_i18n()
-        except Exception:
+            except Exception:
             pytest.fail("init_i18n应该处理异常并继续执行")
 
     def test_i18n_module_import(self):

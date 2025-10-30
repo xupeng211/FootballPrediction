@@ -150,7 +150,7 @@ def api_client_full(monkeypatch):
     finally:
         try:
             app.dependency_overrides.clear()
-        except Exception:
+            except Exception:
             pass
         stack.close()
 

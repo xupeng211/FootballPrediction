@@ -82,7 +82,7 @@ class TestCoreServicesCoverage:
         try:
             event = service.log_event("test", "user", {})
             assert event is not None
-        except Exception:
+            except Exception:
             pass  # 错误处理是可以接受的
 
     def test_service_configuration(self):
@@ -94,7 +94,7 @@ class TestCoreServicesCoverage:
 
             assert service1 is not None
             assert service2 is not None
-        except Exception:
+            except Exception:
             pass  # 如果服务无法实例化,跳过测试
 
 

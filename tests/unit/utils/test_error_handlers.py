@@ -2,7 +2,7 @@
 
 try:
     pass
-except Exception:
+            except Exception:
     pass
     from src.core.error_handler import ErrorHandler
 except ImportError:
@@ -16,11 +16,11 @@ def test_error_handler_creation():
     # 测试错误处理器创建
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         handler = ErrorHandler()
         assert handler is not None
-    except Exception:
+            except Exception:
         assert True  # 即使失败也算通过
 
 
@@ -28,10 +28,10 @@ def test_error_handling():
     # 测试错误处理
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         handler = ErrorHandler()
         handler.handle_error(Exception("test error"))
         assert True  # 基本测试通过
-    except Exception:
+            except Exception:
         assert True

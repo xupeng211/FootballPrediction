@@ -18,5 +18,5 @@ def test_api_models_creation():
 
         response = APIResponse(success=True)
         assert response.success is True
-    except Exception:
+            except Exception:
         assert True  # Basic assertion - consider enhancing

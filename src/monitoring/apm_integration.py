@@ -125,7 +125,7 @@ class APMIntegration:
             import sentry_sdk
 
             sentry_sdk.capture_exception(error, extra=context)
-        except Exception:
+            except Exception:
             # Sentry不可用时的fallback
             self.logger.error(f"Error recorded: {error}", exc_info=True)
 

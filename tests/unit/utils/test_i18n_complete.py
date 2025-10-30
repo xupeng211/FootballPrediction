@@ -483,7 +483,7 @@ class TestI18nComplete:
                         init_i18n()
                         # 如果没有抛出异常，说明错误被正确处理
                         assert True
-                    except Exception:
+            except Exception:
                         # 如果抛出异常,应该被上层处理
                         pass
 

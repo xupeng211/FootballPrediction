@@ -2,7 +2,7 @@
 
 try:
     pass
-except Exception:
+            except Exception:
     pass
     from src.database.models.common import CommonModel
 except ImportError:
@@ -15,20 +15,20 @@ except ImportError:
 def test_model_creation():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         model = CommonModel()
         assert model is not None
-    except Exception:
+            except Exception:
         assert True
 
 
 def test_model_attributes():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         model = CommonModel()
         assert hasattr(model, "id")
-    except Exception:
+            except Exception:
         assert True

@@ -354,7 +354,7 @@ class TestParameterizedInput:
             else:
                 _result = str(invalid_data)
             assert _result is not None
-        except Exception:
+            except Exception:
             pass
 class TestBoundaryConditions:
     """边界条件测试"""

@@ -2,7 +2,7 @@
 
 try:
     pass
-except Exception:
+            except Exception:
     pass
     from src.metrics.exporter import MetricsExporter
 except ImportError:
@@ -15,21 +15,21 @@ except ImportError:
 def test_exporter_creation():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         exporter = MetricsExporter()
         assert exporter is not None
-    except Exception:
+            except Exception:
         assert True
 
 
 def test_export_metrics():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         exporter = MetricsExporter()
         result = exporter.export_metrics()
         assert result is not None
-    except Exception:
+            except Exception:
         assert True

@@ -53,7 +53,7 @@ class TestPerformanceAnalyzer:
         try:
             with open("/tmp/test_results.json", "r") as f:
                 json_data = json.load(f)
-        except Exception:
+            except Exception:
             json_data = {"summary": {}, "tests": []}
 
         return {

@@ -149,7 +149,7 @@ def aggressive_fix(filepath, original_content):
             f.write(fixed_content)
 
         return True
-    except Exception:
+            except Exception:
         return False
 
 
@@ -179,7 +179,7 @@ def main():
             ast.parse(content)
         except SyntaxError:
             error_files.append(filepath)
-        except Exception:
+            except Exception:
             pass
 
     print(f"发现 {len(error_files)} 个语法错误文件")

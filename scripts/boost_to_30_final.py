@@ -260,7 +260,7 @@ def test_exception_handler():
     try:
         config = get_config()
         assert config is not None
-    except Exception:
+            except Exception:
         # 配置加载失败也算通过
         assert True
 

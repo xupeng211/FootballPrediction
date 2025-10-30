@@ -355,7 +355,7 @@ class TestDatabaseTransactionIntegration:
             # 提交事务
             transaction_committed = True
 
-        except Exception:
+            except Exception:
             # 回滚事务
             transaction_rolled_back = True
 
@@ -388,7 +388,7 @@ class TestDatabaseTransactionIntegration:
             # 外层提交
             outer_transaction = True
 
-        except Exception:
+            except Exception:
             # 外层回滚
             outer_transaction = False
 
@@ -433,7 +433,7 @@ def test_api_endpoint_availability(
             # 如果无法导入应用,只验证端点格式
             assert endpoint.startswith("/api/")
             assert endpoint.count("/") >= 2
-    except Exception:
+            except Exception:
         # 端点可能不存在,这是可接受的
         pytest.skip(f"Endpoint {endpoint} not available")
 
@@ -485,7 +485,7 @@ def test_error_propagation_flow(
                 raise BusinessError("Business rule violation")
             elif layer == "api":
                 raise HTTPException(status_code=400, detail="Bad request")
-        except Exception:
+            except Exception:
             error_propagated = True
             break
 

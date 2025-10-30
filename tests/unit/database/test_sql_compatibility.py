@@ -64,7 +64,7 @@ class TestJSONBType:
             assert _result is not None
         except ImportError:
             pytest.skip("get_jsonb_type函数不可用")
-        except Exception:
+            except Exception:
             # 可能需要数据库方言,这是可以接受的
             pass
 

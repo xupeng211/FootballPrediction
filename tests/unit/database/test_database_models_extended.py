@@ -551,13 +551,13 @@ class TestDatabaseModelsExtended:
         try:
             League(id="invalid_id", name=123)
             # 某些模型可能会进行类型转换
-        except Exception:
+            except Exception:
             pass  # 抛出异常也是可以接受的
 
         # 测试缺失必需字段
         try:
             Team()  # 可能缺少必需字段
-        except Exception:
+            except Exception:
             pass  # 可能抛出异常
 
     def test_model_inheritance(self):
@@ -649,7 +649,7 @@ class TestDatabaseQueries:
                         result = method_func()
                         if result is not None:
                             assert isinstance(result, bool)
-                    except Exception:
+            except Exception:
                         pass
 
     def test_model_business_logic(self):
@@ -678,5 +678,5 @@ class TestDatabaseQueries:
                     result = method_func()
                     # 结果应该是布尔值,整数或字符串
                     assert isinstance(result, (bool, int, str, type(None)))
-                except Exception:
+            except Exception:
                     pass

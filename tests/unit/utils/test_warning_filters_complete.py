@@ -148,7 +148,7 @@ class TestWarningFiltersComplete:
         try:
             # 这里应该会触发异常处理逻辑
             logger.info("⚠️  警告过滤器自动设置失败: Test error")
-except Exception:
+            except Exception:
             pass
 
         # 验证logger获取被调用
@@ -166,7 +166,7 @@ except Exception:
         # 模拟KeyError异常处理
         try:
             logger.info("⚠️  警告过滤器自动设置失败: Test KeyError")
-except Exception:
+            except Exception:
             pass
 
         mock_get_logger.assert_called_with("src.utils.warning_filters")
@@ -184,7 +184,7 @@ except Exception:
         # 模拟TypeError异常处理
         try:
             logger.info("⚠️  警告过滤器自动设置失败: Test TypeError")
-except Exception:
+            except Exception:
             pass
 
         mock_get_logger.assert_called_with("src.utils.warning_filters")
