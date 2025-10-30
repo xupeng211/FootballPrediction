@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+""""""""
 投注服务集成模块
 Betting Service Integration Module
 
@@ -12,7 +12,7 @@ Betting Service Integration Module
 
 创建时间: 2025-10-29
 Issue: #116 EV计算和投注策略
-"""
+""""""""
 
 import json
 from datetime import datetime, timedelta

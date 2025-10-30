@@ -615,14 +615,14 @@ jobs:
 
     def _print_summary(self, plan: Dict):
         """打印计划摘要"""
-        print(f"\n🎉 Phase 6 Week 4 CI/CD自动化计划制定完成:")
+        print("\n🎉 Phase 6 Week 4 CI/CD自动化计划制定完成:")
         print(f"   自动化组件: {len(plan['automation_plan']['automation_components'])} 个")
         print(f"   实施步骤: {len(plan['automation_plan']['implementation_steps'])} 步")
         print(f"   配置文件: {len(plan['configuration_files'])} 个")
         print(f"   成功指标: {len(plan['success_metrics'])} 类")
         print(f"   制定时间: {(datetime.now() - self.start_time).total_seconds():.1f}s")
 
-        print(f"\n🚀 下一步行动:")
+        print("\n🚀 下一步行动:")
         for i, step in enumerate(plan['next_steps'][:3], 1):
             print(f"   {i}. {step}")
 

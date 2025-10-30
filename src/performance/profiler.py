@@ -1,4 +1,4 @@
-"""
+""""""""
 性能分析器模块
 Performance Profiler Module
 
@@ -8,7 +8,7 @@ Performance Profiler Module
 - 数据库查询分析
 - API端点性能跟踪
 - 异步任务性能分析
-"""
+""""""""
 
 import asyncio
 import cProfile
@@ -121,8 +121,8 @@ class PerformanceProfiler:
                     call_count=cc,
                     total_time=tt,
                     average_time=tt / cc if cc > 0 else 0,
-                    min_time=0,  # pstats doesn't provide min_time directly
-                    max_time=0,  # pstats doesn't provide max_time directly
+                    min_time=0,  # pstats doesn't provide min_time directly'
+                    max_time=0,  # pstats doesn't provide max_time directly'
                     cpu_time=tt,
                 )
                 profiles.append(profile)

@@ -468,13 +468,13 @@ def main():
         print(f"   当前告警级别: {report['current_status']['alert_level']}")
         print(f"   Phase H准备度: {report['phase_h_readiness']['overall_readiness']}")
 
-        print(f"\n🎯 核心成就:")
-        print(f"   ✅ 建立了实时质量监控系统")
-        print(f"   ✅ 实现了自动化指标收集")
-        print(f"   ✅ 配置了智能告警机制")
-        print(f"   ✅ 验证了Phase G工具链效果")
+        print("\n🎯 核心成就:")
+        print("   ✅ 建立了实时质量监控系统")
+        print("   ✅ 实现了自动化指标收集")
+        print("   ✅ 配置了智能告警机制")
+        print("   ✅ 验证了Phase G工具链效果")
 
-        print(f"\n🚀 Phase H基础设施已就绪!")
+        print("\n🚀 Phase H基础设施已就绪!")
 
     except KeyboardInterrupt:
         print("\n⚠️ 用户中断监控")

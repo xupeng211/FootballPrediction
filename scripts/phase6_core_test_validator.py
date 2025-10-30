@@ -75,7 +75,7 @@ class Phase6CoreTestValidator:
             self.test_results[test_suite['name']] = result
 
         # 运行快速覆盖率检查
-        print(f"\n📊 运行快速覆盖率检查...")
+        print("\n📊 运行快速覆盖率检查...")
         coverage_result = self._run_coverage_check()
 
         # 生成综合报告
@@ -97,7 +97,7 @@ class Phase6CoreTestValidator:
             'recommendations': self._generate_recommendations(total_tests, total_passed, total_failed)
         }
 
-        print(f"\n🎉 Phase 6 Week 3 核心测试验证完成:")
+        print("\n🎉 Phase 6 Week 3 核心测试验证完成:")
         print(f"   测试套件: {final_result['summary']['total_suites']} 个")
         print(f"   总测试数: {final_result['summary']['total_tests']} 个")
         print(f"   通过测试: {final_result['summary']['passed_tests']} 个")
@@ -107,9 +107,9 @@ class Phase6CoreTestValidator:
         print(f"   状态: {'✅ 完全成功' if final_result['success'] else '⚠️ 部分成功'}")
 
         if final_result['coverage']['basic_coverage']:
-            print(f"   覆盖率: 基础功能已验证")
+            print("   覆盖率: 基础功能已验证")
 
-        print(f"\n📋 建议:")
+        print("\n📋 建议:")
         for rec in final_result['recommendations']:
             print(f"   • {rec}")
 

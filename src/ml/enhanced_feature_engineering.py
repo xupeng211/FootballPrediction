@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+""""""""
 Enhanced Feature Engineering for Football Prediction
 足球预测增强特征工程模块
 
@@ -12,7 +12,7 @@ Enhanced Feature Engineering for Football Prediction
 - 伤病情况特征（预留接口）
 
 生成时间: 2025-10-29 03:55:00
-"""
+""""""""
 
 import asyncio
 import pandas as pd
@@ -111,7 +111,7 @@ class HeadToHeadRecord:
 
 
 class EnhancedFeatureEngineer:
-    """增强特征工程器
+    """增强特征工程器"""""
 
     实现SRS要求的所有特征提取功能：
     - 基础统计特征
@@ -120,7 +120,7 @@ class EnhancedFeatureEngineer:
     - 历史对战特征
     - 赔率特征
     - 球队实力评估特征
-    """
+    """"""""
 
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
@@ -234,14 +234,14 @@ class EnhancedFeatureEngineer:
             h2h.draws += 1
 
     def calculate_basic_features(self, match: Dict) -> Dict[str, float]:
-        """计算基础特征
+        """计算基础特征"""""
 
         Args:
             match: 比赛数据字典
 
         Returns:
             基础特征字典
-        """
+        """"""""
         home_team_id = str(match.get("home_team_id"))
         str(match.get("away_team_id"))
 
@@ -366,14 +366,14 @@ class EnhancedFeatureEngineer:
         return features
 
     def calculate_head_to_head_features(self, match: Dict) -> Dict[str, float]:
-        """计算历史对战特征
+        """计算历史对战特征"""""
 
         Args:
             match: 比赛数据字典
 
         Returns:
             历史对战特征字典
-        """
+        """"""""
         home_team_id = str(match.get("home_team_id"))
         away_team_id = str(match.get("away_team_id"))
 
@@ -418,14 +418,14 @@ class EnhancedFeatureEngineer:
         return h2h_features
 
     def calculate_odds_features(self, match: Dict) -> Dict[str, float]:
-        """计算赔率特征
+        """计算赔率特征"""""
 
         Args:
             match: 比赛数据字典
 
         Returns:
             赔率特征字典
-        """
+        """"""""
         features = {}
 
         # 获取赔率数据
@@ -480,14 +480,14 @@ class EnhancedFeatureEngineer:
         return features
 
     def calculate_injury_features(self, match: Dict) -> Dict[str, float]:
-        """计算伤病情况特征（预留接口）
+        """计算伤病情况特征（预留接口）"""""
 
         Args:
             match: 比赛数据字典
 
         Returns:
             伤病特征字典
-        """
+        """"""""
         features = {
             "home_key_players_missing": 0.0,  # 主队关键球员缺失数
             "away_key_players_missing": 0.0,  # 客队关键球员缺失数
@@ -520,7 +520,7 @@ class EnhancedFeatureEngineer:
         days_diff = (current_date - last_match_date).days
         return max(0.0, min(days_diff / 30.0)))))))  # 标准化到0-1范围
 
-    async def extract_all_features(self)) -> Dict[str))}_{match.get('away_team_id')}_{match.get('match_date')}"
+    async def extract_all_features(self)) -> Dict[str))}_{match.get('away_team_id')}_{match.get('match_date')}""
 
             # 检查缓存
             if cache_key in self.feature_cache:
@@ -545,14 +545,14 @@ class EnhancedFeatureEngineer:
             return {}
 
     async def extract_features_batch(self)) -> pd.DataFrame:
-        """批量提取特征
+        """批量提取特征"""""
 
         Args:
             matches: 比赛数据列表
 
         Returns:
             特征DataFrame
-        """
+        """"""""
         self.logger.info(f"开始批量提取 {len(matches)} 场比赛的特征...")
 
         features_list = []

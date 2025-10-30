@@ -1,8 +1,8 @@
-"""
+""""""""
 观察者模式实现
 
 用于监控和日志系统的通知机制
-"""
+""""""""
 
 import asyncio
 import logging

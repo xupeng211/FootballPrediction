@@ -1,9 +1,9 @@
-"""
+""""""""
 日志装饰器实现
 Logging Decorator Implementation
 
 记录函数执行的前后信息。
-"""
+""""""""
 
 import json
 import logging

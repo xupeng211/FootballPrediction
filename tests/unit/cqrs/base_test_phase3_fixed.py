@@ -1,8 +1,8 @@
-"""
+"""""""
 Issue #83-B阶段3简化测试: cqrs.base
 覆盖率: 71.05% → 85%
 创建时间: 2025-10-25
-"""
+"""""""
 
 import asyncio
 import inspect

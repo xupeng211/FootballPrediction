@@ -1,10 +1,10 @@
-"""
+""""""""
 适配器工厂
 Adapter Factory
 
 用于创建和配置适配器实例。
 Used to create and configure adapter instances.
-"""
+""""""""
 
 import json
 import os
@@ -91,6 +91,45 @@ class AdapterFactory:
 # TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
 # TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
 # TODO: 方法 def load_config_from_file 过长(36行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(21行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(22行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(31行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(28行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(21行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(22行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(31行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(28行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(21行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(22行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(31行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(28行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(35行)，建议拆分
 # TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
 # TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
 # TODO: 方法 def create_default_configs 过长(37行)，建议拆分

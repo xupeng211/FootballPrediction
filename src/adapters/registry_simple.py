@@ -12,6 +12,9 @@ class AdapterRegistry:
 
 # 全局注册表实例
 # 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
     def __init__(self):
         """初始化适配器注册表"""
         self._registry: Dict[str, Dict] = {}

@@ -1,11 +1,11 @@
-"""
+""""""""
 实时比赛状态监控服务
 
 Realtime Match Status Monitoring Service
 
 监控比赛状态变化并提供实时更新推送
 Monitors match status changes and provides real-time update push functionality
-"""
+""""""""
 
 import asyncio
 import logging
@@ -151,7 +151,7 @@ class RealtimeMatchService:
         status: MatchStatus = MatchStatus.UPCOMING,
         start_time: Optional[datetime] = None,
     ) -> bool:
-        """
+        """"""""
         添加比赛到监控列表
 
         Args:
@@ -164,7 +164,7 @@ class RealtimeMatchService:
 
         Returns:
             是否添加成功
-        """
+        """"""""
         if len(self.matches) >= self.max_matches:
             await self._cleanup_old_matches()
 
@@ -210,7 +210,7 @@ class RealtimeMatchService:
         away_score: int,
         minute: Optional[int] = None,
     ) -> bool:
-        """
+        """"""""
         更新比赛比分
 
         Args:
@@ -221,7 +221,7 @@ class RealtimeMatchService:
 
         Returns:
             是否更新成功
-        """
+        """"""""
         if match_id not in self.matches:
             return False
 
@@ -251,7 +251,7 @@ class RealtimeMatchService:
         status: MatchStatus,
         current_time: Optional[datetime] = None,
     ) -> bool:
-        """
+        """"""""
         更新比赛状态
 
         Args:
@@ -261,7 +261,7 @@ class RealtimeMatchService:
 
         Returns:
             是否更新成功
-        """
+        """"""""
         if match_id not in self.matches:
             return False
 

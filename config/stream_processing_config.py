@@ -3,6 +3,7 @@
 生成时间：2025-10-26 20:57:22
 """
 
+from typing import Dict, Any, List, Optional
 # Kafka配置
 KAFKA_CONFIG = {
     "bootstrap_servers": ["localhost:9092"],
@@ -51,10 +52,6 @@ STREAM_PROCESSING_CONFIG = {
 import asyncio
 from kafka import KafkaConsumer, KafkaProducer
 import json
-from src.core.config import 
-from src.core.config import 
-
-
 class StreamProcessor:
     def __init__(self):
         self.consumer_config = STREAM_CONSUMER_CONFIG

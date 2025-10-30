@@ -44,7 +44,7 @@ class IsinstanceErrorFixer:
             'failed_files_list': [str(f) for f in self.failed_files]
         }
 
-        print(f"\n📊 isinstance修复结果:")
+        print("\n📊 isinstance修复结果:")
         print(f"   总文件数: {summary['total_files']}")
         print(f"   修复成功: {summary['fixed_files']}")
         print(f"   修复失败: {summary['failed_files']}")
@@ -112,7 +112,7 @@ class IsinstanceErrorFixer:
             obj = match.group(1).strip()
             type1 = match.group(2).strip()
             type2 = match.group(3).strip()
-            type3 = match.group(4).strip()
+            match.group(4).strip()
 
             fixes_applied += 1
             return f"isinstance({obj}, ({type1}, {type2}))"
@@ -128,7 +128,7 @@ class IsinstanceErrorFixer:
             obj = match.group(1).strip()
             type1 = match.group(2).strip()
             type2 = match.group(3).strip()
-            type3 = match.group(4).strip()
+            match.group(4).strip()
 
             fixes_applied += 1
             return f"isinstance({obj}, ({type1}, {type2}))"
@@ -164,7 +164,7 @@ def main():
     src_summary = fixer.fix_project_isinstance_errors("src")
 
     # 验证修复效果
-    print(f"\n🧪 验证修复效果...")
+    print("\n🧪 验证修复效果...")
     import ast
 
     test_files = list(Path("src").rglob("*.py"))[:20]  # 测试前20个文件
@@ -186,7 +186,7 @@ def main():
     with open('isinstance_fix_report.json', 'w', encoding='utf-8') as f:
         json.dump(src_summary, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 详细报告: isinstance_fix_report.json")
+    print("\n📄 详细报告: isinstance_fix_report.json")
 
     # 给出下一步建议
     print("\n🎯 下一步建议:")

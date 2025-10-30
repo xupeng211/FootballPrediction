@@ -104,7 +104,7 @@ class RequirementsCleaner:
 
     def clean_all_requirements(self) -> Dict:
         """清理所有requirements文件"""
-        print(f"🧹 开始清理requirements文件...")
+        print("🧹 开始清理requirements文件...")
         print(f"📁 项目根目录: {self.project_root}")
         print(f"💾 备份目录: {self.backup_dir}")
         print()
@@ -139,7 +139,7 @@ class RequirementsCleaner:
                 print(f"   ✅ 清理完成，移除 {todos_removed} 个TODO注释")
             else:
                 self.cleaning_stats["errors"] += 1
-                print(f"   ❌ 清理失败")
+                print("   ❌ 清理失败")
 
         return self.cleaning_stats
 
@@ -237,7 +237,7 @@ def main():
     report = cleaner.generate_report()
     report_path = cleaner.save_report(report)
 
-    print(f"\n📊 清理完成!")
+    print("\n📊 清理完成!")
     print(f"📄 详细报告: {report_path}")
     print(f"✅ 处理文件: {stats['files_processed']}")
     print(f"🗑️  移除TODO: {stats['todos_removed']}")

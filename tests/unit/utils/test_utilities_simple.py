@@ -4,7 +4,7 @@ from typing import Any
 from typing import Tuple
 from typing import Dict
 from datetime import datetime
-"""
+"""""""
 工具函数测试 - Phase 4B高优先级任务
 
 测试src/utils/中的工具函数模块，包括：
@@ -27,7 +27,7 @@ from datetime import datetime
 7. ✅ 所有测试可独立运行通过pytest
 
 目标：将utils模块覆盖率提升至60%
-"""
+"""""""
 
 import asyncio
 import base64

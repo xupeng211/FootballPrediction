@@ -1,4 +1,4 @@
-"""
+"""""""
 预测API路由业务逻辑测试
 
 基于真实FastAPI路由的业务逻辑测试，专注于：
@@ -9,7 +9,7 @@
 - 错误处理验证
 
 测试覆盖 src/api/predictions/router.py 的所有端点
-"""
+"""""""
 
 from typing import Any, Dict
 

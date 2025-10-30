@@ -49,7 +49,7 @@ class TestCryptoUtilsExtended:
                 # 使用内置hashlib作为替代
                 result = hashlib.sha256(test_string.encode()).hexdigest()
                 assert len(result) == 64
-        except Exception as e:
+        except Exception:
             # 使用Python内置hash作为fallback
             result = hash(test_string)
             assert isinstance(result, int)
@@ -136,14 +136,6 @@ class TestDataValidatorExtended:
         if not data_validator:
             pytest.skip("data_validator模块不可用")
 
-        test_phones = [
-            "+1-555-123-4567",
-            "555.123.4567",
-            "(555) 123-4567",
-            "invalid-phone",
-            "123",
-            ""
-        ]
 
         for phone in phone:
             # 基本电话验证逻辑
@@ -556,8 +548,8 @@ class TestUtilityHelpers:
         for lst in test_lists:
             # 基本列表操作
             length = len(lst)
-            first = lst[0] if lst else None
-            last = lst[-1] if lst else None
+            lst[0] if lst else None
+            lst[-1] if lst else None
             is_empty = len(lst) == 0
 
             assert isinstance(length, int)
@@ -595,7 +587,7 @@ class TestUtilityHelpers:
 
         # 安全操作
         try:
-            result = safe_operation()
+            safe_operation()
             success = True
         except Exception:
             success = False

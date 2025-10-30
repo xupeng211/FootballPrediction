@@ -1,6 +1,6 @@
-"""
+""""""""
 适配器注册表
-"""
+""""""""
 
 from typing import Dict, Optional, Type, List
 
@@ -15,6 +15,9 @@ class AdapterRegistry:
 _global_registry = AdapterRegistry()
 
 
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
     def __init__(self, factory=None):
         self.factory = factory or self._create_default_factory()
         self.adapters: Dict[str, Adapter] = {}
@@ -29,7 +32,7 @@ _global_registry = AdapterRegistry()
             {"create_adapter": lambda self, cls, config=None: cls(config)},
         )()
 
-    def register(self, name: str, adapter: Adapter, group: Optional[str] = None):  # TODO: 添加返回类型注解
+    def register(self, name: str, adapter: Adapter, group: Optional[str] = None):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """注册适配器"""
         self.adapters[name] = adapter
         if group:

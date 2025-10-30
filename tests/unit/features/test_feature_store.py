@@ -100,10 +100,10 @@ from src.features.feature_store import (
         # Then
 pytest.importorskip("feast", reason="feast not installed")
 pytest.importorskip("psycopg", reason="psycopg not installed")
-"""
+"""""""
 特征存储测试
 Tests for Feature Store
-"""
+"""""""
     Entity,
     FeatureStore,
     FeatureView,

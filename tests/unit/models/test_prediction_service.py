@@ -1,10 +1,10 @@
-"""
+"""""""
 预测服务模块测试
 Prediction Service Module Tests
 
 测试src/models/prediction_service.py中定义的预测服务功能，专注于实现100%覆盖率。
 Tests prediction service functionality defined in src/models/prediction_service.py, focused on achieving 100% coverage.
-"""
+"""""""
 
 import pytest
 

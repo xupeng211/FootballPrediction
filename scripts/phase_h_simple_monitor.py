@@ -205,38 +205,38 @@ class PhaseHMonitor:
         print(f"\n🎯 整体状态: {report['phase_h_status']}")
         print(f"📈 生产就绪度: {report['production_readiness']['overall_readiness']}")
 
-        print(f"\n📊 当前质量指标:")
+        print("\n📊 当前质量指标:")
         current = report['current_monitoring_status']
         print(f"   测试覆盖率: {current['test_coverage']}")
         print(f"   测试成功率: {current['test_success_rate']}")
         print(f"   代码质量: {current['code_quality_score']}")
         print(f"   构建性能: {current['build_performance']}")
 
-        print(f"\n🎯 质量门禁状态:")
+        print("\n🎯 质量门禁状态:")
         gates = report['quality_gates']
         for gate_name, gate_info in gates.items():
             gate_display = gate_name.replace('_gate', '').replace('_', ' ').title()
             print(f"   {gate_display}: {gate_info['current_status']} (阈值: {gate_info['threshold']})")
 
-        print(f"\n📈 趋势分析:")
+        print("\n📈 趋势分析:")
         trends = report['trend_analysis']
         if 'coverage_trend' in trends:
             print(f"   覆盖率趋势: {trends['coverage_trend']} {trends['coverage_change']}")
             print(f"   代码质量趋势: {trends['quality_trend']} {trends['quality_change']}")
             print(f"   测试成功率趋势: {trends['success_trend']} {trends['success_change']}")
 
-        print(f"\n🏆 Phase G核心成就:")
+        print("\n🏆 Phase G核心成就:")
         for achievement in report['phase_g_summary']['key_achievements']:
             print(f"   ✅ {achievement}")
 
-        print(f"\n🚀 Phase H基础设施:")
+        print("\n🚀 Phase H基础设施:")
         infra = report['production_readiness']
         for component, status in infra.items():
             if component != 'overall_readiness':
                 component_display = component.replace('_', ' ').title()
                 print(f"   {component_display}: {status}")
 
-        print(f"\n📋 下一步行动:")
+        print("\n📋 下一步行动:")
         for i, step in enumerate(report['next_steps'][:3], 1):
             print(f"   {i}. {step}")
 
@@ -253,13 +253,13 @@ def main():
     print("✅ 质量门禁配置完成")
     print("✅ 报告生成功能正常")
 
-    print(f"\n🎯 Phase H核心价值:")
+    print("\n🎯 Phase H核心价值:")
     print("   📊 实时质量监控和趋势分析")
     print("   🚨 智能告警和质量门禁")
     print("   📈 数据驱动的持续改进")
     print("   🏭 生产环境质量保障")
 
-    print(f"\n🚀 Phase H已准备就绪!")
+    print("\n🚀 Phase H已准备就绪!")
 
 if __name__ == "__main__":
     main()

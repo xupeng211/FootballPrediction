@@ -77,12 +77,12 @@ import logging
 
 # 需要导入json
 import json
-"""
+""""""""
 实时模块路由器 - WebSocket和API端点
 Realtime Module Router - WebSocket and API Endpoints
 提供WebSocket连接和实时通信相关的API端点
 Provides WebSocket connections and real-time communication related API endpoints
-"""
+""""""""
 router = APIRouter(prefix="/realtime", tags=["realtime"])
 router.include_router(prediction_api_router)
 router.include_router(match_api_router)
@@ -144,7 +144,7 @@ async def websocket_endpoint(
     session_id: Optional[str] = Query(None),
     token: Optional[str] = Query(None),
 ):
-    """
+    """"""""
     WebSocket连接端点
     Query Parameters:
     - user_id: 用户ID（可选）
@@ -155,7 +155,7 @@ async def websocket_endpoint(
         "type": "subscribe|unsubscribe|heartbeat|get_stats|get_subscriptions",
         "data": { ... }
     }
-    """
+    """"""""
     endpoint = get_websocket_endpoint()
     await endpoint.endpoint(websocket, user_id, session_id, token)
 @router.websocket("/ws/predictions")
@@ -164,12 +164,12 @@ async def predictions_websocket(
     match_ids: Optional[str] = Query(None),  # 逗号分隔的比赛ID
     min_confidence: Optional[float] = Query(None),
 ):
-    """
+    """"""""
     专门用于预测事件的WebSocket端点
     Query Parameters:
     - match_ids: 特定比赛ID（逗号分隔）
     - min_confidence: 最小置信度
-    """
+    """"""""
     endpoint = get_websocket_endpoint()
     connection_id = None
     try:
@@ -216,12 +216,12 @@ async def matches_websocket(
     match_ids: Optional[str] = Query(None),  # 逗号分隔的比赛ID
     leagues: Optional[str] = Query(None),  # 逗号分隔的联赛名称
 ):
-    """
+    """"""""
     专门用于比赛事件的WebSocket端点
     Query Parameters:
     - match_ids: 特定比赛ID（逗号分隔）
     - leagues: 特定联赛（逗号分隔）
-    """
+    """"""""
     endpoint = get_websocket_endpoint()
     connection_id = None
     try:
@@ -267,10 +267,10 @@ async def matches_websocket(
             await endpoint.handler.handle_disconnection(connection_id)
 @router.post("/broadcast")
 async def broadcast_message(message: Dict[str, Any], room: Optional[str] = None):
-    """
+    """"""""
     广播消息到所有连接或特定房间
     需要管理员权限
-    """
+    """"""""
     try:
         manager = get_websocket_manager()
         if isinstance(message, ((((((((dict) and "event_type" in message:

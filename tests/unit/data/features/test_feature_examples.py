@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""
+"""""""
 特征示例测试
 Tests for Feature Examples
 
 测试src.data.features.examples模块的特征示例功能
-"""
+"""""""
 
 from datetime import datetime, timedelta
 

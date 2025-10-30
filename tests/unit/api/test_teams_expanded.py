@@ -40,11 +40,6 @@ class TestTeamsAPI:
     def test_get_teams(self, client, mock_service):
         """测试get_teams端点"""
         # 模拟服务响应
-        mock_response = {
-            "status": "success",
-            "data": "Test data for get_teams",
-            "timestamp": "2024-01-01T00:00:00Z"
-        }
 
         # 根据HTTP方法发送请求
         if "GET" == "GET":
@@ -63,11 +58,6 @@ class TestTeamsAPI:
     def test_create_teams(self, client, mock_service):
         """测试create_teams端点"""
         # 模拟服务响应
-        mock_response = {
-            "status": "success",
-            "data": "Test data for create_teams",
-            "timestamp": "2024-01-01T00:00:00Z"
-        }
 
         # 根据HTTP方法发送请求
         if "POST" == "GET":
@@ -86,11 +76,6 @@ class TestTeamsAPI:
     def test_update_teams(self, client, mock_service):
         """测试update_teams端点"""
         # 模拟服务响应
-        mock_response = {
-            "status": "success",
-            "data": "Test data for update_teams",
-            "timestamp": "2024-01-01T00:00:00Z"
-        }
 
         # 根据HTTP方法发送请求
         if "PUT" == "GET":

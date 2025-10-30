@@ -1,9 +1,9 @@
-"""
+"""""""
 Celery应用配置测试
 Tests for Celery App Configuration
 
 测试src.tasks.celery_app模块的Celery配置和任务管理功能
-"""
+"""""""
 
 import os
 

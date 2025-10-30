@@ -172,10 +172,10 @@ app = create_mock_app()
 API_AVAILABLE = True
 TEST_SKIP_REASON = "API模块不可用"
 print("智能Mock兼容修复模式：Mock API应用已创建")
-"""
+"""""""
 Tests for api.cqrs
 Auto-generated test file
-"""
+"""""""
 try:
     IMPORT_SUCCESS = True
 except ImportError as e:

@@ -1,9 +1,9 @@
-"""
+"""""""
 服务层综合测试 - 重构版本
 Service Layer Comprehensive Tests - Refactored
 
 基于真实业务逻辑的服务层测试，覆盖核心功能和边界情况。
-"""
+"""""""
 
 from unittest.mock import AsyncMock, Mock, patch
 

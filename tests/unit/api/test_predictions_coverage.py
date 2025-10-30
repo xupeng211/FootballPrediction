@@ -1,7 +1,7 @@
-"""
+"""""""
 测试 predictions 模块的覆盖率补充
 Test coverage supplement for predictions module
-"""
+"""""""
 
 import pytest
 

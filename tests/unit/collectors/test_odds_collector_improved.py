@@ -4,12 +4,12 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-"""
+"""""""
 赔率收集器改进版测试
 Tests for improved odds collector
 
 测试赔率收集器的功能。
-"""
+"""""""
 
 import sys
 from pathlib import Path

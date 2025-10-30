@@ -1,8 +1,8 @@
-"""
+"""""""
 Issue #83-B阶段3简化测试: utils.formatters
 覆盖率: 63.64% → 85%
 创建时间: 2025-10-25
-"""
+"""""""
 
 import inspect
 

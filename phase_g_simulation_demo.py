@@ -33,7 +33,7 @@ def simulate_phase_g_complete():
         print(f"   {i:2d}. {func['name']} ({func['file']}) - 复杂度: {func['complexity']}")
 
     # 2. 模拟测试缺口识别
-    print(f"\n🔍 第二步：测试缺口识别")
+    print("\n🔍 第二步：测试缺口识别")
     test_gaps = []
 
     for func in simulated_functions:
@@ -72,7 +72,7 @@ def simulate_phase_g_complete():
         total_test_cases += gap['estimated_test_cases']
 
     # 3. 模拟测试生成
-    print(f"\n🤖 第三步：自动化测试生成")
+    print("\n🤖 第三步：自动化测试生成")
 
     generated_files = []
     generated_test_cases = 0
@@ -92,14 +92,14 @@ def simulate_phase_g_complete():
         for gap in gaps:
             generated_test_cases += gap['estimated_test_cases']
 
-    print(f"✅ 生成测试文件:")
+    print("✅ 生成测试文件:")
     for file_path in generated_files:
         print(f"   📄 {file_path}")
 
     print(f"\n✅ 总计生成 {generated_test_cases} 个测试用例")
 
     # 4. 模拟覆盖率提升
-    print(f"\n📊 第四步：覆盖率影响分析")
+    print("\n📊 第四步：覆盖率影响分析")
 
     current_coverage = 16.5  # 基于当前项目状态
     coverage_per_test = 0.15  # 每个测试用例提升的覆盖率
@@ -111,7 +111,7 @@ def simulate_phase_g_complete():
     print(f"   预计最终覆盖率: {estimated_final_coverage:.1f}%")
 
     # 5. 生成完整报告
-    print(f"\n📋 第五步：生成Phase G执行报告")
+    print("\n📋 第五步：生成Phase G执行报告")
 
     complete_report = {
         "execution_timestamp": datetime.now().isoformat(),
@@ -218,15 +218,15 @@ def main():
         print(f"   ✅ 测试生成: {report['generator_results']['test_cases_created']}个测试用例")
         print(f"   ✅ 覆盖率提升: +{report['coverage_impact']['estimated_coverage_increase']:.1f}%")
 
-        print(f"\n🔧 工具链状态:")
+        print("\n🔧 工具链状态:")
         for component, status in report['tool_chain_validation'].items():
             print(f"   {component}: {status}")
 
-        print(f"\n🎯 Phase G工具链已验证完整!")
-        print(f"   智能分析器: ✅ 功能完整")
-        print(f"   自动生成器: ✅ 功能完整")
-        print(f"   集成能力: ✅ 验证通过")
-        print(f"   生产就绪度: 🟡 90% (等待源代码修复)")
+        print("\n🎯 Phase G工具链已验证完整!")
+        print("   智能分析器: ✅ 功能完整")
+        print("   自动生成器: ✅ 功能完整")
+        print("   集成能力: ✅ 验证通过")
+        print("   生产就绪度: 🟡 90% (等待源代码修复)")
 
         return report
 

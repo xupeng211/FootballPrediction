@@ -274,7 +274,7 @@ class Test{module_name.replace("_", " ").title()}:
             print(f"🧪 总测试用例: {stats['total_test_cases']} 个")
 
         if "coverage_data" in self.metrics:
-            print(f"📈 覆盖率数据: 已收集")
+            print("📈 覆盖率数据: 已收集")
 
         print("\n🎯 改进建议:")
         for rec in self.metrics.get("recommendations", []):
@@ -291,7 +291,7 @@ def main():
 
     # 1. 创建测试文件
     print("\n📝 步骤1: 为健康模块创建测试文件...")
-    created_tests = monitor.create_test_for_healthy_modules()
+    monitor.create_test_for_healthy_modules()
 
     # 2. 分析当前测试状态
     print("\n📊 步骤2: 分析当前测试状态...")

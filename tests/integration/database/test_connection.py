@@ -1,7 +1,7 @@
-"""
+"""""""
 数据库连接集成测试
 测试数据库连接池、事务、查询优化等功能
-"""
+"""""""
 
 import asyncio
 from datetime import datetime, timezone
@@ -204,7 +204,7 @@ from src.database.models import Match, Team
         # 复杂查询
         _result = await db_session.execute(
             text(
-                """
+                """""""
             SELECT t.name, COUNT(m.id) as match_count
             FROM teams t
             LEFT JOIN matches m ON (t.id = m.home_team_id OR t.id = m.away_team_id)
@@ -213,7 +213,7 @@ from src.database.models import Match, Team
             HAVING COUNT(m.id) > 5
             ORDER BY match_count DESC
             LIMIT 10
-        """
+        """""""
             )
         )
 

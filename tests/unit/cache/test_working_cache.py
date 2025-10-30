@@ -119,7 +119,7 @@ class TestRedisCache:
 
             if hasattr(cache, 'set') and hasattr(cache, 'get'):
                 cache.set("redis_test_key", "redis_test_value")
-                result = cache.get("redis_test_key")
+                cache.get("redis_test_key")
                 # Redis可能不可用，所以不强制断言具体值
                 assert True
             else:

@@ -61,13 +61,13 @@ class CorePerformanceBenchmark:
 
                 # 简单验证结果不为空
                 if result is None:
-                    print(f"⚠️  警告: 函数返回None结果")
+                    print("⚠️  警告: 函数返回None结果")
             except Exception as e:
                 print(f"⚠️  测试运行失败: {e}")
                 continue
 
         if successful_runs == 0:
-            print(f"❌ 所有测试运行都失败了")
+            print("❌ 所有测试运行都失败了")
             return {
                 'name': name,
                 'iterations': iterations,
@@ -355,7 +355,7 @@ class CorePerformanceBenchmark:
         # 显示摘要
         summary = results.get('summary', {})
         if summary:
-            print(f"\n📈 性能摘要:")
+            print("\n📈 性能摘要:")
             print(f"   成功测试: {summary.get('successful_benchmarks', 0)}/{summary.get('total_benchmarks', 0)}")
             print(f"   平均响应时间: {summary.get('avg_response_time_ms', 0):.3f}ms")
             print(f"   最大响应时间: {summary.get('max_response_time_ms', 0):.3f}ms")
@@ -397,7 +397,7 @@ def main():
     benchmark.display_results(results)
 
     # 保存结果
-    filepath = benchmark.save_results(results)
+    benchmark.save_results(results)
 
     return results
 

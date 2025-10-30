@@ -3,12 +3,12 @@
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
 
-"""
+"""""""
 TestContainers集成测试
 TestContainers Integration Tests
 
 使用真实容器进行集成测试
-"""
+"""""""
 
 import asyncio
 import time
@@ -97,13 +97,13 @@ from src.database.connection import DatabaseManager
             # 创建测试表
             await session.execute(
                 text(
-                    """
+                    """""""
                 CREATE TABLE test_table (
                     id SERIAL PRIMARY KEY,
                     name VARCHAR(100),
                     created_at TIMESTAMP DEFAULT NOW()
                 )
-            """
+            """""""
                 )
             )
 
@@ -406,7 +406,7 @@ class TestContainerOrchestration:
 # 测试辅助函数
 def create_test_docker_compose():
     """创建测试用的Docker Compose文件"""
-    compose_content = """
+    compose_content = """""""
 version: '3.8'
 
 services:
@@ -433,7 +433,7 @@ services:
       interval: 1s
       timeout: 5s
       retries: 5
-"""
+"""""""
 
     with open("docker-compose.test.yml", "w") as f:
         f.write(compose_content)

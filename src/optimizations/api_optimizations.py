@@ -218,7 +218,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        except Exception as e:
+        except Exception:
             # 记录错误指标
             error_metrics = PerformanceMetrics(
                 endpoint=request.url.path,
@@ -583,7 +583,7 @@ class APIOptimizer:
 
 async def clear_cache(pattern: str = "*") -> Dict[str, Any]:
     """清理缓存"""
-    cache_manager = APICache()
+    APICache()
     # 这里应该实现模式匹配的缓存清理
     # 暂时返回清理结果
     return {

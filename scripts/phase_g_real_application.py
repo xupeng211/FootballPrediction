@@ -70,7 +70,7 @@ def test_single_module(module_path, test_results):
 
     try:
         # 步骤1: 运行智能分析器
-        print(f"   📊 运行智能分析器...")
+        print("   📊 运行智能分析器...")
         from intelligent_test_gap_analyzer import IntelligentTestGapAnalyzer
 
         analyzer = IntelligentTestGapAnalyzer(source_dir=module_path)
@@ -88,7 +88,7 @@ def test_single_module(module_path, test_results):
                 print(f"         {i}. {func.name} (复杂度: {func.complexity})")
 
             # 步骤2: 生成测试缺口分析
-            print(f"   🔍 生成测试缺口分析...")
+            print("   🔍 生成测试缺口分析...")
             gaps = analyzer._identify_test_gaps()
             gaps_count = len(gaps)
             module_result['gaps_identified'] = gaps_count
@@ -107,14 +107,14 @@ def test_single_module(module_path, test_results):
 
             # 步骤3: 运行测试生成器（如果有缺口）
             if gaps_count > 0:
-                print(f"   🤖 运行自动化测试生成器...")
+                print("   🤖 运行自动化测试生成器...")
                 generator_result = run_test_generator_on_gaps(analyzer, gaps)
                 module_result['generator_success'] = generator_result['success']
                 module_result['generated_files'] = generator_result['generated_files']
                 module_result['generated_tests'] = generator_result['generated_tests']
 
         else:
-            print(f"      ⚠️ 未发现可分析的函数")
+            print("      ⚠️ 未发现可分析的函数")
             module_result['errors'].append("未发现可分析的函数")
 
     except Exception as e:
@@ -270,14 +270,14 @@ def display_application_summary(report):
     print("=" * 60)
 
     summary = report['application_summary']
-    print(f"\n🎯 整体结果:")
+    print("\n🎯 整体结果:")
     print(f"   测试模块: {summary['modules_tested']}")
     print(f"   成功分析: {summary['successful_analyses']}")
     print(f"   分析失败: {summary['failed_analyses']}")
     print(f"   成功率: {summary['success_rate']:.1f}%")
 
     analysis = report['analysis_results']
-    print(f"\n📈 分析成果:")
+    print("\n📈 分析成果:")
     print(f"   发现函数: {analysis['total_functions_found']}")
     print(f"   识别缺口: {analysis['total_gaps_identified']}")
     print(f"   平均函数/模块: {analysis['avg_functions_per_module']:.1f}")
@@ -285,24 +285,24 @@ def display_application_summary(report):
 
     generation = report['generation_results']
     if generation['total_generated_tests'] > 0:
-        print(f"\n🤖 生成成果:")
+        print("\n🤖 生成成果:")
         print(f"   生成文件: {generation['total_generated_files']}")
         print(f"   生成测试: {generation['total_generated_tests']}")
         print(f"   生成模块: {generation['modules_with_generation']}")
 
     effectiveness = report['phase_g_effectiveness']
-    print(f"\n🎯 Phase G效果评估:")
+    print("\n🎯 Phase G效果评估:")
     print(f"   分析器可靠性: {effectiveness['analyzer_reliability']:.1f}%")
     print(f"   生成器有效性: {effectiveness['generator_effectiveness']:.1f}%")
     print(f"   整体成功率: {effectiveness['overall_success_rate']:.1f}%")
 
     if report['key_insights']:
-        print(f"\n💡 关键洞察:")
+        print("\n💡 关键洞察:")
         for insight in report['key_insights']:
             print(f"   • {insight}")
 
     if report['recommendations']:
-        print(f"\n📋 建议:")
+        print("\n📋 建议:")
         for rec in report['recommendations']:
             print(f"   • {rec}")
 
@@ -311,14 +311,14 @@ def main():
     print("🚀 启动Phase G实际应用演示")
 
     try:
-        results = test_phase_g_on_healthy_modules()
+        test_phase_g_on_healthy_modules()
 
         print("\n🎉 Phase G实际应用演示完成!")
         print("✅ 验证了Phase G工具链在实际项目中的可用性")
         print("✅ 展示了智能分析和自动生成的实际效果")
         print("✅ 为大规模应用提供了可行性验证")
 
-        print(f"\n🚀 Phase G工具链已准备好投入实际使用!")
+        print("\n🚀 Phase G工具链已准备好投入实际使用!")
 
     except Exception as e:
         print(f"\n❌ 演示执行失败: {e}")

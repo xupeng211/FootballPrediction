@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-"""
+"""""""
 预测服务健康检查模块单元测试
 Unit Tests for Predictions Health Check Module
 
 这是质量提升计划的第一个测试文件，用于建立测试覆盖基础。
 This is the first test file in the quality improvement plan to establish test coverage foundation.
-"""
+"""""""
 
 import os
 import sys
@@ -369,8 +369,8 @@ class TestHealthCheckPerformance:
         assert min_time > 0, "Min response time should be greater than 0"
 
         print(
-            f"Health check performance: avg =
-    {avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+            f"Health check performance: avg ="
+    {avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms""
         )
 
 

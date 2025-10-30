@@ -11,13 +11,13 @@ from src.decorators.base import *
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-"""
+"""""""
 装饰器模式单元测试
 Unit Tests for Decorator Pattern
 
 测试装饰器模式的各个组件。
 Tests all components of the decorator pattern.
-"""
+"""""""
 
 import asyncio
 import time
@@ -444,7 +444,7 @@ class TestDecoratorFactory:
 
     def test_load_config_from_yaml(self, tmp_path):
         """测试从YAML文件加载配置"""
-        config_content = """
+        config_content = """""""
 decorators:
   - name: test_logging
     decorator_type: logging
@@ -462,7 +462,7 @@ chains:
       - name: test_logging
         decorator_type: logging
         enabled: true
-"""
+"""""""
 
         config_file = tmp_path / "test_config.yaml"
         config_file.write_text(config_content)

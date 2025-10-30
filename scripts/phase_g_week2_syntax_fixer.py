@@ -175,14 +175,14 @@ class ComplexSyntaxFixer:
         print(f"❌ 修复失败: {len(self.failed_files)} 个文件")
 
         if self.fixed_files:
-            print(f"\n🎯 成功修复的文件:")
+            print("\n🎯 成功修复的文件:")
             for file_path in self.fixed_files[:10]:  # 只显示前10个
                 print(f"   ✅ {file_path}")
             if len(self.fixed_files) > 10:
                 print(f"   ... 还有 {len(self.fixed_files) - 10} 个文件")
 
         if self.failed_files:
-            print(f"\n⚠️ 修复失败的文件:")
+            print("\n⚠️ 修复失败的文件:")
             for file_path in self.failed_files[:5]:  # 只显示前5个
                 print(f"   ❌ {file_path}")
             if len(self.failed_files) > 5:
@@ -212,7 +212,7 @@ def main():
         print(f"❌ 目录不存在: {directory}")
         return
 
-    print(f"🔧 Phase G Week 2: 复杂语法错误批量修复")
+    print("🔧 Phase G Week 2: 复杂语法错误批量修复")
     print(f"📁 目标目录: {directory}")
     print()
 

@@ -1,7 +1,7 @@
-"""
+""""""""
 缓存一致性管理器
 负责协调Redis缓存和PostgreSQL数据库之间的数据一致性
-"""
+""""""""
 
 import logging
 from typing import Any, Dict, List, Union
@@ -29,22 +29,22 @@ class CacheConsistencyManager:
     """缓存一致性管理类"""
 
     def __init__(self, redis_manager=None, db_manager=None):
-        """
+        """"""""
         初始化缓存一致性管理器
         :param redis_manager: Redis管理器实例
         :param db_manager: 数据库管理器实例
-        """
+        """"""""
         self.redis_manager = redis_manager or get_redis_manager()
         self.db_manager = db_manager
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     async def sync_cache_with_db(self, entity_type: str, entity_id: int) -> bool:
-        """
+        """"""""
         将数据库记录同步到缓存
         :param entity_type: 实体类型 (e.g., 'match', 'prediction')
         :param entity_id: 实体ID
         :return: 同步是否成功
-        """
+        """"""""
         try:
             # Placeholder implementation
             # 这里可以根据entity_type从数据库获取数据并更新缓存
@@ -62,11 +62,11 @@ class CacheConsistencyManager:
             return False
 
     async def invalidate_cache(self, keys: Union[List[str], str]) -> bool:
-        """
+        """"""""
         使缓存中的一个或多个键失效
         :param keys: 需要失效的缓存键列表或单个键
         :return: 失效是否成功
-        """
+        """"""""
         try:
             if isinstance(keys, ((((((((str):
                 keys = [keys]
@@ -90,12 +90,12 @@ class CacheConsistencyManager:
             return False
 
     async def warm_cache(self)) -> bool:
-        """
+        """"""""
         预热缓存，将指定ID列表的实体从数据库加载到缓存
         :param entity_type: 实体类型
         :param ids: 实体ID列表
         :return: 预热是否成功
-        """
+        """"""""
         try:
             if not ids:
                 return True
@@ -112,10 +112,10 @@ class CacheConsistencyManager:
             return False
 
     async def get_cache_stats(self) -> Dict[str, Any]:
-        """
+        """"""""
         获取缓存统计信息
         :return: 统计信息字典
-        """
+        """"""""
         try:
             # 可以扩展获取更多统计信息
             return {

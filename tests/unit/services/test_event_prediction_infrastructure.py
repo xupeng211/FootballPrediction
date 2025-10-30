@@ -1,4 +1,4 @@
-"""
+"""""""
 事件驱动预测服务基础测试 - 符合严格测试规范
 
 测试src/services/event_prediction_service.py的事件驱动预测功能，包括：
@@ -16,7 +16,7 @@
 5. ✅ 使用pytest标记
 6. ✅ 断言覆盖主要逻辑和边界条件
 7. ✅ 所有测试可独立运行通过pytest
-"""
+"""""""
 
 import asyncio
 from datetime import datetime

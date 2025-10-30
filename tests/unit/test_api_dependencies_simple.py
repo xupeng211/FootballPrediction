@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
+"""""""
 API依赖注入简化测试
 测试 src.api.dependencies 模块的核心功能
-"""
+"""""""
 
 import os
 

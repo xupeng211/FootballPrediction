@@ -1,8 +1,8 @@
-"""
+""""""""
 改进版特征获取API
 
 提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
-"""
+""""""""
 
 import logging
 from typing import Any, Dict, Optional
@@ -144,7 +144,6 @@ def build_response_data(
     features_error: str,
     include_raw: bool,
 ) -> Dict[str, Any]:
-    """TODO: 添加函数文档"""
     """构造响应数据"""
     response_data = {
         "match_id": match.id,
@@ -176,7 +175,7 @@ def build_response_data(
 @router.get("/{match_id}")
 async def get_match_features_improved(
     match_id: int) -> Dict[str, Any]:
-    """
+    """"""""
     改进版本：获取比赛特征
 
     改进点：
@@ -185,7 +184,7 @@ async def get_match_features_improved(
     3. ✅ 服务可用性检查
     4. ✅ 防御性参数验证
     5. ✅ 优雅降级
-    """
+    """"""""
     logger.info(f"开始获取比赛 {match_id} 的特征数据")
 
     # 1. 参数验证

@@ -1,7 +1,7 @@
-"""
+""""""""
 数据质量异常处理器（兼容版本）
 Data Quality Exception Handler (Compatibility Version)
-"""
+""""""""
 
 import logging
 from datetime import datetime
@@ -73,11 +73,11 @@ class DataQualityExceptionHandler:
     def handle_exception(
         self, exception: Exception, context: Optional[Dict[str, Any]] = None
     ) -> bool:
-        """处理异常
+        """处理异常"""""
 
         Returns:
             bool: True表示异常已处理，False表示未处理
-        """
+        """"""""
         if isinstance(exception, ((((((((DataQualityException):
             # 记录异常
             self.exceptions.append(exception)

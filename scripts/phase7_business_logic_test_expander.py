@@ -72,16 +72,16 @@ class Phase7BusinessLogicTestExpander:
             'recommendations': self._generate_business_recommendations()
         }
 
-        print(f"\n🎉 Phase 7 Week 3 业务逻辑测试扩展完成:")
+        print("\n🎉 Phase 7 Week 3 业务逻辑测试扩展完成:")
         print(f"   当前业务逻辑覆盖率: {final_result['summary']['current_business_coverage']}")
         print(f"   目标业务逻辑覆盖率: {final_result['summary']['target_business_coverage']}")
         print(f"   生成测试文件: {final_result['summary']['tests_generated']} 个")
         print(f"   业务逻辑组件测试: {final_result['summary']['business_components_tested']} 个")
         print(f"   业务逻辑集成状态: {final_result['summary']['business_integration_status']}")
         print(f"   执行时间: {final_result['elapsed_time']}")
-        print(f"   状态: ✅ 成功")
+        print("   状态: ✅ 成功")
 
-        print(f"\n📋 下一步行动:")
+        print("\n📋 下一步行动:")
         for i, step in enumerate(final_result['recommendations'][:3], 1):
             print(f"   {i}. {step}")
 

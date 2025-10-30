@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-"""
+"""""""
 健康检查模块独立测试
 Standalone Health Check Module Test
 
 不依赖完整应用，直接测试健康检查功能。
 Does not depend on full application, directly tests health check functionality.
-"""
+"""""""
 
 import asyncio
 import os

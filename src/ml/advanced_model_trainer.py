@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
+""""""""
 Advanced Model Trainer
 高级模型训练器，支持XGBoost和LightGBM集成
 
 Enhanced with XGBoost and LightGBM integration for football prediction models
-"""
+""""""""
 
 import asyncio
 import logging

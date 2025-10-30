@@ -1,9 +1,9 @@
-"""
+""""""""
 多租户管理API
 Multi-Tenant Management API
 
 提供企业级多租户系统的REST API接口。
-"""
+""""""""
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -29,31 +29,25 @@ router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])
 
 class TenantCreationRequestModel(BaseModel):
     """租户创建请求模型"""
-    name: str = Field(..., min_length=1, max_length=100, description="租户名称")
-    slug: str = Field(..., min_length=1, max_length=50, description="租户标识符")
+    name: str = Field(..., min_length=1, max_length=100, description="租户名称")  # TODO: 将魔法数字 100 提取为常量
+    slug: str = Field(..., min_length=1, max_length=50, description="租户标识符")  # TODO: 将魔法数字 50 提取为常量
     contact_email: str = Field(..., description="联系邮箱")
-    company_name: Optional[str] = Field(None, max_length=100, description="公司名称")
-    description: Optional[str] = Field(None, max_length=500, description="租户描述")
+    company_name: Optional[str] = Field(None, max_length=100, description="公司名称")  # TODO: 将魔法数字 100 提取为常量
+    description: Optional[str] = Field(None, max_length=500, description="租户描述")  # TODO: 将魔法数字 500 提取为常量
     plan: TenantPlan = Field(TenantPlan.BASIC, description="租户计划")
-    max_users: int = Field(10, ge=1, le=10000, description="最大用户数")
-    trial_days: int = Field(30, ge=1, le=365, description="试用天数")
+    max_users: int = Field(10, ge=1, le=10000, description="最大用户数")  # TODO: 将魔法数字 10000 提取为常量
+    trial_days: int = Field(30, ge=1, le=365, description="试用天数")  # TODO: 将魔法数字 30 提取为常量
     custom_settings: Optional[Dict[str, Any]] = Field(None, description="自定义设置")
 
     @validator('slug')
-    def validate_slug(cls, v):
-        if not v.replace('-', '').replace('_', '').isalnum():
-            raise ValueError('标识符只能包含字母、数字、连字符和下划线')
-        return v.lower()
-
-
 class TenantUpdateRequestModel(BaseModel):
     """租户更新请求模型"""
-    name: Optional[str] = Field(None, min_length=1, max_length=100, description="租户名称")
-    description: Optional[str] = Field(None, max_length=500, description="租户描述")
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="租户名称")  # TODO: 将魔法数字 100 提取为常量
+    description: Optional[str] = Field(None, max_length=500, description="租户描述")  # TODO: 将魔法数字 500 提取为常量
     contact_email: Optional[str] = Field(None, description="联系邮箱")
-    contact_phone: Optional[str] = Field(None, max_length=50, description="联系电话")
-    company_name: Optional[str] = Field(None, max_length=100, description="公司名称")
-    company_address: Optional[str] = Field(None, max_length=500, description="公司地址")
+    contact_phone: Optional[str] = Field(None, max_length=50, description="联系电话")  # TODO: 将魔法数字 50 提取为常量
+    company_name: Optional[str] = Field(None, max_length=100, description="公司名称")  # TODO: 将魔法数字 100 提取为常量
+    company_address: Optional[str] = Field(None, max_length=500, description="公司地址")  # TODO: 将魔法数字 500 提取为常量
     settings: Optional[Dict[str, Any]] = Field(None, description="租户设置")
     features: Optional[Dict[str, bool]] = Field(None, description="功能配置")
     branding: Optional[Dict[str, Any]] = Field(None, description="品牌定制")
@@ -123,11 +117,11 @@ async def create_tenant(
     request: Request,
     tenant_data: TenantCreationRequestModel
 ):
-    """
+    """"""""
     创建新租户
 
     需要权限: tenant.create
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
 
@@ -155,11 +149,11 @@ async def create_tenant(
 @router.get("/{tenant_id}", response_model=TenantResponseModel)
 @require_permission("tenant.view")
 async def get_tenant(tenant_id: int):
-    """
+    """"""""
     获取租户详情
 
     需要权限: tenant.view
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         tenant = await tenant_service.get_tenant_by_id(tenant_id)
@@ -179,11 +173,11 @@ async def update_tenant(
     tenant_id: int,
     update_data: TenantUpdateRequestModel
 ):
-    """
+    """"""""
     更新租户信息
 
     需要权限: tenant.manage
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
 
@@ -202,11 +196,11 @@ async def suspend_tenant(
     tenant_id: int,
     reason: str = Query(..., description="暂停原因")
 ):
-    """
+    """"""""
     暂停租户
 
     需要权限: tenant.manage
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         tenant = await tenant_service.suspend_tenant(tenant_id, reason)
@@ -219,11 +213,11 @@ async def activate_tenant(
     tenant_id: int,
     plan: Optional[TenantPlan] = Query(None, description="租户计划")
 ):
-    """
+    """"""""
     激活租户
 
     需要权限: tenant.manage
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         tenant = await tenant_service.activate_tenant(tenant_id, plan)
@@ -233,11 +227,11 @@ async def activate_tenant(
 @router.get("/{tenant_id}/statistics", response_model=TenantStatisticsResponseModel)
 @require_permission("tenant.analytics")
 async def get_tenant_statistics(tenant_id: int):
-    """
+    """"""""
     获取租户统计信息
 
     需要权限: tenant.analytics
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         stats = await tenant_service.get_tenant_statistics(tenant_id)
@@ -254,11 +248,11 @@ async def assign_user_role(
     role_data: RoleAssignmentRequestModel,
     request: Request
 ):
-    """
+    """"""""
     为用户分配角色
 
     需要权限: roles.manage
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         tenant_context = get_tenant_context(request)
@@ -281,11 +275,11 @@ async def revoke_user_role(
     user_id: int,
     role_code: str
 ):
-    """
+    """"""""
     撤销用户角色
 
     需要权限: roles.manage
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         success = await tenant_service.revoke_user_role(user_id, tenant_id, role_code)
@@ -306,11 +300,11 @@ async def check_permission(
     permission_data: PermissionCheckRequestModel,
     request: Request
 ):
-    """
+    """"""""
     检查用户权限
 
     需要权限: permissions.check
-    """
+    """"""""
     tenant_context = get_tenant_context(request)
     if not tenant_context:
         raise HTTPException(
@@ -344,11 +338,11 @@ async def check_resource_quota(
     resource_type: str,
     amount: int = Query(1, ge=1, description="需要的资源量")
 ):
-    """
+    """"""""
     检查资源配额
 
     需要权限: quota.view
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         quota_check = await tenant_service.check_resource_quota(
@@ -372,11 +366,11 @@ async def update_usage_metrics(
     tenant_id: int,
     metrics: Dict[str, Any]
 ):
-    """
+    """"""""
     更新使用指标
 
     需要权限: usage.update
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         await tenant_service.update_usage_metrics(tenant_id, metrics)
@@ -389,16 +383,16 @@ async def update_usage_metrics(
 @require_permission("tenant.list")
 async def list_tenants(
     skip: int = Query(0, ge=0, description="跳过数量"),
-    limit: int = Query(50, ge=1, le=100, description="返回数量"),
+    limit: int = Query(50, ge=1, le=100, description="返回数量"),  # TODO: 将魔法数字 50 提取为常量
     status: Optional[TenantStatus] = Query(None, description="状态筛选"),
     plan: Optional[TenantPlan] = Query(None, description="计划筛选"),
     search: Optional[str] = Query(None, description="搜索关键词")
 ):
-    """
+    """"""""
     获取租户列表
 
     需要权限: tenant.list
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
 
@@ -424,11 +418,11 @@ async def tenant_management_health():
 @router.get("/{tenant_id}/health")
 @require_permission("tenant.view")
 async def tenant_health_check(tenant_id: int):
-    """
+    """"""""
     租户健康检查
 
     需要权限: tenant.view
-    """
+    """"""""
     async with get_db_session() as db:
         tenant_service = TenantService(db)
         tenant = await tenant_service.get_tenant_by_id(tenant_id)
@@ -451,26 +445,39 @@ async def tenant_health_check(tenant_id: int):
         }
 
 
+class TenantUpdateRequestModel(BaseModel):
+# TODO: 方法 def _calculate_health_score 过长(23行)，建议拆分
+class TenantUpdateRequestModel(BaseModel):
+# TODO: 方法 def _calculate_health_score 过长(23行)，建议拆分
+    def validate_slug(cls, v):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+        """TODO: 添加函数文档"""
+        if not v.replace('-', '').replace('_', '').isalnum():
+            raise ValueError('标识符只能包含字母、数字、连字符和下划线')
+        return v.lower()
+
+
+class TenantUpdateRequestModel(BaseModel):
+# TODO: 方法 def _calculate_health_score 过长(23行)，建议拆分
 def _calculate_health_score(tenant: Tenant) -> float:
     """计算租户健康分数"""
-    score = 100.0
+    score = 100.0  # TODO: 将魔法数字 100 提取为常量
 
     # 状态检查
     if tenant.status != TenantStatus.ACTIVE:
-        score -= 50.0
+        score -= 50.0  # TODO: 将魔法数字 50 提取为常量
 
     # 订阅检查
     if not tenant.is_subscription_active:
-        score -= 30.0
+        score -= 30.0  # TODO: 将魔法数字 30 提取为常量
 
     # 使用率检查
-    if tenant.usage_percentage > 90:
-        score -= 20.0
-    elif tenant.usage_percentage > 80:
+    if tenant.usage_percentage > 90:  # TODO: 将魔法数字 90 提取为常量
+        score -= 20.0  # TODO: 将魔法数字 20 提取为常量
+    elif tenant.usage_percentage > 80:  # TODO: 将魔法数字 80 提取为常量
         score -= 10.0
 
     # 过期时间检查
     if tenant.days_until_expiry is not None and tenant.days_until_expiry < 7:
-        score -= 15.0
+        score -= 15.0  # TODO: 将魔法数字 15 提取为常量
 
     return max(0.0, score)

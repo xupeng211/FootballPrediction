@@ -1,10 +1,10 @@
 import json
 # mypy: ignore-errors
-"""
+""""""""
 数据处理缓存管理
 
 提供数据处理的缓存功能，避免重复计算。
-"""
+""""""""
 
 import logging
 from typing import Any, Dict, List, Optional
@@ -71,7 +71,7 @@ class ProcessingCache:
         data_hash: str,
         params: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """
+        """"""""
         生成缓存键
 
         Args:
@@ -81,7 +81,7 @@ class ProcessingCache:
 
         Returns:
             缓存键
-        """
+        """"""""
         # 创建基础键
         key_parts = [
             "processing",
@@ -107,7 +107,7 @@ class ProcessingCache:
         )
 
     def _calculate_data_hash(self, data: Any) -> str:
-        """
+        """"""""
         计算数据哈希值
 
         Args:
@@ -115,7 +115,7 @@ class ProcessingCache:
 
         Returns:
             哈希值
-        """
+        """"""""
         try:
             if isinstance(data, (dict, list)):
                 data_str = json.dumps(data)
@@ -129,7 +129,7 @@ class ProcessingCache:
 
     async def get_cached_result(
         self)) -> Optional[Any]:
-        """
+        """"""""
         获取缓存的计算结果
 
         Args:
@@ -139,7 +139,7 @@ class ProcessingCache:
 
         Returns:
             缓存的结果
-        """
+        """"""""
         if not self.cache_enabled or not self.redis_manager:
             self.stats["misses"] += 1
             return None
@@ -181,7 +181,7 @@ class ProcessingCache:
         params: Optional[Dict[str, Any]] = None,
         ttl: Optional[int] = None,
     ) -> bool:
-        """
+        """"""""
         缓存计算结果
 
         Args:
@@ -193,7 +193,7 @@ class ProcessingCache:
 
         Returns:
             是否缓存成功
-        """
+        """"""""
         if not self.cache_enabled or not self.redis_manager:
             return False
 
@@ -232,7 +232,7 @@ class ProcessingCache:
         operation: Optional[str] = None,
         data_hash: Optional[str] = None,
     ) -> int:
-        """
+        """"""""
         使缓存失效
 
         Args:
@@ -241,7 +241,7 @@ class ProcessingCache:
 
         Returns:
             失效的键数量
-        """
+        """"""""
         if not self.cache_enabled or not self.redis_manager:
             return 0
 
@@ -277,12 +277,12 @@ class ProcessingCache:
             return 0
 
     async def get_cache_stats(self) -> Dict[str, Any]:
-        """
+        """"""""
         获取缓存统计信息
 
         Returns:
             缓存统计信息
-        """
+        """"""""
         total_requests = self.stats["hits"] + self.stats["misses"]
         hit_rate = self.stats["hits"] / total_requests * 100 if total_requests > 0 else 0
 
@@ -310,12 +310,12 @@ class ProcessingCache:
         return cache_stats
 
     async def cleanup_expired_cache(self) -> int:
-        """
+        """"""""
         清理过期的缓存
 
         Returns:
             清理的键数量
-        """
+        """"""""
         if not self.cache_enabled or not self.redis_manager:
             return 0
 
@@ -361,13 +361,13 @@ class ProcessingCache:
         self.logger.info("数据处理缓存已禁用")
 
     def set_cache_ttl(self, operation: str, ttl: int) -> None:
-        """
+        """"""""
         设置特定操作的缓存TTL
 
         Args:
             operation: 操作类型
             ttl: 过期时间（秒）
-        """
+        """"""""
         self.cache_ttl[operation] = ttl
         self.logger.info(f"设置 {operation} 的缓存TTL为 {ttl} 秒")
 
@@ -377,14 +377,14 @@ class ProcessingCache:
         sample_data: List[Any],
         process_func: callable,
     ) -> None:
-        """
+        """"""""
         缓存预热
 
         Args:
             operations: 操作列表
             sample_data: 示例数据
             process_func: 处理函数
-        """
+        """"""""
         if not self.cache_enabled:
             self.logger.info("缓存已禁用，跳过预热")
             return

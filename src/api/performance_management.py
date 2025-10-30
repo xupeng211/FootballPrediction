@@ -269,7 +269,7 @@ async def get_database_analysis():
 
     需要权限: performance.view
     """
-    async with get_db_session() as db:
+    async with get_db_session():
         optimizer = DatabaseOptimizerFactory.create_optimizer()
         db_optimizer = await optimizer
 

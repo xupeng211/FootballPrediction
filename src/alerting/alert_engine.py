@@ -4,12 +4,12 @@ from typing import List
 from typing import Dict
 from datetime import datetime
 #!/usr/bin/env python3
-"""
+""""""""
 智能告警引擎
 Intelligent Alert Engine
 
 提供可配置的告警规则引擎、趋势分析、异常检测和智能告警聚合
-"""
+""""""""
 
 import json
 import asyncio

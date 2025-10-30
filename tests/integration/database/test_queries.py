@@ -1,7 +1,7 @@
-"""
+"""""""
 数据库查询优化集成测试
 测试各种查询模式的性能和正确性
-"""
+"""""""
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -92,7 +92,7 @@ from src.database.models import Match, Prediction, Team, User
         # 复杂连接查询
         _result = await db_session.execute(
             text(
-                """
+                """""""
             SELECT
                 t.name as team_name,
                 COUNT(m.id) as total_matches,
@@ -104,7 +104,7 @@ from src.database.models import Match, Prediction, Team, User
             WHERE t.name LIKE 'Join Team%'
             GROUP BY t.id, t.name
             ORDER BY total_matches DESC
-        """
+        """""""
             )
         )
 
@@ -201,7 +201,7 @@ from src.database.models import Prediction, User
         # 使用窗口函数查询
         _result = await db_session.execute(
             text(
-                """
+                """""""
             SELECT
                 u.username,
                 p.confidence,
@@ -212,7 +212,7 @@ from src.database.models import Prediction, User
             FROM users u
             JOIN predictions p ON u.id = p.user_id
             ORDER BY u.id, p.created_at
-        """
+        """""""
             )
         )
 
@@ -288,7 +288,7 @@ from src.database.models import Match, Prediction, Team, User
         # 使用子查询查找预测准确率高于平均的用户
         _result = await db_session.execute(
             text(
-                """
+                """""""
             SELECT u.username, u.email
             FROM users u
             WHERE u.id IN (
@@ -302,7 +302,7 @@ from src.database.models import Match, Prediction, Team, User
                     WHERE p2.status = 'COMPLETED'
                 )
             )
-        """
+        """""""
             )
         )
 
@@ -341,7 +341,7 @@ from src.database.models import Match, Team
         # 使用 CTE 查询
         _result = await db_session.execute(
             text(
-                """
+                """""""
             WITH team_stats AS (
                 SELECT
                     t.id,
@@ -366,7 +366,7 @@ from src.database.models import Match, Team
             FROM team_stats ts
             CROSS JOIN avg_goals ag
             WHERE ts.total_goals > ag.avg_goals_per_team
-        """
+        """""""
             )
         )
 

@@ -4,7 +4,7 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-"""
+"""""""
 特征服务API测试
 
 测试 src/api/features.py 中的7个API端点：
@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 - POST /features/batch/calculate - 批量计算特征
 - GET /features/historical/{match_id} - 获取历史特征
 - GET /features/health - 特征服务健康检查
-"""
+"""""""
 
 from datetime import datetime
 
@@ -520,8 +520,8 @@ class TestBatchCalculateFeatures:
 
             # 发送请求
             response = api_client_full.post(
-                "/api/v1/features/batch/calculate?start_date =
-    2025-09-01T00:00:00&end_date=2025-09-07T23:59:59"
+                "/api/v1/features/batch/calculate?start_date ="
+    2025-09-01T00:00:00&end_date=2025-09-07T23:59:59""
             )
 
         # 验证响应
@@ -540,8 +540,8 @@ class TestBatchCalculateFeatures:
         """测试无效的日期范围"""
         # 发送请求（开始日期晚于结束日期）
         response = api_client_full.post(
-            "/api/v1/features/batch/calculate?start_date =
-    2025-09-10T00:00:00&end_date=2025-09-01T00:00:00"
+            "/api/v1/features/batch/calculate?start_date ="
+    2025-09-10T00:00:00&end_date=2025-09-01T00:00:00""
         )
 
         # 验证响应
@@ -554,8 +554,8 @@ class TestBatchCalculateFeatures:
         """测试时间范围过大"""
         # 发送请求（时间范围超过30天）
         response = api_client_full.post(
-            "/api/v1/features/batch/calculate?start_date =
-    2025-08-01T00:00:00&end_date=2025-09-15T00:00:00"
+            "/api/v1/features/batch/calculate?start_date ="
+    2025-08-01T00:00:00&end_date=2025-09-15T00:00:00""
         )
 
         # 验证响应
@@ -578,8 +578,8 @@ class TestBatchCalculateFeatures:
 
             # 发送请求（恰好30天）
             response = api_client_full.post(
-                "/api/v1/features/batch/calculate?start_date =
-    2025-08-16T00:00:00&end_date=2025-09-15T00:00:00"
+                "/api/v1/features/batch/calculate?start_date ="
+    2025-08-16T00:00:00&end_date=2025-09-15T00:00:00""
             )
 
         # 验证响应

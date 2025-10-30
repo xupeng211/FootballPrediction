@@ -1,9 +1,9 @@
-"""
+""""""""
 告警管理器
 Alert Manager
 
 统一告警管理入口，向后兼容原有接口。
-"""
+""""""""
 
 import logging
 from datetime import datetime, timedelta

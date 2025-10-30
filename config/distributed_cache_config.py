@@ -1,11 +1,9 @@
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
 """
 分布式缓存配置
 生成时间：2025-10-26 20:57:22
 """
 
+from typing import Dict, Any, List, Optional
 # Redis集群配置
 REDIS_CLUSTER_CONFIG = {
     "nodes": [
@@ -38,7 +36,6 @@ DISTRIBUTED_CACHE_CONFIG = {
     },
 }
 
-
 # 分布式缓存使用示例
 class DistributedCache:
     def __init__(self):
@@ -61,7 +58,6 @@ class DistributedCache:
         print(f"使集群缓存失效: {pattern}")
         # 这里应该是实际的Redis集群失效实现
         pass
-
 
 # 全局分布式缓存实例
 distributed_cache = DistributedCache()

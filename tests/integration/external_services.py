@@ -148,7 +148,7 @@ class TestExternalServicesComprehensive:
                             else:
                                 return {"status": "success"}
 
-                    except (Timeout, HTTPError, ConnectionError) as e:
+                    except (Timeout, HTTPError, ConnectionError):
                         if attempt == self.retry_attempts - 1:
                             raise  # 最后一次尝试失败
                         time.sleep(0.1 * (attempt + 1))  # 指数退避
@@ -222,7 +222,7 @@ class TestExternalServicesComprehensive:
 
         for i in range(total_requests):
             try:
-                result = simulator.simulate_request(f"endpoint_{i}")
+                simulator.simulate_request(f"endpoint_{i}")
                 success_count += 1
             except (ConnectionError, Timeout, HTTPError, json.JSONDecodeError):
                 failure_count += 1

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
+""""""""
 真实数据模型训练脚本
 Real Data Model Training Script
 
 集成了特征工程、高级模型训练和AutoML管道的完整训练流程
-"""
+""""""""
 
 import asyncio
 import json
@@ -34,12 +34,12 @@ class RealModelTrainingPipeline:
     """真实数据模型训练管道"""
 
     def __init__(self, config: Dict[str, Any] = None):
-        """
+        """"""""
         初始化训练管道
 
         Args:
             config: 训练配置
-        """
+        """"""""
         self.config = config or {}
         self.feature_calculator = FeatureCalculator()
         self.models = {}
@@ -53,7 +53,7 @@ class RealModelTrainingPipeline:
         self.logger.info("RealModelTrainingPipeline initialized")
 
     def create_sample_match_data(self, num_matches: int = 500) -> List[MatchResult]:
-        """
+        """"""""
         创建示例比赛数据（用于测试）
 
         Args:
@@ -61,7 +61,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             比赛结果列表
-        """
+        """"""""
         self.logger.info(f"Creating {num_matches} sample match data...")
 
         teams = [
@@ -142,7 +142,7 @@ class RealModelTrainingPipeline:
         return matches
 
     def create_sample_league_table(self, teams: List[str]) -> List[Dict[str, Any]]:
-        """
+        """"""""
         创建示例积分榜
 
         Args:
@@ -150,7 +150,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             积分榜数据
-        """
+        """"""""
         league_table = []
 
         # 为每个球队生成随机积分
@@ -188,7 +188,7 @@ class RealModelTrainingPipeline:
         league_table: Optional[List[Dict]] = None,
         league: str = "Premier League",
     ) -> Tuple[pd.DataFrame, pd.Series, List[str]]:
-        """
+        """"""""
         准备训练数据
 
         Args:
@@ -198,7 +198,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             特征DataFrame、标签Series和特征列名
-        """
+        """"""""
         self.logger.info("Preparing training data...")
 
         # 为所有比赛计算特征
@@ -261,7 +261,7 @@ class RealModelTrainingPipeline:
         model_type: str = "xgboost_classifier",
         hyperparameter_tuning: bool = True,
     ) -> Dict[str, Any]:
-        """
+        """"""""
         训练单个模型
 
         Args:
@@ -272,7 +272,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             训练结果
-        """
+        """"""""
         self.logger.info(f"Training single model: {model_type}")
 
         trainer = AdvancedModelTrainer(self.config)
@@ -303,7 +303,7 @@ class RealModelTrainingPipeline:
     async def train_ensemble_models(
         self, X: pd.DataFrame, y: pd.Series, model_types: List[str] = None
     ) -> Dict[str, Any]:
-        """
+        """"""""
         训练集成模型
 
         Args:
@@ -313,7 +313,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             训练结果
-        """
+        """"""""
         self.logger.info("Training ensemble models")
 
         if model_types is None:
@@ -349,7 +349,7 @@ class RealModelTrainingPipeline:
         return result
 
     async def run_automl(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, Any]:
-        """
+        """"""""
         运行AutoML流程
 
         Args:
@@ -358,7 +358,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             AutoML结果
-        """
+        """"""""
         self.logger.info("Running AutoML pipeline")
 
         automl = AutoMLPipeline(self.config)
@@ -410,7 +410,7 @@ class RealModelTrainingPipeline:
         return best_result or {"success": False, "error": "All AutoML models failed"}
 
     async def compare_models(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, Any]:
-        """
+        """"""""
         比较所有训练好的模型
 
         Args:
@@ -419,7 +419,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             模型比较结果
-        """
+        """"""""
         self.logger.info("Comparing all trained models")
 
         comparison_results = {}
@@ -481,7 +481,7 @@ class RealModelTrainingPipeline:
         league_table: Optional[List[Dict]] = None,
         use_sample_data: bool = True,
     ) -> Dict[str, Any]:
-        """
+        """"""""
         运行完整的训练管道
 
         Args:
@@ -491,7 +491,7 @@ class RealModelTrainingPipeline:
 
         Returns:
             完整的训练结果
-        """
+        """"""""
         self.logger.info("Starting complete training pipeline...")
         start_time = datetime.now()
 
@@ -624,7 +624,7 @@ async def train_football_prediction_model(
     config: Dict[str, Any] = None,
     use_sample_data: bool = True,
 ) -> Dict[str, Any]:
-    """
+    """"""""
     训练足球预测模型的便捷函数
 
     Args:
@@ -634,7 +634,7 @@ async def train_football_prediction_model(
 
     Returns:
         训练结果
-    """
+    """"""""
     pipeline = RealModelTrainingPipeline(config)
     return await pipeline.run_complete_training_pipeline(matches, use_sample_data=use_sample_data)
 

@@ -1,9 +1,9 @@
-"""
+"""""""
 数据库集成测试
 Database Integration Tests
 
 测试数据库集成和仓储模式
-"""
+"""""""
 
 import asyncio
 import os
@@ -230,7 +230,7 @@ class TestDatabaseConfig:
         """测试：从环境变量获取数据库URL"""
         if get_database_url:
             url = get_database_url()
-            assert url    == "sqlite+aiosqlite:///test.db"
+            assert url       == "sqlite+aiosqlite:///test.db"
 
 
 @pytest.mark.skipif(not DATABASE_AVAILABLE, reason="Database modules not available")
@@ -261,13 +261,13 @@ class TestDatabasePerformance:
             # 创建测试表
             await session.execute(
                 text(
-                    """
+                    """""""
                 CREATE TABLE test_bulk (
                     id INTEGER PRIMARY KEY,
                     value TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
+            """""""
                 )
             )
 
@@ -299,12 +299,12 @@ class TestDatabasePerformance:
                 # 创建测试表
                 await session.execute(
                     text(
-                        f"""
+                        f"""""""
                     CREATE TABLE IF NOT EXISTS test_concurrent_{session_id} (
                         id INTEGER PRIMARY KEY,
                         value TEXT
                     )
-                """
+                """""""
                     )
                 )
 
@@ -327,7 +327,7 @@ class TestDatabasePerformance:
         # 所有查询都应该成功
         assert len(results) == 10
         for i, result in enumerate(results):
-            assert _result    == f"session_{i}"
+            assert _result       == f"session_{i}"
 
 
 @pytest.mark.skipif(DATABASE_AVAILABLE, reason="Database modules should be available")
@@ -401,13 +401,13 @@ class TestDatabaseErrorHandling:
             # 创建测试表
             await session.execute(
                 text(
-                    """
+                    """""""
                 CREATE TABLE users (
                     id INTEGER PRIMARY KEY,
                     username TEXT,
                     email TEXT
                 )
-            """
+            """""""
                 )
             )
 
@@ -418,7 +418,7 @@ class TestDatabaseErrorHandling:
             )
 
             # 尝试SQL注入（使用参数化查询应该安全）
-            malicious_input = "testuser'; DROP TABLE users; --"
+            malicious_input = "testuser'; DROP TABLE users; --"'
             _result = await session.execute(
                 text("SELECT * FROM users WHERE username = :username"),
                 {"username": malicious_input},

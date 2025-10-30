@@ -73,16 +73,16 @@ class Phase7DeploymentCicdExpander:
             'recommendations': self._generate_deployment_recommendations()
         }
 
-        print(f"\n🎉 Phase 7 Week 4 部署准备和CI/CD集成完成:")
+        print("\n🎉 Phase 7 Week 4 部署准备和CI/CD集成完成:")
         print(f"   部署准备状态: {final_result['summary']['deployment_status']}")
         print(f"   CI/CD优化项: {final_result['summary']['cicd_optimizations']} 个")
         print(f"   部署配置文件: {final_result['summary']['deployment_configs_created']} 个")
         print(f"   监控组件: {final_result['summary']['monitoring_components']} 个")
         print(f"   文档页面: {final_result['summary']['documentation_pages']} 个")
         print(f"   执行时间: {final_result['elapsed_time']}")
-        print(f"   状态: ✅ 成功")
+        print("   状态: ✅ 成功")
 
-        print(f"\n📋 下一步行动:")
+        print("\n📋 下一步行动:")
         for i, step in enumerate(final_result['recommendations'][:3], 1):
             print(f"   {i}. {step}")
 
@@ -298,9 +298,9 @@ class Phase7DeploymentCicdExpander:
                              'cache-to': 'type=gha,mode=max'
                          }},
                         {'name': 'Deploy to ${{ github.event.inputs.environment || ''staging'' }}',
-                         'run': f'''
-                           echo "🚀 Deploying to ${{ github.event.inputs.environment || ''staging'' }}"
-                           docker-compose -f docker-compose.${{{{ github.event.inputs.environment || ''staging'' }}}}.yml up -d
+                         'run': '''
+                           echo "🚀 Deploying to ${ github.event.inputs.environment || ''staging'' }"
+                           docker-compose -f docker-compose.${{ github.event.inputs.environment || ''staging'' }}.yml up -d
                            docker-compose ps
                          '''}
                     ]
@@ -569,17 +569,17 @@ class Phase7DeploymentCicdExpander:
     def _create_environment_configs(self) -> Dict[str, str]:
         """创建环境配置"""
         return {
-            'production': f'''# Production Environment Configuration
+            'production': '''# Production Environment Configuration
 ENV=production
 DEBUG=false
 LOG_LEVEL=INFO
-DATABASE_URL=postgresql://postgres:${{DB_PASSWORD}}@postgres:5432/football_prediction_prod
+DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/football_prediction_prod
 REDIS_URL=redis://redis:6379/0
-SECRET_KEY=${{SECRET_KEY}}
+SECRET_KEY=${SECRET_KEY}
 CORS_ORIGINS=https://football-prediction.com
 MONITORING_ENABLED=true
 ''',
-            'staging': f'''# Staging Environment Configuration
+            'staging': '''# Staging Environment Configuration
 ENV=staging
 DEBUG=true
 LOG_LEVEL=DEBUG

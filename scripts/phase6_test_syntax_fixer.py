@@ -79,7 +79,7 @@ class Phase6TestSyntaxFixer:
             'error_rate': f"{(len(syntax_errors) / len(test_files)) * 100:.1f}%" if test_files else "0%"
         }
 
-        logger.info(f"📊 测试语法错误分析完成:")
+        logger.info("📊 测试语法错误分析完成:")
         logger.info(f"   总文件数: {analysis_result['total_files']}")
         logger.info(f"   错误文件数: {analysis_result['error_files']}")
         logger.info(f"   总错误数: {analysis_result['total_errors']}")
@@ -192,7 +192,7 @@ class Phase6TestSyntaxFixer:
             'success_rate': f"{(len([f for f in fixed_files if f['fixes_applied'] > 0]) / max(len(fixed_files), 1)) * 100:.1f}%"
         }
 
-        logger.info(f"🎉 语法错误修复完成:")
+        logger.info("🎉 语法错误修复完成:")
         logger.info(f"   处理文件数: {result['files_processed']}")
         logger.info(f"   应用修复数: {result['fixes_applied']}")
         logger.info(f"   剩余错误数: {result['remaining_errors']}")
@@ -207,7 +207,7 @@ class Phase6TestSyntaxFixer:
                 content = f.read()
 
             lines = content.split('\n')
-            original_lines = lines.copy()
+            lines.copy()
             fixes = 0
 
             for error in errors:
@@ -352,7 +352,7 @@ def main():
     if args.analyze:
         # 仅分析模式
         result = fixer.analyze_test_syntax_errors()
-        print(f"\n📊 分析结果:")
+        print("\n📊 分析结果:")
         print(f"   总测试文件: {result['total_files']}")
         print(f"   错误文件数: {result['error_files']}")
         print(f"   语法错误数: {result['total_errors']}")
@@ -364,14 +364,14 @@ def main():
                 print(f"\n🎯 {group_data['name']}:")
                 print(f"   文件数: {group_data['total_files']}")
                 print(f"   错误数: {group_data['total_errors']}")
-                print(f"   Top 5 文件:")
+                print("   Top 5 文件:")
                 for i, file_info in enumerate(group_data['files'][:5]):
                     print(f"     {i+1}. {file_info['path']} ({file_info['error_count']}个错误)")
     else:
         # 完整修复模式
         result = fixer.run_phase6_test_syntax_fix(args.max_files)
 
-        print(f"\n🎉 Phase 6 Week 1 执行摘要:")
+        print("\n🎉 Phase 6 Week 1 执行摘要:")
         print(f"   分析文件数: {result['summary']['total_files_analyzed']}")
         print(f"   错误文件数: {result['summary']['files_with_errors']}")
         print(f"   语法错误数: {result['summary']['total_syntax_errors']}")

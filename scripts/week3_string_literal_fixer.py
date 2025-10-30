@@ -68,7 +68,7 @@ class StringLiteralFixer:
         """修复目录下的所有Python文件"""
         python_files = list(Path(directory).rglob("*.py"))
 
-        print(f"🔧 开始修复字符串字面量错误")
+        print("🔧 开始修复字符串字面量错误")
         print(f"📁 目标目录: {directory}")
         print(f"📂 发现 {len(python_files)} 个Python文件")
         print("=" * 60)

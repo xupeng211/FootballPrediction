@@ -3,12 +3,12 @@ from typing import Dict
 from typing import Any
 from datetime import datetime
 #!/usr/bin/env python3
-"""
+""""""""
 高级质量度量分析器
 Advanced Quality Metrics Analyzer
 
 提供代码复杂度、技术债务、性能监控等高级质量度量指标
-"""
+""""""""
 
 import ast
 from pathlib import Path
