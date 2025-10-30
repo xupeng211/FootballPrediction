@@ -61,7 +61,8 @@ python3 scripts/fix_test_crisis.py                  # 测试危机修复
 make env-check                    # 环境健康检查
 make test                         # 运行所有测试
 make coverage                     # 覆盖率报告
-make lint && make fmt             # 代码检查和格式化
+ruff check src/ tests/            # 代码检查（推荐，替代make lint）
+ruff format src/ tests/           # 代码格式化（推荐，替代make fmt）
 make prepush                      # 提交前完整验证
 make up / make down               # 启动/停止Docker服务
 make context                      # 加载项目上下文（⭐ 重要）
@@ -108,8 +109,9 @@ pytest -m "domain or services"                   # 领域和服务层测试
 **⚠️ 重要规则：**
 - 优先使用Makefile命令，避免直接运行pytest
 - 永远不要对单个文件使用 `--cov-fail-under`
-- 当前环境存在依赖问题，建议使用Docker测试
+- 当前环境存在依赖问题和语法错误，建议使用Docker测试
 - 使用 `make context` 加载项目完整上下文再开始开发
+- 注意：当前`make lint`命令依赖flake8，但项目已迁移到ruff，建议直接使用`ruff check`
 
 ## 🏗️ 系统架构
 
@@ -128,22 +130,46 @@ from src.domain.strategies.factory import StrategyFactory
 from src.domain.services.prediction_service import PredictionService
 
 # 动态创建预测策略
-strategy = StrategyFactory.create_strategy("ml_model")  # 或 "statistical", "historical"
+strategy = StrategyFactory.create_strategy("ml_model")  # 或 "statistical", "historical", "ensemble"
 prediction_service = PredictionService(strategy)
 prediction = await prediction_service.create_prediction(match_data, team_data)
+
+# 支持的策略类型
+# - "ml_model": 机器学习模型预测
+# - "statistical": 统计分析预测
+# - "historical": 历史数据预测
+# - "ensemble": 集成多策略预测
 ```
 
 #### 3. CQRS模式
-- **命令查询职责分离**：读写操作独立建模和优化
-- **性能优化**：读操作可优化缓存，写操作专注业务规则
-- **扩展性**：读写两端可独立扩展
+```python
+from src.cqrs.commands import CreatePredictionCommand, UpdatePredictionCommand
+from src.cqrs.queries import GetPredictionsQuery
+from src.cqrs.handlers import CommandHandler, QueryHandler
+
+# 命令侧 - 写操作
+command = CreatePredictionCommand(match_id=123, user_id=456, prediction_data={})
+await command_handler.handle(command)
+
+# 查询侧 - 读操作
+query = GetPredictionsQuery(user_id=456, filters={})
+predictions = await query_handler.handle(query)
+```
 
 #### 4. 依赖注入容器 (`src/core/di.py`)
-- **轻量级DI系统**：支持单例、作用域、瞬时三种生命周期
-- **自动装配**：基于类型注解的依赖注入
-- **循环依赖检测**：防止内存泄漏
-- **服务描述符**：完整的接口-实现映射系统
-- **实例管理**：支持工厂模式和实例预配置
+```python
+from src.core.di import Container
+
+# 创建容器并注册服务
+container = Container()
+container.register_singleton(DatabaseManager)
+container.register_scoped(PredictionService)
+container.register_transient(UserRepository)
+
+# 自动装配依赖
+prediction_service = container.resolve(PredictionService)
+# 自动注入所需的 DatabaseManager 和 UserRepository
+```
 
 #### 5. 数据库架构 (`src/database/`)
 - **基础模型**：统一的基础类和时间戳混入 (`src/database/base.py`)
@@ -173,6 +199,60 @@ make env-check        # 环境健康检查
 # 进行开发工作...
 make prepush          # 提交前验证
 make ci               # CI/CD模拟
+```
+
+### 常见开发场景
+
+#### 场景1: 添加新的预测策略
+```bash
+# 1. 创建策略文件
+touch src/domain/strategies/new_strategy.py
+
+# 2. 实现策略接口
+# 继承 BaseStrategy 并实现 predict 方法
+
+# 3. 注册策略到工厂
+# 编辑 src/domain/strategies/factory.py
+
+# 4. 编写测试
+# touch tests/unit/domain/strategies/test_new_strategy.py
+
+# 5. 验证实现
+make test.unit && make lint
+```
+
+#### 场景2: 添加新的API端点
+```bash
+# 1. 创建CQRS命令和查询
+touch src/cqrs/commands/new_feature_command.py
+touch src/cqrs/queries/new_feature_query.py
+
+# 2. 实现处理器
+touch src/cqrs/handlers/new_feature_handler.py
+
+# 3. 添加FastAPI路由
+# 编辑 src/api/routes/new_feature.py
+
+# 4. 注册依赖注入
+# 编辑 src/core/di.py
+
+# 5. 编写集成测试
+make test.int
+```
+
+#### 场景3: 数据库迁移
+```bash
+# 1. 生成迁移文件
+docker-compose exec app alembic revision --autogenerate -m "add_new_table"
+
+# 2. 检查迁移文件
+# 编辑 alembic/versions/xxxxx_add_new_table.py
+
+# 3. 应用迁移
+docker-compose exec app alembic upgrade head
+
+# 4. 验证数据库结构
+make db-check
 ```
 
 ## 🧪 测试体系详解
@@ -266,17 +346,73 @@ python3 scripts/launch_test_crisis_solution.py      # 交互式修复工具
 ⚠️ **当前测试环境存在5个收集错误，主要在compatibility模块**
 ⚠️ **部分智能修复脚本需要更新以适应当前项目结构**
 
-### 已知问题清单
-1. **测试导入错误**: `tests/compatibility/test_basic_compatibility.py` 等文件存在导入问题
-2. **依赖缺失**: pandas、numpy、scikit-learn等数据科学库在测试环境缺失
-3. **配置清理**: pyproject.toml需要清理重复的TODO注释
-4. **脚本更新**: 部分修复脚本可能需要路径更新
+### 🚨 当前已知问题和修复优先级
 
-### 推荐修复顺序
-1. 使用Docker环境绕过依赖问题
-2. 运行智能修复工具处理语法和导入错误
-3. 清理配置文件中的TODO注释
-4. 验证测试套件正常运行
+#### 高优先级问题（影响开发）
+1. **测试环境依赖缺失**
+   - 问题：pandas、numpy、scikit-learn等数据科学库缺失
+   - 影响：测试无法正常运行，覆盖率数据不准确
+   - 修复：使用Docker环境或手动安装依赖
+
+2. **测试导入错误**
+   - 问题：`tests/compatibility/test_basic_compatibility.py` 等5个文件存在导入问题
+   - 影响：测试收集失败，影响CI/CD流程
+   - 修复：运行智能修复工具自动修复
+
+#### 中优先级问题（影响质量）
+3. **配置文件冗余**
+   - 问题：`pyproject.toml`包含26个重复TODO注释
+   - 影响：配置文件冗长，维护困难
+   - 修复：清理重复注释，保持配置精简
+
+4. **脚本路径更新**
+   - 问题：部分修复脚本可能需要路径更新
+   - 影响：自动化工具执行效果不佳
+   - 修复：验证并更新脚本路径
+
+### 🔧 推荐修复方案
+
+#### 🥇 方案1: Docker环境（推荐）
+```bash
+# 一键解决所有依赖问题
+docker-compose up -d
+docker-compose exec app pytest -m "unit"
+```
+
+#### 🥈 方案2: 手动修复
+```bash
+# 安装缺失依赖
+source .venv/bin/activate
+pip install pandas numpy aiohttp psutil scikit-learn
+
+# 修复导入错误
+python3 scripts/smart_quality_fixer.py
+
+# 清理配置
+python3 scripts/clean_duplicate_imports.py
+```
+
+#### 🥉 方案3: 智能修复（自动化）
+```bash
+# 一键智能修复
+python3 scripts/fix_test_crisis.py
+python3 scripts/quality_guardian.py --check-only
+```
+
+### 修复验证步骤
+```bash
+# 1. 环境健康检查
+make env-check
+
+# 2. 运行核心测试
+make test-phase1
+
+# 3. 验证覆盖率
+make coverage
+
+# 4. 代码质量检查
+make lint && make fmt
+```
 
 ### 项目管理工具
 ```bash
@@ -310,11 +446,12 @@ make clean-env && make install && make up
 ```
 
 ### 关键提醒
-- **依赖问题**: 当前测试环境缺少pandas、numpy等依赖，且存在导入错误，建议使用Docker
+- **依赖问题**: 当前测试环境缺少pandas、numpy等依赖，且存在语法错误，建议使用Docker
 - **测试策略**: 优先使用Makefile命令而非直接运行pytest
-- **覆盖率测量**: 因依赖问题，使用Docker环境获得准确数据
-- **测试错误**: 当前有5个测试收集错误，主要涉及compatibility模块的导入问题
+- **覆盖率测量**: 因语法错误影响，当前覆盖率数据可能不准确
+- **测试错误**: 当前有5个测试收集错误，主要涉及compatibility模块的语法错误和导入问题
 - **工具优先级**: 推荐使用scripts目录下的智能修复工具而非手动修复
+- **代码检查**: 项目已迁移到ruff，建议使用`ruff check`替代`make lint`
 
 ---
 
@@ -373,54 +510,15 @@ make flamegraph                                        # 生成火焰图
 
 ---
 
-## 🛠️ 智能修复工具详解
+### 智能修复工具使用指南
+项目提供100+个自动化修复脚本，核心工具使用建议：
 
-项目提供了100+个自动化修复脚本，按功能分类：
-
-### 🎯 核心修复工具（推荐优先使用）
 ```bash
-# 一键修复系列
-python3 scripts/smart_quality_fixer.py                # 智能质量修复（首选）
-python3 scripts/quality_guardian.py --check-only       # 全面质量检查
-python3 scripts/fix_test_crisis.py                    # 测试危机修复
-
-# 精确修复工具
-python3 scripts/precise_error_fixer.py               # 精确错误定位和修复
-python3 scripts/comprehensive_syntax_fix.py          # 综合语法修复
-python3 scripts/batch_fix_exceptions.py              # 批量异常修复
+# 🎯 首选修复工具（解决80%常见问题）
+python3 scripts/smart_quality_fixer.py               # 智能质量修复
+python3 scripts/quality_guardian.py --check-only     # 全面质量检查
+python3 scripts/fix_test_crisis.py                  # 测试危机修复
 ```
-
-### 📊 质量分析和监控
-```bash
-# 质量报告和分析
-python3 scripts/quality_check.py                     # 生成质量报告
-python3 scripts/generate_test_report.py              # 生成测试报告
-python3 scripts/intelligent_quality_monitor.py       # 智能质量监控
-python3 scripts/coverage_dashboard.py                # 覆盖率仪表板
-
-# CI/CD集成
-python3 scripts/ci_coverage_monitor.py               # CI覆盖率监控
-python3 scripts/pre_commit_check.py                  # 提交前检查
-```
-
-### 🔧 特定问题修复
-```bash
-# 导入和依赖问题
-python3 scripts/fix_import_issues.py                 # 修复导入问题
-python3 scripts/clean_duplicate_imports.py           # 清理重复导入
-python3 scripts/analyze_failed_tests.py              # 分析失败测试
-
-# 代码优化
-python3/scripts/simple_refactor_v2.py                # 简单重构工具
-python3/scripts/clean_unused_ignore.py               # 清理无用忽略注释
-python3/scripts/optimize_exceptions.py               # 异常处理优化
-```
-
-### 工具使用建议
-1. **首选智能工具**: `smart_quality_fixer.py` 能解决大部分常见问题
-2. **质量检查**: 每次开发前运行 `quality_guardian.py --check-only`
-3. **测试问题**: 使用 `fix_test_crisis.py` 处理测试相关问题
-4. **持续改进**: 使用 `continuous_improvement_engine.py` 自动改进
 
 ---
 
