@@ -37,13 +37,12 @@ class TestTeamsAPI:
         """模拟服务"""
         return Mock()
 
-
     def test_get_teams(self, client, mock_service):
         """测试get_teams端点"""
         # 模拟服务响应
         mock_response = {
             "status": "success",
-            "data": "Test data for get_teams"",
+            "data": "Test data for get_teams",
             "timestamp": "2024-01-01T00:00:00Z"
         }
 
@@ -52,8 +51,6 @@ class TestTeamsAPI:
             response = client.get("/teams")
         elif "GET" == "POST":
             response = client.post("/teams", json={"test": "data"})
-        elif "GET" == "PUT":
-            response = client.put("/teams", json={"test": "data"})
         else:
             response = client.get("/teams")
 
@@ -63,13 +60,12 @@ class TestTeamsAPI:
         assert "status" in data
         assert data["status"] == "success"
 
-
     def test_create_teams(self, client, mock_service):
         """测试create_teams端点"""
         # 模拟服务响应
         mock_response = {
             "status": "success",
-            "data": "Test data for create_teams"",
+            "data": "Test data for create_teams",
             "timestamp": "2024-01-01T00:00:00Z"
         }
 
@@ -78,10 +74,8 @@ class TestTeamsAPI:
             response = client.get("/teams")
         elif "POST" == "POST":
             response = client.post("/teams", json={"test": "data"})
-        elif "POST" == "PUT":
-            response = client.put("/teams", json={"test": "data"})
         else:
-            response = client.get("/teams")
+            response = client.post("/teams", json={"test": "data"})
 
         # 验证响应
         assert response.status_code == 200
@@ -89,13 +83,12 @@ class TestTeamsAPI:
         assert "status" in data
         assert data["status"] == "success"
 
-
     def test_update_teams(self, client, mock_service):
         """测试update_teams端点"""
         # 模拟服务响应
         mock_response = {
             "status": "success",
-            "data": "Test data for update_teams"",
+            "data": "Test data for update_teams",
             "timestamp": "2024-01-01T00:00:00Z"
         }
 
@@ -104,10 +97,8 @@ class TestTeamsAPI:
             response = client.get("/teams/{id}")
         elif "PUT" == "POST":
             response = client.post("/teams/{id}", json={"test": "data"})
-        elif "PUT" == "PUT":
-            response = client.put("/teams/{id}", json={"test": "data"})
         else:
-            response = client.get("/teams/{id}")
+            response = client.put("/teams/1", json={"test": "data"})
 
         # 验证响应
         assert response.status_code == 200
@@ -115,16 +106,15 @@ class TestTeamsAPI:
         assert "status" in data
         assert data["status"] == "success"
 
-
     def test_error_handling(self, client):
         """测试错误处理"""
         # 测试不存在的端点
-        response = client.get(f"/{module_name}/nonexistent")
+        response = client.get("/teams/nonexistent")
         assert response.status_code == 404
 
     def test_validation(self, client):
         """测试数据验证"""
         # 测试无效数据
-        response = client.post(f"/{module_name}", json={{"invalid": "data"}})
+        response = client.post("/teams", json={"invalid": "data"})
         # 根据实际API行为调整期望
         assert response.status_code in [400, 422, 200]

@@ -307,7 +307,7 @@ class TestPydanticModelsValidation:
 
     def test_prediction_result_model(self):
         """测试预测结果模型"""
-from src.api.predictions.router import PredictionResult
+        from src.api.predictions.router import PredictionResult
 
         _result = PredictionResult(
             match_id=123,
@@ -324,7 +324,7 @@ from src.api.predictions.router import PredictionResult
 
     def test_league_info_model(self):
         """测试联赛信息模型"""
-from src.api.data_router import LeagueInfo
+        from src.api.data_router import LeagueInfo
 
         league = LeagueInfo(
             id=1,
@@ -337,7 +337,7 @@ from src.api.data_router import LeagueInfo
 
     def test_team_info_model(self):
         """测试球队信息模型"""
-from src.api.data_router import TeamInfo
+        from src.api.data_router import TeamInfo
 
         team = TeamInfo(
             id=1,
