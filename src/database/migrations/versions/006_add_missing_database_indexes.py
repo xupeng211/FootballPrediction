@@ -12,7 +12,7 @@ from sqlalchemy import text
 
 
 # 检查是否在离线模式
-# 在离线模式下执行注释，确保 SQL 生成正常
+# 在离线模式下执行注释,确保 SQL 生成正常
 
 # 获取数据库连接以执行原生SQL
 
@@ -57,7 +57,7 @@ from sqlalchemy import text
 
 # 检查是否在离线模式
 
-# 在离线模式下执行注释，确保 SQL 生成正常
+# 在离线模式下执行注释,确保 SQL 生成正常
 
 # 获取数据库连接
 
@@ -67,8 +67,8 @@ from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 """add_missing_database_indexes
-补充缺失的数据库索引，提高查询性能。
-基于数据架构优化工程师要求，添加以下缺失的索引：
+补充缺失的数据库索引,提高查询性能.
+基于数据架构优化工程师要求,添加以下缺失的索引:
 - idx_recent_matches: 支持按日期降序和联赛查询最近比赛
 - idx_team_matches: 支持主客队和日期的组合查询
 - idx_predictions_lookup: 支持预测数据的快速查找
@@ -86,7 +86,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """添加缺失的数据库索引"""
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过索引创建")
+        logger.info("⚠️  离线模式:跳过索引创建")
         op.execute("-- offline mode: skipped database indexes creation")
         return
     conn = op.get_bind()
@@ -219,7 +219,7 @@ def upgrade() -> None:
         """
             )
         )
-        logger.info("   创建的索引列表：")
+        logger.info("   创建的索引列表:")
         for row in result:
             logger.info(f"   - {row[2]} on {row[1]}")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
@@ -230,7 +230,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     """回滚索引创建（删除添加的索引）"""
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过索引回滚")
+        logger.info("⚠️  离线模式:跳过索引回滚")
         op.execute("-- offline mode: skipped database indexes rollback")
         return
     conn = op.get_bind()

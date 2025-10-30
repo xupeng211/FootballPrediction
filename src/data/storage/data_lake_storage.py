@@ -2,7 +2,7 @@
 数据湖存储模块
 Data Lake Storage Module
 
-提供高性能的数据湖存储功能，支持本地和S3存储。
+提供高性能的数据湖存储功能,支持本地和S3存储.
 """
 
 import logging
@@ -12,7 +12,7 @@ from .lake import LakeStorageUtils, MetadataManager, PartitionManager, S3DataLak
 
 logger = logging.getLogger(__name__)
 
-# 为了向后兼容，导出DataLakeStorage类
+# 为了向后兼容,导出DataLakeStorage类
 DataLakeStorage = LocalDataLakeStorage
 
 # 导出所有主要类

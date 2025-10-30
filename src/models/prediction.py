@@ -2,7 +2,7 @@
 预测模块
 Prediction Module
 
-提供预测相关的数据模型和服务。
+提供预测相关的数据模型和服务.
 Provides prediction-related data models and services.
 """
 

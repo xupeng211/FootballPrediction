@@ -2,7 +2,7 @@
 审计服务
 Audit Service
 
-提供系统操作的审计日志功能。
+提供系统操作的审计日志功能.
 Provides audit logging functionality for system operations.
 """
 

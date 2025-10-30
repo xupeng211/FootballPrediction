@@ -2,7 +2,7 @@
 观察者系统API端点
 Observer System API Endpoints
 
-提供观察者系统的管理和监控接口。
+提供观察者系统的管理和监控接口.
 Provides management and monitoring interfaces for the observer system.
 """
 

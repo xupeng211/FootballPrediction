@@ -3,7 +3,7 @@
 事件驱动的预测服务
 Event-Driven Prediction Service
 
-集成事件系统的预测服务，发布预测相关事件。
+集成事件系统的预测服务,发布预测相关事件.
 Prediction service integrated with event system, publishing prediction-related events.
 """
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class EventDrivenPredictionService(StrategyPredictionService):
     """事件驱动的预测服务
 
-    继承自策略预测服务，添加事件发布功能。
+    继承自策略预测服务,添加事件发布功能.
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
@@ -255,7 +255,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
 class EventDrivenMatchService:
     """事件驱动的比赛服务
 
-    处理比赛相关的事件发布。
+    处理比赛相关的事件发布.
     Handles match-related event publishing.
     """
 
@@ -357,7 +357,7 @@ class EventDrivenMatchService:
 class EventDrivenUserService:
     """事件驱动的用户服务
 
-    处理用户相关的事件发布。
+    处理用户相关的事件发布.
     Handles user-related event publishing.
     """
 

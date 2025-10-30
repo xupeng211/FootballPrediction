@@ -1,10 +1,10 @@
-""""""""
+""""
 仓储基类
 Repository Base Classes
 
-定义仓储模式的基础接口和实现。
+定义仓储模式的基础接口和实现.
 Defines base interfaces and implementations for repository pattern.
-""""""""
+""""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -33,9 +33,9 @@ class QuerySpec:
 class BaseRepository(Generic[T, ID], ABC):
     """仓储基类"""""
 
-    提供基本的数据访问功能。
+    提供基本的数据访问功能.
     Provides basic data access functionality.
-    """"""""
+    """"
 
     def __init__(self, session: AsyncSession, model_class: type[T]):
         self.session = session
@@ -196,9 +196,9 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
 class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
     """完整仓储接口"""""
 
-    组合只读和只写接口。
+    组合只读和只写接口.
     Combines read-only and write-only interfaces.
-    """"""""
+    """"
 
     async def find_or_create(
         self, find_spec: QuerySpec, create_data: Dict[str, Any]

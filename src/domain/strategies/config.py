@@ -6,7 +6,7 @@ config 主模块
 拆分策略: strategy_split
 """
 
-# 导入拆分的模块 - 暂时禁用，避免导入错误
+# 导入拆分的模块 - 暂时禁用,避免导入错误
 # from .domain.strategies.config_historical import *
 # from .domain.strategies.config_ml import *
 # from .domain.strategies.config_statistical import *
@@ -38,7 +38,7 @@ class EnsembleConfig:
     pass
 
 
-# 为了保持向后兼容，提供StrategyConfig别名
+# 为了保持向后兼容,提供StrategyConfig别名
 class StrategyConfig:
     """策略配置 - 占位符实现"""
 

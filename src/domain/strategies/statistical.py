@@ -4,7 +4,7 @@ import logging
 统计分析策略
 Statistical Strategy
 
-使用统计方法和数学模型进行预测的策略实现。
+使用统计方法和数学模型进行预测的策略实现.
 Strategy implementation using statistical methods and mathematical models for prediction.
 """
 
@@ -28,7 +28,7 @@ from .base import (
 class StatisticalStrategy(PredictionStrategy):
     """统计分析预测策略
 
-    基于历史数据的统计分析进行预测，包括：
+    基于历史数据的统计分析进行预测,包括:
     - 进球率统计
     - 主客场优势分析
     - 近期状态评估
@@ -49,7 +49,7 @@ class StatisticalStrategy(PredictionStrategy):
         """初始化统计策略
 
         Args:
-            config: 配置参数，包含：
+            config: 配置参数,包含:
                 - min_sample_size: 最小样本数量
                 - weight_recent_games: 近期比赛权重
                 - home_advantage_factor: 主场优势因子
@@ -170,7 +170,7 @@ class StatisticalStrategy(PredictionStrategy):
         lambda_home = max(0.1, home_avg_goals)
         lambda_away = max(0.1, away_avg_goals)
 
-        # 转换为整数，保持合理范围
+        # 转换为整数,保持合理范围
         lambda_home = float(lambda_home)
         lambda_away = float(lambda_away)
 
@@ -347,7 +347,7 @@ class StatisticalStrategy(PredictionStrategy):
             confidence_factors.append(0.3)
 
         # 预测一致性
-        # 这里简化处理，实际可以比较不同方法的结果一致性
+        # 这里简化处理,实际可以比较不同方法的结果一致性
         confidence_factors.append(0.7)
 
         # 返回平均置信度
@@ -389,10 +389,10 @@ class StatisticalStrategy(PredictionStrategy):
 
         return {"home_win": prob_home_win, "draw": prob_draw, "away_win": prob_away_win}
 
-    # 以下为辅助方法，实际项目中需要从数据库或缓存获取数据
+    # 以下为辅助方法,实际项目中需要从数据库或缓存获取数据
     async def _get_team_average_goals(self, team_id: int, is_home: bool) -> float:
         """获取球队平均进球数"""
-        # 模拟数据，实际应从数据库获取
+        # 模拟数据,实际应从数据库获取
         return 1.5 if is_home else 1.2
 
     async def _get_team_home_scores(self, team_id: int) -> List[Tuple[int, int]]:
@@ -407,7 +407,7 @@ class StatisticalStrategy(PredictionStrategy):
 
     async def _get_recent_games(self, team_id: int, limit: int) -> List[Tuple[int, int, bool]]:
         """获取最近比赛"""
-        # 模拟数据，返回(主场得分, 客场得分, 是否主场)
+        # 模拟数据,返回(主场得分, 客场得分, 是否主场)
         return [(2, 1, True), (1, 2, False), (3, 0, True), (0, 0, False), (2, 1, True)]
 
     async def _get_team_games(self, team_id: int) -> List[Dict[str, Any]]:

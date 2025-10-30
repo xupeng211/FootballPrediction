@@ -4,12 +4,12 @@ from typing import List
 from typing import Dict
 from datetime import datetime
 #!/usr/bin/env python3
-""""""""
+""""
 智能告警引擎
 Intelligent Alert Engine
 
-提供可配置的告警规则引擎、趋势分析、异常检测和智能告警聚合
-""""""""
+提供可配置的告警规则引擎,趋势分析,异常检测和智能告警聚合
+""""
 
 import json
 import asyncio
@@ -117,13 +117,13 @@ class AlertRule:
     name: str
     description: str
     type: AlertType
-    metric_path: str  # 指标路径，如 "overall_score" 或 "performance.cpu_usage"
+    metric_path: str  # 指标路径,如 "overall_score" 或 "performance.cpu_usage"
     operator: str  # 比较操作符: <, >, <=, >=, ==, !=
     threshold: float
     severity: AlertSeverity
     enabled: bool = True
-    duration: int = 300  # 持续时间（秒），超过此时间才触发告警
-    cooldown: int = 900  # 冷却时间（秒），告警触发后的冷却期
+    duration: int = 300  # 持续时间（秒）,超过此时间才触发告警
+    cooldown: int = 900  # 冷却时间（秒）,告警触发后的冷却期
     tags: Optional[List[str]] = None
     metadata: Optional[Dict[str, Any]] = None
 
@@ -142,7 +142,7 @@ class AnomalyDetector:
         """训练异常检测模型"""
         try:
             if len(historical_data) < 10:
-                self.logger.warning("历史数据不足，跳过异常检测模型训练")
+                self.logger.warning("历史数据不足,跳过异常检测模型训练")
                 return False
 
             # 提取数值特征
@@ -165,7 +165,7 @@ class AnomalyDetector:
             self.training_data = historical_data
             self.is_trained = True
 
-            self.logger.info(f"异常检测模型训练完成，使用 {len(features)} 个数据点")
+            self.logger.info(f"异常检测模型训练完成,使用 {len(features)} 个数据点")
             return True
 
         except Exception as e:
@@ -190,7 +190,7 @@ class AnomalyDetector:
             # 标准化
             X_scaled = self.scaler.transform([feature_vector])
 
-            # 预测异常分数 (-1表示异常，1表示正常)
+            # 预测异常分数 (-1表示异常,1表示正常)
             anomaly_score = self.isolation_forest.decision_function(X_scaled)[0]
             is_anomaly = self.isolation_forest.predict(X_scaled)[0] == -1
 
@@ -472,7 +472,7 @@ class AlertEngine:
                 self.alert_history.append(alert)
                 self._save_alert_to_redis(alert)
 
-            self.logger.info(f"检查完成，触发 {len(triggered_alerts)} 个告警")
+            self.logger.info(f"检查完成,触发 {len(triggered_alerts)} 个告警")
 
         except Exception as e:
             self.logger.error(f"告警检查失败: {e}")
@@ -557,7 +557,7 @@ class AlertEngine:
                         type=AlertType.ANOMALY,
                         severity=AlertSeverity.WARNING,
                         title="检测到异常模式",
-                        message=f"系统检测到异常的指标模式，异常分数: {anomaly_score:.3f}",
+                        message=f"系统检测到异常的指标模式,异常分数: {anomaly_score:.3f}",
                         source="anomaly_detector",
                         timestamp=datetime.now(),
                         details={
@@ -603,7 +603,7 @@ class AlertEngine:
                             type=AlertType.TREND,
                             severity=AlertSeverity.WARNING,
                             title=f"检测到{metric}下降趋势",
-                            message=f"{metric}呈现下降趋势，变化率: {trend_result['change_rate']:.2f}%",
+                            message=f"{metric}呈现下降趋势,变化率: {trend_result['change_rate']:.2f}%",
                             source="trend_analyzer",
                             timestamp=datetime.now(),
                             details={"metric": metric, "trend_result": trend_result},
@@ -646,7 +646,7 @@ class AlertEngine:
         seen_signatures = set()
 
         for alert in alerts:
-            # 创建告警签名（基于类型、严重程度、消息）
+            # 创建告警签名（基于类型,严重程度,消息）
             signature = f"{alert.type.value}_{alert.severity.value}_{hash(alert.message)}"
 
             if signature not in seen_signatures:
@@ -777,7 +777,7 @@ class AlertEngine:
     async def _send_alert_notification(self, alert: Alert):
         """发送告警通知"""
         try:
-            # 这里可以集成邮件、Slack、微信等通知渠道
+            # 这里可以集成邮件,Slack,微信等通知渠道
             self.logger.info(f"发送告警通知: {alert.title} - {alert.message}")
 
             # 保存通知记录
@@ -800,3 +800,4 @@ class AlertEngine:
 
 # 全局告警引擎实例
 alert_engine = AlertEngine()
+]

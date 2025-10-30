@@ -7,7 +7,7 @@ from typing import Any
 EV计算和投注策略模块
 Expected Value Calculation and Betting Strategy Module
 
-实现SRS要求的EV计算和投注建议功能：
+实现SRS要求的EV计算和投注建议功能:
 - 期望价值(Expected Value)计算
 - Kelly Criterion投注策略
 - 风险管理和资金管理
@@ -220,10 +220,10 @@ class EVCalculator:
             return 0.0
 
         # 基础价值分数
-        base_score = min(ev * 20, 8.0)  # EV转换为分数，最高8分
+        base_score = min(ev * 20, 8.0)  # EV转换为分数,最高8分
 
         # 概率加成
-        prob_bonus = min(probability * 2, 2.0)  # 概率加成，最高2分
+        prob_bonus = min(probability * 2, 2.0)  # 概率加成,最高2分
 
         total_score = base_score + prob_bonus
         return min(total_score, 10.0)
@@ -240,7 +240,7 @@ class EVCalculator:
             return 0.0
 
         # 使用正态分布近似计算破产概率
-        # 这是一个简化版本，实际应该使用更复杂的模型
+        # 这是一个简化版本,实际应该使用更复杂的模型
         if probability < 0.5:
             return min(kelly_fraction * 2, 0.8)  # 概率低于50%时风险更高
         else:
@@ -330,7 +330,7 @@ class BettingStrategyOptimizer:
         return {
             "conservative": BettingStrategy(
                 name="保守策略",
-                description="低风险，稳定收益，适合新手",
+                description="低风险,稳定收益,适合新手",
                 max_kelly_fraction=0.15,
                 min_ev_threshold=0.08,
                 risk_tolerance=0.3,
@@ -343,7 +343,7 @@ class BettingStrategyOptimizer:
             ),
             "balanced": BettingStrategy(
                 name="平衡策略",
-                description="风险与收益平衡，适合有经验的投注者",
+                description="风险与收益平衡,适合有经验的投注者",
                 max_kelly_fraction=0.25,
                 min_ev_threshold=0.05,
                 risk_tolerance=0.5,
@@ -356,7 +356,7 @@ class BettingStrategyOptimizer:
             ),
             "aggressive": BettingStrategy(
                 name="激进策略",
-                description="高风险高收益，适合专业投注者",
+                description="高风险高收益,适合专业投注者",
                 max_kelly_fraction=0.35,
                 min_ev_threshold=0.03,
                 risk_tolerance=0.7,

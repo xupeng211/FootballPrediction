@@ -3,17 +3,17 @@ from typing import Dict
 from typing import Any
 from src.core.config import 
 from src.core.config import 
-""""""""
+""""
 高级质量监控系统
 Issue #123: Phase 3: 高级质量监控系统开发
 
-提供实时Web监控面板和质量门禁功能：
+提供实时Web监控面板和质量门禁功能:
 - 实时质量指标收集
 - Web监控面板
 - 自动化质量门禁
 - 告警系统
 - 仪表盘可视化
-""""""""
+""""
 
 import logging
 from datetime import datetime, timezone
@@ -348,7 +348,7 @@ class AdvancedMonitoringSystem:
         self.alerts_sent.append(alert)
         logger.warning(f"质量告警: {alert['description']}")
 
-        # 这里可以集成实际的告警系统（邮件、Slack等）
+        # 这里可以集成实际的告警系统（邮件,Slack等）
 
     async def _start_monitoring_loop(self):
         """启动监控循环"""
@@ -382,7 +382,7 @@ class AdvancedMonitoringSystem:
 
     async def _generate_dashboard_html(self) -> str:
         """生成监控面板HTML"""
-        return """"""""
+        return """"
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -670,7 +670,7 @@ class AdvancedMonitoringSystem:
     </script>
 </body>
 </html>
-        """"""""
+        """"
 
     def run(self, host: str = "0.0.0.0", port: int = 8080):
         """启动监控系统"""

@@ -3,7 +3,7 @@
 性能监控集成模块
 Performance Monitoring Integration Module
 
-提供与现有应用的集成功能：
+提供与现有应用的集成功能:
 - 自动集成中间件
 - 配置管理
 - 启动/停止控制
@@ -26,7 +26,7 @@ class PerformanceMonitoringIntegration:
     def __init__(self):
         """初始化性能监控集成"""
         self.settings = get_settings()
-        # 使用getattr访问Pydantic Settings属性，提供默认值
+        # 使用getattr访问Pydantic Settings属性,提供默认值
         self.enabled = getattr(self.settings, "PERFORMANCE_MONITORING_ENABLED", True)
         self.sample_rate = float(getattr(self.settings, "PERFORMANCE_MONITORING_SAMPLE_RATE", 1.0))
         self.profiling_enabled = getattr(self.settings, "PERFORMANCE_PROFILING_ENABLED", False)
@@ -167,7 +167,7 @@ class PerformanceMonitoringIntegration:
             # 更新采样率
             if "sample_rate" in config:
                 self.sample_rate = config["sample_rate"]
-                # 如果中间件已存在，更新其采样率
+                # 如果中间件已存在,更新其采样率
                 if self._monitoring_middleware:
                     self._monitoring_middleware.sample_rate = self.sample_rate
 
@@ -224,9 +224,9 @@ class PerformanceMonitoringIntegration:
 
         try:
             # Note: 需要实现告警设置
-            # 实现内容：
+            # 实现内容:
             # 1. 配置告警规则
-            # 2. 设置告警渠道（邮件、短信、Slack等）
+            # 2. 设置告警渠道（邮件,短信,Slack等）
             # 3. 启动告警检查任务
 
             logger.info("Performance alerting setup completed")

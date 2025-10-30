@@ -3,7 +3,7 @@
 
 Model Training Module - Stub Implementation
 
-临时实现，用于解决导入错误。
+临时实现,用于解决导入错误.
 Temporary implementation to resolve import errors.
 """
 
@@ -129,7 +129,7 @@ class ModelTrainer:
         self.logger.info("Preparing training data...")
         self.status = TrainingStatus.PREPARING
 
-        # 桩实现：简单拆分数据
+        # 桩实现:简单拆分数据
         if feature_columns is None:
             feature_columns = [col for col in data.columns if col != target_column]
 
@@ -138,11 +138,11 @@ class ModelTrainer:
 
         # 模拟数据预处理
         if self.config.feature_scaling:
-            # 桩实现：不实际缩放
+            # 桩实现:不实际缩放
             self.logger.debug("Feature scaling applied")
 
         if self.config.handle_missing:
-            # 桩实现：不实际处理
+            # 桩实现:不实际处理
             self.logger.debug("Missing values handled")
 
         # 简单拆分
@@ -260,7 +260,7 @@ class ModelTrainer:
         if self.model is None:
             raise ValueError("Model must be trained before evaluation")
 
-        # 桩实现：生成评估指标
+        # 桩实现:生成评估指标
         metrics = {
             "accuracy": np.random.uniform(0.6, 0.9),
             "precision": np.random.uniform(0.6, 0.9),

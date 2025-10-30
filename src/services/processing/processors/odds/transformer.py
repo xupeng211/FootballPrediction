@@ -2,7 +2,7 @@
 transformer
 赔率数据转换
 
-此模块从原始文件拆分而来。
+此模块从原始文件拆分而来.
 This module was split from the original file.
 """
 

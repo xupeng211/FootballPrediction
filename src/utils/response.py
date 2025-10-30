@@ -89,5 +89,5 @@ class APIResponse:
         return APIResponse.error(message, code, data)
 
 
-# 为了向后兼容，提供一个ResponseUtils别名
+# 为了向后兼容,提供一个ResponseUtils别名
 ResponseUtils = APIResponse

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""""""""
+""""
 Enhanced Feature Engineering for Football Prediction
 足球预测增强特征工程模块
 
-根据SRS要求，实现基础特征提取算法，包括：
+根据SRS要求,实现基础特征提取算法,包括:
 - 进球数特征
 - 主客场状态特征
 - 赔率变化特征
@@ -12,7 +12,7 @@ Enhanced Feature Engineering for Football Prediction
 - 伤病情况特征（预留接口）
 
 生成时间: 2025-10-29 03:55:00
-""""""""
+""""
 
 import asyncio
 import pandas as pd
@@ -113,14 +113,14 @@ class HeadToHeadRecord:
 class EnhancedFeatureEngineer:
     """增强特征工程器"""""
 
-    实现SRS要求的所有特征提取功能：
+    实现SRS要求的所有特征提取功能:
     - 基础统计特征
     - 近期状态特征
     - 主客场特征
     - 历史对战特征
     - 赔率特征
     - 球队实力评估特征
-    """"""""
+    """"
 
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
@@ -153,7 +153,7 @@ class EnhancedFeatureEngineer:
             # 添加比赛记录
             self._add_match_to_history(match, home_team_id, away_team_id)
 
-        self.logger.info(f"完成初始化，共处理 {len(matches_data)} 场比赛")
+        self.logger.info(f"完成初始化,共处理 {len(matches_data)} 场比赛")
 
     def _add_match_to_history(
         self, match: Dict, home_team_id: str, away_team_id: str
@@ -241,7 +241,7 @@ class EnhancedFeatureEngineer:
 
         Returns:
             基础特征字典
-        """"""""
+        """"
         home_team_id = str(match.get("home_team_id"))
         str(match.get("away_team_id"))
 
@@ -373,7 +373,7 @@ class EnhancedFeatureEngineer:
 
         Returns:
             历史对战特征字典
-        """"""""
+        """"
         home_team_id = str(match.get("home_team_id"))
         away_team_id = str(match.get("away_team_id"))
 
@@ -388,7 +388,7 @@ class EnhancedFeatureEngineer:
                 h2h_key
             ].get_head_to_head_features()
         elif reverse_h2h_key in self.head_to_head_records:
-            # 如果找到反向记录，转换为主队视角
+            # 如果找到反向记录,转换为主队视角
             reverse_h2h = self.head_to_head_records[reverse_h2h_key]
             original_features = reverse_h2h.get_head_to_head_features()
 
@@ -404,7 +404,7 @@ class EnhancedFeatureEngineer:
                 ],  # 反向
             }
         else:
-            # 没有对战记录，使用默认值
+            # 没有对战记录,使用默认值
             h2h_features = {
                 "h2h_total_matches": 0,
                 "h2h_home_win_rate": 0.33,
@@ -425,7 +425,7 @@ class EnhancedFeatureEngineer:
 
         Returns:
             赔率特征字典
-        """"""""
+        """"
         features = {}
 
         # 获取赔率数据
@@ -487,7 +487,7 @@ class EnhancedFeatureEngineer:
 
         Returns:
             伤病特征字典
-        """"""""
+        """"
         features = {
             "home_key_players_missing": 0.0,  # 主队关键球员缺失数
             "away_key_players_missing": 0.0,  # 客队关键球员缺失数
@@ -552,7 +552,7 @@ class EnhancedFeatureEngineer:
 
         Returns:
             特征DataFrame
-        """"""""
+        """"
         self.logger.info(f"开始批量提取 {len(matches)} 场比赛的特征...")
 
         features_list = []
@@ -566,7 +566,7 @@ class EnhancedFeatureEngineer:
 
         if features_list:
             df = pd.DataFrame(features_list)
-            self.logger.info(f"批量特征提取完成，特征维度: {df.shape}")
+            self.logger.info(f"批量特征提取完成,特征维度: {df.shape}")
             return df
         else:
             self.logger.warning("没有提取到任何特征")
@@ -690,3 +690,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+]]

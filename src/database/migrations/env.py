@@ -1,7 +1,7 @@
 """
 Alembic环境配置
 
-配置数据库迁移环境，使用我们的数据库配置和模型。
+配置数据库迁移环境,使用我们的数据库配置和模型.
 """
 
 import asyncio
@@ -38,7 +38,7 @@ in_ci = os.getenv("GITHUB_ACTIONS", "false").lower() == "true"
 # 获取数据库配置
 db_config = get_database_config(environment)
 
-# 如果使用本地数据库或在CI环境中，覆盖数据库主机配置
+# 如果使用本地数据库或在CI环境中,覆盖数据库主机配置
 if use_local_db or in_ci:
     # 为本地开发修改数据库配置
     db_config.host = "localhost"
@@ -135,12 +135,12 @@ def run_migrations_online() -> None:
     """
     # 检查是否在异步环境中
     try:
-        # 如果当前已经有事件循环，使用异步方式
+        # 如果当前已经有事件循环,使用异步方式
         asyncio.get_running_loop()
         asyncio.create_task(run_async_migrations())
         return
     except RuntimeError:
-        # 没有运行中的事件循环，使用同步方式
+        # 没有运行中的事件循环,使用同步方式
         pass
 
     # 同步方式运行迁移

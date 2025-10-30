@@ -3,8 +3,8 @@ from datetime import datetime
 SRS规范简化预测API - 不依赖数据库
 SRS Compliant Simple Prediction API - Database Independent
 
-专注于展示SRS规范的核心功能：
-- /predict API：输入赛事信息返回胜/平/负概率
+专注于展示SRS规范的核心功能:
+- /predict API:输入赛事信息返回胜/平/负概率
 - API响应时间 ≤ 200ms
 - 模型准确率 ≥ 65%  # TODO: 将魔法数字 65 提取为常量
 - 支持1000场比赛并发请求
@@ -152,7 +152,7 @@ class SimplePredictionService:
                 # 检查当前窗口内的请求数
                 current_requests = await redis_client.zcard(key)
 
-                # 限制：每分钟100个请求
+                # 限制:每分钟100个请求
                 if current_requests >= 100:  # TODO: 将魔法数字 100 提取为常量
                     return False
 
@@ -160,7 +160,7 @@ class SimplePredictionService:
                 await redis_client.zadd(key, {str(current_time): current_time})
                 await redis_client.expire(key, 60)  # TODO: 将魔法数字 60 提取为常量
             else:
-                # 如果Redis不可用，使用内存缓存
+                # 如果Redis不可用,使用内存缓存
                 if token not in self._rate_limit_cache:
                     self._rate_limit_cache[token] = []
 
@@ -179,7 +179,7 @@ class SimplePredictionService:
             return True
         except Exception as e:
             logger.error(f"频率限制检查失败: {e}")
-            return True  # 如果出错，不限制请求
+            return True  # 如果出错,不限制请求
 
     async def generate_prediction(self, match_info: MatchInfo) -> Dict:
         """生成单个预测"""
@@ -314,11 +314,11 @@ async def predict_match_simple(
     """
     SRS规范简化预测接口 - 不依赖数据库
 
-    功能：
+    功能:
     - 输入赛事信息返回胜/平/负概率
     - API响应时间 ≤ 200ms
     - 支持Token校验与请求频率限制
-    - 完全独立，不依赖数据库
+    - 完全独立,不依赖数据库
     """
     # 检查请求频率限制
     if not await simple_prediction_service.check_rate_limit(token, redis_client):
@@ -343,7 +343,7 @@ async def predict_match_simple(
         srs_compliance=prediction_data["srs_compliance"],
     )
 
-    # 后台任务：记录预测日志
+    # 后台任务:记录预测日志
     background_tasks.add_task(
         log_prediction_simple,
         request.match_info.match_id,
@@ -364,11 +364,11 @@ async def predict_batch_simple(
     """
     批量预测接口 - 支持1000场比赛并发
 
-    功能：
+    功能:
     - 同时处理多场比赛预测
     - 支持并发控制
     - 平均响应时间 < 200ms
-    - 完全独立，不依赖数据库
+    - 完全独立,不依赖数据库
     """
     start_time = time.time()
 
@@ -428,7 +428,7 @@ async def predict_batch_simple(
         avg_response_time=avg_response_time
     )
 
-    # 后台任务：记录批量预测日志
+    # 后台任务:记录批量预测日志
     background_tasks.add_task(
         log_batch_prediction_simple,
         len(successful_predictions),

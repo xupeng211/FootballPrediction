@@ -2,7 +2,7 @@
 健康检查器
 Health Checker
 
-检查各个系统的健康状态。
+检查各个系统的健康状态.
 """
 
 from datetime import datetime

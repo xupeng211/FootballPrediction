@@ -75,17 +75,17 @@ from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 # 如果permission_audit_log表不存在，忽略错误但记录日志
 
 # 删除清理函数
-# 离线模式下执行注释，确保 SQL 生成正常
+# 离线模式下执行注释,确保 SQL 生成正常
 
-# 删除索引（会随表一起删除，但为了明确性仍然列出）
+# 删除索引（会随表一起删除,但为了明确性仍然列出）
 # 索引会随着表的删除自动删除
 
 # 删除audit_logs表
 logger = logging.getLogger(__name__)
 """
 增强权限审计功能 - 创建audit_logs表
-创建新的权限审计日志表，支持详细的操作记录和合规要求。
-扩展原有的permission_audit_log功能，提供更全面的审计能力。
+创建新的权限审计日志表,支持详细的操作记录和合规要求。
+扩展原有的permission_audit_log功能,提供更全面的审计能力.
 迁移ID: 005
 创建时间: 2025-09-12
 """
@@ -193,7 +193,7 @@ def upgrade():
             comment="更新时间",
         ),
         sa.PrimaryKeyConstraint("id"),
-        comment="权限审计日志表，记录所有敏感操作的详细信息",
+        comment="权限审计日志表,记录所有敏感操作的详细信息",
     )
     with op.batch_alter_table("audit_logs") as batch_op:
         batch_op.create_index("idx_audit_user_timestamp", ["user_id", "timestamp"])
@@ -206,7 +206,7 @@ def upgrade():
     if not context.is_offline_mode():
         connection = op.get_bind()
         if db_dialect == "sqlite":
-            logger.info("⚠️  SQLite环境：跳过PostgreSQL权限设置和函数创建")
+            logger.info("⚠️  SQLite环境:跳过PostgreSQL权限设置和函数创建")
             op.execute("-- SQLite environment: skipped PostgreSQL permission grants")
             op.execute("-- SQLite environment: SQLite does not support GRANT statements")
             op.execute("-- SQLite environment: skipped PostgreSQL function creation")
@@ -249,7 +249,7 @@ def upgrade():
                         """
             INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
             VALUES ('system', 'CREATE_TABLE', 'audit_logs', 'DDL', true, 'migration_005',
-                   '创建增强的权限审计日志表，支持详细的操作记录和合规要求');
+                   '创建增强的权限审计日志表,支持详细的操作记录和合规要求');
         """
                     )
                 )
@@ -271,7 +271,7 @@ def downgrade():
                     """
                 INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
                 VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',
-                       '回滚：删除增强的权限审计日志表');
+                       '回滚:删除增强的权限审计日志表');
             """
                 )
             )

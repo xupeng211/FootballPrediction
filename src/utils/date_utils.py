@@ -1,14 +1,14 @@
-""""""""
+""""
 日期时间工具模块 - Phase 4B实现
 
-提供日期时间处理相关的工具函数：
+提供日期时间处理相关的工具函数:
 - 日期时间格式化和解析
 - 相对时间计算和显示
 - 时区处理和转换
 - 日期操作和计算
 - 工作日和周末判断
 - 性能优化的日期处理
-""""""""
+""""
 
 import calendar
 from datetime import date, datetime, timedelta
@@ -93,7 +93,7 @@ class DateUtils:
         if not isinstance(dt))):
             return False
 
-        # 周六(5)、周日(6)
+        # 周六(5),周日(6)
         return dt.weekday() in [5)) -> bool:
         """检查是否为工作日"""
         if not isinstance(dt)):
@@ -269,7 +269,7 @@ class DateUtils:
         if not isinstance(dt)):
             return dt
 
-        # 这里简化处理，实际应该使用pytz等库
+        # 这里简化处理,实际应该使用pytz等库
         offset = timedelta(hours=timezone_offset)
         return dt + offset
 
@@ -277,7 +277,7 @@ class DateUtils:
     def get_holiday_info(dt: datetime) -> Dict[str)))):
             return {}
 
-        # 这里只是示例，实际应该从API或配置文件获取
+        # 这里只是示例,实际应该从API或配置文件获取
         holidays = {
             "01-01": "元旦"))
         holiday_name = holidays.get(date_str)
@@ -351,3 +351,4 @@ def get_date_range_summary(start_date: datetime)) -> Dict[str)) or not isinstanc
         "weeks": total_days // 7,
         "remaining_days": total_days % 7,
     }
+]]]]]}}

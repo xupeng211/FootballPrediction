@@ -2,7 +2,7 @@ from typing import Optional
 """
 足球预测系统字典处理工具模块
 
-提供字典操作相关的工具函数。
+提供字典操作相关的工具函数.
 """
 
 from typing import Any, Dict, List
@@ -13,25 +13,25 @@ class DictUtils:
 
     @staticmethod
     def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
-        """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
+        """深度合并字典 - 递归合并嵌套字典,dict2的值会覆盖dict1中的同名键"""
         result = dict1.copy()
         for key, value in dict2.items():
             if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-                # 如果两边都是字典，则递归合并，保持嵌套结构
+                # 如果两边都是字典，则递归合并,保持嵌套结构
                 result[key] = DictUtils.deep_merge(result[key], value)
             else:
-                # 非字典值直接覆盖，确保最新值优先
+                # 非字典值直接覆盖,确保最新值优先
                 result[key] = value
         return result
 
     @staticmethod
     def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Dict[str, Any]:
-            # 构建新的键名，使用分隔符连接层级关系
+            # 构建新的键名,使用分隔符连接层级关系
         items = []
         for k, v in d.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
             if isinstance(v, dict):
-                # 递归处理嵌套字典，保持层级关系的可追溯性
+                # 递归处理嵌套字典,保持层级关系的可追溯性
                 items.extend(DictUtils.flatten_dict(v, new_key).items())
             else:
                 items.append((new_key, v))
@@ -44,7 +44,7 @@ class DictUtils:
 
     @staticmethod
     def filter_empty_values(d: Dict[str, Any]) -> Dict[str, Any]:
-        """过滤掉空值（空字符串、空列表、空字典）的键值对"""
+        """过滤掉空值（空字符串,空列表,空字典）的键值对"""
         return {k: v for k, v in d.items() if v is not None and v != "" and v != [] and v != {}}
 
     @staticmethod
@@ -63,7 +63,7 @@ class DictUtils:
 
         Args:
             d: 源字典
-            key_path: 键路径，如 "user.profile.name"
+            key_path: 键路径,如 "user.profile.name"
             default: 默认值
 
         Returns:
@@ -85,7 +85,7 @@ class DictUtils:
 
         Args:
             d: 源字典
-            key_path: 键路径，如 "user.profile.name"
+            key_path: 键路径,如 "user.profile.name"
             value: 要设置的值
         """
         keys = key_path.split(".")

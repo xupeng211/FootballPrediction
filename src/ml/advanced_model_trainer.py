@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-""""""""
+""""
 Advanced Model Trainer
-高级模型训练器，支持XGBoost和LightGBM集成
+高级模型训练器,支持XGBoost和LightGBM集成
 
 Enhanced with XGBoost and LightGBM integration for football prediction models
-""""""""
+""""
 
 import asyncio
 import logging
@@ -115,7 +115,7 @@ class HyperparameterGrids:
 
 
 class AdvancedModelTrainer:
-    """高级模型训练器，支持XGBoost和LightGBM"""
+    """高级模型训练器,支持XGBoost和LightGBM"""
 
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
@@ -384,7 +384,7 @@ class AdvancedModelTrainer:
             self.is_trained = True
             self.performance_metrics.update(metrics)
 
-            logger.info(f"模型训练完成，{metric_name}: {metric_value:.4f}")
+            logger.info(f"模型训练完成,{metric_name}: {metric_value:.4f}")
 
             return {
                 "success": True,
@@ -433,7 +433,7 @@ class AdvancedModelTrainer:
                 "feature_count": len(features_processed.columns),
             }
 
-            # 如果是分类模型，添加预测标签
+            # 如果是分类模型,添加预测标签
             if (
                 probabilities is not None
                 and hasattr(self, "label_encoder")
@@ -484,7 +484,7 @@ class AdvancedModelTrainer:
                 else:  # mse
                     performance_drop = metric_value - baseline
 
-            # 性能记录，用于可能的日志记录或监控
+            # 性能记录,用于可能的日志记录或监控
             performance_record = {
                 "timestamp": datetime.now(),
                 metric_name: metric_value,
@@ -579,7 +579,7 @@ async def main():
 
 
 class EnsembleTrainer:
-    """集成学习训练器，支持多种模型的集成"""
+    """集成学习训练器,支持多种模型的集成"""
 
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
@@ -662,7 +662,7 @@ class EnsembleTrainer:
                     if val_score > 0:
                         val_scores.append(val_score)
                     else:
-                        # 如果没有CV分数，使用测试集准确率
+                        # 如果没有CV分数,使用测试集准确率
                         metrics = result.get("metrics", {})
                         val_score = metrics.get("accuracy", 0)
                         val_scores.append(val_score)
@@ -693,7 +693,7 @@ class EnsembleTrainer:
                 for model_type in self.models.keys():
                     self.weights[model_type] = weight
 
-            # 如果使用stacking方法，训练元模型
+            # 如果使用stacking方法,训练元模型
             if self.ensemble_method == "stacking":
                 await self._train_meta_model(X_train, y_train, X_test, y_test)
 
@@ -713,7 +713,7 @@ class EnsembleTrainer:
                 "feature_count": len(X.columns),
             }
 
-            self.logger.info(f"集成模型训练完成，权重: {self.weights}")
+            self.logger.info(f"集成模型训练完成,权重: {self.weights}")
             return result
 
         except Exception as e:
@@ -763,7 +763,7 @@ class EnsembleTrainer:
 
                 self.logger.info("元模型训练完成")
             else:
-                self.logger.warning("无法训练元模型，回退到加权投票")
+                self.logger.warning("无法训练元模型,回退到加权投票")
                 self.ensemble_method = "weighted_voting"
 
         except Exception as e:
@@ -821,7 +821,7 @@ class EnsembleTrainer:
     ) -> Dict[str, Any]:
         """加权投票"""
         try:
-            # 如果有概率预测，使用加权平均概率
+            # 如果有概率预测,使用加权平均概率
             if probabilities and len(probabilities) > 0:
                 # 确保所有概率矩阵形状一致
                 sample_count = len(list(probabilities.values())[0])

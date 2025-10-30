@@ -1,7 +1,7 @@
 """
 足球预测系统用户画像服务模块
 
-提供用户画像生成和管理功能。
+提供用户画像生成和管理功能.
 """
 
 from datetime import datetime
@@ -45,8 +45,8 @@ class UserProfileService(SimpleService):
     async def _on_initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
-        # 加载用户数据、模型等
-        # 在实际生产环境中，这里会从数据库加载用户数据
+        # 加载用户数据,模型等
+        # 在实际生产环境中,这里会从数据库加载用户数据
         try:
             # 这里可以加载用户数据
             return True
@@ -113,7 +113,7 @@ class UserProfileService(SimpleService):
 
     def _analyze_user_interests(self, user: User) -> List[str]:
         """分析用户兴趣"""
-        # 在实际系统中，这里会基于用户行为分析兴趣
+        # 在实际系统中,这里会基于用户行为分析兴趣
         # 现在提供默认的兴趣列表
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣

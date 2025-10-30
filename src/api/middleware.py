@@ -2,7 +2,7 @@
 API中间件模块
 API Middleware Module
 
-提供各种API中间件实现。
+提供各种API中间件实现.
 Provides various API middleware implementations.
 """
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class TimingMiddleware(BaseHTTPMiddleware):
-    """计时中间件，记录请求处理时间"""
+    """计时中间件,记录请求处理时间"""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
@@ -33,7 +33,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """日志中间件，记录请求信息"""
+    """日志中间件,记录请求信息"""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         request_id = str(uuid.uuid4())

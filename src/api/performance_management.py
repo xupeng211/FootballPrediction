@@ -2,7 +2,7 @@
 性能管理API
 Performance Management API
 
-提供系统性能监控、优化和管理的API接口。
+提供系统性能监控,优化和管理的API接口.
 """
 
 from typing import Optional, List, Dict, Any
@@ -414,8 +414,8 @@ async def get_cache_statistics():
         },
         "recommendations": [
             "考虑增加缓存大小以提高命中率",
-            "部分键的TTL设置过短，建议适当延长",
-            "监控内存使用情况，避免达到内存上限"
+            "部分键的TTL设置过短,建议适当延长",
+            "监控内存使用情况,避免达到内存上限"
         ]
     }
 
@@ -566,17 +566,17 @@ def _generate_database_recommendations(
     # 表大小建议
     large_tables = [t for t in table_sizes if "total_size" in t and "GB" in t["total_size"]]
     if large_tables:
-        recommendations.append(f"发现 {len(large_tables)} 个大表，建议考虑分区或归档")
+        recommendations.append(f"发现 {len(large_tables)} 个大表,建议考虑分区或归档")
 
     # 索引使用建议
     unused_count = index_usage.get("unused_count", 0)
     if unused_count > 0:
-        recommendations.append(f"发现 {unused_count} 个未使用的索引，建议清理以节省空间")
+        recommendations.append(f"发现 {unused_count} 个未使用的索引,建议清理以节省空间")
 
     # 连接池建议
     total_connections = connection_pool.get("total_connections", 0)
     if total_connections > 80:
-        recommendations.append("连接池使用率偏高，建议优化查询或增加连接池大小")
+        recommendations.append("连接池使用率偏高,建议优化查询或增加连接池大小")
 
     return recommendations
 

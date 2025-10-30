@@ -3,7 +3,7 @@
 
 Prediction Model Module - Stub Implementation
 
-临时实现，用于解决导入错误。
+临时实现,用于解决导入错误.
 Temporary implementation to resolve import errors.
 """
 
@@ -82,7 +82,7 @@ class PredictionModel:
         """
         self.logger.info(f"Training model {self.model_name} with {len(X)} samples")
 
-        # 桩实现：模拟训练
+        # 桩实现:模拟训练
         self.feature_columns = list(X.columns)
         self.is_trained = True
 
@@ -118,7 +118,7 @@ class PredictionModel:
 
         self.logger.debug(f"Predicting {len(X)} samples")
 
-        # 桩实现：生成随机预测
+        # 桩实现:生成随机预测
         if self.model_type == "classification":
             n_classes = 3  # 默认3分类
             predictions = np.random.randint(0, n_classes, size=len(X))
@@ -142,7 +142,7 @@ class PredictionModel:
 
         self.logger.debug(f"Predicting probabilities for {len(X)} samples")
 
-        # 桩实现：生成随机概率
+        # 桩实现:生成随机概率
         n_classes = 3  # 默认3分类
         proba = np.random.dirichlet(np.ones(n_classes), size=len(X))
 
@@ -163,7 +163,7 @@ class PredictionModel:
 
         self.predict(X)
 
-        # 桩实现：计算模拟指标
+        # 桩实现:计算模拟指标
         metrics = {
             "accuracy": np.random.uniform(0.6, 0.9),
             "precision": np.random.uniform(0.6, 0.9),
@@ -236,7 +236,7 @@ class PredictionModel:
         Returns:
             特征重要性字典
         """
-        # 桩实现：生成随机特征重要性
+        # 桩实现:生成随机特征重要性
         importance = {}
         for feature in self.feature_columns:
             importance[feature] = np.random.uniform(0, 1)
@@ -260,7 +260,7 @@ class PredictionModel:
         """
         predictions = self.predict(X)
 
-        # 桩实现：生成模拟解释
+        # 桩实现:生成模拟解释
         explanations = []
         for i, pred in enumerate(predictions[:5]):  # 只解释前5个
             explanation = {
@@ -308,7 +308,7 @@ class FootballPredictionModel(PredictionModel):
         """
         self.logger.info(f"Predicting match: {home_team} vs {away_team}")
 
-        # 桩实现：生成随机预测
+        # 桩实现:生成随机预测
         probabilities = np.random.dirichlet(np.ones(3))
         prediction_idx = np.argmax(probabilities)
 

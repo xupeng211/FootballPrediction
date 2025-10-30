@@ -2,7 +2,7 @@
 事件总线实现
 Event Bus Implementation
 
-提供事件的发布、订阅和路由功能。
+提供事件的发布,订阅和路由功能.
 Provides event publishing, subscription, and routing functionality.
 """
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class EventBus:
     """事件总线
 
-    负责事件的发布、订阅和分发。
+    负责事件的发布,订阅和分发.
     Responsible for event publishing, subscription, and distribution.
     """
 
@@ -119,7 +119,7 @@ class EventBus:
                 if filters:
                     self._filters[handler] = filters
 
-                # 如果总线已经在运行，立即启动处理器
+                # 如果总线已经在运行,立即启动处理器
                 if self._running and not handler.is_subscribed_to(event_type):
                     queue: Any = asyncio.Queue()
                     self._queues[event_type] = queue
@@ -214,7 +214,7 @@ class EventBus:
         try:
             while self._running:
                 try:
-                    # 等待事件，设置超时以避免永久阻塞
+                    # 等待事件,设置超时以避免永久阻塞
                     event = await asyncio.wait_for(queue.get(), timeout=1.0)
 
                     if event is None:  # 停止信号
@@ -227,7 +227,7 @@ class EventBus:
                     queue.task_done()
 
                 except asyncio.TimeoutError:
-                    # 超时继续，保持运行
+                    # 超时继续,保持运行
                     continue
                 except (
                     ValueError,
@@ -362,7 +362,7 @@ async def stop_event_bus() -> None:
         _event_bus = None
 
 
-# 装饰器：自动注册事件处理器
+# 装饰器:自动注册事件处理器
 def event_handler(event_types: List[str]):
     """事件处理器装饰器
 

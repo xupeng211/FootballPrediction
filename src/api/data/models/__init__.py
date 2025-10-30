@@ -14,7 +14,7 @@ try:
     OddsInfo = OddsQueryParams
     TeamInfo = TeamQueryParams
 except ImportError:
-    # 如果模型文件不存在，创建基本的占位符类
+    # 如果模型文件不存在,创建基本的占位符类
     from pydantic import BaseModel
 
     class LeagueInfo(BaseModel):
@@ -37,5 +37,5 @@ except ImportError:
 #         id: int  # 重复定义已注释
 #         name: str  # 重复定义已注释
 
-# 为了向后兼容，保持models包
+# 为了向后兼容,保持models包
 __all__ = ["LeagueInfo", "MatchInfo", "OddsInfo", "TeamInfo"]

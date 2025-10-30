@@ -2,7 +2,7 @@
 告警处理器
 Alert Handlers
 
-处理不同类型的告警输出。
+处理不同类型的告警输出.
 """
 
 import logging

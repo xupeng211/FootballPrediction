@@ -2,7 +2,7 @@
 事件系统基础类
 Event System Base Classes
 
-定义事件和事件处理器的核心接口。
+定义事件和事件处理器的核心接口.
 Defines core interfaces for events and event handlers.
 """
 
@@ -19,7 +19,7 @@ T = TypeVar("T", bound="Event")
 class EventData:
     """事件数据基类
 
-    所有事件数据的基类，提供通用的元数据。
+    所有事件数据的基类,提供通用的元数据.
     Base class for all event data, providing common metadata.
     """
 
@@ -42,7 +42,7 @@ class EventData:
 class Event(ABC):
     """事件抽象基类
 
-    定义所有事件必须实现的接口。
+    定义所有事件必须实现的接口.
     Defines the interface that all events must implement.
     """
 
@@ -126,7 +126,7 @@ class Event(ABC):
 class EventHandler(ABC):
     """事件处理器抽象基类
 
-    定义事件处理器必须实现的接口。
+    定义事件处理器必须实现的接口.
     Defines the interface that all event handlers must implement.
     """
 
@@ -222,7 +222,7 @@ class EventHandler(ABC):
 class EventFilter(ABC):
     """事件过滤器抽象基类
 
-    用于过滤事件，决定是否应该处理某个事件。
+    用于过滤事件,决定是否应该处理某个事件.
     """
 
     @abstractmethod
@@ -269,7 +269,7 @@ class EventSourceFilter(EventFilter):
 
 
 class CompositeEventFilter(EventFilter):
-    """组合过滤器，支持AND和OR逻辑"""
+    """组合过滤器,支持AND和OR逻辑"""
 
     def __init__(self, filters: list[EventFilter], operator: str = "AND"):
         """初始化组合过滤器

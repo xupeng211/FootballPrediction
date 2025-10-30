@@ -2,7 +2,7 @@
 processor
 主处理器
 
-此模块从原始文件拆分而来。
+此模块从原始文件拆分而来.
 This module was split from the original file.
 """
 

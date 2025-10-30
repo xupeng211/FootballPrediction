@@ -17,7 +17,7 @@ INT64 = "INT64"
 class FootballFeatureStore:
     """足球特征存储管理器
 
-    基于 Feast 实现的特征存储，支持：
+    基于 Feast 实现的特征存储,支持:
     - 在线特征查询（Redis）
     - 离线特征查询（PostgreSQL）
     - 特征注册和版本管理
@@ -27,6 +27,6 @@ class FootballFeatureStore:
 
 
 class MockFeatureStore:
-    """测试友好的Feast替代实现。"""
+    """测试友好的Feast替代实现."""
 
     pass  # TODO: 实现类逻辑

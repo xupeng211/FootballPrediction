@@ -2,7 +2,7 @@
 预定义的缓存实例
 Predefined Cache Instances
 
-提供常用的缓存实例，开箱即用。
+提供常用的缓存实例,开箱即用.
 Provides commonly used cache instances, ready to use.
 """
 
@@ -29,7 +29,7 @@ config_cache = TTLCache(max_size=500, default_ttl=86400)
 # 临时缓存 - 5分钟过期
 temp_cache = TTLCache(max_size=1000, default_ttl=300)
 
-# 所有缓存的字典，方便统一管理
+# 所有缓存的字典,方便统一管理
 # Dictionary of all caches for easy management
 CACHES = {
     "prediction": prediction_cache,
@@ -61,7 +61,7 @@ def get_cache(name: str):
         name: 缓存名称
 
     Returns:
-        TTLCache: 缓存实例，如果不存在返回None
+        TTLCache: 缓存实例,如果不存在返回None
     """
     return CACHES.get(name)
 

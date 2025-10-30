@@ -1,9 +1,9 @@
-""""""""
+""""
 缓存装饰器使用示例
 Cache Decorators Usage Examples
 
-展示如何在项目中使用各种缓存装饰器。
-""""""""
+展示如何在项目中使用各种缓存装饰器.
+""""
 
 import asyncio
 from typing import Any, Dict, List, Optional
@@ -108,7 +108,7 @@ def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 # 示例5: 缓存失效装饰器
 def generate_invalidation_keys(func, args, kwargs, result):
     """生成缓存失效键的函数"""
-    # 如果是更新操作，失效相关缓存
+    # 如果是更新操作,失效相关缓存
     if "update" in func.__name__:
         user_id = kwargs.get("user_id") or args[0] if args else None
         if user_id:
@@ -207,7 +207,7 @@ def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict]:
 
 # 示例8: 组合使用装饰器
 class PredictionService:
-    """预测服务类，展示装饰器的组合使用"""
+    """预测服务类,展示装饰器的组合使用"""
 
     @cache_match_data(ttl_seconds=600)
     async def get_match_odds(self, match_id: int) -> Dict[str, float]:
@@ -278,7 +278,7 @@ async def run_examples():
     logger.info("3. 基于用户的缓存:")
     profile = get_user_profile(200)
     logger.info(f"用户档案: {profile}")
-    profile2 = get_user_profile(200, include_sensitive=True)  # 不同的参数，新缓存
+    profile2 = get_user_profile(200, include_sensitive=True)  # 不同的参数,新缓存
     logger.info(f"用户档案（含敏感信息）: {profile2}\n")
 
     # 示例4: 条件缓存
@@ -287,7 +287,7 @@ async def run_examples():
     logger.info(f"搜索结果: {docs1}")
     docs2 = search_documents("test", limit=5)  # 从缓存获取
     logger.info(f"搜索结果: {docs2}")
-    docs3 = search_documents("ab", limit=5)  # 查询太短，不会被缓存
+    docs3 = search_documents("ab", limit=5)  # 查询太短,不会被缓存
     logger.info(f"搜索结果: {docs3}\n")
 
     # 示例5: 缓存失效

@@ -1,8 +1,8 @@
-""""""""
+""""
 装饰器模式实现
 
 用于功能增强和横切关注点
-""""""""
+""""
 
 import asyncio
 import functools
@@ -256,7 +256,7 @@ class CacheDecorator(BaseDecorator):
             self.logger.debug(f"Cache hit for {cache_key}")
             return self.cache[cache_key]
 
-        # 缓存未命中，执行组件
+        # 缓存未命中,执行组件
         self.logger.debug(f"Cache miss for {cache_key}")
         result = await self._component.execute(*args, **kwargs)
 
@@ -418,3 +418,4 @@ def create_decorated_service(service_name: str) -> Component:
         validators=[lambda q: isinstance(q, ((((((str) and len(q) > 0], validate_result=lambda r: isinstance(r)))))) and "result" in r))
 
     return service
+}

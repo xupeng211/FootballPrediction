@@ -2,7 +2,7 @@ import redis
 """
 维护任务模块
 
-包含系统维护相关的任务：
+包含系统维护相关的任务:
 - 数据质量检查
 - 错误日志清理
 - 系统健康监控
@@ -27,7 +27,7 @@ def quality_check_task() -> Dict[str, Any]:
     """
     数据质量检查任务
 
-    执行定期的数据质量检查，包括：
+    执行定期的数据质量检查,包括:
     - 数据完整性检查
     - 数据一致性验证
     - 重复数据检查
@@ -137,7 +137,7 @@ def quality_check_task() -> Dict[str, Any]:
                 if stale_logs > 0:
                     issues_found += 1
 
-                logger.info(f"数据质量检查完成，发现 {issues_found} 个问题类别")
+                logger.info(f"数据质量检查完成,发现 {issues_found} 个问题类别")
 
                 return check_results, issues_found
 
@@ -173,7 +173,7 @@ def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
     清理超过指定天数的错误日志记录
 
     Args:
-        days_to_keep: 保留天数，默认7天
+        days_to_keep: 保留天数,默认7天
 
     Returns:
         清理结果字典
@@ -190,7 +190,7 @@ def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
 
         deleted_count = asyncio.run(_cleanup_error_logs())
 
-        logger.info(f"错误日志清理完成，删除了 {deleted_count} 条记录")
+        logger.info(f"错误日志清理完成,删除了 {deleted_count} 条记录")
 
         return {
             "status": "success",
@@ -214,7 +214,7 @@ def system_health_check_task() -> Dict[str, Any]:
     """
     系统健康检查任务
 
-    检查系统各组件的健康状态：
+    检查系统各组件的健康状态:
     - 数据库连接
     - Redis 连接
     - 任务队列状态
@@ -293,7 +293,7 @@ def system_health_check_task() -> Dict[str, Any]:
         health_status, overall_healthy = asyncio.run(_check_system_health())
 
         status = "healthy" if overall_healthy else "unhealthy"
-        logger.info(f"系统健康检查完成，状态: {status}")
+        logger.info(f"系统健康检查完成,状态: {status}")
 
         return {
             "status": status,
@@ -317,7 +317,7 @@ def database_maintenance_task() -> Dict[str, Any]:
     """
     数据库维护任务
 
-    执行定期的数据库维护操作：
+    执行定期的数据库维护操作:
     - 更新表统计信息
     - 清理临时数据
     - 优化数据库性能

@@ -2,7 +2,7 @@
 机器学习模型策略
 ML Model Strategy
 
-使用机器学习模型进行预测的策略实现。
+使用机器学习模型进行预测的策略实现.
 Strategy implementation using machine learning models for prediction.
 """
 
@@ -26,7 +26,7 @@ from .base import (
 class MLModelStrategy(PredictionStrategy):
     """机器学习模型预测策略
 
-    使用训练好的机器学习模型进行比赛预测。
+    使用训练好的机器学习模型进行比赛预测.
     Uses trained machine learning models for match prediction.
     """
 
@@ -44,7 +44,7 @@ class MLModelStrategy(PredictionStrategy):
         """初始化ML模型策略
 
         Args:
-            config: 配置参数，包含：
+            config: 配置参数,包含:
                 - mlflow_tracking_uri: MLflow跟踪URI
                 - model_name: 模型名称
                 - model_stage: 模型阶段（Production, Staging等）
@@ -242,7 +242,7 @@ class MLModelStrategy(PredictionStrategy):
         signal = float(np.sum(feature_vector))
         base_home = int(abs(signal)) % 3 + 1
         base_away = int(abs(signal * 1.3)) % 3
-        # 若两队评分接近且结果偏 draw，提供最少进球数
+        # 若两队评分接近且结果偏 draw,提供最少进球数
         if base_home == base_away:
             base_away = max(0, base_home - 1)
         return np.array([base_home, base_away])
@@ -312,7 +312,7 @@ class MLModelStrategy(PredictionStrategy):
                 pred_home = int(prediction_result[0])
                 pred_away = int(prediction_result[1])
             else:
-                # 单值输出，需要转换为比分
+                # 单值输出,需要转换为比分
                 pred_value = float(prediction_result[0])
                 pred_home, pred_away = await self._convert_prediction_to_score(
                     pred_value
@@ -357,7 +357,7 @@ class MLModelStrategy(PredictionStrategy):
     ) -> Tuple[int, int]:
         """将预测值转换为具体比分"""
         # 这里需要根据实际模型的输出进行调整
-        # 简单示例：假设预测值是主场进球数
+        # 简单示例:假设预测值是主场进球数
         avg_goals = 2.7  # 平均每场总进球数
 
         if prediction_value > 0.5:
@@ -388,7 +388,7 @@ class MLModelStrategy(PredictionStrategy):
             if pred.predicted_home == actual_home and pred.predicted_away == actual_away:
                 correct_predictions += 1
 
-            # 计算精确率、召回率等（这里简化处理）
+            # 计算精确率,召回率等（这里简化处理）
             predicted_home_win = pred.predicted_home > pred.predicted_away
             actual_home_win = actual_home > actual_away
 
@@ -431,14 +431,14 @@ class MLModelStrategy(PredictionStrategy):
 
         # 检查是否有必需的特征数据
         if not input_data.historical_data and not input_data.additional_features:
-            self.logger.info("警告: 缺少特征数据，可能影响预测准确性")
+            self.logger.info("警告: 缺少特征数据,可能影响预测准确性")
 
         return True
 
     async def pre_process(self, input_data: PredictionInput) -> PredictionInput:
         """预处理输入数据"""
         # 可以在这里添加数据预处理逻辑
-        # 例如：特征标准化、缺失值填充等
+        # 例如:特征标准化,缺失值填充等
         return input_data
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:

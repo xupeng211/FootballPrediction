@@ -2,7 +2,7 @@
 领域层
 Domain Layer
 
-实现领域驱动设计（DDD）的核心概念，包含：
+实现领域驱动设计（DDD）的核心概念,包含:
 - 领域模型（Entities, Value Objects）
 - 领域服务（Domain Services）
 - 领域事件（Domain Events）

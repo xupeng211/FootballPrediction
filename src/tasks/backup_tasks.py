@@ -7,7 +7,7 @@
 - 备份文件清理任务
 - 备份验证任务
 
-集成 Prometheus 监控指标，支持备份成功率和时间戳监控。
+集成 Prometheus 监控指标,支持备份成功率和时间戳监控。
 
 Implements scheduled database backup tasks, including:
 - Full backup tasks
@@ -17,9 +17,9 @@ Implements scheduled database backup tasks, including:
 
 Integrates Prometheus monitoring metrics, supporting backup success rate and timestamp monitoring.
 
-⚠️ 注意：此文件已重构为模块化结构。
-为了向后兼容性，这里保留了原始的导入接口。
-建议使用：from src.tasks.backup import <function_name>
+⚠️ 注意:此文件已重构为模块化结构。
+为了向后兼容性,这里保留了原始的导入接口.
+建议使用:from src.tasks.backup import <function_name>
 
 主要类 / Main Classes:
     DatabaseBackupTask: 数据库备份任务基类 / Database backup task base class
@@ -54,16 +54,16 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
     - celery: 任务队列框架 / Task queue framework
 
 重构历史 / Refactoring History:
-    - 原始文件：1380行，包含所有备份相关功能
-    - 重构为模块化结构：
+    - 原始文件:1380行,包含所有备份相关功能
+    - 重构为模块化结构:
       - base.py: 基础类和指标定义
       - database.py: 数据库备份任务
-      - maintenance.py: 维护任务（清理、验证）
-      - services.py: 服务备份任务（Redis、日志）
+      - maintenance.py: 维护任务（清理,验证）
+      - services.py: 服务备份任务（Redis,日志）
       - manual.py: 手动备份和状态查询
 """
 
-# 为了向后兼容性，从新的模块化结构中导入所有内容
+# 为了向后兼容性,从新的模块化结构中导入所有内容
 from .backup import (
     DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务
     backup_config_task,
@@ -124,7 +124,7 @@ __all__ = [
 # 此处保留仅用于向后兼容性
 # 请使用新的模块化结构以获得更好的维护性
 
-# 包含的所有功能：
+# 包含的所有功能:
 # - DatabaseBackupTask: 数据库备份任务基类
 # - get_backup_metrics: 获取备份相关指标
 # - daily_full_backup_task: 每日完整数据库备份任务

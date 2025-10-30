@@ -44,7 +44,7 @@ from ..events.handlers import AnalyticsEventHandler, MetricsEventHandler
 """
 事件系统API端点
 Event System API Endpoints
-提供事件系统的管理和监控接口。
+提供事件系统的管理和监控接口.
 Provides management and monitoring interfaces for the event system.
 """
 logger = logging.getLogger(__name__)

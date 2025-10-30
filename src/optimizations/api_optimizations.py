@@ -2,8 +2,8 @@
 API性能优化
 API Performance Optimizations
 
-提供API层面的性能优化，包括缓存策略、响应优化、
-并发控制、请求限流等。
+提供API层面的性能优化,包括缓存策略、响应优化,
+并发控制,请求限流等.
 """
 
 import asyncio
@@ -168,7 +168,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     """
     性能监控中间件
 
-    监控API性能指标，收集响应时间、缓存命中率等数据
+    监控API性能指标,收集响应时间,缓存命中率等数据
     """
 
     def __init__(self, app: ASGIApp):
@@ -212,7 +212,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             response.headers["X-Response-Time"] = f"{response_time_ms:.2f}ms"
             response.headers["X-Request-ID"] = request_id
 
-            # 如果响应时间过长，添加警告头
+            # 如果响应时间过长,添加警告头
             if response_time_ms > 1000:  # 超过1秒
                 response.headers["X-Performance-Warning"] = "slow-response"
 
@@ -296,7 +296,7 @@ def cache_response(config: Optional[CacheConfig] = None):
                 request = kwargs.get("request")
 
             if not request:
-                # 如果没有请求对象，直接执行函数
+                # 如果没有请求对象,直接执行函数
                 return await func(*args, **kwargs)
 
             # 检查是否应该跳过缓存
@@ -359,7 +359,7 @@ def performance_monitor(min_response_time_ms: float = 100.0):
                 # 计算响应时间
                 response_time_ms = (time.time() - start_time) * 1000
 
-                # 如果响应时间超过阈值，记录警告
+                # 如果响应时间超过阈值,记录警告
                 if response_time_ms > min_response_time_ms:
                     # 这里应该记录到日志或监控系统
                     print(f"警告: {func.__name__} 响应时间 {response_time_ms:.2f}ms 超过阈值 {min_response_time_ms}ms")
@@ -437,7 +437,7 @@ class ConnectionPoolManager:
             recommendations.append("考虑增加连接池大小")
 
         if self._pool_stats["active_connections"] / self._pool_stats["total_connections"] > 0.8:
-            recommendations.append("连接池使用率过高，建议增加最大连接数")
+            recommendations.append("连接池使用率过高,建议增加最大连接数")
 
         return recommendations
 
@@ -568,13 +568,13 @@ class APIOptimizer:
         error_rates = [analysis["error_rate"] for analysis in endpoint_analysis.values()]
 
         if avg_response_times and sum(avg_response_times) / len(avg_response_times) > 500:
-            recommendations.append("整体响应时间偏高，建议启用全局缓存")
+            recommendations.append("整体响应时间偏高,建议启用全局缓存")
 
         if error_rates and sum(error_rates) / len(error_rates) > 3:
-            recommendations.append("错误率偏高，建议检查数据库连接和查询优化")
+            recommendations.append("错误率偏高,建议检查数据库连接和查询优化")
 
         if len(endpoint_analysis) > 20:
-            recommendations.append("端点数量较多，建议实施API网关和负载均衡")
+            recommendations.append("端点数量较多,建议实施API网关和负载均衡")
 
         return recommendations
 

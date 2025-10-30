@@ -254,7 +254,7 @@ class OddsPortalIntegration:
             if not self.is_initialized:
                 await self.initialize()
 
-            # 简单测试：获取今日比赛数量
+            # 简单测试:获取今日比赛数量
             await self.scrape_today_matches()
             return True
 
@@ -291,7 +291,7 @@ class OddsPortalIntegration:
 
 
 class OddsPortalAdapter(DataSourceAdapter):
-    """OddsPortal适配器，实现DataSourceAdapter接口"""
+    """OddsPortal适配器,实现DataSourceAdapter接口"""
 
     def __init__(self, config_path: Optional[str] = None, api_key: Optional[str] = None):
         super().__init__(api_key)
@@ -449,7 +449,7 @@ async def get_oddsportal_integration() -> OddsPortalIntegration:
 
 
 async def main():
-    """主函数，用于测试"""
+    """主函数,用于测试"""
     integration = OddsPortalIntegration()
 
     try:

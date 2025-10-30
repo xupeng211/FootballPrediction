@@ -1,16 +1,16 @@
 """
 Manager - 服务模块
 
-提供 manager 相关的服务功能。
+提供 manager 相关的服务功能.
 
 主要功能：
 - [待补充 - Manager的主要功能]
 
-使用示例：
+使用示例:
     from services import Manager
     # 使用示例代码
 
-注意事项：
+注意事项:
 - [待补充 - 使用注意事项]
 """
 
@@ -27,7 +27,7 @@ from .user_profile import UserProfileService
 """
 足球预测系统服务管理器模块
 
-统一管理所有业务服务的生命周期和依赖关系。
+统一管理所有业务服务的生命周期和依赖关系.
 """
 
 
@@ -39,11 +39,11 @@ class ServiceManager:
         self.logger = logger
 
     def register_service(self, name: str, service: BaseService) -> None:
-        """注册服务 - 将服务加入管理器，支持后续统一初始化和管理"""
+        """注册服务 - 将服务加入管理器,支持后续统一初始化和管理"""
         if name in self._services:
             existing = self._services[name]
             if existing is service or existing.__class__ is service.__class__:
-                self.logger.debug(f"服务已存在，跳过重复注册: {name}")
+                self.logger.debug(f"服务已存在,跳过重复注册: {name}")
                 return
 
             self.logger.warning(
@@ -70,12 +70,12 @@ class ServiceManager:
         return self._services
 
     async def initialize_all(self) -> bool:
-        """初始化所有服务 - 按注册顺序依次初始化，任一失败则整体失败"""
+        """初始化所有服务 - 按注册顺序依次初始化,任一失败则整体失败"""
         self.logger.info("正在初始化所有服务...")
         success = True
         for service in self._services.values():
             try:
-                # 每个服务独立初始化，失败不影响其他服务的尝试
+                # 每个服务独立初始化,失败不影响其他服务的尝试
                 result = await service.initialize()
                 if not result:
                     success = False
@@ -87,7 +87,7 @@ class ServiceManager:
         return success
 
     async def shutdown_all(self) -> None:
-        """关闭所有服务 - 确保资源清理，即使某个服务关闭失败也继续处理其他服务"""
+        """关闭所有服务 - 确保资源清理,即使某个服务关闭失败也继续处理其他服务"""
         self.logger.info("正在关闭所有服务...")
         for service in self._services.values():
             try:
@@ -114,7 +114,7 @@ def _ensure_default_services() -> None:
     for service_name in enabled_services:
         factory = _SERVICE_FACTORIES.get(service_name)
         if not factory:
-            service_manager.logger.warning("未识别的服务名称，跳过注册: %s", service_name)
+            service_manager.logger.warning("未识别的服务名称,跳过注册: %s", service_name)
             continue
 
         if service_name not in service_manager.services:

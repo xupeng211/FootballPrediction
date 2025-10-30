@@ -25,7 +25,7 @@ class LeagueTable:
 
     def update_table(self, match_results: List[Dict[str, Any]]) -> None:
         """更新积分榜"""
-        # 简化实现，实际会更复杂
+        # 简化实现,实际会更复杂
         self.last_updated = datetime.now()
 
     def get_position(self, team_id: int) -> Optional[int]:

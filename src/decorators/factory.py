@@ -2,7 +2,7 @@
 装饰器工厂
 Decorator Factory
 
-用于创建和配置装饰器实例。
+用于创建和配置装饰器实例.
 Used to create and configure decorator instances.
 """
 
@@ -39,7 +39,7 @@ class DecoratorChainConfig:
 
 
 class DecoratorFactory:
-    """装饰器工厂，用于创建装饰器实例"""
+    """装饰器工厂,用于创建装饰器实例"""
 
     def __init__(self):
         self._config_cache: Dict[str, DecoratorConfig] = {}
@@ -259,7 +259,7 @@ class DecoratorFactory:
 
 
 class DecoratorBuilder:
-    """装饰器构建器，使用构建器模式创建装饰器"""
+    """装饰器构建器,使用构建器模式创建装饰器"""
 
     def __init__(self, decorator_type: str, component: Component):
         self.decorator_type = decorator_type

@@ -1,8 +1,8 @@
-""""""""
+""""
 门面模式实现（简化版）
 
-简化复杂子系统的接口，为客户端提供统一的入口
-""""""""
+简化复杂子系统的接口,为客户端提供统一的入口
+""""
 
 import asyncio
 from dataclasses import dataclass
@@ -49,8 +49,8 @@ class DataCollectionConfig:
 class PredictionFacade:
     """预测门面"""""
 
-    简化预测相关的复杂操作，提供统一的预测服务接口
-    """"""""
+    简化预测相关的复杂操作,提供统一的预测服务接口
+    """"
 
     def __init__(self, services: Dict[str, Any]):
         self.services = services
@@ -190,20 +190,20 @@ class PredictionFacade:
         # 基于置信度的建议
         confidence = prediction.get("confidence", 0)
         if confidence > 0.8:
-            recommendations.append("高置信度预测，值得考虑")
+            recommendations.append("高置信度预测,值得考虑")
         elif confidence < 0.5:
-            recommendations.append("低置信度预测，建议谨慎")
+            recommendations.append("低置信度预测,建议谨慎")
 
         # 基于价值的建议
         if value_assessment and value_assessment.get("is_value"):
             recommendations.append(
-                f"发现价值投注机会，推荐投注比例: {value_assessment['recommended_stake'] * 100:.1f}%"
+                f"发现价值投注机会,推荐投注比例: {value_assessment['recommended_stake'] * 100:.1f}%"
             )
         elif value_assessment:
-            recommendations.append("当前市场赔率不具备价值，建议观望")
+            recommendations.append("当前市场赔率不具备价值,建议观望")
 
         # 风险提示
-        recommendations.append("请合理控制投注金额，理性投注")
+        recommendations.append("请合理控制投注金额,理性投注")
 
         return recommendations
 
@@ -216,8 +216,8 @@ class PredictionFacade:
 class DataCollectionFacade:
     """数据收集门面"""""
 
-    简化数据收集、更新和维护的复杂操作
-    """"""""
+    简化数据收集,更新和维护的复杂操作
+    """"
 
     def __init__(self, services: Dict[str, Any]):
         self.services = services
@@ -295,8 +295,8 @@ class DataCollectionFacade:
 class AnalyticsFacade:
     """分析门面"""""
 
-    简化数据分析、报表生成和洞察提取的复杂操作
-    """"""""
+    简化数据分析,报表生成和洞察提取的复杂操作
+    """"
 
     def __init__(self, services: Dict[str, Any]):
         self.services = services
@@ -366,7 +366,7 @@ class AnalyticsFacade:
         return [
             "您的预测准确率在过去30天提升了5%",
             "主胜预测的准确率明显高于客胜",
-            "建议关注低联赛的比赛，价值机会更多",
+            "建议关注低联赛的比赛,价值机会更多",
         ]
 
     async def _generate_performance_report(self, params: Dict[str, Any]) -> Dict[str, Any]:
@@ -419,7 +419,7 @@ class SystemFacade:
     """系统门面"""""
 
     提供整个系统的统一入口
-    """"""""
+    """"
 
     def __init__(self):
         self.services = {}

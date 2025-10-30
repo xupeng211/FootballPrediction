@@ -1,11 +1,11 @@
-""""""""
+""""
 实时预测推送服务
 
 Realtime Prediction Push Service
 
-将预测服务与WebSocket系统集成，提供实时预测结果推送功能
+将预测服务与WebSocket系统集成,提供实时预测结果推送功能
 Integrates prediction service with WebSocket system to provide real-time prediction result push functionality
-""""""""
+""""
 
 import asyncio
 import logging
@@ -85,7 +85,7 @@ class RealtimePredictionService:
         model_version: str = "default",
         priority: bool = False,
     ) -> str:
-        """"""""
+        """"
         提交预测请求
 
         Args:
@@ -96,7 +96,7 @@ class RealtimePredictionService:
 
         Returns:
             任务ID
-        """"""""
+        """"
         task_id = (
             f"pred_{match_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{id(self)}"
         )
@@ -311,7 +311,7 @@ class RealtimePredictionService:
         # 发布事件
         await self.websocket_manager.publish_event(prediction_event)
 
-        # 如果有用户ID，发送给特定用户
+        # 如果有用户ID,发送给特定用户
         if task.user_id:
             await self.websocket_manager.send_to_user(task.user_id, prediction_event)
 

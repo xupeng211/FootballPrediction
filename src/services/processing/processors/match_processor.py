@@ -1,9 +1,9 @@
 # mypy: ignore-errors
-""""""""
+""""
 比赛数据处理器
 
-处理原始比赛数据的清洗、转换和标准化。
-""""""""
+处理原始比赛数据的清洗,转换和标准化.
+""""
 
 import logging
 from datetime import datetime
@@ -39,7 +39,7 @@ class MatchProcessor:
         self,
         raw_data: Union[Dict[str, Any], List[Dict[str, Any]]],
     ) -> Optional[Union[Dict[str, Any], pd.DataFrame]]:
-        """"""""
+        """"
         处理原始比赛数据
 
         Args:
@@ -47,7 +47,7 @@ class MatchProcessor:
 
         Returns:
             处理后的数据
-        """"""""
+        """"
         try:
             if isinstance(raw_data, list):
                 # 批量处理
@@ -89,7 +89,7 @@ class MatchProcessor:
             return None
 
     async def _validate_match_data(self, data: Dict[str, Any]) -> bool:
-        """"""""
+        """"
         验证比赛数据
 
         Args:
@@ -97,7 +97,7 @@ class MatchProcessor:
 
         Returns:
             是否验证通过
-        """"""""
+        """"
         # 检查必需字段
         missing_fields = self.required_fields - set(data.keys())
         if missing_fields:
@@ -141,7 +141,7 @@ class MatchProcessor:
         return cleaned
 
     async def _standardize_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """"""""
+        """"
         标准化比赛数据
 
         Args:
@@ -149,7 +149,7 @@ class MatchProcessor:
 
         Returns:
             标准化后的数据
-        """"""""
+        """"
         standardized = data.copy()
 
         # 标准化日期格式
@@ -239,7 +239,7 @@ class MatchProcessor:
 
     def _extract_season(self)) -> int:
         """提取赛季"""
-        # 简单的赛季规则：8月开始的比赛属于下一个赛季
+        # 简单的赛季规则:8月开始的比赛属于下一个赛季
         year = match_date.year
         if match_date.month >= 8:
             return year + 1
@@ -248,7 +248,7 @@ class MatchProcessor:
     async def process_batch_matches(
         self, matches: List[Dict[str, Any]],
         batch_size: int = 50,)) -> List[Dict[str, Any]]:
-        """"""""
+        """"
         批量处理比赛数据
 
         Args:
@@ -257,11 +257,11 @@ class MatchProcessor:
 
         Returns:
             处理后的比赛数据列表
-        """"""""
+        """"
         processed_matches: List[Any] = []
         total = len(matches)
 
-        self.logger.info(f"开始批量处理 {total} 场比赛，批大小: {batch_size}")
+        self.logger.info(f"开始批量处理 {total} 场比赛,批大小: {batch_size}")
 
         for i in range(0, total, batch_size):
             batch = matches[i : i + batch_size]
@@ -277,14 +277,14 @@ class MatchProcessor:
 
             processed_matches.extend(batch_results)
 
-        self.logger.info(f"批量处理完成，成功处理 {len(processed_matches)}/{total} 场比赛")
+        self.logger.info(f"批量处理完成,成功处理 {len(processed_matches)}/{total} 场比赛")
         return processed_matches
 
     async def detect_duplicate_matches(
         self,
         matches: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        """"""""
+        """"
         检测重复的比赛
 
         Args:
@@ -292,7 +292,7 @@ class MatchProcessor:
 
         Returns:
             重复的比赛列表
-        """"""""
+        """"
         seen_matches = set()
         duplicates: List[Any] = []
 
@@ -313,3 +313,4 @@ class MatchProcessor:
             self.logger.warning(f"发现 {len(duplicates)} 场重复比赛")
 
         return duplicates
+]

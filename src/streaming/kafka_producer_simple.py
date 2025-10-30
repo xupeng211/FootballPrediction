@@ -1,6 +1,6 @@
-""""""""
+""""
 简化的Kafka生产者实现
-""""""""
+""""
 
 import asyncio
 import json

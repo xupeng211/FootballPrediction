@@ -27,7 +27,7 @@ class DataCollectionConfig:
 class PredictionFacade:
     """预测门面
 
-    简化预测相关的复杂操作，提供统一的预测服务接口"""
+    简化预测相关的复杂操作,提供统一的预测服务接口"""
 
     pass  # TODO: 实现类逻辑
 
@@ -35,7 +35,7 @@ class PredictionFacade:
 class DataCollectionFacade:
     """数据收集门面
 
-    简化数据收集、更新和维护的复杂操作"""
+    简化数据收集,更新和维护的复杂操作"""
 
     pass  # TODO: 实现类逻辑
 
@@ -43,7 +43,7 @@ class DataCollectionFacade:
 class AnalyticsFacade:
     """分析门面
 
-    简化数据分析、报表生成和洞察提取的复杂操作"""
+    简化数据分析,报表生成和洞察提取的复杂操作"""
 
     pass  # TODO: 实现类逻辑
 

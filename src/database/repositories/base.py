@@ -2,7 +2,7 @@
 基础仓储接口
 Base Repository Interface
 
-定义Repository模式的基础接口，提供CRUD操作的标准方法。
+定义Repository模式的基础接口,提供CRUD操作的标准方法.
 Defines the base interface for the Repository pattern, providing standard CRUD operations.
 """
 
@@ -25,7 +25,7 @@ class BaseRepository(ABC, Generic[T]):
     基础仓储抽象类
     Base Repository Abstract Class
 
-    提供标准的CRUD操作，所有具体仓储都应继承此类。
+    提供标准的CRUD操作,所有具体仓储都应继承此类.
     Provides standard CRUD operations, all concrete repositories should inherit from this class.
     """
 
@@ -319,7 +319,7 @@ class BaseRepository(ABC, Generic[T]):
         批量更新记录
 
         Args:
-            updates: 更新列表，每个元素包含id和更新数据
+            updates: 更新列表,每个元素包含id和更新数据
             session: 数据库会话（可选）
 
         Returns:

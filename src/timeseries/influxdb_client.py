@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-""""""""
+""""
 InfluxDB时序数据库客户端
 InfluxDB Time Series Database Client
 
-提供高质量指标数据的时序存储、查询和分析功能
-""""""""
+提供高质量指标数据的时序存储,查询和分析功能
+""""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -15,7 +15,7 @@ try:
     from influxdb_client.client.write_api import SYNCHRONOUS
     from influxdb_client.client.query_api import QueryApi
 except ImportError:
-    print("警告: influxdb-client 未安装，InfluxDB功能将不可用")
+    print("警告: influxdb-client 未安装,InfluxDB功能将不可用")
     InfluxDBClient = None
     Point = None
 
@@ -29,9 +29,9 @@ logger = get_logger(__name__)
 class TimeSeriesMetric:
     """时序指标数据模型"""
 
-    measurement: str  # 测量名称，如 "quality_metrics"
-    tags: Dict[str, str]  # 标签，用于过滤和分组
-    fields: Dict[str, Union[float, int, str, bool]]  # 字段，实际的数据值
+    measurement: str  # 测量名称,如 "quality_metrics"
+    tags: Dict[str, str]  # 标签,用于过滤和分组
+    fields: Dict[str, Union[float, int, str, bool]]  # 字段,实际的数据值
     timestamp: datetime  # 时间戳
 
     def to_influx_point(self) -> "Point":
@@ -65,7 +65,7 @@ class MetricQuery:
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     aggregation: Optional[str] = None  # mean, max, min, sum, count
-    window: Optional[str] = None  # 时间窗口，如 "1h", "30m"
+    window: Optional[str] = None  # 时间窗口,如 "1h", "30m"
     limit: Optional[int] = None
 
 
@@ -94,7 +94,7 @@ class InfluxDBManager:
     async def connect(self) -> bool:
         """连接到InfluxDB"""
         if InfluxDBClient is None:
-            self.logger.error("influxdb-client 未安装，无法连接到InfluxDB")
+            self.logger.error("influxdb-client 未安装,无法连接到InfluxDB")
             return False
 
         try:
@@ -437,17 +437,17 @@ class InfluxDBManager:
             )
 
             # 构建删除查询
-            delete_query = f""""""""
+            delete_query = f""""
             from(bucket: "{self.influx_bucket}")
                 |> range(start: -365d, stop: {delete_time})
                 |> drop()
-            """"""""
+            """"
             # 记录删除查询（用于调试）
             logger.debug(
                 f"Generated delete query for data older than {delete_time}: {delete_query.strip()}"
             )
 
-            # 执行删除 (注意：这需要适当的权限)
+            # 执行删除 (注意:这需要适当的权限)
             # self.query_api.query(delete_query)
 
             self.logger.info(f"已清理 {days_to_keep} 天前的数据")
@@ -579,3 +579,4 @@ if __name__ == "__main__":
         print("✅ 测试完成")
 
     asyncio.run(test_influxdb())
+}

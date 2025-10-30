@@ -1,6 +1,6 @@
 """
 增强版比赛赛程收集器
-集成新的数据源管理器，支持多种数据源
+集成新的数据源管理器,支持多种数据源
 """
 
 from datetime import datetime, timedelta

@@ -96,7 +96,7 @@ class LogHandler:
 
     def get_logs(self, level: AlertLevel = None, limit: int = 100) -> List[str]:
         """获取日志（简化版本）"""
-        # 在实际应用中，这里会从日志文件或日志系统读取
+        # 在实际应用中,这里会从日志文件或日志系统读取
         return [f"Log entry for {level.value if level else 'all'}"]
 
 

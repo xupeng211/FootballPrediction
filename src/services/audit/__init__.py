@@ -1,9 +1,9 @@
 """
 audit 模块
 
-提供审计功能和日志记录服务。
+提供审计功能和日志记录服务.
 
-模块结构：
+模块结构:
 - audit_service: 审计服务主实现
 - audit_models: 审计相关的数据模型
 - audit_repository: 审计数据访问层

@@ -2,10 +2,10 @@
 系统监控器
 System Monitor
 
-统一系统监控入口，向后兼容原有接口。
+统一系统监控入口,向后兼容原有接口.
 """
 
-# 为了向后兼容，从模块化实现重新导出
+# 为了向后兼容,从模块化实现重新导出
 from .system_monitor import SystemMonitor, get_system_monitor
 
 

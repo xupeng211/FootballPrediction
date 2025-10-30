@@ -2,7 +2,7 @@
 配置驱动的依赖注入
 Configuration-driven Dependency Injection
 
-通过配置文件管理依赖注入。
+通过配置文件管理依赖注入.
 Manages dependency injection through configuration files.
 """
 
@@ -216,7 +216,7 @@ class ConfigurationBinder:
                 logger.debug(f"注册工厂服务: {service_name}")
 
             else:
-                # 没有指定实现，尝试自动绑定
+                # 没有指定实现,尝试自动绑定
                 self.auto_binder.bind_interface_to_implementations(service_type)
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

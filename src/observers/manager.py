@@ -2,7 +2,7 @@
 观察者管理器
 ObserverManager
 
-管理观察者模式的核心组件。
+管理观察者模式的核心组件.
 """
 
 import asyncio

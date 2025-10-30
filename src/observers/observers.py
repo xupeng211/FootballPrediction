@@ -2,7 +2,7 @@
 具体观察者实现
 Concrete Observer Implementations
 
-提供各种观察者的具体实现。
+提供各种观察者的具体实现.
 Provides concrete implementations for various observers.
 """
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class MetricsObserver(Observer):
     """指标收集观察者
 
-    收集和聚合系统指标数据。
+    收集和聚合系统指标数据.
     Collects and aggregates system metrics.
     """
 
@@ -165,7 +165,7 @@ class MetricsObserver(Observer):
 class LoggingObserver(Observer):
     """日志记录观察者
 
-    将事件记录到日志系统。
+    将事件记录到日志系统.
     Logs events to the logging system.
     """
 
@@ -194,7 +194,7 @@ class LoggingObserver(Observer):
         # 记录日志
         log_method(message)
 
-        # 如果是错误或严重事件，额外记录详细信息
+        # 如果是错误或严重事件,额外记录详细信息
         if event.severity in ["error", "critical"]:
             self._logger.debug(f"Event details: {event.data}")
 
@@ -252,7 +252,7 @@ class LoggingObserver(Observer):
 class AlertingObserver(Observer):
     """告警通知观察者
 
-    监控事件并触发告警。
+    监控事件并触发告警.
     Monitors events and triggers alerts.
     """
 
@@ -342,16 +342,16 @@ class AlertingObserver(Observer):
 
     async def _send_alert(self, alert: Dict[str, Any]) -> None:
         """发送告警通知"""
-        # 这里可以集成各种通知渠道：
+        # 这里可以集成各种通知渠道:
         # - 邮件
         # - 短信
         # - Slack/Teams
         # - Webhook
 
-        # 简化实现：记录到日志
+        # 简化实现:记录到日志
         logger.warning(f"ALERT [{alert['severity'].upper()}]: {alert['message']}")
 
-        # 如果是严重告警，记录到错误日志
+        # 如果是严重告警,记录到错误日志
         if alert["severity"] == "critical":
             logger.error(
                 f"CRITICAL ALERT: {alert['message']} | "
@@ -417,7 +417,7 @@ class AlertingObserver(Observer):
 class PerformanceObserver(Observer):
     """性能监控观察者
 
-    监控系统性能指标。
+    监控系统性能指标.
     Monitors system performance metrics.
     """
 

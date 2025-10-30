@@ -2,7 +2,7 @@
 用户仓储
 User Repository
 
-提供用户数据的访问操作，实现Repository模式。
+提供用户数据的访问操作,实现Repository模式.
 Provides user data access operations, implementing the Repository pattern.
 """
 
@@ -21,7 +21,7 @@ class UserRepository(BaseRepository[User]):
     用户仓储类
     User Repository Class
 
-    提供用户数据的CRUD操作和复杂查询方法。
+    提供用户数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for user data.
     """
 
@@ -125,7 +125,7 @@ class UserRepository(BaseRepository[User]):
             if session:
                 sess = session
 
-            # 定义活跃用户：最近30天内有登录
+            # 定义活跃用户:最近30天内有登录
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
             stmt = (
@@ -187,7 +187,7 @@ class UserRepository(BaseRepository[User]):
 
         Args:
             query: 搜索关键词
-            search_fields: 搜索字段列表（默认搜索用户名、邮箱、显示名）
+            search_fields: 搜索字段列表（默认搜索用户名,邮箱,显示名）
             limit: 限制返回数量
             session: 数据库会话
 

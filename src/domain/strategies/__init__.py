@@ -2,7 +2,7 @@
 预测策略模块
 Prediction Strategies Module
 
-提供各种预测算法的策略模式实现。
+提供各种预测算法的策略模式实现.
 Provides strategy pattern implementation for various prediction algorithms.
 """
 

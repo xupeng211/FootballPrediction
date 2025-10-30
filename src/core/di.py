@@ -2,7 +2,7 @@
 依赖注入容器
 Dependency Injection Container
 
-提供轻量级的依赖注入实现。
+提供轻量级的依赖注入实现.
 Provides a lightweight dependency injection implementation.
 """
 
@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 class ServiceLifetime(Enum):
     """服务生命周期枚举"""
 
-    SINGLETON = "singleton"  # 单例：整个容器生命周期内只创建一次
-    SCOPED = "scoped"  # 作用域：每个作用域内创建一次
-    TRANSIENT = "transient"  # 瞬时：每次请求都创建新实例
+    SINGLETON = "singleton"  # 单例:整个容器生命周期内只创建一次
+    SCOPED = "scoped"  # 作用域:每个作用域内创建一次
+    TRANSIENT = "transient"  # 瞬时:每次请求都创建新实例
 
 
 @dataclass
@@ -108,7 +108,7 @@ class DIContainer:
     ) -> "DIContainer":
         """内部注册方法"""
         if implementation is None and interface is not None:
-            # 如果没有指定实现，使用接口自身作为实现
+            # 如果没有指定实现,使用接口自身作为实现
             implementation = interface
 
         if implementation is None and factory is None:
@@ -168,8 +168,8 @@ class DIContainer:
     def _get_scoped(self, descriptor: ServiceDescriptor) -> Any:
         """获取作用域实例"""
         if self._current_scope is None:
-            # 如果没有作用域，当作单例处理
-            logger.warning("没有活动的作用域，将作用域服务当作单例处理")
+            # 如果没有作用域,当作单例处理
+            logger.warning("没有活动的作用域,将作用域服务当作单例处理")
             return self._get_singleton(descriptor)
 
         if self._current_scope not in self._scoped_instances:
@@ -312,7 +312,7 @@ class DIScope:
 
 
 class ServiceCollection:
-    """服务集合，用于批量注册服务"""
+    """服务集合,用于批量注册服务"""
 
     def __init__(self):
         self._registrations: List[Callable[[DIContainer], None]] = []

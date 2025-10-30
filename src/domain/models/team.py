@@ -2,7 +2,7 @@
 球队领域模型
 Team Domain Model
 
-封装球队相关的业务逻辑和不变性约束。
+封装球队相关的业务逻辑和不变性约束.
 Encapsulates team-related business logic and invariants.
 """
 
@@ -54,7 +54,7 @@ class TeamStats:
 
     @property
     def points(self) -> int:
-        """积分（标准足球积分：胜3平1负0）"""
+        """积分（标准足球积分:胜3平1负0）"""
         return self.wins * 3 + self.draws
 
     @property
@@ -72,7 +72,7 @@ class TeamStats:
     @property
     def form(self) -> List[str]:
         """最近状态（简化表示）"""
-        # 这里应该从历史记录计算，简化处理
+        # 这里应该从历史记录计算,简化处理
         return []
 
     def update(self, result: str, goals_for: int, goals_against: int) -> None:
@@ -96,9 +96,9 @@ class TeamStats:
 class TeamForm:
     """球队状态值对象"""
 
-    last_matches: List[str] = field(default_factory=list)  # 最近比赛结果：W/D/L
-    current_streak: int = 0  # 当前连续纪录（胜/负为正数，平为0）
-    streak_type: str = ""  # 连续类型：win/draw/loss/none
+    last_matches: List[str] = field(default_factory=list)  # 最近比赛结果:W/D/L
+    current_streak: int = 0  # 当前连续纪录（胜/负为正数,平为0）
+    streak_type: str = ""  # 连续类型:win/draw/loss/none
 
     def __post_init__(self):
         """验证状态数据"""
@@ -114,7 +114,7 @@ class TeamForm:
         if result not in ["W", "D", "L"]:
             raise DomainError("比赛结果只能是 W/D/L")
 
-        # 添加到记录开头，保留最近10场
+        # 添加到记录开头,保留最近10场
         self.last_matches.insert(0, result)
         self.last_matches = self.last_matches[:10]
 
@@ -158,7 +158,7 @@ class TeamForm:
     @property
     def is_in_good_form(self) -> bool:
         """是否状态良好"""
-        # 简单判断：最近5场不败且至少赢3场
+        # 简单判断:最近5场不败且至少赢3场
         if len(self.last_matches) < 5:
             return False
 
@@ -181,7 +181,7 @@ class Team:
     """
     球队领域模型
 
-    封装球队的核心业务逻辑和不变性约束。
+    封装球队的核心业务逻辑和不变性约束.
     """
 
     id: Optional[int] = None

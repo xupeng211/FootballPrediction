@@ -2,7 +2,7 @@
 服务生命周期管理器
 ServiceLifecycleManager
 
-管理服务的注册、启动、停止和监控。
+管理服务的注册,启动,停止和监控.
 """
 
 import asyncio
@@ -233,7 +233,7 @@ class ServiceLifecycleManager:
                             else:
                                 healthy = service_info.health_check(service_info.service)
                         else:
-                            # 默认健康检查：检查服务是否有严重错误
+                            # 默认健康检查:检查服务是否有严重错误
                             healthy = service_info.state != ServiceState.ERROR
 
                         health_results[name] = healthy

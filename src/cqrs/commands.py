@@ -2,7 +2,7 @@
 命令定义
 Command Definitions
 
-定义所有写操作命令。
+定义所有写操作命令.
 Defines all write operation commands.
 """
 
@@ -52,7 +52,7 @@ class CreatePredictionCommand(ValidatableCommand):
             errors.append("置信度必须在0到1之间")
 
         # 验证比赛和用户是否存在
-        # 在实际应用中，这些验证应该在服务层处理
+        # 在实际应用中,这些验证应该在服务层处理
         # 这里仅做基本验证
 
         return ValidationResult.success() if not errors else ValidationResult.failure(errors)

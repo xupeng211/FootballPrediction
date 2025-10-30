@@ -1,9 +1,9 @@
-""""""""
+""""
 告警管理器
 Alert Manager
 
-统一告警管理入口，向后兼容原有接口。
-""""""""
+统一告警管理入口,向后兼容原有接口.
+""""
 
 import logging
 from datetime import datetime, timedelta
@@ -86,7 +86,7 @@ class AlertManager:
         if name is None:
             name = f"alert-{len(self.alerts)}"
 
-        # 如果提供了旧格式参数，转换为新格式
+        # 如果提供了旧格式参数,转换为新格式
         if type is not None and severity is not None and message:
             alert = Alert(name, severity, type, message)
             self.alerts.append(alert)
@@ -198,7 +198,7 @@ class AlertManager:
             created_at_str = alert.get("created_at", "") or alert.get("timestamp", "")
             if created_at_str:
                 try:
-                    # 如果是datetime对象，转换为ISO字符串
+                    # 如果是datetime对象,转换为ISO字符串
                     if isinstance(created_at_str, ((((((((datetime):
                         created_at = created_at_str
                     else:
@@ -210,7 +210,7 @@ class AlertManager:
                         archived_count += 1
                         logger.info(f"Archived alert {alert_id} with timestamp {created_at}")
                 except (ValueError)):
-                    # 如果时间戳格式有问题，跳过
+                    # 如果时间戳格式有问题,跳过
                     continue
 
         return archived_count
@@ -237,7 +237,7 @@ class AlertManager:
         return True
 
     async def monitor_system_health(self) -> List[Dict]:
-        """监控系统健康状态，根据系统指标创建告警"""
+        """监控系统健康状态,根据系统指标创建告警"""
         try:
             # 获取系统指标
             metrics = get_system_metrics()
@@ -282,7 +282,7 @@ class AlertManager:
             is_healthy = check_database_health()
 
             if not is_healthy:
-                # 数据库连接失败，创建关键告警
+                # 数据库连接失败,创建关键告警
                 alert = self.create_alert(
                     type=AlertType.ERROR,
                     severity=AlertSeverity.CRITICAL,
@@ -310,7 +310,7 @@ class AlertManager:
             return alert
 
     async def check_database_connection(self) -> Dict:
-        """检查数据库连接（别名方法，用于测试兼容）"""
+        """检查数据库连接（别名方法,用于测试兼容）"""
         return await self.monitor_database_connection()
 
     async def monitor_api_response_time(self) -> Dict:
@@ -345,7 +345,7 @@ class AlertManager:
             }
 
     async def check_api_response_time(self) -> Dict:
-        """检查API响应时间（别名方法，用于测试兼容）"""
+        """检查API响应时间（别名方法,用于测试兼容）"""
         return await self.monitor_api_response_time()
 
     def aggregate_alerts(self, alerts: List[Dict] = None, window_minutes: int = 60) -> Dict:
@@ -371,7 +371,7 @@ class AlertManager:
 
         # 创建聚合告警
         if len(message_groups) == 1 and len(alerts) > 1:
-            # 如果所有告警都相似，返回聚合告警
+            # 如果所有告警都相似,返回聚合告警
             message = list(message_groups.keys())[0]
             count = len(alerts)
 
@@ -437,7 +437,7 @@ class AlertManager:
             return False
 
     def _serialize_alert(self, alert: Dict) -> Dict:
-        """序列化告警对象，转换枚举为字符串"""
+        """序列化告警对象,转换枚举为字符串"""
         serialized = {}
         for key, value in alert.items():
             if hasattr(value, "value"):  # 枚举对象
@@ -525,7 +525,7 @@ class AlertManager:
 
             # 检查服务健康状态
             if check_service_health():
-                # 服务健康，解决所有service类型的告警
+                # 服务健康,解决所有service类型的告警
                 for alert in list(self.active_alerts):
                     if alert.get("source") == "service":
                         # 标记为已解决
@@ -589,7 +589,7 @@ class AlertManager:
         ]
 
 
-# 为了向后兼容，保留原有的类名
+# 为了向后兼容,保留原有的类名
 AlertLevel = AlertSeverity
 AlertStatus = str  # 简化处理
 AlertChannel = str  # 简化处理
@@ -666,7 +666,7 @@ def get_system_metrics() -> Dict[str, float]:
             "error_rate": 0.0,  # 简化实现
         }
     except ImportError:
-        # 如果psutil不可用，返回模拟数据
+        # 如果psutil不可用,返回模拟数据
         return {
             "cpu_usage": 50.0,
             "memory_usage": 60.0,
@@ -678,8 +678,8 @@ def get_system_metrics() -> Dict[str, float]:
 def check_database_health() -> bool:
     """检查数据库健康状态"""
     try:
-        # 简化实现：总是返回True（健康）
-        # 在实际应用中，这里应该执行真实的数据库连接检查
+        # 简化实现:总是返回True（健康）
+        # 在实际应用中,这里应该执行真实的数据库连接检查
         return True
     except Exception:
         return False
@@ -688,8 +688,8 @@ def check_database_health() -> bool:
 def get_api_response_time() -> float:
     """获取API响应时间"""
     try:
-        # 简化实现：返回模拟响应时间
-        # 在实际应用中，这里应该测量真实的API响应时间
+        # 简化实现:返回模拟响应时间
+        # 在实际应用中,这里应该测量真实的API响应时间
         import time
 
         time.sleep(0.1)  # 模拟请求延迟
@@ -701,8 +701,8 @@ def get_api_response_time() -> float:
 def check_service_health() -> bool:
     """检查服务健康状态"""
     try:
-        # 简化实现：总是返回True（健康）
-        # 在实际应用中，这里应该检查各个服务的健康状态
+        # 简化实现:总是返回True（健康）
+        # 在实际应用中,这里应该检查各个服务的健康状态
         return True
     except Exception:
         return False
@@ -730,3 +730,4 @@ __all__ = [
     "get_api_response_time",
     "check_service_health",
 ]
+]}

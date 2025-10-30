@@ -2,7 +2,7 @@
 性能监控中间件
 Performance Monitoring Middleware
 
-提供FastAPI应用的性能监控：
+提供FastAPI应用的性能监控:
 - 请求响应时间跟踪
 - 内存使用监控
 - 并发请求统计
@@ -39,7 +39,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             app: FastAPI应用实例
             track_memory: 是否跟踪内存使用
             track_concurrency: 是否跟踪并发请求
-            sample_rate: 采样率（0-1），1.0表示100%采样
+            sample_rate: 采样率（0-1）,1.0表示100%采样
         """
         super().__init__(app)
         self.track_memory = track_memory

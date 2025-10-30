@@ -11,7 +11,7 @@ class OpenAPIConfig:
     """OpenAPI 配置管理类"""
 
     @staticmethod
-    # TODO: 方法 def get_tags_metadata 过长(22行)，建议拆分
+    # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
     def configure_openapi(app: FastAPI) -> None:
         """配置OpenAPI文档"""
         app.title = "足球预测系统 API"
@@ -27,8 +27,8 @@ class OpenAPIConfig:
         }
 
     @staticmethod
-    # TODO: 方法 def get_tags_metadata 过长(22行)，建议拆分
-    # TODO: 方法 def get_tags_metadata 过长(22行)，建议拆分
+    # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
+    # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
     def get_tags_metadata() -> List[Dict[str, Any]]:
         """获取API标签元数据"""
         return [

@@ -49,27 +49,27 @@ from src.core.config import get_config
 
 
 # mypy: ignore-errors
-# 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
-# 去除内部前缀，由主应用通过 include_router(prefix="/api/v1") 统一挂载
+# 监控收集器与导出器（保留原功能,迁移到 /collector/* 与 /metrics/prometheus）
+# 去除内部前缀,由主应用通过 include_router(prefix="/api/v1") 统一挂载
 # 异常时包含
 # 健康检查
 # 统计信息（关键字用于测试桩匹配）
 # row 可能是列表或元组
 # 使用注释与时间窗口关键词，便于测试桩根据字符串匹配
-# 近30天模型准确率（示例：正确/总）
+# 近30天模型准确率（示例:正确/总）
 # 执行查询
-# 异常时保持None，并更新时间戳
+# 异常时保持None,并更新时间戳
 # 获取系统基本信息
 # 系统指标
 # 数据库与业务指标（允许mock为非协程）
 # 运行时信息
 # 数据库健康
 # 缓存健康
-# 将原收集器相关端点迁移到 /collector/*，避免与 /status 冲突
+# 将原收集器相关端点迁移到 /collector/*,避免与 /status 冲突
 """
 监控API路由
-提供监控相关的API端点：
-- /metrics: 返回系统、数据库、业务与运行时指标（JSON）
+提供监控相关的API端点:
+- /metrics: 返回系统,数据库,业务与运行时指标（JSON）
 - /status: 返回服务健康状态（JSON）
 - /metrics/prometheus: 返回Prometheus指标文本
 - /collector/*: 指标收集器控制与状态
@@ -80,8 +80,8 @@ router = APIRouter(tags=["monitoring"])
 
 
 async def _get_database_metrics(db: Session) -> Dict[str, Any]:
-    """获取数据库健康与统计指标。
-    返回结构：
+    """获取数据库健康与统计指标.
+    返回结构:
     {
         "healthy": bool,
         "response_time_ms": float,
@@ -129,8 +129,8 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
 
 
 async def _get_business_metrics(db: Session) -> Dict[str, Any]:
-    """获取业务层关键指标。异常时各项返回 None。
-    返回结构：
+    """获取业务层关键指标。异常时各项返回 None.
+    返回结构:
     {
         "24h_predictions": Optional[int],
         "upcoming_matches_7d": Optional[int],
@@ -259,7 +259,7 @@ async def get_monitoring_stats():
 
 @router.get("/metrics")
 async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200。"""
+    """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200."""
     start = time.time()
     response: Dict[str, Any] = {
         "status": "ok",
@@ -319,7 +319,7 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
 @router.get("/status")
 async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """服务健康状态（JSON）。"""
+    """服务健康状态（JSON）."""
     api_health = True
     try:
         db.execute(text("SELECT 1"))
@@ -351,7 +351,7 @@ async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
 @router.get(str("/metrics/prometheus"), response_class=PlainTextResponse)
 async def prometheus_metrics():
-    """Prometheus 指标端点（文本）。"""
+    """Prometheus 指标端点（文本）."""
     try:
         metrics_exporter = get_metrics_exporter()
         content_type, metrics_data = metrics_exporter.get_metrics()

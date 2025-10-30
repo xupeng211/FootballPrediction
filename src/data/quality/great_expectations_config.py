@@ -1,13 +1,13 @@
 """
 Great Expectations 配置模块
 
-实现GE数据上下文配置、断言规则定义和质量检查流程。
-负责足球预测系统的数据质量断言和验证。
+实现GE数据上下文配置,断言规则定义和质量检查流程。
+负责足球预测系统的数据质量断言和验证.
 
-基于阶段三要求实现：
+基于阶段三要求实现:
 - 比赛时间字段不能为空且必须是合法时间
-- 赔率必须 > 1.01，且总隐含概率在 [0.95, 1.20]
-- 球队 ID、联赛 ID 必须存在有效外键引用
+- 赔率必须 > 1.01,且总隐含概率在 [0.95, 1.20]
+- 球队 ID,联赛 ID 必须存在有效外键引用
 - 比分必须在 [0, 99] 范围内
 """
 
@@ -47,7 +47,7 @@ except ImportError:
 #     try:
 #         from great_expectations.batch import RuntimeBatchRequest
 #     except ImportError:
-#         # 如果都不存在，使用 Any 类型占位
+#         # 如果都不存在,使用 Any 类型占位
 #         RuntimeBatchRequest = Any
 RuntimeBatchRequest = Any  # Placeholder for testing
 
@@ -56,8 +56,8 @@ class GreatExpectationsConfig:
     """
     Great Expectations 配置管理器
 
-    负责配置GE数据上下文、定义断言套件和执行数据质量检查。
-    集成足球预测系统的数据质量监控流程。
+    负责配置GE数据上下文,定义断言套件和执行数据质量检查。
+    集成足球预测系统的数据质量监控流程.
     """
 
     def __init__(
@@ -321,7 +321,7 @@ class GreatExpectationsConfig:
 
     def _get_safe_query_parameters(self, table_name: str, limit_rows: int) -> Dict[str, str]:
         """
-        获取安全的查询参数，防止SQL注入
+        获取安全的查询参数,防止SQL注入
 
         Args:
             table_name: 表名
@@ -495,7 +495,7 @@ class GreatExpectationsConfig:
 
     def get_custom_expectation_for_odds_probability(self) -> Dict[str, Any]:
         """
-        自定义断言：检查赔率隐含概率总和在合理范围内
+        自定义断言:检查赔率隐含概率总和在合理范围内
 
         Returns:
             Dict: 自定义断言配置
@@ -506,7 +506,7 @@ class GreatExpectationsConfig:
             "meta": {
                 "notes": {
                     "format": "markdown",
-                    "content": "检查赔率表列数合理性，确保包含基本的home_odds, draw_odds, away_odds字段",
+                    "content": "检查赔率表列数合理性,确保包含基本的home_odds, draw_odds, away_odds字段",
                 }
             },
         }

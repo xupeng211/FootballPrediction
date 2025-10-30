@@ -2,7 +2,7 @@
 数据验证工具类
 DataValidator
 
-提供各种数据验证方法。
+提供各种数据验证方法.
 """
 
 import re
@@ -86,7 +86,7 @@ class DataValidator:
         if not isinstance(username, str):
             return False
 
-        # 用户名长度4-20位，只能包含字母、数字、下划线
+        # 用户名长度4-20位,只能包含字母,数字,下划线
         pattern = r'^[a-zA-Z0-9_]{4,20}$'
         return bool(re.match(pattern, username))
 

@@ -1,10 +1,10 @@
-""""""""
+"""
 命令和查询总线
 Command and Query Bus
 
-实现命令和查询的分发机制。
+实现命令和查询的分发机制.
 Implements dispatching mechanism for commands and queries.
-""""""""
+"""
 
 import logging
 from typing import Any, Dict, Optional, Type
@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class CommandBus:
-    """命令总线"""""
-
-    负责将命令分发给对应的处理器。
+    """
+    命令总线
+    负责将命令分发给对应的处理器.
     Responsible for dispatching commands to their handlers.
-    """"""""
+    """
 
     def __init__(self):
         self._handlers: Dict[Type[Command], CommandHandler] = {}
@@ -71,11 +71,11 @@ class CommandBus:
 
 
 class QueryBus:
-    """查询总线"""""
-
-    负责将查询分发给对应的处理器。
+    """
+    查询总线
+    负责将查询分发给对应的处理器.
     Responsible for dispatching queries to their handlers.
-    """"""""
+    """
 
     def __init__(self):
         self._handlers: Dict[Type[Query], QueryHandler] = {}
@@ -188,11 +188,13 @@ class MetricsMiddleware:
         time.time()
 
         type(message).__name__
-        if isinstance(message, (((((Command):
+        if isinstance(message, Command):
             self._metrics["commands_processed"] += 1
-        elif isinstance(message, Query))))):
+        elif isinstance(message, Query):
             self._metrics["queries_processed"] += 1
 
         return message
 
-    def get_metrics(self) -> Dict[str]:
+    def get_metrics(self) -> Dict[str, int]:
+        """获取处理指标"""
+        return self._metrics

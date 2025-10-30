@@ -1,8 +1,8 @@
-""""""""
+""""
 观察者模式实现
 
 用于监控和日志系统的通知机制
-""""""""
+""""
 
 import asyncio
 import logging
@@ -317,3 +317,4 @@ async def setup_service_observers(service: ObservableService, observers: List[Ob
     for observer in observers:
         service.attach(observer)
         await service.notify("observer.attached", {"observer": observer.get_name()})
+]]}

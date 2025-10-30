@@ -29,7 +29,7 @@ class EnsembleResult:
 class EnsembleStrategy:
     """集成预测策略
 
-    组合多个子策略的预测结果，通过智能加权提高整体准确性。
+    组合多个子策略的预测结果,通过智能加权提高整体准确性.
     Combines predictions from multiple sub-strategies through intelligent weighting."""
 
     pass  # TODO: 实现类逻辑

@@ -1,7 +1,7 @@
 """
 预测API端点 / Prediction API Endpoints
 
-提供比赛预测相关的API接口：
+提供比赛预测相关的API接口:
 - 获取比赛预测结果
 - 实时生成预测
 - 批量预测接口
@@ -39,7 +39,7 @@ Provides API endpoints for match prediction:
     - 400: 请求参数错误 / Bad request parameters  # TODO: 将魔法数字 400 提取为常量
     - 500: 服务器内部错误 / Internal server error  # TODO: 将魔法数字 500 提取为常量
 
-该文件已重构为模块化架构，原始功能现在通过以下模块提供：
+该文件已重构为模块化架构,原始功能现在通过以下模块提供:
 - rate_limiter: 速率限制配置
 - prediction_handlers: 单个预测处理逻辑
 - batch_handlers: 批量预测处理
@@ -47,10 +47,10 @@ Provides API endpoints for match prediction:
 - schemas: API响应模式定义
 - predictions_router: 主路由器
 
-基于 API_DESIGN.md 第3.1节设计。
+基于 API_DESIGN.md 第3.1节设计.
 """
 
-# 为了向后兼容，从新的模块化实现重新导出路由器
+# 为了向后兼容,从新的模块化实现重新导出路由器
 from .predictions.router import router
 
 # 保持原有的导出

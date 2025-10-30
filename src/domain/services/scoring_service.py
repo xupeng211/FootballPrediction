@@ -2,7 +2,7 @@
 计分领域服务
 Scoring Domain Service
 
-处理预测计分相关的复杂业务逻辑。
+处理预测计分相关的复杂业务逻辑.
 Handles complex business logic related to prediction scoring.
 """
 
@@ -170,7 +170,7 @@ class ScoringService:
         difficulty_multiplier *= 1 + match_importance
 
         # 返回整数奖励分
-        return int(difficulty_multiplier * 2)  # 基础2分，根据难度调整
+        return int(difficulty_multiplier * 2)  # 基础2分,根据难度调整
 
     def _get_outcome(self, home: int, away: int) -> str:
         """获取比赛结果"""

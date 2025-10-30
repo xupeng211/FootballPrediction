@@ -1,10 +1,10 @@
-""""""""
+""""
 比赛仓储
 Match Repository
 
-实现比赛相关的数据访问逻辑。
+实现比赛相关的数据访问逻辑.
 Implements data access logic for matches.
-""""""""
+""""
 
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -297,7 +297,7 @@ class MatchRepository(MatchRepositoryInterface):
             update_data["match_date"] = datetime.fromisoformat(update_data["match_date"])
 
         if "status" in update_data:
-            # 更新状态时，记录状态变更时间
+            # 更新状态时,记录状态变更时间
             if update_data["status"] == MatchStatus.LIVE.value:
                 update_data["started_at"] = datetime.utcnow()
             elif update_data["status"] == MatchStatus.FINISHED.value:

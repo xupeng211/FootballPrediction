@@ -234,8 +234,8 @@ class FootballDataOrgAdapter(DataSourceAdapter):
     async def get_odds(self, match_id: int) -> List[OddsData]:
         """获取赔率数据"""
         # Football-Data.org 的赔率API需要付费订阅
-        # 这里返回空列表，实际项目中需要订阅服务
-        logger.warning(f"Football-Data.org赔率API需要付费订阅，match_id: {match_id}")
+        # 这里返回空列表,实际项目中需要订阅服务
+        logger.warning(f"Football-Data.org赔率API需要付费订阅,match_id: {match_id}")
         return []
 
 
@@ -358,7 +358,7 @@ class MockDataAdapter(DataSourceAdapter):
 class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     """增强版Football-Data.org API适配器
 
-    支持完整的联赛管理、错误处理、速率限制和数据验证
+    支持完整的联赛管理,错误处理,速率限制和数据验证
     """
 
     def __init__(self, api_key: Optional[str] = None):
@@ -383,7 +383,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             603: "Coupe de France",
         }
 
-        # 速率限制：10 requests/minute
+        # 速率限制:10 requests/minute
         self.rate_limit = 10
         self.request_count = 0
         self.last_reset = datetime.now()
@@ -402,13 +402,13 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
         if self.request_count >= self.rate_limit:
             wait_time = 60 - (now - self.last_reset).total_seconds()
             if wait_time > 0:
-                logger.warning(f"达到速率限制，等待 {wait_time:.1f} 秒")
+                logger.warning(f"达到速率限制,等待 {wait_time:.1f} 秒")
                 asyncio.sleep(wait_time)
                 self.request_count = 0
                 self.last_reset = datetime.now()
 
     async def _make_request(self, url: str, params: Optional[Dict] = None) -> Dict:
-        """安全的API请求，包含重试逻辑"""
+        """安全的API请求,包含重试逻辑"""
         self._check_rate_limit()
 
         for attempt in range(self.max_retries):
@@ -425,7 +425,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                             # 速率限制错误
                             retry_after = response.headers.get("Retry-After", "60")
                             wait_time = int(retry_after)
-                            logger.warning(f"触发API速率限制，等待 {wait_time} 秒")
+                            logger.warning(f"触发API速率限制,等待 {wait_time} 秒")
                             await asyncio.sleep(wait_time)
                             continue
                         elif response.status in [400, 401, 403, 404]:
@@ -439,7 +439,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2**attempt)
                     logger.warning(
-                        f"请求失败，{wait_time}秒后重试 (尝试 {attempt + 1}/{self.max_retries}): {e}"
+                        f"请求失败,{wait_time}秒后重试 (尝试 {attempt + 1}/{self.max_retries}): {e}"
                     )
                     await asyncio.sleep(wait_time)
                 else:
@@ -472,7 +472,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
         date_to: Optional[datetime] = None,
         status: Optional[str] = None,
     ) -> List[MatchData]:
-        """获取比赛列表，支持多种筛选条件"""
+        """获取比赛列表,支持多种筛选条件"""
         try:
             # 构建URL
             if league_id:
@@ -563,7 +563,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
         return await self.get_matches(date_from=date_from, date_to=date_to, status="SCHEDULED")
 
     def _parse_match_data(self, match: Dict) -> Optional[MatchData]:
-        """解析比赛数据，增强错误处理"""
+        """解析比赛数据,增强错误处理"""
         try:
             # 验证必要字段
             if not all(key in match for key in ["id", "homeTeam", "awayTeam", "utcDate"]):
@@ -596,7 +596,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             league_name = competition.get("name", "")
             league_id = competition.get("id")
 
-            # 如果是支持的联赛，使用中文名称
+            # 如果是支持的联赛,使用中文名称
             if league_id in self.supported_leagues:
                 league_name = self.supported_leagues[league_id]
 
@@ -621,7 +621,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             return None
 
     def _parse_team_data(self, team: Dict) -> Optional[TeamData]:
-        """解析球队数据，增强错误处理"""
+        """解析球队数据,增强错误处理"""
         try:
             # 验证必要字段
             if not all(key in team for key in ["id", "name"]):
@@ -694,7 +694,7 @@ class DataSourceManager:
 
     def get_primary_adapter(self) -> DataSourceAdapter:
         """获取主要的数据源适配器"""
-        # 优先级：增强适配器 > 原始适配器 > 模拟适配器
+        # 优先级:增强适配器 > 原始适配器 > 模拟适配器
         if "football_data_org_enhanced" in self.adapters:
             return self.adapters["football_data_org_enhanced"]
         elif "football_data_org" in self.adapters:

@@ -1,16 +1,16 @@
-""""""""
+""""
 缺失数据处理器
 
-实现处理数据缺失的逻辑，包括填充、插值、删除等策略。
+实现处理数据缺失的逻辑,包括填充,插值,删除等策略。
 
 填充策略：
 - 球队统计：使用历史平均值
 - 球员统计：使用位置中位数
-- 天气数据：使用季节正常值
-- 赔率数据：使用市场共识
+- 天气数据:使用季节正常值
+- 赔率数据:使用市场共识
 
-基于 DATA_DESIGN.md 第4.3节设计。
-""""""""
+基于 DATA_DESIGN.md 第4.3节设计.
+""""
 
 import json
 import logging
@@ -29,12 +29,12 @@ from .models import Features
 
 
 class MissingDataHandler:
-    """"""""
+    """"
     缺失数据处理器
 
-    提供多种策略来处理数据集中的缺失值，
-    确保数据完整性，为模型训练做准备。
-    """"""""
+    提供多种策略来处理数据集中的缺失值,
+    确保数据完整性,为模型训练做准备.
+    """"
 
     FILL_STRATEGIES = {
         "team_stats": "historical_average",  # 历史平均值
@@ -59,7 +59,7 @@ class MissingDataHandler:
         self._fallback_defaults = self._load_fallback_defaults()
 
     async def handle_missing_match_data(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
-        """"""""
+        """"
         处理比赛数据中的缺失值
 
         Args:
@@ -67,8 +67,8 @@ class MissingDataHandler:
 
         Returns:
             Dict[str, Any]: 处理缺失值后的数据
-        """"""""
-        # 示例：填充缺失的比分
+        """"
+        # 示例:填充缺失的比分
         if match_data.get("home_score") is None:
             match_data["home_score"] = 0
             self.logger.debug(
@@ -83,7 +83,7 @@ class MissingDataHandler:
                 match_data.get("external_match_id") or match_data.get("id"),
             )
 
-        # 示例：填充缺失的场地和裁判
+        # 示例:填充缺失的场地和裁判
         if not match_data.get("venue"):
             match_data["venue"] = "Unknown"
 
@@ -95,7 +95,7 @@ class MissingDataHandler:
     async def handle_missing_features(
         self, match_id: int, features_df: pd.DataFrame
     ) -> pd.DataFrame:
-        """"""""
+        """"
         处理特征数据中的缺失值
 
         Args:
@@ -104,7 +104,7 @@ class MissingDataHandler:
 
         Returns:
             pd.DataFrame: 处理缺失值后的特征数据
-        """"""""
+        """"
         try:
             # 遍历所有特征列
             for col in features_df.columns:
@@ -136,7 +136,7 @@ class MissingDataHandler:
             return features_df
 
     async def _get_historical_average(self, feature_name: str) -> float:
-        """"""""
+        """"
         获取特征的历史平均值
 
         Args:
@@ -144,7 +144,7 @@ class MissingDataHandler:
 
         Returns:
             float: 历史平均值
-        """"""""
+        """"
         if feature_name in self._feature_average_cache:
             return self._feature_average_cache[feature_name]
 
@@ -183,7 +183,7 @@ class MissingDataHandler:
         return self._fallback_defaults.get(str(feature_name), 0.0)
 
     def register_fallback_average(self, feature_name: str, value: float) -> None:
-        """在运行时注册或覆盖指定特征的默认均值。"""
+        """在运行时注册或覆盖指定特征的默认均值."""
 
         try:
             numeric_value = float(value)
@@ -194,7 +194,7 @@ class MissingDataHandler:
         self._fallback_defaults[feature_name] = numeric_value
 
     def _load_fallback_defaults(self) -> Dict[str, float]:
-        """加载缺失值默认均值配置，支持环境变量或JSON配置文件。"""
+        """加载缺失值默认均值配置,支持环境变量或JSON配置文件."""
 
         defaults = self._DEFAULT_FALLBACK_AVERAGES.copy()
 
@@ -233,7 +233,7 @@ class MissingDataHandler:
     def _merge_default_source(
         self, defaults: Dict[str, float], raw_json: str, *, source: str
     ) -> None:
-        """将来自字符串的 JSON 数据合并到默认映射。"""
+        """将来自字符串的 JSON 数据合并到默认映射."""
 
         try:
             payload = json.loads(raw_json)
@@ -252,7 +252,7 @@ class MissingDataHandler:
                 self.logger.warning("忽略无效的默认均值（来源: %s）: %s=%s"))
 
     def interpolate_time_series_data(self)) -> pd.Series:
-        """"""""
+        """"
         使用插值法填充时间序列数据
 
         Args:
@@ -260,7 +260,7 @@ class MissingDataHandler:
 
         Returns:
             pd.Series: 填充后的数据
-        """"""""
+        """"
         try:
             # 使用线性插值
             return data.interpolate(method="linear")
@@ -271,7 +271,7 @@ class MissingDataHandler:
     def remove_rows_with_missing_critical_data(
         self, df: pd.DataFrame, critical_columns: List[str]
     ) -> pd.DataFrame:
-        """"""""
+        """"
         删除包含关键数据缺失的行
 
         Args:
@@ -280,7 +280,7 @@ class MissingDataHandler:
 
         Returns:
             pd.DataFrame: 清理后的数据集
-        """"""""
+        """"
         try:
             original_rows = len(df)
             cleaned_df = df.dropna(subset=critical_columns)
@@ -298,12 +298,12 @@ class MissingDataHandler:
             return df
 
     def reload_fallback_defaults(self) -> None:
-        """重新加载缺省均值配置并清除缓存，支持运行时热更新。"""
+        """重新加载缺省均值配置并清除缓存,支持运行时热更新."""
 
         self._fallback_defaults = self._load_fallback_defaults()
         self._feature_average_cache.clear()
 
     def clear_cached_averages(self) -> None:
-        """清理历史均值缓存。"""
+        """清理历史均值缓存."""
 
         self._feature_average_cache.clear()

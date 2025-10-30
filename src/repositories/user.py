@@ -1,10 +1,10 @@
-""""""""
+""""
 用户仓储
 User Repository
 
-实现用户相关的数据访问逻辑。
+实现用户相关的数据访问逻辑.
 Implements data access logic for users.
-""""""""
+""""
 
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional

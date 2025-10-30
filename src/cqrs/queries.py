@@ -2,7 +2,7 @@
 查询定义
 Query Definitions
 
-定义所有读操作查询。
+定义所有读操作查询.
 Defines all read operation queries.
 """
 
@@ -224,7 +224,7 @@ class GetLeaderboardQuery(ValidatableQuery):
 
         valid_periods = ["all_time", "monthly", "weekly"]
         if self.period not in valid_periods:
-            errors.append(f"无效的时间段，必须是: {', '.join(valid_periods)}")
+            errors.append(f"无效的时间段,必须是: {', '.join(valid_periods)}")
 
         if self.limit is not None and self.limit <= 0:
             errors.append("限制数量必须为正数")

@@ -63,8 +63,8 @@ from alembic import op
 # 删除其他表的JSONB索引（如果存在）
 # 忽略索引不存在的错误，但记录日志
 
-# 注意：将JSONB降级回JSON需要谨慎处理，这里不自动执行
-# 如果需要，可以手动执行：
+# 注意:将JSONB降级回JSON需要谨慎处理,这里不自动执行
+# 如果需要,可以手动执行:
 # ALTER TABLE raw_match_data ALTER COLUMN raw_data TYPE JSON;
 # ALTER TABLE raw_odds_data ALTER COLUMN raw_data TYPE JSON;
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """
     添加raw_scores_data表并升级现有Bronze层表为JSONB
-    变更内容：
+    变更内容:
     1. 创建raw_scores_data表（Bronze层比分数据）
     2. 升级raw_match_data和raw_odds_data表的JSON字段为JSONB
     3. 添加分区策略（按月分区）
@@ -147,7 +147,7 @@ def upgrade() -> None:
             postgresql_using="gin",
         )
     else:
-        logger.info("⚠️  SQLite环境：跳过JSONB GIN索引创建")
+        logger.info("⚠️  SQLite环境:跳过JSONB GIN索引创建")
     if db_dialect != "sqlite":
         try:
             op.execute(
@@ -171,7 +171,7 @@ def upgrade() -> None:
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"Warning: Failed to upgrade JSON to JSONB: {e}")
     else:
-        logger.info("⚠️  SQLite环境：跳过JSON到JSONB的升级")
+        logger.info("⚠️  SQLite环境:跳过JSON到JSONB的升级")
     if db_dialect != "sqlite":
         op.execute(
             """
@@ -185,7 +185,7 @@ def upgrade() -> None:
             partition_name := table_name || '_' || year_month;
             start_date := (year_month || '-01')::DATE;
             end_date := start_date + INTERVAL '1 month';
-            -- 创建分区表（仅作为示例，实际实现需要根据具体需求调整）
+            -- 创建分区表（仅作为示例,实际实现需要根据具体需求调整）
             EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I
                             FOR VALUES FROM (%L) TO (%L)',
                            partition_name, table_name, start_date, end_date);
@@ -205,7 +205,7 @@ def upgrade() -> None:
             "match_minute IS NULL OR (match_minute >= 0 AND match_minute <= 150)",
         )
     else:
-        logger.info("⚠️  SQLite环境：跳过检查约束添加")
+        logger.info("⚠️  SQLite环境:跳过检查约束添加")
     if db_dialect != "sqlite":
         op.execute(
             """
@@ -239,11 +239,11 @@ def downgrade() -> None:
         op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
         op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
     else:
-        logger.info("⚠️  SQLite环境：跳过触发器和函数删除")
+        logger.info("⚠️  SQLite环境:跳过触发器和函数删除")
     try:
         op.drop_index("idx_raw_scores_data_jsonb_gin", table_name="raw_scores_data")
     except (SQLAlchemyError, DatabaseError):
-        logger.info("⚠️  索引idx_raw_scores_data_jsonb_gin不存在，跳过删除")
+        logger.info("⚠️  索引idx_raw_scores_data_jsonb_gin不存在,跳过删除")
     op.drop_index("idx_raw_scores_data_score", table_name="raw_scores_data")
     op.drop_index("idx_raw_scores_data_status", table_name="raw_scores_data")
     op.drop_index("idx_raw_scores_data_external_match", table_name="raw_scores_data")
@@ -255,7 +255,7 @@ def downgrade() -> None:
             op.drop_constraint("ck_raw_scores_data_minute_range", "raw_scores_data")
             op.drop_constraint("ck_raw_scores_data_scores_range", "raw_scores_data")
         except (SQLAlchemyError, DatabaseError):
-            logger.info("⚠️  约束不存在，跳过删除")
+            logger.info("⚠️  约束不存在,跳过删除")
     op.drop_table("raw_scores_data")
     if db_dialect != "sqlite":
         try:
@@ -264,4 +264,4 @@ def downgrade() -> None:
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"Warning: Could not drop indexes during downgrade: {e}")
     else:
-        logger.info("⚠️  SQLite环境：跳过JSONB索引删除")
+        logger.info("⚠️  SQLite环境:跳过JSONB索引删除")

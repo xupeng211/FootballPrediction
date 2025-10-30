@@ -52,7 +52,7 @@ def upgrade():
         ["collection_type", "status", "start_time"],
     )
 
-    # PostgreSQL环境：执行所有PostgreSQL特有的操作
+    # PostgreSQL环境:执行所有PostgreSQL特有的操作
     if db_dialect != "sqlite":
         # 创建原始数据分区表（如果不存在）
         op.execute(
@@ -234,7 +234,7 @@ def downgrade():
     op.drop_index("idx_data_collection_type_status_time", table_name="data_collection_logs")
 
     if db_dialect != "sqlite":
-        # PostgreSQL环境：删除视图
+        # PostgreSQL环境:删除视图
         op.execute("DROP VIEW IF EXISTS live_matches_view;")
         op.execute("DROP VIEW IF EXISTS model_accuracy_view;")
         op.execute("DROP VIEW IF EXISTS prediction_stats_view;")

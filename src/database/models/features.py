@@ -1,18 +1,18 @@
 """
 Features - 数据库模块
 
-提供 features 相关的数据库功能。
+提供 features 相关的数据库功能.
 
 主要功能：
 - 特征实体管理
 - 特征元数据管理
 - 特征类型定义
 
-使用示例：
+使用示例:
     from database.models.features import FeatureEntity, FeatureMetadata
     # 使用示例代码
 
-注意事项：
+注意事项:
 - 使用SQLAlchemy 2.0语法
 """
 

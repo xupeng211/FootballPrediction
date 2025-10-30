@@ -77,7 +77,7 @@ class User(BaseModel):
         self.last_login = datetime.utcnow()
 
     def to_dict(self, exclude_fields: Optional[set] = None) -> dict:
-        """转换为字典，排除敏感字段"""
+        """转换为字典,排除敏感字段"""
         if exclude_fields is None:
             exclude_fields = {"password_hash"}
 

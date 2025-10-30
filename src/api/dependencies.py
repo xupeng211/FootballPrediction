@@ -2,7 +2,7 @@
 API依赖注入
 API Dependencies
 
-提供FastAPI依赖注入函数，包括：
+提供FastAPI依赖注入函数,包括:
 - 用户认证
 - 预测引擎
 - 权限检查
@@ -25,11 +25,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 try:
     from jose import JWTError, jwt
 except ImportError:
-    # 如果没有安装python-jose，提供一个简单的占位符
+    # 如果没有安装python-jose,提供一个简单的占位符
     class JWTError(Exception):
         pass
 
-    def jwt(*args, **kwargs):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def jwt(*args, **kwargs):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """TODO: 添加函数文档"""
         raise ImportError("Please install python-jose: pip install python-jose")
 
@@ -49,12 +49,12 @@ security = HTTPBearer()
 
 
 # 验证密钥强度
-def validate_secret_key():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def validate_secret_key():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """验证JWT密钥强度"""
     if SECRET_KEY in ["your-secret-key-here", "your-jwt-secret-key-change-this"]:
-        logger.warning("⚠️ 使用默认JWT密钥，请立即更改！")
+        logger.warning("⚠️ 使用默认JWT密钥,请立即更改！")
     if len(SECRET_KEY) < 32:  # TODO: 将魔法数字 32 提取为常量
-        logger.warning("⚠️ JWT密钥长度不足32位，建议使用更强的密钥")
+        logger.warning("⚠️ JWT密钥长度不足32位,建议使用更强的密钥")
 
 
 # 启动时验证
@@ -149,7 +149,7 @@ async def verify_prediction_permission(
         bool: 是否有权限
     """
     # 这里可以实现更复杂的权限逻辑
-    # 例如：检查用户是否有访问特定比赛的权限
+    # 例如:检查用户是否有访问特定比赛的权限
     return True
 
 
@@ -164,5 +164,5 @@ async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
         bool: 是否通过限制
     """
     # 这里可以实现速率限制逻辑
-    # 例如：检查用户在时间窗口内的请求次数
+    # 例如:检查用户在时间窗口内的请求次数
     return True

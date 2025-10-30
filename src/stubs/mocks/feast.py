@@ -1,7 +1,7 @@
-""""""""
+""""
 Feast Feature Store Mock 实现
-用于测试环境，避免真实的Feast依赖
-""""""""
+用于测试环境,避免真实的Feast依赖
+""""
 
 import logging
 from collections import defaultdict
@@ -314,3 +314,4 @@ def reset_feast_store() -> None:
     if global_feast_store:
         global_feast_store.teardown()
     global_feast_store = None
+]]]

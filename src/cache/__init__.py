@@ -1,7 +1,7 @@
 """
 缓存模块 - 提供统一的缓存管理功能
 
-提供Redis缓存功能，支持：
+提供Redis缓存功能,支持:
 - Redis连接池管理
 - 同步和异步操作
 - 缓存Key命名规范
@@ -10,7 +10,7 @@
 - 内存缓存（TTL Cache）
 - 缓存一致性管理
 
-统一接口：
+统一接口:
 - redis_manager: Redis缓存管理
 - ttl_cache: 高性能内存缓存
 - decorators: 缓存装饰器
@@ -84,7 +84,7 @@ from .ttl_cache import (
 )
 
 # 向后兼容别名
-# 为了保持向后兼容，提供一些常用别名
+# 为了保持向后兼容,提供一些常用别名
 TTLCacheEntry = CacheEntry
 
 

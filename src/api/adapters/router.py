@@ -4,7 +4,7 @@ from src.core.config import get_config
 适配器API路由
 Adapter API Router
 
-提供适配器管理、足球数据获取和演示功能的API端点。
+提供适配器管理,足球数据获取和演示功能的API端点.
 Provides API endpoints for adapter management, football data retrieval, and demo features.
 """
 
@@ -176,7 +176,7 @@ async def get_registry_status():
             if hasattr(reg_candidate, "_mock_name") or hasattr(reg_candidate, "status"):
                 registry = reg_candidate
 
-        # 如果没有找到mock，创建默认实例
+        # 如果没有找到mock,创建默认实例
         if registry is None:
             registry = AdapterRegistry()
             src.adapters.registry = registry
@@ -188,7 +188,7 @@ async def get_registry_status():
                 if registry.status.value == "inactive":
                     await registry.initialize()
             else:
-                # Mock对象可能没有status.value，跳过初始化
+                # Mock对象可能没有status.value,跳过初始化
                 pass
         except Exception as e:
             # 初始化失败时静默处理（可能是mock对象）
@@ -291,7 +291,7 @@ async def shutdown_registry():
             if hasattr(reg_candidate, "_mock_name") or hasattr(reg_candidate, "status"):
                 registry = reg_candidate
 
-        # 如果没有找到mock，创建默认实例
+        # 如果没有找到mock,创建默认实例
         if registry is None:
             registry = AdapterRegistry()
             src.adapters.registry = registry
@@ -302,7 +302,7 @@ async def shutdown_registry():
             if hasattr(registry, "shutdown"):
                 await registry.shutdown()
             else:
-                # Mock对象可能没有shutdown方法，跳过
+                # Mock对象可能没有shutdown方法,跳过
                 pass
         except Exception as e:
             # 关闭失败时静默处理（可能是mock对象）
@@ -337,7 +337,7 @@ async def get_adapter_configs():
             ):
                 factory = factory_candidate
 
-        # 如果找到mock，使用mock的返回数据
+        # 如果找到mock,使用mock的返回数据
         if factory and hasattr(factory, "get_adapter_config"):
             try:
                 mock_data = factory.get_adapter_config()

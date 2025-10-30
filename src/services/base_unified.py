@@ -1,7 +1,7 @@
 """
 统一的基础服务类
 
-合并了原来两个基础服务类的功能，提供完整的服务基础设施。
+合并了原来两个基础服务类的功能,提供完整的服务基础设施.
 """
 
 import logging
@@ -16,8 +16,8 @@ class BaseService(ABC):
     """
     统一的基础服务类
 
-    提供以下功能：
-    - 服务生命周期管理（初始化、启动、停止、关闭）
+    提供以下功能:
+    - 服务生命周期管理（初始化、启动,停止,关闭）
     - 数据库会话管理（同步和异步）
     - 日志记录
     - 操作追踪
@@ -28,8 +28,8 @@ class BaseService(ABC):
         初始化基础服务
 
         Args:
-            name: 服务名称，默认使用类名
-            db_manager: 数据库管理器实例，可选
+            name: 服务名称,默认使用类名
+            db_manager: 数据库管理器实例,可选
         """
         self.name = name or self.__class__.__name__
         self.db_manager = db_manager or DatabaseManager()
@@ -97,7 +97,7 @@ class BaseService(ABC):
             bool: 启动是否成功
         """
         if not self._initialized:
-            self.logger.error(f"服务 {self.name} 未初始化，无法启动")
+            self.logger.error(f"服务 {self.name} 未初始化,无法启动")
             return False
 
         if self._running:
@@ -286,7 +286,7 @@ class BaseService(ABC):
         """
         获取服务信息
 
-        子类必须实现此方法，返回服务的基本信息
+        子类必须实现此方法,返回服务的基本信息
 
         Returns:
             Dict: 服务信息

@@ -2,7 +2,7 @@
 预测领域服务
 Prediction Domain Service
 
-处理预测相关的复杂业务逻辑。
+处理预测相关的复杂业务逻辑.
 Handles complex business logic related to predictions.
 """
 
@@ -68,7 +68,7 @@ class PredictionDomainService:
             predicted_away=predicted_away,
             confidence=confidence,
         )
-        # Note: notes 字段在当前模型中不存在，需要时可以扩展模型
+        # Note: notes 字段在当前模型中不存在,需要时可以扩展模型
 
         # 记录领域事件
         if _prediction.id is None:
@@ -268,7 +268,7 @@ class PredictionDomainService:
             if not 0.0 <= float(prediction.confidence.value) <= 1.0:
                 errors.append("信心度必须在0-1之间")
 
-        # Note: notes 字段在当前模型中不存在，需要时可以扩展模型
+        # Note: notes 字段在当前模型中不存在,需要时可以扩展模型
         # if prediction.notes and len(prediction.notes) > 500:
         #     errors.append("备注不能超过500个字符")
 

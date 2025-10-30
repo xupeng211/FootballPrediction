@@ -2,7 +2,7 @@
 比赛领域服务
 Match Domain Service
 
-处理比赛相关的复杂业务逻辑。
+处理比赛相关的复杂业务逻辑.
 Handles complex business logic related to matches.
 """
 
@@ -38,7 +38,7 @@ class MatchDomainService:
             raise ValueError("主队和客队不能是同一支球队")
 
         # 检查球队是否已经在同一时间有比赛
-        # 这里简化处理，实际应该查询数据库
+        # 这里简化处理,实际应该查询数据库
 
         if home_team.id is None or away_team.id is None:
             raise ValueError("球队ID不能为空")
@@ -55,7 +55,7 @@ class MatchDomainService:
     def start_match(self, match: Match) -> None:
         """开始比赛"""
         if match.status != MatchStatus.SCHEDULED:
-            raise ValueError(f"比赛状态为 {match.status.value}，无法开始")
+            raise ValueError(f"比赛状态为 {match.status.value},无法开始")
 
         if datetime.utcnow() < match.match_date:
             raise ValueError("比赛时间还未到")
@@ -111,7 +111,7 @@ class MatchDomainService:
     def cancel_match(self, match: Match, reason: str) -> None:
         """取消比赛"""
         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
-            raise ValueError(f"比赛状态为 {match.status.value}，无法取消")
+            raise ValueError(f"比赛状态为 {match.status.value},无法取消")
 
         match.status = MatchStatus.CANCELLED
 
@@ -122,7 +122,7 @@ class MatchDomainService:
     def postpone_match(self, match: Match, new_date: datetime, reason: str) -> None:
         """延期比赛"""
         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
-            raise ValueError(f"比赛状态为 {match.status.value}，无法延期")
+            raise ValueError(f"比赛状态为 {match.status.value},无法延期")
 
         match.status = MatchStatus.POSTPONED
         match.match_date = new_date

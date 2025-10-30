@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Model Performance Monitor
-模型性能监控，实时跟踪模型表现
+模型性能监控,实时跟踪模型表现
 
 生成时间: 2025-10-26 20:57:38
 """
@@ -105,7 +105,7 @@ class ModelPerformanceMonitor:
             self.is_trained = True
             self.performance_metrics[metric_name] = metric_value
 
-            logger.info(f"模型训练完成，{metric_name}: {metric_value:.4f}")
+            logger.info(f"模型训练完成,{metric_name}: {metric_value:.4f}")
 
             return {
                 "success": True,
@@ -172,7 +172,7 @@ class ModelPerformanceMonitor:
                 else:  # mse
                     performance_drop = metric_value - baseline
 
-            # 性能记录，用于可能的日志记录或监控
+            # 性能记录,用于可能的日志记录或监控
             performance_record = {
                 "timestamp": datetime.now(),
                 metric_name: metric_value,

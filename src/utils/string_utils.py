@@ -1,7 +1,7 @@
 """
 足球预测系统字符串处理工具模块 - Phase 4B增强版
 
-提供字符串操作和文本处理相关的工具函数：
+提供字符串操作和文本处理相关的工具函数:
 - 字符串清理和格式化
 - 邮箱和URL验证
 - 文本截断和省略
@@ -36,7 +36,7 @@ class StringUtils:
         cleaned = "".join(char for char in cleaned if unicodedata.category(char)[0] != "C")
 
         if remove_special_chars:
-            # 移除特殊字符，保留字母数字和基本标点
+            # 移除特殊字符,保留字母数字和基本标点
             cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', '', cleaned)
 
         # 规范化空白字符
@@ -51,7 +51,7 @@ class StringUtils:
 
         # 处理负长度情况
         if length < 0:
-            # 负长度：从开头截取到 len(suffix) + length - 1
+            # 负长度:从开头截取到 len(suffix) + length - 1
             effective_length = len(suffix) + length - 1
             if effective_length <= 0:
                 return suffix
@@ -95,7 +95,7 @@ class StringUtils:
         text = unicodedata.normalize("NFKD", text)
         text = "".join(char for char in text if unicodedata.category(char) != "Mn")
 
-        # 转换为小写，替换空格为连字符
+        # 转换为小写,替换空格为连字符
         text = text.lower()
         text = re.sub(r"[^\w\s-]", "", text)
         text = re.sub(r"[-\s]+", "-", text).strip("-")

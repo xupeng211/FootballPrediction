@@ -1,7 +1,7 @@
 """
 数据处理器模块
 
-提供各种数据处理功能。
+提供各种数据处理功能.
 """
 
 from .features_processor import FeaturesProcessor

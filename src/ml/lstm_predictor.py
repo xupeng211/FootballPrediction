@@ -24,7 +24,7 @@ try:
     from tensorflow.keras.optimizers import Adam
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 except ImportError:
-    print("警告: TensorFlow未安装，LSTM功能将不可用")
+    print("警告: TensorFlow未安装,LSTM功能将不可用")
     tf = None
 
 from src.core.logging_system import get_logger
@@ -160,7 +160,7 @@ class LSTMPredictor:
     def build_model(self, input_shape: Tuple[int, int]) -> None:
         """构建LSTM模型"""
         if tf is None:
-            raise ImportError("TensorFlow未安装，无法构建LSTM模型")
+            raise ImportError("TensorFlow未安装,无法构建LSTM模型")
 
         try:
             self.model = Sequential()
@@ -317,7 +317,7 @@ class LSTMPredictor:
                         )
                     )
             else:
-                # 如果没有验证数据，使用默认置信区间
+                # 如果没有验证数据,使用默认置信区间
                 for pred_val in prediction:
                     margin = 0.5  # 默认置信区间±0.5
                     confidence_intervals.append(
@@ -348,7 +348,7 @@ class LSTMPredictor:
             )
 
             if len(recent_data) < self.config.sequence_length:
-                raise ValueError(f"历史数据不足，需要至少 {self.config.sequence_length} 个数据点")
+                raise ValueError(f"历史数据不足,需要至少 {self.config.sequence_length} 个数据点")
 
             # 提取特征数据
             features_data = []
@@ -365,7 +365,7 @@ class LSTMPredictor:
                 ]
                 features_data.append(feature_vector)
 
-            # 如果特征数据不足，使用默认值填充
+            # 如果特征数据不足,使用默认值填充
             while len(features_data) < self.config.sequence_length:
                 features_data.insert(0, [7.0, 50.0, 60.0, 10])  # 默认值
 
@@ -469,7 +469,7 @@ class LSTMPredictor:
             historical_data = await influxdb_manager.get_quality_metrics_history(hours=days * 24)
 
             if len(historical_data) < 100:
-                raise ValueError(f"历史数据不足，只有 {len(historical_data)} 个数据点")
+                raise ValueError(f"历史数据不足,只有 {len(historical_data)} 个数据点")
 
             # 准备数据
             X, y = self.prepare_data(historical_data)

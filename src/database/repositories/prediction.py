@@ -2,7 +2,7 @@
 预测仓储
 Prediction Repository
 
-提供预测数据的访问操作，实现Repository模式。
+提供预测数据的访问操作,实现Repository模式.
 Provides prediction data access operations, implementing the Repository pattern.
 """
 
@@ -32,7 +32,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     预测仓储类
     Prediction Repository Class
 
-    提供预测数据的CRUD操作和复杂查询方法。
+    提供预测数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for prediction data.
     """
 

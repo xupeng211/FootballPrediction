@@ -15,7 +15,7 @@ INT64 = "INT64"
 
 # 类定义
 class _MockFeastResult:
-    """轻量的Feast查询结果，仅实现 to_df 方法。"""
+    """轻量的Feast查询结果,仅实现 to_df 方法."""
 
     pass  # TODO: 实现类逻辑
 

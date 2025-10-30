@@ -2,7 +2,7 @@
 仓储依赖注入配置
 Repository Dependency Injection Configuration
 
-为FastAPI提供仓储实例的依赖注入。
+为FastAPI提供仓储实例的依赖注入.
 Provides dependency injection for repository instances in FastAPI.
 """
 

@@ -4,19 +4,19 @@ from src.core.config import Config
 """
 
 # mypy: ignore-errors
-# 该文件包含复杂的机器学习逻辑，类型检查已忽略
+# 该文件包含复杂的机器学习逻辑,类型检查已忽略
 赛程数据采集器
 
 实现足球比赛赛程数据的采集逻辑。
-包含防重复、防丢失策略，确保赛程数据的完整性和一致性。
+包含防重复,防丢失策略,确保赛程数据的完整性和一致性。
 
-采集策略：
+采集策略:
 - 每日凌晨执行全量同步
 - 实时增量更新新增赛程
 - 基于 match_id + league_id 去重
 - 检测缺失比赛并补全
 
-基于 DATA_DESIGN.md 第1.1节设计。
+基于 DATA_DESIGN.md 第1.1节设计.
 """
 
 from datetime import datetime
@@ -29,8 +29,8 @@ class FixturesCollector(DataCollector):
     """
     赛程数据采集器
 
-    负责从外部API采集足球比赛赛程数据，
-    实现防重复、防丢失机制，确保数据质量。
+    负责从外部API采集足球比赛赛程数据,
+    实现防重复,防丢失机制,确保数据质量.
     """
 
     def __init__(
@@ -52,9 +52,9 @@ class FixturesCollector(DataCollector):
         self.api_key = api_key
         self.base_url = base_url
 
-        # 防重复：记录已处理的比赛ID
+        # 防重复:记录已处理的比赛ID
         self._processed_matches: Set[str] = set()
-        # 防丢失：记录应该存在但缺失的比赛
+        # 防丢失:记录应该存在但缺失的比赛
         self._missing_matches: List[Dict[str, Any]] = []
 
     async def collect_fixtures(
@@ -67,12 +67,12 @@ class FixturesCollector(DataCollector):
         """
         采集赛程数据
 
-        防重复策略：
+        防重复策略:
         - 基于 external_match_id + league_id 生成唯一键
         - 检查数据库中是否已存在
         - 跳过重复记录
 
-        防丢失策略：
+        防丢失策略:
         - 全量获取指定时间范围内的赛程
         - 与数据库现有数据比对
         - 标记缺失的比赛并补全
@@ -236,7 +236,7 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 从数据库获取活跃联赛列表
-            # 在实际生产环境中，这里会查询数据库获取配置的活跃联赛
+            # 在实际生产环境中,这里会查询数据库获取配置的活跃联赛
             # 目前返回主要联赛作为默认配置
             active_leagues = [
                 "PL",  # 英超
@@ -265,8 +265,8 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 查询数据库中已存在的比赛
-            # 在实际生产环境中，这里会查询数据库获取指定日期范围内的比赛
-            # 目前使用空集合作为占位符，允许重复插入（生产环境需要实现）
+            # 在实际生产环境中,这里会查询数据库获取指定日期范围内的比赛
+            # 目前使用空集合作为占位符,允许重复插入（生产环境需要实现）
             self.logger.info(f"加载 {date_from} 到 {date_to} 的已存在比赛ID")
             self._processed_matches = set()
 
@@ -325,7 +325,7 @@ class FixturesCollector(DataCollector):
         Returns:
             str: 比赛唯一键
         """
-        # 使用外部ID、主队、客队、比赛时间生成唯一键
+        # 使用外部ID、主队,客队,比赛时间生成唯一键
         key_components = [
             str(fixture_data.get(str("id"), "")),
             str(fixture_data.get(str("homeTeam"), {}).get(str("id"), "")),
@@ -344,7 +344,7 @@ class FixturesCollector(DataCollector):
             raw_fixture: 原始赛程数据
 
         Returns:
-            Optional[Dict]: 清洗后的数据，无效则返回None
+            Optional[Dict]: 清洗后的数据,无效则返回None
         """
         try:
             # 基础字段验证

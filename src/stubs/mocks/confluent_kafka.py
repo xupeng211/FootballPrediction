@@ -1,10 +1,10 @@
 import asyncio
 from typing import cast, defaultdict
 
-""""""""
+""""
 Confluent Kafka Mock 实现
-用于测试环境，避免真实的Kafka依赖
-""""""""
+用于测试环境,避免真实的Kafka依赖
+""""
 
 import logging
 from typing import Any, Callable, Dict, List, Optional
@@ -184,7 +184,7 @@ class MockProducer:
 
     def poll(self, timeout: float = 0) -> None:
         """轮询事件"""
-        # Mock实现，不需要做任何事
+        # Mock实现,不需要做任何事
         pass
 
     def close(self) -> None:
@@ -366,3 +366,4 @@ KAFKA_UNKNOWN_TOPIC_OR_PART = 3
 KAFKA_LEADER_NOT_AVAILABLE = 5
 KAFKA_OFFSET_OUT_OF_RANGE = 1
 KAFKA_GROUP_AUTHORIZATION_FAILED = 30
+]]]

@@ -2,7 +2,7 @@
 依赖注入设置
 Dependency Injection Setup
 
-提供依赖注入的初始化和配置功能。
+提供依赖注入的初始化和配置功能.
 Provides initialization and configuration for dependency injection.
 """
 
@@ -34,7 +34,7 @@ class DISetup:
         auto_scan_modules: Optional[list] = None,
     ) -> DIContainer:
         """初始化依赖注入"""
-        logger.info(f"初始化依赖注入，配置文件: {config_file}, 环境: {self.profile}")
+        logger.info(f"初始化依赖注入,配置文件: {config_file}, 环境: {self.profile}")
 
         # 创建容器
         collection = ServiceCollection()
@@ -78,7 +78,7 @@ class DISetup:
     def _auto_register_repositories(self) -> None:
         """自动注册仓储"""
         # 这里可以扫描并自动注册所有仓储类
-        # 简化示例，手动注册主要仓储
+        # 简化示例,手动注册主要仓储
         try:
             from ..database.repositories.match_repository import MatchRepository
             from ..database.repositories.prediction_repository import (
@@ -145,7 +145,7 @@ def configure_di(
     return setup.initialize(config_file, auto_scan_modules)
 
 
-# 装饰器：自动注册服务
+# 装饰器:自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
     interface: Optional[type] = None,
@@ -182,7 +182,7 @@ def register_service(
     return decorator
 
 
-# 示例：创建配置文件的便捷函数
+# 示例:创建配置文件的便捷函数
 def create_di_config(output_path: str = "configs/di-config.yaml", format: str = "yaml") -> None:
     """创建依赖注入配置文件"""
     from .config_di import generate_sample_config

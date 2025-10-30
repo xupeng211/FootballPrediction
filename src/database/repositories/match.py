@@ -2,7 +2,7 @@
 比赛仓储
 Match Repository
 
-提供比赛数据的访问操作，实现Repository模式。
+提供比赛数据的访问操作,实现Repository模式.
 Provides match data access operations, implementing the Repository pattern.
 """
 
@@ -22,7 +22,7 @@ class MatchRepository(BaseRepository[Match]):
     比赛仓储类
     Match Repository Class
 
-    提供比赛数据的CRUD操作和复杂查询方法。
+    提供比赛数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for match data.
     """
 
@@ -195,7 +195,7 @@ class MatchRepository(BaseRepository[Match]):
 
         Args:
             team_id: 球队ID
-            home_or_away: 'home'、'away' 或 None（全部）
+            home_or_away: 'home','away' 或 None（全部）
             limit: 限制返回数量
             session: 数据库会话
 
@@ -342,7 +342,7 @@ class MatchRepository(BaseRepository[Match]):
         if away_score is not None:
             update_data["away_score"] = away_score
 
-        # 如果比赛有比分，设置状态为进行中或已结束
+        # 如果比赛有比分,设置状态为进行中或已结束
         if home_score is not None and away_score is not None:
             update_data["status"] = MatchStatus.LIVE.value
 
@@ -363,7 +363,7 @@ class MatchRepository(BaseRepository[Match]):
             match_id: 比赛ID
             home_score: 主队最终得分
             away_score: 客队最终得分
-            result: 比赛结果（可选，可根据比分自动判断）
+            result: 比赛结果（可选,可根据比分自动判断）
             session: 数据库会话
 
         Returns:

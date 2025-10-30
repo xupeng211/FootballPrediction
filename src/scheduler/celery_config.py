@@ -11,16 +11,16 @@ from datetime import datetime, timezone
 
 Celery调度器配置
 
-配置Celery任务队列和定时任务，实现足球数据的自动化采集调度。
+配置Celery任务队列和定时任务,实现足球数据的自动化采集调度。
 
 调度策略：
 - 赛程采集：每日凌晨2:00执行
 - 赔率采集：每5分钟执行
 - 实时比分：比赛期间每2分钟执行
-- 特征计算：赛前1小时执行
-- 数据清理：每周日凌晨3:00执行
+- 特征计算:赛前1小时执行
+- 数据清理:每周日凌晨3:00执行
 
-基于 DATA_DESIGN.md 第3节设计。
+基于 DATA_DESIGN.md 第3节设计.
 """
 
 from celery.schedules import crontab
@@ -193,7 +193,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
         #     } for row in result]
         #     return matches
 
-        # 当前返回空列表，生产环境需要实现数据库查询
+        # 当前返回空列表,生产环境需要实现数据库查询
         return []
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return []
@@ -206,7 +206,7 @@ def should_collect_live_scores() -> bool:
         # 获取当前时间前后2小时内的比赛
         _matches = get_upcoming_matches(hours=2)
 
-        # 如果有比赛，则需要采集实时比分
+        # 如果有比赛,则需要采集实时比分
         return len(matches) > 0
 
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):

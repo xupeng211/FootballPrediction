@@ -1,6 +1,6 @@
 """
 质量指标收集器
-独立的质量指标收集模块，不依赖复杂的导入
+独立的质量指标收集模块,不依赖复杂的导入
 """
 
 import json
@@ -199,7 +199,7 @@ class QualityMetricsCollector:
     async def _get_technical_debt_ratio(self) -> float:
         """获取技术债务比例"""
         try:
-            # 简化的技术债务计算，基于TODO/FIXME注释
+            # 简化的技术债务计算,基于TODO/FIXME注释
             result = subprocess.run(
                 [
                     "grep",
@@ -410,11 +410,11 @@ class QualityMetricsCollector:
 
             # 特殊处理错误率（反向指标）
             if metric == "error_rate":
-                # 错误率转换为分数：0%错误=10分，10%错误=0分
+                # 错误率转换为分数:0%错误=10分,10%错误=0分
                 error_score = max(0, 10 - value)
                 total_score += error_score * weight
             else:
-                # 其他指标：归一化到0-10分
+                # 其他指标:归一化到0-10分
                 if (
                     metric == "test_coverage"
                     or metric == "srs_compliance"

@@ -1,7 +1,7 @@
 """
 common_models.py
 此文件已被拆分为多个模块以提供更好的组织结构。
-为了向后兼容，此文件重新导出所有模块中的类。
+为了向后兼容,此文件重新导出所有模块中的类.
 """
 
 import warnings
@@ -22,7 +22,7 @@ utils = None  # 临时设置为 None 以避免导入错误
 
 # 向后兼容警告
 warnings.warn(
-    "直接从 common_models 导入已弃用。请从 src/models/common 导入相关类。",
+    "直接从 common_models 导入已弃用。请从 src/models/common 导入相关类.",
     DeprecationWarning,
     stacklevel=2,
 )
