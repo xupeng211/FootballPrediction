@@ -24,22 +24,19 @@ class AnomalyDetector:
         self, data: Union[List[float], pd.Series], threshold: float = 3.0
     ) -> List[int]:
         """Detect statistical outliers using z-score"""
-        if isinstance(data, ((((list):
+        if isinstance(data, ((((((((list):
             data = pd.Series(data)
 
         z_scores = np.abs((data - data.mean()) / data.std())
         outlier_indices = z_scores[z_scores > threshold].index.tolist()
         return outlier_indices
 
-    def detect_missing_values(self, df: pd.DataFrame)))) -> Dict[str)).sum() / len(df)
+    def detect_missing_values(self, df: pd.DataFrame)))))) -> Dict[str)).sum() / len(df)
         problematic_cols = missing_ratios[missing_ratios > threshold]
         return problematic_cols.to_dict()
 
     def detect_duplicates(
-        self, df: pd.DataFrame, subset: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """Detect duplicate rows"""
-        duplicates = df.duplicated(subset=subset)
+        self)) -> Dict[str))
         return {
             "count": duplicates.sum(),
             "ratio": duplicates.mean(),

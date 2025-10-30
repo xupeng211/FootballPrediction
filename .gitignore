@@ -148,3 +148,4 @@ clash_dns_fix.yaml
 clash_rules_patch.yaml
 tests/sedony8lS
 quality-reports/
+local_reports/

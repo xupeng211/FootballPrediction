@@ -1,8 +1,8 @@
 {
   "timestamp": "/home/user/projects/FootballPrediction",
   "statistics": {
-    "total_files": 607,
-    "successful_fixes": 1030,
+    "total_files": 610,
+    "successful_fixes": 1033,
     "failed_fixes": 119,
     "total_fixes_applied": 0,
     "error_types_found": {
@@ -534,6 +534,7 @@
     "scripts/check_code_standards.py",
     "scripts/validate_security_config.py",
     "scripts/deployment_status_checker.py",
+    "scripts/phase_g_extension_framework.py",
     "scripts/phase2_core_modules.py",
     "scripts/final_verify_phase1_3.py",
     "scripts/migrate_to_split_code.py",
@@ -711,6 +712,7 @@
     "scripts/verify_phase2_final.py",
     "scripts/performance_benchmark.py",
     "scripts/verify_phase2_goal.py",
+    "scripts/quality_gate_system.py",
     "scripts/automated_maintenance_system.py",
     "scripts/batch_type_fixer.py",
     "scripts/final_clean_imports.py",
@@ -804,6 +806,7 @@
     "scripts/verify_phase3.py",
     "scripts/fix_specific_syntax_errors.py",
     "scripts/migrate_service_legacy.py",
+    "scripts/phase_g_real_application.py",
     "scripts/f401_unused_import_fixer.py",
     "scripts/smart_indentation_fixer.py",
     "scripts/deep_coverage_analysis.py",
@@ -1066,7 +1069,7 @@
     },
     {
       "path": "src/api/predictions_srs_simple.py",
-      "error": "unmatched ')' (<unknown>, line 439)"
+      "error": "unmatched ')' (<unknown>, line 424)"
     },
     {
       "path": "src/api/features.py",
@@ -1074,7 +1077,7 @@
     },
     {
       "path": "src/api/predictions_enhanced.py",
-      "error": "unmatched ')' (<unknown>, line 411)"
+      "error": "unmatched ')' (<unknown>, line 399)"
     },
     {
       "path": "src/api/monitoring.py",
@@ -1094,19 +1097,19 @@
     },
     {
       "path": "src/utils/string_utils.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 191)"
+      "error": "unmatched ')' (<unknown>, line 163)"
     },
     {
       "path": "src/utils/dict_utils.py",
-      "error": "invalid syntax (<unknown>, line 19)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 28)"
     },
     {
       "path": "src/utils/helpers.py",
-      "error": "invalid syntax (<unknown>, line 37)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' on line 65 (<unknown>, line 66)"
     },
     {
       "path": "src/utils/crypto_utils.py",
-      "error": "invalid syntax (<unknown>, line 47)"
+      "error": "unmatched ')' (<unknown>, line 97)"
     },
     {
       "path": "src/utils/data_validator.py",
@@ -1134,11 +1137,11 @@
     },
     {
       "path": "src/stubs/mocks/feast.py",
-      "error": "invalid syntax (<unknown>, line 80)"
+      "error": "unmatched ')' (<unknown>, line 98)"
     },
     {
       "path": "src/stubs/mocks/confluent_kafka.py",
-      "error": "invalid syntax (<unknown>, line 36)"
+      "error": "unmatched ')' (<unknown>, line 68)"
     },
     {
       "path": "src/facades/factory.py",
@@ -1146,11 +1149,11 @@
     },
     {
       "path": "src/patterns/decorator.py",
-      "error": "closing parenthesis ']' does not match opening parenthesis '(' (<unknown>, line 426)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 134 (<unknown>, line 135)"
     },
     {
       "path": "src/patterns/observer.py",
-      "error": "invalid syntax (<unknown>, line 14)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 220)"
     },
     {
       "path": "src/patterns/facade_simple.py",
@@ -1166,7 +1169,7 @@
     },
     {
       "path": "src/monitoring/alert_manager.py",
-      "error": "invalid syntax (<unknown>, line 202)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 469 (<unknown>, line 470)"
     },
     {
       "path": "src/performance/profiler.py",
@@ -1174,7 +1177,7 @@
     },
     {
       "path": "src/ml/enhanced_feature_engineering.py",
-      "error": "invalid syntax (<unknown>, line 268)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 278)"
     },
     {
       "path": "src/ml/advanced_model_trainer.py",
@@ -1186,7 +1189,7 @@
     },
     {
       "path": "src/ml/real_model_training.py",
-      "error": "invalid syntax (<unknown>, line 432)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 444 (<unknown>, line 445)"
     },
     {
       "path": "src/middleware/cors_config.py",
@@ -1194,7 +1197,7 @@
     },
     {
       "path": "src/decorators/implementations/logging.py",
-      "error": "unmatched ')' (<unknown>, line 62)"
+      "error": "unmatched ')' (<unknown>, line 66)"
     },
     {
       "path": "src/realtime/prediction_api.py",
@@ -1210,7 +1213,7 @@
     },
     {
       "path": "src/realtime/events.py",
-      "error": "closing parenthesis ']' does not match opening parenthesis '(' on line 382 (<unknown>, line 385)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' on line 381 (<unknown>, line 382)"
     },
     {
       "path": "src/realtime/handlers.py",
@@ -1218,7 +1221,7 @@
     },
     {
       "path": "src/realtime/manager.py",
-      "error": "invalid syntax (<unknown>, line 21)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '{' (<unknown>, line 165)"
     },
     {
       "path": "src/realtime/websocket.py",
@@ -1230,7 +1233,7 @@
     },
     {
       "path": "src/domain/strategies/ml_model.py",
-      "error": "invalid syntax (<unknown>, line 309)"
+      "error": "unmatched ')' (<unknown>, line 322)"
     },
     {
       "path": "src/domain/strategies/factory.py",
@@ -1238,7 +1241,7 @@
     },
     {
       "path": "src/domain/services/prediction_service.py",
-      "error": "unmatched ')' (<unknown>, line 156)"
+      "error": "unmatched ')' (<unknown>, line 153)"
     },
     {
       "path": "src/cqrs/bus.py",
@@ -1266,11 +1269,11 @@
     },
     {
       "path": "src/database/types.py",
-      "error": "invalid syntax (<unknown>, line 43)"
+      "error": "unmatched ')' (<unknown>, line 52)"
     },
     {
       "path": "src/database/repositories/prediction.py",
-      "error": "closing parenthesis '}' does not match opening parenthesis '(' (<unknown>, line 116)"
+      "error": "closing parenthesis '}' does not match opening parenthesis '(' (<unknown>, line 107)"
     },
     {
       "path": "src/database/repositories/user.py",
@@ -1310,7 +1313,7 @@
     },
     {
       "path": "src/collectors/models/match.py",
-      "error": "unmatched ')' (<unknown>, line 58)"
+      "error": "unmatched ')' (<unknown>, line 52)"
     },
     {
       "path": "src/core/config.py",
@@ -1322,19 +1325,19 @@
     },
     {
       "path": "src/observers/manager.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '{' on line 339 (<unknown>, line 340)"
+      "error": "unmatched ')' (<unknown>, line 230)"
     },
     {
       "path": "src/services/data_processing.py",
-      "error": "invalid syntax (<unknown>, line 102)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 113)"
     },
     {
       "path": "src/services/user_profile.py",
-      "error": "invalid syntax (<unknown>, line 122)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 126)"
     },
     {
       "path": "src/services/processing/processors/match_processor.py",
-      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 192)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 131)"
     },
     {
       "path": "src/services/processing/validators/data_validator.py",
@@ -1370,7 +1373,7 @@
     },
     {
       "path": "src/data/processing/missing_data_handler.py",
-      "error": "unmatched ')' (<unknown>, line 248)"
+      "error": "unmatched ')' (<unknown>, line 251)"
     },
     {
       "path": "src/data/processing/football_data_cleaner.py",
@@ -1378,7 +1381,7 @@
     },
     {
       "path": "src/data/quality/anomaly_detector.py",
-      "error": "invalid syntax (<unknown>, line 27)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 34)"
     },
     {
       "path": "src/data/quality/exception_handler.py",
@@ -1402,7 +1405,7 @@
     },
     {
       "path": "src/data/features/feature_store.py",
-      "error": "invalid syntax (<unknown>, line 19)"
+      "error": "closing parenthesis ')' does not match opening parenthesis '[' (<unknown>, line 412)"
     },
     {
       "path": "src/data/features/examples.py",

@@ -40,9 +40,9 @@ class FootballDataCleaner:
         cleaned = data.copy()
 
         # 基本清洗
-        if "match_time" in cleaned and isinstance(cleaned["match_time"], ((((str):
+        if "match_time" in cleaned and isinstance(cleaned["match_time"], ((((((((str):
             # 简单的时间格式处理
-            cleaned["match_time"] = cleaned["match_time"].replace("T", " ")))
+            cleaned["match_time"] = cleaned["match_time"].replace("T", " ")))))
 
         # 确保比分是整数
         if "home_score" in cleaned:
@@ -60,12 +60,7 @@ class FootballDataCleaner:
         logger.debug(f"Cleaned match data: {cleaned.get('id')}")
         return cleaned
 
-    def validate_data(self, data: Dict[str, Any]) -> tuple[bool, List[str]]:
-        """验证数据"""
-        errors = []
-
-        # 基本验证
-        if not data.get("id"):
+    def validate_data(self)) -> tuple[bool)):
             errors.append("Missing match ID")
 
         if data.get("home_score", 0) < 0 or data.get("away_score", 0) < 0:

@@ -56,10 +56,10 @@ class LoggingDecorator(Decorator):
 
         if self.include_context and "context" in kwargs:
             context = kwargs["context"]
-            if isinstance(context, ((((DecoratorContext):
+            if isinstance(context, ((((((((DecoratorContext):
                 log_data["trace_id"] = context.trace_id
 
-        logger_instance.log(getattr(logging, self.level))))))
+        logger_instance.log(getattr(logging, self.level))))))))
 
         try:
             # 执行被装饰的函数
@@ -68,19 +68,11 @@ class LoggingDecorator(Decorator):
             # 记录函数执行成功
             if self.log_result:
                 success_log = {
-                    "event": "function_success",
-                    "function": func_name,
-                    "decorator": self.name,
-                    "result": self._sanitize_result(result),
-                }
-
-                if self.include_context and "context" in kwargs:
-                    context = kwargs["context"]
-                    if isinstance(context, ((((DecoratorContext):
+                    "event": "function_success")))):
                         success_log["execution_time"] = context.get_execution_time()
                         success_log["execution_path"] = context.execution_path
 
-                logger_instance.log(getattr(logging, self.level))))))
+                logger_instance.log(getattr(logging, self.level)))))))
 
             return result
 
@@ -88,23 +80,20 @@ class LoggingDecorator(Decorator):
             # 记录函数执行失败
             if self.log_exception:
                 error_log = {
-                    "event": "function_error",
-                    "function": func_name,
-                    "decorator": self.name,
-                    "error": str(e),
+                    "event": "function_error")),
                     "error_type": type(e).__name__,
                 }
 
                 if self.include_context and "context" in kwargs:
                     context = kwargs["context"]
-                    if isinstance(context, ((((DecoratorContext):
+                    if isinstance(context, ((((((((DecoratorContext):
                         error_log["execution_time"] = context.get_execution_time()
 
                 logger_instance.error(json.dumps(error_log))
 
             raise
 
-    def _sanitize_args(self, args: tuple))) -> List[Any]:
+    def _sanitize_args(self, args: tuple))))) -> List[Any]:
         """清理参数，移除敏感信息"""
         sanitized: List[Any] = []
 
@@ -120,17 +109,12 @@ class LoggingDecorator(Decorator):
 
     def _sanitize_kwargs(self)) -> Dict[str))
 
-    def _sanitize_dict(self, (data: dict) -> Dict[str, Any]:
-        """清理字典，移除敏感信息"""
-        sensitive_keys = ["password", "token", "secret", "key", "auth"]
-        sanitized: Dict[str, Any] = {}
-
-        for key, value in data.items()):
+    def _sanitize_dict(self)) -> Dict[str)):
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
                 sanitized[key] = "***"
-            elif isinstance(value, ((((dict):
+            elif isinstance(value))):
                 sanitized[key] = self._sanitize_dict(value)
-            elif isinstance(value, (list))))):
+            elif isinstance(value, (((list))))):
                 sanitized[key] = self._sanitize_sequence(value)
             else:
                 sanitized[key] = str(value)[:100]
@@ -142,9 +126,9 @@ class LoggingDecorator(Decorator):
         sanitized: List[Any] = []
 
         for item in seq:
-            if isinstance(item, ((((dict):
+            if isinstance(item)):
                 sanitized.append(self._sanitize_dict(item))
-            elif isinstance(item, (list))))):
+            elif isinstance(item))))):
                 sanitized.append(self._sanitize_sequence(item))
             else:
                 sanitized.append(str(item)[:100])
@@ -153,9 +137,9 @@ class LoggingDecorator(Decorator):
 
     def _sanitize_result(self)) -> Any:
         """清理结果，移除敏感信息"""
-        if isinstance(result, (((dict):
+        if isinstance(result)):
             return self._sanitize_dict(result)
-        elif isinstance(result, (list))))):
+        elif isinstance(result, (list)))))):
             return self._sanitize_sequence(result)
         else:
             return str(result)[:100]

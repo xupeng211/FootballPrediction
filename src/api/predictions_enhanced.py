@@ -386,7 +386,7 @@ async def predict_batch(
     failed_predictions = 0
 
     for result in results:
-        if isinstance(result, ((((PredictionResponse):
+        if isinstance(result, ((((((((PredictionResponse):
             successful_predictions.append(result)
         else:
             failed_predictions += 1
@@ -396,16 +396,11 @@ async def predict_batch(
 
     # 构建响应
     response = BatchPredictionResponse(
-        success=len(successful_predictions) > 0, total_matches=len(request.matches))))))) <= 1000,
-            "rate_limited": True,
-            "token_authenticated": True,
-        },
-    )
+        success=len(successful_predictions) > 0, total_matches=len(request.matches))))))))) <= 1000))
 
     # 后台任务：记录批量预测日志
     background_tasks.add_task(
-        log_batch_prediction,
-        len(request.matches),
+        log_batch_prediction)),
         len(successful_predictions),
         batch_processing_time,
     )

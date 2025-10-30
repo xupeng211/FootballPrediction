@@ -188,9 +188,9 @@ class MetricsMiddleware:
         time.time()
 
         type(message).__name__
-        if isinstance(message, (((Command):
+        if isinstance(message, (((((Command):
             self._metrics["commands_processed"] += 1
-        elif isinstance(message, Query))):
+        elif isinstance(message, Query))))):
             self._metrics["queries_processed"] += 1
 
         return message
