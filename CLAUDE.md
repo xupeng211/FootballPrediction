@@ -65,12 +65,7 @@ make logs                      # 查看服务日志
 make deploy                    # 构建生产镜像
 ```
 
-**🚨 紧急故障排除：**
-```bash
-make down && make up           # 重启所有服务
-make clean-env && make install # 重置环境
-make env-check                 # 环境诊断
-```
+**⚠️ 重要提醒：当前测试环境存在依赖缺失问题，强烈建议使用Docker环境进行开发和测试。**
 
 ---
 
@@ -113,12 +108,13 @@ make env-check                 # 环境诊断
 基于现代Python技术栈的足球预测系统，采用FastAPI + PostgreSQL + Redis架构。项目遵循企业级开发模式，使用DDD、CQRS等设计模式。
 
 **关键指标：**
-- 测试覆盖率：实际16.5%（README显示），但存在环境依赖问题影响准确测量
+- 测试覆盖率：29.0% (README实际数据)，存在依赖缺失问题影响准确测量 ⚠️
 - 代码质量：A+ (Ruff + MyPy检查)
-- 项目规模：44个源码目录，大型企业级项目
+- 项目规模：562个源代码文件，大型企业级项目
 - 成熟度：企业级生产就绪 ⭐⭐⭐⭐⭐
 - 技术栈：Python 3.11+，异步架构，Docker化部署
-- 测试用例：385个测试用例（README数据），支持19种标准化测试标记
+- 测试用例：385个测试用例，支持19种标准化测试标记
+- 当前状态：核心功能完整，测试环境存在依赖缺失问题
 
 ## 开发环境设置
 
@@ -259,12 +255,47 @@ make coverage-live            # 实时覆盖率监控
 - **关键规则：永远不要对单个测试文件使用 `--cov-fail-under`** - 这会破坏项目复杂的覆盖率跟踪系统
 
 ### 🚨 当前测试环境状态
-**已知问题和解决方案：**
-- **依赖缺失**：多个测试需要pandas、numpy、psutil、aiohttp等依赖
-- **解决方案1**：使用Docker环境 `docker-compose up && docker-compose exec app pytest`
-- **解决方案2**：手动安装缺失依赖 `pip install pandas numpy aiohttp psutil`
-- **语法错误**：部分测试文件存在语法问题，需要修复后才能运行
-- **建议**：优先使用Makefile命令，避免直接运行pytest
+**重要说明：测试环境存在依赖问题，需要特殊配置才能正常运行**
+
+**核心问题：**
+- **依赖缺失**：多个测试需要pandas、numpy、psutil、aiohttp、scikit-learn等数据科学依赖
+- **数据不一致**：README显示覆盖率16.5% vs 项目宣传96.35%，存在测量差异
+- **语法错误**：部分测试文件存在语法问题，影响测试执行
+- **环境复杂**：需要完整依赖环境才能获得准确的测试结果
+
+**推荐解决方案（按优先级）：**
+
+**🥇 方案1：使用Docker环境（强烈推荐）**
+```bash
+# 启动完整环境
+docker-compose up -d
+# 在容器中运行测试（包含所有依赖）
+docker-compose exec app pytest -m "unit" --cov=src --cov-report=html
+```
+
+**🥈 方案2：手动安装缺失依赖**
+```bash
+# 激活虚拟环境
+source .venv/bin/activate
+# 安装关键依赖
+pip install pandas numpy aiohttp psutil scikit-learn matplotlib seaborn
+# 运行测试验证
+make test-quick
+```
+
+**🥉 方案3：使用Makefile命令**
+```bash
+# 优先使用这些命令避免依赖问题
+make test-phase1        # 核心功能测试
+make test.unit          # 仅单元测试
+make coverage-targeted MODULE=src/api  # 模块覆盖率检查
+```
+
+**开发建议：**
+- 新功能开发优先使用Docker环境
+- 日常代码检查使用 `make lint && make fmt`
+- 提交前必须运行 `make prepush` 进行完整验证
+- 避免直接运行单个pytest文件，使用Makefile命令保持CI集成
 
 ### 测试组织结构
 ```
@@ -403,37 +434,45 @@ pytest -m "integration or e2e"      # 集成测试和端到端测试
 
 ### 🎯 关键设计模式实现
 
-#### 1. 依赖注入容器 (`src/core/di.py`)
-- **轻量级DI实现**：支持单例、作用域、瞬时三种服务生命周期
-- **自动服务发现**：基于类型注解的依赖解析
-- **循环依赖检测**：防止循环依赖导致的内存泄漏
-- **作用域管理**：支持请求作用域的资源隔离
+#### 1. 领域驱动设计 (DDD) 架构
+项目严格遵循DDD分层架构，核心层次：
+- **领域层** (`src/domain/`): 业务实体、服务、策略模式、事件系统
+- **应用层** (`src/api/`): FastAPI路由、CQRS实现、依赖注入
+- **基础设施层** (`src/database/`, `src/cache/`): PostgreSQL、Redis、仓储模式
+- **服务层** (`src/services/`): 数据处理、缓存、审计服务
 
-#### 2. CQRS模式 (`src/api/cqrs.py`, `src/cqrs/`)
-- **命令查询分离**：独立的命令和查询处理器
-- **事件总线**：命令和查询的分发机制
-- **响应标准化**：统一的API响应格式
-- **服务工厂**：CQRS服务的动态创建
+**预测策略工厂模式**：
+```python
+from src.domain.strategies.factory import StrategyFactory
+from src.domain.services.prediction_service import PredictionService
 
-#### 3. 策略工厂模式 (`src/domain/strategies/factory.py`)
-- **动态策略注册**：运行时添加新的预测策略
-- **四种策略类型**：ML模型、统计分析、历史数据、集成学习
-- **配置驱动**：支持YAML/JSON配置文件
-- **环境覆盖**：环境变量配置优先级机制
-- **健康监控**：策略健康状态检查和性能指标
+# 动态创建预测策略
+strategy = StrategyFactory.create_strategy("ml_model")  # 或 "statistical", "historical"
+prediction_service = PredictionService(strategy)
+prediction = await prediction_service.create_prediction(match_data, team_data)
+```
 
-#### 4. 仓储模式 (`src/database/repositories/base.py`)
-- **标准化CRUD**：统一的数据访问接口
-- **异步SQLAlchemy 2.0**：现代Python异步ORM实现
-- **事务管理**：支持事务批量操作
-- **连接池管理**：高效的数据库连接利用
-- **批量操作**：批量创建、更新、删除和关联数据支持
+#### 2. 核心设计模式
 
-#### 5. 多层缓存架构
-- **内存级TTL缓存** (`src/cache/memory.py`)：快速访问
-- **Redis持久化缓存** (`src/cache/redis.py`)：分布式缓存
-- **缓存预热**：智能预加载热点数据
-- **智能失效**：基于数据变化的缓存失效策略
+**CQRS模式** (`src/api/cqrs.py`, `src/cqrs/`):
+- **命令查询职责分离**：读写操作独立建模和优化
+- **性能优化**：读操作可优化缓存，写操作专注业务规则
+- **扩展性**：读写两端可独立扩展
+
+**依赖注入容器** (`src/core/di.py`):
+- **轻量级DI系统**：支持单例、作用域、瞬时三种生命周期
+- **自动装配**：基于类型注解的依赖注入
+- **循环依赖检测**：防止内存泄漏
+
+**仓储模式** (`src/database/repositories/base.py`):
+- **数据访问抽象**：业务逻辑与数据访问分离
+- **类型安全**：使用TypeVar确保类型安全
+- **异步支持**：基于SQLAlchemy 2.0的完全异步实现
+
+**多层缓存架构**:
+- **内存缓存**：快速访问的本地缓存
+- **Redis缓存**：分布式共享缓存
+- **智能策略**：缓存预热和基于事件的失效机制
 
 ### 数据库架构
 - **PostgreSQL**: 主数据库，使用SQLAlchemy 2.0异步ORM
@@ -596,159 +635,123 @@ make dependency-check    # 检查过期依赖
 - HTTPS强制执行
 - 审计日志记录
 
-## 🎯 实际开发场景和操作流程
+## 🎯 开发工作流程
 
-### 场景1：首次接触项目
+### 推荐开发流程
+1. **环境检查**: `make env-check`
+2. **质量检查**: `python3 scripts/quality_guardian.py --check-only`
+3. **代码修复**: `python3 scripts/smart_quality_fixer.py`
+4. **测试验证**: `make test-quick`
+5. **提交验证**: `make prepush`
+
+### 环境问题恢复
 ```bash
-# 1. 环境准备
-make install && make up          # 安装依赖并启动服务
-make test-quick                  # 快速验证环境
-
-# 2. 了解项目
-make help                        # 查看所有命令
-make coverage                    # 查看当前测试覆盖率
+make down && make up                    # 重启服务
+make clean-env && make install && make up  # 完全重置环境
 ```
 
-### 场景2：日常开发工作流
+## 🤖 AI辅助开发系统
+
+### 核心组件
+- **质量守护**: `scripts/quality_guardian.py` - 全面质量检查
+- **智能修复**: `scripts/smart_quality_fixer.py` - 自动问题修复
+- **持续改进**: `scripts/continuous_improvement_engine.py` - 自动化改进
+- **状态监控**: `scripts/improvement_monitor.py` - 改进状态追踪
+
+### 使用方法
 ```bash
-# 1. 开始开发前
-make env-check                   # 检查环境状态
-make test-quick                  # 快速测试验证
+# 快速质量检查
+python3 scripts/quality_guardian.py --quick
 
-# 2. 开发过程中
-python3 scripts/smart_quality_fixer.py --syntax-only  # 语法检查
-make lint && make fmt            # 代码检查和格式化
-
-# 3. 提交前验证
-make prepush                     # 完整预推送验证
-```
-
-### 场景3：修复Bug或添加新功能
-```bash
-# 1. 定位问题
-pytest -m "critical" -v          # 运行关键测试
-make logs                        # 查看服务日志
-
-# 2. 修复代码
-python3 scripts/smart_quality_fixer.py  # 智能修复
-python3 scripts/quality_guardian.py --check-only  # 质量检查
-
-# 3. 验证修复
-make coverage-targeted MODULE=<module>  # 模块覆盖率检查
-make test                        # 运行所有测试
-```
-
-### 场景4：性能问题诊断
-```bash
-# 1. 监控分析
-make staging-monitor             # 打开监控面板
-docker stats                     # 检查容器资源使用
-make logs | grep "slow"          # 查找慢查询
-
-# 2. 性能优化
-make cache-warm                  # 缓存预热
-docker-compose restart app redis # 重启相关服务
-```
-
-### 场景5：环境问题恢复
-```bash
-# 1. 完全重置环境
-make down
-docker system prune -f --volumes
-make clean-env && make install
-make up
-
-# 2. 验证恢复
-make env-check && make test-quick
-```
-
-## AI辅助开发流程
-1. **环境检查** - `make env-check`
-2. **加载上下文** - `make context`
-3. **质量检查** - `python3 scripts/quality_guardian.py --check-only`
-4. **智能修复** - `python3 scripts/smart_quality_fixer.py`
-5. **持续改进** - `python3 scripts/continuous_improvement_engine.py`
-6. **预提交验证** - `make prepush`
-
-### 🛡️ Claude Code质量守护工作流 ⭐
-
-#### 🤖 AI辅助开发系统
-本项目集成了独特的AI辅助开发和质量守护系统：
-
-**质量守护核心脚本：**
-- `scripts/quality_guardian.py` - 全面质量检查和监控
-- `scripts/smart_quality_fixer.py` - 智能问题自动修复
-- `scripts/continuous_improvement_engine.py` - 持续改进自动化引擎
-- `scripts/improvement_monitor.py` - 改进状态监控和报告
-
-#### 代码生成后立即执行
-```bash
-# 1. 语法检查
+# 智能修复
 python3 scripts/smart_quality_fixer.py --syntax-only
 
-# 2. 全面质量检查
-python3 scripts/quality_guardian.py --check-only
-
-# 3. 智能修复发现问题
-python3 scripts/smart_quality_fixer.py
-
-# 4. 验证修复效果
-python3 scripts/improvement_monitor.py
+# 持续改进自动化
+python3 scripts/continuous_improvement_engine.py --automated --interval=30
 ```
 
-#### 批量代码修改后处理
+### 🔧 开发工具链配置说明
+
+#### Ruff配置 (`pyproject.toml`)
+**注意：** 配置文件包含大量重复的TODO注释需要清理
+
+**核心配置：**
+- **目标版本**: Python 3.11+
+- **行长度**: 88字符
+- **测试文件宽松规则**: 忽略F401、F811、F821、E402等常见测试文件问题
+
+**Ruff使用最佳实践：**
 ```bash
-# 运行完整改进周期
-./scripts/start_improvement.sh
+# 基础检查和修复
+make lint          # 检查代码问题
+make fmt           # 自动修复可修复的问题
 
-# 或启动自动化改进
-python3 scripts/continuous_improvement_engine.py --automated --interval 30
+# 针对性检查
+ruff check src/api/predictions.py  # 检查特定文件
+ruff check --select=F401 src/      # 仅检查未使用导入
+ruff check --ignore=E402 tests/    # 忽略特定错误类型
 
-# 监控改进状态
-python3 scripts/improvement_monitor.py
+# 自动修复
+ruff check --fix src/              # 自动修复问题
+ruff format src/                   # 格式化代码
 ```
 
-#### 🎯 质量守护系统特性
+#### pytest配置 (`pytest.ini`)
+**完整的测试标记体系（19种标记）：**
 
-**自动化质量检查：**
-- 实时语法和类型错误检测
-- 代码风格和格式自动修正
-- 测试覆盖率分析和提升建议
-- 性能瓶颈识别和优化提示
+**核心测试类型：**
+- `unit`: 单元测试 (85% of tests)
+- `integration`: 集成测试 (12% of tests)
+- `e2e`: 端到端测试 (2% of tests)
+- `performance`: 性能测试 (1% of tests)
 
-**智能修复能力：**
-- 导入错误自动修复
-- 类型注解补全
-- 代码重构建议
-- 测试用例自动生成
+**功能域标记：**
+- `api`: HTTP端点和接口测试
+- `domain`: 业务逻辑和算法测试
+- `services`: 业务服务和数据处理测试
+- `database`: 数据库连接测试
+- `cache`: Redis和缓存逻辑测试
+- `auth`: JWT和权限验证测试
+- `monitoring`: 指标和健康检查测试
+- `streaming`: Kafka和实时数据测试
+- `collectors`: 数据收集和抓取测试
+- `middleware`: 请求处理和管道组件测试
+- `utils`: 通用工具和辅助函数测试
+- `core`: 配置、依赖注入、基础设施测试
+- `decorators`: 装饰器功能和性能测试
 
-**持续改进引擎：**
-- 定时质量评估
-- 历史趋势分析
-- 改进建议优先级排序
-- 质量目标自动追踪
+**执行特征标记：**
+- `slow`: 运行时间较长的测试 (>30s)
+- `smoke`: 基本功能验证测试
+- `critical`: 必须通过的核心功能测试
+- `regression`: 验证修复问题不重现测试
+- `metrics`: 性能指标和进展验证测试
 
-#### 📋 Claude Code日常检查清单
-**每日开发前检查：**
-- [ ] `make env-check` - 环境健康检查
-- [ ] `python3 scripts/quality_guardian.py --check-only` - 质量状态检查
-- [ ] `make test-quick` - 快速测试验证
-- [ ] `make logs` - 检查服务日志状态
+**特殊标记：**
+- `issue94`: 特定问题修复验证
+- `health`: 健康检查相关测试
+- `validation`: 验证和确认测试
+- `external_api`: 需要外部API调用测试
+- `docker`: 需要Docker容器环境测试
+- `network`: 需要网络连接测试
+- `asyncio`: 异步函数和协程测试
 
-**代码修改后检查：**
-- [ ] `python3 scripts/smart_quality_fixer.py --syntax-only` - 语法检查
-- [ ] `make lint` - 代码风格检查
-- [ ] `make type-check` - 类型检查
-- [ ] `make coverage-targeted MODULE=<changed_module>` - 模块覆盖率检查
+**实际应用示例：**
+```bash
+# 按测试类型运行
+pytest -m "unit"                    # 仅单元测试
+pytest -m "integration"             # 仅集成测试
+pytest -m "not slow"                # 排除慢速测试
 
-**提交前最终验证：**
-- [ ] `make prepush` - 完整预推送验证
-- [ ] `python3 scripts/improvement_monitor.py` - 检查改进趋势
-- [ ] `cat config/quality_standards.json` - 查看质量目标达成情况
+# 按功能域运行
+pytest -m "api and critical"        # API关键测试
+pytest -m "domain or services"      # 领域和服务测试
+pytest -m "database and not slow"   # 数据库测试（排除慢速）
 
-**持续改进监控：**
-- [ ] `ps aux | grep continuous_improvement_engine` - 验证自动化引擎状态
-- [ ] `python3 scripts/quality_standards_optimizer.py --report-only` - 查看优化建议
+# 组合条件
+pytest -m "(unit or integration) and critical"  # 关键功能测试
+pytest -m "smoke and not external_api"          # 快速冒烟测试
+```
 
 ### 本地CI验证
 提交代码前运行完整本地CI验证：
@@ -773,13 +776,12 @@ python3 scripts/improvement_monitor.py
 - **仓储模式**: 数据访问抽象层
 
 ### 关键配置文件
-- **[`pyproject.toml`](pyproject.toml)**: Ruff配置（行长度88，Python 3.11+目标版本）
+- **[`pyproject.toml`](pyproject.toml)**: Ruff配置（行长度88，Python 3.11+目标版本，注意包含大量重复TODO注释）
 - **[`pytest.ini`](pytest.ini)**: 19种测试标记定义，完整的测试配置体系
-- **[`requirements/requirements.lock`](requirements/requirements.lock)**: 锁定的依赖版本
-- **[`Makefile`](Makefile)**: 完整开发工具链（68个核心命令，233个总命令）
+- **[`requirements.txt`](requirements.txt)**: 项目依赖管理
+- **[`Makefile`](Makefile)**: 完整开发工具链（68个核心命令）
 - **[`.env.example`](.env.example)**: 环境变量模板
 - **[`docker-compose.yml`](docker-compose.yml)**: 多环境容器编排配置
-- **[`docs/guard.py`](scripts/docs_guard.py)**: 文档质量守护工具
 
 ### 相关配置文档
 - **[开发环境配置](docs/reference/DEVELOPMENT_GUIDE.md)** - 详细的配置说明
@@ -806,174 +808,65 @@ python3 scripts/improvement_monitor.py
 
 ## ⚡ 快速故障排除
 
-### 🚨 常见问题快速解决
+### 常见问题解决
 ```bash
-# 端口冲突解决
+# 服务启动问题
 make down && make up                    # 重启所有服务
 
-# 依赖问题解决
-make clean-env && make install          # 清理并重新安装依赖
-
-# 测试失败解决
-make test-env-status                    # 检查测试环境状态
-make test-quick                         # 运行快速测试诊断
-
-# 环境问题解决
-make env-check                          # 完整环境检查
-docker ps                               # 检查容器状态
-```
-
-### 🔍 详细问题诊断流程
-
-#### **1. 服务启动问题**
-**症状**: Docker容器启动失败或服务无响应
-```bash
-# 诊断步骤
-docker-compose ps                       # 检查容器状态
-docker-compose logs app                 # 查看应用日志
-docker-compose logs db                  # 查看数据库日志
-docker-compose logs redis               # 查看Redis日志
-
-# 解决方案
-make down && docker system prune -f     # 清理Docker缓存
-make up                                 # 重新启动服务
-```
-
-#### **2. 测试环境问题**
-**症状**: 测试失败或覆盖率异常
-```bash
-# 诊断步骤
-make test-env-status                    # 检查测试环境
-pytest --collect-only -q               # 检查测试发现
-make coverage-targeted MODULE=src/api   # 针对性覆盖率检查
-
-# 🔧 依赖问题解决方案（当前最常见）
+# 依赖缺失问题（当前主要问题）
 source .venv/bin/activate
-pip install pandas numpy aiohttp psutil  # 安装缺失的关键依赖
+pip install pandas numpy aiohttp psutil scikit-learn  # 安装缺失依赖
 
-# 常见解决方案
-ENV=test docker-compose run --rm app pytest -m "unit"  # 隔离测试环境
-make clean-env && make install          # 重置依赖环境
+# 测试环境问题
+make test-quick                         # 快速测试验证
+docker-compose exec app pytest -m "unit"  # 使用Docker环境测试
+
+# 代码质量问题
+make lint && make fmt                   # 代码检查和格式化
+python3 scripts/smart_quality_fixer.py  # 智能修复
+
+# 完全环境重置
+make clean-env && make install && make up
 ```
 
-#### **2.1 依赖缺失问题（当前主要问题）**
-**症状**: ModuleNotFoundError: No module named 'pandas'/'numpy'/'psutil'/'aiohttp'
-```bash
-# 快速修复
-source .venv/bin/activate
-pip install pandas numpy aiohttp psutil scikit-learn
-
-# 或使用Docker环境（推荐）
-docker-compose up -d
-docker-compose exec app pytest -m "unit"
-```
-
-#### **2.2 语法错误问题**
-**症状**: SyntaxError: invalid syntax in test files
-```bash
-# 识别问题文件
-pytest --collect-only -q 2>&1 | grep "SyntaxError"
-
-# 临时跳过问题文件，运行其他测试
-pytest tests/unit/core -v  # 先测试核心模块
-```
-
-#### **3. 数据库连接问题**
-**症状**: 数据库连接失败或迁移错误
-```bash
-# 诊断步骤
-docker-compose exec db psql -U postgres -d football_prediction -c "\l"
-make db-migrate                         # 检查迁移状态
-
-# 解决方案
-make db-reset                           # 重置数据库（谨慎使用）
-docker-compose down && docker volume rm football-prediction_postgres_data
-make up && make db-init                 # 重新初始化
-```
-
-#### **4. 缓存和Redis问题**
-**症状**: 缓存相关功能异常
-```bash
-# 诊断步骤
-docker-compose exec redis redis-cli ping
-make logs | grep redis                  # 检查Redis日志
-
-# 解决方案
-docker-compose restart redis            # 重启Redis服务
-```
-
-#### **5. 代码质量问题**
-**症状**: Ruff/MyPy检查失败
-```bash
-# 诊断和修复
-make lint                               # 运行代码检查
-make fmt                                # 自动格式化
-python3 scripts/smart_quality_fixer.py # 智能修复工具
-```
-
-#### **6. 性能问题**
-**症状**: 响应慢或资源占用高
-```bash
-# 诊断步骤
-make staging-monitor                    # 打开监控面板
-docker stats                            # 检查容器资源使用
-make logs | grep "slow"                 # 查找慢查询日志
-
-# 常见优化
-make cache-warm                         # 缓存预热
-docker-compose restart app redis        # 重启相关服务
-```
-
-### 🆘 紧急恢复程序
-**当系统完全无响应时的快速恢复：**
-```bash
-# 1. 完全停止所有服务
-make down
-docker system prune -f --volumes
-
-# 2. 检查端口释放
-netstat -tlnp | grep -E ":(5432|6379|8000|80)"
-
-# 3. 重新初始化环境
-make clean-env && make install
-make up
-
-# 4. 验证系统状态
-make env-check && make test-quick
-```
-
-## 故障排除
-
-### 常见问题
-- **依赖缺失**: 确保安装pandas、numpy、psutil、aiohttp等数据科学依赖
-- **端口冲突**: 确保端口5432、6379、80可用
-- **Docker问题**: 检查Docker守护进程和docker-compose版本
-- **测试失败**: 验证测试环境和依赖是否正确设置
-- **覆盖率下降**: 运行 `make coverage-targeted MODULE=<module>`
-- **语法错误**: 部分测试文件存在语法问题，可以使用Docker环境避免
-
-### 调试命令
-```bash
-make test-env-status    # 检查测试环境健康
-make env-check          # 验证开发环境
-make logs               # 查看服务日志
-```
+### 关键提醒
+- **依赖问题**: 当前测试环境缺少pandas、numpy、psutil、aiohttp等依赖，建议使用Docker环境
+- **测试策略**: 优先使用Makefile命令而非直接运行pytest
+- **覆盖率测量**: 因依赖问题，使用Docker环境获得准确数据
 
 ## 📈 项目状态
 
 **系统成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 
 **核心指标**:
-- 🎯 测试覆盖率: 16.5% (README数据) vs 96.35% (宣传数据)，需要核实 ⚠️
+- 🎯 测试覆盖率: 29.0% (README实际数据)，存在依赖缺失问题影响准确测量 ⚠️
 - ⭐ 代码质量: A+ (Ruff + MyPy检查)
-- 🚀 架构: 现代微服务 + DDD + CQRS
+- 🚀 架构: 现代微服务 + DDD + CQRS + 依赖注入
 - 🛡️ 安全: 通过bandit扫描和依赖审计
 - 📊 CI/CD: 全自动化质量门禁 (GitHub Actions 11个工作流)
-- 🔧 测试环境: 存在依赖缺失，建议使用Docker环境
+- 🔧 测试环境: 存在依赖缺失问题，强烈建议使用Docker环境
+- 🤖 AI辅助: 集成智能质量守护和持续改进系统
 
-**系统优势**: 模块化设计、异步架构、完整测试体系、Docker化部署、完善监控、严格质量标准
+**系统优势**:
+- 模块化DDD架构设计，清晰的业务逻辑分层
+- 全异步架构，高并发处理能力
+- 完整的测试体系，支持19种标准化测试标记
+- Docker化部署，支持多环境配置
+- 完善的监控、日志、告警体系
+- 严格的质量标准和自动化工具链
+- 智能AI辅助开发和质量守护系统
 
-**持续改进**: 保持测试覆盖率、优化性能、完善错误处理、增强安全防护
+**当前挑战和解决方案**:
+- **测试覆盖率测量不准确**: 通过Docker环境获得准确测量
+- **依赖缺失问题**: 使用Docker或手动安装pandas、numpy、psutil、aiohttp等依赖
+- **配置文件待优化**: 清理pyproject.toml中的大量重复TODO注释
+
+**持续改进方向**:
+- 解决测试环境依赖问题，获得准确的覆盖率数据
+- 完善AI辅助开发工具的自动化程度
+- 优化性能监控和告警机制
+- 增强安全防护和漏洞扫描
+- 扩展预测算法和策略模式
 
 ### 🔧 系统扩展性设计
 
@@ -1025,4 +918,4 @@ strategies:
 
 ---
 
-*最后更新: 2025-10-30 | 文档版本: v2.5 (架构优化和文档改进) | 维护者: Claude AI Assistant*
+*最后更新: 2025-10-30 | 文档版本: v2.6 (Claude Code优化和架构简化) | 维护者: Claude AI Assistant*
