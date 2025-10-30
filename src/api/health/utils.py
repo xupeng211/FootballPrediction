@@ -51,14 +51,33 @@ class HealthChecker:
         checks = {
             "database": (
                 results[0]
-                if not isinstance(results[0], ((((((((Exception)
-                else {"status": "error", "error": str(results[0])))))}
-            )))
-                else {"status": "error"))}
-            )))
-                else {"status": "error")))}
-            ))):
-            if check.get("status") not in ["healthy")).isoformat())) -> Dict[str, Any]:
+                if not isinstance(results[0], Exception)
+                else {"status": "error", "error": str(results[0])}
+            ),
+            "redis": (
+                results[1]
+                if not isinstance(results[1], Exception)
+                else {"status": "error", "error": str(results[1])}
+            ),
+            "prediction_service": (
+                results[2]
+                if not isinstance(results[2], Exception)
+                else {"status": "error", "error": str(results[2])}
+            ),
+        }
+
+        # 检查整体健康状态
+        overall_status = "healthy" if all(
+            check.get("status") == "healthy" for check in checks.values()
+        ) else "unhealthy"
+
+        return {
+            "overall_status": overall_status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "services": checks
+        }
+
+    async def check_database(self) -> Dict[str, Any]:
         """检查数据库连接健康状态
 
         Returns:

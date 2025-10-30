@@ -15,9 +15,6 @@ from sqlalchemy.orm import selectinload
 
 from ..models.user import User
 from .base import BaseRepository
-from src.core.config import 
-from src.core.config import 
-
 
 class UserRepository(BaseRepository[User]):
     """

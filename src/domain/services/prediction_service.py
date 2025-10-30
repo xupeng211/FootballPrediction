@@ -144,17 +144,22 @@ class PredictionDomainService:
         # Get points earned as int
         points_earned = None
         if prediction.points:
-            if isinstance(prediction.points.total, ((((((((Decimal):
+            if isinstance(prediction.points.total, Decimal):
                 points_earned = int(prediction.points.total)
             else:
                 points_earned = prediction.points.total
 
         event = PredictionEvaluatedEvent(
-            prediction_id=prediction.id, actual_home=actual_home))))))))
+            prediction_id=prediction.id,
+            actual_home=actual_home,
+            actual_away=actual_away,
+            points_earned=points_earned
+        )
         self._events.append(event)
 
     def cancel_prediction(
-        self)) -> None:
+        self, prediction: Prediction
+    ) -> None:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能取消待处理的预测")
@@ -166,7 +171,8 @@ class PredictionDomainService:
             raise ValueError("预测ID不能为空")
 
         event = PredictionCancelledEvent(
-            prediction_id=prediction.id))
+            prediction_id=prediction.id
+        )
         self._events.append(event)
 
     def expire_prediction(self, prediction: Prediction) -> None:

@@ -306,7 +306,7 @@ class MLModelStrategy(PredictionStrategy):
     ) -> PredictionOutput:
         """格式化预测输出"""
         # 根据模型输出解析预测结果
-        if hasattr(prediction_result, "__iter__") and not isinstance(prediction_result, ((((((((str):
+        if hasattr(prediction_result, "__iter__") and not isinstance(prediction_result, str):
             # 如果输出是数组
             if len(prediction_result) >= 2:
                 pred_home = int(prediction_result[0])
@@ -315,11 +315,12 @@ class MLModelStrategy(PredictionStrategy):
                 # 单值输出，需要转换为比分
                 pred_value = float(prediction_result[0])
                 pred_home, pred_away = await self._convert_prediction_to_score(
-                    pred_value))))))
+                    pred_value
+                )
         else:
             # 单值输出
             pred_value = float(prediction_result)
-            pred_home))
+            pred_home = int(pred_value)
 
         # 计算置信度
         if prediction_proba is not None:
@@ -329,10 +330,11 @@ class MLModelStrategy(PredictionStrategy):
 
         # 创建概率分布
         probability_distribution = None
-        if prediction_proba is not None and hasattr(prediction_proba)):
+        if prediction_proba is not None and hasattr(prediction_proba, '__len__'):
             if len(prediction_proba) == 3:  # 假设是赢/平/输的概率
                 probability_distribution = {
-                    "home_win": float(prediction_proba[0]))),
+                    "home_win": float(prediction_proba[0]),
+                    "draw": float(prediction_proba[1]),
                     "away_win": float(prediction_proba[2]),
                 }
 
