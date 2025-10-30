@@ -2,9 +2,9 @@ from typing import List
 from typing import Dict
 from datetime import datetime
 from src.core.config import 
-""""""""
+""""
 特征计算器
-""""""""
+""""
 
 import numpy as np
 from dataclasses import dataclass
@@ -46,7 +46,7 @@ class TeamStats:
     goals_scored: int
     goals_conceded: int
     points: int
-    recent_form: List[str]  # 最近5场比赛结果：W/D/L
+    recent_form: List[str]  # 最近5场比赛结果:W/D/L
     avg_goals_scored: float
     avg_goals_conceded: float
     clean_sheets: int
@@ -56,11 +56,11 @@ class TeamStats:
 class FeatureCalculator:
     """特征计算器"""""
 
-    负责计算各种特征的核心类，支持：
+    负责计算各种特征的核心类,支持:
     - 近期战绩特征计算
     - 历史对战特征计算
     - 赔率特征计算
-    - 批量计算和缓存优化""""""""
+    - 批量计算和缓存优化""""
 
     def __init__(self):
         self.logger = get_logger(self.__class__.__name__)
@@ -80,7 +80,7 @@ class FeatureCalculator:
 
         Returns:
             球队状态特征字典
-        """"""""
+        """"
         try:
             # 获取该球队的比赛
             team_matches = []
@@ -88,7 +88,7 @@ class FeatureCalculator:
                 if match.home_team == team or match.away_team == team:
                     team_matches.append(match)
 
-            # 按日期排序，获取最近的比赛
+            # 按日期排序,获取最近的比赛
             team_matches.sort(key=lambda x: x.match_date, reverse=True)
             recent_matches = team_matches[:last_n_matches]
 
@@ -210,7 +210,7 @@ class FeatureCalculator:
 
         Returns:
             历史对战特征字典
-        """"""""
+        """"
         try:
             # 获取两队之间的对战记录
             h2h_matches = []
@@ -220,7 +220,7 @@ class FeatureCalculator:
                 ):
                     h2h_matches.append(match)
 
-            # 按日期排序，获取最近的对战
+            # 按日期排序,获取最近的对战
             h2h_matches.sort(key=lambda x: x.match_date, reverse=True)
             recent_h2h = h2h_matches[:last_n_matches]
 
@@ -332,7 +332,7 @@ class FeatureCalculator:
 
         Returns:
             球队统计特征字典
-        """"""""
+        """"
         try:
             # 计算球队基础统计
             team_stats = self._calculate_team_stats(team, matches)
@@ -418,7 +418,7 @@ class FeatureCalculator:
 
         Returns:
             排名特征字典
-        """"""""
+        """"
         try:
             if not league_table:
                 return self._get_default_ranking_features()
@@ -497,7 +497,7 @@ class FeatureCalculator:
 
         Returns:
             比赛重要性特征字典
-        """"""""
+        """"
         try:
             features = {}
 
@@ -534,7 +534,7 @@ class FeatureCalculator:
                 else:
                     features["importance_stage_weight"] = 0.8
             else:
-                # 联赛比赛，根据时间推断重要性
+                # 联赛比赛,根据时间推断重要性
                 current_month = datetime.now().month
                 if current_month >= 8:  # 赛季初期
                     features["importance_stage_weight"] = 0.7
@@ -546,7 +546,7 @@ class FeatureCalculator:
                     features["importance_stage_weight"] = 0.8
 
             # 3. 对阵重要性（基于球队实力差距）
-            # 这里简化处理，实际应该根据球队排名计算
+            # 这里简化处理,实际应该根据球队排名计算
             features["importance_rivalry_weight"] = 0.8  # 默认值
 
             # 4. 综合重要性评分
@@ -581,7 +581,7 @@ class FeatureCalculator:
 
         Returns:
             完整特征字典
-        """"""""
+        """"
         try:
             all_features = {}
 
@@ -848,7 +848,7 @@ class FeatureCalculator:
         # 计算平均积分
         team_points = []
         for team, stats in teams_goals.items():
-            # 简化计算：假设进球数和积分相关
+            # 简化计算:假设进球数和积分相关
             points = stats["scored"] * 3 - stats["conceded"]
             team_points.append(max(points, 0) / stats["matches"])
 

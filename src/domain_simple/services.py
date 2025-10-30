@@ -12,11 +12,11 @@ from src.core.config import
 from src.core.config import 
 from src.core.config import 
 
-""""""""
+""""
 域服务工厂
 
-提供领域服务的工厂模式实现，管理服务依赖和生命周期。
-""""""""
+提供领域服务的工厂模式实现,管理服务依赖和生命周期.
+""""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -289,8 +289,8 @@ class PredictionDomainService(DomainService[Prediction]):
 class DomainServiceFactory:
     """域服务工厂"""""
 
-    负责创建、配置和管理所有域服务实例。
-    """"""""
+    负责创建,配置和管理所有域服务实例.
+    """"
 
     def __init__(self):
         self._services: Dict[str, DomainService] = {}

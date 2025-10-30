@@ -2,7 +2,7 @@
 预测策略基础接口
 Prediction Strategy Base Interface
 
-定义预测策略的抽象基类和相关数据结构。
+定义预测策略的抽象基类和相关数据结构.
 Defines abstract base classes and data structures for prediction strategies.
 """
 
@@ -112,7 +112,7 @@ class PredictionStrategy(ABC):
         """更新策略性能指标
 
         Args:
-            actual_results: 实际结果列表，包含预测和实际比赛结果
+            actual_results: 实际结果列表,包含预测和实际比赛结果
         """
         pass
 
@@ -161,7 +161,7 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionInput: 处理后的输入数据
         """
-        # 默认不做处理，子类可以覆盖
+        # 默认不做处理,子类可以覆盖
         return input_data
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:
@@ -173,7 +173,7 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionOutput: 处理后的预测结果
         """
-        # 默认不做处理，子类可以覆盖
+        # 默认不做处理,子类可以覆盖
         return output
 
     def __str__(self) -> str:
@@ -187,7 +187,7 @@ class PredictionStrategy(ABC):
 class PredictionContext:
     """预测上下文
 
-    包含预测过程中需要的所有上下文信息。
+    包含预测过程中需要的所有上下文信息.
     """
 
     # 基础数据

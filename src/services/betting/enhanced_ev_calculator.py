@@ -8,7 +8,7 @@ from typing import Dict
 增强版EV计算器 - Issue #121优化版本
 Enhanced EV Calculator for Issue #121 Optimization
 
-主要优化：
+主要优化:
 1. 改进Kelly Criterion参数计算
 2. 增强价值评级算法
 3. 动态风险管理
@@ -41,7 +41,7 @@ try:
 except ImportError as e:
     print(f"基础EV计算器导入错误: {e}")
 
-    # 如果导入失败，使用备用定义
+    # 如果导入失败,使用备用定义
     # 定义基础类型以防导入失败
     class BetType(Enum):
         HOME_WIN = "home_win"
@@ -625,14 +625,14 @@ class EnhancedValueRatingCalculator:
         # 2. 历史ROI
         if "roi" in historical_data:
             roi = historical_data["roi"]
-            # ROI转换为分数 (正ROI加分，负ROI减分)
+            # ROI转换为分数 (正ROI加分,负ROI减分)
             roi_score = 5 + roi * 10
             performance_factors.append(max(0, min(roi_score, 10)))
 
         # 3. 连胜连败记录
         if "win_streak" in historical_data:
             streak = historical_data["win_streak"]
-            streak_score = 5 + streak  # 连胜加分，连败减分
+            streak_score = 5 + streak  # 连胜加分,连败减分
             performance_factors.append(max(0, min(streak_score, 10)))
 
         # 4. 波动率
@@ -665,7 +665,7 @@ class EnhancedEVCalculator:
         return {
             "ultra_conservative": BettingStrategy(
                 name="超级保守策略",
-                description="最低风险，适合风险厌恶型投注者",
+                description="最低风险,适合风险厌恶型投注者",
                 max_kelly_fraction=0.10,
                 min_ev_threshold=0.08,
                 risk_tolerance=0.2,

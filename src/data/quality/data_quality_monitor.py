@@ -5,15 +5,15 @@ from src.core.config import
 数据质量监控器
 
 实现数据质量检查与异常检测功能。
-监控数据新鲜度、完整性、一致性和异常值。
+监控数据新鲜度,完整性,一致性和异常值。
 
 监控指标：
 - 数据新鲜度：检查最后更新时间
 - 数据完整性：检查缺失值和必需字段
-- 数据一致性：检查数据格式和范围
-- 异常检测：识别可疑的赔率和比分
+- 数据一致性:检查数据格式和范围
+- 异常检测:识别可疑的赔率和比分
 
-基于 DATA_DESIGN.md 第5.1节设计。
+基于 DATA_DESIGN.md 第5.1节设计.
 """
 
 import logging
@@ -27,8 +27,8 @@ class DataQualityMonitor:
     """
     数据质量监控器
 
-    负责监控足球数据的质量，检测异常和问题，
-    生成质量报告和告警。
+    负责监控足球数据的质量,检测异常和问题,
+    生成质量报告和告警.
     """
 
     def __init__(self):
@@ -69,7 +69,7 @@ class DataQualityMonitor:
 
                 if fixtures_age["hours_since_update"] > self.thresholds["data_freshness_hours"]:
                     freshness_report["issues"].append(
-                        f"赛程数据过期：{fixtures_age['hours_since_update']}小时未更新"
+                        f"赛程数据过期:{fixtures_age['hours_since_update']}小时未更新"
                     )
                     freshness_report["status"] = "warning"
 
@@ -79,7 +79,7 @@ class DataQualityMonitor:
 
                 if odds_age["hours_since_update"] > 1:  # 赔率数据应该更频繁更新
                     freshness_report["warnings"].append(
-                        f"赔率数据可能过期：{odds_age['hours_since_update']}小时未更新"
+                        f"赔率数据可能过期:{odds_age['hours_since_update']}小时未更新"
                     )
 
                 # 检查缺失的比赛
@@ -124,7 +124,7 @@ class DataQualityMonitor:
                 consistency_issues = await self._check_data_consistency(session)
                 anomalies.extend(consistency_issues)
 
-            self.logger.info(f"异常检测完成，发现{len(anomalies)}个异常")
+            self.logger.info(f"异常检测完成,发现{len(anomalies)}个异常")
             return anomalies
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -368,7 +368,7 @@ class DataQualityMonitor:
                 "recommendations": self._generate_recommendations(freshness_check, anomalies),
             }
 
-            self.logger.info(f"数据质量报告生成完成，总体状态: {report['overall_status']}")
+            self.logger.info(f"数据质量报告生成完成,总体状态: {report['overall_status']}")
             return report
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

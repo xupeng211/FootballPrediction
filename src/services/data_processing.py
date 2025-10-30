@@ -2,7 +2,7 @@
 数据处理服务
 Data Processing Service
 
-提供数据处理和转换功能。
+提供数据处理和转换功能.
 Provides data processing and transformation functionality.
 """
 
@@ -219,7 +219,7 @@ __all__ = [
 ]
 
 # 数据处理服务实现
-# 此处是主要实现，不再使用 _mod 模块
+# 此处是主要实现,不再使用 _mod 模块
 
 # 包含的所有功能：
 # - DataProcessingService: 核心数据处理服务
@@ -230,7 +230,7 @@ __all__ = [
 #   - validate_data_quality: 验证数据质量
 #   - detect_anomalies: 检测异常值
 #   - process_bronze_to_silver: 处理青铜到银层数据
-# - 各类专用处理器：
+# - 各类专用处理器:
 #   - MatchDataProcessor: 比赛数据处理器
 #   - OddsDataProcessor: 赔率数据处理器
 #   - ScoresDataProcessor: 比分数据处理器
@@ -238,7 +238,7 @@ __all__ = [
 #   - MissingDataHandler: 缺失数据处理器
 #   - MissingDataHandler: 缺失比分处理器
 #   - MissingTeamDataHandler: 缺失队伍数据处理器
-# - 数据管道组件：
+# - 数据管道组件:
 #   - BronzeToSilverProcessor: 青铜到银层数据处理器
 #   - DataQualityValidator: 数据质量验证器
 #   - AnomalyDetector: 异常检测器

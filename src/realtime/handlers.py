@@ -1,11 +1,11 @@
-""""""""
+""""
 WebSocket处理器 - 实时通信接口
 
 WebSocket Handlers - Real-time Communication Interface
 
-处理WebSocket连接、消息路由和订阅管理
+处理WebSocket连接,消息路由和订阅管理
 Handles WebSocket connections, message routing, and subscription management
-""""""""
+""""
 
 import json
 import logging
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ):
-    """获取当前用户（简化版本，实际应该验证JWT token）"""
+    """获取当前用户（简化版本,实际应该验证JWT token）"""
     # 这里应该实现JWT token验证逻辑
     # 暂时返回一个示例用户ID
     if credentials:

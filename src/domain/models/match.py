@@ -2,7 +2,7 @@
 比赛领域模型
 Match Domain Model
 
-封装比赛相关的业务逻辑和不变性约束。
+封装比赛相关的业务逻辑和不变性约束.
 Encapsulates match-related business logic and invariants.
 """
 
@@ -72,7 +72,7 @@ class Match:
     """
     比赛领域模型
 
-    封装比赛的核心业务逻辑和不变性约束。
+    封装比赛的核心业务逻辑和不变性约束.
     """
 
     id: Optional[int] = None
@@ -99,12 +99,12 @@ class Match:
             raise DomainError("主队和客队不能相同")
 
         if self.season and not self._is_valid_season_format(self.season):
-            raise DomainError("赛季格式无效，应为 YYYY-YYYY 或 YYYY")
+            raise DomainError("赛季格式无效,应为 YYYY-YYYY 或 YYYY")
 
     @staticmethod
     def _is_valid_season_format(season: str) -> bool:
         """验证赛季格式"""
-        # 简单验证：2023-2024 或 2023
+        # 简单验证:2023-2024 或 2023
         parts = season.split("-")
         if len(parts) == 1:
             return parts[0].isdigit() and len(parts[0]) == 4
@@ -125,7 +125,7 @@ class Match:
     def start_match(self) -> None:
         """开始比赛"""
         if self.status != MatchStatus.SCHEDULED:
-            raise DomainError(f"比赛状态为 {self.status.value}，无法开始")
+            raise DomainError(f"比赛状态为 {self.status.value},无法开始")
 
         self.status = MatchStatus.LIVE
         self.updated_at = datetime.utcnow()
@@ -138,7 +138,7 @@ class Match:
         old_score = self.score
         self.score = MatchScore(home_score=home_score, away_score=away_score)
 
-        # 如果是首次有比分，将状态改为进行中
+        # 如果是首次有比分,将状态改为进行中
         if old_score is None and (home_score > 0 or away_score > 0):
             self.status = MatchStatus.LIVE
 
@@ -241,7 +241,7 @@ class Match:
     def get_duration(self) -> Optional[int]:
         """获取比赛时长（分钟）"""
         if self.status == MatchStatus.FINISHED and self.created_at:
-            # 这里简化处理，实际应该记录开始时间
+            # 这里简化处理,实际应该记录开始时间
             return 90  # 标准足球比赛时长
         return None
 

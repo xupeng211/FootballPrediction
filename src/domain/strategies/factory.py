@@ -2,7 +2,7 @@
 预测策略工厂
 Prediction Strategy Factory
 
-负责创建和管理预测策略实例。
+负责创建和管理预测策略实例.
 Responsible for creating and managing prediction strategy instances.
 """
 
@@ -39,7 +39,7 @@ class StrategyConfigurationError(Exception):
 class PredictionStrategyFactory:
     """预测策略工厂类
 
-    负责根据配置创建和管理各种预测策略实例。
+    负责根据配置创建和管理各种预测策略实例.
     """
 
     def __init__(self, config_path: Optional[Union[str, Path]] = None):
@@ -111,7 +111,7 @@ class PredictionStrategyFactory:
         """
         # 检查是否已存在
         if strategy_name in self._strategies and not overwrite:
-            logger.warning(f"策略 '{strategy_name}' 已存在，返回现有实例")
+            logger.warning(f"策略 '{strategy_name}' 已存在,返回现有实例")
             return self._strategies[strategy_name]
 
         # 获取策略配置
@@ -131,7 +131,7 @@ class PredictionStrategyFactory:
         # 创建策略实例
         strategy_class = self._strategy_registry[strategy_type]
         try:
-            # 对于集成策略，需要特殊处理
+            # 对于集成策略,需要特殊处理
             if strategy_type == "ensemble":
                 strategy = await self._create_ensemble_strategy(strategy_name, config)
             else:
@@ -193,7 +193,7 @@ class PredictionStrategyFactory:
             strategy_name: 策略名称
 
         Returns:
-            Optional[PredictionStrategy]: 策略实例，如果不存在则返回None
+            Optional[PredictionStrategy]: 策略实例,如果不存在则返回None
         """
         return self._strategies.get(strategy_name)
 
@@ -414,7 +414,7 @@ class PredictionStrategyFactory:
                     # 尝试JSON解析
                     parsed_value = json.loads(value)
                 except (json.JSONDecodeError, ValueError):
-                    # 如果不是JSON，保持字符串
+                    # 如果不是JSON,保持字符串
                     parsed_value = value
 
                 # 应用覆盖
@@ -448,7 +448,7 @@ class PredictionStrategyFactory:
         # 应用环境变量覆盖
         for key, value in self._environment_overrides.items():
             if "." in key:
-                # 支持嵌套配置，如 "ml_model.model_name"
+                # 支持嵌套配置,如 "ml_model.model_name"
                 keys = key.split(".")
                 current = config
                 for k in keys[:-1]:
@@ -476,7 +476,7 @@ class PredictionStrategyFactory:
             config: 策略配置
 
         Returns:
-            List[str]: 验证错误列表，空列表表示验证通过
+            List[str]: 验证错误列表,空列表表示验证通过
         """
         errors = []
 

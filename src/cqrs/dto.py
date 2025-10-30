@@ -2,7 +2,7 @@
 数据传输对象
 Data Transfer Objects
 
-定义CQRS模式中使用的DTO。
+定义CQRS模式中使用的DTO.
 Defines DTOs used in CQRS pattern.
 """
 

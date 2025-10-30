@@ -2,7 +2,7 @@
 装饰器模式实现
 Decorator Pattern Implementation
 
-用于功能增强和横切关注点。
+用于功能增强和横切关注点.
 Used for functionality enhancement and cross-cutting concerns.
 """
 

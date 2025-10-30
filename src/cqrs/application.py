@@ -2,7 +2,7 @@
 CQRS应用服务
 CQRS Application Services
 
-提供高级的CQRS操作接口。
+提供高级的CQRS操作接口.
 Provides high-level CQRS operation interfaces.
 """
 
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 class PredictionCQRSService:
     """预测CQRS服务
 
-    提供预测相关的命令和查询操作。
+    提供预测相关的命令和查询操作.
     Provides command and query operations for predictions.
     """
 
@@ -133,7 +133,7 @@ class PredictionCQRSService:
 class MatchCQRSService:
     """比赛CQRS服务
 
-    提供比赛相关的命令和查询操作。
+    提供比赛相关的命令和查询操作.
     Provides command and query operations for matches.
     """
 
@@ -205,7 +205,7 @@ class MatchCQRSService:
 class UserCQRSService:
     """用户CQRS服务
 
-    提供用户相关的命令和查询操作。
+    提供用户相关的命令和查询操作.
     Provides command and query operations for users.
     """
 
@@ -241,7 +241,7 @@ class UserCQRSService:
 class AnalyticsCQRSService:
     """分析CQRS服务
 
-    提供分析相关的查询操作。
+    提供分析相关的查询操作.
     Provides analytics-related query operations.
     """
 

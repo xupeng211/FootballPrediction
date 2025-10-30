@@ -13,7 +13,7 @@ T = TypeVar("T")
 
 # 类定义
 class CacheDecorator:
-    """缓存装饰器类，提供更灵活的配置"""
+    """缓存装饰器类,提供更灵活的配置"""
 
     pass  # TODO: 实现类逻辑
 

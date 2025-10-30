@@ -1,7 +1,7 @@
 """
 重试机制模块 / Retry Mechanism Module
 
-包含所有重试相关的类和函数。
+包含所有重试相关的类和函数.
 """
 
 import asyncio

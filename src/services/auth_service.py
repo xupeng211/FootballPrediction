@@ -1,7 +1,7 @@
 """
 用户认证服务
 
-提供用户注册、登录、JWT令牌管理等认证相关功能
+提供用户注册,登录,JWT令牌管理等认证相关功能
 """
 
 import secrets
@@ -158,7 +158,7 @@ class AuthService:
         return user
 
     async def login_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
-        """用户登录，返回令牌信息"""
+        """用户登录,返回令牌信息"""
         user = await self.authenticate_user(username, password)
         if not user:
             return None

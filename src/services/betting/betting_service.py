@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""""""""
+""""
 投注服务集成模块
 Betting Service Integration Module
 
-将EV计算和投注策略集成到现有的预测系统中：
+将EV计算和投注策略集成到现有的预测系统中:
 - 与预测系统的集成
 - 实时赔率数据处理
 - 投注建议API接口
@@ -12,7 +12,7 @@ Betting Service Integration Module
 
 创建时间: 2025-10-29
 Issue: #116 EV计算和投注策略
-""""""""
+""""
 
 import json
 from datetime import datetime, timedelta
@@ -790,7 +790,7 @@ class BettingService:
     ) -> List[Dict[str, Any]]:
         """获取历史投注记录"""
         try:
-            # 简化版本：从Redis获取历史记录
+            # 简化版本:从Redis获取历史记录
             history = await self.redis_manager.alrange(
                 "betting_recommendations_history", 0, -1
             )

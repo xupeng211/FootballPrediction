@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Real-time Data Streaming API
-实时数据流API，支持WebSocket和SSE
+实时数据流API,支持WebSocket和SSE
 
 生成时间: 2025-10-26 20:57:38
 """

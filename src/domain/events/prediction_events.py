@@ -2,7 +2,7 @@
 预测领域事件
 Prediction Domain Events
 
-定义与预测相关的领域事件。
+定义与预测相关的领域事件.
 Defines domain events related to predictions.
 """
 

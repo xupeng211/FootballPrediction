@@ -2,7 +2,7 @@
 日志系统（向后兼容）
 Logging System (Backward Compatible)
 
-为了保持向后兼容性，此文件重新导出新的模块化日志系统。
+为了保持向后兼容性,此文件重新导出新的模块化日志系统.
 
 Provides backward compatible exports for the modular logging system.
 """

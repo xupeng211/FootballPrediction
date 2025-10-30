@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class RedisManager:
-    """Redis管理器主类，整合同步和异步操作"""
+    """Redis管理器主类,整合同步和异步操作"""
 
     def __init__(self, redis_url: Optional[str] = None):
         """初始化Redis管理器"""

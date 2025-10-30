@@ -1,6 +1,6 @@
-""""""""
+""""
 简化的流配置实现
-""""""""
+""""
 
 import json
 import os
@@ -240,3 +240,4 @@ class ProducerConfig(StreamConfig):
             "buffer_memory": getattr(self, "buffer_memory", 33554432),
             "enable_idempotence": getattr(self, "enable_idempotence", False),
         }
+]]

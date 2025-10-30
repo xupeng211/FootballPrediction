@@ -1,7 +1,7 @@
 """
 足球预测系统配置管理模块
 
-提供统一的配置读写和持久化机制。
+提供统一的配置读写和持久化机制.
 """
 
 import json
@@ -35,7 +35,7 @@ class Config:
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
     def __init__(self):
-        # 配置文件存储在用户主目录下，避免权限问题
+        # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
         self.config: Dict[str, Any] = {}
@@ -48,20 +48,20 @@ class Config:
                 with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                # 配置文件损坏时记录警告，但不中断程序执行
+                # 配置文件损坏时记录警告,但不中断程序执行
                 logging.warning(f"配置文件加载失败: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置项 - 支持默认值，确保程序健壮性"""
+        """获取配置项 - 支持默认值,确保程序健壮性"""
         return self.config.get(str(key), default)
 
     def set(self, key: str, value: Any) -> None:
-        """设置配置项 - 仅更新内存中的配置，需调用save()持久化"""
+        """设置配置项 - 仅更新内存中的配置,需调用save()持久化"""
         self.config[key] = value
 
     def save(self) -> None:
-        """保存配置到文件 - 自动创建目录，确保配置持久化"""
-        # 确保配置目录存在，parents=True递归创建父目录
+        """保存配置到文件 - 自动创建目录,确保配置持久化"""
+        # 确保配置目录存在,parents=True递归创建父目录
         self.config_dir.mkdir(parents=True, exist_ok=True)
         with open(self.config_file, "w", encoding="utf-8") as f:
             # ensure_ascii=False保证中文字符正确显示

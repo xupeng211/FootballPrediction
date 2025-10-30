@@ -1,7 +1,7 @@
 """
 模型指标导出器
 
-提供Prometheus指标导出功能，监控模型性能和预测质量
+提供Prometheus指标导出功能,监控模型性能和预测质量
 """
 
 import logging
@@ -17,7 +17,7 @@ class ModelMetricsExporter:
     """
     模型指标导出器
 
-    提供模型性能监控指标导出，包括：
+    提供模型性能监控指标导出,包括:
     - 预测数量统计
     - 预测准确率监控
     - 置信度分布
@@ -28,7 +28,7 @@ class ModelMetricsExporter:
         """初始化Prometheus指标"""
         # 使用自定义registry避免重复注册错误
         if registry is None:
-            # 在测试环境中创建新的registry，避免重复注册
+            # 在测试环境中创建新的registry,避免重复注册
             self.registry = CollectorRegistry()
         else:
             self.registry = registry
@@ -123,7 +123,7 @@ class ModelMetricsExporter:
             self.daily_predictions_count.labels(model_name=result.model_name, date=today).inc()
 
             logger.debug(
-                f"已导出预测指标：match_id={result.match_id}, result ={result.predicted_result}"
+                f"已导出预测指标:match_id={result.match_id}, result ={result.predicted_result}"
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -152,7 +152,7 @@ class ModelMetricsExporter:
                 time_window=time_window,
             ).set(accuracy)
 
-            logger.debug(f"已导出准确率指标：{model_name} v{model_version} = {accuracy:.3f}")
+            logger.debug(f"已导出准确率指标:{model_name} v{model_version} = {accuracy:.3f}")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出准确率指标失败: {e}")

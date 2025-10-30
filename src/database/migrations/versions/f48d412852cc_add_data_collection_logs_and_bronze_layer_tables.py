@@ -26,7 +26,7 @@ def upgrade() -> None:
     """
     创建数据采集日志表和Bronze层原始数据表
 
-    基于 DATA_DESIGN.md 第1.3节和第2.1节设计：
+    基于 DATA_DESIGN.md 第1.3节和第2.1节设计:
     - data_collection_logs: 采集任务日志记录
     - raw_match_data: Bronze层原始比赛数据
     - raw_odds_data: Bronze层原始赔率数据（分区表）
@@ -137,7 +137,7 @@ def upgrade() -> None:
     op.create_index("idx_raw_match_data_match_time", "raw_match_data", ["match_time"])
 
     # 创建Bronze层原始赔率数据表（分区表准备）
-    # 注意：PostgreSQL分区表需要特殊语法，这里先创建基础结构
+    # 注意:PostgreSQL分区表需要特殊语法,这里先创建基础结构
     op.create_table(
         "raw_odds_data",
         sa.Column("id", sa.Integer(), nullable=False, comment="主键ID"),
@@ -186,7 +186,7 @@ def upgrade() -> None:
     # 只添加在初始schema中不存在的字段
     try:
         # 添加新的特征字段以支持更复杂的ML特征
-        # 跳过已在初始schema中存在的字段：recent_5_draws, recent_5_losses,
+        # 跳过已在初始schema中存在的字段:recent_5_draws, recent_5_losses,
         # recent_5_goals_against, h2h_draws, h2h_losses
         new_columns = [
             ("home_advantage_score", sa.Numeric(5, 2), "主场优势评分"),
@@ -208,11 +208,11 @@ def upgrade() -> None:
                     sa.Column(column_name, column_type, nullable=True, comment=column_comment),
                 )
             except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-                # 如果字段已存在，忽略错误
+                # 如果字段已存在,忽略错误
                 logger.info(f"Warning: Column {column_name} already exists: {e}")
 
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        # 如果features表不存在或字段已存在，忽略错误但记录日志
+        # 如果features表不存在或字段已存在,忽略错误但记录日志
         logger.info(f"Warning: Could not add columns to features table: {e}")
 
 

@@ -4,8 +4,8 @@
 
 定义足球预测系统中的核心特征：
 - 近期战绩特征：recent_5_wins, goals_for/against
-- 历史对战特征：h2h_wins, h2h_goals_avg
-- 赔率特征：implied_probability, bookmaker_consensus
+- 历史对战特征:h2h_wins, h2h_goals_avg
+- 赔率特征:implied_probability, bookmaker_consensus
 """
 
 from dataclasses import dataclass

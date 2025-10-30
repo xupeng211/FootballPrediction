@@ -81,7 +81,7 @@ class OptaDataAdapter:
 
 
 class CompositeFootballAdapter:
-    """复合适配器，集成多个足球数据源"""
+    """复合适配器,集成多个足球数据源"""
 
     pass  # TODO: 实现类逻辑
 

@@ -1,7 +1,7 @@
 """
 任务工具函数
 
-提供任务调度相关的工具函数，包括：
+提供任务调度相关的工具函数,包括:
 - 比赛时间检查
 - 数据采集条件判断
 - 任务状态管理
@@ -48,7 +48,7 @@ async def should_collect_live_scores() -> bool:
             return match_count > 0
 
     except (ValueError, KeyError, RuntimeError):
-        # 如果查询失败，返回 False（避免在测试中无谓的数据采集）
+        # 如果查询失败,返回 False（避免在测试中无谓的数据采集）
         return False
 
 
@@ -111,7 +111,7 @@ def is_match_day(date: Optional[datetime] = None) -> bool:
     检查指定日期是否有比赛
 
     Args:
-        date: 要检查的日期，默认为今天
+        date: 要检查的日期,默认为今天
 
     Returns:
         是否有比赛
@@ -119,9 +119,9 @@ def is_match_day(date: Optional[datetime] = None) -> bool:
     if date is None:
         date = datetime.now()
 
-    # 简化实现：假设周末更可能有比赛
+    # 简化实现:假设周末更可能有比赛
     weekday = date.weekday()
-    return weekday in [5, 6]  # 周六、周日
+    return weekday in [5, 6]  # 周六,周日
 
 
 async def get_active_leagues() -> List[str]:
@@ -169,14 +169,14 @@ def calculate_next_collection_time(task_name: str, interval_minutes: int = None)
     now = datetime.now()
 
     if task_name == "collect_fixtures_task":
-        # 赛程采集：每日凌晨2点
+        # 赛程采集:每日凌晨2点
         next_run = now.replace(hour=2, minute=0, second=0, microsecond=0)
         if next_run <= now:
             next_run += timedelta(days=1)
         return next_run
 
     elif task_name == "collect_odds_task":
-        # 赔率采集：每5分钟
+        # 赔率采集:每5分钟
         minutes = (now.minute // 5 + 1) * 5
         next_run = now.replace(minute=minutes % 60, second=0, microsecond=0)
         if minutes >= 60:
@@ -184,7 +184,7 @@ def calculate_next_collection_time(task_name: str, interval_minutes: int = None)
         return next_run
 
     elif task_name == "collect_scores_task":
-        # 比分采集：每2分钟
+        # 比分采集:每2分钟
         minutes = (now.minute // 2 + 1) * 2
         next_run = now.replace(minute=minutes % 60, second=0, microsecond=0)
         if minutes >= 60:

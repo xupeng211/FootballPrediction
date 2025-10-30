@@ -4,7 +4,7 @@ from typing import Dict, Optional
 核心事件类型定义
 Core Event Types
 
-定义系统中的核心事件类型。
+定义系统中的核心事件类型.
 Defines core event types in the system.
 """
 

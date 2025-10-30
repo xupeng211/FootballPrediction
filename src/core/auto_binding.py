@@ -3,7 +3,7 @@
 自动绑定系统
 Auto Binding System
 
-提供接口到实现的自动绑定功能。
+提供接口到实现的自动绑定功能.
 Provides automatic binding from interfaces to implementations.
 """
 
@@ -82,11 +82,11 @@ class AutoBinder:
             return
 
         if len(implementations) == 1:
-            # 只有一个实现，直接绑定
+            # 只有一个实现,直接绑定
             self.container.register_transient(interface, implementations[0])
             logger.info(f"绑定 {interface.__name__} -> {implementations[0].name__}")
         else:
-            # 多个实现，需要进一步选择
+            # 多个实现,需要进一步选择
             primary = self._select_primary_implementation(interface, implementations)
             if primary:
                 self.container.register_transient(interface, primary)
@@ -116,7 +116,7 @@ class AutoBinder:
                 else:
                     self.container.register_transient(rule.interface, rule.implementation)
 
-        logger.info(f"自动绑定完成，应用了 {len(self._binding_rules)} 个规则")
+        logger.info(f"自动绑定完成,应用了 {len(self._binding_rules)} 个规则")
 
     def _scan_directory(
         self, directory: Path, module_prefix: str, pattern: str, recursive: bool
@@ -188,7 +188,7 @@ class AutoBinder:
                     self._implementation_cache[base] = []
                 self._implementation_cache[base].append(cls)
 
-                # 如果这是第一个实现，自动绑定
+                # 如果这是第一个实现,自动绑定
                 if len(self._implementation_cache[base]) == 1:
                     self.container.register_transient(base, cls)
                     logger.debug(f"自动绑定: {base.__name__} -> {cls.__name__}")
@@ -236,17 +236,17 @@ class AutoBinder:
 
         interface_name = interface.__name__
 
-        # 规则1：类名以接口名结尾
+        # 规则1:类名以接口名结尾
         for impl in implementations:
             if impl.__name__.endswith(interface_name):
                 return impl
 
-        # 规则2：类名包含Default
+        # 规则2:类名包含Default
         for impl in implementations:
             if "Default" in impl.__name__:
                 return impl
 
-        # 规则3：第一个实现
+        # 规则3:第一个实现
         return implementations[0] if implementations else None
 
     def _select_default_implementation(
@@ -257,7 +257,7 @@ class AutoBinder:
 
     def _apply_default_convention(self) -> None:
         """应用默认约定"""
-        # 默认约定：接口名以I开头，实现名去掉I
+        # 默认约定:接口名以I开头,实现名去掉I
         for interface in self._implementation_cache:
             if interface.__name__.startswith("I"):
                 default_name = interface.__name__[1:]
@@ -269,7 +269,7 @@ class AutoBinder:
 
     def _apply_repository_convention(self) -> None:
         """应用仓储约定"""
-        # 约定：IRepository -> Repository
+        # 约定:IRepository -> Repository
         for interface in self._implementation_cache:
             if "Repository" in interface.__name__:
                 for impl in self._implementation_cache[interface]:
@@ -280,7 +280,7 @@ class AutoBinder:
 
     def _apply_service_convention(self) -> None:
         """应用服务约定"""
-        # 约定：IService -> Service
+        # 约定:IService -> Service
         for interface in self._implementation_cache:
             if interface.__name__.startswith("I") and "Service" in interface.__name__:
                 for impl in self._implementation_cache[interface]:

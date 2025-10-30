@@ -2,7 +2,7 @@
 数据库兼容性模块
 Database Compatibility Module
 
-提供数据库兼容性相关的类和函数。
+提供数据库兼容性相关的类和函数.
 """
 
 import re

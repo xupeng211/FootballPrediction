@@ -1,11 +1,11 @@
-""""""""
+""""
 WebSocket连接管理器 - 生产级实现
 
 WebSocket Connection Manager - Production Implementation
 
-提供完整的WebSocket连接管理、房间管理、消息路由等功能
+提供完整的WebSocket连接管理,房间管理,消息路由等功能
 Provides complete WebSocket connection management, room management, message routing, etc.
-""""""""
+""""
 
 import json
 import logging
@@ -455,3 +455,4 @@ async def broadcast_to_room(room_name: str, message: Any) -> int:
 async def broadcast_to_all(message: Any) -> int:
     """广播消息给所有连接"""
     return await get_websocket_manager().broadcast(message)
+]

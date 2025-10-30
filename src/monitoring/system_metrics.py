@@ -2,7 +2,7 @@
 系统指标收集器
 System Metrics Collector
 
-负责收集系统、数据库、缓存等各项指标。
+负责收集系统,数据库,缓存等各项指标.
 """
 
 from datetime import datetime

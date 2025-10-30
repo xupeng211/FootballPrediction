@@ -1,13 +1,13 @@
 """
 Celery 应用配置
 
-基于 Redis 的任务队列系统，支持：
+基于 Redis 的任务队列系统,支持:
 - 多队列任务路由
 - 定时任务调度
 - 任务重试机制
 - 监控指标收集
 
-基于 DATA_DESIGN.md 第3节《任务调度系统》设计。
+基于 DATA_DESIGN.md 第3节《任务调度系统》设计.
 """
 
 import logging
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # 模拟的数据库管理器类（用于测试支持）
 class DatabaseManager:
-    """数据库管理器模拟类，用于支持测试"""
+    """数据库管理器模拟类,用于支持测试"""
 
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
@@ -37,7 +37,7 @@ class DatabaseManager:
 
 # 模拟的Redis管理器类（用于测试支持）
 class RedisManager:
-    """Redis管理器模拟类，用于支持测试"""
+    """Redis管理器模拟类,用于支持测试"""
 
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.RedisManager")
@@ -176,7 +176,7 @@ app.conf.beat_schedule = {
         "task": "tasks.streaming_tasks.stream_data_processing_task",
         "schedule": 300.0,  # 5分钟
         "options": {"queue": "streaming"},
-        "kwargs": {"processing_duration": 280},  # 运行4分40秒，留20秒间隔
+        "kwargs": {"processing_duration": 280},  # 运行4分40秒,留20秒间隔
     },
     # 数据库备份任务
     # 每日全量备份 - 凌晨3:00

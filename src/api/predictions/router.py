@@ -2,11 +2,11 @@
 预测API路由器
 Predictions API Router
 
-提供预测相关的API路由。
+提供预测相关的API路由.
 """
 
 # mypy: ignore-errors
-# 该文件包含复杂的机器学习逻辑，类型检查已忽略
+# 该文件包含复杂的机器学习逻辑,类型检查已忽略
 
 import logging
 from datetime import datetime, timedelta
@@ -130,7 +130,7 @@ async def get_recent_predictions(
     """
     获取最近的预测记录
 
-    返回系统最近生成的预测，默认返回最近24小时内的预测。
+    返回系统最近生成的预测,默认返回最近24小时内的预测.
     """
     logger.info(f"获取最近 {hours} 小时内的 {limit} 条预测")
 
@@ -175,8 +175,8 @@ async def get_prediction(
     """
     获取指定比赛的预测结果
 
-    获取已缓存的预测结果，如果不存在则返回404。
-    使用 POST /predictions/{match_id}/predict 生成新的预测。
+    获取已缓存的预测结果,如果不存在则返回404。
+    使用 POST /predictions/{match_id}/predict 生成新的预测.
     """
     logger.info(f"获取比赛 {match_id} 的预测结果")
 
@@ -208,7 +208,7 @@ async def create_prediction(match_id: int, request: Optional[PredictionRequest] 
     实时生成比赛预测
 
     使用机器学习模型实时计算比赛结果预测。
-    此操作会触发完整的预测流程，包括特征提取和模型推理。
+    此操作会触发完整的预测流程,包括特征提取和模型推理.
     """
     logger.info(f"开始为比赛 {match_id} 生成预测")
 
@@ -244,8 +244,8 @@ async def batch_predict(request: BatchPredictionRequest):
     """
     批量预测比赛结果
 
-    一次性为多场比赛生成预测，适用于批处理场景。
-    最多支持100场比赛的批量预测。
+    一次性为多场比赛生成预测,适用于批处理场景。
+    最多支持100场比赛的批量预测.
     """
     logger.info(f"开始批量预测 {len(request.match_ids)} 场比赛")
 
@@ -295,8 +295,8 @@ async def get_prediction_history(
     """
     获取比赛的历史预测记录
 
-    返回指定比赛的所有历史预测，按时间倒序排列。
-    可用于分析预测准确性的变化趋势。
+    返回指定比赛的所有历史预测,按时间倒序排列。
+    可用于分析预测准确性的变化趋势.
     """
     logger.info(f"获取比赛 {match_id} 的历史预测记录")
 
@@ -339,10 +339,10 @@ async def verify_prediction(
     """
     验证预测结果的准确性
 
-    在比赛结束后，使用此端点验证预测的准确性。
-    系统会自动计算准确性分数并更新模型统计。
+    在比赛结束后,使用此端点验证预测的准确性。
+    系统会自动计算准确性分数并更新模型统计.
     """
-    logger.info(f"验证比赛 {match_id} 的预测结果，实际结果: {actual_result}")
+    logger.info(f"验证比赛 {match_id} 的预测结果,实际结果: {actual_result}")
 
     try:
         # TODO: 获取原始预测并进行验证

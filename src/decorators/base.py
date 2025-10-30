@@ -2,7 +2,7 @@
 装饰器模式基类
 Decorator Pattern Base Classes
 
-定义装饰器模式的核心接口和抽象类。
+定义装饰器模式的核心接口和抽象类.
 Define core interfaces and abstract classes for the decorator pattern.
 """
 
@@ -15,7 +15,7 @@ from typing import Any, Awaitable, Callable, Dict, Optional
 
 
 class Component(ABC):
-    """组件接口，定义了组件的基本操作"""
+    """组件接口,定义了组件的基本操作"""
 
     @abstractmethod
     async def execute(self, *args, **kwargs) -> Any:
@@ -29,7 +29,7 @@ class Component(ABC):
 
 
 class ConcreteComponent(Component):
-    """具体组件，实现了组件接口的基本功能"""
+    """具体组件,实现了组件接口的基本功能"""
 
     def __init__(self, name: str, func: Callable):
         self.name = name
@@ -56,7 +56,7 @@ class ConcreteComponent(Component):
 
 
 class Decorator(Component):
-    """装饰器基类，实现了组件接口并持有一个组件引用"""
+    """装饰器基类,实现了组件接口并持有一个组件引用"""
 
     def __init__(self, component: Component, name: Optional[str] = None):
         self.component = component
@@ -67,7 +67,7 @@ class Decorator(Component):
         self.error_count = 0
 
     async def execute(self, *args, **kwargs) -> Any:
-        """执行装饰器的操作，通常会调用被装饰组件的方法"""
+        """执行装饰器的操作,通常会调用被装饰组件的方法"""
         self.execution_count += 1
         start_time = time.time()
 
@@ -87,7 +87,7 @@ class Decorator(Component):
 
     @abstractmethod
     async def _execute(self, *args, **kwargs) -> Any:
-        """装饰器的具体实现，由子类重写"""
+        """装饰器的具体实现,由子类重写"""
         pass
 
     def get_name(self) -> str:
@@ -114,7 +114,7 @@ class Decorator(Component):
 
 
 class DecoratorComponent(Decorator):
-    """装饰器组件，用于装饰函数或方法"""
+    """装饰器组件,用于装饰函数或方法"""
 
     def __init__(
         self,
@@ -151,7 +151,7 @@ class DecoratorComponent(Decorator):
 
 
 class DecoratorChain:
-    """装饰器链，用于管理多个装饰器的执行顺序"""
+    """装饰器链,用于管理多个装饰器的执行顺序"""
 
     def __init__(self):
         self.decorators: list[Decorator] = []
@@ -189,7 +189,7 @@ class DecoratorChain:
 
 # 装饰器上下文管理器
 class DecoratorContext:
-    """装饰器执行上下文，用于在装饰器之间传递数据"""
+    """装饰器执行上下文,用于在装饰器之间传递数据"""
 
     def __init__(self):
         self.data: Dict[str, Any] = {}
@@ -229,7 +229,7 @@ class DecoratorContext:
 
 # 装饰器注册表
 class DecoratorRegistry:
-    """装饰器注册表，用于管理全局装饰器"""
+    """装饰器注册表,用于管理全局装饰器"""
 
     def __init__(self):
         self._decorators: Dict[str, type[Decorator]] = {}

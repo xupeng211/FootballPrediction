@@ -1,8 +1,8 @@
 """
 监控指标导出器
 
-导出足球预测平台的各项监控指标，供 Prometheus 采集。
-包括数据采集成功/失败次数、数据清洗成功/失败次数、调度任务延迟时间、数据表行数统计等。
+导出足球预测平台的各项监控指标,供 Prometheus 采集。
+包括数据采集成功/失败次数、数据清洗成功/失败次数,调度任务延迟时间,数据表行数统计等.
 """
 
 import logging
@@ -33,7 +33,7 @@ class MetricsExporter:
     """
     监控指标导出器
 
-    提供 Prometheus 格式的监控指标，包括：
+    提供 Prometheus 格式的监控指标,包括:
     - 数据采集成功/失败次数
     - 数据清洗成功/失败次数
     - 调度任务延迟时间
@@ -50,12 +50,12 @@ class MetricsExporter:
         初始化指标导出器
 
         Args:
-            registry: Prometheus 注册表，默认使用全局注册表
-                     在测试环境中，传入独立的 CollectorRegistry 实例可以：
+            registry: Prometheus 注册表,默认使用全局注册表
+                     在测试环境中,传入独立的 CollectorRegistry 实例可以:
                      1. 避免测试间的全局状态污染
                      2. 确保每个测试有干净的指标环境
                      3. 防止指标重复注册导致的错误
-                     这是 Prometheus 测试的最佳实践。
+                     这是 Prometheus 测试的最佳实践.
         """
         self.registry = registry or REGISTRY
         settings = get_settings()
@@ -181,7 +181,7 @@ class MetricsExporter:
         )
 
     def set_tables_to_monitor(self, tables: List[str]) -> None:
-        """设置需要统计行数的表列表。"""
+        """设置需要统计行数的表列表."""
 
         self._tables_to_monitor = list(tables)
 
@@ -332,7 +332,7 @@ class MetricsExporter:
 
     def record_scheduler_task_simple(self, task_name: str, status: str, duration: float) -> None:
         """
-        记录调度任务指标 - 简化接口，兼容测试
+        记录调度任务指标 - 简化接口,兼容测试
 
         Args:
             task_name: 任务名称
@@ -356,15 +356,15 @@ class MetricsExporter:
         更新数据表行数统计 - 兼容测试接口
 
         Args:
-            table_counts: 表行数字典，格式为 {table_name: row_count}
+            table_counts: 表行数字典,格式为 {table_name: row_count}
         """
         if table_counts:
-            # 测试模式：直接使用提供的数据
+            # 测试模式:直接使用提供的数据
             for table_name, count in table_counts.items():
                 self.table_row_count.labels(table_name=table_name).set(float(count))
         else:
-            # 生产模式：同步处理，避免事件循环冲突
-            # 在测试环境中，不应该调用真实的数据库操作
+            # 生产模式:同步处理,避免事件循环冲突
+            # 在测试环境中,不应该调用真实的数据库操作
             logger.warning("update_table_row_counts 在没有提供数据的情况下被调用")
             # 设置一些默认值用于测试
             default_tables = ["matches", "teams", "odds", "predictions"]
@@ -378,20 +378,20 @@ class MetricsExporter:
         try:
             async with get_async_session() as session:
                 if not self._tables_to_monitor:
-                    logger.debug("未配置数据库表监控列表，跳过行数统计")
+                    logger.debug("未配置数据库表监控列表,跳过行数统计")
                     return
 
                 for table_name in self._tables_to_monitor:
                     try:
                         # 使用参数化查询避免SQL注入风险
-                        # 注意：表名不能参数化，所以需要验证表名的安全性
+                        # 注意:表名不能参数化,所以需要验证表名的安全性
                         if not table_name.replace("_", "").isalnum():
                             logger.warning(f"跳过可能不安全的表名: {table_name}")
                             continue
                         # Safe: table_name is from predefined list in try block
                         # Safe: table_name is from validated table list
                         # Note: Using f-string here is safe as table_name is validated
-                        # 使用quoted_name确保表名安全，防止SQL注入
+                        # 使用quoted_name确保表名安全,防止SQL注入
                         from sqlalchemy import quoted_name
 
                         safe_table_name = quoted_name(table_name, quote=True)
@@ -481,19 +481,19 @@ class MetricsExporter:
         self, name: str, description: str, labels: list, registry: CollectorRegistry
     ):
         """
-        获取或创建Counter指标，避免重复注册
+        获取或创建Counter指标,避免重复注册
 
         在测试环境中使用独立的 CollectorRegistry 可以避免指标重复注册问题。
-        这个方法确保在出现冲突时能够优雅处理。
+        这个方法确保在出现冲突时能够优雅处理.
         """
         try:
             return Counter(name, description, labels, registry=registry)
         except ValueError:
-            # 如果指标已存在，从registry中获取
+            # 如果指标已存在,从registry中获取
             for collector in registry._collector_to_names:
                 if hasattr(collector, "_name") and collector._name == name:
                     return collector
-            # 如果找不到，返回一个mock counter用于测试
+            # 如果找不到,返回一个mock counter用于测试
             from unittest.mock import Mock
 
             mock_counter = Mock()
@@ -505,19 +505,19 @@ class MetricsExporter:
         self, name: str, description: str, labels: list, registry: CollectorRegistry
     ):
         """
-        获取或创建Gauge指标，避免重复注册
+        获取或创建Gauge指标,避免重复注册
 
         在测试环境中使用独立的 CollectorRegistry 可以避免指标重复注册问题。
-        这个方法确保在出现冲突时能够优雅处理。
+        这个方法确保在出现冲突时能够优雅处理.
         """
         try:
             return Gauge(name, description, labels, registry=registry)
         except ValueError:
-            # 如果指标已存在，从registry中获取
+            # 如果指标已存在,从registry中获取
             for collector in registry._collector_to_names:
                 if hasattr(collector, "_name") and collector._name == name:
                     return collector
-            # 如果找不到，返回一个mock gauge用于测试
+            # 如果找不到,返回一个mock gauge用于测试
             from unittest.mock import Mock
 
             mock_gauge = Mock()
@@ -537,17 +537,17 @@ def get_metrics_exporter(
     获取指标导出器实例 - 支持自定义注册表
 
     在测试环境中，可以传入独立的 CollectorRegistry 来避免全局状态污染。
-    在生产环境中，将使用全局单例实例。
+    在生产环境中,将使用全局单例实例.
 
     Args:
-        registry: 可选的 CollectorRegistry 实例，主要用于测试
+        registry: 可选的 CollectorRegistry 实例,主要用于测试
 
     Returns:
         MetricsExporter: 指标导出器实例
     """
     global _metrics_exporter_instance
 
-    # 如果指定了注册表，创建新实例（主要用于测试）
+    # 如果指定了注册表,创建新实例（主要用于测试）
     if registry is not None:
         return MetricsExporter(registry=registry)
 
@@ -562,7 +562,7 @@ def reset_metrics_exporter():
     """
     重置全局指标导出器实例 - 主要用于测试清理
 
-    这个函数允许测试在运行前清理全局状态，确保测试独立性。
+    这个函数允许测试在运行前清理全局状态,确保测试独立性.
     """
     global _metrics_exporter_instance
     _metrics_exporter_instance = None

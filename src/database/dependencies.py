@@ -1,8 +1,8 @@
 """
 FastAPI 依赖注入模块
 
-提供数据库会话的依赖注入函数，用于替换全局会话模式。
-支持同步和异步会话管理。
+提供数据库会话的依赖注入函数,用于替换全局会话模式。
+支持同步和异步会话管理.
 """
 
 from typing import AsyncGenerator, Generator
@@ -25,8 +25,8 @@ def get_db() -> Generator[Session, None, None]:
     """
     获取数据库会话的依赖注入函数
 
-    用于 FastAPI 路由中，提供同步数据库会话。
-    确保每个请求都有独立的数据库会话。
+    用于 FastAPI 路由中,提供同步数据库会话。
+    确保每个请求都有独立的数据库会话.
 
     Yields:
         Session: SQLAlchemy 数据库会话
@@ -42,8 +42,8 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
     获取异步数据库会话的依赖注入函数
 
-    用于 FastAPI 异步路由中，提供异步数据库会话。
-    确保每个请求都有独立的异步数据库会话。
+    用于 FastAPI 异步路由中,提供异步数据库会话。
+    确保每个请求都有独立的异步数据库会话.
 
     Yields:
         AsyncSession: SQLAlchemy 异步数据库会话
@@ -59,7 +59,7 @@ def get_reader_db() -> Generator[Session, None, None]:
     """
     获取只读数据库会话的依赖注入函数
 
-    用于执行只读操作的路由。
+    用于执行只读操作的路由.
 
     Yields:
         Session: 只读数据库会话
@@ -75,7 +75,7 @@ def get_writer_db() -> Generator[Session, None, None]:
     """
     获取写入数据库会话的依赖注入函数
 
-    用于执行写入操作的路由。
+    用于执行写入操作的路由.
 
     Yields:
         Session: 写入数据库会话
@@ -91,7 +91,7 @@ async def get_async_reader_db() -> AsyncGenerator[AsyncSession, None]:
     """
     获取异步只读数据库会话的依赖注入函数
 
-    用于异步只读操作的路由。
+    用于异步只读操作的路由.
 
     Yields:
         AsyncSession: 异步只读数据库会话
@@ -107,7 +107,7 @@ async def get_async_writer_db() -> AsyncGenerator[AsyncSession, None]:
     """
     获取异步写入数据库会话的依赖注入函数
 
-    用于异步写入操作的路由。
+    用于异步写入操作的路由.
 
     Yields:
         AsyncSession: 异步写入数据库会话
@@ -119,7 +119,7 @@ async def get_async_writer_db() -> AsyncGenerator[AsyncSession, None]:
         await session.close()
 
 
-# 为了向后兼容，保留原有的函数名
+# 为了向后兼容,保留原有的函数名
 get_db_session = get_db
 get_async_db_session = get_async_db
 
@@ -129,7 +129,7 @@ def get_test_db() -> Generator[Session, None, None]:
     """
     测试用的数据库会话依赖注入函数
 
-    在测试环境中使用，可以提供内存数据库或其他测试专用配置。
+    在测试环境中使用,可以提供内存数据库或其他测试专用配置.
 
     Yields:
         Session: 测试数据库会话
@@ -146,7 +146,7 @@ async def get_test_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
     测试用的异步数据库会话依赖注入函数
 
-    在测试环境中使用，提供异步测试数据库会话。
+    在测试环境中使用,提供异步测试数据库会话.
 
     Yields:
         AsyncSession: 异步测试数据库会话
@@ -159,7 +159,7 @@ async def get_test_async_db() -> AsyncGenerator[AsyncSession, None]:
         await session.close()
 
 
-# 便捷的依赖注入对象，可以直接在路由中使用
+# 便捷的依赖注入对象,可以直接在路由中使用
 db_session = Depends(get_db)
 async_db_session = Depends(get_async_db)
 reader_db = Depends(get_reader_db)

@@ -1,8 +1,8 @@
-""""""""
+""""
 改进版特征获取API
 
-提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
-""""""""
+提供更可靠,更详细的特征获取接口,包含完善的错误处理和日志记录.
+""""
 
 import logging
 from typing import Any, Dict, Optional
@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
-# 全局特征存储实例（惰性初始化，避免导入时报错）
+# 全局特征存储实例（惰性初始化,避免导入时报错）
 feature_store: Optional[FootballFeatureStore] = None
 
 
 def get_feature_store() -> Optional[FootballFeatureStore]:
-    """获取（或初始化）特征存储实例。"""
+    """获取（或初始化）特征存储实例."""
     global feature_store
     if feature_store is not None:
         return feature_store
@@ -60,7 +60,7 @@ def check_feature_store_availability() -> None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
             status_code=503,  # TODO: 将魔法数字 503 提取为常量
-            detail="特征存储服务暂时不可用，请稍后重试",  # TODO: 将魔法数字 503 提取为常量
+            detail="特征存储服务暂时不可用,请稍后重试",  # TODO: 将魔法数字 503 提取为常量
         )
 
 
@@ -88,7 +88,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         logger.error(f"数据库查询失败 (match_id={match_id}): {db_error}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail="数据库查询失败，请稍后重试",  # TODO: 将魔法数字 500 提取为常量
+            detail="数据库查询失败,请稍后重试",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
     except (
         ValueError,
@@ -134,7 +134,7 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
         RequestException,
     ) as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
-        return {}, str(feature_error)  # 优雅降级：返回空特征而不是完全失败
+        return {}, str(feature_error)  # 优雅降级:返回空特征而不是完全失败
 
 
 def build_response_data(
@@ -175,16 +175,16 @@ def build_response_data(
 @router.get("/{match_id}")
 async def get_match_features_improved(
     match_id: int) -> Dict[str, Any]:
-    """"""""
-    改进版本：获取比赛特征
+    """"
+    改进版本:获取比赛特征
 
-    改进点：
+    改进点:
     1. ✅ 详细的日志记录
     2. ✅ 分层错误处理
     3. ✅ 服务可用性检查
     4. ✅ 防御性参数验证
     5. ✅ 优雅降级
-    """"""""
+    """"
     logger.info(f"开始获取比赛 {match_id} 的特征数据")
 
     # 1. 参数验证

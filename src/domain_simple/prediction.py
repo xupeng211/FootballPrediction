@@ -69,7 +69,7 @@ class Prediction:
         self.predicted_home: Optional[int] = None
         self.predicted_away: Optional[int] = None
 
-        # 如果 predicted_value 包含比分，解析它
+        # 如果 predicted_value 包含比分,解析它
         if ":" in predicted_value:
             try:
                 home, away = predicted_value.split(":")
@@ -143,7 +143,7 @@ class Prediction:
         if not self.odds or self.odds <= 1:
             return False
 
-        # 简单的价值计算：预测概率 * 赔率 > 1 + 阈值
+        # 简单的价值计算:预测概率 * 赔率 > 1 + 阈值
         expected_value = self.confidence * self.odds
         return expected_value > (1 + threshold)
 

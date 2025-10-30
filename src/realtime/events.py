@@ -2,14 +2,14 @@ from typing import Optional
 from typing import Dict
 from typing import Union
 from typing import Any
-""""""""
+""""
 实时事件定义 - 足球预测系统
 
 Realtime Events Definition - Football Prediction System
 
 定义所有实时事件的类型和数据结构
 Define all realtime event types and data structures
-""""""""
+""""
 
 from datetime import datetime
 from enum import Enum
@@ -394,3 +394,4 @@ def validate_event(event: RealtimeEvent) -> bool:
 
     except Exception:
         return False
+]]]]

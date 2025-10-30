@@ -1,14 +1,14 @@
-""""""""
+""""
 性能分析器模块
 Performance Profiler Module
 
-提供多种性能分析工具：
+提供多种性能分析工具:
 - 函数级性能分析
 - 内存使用分析
 - 数据库查询分析
 - API端点性能跟踪
 - 异步任务性能分析
-""""""""
+""""
 
 import asyncio
 import cProfile

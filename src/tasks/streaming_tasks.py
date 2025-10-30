@@ -1,7 +1,7 @@
 """
 实时数据流任务
 
-处理实时数据流，包括：
+处理实时数据流,包括:
 - WebSocket连接管理
 - 实时数据处理
 - 流数据持久化
@@ -24,7 +24,7 @@ class StreamingTask(Task):
     """
     流处理任务基类
 
-    提供流处理任务的通用功能：
+    提供流处理任务的通用功能:
     - 异步任务执行
     - 错误处理和重试
     - 日志记录
@@ -56,7 +56,7 @@ def consume_kafka_streams_task(
     消费Kafka流数据任务
 
     Args:
-        topics: 要消费的Topic列表，None表示消费所有Topic
+        topics: 要消费的Topic列表,None表示消费所有Topic
         batch_size: 批量消费大小
         timeout: 超时时间（秒）
 
@@ -126,7 +126,7 @@ def start_continuous_consumer_task(
     启动持续Kafka消费任务
 
     Args:
-        topics: 要消费的Topic列表，None表示消费所有Topic
+        topics: 要消费的Topic列表,None表示消费所有Topic
         consumer_group_id: 消费者组ID
 
     Returns:

@@ -4,7 +4,7 @@ from datetime import datetime
 投注API模块
 Betting API Module
 
-提供EV计算和投注策略的RESTful API接口：
+提供EV计算和投注策略的RESTful API接口:
 - 单场比赛投注建议
 - 组合投注优化
 - 历史表现分析
@@ -123,7 +123,7 @@ async def get_betting_service() -> BettingService:
     "/recommendations/{match_id}",
     response_model=BettingRecommendationResponse,
     summary="获取比赛投注建议",
-    description="为指定比赛生成详细的投注建议，包括EV计算、Kelly准则和风险评估",
+    description="为指定比赛生成详细的投注建议,包括EV计算,Kelly准则和风险评估",
 )
 async def get_match_recommendations(
     match_id: str,
@@ -342,7 +342,7 @@ async def get_available_strategies(
         strategies = {
             "conservative": {
                 "name": "保守策略",
-                "description": "低风险，稳定收益，适合新手",
+                "description": "低风险,稳定收益,适合新手",
                 "max_kelly_fraction": 0.15,  # TODO: 将魔法数字 15 提取为常量
                 "min_ev_threshold": 0.08,
                 "risk_tolerance": 0.3,
@@ -350,7 +350,7 @@ async def get_available_strategies(
             },
             "balanced": {
                 "name": "平衡策略",
-                "description": "风险与收益平衡，适合有经验的投注者",
+                "description": "风险与收益平衡,适合有经验的投注者",
                 "max_kelly_fraction": 0.25,  # TODO: 将魔法数字 25 提取为常量
                 "min_ev_threshold": 0.05,
                 "risk_tolerance": 0.5,
@@ -358,7 +358,7 @@ async def get_available_strategies(
             },
             "aggressive": {
                 "name": "激进策略",
-                "description": "高风险高收益，适合专业投注者",
+                "description": "高风险高收益,适合专业投注者",
                 "max_kelly_fraction": 0.35,  # TODO: 将魔法数字 35 提取为常量
                 "min_ev_threshold": 0.03,
                 "risk_tolerance": 0.7,
@@ -539,7 +539,7 @@ __all__ = [
 ]
 
 
-def register_betting_api(app):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def register_betting_api(app):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """注册投注API路由"""
     app.include_router(router)
     logger.info("投注API路由注册完成")

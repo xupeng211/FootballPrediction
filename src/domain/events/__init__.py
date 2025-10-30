@@ -2,7 +2,7 @@
 领域事件
 Domain Events
 
-定义领域事件类，用于记录和传播领域中的重要事件。
+定义领域事件类,用于记录和传播领域中的重要事件.
 Defines domain event classes for recording and propagating important events in the domain.
 """
 

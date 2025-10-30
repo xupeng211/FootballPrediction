@@ -1,9 +1,9 @@
-""""""""
+""""
 可选依赖管理模块
 
-管理所有可选的、可能不存在的依赖导入。
-如果某个依赖不存在，会提供一个安全的替代实现或None值。
-""""""""
+管理所有可选的,可能不存在的依赖导入。
+如果某个依赖不存在,会提供一个安全的替代实现或None值.
+""""
 
 import logging
 import sys
@@ -22,21 +22,21 @@ class MissingDependency:
         self.name = name
 
     def __call__(self, *args, **kwargs):
-        warnings.warn(f"依赖 {self.name} 未安装，相关功能将被禁用", ImportWarning)
+        warnings.warn(f"依赖 {self.name} 未安装,相关功能将被禁用", ImportWarning)
         return None
 
     def __getattr__(self, item):
-        warnings.warn(f"依赖 {self.name} 未安装，相关功能将被禁用", ImportWarning)
+        warnings.warn(f"依赖 {self.name} 未安装,相关功能将被禁用", ImportWarning)
         return MissingDependency(f"{self.name}.{item}")
 
     def __bool__(self):
         return False
 
 
-# 尝试导入可选依赖，失败则提供占位符
+# 尝试导入可选依赖,失败则提供占位符
 def try_import(module_name: str, package: str = None) -> Union[Any, MissingDependency]:
-    """"""""
-    尝试导入模块，失败时返回占位符
+    """"
+    尝试导入模块,失败时返回占位符
 
     Args:
         module_name: 模块名
@@ -44,7 +44,7 @@ def try_import(module_name: str, package: str = None) -> Union[Any, MissingDepen
 
     Returns:
         模块对象或占位符
-    """"""""
+    """"
     try:
         if package:
             from importlib import import_module
@@ -55,13 +55,13 @@ def try_import(module_name: str, package: str = None) -> Union[Any, MissingDepen
     except ImportError:
         return MissingDependency(module_name)
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-        # 某些模块导入时可能会有属性错误，但不一定是严重问题
+        # 某些模块导入时可能会有属性错误,但不一定是严重问题
         # 只在调试模式下显示警告
         if __debug__ and module_name == "matplotlib":
-            # matplotlib 的 __version__ 属性问题很常见，静默处理
+            # matplotlib 的 __version__ 属性问题很常见,静默处理
             pass
         elif isinstance(e, ((((((((AttributeError) and "__version__" in str(e):
-            # 版本属性错误，静默处理
+            # 版本属性错误,静默处理
             pass
         else:
             warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)))))
@@ -144,8 +144,8 @@ great_expectations = try_import("great_expectations")
 
 
 def safe_import(module_path: str)) -> Optional[T]:
-    """"""""
-    安全地导入模块，返回默认值
+    """"
+    安全地导入模块,返回默认值
 
     Args:
         module_path: 模块路径（如 'package.module.Class'）
@@ -153,7 +153,7 @@ def safe_import(module_path: str)) -> Optional[T]:
 
     Returns:
         导入的对象或默认值
-    """"""""
+    """"
     try:
         parts = module_path.split(".")
         module = __import__(parts[0])
@@ -165,7 +165,7 @@ def safe_import(module_path: str)) -> Optional[T]:
 
 
 def has_dependency(dependency_name: str) -> bool:
-    """"""""
+    """"
     检查依赖是否存在
 
     Args:
@@ -173,7 +173,7 @@ def has_dependency(dependency_name: str) -> bool:
 
     Returns:
         是否存在
-    """"""""
+    """"
     try:
         parts = dependency_name.split(".")
         module = __import__(parts[0])
@@ -185,7 +185,7 @@ def has_dependency(dependency_name: str) -> bool:
 
 
 def get_dependency_version(dependency_name: str) -> Optional[str]:
-    """"""""
+    """"
     获取依赖版本
 
     Args:
@@ -193,7 +193,7 @@ def get_dependency_version(dependency_name: str) -> Optional[str]:
 
     Returns:
         版本号或None
-    """"""""
+    """"
     try:
         module = sys.modules.get(dependency_name)
         if module is None:
@@ -204,12 +204,12 @@ def get_dependency_version(dependency_name: str) -> Optional[str]:
 
 
 def check_optional_dependencies() -> dict:
-    """"""""
+    """"
     检查所有可选依赖的状态
 
     Returns:
         依赖状态字典
-    """"""""
+    """"
     dependencies = {
         "pandas": has_dependency("pandas"),
         "numpy": has_dependency("numpy"),

@@ -97,13 +97,13 @@ from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 """add_performance_critical_indexes
-添加性能关键索引，优化高频查询性能。
-基于性能分析结果，添加以下关键索引：
+添加性能关键索引,优化高频查询性能.
+基于性能分析结果,添加以下关键索引：
 - 预测表时间索引：优化创建时间查询
 - 比赛表状态时间复合索引：优化状态和时间查询
 - 特征表匹配时间索引：优化特征查询
-- 数据质量监控索引：优化监控查询
-- 审计日志索引：优化审计查询
+- 数据质量监控索引:优化监控查询
+- 审计日志索引:优化审计查询
 Revision ID: d3bf28af22ff
 Revises: 006_missing_indexes
 Create Date: 2025-09-29 23:08:00.000000
@@ -146,7 +146,7 @@ def _create_predictions_indexes(conn) -> None:
 def upgrade() -> None:
     """添加性能关键索引"""
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过性能索引创建")
+        logger.info("⚠️  离线模式:跳过性能索引创建")
         op.execute("-- offline mode: skipped performance indexes creation")
         return
     conn = op.get_bind()
@@ -364,7 +364,7 @@ def _create_audit_logs_indexes(conn) -> None:
 def downgrade() -> None:
     """删除性能关键索引"""
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过索引删除")
+        logger.info("⚠️  离线模式:跳过索引删除")
         op.execute("-- offline mode: skipped performance indexes removal")
         return
     conn = op.get_bind()

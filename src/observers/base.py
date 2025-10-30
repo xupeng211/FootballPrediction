@@ -2,7 +2,7 @@
 观察者模式基础类
 Observer Pattern Base Classes
 
-定义观察者和被观察者的核心接口。
+定义观察者和被观察者的核心接口.
 Defines core interfaces for observers and subjects.
 """
 
@@ -48,7 +48,7 @@ class ObservableEvent:
 class Observer(ABC):
     """观察者抽象基类
 
-    定义观察者必须实现的接口。
+    定义观察者必须实现的接口.
     Defines the interface that all observers must implement.
     """
 
@@ -84,7 +84,7 @@ class Observer(ABC):
         """添加事件过滤器
 
         Args:
-            filter_func: 过滤函数，返回True表示需要处理此事件
+            filter_func: 过滤函数,返回True表示需要处理此事件
         """
         self._subscription_filters.append(filter_func)
 
@@ -139,7 +139,7 @@ class Observer(ABC):
 class Subject(ABC):
     """被观察者抽象基类
 
-    定义被观察者必须实现的接口。
+    定义被观察者必须实现的接口.
     Defines the interface that all subjects must implement.
     """
 
@@ -305,7 +305,7 @@ class Subject(ABC):
 class CompositeObserver(Observer):
     """组合观察者
 
-    可以将多个观察器组合成一个。
+    可以将多个观察器组合成一个.
     Combines multiple observers into one.
     """
 

@@ -2,7 +2,7 @@
 事件驱动应用程序初始化
 Event-Driven Application Initialization
 
-提供事件系统的初始化和生命周期管理。
+提供事件系统的初始化和生命周期管理.
 Provides event system initialization and lifecycle management.
 """
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class EventDrivenApplication:
     """事件驱动应用程序
 
-    管理事件系统的生命周期。
+    管理事件系统的生命周期.
     Manages the event system lifecycle.
     """
 
@@ -73,9 +73,9 @@ class EventDrivenApplication:
     async def _register_custom_handlers(self) -> None:
         """注册自定义事件处理器"""
         # 这里可以注册特定于应用程序的事件处理器
-        # 例如：邮件发送处理器、WebSocket推送处理器等
+        # 例如:邮件发送处理器,WebSocket推送处理器等
 
-        # 示例：注册一个简单的统计处理器
+        # 示例:注册一个简单的统计处理器
         from ..events.base import Event, EventHandler
 
         class SimpleStatsHandler(EventHandler):

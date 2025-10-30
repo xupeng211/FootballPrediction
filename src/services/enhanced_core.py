@@ -1,7 +1,7 @@
 """
 增强的服务核心模块
 
-定义统一的基础服务类和配置。
+定义统一的基础服务类和配置.
 """
 
 import time
@@ -60,8 +60,8 @@ class ServiceMetrics:
 class EnhancedBaseService(ABC):
     """增强的基础服务类
 
-    整合了原有BaseService和AbstractBaseService的功能，
-    并添加了指标收集、配置管理、健康检查等功能。
+    整合了原有BaseService和AbstractBaseService的功能,
+    并添加了指标收集,配置管理,健康检查等功能.
     """
 
     def __init__(self, config: Optional[ServiceConfig] = None):
@@ -238,7 +238,7 @@ class EnhancedBaseService(ABC):
         return f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
 
 
-# 为了向后兼容，保留原有的BaseService类
+# 为了向后兼容,保留原有的BaseService类
 class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
 

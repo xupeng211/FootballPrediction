@@ -3,7 +3,7 @@
 多渠道通知管理器
 Multi-channel Notification Manager
 
-支持邮件、Slack、企业微信、钉钉等多种通知渠道
+支持邮件、Slack,企业微信,钉钉等多种通知渠道
 """
 
 import json
@@ -217,7 +217,7 @@ class EmailClient:
 
     async def _send_email(self, msg: MIMEMultipart, recipients: List[str]):
         """发送邮件"""
-        # 在实际实现中，这里应该使用异步SMTP库
+        # 在实际实现中,这里应该使用异步SMTP库
         # 目前使用同步方式作为示例
         with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
             if self.use_tls:
@@ -564,7 +564,7 @@ class NotificationManager:
     def _should_send_alert(self, alert: Alert, channel: NotificationChannel) -> bool:
         """检查告警是否应该发送到指定渠道"""
         try:
-            # 如果没有过滤条件，默认发送
+            # 如果没有过滤条件,默认发送
             if not channel.filters:
                 return True
 

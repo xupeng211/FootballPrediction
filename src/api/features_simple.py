@@ -1,7 +1,7 @@
 """
 简化版特征获取API
 
-提供基本的特征获取接口，避免复杂的Feast依赖问题。
+提供基本的特征获取接口,避免复杂的Feast依赖问题.
 """
 
 import logging
@@ -34,7 +34,7 @@ async def get_match_features(
         Dict包含比赛基本特征数据
     """
     try:
-        # 这里使用基本的SQL查询，避免复杂特征存储
+        # 这里使用基本的SQL查询,避免复杂特征存储
         result = await db.execute(
             select(
                 Match.id,

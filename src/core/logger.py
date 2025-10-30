@@ -1,7 +1,7 @@
 """
 足球预测系统日志管理模块
 
-提供统一的日志配置和管理功能。
+提供统一的日志配置和管理功能.
 """
 
 import logging
@@ -26,7 +26,7 @@ class Logger:
 
 
 def get_logger(name: str, level: str = "INFO") -> logging.Logger:
-    """获取日志器 - 全局函数，方便使用"""
+    """获取日志器 - 全局函数,方便使用"""
     return Logger.setup_logger(name, level)
 
 

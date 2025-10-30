@@ -1,7 +1,7 @@
 """
 数据库类型适配模块
 
-提供跨数据库兼容的数据类型定义，特别是JSONB与SQLite的兼容性支持。
+提供跨数据库兼容的数据类型定义,特别是JSONB与SQLite的兼容性支持.
 """
 
 import json
@@ -9,14 +9,15 @@ from typing import Any, Union
 
 from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.engine.interfaces import Dialect
 
 
 class SQLiteCompatibleJSONB(TypeDecorator):
     """
     SQLite兼容的JSONB类型
 
-    在PostgreSQL中使用JSONB，在SQLite中自动转换为TEXT存储。
-    提供统一的JSON操作接口。
+    在PostgreSQL中使用JSONB,在SQLite中自动转换为TEXT存储。
+    提供统一的JSON操作接口.
     """
 
     impl = Text
@@ -27,7 +28,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB())
         else:
-            # 对于SQLite和其他数据库，使用TEXT
+            # 对于SQLite和其他数据库,使用TEXT
             return dialect.type_descriptor(Text())
 
     def process_bind_param(self, value: Any, dialect) -> Union[str, Any]:
@@ -43,12 +44,12 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             if isinstance(value, (dict, list)):
                 return json.dumps(value)
             elif isinstance(value, str):
-                # 如果已经是字符串，验证是否为有效JSON
+                # 如果已经是字符串,验证是否为有效JSON
                 try:
                     json.loads(value)
                     return value
                 except (json.JSONDecodeError):
-                    # 如果不是有效JSON，包装成字符串
+                    # 如果不是有效JSON,包装成字符串
                     return json.dumps(value)
             else:
                 return json.dumps(value)
@@ -62,7 +63,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             # PostgreSQL的JSONB会自动反序列化
             return value
         else:
-            # SQLite存储的是JSON字符串，需要反序列化
+            # SQLite存储的是JSON字符串,需要反序列化
             if isinstance(value, str):
                 try:
                     return json.loads(value)
@@ -75,7 +76,7 @@ class CompatibleJSON(TypeDecorator):
     """
     跨数据库兼容的JSON类型
 
-    自动根据数据库类型选择最佳的JSON存储方式。
+    自动根据数据库类型选择最佳的JSON存储方式.
     """
 
     impl = Text
@@ -113,7 +114,7 @@ JsonbType = SQLiteCompatibleJSONB()
 CompatJsonType = CompatibleJSON()
 
 # 传统方式的兼容定义（向后兼容）
-JsonTypeCompat = JSONB().with_variant(JSON())
+JsonTypeCompat = JSON
 
 
 def get_json_type(use_jsonb: bool = True) -> TypeDecorator:

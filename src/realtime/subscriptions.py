@@ -63,7 +63,7 @@ import asyncio
 # 更新事件订阅者索引
 # 移除订阅
 # 更新事件订阅者索引
-# 如果连接没有任何订阅了，清理索引
+# 如果连接没有任何订阅了,清理索引
 # 清理事件订阅者索引
 # 删除连接的所有订阅
 # 检查是否超过非活跃阈值
@@ -76,7 +76,7 @@ import asyncio
 """
 订阅管理模块 - WebSocket事件订阅
 Subscription Management Module - WebSocket Event Subscriptions
-管理客户端对特定事件的订阅，支持过滤和路由
+管理客户端对特定事件的订阅,支持过滤和路由
 Manages client subscriptions to specific events with filtering and routing
 """
 

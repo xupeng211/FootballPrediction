@@ -2,7 +2,7 @@
 加密工具类
 CryptoUtils
 
-提供加密、哈希、编码等工具方法。
+提供加密,哈希,编码等工具方法.
 """
 
 import hashlib

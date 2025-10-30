@@ -1,7 +1,7 @@
 """球队领域服务
 
-提供围绕球队聚合的高级业务操作，例如比赛结果更新、
-球队信息维护以及联赛积分榜计算。
+提供围绕球队聚合的高级业务操作,例如比赛结果更新,
+球队信息维护以及联赛积分榜计算.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from ..models.team import Team, TeamForm, TeamStats
 
 
 class TeamRepositoryProtocol(Protocol):
-    """球队仓储协议。"""
+    """球队仓储协议."""
 
     def save(self, team: Team) -> Team:  # pragma: no cover - 协议定义
         ...
@@ -61,7 +61,7 @@ class TeamDomainService:
         self._repository = repository
 
     def attach_repository(self, repository: TeamRepositoryProtocol) -> None:
-        """绑定仓储实现。"""
+        """绑定仓储实现."""
         self._repository = repository
 
     def update_team_profile(
@@ -72,7 +72,7 @@ class TeamDomainService:
         stadium: Optional[str] = None,
         capacity: Optional[int] = None,
     ) -> None:
-        """批量更新球队基础信息。"""
+        """批量更新球队基础信息."""
         original = {
             "name": team.name,
             "short_name": team.short_name,
@@ -105,7 +105,7 @@ class TeamDomainService:
         goals_for: int,
         goals_against: int,
     ) -> Team:
-        """记录一场比赛的结果并更新球队统计。"""
+        """记录一场比赛的结果并更新球队统计."""
         team.add_match_result(result, goals_for, goals_against)
 
         stats = team.stats
@@ -125,14 +125,14 @@ class TeamDomainService:
         return team
 
     def reset_team_performance(self, team: Team) -> None:
-        """重置球队的统计和状态信息。"""
+        """重置球队的统计和状态信息."""
         team.stats = TeamStats()
         team.form = TeamForm()
         self._events.append(TeamPerformanceResetEvent(team_id=team.id or 0))
         self._persist(team)
 
     def calculate_league_table(self, teams: List[Team]) -> List[Dict[str, Any]]:
-        """根据球队当前统计生成积分榜。"""
+        """根据球队当前统计生成积分榜."""
         table = []
         for team in teams:
             stats = team.stats or TeamStats()
@@ -158,15 +158,15 @@ class TeamDomainService:
         return table
 
     def get_domain_events(self) -> List[Any]:
-        """返回当前收集到的领域事件快照。"""
+        """返回当前收集到的领域事件快照."""
         return self._events.copy()
 
     def clear_domain_events(self) -> None:
-        """清空领域事件缓存。"""
+        """清空领域事件缓存."""
         self._events.clear()
 
     def _persist(self, team: Team) -> Team:
-        """将球队状态同步到仓储（如有）。"""
+        """将球队状态同步到仓储（如有）."""
         if not self._repository:
             return team
 

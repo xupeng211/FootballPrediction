@@ -1,11 +1,11 @@
-""""""""
+""""
 实时比赛状态监控服务
 
 Realtime Match Status Monitoring Service
 
 监控比赛状态变化并提供实时更新推送
 Monitors match status changes and provides real-time update push functionality
-""""""""
+""""
 
 import asyncio
 import logging
@@ -59,7 +59,7 @@ class MatchInfo:
             self.last_update = datetime.now()
 
     def update_score(self, home_score: int, away_score: int, minute: Optional[int] = None) -> bool:
-        """更新比分，返回是否有变化"""
+        """更新比分,返回是否有变化"""
         score_changed = self.home_score != home_score or self.away_score != away_score
 
         self.home_score = home_score
@@ -71,7 +71,7 @@ class MatchInfo:
         return score_changed
 
     def update_status(self, status: MatchStatus) -> bool:
-        """更新状态，返回是否有变化"""
+        """更新状态,返回是否有变化"""
         if self.status != status:
             old_status = self.status
             # 记录状态变化（用于日志或调试）
@@ -151,7 +151,7 @@ class RealtimeMatchService:
         status: MatchStatus = MatchStatus.UPCOMING,
         start_time: Optional[datetime] = None,
     ) -> bool:
-        """"""""
+        """"
         添加比赛到监控列表
 
         Args:
@@ -164,7 +164,7 @@ class RealtimeMatchService:
 
         Returns:
             是否添加成功
-        """"""""
+        """"
         if len(self.matches) >= self.max_matches:
             await self._cleanup_old_matches()
 
@@ -210,7 +210,7 @@ class RealtimeMatchService:
         away_score: int,
         minute: Optional[int] = None,
     ) -> bool:
-        """"""""
+        """"
         更新比赛比分
 
         Args:
@@ -221,7 +221,7 @@ class RealtimeMatchService:
 
         Returns:
             是否更新成功
-        """"""""
+        """"
         if match_id not in self.matches:
             return False
 
@@ -251,7 +251,7 @@ class RealtimeMatchService:
         status: MatchStatus,
         current_time: Optional[datetime] = None,
     ) -> bool:
-        """"""""
+        """"
         更新比赛状态
 
         Args:
@@ -261,7 +261,7 @@ class RealtimeMatchService:
 
         Returns:
             是否更新成功
-        """"""""
+        """"
         if match_id not in self.matches:
             return False
 

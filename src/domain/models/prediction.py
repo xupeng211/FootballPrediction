@@ -2,7 +2,7 @@
 预测领域模型
 Prediction Domain Model
 
-封装预测相关的业务逻辑和不变性约束。
+封装预测相关的业务逻辑和不变性约束.
 Encapsulates prediction-related business logic and invariants.
 """
 
@@ -150,7 +150,7 @@ class Prediction:
     """
     预测领域模型
 
-    封装预测的核心业务逻辑和不变性约束。
+    封装预测的核心业务逻辑和不变性约束.
     """
 
     id: Optional[int] = None
@@ -189,7 +189,7 @@ class Prediction:
     ) -> None:
         """创建预测"""
         if self.status != PredictionStatus.PENDING:
-            raise DomainError(f"预测状态为 {self.status.value}，无法修改")
+            raise DomainError(f"预测状态为 {self.status.value},无法修改")
 
         self.score = PredictionScore(predicted_home=predicted_home, predicted_away=predicted_away)
 
@@ -221,7 +221,7 @@ class Prediction:
     ) -> None:
         """评估预测结果"""
         if self.status != PredictionStatus.PENDING:
-            raise DomainError(f"预测状态为 {self.status.value}，无法评估")
+            raise DomainError(f"预测状态为 {self.status.value},无法评估")
 
         if not self.score:
             raise DomainError("预测必须包含比分才能评估")
@@ -252,7 +252,7 @@ class Prediction:
     def cancel(self, reason: Optional[str] = None) -> None:
         """取消预测"""
         if self.status in [PredictionStatus.EVALUATED, PredictionStatus.CANCELLED]:
-            raise DomainError(f"预测状态为 {self.status.value}，无法取消")
+            raise DomainError(f"预测状态为 {self.status.value},无法取消")
 
         self.status = PredictionStatus.CANCELLED
         self.cancelled_at = datetime.utcnow()
@@ -261,7 +261,7 @@ class Prediction:
     def mark_expired(self) -> None:
         """标记为过期"""
         if self.status != PredictionStatus.PENDING:
-            raise DomainError(f"预测状态为 {self.status.value}，无法标记为过期")
+            raise DomainError(f"预测状态为 {self.status.value},无法标记为过期")
 
         self.status = PredictionStatus.EXPIRED
 

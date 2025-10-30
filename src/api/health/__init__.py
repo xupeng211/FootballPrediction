@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 
 # 发出弃用警告
 warnings.warn(
-    "直接从 health 导入已弃用，请使用 from src.api.health.router import router",
+    "直接从 health 导入已弃用,请使用 from src.api.health.router import router",
     DeprecationWarning,
     stacklevel=2,
 )
@@ -68,7 +68,7 @@ async def liveness_check():
         try:
             timestamp = time.time()
         except Exception:
-            # 如果时间函数失败，使用默认值
+            # 如果时间函数失败,使用默认值
             timestamp = 0.0
 
         return {

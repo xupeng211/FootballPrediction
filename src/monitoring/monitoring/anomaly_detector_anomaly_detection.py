@@ -40,7 +40,7 @@ class AnomalyResult:
 class AnomalyDetector:
     """统计学异常检测器主类
 
-    提供多种异常检测方法：
+    提供多种异常检测方法:
     - 3σ规则检测
     - IQR方法检测
     - Z-score分析

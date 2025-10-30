@@ -38,10 +38,10 @@ from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 
     # 3. 为现有表添加分区（需要先备份数据）
-    # 注意：在生产环境中，这需要谨慎操作
+    # 注意:在生产环境中，这需要谨慎操作
         # 检查表是否已分区
 
-            # 在实际部署中，需要先创建分区表，再迁移数据
+            # 在实际部署中，需要先创建分区表,再迁移数据
 
 
     # 4. 创建年度分区（示例）
@@ -83,7 +83,7 @@ from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 
     # 检查是否在离线模式
-        # 在离线模式下执行注释，确保 SQL 生成正常
+        # 在离线模式下执行注释,确保 SQL 生成正常
 
 
 
@@ -101,7 +101,7 @@ from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 logger = logging.getLogger(__name__)
 """implement_partitioned_tables_and_indexes
 实现分区表和索引优化策略
-基于 architecture.md 第3.4节和第3.3节的设计要求，实现：
+基于 architecture.md 第3.4节和第3.3节的设计要求,实现:
 1. 比赛表按年份分区
 2. 预测表按月分区
 3. 补充缺失的查询优化索引
@@ -128,25 +128,25 @@ def is_postgresql():
     return bind.dialect.name == "postgresql"
 def upgrade() -> None:
     """
-    升级数据库：实现分区表和索引优化
-    SQLite不支持分区表，但会创建相应的索引来优化查询性能。
-    PostgreSQL将实现完整的分区表策略和高级索引。
+    升级数据库:实现分区表和索引优化
+    SQLite不支持分区表,但会创建相应的索引来优化查询性能。
+    PostgreSQL将实现完整的分区表策略和高级索引.
     """
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过分区表实现")
+        logger.info("⚠️  离线模式:跳过分区表实现")
         op.execute("-- offline mode: skipped partitioned tables implementation")
         op.execute("-- offline mode: skipped advanced indexes creation")
         return
     bind = op.get_bind()
     logger.info(f"当前数据库类型: {bind.dialect.name}")
     if is_postgresql():
-        logger.info("PostgreSQL环境：实现分区表和高级索引...")
+        logger.info("PostgreSQL环境:实现分区表和高级索引...")
         _implement_postgresql_partitioning_and_indexes()
     elif is_sqlite():
-        logger.info("SQLite环境：实现优化索引（不支持分区表）...")
+        logger.info("SQLite环境:实现优化索引（不支持分区表）...")
         _implement_sqlite_optimized_indexes()
     else:
-        logger.info(f"其他数据库类型 {bind.dialect.name}：实现基础索引...")
+        logger.info(f"其他数据库类型 {bind.dialect.name}:实现基础索引...")
         _implement_basic_indexes()
     logger.info("分区表和索引优化实施完成")
 def _implement_postgresql_partitioning_and_indexes():
@@ -224,7 +224,7 @@ def _implement_postgresql_partitioning_and_indexes():
             .scalar()
         )
         if result == 0:
-            logger.info("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
+            logger.info("  提醒:matches表尚未分区,建议在维护窗口期间手动执行分区操作")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"  分区检查失败: {e}")
     current_year = 2025
@@ -372,7 +372,7 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
         .scalar()
     )
     if exists > 0:
-        logger.info(f"  索引 {name} 已存在，跳过创建")
+        logger.info(f"  索引 {name} 已存在,跳过创建")
         return
     columns_str = ", ".join(columns)
     if method == "gin":
@@ -390,16 +390,16 @@ def _create_simple_index(name, table, columns):
         logger.info(f"  ✓ 已创建索引: {name}")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         if "already exists" in str(e).lower():
-            logger.info(f"  索引 {name} 已存在，跳过创建")
+            logger.info(f"  索引 {name} 已存在,跳过创建")
         else:
             raise
 def downgrade() -> None:
     """
-    降级操作：移除分区表和索引
-    注意：分区表的降级需要谨慎操作，可能需要数据迁移
+    降级操作:移除分区表和索引
+    注意:分区表的降级需要谨慎操作,可能需要数据迁移
     """
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过分区表降级")
+        logger.info("⚠️  离线模式:跳过分区表降级")
         op.execute("-- offline mode: skipped partitioned tables downgrade")
         op.execute("-- offline mode: skipped advanced indexes removal")
         return

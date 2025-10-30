@@ -2,7 +2,7 @@
 多租户权限管理中间件
 Multi-Tenant Permission Management Middleware
 
-提供HTTP层面的多租户权限控制和访问管理。
+提供HTTP层面的多租户权限控制和访问管理.
 """
 
 import json
@@ -54,7 +54,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
     """
     多租户中间件
 
-    负责处理HTTP请求中的租户识别、用户认证和权限验证
+    负责处理HTTP请求中的租户识别,用户认证和权限验证
     """
 
     def __init__(self, app, tenant_service: TenantService, auth_service: AuthService):
@@ -64,7 +64,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
-        处理请求，建立租户上下文
+        处理请求,建立租户上下文
         """
         try:
             # 从请求中提取租户信息
@@ -117,7 +117,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         """
         从请求中提取租户信息
 
-        支持多种租户识别方式：
+        支持多种租户识别方式:
         1. 子域名 (tenant.example.com)
         2. 自定义域名
         3. Header (X-Tenant-ID 或 X-Tenant-Slug)
@@ -202,7 +202,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                             context["restrictions"] = permission_result.restrictions
 
             except Exception:
-                # Token解析失败，继续其他验证方式
+                # Token解析失败,继续其他验证方式
                 pass
 
         # 尝试从API Key获取用户信息
@@ -260,9 +260,9 @@ def require_permission(permission_code: str, resource_context: Optional[Dict[str
                     detail="未认证的访问"
                 )
 
-            # 如果需要特定权限，进行检查
+            # 如果需要特定权限,进行检查
             if permission_code:
-                # 这里需要访问数据库，所以需要获取服务实例
+                # 这里需要访问数据库,所以需要获取服务实例
                 # 实际实现中应该通过依赖注入获取服务
                 from src.database.base import get_db_session
 

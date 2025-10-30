@@ -3,7 +3,7 @@
 
 Realtime Module - Football Prediction System WebSocket Real-time Communication
 
-提供完整的WebSocket实时通信功能，包括：
+提供完整的WebSocket实时通信功能,包括:
 - WebSocket连接管理
 - 事件定义和处理
 - 订阅管理

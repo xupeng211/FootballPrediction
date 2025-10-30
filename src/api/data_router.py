@@ -131,7 +131,7 @@ async def get_leagues(
     """
     获取联赛列表
 
-    支持按国家和赛季筛选联赛。
+    支持按国家和赛季筛选联赛.
     """
     logger.info(f"获取联赛列表: country={country}, season={season}")
 
@@ -194,7 +194,7 @@ async def get_teams(
     """
     获取球队列表
 
-    支持按联赛、国家筛选，或通过关键词搜索球队。
+    支持按联赛,国家筛选,或通过关键词搜索球队.
     """
     logger.info(f"获取球队列表: league_id={league_id}, search={search}")
 
@@ -294,7 +294,7 @@ async def get_matches(
     """
     获取比赛列表
 
-    支持按联赛、球队、日期范围、状态筛选比赛。
+    支持按联赛、球队,日期范围,状态筛选比赛.
     """
     logger.info(f"获取比赛列表: league_id={league_id}, team_id={team_id}")
 
@@ -408,7 +408,7 @@ async def get_odds(
     """
     获取赔率数据
 
-    支持按比赛和博彩公司筛选赔率。
+    支持按比赛和博彩公司筛选赔率.
     """
     logger.info(f"获取赔率数据: match_id={match_id}, bookmaker={bookmaker}")
 

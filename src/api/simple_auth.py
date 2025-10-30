@@ -3,14 +3,14 @@ from datetime import datetime
 """
 简化的用户认证API
 
-提供基本的用户认证功能，避免复杂依赖问题
+提供基本的用户认证功能,避免复杂依赖问题
 """
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
-# 简化的依赖，避免复杂导入
+# 简化的依赖,避免复杂导入
 # from src.database.connection import get_async_session
 
 router = APIRouter(prefix="/auth", tags=["认证"])
@@ -202,8 +202,8 @@ auth_service = SimpleAuthService()
 
 # 依赖函数
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
-    """获取当前用户（简化版本，不验证令牌）"""
-    # 简化实现：从令牌中提取用户名
+    """获取当前用户（简化版本,不验证令牌）"""
+    # 简化实现:从令牌中提取用户名
     # 实际应用中应该验证JWT令牌
     if not token:
         raise HTTPException(
@@ -212,7 +212,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 简化实现：假设token格式为 "Bearer username"
+    # 简化实现:假设token格式为 "Bearer username"
     if token.startswith("Bearer "):
         username = token[7:]  # 移除 "Bearer " 前缀
     else:

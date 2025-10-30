@@ -6,7 +6,7 @@ from typing import List
 实时质量监控WebSocket服务器
 Real-time Quality Monitoring WebSocket Server
 
-提供实时质量指标推送、告警广播和客户端连接管理
+提供实时质量指标推送,告警广播和客户端连接管理
 """
 
 import asyncio
@@ -390,7 +390,7 @@ class QualityMonitorServer:
                     f"alert:{alert['id']}", 3600, json.dumps(alert)  # 1小时过期
                 )
 
-            # 如果有新告警，立即广播
+            # 如果有新告警,立即广播
             if alerts:
                 await self.broadcast_quality_update({"type": "new_alerts", "alerts": alerts})
 

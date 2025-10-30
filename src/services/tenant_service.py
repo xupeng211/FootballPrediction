@@ -2,8 +2,8 @@
 企业级多租户管理服务
 Enterprise Multi-Tenant Management Service
 
-提供多租户架构的核心管理功能，包括租户生命周期管理、
-权限控制、资源配额管理等。
+提供多租户架构的核心管理功能,包括租户生命周期管理,
+权限控制,资源配额管理等.
 """
 
 import asyncio
@@ -66,7 +66,7 @@ class TenantService:
     """
     企业级多租户管理服务
 
-    提供完整的租户生命周期管理、权限控制和资源配额管理功能
+    提供完整的租户生命周期管理,权限控制和资源配额管理功能
     """
 
     def __init__(self, db: AsyncSession):
@@ -523,7 +523,7 @@ class TenantService:
             {
                 "name": "租户管理员",
                 "code": "tenant_admin",
-                "description": "租户管理员，拥有所有权限",
+                "description": "租户管理员,拥有所有权限",
                 "level": 10,
                 "permissions": [
                     "tenant.manage", "users.manage", "roles.manage",
@@ -533,7 +533,7 @@ class TenantService:
             {
                 "name": "数据分析师",
                 "code": "analyst",
-                "description": "数据分析师，可以查看和分析数据",
+                "description": "数据分析师,可以查看和分析数据",
                 "level": 5,
                 "permissions": [
                     "predictions.view", "predictions.create", "data.view",
@@ -543,7 +543,7 @@ class TenantService:
             {
                 "name": "普通用户",
                 "code": "user",
-                "description": "普通用户，基本使用权限",
+                "description": "普通用户,基本使用权限",
                 "level": 1,
                 "permissions": [
                     "predictions.view", "predictions.create", "data.view"

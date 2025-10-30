@@ -1,7 +1,7 @@
-""""""""
+""""
 数据质量异常处理器（兼容版本）
 Data Quality Exception Handler (Compatibility Version)
-""""""""
+""""
 
 import logging
 from datetime import datetime
@@ -76,8 +76,8 @@ class DataQualityExceptionHandler:
         """处理异常"""""
 
         Returns:
-            bool: True表示异常已处理，False表示未处理
-        """"""""
+            bool: True表示异常已处理,False表示未处理
+        """"
         if isinstance(exception, ((((((((DataQualityException):
             # 记录异常
             self.exceptions.append(exception)
@@ -90,7 +90,7 @@ class DataQualityExceptionHandler:
                 except Exception as e:
                     logger.error(f"Error handling exception: {e}")
 
-            # 默认处理：记录日志
+            # 默认处理:记录日志
             logger.error(f"Data quality error: {exception}")
             return False
 
@@ -279,7 +279,7 @@ class SuspiciousOddsHandler:
 
     def validate_over_under(self, line: float, over_odds: float, under_odds: float) -> bool:
         """验证大小球赔率"""
-        # 基本验证：赔率应该合理
+        # 基本验证:赔率应该合理
         if over_odds < 1.01 or under_odds < 1.01:
             return False
 

@@ -1,10 +1,10 @@
-""""""""
+""""
 门面工厂
 Facade Factory
 
-用于创建和配置门面实例。
+用于创建和配置门面实例.
 Used to create and configure facade instances.
-""""""""
+""""
 
 import json
 import os
@@ -299,3 +299,4 @@ facade_factory = FacadeFactory()
 
 # 创建默认配置
 facade_factory.create_default_configs()
+]]

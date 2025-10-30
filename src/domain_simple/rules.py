@@ -140,7 +140,7 @@ class ValidationEngine:
             result.errors.extend(rule_result.errors)
             result.warnings.extend(rule_result.warnings)
 
-            # 如果有错误，标记为无效
+            # 如果有错误,标记为无效
             if rule_result.has_errors():
                 result.is_valid = False
 
@@ -205,7 +205,7 @@ class BusinessRules:
         """创建比赛相关的业务规则"""
         rules = []
 
-        # 规则1：比赛必须有两支不同的球队
+        # 规则1:比赛必须有两支不同的球队
         rules.append(
             BusinessRule(
                 name="different_teams",
@@ -217,7 +217,7 @@ class BusinessRules:
             )
         )
 
-        # 规则2：比赛时间不能是过去
+        # 规则2:比赛时间不能是过去
         rules.append(
             BusinessRule(
                 name="future_match_time",
@@ -228,7 +228,7 @@ class BusinessRules:
             )
         )
 
-        # 规则3：比分不能为负数
+        # 规则3:比分不能为负数
         rules.append(
             BusinessRule(
                 name="non_negative_scores",
@@ -246,7 +246,7 @@ class BusinessRules:
         """创建预测相关的业务规则"""
         rules = []
 
-        # 规则1：置信度必须在0-1之间
+        # 规则1:置信度必须在0-1之间
         rules.append(
             BusinessRule(
                 name="valid_confidence",
@@ -256,7 +256,7 @@ class BusinessRules:
             )
         )
 
-        # 规则2：投注金额必须为正数
+        # 规则2:投注金额必须为正数
         rules.append(
             BusinessRule(
                 name="positive_stake",
@@ -266,7 +266,7 @@ class BusinessRules:
             )
         )
 
-        # 规则3：赔率必须大于1
+        # 规则3:赔率必须大于1
         rules.append(
             BusinessRule(
                 name="valid_odds",
@@ -283,7 +283,7 @@ class BusinessRules:
         """创建球队相关的业务规则"""
         rules = []
 
-        # 规则1：球队名称不能为空
+        # 规则1:球队名称不能为空
         rules.append(
             BusinessRule(
                 name="non_empty_name",
@@ -293,7 +293,7 @@ class BusinessRules:
             )
         )
 
-        # 规则2：成立年份不能在未来
+        # 规则2:成立年份不能在未来
         rules.append(
             BusinessRule(
                 name="valid_founding_year",
@@ -303,7 +303,7 @@ class BusinessRules:
             )
         )
 
-        # 规则3：实力评分必须在0-100之间
+        # 规则3:实力评分必须在0-100之间
         rules.append(
             BusinessRule(
                 name="valid_strength_score",

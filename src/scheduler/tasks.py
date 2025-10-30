@@ -4,14 +4,14 @@ Celery Scheduler Tasks
 
 实现足球数据采集和处理的定时任务。
 
-⚠️ 注意：此文件已重构为模块化结构。
-为了向后兼容性，这里保留了原始的导入接口。
-建议使用：from src.scheduler.tasks import <task_name>
+⚠️ 注意:此文件已重构为模块化结构。
+为了向后兼容性,这里保留了原始的导入接口。
+建议使用:from src.scheduler.tasks import <task_name>
 
-基于 DATA_DESIGN.md 第3节设计。
+基于 DATA_DESIGN.md 第3节设计.
 """
 
-from .tasks import (  # 为了向后兼容性，从新的模块化结构中导入所有任务; 基础类; 数据采集任务; 特征计算任务; 维护任务; 质量检查任务; 预测任务; 数据处理任务; 任务别名（向后兼容）
+from .tasks import (  # 为了向后兼容性,从新的模块化结构中导入所有任务; 基础类; 数据采集任务; 特征计算任务; 维护任务; 质量检查任务; 预测任务; 数据处理任务; 任务别名（向后兼容）
     BaseDataTask,
     backup_database,
     calculate_features_batch,
@@ -60,7 +60,7 @@ __all__ = [
 # 此处保留仅用于向后兼容性
 # 请使用新的模块化结构以获得更好的维护性
 
-# 包含的所有任务：
+# 包含的所有任务:
 # - collect_fixtures: 采集赛程数据
 # - collect_odds: 采集赔率数据
 # - collect_live_scores_conditional: 条件性实时比分采集

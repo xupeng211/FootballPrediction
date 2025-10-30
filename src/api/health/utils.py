@@ -1,18 +1,18 @@
 """
 Health Utils - API模块
 
-提供健康检查相关的工具类。
+提供健康检查相关的工具类.
 
 主要功能：
 - HealthChecker 类用于检查各个服务的健康状态
-- 数据库、Redis、预测服务的健康检查
+- 数据库,Redis,预测服务的健康检查
 
-使用示例：
+使用示例:
     from .health.utils import HealthChecker
     checker = HealthChecker()
     status = await checker.check_all_services()
 
-注意事项：
+注意事项:
 - 所有检查方法都是异步的
 - 返回统一格式的健康状态
 """
@@ -26,7 +26,7 @@ from typing import Any, Dict
 class HealthChecker:
     """健康检查器类
 
-    用于检查系统中各个服务的健康状态，包括：
+    用于检查系统中各个服务的健康状态,包括:
     - 数据库连接
     - Redis 缓存
     - 预测服务

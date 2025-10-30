@@ -2,9 +2,9 @@
 数据质量监控模块
 
 提供基于Great Expectations的数据质量监控和异常检测功能。
-集成Prometheus指标导出，支持实时监控和告警。
+集成Prometheus指标导出,支持实时监控和告警.
 
-主要组件：
+主要组件:
 - DataQualityMonitor: 数据质量监控器
 - DataQualityExceptionHandler: 数据质量异常处理器
 - GePrometheusExporter: Great Expectations Prometheus指标导出器
@@ -19,7 +19,7 @@ from .anomaly_detector import (  # AnomalyDetector,  # Simple version  # 未使�
     StatisticalAnomalyDetector,
 )
 
-# 如果 AdvancedAnomalyDetector 不存在，创建一个简单的实现
+# 如果 AdvancedAnomalyDetector 不存在,创建一个简单的实现
 try:
     from .advanced_anomaly_detector import AdvancedAnomalyDetector
 except ImportError:

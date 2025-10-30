@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Advanced Prediction API
-高级预测API，支持多种预测模型
+高级预测API,支持多种预测模型
 
 生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """

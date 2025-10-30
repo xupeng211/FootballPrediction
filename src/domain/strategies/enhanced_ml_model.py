@@ -2,8 +2,8 @@
 增强机器学习模型策略
 Enhanced ML Model Strategy
 
-Phase G Week 4 P2任务：智能预测增强
-专注于性能优化和预测准确性提升。
+Phase G Week 4 P2任务:智能预测增强
+专注于性能优化和预测准确性提升.
 """
 
 import asyncio
@@ -61,7 +61,7 @@ class PredictionCache:
                 self.hits += 1
                 return self.cache[key]
             else:
-                # 过期，删除
+                # 过期,删除
                 del self.cache[key]
                 del self.timestamps[key]
 
@@ -216,8 +216,8 @@ class PerformanceMetrics:
 class EnhancedMLModelStrategy(PredictionStrategy):
     """增强机器学习模型预测策略
 
-    Phase G Week 4 P2任务：智能预测增强
-    专注于性能优化和预测准确性提升。
+    Phase G Week 4 P2任务:智能预测增强
+    专注于性能优化和预测准确性提升.
     """
 
     def __init__(self, model_name: str = "enhanced_ml_model"):
@@ -295,7 +295,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
                 except FileNotFoundError:
                     self.logger.warning(f"Model file not found: {model_file}")
 
-            # 如果没有预训练模型，创建简单的模型
+            # 如果没有预训练模型,创建简单的模型
             if not self.models:
                 self._create_simple_models()
 
@@ -606,7 +606,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         start_time = time.time()
 
         # 这里可以实现真正的批量预测逻辑
-        # 例如：向量化处理、并行处理等
+        # 例如:向量化处理,并行处理等
 
         results = []
         for inp in inputs:

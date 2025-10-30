@@ -1,7 +1,7 @@
 """
 数据库连接管理模块 / Database Connection Management Module
 
-提供同步和异步的PostgreSQL数据库连接、会话管理和生命周期控制。
+提供同步和异步的PostgreSQL数据库连接,会话管理和生命周期控制。
 支持多用户权限分离的数据库连接管理。
 集成重试机制以提高连接可靠性。
 
@@ -10,7 +10,7 @@ and lifecycle control. Supports multi-user permission-separated database connect
 Integrates retry mechanisms to improve connection reliability.
 
 ⚠️ 注意：此文件已重构为模块化结构。
-为了向后兼容性，这里保留了原始的导入接口。
+为了向后兼容性，这里保留了原始的导入接口.
 建议使用：from src.database.connection import <class_name>
 
 主要类 / Main Classes:
@@ -48,7 +48,7 @@ Integrates retry mechanisms to improve connection reliability.
     DB_USER: 数据库用户名 / Database username
     DB_PASSWORD: 数据库密码 / Database password
     DATABASE_RETRY_MAX_ATTEMPTS: 数据库重试最大尝试次数，默认5 / Database retry max attempts, default 5
-    DATABASE_RETRY_BASE_DELAY: 数据库重试基础延迟秒数，默认1.0 / Database retry base delay in seconds, default 1.0
+    DATABASE_RETRY_BASE_DELAY: 数据库重试基础延迟秒数,默认1.0 / Database retry base delay in seconds, default 1.0
 
 依赖 / Dependencies:
     - sqlalchemy: 数据库ORM框架 / Database ORM framework
@@ -56,8 +56,8 @@ Integrates retry mechanisms to improve connection reliability.
     - src.utils.retry: 重试机制 / Retry mechanism
 
 重构历史 / Refactoring History:
-    - 原始文件：1110行，包含所有数据库连接管理功能
-    - 重构为模块化结构：
+    - 原始文件:1110行,包含所有数据库连接管理功能
+    - 重构为模块化结构:
       - roles.py: 数据库角色定义
       - config.py: 数据库配置
       - manager.py: 数据库连接管理器
@@ -116,10 +116,10 @@ __all__ = [
 # 此处保留仅用于向后兼容性
 # 请使用新的模块化结构以获得更好的维护性
 
-# 包含的所有功能：
-# - DatabaseRole: 数据库用户角色枚举（READER、WRITER、ADMIN）
+# 包含的所有功能:
+# - DatabaseRole: 数据库用户角色枚举（READER,WRITER,ADMIN）
 # - DatabaseManager: 单例数据库连接管理器
 # - MultiUserDatabaseManager: 多用户数据库连接管理器
 # - get_database_manager: 获取数据库管理器单例
 # - initialize_database: 初始化数据库连接
-# - 各种会话获取函数：get_db_session, get_reader_session等
+# - 各种会话获取函数:get_db_session, get_reader_session等

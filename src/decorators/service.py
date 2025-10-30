@@ -2,7 +2,7 @@
 装饰器服务
 Decorator Service
 
-提供装饰器的高层管理和服务。
+提供装饰器的高层管理和服务.
 Provides high-level management and services for decorators.
 """
 
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 class DecoratorService:
-    """装饰器服务，管理和应用装饰器"""
+    """装饰器服务,管理和应用装饰器"""
 
     def __init__(self, factory: Optional[DecoratorFactory] = None):
         self.factory = factory or DecoratorFactory()
@@ -52,7 +52,7 @@ class DecoratorService:
         """应用装饰器到函数"""
         func_name = func.__name__
 
-        # 如果已经装饰过，直接返回
+        # 如果已经装饰过,直接返回
         if func_name in self._decorated_functions:
             return self._decorated_functions[func_name]
 
@@ -181,7 +181,7 @@ class DecoratorService:
 
 # 便捷装饰器函数
 def decorate(decorator_names: Optional[List[str]] = None, **decorator_kwargs) -> Callable:
-    """装饰器工厂函数，用于装饰其他函数"""
+    """装饰器工厂函数,用于装饰其他函数"""
 
     def decorator(func: Callable) -> Callable:
         # 获取装饰器服务

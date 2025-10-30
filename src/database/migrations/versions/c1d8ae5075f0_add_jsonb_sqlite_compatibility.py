@@ -16,7 +16,7 @@ from alembic import context, op
 
 
 # SQLite特定的配置
-# 由于我们使用了TypeDecorator，JSON数据会自动转换为TEXT存储
+# 由于我们使用了TypeDecorator,JSON数据会自动转换为TEXT存储
 
 # 验证主要的JSON字段表是否存在
 
@@ -31,13 +31,13 @@ from alembic import context, op
 
 # 检查是否在离线模式
 
-# 在离线模式下执行注释，确保 SQL 生成正常
+# 在离线模式下执行注释,确保 SQL 生成正常
 
 logger = logging.getLogger(__name__)
 """add_jsonb_sqlite_compatibility
 添加JSONB与SQLite兼容性支持
-本迁移文件主要目的是确保数据库模型在不同数据库类型（PostgreSQL/SQLite）下的兼容性。
-主要变更：
+本迁移文件主要目的是确保数据库模型在不同数据库类型（PostgreSQL/SQLite）下的兼容性.
+主要变更:
 1. 验证现有JSONB字段的兼容性配置
 2. 添加数据库类型检测辅助函数
 3. 确保SQLite环境下JSON字段正常工作
@@ -71,20 +71,20 @@ def is_postgresql():
 def upgrade() -> None:
     """
     升级数据库结构以支持JSONB与SQLite兼容性
-    注意：由于我们已经在模型层面使用了兼容的类型定义，
-    这个迁移主要是为了验证和确保现有结构的兼容性。
+    注意:由于我们已经在模型层面使用了兼容的类型定义,
+    这个迁移主要是为了验证和确保现有结构的兼容性.
     """
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过JSONB兼容性检查")
+        logger.info("⚠️  离线模式:跳过JSONB兼容性检查")
         op.execute("-- offline mode: skipped JSONB compatibility validation")
         return
     bind = op.get_bind()
     logger.info(f"当前数据库类型: {bind.dialect.name}")
     if is_sqlite():
-        logger.info("检测到SQLite数据库，执行SQLite兼容性配置...")
+        logger.info("检测到SQLite数据库,执行SQLite兼容性配置...")
         _configure_sqlite_compatibility()
     elif is_postgresql():
-        logger.info("检测到PostgreSQL数据库，验证JSONB配置...")
+        logger.info("检测到PostgreSQL数据库,验证JSONB配置...")
         _verify_postgresql_jsonb_config()
     else:
         logger.info(f"检测到其他数据库类型: {bind.dialect.name}")
@@ -104,9 +104,9 @@ def _configure_sqlite_compatibility():
     existing_tables = inspector.get_table_names()
     for table_name in tables_to_check:
         if table_name in existing_tables:
-            logger.info(f"  ✓ 表 {table_name} 存在，JSON字段将自动适配为TEXT")
+            logger.info(f"  ✓ 表 {table_name} 存在,JSON字段将自动适配为TEXT")
         else:
-            logger.info(f"  ⚠ 表 {table_name} 不存在，跳过检查")
+            logger.info(f"  ⚠ 表 {table_name} 不存在,跳过检查")
 
 
 def _verify_postgresql_jsonb_config():
@@ -137,7 +137,7 @@ def _verify_postgresql_jsonb_config():
                     if gin_index:
                         logger.info(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
-                        print(f"    ⚠ {jsonb_column} 字段缺少GIN索引，查询性能可能受影响")
+                        print(f"    ⚠ {jsonb_column} 字段缺少GIN索引,查询性能可能受影响")
                 else:
                     logger.info(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:
@@ -149,11 +149,11 @@ def _verify_postgresql_jsonb_config():
 def downgrade() -> None:
     """
     降级操作
-    由于此迁移主要是兼容性验证和配置，降级时不需要特殊操作。
-    实际的数据库结构没有发生改变。
+    由于此迁移主要是兼容性验证和配置,降级时不需要特殊操作。
+    实际的数据库结构没有发生改变.
     """
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过JSONB兼容性降级")
+        logger.info("⚠️  离线模式:跳过JSONB兼容性降级")
         op.execute("-- offline mode: skipped JSONB compatibility downgrade")
         return
     logger.info("JSONB兼容性迁移降级 - 无需特殊操作")

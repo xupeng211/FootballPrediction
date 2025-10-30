@@ -2,7 +2,7 @@
 门面模式基础类
 Facade Pattern Base Classes
 
-定义门面模式的核心组件。
+定义门面模式的核心组件.
 Defines core components of the facade pattern.
 """
 

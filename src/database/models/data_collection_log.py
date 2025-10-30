@@ -10,10 +10,10 @@ from ..base import BaseModel
 """
 数据采集日志模型
 
-记录数据采集任务的执行日志，包括采集状态、成功失败统计等信息。
-对应数据库表：data_collection_logs
+记录数据采集任务的执行日志,包括采集状态,成功失败统计等信息。
+对应数据库表:data_collection_logs
 
-基于 DATA_DESIGN.md 第1.3节设计。
+基于 DATA_DESIGN.md 第1.3节设计.
 """
 
 from typing import Any, Dict, Optional
@@ -47,8 +47,8 @@ class DataCollectionLog(BaseModel):
     """
     数据采集日志模型
 
-    记录每次数据采集任务的详细执行信息，
-    用于监控采集状态、调试错误、统计性能等。
+    记录每次数据采集任务的详细执行信息,
+    用于监控采集状态,调试错误,统计性能等.
     """
 
     __tablename__ = "data_collection_logs"

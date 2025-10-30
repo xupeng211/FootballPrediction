@@ -26,11 +26,11 @@ from alembic import op
 # 创建数据库用户
 # =============================================================================
 
-# 创建只读用户（分析、前端）
+# 创建只读用户（分析,前端）
 
 # 创建写入用户（数据采集）
 
-# 创建管理员用户（运维、迁移）
+# 创建管理员用户（运维,迁移）
 
 # =============================================================================
 # 配置只读用户权限
@@ -64,7 +64,7 @@ from alembic import op
 
 # 为未来创建的序列自动授予权限
 
-# 特殊权限：允许删除采集日志和原始数据（用于清理）
+# 特殊权限:允许删除采集日志和原始数据（用于清理）
 
 
 # =============================================================================
@@ -89,7 +89,7 @@ from alembic import op
 # 创建角色和权限视图
 # =============================================================================
 
-# 创建权限查询视图，方便监控用户权限
+# 创建权限查询视图,方便监控用户权限
 
 # 创建表权限查询视图
 
@@ -109,7 +109,7 @@ from alembic import op
 
 
 # 检查是否在离线模式
-# 在离线模式下执行注释，确保 SQL 生成正常
+# 在离线模式下执行注释,确保 SQL 生成正常
 
 
 # 检查是否在SQLite环境中（测试环境）
@@ -124,14 +124,14 @@ from alembic import op
 # 撤销用户权限
 
 
-# 删除用户（注意：在生产环境中可能不希望删除用户）
+# 删除用户（注意:在生产环境中可能不希望删除用户）
 logger = logging.getLogger(__name__)
 """配置数据库权限
-配置三类数据库用户的权限：
-- football_reader: 只读用户（分析、前端）
+配置三类数据库用户的权限:
+- football_reader: 只读用户（分析,前端）
 - football_writer: 写入用户（数据采集）
-- football_admin: 管理员用户（运维、迁移）
-基于 DATA_DESIGN.md 第5.3节设计。
+- football_admin: 管理员用户（运维,迁移）
+基于 DATA_DESIGN.md 第5.3节设计.
 Revision ID: 004_configure_permissions
 Revises: f48d412852cc
 Create Date: 2025-09-10 16:40:00.000000
@@ -145,14 +145,14 @@ depends_on = None
 def upgrade() -> None:
     """配置数据库权限"""
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过数据库权限配置")
+        logger.info("⚠️  离线模式:跳过数据库权限配置")
         op.execute("-- offline mode: skipped database user creation")
         op.execute("-- offline mode: skipped database permission configuration")
         return
     connection = op.get_bind()
     db_dialect = connection.dialect.name.lower()
     if db_dialect == "sqlite":
-        logger.info("⚠️  SQLite环境：跳过PostgreSQL权限配置")
+        logger.info("⚠️  SQLite环境:跳过PostgreSQL权限配置")
         op.execute("-- SQLite environment: skipped PostgreSQL permission configuration")
         return
     connection = op.get_bind()
@@ -368,14 +368,14 @@ def upgrade() -> None:
 def downgrade() -> None:
     """回滚数据库权限配置"""
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过数据库权限回滚")
+        logger.info("⚠️  离线模式:跳过数据库权限回滚")
         op.execute("-- offline mode: skipped database permission rollback")
         op.execute("-- offline mode: skipped database user deletion")
         return
     connection = op.get_bind()
     db_dialect = connection.dialect.name.lower()
     if db_dialect == "sqlite":
-        logger.info("⚠️  SQLite环境：跳过PostgreSQL权限回滚")
+        logger.info("⚠️  SQLite环境:跳过PostgreSQL权限回滚")
         op.execute("-- SQLite environment: skipped PostgreSQL permission rollback")
         return
     connection = op.get_bind()

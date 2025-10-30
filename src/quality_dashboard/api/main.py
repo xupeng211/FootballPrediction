@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-""""""""
+""""
 实时质量监控面板API
 Real-time Quality Monitoring Dashboard API
 
-提供实时质量数据、WebSocket连接和RESTful API接口
-""""""""
+提供实时质量数据,WebSocket连接和RESTful API接口
+""""
 
 import asyncio
 import json
@@ -106,7 +106,7 @@ async def shutdown_event():
 
 
 async def collect_quality_data():
-    """后台任务：定期收集质量数据"""
+    """后台任务:定期收集质量数据"""
     while True:
         try:
             # 收集质量数据
@@ -190,7 +190,7 @@ async def broadcast_quality_update(data: Dict[str, Any]):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket端点，用于实时数据推送"""
+    """WebSocket端点,用于实时数据推送"""
     await websocket.accept()
     connected_clients.append(websocket)
 
@@ -225,7 +225,7 @@ async def health_check():
 async def get_quality_metrics():
     """获取当前质量指标"""
     if not latest_quality_data:
-        # 如果没有数据，立即获取
+        # 如果没有数据,立即获取
         metrics = await get_current_quality_metrics()
         return QualityMetrics(**metrics)
 

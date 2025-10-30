@@ -1,10 +1,10 @@
-""""""""
+""""
 适配器模式基类
 Adapter Pattern Base Classes
 
-定义适配器模式的核心接口和抽象类。
+定义适配器模式的核心接口和抽象类.
 Define core interfaces and abstract classes for the adapter pattern.
-""""""""
+""""
 
 import asyncio
 from abc import ABC, abstractmethod
@@ -22,7 +22,7 @@ class AdapterStatus(Enum):
 
 
 class Adaptee(ABC):
-    """被适配者接口，需要被适配的现有接口"""
+    """被适配者接口,需要被适配的现有接口"""
 
     @abstractmethod
     async def get_data(self, *args, **kwargs) -> Any:
@@ -36,7 +36,7 @@ class Adaptee(ABC):
 
 
 class Target(ABC):
-    """目标接口，客户端期望的接口"""
+    """目标接口,客户端期望的接口"""
 
     @abstractmethod
     async def request(self, *args, **kwargs) -> Any:
@@ -45,7 +45,7 @@ class Target(ABC):
 
 
 class Adapter(Target):
-    """适配器基类，将Adaptee接口转换为Target接口"""
+    """适配器基类,将Adaptee接口转换为Target接口"""
 
     pass
 
@@ -66,7 +66,7 @@ class DataTransformer(ABC):
 
 
 class CompositeAdapter(Adapter):
-    """组合适配器，可以管理多个子适配器"""
+    """组合适配器,可以管理多个子适配器"""
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
@@ -74,7 +74,8 @@ class CompositeAdapter(Adapter):
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
 # TODO: 方法 def get_adapter 过长(23行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
+# TODO: 方法 def get_adapter 过长(23行),建议拆分
+# TODO: 方法 def get_adapter 过长(23行),建议拆分
     def get_source_schema(self) -> Dict[str, Any]:
         """获取源数据结构"""
         return {}
@@ -129,8 +130,8 @@ class CompositeAdapter(Adapter):
         return False
 
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(25行)，建议拆分
-# TODO: 方法 def get_adapter 过长(23行)，建议拆分
+    # TODO: 方法 def get_adapter 过长(25行),建议拆分
+# TODO: 方法 def get_adapter 过长(23行),建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)

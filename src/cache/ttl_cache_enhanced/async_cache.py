@@ -2,7 +2,7 @@
 异步TTL缓存包装器
 Async TTL Cache Wrapper
 
-为TTLCache提供异步接口。
+为TTLCache提供异步接口.
 Provides async interface for TTLCache.
 """
 
@@ -16,7 +16,7 @@ class AsyncTTLCache:
     异步TTL缓存包装器
     Async TTL Cache Wrapper
 
-    为TTLCache提供异步接口。
+    为TTLCache提供异步接口.
     Provides async interface for TTLCache.
     """
 

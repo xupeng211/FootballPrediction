@@ -1,8 +1,8 @@
 """
 数据血缘报告器
 
-集成 OpenLineage 标准，自动上报数据血缘信息到 Marquez。
-跟踪数据流转过程，包括采集、清洗、转换等各个环节。
+集成 OpenLineage 标准,自动上报数据血缘信息到 Marquez。
+跟踪数据流转过程,包括采集,清洗,转换等各个环节.
 """
 
 import logging
@@ -26,8 +26,8 @@ class LineageReporter:
     """
     数据血缘报告器
 
-    负责向 Marquez 报告数据血缘信息，跟踪数据流转过程。
-    支持多种数据处理场景：采集、清洗、转换、聚合等。
+    负责向 Marquez 报告数据血缘信息,跟踪数据流转过程。
+    支持多种数据处理场景:采集、清洗,转换,聚合等.
     """
 
     def __init__(
@@ -153,7 +153,7 @@ class LineageReporter:
             job_name: 作业名称
             outputs: 输出数据集信息
             metrics: 运行指标
-            run_id: 运行ID（如果不提供，从活跃运行中获取）
+            run_id: 运行ID（如果不提供,从活跃运行中获取）
 
         Returns:
             bool: 是否成功
@@ -233,7 +233,7 @@ class LineageReporter:
         Args:
             job_name: 作业名称
             error_message: 错误信息
-            run_id: 运行ID（如果不提供，从活跃运行中获取）
+            run_id: 运行ID（如果不提供,从活跃运行中获取）
 
         Returns:
             bool: 是否成功

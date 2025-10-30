@@ -2,7 +2,7 @@
 预测仓储
 Prediction Repository
 
-实现预测相关的数据访问逻辑。
+实现预测相关的数据访问逻辑.
 Implements data access logic for predictions.
 """
 

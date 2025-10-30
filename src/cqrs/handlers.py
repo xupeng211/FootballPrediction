@@ -64,7 +64,7 @@ from src.core.config import
 命令和查询处理器
 Command and Query Handlers
 
-实现所有命令和查询的处理器。
+实现所有命令和查询的处理器.
 Implements handlers for all commands and queries.
 """
 

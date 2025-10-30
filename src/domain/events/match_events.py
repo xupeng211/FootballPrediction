@@ -2,7 +2,7 @@
 比赛领域事件
 Match Domain Events
 
-定义与比赛相关的领域事件。
+定义与比赛相关的领域事件.
 Defines domain events related to matches.
 """
 

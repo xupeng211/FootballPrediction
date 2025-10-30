@@ -1,13 +1,8 @@
-from typing import Optional
-from typing import Union
-from typing import Callable
-from typing import Any
-from typing import List
-from typing import Dict
-""""""""
+from typing import Optional, Union, Callable, Any, List, Dict
+"""
 配置管理器模块 - Phase 4B实现
 
-提供配置管理和处理功能：
+提供配置管理和处理功能:
 - 配置文件加载和解析
 - 环境变量管理和验证
 - 配置值类型转换和验证
@@ -16,7 +11,7 @@ from typing import Dict
 - 配置安全加密
 - 配置依赖注入集成
 - 配置变更通知机制
-""""""""
+""""
 
 import base64
 import logging
@@ -70,7 +65,7 @@ class ConfigManager:
     pass
 
 
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# TODO: 方法 def _convert_value 过长(50行),建议拆分
 # 全局配置管理器实例
 _global_config_manager = None
 
@@ -85,9 +80,9 @@ class ConfigValidator:
     """配置验证器"""
 
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# TODO: 方法 def _convert_value 过长(50行),建议拆分
 # 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
 class ConfigCache:
     """配置缓存类 - 第二个定义"""
 
@@ -98,7 +93,7 @@ class ConfigValidator:
     """配置验证器"""
 
 # 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
 class ConfigCache:
     """配置验证器 - 第二个定义"""
 
@@ -106,8 +101,8 @@ class ConfigCache:
 
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
 # 全局配置管理器实例
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
+# TODO: 方法 def get_config_by_env 过长(52行),建议拆分
 class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
@@ -138,6 +133,13 @@ class ConfigValidator:
 # 全局配置管理器实例
 # TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
 # TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
+class ConfigCache:
+class ConfigValidator:
+# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# 全局配置管理器实例
+# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
+# TODO: 方法 def get_config_by_env 过长(52行),建议拆分
 class ConfigCache:
 class ConfigValidator:
     def __init__(self):
@@ -183,8 +185,8 @@ class ConfigValidator:
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
-# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# TODO: 方法 def _convert_value 过长(50行),建议拆分
+# TODO: 方法 def _convert_value 过长(50行),建议拆分
     def _convert_value(self, value: str) -> Union[str, int, float, bool]:
         """尝试转换值的类型"""
         # 布尔值
@@ -280,8 +282,8 @@ def get_default_config_manager() -> ConfigManager:
     return get_config_manager()
 
 
-# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
-# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(32行),建议拆分
+# TODO: 方法 def get_config_by_env 过长(52行),建议拆分
 def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
     """根据环境获取配置"""
     if env is None:

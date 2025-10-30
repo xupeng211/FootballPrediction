@@ -6,7 +6,7 @@ from ..base import BaseModel
 """
 球队模型
 
-存储足球队伍的基础信息，如曼联、巴塞罗那等。
+存储足球队伍的基础信息,如曼联,巴塞罗那等.
 """
 
 # Match model imported locally to avoid circular imports

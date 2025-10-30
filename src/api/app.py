@@ -26,10 +26,10 @@ from src.core.prediction import PredictionEngine
 # 全局预测引擎实例
 
 
-        # 不抛出异常，允许应用继续启动
+        # 不抛出异常,允许应用继续启动
 
 
-            # 如果预测引擎有清理方法，在这里调用
+            # 如果预测引擎有清理方法,在这里调用
 
 
     # 启动时初始化
@@ -112,7 +112,7 @@ import uvicorn
 """
 FastAPI主应用
 FastAPI Main Application
-整合所有API路由和中间件。
+整合所有API路由和中间件.
 Integrates all API routes and middleware.
 """
 logger = get_logger(__name__)
@@ -146,7 +146,7 @@ async def lifespan(app: FastAPI):
     logger.info("服务已关闭")
 app = FastAPI(
     title="Football Prediction API",
-    description="足球预测系统API - 提供比赛预测、数据查询和统计分析功能",
+    description="足球预测系统API - 提供比赛预测,数据查询和统计分析功能",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",

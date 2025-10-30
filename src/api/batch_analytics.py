@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Batch Analytics API
-批量分析API，支持大数据处理
+批量分析API,支持大数据处理
 
 生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """

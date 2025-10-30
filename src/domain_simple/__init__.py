@@ -1,7 +1,7 @@
 """
 简化的领域模型模块
 
-包含核心业务逻辑和领域实体。
+包含核心业务逻辑和领域实体.
 """
 
 from .league import League, LeagueTable

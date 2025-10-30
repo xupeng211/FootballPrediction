@@ -1,7 +1,7 @@
 """
 用户认证API的依赖项
 
-提供获取当前用户、认证服务等依赖函数
+提供获取当前用户,认证服务等依赖函数
 """
 
 from typing import Optional
@@ -106,7 +106,7 @@ async def get_current_admin_user(
     """
     if not current_user.is_admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="权限不足，需要管理员权限"
+            status_code=status.HTTP_403_FORBIDDEN, detail="权限不足,需要管理员权限"
         )
     return current_user
 
@@ -148,7 +148,7 @@ def require_permissions(required_roles: Optional[list] = None):
         if required_roles and current_user.role not in required_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"权限不足，需要以下角色之一: {', '.join(required_roles)}",
+                detail=f"权限不足,需要以下角色之一: {', '.join(required_roles)}",
             )
         return current_user
 
@@ -184,7 +184,7 @@ class OptionalAuth:
             auth_service: 认证服务
 
         Returns:
-            Optional[User]: 当前用户对象，如果未登录则返回None
+            Optional[User]: 当前用户对象,如果未登录则返回None
         """
         if not token:
             return None

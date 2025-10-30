@@ -2,9 +2,9 @@
 足球预测系统特征定义
 
 定义用于机器学习模型的实体和特征视图。
-包括比赛特征、球队统计特征、赔率衍生特征等。
+包括比赛特征,球队统计特征,赔率衍生特征等。
 
-基于 DATA_DESIGN.md 第6.1节特征仓库设计。
+基于 DATA_DESIGN.md 第6.1节特征仓库设计.
 """
 
 from datetime import timedelta
@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 
 
 class FeatureDefinitions:
-    """特征定义类，包含所有特征相关的定义"""
+    """特征定义类,包含所有特征相关的定义"""
 
     # 实体定义
     ENTITIES = {
@@ -64,7 +64,7 @@ class FeatureDefinitions:
     }
 
 
-# 为了兼容性，提供简化的模拟对象
+# 为了兼容性,提供简化的模拟对象
 class MockEntity:
     def __init__(self, name: str, description: str, join_keys: List[str]) -> None:
         self.name = name

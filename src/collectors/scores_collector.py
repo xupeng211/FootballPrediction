@@ -25,7 +25,7 @@ class ScoresCollector:
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
         self.db_session = db_session
         self.redis_client = redis_client
-        self.cache_timeout = 60  # 1分钟缓存，比分变化很快
+        self.cache_timeout = 60  # 1分钟缓存,比分变化很快
         self.api_endpoints = {
             "live_scores": "https://api.football-data.org/v4/matches",
             "events": "https://api.football-data.org/v4/matches/{match_id}/events",

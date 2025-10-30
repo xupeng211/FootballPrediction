@@ -2,7 +2,7 @@
 事件处理器实现
 Event Handlers Implementation
 
-提供各种事件处理器的实现。
+提供各种事件处理器的实现.
 Provides implementations for various event handlers.
 """
 
@@ -37,7 +37,7 @@ class MetricsEventHandler(EventHandler):
         }
 
     async def handle(self, event: Event) -> None:
-        """处理事件，收集指标"""
+        """处理事件,收集指标"""
         event_type = event.get_event_type()
         self.metrics["events_processed"] += 1
         self.metrics["event_counts"][event_type] = (
@@ -354,7 +354,7 @@ class AlertEventHandler(EventHandler):
         ]
 
 
-# 便捷函数：注册所有默认处理器
+# 便捷函数:注册所有默认处理器
 async def register_default_handlers() -> None:
     """注册所有默认事件处理器"""
     bus = get_event_bus()

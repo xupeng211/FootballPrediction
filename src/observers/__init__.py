@@ -2,7 +2,7 @@
 观察者模式模块
 Observer Pattern Module
 
-提供观察者模式的实现，用于监控和日志系统的通知。
+提供观察者模式的实现,用于监控和日志系统的通知.
 Provides observer pattern implementation for monitoring and logging notifications.
 """
 

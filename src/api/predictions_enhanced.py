@@ -3,8 +3,8 @@ from datetime import datetime
 增强版预测API - 符合SRS规范
 SRS Compliant Enhanced Prediction API
 
-实现需求：
-- /predict API：输入赛事信息返回胜/平/负概率
+实现需求:
+- /predict API:输入赛事信息返回胜/平/负概率
 - API响应时间 ≤ 200ms
 - 模型准确率 ≥ 65%
 - 支持1000场比赛并发请求
@@ -157,7 +157,7 @@ class EnhancedPredictionService:
             # 检查当前窗口内的请求数
             current_requests = await redis_client.zcard(key)
 
-            # 限制：每分钟100个请求
+            # 限制:每分钟100个请求
             if current_requests >= 100:
                 return False
 
@@ -168,7 +168,7 @@ class EnhancedPredictionService:
             return True
         except Exception as e:
             logger.error(f"频率限制检查失败: {e}")
-            return True  # 如果redis出错，不限制请求
+            return True  # 如果redis出错,不限制请求
 
     async def generate_prediction(self, match_info: MatchInfo) -> Dict:
         """生成单个预测"""
@@ -290,7 +290,7 @@ async def predict_match(
     """
     SRS规范预测接口
 
-    功能：
+    功能:
     - 输入赛事信息返回胜/平/负概率
     - API响应时间 ≤ 200ms
     - 支持Token校验与请求频率限制
@@ -318,7 +318,7 @@ async def predict_match(
         srs_compliance=prediction_data["srs_compliance"],
     )
 
-    # 后台任务：记录预测日志
+    # 后台任务:记录预测日志
     background_tasks.add_task(
         log_prediction,
         request.match_info.match_id,
@@ -340,7 +340,7 @@ async def predict_batch(
     """
     批量预测接口 - 支持1000场比赛并发
 
-    功能：
+    功能:
     - 同时处理多场比赛预测
     - 支持并发控制
     - 平均响应时间 < 200ms
@@ -403,7 +403,7 @@ async def predict_batch(
         avg_response_time=avg_response_time
     )
 
-    # 后台任务：记录批量预测日志
+    # 后台任务:记录批量预测日志
     background_tasks.add_task(
         log_batch_prediction,
         len(successful_predictions),

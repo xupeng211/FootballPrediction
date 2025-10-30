@@ -1,7 +1,7 @@
 """
 足球预测系统时间处理工具模块
 
-提供时间和日期处理相关的工具函数。
+提供时间和日期处理相关的工具函数.
 """
 
 from datetime import datetime, timezone, timedelta
@@ -203,7 +203,7 @@ class TimeUtils:
                 dt = dt.replace(tzinfo=from_tz)
             return dt.astimezone(to_tz)
         except (ImportError, ValueError, KeyError):
-            # 如果时区不可用，返回原始datetime
+            # 如果时区不可用,返回原始datetime
             return dt
 
     @staticmethod
@@ -221,7 +221,7 @@ class TimeUtils:
             return f"{secs}s"
 
 
-# 为了向后兼容，添加常用函数别名
+# 为了向后兼容,添加常用函数别名
 def utc_now() -> datetime:
     """获取当前UTC时间（向后兼容性函数）"""
     return datetime.now(timezone.utc)

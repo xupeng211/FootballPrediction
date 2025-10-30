@@ -2,7 +2,7 @@
 缓存工厂类
 Cache Factory
 
-提供创建不同类型缓存的工厂方法。
+提供创建不同类型缓存的工厂方法.
 Provides factory methods for creating different types of caches.
 """
 
@@ -15,7 +15,7 @@ from .ttl_cache import TTLCache
 class CacheFactory:
     """缓存工厂类
 
-    提供创建不同类型缓存的静态方法。
+    提供创建不同类型缓存的静态方法.
     Provides static methods for creating different types of caches.
     """
 

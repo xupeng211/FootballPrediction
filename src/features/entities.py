@@ -1,9 +1,9 @@
 """
 特征实体定义
 
-定义足球预测系统中的核心实体：
-- MatchEntity: 比赛实体，用于比赛级别的特征
-- TeamEntity: 球队实体，用于球队级别的特征
+定义足球预测系统中的核心实体:
+- MatchEntity: 比赛实体,用于比赛级别的特征
+- TeamEntity: 球队实体,用于球队级别的特征
 """
 
 from dataclasses import dataclass
@@ -27,7 +27,7 @@ class MatchEntity:
     """
     比赛实体
 
-    用于标识比赛级别的特征，包含比赛的基本信息
+    用于标识比赛级别的特征,包含比赛的基本信息
     """
 
     match_id: int
@@ -66,7 +66,7 @@ class TeamEntity:
     """
     球队实体
 
-    用于标识球队级别的特征，包含球队的基本信息
+    用于标识球队级别的特征,包含球队的基本信息
     """
 
     team_id: int
@@ -97,7 +97,7 @@ class TeamEntity:
 @dataclass
 class FeatureKey:
     """
-    特征键，用于唯一标识一个特征记录
+    特征键,用于唯一标识一个特征记录
     """
 
     entity_type: str  # "match" 或 "team"

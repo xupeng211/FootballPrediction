@@ -10,10 +10,10 @@ from ..types import SQLiteCompatibleJSONB
 """
 权限审计日志模型
 
-实现全面的数据库操作审计功能，记录所有敏感数据的访问和修改操作。
+实现全面的数据库操作审计功能,记录所有敏感数据的访问和修改操作。
 支持合规要求和安全审计。
 
-基于 DATA_DESIGN.md 中的权限控制设计。
+基于 DATA_DESIGN.md 中的权限控制设计.
 """
 
 
@@ -44,11 +44,11 @@ class AuditAction(str, Enum):
 class AuditSeverity(str, Enum):
     """审计事件严重级别"""
 
-    INFO = "INFO"  # 信息级：一般性成功事件
-    LOW = "LOW"  # 低风险：普通读操作
-    MEDIUM = "MEDIUM"  # 中风险：普通写操作
-    HIGH = "HIGH"  # 高风险：删除、权限变更
-    CRITICAL = "CRITICAL"  # 极高风险：系统级操作
+    INFO = "INFO"  # 信息级:一般性成功事件
+    LOW = "LOW"  # 低风险:普通读操作
+    MEDIUM = "MEDIUM"  # 中风险:普通写操作
+    HIGH = "HIGH"  # 高风险:删除,权限变更
+    CRITICAL = "CRITICAL"  # 极高风险:系统级操作
 
 
 class AuditLog(BaseModel):

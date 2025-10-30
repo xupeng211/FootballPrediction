@@ -2,7 +2,7 @@
 缓存条目定义
 Cache Entry Definition
 
-定义缓存中的单个条目，包含值、过期时间和访问统计。
+定义缓存中的单个条目,包含值,过期时间和访问统计.
 """
 
 import time
@@ -12,7 +12,7 @@ from typing import Any, Optional
 class CacheEntry:
     """缓存条目
 
-    存储缓存的值、过期时间、访问次数等信息。
+    存储缓存的值,过期时间,访问次数等信息.
     Stores cached value, expiration time, access count, etc.
     """
 
@@ -51,7 +51,7 @@ class CacheEntry:
         """
         访问缓存项
 
-        更新访问统计并返回值。
+        更新访问统计并返回值.
 
         Returns:
             Any: 缓存值
@@ -65,7 +65,7 @@ class CacheEntry:
         更新过期时间
 
         Args:
-            ttl: 新的TTL（秒），None表示永不过期
+            ttl: 新的TTL（秒）,None表示永不过期
         """
         if ttl is not None:
             self.expires_at = time.time() + ttl
@@ -77,7 +77,7 @@ class CacheEntry:
         获取剩余TTL
 
         Returns:
-            Optional[int]: 剩余秒数，None表示永不过期
+            Optional[int]: 剩余秒数,None表示永不过期
         """
         if self.expires_at is None:
             return None
@@ -86,9 +86,9 @@ class CacheEntry:
 
     def __lt__(self, other):
         """
-        用于堆排序，比较过期时间
+        用于堆排序,比较过期时间
 
-        过期时间早的条目更小。
+        过期时间早的条目更小.
         """
         if self.expires_at is None and other.expires_at is None:
             return False

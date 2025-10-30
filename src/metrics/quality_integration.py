@@ -70,7 +70,7 @@ class QualityMetricsIntegrator:
 
         # 计算加权平均（高级度量权重更高）
         if scores:
-            # 原始分数 30%，高级度量 40%，代码质量 15%，安全 15%
+            # 原始分数 30%，高级度量 40%,代码质量 15%,安全 15%
             weights = [0.3, 0.4, 0.15, 0.15]
             weighted_score = sum(score * weight for score, weight in zip(scores, weights))
             return round(weighted_score, 2)
@@ -132,7 +132,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "complexity",
                     "priority": "high",
-                    "message": "平均圈复杂度过高，建议重构复杂函数",
+                    "message": "平均圈复杂度过高,建议重构复杂函数",
                 }
             )
 
@@ -141,7 +141,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "complexity",
                     "priority": "medium",
-                    "message": "嵌套深度过深，建议提取子函数减少嵌套",
+                    "message": "嵌套深度过深,建议提取子函数减少嵌套",
                 }
             )
 
@@ -152,7 +152,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "technical_debt",
                     "priority": "high",
-                    "message": "技术债务分数较低，建议优先处理代码异味和安全问题",
+                    "message": "技术债务分数较低,建议优先处理代码异味和安全问题",
                 }
             )
 
@@ -161,7 +161,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "security",
                     "priority": "critical",
-                    "message": f'发现{debt["security_issues_count"]}个安全问题，需要立即处理',
+                    "message": f'发现{debt["security_issues_count"]}个安全问题,需要立即处理',
                 }
             )
 
@@ -172,7 +172,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "performance",
                     "priority": "medium",
-                    "message": "CPU使用率较高，建议优化算法或增加缓存",
+                    "message": "CPU使用率较高,建议优化算法或增加缓存",
                 }
             )
 
@@ -181,7 +181,7 @@ class QualityMetricsIntegrator:
                 {
                     "type": "performance",
                     "priority": "medium",
-                    "message": "内存使用率较高，建议检查内存泄漏",
+                    "message": "内存使用率较高,建议检查内存泄漏",
                 }
             )
 
@@ -191,12 +191,12 @@ class QualityMetricsIntegrator:
 def enhance_quality_guardian():
     """为质量守护系统添加高级度量功能"""
     # 这里可以修改 scripts/quality_guardian.py 来集成高级度量
-    # 为了避免修改现有文件，我们创建一个包装器
+    # 为了避免修改现有文件,我们创建一个包装器
     pass
 
 
 def main():
-    """主函数，用于测试集成"""
+    """主函数,用于测试集成"""
     integrator = QualityMetricsIntegrator()
 
     # 模拟现有质量报告

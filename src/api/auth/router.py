@@ -1,7 +1,7 @@
 """
 用户认证API路由
 
-提供用户注册、登录、令牌管理等认证相关的API端点
+提供用户注册,登录,令牌管理等认证相关的API端点
 """
 
 from typing import Any, Dict
@@ -23,7 +23,7 @@ from src.database.models.user import User
 from src.database.connection import get_async_session
 from src.services.auth_service import AuthService
 
-# 暂时移除监控指标，避免导入问题
+# 暂时移除监控指标,避免导入问题
 # from src.monitoring.metrics_collector import (
 #     increase_user_registrations,
 #     increase_user_logins,
@@ -260,17 +260,17 @@ async def request_password_reset(
     auth_service: AuthService = Depends(get_auth_service),
 ) -> Dict[str, str]:
     """
-    请求密码重置，发送重置令牌到用户邮箱
+    请求密码重置,发送重置令牌到用户邮箱
 
     - **email**: 用户邮箱
     """
     reset_token = await auth_service.reset_password_request(reset_request.email)
 
     if not reset_token:
-        # 为了安全，即使用户不存在也返回成功消息
-        return {"message": "如果邮箱存在，重置链接已发送"}
+        # 为了安全,即使用户不存在也返回成功消息
+        return {"message": "如果邮箱存在,重置链接已发送"}
 
-    # 这里应该发送邮件，暂时返回令牌（实际生产中不应该返回）
+    # 这里应该发送邮件,暂时返回令牌（实际生产中不应该返回）
     # TODO: 集成邮件服务
     print(f"密码重置令牌: {reset_token}")  # 调试用
 
@@ -368,7 +368,7 @@ async def logout(
     """
     用户登出接口
 
-    注意：由于JWT是无状态的，实际的令牌失效需要客户端删除
+    注意:由于JWT是无状态的,实际的令牌失效需要客户端删除
     这个接口主要用于记录登出事件和清理服务器端状态
     """
     # TODO: 实现令牌黑名单机制（可选）

@@ -2,7 +2,7 @@
 数据收集任务
 Data Collection Tasks
 
-提供各种数据收集任务的定义和执行。
+提供各种数据收集任务的定义和执行.
 """
 
 from .data_collection_core import (
@@ -16,7 +16,7 @@ from .data_collection_core import (
     validate_collected_data,
 )
 
-# 导入所有必要的类，保持向后兼容
+# 导入所有必要的类,保持向后兼容
 from .data_collectors import (
     DataCollectionOrchestrator,
     DataCollector,

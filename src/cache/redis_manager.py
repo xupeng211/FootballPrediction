@@ -1,7 +1,7 @@
 """
 Redis缓存管理器
 
-实现Redis连接池、基础操作方法，支持异步和同步两种模式
+实现Redis连接池,基础操作方法,支持异步和同步两种模式
 """
 
 try:
@@ -26,7 +26,7 @@ try:
         ttl_cache,
     )
 except ImportError:
-    # 如果redis模块不可用，使用mock_redis
+    # 如果redis模块不可用,使用mock_redis
     from .mock_redis import CacheKeyManager
     from .mock_redis import MockRedisManager as RedisManager
     from .mock_redis import (
@@ -74,4 +74,4 @@ __all__ = [
 
 # 版本信息
 __version__ = "2.0.0"
-__description__ = "重构后的Redis缓存管理器 - 提供模块化、可扩展的缓存管理功能"
+__description__ = "重构后的Redis缓存管理器 - 提供模块化,可扩展的缓存管理功能"

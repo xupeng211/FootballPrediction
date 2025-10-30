@@ -1,16 +1,16 @@
 """
 Predictions - 数据库模块
 
-提供 predictions 相关的数据库功能。
+提供 predictions 相关的数据库功能.
 
 主要功能：
 - [待补充 - Predictions的主要功能]
 
-使用示例：
+使用示例:
     from database.models import Predictions
     # 使用示例代码
 
-注意事项：
+注意事项:
 - [待补充 - 使用注意事项]
 """
 
@@ -22,7 +22,7 @@ from ..base import BaseModel
 """
 预测结果数据模型
 
-存储机器学习模型的预测结果，包括胜负概率、比分预测等。
+存储机器学习模型的预测结果,包括胜负概率,比分预测等.
 """
 
 

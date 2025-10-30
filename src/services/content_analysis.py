@@ -1,7 +1,7 @@
 """
 足球预测系统内容分析服务模块
 
-提供内容分析和处理功能。
+提供内容分析和处理功能.
 """
 
 from datetime import datetime
@@ -77,8 +77,8 @@ class ContentAnalysisService(SimpleService):
     async def _on_initialize(self) -> bool:
         """初始化服务"""
         self.logger.info(f"正在初始化 {self.name}")
-        # 加载AI模型、连接外部API等
-        # 在实际生产环境中，这里会加载ML模型和建立外部连接
+        # 加载AI模型,连接外部API等
+        # 在实际生产环境中,这里会加载ML模型和建立外部连接
         try:
             # 这里可以加载ML模型
             self._models_loaded = True
@@ -108,7 +108,7 @@ class ContentAnalysisService(SimpleService):
             raise RuntimeError("服务未初始化")
         self.logger.info(f"正在分析内容: {content.id}")
         # 实现内容分析逻辑
-        # 这里提供基本的文本分析功能，生产环境可扩展为ML模型分析
+        # 这里提供基本的文本分析功能,生产环境可扩展为ML模型分析
         if content.content_type == "text":
             text_analysis = self.analyze_text(content.data.get("text", ""))
             analysis_data = {
@@ -170,7 +170,7 @@ class ContentAnalysisService(SimpleService):
         """计算内容质量分数"""
         if content.content_type == "text":
             text = content.data.get("text", "")
-            # 基于长度、关键词数量等计算质量分数
+            # 基于长度,关键词数量等计算质量分数
             word_count = len(text.split())
             keyword_count = len([kw for kw in ["足球", "比赛", "分析"] if kw in text])
             # 基础分数 + 关键词奖励 + 长度奖励（有上限）
@@ -291,14 +291,14 @@ class ContentAnalysisService(SimpleService):
         if not text or len(text) <= max_length:
             return text or ""
 
-        # 简单的摘要生成：取前面部分加上省略号
+        # 简单的摘要生成:取前面部分加上省略号
 
-        sentences = text.split("。")
+        sentences = text.split(".")
         summary = ""
 
         for sentence in sentences:
             if len(summary + sentence) <= max_length:
-                summary += sentence + "。"
+                summary += sentence + "."
             else:
                 break
 

@@ -15,7 +15,7 @@ class HistoricalMatch:
 class HistoricalStrategy:
     """历史数据预测策略
 
-    基于以下历史数据进行预测：
+    基于以下历史数据进行预测:
     - 相同对战的历史记录
     - 相似比分场景的历史记录
     - 同赛季类似情况

@@ -3,7 +3,7 @@
 仓储模式API端点
 Repository Pattern API Endpoints
 
-展示仓储模式的查询和管理功能。
+展示仓储模式的查询和管理功能.
 Demonstrates query and management features of the repository pattern.
 """
 

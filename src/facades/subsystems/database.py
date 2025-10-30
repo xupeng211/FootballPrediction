@@ -3,7 +3,7 @@ from datetime import datetime
 数据库子系统实现
 Database Subsystem Implementation
 
-提供数据库连接和查询功能。
+提供数据库连接和查询功能.
 """
 
 import asyncio

@@ -1,9 +1,9 @@
-""""""""
+""""
 数据收集核心
 Data Collection Core
 
-数据收集的核心逻辑和任务定义。
-""""""""
+数据收集的核心逻辑和任务定义.
+""""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -132,8 +132,8 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
     手动触发所有数据收集
 
-    这是一个同步任务，用于立即收集所有类型的数据。
-    """"""""
+    这是一个同步任务,用于立即收集所有类型的数据.
+    """"
     task = DataCollectionTask()
 
     try:
@@ -156,11 +156,11 @@ def manual_collect_all_data() -> Dict[str, Any]:
 def emergency_data_collection_task(
     data_types: Optional[List[str]] = None, priority: int = 1
 ) -> Dict[str, Any]:
-    """"""""
+    """"
     紧急数据收集任务
 
-    用于在数据缺失时紧急收集关键数据。
-    """"""""
+    用于在数据缺失时紧急收集关键数据.
+    """"
     task = DataCollectionTask()
 
     try:
@@ -299,3 +299,4 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     # 实现比赛数据验证逻辑
     return {"validation_errors": errors, "recommendations": recommendations}
+]]]}

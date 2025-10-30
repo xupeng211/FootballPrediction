@@ -2,9 +2,9 @@
 增强的指标收集器
 Enhanced Metrics Collector
 
-提供全面的业务和系统指标收集：
+提供全面的业务和系统指标收集:
 - 业务指标（预测数量、准确率等）
-- 系统指标（延迟、吞吐量、错误率）
+- 系统指标（延迟,吞吐量,错误率）
 - 自定义指标和告警
 - Prometheus集成
 
@@ -48,7 +48,7 @@ class MetricsAggregator:
         """聚合指标"""
         for key, value in metrics.items():
             if key in self.aggregated_metrics:
-                # 简单的聚合逻辑：取平均值
+                # 简单的聚合逻辑:取平均值
                 self.aggregated_metrics[key] = (self.aggregated_metrics[key] + value) / 2
             else:
                 self.aggregated_metrics[key] = value

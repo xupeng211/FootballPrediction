@@ -2,7 +2,7 @@
 仓储提供者
 Repository Provider
 
-提供仓储实例的创建和依赖注入配置。
+提供仓储实例的创建和依赖注入配置.
 Provides creation and dependency injection configuration for repository instances.
 """
 
@@ -78,7 +78,7 @@ class DefaultRepositoryFactory:
 class RepositoryProvider:
     """仓储提供者
 
-    管理仓储实例的创建和生命周期。
+    管理仓储实例的创建和生命周期.
     Manages creation and lifecycle of repository instances.
     """
 
@@ -160,15 +160,15 @@ def _get_repository_cached(
 def get_prediction_repository(
     session: AsyncSession, read_only: bool = False
 ) -> Repository[Prediction, int]:
-    """便捷函数：获取预测仓储"""
+    """便捷函数:获取预测仓储"""
     return get_repository_provider().get_prediction_repository(session, read_only)
 
 
 def get_user_repository(session: AsyncSession, read_only: bool = False) -> Repository[User, int]:
-    """便捷函数：获取用户仓储"""
+    """便捷函数:获取用户仓储"""
     return get_repository_provider().get_user_repository(session, read_only)
 
 
 def get_match_repository(session: AsyncSession, read_only: bool = False) -> Repository[Match, int]:
-    """便捷函数：获取比赛仓储"""
+    """便捷函数:获取比赛仓储"""
     return get_repository_provider().get_match_repository(session, read_only)

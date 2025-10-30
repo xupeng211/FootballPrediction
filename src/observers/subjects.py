@@ -2,7 +2,7 @@
 具体被观察者实现
 Concrete Subject Implementations
 
-提供各种被观察者的具体实现。
+提供各种被观察者的具体实现.
 Provides concrete implementations for various subjects.
 """
 
@@ -18,7 +18,7 @@ from .base import ObservableEvent, ObservableEventType, Subject
 class SystemMetricsSubject(Subject):
     """系统指标被观察者
 
-    监控系统级别的指标变化。
+    监控系统级别的指标变化.
     Monitors system-level metric changes.
     """
 
@@ -133,7 +133,7 @@ class SystemMetricsSubject(Subject):
     async def collect_metrics(self) -> None:
         """收集系统指标"""
         # 这里可以收集实际的系统指标
-        # 例如：CPU、内存、磁盘使用率等
+        # 例如:CPU,内存,磁盘使用率等
 
         # 模拟数据
         import random
@@ -156,7 +156,7 @@ class SystemMetricsSubject(Subject):
 class PredictionMetricsSubject(Subject):
     """预测指标被观察者
 
-    监控预测相关的指标。
+    监控预测相关的指标.
     Monitors prediction-related metrics.
     """
 
@@ -311,7 +311,7 @@ class PredictionMetricsSubject(Subject):
 class AlertSubject(Subject):
     """告警被观察者
 
-    管理告警事件。
+    管理告警事件.
     Manages alert events.
     """
 
@@ -417,7 +417,7 @@ class AlertSubject(Subject):
 class CacheSubject(Subject):
     """缓存被观察者
 
-    监控缓存相关事件。
+    监控缓存相关事件.
     Monitors cache-related events.
     """
 

@@ -8,7 +8,7 @@ from datetime import datetime
 质量门禁系统
 Quality Gate System
 
-提供自动化的质量检查和门禁控制，确保代码质量标准
+提供自动化的质量检查和门禁控制,确保代码质量标准
 """
 
 import json
@@ -156,7 +156,7 @@ class CodeQualityGate(QualityGate):
         """计算代码质量分数"""
         report = self.quality_guardian.run_quality_check()
 
-        # Ruff和MyPy满分各5分，总分10分
+        # Ruff和MyPy满分各5分,总分10分
         ruff_score = (
             5.0 if report.get("ruff_errors", 0) == 0 else max(0, 5.0 - report.get("ruff_errors", 0))
         )
@@ -454,8 +454,8 @@ class QualityGateSystem:
             report_lines.extend(
                 [
                     "## ⚠️ 阻止合并",
-                    "由于存在关键门禁失败，建议阻止代码合并。",
-                    "请修复所有关键问题后重新检查。",
+                    "由于存在关键门禁失败,建议阻止代码合并.",
+                    "请修复所有关键问题后重新检查.",
                 ]
             )
 
@@ -467,7 +467,7 @@ class QualityGateSystem:
 
 
 def main():
-    """主函数，用于测试"""
+    """主函数,用于测试"""
     gate_system = QualityGateSystem()
 
     print("🚪 质量门禁系统测试")

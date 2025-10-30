@@ -3,7 +3,7 @@
 基于策略模式的预测服务
 Strategy-based Prediction Service
 
-使用策略模式重构的预测服务，提供灵活的预测算法选择。
+使用策略模式重构的预测服务,提供灵活的预测算法选择.
 Refactored prediction service using strategy pattern for flexible algorithm selection.
 """
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class StrategyPredictionService:
     """基于策略模式的预测服务
 
-    使用策略模式管理多种预测算法，提供灵活的预测服务。
+    使用策略模式管理多种预测算法,提供灵活的预测服务.
     Uses strategy pattern to manage multiple prediction algorithms.
     """
 
@@ -82,7 +82,7 @@ class StrategyPredictionService:
         Args:
             match_id: 比赛ID
             user_id: 用户ID
-            strategy_name: 使用的策略名称，None表示使用默认策略
+            strategy_name: 使用的策略名称,None表示使用默认策略
             confidence: 预测信心度
             notes: 预测备注
 
@@ -132,7 +132,7 @@ class StrategyPredictionService:
         # 记录预测详情
         await self._log_prediction_details(prediction, prediction_output, strategy_name)
 
-        logger.info(f"用户 {user_id} 对比赛 {match_id} 完成预测，使用策略: {strategy_name}")
+        logger.info(f"用户 {user_id} 对比赛 {match_id} 完成预测,使用策略: {strategy_name}")
 
         return prediction
 
@@ -203,7 +203,7 @@ class StrategyPredictionService:
 
         Args:
             match_id: 比赛ID
-            strategy_names: 要比较的策略列表，None表示比较所有可用策略
+            strategy_names: 要比较的策略列表,None表示比较所有可用策略
 
         Returns:
             Dict[str, PredictionOutput]: 各策略的预测结果
@@ -367,7 +367,7 @@ class StrategyPredictionService:
     async def _collect_historical_data(self, context: PredictionContext) -> Dict[str, Any]:
         """收集历史数据"""
         # 这里应该从数据库或缓存获取历史数据
-        # 简化实现，返回模拟数据
+        # 简化实现,返回模拟数据
         return {
             "home_team_recent_form": [
                 {"goals_for": 2, "goals_against": 1, "result": "win"},

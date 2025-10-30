@@ -13,7 +13,7 @@ Revision ID: a20f91c49306
 Revises: d82ea26f05d0
 Create Date: 2025-09-11 23:59:32.853716
 
-为关键表添加业务逻辑约束和触发器：
+为关键表添加业务逻辑约束和触发器:
 1. 比分字段必须 >=0 且 <=99
 2. 赔率必须 >1.01
 3. 比赛时间必须大于 2000-01-01
@@ -35,7 +35,7 @@ def upgrade() -> None:
     db_dialect = conn.dialect.name.lower()
 
     if db_dialect == "sqlite":
-        logger.info("⚠️  SQLite环境：跳过业务约束和触发器创建")
+        logger.info("⚠️  SQLite环境:跳过业务约束和触发器创建")
         op.execute("-- SQLite environment: skipped business constraints and triggers")
         op.execute("-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT")
         return
@@ -130,7 +130,7 @@ def upgrade() -> None:
     )
 
     # 4. 添加触发器函数和触发器（确保外键引用一致性）
-    # 4.1 创建触发器函数，确保主队和客队不能相同
+    # 4.1 创建触发器函数,确保主队和客队不能相同
     op.execute(
         """
         CREATE OR REPLACE FUNCTION check_match_teams_consistency()
@@ -208,7 +208,7 @@ def downgrade() -> None:
     db_dialect = conn.dialect.name.lower()
 
     if db_dialect == "sqlite":
-        logger.info("⚠️  SQLite环境：跳过业务约束和触发器移除")
+        logger.info("⚠️  SQLite环境:跳过业务约束和触发器移除")
         op.execute("-- SQLite environment: skipped business constraints and triggers removal")
         op.execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
         return

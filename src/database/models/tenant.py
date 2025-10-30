@@ -2,7 +2,7 @@
 企业级多租户系统数据模型
 Enterprise Multi-Tenant System Data Models
 
-提供多租户架构的核心数据模型，包括租户、权限、角色等。
+提供多租户架构的核心数据模型,包括租户,权限,角色等.
 """
 
 from datetime import datetime
@@ -245,7 +245,7 @@ class TenantPermission(BaseModel):
 
     def _evaluate_conditions(self, context: Dict[str, Any]) -> bool:
         """评估权限条件"""
-        # 简单的条件评估逻辑，可根据需要扩展
+        # 简单的条件评估逻辑,可根据需要扩展
         for condition_key, condition_value in self.conditions.items():
             if condition_key not in context:
                 return False
@@ -305,7 +305,7 @@ class TenantRole(BaseModel):
 class RolePermission(BaseModel):
     """
     角色权限关联模型
-    多对多关系表，连接角色和权限
+    多对多关系表,连接角色和权限
     """
     __tablename__ = "role_permissions"
 

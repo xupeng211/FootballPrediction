@@ -75,10 +75,10 @@ def _make_cache_key(func_or_name, args, kwargs, prefix=None, user_id=None, exclu
 
     # 智能Mock兼容修复模式 - 支持函数对象和函数名两种输入
     if callable(func_or_name):
-        # 如果是函数对象，提取模块和限定名
+        # 如果是函数对象,提取模块和限定名
         func_name = f"{func_or_name.__module__}:{func_or_name.__qualname__}"
     else:
-        # 如果是字符串，直接使用
+        # 如果是字符串,直接使用
         func_name = str(func_or_name)
 
     key_parts = []
@@ -108,10 +108,10 @@ def _make_cache_key(func_or_name, args, kwargs, prefix=None, user_id=None, exclu
         sorted_kwargs = sorted(filtered_kwargs.items())
         key_parts.extend(f"{k}:{v}" for k, v in sorted_kwargs)
 
-    # 智能Mock兼容修复模式 - 生成可读的键格式，包含哈希避免过长
+    # 智能Mock兼容修复模式 - 生成可读的键格式,包含哈希避免过长
     key_str = ":".join(key_parts)
 
-    # 如果键太长，生成哈希版本
+    # 如果键太长,生成哈希版本
     if len(key_str) > 200:
         return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
 

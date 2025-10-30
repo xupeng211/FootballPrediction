@@ -1,9 +1,9 @@
-""""""""
+""""
 日志装饰器实现
 Logging Decorator Implementation
 
-记录函数执行的前后信息。
-""""""""
+记录函数执行的前后信息.
+""""
 
 import json
 import logging
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 
 
 class LoggingDecorator(Decorator):
-    """日志装饰器，记录函数执行的前后信息"""
+    """日志装饰器,记录函数执行的前后信息"""
 
     def __init__(
         self,
@@ -94,7 +94,7 @@ class LoggingDecorator(Decorator):
             raise
 
     def _sanitize_args(self, args: tuple))))) -> List[Any]:
-        """清理参数，移除敏感信息"""
+        """清理参数,移除敏感信息"""
         sanitized: List[Any] = []
 
         for arg in args:
@@ -122,7 +122,7 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_sequence(self)) -> List[Any]:
-        """清理序列，移除敏感信息"""
+        """清理序列,移除敏感信息"""
         sanitized: List[Any] = []
 
         for item in seq:
@@ -136,10 +136,11 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_result(self)) -> Any:
-        """清理结果，移除敏感信息"""
+        """清理结果,移除敏感信息"""
         if isinstance(result)):
             return self._sanitize_dict(result)
         elif isinstance(result, (list)))))):
             return self._sanitize_sequence(result)
         else:
             return str(result)[:100]
+]]}

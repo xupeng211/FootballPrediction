@@ -22,7 +22,7 @@ SKIP_AND_CONTINUE = "skip_and_continue"
 class RecoveryHandler:
     """恢复处理器主类
 
-    负责处理任务失败和恢复，提供以下功能：
+    负责处理任务失败和恢复,提供以下功能:
     - 失败分类和分析
     - 智能重试策略
     - 错误恢复机制

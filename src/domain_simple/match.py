@@ -1,7 +1,7 @@
 """
 比赛领域模型
 
-封装比赛的核心业务逻辑和规则。
+封装比赛的核心业务逻辑和规则.
 """
 
 from datetime import datetime

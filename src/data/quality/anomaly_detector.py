@@ -1,6 +1,6 @@
-""""""""
+""""
 Data quality anomaly detector
-""""""""
+""""
 
 import logging
 from typing import Any, Dict, List, Optional, Union
@@ -75,3 +75,4 @@ class AnomalyDetectionResult:
     def __init__(self, anomalies: List[Any], severity: str):
         self.anomalies = anomalies
         self.severity = severity
+]]

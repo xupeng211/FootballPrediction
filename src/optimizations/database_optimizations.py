@@ -2,8 +2,8 @@
 数据库性能优化
 Database Performance Optimizations
 
-提供数据库层面的性能优化，包括索引优化、查询优化、
-连接池优化等。
+提供数据库层面的性能优化,包括索引优化,查询优化,
+连接池优化等.
 """
 
 import asyncio
@@ -36,7 +36,7 @@ class DatabaseOptimizer:
     """
     数据库优化器
 
-    提供数据库性能优化功能，包括索引管理、查询优化、
+    提供数据库性能优化功能,包括索引管理,查询优化,
     数据清理等
     """
 
@@ -417,12 +417,12 @@ class DatabaseOptimizer:
             )
             results.append(vacuum_result)
 
-            # 如果死元组过多，建议执行VACUUM FULL
+            # 如果死元组过多,建议执行VACUUM FULL
             live_tuples = table.get("live_tuples", 0)
             dead_tuples = table.get("dead_tuples", 0)
 
             if dead_tuples > live_tuples * 0.2:  # 死元组超过20%
-                # 注意：VACUUM FULL会锁表，应该在维护窗口执行
+                # 注意:VACUUM FULL会锁表,应该在维护窗口执行
                 results.append(OptimizationResult(
                     success=False,
                     operation=f"建议对表 {table_name} 执行 VACUUM FULL",
@@ -481,7 +481,7 @@ class DatabaseOptimizer:
             )
             constraints = result.fetchall()
 
-            # 如果索引被约束使用，不能删除
+            # 如果索引被约束使用,不能删除
             if constraints:
                 return False
 

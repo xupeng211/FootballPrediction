@@ -2,7 +2,7 @@
 领域模型
 Domain Models
 
-包含足球预测系统的核心领域模型。
+包含足球预测系统的核心领域模型.
 Contains core domain models for the football prediction system.
 """
 

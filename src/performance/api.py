@@ -3,7 +3,7 @@
 性能监控API端点
 Performance Monitoring API Endpoints
 
-提供性能监控相关的API：
+提供性能监控相关的API:
 - 获取实时性能指标
 - 获取性能报告
 - 启动/停止性能分析

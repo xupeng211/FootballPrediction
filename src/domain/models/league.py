@@ -2,7 +2,7 @@
 联赛领域模型
 League Domain Model
 
-封装联赛相关的业务逻辑和不变性约束。
+封装联赛相关的业务逻辑和不变性约束.
 Encapsulates league-related business logic and invariants.
 """
 
@@ -73,7 +73,7 @@ class LeagueSeason:
     def start_season(self) -> None:
         """开始赛季"""
         if self.status != LeagueStatus.UPCOMING:
-            raise DomainError(f"赛季状态为 {self.status.value}，无法开始")
+            raise DomainError(f"赛季状态为 {self.status.value},无法开始")
 
         self.status = LeagueStatus.ACTIVE
         self.current_round = 1
@@ -153,7 +153,7 @@ class League:
     """
     联赛领域模型
 
-    封装联赛的核心业务逻辑和不变性约束。
+    封装联赛的核心业务逻辑和不变性约束.
     """
 
     id: Optional[int] = None
@@ -350,7 +350,7 @@ class League:
 
     def can_team_register(self, team_level: int) -> bool:
         """检查球队是否可以注册"""
-        # 简化规则：球队级别不能超过联赛级别太多
+        # 简化规则:球队级别不能超过联赛级别太多
         return abs(team_level - self.level) <= 2
 
     # ========================================

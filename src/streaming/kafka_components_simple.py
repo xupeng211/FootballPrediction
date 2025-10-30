@@ -1,6 +1,6 @@
-""""""""
+""""
 简化的Kafka组件实现
-""""""""
+""""
 
 from typing import Any, Dict, List
 

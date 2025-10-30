@@ -2,7 +2,7 @@
 APM集成模块
 APM Integration Module
 
-集成应用性能监控工具，提供分布式追踪、性能指标和错误监控。
+集成应用性能监控工具,提供分布式追踪,性能指标和错误监控.
 """
 
 import logging
@@ -247,7 +247,7 @@ class APMMiddleware(BaseHTTPMiddleware):
 
 
 class _DummySpan:
-    """虚拟Span，用于APM不可用时的fallback"""
+    """虚拟Span,用于APM不可用时的fallback"""
 
     def __enter__(self):
         return self

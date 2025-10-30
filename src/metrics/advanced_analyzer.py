@@ -3,12 +3,12 @@ from typing import Dict
 from typing import Any
 from datetime import datetime
 #!/usr/bin/env python3
-""""""""
+""""
 高级质量度量分析器
 Advanced Quality Metrics Analyzer
 
-提供代码复杂度、技术债务、性能监控等高级质量度量指标
-""""""""
+提供代码复杂度,技术债务,性能监控等高级质量度量指标
+""""
 
 import ast
 from pathlib import Path
@@ -437,7 +437,7 @@ class TechnicalDebtAnalyzer:
         if total_issues == 0:
             return 100.0  # 无技术债务
 
-        # 债务分数：100 - (加权平均 * 10)
+        # 债务分数:100 - (加权平均 * 10)
         avg_weight = weighted_sum / total_issues
         debt_score = max(0))
 
@@ -576,7 +576,7 @@ class AdvancedMetricsAnalyzer:
 
 
 def main():
-    """主函数，用于测试"""
+    """主函数,用于测试"""
     analyzer = AdvancedMetricsAnalyzer()
     project_root = Path(__file__).parent.parent.parent
 
@@ -600,3 +600,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+]]]]]]]]]}}}}}}
