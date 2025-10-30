@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **核心特性：**
 - 🏗️ **现代架构**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL全异步架构
 - 🎯 **设计模式**: DDD分层架构 + CQRS模式 + 依赖注入容器
-- 🧪 **完整测试**: 229个活跃测试用例，19种标准化测试标记，覆盖率29.0%（存在运行时错误）
+- 🧪 **完整测试**: 229个活跃测试用例，19种标准化测试标记，覆盖率23%（存在运行时错误）
 - 🐳 **容器化**: Docker + docker-compose完整部署方案，支持多环境配置
 - 🛡️ **质量保证**: Ruff + MyPy + bandit完整质量检查体系
 - ⚠️ **当前状态**: 生产就绪，但测试环境存在依赖问题和导入错误需要修复
@@ -32,18 +32,22 @@ make test-quick && make env-check
 ```
 
 ### 环境问题修复
-当前测试环境存在依赖缺失和导入错误问题，推荐解决方案：
+当前测试环境存在语法错误和依赖问题，推荐解决方案：
 
 **🥇 方案1：使用Docker环境（强烈推荐）**
 ```bash
+# 启动Docker环境并运行测试
 docker-compose up -d
 docker-compose exec app pytest -m "unit"
 ```
 
-**🥈 方案2：手动安装缺失依赖**
+**🥈 方案2：修复语法错误后测试**
 ```bash
+# 1. 修复已知语法错误（已修复crypto_utils.py）
+# 2. 安装缺失依赖
 source .venv/bin/activate
 pip install pandas numpy aiohttp psutil scikit-learn
+# 3. 运行测试
 make test-quick
 ```
 
@@ -56,45 +60,26 @@ python3 scripts/fix_test_crisis.py                  # 测试危机修复
 
 ## 🔧 核心开发命令
 
-### 日常高频使用
+### ⭐ 最常用命令（日常开发）
 ```bash
-make env-check                    # 环境健康检查
-make test                         # 运行所有测试
-make coverage                     # 覆盖率报告
-ruff check src/ tests/            # 代码检查（推荐，替代make lint）
-ruff format src/ tests/           # 代码格式化（推荐，替代make fmt）
-make prepush                      # 提交前完整验证
-make up / make down               # 启动/停止Docker服务
-make context                      # 加载项目上下文（⭐ 重要）
+make context          # 加载项目上下文（⭐ 开发前必做）
+make env-check        # 环境健康检查
+make test            # 运行所有测试
+make coverage        # 覆盖率报告
+make prepush         # 提交前完整验证
+
+# Docker环境
+make up              # 启动Docker服务
+make down            # 停止Docker服务
+
+# 代码质量（推荐使用ruff）
+ruff check src/ tests/    # 代码检查
+ruff format src/ tests/   # 代码格式化
 ```
 
-### 质量守护工具
+### 🧪 测试相关命令
 ```bash
-python3 scripts/quality_guardian.py --check-only      # 全面质量检查
-python3 scripts/smart_quality_fixer.py               # 智能自动修复
-python3 scripts/continuous_improvement_engine.py --automated  # 自动改进
-./scripts/ci-verify.sh                              # 本地CI验证
-```
-
-### 高级开发工具
-```bash
-# 测试危机修复工具
-python3 scripts/fix_test_crisis.py                   # 测试危机修复
-python3 scripts/precise_error_fixer.py              # 精确错误修复
-python3 scripts/launch_test_crisis_solution.py      # 交互式修复工具
-
-# 代码质量优化
-python3 scripts/comprehensive_syntax_fix.py         # 综合语法修复
-python3 scripts/batch_fix_exceptions.py             # 批量异常修复
-python3 scripts/clean_duplicate_imports.py          # 清理重复导入
-
-# 依赖和包管理
-python3 scripts/analyze_failed_tests.py             # 分析失败的测试
-python3 scripts/generate_test_report.py             # 生成测试报告
-```
-
-### 测试策略
-```bash
+# 测试执行
 make test-phase1        # 核心功能测试
 make test.unit          # 仅单元测试
 make test.int           # 集成测试
@@ -104,6 +89,20 @@ make coverage-targeted MODULE=<module>  # 模块覆盖率
 pytest -m "unit and not slow"                    # 单元测试（排除慢速）
 pytest -m "api and critical"                     # API关键功能测试
 pytest -m "domain or services"                   # 领域和服务层测试
+```
+
+### 🛠️ 质量守护工具
+```bash
+python3 scripts/quality_guardian.py --check-only      # 全面质量检查
+python3 scripts/smart_quality_fixer.py               # 智能自动修复
+python3 scripts/continuous_improvement_engine.py --automated  # 自动改进
+./scripts/ci-verify.sh                              # 本地CI验证
+
+# 高级修复工具
+python3 scripts/fix_test_crisis.py                   # 测试危机修复
+python3 scripts/precise_error_fixer.py              # 精确错误修复
+python3 scripts/comprehensive_syntax_fix.py         # 综合语法修复
+python3 scripts/clean_duplicate_imports.py          # 清理重复导入
 ```
 
 **⚠️ 重要规则：**
@@ -342,9 +341,10 @@ python3 scripts/launch_test_crisis_solution.py      # 交互式修复工具
 ```
 
 ### 关键配置问题
-⚠️ **pyproject.toml包含大量重复TODO注释需要清理**
-⚠️ **当前测试环境存在5个收集错误，主要在compatibility模块**
+✅ **pyproject.toml重复TODO注释已清理**
+⚠️ **当前测试环境存在收集错误，主要在compatibility模块**
 ⚠️ **部分智能修复脚本需要更新以适应当前项目结构**
+✅ **crypto_utils.py语法错误已修复**
 
 ### 🚨 当前已知问题和修复优先级
 
@@ -474,7 +474,7 @@ make clean-env && make install && make up
 ### 项目状态总结
 - **成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 - **架构**: DDD + CQRS + 依赖注入 + 异步架构
-- **测试**: 229个活跃测试用例，19种标记，覆盖率29.0%（存在运行时错误）
+- **测试**: 229个活跃测试用例，19种标记，覆盖率23%（存在运行时错误）
 - **质量**: A+代码质量，完整工具链
 - **当前挑战**: 测试环境依赖缺失，存在导入错误，建议使用Docker环境
 - **工具链**: 935行Makefile，613个命令，完整CI/CD自动化
