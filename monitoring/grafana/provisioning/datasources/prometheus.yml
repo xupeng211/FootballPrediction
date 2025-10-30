@@ -11,9 +11,11 @@ datasources:
     isDefault: true
     editable: true
     jsonData:
-      timeInterval: "10s"
+      timeInterval: "30s"
       queryTimeout: "60s"
       httpMethod: "POST"
+      httpHeaderName1: "X-Custom-Header"
+      httpHeaderValue1: "FootballPrediction"
     secureJsonData: {}
 
   - name: Loki
@@ -23,4 +25,22 @@ datasources:
     editable: true
     jsonData:
       maxLines: 1000
+      derivedFields:
+        - datasourceUid: prometheus
+          matcherRegex: "trace_id=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
     secureJsonData: {}
+
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres://postgres:5432/football_prediction
+    database: football_prediction
+    user: grafana
+    secureJsonData:
+      password: ${POSTGRES_GRAFANA_PASSWORD}
+    jsonData:
+      postgresVersion: 130000
+      timescaledb: false
+      sslmode: "disable"

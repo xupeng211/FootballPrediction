@@ -1,67 +1,272 @@
+# 生产环境Docker Compose配置 - 优化版本
+# Production Environment Docker Compose Configuration - Optimized
+
+version: '3.8'
+
 networks:
-  backend: null
-  frontend: null
+  football-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
 services:
+  # 主应用服务 - 多实例负载均衡
   app:
+    image: ghcr.io/xupeng211/football-prediction:latest
+    container_name: football-app-prod
+    restart: unless-stopped
+    environment:
+      - ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/football_prediction_prod
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - PROMETHEUS_ENABLED=true
+      - METRICS_PORT=8000
+      - WORKERS=4
+      - MAX_CONNECTIONS=100
+      - MIN_CONNECTIONS=20
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./ssl:/app/ssl:ro
+    networks:
+      - football-network
     depends_on:
-    - db
-    - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     deploy:
       replicas: 3
       resources:
         limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
           cpus: '1.0'
           memory: 1G
-    environment:
-    - ENV=production
-    - DEBUG=false
-    - LOG_LEVEL=INFO
-    healthcheck:
-      interval: 30s
-      retries: 3
-      test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:8000/health
-      timeout: 10s
-    image: ghcr.io/xupeng211/football-prediction:latest
-    ports:
-    - 8000:8000
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  # PostgreSQL数据库 - 优化配置
+  postgres:
+    image: postgres:15-alpine
+    container_name: football-postgres-prod
     restart: unless-stopped
-  db:
+    environment:
+      - POSTGRES_DB=football_prediction_prod
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+      - ./database/backup:/backup
+    networks:
+      - football-network
+    ports:
+      - "5432:5432"
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c synchronous_commit=off
+      -c fsync=off
+      -c full_page_writes=off
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Redis缓存 - 性能优化
+  redis:
+    image: redis:7-alpine
+    container_name: football-redis-prod
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - football-network
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 512M
-    environment:
-    - POSTGRES_DB=football_prediction_prod
-    - POSTGRES_USER=postgres
-    - POSTGRES_PASSWORD=${DB_PASSWORD}
-    image: postgres:15
-    restart: unless-stopped
-    volumes:
-    - postgres_data_prod:/var/lib/postgresql/data
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Nginx负载均衡器 - SSL终止
   nginx:
-    depends_on:
-    - app
     image: nginx:alpine
-    ports:
-    - 80:80
-    - 443:443
+    container_name: football-nginx-prod
     restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
-    - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  redis:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - football-network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     deploy:
       resources:
         limits:
-          cpus: '0.2'
+          cpus: '0.5'
           memory: 256M
-    image: redis:7-alpine
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # Celery Worker (异步任务处理)
+  celery-worker:
+    image: ghcr.io/xupeng211/football-prediction:latest
+    container_name: football-celery-worker-prod
     restart: unless-stopped
-version: '3.8'
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/football_prediction_prod
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    networks:
+      - football-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A src.celery_app worker --loglevel=info --concurrency=4 --max-tasks-per-child=1000
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Celery Beat (定时任务调度)
+  celery-beat:
+    image: ghcr.io/xupeng211/football-prediction:latest
+    container_name: football-celery-beat-prod
+    restart: unless-stopped
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/football_prediction_prod
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - ./celery/celerybeat-schedule.db:/app/celerybeat-schedule.db
+    networks:
+      - football-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A src.celery_app beat --loglevel=info
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # Flower (Celery监控)
+  flower:
+    image: ghcr.io/xupeng211/football-prediction:latest
+    container_name: football-flower-prod
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - ENV=production
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - FLOWER_BASIC_AUTH=${FLOWER_USER}:${FLOWER_PASSWORD}
+    networks:
+      - football-network
+    depends_on:
+      - redis
+    command: celery -A src.celery_app flower --port=5555
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5555"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
 volumes:
   postgres_data_prod:
+    driver: local
+  redis_data:
     driver: local

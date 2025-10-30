@@ -1,0 +1,237 @@
+groups:
+  - name: football_prediction_system
+    rules:
+      # 系统可用性告警
+      - alert: SystemDown
+        expr: up{job="football-prediction"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "足球预测系统服务不可用"
+          description: "实例 {{ $labels.instance }} 已停机超过1分钟"
+
+      # 高响应时间告警
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "API响应时间过高"
+          description: "95%分位响应时间 {{ $value }}s 超过阈值1s"
+
+      # 错误率告警
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{job="football-prediction",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="football-prediction"}[5m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "API错误率过高"
+          description: "5xx错误率 {{ $value | humanizePercentage }} 超过阈值5%"
+
+      - alert: HighClientErrorRate
+        expr: sum(rate(http_requests_total{job="football-prediction",status=~"4.."}[5m])) / sum(rate(http_requests_total{job="football-prediction"}[5m])) > 0.10
+        for: 2m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "客户端错误率过高"
+          description: "4xx错误率 {{ $value | humanizePercentage }} 超过阈值10%"
+
+      # CPU使用率告警
+      - alert: HighCPUUsage
+        expr: rate(cpu_usage_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率 {{ $value }}% 超过阈值80%"
+
+      - alert: CriticalCPUUsage
+        expr: rate(cpu_usage_total[5m]) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "CPU使用率严重过高"
+          description: "CPU使用率 {{ $value }}% 超过阈值95%"
+
+      # 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: memory_usage_bytes / memory_total_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率 {{ $value }}% 超过阈值85%"
+
+      - alert: CriticalMemoryUsage
+        expr: memory_usage_bytes / memory_total_bytes * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "内存使用率严重过高"
+          description: "内存使用率 {{ $value }}% 超过阈值95%"
+
+      # 磁盘使用率告警
+      - alert: HighDiskUsage
+        expr: disk_usage_bytes / disk_total_bytes * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "磁盘使用率过高"
+          description: "磁盘使用率 {{ $value }}% 超过阈值80%"
+
+      - alert: CriticalDiskUsage
+        expr: disk_usage_bytes / disk_total_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "磁盘使用率严重过高"
+          description: "磁盘使用率 {{ $value }}% 超过阈值90%"
+
+      # 数据库连接告警
+      - alert: DatabaseConnectionHigh
+        expr: db_connections_active / db_connections_max > 0.8
+        for: 3m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "数据库连接使用率过高"
+          description: "数据库连接使用率 {{ $value | humanizePercentage }} 超过阈值80%"
+
+      - alert: DatabaseConnectionCritical
+        expr: db_connections_active / db_connections_max > 0.95
+        for: 1m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "数据库连接使用率严重过高"
+          description: "数据库连接使用率 {{ $value | humanizePercentage }} 超过阈值95%"
+
+      # 缓存性能告警
+      - alert: LowCacheHitRate
+        expr: cache_hit_rate < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "缓存命中率过低"
+          description: "缓存命中率 {{ $value | humanizePercentage }} 低于阈值70%"
+
+      # 预测系统告警
+      - alert: LowPredictionAccuracy
+        expr: prediction_accuracy < 0.6
+        for: 30m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "预测准确率过低"
+          description: "预测准确率 {{ $value | humanizePercentage }} 低于阈值60%"
+
+      - alert: PredictionRequestSpike
+        expr: rate(prediction_requests_total[5m]) > 100
+        for: 2m
+        labels:
+          severity: info
+          service: football-prediction
+        annotations:
+          summary: "预测请求量激增"
+          description: "预测请求速率 {{ $value }} req/s 超过正常水平"
+
+      # 业务指标告警
+      - alert: LowActiveUsers
+        expr: active_users_total < 10
+        for: 15m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "活跃用户数过低"
+          description: "活跃用户数 {{ $value }} 低于预期水平"
+
+      - alert: TenantQuotaExceeded
+        expr: tenant_quota_usage / tenant_quota_limit > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "租户配额即将超限"
+          description: "租户 {{ $labels.tenant_name }} 配额使用率 {{ $value | humanizePercentage }} 超过90%"
+
+      # API健康检查告警
+      - alert: APIHealthCheckFailed
+        expr: api_health_check_status != 1
+        for: 1m
+        labels:
+          severity: critical
+          service: football-prediction
+        annotations:
+          summary: "API健康检查失败"
+          description: "端点 {{ $labels.endpoint }} 健康检查失败"
+
+  - name: football_prediction_business
+    rules:
+      # 业务增长指标
+      - alert: DecliningUserEngagement
+        expr: rate(user_sessions_total[1h]) / rate(user_sessions_total[24h] offset 24h) < 0.8
+        for: 2h
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "用户参与度下降"
+          description: "当前用户会话速率是昨天同期的{{ $value | humanizePercentage }}"
+
+      - alert: PredictionQualityDegradation
+        expr: prediction_success_rate < 0.7
+        for: 1h
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "预测成功率下降"
+          description: "预测成功率 {{ $value | humanizePercentage }} 低于阈值70%"
+
+      # 数据质量告警
+      - alert: DataCollectionLag
+        expr: time() - data_last_updated_timestamp > 3600
+        for: 10m
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "数据收集延迟"
+          description: "数据最后更新时间超过1小时"
+
+      - alert: MLModelPerformanceDegradation
+        expr: ml_model_accuracy < 0.65
+        for: 4h
+        labels:
+          severity: warning
+          service: football-prediction
+        annotations:
+          summary: "机器学习模型性能下降"
+          description: "模型准确率 {{ $value | humanizePercentage }} 低于预期水平"

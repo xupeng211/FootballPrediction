@@ -1,0 +1,55 @@
+# Grafana仪表板配置
+# Grafana Dashboard Configuration
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+
+dashboards:
+  - name: '系统监控'
+    folder: 'Production'
+    file: 'dashboards/system-overview.json'
+
+  - name: '应用性能'
+    folder: 'Production'
+    file: 'dashboards/application-performance.json'
+
+  - name: '数据库监控'
+    folder: 'Production'
+    file: 'dashboards/database-monitoring.json'
+
+  - name: '负载均衡监控'
+    folder: 'Production'
+    file: 'dashboards/load-balancer.json'
+
+  - name: '业务指标'
+    folder: 'Production'
+    file: 'dashboards/business-metrics.json'
+
+  - name: '告警管理'
+    folder: 'Operations'
+    file: 'dashboards/alert-management.json'
+
+# 仪表板提供者配置
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

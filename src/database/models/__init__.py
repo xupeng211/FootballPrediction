@@ -15,6 +15,10 @@ from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
 from .user import User
+from .tenant import (
+    Tenant, TenantRole, TenantPermission, RolePermission, UserRoleAssignment,
+    TenantStatus, TenantPlan, PermissionScope, ResourceType
+)
 
 # 为API兼容性创建别名
 Prediction = Predictions
@@ -40,6 +44,12 @@ __all__ = [
     # 审计日志模型
     "AuditLog",
     "AuditLogSummary",
+    # 多租户模型
+    "Tenant",
+    "TenantRole",
+    "TenantPermission",
+    "RolePermission",
+    "UserRoleAssignment",
     # 枚举类
     "MatchStatus",
     "MarketType",
@@ -49,4 +59,8 @@ __all__ = [
     "CollectionType",
     "AuditAction",
     "AuditSeverity",
+    "TenantStatus",
+    "TenantPlan",
+    "PermissionScope",
+    "ResourceType",
 ]
