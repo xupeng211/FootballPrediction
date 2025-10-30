@@ -60,11 +60,11 @@ def try_import(module_name: str, package: str = None) -> Union[Any, MissingDepen
         if __debug__ and module_name == "matplotlib":
             # matplotlib 的 __version__ 属性问题很常见，静默处理
             pass
-        elif isinstance(e, AttributeError) and "__version__" in str(e):
+        elif isinstance(e, ((((AttributeError) and "__version__" in str(e):
             # 版本属性错误，静默处理
             pass
         else:
-            warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)
+            warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)))
         return MissingDependency(module_name)
 
 
@@ -99,11 +99,11 @@ beautifulsoup4 = try_import("bs4")
 selenium = try_import("selenium")
 
 # 缓存
-redis_client = try_import("redis", "redis.client")
+redis_client = try_import("redis"))
 
 # 消息队列
 celery = try_import("celery")
-kafka = try_import("kafka-python", "kafka")
+kafka = try_import("kafka-python"))
 pika = try_import("pika")
 
 # 监控

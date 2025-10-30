@@ -17,6 +17,8 @@ from src.database.connection import DatabaseManager
 
 from .models.match import Match
 from .models.team import Team
+from src.core.config import 
+from src.core.config import 
 
 logger = get_logger(__name__)
 

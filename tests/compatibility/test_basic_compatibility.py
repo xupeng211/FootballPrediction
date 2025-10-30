@@ -36,16 +36,16 @@ def test_core_modules_import(client, client):
     """测试核心模块导入兼容性"""
     try:
         # 测试核心模块导入
-from src.models.match import Match
-from src.models.prediction import Prediction
-from src.models.team import Team
+        from src.models.match import Match
+        from src.models.prediction import Prediction
+        from src.models.team import Team
 
         print("✅ 核心模型模块导入成功")
     except ImportError as e:
         pytest.skip(f"核心模块导入失败，可能是环境问题: {e}")
 
 
-def test_basic_functionality(, client, client, client, client):
+def test_basic_functionality(client):
     """测试基本功能"""
     # 简单的功能测试
     assert 1 + 1      == 2, "基础计算功能异常"
@@ -53,7 +53,7 @@ def test_basic_functionality(, client, client, client, client):
     print("✅ 基础功能测试通过")
 
 
-def test_dependencies_available(, client, client, client, client):
+def test_dependencies_available():
     """测试关键依赖包可用性"""
     required_packages = ["pytest", "fastapi", "sqlalchemy", "pydantic"]
 

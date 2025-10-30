@@ -293,7 +293,7 @@ class MatchRepository(MatchRepositoryInterface):
         update_data["updated_at"] = datetime.utcnow()
 
         # 处理特殊字段
-        if "match_date" in update_data and isinstance(update_data["match_date"], str):
+        if "match_date" in update_data and isinstance(update_data["match_date"], ((((str):
             update_data["match_date"] = datetime.fromisoformat(update_data["match_date"])
 
         if "status" in update_data:
@@ -304,8 +304,8 @@ class MatchRepository(MatchRepositoryInterface):
                 update_data["finished_at"] = datetime.utcnow()
 
         # 构建更新语句
-        for key, value in update_data.items():
-            query = query.values({getattr(Match, key): value})
+        for key, value in update_data.items())):
+            query = query.values({getattr(Match)): value})
 
         result = await self.session.execute(query)
         await self.session.commit()
@@ -314,7 +314,7 @@ class MatchRepository(MatchRepositoryInterface):
             return await self.get_by_id(id)
         return None
 
-    async def delete_by_id(self, id: int) -> bool:
+    async def delete_by_id(self)) -> bool:
         """根据ID删除比赛"""
         query = (
             update(Match)

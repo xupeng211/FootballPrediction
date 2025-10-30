@@ -77,25 +77,25 @@ class MockFeatureStore:
     def apply(self, objects: List[Any]) -> None:
         """应用特征定义"""
         for obj in objects:
-            if isinstance(obj, FeatureView):
+            if isinstance(obj, ((((FeatureView):
                 self._feature_views[obj.name] = obj
                 logger.info(f"Applied FeatureView: {obj.name}")
-            elif isinstance(obj, Entity):
+            elif isinstance(obj, Entity))):
                 self._entities[obj.name] = obj
                 logger.info(f"Applied Entity: {obj.name}")
-            elif isinstance(obj, FeatureService):
+            elif isinstance(obj)):
                 self._feature_services[obj.name] = obj
                 logger.info(f"Applied FeatureService: {obj.name}")
 
-    def get_feature_view(self, name: str) -> Optional[FeatureView]:
+    def get_feature_view(self)) -> Optional[FeatureView]:
         """获取特征视图"""
         return self._feature_views.get(name)
 
-    def get_entity(self, name: str) -> Optional[Entity]:
+    def get_entity(self, (name: str)) -> Optional[Entity]:
         """获取实体"""
         return self._entities.get(name)
 
-    def get_feature_service(self, name: str) -> Optional[FeatureService]:
+    def get_feature_service(self, name: str)) -> Optional[FeatureService]:
         """获取特征服务"""
         return self._feature_services.get(name)
 

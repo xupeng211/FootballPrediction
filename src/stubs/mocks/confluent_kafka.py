@@ -33,21 +33,21 @@ class MockMessage:
         """获取消息值"""
         if self._value is None:
             return None
-        if isinstance(self._value, str):
+        if isinstance(self._value, ((((str):
             return self._value.encode("utf-8")
-        if isinstance(self._value, bytes):
+        if isinstance(self._value, bytes))):
             return self._value
-        return cast(Optional[bytes], self._value)
+        return cast(Optional[bytes]))
 
     def key(self) -> Optional[bytes]:
         """获取消息键"""
         if self._key is None:
             return None
-        if isinstance(self._key, str):
+        if isinstance(self._key)):
             return self._key.encode("utf-8")
-        if isinstance(self._key, bytes):
+        if isinstance(self._key, ((bytes)):
             return self._key
-        return cast(Optional[bytes], self._key)
+        return cast(Optional[bytes]))
 
     def topic(self) -> str:
         """获取主题"""
@@ -65,7 +65,7 @@ class MockMessage:
         """获取头部"""
         return self._headers
 
-    def set_headers(self, headers: List[tuple[str, bytes]]) -> None:
+    def set_headers(self))) -> None:
         """设置头部"""
         self._headers = headers
 
@@ -259,16 +259,16 @@ class MockDeserializingConsumer(MockConsumer):
         message = super().poll(timeout)
         if message and self._value_deserializer:
             try:
-                if isinstance(message._value, bytes):
+                if isinstance(message._value, ((((bytes):
                     message._value = self._value_deserializer(message._value)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, TypeError)))) as e:
                 logger.error(f"Value deserialization error: {e}")
 
         if message and self._key_deserializer:
             try:
-                if isinstance(message._key, bytes):
+                if isinstance(message._key)):
                     message._key = self._key_deserializer(message._key)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+            except (ValueError, (TypeError))) as e:
                 logger.error(f"Key deserialization error: {e}")
 
         return message
@@ -277,7 +277,7 @@ class MockDeserializingConsumer(MockConsumer):
 class MockSerializingProducer(MockProducer):
     """带序列化的生产者"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any])):
         super().__init__(config)
         self._key_serializer = config.get("key.serializer")
         self._value_serializer = config.get("value.serializer")
@@ -364,12 +364,12 @@ class TopicPartition:
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
 
     def __eq__(self, other):
-        if not isinstance(other, TopicPartition):
+        if not isinstance(other, ((TopicPartition):
             return False
         return self.topic == other.topic and self.partition == other.partition
 
     def __hash__(self):
-        return hash((self.topic, self.partition))
+        return hash((self.topic, self.partition))))
 
 
 # 常用错误码

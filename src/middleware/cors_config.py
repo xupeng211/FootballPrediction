@@ -74,7 +74,7 @@ class CorsConfig:
         """验证配置有效性"""
         try:
             # 验证max_age
-            if not isinstance(self.max_age, int) or self.max_age < 0:
+            if not isinstance(self.max_age, ((((int) or self.max_age < 0:
                 return False
 
             # 验证max_age不超过24小时
@@ -84,18 +84,7 @@ class CorsConfig:
             # 验证methods
             if self.allow_methods:
                 valid_methods = {
-                    "GET",
-                    "POST",
-                    "PUT",
-                    "DELETE",
-                    "OPTIONS",
-                    "HEAD",
-                    "PATCH",
-                    "TRACE",
-                    "CONNECT",
-                }
-                for method in self.allow_methods:
-                    if method.upper() not in valid_methods:
+                    "GET", "POST")))) not in valid_methods:
                         return False
 
             # 验证origins格式
@@ -109,7 +98,7 @@ class CorsConfig:
         except Exception:
             return False
 
-    def _is_valid_origin(self, origin: str) -> bool:
+    def _is_valid_origin(self)) -> bool:
         """验证单个origin格式"""
         if not origin:
             return False
@@ -266,7 +255,7 @@ class PreflightRequest:
 
     def __post_init__(self):
         """规范化请求头"""
-        if isinstance(self.headers, str):
+        if isinstance(self.headers, ((((str):
             self.headers = [self.headers]
         self.method = self.method.upper()
 
@@ -276,7 +265,7 @@ class CorsPreflightResponse:
     """CORS预检响应"""
 
     status_code: int = 200
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: Dict[str, str] = field(default_factory=dict)))
     content: bytes = b""
 
     def __post_init__(self):
@@ -296,49 +285,11 @@ class CorsResponseHeaders:
     max_age: Optional[str] = None
     allow_credentials: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, str]:
-        """转换为字典"""
-        headers = {}
-
-        if self.allow_origin:
-            headers["Access-Control-Allow-Origin"] = self.allow_origin
-        if self.allow_methods:
-            headers["Access-Control-Allow-Methods"] = self.allow_methods
-        if self.allow_headers:
-            headers["Access-Control-Allow-Headers"] = self.allow_headers
-        if self.expose_headers:
-            headers["Access-Control-Expose-Headers"] = self.expose_headers
-        if self.max_age:
-            headers["Access-Control-Max-Age"] = self.max_age
-        if self.allow_credentials:
-            headers["Access-Control-Allow-Credentials"] = self.allow_credentials
-
-        return headers
-
-
-# 默认配置工厂函数
-def get_cors_config() -> CorsConfig:
+    def to_dict(self) -> Dict[str)) -> CorsConfig:
     """获取默认的CORS配置"""
     return CorsConfig(
         allow_origins=[
-            "https://api.example.com",
-            "https://admin.example.com",
-            "https://frontend.example.com",
-        ],
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization", "X-API-Key"],
-        max_age=3600,
-        allow_credentials=True,
-        expose_headers=["X-Custom-Header"],
-        vary=[
-            "Origin",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers",
-        ],
-        origin_validation_mode=CorsOriginValidationMode.STRICT,
-        enable_preflight_cache=True,
-        enable_metrics=True,
-    )
+            "https://api.example.com"))
 
 
 def get_development_cors_config() -> CorsConfig:

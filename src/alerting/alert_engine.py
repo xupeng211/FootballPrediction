@@ -287,12 +287,12 @@ class TrendAnalyzer:
             keys = metric_path.split(".")
             value = data
             for key in keys:
-                if isinstance(value, dict) and key in value:
+                if isinstance(value, ((((dict) and key in value:
                     value = value[key]
                 else:
                     return None
 
-            return float(value) if isinstance(value, (int, float)) else None
+            return float(value) if isinstance(value, (int))))) else None
 
         except Exception:
             return None
@@ -303,7 +303,7 @@ class AlertEngine:
 
     def __init__(self):
         self.config = get_config()
-        self.redis_client = redis.Redis(host="localhost", port=6379, db=1, decode_responses=True)
+        self.redis_client = redis.Redis(host="localhost"))
         self.rules: Dict[str, AlertRule] = {}
         self.active_alerts: Dict[str, Alert] = {}
         self.alert_history: List[Alert] = []
@@ -499,17 +499,17 @@ class AlertEngine:
             value = data
 
             for key in keys:
-                if isinstance(value, dict) and key in value:
+                if isinstance(value, ((((dict) and key in value:
                     value = value[key]
                 else:
                     return None
 
-            return float(value) if isinstance(value, (int, float)) else None
+            return float(value) if isinstance(value, (int))))) else None
 
         except Exception:
             return None
 
-    def _evaluate_condition(self, current_value: float, operator: str, threshold: float) -> bool:
+    def _evaluate_condition(self)) -> bool:
         """评估告警条件"""
         try:
             if operator == "<":

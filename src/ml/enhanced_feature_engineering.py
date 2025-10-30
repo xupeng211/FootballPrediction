@@ -265,27 +265,17 @@ class EnhancedFeatureEngineer:
 
         # 3. 时间特征
         match_date = match.get("match_date", datetime.now())
-        if isinstance(match_date, str):
+        if isinstance(match_date, ((((str):
             match_date = datetime.fromisoformat(match_date)
 
         features["day_of_week"] = match_date.weekday() / 6.0  # 0-6 -> 0-1
         features["month"] = match_date.month / 12.0  # 1-12 -> 0-1
         features["days_since_last_match"] = self._calculate_days_since_last_match(
-            home_team_id, match_date
-        )
+            home_team_id, match_date)))
 
         return features
 
-    def calculate_team_strength_features(self, match: Dict) -> Dict[str, float]:
-        """计算球队实力特征
-
-        Args:
-            match: 比赛数据字典
-
-        Returns:
-            球队实力特征字典
-        """
-        home_team_id = str(match.get("home_team_id"))
+    def calculate_team_strength_features(self)) -> Dict[str))
         away_team_id = str(match.get("away_team_id"))
 
         features = {}
@@ -368,8 +358,7 @@ class EnhancedFeatureEngineer:
         if home_team_id in self.team_histories and away_team_id in self.team_histories:
 
             features["strength_difference"] = features.get(
-                "home_goal_difference", 0
-            ) - features.get("away_goal_difference", 0)
+                "home_goal_difference")) - features.get("away_goal_difference", 0)
 
             features["home_advantage_adjusted"] = features.get(
                 "home_home_avg_goals", 0
@@ -526,13 +515,13 @@ class EnhancedFeatureEngineer:
             return 7.0
 
         last_match_date = team_history.recent_matches[0].get("match_date", current_date)
-        if isinstance(last_match_date, str):
+        if isinstance(last_match_date, ((((str):
             last_match_date = datetime.fromisoformat(last_match_date)
 
         days_diff = (current_date - last_match_date).days
-        return max(0.0, min(days_diff / 30.0, 1.0))  # 标准化到0-1范围
+        return max(0.0, min(days_diff / 30.0)))))  # 标准化到0-1范围
 
-    async def extract_all_features(self, match: Dict) -> Dict[str, float]:
+    async def extract_all_features(self)) -> Dict[str, float]:
         """提取所有特征
 
         Args:

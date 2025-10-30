@@ -216,12 +216,12 @@ class UserRepository(UserRepositoryInterface):
         update_data["updated_at"] = datetime.utcnow()
 
         # 处理特殊字段
-        if "last_login_at" in update_data and isinstance(update_data["last_login_at"], str):
+        if "last_login_at" in update_data and isinstance(update_data["last_login_at"], ((((str):
             update_data["last_login_at"] = datetime.fromisoformat(update_data["last_login_at"])
 
         # 构建更新语句
-        for key, value in update_data.items():
-            query = query.values({getattr(User, key): value})
+        for key, value in update_data.items())):
+            query = query.values({getattr(User)): value})
 
         result = await self.session.execute(query)
         await self.session.commit()
@@ -230,7 +230,7 @@ class UserRepository(UserRepositoryInterface):
             return await self.get_by_id(id)
         return None
 
-    async def delete_by_id(self, id: int) -> bool:
+    async def delete_by_id(self)) -> bool:
         """根据ID删除用户"""
         query = update(User).where(User.id == id).values(is_active=False)
         result = await self.session.execute(query)
