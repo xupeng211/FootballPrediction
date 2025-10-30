@@ -22,7 +22,7 @@ def get_file_errors(file_path):
                     error_count = int(line.split()[1])
                     return error_count
         return 0
-    except Exception:
+            except Exception:
         return 0
 
 

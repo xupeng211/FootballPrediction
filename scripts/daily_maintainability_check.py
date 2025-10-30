@@ -44,7 +44,7 @@ class DailyMaintainabilityChecker:
                         data = json.load(f)
                         return data["totals"]["percent_covered"]
             return 0.0
-        except Exception:
+            except Exception:
             return 0.0
 
     def count_test_errors(self) -> int:
@@ -61,7 +61,7 @@ class DailyMaintainabilityChecker:
             # 计算错误数量
             errors = result.stderr.count("ERROR")
             return errors
-        except Exception:
+            except Exception:
             return 999  # 表示无法获取
 
     def count_complex_functions(self) -> int:
@@ -90,7 +90,7 @@ class DailyMaintainabilityChecker:
                             count += 1
                 return count
             return 0
-        except Exception:
+            except Exception:
             # 如果没有 radon，返回预估数
             return 20
 
@@ -120,7 +120,7 @@ class DailyMaintainabilityChecker:
 
             errors = result.stdout.count("error:")
             return errors
-        except Exception:
+            except Exception:
             return 531  # 使用已知值
 
     def generate_report(self) -> Dict:

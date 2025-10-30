@@ -392,6 +392,6 @@ def validate_event(event: RealtimeEvent) -> bool:
 
         return True
 
-    except Exception:
+            except Exception:
         return False
 ]]]]

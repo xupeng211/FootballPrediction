@@ -43,7 +43,7 @@ def collect_skipped_from_file(test_file):
                     )
 
         return skipped_tests
-    except Exception:
+            except Exception:
         return []
 
 
@@ -71,7 +71,7 @@ def get_skip_reason(test_file, test_name):
                                 return skip_reason.group(1)
 
         return "未知原因"
-    except Exception:
+            except Exception:
         return "无法读取文件"
 
 

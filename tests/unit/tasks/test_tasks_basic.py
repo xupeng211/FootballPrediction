@@ -19,7 +19,7 @@ class TestCeleryApp:
         """测试Celery应用导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.celery_app import celery_app
 
@@ -31,7 +31,7 @@ class TestCeleryApp:
         """测试Celery配置"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.celery_app import celery_app
 
@@ -45,7 +45,7 @@ class TestCeleryApp:
         """测试Celery任务装饰器"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.celery_app import celery_app
 
@@ -68,7 +68,7 @@ class TestDataCollectionTasks:
         """测试数据收集任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.data_collection_tasks import collect_all_data
 
@@ -80,7 +80,7 @@ class TestDataCollectionTasks:
         """测试fixtures任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.data_collection.fixtures_tasks import collect_fixtures
 
@@ -92,7 +92,7 @@ class TestDataCollectionTasks:
         """测试赔率任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.data_collection.odds_tasks import collect_odds
 
@@ -104,7 +104,7 @@ class TestDataCollectionTasks:
         """测试比分任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.data_collection.scores_tasks import collect_scores
 
@@ -116,7 +116,7 @@ class TestDataCollectionTasks:
         """测试统计任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.data_collection.stats_tasks import collect_stats
 
@@ -133,7 +133,7 @@ class TestMaintenanceTasks:
         """测试维护任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.maintenance_tasks import (
                 backup_database,
@@ -152,7 +152,7 @@ class TestMaintenanceTasks:
         """测试清理旧数据任务"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             # 使用mock模拟执行
@@ -167,7 +167,7 @@ class TestMaintenanceTasks:
         """测试数据库备份任务"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.maintenance_tasks.backup_database") as mock_backup:
@@ -186,7 +186,7 @@ class TestMonitoringTasks:
         """测试监控模块导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.monitoring import (
                 check_system_health,
@@ -204,7 +204,7 @@ class TestMonitoringTasks:
         """测试系统健康检查"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.monitoring.check_system_health") as mock_check:
@@ -225,7 +225,7 @@ class TestMonitoringTasks:
         """测试收集指标"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.monitoring.collect_metrics") as mock_collect:
@@ -249,7 +249,7 @@ class TestErrorHandling:
         """测试错误日志导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.error_logger import log_critical, log_error
 
@@ -262,7 +262,7 @@ class TestErrorHandling:
         """测试错误日志功能"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.error_logger.log_error") as mock_log:
@@ -281,7 +281,7 @@ class TestStreamingTasks:
         """测试流处理任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.streaming_tasks import (
                 handle_stream_data,
@@ -300,7 +300,7 @@ class TestStreamingTasks:
         """测试Kafka消息处理"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.streaming_tasks.process_kafka_message") as mock_process:
@@ -319,7 +319,7 @@ class TestBackupTasks:
         """测试备份任务导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.backup_tasks import (
                 create_backup,
@@ -337,7 +337,7 @@ class TestBackupTasks:
         """测试创建备份"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.backup_tasks.create_backup") as mock_backup:
@@ -361,7 +361,7 @@ class TestTaskUtils:
         """测试任务工具导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.utils import (
                 cancel_task,
@@ -381,7 +381,7 @@ class TestTaskUtils:
         """测试获取任务状态"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.utils.get_task_status") as mock_status:
@@ -399,7 +399,7 @@ class TestTaskUtils:
         """测试格式化任务结果"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.utils.format_task_result") as mock_format:
@@ -422,7 +422,7 @@ class TestTaskDecorators:
         """测试任务装饰器导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.decorators import (
                 task_circuit_breaker,
@@ -442,7 +442,7 @@ class TestTaskDecorators:
         """测试任务重试装饰器"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.decorators import task_retry
 
@@ -464,7 +464,7 @@ class TestTaskScheduler:
         """测试调度器导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.scheduler import (
                 TaskScheduler,
@@ -484,7 +484,7 @@ class TestTaskScheduler:
         """测试调度任务"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
 
             with patch("src.tasks.scheduler.schedule_task") as mock_schedule:
@@ -506,7 +506,7 @@ class TestTaskQueue:
         """测试队列管理器导入"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.queue_manager import (
                 QueueManager,
@@ -528,7 +528,7 @@ class TestTaskQueue:
         """测试获取队列大小"""
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             from src.tasks.queue_manager import get_queue_size
 

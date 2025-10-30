@@ -45,7 +45,7 @@ class TestMetricsEventHandler:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate MetricsEventHandler")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating MetricsEventHandler instance")
 
     def test_class_exists(self):
@@ -119,7 +119,7 @@ class TestLoggingEventHandler:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate LoggingEventHandler")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating LoggingEventHandler instance")
 
     def test_class_exists(self):
@@ -183,7 +183,7 @@ class TestCacheInvalidationHandler:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate CacheInvalidationHandler")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating CacheInvalidationHandler instance")
 
     def test_class_exists(self):
@@ -247,7 +247,7 @@ class TestNotificationEventHandler:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate NotificationEventHandler")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating NotificationEventHandler instance")
 
     def test_class_exists(self):
@@ -311,7 +311,7 @@ class TestAnalyticsEventHandler:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate AnalyticsEventHandler")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating AnalyticsEventHandler instance")
 
     def test_class_exists(self):
@@ -385,7 +385,7 @@ class TestAlertEventHandler:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate AlertEventHandler")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating AlertEventHandler instance")
 
     def test_class_exists(self):

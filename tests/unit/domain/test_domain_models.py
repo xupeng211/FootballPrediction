@@ -104,7 +104,7 @@ class TestDomainModels:
                 result = league.is_valid()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_league_methods(self):
@@ -146,7 +146,7 @@ class TestDomainModels:
 
             for status in statuses:
                 assert status is not None
-        except Exception:
+            except Exception:
             # 枚举可能不存在或格式不同
             pass
 
@@ -157,7 +157,7 @@ class TestDomainModels:
 
             for result in results:
                 assert result is not None
-        except Exception:
+            except Exception:
             # 枚举可能不存在或格式不同
             pass
 
@@ -197,7 +197,7 @@ class TestDomainModels:
                 result = match.is_valid()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_match_methods(self):
@@ -247,7 +247,7 @@ class TestDomainModels:
                 result = team.is_valid()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_team_methods(self):
@@ -290,7 +290,7 @@ class TestDomainModels:
                 result = prediction.is_valid()
                 if result is not None:
                     assert isinstance(result, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_prediction_methods(self):
@@ -338,7 +338,7 @@ class TestDomainModels:
             if hasattr(match, "get_away_team"):
                 match.get_away_team()
                 # 可能需要mock或实际查询
-        except Exception:
+            except Exception:
             pass
 
     def test_model_serialization(self):
@@ -387,7 +387,7 @@ class TestDomainModels:
                 league = League.from_json(json_str)
                 if league is not None:
                     assert league.id == 1
-        except Exception:
+            except Exception:
             pass
 
     def test_model_update(self):
@@ -404,7 +404,7 @@ class TestDomainModels:
                 league.update({"country": "Updated Country"})
                 if hasattr(league, "country"):
                     assert league.country == "Updated Country"
-        except Exception:
+            except Exception:
             pass
 
     def test_model_clone(self):
@@ -418,7 +418,7 @@ class TestDomainModels:
                     assert cloned.id == original.id
                     assert cloned.name == original.name
                     assert cloned is not original  # 确保是不同的对象
-        except Exception:
+            except Exception:
             pass
 
     def test_model_equality(self):
@@ -431,7 +431,7 @@ class TestDomainModels:
             if hasattr(league1, "__eq__"):
                 assert league1 == league2  # 相同ID应该相等
                 assert league1 != league3  # 不同ID应该不相等
-        except Exception:
+            except Exception:
             pass
 
     def test_model_hash(self):
@@ -442,7 +442,7 @@ class TestDomainModels:
             if hasattr(league, "__hash__"):
                 hash_value = hash(league)
                 assert isinstance(hash_value, int)
-        except Exception:
+            except Exception:
             pass
 
     def test_model_string_representation(self):
@@ -477,9 +477,9 @@ class TestDomainModels:
                     if hasattr(League, "from_dict"):
                         League.from_dict(data)
                         # 应该优雅地处理无效数据
-                except Exception:
+            except Exception:
                     pass  # 抛出异常也是可以接受的
-        except Exception:
+            except Exception:
             pass
 
     def test_model_edge_cases(self):
@@ -498,7 +498,7 @@ class TestDomainModels:
             special_name = "测试 🚀 League"
             league = League(id=1, name=special_name)
             assert league.name == special_name
-        except Exception:
+            except Exception:
             pass
 
     def test_model_composition(self):
@@ -531,7 +531,7 @@ class TestDomainModels:
             assert match.home_team_id == home_team.id
             assert match.away_team_id == away_team.id
             assert prediction.match_id == match.id
-        except Exception:
+            except Exception:
             pass
 
     def test_model_performance(self):
@@ -555,7 +555,7 @@ class TestDomainModels:
                     model.to_dict()
                 serialization_time = time.time() - start_time
                 assert serialization_time < 0.5  # 应该在0.5秒内序列化100个模型
-        except Exception:
+            except Exception:
             pass
 
 

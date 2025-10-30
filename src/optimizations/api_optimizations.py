@@ -218,7 +218,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        except Exception:
+            except Exception:
             # 记录错误指标
             error_metrics = PerformanceMetrics(
                 endpoint=request.url.path,

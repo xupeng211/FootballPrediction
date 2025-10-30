@@ -681,7 +681,7 @@ def check_database_health() -> bool:
         # 简化实现:总是返回True（健康）
         # 在实际应用中,这里应该执行真实的数据库连接检查
         return True
-    except Exception:
+            except Exception:
         return False
 
 
@@ -694,7 +694,7 @@ def get_api_response_time() -> float:
 
         time.sleep(0.1)  # 模拟请求延迟
         return 2.5  # 2.5秒响应时间
-    except Exception:
+            except Exception:
         return 0.0
 
 
@@ -704,7 +704,7 @@ def check_service_health() -> bool:
         # 简化实现:总是返回True（健康）
         # 在实际应用中,这里应该检查各个服务的健康状态
         return True
-    except Exception:
+            except Exception:
         return False
 
 

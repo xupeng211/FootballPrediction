@@ -228,7 +228,7 @@ class IntelligentFileCleanup:
 
                 with open("pytest.ini", "w", encoding="utf-8") as f:
                     f.write(content)
-        except Exception:
+            except Exception:
             pass  # 忽略优化错误
 
     def _optimize_makefile(self):
@@ -254,7 +254,7 @@ cleanup-issue88:
 
                 with open("Makefile", "w", encoding="utf-8") as f:
                     f.write(content)
-        except Exception:
+            except Exception:
             pass  # 忽略优化错误
 
     def commit_cleanup_changes(self):

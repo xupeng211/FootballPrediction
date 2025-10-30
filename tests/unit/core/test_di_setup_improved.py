@@ -371,7 +371,7 @@ profiles:
                 )
                 try:
                     pass
-                except Exception:
+            except Exception:
                     pass
                     setup._auto_register_repositories()
                 except ImportError:
@@ -391,7 +391,7 @@ profiles:
                 )
                 try:
                     pass
-                except Exception:
+            except Exception:
                     pass
                     setup._auto_register_services()
                 except ImportError:
@@ -530,7 +530,7 @@ profiles:
             temp_path = temp_file.name
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             create_di_config(temp_path, "yaml")
             with open(temp_path, "r") as f:
@@ -562,7 +562,7 @@ profiles:
         empty_config.close()
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             setup = DISetup()
             with (

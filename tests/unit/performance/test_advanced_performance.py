@@ -85,7 +85,7 @@ class TestCachePerformance:
                         else:
                             cache[key] = value
                         operations += 1
-                except Exception:
+            except Exception:
                     errors += 1
 
             end_time = time.time()

@@ -358,7 +358,7 @@ profiles:
             with patch("src.core.di_setup.logger") as mock_logger:
                 try:
                     pass
-                except Exception:
+            except Exception:
                     pass
                     setup._auto_register_repositories()
                 except ImportError:
@@ -382,7 +382,7 @@ profiles:
                 with patch("src.core.di_setup.logger"):
                     try:
                         pass
-                    except Exception:
+            except Exception:
                         pass
                         setup._auto_register_services()
                     except ImportError:
@@ -520,7 +520,7 @@ profiles:
         temp_path = tempfile.mktemp(suffix=".yaml")
         try:
             pass
-        except Exception:
+            except Exception:
             pass
             with patch(
                 "src.core.config_di.generate_sample_config",

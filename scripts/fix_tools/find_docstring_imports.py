@@ -37,7 +37,7 @@ def find_docstring_imports(filepath):
 
         return issues
 
-    except Exception:
+            except Exception:
         return []
 
 

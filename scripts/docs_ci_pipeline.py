@@ -233,7 +233,7 @@ class DocsCIPipeline:
                             self._get_package_version(package) if result.returncode == 0 else None
                         ),
                     }
-                except Exception:
+            except Exception:
                     stage_result["dependencies"][f"optional_{package}"] = {"installed": False}
 
             stage_result["success"] = True
@@ -258,7 +258,7 @@ class DocsCIPipeline:
             )
             if result.returncode == 0:
                 return result.stdout.strip()
-        except Exception:
+            except Exception:
             pass
         return None
 
@@ -517,7 +517,7 @@ class DocsCIPipeline:
             result = subprocess.run(["du", "-sh", str(directory)], capture_output=True, text=True)
             if result.returncode == 0:
                 return result.stdout.split()[0]
-        except Exception:
+            except Exception:
             pass
         return "未知"
 

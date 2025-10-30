@@ -160,7 +160,7 @@ class TestDISetupAdvanced:
         try:
             await setup.initialize()
             assert setup.initialized
-        except Exception:
+            except Exception:
             pytest.fail("初始化不应该失败")
 
     @pytest.mark.asyncio

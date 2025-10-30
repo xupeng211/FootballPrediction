@@ -111,7 +111,7 @@ class TestDatabaseConnection:
                 )
                 # 故意抛出异常触发回滚
                 raise Exception("Test rollback")
-        except Exception:
+            except Exception:
             pass
 
         # 验证数据未被提交
@@ -389,7 +389,7 @@ class TestDatabaseErrorHandling:
             db_manager = DatabaseManager(timeout_url, connect_timeout=1)
             async with db_manager.get_session() as session:
                 await session.execute(text("SELECT 1"))
-        except Exception:
+            except Exception:
             # 预期的连接错误
             pass
 

@@ -284,7 +284,7 @@ class TestApiSchemas:
             # 应该抛出验证错误
             with pytest.raises(Exception):
                 MatchRequest(**invalid_data)
-        except Exception:
+            except Exception:
             # 如果模型不可用,跳过测试
             pytest.skip("MatchRequest validation not available")
 
@@ -302,7 +302,7 @@ class TestApiSchemas:
         try:
             prediction_request = PredictionRequest(**valid_data)
             assert 0.0 <= prediction_request.confidence <= 1.0
-        except Exception:
+            except Exception:
             pytest.skip("PredictionRequest model not available")
 
     def test_odds_decimal_validation(self):
@@ -321,5 +321,5 @@ class TestApiSchemas:
             assert odds_request.home_win_odds > 0
             assert odds_request.draw_odds > 0
             assert odds_request.away_win_odds > 0
-        except Exception:
+            except Exception:
             pytest.skip("OddsRequest model not available")

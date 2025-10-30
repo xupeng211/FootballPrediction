@@ -166,7 +166,7 @@ class TestPredictionEngine:
             await init_prediction_engine()
             # 如果没有抛出异常，则测试通过
             assert True
-        except Exception:
+            except Exception:
             # 如果有异常（比如PredictionEngine不可用）,也是可以接受的
             assert True
 
@@ -178,7 +178,7 @@ class TestPredictionEngine:
             await close_prediction_engine()
             # 如果没有抛出异常，则测试通过
             assert True
-        except Exception:
+            except Exception:
             # 如果有异常,也是可以接受的
             assert True
 

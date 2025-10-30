@@ -73,7 +73,7 @@ for dir_path in all_dirs:
                 print(f"  ❌ 发现引用: {pattern}")
                 print(f"    {result.stdout.split()[0]}")
                 found_refs = True
-        except Exception:
+            except Exception:
             pass
 
     if not found_refs:

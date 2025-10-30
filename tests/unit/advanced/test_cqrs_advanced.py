@@ -43,12 +43,12 @@ class TestCQRS:
                         try:
                             attr()
                             break
-except Exception:
+            except Exception:
                             continue
 
             # 如果没有找到类,至少验证模块存在
             assert True
-        except Exception:
+            except Exception:
             pytest.skip("初始化测试跳过")
 
     def test_configuration_handling(self):
@@ -78,7 +78,7 @@ except Exception:
             result = mock_instance.process("test_input")
             assert result is None
 
-        except Exception:
+            except Exception:
             pytest.skip("错误处理测试跳过")
 
     def test_async_functionality(self):
@@ -98,7 +98,7 @@ except Exception:
             import asyncio
 
             asyncio.run(test_async())
-except Exception:
+            except Exception:
             pytest.skip("异步功能测试跳过")
 
     def test_data_validation(self):

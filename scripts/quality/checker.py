@@ -608,7 +608,7 @@ class QualityChecker:
 
             return False
 
-        except Exception:
+            except Exception:
             return False
 
     def _auto_fix_lint_issues(self, details: Dict) -> bool:
@@ -639,7 +639,7 @@ class QualityChecker:
 
             return result.returncode == 0
 
-        except Exception:
+            except Exception:
             return False
 
     def _log_iteration(self, retry: int, passed: bool) -> None:

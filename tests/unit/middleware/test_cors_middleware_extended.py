@@ -113,7 +113,7 @@ class TestCORSMiddlewareExtended:
                 assert "Access-Control-Allow-Origin" in response.headers
                 assert "Access-Control-Allow-Methods" in response.headers
                 assert "Access-Control-Allow-Headers" in response.headers
-        except Exception:
+            except Exception:
             pass  # 异步测试可能失败
 
     @pytest.mark.asyncio
@@ -136,7 +136,7 @@ class TestCORSMiddlewareExtended:
             response = await cors_middleware(scope, receive, send)
             if response and hasattr(response, "headers"):
                 assert "Access-Control-Allow-Origin" in response.headers
-        except Exception:
+            except Exception:
             pass
 
     @pytest.mark.asyncio
@@ -154,7 +154,7 @@ class TestCORSMiddlewareExtended:
             await cors_middleware(scope, receive, send)
             # 非CORS请求应该正常处理
             assert True  # 如果没有异常就算通过
-        except Exception:
+            except Exception:
             pass
 
     def test_cors_origin_validation(self, cors_middleware):
@@ -292,7 +292,7 @@ class TestCORSMiddlewareExtended:
                 allow_headers=None,
             )
             # 应该能够处理None值
-        except Exception:
+            except Exception:
             pass  # 预期可能失败
 
     def test_cors_case_sensitivity(self, mock_app):

@@ -304,5 +304,5 @@ class DataQualityRule:
         try:
             result = self.validator(data)
             return bool(result)
-        except Exception:
+            except Exception:
             return False

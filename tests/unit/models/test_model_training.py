@@ -409,14 +409,14 @@ class TestIntegration:
         # 测试MLflow操作的健壮性
         try:
             mlflow.log_metric(None, None)  # 可能无效的参数
-        except Exception:
+            except Exception:
             pass  # Mock实现应该处理这种情况
 
         try:
             client = MlflowClient(None, None)  # 可能无效的参数
             versions = client.get_latest_versions(None)
             assert isinstance(versions, list)
-        except Exception:
+            except Exception:
             pass
 
     def test_mock_functionality_coverage(self):

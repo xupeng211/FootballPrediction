@@ -407,7 +407,7 @@ class TestPredictionModelAdvanced:
         try:
             model.train(X, y)
             assert True  # 如果能训练成功
-        except Exception:
+            except Exception:
             # 可能需要预处理
             pass
 

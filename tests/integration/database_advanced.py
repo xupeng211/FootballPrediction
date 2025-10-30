@@ -245,7 +245,7 @@ class TestDatabaseAdvanced:
                     end_time = time.time()
                     query_time = (end_time - start_time) * 1000
                     query_times.append(query_time)
-                except Exception:
+            except Exception:
                     # 如果查询失败,记录较长的查询时间
                     query_time = 1000  # 1秒作为超时
                     query_times.append(query_time)
@@ -354,7 +354,7 @@ class TestDatabaseAdvanced:
                     connection.execute(text("INSERT INTO rollback_test (data, status) VALUES ('test1', 'active')"))
                     connection.execute(text("INSERT INTO rollback_test (data, status) VALUES ('test2', 'active')"))
                     trans.commit()
-                except Exception:
+            except Exception:
                     trans.rollback()
                     raise
 
@@ -373,7 +373,7 @@ class TestDatabaseAdvanced:
                     # 故意引发错误
                     connection.execute(text("INSERT INTO rollback_test (data, status) VALUES (NULL, NULL)"))
                     trans.commit()
-                except Exception:
+            except Exception:
                     trans.rollback()
 
             # 验证回滚成功

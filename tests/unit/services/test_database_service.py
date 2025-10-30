@@ -248,7 +248,7 @@ async def test_async_functionality():
         try:
             result = await service.async_operation()
             assert result is not None
-        except Exception:
+            except Exception:
             pass
 
     assert True  # 基础断言

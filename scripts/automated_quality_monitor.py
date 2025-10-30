@@ -68,7 +68,7 @@ class AutomatedQualityMonitor:
                 )
                 if result.stdout:
                     file_count = len(result.stdout.strip().split('\n')) if result.stdout.strip() else 0
-except Exception:
+            except Exception:
                 file_count = 0
 
             # 计算质量分数

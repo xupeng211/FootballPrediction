@@ -190,7 +190,7 @@ class ProductionReadinessAssessor:
                     response = await client.get(f"{self.api_base_url}{endpoint}")
                     if response.status_code == 200:
                         response_times.append(time.time() - start_time)
-except Exception:
+            except Exception:
                 pass
 
         if response_times:
@@ -214,7 +214,7 @@ except Exception:
                 async with httpx.AsyncClient(timeout=5) as client:
                     response = await client.get(f"{self.api_base_url}/api/health/")
                     return response.status_code == 200
-except Exception:
+            except Exception:
                 return False
 
         # 并发10个请求
@@ -303,7 +303,7 @@ except Exception:
                 ]
                 header_count = sum(1 for header in cors_headers if header in response.headers)
                 return (header_count / len(cors_headers)) * 100
-except Exception:
+            except Exception:
             return 0
 
     async def check_error_handling(self):
@@ -322,11 +322,11 @@ except Exception:
                         )
                         security_score = max(0, 100 - (exposed_count * 20))
                         return security_score
-except Exception:
+            except Exception:
                         return 80  # JSON解析失败也算安全
                 else:
                     return 60
-except Exception:
+            except Exception:
             return 0
 
     async def check_auth_security(self):
@@ -341,7 +341,7 @@ except Exception:
                     return 50  # 允许未授权访问，安全性较低
                 else:
                     return 80
-except Exception:
+            except Exception:
             return 0
 
     async def check_https_support(self):

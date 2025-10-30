@@ -490,7 +490,7 @@ class TestExternalServicesComprehensive:
             result = circuit_breaker.call(mock_working_service)
             assert result["status"] == "success"
             assert circuit_breaker.state == "CLOSED"  # 成功后应该重置
-        except Exception:
+            except Exception:
             # 如果还是失败,断路器应该重新打开
             assert circuit_breaker.state == "OPEN"
 

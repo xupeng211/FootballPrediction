@@ -335,14 +335,14 @@ class TestConfigManager:
         try:
             manager.set(123, "invalid_key_type")
             # 可能成功或失败,都是可以接受的
-        except Exception:
+            except Exception:
             pass
 
         # 测试None键
         try:
             manager.set(None, "none_key")
             # 可能成功或失败,都是可以接受的
-        except Exception:
+            except Exception:
             pass
 
     def test_config_merge_operations(self):
@@ -448,7 +448,7 @@ class TestConfigManager:
 
             # 验证结果
             assert len(results) > 0
-        except Exception:
+            except Exception:
             pass  # 线程测试可能失败
 
     def test_config_memory_efficiency(self):

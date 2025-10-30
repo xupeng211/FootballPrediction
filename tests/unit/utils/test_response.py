@@ -431,7 +431,7 @@ class TestParameterizedInput:
                 _result = str(invaliddata)
             # 确保没有崩溃
             assert _result is not None
-        except Exception:
+            except Exception:
             # 期望的错误处理
             pass
 

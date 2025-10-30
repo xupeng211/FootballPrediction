@@ -46,7 +46,7 @@ class TestBasicCoverageBoost:
 
         except ImportError:
             pytest.skip("数据验证器不可用")
-        except Exception:
+            except Exception:
             assert True  # 至少类存在
 
     def test_data_formatter_functionality(self):
@@ -67,7 +67,7 @@ class TestBasicCoverageBoost:
 
         except ImportError:
             pytest.skip("数据格式化器不可用")
-        except Exception:
+            except Exception:
             assert True  # 至少类存在
 
     def test_response_builder_functionality(self):
@@ -88,7 +88,7 @@ class TestBasicCoverageBoost:
 
         except ImportError:
             pytest.skip("响应构建器不可用")
-        except Exception:
+            except Exception:
             assert True  # 至少类存在
 
     def test_cache_basic_functionality(self):
@@ -105,7 +105,7 @@ class TestBasicCoverageBoost:
             del cache_data["key1"]
             assert "key1" not in cache_data
 
-        except Exception:
+            except Exception:
             assert True  # 基本缓存测试
 
     def test_service_layer_mock(self):
@@ -165,7 +165,7 @@ class TestBasicCoverageBoost:
         # 测试异常处理
         try:
             raise mock_exception
-except Exception:
+            except Exception:
             assert True  # 异常被正确抛出
 
     def test_configuration_mock(self):

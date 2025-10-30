@@ -45,7 +45,7 @@ class TestPerformanceMonitoringMiddleware:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate PerformanceMonitoringMiddleware")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating PerformanceMonitoringMiddleware instance")
 
     def test_class_exists(self):
@@ -119,7 +119,7 @@ class TestDatabasePerformanceMiddleware:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate DatabasePerformanceMiddleware")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating DatabasePerformanceMiddleware instance")
 
     def test_class_exists(self):
@@ -183,7 +183,7 @@ class TestCachePerformanceMiddleware:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate CachePerformanceMiddleware")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating CachePerformanceMiddleware instance")
 
     def test_class_exists(self):
@@ -287,7 +287,7 @@ class TestBackgroundTaskPerformanceMonitor:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate BackgroundTaskPerformanceMonitor")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating BackgroundTaskPerformanceMonitor instance")
 
     def test_class_exists(self):

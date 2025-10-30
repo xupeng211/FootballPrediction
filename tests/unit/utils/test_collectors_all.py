@@ -13,7 +13,7 @@ def test_collectors_creation():
     try:
         collectors = AllCollectors()
         assert collectors is not None
-    except Exception:
+            except Exception:
         assert True
 
 
@@ -22,5 +22,5 @@ def test_get_collectors():
         collectors = AllCollectors()
         result = collectors.get_all_collectors()
         assert isinstance(result, list)
-    except Exception:
+            except Exception:
         assert True

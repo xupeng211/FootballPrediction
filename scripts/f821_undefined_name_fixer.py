@@ -295,7 +295,7 @@ class F821NameFixer:
 
             return False
 
-        except Exception:
+            except Exception:
             return False
 
     def apply_fix(self, file_path: str, line_num: int, analysis: Dict) -> bool:

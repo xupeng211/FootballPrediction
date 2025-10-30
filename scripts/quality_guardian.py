@@ -256,7 +256,7 @@ class QualityGuardian:
                 try:
                     bandit_data = json.loads(result.stdout)
                     security["vulnerabilities"] = len(bandit_data.get("results", []))
-                except Exception:
+            except Exception:
                     pass
         except Exception as e:
             logger.warning(f"安全检查失败: {e}")

@@ -117,7 +117,7 @@ class EnhancedPreCommitChecker:
             if result.returncode == 0:
                 files = [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
                 return [f for f in files if f.startswith("src/")]
-        except Exception:
+            except Exception:
             pass
 
         # 如果不是git环境或获取失败，返回核心文件
@@ -160,7 +160,7 @@ class EnhancedPreCommitChecker:
                     )
                     if result.returncode != 0:
                         syntax_errors.append(f"{file_path}: {result.stderr}")
-                except Exception:
+            except Exception:
                     syntax_errors.append(f"{file_path}: 检查异常")
 
         if syntax_errors:
@@ -208,7 +208,7 @@ class EnhancedPreCommitChecker:
                     )
                     if result.returncode != 0:
                         import_errors.append(import_stmt)
-                except Exception:
+            except Exception:
                     import_errors.append(import_stmt)
 
             if import_errors:

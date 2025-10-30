@@ -45,7 +45,7 @@ class TestUserRepositoryInterface:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate UserRepositoryInterface")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating UserRepositoryInterface instance")
 
     def test_class_exists(self):
@@ -99,7 +99,7 @@ class TestReadOnlyUserRepository:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate ReadOnlyUserRepository")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating ReadOnlyUserRepository instance")
 
     def test_class_exists(self):
@@ -153,7 +153,7 @@ class TestUserRepository:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate UserRepository")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating UserRepository instance")
 
     def test_class_exists(self):

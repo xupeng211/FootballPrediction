@@ -282,7 +282,7 @@ class ScheduledQualityAuditor:
                 return f"距离上次审计已过{time_diff.days}天，可以考虑运行快速检查"
             else:
                 return "近期已审计，无需重复运行"
-        except Exception:
+            except Exception:
             return "审计时间记录异常，建议重新运行"
 
     def run_scheduled_audit(self, audit_type: str = "weekly") -> Dict[str, Any]:

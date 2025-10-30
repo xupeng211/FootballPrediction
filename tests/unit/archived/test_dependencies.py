@@ -58,7 +58,7 @@ class TestAPIDependencies:
         except ImportError:
             # 如果JWT不可用，这是预期的
             pass
-        except Exception:
+            except Exception:
             # 其他异常也是可以接受的,因为我们没有设置完整的JWT环境
             pass
 
@@ -71,7 +71,7 @@ class TestAPIDependencies:
         try:
             result = await get_admin_user(test_user)
             assert result == test_user
-        except Exception:
+            except Exception:
             # 可能因为依赖问题失败,这是可以接受的
             pass
 
@@ -83,7 +83,7 @@ class TestAPIDependencies:
             result = await get_prediction_engine()
             # 结果可能是None或PredictionEngine实例
             assert result is None or hasattr(result, "predict")
-        except Exception:
+            except Exception:
             # 可能因为依赖问题失败
             pass
 
@@ -95,7 +95,7 @@ class TestAPIDependencies:
             result = await get_redis_manager()
             # 结果可能是None或Redis管理器实例
             assert result is None or hasattr(result, "get")
-        except Exception:
+            except Exception:
             # 可能因为依赖问题失败
             pass
 
@@ -109,7 +109,7 @@ class TestAPIDependencies:
         try:
             result = await verify_prediction_permission(match_id, test_user)
             assert result is True
-        except Exception:
+            except Exception:
             # 可能因为依赖问题失败
             pass
 
@@ -122,7 +122,7 @@ class TestAPIDependencies:
         try:
             result = await rate_limit_check(test_user)
             assert result is True
-        except Exception:
+            except Exception:
             # 可能因为依赖问题失败
             pass
 
@@ -220,7 +220,7 @@ class TestParameterizedInput:
                 _result = str(invalid_data)
             # 确保没有崩溃
             assert _result is not None
-        except Exception:
+            except Exception:
             # 期望的错误处理
             pass
 

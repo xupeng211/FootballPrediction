@@ -67,7 +67,7 @@ def extract_links(filepath):
     """Extract all relative links from a markdown file"""
     try:
         content = filepath.read_text(encoding="utf-8")
-    except Exception:
+            except Exception:
         return []
 
     # Find markdown links: [text](target)

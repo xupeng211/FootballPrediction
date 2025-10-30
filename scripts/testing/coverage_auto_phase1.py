@@ -15,7 +15,7 @@ def get_coverage():
         for line in out.splitlines():
             if "TOTAL" in line:
                 return float(line.split()[-1].replace("%", ""))
-    except Exception:
+            except Exception:
         return 0.0
     return 0.0
 

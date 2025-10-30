@@ -23,7 +23,7 @@ class TestMonitoringAPI:
             from src.api.monitoring import router
 
             assert hasattr(router, "routes")
-        except Exception:
+            except Exception:
             pytest.skip("monitoring router not available")
 
     def test_monitoring_endpoints(self):
@@ -33,5 +33,5 @@ class TestMonitoringAPI:
 
             routes = list(router.routes)
             assert isinstance(routes, list)
-        except Exception:
+            except Exception:
             pytest.skip("monitoring endpoints not testable")

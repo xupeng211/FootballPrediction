@@ -313,7 +313,7 @@ class EnhancedF821Scaler:
 
             return result.stdout.count('F821')
 
-        except Exception:
+            except Exception:
             return -1
 
     def fix_file_smartly(self, file_path: str, errors: List[Dict]) -> bool:

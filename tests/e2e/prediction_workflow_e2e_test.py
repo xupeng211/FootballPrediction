@@ -179,7 +179,7 @@ class TestPredictionWorkflowE2E:
         try:
             mock_services["data_service"].process_match_data({})
             assert False, "应该抛出异常"
-        except Exception:
+            except Exception:
             print("         ✅ 数据处理失败被正确处理")
 
         # 场景2: 预测服务失败
@@ -191,7 +191,7 @@ class TestPredictionWorkflowE2E:
         try:
             mock_services["prediction_service"].predict({}, {})
             assert False, "应该抛出异常"
-        except Exception:
+            except Exception:
             print("         ✅ 预测服务失败被正确处理")
 
         # 场景3: 数据库存储失败
@@ -202,7 +202,7 @@ class TestPredictionWorkflowE2E:
         try:
             mock_services["database_session"].commit()
             assert False, "应该抛出异常"
-        except Exception:
+            except Exception:
             print("         ✅ 数据库存储失败被正确处理")
 
     @pytest.mark.e2e

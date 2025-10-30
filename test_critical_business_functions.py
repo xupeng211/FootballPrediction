@@ -32,7 +32,7 @@ def test_team_management_critical():
             Team(name="Invalid", short_name="INV", code="INVALID")
             print("❌ 球队代码验证失败")
             return False
-        except Exception:
+            except Exception:
             print("✅ 球队代码验证正确")
 
         # 测试球队信息完整性
@@ -162,7 +162,7 @@ def test_league_management_critical():
             League(name="Invalid", short_name="INV", code="INVALIDCODE")
             print("❌ 联赛代码验证失败")
             return False
-        except Exception:
+            except Exception:
             print("✅ 联赛代码验证正确")
 
         print("✅ 联赛管理核心功能测试通过")

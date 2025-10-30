@@ -24,7 +24,7 @@ from src.api.health.utils import HealthChecker
         try:
             checker = HealthChecker()
             assert checker is not None
-        except Exception:
+            except Exception:
             # 如果需要参数,跳过
             pytest.skip("HealthChecker 需要参数初始化")
 

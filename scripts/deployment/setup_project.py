@@ -32,7 +32,7 @@ def run_command(command: str, cwd: Path | None = None) -> bool:
     try:
         result = subprocess.run(command.split(), cwd=cwd, capture_output=True, text=True)
         return result.returncode == 0
-    except Exception:
+            except Exception:
         return False
 
 

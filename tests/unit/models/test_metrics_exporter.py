@@ -111,7 +111,7 @@ class TestModelMetricsExporter:
                 model_name="test", model_version="v1.0", predicted_result="home_win"
             )
             assert labels is not None
-        except Exception:
+            except Exception:
             # 如果无法直接测试标签,至少验证指标存在
             assert exporter.predictions_total is not None
 

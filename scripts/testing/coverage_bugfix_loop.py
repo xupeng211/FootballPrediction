@@ -23,7 +23,7 @@ def get_last_processed_id():
         try:
             data = json.loads(STATE_FILE.read_text())
             return data.get("last_processed_run_id")
-        except Exception:
+            except Exception:
             return None
     return None
 

@@ -18,7 +18,7 @@ try:  # Optional dependency; charting is skipped if unavailable.
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-except Exception:  # pragma: no cover - best effort fallback
+            except Exception:  # pragma: no cover - best effort fallback
     plt = None
 
 ROOT = Path(__file__).resolve().parents[1]

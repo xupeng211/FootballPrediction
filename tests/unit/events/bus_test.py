@@ -45,7 +45,7 @@ class TestEventBus:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate EventBus")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating EventBus instance")
 
     def test_class_exists(self):
@@ -139,7 +139,7 @@ def test_get_event_bus_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 
@@ -173,7 +173,7 @@ def test_event_handler_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 
@@ -207,7 +207,7 @@ def test_decorator_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 
@@ -241,7 +241,7 @@ def test___init___with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 
@@ -275,7 +275,7 @@ def test_get_handled_events_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 

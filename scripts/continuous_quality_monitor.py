@@ -31,7 +31,7 @@ class ContinuousQualityMonitor:
                 content = f.read()
             ast.parse(content)
             return True
-        except Exception:
+            except Exception:
             return False
 
     def analyze_directory(self, directory: str) -> Dict:

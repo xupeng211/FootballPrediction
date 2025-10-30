@@ -81,7 +81,7 @@ class QualityStandardsOptimizer:
                         match = re.search(r"collected (\d+) items", line)
                         if match:
                             return int(match.group(1))
-        except Exception:
+            except Exception:
             pass
 
         return 0
@@ -94,7 +94,7 @@ class QualityStandardsOptimizer:
                 with open(quality_file, "r") as f:
                     data = json.load(f)
                 return data.get("metrics", {}).get("code_quality", 7.0)
-        except Exception:
+            except Exception:
             pass
 
         # 默认评分

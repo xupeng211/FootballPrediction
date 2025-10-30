@@ -33,7 +33,7 @@ class TestOddsCollector:
         try:
             collector = OddsCollector(config)
             assert collector is not None
-        except Exception:
+            except Exception:
             # 配置可能不支持,这是可以接受的
             collector = OddsCollector()
             assert collector is not None
@@ -94,7 +94,7 @@ class TestOddsCollector:
         try:
             result = collector.validate_odds(valid_odds)
             assert result is True
-        except Exception:
+            except Exception:
             # 验证方法可能有不同的接口
             if hasattr(collector, "validate_odds"):
                 result = collector.validate_odds(valid_odds)
@@ -133,7 +133,7 @@ class TestOddsCollector:
             assert "home_win" in formatted
             assert "draw" in formatted
             assert "away_win" in formatted
-        except Exception:
+            except Exception:
             # 格式化方法可能不存在
             if hasattr(collector, "format_odds"):
                 pass
@@ -151,7 +151,7 @@ class TestOddsCollector:
         try:
             trend = collector.analyze_odds_trend(odds_history, "home_win")
             assert trend is not None
-        except Exception:
+            except Exception:
             # 趋势分析可能不支持
             if hasattr(collector, "analyze_odds_trend"):
                 pass
@@ -302,7 +302,7 @@ class TestOddsCollector:
             can_make_request = collector.check_rate_limit()
             if can_make_request is not None:
                 assert isinstance(can_make_request, bool)
-        except Exception:
+            except Exception:
             pass
 
     def test_caching_mechanism(self):
@@ -320,7 +320,7 @@ class TestOddsCollector:
             cached_data = collector.get_cached_odds(match_id)
             if cached_data is not None:
                 assert cached_data == odds_data
-        except Exception:
+            except Exception:
             pass
 
     def test_odds_comparison(self):
@@ -334,7 +334,7 @@ class TestOddsCollector:
             comparison = collector.compare_odds(odds_set1, odds_set2)
             if comparison is not None:
                 assert isinstance(comparison, dict)
-        except Exception:
+            except Exception:
             pass
 
     @pytest.mark.asyncio
@@ -355,7 +355,7 @@ class TestOddsCollector:
             # 验证回调被调用
             if hasattr(update_callback, "called"):
                 assert True
-        except Exception:
+            except Exception:
             pass
 
     def test_export_import_functionality(self):
@@ -375,7 +375,7 @@ class TestOddsCollector:
             # 测试导入
             imported_data = collector.import_odds_data(exported_data)
             assert imported_data is not None
-        except Exception:
+            except Exception:
             pass
 
     def test_performance_metrics(self):
@@ -395,7 +395,7 @@ class TestOddsCollector:
                 for metric in possible_metrics:
                     if metric in metrics:
                         assert isinstance(metrics[metric], (int, float))
-        except Exception:
+            except Exception:
             pass
 
 
@@ -412,7 +412,7 @@ async def test_async_functionality():
         try:
             result = await collector.async_collect()
             assert result is not None
-        except Exception:
+            except Exception:
             pass
 
     assert True  # 基础断言

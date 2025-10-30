@@ -352,7 +352,7 @@ class TestAPIDependenciesEnhanced:
                     user = get_current_user(mock_request)
                     # 如果实现了后备认证，应该成功
                     assert user is not None
-                except Exception:
+            except Exception:
                     # 如果没有后备认证,应该失败
                     pass
 

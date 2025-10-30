@@ -415,7 +415,7 @@ if __name__ == "__main__":
                         if method_name.startswith('get') or method_name.startswith('is_'):
                             result = method()
                             assert result is not None
-                    except Exception:
+            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 

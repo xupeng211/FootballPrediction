@@ -2,7 +2,7 @@
 
 try:
     pass
-except Exception:
+            except Exception:
     pass
     from src.data_quality.quality_checker_extended import QualityCheckerExtended
 except ImportError:
@@ -15,21 +15,21 @@ except ImportError:
 def test_quality_checker_creation():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         checker = QualityCheckerExtended()
         assert checker is not None
-    except Exception:
+            except Exception:
         assert True
 
 
 def test_check_quality():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         checker = QualityCheckerExtended()
         result = checker.check_quality({"test": "data"})
         assert isinstance(result, bool)
-    except Exception:
+            except Exception:
         assert True

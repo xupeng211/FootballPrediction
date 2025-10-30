@@ -2,7 +2,7 @@
 
 try:
     pass
-except Exception:
+            except Exception:
     pass
     from src.repositories.lineage_reporter import LineageReporter
 except ImportError:
@@ -15,21 +15,21 @@ except ImportError:
 def test_reporter_creation():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         reporter = LineageReporter()
         assert reporter is not None
-    except Exception:
+            except Exception:
         assert True
 
 
 def test_generate_report():
     try:
         pass
-    except Exception:
+            except Exception:
         pass
         reporter = LineageReporter()
         report = reporter.generate_report()
         assert isinstance(report, dict)
-    except Exception:
+            except Exception:
         assert True

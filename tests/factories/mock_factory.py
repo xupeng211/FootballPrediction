@@ -400,7 +400,7 @@ class MockFactory:
                     import json
 
                     return json.loads(value)
-except Exception:
+            except Exception:
                     return value
             return value
 

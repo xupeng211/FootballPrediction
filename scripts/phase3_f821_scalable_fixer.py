@@ -288,7 +288,7 @@ class Phase3F821ScalableFixer:
                     except SyntaxError:
                         continue
 
-                except Exception:
+            except Exception:
                     continue
 
         return None
@@ -320,7 +320,7 @@ class Phase3F821ScalableFixer:
 
             return sorted(similar_names, key=lambda x: x['similarity'], reverse=True)
 
-        except Exception:
+            except Exception:
             return []
 
     def calculate_similarity(self, s1: str, s2: str) -> float:

@@ -67,7 +67,7 @@ class TestDomainModels:
             assert match.status in ["scheduled", "live", "completed", "cancelled"]
             assert match.home_score >= 0
             assert match.away_score >= 0
-        except Exception:
+            except Exception:
             pytest.skip("Match model validation not available")
 
     def test_team_model_creation(self):
@@ -105,7 +105,7 @@ class TestDomainModels:
             assert team.name.strip() != ""
             assert team.founded_year > 1800  # 足球发明之前不可能有球队
             assert team.founded_year <= datetime.now().year
-        except Exception:
+            except Exception:
             pytest.skip("Team model validation not available")
 
     def test_league_model_creation(self):
@@ -143,7 +143,7 @@ class TestDomainModels:
             assert league.country.strip() != ""
             assert league.number_of_teams > 0
             assert league.number_of_teams <= 50  # 合理的球队数量上限
-        except Exception:
+            except Exception:
             pytest.skip("League model validation not available")
 
     def test_prediction_model_creation(self):
@@ -182,7 +182,7 @@ class TestDomainModels:
                     confidence=confidence
                 )
                 assert 0.0 <= prediction.confidence <= 1.0
-        except Exception:
+            except Exception:
             pytest.skip("Prediction confidence validation not available")
 
     def test_prediction_types(self):
@@ -199,7 +199,7 @@ class TestDomainModels:
                     confidence=0.75
                 )
                 assert prediction.prediction_type in valid_types
-        except Exception:
+            except Exception:
             pytest.skip("Prediction type validation not available")
 
     def test_match_result_calculation(self):
@@ -248,7 +248,7 @@ class TestDomainModels:
                 result = match_away.get_result()
                 assert result == "away_win"
 
-        except Exception:
+            except Exception:
             pytest.skip("Match result calculation not available")
 
     @pytest.mark.parametrize("team_name,expected", [
@@ -270,7 +270,7 @@ class TestDomainModels:
             if hasattr(team, 'get_normalized_name'):
                 normalized = team.get_normalized_name()
                 assert normalized == expected
-        except Exception:
+            except Exception:
             pytest.skip("Team name normalization not available")
 
     def test_league_season_format(self):
@@ -293,7 +293,7 @@ class TestDomainModels:
                 # 如果有验证方法,测试它
                 if hasattr(league, 'is_valid_season'):
                     assert league.is_valid_season()
-        except Exception:
+            except Exception:
             pytest.skip("League season validation not available")
 
     def test_prediction_accuracy_calculation(self):
@@ -332,7 +332,7 @@ class TestDomainModels:
 
             assert accuracy == 2/3  # 2/3的预测正确
 
-        except Exception:
+            except Exception:
             pytest.skip("Prediction accuracy calculation not available")
 
     def test_model_relationships(self):
@@ -369,5 +369,5 @@ class TestDomainModels:
             assert match.away_team_id == team2.id
             assert prediction.match_id == match.id
 
-        except Exception:
+            except Exception:
             pytest.skip("Model relationships not available")

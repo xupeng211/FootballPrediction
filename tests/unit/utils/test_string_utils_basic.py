@@ -229,7 +229,7 @@ class TestStringUtils:
                 result = utils.process_large(large_string)
                 if result is not None:
                     assert isinstance(result, str)
-        except Exception:
+            except Exception:
             pass
 
         # 测试批量处理
@@ -240,7 +240,7 @@ class TestStringUtils:
                 result = utils.batch_process(string_list)
                 if result is not None:
                     assert isinstance(result, list)
-        except Exception:
+            except Exception:
             pass
 
     def test_edge_cases(self):
@@ -300,7 +300,7 @@ class TestStringUtils:
                     for key in possible_keys:
                         if key in stats:
                             assert isinstance(stats[key], (int, float))
-        except Exception:
+            except Exception:
             pass
 
 

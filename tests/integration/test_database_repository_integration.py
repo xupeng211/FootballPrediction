@@ -193,7 +193,7 @@ class TestDatabaseTransactionIntegration:
             async with mock_transaction:
                 # 执行一些操作
                 raise Exception("Database error")
-        except Exception:
+            except Exception:
             pass
 
         # 验证事务被回滚
@@ -222,7 +222,7 @@ class TestDatabaseTransactionIntegration:
                 # 回滚到保存点
                 savepoint_rolled_back = True
 
-        except Exception:
+            except Exception:
             # 回滚到保存点
             savepoint_rolled_back = True
 

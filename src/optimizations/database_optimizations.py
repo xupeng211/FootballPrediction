@@ -493,7 +493,7 @@ class DatabaseOptimizer:
 
             return True
 
-        except Exception:
+            except Exception:
             return False
 
 

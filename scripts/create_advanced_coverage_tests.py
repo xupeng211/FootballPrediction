@@ -214,7 +214,7 @@ class {class_name}:
                     try:
                         instance = attr()
                         break
-except Exception:
+            except Exception:
                         continue
 
             if instance is not None:
@@ -301,7 +301,7 @@ except Exception:
         try:
             import asyncio
             asyncio.run(test_async_operations())
-except Exception:
+            except Exception:
             pytest.skip("异步功能测试跳过")
 
     def test_integration_with_dependencies(self):

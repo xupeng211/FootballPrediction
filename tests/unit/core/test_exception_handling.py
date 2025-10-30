@@ -362,7 +362,7 @@ class TestErrorRecovery:
                         self.state = "closed"
                         self.failure_count = 0
                     return result
-                except Exception:
+            except Exception:
                     self.failure_count += 1
                     self.last_failure_time = datetime.now()
 
@@ -410,7 +410,7 @@ class TestErrorRecovery:
                 if feature_name in self.features:
                     try:
                         return self.features[feature_name]()
-                    except Exception:
+            except Exception:
                         if fallback:
                             # 尝试降级到更简单的功能
                             fallback_order = ["advanced", "basic", "minimal"]

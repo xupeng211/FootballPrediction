@@ -320,7 +320,7 @@ class TestValidationUtils:
                         _result = validator_func(value)
                         if not _result:
                             errors.append(error_msg or "验证失败")
-                    except Exception:
+            except Exception:
                         errors.append(error_msg or "验证出错")
                 return len(errors) == 0, errors
 

@@ -43,7 +43,7 @@ class TestServiceConfig:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate ServiceConfig")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating ServiceConfig instance")
 
     def test_class_exists(self):
@@ -196,7 +196,7 @@ class TestDIConfiguration:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate DIConfiguration")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating DIConfiguration instance")
 
     def test_class_exists(self):
@@ -305,7 +305,7 @@ class TestConfigurationBinder:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate ConfigurationBinder")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating ConfigurationBinder instance")
 
     def test_class_exists(self):
@@ -399,7 +399,7 @@ class TestConfigurationBuilder:
             except Exception:
                 # Skip if instantiation fails
                 pytest.skip("Cannot instantiate ConfigurationBuilder")
-        except Exception:
+            except Exception:
             pytest.skip("Error creating ConfigurationBuilder instance")
 
     def test_class_exists(self):
@@ -513,7 +513,7 @@ def test_create_config_from_file_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 
@@ -547,7 +547,7 @@ def test_create_config_from_dict_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 
@@ -581,7 +581,7 @@ def test_generate_sample_config_with_args(self):
             except Exception:
                 # Function might require specific arguments
                 pass
-        except Exception:
+            except Exception:
             # Function might have side effects
             pass
 

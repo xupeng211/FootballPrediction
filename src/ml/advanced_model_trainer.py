@@ -627,7 +627,7 @@ class EnsembleTrainer:
                         if not LGB_AVAILABLE:
                             continue
                     available_models.append(model_type)
-                except Exception:
+            except Exception:
                     continue
 
             if not available_models:

@@ -181,7 +181,7 @@ class ProjectCleanlinessMonitor:
             try:
                 with open(self.report_file, "r", encoding="utf-8") as f:
                     history = json.load(f)
-except Exception:
+            except Exception:
                 history = []
 
         # 添加新报告

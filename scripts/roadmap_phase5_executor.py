@@ -3025,7 +3025,7 @@ class DatabaseClustering:
                 try:
                     await pool.release(connection)
                     break
-except Exception:
+            except Exception:
                     continue
         else:
             if self.primary_pool:

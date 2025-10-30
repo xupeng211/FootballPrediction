@@ -128,7 +128,7 @@ class TestDataRouterComprehensive:
         if hasattr(TestClient, "__call__"):
             try:
                 return TestClient(app)
-except Exception:
+            except Exception:
                 # 如果TestClient不可用,创建Mock客户端
                 mock_client = Mock()
                 mock_client.get = Mock()

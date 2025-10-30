@@ -53,7 +53,7 @@ def find_corrupted_files():
                             compile(content, file_path, "exec")
                         except SyntaxError:
                             corrupted.append(file_path)
-                except Exception:
+            except Exception:
                     corrupted.append(file_path)
 
     return corrupted

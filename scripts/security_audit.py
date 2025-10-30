@@ -427,7 +427,7 @@ class SecurityAuditor:
             if "cors" not in content.lower():
                 issues["no_cors"].append(str(file_path))
 
-        except Exception:
+            except Exception:
             pass
 
     def audit_database_security(self):

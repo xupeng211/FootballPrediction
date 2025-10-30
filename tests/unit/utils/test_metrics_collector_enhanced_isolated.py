@@ -234,7 +234,7 @@ def test_alert_manager_isolated():
                             metrics,
                         )
                         rule["last_triggered"] = now
-                except Exception:
+            except Exception:
                     pass
 
         def _trigger_alert(self, name, message, severity, context=None):
@@ -320,7 +320,7 @@ def test_decorators_isolated():
                 try:
                     _result = await func(*args, **kwargs)
                     success = True
-                except Exception:
+            except Exception:
                     success = False
                     raise
                 finally:
@@ -347,7 +347,7 @@ def test_decorators_isolated():
                 try:
                     _result = func(*args, **kwargs)
                     success = True
-                except Exception:
+            except Exception:
                     success = False
                     raise
                 finally:
@@ -381,7 +381,7 @@ def test_decorators_isolated():
                 try:
                     _result = func(*args, **kwargs)
                     hit = result is not None
-                except Exception:
+            except Exception:
                     hit = False
                     raise
                 finally:

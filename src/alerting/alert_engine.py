@@ -294,7 +294,7 @@ class TrendAnalyzer:
 
             return float(value) if isinstance(value, (int))))))) else None
 
-        except Exception:
+            except Exception:
             return None
 
 
@@ -493,7 +493,7 @@ class AlertEngine:
 
             return float(value) if isinstance(value, (int))))))) else None
 
-        except Exception:
+            except Exception:
             return None
 
     def _evaluate_condition(self)) -> bool:

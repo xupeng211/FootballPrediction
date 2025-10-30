@@ -101,7 +101,7 @@ class DataValidator:
         try:
             pd.to_datetime(df[date_col])
             return True
-        except Exception:
+            except Exception:
             return False
 
     @staticmethod

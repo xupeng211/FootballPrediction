@@ -194,7 +194,7 @@ class TestEventBus:
                 await bus.publish(event)
             elif hasattr(bus, "emit"):
                 await bus.emit(event)
-        except Exception:
+            except Exception:
             # 某些实现可能会抛出异常,这是可以接受的
             pass
 

@@ -51,7 +51,7 @@ def fix_future_import_in_file(file_path: Path) -> bool:
             return True
 
         return False
-    except Exception:
+            except Exception:
         return False
 
 

@@ -536,7 +536,7 @@ mock_service.return_value = {"status": "success"}
                 timeout=60,
             )
             return result.returncode == 0
-        except Exception:
+            except Exception:
             return False
 
     def establish_coverage_gate(self) -> bool:
@@ -557,7 +557,7 @@ mock_service.return_value = {"status": "success"}
                 timeout=120,
             )
             return result.returncode == 0
-        except Exception:
+            except Exception:
             return False
 
     def establish_security_gate(self) -> bool:
@@ -568,7 +568,7 @@ mock_service.return_value = {"status": "success"}
             )
             # 简单检查：只要有结果就算通过（具体检查可以后续优化）
             return True
-        except Exception:
+            except Exception:
             return False
 
     def establish_integration_gate(self) -> bool:
@@ -581,7 +581,7 @@ mock_service.return_value = {"status": "success"}
                 timeout=180,
             )
             return result.returncode == 0
-        except Exception:
+            except Exception:
             return False
 
     def generate_phase1_report(self):

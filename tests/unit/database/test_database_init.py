@@ -107,7 +107,7 @@ class TestDatabaseModuleIntegration:
         try:
             config = get_database_config()
             assert config is not None
-        except Exception:
+            except Exception:
             # 如果配置需要外部依赖,跳过测试
             pytest.skip("配置函数需要外部环境")
 
@@ -130,5 +130,5 @@ class TestDatabaseModuleIntegration:
             assert hasattr(manager_class, "connect") or hasattr(
                 manager_class, "get_session"
             )
-        except Exception:
+            except Exception:
             pytest.skip("DatabaseManager类结构检查失败")

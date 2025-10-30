@@ -124,7 +124,7 @@ def remove_unused_type_ignore():
                     f.write(content)
                 count += 1
 
-        except Exception:
+            except Exception:
             pass
 
     print(f"  ✅ 已清理 {count} 个文件的 type: ignore")
