@@ -1,6 +1,14 @@
-# ml package init
-# 自动生成以解决导入问题
+"""
+机器学习模块
+Machine Learning Module for Football Prediction
+"""
 
-from .router import router
+from .models.base_model import BaseModel
+from .models.poisson_model import PoissonModel
+from .models.elo_model import EloModel
 
-__all__ = ["router"]
+__all__ = [
+    'BaseModel',
+    'PoissonModel',
+    'EloModel'
+]
