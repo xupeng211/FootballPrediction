@@ -10,11 +10,11 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 import logging
 from typing import Any, Dict, List, Optional
 
-from ..core.di import DIContainer
-from ..database.repositories import MatchRepository, PredictionRepository
-from ..domain.models import Prediction, Team
-from ..domain.services import PredictionDomainService
-from ..domain.strategies import (
+from src.core.di import DIContainer
+from src.database.repositories import MatchRepository, PredictionRepository
+from src.domain.models import Prediction, Team
+from src.domain.services import PredictionDomainService
+from src.domain.strategies import (
     PredictionContext,
     PredictionInput,
     PredictionOutput,
