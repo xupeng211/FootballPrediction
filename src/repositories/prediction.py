@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, select
 
-from ..database.models import Prediction
+from src.database.models import Prediction
 from .base import QuerySpec, ReadOnlyRepository, Repository
 
 

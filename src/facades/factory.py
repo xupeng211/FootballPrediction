@@ -1,309 +1,207 @@
 """
-门面工厂
-Facade Factory
+外观模式工厂模块
+Facade Factory Module
 
-用于创建和配置门面实例.
-Used to create and configure facade instances.
+提供外观和子系统的工厂创建功能.
 """
 
-import json
-import os
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
-
-import yaml
-
-from .base import SystemFacade
-from .facades import (
-    AnalyticsFacade,
-    DataCollectionFacade,
-    MainSystemFacade,
-    NotificationFacade,
-    PredictionFacade,
-)
+from typing import Any, Dict, Optional, Type
+from .base import Subsystem, Facade, SystemFacade
 
 
-@dataclass
 class FacadeConfig:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """门面配置"""
+    """外观配置类"""
 
-    name: str
-    facade_type: str
-    enabled: bool = True
-    auto_initialize: bool = True
-    subsystems: List[str] = field(default_factory=list)
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    environment: Optional[str] = None
+    def __init__(self,
+                 name: str,
+                 subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
+                 global_config: Optional[Dict[str, Any]] = None):
+        """初始化外观配置
+
+        Args:
+            name: 外观名称
+            subsystem_configs: 子系统配置字典
+            global_config: 全局配置
+        """
+        self.name = name
+        self.subsystem_configs = subsystem_configs or {}
+        self.global_config = global_config or {}
+        self.auto_start = True
+        self.health_check_interval = 30
+
+    def add_subsystem_config(self, name: str, config: Dict[str, Any]) -> None:
+        """添加子系统配置"""
+        self.subsystem_configs[name] = config
+
+    def get_subsystem_config(self, name: str) -> Optional[Dict[str, Any]]:
+        """获取子系统配置"""
+        return self.subsystem_configs.get(name)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典"""
+        return {
+            "name": self.name,
+            "subsystem_configs": self.subsystem_configs,
+            "global_config": self.global_config,
+            "auto_start": self.auto_start,
+            "health_check_interval": self.health_check_interval
+        }
 
 
 class FacadeFactory:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """门面工厂类"""
-
-    # 注册的门面类型
-    FACADE_TYPES: Dict[str, Type[SystemFacade]] = {
-        "main": MainSystemFacade,
-        "prediction": PredictionFacade,
-        "data_collection": DataCollectionFacade,
-        "analytics": AnalyticsFacade,
-        "notification": NotificationFacade,
-    }
+    """外观工厂类"""
 
     def __init__(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        self._config_cache: Dict[str, FacadeConfig] = {}
-        self._instance_cache: Dict[str, SystemFacade] = {}
-        self.default_environment = os.getenv("ENVIRONMENT", "development")
+        """初始化工厂"""
+        self._subsystem_registry: Dict[str, Type[Subsystem]] = {}
+        self._facade_registry: Dict[str, Type[Facade]] = {}
+        self._created_instances: Dict[str, Facade] = {}
 
-    def create_facade(
-        self, facade_type: str, config: Optional[FacadeConfig] = None
-    ) -> SystemFacade:
-        """创建门面实例"""
-        if facade_type not in self.FACADE_TYPES:
-            raise ValueError(f"Unknown facade type: {facade_type}")
+    def register_subsystem(self, name: str, subsystem_class: Type[Subsystem]) -> None:
+        """注册子系统类型
 
-        facade_class = self.FACADE_TYPES[facade_type]
-        facade = facade_class()
+        Args:
+            name: 子系统名称
+            subsystem_class: 子系统类
+        """
+        self._subsystem_registry[name] = subsystem_class
 
-        # 应用配置
-        if config:
-            self._apply_config(facade, config)
+    def register_facade(self, name: str, facade_class: Type[Facade]) -> None:
+        """注册外观类型
+
+        Args:
+            name: 外观名称
+            facade_class: 外观类
+        """
+        self._facade_registry[name] = facade_class
+
+    def create_subsystem(self, name: str, config: Optional[Dict[str, Any]] = None) -> Optional[Subsystem]:
+        """创建子系统实例
+
+        Args:
+            name: 子系统名称
+            config: 配置参数
+
+        Returns:
+            Optional[Subsystem]: 子系统实例或None
+        """
+        if name not in self._subsystem_registry:
+            return None
+
+        subsystem_class = self._subsystem_registry[name]
+        return subsystem_class(name, config)
+
+    def create_facade(self, config: FacadeConfig) -> Optional[Facade]:
+        """创建外观实例
+
+        Args:
+            config: 外观配置
+
+        Returns:
+            Optional[Facade]: 外观实例或None
+        """
+        # 优先使用注册的特定外观类
+        if config.name in self._facade_registry:
+            facade_class = self._facade_registry[config.name]
+            facade = facade_class(config.name, config.global_config)
+        else:
+            # 默认使用SystemFacade
+            facade = SystemFacade(config.name, config.global_config)
+
+        # 创建并注册子系统
+        for subsystem_name, subsystem_config in config.subsystem_configs.items():
+            subsystem = self.create_subsystem(subsystem_name, subsystem_config)
+            if subsystem:
+                facade.register_subsystem(subsystem)
+
+        # 缓存创建的实例
+        self._created_instances[config.name] = facade
 
         return facade
 
-    def create_from_config(self, config: FacadeConfig) -> SystemFacade:
-        """从配置创建门面"""
-        if not config.enabled:
-            raise ValueError(f"Facade {config.name} is disabled")
+    def get_facade(self, name: str) -> Optional[Facade]:
+        """获取已创建的外观实例
 
-        return self.create_facade(config.facade_type, config)
+        Args:
+            name: 外观名称
 
-    def create_all_from_configs(self) -> Dict[str, SystemFacade]:
-        """从所有配置创建门面"""
-        facades = {}
-        for config in self._config_cache.values():
-            if config.enabled:
-                facade = self.create_from_config(config)
-                facades[config.name] = facade
-                self._instance_cache[config.name] = facade
-        return facades
+        Returns:
+            Optional[Facade]: 外观实例或None
+        """
+        return self._created_instances.get(name)
 
-    def get_or_create(self, facade_name: str) -> SystemFacade:
-        """获取或创建门面实例（单例模式）"""
-        if facade_name in self._instance_cache:
-            return self._instance_cache[facade_name]
+    def create_system_facade(self, name: str = "System",
+                           config: Optional[Dict[str, Any]] = None) -> SystemFacade:
+        """创建系统外观的便捷方法
 
-        config = self._config_cache.get(facade_name)
-        if not config:
-            raise ValueError(f"No configuration found for facade: {facade_name}")
+        Args:
+            name: 系统名称
+            config: 配置参数
 
-        facade = self.create_from_config(config)
-        self._instance_cache[facade_name] = facade
-        return facade
+        Returns:
+            SystemFacade: 系统外观实例
+        """
+        facade_config = FacadeConfig(name, global_config=config)
+        return self.create_facade(facade_config)
 
-    def load_config_from_file(self, file_path: Union[str, Path]) -> None:
-        """从文件加载门面配置"""
-        file_path = Path(file_path)
+    def list_registered_subsystems(self) -> list[str]:
+        """列出已注册的子系统类型"""
+        return list(self._subsystem_registry.keys())
 
-        if not file_path.exists():
-            raise FileNotFoundError(f"Config file not found: {file_path}")
+    def list_registered_facades(self) -> list[str]:
+        """列出已注册的外观类型"""
+        return list(self._facade_registry.keys())
 
-        # 根据文件扩展名选择解析器
-        if file_path.suffix.lower() in [".yaml", ".yml"]:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-        elif file_path.suffix.lower() == ".json":
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        else:
-            raise ValueError(f"Unsupported config file format: {file_path.suffix}")
-
-        # 解析门面配置
-        if "facades" in data:
-            for facade_data in data["facades"]:
-                config = FacadeConfig(**facade_data)
-                # 环境变量替换
-                config = self._resolve_environment_variables(config)
-                self._config_cache[config.name] = config
-
-    def load_config_from_dict(self, data: Dict) -> None:
-        """从字典加载门面配置"""
-        if "facades" in data:
-            for facade_data in data["facades"]:
-                config = FacadeConfig(**facade_data)
-                config = self._resolve_environment_variables(config)
-                self._config_cache[config.name] = config
-
-    def register_config(self, config: FacadeConfig) -> None:
-        """注册门面配置"""
-        config = self._resolve_environment_variables(config)
-        self._config_cache[config.name] = config
-
-    def get_config(self, name: str) -> Optional[FacadeConfig]:
-        """获取门面配置"""
-        return self._config_cache.get(name)
-
-    def list_configs(self) -> List[str]:
-        """列出所有配置"""
-        return list(self._config_cache.keys())
-
-    def list_facade_types(self) -> List[str]:
-        """列出所有可用的门面类型"""
-        return list(self.FACADE_TYPES.keys())
-
-    def register_facade_type(self, name: str, facade_class: Type[SystemFacade]) -> None:
-        """注册新的门面类型"""
-        self.FACADE_TYPES[name] = facade_class
-
-    def _apply_config(self, facade: SystemFacade, config: FacadeConfig) -> None:
-        """应用配置到门面"""
-        # 这里可以根据配置参数调整门面行为
-        # 例如设置特定的参数值
-        for key, value in config.parameters.items():
-            if hasattr(facade, key):
-                setattr(facade, key, value)
-
-    def _resolve_environment_variables(self, config: FacadeConfig) -> FacadeConfig:
-        """解析环境变量"""
-        # 解析参数中的环境变量
-        resolved_params = {}
-        for key, value in config.parameters.items():
-            if isinstance(value, ((str) and value.startswith("$"):
-                env_var = value[1:]
-                env_value = os.getenv(env_var)
-                if env_value is not None:
-                    # 尝试转换类型
-                    resolved_params[key] = self._convert_type(env_value)
-                else:
-                    resolved_params[key] = value
-            else:
-                resolved_params[key] = value
-
-        config.parameters = resolved_params
-
-        # 设置环境
-        if not config.environment:
-            config.environment = self.default_environment
-
-        return config
-
-    def _convert_type(self, value: str))))) -> Union[str)) in ["true")) == "true"
-
-        # 整数
-        try:
-            return int(value)
-        except ValueError:
-            pass
-
-        # 浮点数
-        try:
-            return float(value)
-        except ValueError:
-            pass
-
-        # 默认返回字符串
-        return value
-
-    def create_default_configs(self) -> None:
-        """创建默认配置"""
-        # 主系统门面配置
-        main_config = FacadeConfig(
-            name="main_facade"))
-        self._config_cache["main_facade"] = main_config
-
-        # 预测门面配置
-        prediction_config = FacadeConfig(
-            name="prediction_facade"))
-        self._config_cache["prediction_facade"] = prediction_config
-
-        # 数据收集门面配置
-        data_config = FacadeConfig(
-            name="data_collection_facade",
-            facade_type="data_collection",
-            enabled=True,
-            auto_initialize=True,
-            parameters={
-                "batch_size": 50,
-                "enable_compression": True,
-                "backup_enabled": True,
-            },
-        )
-        self._config_cache["data_collection_facade"] = data_config
-
-        # 分析门面配置
-        analytics_config = FacadeConfig(
-            name="analytics_facade",
-            facade_type="analytics",
-            enabled=True,
-            auto_initialize=False,  # 按需初始化
-            parameters={
-                "retention_days": 90,
-                "aggregation_interval": 3600,
-            },
-        )
-        self._config_cache["analytics_facade"] = analytics_config
-
-        # 通知门面配置
-        notification_config = FacadeConfig(
-            name="notification_facade",
-            facade_type="notification",
-            enabled=True,
-            auto_initialize=True,
-            parameters={
-                "default_channel": "email",
-                "queue_size": 1000,
-                "retry_failed": True,
-            },
-        )
-        self._config_cache["notification_facade"] = notification_config
-
-    def save_config_to_file(self, file_path: Union[str, Path]) -> None:
-        """保存配置到文件"""
-        file_path = Path(file_path)
-
-        data = {
-            "facades": [
-                {
-                    "name": config.name,
-                    "facade_type": config.facade_type,
-                    "enabled": config.enabled,
-                    "auto_initialize": config.auto_initialize,
-                    "subsystems": config.subsystems,
-                    "parameters": config.parameters,
-                    "environment": config.environment,
-                }
-                for config in self._config_cache.values()
-            ]
-        }
-
-        # 根据文件扩展名选择格式
-        if file_path.suffix.lower() in [".yaml", ".yml"]:
-            with open(file_path, "w", encoding="utf-8") as f:
-                yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
-        elif file_path.suffix.lower() == ".json":
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        else:
-            raise ValueError(f"Unsupported config file format: {file_path.suffix}")
+    def list_created_instances(self) -> list[str]:
+        """列出已创建的实例"""
+        return list(self._created_instances.keys())
 
     def clear_cache(self) -> None:
-        """清空实例缓存"""
-        self._instance_cache.clear()
-
-    def get_cached_instance(self, name: str) -> Optional[SystemFacade]:
-        """获取缓存的实例"""
-        return self._instance_cache.get(name)
+        """清除实例缓存"""
+        self._created_instances.clear()
 
 
-# 全局门面工厂实例
+# 全局工厂实例
 facade_factory = FacadeFactory()
 
-# 创建默认配置
-facade_factory.create_default_configs()
-]]
+
+# 便捷函数
+def create_facade(name: str,
+                 subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
+                 global_config: Optional[Dict[str, Any]] = None) -> Optional[Facade]:
+    """创建外观的便捷函数
+
+    Args:
+        name: 外观名称
+        subsystem_configs: 子系统配置
+        global_config: 全局配置
+
+    Returns:
+        Optional[Facade]: 外观实例
+    """
+    config = FacadeConfig(name, subsystem_configs, global_config)
+    return facade_factory.create_facade(config)
+
+
+def create_system_facade(name: str = "System",
+                        config: Optional[Dict[str, Any]] = None) -> SystemFacade:
+    """创建系统外观的便捷函数
+
+    Args:
+        name: 系统名称
+        config: 配置参数
+
+    Returns:
+        SystemFacade: 系统外观实例
+    """
+    return facade_factory.create_system_facade(name, config)
+
+
+# 导出的公共接口
+__all__ = [
+    "FacadeConfig",
+    "FacadeFactory",
+    "facade_factory",
+    "create_facade",
+    "create_system_facade"
+]

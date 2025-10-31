@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 # 从基础模块导入
 from .base_models import base_models as base_models_mod
-from ..common import api_models
+from src.common import api_models
 
 
 # 基础配置

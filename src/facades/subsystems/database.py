@@ -10,37 +10,55 @@ Database Subsystem Implementation
 import asyncio
 from typing import Any, Dict, Optional
 
-from ..base import Subsystem, SubsystemStatus
+from src.facades.base import Subsystem, SubsystemStatus
 
 
 class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
-    def __init__(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        super().__init__("database", "2.0.0")
+    def __init__(self, name: str = "database", config: Optional[Dict] = None):
+        """初始化数据库子系统"""
+        super().__init__(name)
         self.connection_pool = None
         self.query_count = 0
+        self.config = config or {}
+
+    async def start(self) -> bool:
+        """启动数据库子系统"""
+        try:
+            await asyncio.sleep(0.1)  # 模拟连接时间
+            self.connection_pool = {"active_connections": 0, "max_connections": 100}
+            self.status = SubsystemStatus.ACTIVE
+            self.metrics = {
+                "connection_pool_size": 100,
+                "active_connections": 0,
+                "query_count": 0,
+            }
+            return True
+        except Exception as e:
+            self.status = SubsystemStatus.ERROR
+            self.error_message = str(e)
+            return False
+
+    async def stop(self) -> bool:
+        """停止数据库子系统"""
+        try:
+            if self.connection_pool:
+                self.connection_pool = None
+            self.status = SubsystemStatus.INACTIVE
+            return True
+        except Exception as e:
+            self.status = SubsystemStatus.ERROR
+            self.error_message = str(e)
+            return False
 
     async def initialize(self) -> None:
-        """初始化数据库连接"""
-        # 模拟数据库初始化
-        await asyncio.sleep(0.1)
-        self.connection_pool = {"active_connections": 0, "max_connections": 100}
-        self.status = SubsystemStatus.ACTIVE
-        self.metrics = {
-            "connection_pool_size": 100,
-            "active_connections": 0,
-            "query_count": 0,
-        }
+        """初始化数据库连接 (兼容性方法)"""
+        await self.start()
 
     async def shutdown(self) -> None:
-        """关闭数据库连接"""
-        if self.connection_pool:
-            self.connection_pool = None
-        self.status = SubsystemStatus.INACTIVE
+        """关闭数据库连接 (兼容性方法)"""
+        await self.stop()
 
     async def execute_query(
         self, query: str, params: Optional[Dict] = None
