@@ -11,16 +11,16 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..core.di import DIContainer
-from ..domain.models import Match, Prediction
-from ..events import (
+from src.core.di import DIContainer
+from src.domain.models import Match, Prediction
+from src.events import (
     PredictionMadeEvent,
     PredictionMadeEventData,
     PredictionUpdatedEvent,
     PredictionUpdatedEventData,
     get_event_bus,
 )
-from ..events.types import MatchCreatedEventData, UserRegisteredEventData
+from src.events.types import MatchCreatedEventData, UserRegisteredEventData
 from .strategy_prediction_service import StrategyPredictionService
 
 logger = logging.getLogger(__name__)
