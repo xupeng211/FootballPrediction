@@ -402,7 +402,7 @@ async def list_tenants(
     需要权限: tenant.list
     """
     async with get_db_session() as db:
-        tenant_service = TenantService(db)
+        TenantService(db)
 
         # 这里应该实现分页查询逻辑
         # 暂时返回空列表作为示例

@@ -78,7 +78,7 @@ class EVCalculator:
         if odds <= 1.0 or probability <= 0.0 or probability >= 1.0:
             return 0.0
 
-        implied_prob = 1.0 / odds
+        1.0 / odds
         actual_prob = probability * (1 - self.margin)
 
         return (actual_prob * odds - 1.0) * 100  # 返回百分比

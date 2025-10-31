@@ -387,22 +387,22 @@ def upgrade() -> None:
             NOW(),
             NOW()
         )
-    """)"
+    """)
 
     # 为现有用户分配到默认租户
     op.execute("""
         UPDATE users SET tenant_id = (SELECT id FROM tenants WHERE slug = 'default') WHERE tenant_id IS NULL
-    """)"
+    """)
 
     # 为现有预测数据分配到默认租户
     op.execute("""
         UPDATE predictions SET tenant_id = (SELECT id FROM tenants WHERE slug = 'default') WHERE tenant_id IS NULL
-    """)"
+    """)
 
     # 为现有比赛数据分配到默认租户
     op.execute("""
         UPDATE matches SET tenant_id = (SELECT id FROM tenants WHERE slug = 'default') WHERE tenant_id IS NULL
-    """)"
+    """)
 
 
 def downgrade() -> None:

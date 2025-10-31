@@ -135,13 +135,13 @@ class SQLCompatibilityHelper:
                 "INT AUTO_INCREMENT": "SERIAL",
                 "DATETIME": "TIMESTAMP",
                 "JSON": "JSONB",
-                "`": '"',"
+                "`": '"',
             },
             "mysql_to_sqlite": {
                 "INT AUTO_INCREMENT": "INTEGER PRIMARY KEY AUTOINCREMENT",
                 "DATETIME": "DATETIME",
                 "JSON": "TEXT",
-                "`": '"',"
+                "`": '"',
             },
             "sqlite_to_postgresql": {
                 "INTEGER PRIMARY KEY AUTOINCREMENT": "SERIAL",
@@ -155,7 +155,7 @@ class SQLCompatibilityHelper:
                 "TEXT": "TEXT",
                 "TRUE": "1",
                 "FALSE": "0",
-                '"': "`","
+                '"': '`',
             },
         }
 

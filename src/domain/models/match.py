@@ -43,6 +43,7 @@ class MatchScore:
 
     def __post_init__(self):
         """验证比赛数据"""
+        if self.home_score < 0 or self.away_score < 0:
             raise DomainError("比分不能为负数")
 
     @property

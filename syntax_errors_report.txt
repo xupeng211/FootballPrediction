@@ -1,29 +1,6 @@
 语法错误详细报告
 ========================================
 
-DATABASE 目录:
---------------------
-文件: src/database/compatibility.py
-错误:   File "src/database/compatibility.py", line 138
-    "`": '"',"
-             ^
-SyntaxError: unterminated string literal (detected at line 138)
-
-----------------------------------------
-文件: src/database/migrations/versions/005_add_multi_tenant_support.py
-错误:   File "src/database/migrations/versions/005_add_multi_tenant_support.py", line 390
-    """)"
-        ^
-SyntaxError: unterminated string literal (detected at line 390)
-
-----------------------------------------
-
-DOMAIN 目录:
---------------------
-文件: src/domain/models/match.py
-错误: Sorry: IndentationError: unexpected indent (match.py, line 46)
-----------------------------------------
-
 UTILS 目录:
 --------------------
 文件: src/utils/date_utils_broken.py
