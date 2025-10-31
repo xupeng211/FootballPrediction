@@ -41,8 +41,9 @@ class ServiceDescriptor:
     dependencies: Optional[List[Type]] = None
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if self.dependencies is None:
             self.dependencies = []
 
@@ -53,8 +54,9 @@ class DIContainer:
     """依赖注入容器"""
 
     def __init__(self, name: str = "default"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self._services: Dict[Type, ServiceDescriptor] = {}
         self._singletons: Dict[Type, Any] = {}
@@ -313,23 +315,26 @@ class DIScope:
     """依赖注入作用域"""
 
     def __init__(self, container: DIContainer, scope_name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.container = container
         self.scope_name = scope_name
         self._old_scope = None
 
     def __enter__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._old_scope = self.container._current_scope
         self.container._current_scope = self.scope_name
         logger.debug(f"进入作用域: {self.scope_name}")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.container._current_scope = self._old_scope
         self.container.clear_scope(self.scope_name)
         logger.debug(f"退出作用域: {self.scope_name}")
@@ -341,8 +346,9 @@ class ServiceCollection:
     """服务集合,用于批量注册服务"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._registrations: List[Callable[[DIContainer], None]] = []
 
     def add_singleton(
@@ -437,8 +443,8 @@ def inject(
 
     def decorator(func: Callable) -> Callable:
         def wrapper(*args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+            """函数文档字符串"""
+            # 添加pass语句
             if container is None:
                 instance = resolve(service_type)
             else:

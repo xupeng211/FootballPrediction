@@ -1,0 +1,45 @@
+# Prometheus简化配置文件
+# 用于快速部署和验证
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  - job_name: 'football-api'
+    static_configs:
+      - targets: ['footballprediction-app-1:8000']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  - job_name: 'football-health'
+    static_configs:
+      - targets: ['localhost:8001']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  - job_name: 'test-server'
+    static_configs:
+      - targets: ['localhost:8002']
+    scrape_interval: 30s
+    metrics_path: /

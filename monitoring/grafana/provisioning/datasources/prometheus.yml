@@ -1,6 +1,4 @@
 # Grafana Prometheus数据源配置
-# Grafana Prometheus Datasource Configuration
-
 apiVersion: 1
 
 datasources:
@@ -11,36 +9,33 @@ datasources:
     isDefault: true
     editable: true
     jsonData:
-      timeInterval: "30s"
-      queryTimeout: "60s"
-      httpMethod: "POST"
-      httpHeaderName1: "X-Custom-Header"
-      httpHeaderValue1: "FootballPrediction"
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.2
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: 10m
+      queryTimeout: 60s
+      timeInterval: 30s
+      tlsSkipVerify: true
     secureJsonData: {}
 
-  - name: Loki
-    type: loki
+  - name: Prometheus-Football-API
+    type: prometheus
     access: proxy
-    url: http://loki:3100
+    url: http://prometheus:9090
+    database: football-api
+    isDefault: false
     editable: true
     jsonData:
-      maxLines: 1000
-      derivedFields:
-        - datasourceUid: prometheus
-          matcherRegex: "trace_id=(\\w+)"
-          name: TraceID
-          url: "$${__value.raw}"
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.2
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: 10m
+      queryTimeout: 60s
+      timeInterval: 15s
     secureJsonData: {}
-
-  - name: PostgreSQL
-    type: postgres
-    access: proxy
-    url: postgres://postgres:5432/football_prediction
-    database: football_prediction
-    user: grafana
-    secureJsonData:
-      password: ${POSTGRES_GRAFANA_PASSWORD}
-    jsonData:
-      postgresVersion: 130000
-      timescaledb: false
-      sslmode: "disable"
