@@ -507,7 +507,7 @@ class RetryDecorator(BaseDecorator):
                     print(f"[重试] 第{attempt + 1}次尝试失败，{self.delay}秒后重试: {e}")
                     time.sleep(self.delay)
                 else:
-                    print(f"[重试] 所有重试均失败")
+                    print("[重试] 所有重试均失败")
 
         raise last_exception
 
@@ -625,7 +625,7 @@ def async_metrics(func):
             duration = time.time() - start_time
             print(f"[异步指标] {func.__name__} 耗时: {duration:.4f}s")
             return result
-        except Exception as e:
+        except Exception:
             duration = time.time() - start_time
             print(f"[异步指标] {func.__name__} 异常，耗时: {duration:.4f}s")
             raise
@@ -651,7 +651,7 @@ def async_retry(max_retries: int = 3, delay: float = 1.0):
                         print(f"[异步重试] 第{attempt + 1}次尝试失败，{delay}秒后重试: {e}")
                         await asyncio.sleep(delay)
                     else:
-                        print(f"[异步重试] 所有重试均失败")
+                        print("[异步重试] 所有重试均失败")
 
             raise last_exception
         return wrapper
