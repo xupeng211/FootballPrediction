@@ -1,52 +1,39 @@
 """
 Redis缓存管理器
+Redis Cache Manager
 
-实现Redis连接池,基础操作方法,支持异步和同步两种模式
+实现Redis连接池、基础操作方法，支持异步和同步两种模式，以及集群、哨兵等高级特性。
 """
 
-try:
-    from .redis import CacheKeyManager  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
-    from .redis import (
-        RedisManager,
-        adelete_cache,
-        aexists_cache,
-        aget_cache,
-        amget_cache,
-        amset_cache,
-        aset_cache,
-        attl_cache,
-        delete_cache,
-        exists_cache,
-        get_cache,
-        get_redis_manager,
-        mget_cache,
-        mset_cache,
-        set_cache,
-        startup_warmup,
-        ttl_cache,
-    )
-except ImportError:
-    # 如果redis模块不可用,使用mock_redis
-    from .mock_redis import CacheKeyManager
-    from .mock_redis import MockRedisManager as RedisManager
-    from .mock_redis import (
-        adelete_cache,
-        aexists_cache,
-        aget_cache,
-        amget_cache,
-        amset_cache,
-        aset_cache,
-        attl_cache,
-        delete_cache,
-        exists_cache,
-        get_cache,
-        get_redis_manager,
-        mget_cache,
-        mset_cache,
-        set_cache,
-        startup_warmup,
-        ttl_cache,
-    )
+from typing import Optional, Dict, List, Any, Union
+import logging
+
+from .redis_enhanced import EnhancedRedisManager, RedisConfig, get_redis_manager
+from .mock_redis import MockRedisManager, CacheKeyManager
+
+logger = logging.getLogger(__name__)
+
+# 向后兼容别名
+RedisManager = EnhancedRedisManager
+
+# 从mock_redis导入便捷函数以确保向后兼容
+from .mock_redis import (
+    adelete_cache,
+    aexists_cache,
+    aget_cache,
+    amget_cache,
+    amset_cache,
+    aset_cache,
+    attl_cache,
+    delete_cache,
+    exists_cache,
+    get_cache,
+    mget_cache,
+    mset_cache,
+    set_cache,
+    ttl_cache,
+    startup_warmup,
+)
 
 # 导出所有公共接口
 __all__ = [

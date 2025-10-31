@@ -13,7 +13,7 @@ from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.predictions import Predictions
+from src.database.models.predictions import Predictions
 from .base import BaseRepository
 
 # 类型别名

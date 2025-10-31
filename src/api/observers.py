@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 
-from ..observers import get_observer_manager
-from ..observers.base import ObservableEventType
+from src.observers import get_observer_manager
+from src.observers.base import ObservableEventType
 
 # mypy: ignore-errors
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑

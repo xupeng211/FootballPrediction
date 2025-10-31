@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from ..models.prediction import Prediction
-from .base import (
+from src.domain.models.prediction import Prediction
+from src.domain.strategies.base import (
     PredictionInput,
     PredictionOutput,
     PredictionStrategy,

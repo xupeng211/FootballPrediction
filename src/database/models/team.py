@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 """
 球队模型

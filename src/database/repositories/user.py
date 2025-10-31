@@ -13,7 +13,7 @@ from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from ..models.user import User
+from src.database.models.user import User
 from .base import BaseRepository
 
 

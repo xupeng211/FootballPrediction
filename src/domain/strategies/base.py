@@ -12,9 +12,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..models.match import Match
-from ..models.prediction import Prediction
-from ..models.team import Team
+from src.domain.models.match import Match
+from src.domain.models.prediction import Prediction
+from src.domain.models.team import Team
 
 
 class StrategyType(Enum):

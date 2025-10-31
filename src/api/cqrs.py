@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from ..cqrs.application import CQRSServiceFactory
+from src.cqrs.application import CQRSServiceFactory
 
 router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 

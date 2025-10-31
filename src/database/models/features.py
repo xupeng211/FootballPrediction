@@ -30,7 +30,7 @@ from sqlalchemy import DECIMAL, DateTime
 from sqlalchemy import Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 
 class TeamType(str, Enum):

@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 
-from ..base import BaseModel
-from ..types import JsonbType
+from src.database.base import BaseModel
+from src.database.types import JsonbType
 
 
 class RawData(BaseModel):

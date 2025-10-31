@@ -6,10 +6,10 @@ Domain Services
 Contains business logic that spans multiple aggregates.
 """
 
-from .match_service import MatchDomainService
-from .prediction_service import PredictionDomainService
-from .scoring_service import ScoringService
-from .team_service import TeamDomainService
+from src.domain.services.match_service import MatchDomainService
+from src.domain.services.prediction_service import PredictionDomainService
+from src.domain.services.scoring_service import ScoringService
+from src.domain.services.team_service import TeamDomainService
 
 __all__ = [
     "MatchDomainService",

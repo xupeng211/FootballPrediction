@@ -4,8 +4,8 @@ from typing import Any, Dict
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, func
 from sqlalchemy.sql import func
 
-from ..base import BaseModel
-from ..types import SQLiteCompatibleJSONB
+from src.database.base import BaseModel
+from src.database.types import SQLiteCompatibleJSONB
 
 """
 权限审计日志模型

@@ -8,8 +8,8 @@ Defines domain events related to matches.
 
 from typing import Any, Dict
 
-from ..models.match import MatchResult, MatchScore
-from .base import DomainEvent
+from src.domain.models.match import MatchResult, MatchScore
+from src.domain.events.base import DomainEvent
 
 
 class MatchStartedEvent(DomainEvent):

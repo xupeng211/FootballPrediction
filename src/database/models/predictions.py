@@ -17,7 +17,7 @@ Predictions - 数据库模块
 from enum import Enum
 
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 """
 预测结果数据模型

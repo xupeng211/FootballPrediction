@@ -15,11 +15,11 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 import yaml
 
-from .base import PredictionStrategy, StrategyType
-from .ensemble import EnsembleStrategy
-from .historical import HistoricalStrategy
-from .ml_model import MLModelStrategy
-from .statistical import StatisticalStrategy
+from src.domain.strategies.base import PredictionStrategy, StrategyType
+from src.domain.strategies.ensemble import EnsembleStrategy
+from src.domain.strategies.historical import HistoricalStrategy
+from src.domain.strategies.ml_model import MLModelStrategy
+from src.domain.strategies.statistical import StatisticalStrategy
 
 logger = logging.getLogger(__name__)
 

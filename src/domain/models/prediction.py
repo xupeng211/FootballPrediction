@@ -12,7 +12,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from ...core.exceptions import DomainError
+from src.core.exceptions import DomainError
 
 
 class PredictionStatus(Enum):
@@ -222,7 +222,7 @@ class Prediction:
             self.model_version = model_version
 
         # 发布领域事件
-        from ..events import PredictionCreatedEvent
+        from src.domain.events import PredictionCreatedEvent
 
         self._add_domain_event(
             PredictionCreatedEvent(
@@ -260,7 +260,7 @@ class Prediction:
         )
 
         # 发布领域事件
-        from ..events import PredictionEvaluatedEvent
+        from src.domain.events import PredictionEvaluatedEvent
 
         self._add_domain_event(
             PredictionEvaluatedEvent(
