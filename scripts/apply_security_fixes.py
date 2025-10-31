@@ -29,7 +29,7 @@ class SecurityFixer:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            original_content = content
+            _ = content
 
             # 修复规则：将random.random()替换为secrets.randbelow() / 100
             content = re.sub(
@@ -94,7 +94,7 @@ class SecurityFixer:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            original_content = content
+            _ = content
 
             # 检查是否有SQL字符串拼接
             sql_patterns = [

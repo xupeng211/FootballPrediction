@@ -33,7 +33,7 @@ def load_maintenance_logs():
                 return logs[-5:]  # 返回最近5条日志
             except Exception:
                 pass
-    return []
+        return []
 
 
 def get_system_status():
