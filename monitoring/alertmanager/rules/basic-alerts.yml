@@ -1,0 +1,290 @@
+# 基础告警规则
+# 用于生产环境系统监控
+
+groups:
+  - name: basic-alerts
+    rules:
+      # 实例宕机告警
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: '{{ $labels.job }}'
+        annotations:
+          summary: '实例 {{ $labels.instance }} 宕机'
+          description: '实例 {{ $labels.instance }} ({{ $labels.job }}) 已宕机超过1分钟'
+
+      # CPU使用率过高
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: 'CPU使用率过高 - {{ $labels.instance }}'
+          description: '{{ $labels.instance }} CPU使用率超过80%，当前值: {{ $value }}%'
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: 'CPU使用率严重过高 - {{ $labels.instance }}'
+          description: '{{ $labels.instance }} CPU使用率超过95%，当前值: {{ $value }}%'
+
+      # 内存使用率过高
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: '内存使用率过高 - {{ $labels.instance }}'
+          description: '{{ $labels.instance }} 内存使用率超过80%，当前值: {{ $value }}%'
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: '内存使用率严重过高 - {{ $labels.instance }}'
+          description: '{{ $labels.instance }} 内存使用率超过95%，当前值: {{ $value }}%'
+
+      # 磁盘空间不足
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: '磁盘空间不足 - {{ $labels.instance }}:{{ $labels.mountpoint }}'
+          description: '{{ $labels.instance }} 挂载点 {{ $labels.mountpoint }} 磁盘使用率超过85%，当前值: {{ $value }}%'
+
+      - alert: DiskSpaceCritical
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: '磁盘空间严重不足 - {{ $labels.instance }}:{{ $labels.mountpoint }}'
+          description: '{{ $labels.instance }} 挂载点 {{ $labels.mountpoint }} 磁盘使用率超过95%，当前值: {{ $value }}%'
+
+      # 磁盘IO过高
+      - alert: HighDiskIO
+        expr: irate(node_disk_io_time_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: '磁盘IO过高 - {{ $labels.instance }}:{{ $labels.device }}'
+          description: '{{ $labels.instance }} 设备 {{ $labels.device }} 磁盘IO使用率超过80%，当前值: {{ $value }}%'
+
+      # 网络错误
+      - alert: NetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) + rate(node_network_transmit_errs_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: '网络错误 - {{ $labels.instance }}:{{ $labels.device }}'
+          description: '{{ $labels.instance }} 网卡 {{ $labels.device }} 每秒网络错误数超过10，当前值: {{ $value }}'
+
+      # 系统负载过高
+      - alert: HighSystemLoad
+        expr: node_load15 > (count by (instance) (node_cpu_seconds_total{mode="idle"}) * 1.5)
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: '系统负载过高 - {{ $labels.instance }}'
+          description: '{{ $labels.instance }} 15分钟平均负载 {{ $value }} 超过CPU核心数的1.5倍'
+
+      - alert: CriticalSystemLoad
+        expr: node_load15 > (count by (instance) (node_cpu_seconds_total{mode="idle"}) * 2)
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: '系统负载严重过高 - {{ $labels.instance }}'
+          description: '{{ $labels.instance }} 15分钟平均负载 {{ $value }} 超过CPU核心数的2倍'
+
+  - name: football-api-alerts
+    rules:
+      # API错误率过高
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: football-api
+        annotations:
+          summary: 'API错误率过高'
+          description: 'FootballPrediction API 5xx错误率超过5%，当前值: {{ $value }}%'
+
+      - alert: CriticalAPIErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 10
+        for: 1m
+        labels:
+          severity: critical
+          service: football-api
+        annotations:
+          summary: 'API错误率严重过高'
+          description: 'FootballPrediction API 5xx错误率超过10%，当前值: {{ $value }}%'
+
+      # API响应时间过长
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: football-api
+        annotations:
+          summary: 'API响应时间过长'
+          description: 'FootballPrediction API P95响应时间超过1秒，当前值: {{ $value }}秒'
+
+      - alert: CriticalAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: critical
+          service: football-api
+        annotations:
+          summary: 'API响应时间严重过长'
+          description: 'FootballPrediction API P95响应时间超过2秒，当前值: {{ $value }}秒'
+
+      # API请求量突降
+      - alert: LowAPIRequestRate
+        expr: rate(http_requests_total[5m]) < 10
+        for: 5m
+        labels:
+          severity: warning
+          service: football-api
+        annotations:
+          summary: 'API请求量过低'
+          description: 'FootballPrediction API请求速率低于10 req/s，当前值: {{ $value }} req/s'
+
+  - name: database-alerts
+    rules:
+      # PostgreSQL连接数过多
+      - alert: HighPostgreSQLConnections
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: 'PostgreSQL连接数过高'
+          description: 'PostgreSQL数据库连接数超过80%，当前值: {{ $value }}%'
+
+      - alert: CriticalPostgreSQLConnections
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: postgres
+        annotations:
+          summary: 'PostgreSQL连接数严重过高'
+          description: 'PostgreSQL数据库连接数超过90%，当前值: {{ $value }}%'
+
+      # PostgreSQL查询时间过长
+      - alert: SlowPostgreSQLQueries
+        expr: pg_stat_statements_mean_time_seconds > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: postgres
+        annotations:
+          summary: 'PostgreSQL查询时间过长'
+          description: 'PostgreSQL平均查询时间超过1秒，当前值: {{ $value }}秒'
+
+      - alert: CriticalSlowPostgreSQLQueries
+        expr: pg_stat_statements_mean_time_seconds > 2
+        for: 2m
+        labels:
+          severity: critical
+          service: postgres
+        annotations:
+          summary: 'PostgreSQL查询时间严重过长'
+          description: 'PostgreSQL平均查询时间超过2秒，当前值: {{ $value }}秒'
+
+  - name: redis-alerts
+    rules:
+      # Redis内存使用率过高
+      - alert: HighRedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: 'Redis内存使用率过高'
+          description: 'Redis内存使用率超过80%，当前值: {{ $value }}%'
+
+      - alert: CriticalRedisMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: 'Redis内存使用率严重过高'
+          description: 'Redis内存使用率超过90%，当前值: {{ $value }}%'
+
+      # Redis连接数过多
+      - alert: HighRedisConnections
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: 'Redis连接数过高'
+          description: 'Redis连接数超过100，当前值: {{ $value }}'
+
+  - name: monitoring-alerts
+    rules:
+      # Prometheus目标离线
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: prometheus
+        annotations:
+          summary: 'Prometheus监控目标离线'
+          description: 'Prometheus监控目标 {{ $labels.instance }} ({{ $labels.job }}) 已离线'
+
+      # AlertManager配置失败
+      - alert: AlertManagerConfigFailed
+        expr: alertmanager_config_last_reload_successful == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: alertmanager
+        annotations:
+          summary: 'AlertManager配置加载失败'
+          description: 'AlertManager配置文件加载失败，请检查配置文件语法'
+
+      # Prometheus存储空间不足
+      - alert: PrometheusStorageLow
+        expr: (prometheus_tsdb_head_chunks / prometheus_tsdb_retention_limit) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: prometheus
+        annotations:
+          summary: 'Prometheus存储空间不足'
+          description: 'Prometheus TSDB存储使用率超过80%，当前值: {{ $value }}%'

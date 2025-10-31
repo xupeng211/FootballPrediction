@@ -1,0 +1,81 @@
+# Grafana完整配置文件
+# 用于生产环境的监控可视化
+
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_ORG_ROLE=Editor
+      - GF_SECURITY_DATASOURCE_TIMEOUT=60
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_COOKIE_SAMESITE=strict
+      - GF_LOG_LEVEL=info
+      - GF_LOG_MODE=console
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/dashboards/json:/etc/grafana/dashboards/json
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      - PROMETHEUS_CONFIG_FILE=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus/prometheus-complete.yml:/etc/prometheus/prometheus.yml
+      - prometheus-storage:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  grafana-storage:
+    driver: local
+  prometheus-storage:
+    driver: local
+
+networks:
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

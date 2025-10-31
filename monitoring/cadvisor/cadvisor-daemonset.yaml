@@ -1,0 +1,185 @@
+# cAdvisor DaemonSet for Kubernetes
+# 在每个Kubernetes节点上部署cAdvisor
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cadvisor
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: cadvisor
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cadvisor
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cadvisor
+        app.kubernetes.io/component: monitoring
+        app.kubernetes.io/part-of: prometheus
+    spec:
+      serviceAccountName: cadvisor
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+        - name: cadvisor
+          image: gcr.io/cadvisor/cadvisor:v0.47.0
+          args:
+            - --port=8080
+            - --docker_only=true
+            - --storage_duration=2m
+            - --housekeeping_interval=30s
+            - --disable_metrics=accelerator,cpu_topology,disk,diskIO,memory,numa,process,tcp,udp
+            - --enable_metrics=cpu,memory,network
+            - --path_rootfs=/rootfs
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 300m
+              memory: 200Mi
+            requests:
+              cpu: 150m
+              memory: 100Mi
+          volumeMounts:
+            - name: rootfs
+              mountPath: /rootfs
+              readOnly: true
+            - name: var-run
+              mountPath: /var/run
+              readOnly: true
+            - name: sys
+              mountPath: /sys
+              readOnly: true
+            - name: docker
+              mountPath: /var/lib/docker
+              readOnly: true
+            - name: disk
+              mountPath: /dev/disk
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_ADMIN
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      nodeSelector:
+        kubernetes.io/os: linux
+      volumes:
+        - name: rootfs
+          hostPath:
+            path: /
+        - name: var-run
+          hostPath:
+            path: /var/run
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: docker
+          hostPath:
+            path: /var/lib/docker
+        - name: disk
+          hostPath:
+            path: /dev/disk
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cadvisor
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: cadvisor
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: prometheus
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: cadvisor
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cadvisor
+  namespace: monitoring
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cadvisor
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cadvisor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cadvisor
+subjects:
+  - kind: ServiceAccount
+    name: cadvisor
+    namespace: monitoring

@@ -26,8 +26,9 @@ class EventDrivenApplication:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化应用程序"""
         self._event_bus = get_event_bus()
         self._settings = get_settings()
@@ -84,8 +85,7 @@ class EventDrivenApplication:
             """简单统计处理器"""
 
             def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+                """函数文档字符串"""
                 super().__init__("SimpleStats")
                 self.stats = {}
 

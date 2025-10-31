@@ -1,0 +1,195 @@
+# AlertManager配置文件
+# 用于生产环境告警管理和通知
+
+global:
+  resolve_timeout: 5m
+  http_config:
+    follow_redirects: true
+    enable_http2: true
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@footballprediction.com'
+  smtp_auth_username: 'alerts@footballprediction.com'
+  smtp_auth_password: 'your-smtp-password'
+
+# 路由配置
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    # 系统级告警
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      repeat_interval: 5m
+      routes:
+        - match:
+            service: football-api
+          receiver: 'football-api-critical'
+
+    # 数据库告警
+    - match:
+        service: postgres
+      receiver: 'database-alerts'
+      group_wait: 10s
+      repeat_interval: 30m
+
+    # 缓存告警
+    - match:
+        service: redis
+      receiver: 'cache-alerts'
+      group_wait: 10s
+      repeat_interval: 30m
+
+    # 监控系统告警
+    - match:
+        service: prometheus
+      receiver: 'monitoring-alerts'
+      group_wait: 30s
+      repeat_interval: 1h
+
+    # 警告级别告警
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 2h
+
+# 接收器配置
+receivers:
+  # 默认接收器
+  - name: 'default'
+    email_configs:
+      - to: 'team@footballprediction.com'
+        subject: '[FootballPrediction] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        body: |
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          标签: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+  # 关键告警接收器
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'ops@footballprediction.com,manager@footballprediction.com'
+        subject: '[CRITICAL] FootballPrediction系统告警 - {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 关键告警 🚨
+
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          详细描述: {{ .Annotations.description }}
+          严重程度: {{ .Labels.severity }}
+          服务: {{ .Labels.service }}
+          实例: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+
+          立即处理！
+          {{ end }}
+
+  # Football API关键告警
+  - name: 'football-api-critical'
+    email_configs:
+      - to: 'dev-team@footballprediction.com,ops@footballprediction.com'
+        subject: '[CRITICAL] FootballPrediction API告警 - {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 FootballPrediction API关键告警 🚨
+
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          端点: {{ .Labels.endpoint }}
+          方法: {{ .Labels.method }}
+          状态码: {{ .Labels.status_code }}
+          响应时间: {{ .Labels.response_time }}ms
+          {{ end }}
+
+  # 数据库告警
+  - name: 'database-alerts'
+    email_configs:
+      - to: 'dba@footballprediction.com,ops@footballprediction.com'
+        subject: '[DATABASE] FootballPrediction数据库告警'
+        body: |
+          📊 数据库告警 📊
+
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          数据库: {{ .Labels.database }}
+          指标: {{ .Labels.metric }}
+          当前值: {{ .Labels.current_value }}
+          阈值: {{ .Labels.threshold }}
+          {{ end }}
+
+  # 缓存告警
+  - name: 'cache-alerts'
+    email_configs:
+      - to: 'ops@footballprediction.com,dev-team@footballprediction.com'
+        subject: '[CACHE] FootballPrediction缓存告警'
+        body: |
+          💾 缓存告警 💾
+
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          实例: {{ .Labels.instance }}
+          指标: {{ .Labels.metric }}
+          当前值: {{ .Labels.current_value }}
+          {{ end }}
+
+  # 监控系统告警
+  - name: 'monitoring-alerts'
+    email_configs:
+      - to: 'ops@footballprediction.com'
+        subject: '[MONITORING] 监控系统告警'
+        body: |
+          📈 监控系统告警 📈
+
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          组件: {{ .Labels.component }}
+          实例: {{ .Labels.instance }}
+          {{ end }}
+
+  # 警告级告警
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'team@footballprediction.com'
+        subject: '[WARNING] FootballPrediction警告'
+        body: |
+          ⚠️ 系统警告 ⚠️
+
+          {{ range .Alerts }}
+          警告: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          服务: {{ .Labels.service }}
+          实例: {{ .Labels.instance }}
+          {{ end }}
+
+# 抑制规则
+inhibit_rules:
+  # 如果服务宕机，抑制该服务的其他告警
+  - source_match:
+      alertname: 'InstanceDown'
+      severity: 'critical'
+    target_match:
+      service: '{{ .Labels.service }}'
+    equal: ['instance', 'service']
+
+  # 如果节点宕机，抑制该节点上的所有告警
+  - source_match:
+      alertname: 'NodeDown'
+      severity: 'critical'
+    target_match:
+      instance: '{{ .Labels.instance }}'
+    equal: ['instance']
+
+# 模板文件
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

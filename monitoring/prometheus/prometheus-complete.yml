@@ -1,0 +1,180 @@
+# Prometheus完整配置文件
+# 用于生产环境的基础设施监控
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'football-prediction'
+    environment: 'production'
+
+# 规则文件配置
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+# 告警管理器配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# 抓取配置
+scrape_configs:
+  # 应用监控
+  - job_name: 'football-api'
+    static_configs:
+      - targets: ['football-api-service:8000']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    scheme: http
+    relabel_configs:
+      - source_labels: ['__address__', '__meta_kubernetes_pod_label_name', '__meta_kubernetes_pod_label_app', '__meta_kubernetes_namespace']
+        regex_labels:
+          - '^(.*)__meta_kubernetes_pod_label_(.*)'
+          - target_label: kubernetes_pod_label_$2
+        action: replace
+
+  # Prometheus自监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Kubernetes API服务器监控
+  - job_name: 'kubernetes-apiservers'
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: ['default', 'kube-system', 'football-prediction']
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: replace
+        regex:
+          - '(.+);(.+)'
+          - target_label: $2
+          - target_label: $1
+
+  # Node Exporter监控
+  - job_name: 'node-exporter'
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: ['monitoring']
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: replace
+        regex:
+          - '(.+);(.+)'
+          - target_label: $2
+          - target_label: $1
+
+  # Kubelet监控
+  - job_name: 'kubelet'
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: ['kube-system']
+        relabel_configs:
+          - target_label: __meta_kubernetes_namespace
+            replacement: $1
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            action: replace
+            regex: (.*)
+            target_label: $1
+
+  # cAdvisor监控
+  - job_name: 'cadvisor'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_node_name]
+        action: replace
+        target_label: node
+
+  # PostgreSQL监控
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Redis监控
+  - job_name: 'redis'
+    static_configs:
+      -targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+# 存储配置
+storage:
+  tsdb:
+    Prometheus自身时序数据
+    retention_time: 7d
+    data_retention_size: 2GB
+    record_retention_size: 100MB
+
+  其他数据存储
+  - name: alertmanager
+    retention: 7d
+    path: /etc/prometheus
+
+  - name: prometheus
+    retention: 7d
+    path: /prometheus
+
+# 写入配置
+remote_write:
+  - url: "https://remote-write.prometheus.io/api/v1/write"
+  - send_exemplars: true
+  - headers:
+    'X-Prometheus-Remote-Write-Version': '0.1.0'
+
+# 远程读取配置 (可选)
+# remote_read:
+#   read_recent: true
+#   fetch_timeout: 5m
+#   basic_auth:
+#     username: user
+#     password: pass
+
+# 全局配置
+global:
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'football-prediction'
+    environment: 'production'
+
+# 管理配置
+management:
+  prometheus_url: http://localhost:9090
+  storage.tsdb.path: /etc/prometheus/tsdb
+
+# Webhook配置
+webhook_configs:
+  - url: http://localhost:9093/api/v1/alertmanager/reload
+    send_resolved: true
+    send_timeout: 10s
+
+# 启用特性
+enable_feature:
+  - promql_experimental_storage_enabled: true
+  - exemplar_storage_enabled: true
+
+# 健康检查配置
+healthcheck:
+  http:
+    path: /-/healthy
+    port: 9090
+    interval: 30s
+    timeout: 10s
+
+# 启用配置
+enable_feature:
+  - promql_experimental_storage_enabled: true
+  - exemplar_storage_enabled: true

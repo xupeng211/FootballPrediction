@@ -1,0 +1,45 @@
+# cAdvisor部署配置
+# 用于容器资源监控
+
+version: '3.8'
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - '--port=8080'
+      - '--docker_only=true'
+      - '--storage_duration=2m'
+      - '--housekeeping_interval=30s'
+      - '--disable_metrics=accelerator,cpu_topology,disk,diskIO,memory,numa,process,tcp,udp'
+      - '--enable_metrics=cpu,memory,network'
+    environment:
+      - CADVISOR_HEALTH_CHECK_PORT=8080
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+      - "monitoring.target=cadvisor"
+
+networks:
+  monitoring:
+    external: true

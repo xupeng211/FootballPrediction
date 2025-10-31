@@ -1,0 +1,47 @@
+# Node Exporter部署配置
+# 用于服务器资源监控
+
+version: '3.8'
+
+services:
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.cpu'
+      - '--collector.diskstats'
+      - '--collector.filesystem'
+      - '--collector.meminfo'
+      - '--collector.netdev'
+      - '--collector.netstat'
+      - '--collector.stat'
+      - '--collector.time'
+      - '--collector.vmstat'
+      - '--collector.hwmon'
+      - '--collector.uname'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9100/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=false"
+      - "monitoring.target=node-exporter"
+
+networks:
+  monitoring:
+    external: true
