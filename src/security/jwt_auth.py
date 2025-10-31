@@ -250,6 +250,9 @@ class JWTAuthManager:
         Returns:
             哈希后的密码
         """
+        # bcrypt限制密码长度为72字节
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
         return self.pwd_context.hash(password)
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
@@ -263,6 +266,9 @@ class JWTAuthManager:
         Returns:
             密码是否正确
         """
+        # bcrypt限制密码长度为72字节
+        if len(plain_password.encode('utf-8')) > 72:
+            plain_password = plain_password[:72]
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def generate_password_reset_token(self, email: str) -> str:
