@@ -1,0 +1,76 @@
+# =================================================================
+# 本地试运营环境Promtail配置
+# Local Staging Promtail Configuration
+# =================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # 应用日志
+  - job_name: app-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: app
+          __path__: /var/log/containers/*football-prediction-staging-app*.log
+
+  # Nginx日志
+  - job_name: nginx-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          __path__: /var/log/containers/*football-prediction-staging-nginx*.log
+
+  # 数据库日志
+  - job_name: db-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgres
+          __path__: /var/log/containers/*football-prediction-staging-db*.log
+
+  # Redis日志
+  - job_name: redis-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: redis
+          __path__: /var/log/containers/*football-prediction-staging-redis*.log
+
+  # 系统日志
+  - job_name: system-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          __path__: /var/log/syslog
+
+  # Docker容器日志
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        port: 80
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '(.*)'
+        target_label: container_name
+        replacement: '$1'
+      - source_labels: ['__meta_docker_container_log_stream']
+        regex: '(.*)'
+        target_label: stream
+        replacement: '$1'

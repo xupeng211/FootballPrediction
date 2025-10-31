@@ -1,0 +1,217 @@
+{
+  "python_version": "3.11.9 (main, Aug  8 2025, 00:29:36) [GCC 11.4.0]",
+  "environment": {
+    "version": "3.11.9 (main, Aug  8 2025, 00:29:36) [GCC 11.4.0]",
+    "executable": "/home/user/projects/FootballPrediction/.venv/bin/python",
+    "platform": "linux",
+    "implementation": "namespace(name='cpython', cache_tag='cpython-311', version=sys.version_info(major=3, minor=11, micro=9, releaselevel='final', serial=0), hexversion=51055088, _multiarch='x86_64-linux-gnu')",
+    "paths": [
+      "/home/user/projects/FootballPrediction/scripts",
+      "/home/user/.pyenv/versions/3.11.9/lib/python311.zip",
+      "/home/user/.pyenv/versions/3.11.9/lib/python3.11",
+      "/home/user/.pyenv/versions/3.11.9/lib/python3.11/lib-dynload",
+      "/home/user/projects/FootballPrediction/.venv/lib/python3.11/site-packages"
+    ]
+  },
+  "dependencies": {
+    "requests": {
+      "name": "requests",
+      "import_name": "requests",
+      "description": "HTTP请求库",
+      "installed": true,
+      "version": "2.32.5",
+      "version_ok": true,
+      "error": null
+    },
+    "aiohttp": {
+      "name": "aiohttp",
+      "import_name": "aiohttp",
+      "description": "异步HTTP客户端",
+      "installed": true,
+      "version": "3.13.2",
+      "version_ok": true,
+      "error": null
+    },
+    "pyyaml": {
+      "name": "pyyaml",
+      "import_name": "yaml",
+      "description": "YAML配置解析",
+      "installed": true,
+      "version": "6.0.3",
+      "version_ok": true,
+      "error": null
+    },
+    "psutil": {
+      "name": "psutil",
+      "import_name": "psutil",
+      "description": "系统监控",
+      "installed": true,
+      "version": "7.1.2",
+      "version_ok": true,
+      "error": null
+    },
+    "pandas": {
+      "name": "pandas",
+      "import_name": "pandas",
+      "description": "数据处理",
+      "installed": true,
+      "version": "2.3.3",
+      "version_ok": true,
+      "error": null
+    },
+    "numpy": {
+      "name": "numpy",
+      "import_name": "numpy",
+      "description": "数值计算",
+      "installed": true,
+      "version": "2.3.4",
+      "version_ok": true,
+      "error": null
+    },
+    "redis": {
+      "name": "redis",
+      "import_name": "redis",
+      "description": "Redis客户端",
+      "installed": true,
+      "version": "7.0.1",
+      "version_ok": true,
+      "error": null
+    },
+    "prometheus_client": {
+      "name": "prometheus_client",
+      "import_name": "prometheus_client",
+      "description": "Prometheus监控",
+      "installed": true,
+      "version": "0.23.1",
+      "version_ok": null,
+      "error": null
+    },
+    "fastapi": {
+      "name": "fastapi",
+      "import_name": "fastapi",
+      "description": "Web框架",
+      "installed": true,
+      "version": "0.120.3",
+      "version_ok": true,
+      "error": null
+    },
+    "sqlalchemy": {
+      "name": "sqlalchemy",
+      "import_name": "sqlalchemy",
+      "description": "ORM框架",
+      "installed": true,
+      "version": "2.0.44",
+      "version_ok": true,
+      "error": null
+    },
+    "asyncpg": {
+      "name": "asyncpg",
+      "import_name": "asyncpg",
+      "description": "PostgreSQL异步驱动",
+      "installed": true,
+      "version": "0.30.0",
+      "version_ok": true,
+      "error": null
+    },
+    "uvicorn": {
+      "name": "uvicorn",
+      "import_name": "uvicorn",
+      "description": "ASGI服务器",
+      "installed": true,
+      "version": "0.38.0",
+      "version_ok": true,
+      "error": null
+    },
+    "matplotlib": {
+      "name": "matplotlib",
+      "import_name": "matplotlib",
+      "description": "数据可视化",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'matplotlib'"
+    },
+    "scikit-learn": {
+      "name": "scikit-learn",
+      "import_name": "scikit-learn",
+      "description": "机器学习库",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'scikit-learn'"
+    },
+    "jupyter": {
+      "name": "jupyter",
+      "import_name": "jupyter",
+      "description": "Jupyter笔记本",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'jupyter'"
+    },
+    "pytest": {
+      "name": "pytest",
+      "import_name": "pytest",
+      "description": "测试框架",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'pytest'"
+    },
+    "black": {
+      "name": "black",
+      "import_name": "black",
+      "description": "代码格式化",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'black'"
+    },
+    "mypy": {
+      "name": "mypy",
+      "import_name": "mypy",
+      "description": "类型检查",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'mypy'"
+    },
+    "bandit": {
+      "name": "bandit",
+      "import_name": "bandit",
+      "description": "安全扫描",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'bandit'"
+    },
+    "pip-audit": {
+      "name": "pip-audit",
+      "import_name": "pip-audit",
+      "description": "依赖安全审计",
+      "installed": false,
+      "version": null,
+      "version_ok": null,
+      "error": "No module named 'pip-audit'"
+    }
+  },
+  "missing_packages": [
+    "matplotlib",
+    "scikit-learn",
+    "jupyter",
+    "pytest",
+    "black",
+    "mypy",
+    "bandit",
+    "pip-audit"
+  ],
+  "version_conflicts": [],
+  "summary": {
+    "total_packages": 20,
+    "installed_packages": 12,
+    "missing_packages": 8,
+    "version_conflicts": 0,
+    "installation_rate": 60.0,
+    "status": "WARNING"
+  }
+}
