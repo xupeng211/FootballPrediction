@@ -73,7 +73,7 @@ class TestBasicOperations:
         # 键错误
         try:
             data = {"key": "value"}
-            result = data["missing_key"]
+            data["missing_key"]
             assert False, "应该抛出异常"
         except KeyError:
             assert True
@@ -135,14 +135,14 @@ class TestDataValidation:
             return len(name.strip()) > 0 and len(name) <= 50
 
         # 测试有效队名
-        assert is_valid_team_name("Real Madrid") == True
-        assert is_valid_team_name("FC Barcelona") == True
-        assert is_valid_team_name("Manchester City FC") == True
+        assert is_valid_team_name("Real Madrid")
+        assert is_valid_team_name("FC Barcelona")
+        assert is_valid_team_name("Manchester City FC")
 
         # 测试无效队名
-        assert is_valid_team_name("") == False
-        assert is_valid_team_name(None) == False
-        assert is_valid_team_name("A" * 51) == False
+        assert not is_valid_team_name("")
+        assert not is_valid_team_name(None)
+        assert not is_valid_team_name("A" * 51)
 
     def test_score_validation(self):
         """测试比分验证"""
@@ -160,19 +160,19 @@ class TestDataValidation:
                 away_score = int(away.strip())
 
                 return home_score >= 0 and away_score >= 0
-            except:
+            except ValueError:
                 return False
 
         # 测试有效比分
-        assert is_valid_score("2-1") == True
-        assert is_valid_score("0-0") == True
-        assert is_valid_score("10-2") == True
+        assert is_valid_score("2-1")
+        assert is_valid_score("0-0")
+        assert is_valid_score("10-2")
 
         # 测试无效比分
-        assert is_valid_score("2") == False
-        assert is_valid_score("2-1-3") == False
-        assert is_valid_score("abc-def") == False
-        assert is_valid_score("-1-2") == False
+        assert not is_valid_score("2")
+        assert not is_valid_score("2-1-3")
+        assert not is_valid_score("abc-def")
+        assert not is_valid_score("-1-2")
 
 
 class TestPerformance:
