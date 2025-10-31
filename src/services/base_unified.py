@@ -141,8 +141,6 @@ class BaseService(ABC):
         return self.db_manager.get_async_session()
 
     def get_sync_session(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
         """获取同步数据库会话"""
         return self.db_manager.get_session()
 
