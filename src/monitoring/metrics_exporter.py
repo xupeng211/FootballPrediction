@@ -24,7 +24,7 @@ from sqlalchemy import text
 
 from src.core.config import get_settings
 
-from ..database.connection import get_async_session
+from src.database.connection import get_async_session
 
 logger = logging.getLogger(__name__)
 
