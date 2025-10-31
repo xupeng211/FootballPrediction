@@ -63,8 +63,8 @@ def retry_with_exponential_backoff(
                     last_exception = e
                     if attempt < max_attempts - 1:
                         delay = min(base_delay * (2**attempt), max_delay)
-                        if secrets.randbelow(100) / 100 < 0.1:  # 添加抖动  # noqa: B311
-                            delay *= 0.5 + secrets.randbelow(100) / 100  # noqa: B311
+                        if secrets.randbelow(100) / 100 < 0.1:  # 添加抖动
+                            delay *= 0.5 + secrets.randbelow(100) / 100
                         time.sleep(delay)
 
             raise RetryError(
@@ -96,8 +96,8 @@ async def async_retry_with_exponential_backoff(
                     last_exception = e
                     if attempt < max_attempts - 1:
                         delay = min(base_delay * (2**attempt), max_delay)
-                        if secrets.randbelow(100) / 100 < 0.1:  # 添加抖动  # noqa: B311
-                            delay *= 0.5 + secrets.randbelow(100) / 100  # noqa: B311
+                        if secrets.randbelow(100) / 100 < 0.1:  # 添加抖动
+                            delay *= 0.5 + secrets.randbelow(100) / 100
                         await asyncio.sleep(delay)
 
             raise RetryError(

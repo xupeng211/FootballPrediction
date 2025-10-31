@@ -256,7 +256,7 @@ class DataSyncService:
                 stmt = (
                     select(ExternalMatch)
                     .where(ExternalMatch.status == status)
-                    .where(ExternalMatch.is_active == True)
+                    .where(ExternalMatch.is_active)
                     .order_by(ExternalMatch.match_date.desc())
                     .limit(limit)
                 )
@@ -302,7 +302,7 @@ class DataSyncService:
                 stmt = (
                     select(ExternalMatch)
                     .where(ExternalMatch.status.in_(['scheduled', 'timed']))
-                    .where(ExternalMatch.is_active == True)
+                    .where(ExternalMatch.is_active)
                     .where(ExternalMatch.match_date >= datetime.utcnow())
                     .order_by(ExternalMatch.match_date.asc())
                     .limit(limit)
@@ -348,7 +348,7 @@ class DataSyncService:
                 stmt = (
                     select(ExternalMatch)
                     .where(ExternalMatch.status == 'finished')
-                    .where(ExternalMatch.is_active == True)
+                    .where(ExternalMatch.is_active)
                     .order_by(ExternalMatch.match_date.desc())
                     .limit(limit)
                 )

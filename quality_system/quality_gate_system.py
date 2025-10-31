@@ -100,7 +100,7 @@ class CoverageRule(QualityRule):
         coverage_data = context.get('coverage_data', {})
 
         coverage_percentage = coverage_data.get('coverage_percentage', 0)
-        covered_modules = coverage_data.get('covered_modules', 0)
+        _covered_modules = coverage_data.get('covered_modules', 0)
         total_modules = coverage_data.get('total_modules', 0)
 
         if coverage_percentage < self.min_coverage:
@@ -128,7 +128,7 @@ class TestQualityRule(QualityRule):
         issues = []
         test_analysis = context.get('test_analysis', {})
 
-        test_files = test_analysis.get('test_files', [])
+        _test_files = test_analysis.get('test_files', [])
         total_tests = test_analysis.get('total_tests', 0)
         success_rate = test_analysis.get('success_rate', 100)
 
@@ -281,7 +281,7 @@ class QualityGateSystem:
         passed_checks = 0
         total_checks = len(self.rules)
 
-        print(f"🏛️ 执行质量门禁检查...")
+        print("🏛️ 执行质量门禁检查...")
         print(f"📋 总检查项: {total_checks}个")
 
         for rule in self.rules:
@@ -440,7 +440,7 @@ def main():
     print("🏛️ 企业级质量保障系统 - 质量门禁检查结果")
     print("="*80)
 
-    print(f"\n📊 质量指标:")
+    print("\n📊 质量指标:")
     print(f"  🎯 覆盖率: {result.metrics.coverage_percentage:.1f}%")
     print(f"  🧪 测试数量: {result.metrics.test_count}")
     print(f"  ✅ 成功率: {result.metrics.test_success_rate:.1f}%")
@@ -461,7 +461,7 @@ def main():
             print(f"  ... 还有 {len(result.issues) - 10} 个问题")
 
     if result.recommendations:
-        print(f"\n💡 改进建议:")
+        print("\n💡 改进建议:")
         for rec in result.recommendations:
             print(f"  {rec}")
 

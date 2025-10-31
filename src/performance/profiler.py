@@ -77,13 +77,13 @@ class APIEndpointProfiler:
 
     def get_recent_performance(self, endpoint: str, minutes: int = 5) -> Dict[str, Any]:
         """获取最近的性能数据"""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
         with self.lock:
             stats = self.stats[endpoint]
             recent_times = [
                 duration for i, duration in enumerate(stats.recent_calls)
-                if datetime.utcnow() - timedelta(seconds=i) >= cutoff_time
+                if datetime.utcnow() - timedelta(seconds=i) >= _cutoff_time
             ]
 
             if not recent_times:
@@ -376,7 +376,7 @@ class SystemProfiler:
 
     def get_metric_summary(self, name: str, minutes: int = 5) -> Dict[str, float]:
         """获取指标摘要"""
-        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+        _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
         with self.lock:
             values = self.metrics.get(name, [])

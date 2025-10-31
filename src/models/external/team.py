@@ -178,7 +178,7 @@ class ExternalTeam(Base):
         score += sum(6 for field in detail_fields if data.get(field))
 
         # 地理信息 (20分)
-        area_fields = ['area']
+        _area_fields = ['area']
         if data.get('area') and isinstance(data['area'], dict):
             area_data = data['area']
             area_keys = ['id', 'name', 'code', 'flag']

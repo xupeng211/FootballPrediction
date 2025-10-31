@@ -249,7 +249,7 @@ class ImportAnalysisRule(QualityRule):
 
     def _check_circular_imports(self, file_path: Path, imports: List[Dict], content: str, issues: List[QualityIssue]):
         """检测循环导入（简化版本）"""
-        file_path_str = str(file_path)
+        _file_path_str = str(file_path)
 
         for imp in imports:
             if imp['type'] == 'import_from':
@@ -607,7 +607,7 @@ class IntelligentQualityAnalyzerV2:
             'cache_hits': 0
         }
 
-        print(f"🤖 智能质量分析引擎 v2.0 已初始化")
+        print("🤖 智能质量分析引擎 v2.0 已初始化")
         print(f"📊 分析规则: {len(self.rules)}个")
         print(f"⚡ 并行处理: {max_workers}线程")
         print(f"💾 缓存容量: {cache_size}项")
@@ -669,7 +669,7 @@ class IntelligentQualityAnalyzerV2:
 
             return tree, content
 
-        except SyntaxError as e:
+        except SyntaxError:
             # 语法错误时返回None和原始内容
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -701,7 +701,7 @@ class IntelligentQualityAnalyzerV2:
         lines_of_code = len([line for line in content.split('\n') if line.strip() and not line.strip().startswith('#')])
         metrics = self._calculate_file_metrics(file_path, all_issues, lines_of_code)
 
-        analysis_time = time.time() - start_time
+        _analysis_time = time.time() - start_time
 
         return all_issues, metrics
 
@@ -835,7 +835,7 @@ class IntelligentQualityAnalyzerV2:
 
     def analyze_project_parallel(self, paths: List[Path] = None) -> ProjectQualityReport:
         """并行分析整个项目"""
-        print(f"🚀 启动项目质量分析...")
+        print("🚀 启动项目质量分析...")
         start_time = time.time()
 
         # 发现Python文件
@@ -1034,7 +1034,7 @@ class IntelligentQualityAnalyzerV2:
             return recommendations
 
         issue_types = Counter(issue.category for issue in issues)
-        severity_types = Counter(issue.severity for issue in issues)
+        _severity_types = Counter(issue.severity for issue in issues)
 
         # 安全建议
         if issue_types[IssueCategory.SECURITY] > 0:
@@ -1085,7 +1085,7 @@ class IntelligentQualityAnalyzerV2:
         print("🤖 企业级智能质量分析引擎 v2.0 - 项目质量报告")
         print("="*80)
 
-        print(f"\n📊 项目概览:")
+        print("\n📊 项目概览:")
         print(f"  🏷️ 项目名称: {report.project_name}")
         print(f"  📅 分析时间: {report.analysis_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"  📁 文件总数: {report.total_files}")
@@ -1093,20 +1093,20 @@ class IntelligentQualityAnalyzerV2:
         print(f"  🐛 问题总数: {report.total_issues}")
         print(f"  ⏱️ 分析耗时: {self.analysis_stats['analysis_time']:.2f}秒")
 
-        print(f"\n🏆 质量评分:")
+        print("\n🏆 质量评分:")
         print(f"  📊 综合分数: {report.overall_quality_score:.1f}/100")
         print(f"  🎯 质量等级: {report.grade}")
         print(f"  ⏰ 技术债务: {report.technical_debt_total:.1f}小时")
 
         # 问题分布
         if report.issue_distribution:
-            print(f"\n📈 问题分布:")
+            print("\n📈 问题分布:")
             for category, count in sorted(report.issue_distribution.items(), key=lambda x: x[1], reverse=True):
                 print(f"  {category.value}: {count}个")
 
         # 严重程度分布
         if report.severity_distribution:
-            print(f"\n🚨 严重程度分布:")
+            print("\n🚨 严重程度分布:")
             for severity, count in sorted(report.severity_distribution.items(), key=lambda x: self._severity_weight(x[0]), reverse=True):
                 emoji = {"CRITICAL": "🚨", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "💡", "INFO": "ℹ️"}
                 print(f"  {emoji.get(severity.value, '*')} {severity.value}: {count}个")
@@ -1124,7 +1124,7 @@ class IntelligentQualityAnalyzerV2:
 
         # 改进路线图
         if report.improvement_roadmap:
-            print(f"\n🗺️ 改进路线图:")
+            print("\n🗺️ 改进路线图:")
             for phase in report.improvement_roadmap:
                 print(f"  Phase {phase['phase']}: {phase['title']}")
                 print(f"    📝 {phase['description']}")
@@ -1134,7 +1134,7 @@ class IntelligentQualityAnalyzerV2:
 
         # 推荐建议
         if report.recommendations:
-            print(f"\n💡 推荐建议:")
+            print("\n💡 推荐建议:")
             for i, rec in enumerate(report.recommendations, 1):
                 print(f"  {i}. {rec}")
 

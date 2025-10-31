@@ -627,7 +627,7 @@ class IntelligentQualityAnalyzer:
         for pattern in analysis_result['patterns_found']:
             report += f"- **{pattern['name']}**: {pattern['description']}\n"
 
-        report += f"""
+        report += """
 ## 💡 质量洞察
 """
 

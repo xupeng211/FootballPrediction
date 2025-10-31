@@ -27,11 +27,12 @@ def load_maintenance_logs():
     try:
         log_file = Path("maintenance_logs/maintenance_log.json")
         if log_file.exists():
-            with open(log_file, "r", encoding="utf-8") as f:
-                logs = json.load(f)
-            return logs[-5:]  # 返回最近5条日志
+            try:
+                with open(log_file, "r", encoding="utf-8") as f:
+                    logs = json.load(f)
+                return logs[-5:]  # 返回最近5条日志
             except Exception:
-        pass
+                pass
     return []
 
 
