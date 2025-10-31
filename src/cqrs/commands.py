@@ -9,7 +9,7 @@ Defines all write operation commands.
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from ..database.models import Match, Prediction, User
+from src.database.models import Match, Prediction, User
 from .base import ValidatableCommand, ValidationResult
 
 

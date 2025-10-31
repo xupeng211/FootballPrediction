@@ -73,8 +73,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from ..database.connection import get_session
-from ..database.models import Prediction, User
+from src.database.connection import get_session
+from src.database.models import Prediction, User
 from .base import CommandHandler, QueryHandler
 from .commands import (
     CreatePredictionCommand,

@@ -11,7 +11,7 @@ from typing import Protocol, Type, TypeVar, runtime_checkable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database.models import Match, Prediction, User
+from src.database.models import Match, Prediction, User
 from .base import BaseRepository, Repository
 from .match import MatchRepository, ReadOnlyMatchRepository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository

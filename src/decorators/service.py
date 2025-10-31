@@ -9,7 +9,7 @@ Provides high-level management and services for decorators.
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..core.logger import get_logger
+from src.core.logger import get_logger
 from .base import ConcreteComponent, DecoratorComponent, DecoratorContext
 from .factory import DecoratorConfig, DecoratorFactory
 

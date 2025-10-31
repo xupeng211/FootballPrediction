@@ -2,591 +2,476 @@
 性能分析器模块
 Performance Profiler Module
 
-提供多种性能分析工具:
-- 函数级性能分析
-- 内存使用分析
-- 数据库查询分析
-- API端点性能跟踪
-- 异步任务性能分析
+提供API端点和系统性能分析功能.
 """
 
 import asyncio
-import cProfile
-import io
-import json
-import pstats
+import functools
 import time
-import tracemalloc
-from contextlib import asynccontextmanager, contextmanager
+import threading
+from collections import defaultdict, deque
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional, Union
+
 from dataclasses import dataclass, field
-from datetime import datetime
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
-
-import psutil
-
-from src.core.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 @dataclass
-class PerformanceMetric:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """性能指标数据结构"""
-
-    name: str
-    value: float
-    unit: str
-    timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class FunctionProfile:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """函数性能分析结果"""
-
-    function_name: str
-    call_count: int
-    total_time: float
-    average_time: float
-    min_time: float
-    max_time: float
-    cpu_time: float
-    memory_usage: int = 0
-
-
-@dataclass
-class QueryProfile:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """数据库查询性能分析结果"""
-
-    query: str
-    execution_time: float
-    rows_affected: int
-    index_used: Optional[str] = None
-    explain_plan: Optional[Dict] = None
-
-
-class PerformanceProfiler:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """性能分析器主类"""
-
-    def __init__(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        """初始化性能分析器"""
-        self.metrics: List[PerformanceMetric] = []
-        self.function_profiles: Dict[str, FunctionProfile] = {}
-        self.query_profiles: List[QueryProfile] = []
-        self.active_profiling = False
-        self.profiler = cProfile.Profile()
-
-    def start_profiling(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        """开始性能分析"""
-        self.active_profiling = True
-        self.profiler.enable()
-        tracemalloc.start()
-        logger.info("Performance profiling started")
-
-    def stop_profiling(self) -> Dict[str, Any]:
-        """停止性能分析并返回结果"""
-        self.profiler.disable()
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-
-        # 获取统计信息
-        stats_stream = io.StringIO()
-        ps = pstats.Stats(self.profiler, stream=stats_stream)
-        ps.sort_stats("cumulative")
-        ps.print_stats(20)
-
-        self.active_profiling = False
-
-        result = {
-            "stats": stats_stream.getvalue(),
-            "memory_current": current,
-            "memory_peak": peak,
-            "function_profiles": self._parse_function_stats(ps),
-        }
-
-        logger.info(
-            f"Performance profiling completed. Peak memory: {peak / 1024 / 1024:.2f} MB"
-        )
-        return result
-
-    def _parse_function_stats(self, ps: pstats.Stats) -> List[FunctionProfile]:
-        """解析函数统计信息"""
-        profiles = []
-        stats_dict = ps.stats
-
-        for func_info, (cc, nc, tt, ct, callers) in stats_dict.items():
-            filename, line, func_name = func_info
-            if not filename.startswith("<") and "/site-packages/" not in filename:
-                profile = FunctionProfile(
-                    function_name=func_name,
-                    call_count=cc,
-                    total_time=tt,
-                    average_time=tt / cc if cc > 0 else 0,
-                    min_time=0,  # pstats doesn't provide min_time directly'
-                    max_time=0,  # pstats doesn't provide max_time directly'
-                    cpu_time=tt,
-                )
-                profiles.append(profile)
-
-        return sorted(profiles, key=lambda x: x.total_time, reverse=True)
-
-    @contextmanager
-    def profile_function(self, name: Optional[str] = None):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        """函数性能分析上下文管理器"""
-        start_time = time.perf_counter()
-        start_memory = psutil.Process().memory_info().rss
-
-        try:
-            yield
-        finally:
-            end_time = time.perf_counter()
-            end_memory = psutil.Process().memory_info().rss
-
-            execution_time = end_time - start_time
-            memory_delta = end_memory - start_memory
-
-            func_name = name or "anonymous_function"
-
-            # 记录指标
-            metric = PerformanceMetric(
-                name=f"function_duration_{func_name}",
-                value=execution_time,
-                unit="seconds",
-            )
-            self.metrics.append(metric)
-
-            memory_metric = PerformanceMetric(
-                name=f"function_memory_{func_name}", value=memory_delta, unit="bytes"
-            )
-            self.metrics.append(memory_metric)
-
-            logger.debug(
-                f"Function {func_name}: {execution_time:.4f}s, Memory: {memory_delta / 1024:.2f}KB"
-            )
-
-    @asynccontextmanager
-    async def profile_async_function(self, name: Optional[str] = None):
-        """异步函数性能分析上下文管理器"""
-        start_time = time.perf_counter()
-        start_memory = psutil.Process().memory_info().rss
-
-        try:
-            yield
-        finally:
-            end_time = time.perf_counter()
-            end_memory = psutil.Process().memory_info().rss
-
-            execution_time = end_time - start_time
-            end_memory - start_memory
-
-            func_name = name or "async_anonymous_function"
-
-            # 记录指标
-            metric = PerformanceMetric(
-                name=f"async_function_duration_{func_name}",
-                value=execution_time,
-                unit="seconds",
-            )
-            self.metrics.append(metric)
-
-            logger.debug(f"Async function {func_name}: {execution_time:.4f}s")
-
-    def record_query_profile(
-        self,
-        query: str,
-        execution_time: float,
-        rows_affected: int = 0,
-        index_used: Optional[str] = None,
-        explain_plan: Optional[Dict] = None,
-    ):
-        """记录数据库查询性能"""
-        profile = QueryProfile(
-            query=query,
-            execution_time=execution_time,
-            rows_affected=rows_affected,
-            index_used=index_used,
-            explain_plan=explain_plan,
-        )
-        self.query_profiles.append(profile)
-
-        # 记录指标
-        metric = PerformanceMetric(
-            name="database_query_duration",
-            value=execution_time,
-            unit="seconds",
-            metadata={"query": query[:100], "rows": rows_affected},
-        )
-        self.metrics.append(metric)
-
-    def get_slow_functions(self, threshold: float = 0.1) -> List[FunctionProfile]:
-        """获取慢函数列表"""
-        return [
-            f for f in self.function_profiles.values() if f.average_time > threshold
-        ]
-
-    def get_slow_queries(self, threshold: float = 0.5) -> List[QueryProfile]:
-        """获取慢查询列表"""
-        return [q for q in self.query_profiles if q.execution_time > threshold]
-
-    def get_metrics_summary(self) -> Dict[str, Any]:
-        """获取性能指标摘要"""
-        if not self.metrics:
-            return {}
-
-        # 按名称分组指标
-        grouped_metrics = {}
-        for metric in self.metrics:
-            if metric.name not in grouped_metrics:
-                grouped_metrics[metric.name] = []
-            grouped_metrics[metric.name].append(metric.value)
-
-        # 计算统计信息
-        summary = {}
-        for name, values in grouped_metrics.items():
-            summary[name] = {
-                "count": len(values),
-                "total": sum(values),
-                "average": sum(values) / len(values),
-                "min": min(values),
-                "max": max(values),
-            }
-
-        return summary
-
-    def export_metrics(self, format: str = "json") -> str:
-        """导出性能指标"""
-        data = {
-            "timestamp": datetime.now().isoformat(),
-            "metrics_summary": self.get_metrics_summary(),
-            "slow_functions": [
-                {
-                    "name": f.function_name,
-                    "average_time": f.average_time,
-                    "call_count": f.call_count,
-                }
-                for f in self.get_slow_functions()
-            ],
-            "slow_queries": [
-                {
-                    "query": q.query[:100] + "..." if len(q.query) > 100 else q.query,
-                    "execution_time": q.execution_time,
-                    "rows_affected": q.rows_affected,
-                }
-                for q in self.get_slow_queries()
-            ],
-        }
-
-        if format == "json":
-            return json.dumps(data, indent=2)
-        else:
-            return str(data)
-
-    def reset(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        """重置所有性能数据"""
-        self.metrics.clear()
-        self.function_profiles.clear()
-        self.query_profiles.clear()
-        self.profiler = cProfile.Profile()
-        logger.info("Performance profiler reset")
-
-
-# 全局性能分析器实例
-_global_profiler = PerformanceProfiler()
-
-
-def get_profiler() -> PerformanceProfiler:
-    """获取全局性能分析器实例"""
-    return _global_profiler
-
-
-def profile_function(name: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """函数性能分析装饰器"""
-
-    def decorator(func: Callable) -> Callable:
-        if asyncio.iscoroutinefunction(func):
-
-            @wraps(func)
-            async def async_wrapper(*args, **kwargs):
-                async with _global_profiler.profile_async_function(
-                    name or func.__name__
-                ):
-                    return await func(*args, **kwargs)
-
-            return async_wrapper
-        else:
-
-            @wraps(func)
-            def sync_wrapper(*args, **kwargs):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-                with _global_profiler.profile_function(name or func.__name__):
-                    return func(*args, **kwargs)
-
-            return sync_wrapper
-
-    return decorator
-
-
-def profile_method(cls_attr: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """方法性能分析装饰器（用于类方法）"""
-
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-            # 获取类名
-            if args and hasattr(args[0], "__class__"):
-                class_name = args[0].__class__.__name__
-                func_name = f"{class_name}.{func.__name__}"
-            else:
-                func_name = func.__name__
-
-            with _global_profiler.profile_function(func_name):
-                return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-class DatabaseQueryProfiler:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """数据库查询性能分析器"""
-
-    def __init__(self, profiler: PerformanceProfiler):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        self.profiler = profiler
-
-    def profile_query(self, query: str, execute_func: Callable) -> Any:
-        """分析数据库查询性能"""
-        start_time = time.perf_counter()
-
-        try:
-            result = execute_func(query)
-
-            # 尝试获取影响行数
-            rows_affected = 0
-            if hasattr(result, "rowcount"):
-                rows_affected = result.rowcount
-            elif isinstance(result, list):
-                rows_affected = len(result)
-
-            execution_time = time.perf_counter() - start_time
-
-            # 记录查询性能
-            self.profiler.record_query_profile(
-                query=query, execution_time=execution_time
-            )
-
-            return result
-
-        except ValueError as e:
-            execution_time = time.perf_counter() - start_time
-
-            # 记录失败的查询
-            self.profiler.record_query_profile(query=query)
-
-            logger.error(f"Query failed after {execution_time:.4f}s: {str(e)}")
-            raise
+class ProfileStats:
+    """性能统计信息"""
+    call_count: int = 0
+    total_time: float = 0.0
+    avg_time: float = 0.0
+    min_time: float = float('inf')
+    max_time: float = 0.0
+    recent_calls: deque = field(default_factory=lambda: deque(maxlen=100))
+    error_count: int = 0
+    last_error: Optional[str] = None
 
 
 class APIEndpointProfiler:
-    """类文档字符串"""
-    pass  # 添加pass语句
     """API端点性能分析器"""
 
-    def __init__(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        self.profiler = profiler
-        self.endpoint_stats: Dict[str, Dict] = {}
+    def __init__(self, max_history: int = 1000):
+        self.max_history = max_history
+        self.stats: Dict[str, ProfileStats] = defaultdict(ProfileStats)
+        self.lock = threading.RLock()
+        self.enabled = True
 
-    def record_endpoint_request(
-        self,
-        endpoint: str,
-        method: str,
-        status_code: int,
-        duration: float,
-        request_size: int = 0,
-        response_size: int = 0,
-    ):
-        """记录API端点请求性能"""
-        key = f"{method} {endpoint}"
+    def record_call(self, endpoint: str, duration: float, success: bool = True, error: Optional[str] = None):
+        """记录API调用"""
+        if not self.enabled:
+            return
 
-        if key not in self.endpoint_stats:
-            self.endpoint_stats[key] = {
-                "request_count": 0,
-                "total_duration": 0,
-                "status_codes": {},
-                "avg_request_size": 0,
-                "avg_response_size": 0,
-                "min_duration": float("inf"),
-                "max_duration": 0,
+        with self.lock:
+            stats = self.stats[endpoint]
+            stats.call_count += 1
+            stats.recent_calls.append(duration)
+
+            if success:
+                stats.total_time += duration
+                stats.avg_time = stats.total_time / stats.call_count
+                stats.min_time = min(stats.min_time, duration)
+                stats.max_time = max(stats.max_time, duration)
+            else:
+                stats.error_count += 1
+                stats.last_error = error
+
+    def get_stats(self, endpoint: Optional[str] = None) -> Union[ProfileStats, Dict[str, ProfileStats]]:
+        """获取性能统计"""
+        with self.lock:
+            if endpoint:
+                return self.stats[endpoint]
+            return dict(self.stats)
+
+    def get_top_slowest(self, limit: int = 10) -> List[tuple]:
+        """获取最慢的端点"""
+        with self.lock:
+            return sorted(
+                [(name, stats.avg_time, stats.call_count)
+                 for name, stats in self.stats.items()
+                 if stats.call_count > 0],
+                key=lambda x: x[1],
+                reverse=True
+            )[:limit]
+
+    def get_recent_performance(self, endpoint: str, minutes: int = 5) -> Dict[str, Any]:
+        """获取最近的性能数据"""
+        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+
+        with self.lock:
+            stats = self.stats[endpoint]
+            recent_times = [
+                duration for i, duration in enumerate(stats.recent_calls)
+                if datetime.utcnow() - timedelta(seconds=i) >= cutoff_time
+            ]
+
+            if not recent_times:
+                return {
+                    "avg_time": 0,
+                    "call_count": 0,
+                    "min_time": 0,
+                    "max_time": 0
+                }
+
+            return {
+                "avg_time": sum(recent_times) / len(recent_times),
+                "call_count": len(recent_times),
+                "min_time": min(recent_times),
+                "max_time": max(recent_times)
             }
 
-        stats = self.endpoint_stats[key]
-        stats["request_count"] += 1
-        stats["total_duration"] += duration
-        stats["min_duration"] = min(stats["min_duration"], duration)
-        stats["max_duration"] = max(stats["max_duration"], duration)
-
-        # 状态码统计
-        if status_code not in stats["status_codes"]:
-            stats["status_codes"][status_code] = 0
-        stats["status_codes"][status_code] += 1
-
-        # 更新平均大小
-        stats["avg_request_size"] = (
-            stats["avg_request_size"] * (stats["request_count"] - 1) + request_size
-        ) / stats["request_count"]
-        stats["avg_response_size"] = (
-            stats["avg_response_size"] * (stats["request_count"] - 1) + response_size
-        ) / stats["request_count"]
-
-        # 记录指标
-        metric = PerformanceMetric(
-            name=f"api_endpoint_duration_{key}",
-            value=duration,
-            unit="seconds",
-            metadata={
-                "endpoint": endpoint,
-                "method": method,
-                "status_code": status_code,
-            },
-        )
-        self.profiler.metrics.append(metric)
-
-    def get_endpoint_stats(self) -> Dict[str, Dict]:
-        """获取端点性能统计"""
-        # 计算平均持续时间
-        for stats in self.endpoint_stats.values():
-            if stats["request_count"] > 0:
-                stats["average_duration"] = (
-                    stats["total_duration"] / stats["request_count"]
-                )
+    def clear_stats(self, endpoint: Optional[str] = None):
+        """清空统计数据"""
+        with self.lock:
+            if endpoint:
+                if endpoint in self.stats:
+                    del self.stats[endpoint]
             else:
-                stats["average_duration"] = 0
+                self.stats.clear()
 
-        return self.endpoint_stats
+    def enable(self):
+        """启用性能分析"""
+        self.enabled = True
 
-    def get_slow_endpoints(self, threshold: float = 1.0) -> List[Dict]:
-        """获取慢端点列表"""
-        slow_endpoints = []
+    def disable(self):
+        """禁用性能分析"""
+        self.enabled = False
 
-        for endpoint, stats in self.get_endpoint_stats().items():
-            if stats["average_duration"] > threshold:
-                slow_endpoints.append(
-                    {
-                        "endpoint": endpoint,
-                        "average_duration": stats["average_duration"],
-                        "request_count": stats["request_count"],
-                        "max_duration": stats["max_duration"],
-                    }
-                )
+    def profile_endpoint(self, endpoint_name: str):
+        """装饰器：分析API端点性能"""
+        def decorator(func: Callable):
+            if asyncio.iscoroutinefunction(func):
+                @functools.wraps(func)
+                async def async_wrapper(*args, **kwargs):
+                    if not self.enabled:
+                        return await func(*args, **kwargs)
 
-        return sorted(slow_endpoints, key=lambda x: x["average_duration"], reverse=True)
+                    start_time = time.time()
+                    try:
+                        result = await func(*args, **kwargs)
+                        duration = time.time() - start_time
+                        self.record_call(endpoint_name, duration, success=True)
+                        return result
+                    except Exception as e:
+                        duration = time.time() - start_time
+                        self.record_call(endpoint_name, duration, success=False, error=str(e))
+                        raise
+                return async_wrapper
+            else:
+                @functools.wraps(func)
+                def sync_wrapper(*args, **kwargs):
+                    if not self.enabled:
+                        return func(*args, **kwargs)
+
+                    start_time = time.time()
+                    try:
+                        result = func(*args, **kwargs)
+                        duration = time.time() - start_time
+                        self.record_call(endpoint_name, duration, success=True)
+                        return result
+                    except Exception as e:
+                        duration = time.time() - start_time
+                        self.record_call(endpoint_name, duration, success=False, error=str(e))
+                        raise
+                return sync_wrapper
+        return decorator
+
+    def get_summary_report(self) -> Dict[str, Any]:
+        """获取摘要报告"""
+        with self.lock:
+            total_calls = sum(stats.call_count for stats in self.stats.values())
+            total_errors = sum(stats.error_count for stats in self.stats.values())
+
+            if total_calls == 0:
+                return {
+                    "total_calls": 0,
+                    "total_errors": 0,
+                    "error_rate": 0.0,
+                    "top_slowest": [],
+                    "endpoint_count": 0
+                }
+
+            return {
+                "total_calls": total_calls,
+                "total_errors": total_errors,
+                "error_rate": (total_errors / total_calls) * 100,
+                "top_slowest": self.get_top_slowest(5),
+                "endpoint_count": len(self.stats)
+            }
 
 
+# 全局性能分析器实例
+_profiler_instance: Optional[APIEndpointProfiler] = None
+_profiler_lock = threading.Lock()
+
+
+def get_profiler() -> APIEndpointProfiler:
+    """获取全局性能分析器实例"""
+    global _profiler_instance
+    if _profiler_instance is None:
+        with _profiler_lock:
+            if _profiler_instance is None:
+                _profiler_instance = APIEndpointProfiler()
+    return _profiler_instance
+
+
+def profile_api_endpoint(endpoint_name: str):
+    """便捷的API端点性能分析装饰器"""
+    return get_profiler().profile_endpoint(endpoint_name)
+
+
+# 数据库查询性能分析器
+class DatabaseQueryProfiler:
+    """数据库查询性能分析器"""
+
+    def __init__(self, max_history: int = 1000):
+        self.max_history = max_history
+        self.queries: Dict[str, List[float]] = defaultdict(list)
+        self.lock = threading.Lock()
+        self.enabled = True
+
+    def record_query(self, query_type: str, duration: float):
+        """记录数据库查询"""
+        if not self.enabled:
+            return
+
+        with self.lock:
+            self.queries[query_type].append(duration)
+            # 保留最近的查询记录
+            if len(self.queries[query_type]) > self.max_history:
+                self.queries[query_type] = self.queries[query_type][-self.max_history:]
+
+    def get_query_stats(self, query_type: str) -> Dict[str, float]:
+        """获取查询统计"""
+        with self.lock:
+            times = self.queries.get(query_type, [])
+            if not times:
+                return {
+                    "avg_time": 0.0,
+                    "min_time": 0.0,
+                    "max_time": 0.0,
+                    "count": 0,
+                    "total_time": 0.0
+                }
+
+            return {
+                "avg_time": sum(times) / len(times),
+                "min_time": min(times),
+                "max_time": max(times),
+                "count": len(times),
+                "total_time": sum(times)
+            }
+
+    def get_all_stats(self) -> Dict[str, Dict[str, float]]:
+        """获取所有查询统计"""
+        with self.lock:
+            return {
+                query_type: self.get_query_stats(query_type)
+                for query_type in self.queries.keys()
+            }
+
+
+# 内存性能分析器
 class MemoryProfiler:
-    """类文档字符串"""
-    pass  # 添加pass语句
-    """内存使用分析器"""
+    """内存性能分析器"""
 
     def __init__(self):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        self.snapshots: List[Dict] = []
+        self.samples: List[Dict[str, Any]] = []
+        self.lock = threading.Lock()
+        self.enabled = True
 
-    def take_snapshot(self, label: str = ""):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        """获取内存快照"""
-        process = psutil.Process()
-        memory_info = process.memory_info()
+    def sample_memory(self):
+        """采样内存使用情况"""
+        if not self.enabled:
+            return
 
-        snapshot = {
-            "timestamp": datetime.now(),
-            "label": label,
-            "rss": memory_info.rss,  # 物理内存
-            "vms": memory_info.vms,  # 虚拟内存
-            "percent": process.memory_percent(),
-            "available": psutil.virtual_memory().available,
-        }
+        try:
+            import psutil
+            import gc
 
-        self.snapshots.append(snapshot)
-        return snapshot
+            process = psutil.Process()
+            memory_info = process.memory_info()
 
-    def get_memory_trend(self) -> Dict[str, List]:
+            sample = {
+                "timestamp": datetime.utcnow(),
+                "rss": memory_info.rss,  # 物理内存
+                "vms": memory_info.vms,  # 虚拟内存
+                "percent": process.memory_percent(),
+                "gc_count": tuple(gc.get_count()),
+                "gc_objects": len(gc.get_objects())
+            }
+
+            with self.lock:
+                self.samples.append(sample)
+                # 保留最近1000个样本
+                if len(self.samples) > 1000:
+                    self.samples = self.samples[-1000:]
+
+        except ImportError:
+            # psutil不可用时跳过内存采样
+            pass
+
+    def get_memory_trend(self, minutes: int = 5) -> Dict[str, Any]:
         """获取内存使用趋势"""
-        if not self.snapshots:
-            return {}
+        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
+        with self.lock:
+            recent_samples = [
+                sample for sample in self.samples
+                if sample["timestamp"] >= cutoff_time
+            ]
+
+            if not recent_samples:
+                return {
+                    "avg_rss": 0,
+                    "avg_vms": 0,
+                    "avg_percent": 0,
+                    "sample_count": 0
+                }
+
+            return {
+                "avg_rss": sum(s["rss"] for s in recent_samples) / len(recent_samples),
+                "avg_vms": sum(s["vms"] for s in recent_samples) / len(recent_samples),
+                "avg_percent": sum(s["percent"] for s in recent_samples) / len(recent_samples),
+                "sample_count": len(recent_samples),
+                "max_rss": max(s["rss"] for s in recent_samples),
+                "min_rss": min(s["rss"] for s in recent_samples)
+            }
+
+
+# 通用性能分析器
+class PerformanceProfiler:
+    """通用性能分析器"""
+
+    def __init__(self):
+        self.api_profiler = APIEndpointProfiler()
+        self.db_profiler = DatabaseQueryProfiler()
+        self.memory_profiler = MemoryProfiler()
+        self.system_profiler = SystemProfiler()
+
+    def get_comprehensive_report(self) -> Dict[str, Any]:
+        """获取综合性能报告"""
         return {
-            "timestamps": [s["timestamp"].isoformat() for s in self.snapshots],
-            "rss": [s["rss"] / 1024 / 1024 for s in self.snapshots],  # MB
-            "vms": [s["vms"] / 1024 / 1024 for s in self.snapshots],  # MB
-            "percent": [s["percent"] for s in self.snapshots],
-            "labels": [s["label"] for s in self.snapshots],
+            "api_stats": self.api_profiler.get_summary_report(),
+            "db_stats": self.db_profiler.get_all_stats(),
+            "memory_trend": self.memory_profiler.get_memory_trend(),
+            "timestamp": datetime.utcnow().isoformat()
         }
 
-    def detect_memory_leaks(self, threshold: float = 50.0) -> bool:
-        """检测内存泄漏（MB）"""
-        if len(self.snapshots) < 2:
-            return False
+    def enable_all(self):
+        """启用所有分析器"""
+        self.api_profiler.enable()
+        self.db_profiler.enabled = True
+        self.memory_profiler.enabled = True
 
-        first_rss = self.snapshots[0]["rss"] / 1024 / 1024
-        last_rss = self.snapshots[-1]["rss"] / 1024 / 1024
+    def disable_all(self):
+        """禁用所有分析器"""
+        self.api_profiler.disable()
+        self.db_profiler.enabled = False
+        self.memory_profiler.enabled = False
 
-        return (last_rss - first_rss) > threshold
+
+def get_performance_report() -> Dict[str, Any]:
+    """获取性能报告的便捷函数"""
+    profiler = PerformanceProfiler()
+    return profiler.get_comprehensive_report()
 
 
-# 创建性能分析器的便捷函数
+# 系统级性能监控
+class SystemProfiler:
+    """系统性能分析器"""
+
+    def __init__(self):
+        self.metrics: Dict[str, List[float]] = defaultdict(list)
+        self.lock = threading.Lock()
+
+    def record_metric(self, name: str, value: float):
+        """记录系统指标"""
+        with self.lock:
+            self.metrics[name].append(value)
+            # 保留最近1000个数据点
+            if len(self.metrics[name]) > 1000:
+                self.metrics[name] = self.metrics[name][-1000:]
+
+    def get_metric_summary(self, name: str, minutes: int = 5) -> Dict[str, float]:
+        """获取指标摘要"""
+        cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
+
+        with self.lock:
+            values = self.metrics.get(name, [])
+            if not values:
+                return {
+                    "avg": 0.0,
+                    "min": 0.0,
+                    "max": 0.0,
+                    "count": 0
+                }
+
+            return {
+                "avg": sum(values) / len(values),
+                "min": min(values),
+                "max": max(values),
+                "count": len(values)
+            }
+
+
+# 全局系统分析器
+_system_profiler: Optional[SystemProfiler] = None
+
+
+def get_system_profiler() -> SystemProfiler:
+    """获取系统分析器实例"""
+    global _system_profiler
+    if _system_profiler is None:
+        with _profiler_lock:
+            if _system_profiler is None:
+                _system_profiler = SystemProfiler()
+    return _system_profiler
+
+
+# 装饰器函数
+def profile_function(func: Callable) -> Callable:
+    """函数性能分析装饰器"""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        profiler = get_profiler()
+        return profiler.profile_function(func.__name__)(func)(*args, **kwargs)
+    return wrapper
+
+
+def profile_method(method: Callable) -> Callable:
+    """方法性能分析装饰器"""
+    @functools.wraps(method)
+    def wrapper(*args, **kwargs):
+        profiler = get_profiler()
+        return profiler.profile_method(method.__name__)(method)(*args, **kwargs)
+    return wrapper
+
+
+# 全局性能控制
+_profiling_enabled = False
+_profiler_lock = threading.Lock()
+
+
 def start_profiling():
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """开始全局性能分析"""
-    _global_profiler.start_profiling()
+    """启动性能分析"""
+    global _profiling_enabled
+    with _profiler_lock:
+        _profiling_enabled = True
+        profiler = get_profiler()
+        profiler.enabled = True
 
 
-def stop_profiling() -> Dict[str, Any]:
-    """停止全局性能分析"""
-    return _global_profiler.stop_profiling()
+def stop_profiling():
+    """停止性能分析"""
+    global _profiling_enabled
+    with _profiler_lock:
+        _profiling_enabled = False
+        profiler = get_profiler()
+        profiler.enabled = False
 
 
-def get_performance_report() -> str:
-    """获取性能报告"""
-    return _global_profiler.export_metrics()
+def is_profiling_enabled() -> bool:
+    """检查是否启用性能分析"""
+    return _profiling_enabled
+
+
+# 导出的公共接口
+__all__ = [
+    "ProfileStats",
+    "APIEndpointProfiler",
+    "DatabaseQueryProfiler",
+    "MemoryProfiler",
+    "PerformanceProfiler",
+    "SystemProfiler",
+    "get_profiler",
+    "profile_api_endpoint",
+    "profile_function",
+    "profile_method",
+    "start_profiling",
+    "stop_profiling",
+    "is_profiling_enabled",
+    "get_system_profiler",
+    "get_performance_report"
+]
