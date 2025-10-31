@@ -17,8 +17,9 @@ class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__("database", "2.0.0")
         self.connection_pool = None
         self.query_count = 0

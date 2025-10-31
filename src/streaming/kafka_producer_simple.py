@@ -15,8 +15,9 @@ class KafkaMessageProducer:
     """Kafka消息生产者（简化版）"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if "bootstrap_servers" not in config:
             raise StreamingError("Missing required config: bootstrap_servers")
         if "topic" not in config:

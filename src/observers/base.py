@@ -48,16 +48,14 @@ class ObservableEvent:
 
 
 class Observer(ABC):
-    """观察者抽象基类"
+    """观察者抽象基类
 
     定义观察者必须实现的接口.
     Defines the interface that all observers must implement.
     """
 
     def __init__(self, name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-        """初始化观察者"
+        """初始化观察者
 
         Args:
             name: 观察者名称
@@ -68,7 +66,7 @@ class Observer(ABC):
 
     @abstractmethod
     async def update(self, event: ObservableEvent) -> None:
-        """接收并处理事件通知"
+        """接收并处理事件通知
 
         Args:
             event: 被通知的事件
@@ -77,7 +75,7 @@ class Observer(ABC):
 
     @abstractmethod
     def get_observed_event_types(self) -> List[ObservableEventType]:
-        """获取观察者感兴趣的事件类型"
+        """获取观察者感兴趣的事件类型
 
         Returns:
             List[ObservableEventType]: 事件类型列表
@@ -85,7 +83,7 @@ class Observer(ABC):
         pass
 
     def add_filter(self, filter_func: Callable[[ObservableEvent], bool]) -> None:
-        """添加事件过滤器"
+        """添加事件过滤器
 
         Args:
             filter_func: 过滤函数,返回True表示需要处理此事件
@@ -93,7 +91,7 @@ class Observer(ABC):
         self._subscription_filters.append(filter_func)
 
     def should_handle_event(self, event: ObservableEvent) -> bool:
-        """判断是否应该处理事件"
+        """判断是否应该处理事件"""
 
         Args:
             event: 事件
@@ -148,8 +146,9 @@ class Subject(ABC):
     """
 
     def __init__(self, name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化被观察者"
 
         Args:
@@ -319,8 +318,9 @@ class CompositeObserver(Observer):
     """
 
     def __init__(self, name: str, observers: List[Observer] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化组合观察者"
 
         Args:

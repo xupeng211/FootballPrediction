@@ -42,9 +42,9 @@ class TenantCreationRequestModel(BaseModel):
     @validator('slug')
     def validate_slug(cls, v):
         """验证租户标识符"""
-        if not v.isidentifier():
-            raise ValueError('租户标识符必须是有效的Python标识符')
-        return v.lower()
+        if not re.match(r'^[a-z0-9-]+$', v):
+            raise ValueError('租户标识符只能包含小写字母、数字和连字符')
+        return v
 
 
 class TenantUpdateRequestModel(BaseModel):
@@ -453,7 +453,7 @@ async def tenant_health_check(tenant_id: int):
         }
 
 
-# TODO: 重复的类定义已删除
+# 重复的类定义已清理
 def _calculate_health_score(tenant: Tenant) -> float:
     """计算租户健康分数"""
     score = 100.0  # TODO: 将魔法数字 100 提取为常量

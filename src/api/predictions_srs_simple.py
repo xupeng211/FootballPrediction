@@ -103,7 +103,7 @@ class BatchPredictionRequest(BaseModel):
     )  # TODO: 将魔法数字 1000 提取为常量
     include_confidence: bool = Field(True, description="是否包含置信度")
     max_concurrent: int = Field(
-        100,
+        100,  # TODO: 将魔法数字 100 提取为常量
         description="最大并发数",
         ge=1,
         le=1000,  # TODO: 将魔法数字 100 提取为常量
@@ -131,8 +131,9 @@ class SimplePredictionService:
     """简化版预测服务 - 不依赖数据库"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.request_count = 0
         self._rate_limit_cache = {}
 
@@ -247,11 +248,11 @@ class SimplePredictionService:
 
         # 基于队名生成模拟特征
         home_strength = (
-            hash(match_info.home_team) % 50 / 100.0
+            hash(match_info.home_team) % 50 / 100.0  # TODO: 将魔法数字 50 提取为常量
             + 0.4  # TODO: 将魔法数字 50 提取为常量
         )  # TODO: 将魔法数字 50 提取为常量
         away_strength = (
-            hash(match_info.away_team) % 50 / 100.0
+            hash(match_info.away_team) % 50 / 100.0  # TODO: 将魔法数字 50 提取为常量
             + 0.4  # TODO: 将魔法数字 50 提取为常量
         )  # TODO: 将魔法数字 50 提取为常量
 

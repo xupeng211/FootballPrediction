@@ -27,19 +27,22 @@ class DatabaseManager:
     """数据库管理器模拟类,用于支持测试"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = logging.getLogger(f"{__name__}.DatabaseManager")
 
     def get_connection(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """获取数据库连接"""
         return None
 
     def close_connection(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """关闭数据库连接"""
 
 
@@ -50,19 +53,22 @@ class RedisManager:
     """Redis管理器模拟类,用于支持测试"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = logging.getLogger(f"{__name__}.RedisManager")
 
     def get_redis_client(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """获取Redis客户端"""
         return None
 
     def close_connection(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """关闭Redis连接"""
 
 

@@ -37,8 +37,9 @@ class RealModelTrainingPipeline:
     """真实数据模型训练管道"""
 
     def __init__(self, config: Dict[str, Any] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化训练管道
 

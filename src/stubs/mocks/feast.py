@@ -71,8 +71,9 @@ class MockFeatureStore:
     """模拟特征存储"""
 
     def __init__(self, repo_path: Optional[str] = None, config_path: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.repo_path = repo_path
         self.config_path = config_path
         self._feature_views: Dict[str, FeatureView] = {}
@@ -203,8 +204,9 @@ class MockFeatureService:
     """模拟特征服务"""
 
     def __init__(self, name: str, feature_store: MockFeatureStore):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.feature_store = feature_store
         self._service_config: Optional[Dict[str, Any]] = None
@@ -222,8 +224,9 @@ class MockFeastClient:
     """模拟Feast客户端"""
 
     def __init__(self, repo_path: Optional[str] = None, config_path: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.feature_store = MockFeatureStore(repo_path, config_path)
         self._services: Dict[str, MockFeatureService] = {}
 
@@ -255,8 +258,9 @@ class MockOnlineResponse:
     """模拟在线特征响应"""
 
     def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._features = features
         self._field_names = field_names
         self._to_dict_called = False
@@ -282,8 +286,9 @@ class MockOnlineResponse:
         return len(self._features)
 
     def __iter__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """迭代器"""
         return iter(self._features)
 

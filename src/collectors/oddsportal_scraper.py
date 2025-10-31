@@ -52,8 +52,9 @@ class OddsPortalScraper:
     """OddsPortal爬虫类"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化OddsPortal爬虫
 

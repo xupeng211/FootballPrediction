@@ -24,8 +24,9 @@ class CompatibleQueryBuilder:
     """兼容性查询构建器"""
 
     def __init__(self, dialect: str = "postgresql"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化查询构建器"
 
         Args:
@@ -100,8 +101,9 @@ class SQLCompatibilityHelper:
     """SQL兼容性助手"""
 
     def __init__(self, source_dialect: str, target_dialect: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化兼容性助手"
 
         Args:

@@ -54,8 +54,9 @@ class Odds(Base):
     is_active = Column(Boolean, default=True)
 
     def __repr__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return f"<Odds(match_id={self.match_id}, bookmaker={self.bookmaker}, type={self.bet_type}, odds={self.odds_value})>"
 
     @property
@@ -82,8 +83,9 @@ class OddsHistory(Base):
     change_reason = Column(Text, nullable=True)
 
     def __repr__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return f"<OddsHistory(odds_id={self.odds_id}, change={self.old_odds_value}->{self.new_odds_value})>"
 
 
@@ -103,8 +105,9 @@ class MarketAnalysis(Base):
     market_confidence = Column(Numeric(3, 2), default=0.5)  # 0-1之间的市场信心度
 
     def __repr__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return f"<MarketAnalysis(match_id={self.match_id}, type={self.bet_type}, avg_odds={self.average_odds})>"
 
     @property

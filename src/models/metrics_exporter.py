@@ -27,8 +27,9 @@ class ModelMetricsExporter:
     """
 
     def __init__(self, registry=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化Prometheus指标"""
         # 使用自定义registry避免重复注册错误
         if registry is None:

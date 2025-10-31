@@ -15,8 +15,9 @@ class KafkaMessageConsumer:
     """Kafka消息消费者（简化版）"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if "bootstrap_servers" not in config:
             raise StreamingError("Missing required config: bootstrap_servers")
         if "group_id" not in config:
@@ -121,26 +122,30 @@ class KafkaMessageConsumer:
         pass  # 简化实现
 
     def pause_partition(self, partition):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """暂停分区"""
         pass  # 简化实现
 
     def resume_partition(self, partition):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """恢复分区"""
         pass  # 简化实现
 
     def get_assignment(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """获取分区分配"""
         return list(range(len(self.topics)))
 
     def get_position(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """获取当前位置"""
         return {i: self.stats["messages_consumed"] for i in range(len(self.topics))}
 
@@ -188,8 +193,9 @@ class KafkaMessageConsumer:
         await self.seek(topic, partition, -1)
 
     def _create_rebalance_listener(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """创建重平衡监听器"""
 
         class RebalanceListener:

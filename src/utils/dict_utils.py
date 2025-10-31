@@ -1,1 +1,228 @@
-from typing import Optional\n\n"""\n足球预测系统字典处理工具模块\n\n提供字典操作相关的工具函数.\n"""\n\nfrom typing import Any, Dict, List\n\n\nclass DictUtils:\n    """字典处理工具类"""\n\n    @staticmethod\n    def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:\n        """深度合并字典 - 递归合并嵌套字典,dict2的值会覆盖dict1中的同名键"""\n        result = dict1.copy()\n        for key, value in dict2.items():\n            if (\n                key in result\n                and isinstance(result[key], dict)\n                and isinstance(value, dict)\n            ):\n                # 如果两边都是字典，则递归合并,保持嵌套结构\n                result[key] = DictUtils.deep_merge(result[key], value)\n            else:\n                # 非字典值直接覆盖,确保最新值优先\n                result[key] = value\n        return result\n\n    @staticmethod\n    def flatten_dict(\n        d: Dict[str, Any], parent_key: str = "", sep: str = "."\n    ) -> Dict[str, Any]:\n        # 构建新的键名,使用分隔符连接层级关系\n        items = []\n        for k, v in d.items():\n            new_key = f"{parent_key}{sep}{k}" if parent_key else k\n            if isinstance(v, dict):\n                # 递归处理嵌套字典,保持层级关系的可追溯性\n                items.extend(DictUtils.flatten_dict(v, new_key).items())\n            else:\n                items.append((new_key, v))\n        return dict(items)\n\n    @staticmethod\n    def filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:\n        """过滤掉None值的键值对"""\n        return {k: v for k, v in d.items() if v is not None}\n\n    @staticmethod\n    def filter_empty_values(d: Dict[str, Any]) -> Dict[str, Any]:\n        """过滤掉空值（空字符串,空列表,空字典）的键值对"""\n        return {\n            k: v\n            for k, v in d.items()\n            if v is not None and v != "" and v != [] and v != {}\n        }\n\n    @staticmethod\n    def filter_by_keys(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:\n        """只保留指定的键"""\n        return {k: v for k, v in d.items() if k in keys}\n\n    @staticmethod\n    def exclude_keys(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:\n        """排除指定的键"""\n        return {k: v for k, v in d.items() if k not in keys}\n\n    @staticmethod\n    def get_nested_value(d: Dict[str, Any], key_path: str, default: Any = None) -> Any:\n        """获取嵌套字典中的值\n\n        Args:\n            d: 源字典\n            key_path: 键路径,如 "user.profile.name"\n            default: 默认值\n\n        Returns:\n            找到的值或默认值\n        """\n        keys = key_path.split(".")\n        current = d\n\n        try:\n            for key in keys:\n                current = current[key]\n            return current\n        except (KeyError, TypeError, AttributeError):\n            return default\n\n    @staticmethod\n    def set_nested_value(d: Dict[str, Any], key_path: str, value: Any) -> None:\n        """设置嵌套字典中的值\n\n        Args:\n            d: 源字典\n            key_path: 键路径,如 "user.profile.name"\n            value: 要设置的值\n        """\n        keys = key_path.split(".")\n        current = d\n\n        # 创建嵌套结构\n        for key in keys[:-1]:\n            if key not in current or not isinstance(current[key], dict):\n                current[key] = {}\n            current = current[key]\n\n        # 设置最终值\n        current[keys[-1]] = value\n\n    @staticmethod\n    def rename_keys(d: Dict[str, Any], key_map: Dict[str, str]) -> Dict[str, Any]:\n        """重命名字典的键"""\n        return {key_map.get(k, k): v for k, v in d.items()}\n\n    @staticmethod\n    def swap_keys(d: Dict[str, Any]) -> Dict[str, Any]:\n        """交换字典的键和值"""\n        return {str(v): k for k, v in d.items()}\n\n    @staticmethod\n    def invert_dict(d: Dict[str, Any]) -> Dict[Any, str]:\n        """反转字典（键值互换）"""\n        return {v: k for k, v in d.items()}\n\n    @staticmethod\n    def pick_values(d: Dict[str, Any], keys: List[str]) -> List[Any]:\n        """提取指定键的值"""\n        return [d.get(k) for k in keys]\n\n    @staticmethod\n    def count_values(d: Dict[str, Any]) -> int:\n        """计算字典中值的总数"""\n        return len(d)\n\n    @staticmethod\n    def is_empty(d: Optional[Dict[str, Any]]) -> bool:\n        """检查字典是否为空"""\n        if d is None:\n            return True\n        return len(d) == 0\n\n    @staticmethod\n    def merge_list(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:\n        """合并多个字典（后面的会覆盖前面的）"""\n        result = {}\n        for d in dicts:\n            if isinstance(d, dict):\n                result.update(d)\n        return result\n\n    @staticmethod\n    def chunk_dict(d: Dict[str, Any], chunk_size: int) -> List[Dict[str, Any]]:\n        items = list(d.items())\n        return [\n            dict(items[i : i + chunk_size]) for i in range(0, len(items), chunk_size)\n        ]\n\n    @staticmethod\n    def sort_keys(d: Dict[str, Any], reverse: bool = False) -> Dict[str, Any]:\n        """按键排序"""\n        return dict(sorted(d.items(), key=lambda item: item[0], reverse=reverse))\n\n    @staticmethod\n    def group_by_first_char(d: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:\n        """按首字母分组"""\n        result = {}\n        for key, value in d.items():\n            first_char = key[0].upper() if key else "_"\n            if first_char not in result:\n                result[first_char] = {}\n            result[first_char][key] = value\n        return result\n\n    @staticmethod\n    def validate_required_keys(\n        d: Dict[str, Any], required_keys: List[str]\n    ) -> List[str]:\n        """验证必需的键是否存在"""\n        missing = []\n        for key in required_keys:\n            if key not in d:\n                missing.append(key)\n        return missing\n\n    @staticmethod\n    def convert_keys_case(d: Dict[str, Any], case: str = "lower") -> Dict[str, Any]:\n        """转换键的大小写"""\n        if case == "lower":\n            return {k.lower(): v for k, v in d.items()}\n        elif case == "upper":\n            return {k.upper(): v for k, v in d.items()}\n        elif case == "title":\n            return {k.title(): v for k, v in d.items()}\n        else:\n            return d\n\n    @staticmethod\n    def deep_clone(d: Dict[str, Any]) -> Dict[str, Any]:\n        """深度克隆字典"""\n        import copy\n\n        return copy.deepcopy(d)\n
+from typing import Optional
+
+"""
+足球预测系统字典处理工具模块
+
+提供字典操作相关的工具函数.
+"""
+
+from typing import Any, Dict, List
+
+
+class DictUtils:
+    """字典处理工具类"""
+
+    @staticmethod
+    def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+        """深度合并字典 - 递归合并嵌套字典,dict2的值会覆盖dict1中的同名键"""
+        result = dict1.copy()
+        for key, value in dict2.items():
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
+                # 如果两边都是字典，则递归合并,保持嵌套结构
+                result[key] = DictUtils.deep_merge(result[key], value)
+            else:
+                # 非字典值直接覆盖,确保最新值优先
+                result[key] = value
+        return result
+
+    @staticmethod
+    def flatten_dict(
+        d: Dict[str, Any], parent_key: str = "", sep: str = "."
+    ) -> Dict[str, Any]:
+        # 构建新的键名,使用分隔符连接层级关系
+        items = []
+        for k, v in d.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, dict):
+                # 递归处理嵌套字典,保持层级关系的可追溯性
+                items.extend(DictUtils.flatten_dict(v, new_key).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
+
+    @staticmethod
+    def filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:
+        """过滤掉None值的键值对"""
+        return {k: v for k, v in d.items() if v is not None}
+
+    @staticmethod
+    def filter_empty_values(d: Dict[str, Any]) -> Dict[str, Any]:
+        """过滤掉空值（空字符串,空列表,空字典）的键值对"""
+        return {
+            k: v
+            for k, v in d.items()
+            if v is not None and v != "" and v != [] and v != {}
+        }
+
+    @staticmethod
+    def filter_by_keys(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
+        """只保留指定的键"""
+        return {k: v for k, v in d.items() if k in keys}
+
+    @staticmethod
+    def exclude_keys(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
+        """排除指定的键"""
+        return {k: v for k, v in d.items() if k not in keys}
+
+    @staticmethod
+    def get_nested_value(d: Dict[str, Any], key_path: str, default: Any = None) -> Any:
+        """获取嵌套字典中的值
+
+        Args:
+            d: 源字典
+            key_path: 键路径,如 "user.profile.name"
+            default: 默认值
+
+        Returns:
+            找到的值或默认值
+        """
+        keys = key_path.split(".")
+        current = d
+
+        try:
+            for key in keys:
+                current = current[key]
+            return current
+        except (KeyError, TypeError, AttributeError):
+            return default
+
+    @staticmethod
+    def set_nested_value(d: Dict[str, Any], key_path: str, value: Any) -> None:
+        """设置嵌套字典中的值
+
+        Args:
+            d: 源字典
+            key_path: 键路径,如 "user.profile.name"
+            value: 要设置的值
+        """
+        keys = key_path.split(".")
+        current = d
+
+        # 创建嵌套结构
+        for key in keys[:-1]:
+            if key not in current or not isinstance(current[key], dict):
+                current[key] = {}
+            current = current[key]
+
+        # 设置最终值
+        current[keys[-1]] = value
+
+    @staticmethod
+    def rename_keys(d: Dict[str, Any], key_map: Dict[str, str]) -> Dict[str, Any]:
+        """重命名字典的键"""
+        return {key_map.get(k, k): v for k, v in d.items()}
+
+    @staticmethod
+    def swap_keys(d: Dict[str, Any]) -> Dict[str, Any]:
+        """交换字典的键和值"""
+        return {str(v): k for k, v in d.items()}
+
+    @staticmethod
+    def invert_dict(d: Dict[str, Any]) -> Dict[Any, str]:
+        """反转字典（键值互换）"""
+        return {v: k for k, v in d.items()}
+
+    @staticmethod
+    def pick_values(d: Dict[str, Any], keys: List[str]) -> List[Any]:
+        """提取指定键的值"""
+        return [d.get(k) for k in keys]
+
+    @staticmethod
+    def count_values(d: Dict[str, Any]) -> int:
+        """计算字典中值的总数"""
+        return len(d)
+
+    @staticmethod
+    def is_empty(d: Optional[Dict[str, Any]]) -> bool:
+        """检查字典是否为空"""
+        if d is None:
+            return True
+        return len(d) == 0
+
+    @staticmethod
+    def merge_list(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """合并多个字典（后面的会覆盖前面的）"""
+        result = {}
+        for d in dicts:
+            if isinstance(d, dict):
+                result.update(d)
+        return result
+
+    @staticmethod
+    def chunk_dict(d: Dict[str, Any], chunk_size: int) -> List[Dict[str, Any]]:
+        items = list(d.items())
+        return [
+            dict(items[i : i + chunk_size]) for i in range(0, len(items), chunk_size)
+        ]
+
+    @staticmethod
+    def sort_keys(d: Dict[str, Any], reverse: bool = False) -> Dict[str, Any]:
+        """按键排序"""
+        return dict(sorted(d.items(), key=lambda item: item[0], reverse=reverse))
+
+    @staticmethod
+    def group_by_first_char(d: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """按首字母分组"""
+        result = {}
+        for key, value in d.items():
+            first_char = key[0].upper() if key else "_"
+            if first_char not in result:
+                result[first_char] = {}
+            result[first_char][key] = value
+        return result
+
+    @staticmethod
+    def validate_required_keys(
+        d: Dict[str, Any], required_keys: List[str]
+    ) -> List[str]:
+        """验证必需的键是否存在"""
+        missing = []
+        for key in required_keys:
+            if key not in d:
+                missing.append(key)
+        return missing
+
+    @staticmethod
+    def convert_keys_case(d: Dict[str, Any], case: str = "lower") -> Dict[str, Any]:
+        """转换键的大小写"""
+        if case == "lower":
+            return {k.lower(): v for k, v in d.items()}
+        elif case == "upper":
+            return {k.upper(): v for k, v in d.items()}
+        elif case == "title":
+            return {k.title(): v for k, v in d.items()}
+        else:
+            return d
+
+    @staticmethod
+    def deep_clone(d: Dict[str, Any]) -> Dict[str, Any]:
+        """深度克隆字典"""
+        import copy
+
+        return copy.deepcopy(d)
+
+    @staticmethod
+    def merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+        """浅度合并字典 - dict2的值会覆盖dict1中的同名键"""
+        result = dict1.copy()
+        result.update(dict2)
+        return result
+
+    @staticmethod
+    def get(d: Dict[str, Any], key: str, default: Any = None) -> Any:
+        """获取字典值，支持默认值"""
+        return d.get(key, default)
+
+    @staticmethod
+    def has_key(d: Dict[str, Any], key: str) -> bool:
+        """检查字典是否包含指定键"""
+        return key in d
+
+    @staticmethod
+    def filter_keys(d: Dict[str, Any], filter_func) -> Dict[str, Any]:
+        """根据过滤函数筛选键值对"""
+        return {k: v for k, v in d.items() if filter_func(k)}

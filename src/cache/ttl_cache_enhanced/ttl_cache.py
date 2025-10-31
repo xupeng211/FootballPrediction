@@ -391,8 +391,9 @@ class TTLCache:
                 self.stats[key] = 0
 
     def start_auto_cleanup(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """启动自动清理任务"""
         if self._running:
             return None
@@ -401,8 +402,9 @@ class TTLCache:
         self._cleanup_task = loop.create_task(self._auto_cleanup())
 
     def stop_auto_cleanup(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """停止自动清理任务"""
         self._running = False
         if self._cleanup_task:

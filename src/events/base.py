@@ -49,8 +49,9 @@ class Event(ABC):
     """
 
     def __init__(self, data: EventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化事件"
 
         Args:
@@ -135,8 +136,9 @@ class EventHandler(ABC):
     """
 
     def __init__(self, name: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化事件处理器"
 
         Args:
@@ -248,8 +250,9 @@ class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
     def __init__(self, allowed_types: list[str]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化过滤器"
 
         Args:
@@ -265,8 +268,9 @@ class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
     def __init__(self, allowed_sources: list[str]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化过滤器"
 
         Args:
@@ -282,8 +286,9 @@ class CompositeEventFilter(EventFilter):
     """组合过滤器,支持AND和OR逻辑"""
 
     def __init__(self, filters: list[EventFilter], operator: str = "AND"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化组合过滤器"
 
         Args:

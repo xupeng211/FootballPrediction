@@ -45,8 +45,9 @@ class EmailClient:
     """邮件通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
         self.smtp_port = config.get("smtp_port", 587)
         self.username = config.get("username")
@@ -238,8 +239,9 @@ class SlackClient:
     """Slack通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.channel = config.get("channel", "#quality-alerts")
         self.username = config.get("username", "Quality Monitor")
@@ -334,8 +336,9 @@ class WeChatClient:
     """企业微信通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.mentioned_list = config.get("mentioned_list", [])
         self.logger = get_logger(self.__class__.__name__)
@@ -419,8 +422,9 @@ class DingTalkClient:
     """钉钉通知客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.secret = config.get("secret")
         self.at_mobiles = config.get("at_mobiles", [])
@@ -506,8 +510,9 @@ class NotificationManager:
     """通知管理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.channels: Dict[str, NotificationChannel] = {}
         self.clients: Dict[str, Any] = {}
         self.config = get_config()
@@ -517,8 +522,9 @@ class NotificationManager:
         self._load_notification_channels()
 
     def _load_notification_channels(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """加载通知渠道配置"""
         try:
             # 默认通知渠道配置
@@ -552,8 +558,9 @@ class NotificationManager:
             self.logger.error(f"加载通知渠道配置失败: {e}")
 
     def _initialize_client(self, channel: NotificationChannel):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化通知客户端"""
         try:
             if channel.type == "email" and channel.enabled:
@@ -672,16 +679,18 @@ class NotificationManager:
             return False
 
     def add_channel(self, channel: NotificationChannel):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """添加新的通知渠道"""
         self.channels[channel.id] = channel
         self._initialize_client(channel)
         self.logger.info(f"已添加通知渠道: {channel.id}")
 
     def remove_channel(self, channel_id: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """移除通知渠道"""
         if channel_id in self.channels:
             del self.channels[channel_id]

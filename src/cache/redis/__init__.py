@@ -27,8 +27,9 @@ class RedisManager:
     """Redis管理器主类,整合同步和异步操作"""
 
     def __init__(self, redis_url: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化Redis管理器"""
         self.redis_url = redis_url or "redis://localhost:6379"
         self.connection_manager = RedisConnectionManager()

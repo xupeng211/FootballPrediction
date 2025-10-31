@@ -27,8 +27,9 @@ class OddsPortalIntegration:
     """OddsPortal爬虫集成管理器"""
 
     def __init__(self, config_path: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化OddsPortal集成
 
@@ -90,8 +91,9 @@ class OddsPortalIntegration:
         }
 
     def _validate_config(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """验证配置"""
         required_sections = ["basic", "request", "scraping"]
         for section in required_sections:

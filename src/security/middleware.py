@@ -35,8 +35,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件"""
 
     def __init__(self, app: ASGIApp, enabled: bool = True):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
         self.headers = self._get_security_headers()
@@ -120,8 +121,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return request.client.host if request.client else "unknown"
 
     def _cleanup_old_requests(self, client_ip: str, current_time: float):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """清理过期的请求记录"""
         cutoff_time = current_time - 60  # 1分钟前
         self.clients[client_ip] = [
@@ -149,15 +151,17 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
     """审计日志中间件"""
 
     def __init__(self, app: ASGIApp, enabled: bool = True):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
         self.setup_audit_logger()
 
     def setup_audit_logger(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """设置审计日志记录器"""
         if not self.enabled:
             return None
@@ -207,8 +211,9 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
     def _log_request_start(self, request: Request):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录请求开始"""
         self.audit_logger.info(
             f"Request started: {request.method} {request.url} - "
@@ -228,8 +233,9 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
         )
 
     def _log_request_error(self, request: Request, error: Exception, duration: float):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录请求错误"""
         self.audit_logger.error(
             f"Request failed: {request.method} {request.url} - "
@@ -251,8 +257,9 @@ class CSPMiddleware(BaseHTTPMiddleware):
     """内容安全策略中间件"""
 
     def __init__(self, app: ASGIApp, enabled: bool = True):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
         self.csp_policy = self._build_csp_policy()
@@ -338,13 +345,15 @@ class SecurityConfig:
     """安全配置类"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.load_config()
 
     def load_config(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """加载安全配置"""
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
         self.rate_limit_burst = int(os.getenv("RATE_LIMIT_BURST", "10"))

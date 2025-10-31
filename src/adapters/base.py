@@ -86,8 +86,7 @@ class CompositeAdapter(Adapter):
         pass
 
     def __init__(self, name: str = "CompositeAdapter"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化组合适配器"""
         self.name = name
         self.adapters: List[Adapter] = []
         self.adapter_registry: Dict[str, Adapter] = {}

@@ -53,8 +53,9 @@ class MissingDataHandler:
     }
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化缺失数据处理器"""
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"handler.{self.__class__.__name__}")

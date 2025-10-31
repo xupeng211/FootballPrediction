@@ -47,8 +47,9 @@ class LeagueSeason:
     current_round: int = 0
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """验证赛季信息"""
         if not self.season:
             raise DomainError("赛季名称不能为空")
@@ -120,8 +121,9 @@ class LeagueSettings:
     penalty_shootout: bool = False  # 是否点球
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """验证设置"""
         if any(
             x < 0
@@ -191,8 +193,9 @@ class League:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("联赛名称不能为空")

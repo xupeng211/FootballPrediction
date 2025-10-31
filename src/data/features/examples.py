@@ -411,8 +411,9 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
 
     # 模拟ML训练流程
     def train_model_with_features():
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """模拟模型训练"""
         logger.info("  🎯 使用特征仓库数据训练模型...")
 
@@ -429,8 +430,9 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
 
     # 模拟实时预测流程
     def predict_with_online_features():
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """模拟实时预测"""
         logger.info("  🔮 使用在线特征进行实时预测...")
 

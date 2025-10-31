@@ -19,8 +19,9 @@ class AnomalyDetector:
     """Data anomaly detection utilities"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """Initialize anomaly detector"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -79,8 +80,9 @@ class AnomalyDetectionResult:
     """Anomaly detection result"""
 
     def __init__(self, anomalies: List[Any], severity: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.anomalies = anomalies
         self.severity = severity
 ]]

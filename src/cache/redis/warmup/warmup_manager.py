@@ -17,8 +17,9 @@ class WarmupManager:
     """Redis cache warmup manager"""
 
     def __init__(self, redis_manager=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """Initialize warmup manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.redis_manager = redis_manager

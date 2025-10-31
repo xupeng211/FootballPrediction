@@ -22,8 +22,9 @@ class DecoratorService:
     """装饰器服务,管理和应用装饰器"""
 
     def __init__(self, factory: Optional[DecoratorFactory] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.factory = factory or DecoratorFactory()
         self._decorated_functions: Dict[str, DecoratorComponent] = {}
         self._global_decorators: List[DecoratorConfig] = []

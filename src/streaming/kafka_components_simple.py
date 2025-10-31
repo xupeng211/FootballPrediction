@@ -13,8 +13,9 @@ class KafkaAdminClient:
     """Kafka管理客户端（简化版）"""
 
     def __init__(self, bootstrap_servers: List[str]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.bootstrap_servers = bootstrap_servers
         self.is_running = False
 
@@ -71,8 +72,9 @@ class KafkaTopicManager:
     """Kafka主题管理器"""
 
     def __init__(self, admin_client: KafkaAdminClient):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.admin = admin_client
 
     async def create_topic(self, topic_spec: Dict[str, Any]):
@@ -121,8 +123,9 @@ class KafkaConsumerGroup:
     """Kafka消费者组管理"""
 
     def __init__(self, group_id: str, admin_client: KafkaAdminClient):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.group_id = group_id
         self.admin = admin_client
 
@@ -160,8 +163,9 @@ class KafkaCluster:
     """Kafka集群"""
 
     def __init__(self, name: str, brokers: List[str]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.brokers = brokers
         self.is_healthy = None
@@ -204,8 +208,9 @@ class KafkaHealthChecker:
     """Kafka健康检查器"""
 
     def __init__(self, admin_client: KafkaAdminClient):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.admin = admin_client
 
     async def check_broker_health(self) -> Dict[int, Dict[str, Any]]:
@@ -255,8 +260,9 @@ class KafkaMetricsCollector:
     """Kafka指标收集器"""
 
     def __init__(self, admin_client: KafkaAdminClient):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.admin = admin_client
 
     async def collect_broker_metrics(self) -> Dict[str, Dict[str, Any]]:

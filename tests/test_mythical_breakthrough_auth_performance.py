@@ -129,7 +129,7 @@ class TestMythicalBreakthroughAuthPerformance:
         # 测试函数性能分析
         try:
             @profile_function
-            def test_function():
+            def test_function(, client, client):
                 return "test_result"
 
             result = test_function()

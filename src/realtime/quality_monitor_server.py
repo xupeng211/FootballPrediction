@@ -31,8 +31,9 @@ class QualityMonitorServer:
     """实时质量监控服务器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.app = FastAPI(
             title="实时质量监控服务",
             description="Real-time Quality Monitoring WebSocket Server",
@@ -69,8 +70,9 @@ class QualityMonitorServer:
         self.logger = get_logger(self.__class__.__name__)
 
     def _setup_routes(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """设置路由"""
 
         @self.app.websocket("/ws/quality")
@@ -425,8 +427,9 @@ class QualityMonitorServer:
         self.logger.info("实时质量监控服务器启动完成")
 
     def stop_server(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """停止服务器"""
         if self.background_task:
             self.background_task.cancel()

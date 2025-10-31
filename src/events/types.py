@@ -259,8 +259,9 @@ class MatchCreatedEvent(Event):
     """比赛创建事件"""
 
     def __init__(self, data: MatchCreatedEventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(data)
 
     @classmethod
@@ -313,8 +314,9 @@ class MatchUpdatedEvent(Event):
     """比赛更新事件"""
 
     def __init__(self, data: MatchUpdatedEventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(data)
 
     @classmethod
@@ -367,8 +369,9 @@ class PredictionMadeEvent(Event):
     """预测创建事件"""
 
     def __init__(self, data: PredictionMadeEventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(data)
 
     @classmethod
@@ -419,8 +422,9 @@ class PredictionUpdatedEvent(Event):
     """预测更新事件"""
 
     def __init__(self, data: PredictionUpdatedEventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(data)
 
     @classmethod
@@ -471,8 +475,9 @@ class UserRegisteredEvent(Event):
     """用户注册事件"""
 
     def __init__(self, data: UserRegisteredEventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(data)
 
     @classmethod
@@ -519,8 +524,9 @@ class TeamStatsUpdatedEvent(Event):
     """球队统计更新事件"""
 
     def __init__(self, data: TeamStatsEventData):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(data)
 
     @classmethod

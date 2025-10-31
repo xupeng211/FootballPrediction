@@ -30,8 +30,9 @@ class AutoMLPipeline:
     """AutoML Pipeline"""
 
     def __init__(self, config: Dict[str, Any] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config or {}
         self.model = None
         self.is_trained = False

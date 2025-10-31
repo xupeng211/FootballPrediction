@@ -22,8 +22,9 @@ class LeagueTable:
     """联赛积分榜"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.standings: List[Dict[str, Any]] = []
         self.last_updated = datetime.now()
 

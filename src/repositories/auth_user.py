@@ -18,8 +18,9 @@ class AuthUserRepository:
     """认证用户仓储"""
 
     def __init__(self, db: AsyncSession):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.db = db
 
     async def get_by_username(self, username: str) -> Optional[User]:

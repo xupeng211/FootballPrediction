@@ -163,7 +163,7 @@ class TestSuperBreakthroughStreaming:
         # 测试连接事件
         conn_event = ConnectionEvent(user_id=123, connection_id="conn_123")
         assert conn_event is not None
-        assert conn_event.user_id == 123
+        assert conn_event.user_id   == 123
 
         # 测试断开连接事件
         disconn_event = DisconnectionEvent(user_id=123, connection_id="conn_123")

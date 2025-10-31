@@ -44,17 +44,17 @@ class TestFinalBreakthroughAPI:
         create_schema = PredictionCreate(match_id=123, predicted_result="HOME_WIN")
         assert create_schema is not None
         assert create_schema.match_id == 123
-        assert create_schema.predicted_result == "HOME_WIN"
+        assert create_schema.predicted_result   == "HOME_WIN"
 
         # 测试响应模式
         response_schema = PredictionResponse(id=1, match_id=123, predicted_result="HOME_WIN")
         assert response_schema is not None
-        assert response_schema.id == 1
+        assert response_schema.id   == 1
 
         # 测试更新模式
         update_schema = PredictionUpdate(predicted_result="AWAY_WIN")
         assert update_schema is not None
-        assert update_schema.predicted_result == "AWAY_WIN"
+        assert update_schema.predicted_result   == "AWAY_WIN"
 
     def test_api_schemas_match_schemas(self):
         """测试比赛模式"""
@@ -76,7 +76,7 @@ class TestFinalBreakthroughAPI:
         create_schema = TeamCreate(name="Test Team", league="Test League")
         assert create_schema is not None
         assert create_schema.name == "Test Team"
-        assert create_schema.league == "Test League"
+        assert create_schema.league   == "Test League"
 
         response_schema = TeamResponse(id=1, name="Test Team", league="Test League")
         assert response_schema is not None
@@ -91,7 +91,7 @@ class TestFinalBreakthroughAPI:
         create_schema = UserCreate(username="testuser", email="test@example.com")
         assert create_schema is not None
         assert create_schema.username == "testuser"
-        assert create_schema.email == "test@example.com"
+        assert create_schema.email   == "test@example.com"
 
         response_schema = UserResponse(id=1, username="testuser", email="test@example.com")
         assert response_schema is not None
@@ -186,12 +186,12 @@ class TestFinalBreakthroughAPI:
         pagination = PaginationParams(page=1, size=10)
         assert pagination is not None
         assert pagination.page == 1
-        assert pagination.size == 10
+        assert pagination.size   == 10
 
         # 测试分页响应
         response = PaginatedResponse(items=[], total=0, page=1, size=10)
         assert response is not None
-        assert response.total == 0
+        assert response.total   == 0
 
     def test_api_utils_filters(self):
         """测试过滤工具"""
@@ -212,13 +212,13 @@ class TestFinalBreakthroughAPI:
         # 测试API响应
         success_response = APIResponse(data={"test": "data"}, message="Success")
         assert success_response is not None
-        assert success_response.data["test"] == "data"
+        assert success_response.data["test"]   == "data"
 
         # 测试错误响应
         error_response = ErrorResponse(error="Test error", code=400)
         assert error_response is not None
         assert error_response.error == "Test error"
-        assert error_response.code == 400
+        assert error_response.code   == 400
 
     def test_api_main_application(self):
         """测试主应用"""
@@ -247,4 +247,4 @@ class TestFinalBreakthroughAPI:
 
         status = HealthStatus(status="healthy")
         assert status is not None
-        assert status.status == "healthy"
+        assert status.status   == "healthy"

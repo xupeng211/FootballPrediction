@@ -74,8 +74,9 @@ class PredictionStrategy(ABC):
     """预测策略抽象基类"""
 
     def __init__(self, name: str, strategy_type: StrategyType):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.strategy_type = strategy_type
         self._metrics: Optional[StrategyMetrics] = None

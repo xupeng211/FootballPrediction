@@ -40,8 +40,9 @@ class Alert:
     """警报对象"""
 
     def __init__(self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.severity = severity
         self.type = alert_type
@@ -55,8 +56,9 @@ class AlertRule:
     """警报规则"""
 
     def __init__(self, name: str, condition: str, severity: AlertSeverity):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.condition = condition
         self.severity = severity
@@ -69,8 +71,9 @@ class AlertManager:
     """警报管理器 - 完整版本"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.alerts: List[Alert] = []
         self.alert_rules = {}
         self.active_alerts: List[Dict] = []  # 改为列表以匹配测试期望

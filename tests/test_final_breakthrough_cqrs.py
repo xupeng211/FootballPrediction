@@ -23,7 +23,7 @@ class TestFinalBreakthroughCQRS:
         assert create_cmd.match_id == 123
         assert create_cmd.user_id == 456
         assert create_cmd.predicted_result == "HOME_WIN"
-        assert create_cmd.confidence == 0.85
+        assert create_cmd.confidence      == 0.85
 
         # 测试更新预测命令
         update_cmd = UpdatePredictionCommand(
@@ -33,12 +33,12 @@ class TestFinalBreakthroughCQRS:
         )
         assert update_cmd is not None
         assert update_cmd.prediction_id == 789
-        assert update_cmd.predicted_result == "AWAY_WIN"
+        assert update_cmd.predicted_result      == "AWAY_WIN"
 
         # 测试删除预测命令
         delete_cmd = DeletePredictionCommand(prediction_id=789)
         assert delete_cmd is not None
-        assert delete_cmd.prediction_id == 789
+        assert delete_cmd.prediction_id      == 789
 
     def test_cqrs_commands_match_commands(self):
         """测试比赛命令"""
@@ -53,7 +53,7 @@ class TestFinalBreakthroughCQRS:
         )
         assert create_cmd is not None
         assert create_cmd.home_team_id == 1
-        assert create_cmd.away_team_id == 2
+        assert create_cmd.away_team_id      == 2
 
         # 测试更新比赛命令
         update_cmd = UpdateMatchCommand(
@@ -63,7 +63,7 @@ class TestFinalBreakthroughCQRS:
         )
         assert update_cmd is not None
         assert update_cmd.match_id == 123
-        assert update_cmd.status == "LIVE"
+        assert update_cmd.status      == "LIVE"
 
         # 测试结束比赛命令
         finish_cmd = FinishMatchCommand(
@@ -72,7 +72,7 @@ class TestFinalBreakthroughCQRS:
             match_events=[]
         )
         assert finish_cmd is not None
-        assert finish_cmd.final_score == "2-1"
+        assert finish_cmd.final_score      == "2-1"
 
     def test_cqrs_queries_prediction_queries(self):
         """测试预测查询"""
@@ -81,7 +81,7 @@ class TestFinalBreakthroughCQRS:
         # 测试获取单个预测查询
         get_pred_query = GetPredictionQuery(prediction_id=123)
         assert get_pred_query is not None
-        assert get_pred_query.prediction_id == 123
+        assert get_pred_query.prediction_id      == 123
 
         # 测试获取用户预测查询
         user_preds_query = GetUserPredictionsQuery(
@@ -91,7 +91,7 @@ class TestFinalBreakthroughCQRS:
         )
         assert user_preds_query is not None
         assert user_preds_query.user_id == 456
-        assert user_preds_query.limit == 10
+        assert user_preds_query.limit      == 10
 
         # 测试获取比赛预测查询
         match_preds_query = GetMatchPredictionsQuery(
@@ -99,7 +99,7 @@ class TestFinalBreakthroughCQRS:
             include_analysis=True
         )
         assert match_preds_query is not None
-        assert match_preds_query.match_id == 789
+        assert match_preds_query.match_id      == 789
 
     def test_cqrs_queries_match_queries(self):
         """测试比赛查询"""
@@ -108,7 +108,7 @@ class TestFinalBreakthroughCQRS:
         # 测试获取比赛查询
         get_match_query = GetMatchQuery(match_id=123)
         assert get_match_query is not None
-        assert get_match_query.match_id == 123
+        assert get_match_query.match_id      == 123
 
         # 测试获取比赛列表查询
         get_matches_query = GetMatchesQuery(
@@ -117,7 +117,7 @@ class TestFinalBreakthroughCQRS:
             limit=20
         )
         assert get_matches_query is not None
-        assert get_matches_query.league == "Premier League"
+        assert get_matches_query.league      == "Premier League"
 
         # 测试获取队伍比赛查询
         team_matches_query = GetTeamMatchesQuery(
@@ -126,7 +126,7 @@ class TestFinalBreakthroughCQRS:
             date_to="2024-12-31"
         )
         assert team_matches_query is not None
-        assert team_matches_query.team_id == 456
+        assert team_matches_query.team_id      == 456
 
     def test_cqrs_handlers_prediction_handlers(self):
         """测试预测处理器"""
@@ -232,14 +232,14 @@ class TestFinalBreakthroughCQRS:
         success = SuccessResult(data={"prediction_id": 123})
         assert success is not None
         assert success.success is True
-        assert success.data["prediction_id"] == 123
+        assert success.data["prediction_id"]      == 123
 
         # 测试错误结果
         error = ErrorResult(error_message="Validation failed", error_code=400)
         assert error is not None
         assert error.success is False
         assert error.error_message == "Validation failed"
-        assert error.error_code == 400
+        assert error.error_code      == 400
 
     def test_cqrs_results_query_result(self):
         """测试查询结果"""
@@ -248,13 +248,13 @@ class TestFinalBreakthroughCQRS:
         # 测试查询结果
         query_result = QueryResult(data=[{"id": 1, "name": "Test"}], total_count=1)
         assert query_result is not None
-        assert query_result.total_count == 1
+        assert query_result.total_count      == 1
         assert len(query_result.data) == 1
 
         # 测试空结果
         empty_result = EmptyResult()
         assert empty_result is not None
-        assert empty_result.total_count == 0
+        assert empty_result.total_count      == 0
         assert len(empty_result.data) == 0
 
     def test_cqrs_validators_command_validators(self):
@@ -301,7 +301,7 @@ class TestFinalBreakthroughCQRS:
             predicted_result="HOME_WIN"
         )
         assert pred_created is not None
-        assert pred_created.prediction_id == 123
+        assert pred_created.prediction_id      == 123
 
         # 测试预测更新事件
         pred_updated = PredictionUpdatedEvent(
@@ -310,7 +310,7 @@ class TestFinalBreakthroughCQRS:
             new_result="AWAY_WIN"
         )
         assert pred_updated is not None
-        assert pred_updated.old_result == "HOME_WIN"
+        assert pred_updated.old_result      == "HOME_WIN"
 
         # 测试比赛创建事件
         match_created = MatchCreatedEvent(
@@ -319,7 +319,7 @@ class TestFinalBreakthroughCQRS:
             away_team_id=2
         )
         assert match_created is not None
-        assert match_created.match_id == 456
+        assert match_created.match_id      == 456
 
     def test_cqrs_events_event_handlers(self):
         """测试事件处理器"""

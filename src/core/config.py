@@ -37,8 +37,9 @@ class Config:
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
@@ -218,62 +219,61 @@ class Settings(SettingsClass):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             # Fallback for older versions
             class Config:
-    """类文档字符串"""
-    pass  # 添加pass语句
+                """类文档字符串"""
+                pass  # 添加pass语句
+
                 env_file = ".env"
                 env_file_encoding = "utf-8"
                 case_sensitive = False
                 extra = "allow"  # Allow extra fields from environment
 
     else:
-
         def __init__(self, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-            # 设置默认值
-            self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
-            self.redis_url = "redis://redis:6379/0"
-            self.api_host = "localhost"
-            self.api_port = 8000
-            self.environment = "development"
-            self.log_level = "INFO"
-            self.mlflow_tracking_uri = "file:///tmp/mlflow"
-            self.api_football_key = None
-            self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
-            self.metrics_enabled = True
-            self.metrics_tables = [
-                "matches",
-                "teams",
-                "leagues",
-                "odds",
-                "features",
-                "raw_match_data",
-                "raw_odds_data",
-                "raw_scores_data",
-                "data_collection_logs",
-            ]
-            self.metrics_collection_interval = 30
-            self.missing_data_defaults_path = None
-            self.missing_data_defaults_json = None
-            self.enabled_services = [
-                "ContentAnalysisService",
-                "UserProfileService",
-                "DataProcessingService",
-            ]
+            """函数文档字符串"""
+            pass
 
-            # 从环境变量或kwargs更新配置
-            for key, value in kwargs.items():
-                setattr(self, key, value)
+        # 设置默认值
+        self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
+        self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
+        self.redis_url = "redis://redis:6379/0"
+        self.api_host = "localhost"
+        self.api_port = 8000
+        self.environment = "development"
+        self.log_level = "INFO"
+        self.mlflow_tracking_uri = "file:///tmp/mlflow"
+        self.api_football_key = None
+        self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
+        self.metrics_enabled = True
+        self.metrics_tables = [
+            "matches",
+            "teams",
+            "leagues",
+            "odds",
+            "features",
+            "raw_match_data",
+            "raw_odds_data",
+            "raw_scores_data",
+            "data_collection_logs",
+        ]
+        self.metrics_collection_interval = 30
+        self.missing_data_defaults_path = None
+        self.missing_data_defaults_json = None
+        self.enabled_services = [
+            "ContentAnalysisService",
+            "UserProfileService",
+            "DataProcessingService",
+        ]
 
-            # 从环境变量读取配置
-            self._load_from_env()
+        # 从环境变量或kwargs更新配置
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-        def _load_from_env(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-            """从环境变量加载配置"""
-            env_mapping = {
+        # 从环境变量读取配置
+        self._load_from_env()
+
+    def _load_from_env(self):
+        """从环境变量加载配置"""
+        env_mapping = {
                 "DATABASE_URL": "database_url",
                 "TEST_DATABASE_URL": "test_database_url",
                 "REDIS_URL": "redis_url",
@@ -292,36 +292,36 @@ class Settings(SettingsClass):
                 "ENABLED_SERVICES": "enabled_services",
             }
 
-            for env_key, attr_name in env_mapping.items():
-                env_value = os.getenv(env_key)
-                if env_value is None:
+        for env_key, attr_name in env_mapping.items():
+            env_value = os.getenv(env_key)
+            if env_value is None:
+                continue
+
+            if attr_name in {"api_port", "metrics_collection_interval"}:
+                try:
+                    env_value = int(env_value)
+                except ValueError:
                     continue
+            elif attr_name in {"metrics_enabled"}:
+                env_value = str(env_value).lower() == "true"
+            elif attr_name in {"metrics_tables", "enabled_services"}:
+                env_value = self._parse_list_env(env_value)
 
-                if attr_name in {"api_port", "metrics_collection_interval"}:
-                    try:
-                        env_value = int(env_value)
-                    except ValueError:
-                        continue
-                elif attr_name in {"metrics_enabled"}:
-                    env_value = str(env_value).lower() == "true"
-                elif attr_name in {"metrics_tables", "enabled_services"}:
-                    env_value = self._parse_list_env(env_value)
+            setattr(self, attr_name, env_value)
 
-                setattr(self, attr_name, env_value)
+    def _parse_list_env(self, value: str) -> List[str]:
+        value = value.strip()
+        if not value:
+            return []
 
-        def _parse_list_env(self, value: str) -> List[str]:
-            value = value.strip()
-            if not value:
-                return []
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+        except json.JSONDecodeError:
+            pass
 
-            try:
-                parsed = json.loads(value)
-                if isinstance(parsed, list):
-                    return [str(item).strip() for item in parsed if str(item).strip()]
-            except json.JSONDecodeError:
-                pass
-
-            return [item.strip() for item in value.split(",") if item.strip()]
+        return [item.strip() for item in value.split(",") if item.strip()]
 
 
 # 全局配置实例

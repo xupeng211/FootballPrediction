@@ -1,1 +1,93 @@
-"""\nAPI响应工具类\n\n提供统一的API响应格式\n"""\n\nfrom datetime import datetime\nfrom typing import Any, Dict, Optional\n\nfrom pydantic import BaseModel\n\n\nclass APIResponseModel(BaseModel):\n    """API响应Pydantic模型"""\n\n    success: bool\n    message: str\n    data: Optional[Any] = None\n    code: Optional[str] = None\n\n\nclass APIResponse:\n    """API响应格式化工具"""\n\n    @staticmethod\n    def success(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:\n        """\n        成功响应\n\n        Args:\n            data: 响应数据\n            message: 响应消息\n\n        Returns:\n            Dict[str, Any]: 格式化的成功响应\n        """\n        response = {\n            "success": True,\n            "message": message,\n            "timestamp": datetime.now().isoformat(),\n        }\n\n        if data is not None:\n            response["data"] = data\n\n        return response\n\n    @staticmethod\n    def success_response(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:\n        """成功响应（别名方法）"""\n        return APIResponse.success(data, message)\n\n    @staticmethod\n    def error(\n        message: str = "操作失败", code: Optional[int] = None, data: Any = None\n    ) -> Dict[str, Any]:\n        """\n        错误响应\n\n        Args:\n            message: 错误消息\n            code: 错误代码\n            data: 附加数据\n\n        Returns:\n            Dict[str, Any]: 格式化的错误响应\n        """\n        response = {\n            "success": False,\n            "message": message,\n            "timestamp": datetime.now().isoformat(),\n        }\n\n        if code is not None:\n            response["code"] = code\n        else:\n            response["code"] = 500  # 默认错误代码\n\n        if data is not None:\n            response["data"] = data\n\n        return response\n\n    @staticmethod\n    def error_response(\n        message: str = "操作失败", code: Optional[int] = None, data: Any = None\n    ) -> Dict[str, Any]:\n        """错误响应（别名方法）"""\n        return APIResponse.error(message, code, data)\n\n\n# 为了向后兼容,提供一个ResponseUtils别名\nResponseUtils = APIResponse\n
+"""
+API响应工具类
+
+提供统一的API响应格式
+"""
+
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel
+
+
+class APIResponseModel(BaseModel):
+    """API响应Pydantic模型"""
+
+    success: bool
+    message: str
+    data: Optional[Any] = None
+    code: Optional[str] = None
+
+
+class APIResponse:
+    """API响应格式化工具"""
+
+    @staticmethod
+    def success(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:
+        """
+        成功响应
+
+        Args:
+            data: 响应数据
+            message: 响应消息
+
+        Returns:
+            Dict[str, Any]: 格式化的成功响应
+        """
+        response = {
+            "success": True,
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        if data is not None:
+            response["data"] = data
+
+        return response
+
+    @staticmethod
+    def success_response(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:
+        """成功响应（别名方法）"""
+        return APIResponse.success(data, message)
+
+    @staticmethod
+    def error(
+        message: str = "操作失败", code: Optional[int] = None, data: Any = None
+    ) -> Dict[str, Any]:
+        """
+        错误响应
+
+        Args:
+            message: 错误消息
+            code: 错误代码
+            data: 附加数据
+
+        Returns:
+            Dict[str, Any]: 格式化的错误响应
+        """
+        response = {
+            "success": False,
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        if code is not None:
+            response["code"] = code
+        else:
+            response["code"] = 500  # 默认错误代码
+
+        if data is not None:
+            response["data"] = data
+
+        return response
+
+    @staticmethod
+    def error_response(
+        message: str = "操作失败", code: Optional[int] = None, data: Any = None
+    ) -> Dict[str, Any]:
+        """错误响应（别名方法）"""
+        return APIResponse.error(message, code, data)
+
+
+# 为了向后兼容,提供一个ResponseUtils别名
+ResponseUtils = APIResponse

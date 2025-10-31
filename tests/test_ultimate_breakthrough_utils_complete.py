@@ -65,7 +65,7 @@ class TestUltimateBreakthroughUtilsComplete:
         # 测试单词首字母大写
         try:
             result = capitalize_words("hello world")
-            assert result == "Hello World"
+            assert result      == "Hello World"
         except:
             pass
 
@@ -79,7 +79,7 @@ class TestUltimateBreakthroughUtilsComplete:
         # 测试字符串清理
         try:
             result = clean_string("  hello  world  ")
-            assert result == "hello world"
+            assert result      == "hello world"
         except:
             pass
 
@@ -95,7 +95,7 @@ class TestUltimateBreakthroughUtilsComplete:
             assert result["a"] == 1
             assert result["b"]["c"] == 2
             assert result["b"]["d"] == 3
-            assert result["e"] == 4
+            assert result["e"]      == 4
         except:
             pass
 
@@ -111,7 +111,7 @@ class TestUltimateBreakthroughUtilsComplete:
         try:
             source_dict = {"a": 1, "b": 2, "c": 3}
             result = filter_dict(source_dict, ["a", "c"])
-            assert result == {"a": 1, "c": 3}
+            assert result      == {"a": 1, "c": 3}
         except:
             pass
 
@@ -191,7 +191,7 @@ class TestUltimateBreakthroughUtilsComplete:
         # 测试获取配置值
         try:
             value = get_config_value({"database": {"host": "localhost"}}, "database.host")
-            assert value == "localhost"
+            assert value      == "localhost"
         except:
             pass
 
@@ -199,7 +199,7 @@ class TestUltimateBreakthroughUtilsComplete:
         try:
             config = {}
             result = set_config_value(config, "app.name", "TestApp")
-            assert result["app"]["name"] == "TestApp"
+            assert result["app"]["name"]      == "TestApp"
         except:
             pass
 
@@ -225,7 +225,7 @@ class TestUltimateBreakthroughUtilsComplete:
         # 测试安全JSON加载
         try:
             data = safe_json_load('{"key": "value"}')
-            assert data["key"] == "value"
+            assert data["key"]      == "value"
         except:
             pass
 
@@ -236,7 +236,7 @@ class TestUltimateBreakthroughUtilsComplete:
         # 测试数据加密
         try:
             encrypted = encrypt_data("secret data", "password")
-            assert encrypted != "secret data"
+            assert encrypted      != "secret data"
         except:
             pass
 
@@ -343,7 +343,7 @@ class TestUltimateBreakthroughUtilsComplete:
             import datetime
             date = datetime.date(2024, 1, 1)
             result = add_days(date, 7)
-            assert result.day == 8
+            assert result.day      == 8
         except:
             pass
 

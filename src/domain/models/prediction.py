@@ -33,9 +33,7 @@ class ConfidenceScore:
     value: Decimal
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-        """验证置信度范围"""
+        """验证预测数据"""
         if self.value < 0 or self.value > 1:
             raise DomainError("置信度必须在 0 到 1 之间")
         # 转换为两位小数
@@ -67,8 +65,9 @@ class PredictionScore:
     actual_away: Optional[int] = None
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
             raise DomainError("预测比分不能为负数")
@@ -138,8 +137,9 @@ class PredictionPoints:
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
@@ -187,8 +187,9 @@ class Prediction:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化后的验证"""
         if self.user_id <= 0:
             raise DomainError("用户ID必须大于0")

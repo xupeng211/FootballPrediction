@@ -23,7 +23,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         assert create_cmd.match_id == 123
         assert create_cmd.user_id == 456
         assert create_cmd.predicted_result == "HOME_WIN"
-        assert create_cmd.confidence == 0.85
+        assert create_cmd.confidence   == 0.85
 
         # 测试更新预测命令
         update_cmd = UpdatePredictionCommand(
@@ -33,12 +33,12 @@ class TestUltraBreakthroughCQRSEnhanced:
         )
         assert update_cmd is not None
         assert update_cmd.prediction_id == 789
-        assert update_cmd.predicted_result == "AWAY_WIN"
+        assert update_cmd.predicted_result   == "AWAY_WIN"
 
         # 测试删除预测命令
         delete_cmd = DeletePredictionCommand(prediction_id=789)
         assert delete_cmd is not None
-        assert delete_cmd.prediction_id == 789
+        assert delete_cmd.prediction_id   == 789
 
     def test_cqrs_commands_match_commands(self):
         """测试比赛命令"""
@@ -53,7 +53,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         )
         assert create_cmd is not None
         assert create_cmd.home_team_id == 1
-        assert create_cmd.away_team_id == 2
+        assert create_cmd.away_team_id   == 2
 
         # 测试更新比赛命令
         update_cmd = UpdateMatchCommand(
@@ -63,7 +63,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         )
         assert update_cmd is not None
         assert update_cmd.match_id == 123
-        assert update_cmd.status == "LIVE"
+        assert update_cmd.status   == "LIVE"
 
         # 测试结束比赛命令
         finish_cmd = FinishMatchCommand(
@@ -72,7 +72,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             match_events=[]
         )
         assert finish_cmd is not None
-        assert finish_cmd.final_score == "2-1"
+        assert finish_cmd.final_score   == "2-1"
 
     def test_cqrs_commands_user_commands(self):
         """测试用户命令"""
@@ -86,7 +86,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         )
         assert create_cmd is not None
         assert create_cmd.username == "testuser"
-        assert create_cmd.email == "test@example.com"
+        assert create_cmd.email   == "test@example.com"
 
         # 测试更新用户命令
         update_cmd = UpdateUserCommand(
@@ -94,12 +94,12 @@ class TestUltraBreakthroughCQRSEnhanced:
             email="updated@example.com"
         )
         assert update_cmd is not None
-        assert update_cmd.user_id == 123
+        assert update_cmd.user_id   == 123
 
         # 测试删除用户命令
         delete_cmd = DeleteUserCommand(user_id=123)
         assert delete_cmd is not None
-        assert delete_cmd.user_id == 123
+        assert delete_cmd.user_id   == 123
 
     def test_cqrs_queries_prediction_queries(self):
         """测试预测查询"""
@@ -108,7 +108,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         # 测试获取单个预测查询
         get_pred_query = GetPredictionQuery(prediction_id=123)
         assert get_pred_query is not None
-        assert get_pred_query.prediction_id == 123
+        assert get_pred_query.prediction_id   == 123
 
         # 测试获取用户预测查询
         user_preds_query = GetUserPredictionsQuery(
@@ -118,7 +118,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         )
         assert user_preds_query is not None
         assert user_preds_query.user_id == 456
-        assert user_preds_query.limit == 10
+        assert user_preds_query.limit   == 10
 
         # 测试获取比赛预测查询
         match_preds_query = GetMatchPredictionsQuery(
@@ -126,7 +126,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             include_analysis=True
         )
         assert match_preds_query is not None
-        assert match_preds_query.match_id == 789
+        assert match_preds_query.match_id   == 789
 
     def test_cqrs_queries_match_queries(self):
         """测试比赛查询"""
@@ -135,7 +135,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         # 测试获取比赛查询
         get_match_query = GetMatchQuery(match_id=123)
         assert get_match_query is not None
-        assert get_match_query.match_id == 123
+        assert get_match_query.match_id   == 123
 
         # 测试获取比赛列表查询
         get_matches_query = GetMatchesQuery(
@@ -144,7 +144,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             limit=20
         )
         assert get_matches_query is not None
-        assert get_matches_query.league == "Premier League"
+        assert get_matches_query.league   == "Premier League"
 
         # 测试获取队伍比赛查询
         team_matches_query = GetTeamMatchesQuery(
@@ -153,7 +153,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             date_to="2024-12-31"
         )
         assert team_matches_query is not None
-        assert team_matches_query.team_id == 456
+        assert team_matches_query.team_id   == 456
 
     def test_cqrs_queries_user_queries(self):
         """测试用户查询"""
@@ -162,7 +162,7 @@ class TestUltraBreakthroughCQRSEnhanced:
         # 测试获取用户查询
         get_user_query = GetUserQuery(user_id=123)
         assert get_user_query is not None
-        assert get_user_query.user_id == 123
+        assert get_user_query.user_id   == 123
 
         # 测试获取用户列表查询
         get_users_query = GetUsersQuery(
@@ -171,7 +171,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             filters={"status": "active"}
         )
         assert get_users_query is not None
-        assert get_users_query.limit == 10
+        assert get_users_query.limit   == 10
 
         # 测试搜索用户查询
         search_query = SearchUsersQuery(
@@ -179,7 +179,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             limit=5
         )
         assert search_query is not None
-        assert search_query.search_term == "test"
+        assert search_query.search_term   == "test"
 
     def test_cqrs_handlers_prediction_handlers(self):
         """测试预测处理器"""
@@ -301,14 +301,14 @@ class TestUltraBreakthroughCQRSEnhanced:
         success = SuccessResult(data={"prediction_id": 123})
         assert success is not None
         assert success.success is True
-        assert success.data["prediction_id"] == 123
+        assert success.data["prediction_id"]   == 123
 
         # 测试错误结果
         error = ErrorResult(error_message="Validation failed", error_code=400)
         assert error is not None
         assert error.success is False
         assert error.error_message == "Validation failed"
-        assert error.error_code == 400
+        assert error.error_code   == 400
 
     def test_cqrs_results_query_result(self):
         """测试查询结果"""
@@ -317,13 +317,13 @@ class TestUltraBreakthroughCQRSEnhanced:
         # 测试查询结果
         query_result = QueryResult(data=[{"id": 1, "name": "Test"}], total_count=1)
         assert query_result is not None
-        assert query_result.total_count == 1
+        assert query_result.total_count   == 1
         assert len(query_result.data) == 1
 
         # 测试空结果
         empty_result = EmptyResult()
         assert empty_result is not None
-        assert empty_result.total_count == 0
+        assert empty_result.total_count   == 0
         assert len(empty_result.data) == 0
 
     def test_cqrs_validators_command_validators(self):
@@ -370,7 +370,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             predicted_result="HOME_WIN"
         )
         assert pred_created is not None
-        assert pred_created.prediction_id == 123
+        assert pred_created.prediction_id   == 123
 
         # 测试预测更新事件
         pred_updated = PredictionUpdatedEvent(
@@ -379,7 +379,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             new_result="AWAY_WIN"
         )
         assert pred_updated is not None
-        assert pred_updated.old_result == "HOME_WIN"
+        assert pred_updated.old_result   == "HOME_WIN"
 
         # 测试比赛创建事件
         match_created = MatchCreatedEvent(
@@ -388,7 +388,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             away_team_id=2
         )
         assert match_created is not None
-        assert match_created.match_id == 456
+        assert match_created.match_id   == 456
 
         # 测试用户注册事件
         user_registered = UserRegisteredEvent(
@@ -397,7 +397,7 @@ class TestUltraBreakthroughCQRSEnhanced:
             email="test@example.com"
         )
         assert user_registered is not None
-        assert user_registered.user_id == 789
+        assert user_registered.user_id   == 789
 
     def test_cqrs_events_event_handlers(self):
         """测试事件处理器"""

@@ -82,8 +82,9 @@ class ResourceMonitor:
     """资源监控器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化资源监控器"""
         self.monitoring = False
         self.monitor_thread: Optional[threading.Thread] = None
@@ -105,8 +106,9 @@ class ResourceMonitor:
         self.resource_stats = {"memory": [], "cpu": []}
 
         def _monitor():
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             """监控线程"""
             import psutil
 
@@ -181,8 +183,9 @@ class JobManager:
     """
 
     def __init__(self, max_workers: int = 5):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化作业管理器
 
@@ -334,8 +337,9 @@ class JobManager:
 
         # 在新的事件循环中执行异步任务
         def run_async():
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
@@ -524,7 +528,8 @@ class JobManager:
             logger.error(f"作业管理器资源清理失败: {e}")
 
     def __del__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """析构函数"""
         self.cleanup_resources()

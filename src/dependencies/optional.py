@@ -21,25 +21,29 @@ class MissingDependency:
     """缺失依赖的占位符"""
 
     def __init__(self, name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
 
     def __call__(self, *args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         warnings.warn(f"依赖 {self.name} 未安装,相关功能将被禁用", ImportWarning)
         return None
 
     def __getattr__(self, item):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         warnings.warn(f"依赖 {self.name} 未安装,相关功能将被禁用", ImportWarning)
         return MissingDependency(f"{self.name}.{item}")
 
     def __bool__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return False
 
 

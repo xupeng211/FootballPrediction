@@ -138,8 +138,9 @@ class AnomalyDetector:
     """异常检测器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.isolation_forest = IsolationForest(contamination=0.1, random_state=42)
         self.scaler = StandardScaler()
         self.is_trained = False
@@ -147,8 +148,9 @@ class AnomalyDetector:
         self.logger = get_logger(self.__class__.__name__)
 
     def train(self, historical_data: List[Dict[str, float]]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """训练异常检测模型"""
         try:
             if len(historical_data) < 10:
@@ -217,8 +219,9 @@ class TrendAnalyzer:
     """趋势分析器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
 
     def analyze_trend(
@@ -317,11 +320,10 @@ class AlertEngine:
     """智能告警引擎"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化智能告警引擎"""
         self.config = get_config()
-        self.redis_client = redis.Redis(host="localhost"))
-        self.rules: Dict[str))
+        self.redis_client = redis.Redis(host="localhost")
+        self.rules: Dict[str, Any] = {}
         self.trend_analyzer = TrendAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -332,8 +334,9 @@ class AlertEngine:
         self.background_task = None
 
     def _load_alert_rules(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """加载告警规则"""
         try:
             # 默认告警规则
@@ -402,8 +405,9 @@ class AlertEngine:
             self.logger.error(f"加载告警规则失败: {e}")
 
     def _load_custom_rules(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """加载自定义告警规则"""
         try:
             rules_file = Path("config/alert_rules.json")
@@ -676,8 +680,9 @@ class AlertEngine:
         return unique_alerts
 
     def _save_alert_to_redis(self, alert: Alert):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """保存告警到Redis"""
         try:
             alert_key = f"alert:{alert.id}"
@@ -744,8 +749,9 @@ class AlertEngine:
         return sorted(self.alert_history, key=lambda x: x.timestamp, reverse=True)[:limit]
 
     def start_background_monitoring(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """启动后台监控任务"""
 
         async def monitoring_loop():
@@ -773,8 +779,9 @@ class AlertEngine:
         self.logger.info("后台告警监控任务已启动")
 
     def stop_background_monitoring(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """停止后台监控任务"""
         if self.background_task:
             self.background_task.cancel()

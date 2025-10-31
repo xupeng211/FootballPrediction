@@ -69,8 +69,9 @@ class FeatureCalculator:
     - 批量计算和缓存优化"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
         self.team_stats_cache = {}
         self.head_to_head_cache = {}

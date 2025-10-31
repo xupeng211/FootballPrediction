@@ -31,8 +31,9 @@ class MLModelStrategy(PredictionStrategy):
     """
 
     def __init__(self, model_name: str = "default_ml_model"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(model_name, StrategyType.ML_MODEL)
         self._model = None
         self._feature_processor = None
