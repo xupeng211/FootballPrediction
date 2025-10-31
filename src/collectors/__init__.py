@@ -3,15 +3,14 @@
 负责从各种数据源收集足球相关数据
 """
 
-from .fixtures_collector import FixturesCollector, FixturesCollectorFactory
-from .odds_collector import OddsCollector, OddsCollectorFactory
-from .scores_collector import ScoresCollector, ScoresCollectorFactory
+from .base_collector import BaseCollector, CollectionResult, CollectorError
+from .football_data_collector import FootballDataCollector
+from .match_collector import MatchCollector
 
 __all__ = [
-    "FixturesCollector",
-    "FixturesCollectorFactory",
-    "OddsCollector",
-    "OddsCollectorFactory",
-    "ScoresCollector",
-    "ScoresCollectorFactory",
+    "BaseCollector",
+    "CollectionResult",
+    "CollectorError",
+    "FootballDataCollector",
+    "MatchCollector",
 ]

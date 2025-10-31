@@ -1,23 +1,32 @@
 """
 比赛数据采集器
-Match Data Collector for Football Matches
+专门负责采集和管理比赛相关数据
 """
 
 import asyncio
-from typing import Dict, Any, List, Optional
+import os
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 import logging
 
-from .base_collector import FootballDataCollector
+from .base_collector import BaseCollector, CollectionResult, DataValidationError
 
 logger = logging.getLogger(__name__)
 
 
-class MatchCollector(FootballDataCollector):
+class MatchCollector(BaseCollector):
     """比赛数据采集器"""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None, **kwargs):
+        # 从环境变量获取默认值
+        api_key = api_key or os.getenv('FOOTBALL_DATA_API_KEY', '')
+        base_url = base_url or os.getenv('FOOTBALL_DATA_BASE_URL', 'https://api.football-data.org/v4')
+
+        if not api_key:
+            raise ValueError("API key is required for MatchCollector")
+
+        super().__init__(api_key, base_url, **kwargs)
+
         self.match_status_mapping = {
             'SCHEDULED': 'scheduled',
             'TIMED': 'scheduled',
@@ -30,80 +39,123 @@ class MatchCollector(FootballDataCollector):
             'AWARDED': 'finished'
         }
 
-    async def collect_data(self) -> Dict[str, Any]:
-        """
-        收集比赛数据
-
-        Returns:
-            包含所有比赛数据的字典
-        """
-        results = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'matches': {
-                'scheduled': [],
-                'live': [],
-                'finished': [],
-                'postponed': [],
-                'cancelled': []
-            },
-            'competitions': [],
-            'errors': []
+    async def _get_headers(self) -> Dict[str, str]:
+        """获取请求头"""
+        return {
+            'X-Auth-Token': self.api_key,
+            'Content-Type': 'application/json'
         }
 
+    def _build_url(self, endpoint: str, **params) -> str:
+        """构建请求URL"""
+        from urllib.parse import urljoin
+
+        # 移除开头的斜杠
+        endpoint = endpoint.lstrip('/')
+
+        if params:
+            query_string = "&".join([f"{k}={v}" for k, v in params.items() if v is not None])
+            return urljoin(self.base_url + '/', f"{endpoint}?{query_string}")
+        return urljoin(self.base_url + '/', endpoint)
+
+    async def collect_matches(
+        self,
+        league_id: Optional[int] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        status: Optional[str] = None
+    ) -> CollectionResult:
+        """采集比赛数据"""
         try:
-            # 获取支持的联赛
-            all_competitions = await self.fetch_competitions()
-            supported_competitions = [
-                comp for comp in all_competitions
-                if comp.get('code') in self.supported_competitions
-            ]
-            results['competitions'] = supported_competitions
+            if league_id:
+                endpoint = f"competitions/{league_id}/matches"
+            else:
+                endpoint = "matches"
 
-            # 收集各联赛的比赛数据
-            for competition in supported_competitions:
-                comp_id = competition['id']
-                comp_code = competition['code']
+            params = {}
+            if date_from:
+                params['dateFrom'] = date_from.strftime('%Y-%m-%d')
+            if date_to:
+                params['dateTo'] = date_to.strftime('%Y-%m-%d')
+            if status:
+                params['status'] = status
 
-                try:
-                    logger.info(f"Collecting matches for competition: {comp_code}")
+            result = await self.get(endpoint, params=params)
 
-                    # 收集即将开始的比赛
-                    scheduled_matches = await self.fetch_matches(
-                        str(comp_id),
-                        status='SCHEDULED',
-                        limit=10
-                    )
-                    results['matches']['scheduled'].extend(scheduled_matches)
-
-                    # 收集已结束的比赛（最近30场）
-                    finished_matches = await self.fetch_matches(
-                        str(comp_id),
-                        status='FINISHED',
-                        limit=30
-                    )
-                    results['matches']['finished'].extend(finished_matches)
-
-                    # 收集正在进行的比赛
-                    live_matches = await self.fetch_matches(
-                        str(comp_id),
-                        status='LIVE'
-                    )
-                    results['matches']['live'].extend(live_matches)
-
-                    logger.info(f"Collected {len(scheduled_matches)} scheduled, {len(finished_matches)} finished, {len(live_matches)} live matches for {comp_code}")
-
-                except Exception as e:
-                    error_msg = f"Failed to collect matches for {comp_code}: {e}"
-                    logger.error(error_msg)
-                    results['errors'].append(error_msg)
-                    continue
+            if result.success:
+                matches = result.data.get('matches', [])
+                return CollectionResult(
+                    success=True,
+                    data={
+                        'matches': matches,
+                        'count': len(matches)
+                    },
+                    response_time=result.response_time
+                )
+            else:
+                return result
 
         except Exception as e:
-            error_msg = f"General match collection error: {e}"
-            logger.error(error_msg)
-            results['errors'].append(error_msg)
+            logger.error(f"Error collecting matches: {e}")
+            return CollectionResult(
+                success=False,
+                error=f"Failed to collect matches: {str(e)}"
+            )
 
-        return results
+    async def collect_teams(self, league_id: Optional[int] = None) -> CollectionResult:
+        """采集球队数据 - MatchCollector不实现此功能"""
+        return CollectionResult(
+            success=False,
+            error="MatchCollector does not support team collection"
+        )
+
+    async def collect_players(self, team_id: Optional[int] = None) -> CollectionResult:
+        """采集球员数据 - MatchCollector不实现此功能"""
+        return CollectionResult(
+            success=False,
+            error="MatchCollector does not support player collection"
+        )
+
+    async def collect_leagues(self) -> CollectionResult:
+        """采集联赛数据 - MatchCollector不实现此功能"""
+        return CollectionResult(
+            success=False,
+            error="MatchCollector does not support league collection"
+        )
+
+    # 兼容性方法 - 保持向后兼容
+    async def fetch_competitions(self) -> List[Dict[str, Any]]:
+        """获取所有可用的比赛"""
+        try:
+            result = await self.get("competitions")
+            if result.success:
+                return result.data.get('competitions', [])
+            return []
+        except Exception as e:
+            logger.error(f"Failed to fetch competitions: {e}")
+            return []
+
+    async def fetch_teams(self, competition_id: str) -> List[Dict[str, Any]]:
+        """获取指定比赛的球队列表"""
+        try:
+            result = await self.get(f"competitions/{competition_id}/teams")
+            if result.success:
+                return result.data.get('teams', [])
+            return []
+        except Exception as e:
+            logger.error(f"Failed to fetch teams for competition {competition_id}: {e}")
+            return []
+
+    async def fetch_matches(self, competition_id: str, **kwargs) -> List[Dict[str, Any]]:
+        """获取比赛数据"""
+        try:
+            result = await self.get(f"competitions/{competition_id}/matches", params=kwargs)
+            if result.success:
+                return result.data.get('matches', [])
+            return []
+        except Exception as e:
+            logger.error(f"Failed to fetch matches for competition {competition_id}: {e}")
+            return []
 
     async def collect_upcoming_matches(self, days_ahead: int = 7) -> List[Dict[str, Any]]:
         """
