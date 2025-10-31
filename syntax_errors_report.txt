@@ -1,16 +1,6 @@
 语法错误详细报告
 ========================================
 
-UTILS 目录:
---------------------
-文件: src/utils/date_utils_broken.py
-错误:   File "src/utils/date_utils_broken.py", line 336
-    def get_business_days_range(start_date: datetime)) -> int:
-                                                     ^
-SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on line 293
-
-----------------------------------------
-
 OTHER 目录:
 --------------------
 文件: src/bad_example.py
