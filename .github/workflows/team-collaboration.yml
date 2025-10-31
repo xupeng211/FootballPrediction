@@ -1,0 +1,461 @@
+name: 👥 Team Collaboration Automation
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, closed]
+    branches: [main]
+  issues:
+    types: [opened, closed]
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/**'
+      - 'CONTRIBUTING.md'
+  schedule:
+    # 每周一团队协作报告
+    - cron: '0 9 * * 1'  # 每周一9点
+  workflow_dispatch:
+    inputs:
+      collaboration_type:
+        description: 'Type of collaboration task'
+        required: false
+        default: 'review'
+        type: choice
+        options:
+        - review
+        - onboard
+        - report
+        - cleanup
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # 1. PR自动审查
+  pr-automated-review:
+    name: 🔍 Automated PR Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml
+
+    - name: 🔍 PR Analysis
+      id: pr-analysis
+      run: |
+        python3 scripts/analyze_pr.py \
+          --pr-number ${{ github.event.number }} \
+          --repo ${{ github.repository }} \
+          --token ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 📋 Code Review Checklist
+      run: |
+        python3 scripts/generate_review_checklist.py \
+          --pr-number ${{ github.event.number }} \
+          --author ${{ github.event.pull_request.user.login }}
+
+    - name: 💬 Auto-Comment PR
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          // 读取分析结果
+          let analysis = {};
+          try {
+            analysis = JSON.parse(fs.readFileSync('pr_analysis.json', 'utf8'));
+          } catch (e) {
+            console.log('Could not read analysis file');
+          }
+
+          // 构建评论内容
+          let comment = `## 🔍 Automated PR Review\n\n`;
+
+          comment += `👋 **Author**: @${{ github.event.pull_request.user.login }}\n`;
+          comment += `📊 **Files Changed**: ${{ github.event.pull_request.changed_files }}\n`;
+          comment += `➕ **Additions**: ${{ github.event.pull_request.additions }}\n`;
+          comment += `➖ **Deletions**: ${{ github.event.pull_request.deletions }}\n\n`;
+
+          // 添加检查清单
+          comment += `## ✅ Automated Checks\n\n`;
+          comment += `- [ ] Code follows project style guidelines\n`;
+          comment += `- [ ] Tests are included for new functionality\n`;
+          comment += `- [ ] Documentation is updated\n`;
+          comment += `- [ ] No breaking changes introduced\n\n`;
+
+          // 添加分析结果
+          if (analysis.complexity) {
+            comment += `## 📊 Code Complexity Analysis\n\n`;
+            comment += `- **Complexity Score**: ${analysis.complexity.score}/10\n`;
+            comment += `- **Risk Level**: ${analysis.complexity.risk}\n\n`;
+          }
+
+          if (analysis.suggestions && analysis.suggestions.length > 0) {
+            comment += `## 💡 Suggestions\n\n`;
+            analysis.suggestions.slice(0, 3).forEach(suggestion => {
+              comment += `- ${suggestion}\n`;
+            });
+            comment += `\n`;
+          }
+
+          comment += `## 🤖 Next Steps\n\n`;
+          comment += `1. Address the automated checklist items above\n`;
+          comment += `2. Request manual review from team members\n`;
+          comment += `3. Wait for CI/CD checks to pass\n`;
+          comment += `4. Respond to reviewer feedback\n\n`;
+
+          comment += `---\n`;
+          comment += `*This is an automated review. Human review is still required!*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: 🏷️ Add Labels
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const labels = [];
+
+          // 根据PR大小添加标签
+          if (context.payload.pull_request.additions > 500) {
+            labels.push('large-pr');
+          } else if (context.payload.pull_request.additions > 100) {
+            labels.push('medium-pr');
+          } else {
+            labels.push('small-pr');
+          }
+
+          // 根据文件类型添加标签
+          const changedFiles = context.payload.pull_request.changed_files;
+          if (changedFiles > 0) {
+            labels.push('needs-review');
+          }
+
+          // 添加标签
+          if (labels.length > 0) {
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: labels
+            });
+          }
+
+  # 2. 团队成员分配
+  assign-reviewers:
+    name: 👥 Assign Reviewers
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'ready_for_review'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml
+
+    - name: 👥 Smart Reviewer Assignment
+      run: |
+        python3 scripts/assign_reviewers.py \
+          --pr-number ${{ github.event.number }} \
+          --author ${{ github.event.pull_request.user.login }} \
+          --files-changed ${{ github.event.pull_request.changed_files }} \
+          --repo ${{ github.repository }}
+
+    - name: 🏷️ Assign Reviewers
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          let reviewers = [];
+          try {
+            const assignment = JSON.parse(fs.readFileSync('reviewer_assignment.json', 'utf8'));
+            reviewers = assignment.reviewers || [];
+          } catch (e) {
+            console.log('Could not read reviewer assignment');
+          }
+
+          if (reviewers.length > 0) {
+            // 避免分配给PR作者
+            const filteredReviewers = reviewers.filter(r => r !== context.payload.pull_request.user.login);
+
+            if (filteredReviewers.length > 0) {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                reviewers: filteredReviewers.slice(0, 2) // 最多分配2个审查者
+              });
+            }
+          }
+
+  # 3. Issue自动分类
+  issue-categorization:
+    name: 🏷️ Issue Auto-Categorization
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml
+
+    - name: 🏷️ Analyze and Categorize Issue
+      run: |
+        python3 scripts/categorize_issue.py \
+          --issue-number ${{ github.event.issue.number }} \
+          --title "${{ github.event.issue.title }}" \
+          --body "${{ github.event.issue.body }}" \
+          --author ${{ github.event.issue.user.login }}
+
+    - name: 🏷️ Apply Labels
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          let labels = [];
+          try {
+            const categorization = JSON.parse(fs.readFileSync('issue_categorization.json', 'utf8'));
+            labels = categorization.labels || [];
+          } catch (e) {
+            console.log('Could not read issue categorization');
+          }
+
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: labels
+            });
+          }
+
+    - name: 💬 Auto-Comment Issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          let comment = `## 🎯 Issue Received\n\n`;
+          comment += `Thank you for opening this issue! 🎉\n\n`;
+          comment += `📋 **Issue Number**: #${{ github.event.issue.number }}\n`;
+          comment += `👤 **Reported by**: @${{ github.event.issue.user.login }}\n\n`;
+
+          let categorization = {};
+          try {
+            categorization = JSON.parse(fs.readFileSync('issue_categorization.json', 'utf8'));
+
+            if (categorization.type) {
+              comment += `🏷️ **Type**: ${categorization.type}\n`;
+            }
+            if (categorization.priority) {
+              comment += `⚡ **Priority**: ${categorization.priority}\n`;
+            }
+            if (categorization.estimated_effort) {
+              comment += `⏱️ **Estimated Effort**: ${categorization.estimated_effort}\n`;
+            }
+          } catch (e) {
+            console.log('Could not read categorization');
+          }
+
+          comment += `\n## 🔄 Next Steps\n\n`;
+          comment += `1. Our team will review this issue shortly\n`;
+          comment += `2. We may ask for additional information if needed\n`;
+          comment += `3. We'll provide an estimate and timeline\n`;
+          comment += `4. You'll receive updates as we progress\n\n`;
+
+          comment += `💬 **Need to add more information?**\n`;
+          comment += `Just reply to this issue with any additional details!`;
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # 4. 新成员入职引导
+  new-member-onboarding:
+    name: 👋 New Member Onboarding
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'help-wanted')
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 👋 Generate Onboarding Guide
+      run: |
+        python3 scripts/generate_onboarding_guide.py \
+          --issue-number ${{ github.event.issue.number }} \
+          --new-member ${{ github.event.issue.user.login }}
+
+    - name: 💬 Welcome New Member
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          let onboardingGuide = "";
+          try {
+            onboardingGuide = fs.readFileSync('onboarding_guide.md', 'utf8');
+          } catch (e) {
+            console.log('Could not read onboarding guide');
+          }
+
+          let comment = `🎉 Welcome to the team, @${{ github.event.issue.user.login }}! 👋\n\n`;
+          comment += `We're excited to have you contribute to the Football Prediction project!\n\n`;
+
+          if (onboardingGuide) {
+            comment += onboardingGuide;
+          } else {
+            comment += `## 🚀 Getting Started\n\n`;
+            comment += `1. 📚 Read our [Contributing Guide](CONTRIBUTING.md)\n`;
+            comment += `2. 🔧 Set up your development environment\n`;
+            comment += `3. 🤖 Try our AI-assisted development tools\n`;
+            comment += `4. 📋 Check out our [Project Documentation](CLAUDE.md)\n\n`;
+            comment += `## 💬 Need Help?\n\n`;
+            comment += `- Feel free to ask questions in this issue\n`;
+            comment += `- Join our GitHub Discussions\n`;
+            comment += `- Check out existing issues for examples\n\n`;
+            comment += `Happy coding! 🚀\n`;
+          }
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # 5. 团队协作周报
+  weekly-collaboration-report:
+    name: 📊 Weekly Collaboration Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml pandas matplotlib
+
+    - name: 📊 Generate Weekly Report
+      run: |
+        python3 scripts/generate_weekly_collaboration_report.py
+
+    - name: 📧 Send Weekly Report
+      run: |
+        python3 scripts/send_weekly_report.py
+
+    - name: 📤 Upload Weekly Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: weekly-collaboration-report
+        path: weekly_collaboration_report_*.md
+        retention-days: 30
+
+  # 6. 项目看板更新
+  update-project-board:
+    name: 📋 Update Project Board
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml
+
+    - name: 📋 Update Project Board
+      run: |
+        python3 scripts/update_project_board.py \
+          --event-type ${{ github.event_name }} \
+          --action ${{ github.event.action }}
+
+  # 7. 协作指标收集
+  collaboration-metrics:
+    name: 📈 Collect Collaboration Metrics
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml
+
+    - name: 📈 Collect Metrics
+      run: |
+        python3 scripts/collect_collaboration_metrics.py
+
+    - name: 📊 Store Metrics
+      uses: actions/upload-artifact@v3
+      with:
+        name: collaboration-metrics
+        path: collaboration_metrics_*.json
+        retention-days: 90
