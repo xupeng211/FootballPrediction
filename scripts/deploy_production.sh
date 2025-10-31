@@ -1,21 +1,27 @@
 #!/bin/bash
 
-# 足球预测系统生产环境一键部署脚本
+# =================================================================
+# 生产环境部署脚本
+# Production Deployment Script
+# =================================================================
+
 set -e
 
-# 颜色定义
+# 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# 项目信息
+# 配置变量
 PROJECT_NAME="football-prediction"
-DOCKER_IMAGE_TAG="football-prediction:prod"
-COMPOSE_FILE="docker-compose.prod.yml"
+DOCKER_REGISTRY="${DOCKER_REGISTRY:-your-registry.com}"
+VERSION="${VERSION:-latest}"
+ENVIRONMENT="${ENVIRONMENT:-production}"
+COMPOSE_FILE="docker/docker-compose.production.yml"
 
 # 函数：打印带颜色的消息
 print_message() {

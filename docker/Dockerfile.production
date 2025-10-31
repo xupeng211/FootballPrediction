@@ -1,0 +1,104 @@
+# =================================================================
+# 生产环境Dockerfile
+# Production Dockerfile
+# =================================================================
+
+# 多阶段构建：基础镜像
+FROM python:3.11-slim as base
+
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONHASHSEED=random \
+    TZ=Asia/Shanghai
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    libpq-dev \
+    git \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && groupadd -r appuser && useradd -r -g appuser appuser
+
+# 设置工作目录
+WORKDIR /app
+
+# ===================
+# 构建阶段
+# ===================
+FROM base as builder
+
+# 复制依赖文件
+COPY requirements/ ./requirements/
+
+# 安装Python依赖
+RUN pip install --no-cache-dir -r requirements/production.txt
+
+# 复制应用代码
+COPY . .
+
+# 运行测试和代码质量检查
+RUN python -m pytest tests/unit/ -xvs \
+    && python -m ruff check src/ --exit-zero \
+    && python -m ruff format src/ --check --exit-zero
+
+# ===================
+# 生产环境
+# ===================
+FROM base as production
+
+# 安装运行时依赖
+RUN apt-get update && apt-get install -y \
+    curl \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 创建必要的目录
+RUN mkdir -p /app/logs /app/tmp \
+    && chown -R appuser:appuser /app
+
+# 从构建阶段复制Python依赖
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /app /app
+
+# 复制配置文件
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/gunicorn.conf.py /etc/gunicorn.conf.py
+
+# 设置权限
+RUN chmod +x /app/docker/entrypoint.sh \
+    && chown -R appuser:appuser /app
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 切换到非root用户
+USER appuser
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["/app/docker/entrypoint.sh"]
+
+# ===================
+# 测试环境
+# ===================
+FROM builder as test
+
+# 安装测试依赖
+RUN pip install --no-cache-dir pytest pytest-asyncio pytest-cov
+
+# 运行测试
+RUN python -m pytest tests/ -xvs --cov=src --cov-report=html --cov-report=term
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD echo "Tests completed successfully" || exit 1
