@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from ..database.repositories.base import BaseRepository
+from src.database.repositories.base import BaseRepository
 from .auto_binding import AutoBinder
 from .config_di import ConfigurationBinder
 from .di import DIContainer, ServiceCollection, ServiceLifetime
