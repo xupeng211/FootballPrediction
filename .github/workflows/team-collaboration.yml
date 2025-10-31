@@ -395,7 +395,7 @@ jobs:
         python3 scripts/send_weekly_report.py
 
     - name: 📤 Upload Weekly Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: weekly-collaboration-report
         path: weekly_collaboration_report_*.md
@@ -454,7 +454,7 @@ jobs:
         python3 scripts/collect_collaboration_metrics.py
 
     - name: 📊 Store Metrics
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: collaboration-metrics
         path: collaboration_metrics_*.json

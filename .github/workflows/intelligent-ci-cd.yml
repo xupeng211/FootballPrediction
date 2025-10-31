@@ -242,7 +242,7 @@ EOF
           echo "🎯 Deployment Decision: ${{ steps.decision.outputs.deploy }}"
 
       - name: 📤 Upload Analysis Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: intelligent-analysis-results
@@ -324,7 +324,7 @@ EOF
           echo "📄 Test report generated"
 
       - name: 📤 Upload Test Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
@@ -506,7 +506,7 @@ EOF
           python ai_test_generator.py
 
       - name: 📤 Upload Generated Tests
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ai-generated-tests
           path: tests/test_ai_generated.py
@@ -575,7 +575,7 @@ EOF
           echo "📄 Quality report generated"
 
       - name: 📤 Upload Quality Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: quality-gate-report
           path: quality_gate_report.md

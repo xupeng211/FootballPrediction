@@ -115,7 +115,7 @@ jobs:
         python3 scripts/send_daily_report.py
 
     - name: 📤 Upload Daily Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: daily-quality-report
         path: daily_quality_report_*.md
@@ -197,7 +197,7 @@ jobs:
         python3 scripts/send_security_alerts.py
 
     - name: 📤 Upload Security Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
@@ -318,7 +318,7 @@ jobs:
         python3 scripts/send_alert_summary.py
 
     - name: 📤 Upload Alert Summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: alert-summary
         path: alert_summary.md

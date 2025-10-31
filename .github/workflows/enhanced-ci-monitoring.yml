@@ -222,7 +222,7 @@ jobs:
         cat quality_report.md
 
     - name: 📤 Upload Quality Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quality-reports
         path: |
@@ -303,7 +303,7 @@ jobs:
         cat test_metrics.json | python -m json.tool
 
     - name: 📤 Upload Test Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-reports
         path: test_metrics.json
