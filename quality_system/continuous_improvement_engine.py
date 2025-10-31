@@ -877,9 +877,8 @@ class ContinuousImprovementEngine:
 
         # 添加行动卡片
         for action in actions[:5]:
-            priority_class = f"priority-{action['priority'].lower()}"
-            html += """
-        <div class="action-card {priority_class}">
+            html += f"""
+        <div class="action-card priority-{action['priority'].lower()}">
             <h3>{action['title']}</h3>
             <p><strong>描述:</strong> {action['description']}</p>
             <p><strong>类别:</strong> {action['category']} | <strong>工作量:</strong> {action['effort_estimate']}</p>

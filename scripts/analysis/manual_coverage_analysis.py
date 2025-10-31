@@ -20,7 +20,7 @@ def count_lines_of_code(file_path: str) -> int:
             if line and not line.startswith("#"):
                 code_lines += 1
         return code_lines
-            except Exception:
+    except Exception:
         return 0
 
 

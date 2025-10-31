@@ -109,7 +109,7 @@ class MCPHealthChecker:
                 self.add_result("global_mcp", "Redis MCP", "❌ 异常", "PING 返回 False")
                 self.log("❌ Redis MCP: PING 返回 False")
 
-            except Exception:
+        except Exception:
             # Try with password
             try:
                 r = redis.Redis(

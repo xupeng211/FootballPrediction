@@ -201,7 +201,7 @@ def main():
             baseline_errors = len(json.loads(result.stdout))
         else:
             baseline_errors = 0
-    except:
+    except Exception:
         baseline_errors = 0
     
     print(f"📊 修复前Ruff错误数: {baseline_errors}")
@@ -226,9 +226,9 @@ def main():
         priority_patterns.extend([
             "src/**/*.py"
         ])
-    
-    results = fixer.fix_files_in_batches(priority_patterns)
-    
+
+    fixer.fix_files_in_batches(priority_patterns)
+
     # 验证修复效果
     print("\n🔍 验证修复效果...")
     after_fix = run_ruff_comparison()
@@ -237,7 +237,7 @@ def main():
         reduction = baseline_errors - after_fix['total_errors']
         reduction_rate = (reduction / baseline_errors * 100) if baseline_errors > 0 else 0
         
-        print(f"\n📈 修复效果:")
+        print("\n📈 修复效果:")
         print(f"   - 修复前错误: {baseline_errors}")
         print(f"   - 修复后错误: {after_fix['total_errors']}")
         print(f"   - 错误减少: {reduction}")
@@ -254,7 +254,7 @@ def main():
         
         # 显示错误类型变化
         if 'error_types' in after_fix:
-            print(f"\n📊 修复后错误类型分布:")
+            print("\n📊 修复后错误类型分布:")
             for error_type, count in sorted(after_fix['error_types'].items(), key=lambda x: x[1], reverse=True)[:10]:
                 print(f"   - {error_type}: {count}")
         
@@ -275,4 +275,4 @@ if __name__ == "__main__":
     if result.get('target_achieved'):
         print("\n🎯 目标达成: Ruff错误数已降至1500以下")
     else:
-        print(f"\n📋 继续优化: 当前错误数仍需进一步减少")
+        print("\n📋 继续优化: 当前错误数仍需进一步减少")
