@@ -1,18 +1,22 @@
 #!/bin/bash
-# Docker容器入口脚本
-# 负责初始化和启动应用
+
+# =================================================================
+# Docker生产环境入口脚本
+# Production Docker Entrypoint Script
+# =================================================================
 
 set -e
 
-# 颜色定义
+# 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
 # 日志函数
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 log_warn() {
@@ -21,6 +25,10 @@ log_warn() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 # 检查环境变量
