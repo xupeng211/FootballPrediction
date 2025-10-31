@@ -302,7 +302,6 @@ class AdapterFactory:
                 adapter_config = self._configs.get(adapter_name)
                 if adapter_config:
                     adapter = self.create_adapter(adapter_config)
-                    is_primary = adapter_name == group_config.primary_adapter
                     composite.add_adapter(adapter)
 
             return composite
