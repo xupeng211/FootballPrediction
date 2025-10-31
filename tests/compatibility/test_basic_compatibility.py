@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""""""
+"""
 基础兼容性测试
 测试项目在不同Python版本和平台上的基本兼容性
-"""""""
+"""
 
 import sys
 from pathlib import Path

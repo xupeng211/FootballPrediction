@@ -15,6 +15,7 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
+    from src.domain.models.league import League
 except ImportError as e:
     pytest.skip(f"无法导入模块 {e}")
 
