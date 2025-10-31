@@ -597,14 +597,14 @@ class QualityMetricsDashboard:
 
         # 基本信息
         dashboard_info = report["dashboard_info"]
-        print(f"\n📋 仪表板信息:")
+        print("\n📋 仪表板信息:")
         print(f"  🏷️ 项目: {dashboard_info['project_name']}")
         print(f"  📅 生成时间: {dashboard_info['generated_at'][:19].replace('T', ' ')}")
         print(f"  🏆 基础成就: {dashboard_info['based_on']}")
 
         # 当前指标
         current = report["current_metrics"]
-        print(f"\n📊 当前质量指标:")
+        print("\n📊 当前质量指标:")
         print(f"  🎯 综合分数: {current['overall_score']:.1f}/100 ({current['grade']})")
         print(f"  📈 覆盖率: {current['coverage_percentage']:.1f}%")
         print(f"  🧪 测试数量: {current['test_count']}")
@@ -616,7 +616,7 @@ class QualityMetricsDashboard:
 
         # 问题统计
         issues = report["issues_summary"]
-        print(f"\n🐛 问题统计:")
+        print("\n🐛 问题统计:")
         print(f"  🚨 严重问题: {issues['critical_issues']}")
         print(f"  ⚠️ 高优先级: {issues['high_issues']}")
         print(f"  ⚡ 中等优先级: {issues['medium_issues']}")
@@ -637,7 +637,7 @@ class QualityMetricsDashboard:
         # 趋势分析
         trends = report["trends"]
         if trends:
-            print(f"\n📈 趋势分析:")
+            print("\n📈 趋势分析:")
             for trend in trends:
                 direction_emoji = {"IMPROVING": "📈", "DECLINING": "📉", "STABLE": "➡️"}
                 change_text = f"+{trend['change_percentage']:.1f}%" if trend['change_percentage'] > 0 else f"{trend['change_percentage']:.1f}%"
@@ -646,7 +646,7 @@ class QualityMetricsDashboard:
         # 改进建议
         recommendations = report["recommendations"]
         if recommendations:
-            print(f"\n💡 改进建议:")
+            print("\n💡 改进建议:")
             for i, rec in enumerate(recommendations, 1):
                 print(f"  {i}. {rec}")
 

@@ -740,7 +740,7 @@ class ContinuousImprovementEngine:
 
         # 趋势分析
         trends = report["trend_analysis"]
-        print(f"\n📈 质量趋势分析:")
+        print("\n📈 质量趋势分析:")
         for trend in trends:
             trend_icon = {"IMPROVING": "📈", "DECLINING": "📉", "STABLE": "➡️"}
             risk_icon = {"HIGH": "🚨", "MEDIUM": "⚠️", "LOW": "✅"}
@@ -753,19 +753,19 @@ class ContinuousImprovementEngine:
         weekly_plan = report["weekly_plan"]
         monthly_plan = report["monthly_plan"]
 
-        print(f"\n📅 本周改进计划:")
+        print("\n📅 本周改进计划:")
         print(f"  📋 计划名称: {weekly_plan['plan_name']}")
         print(f"  🎯 行动数量: {len(weekly_plan['actions'])}个")
         for action in weekly_plan['actions']:
             print(f"    • {action['title']} ({action['effort_estimate']})")
 
-        print(f"\n📅 本月改进计划:")
+        print("\n📅 本月改进计划:")
         print(f"  📋 计划名称: {monthly_plan['plan_name']}")
         print(f"  🎯 行动数量: {len(monthly_plan['actions'])}个")
 
         # 整体建议
         recommendations = report["recommendations"]
-        print(f"\n💡 整体建议:")
+        print("\n💡 整体建议:")
         for i, rec in enumerate(recommendations, 1):
             print(f"  {i}. {rec}")
 
@@ -789,7 +789,7 @@ class ContinuousImprovementEngine:
         actions = report["improvement_actions"]
         recommendations = report["recommendations"]
 
-        html = f"""
+        html = """
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -862,7 +862,7 @@ class ContinuousImprovementEngine:
         # 添加状态卡片
         current_metrics = quality_state["current_metrics"]
         for metric, value in current_metrics.items():
-            html += f"""
+            html += """
             <div class="status-card">
                 <div style="font-size: 1.5em; font-weight: bold;">{value:.1f}</div>
                 <div style="color: #666; margin-top: 5px;">{metric.replace('_', ' ').title()}</div>
@@ -878,7 +878,7 @@ class ContinuousImprovementEngine:
         # 添加行动卡片
         for action in actions[:5]:
             priority_class = f"priority-{action['priority'].lower()}"
-            html += f"""
+            html += """
         <div class="action-card {priority_class}">
             <h3>{action['title']}</h3>
             <p><strong>描述:</strong> {action['description']}</p>

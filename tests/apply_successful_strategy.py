@@ -58,15 +58,15 @@ class ApplySuccessfulStrategy:
 
             # 策略1: 初始化和实例化测试
             collector = EnhancedMetricsCollector()
-            manager = ObserverManager()
+            _manager = ObserverManager()
 
             test_results.append("✅ 核心服务实例化成功")
 
             # 策略2: Mock兼容性测试
             try:
                 # 使用全局实例（智能Mock模式）
-                global_collector = get_metrics_collector()
-                global_manager = get_observer_manager()
+                _global_collector = get_metrics_collector()
+                _global_manager = get_observer_manager()
 
                 test_results.append("✅ 智能Mock兼容模式正常")
             except Exception as e:
@@ -74,8 +74,8 @@ class ApplySuccessfulStrategy:
 
             # 策略3: 功能验证
             collector.add_metric('strategy_test', 'success')
-            metrics = collector.collect()
-            if 'strategy_test' in metrics.get('metrics', {}):
+            _metrics = collector.collect()
+            if 'strategy_test' in _metrics.get('metrics', {}):
                 test_results.append("✅ Mock兼容性验证通过")
             else:
                 test_results.append("❌ Mock兼容性验证失败")
@@ -252,7 +252,7 @@ def run_successful_strategy_application():
             print(f"❌ {test_name} 执行失败: {e}")
 
     # 生成行动计划
-    print(f"\n📋 生成的行动计划:")
+    print("\n📋 生成的行动计划:")
     print("-" * 60)
     action_plan = strategy.generate_action_plan()
     for line in action_plan:
@@ -289,8 +289,8 @@ def run_successful_strategy_application():
 if __name__ == "__main__":
     results = run_successful_strategy_application()
 
-    print(f"\n🎯 基于历史成功经验的结论:")
-    print(f"✅ Issue #95的智能Mock兼容修复模式可以应用")
-    print(f"✅ Issue #130的语法错误修复方法已验证有效")
-    print(f"✅ 我们当前的64.3%成功率是良好的基础")
-    print(f"💡 下一步：系统性应用这些成功策略")
+    print("\n🎯 基于历史成功经验的结论:")
+    print("✅ Issue #95的智能Mock兼容修复模式可以应用")
+    print("✅ Issue #130的语法错误修复方法已验证有效")
+    print("✅ 我们当前的64.3%成功率是良好的基础")
+    print("💡 下一步：系统性应用这些成功策略")

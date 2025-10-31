@@ -233,7 +233,7 @@ class ExternalMatch(Base):
 
             # 更新关键字段
             score = data.get('score', {})
-            competition = data.get('competition', {})
+            _competition = data.get('competition', {})
 
             # 更新比分
             full_time_score = score.get('fullTime', {})
