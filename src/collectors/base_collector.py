@@ -1,545 +1,262 @@
 """
 基础数据采集器
-Base Data Collector for Football-Data.org API
+提供通用的数据采集功能和接口规范
 """
 
 import asyncio
-import aiohttp
-import time
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-import os
-from abc import ABC, abstractmethod
-import json
 import logging
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
+from dataclasses import dataclass
+import aiohttp
+import backoff
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class CollectionResult:
+    """数据采集结果"""
+    success: bool
+    data: Optional[Any] = None
+    error: Optional[str] = None
+    status_code: Optional[int] = None
+    response_time: Optional[float] = None
+    cached: bool = False
 
 
 class BaseCollector(ABC):
     """基础数据采集器抽象类"""
 
-    def __init__(self):
-        self.api_key = os.getenv('FOOTBALL_DATA_API_KEY', 'ed809154dc1f422da46a18d8961a98a0')
-        self.base_url = os.getenv('FOOTBALL_DATA_BASE_URL', 'https://api.football-data.org/v4')
-        self.rate_limit = int(os.getenv('FOOTBALL_DATA_RATE_LIMIT', '10'))
-        self.cache_ttl = int(os.getenv('FOOTBALL_DATA_CACHE_TTL', '3600'))
-        self.last_request_time = 0
-        self.session = None
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str,
+        timeout: int = 30,
+        max_retries: int = 3,
+        rate_limit: int = 10,  # requests per minute
+    ):
+        self.api_key = api_key
+        self.base_url = base_url.rstrip('/')
+        self.timeout = aiohttp.ClientTimeout(total=timeout)
+        self.max_retries = max_retries
+        self.rate_limit = rate_limit
+        self.session: Optional[aiohttp.ClientSession] = None
+        self._last_request_time = 0.0
+        self._request_count = 0
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
-        await self._init_session()
+        await self._ensure_session()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
-        if self.session:
-            await self.session.close()
+        await self.close()
 
-    async def _init_session(self):
-        """初始化HTTP会话"""
-        if not self.session:
-            timeout = aiohttp.ClientTimeout(total=30)
-            headers = {
-                'X-Auth-Token': self.api_key,
-                'Content-Type': 'application/json'
-            }
+    async def _ensure_session(self):
+        """确保会话存在"""
+        if self.session is None or self.session.closed:
+            headers = await self._get_headers()
             self.session = aiohttp.ClientSession(
-                timeout=timeout,
-                headers=headers
+                headers=headers,
+                timeout=self.timeout
             )
 
-    async def _rate_limit(self):
-        """API调用限流控制"""
-        current_time = time.time()
-        time_since_last_request = current_time - self.last_request_time
-
-        min_interval = 60 / self.rate_limit  # 每次请求最小间隔(秒)
-        if time_since_last_request < min_interval:
-            sleep_time = min_interval - time_since_last_request
-            logger.info(f"Rate limiting: sleeping for {sleep_time:.2f} seconds")
-            await asyncio.sleep(sleep_time)
-
-        self.last_request_time = time.time()
-
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None, max_retries: int = 3) -> Dict[str, Any]:
-        """
-        发起API请求（带重试机制）
-
-        Args:
-            endpoint: API端点
-            params: 请求参数
-            max_retries: 最大重试次数
-
-        Returns:
-            API响应数据
-        """
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-
-        for attempt in range(max_retries + 1):
-            try:
-                await self._rate_limit()
-
-                logger.debug(f"Attempt {attempt + 1}/{max_retries + 1}: Making request to {url}")
-
-                async with self.session.get(url, params=params) as response:
-                    # 检查HTTP状态码
-                    if response.status == 200:
-                        data = await response.json()
-                        logger.debug(f"Successfully fetched data from {url}")
-                        return data
-                    elif response.status == 429:  # Rate limit exceeded
-                        retry_after = int(response.headers.get('Retry-After', 60))
-                        logger.warning(f"Rate limit exceeded. Waiting {retry_after} seconds...")
-                        await asyncio.sleep(retry_after)
-                        continue
-                    elif response.status == 404:  # Not found
-                        logger.warning(f"Resource not found: {url}")
-                        return {"error": "Not found", "status": 404, "url": url}
-                    elif response.status >= 500:  # Server error
-                        if attempt < max_retries:
-                            wait_time = 2 ** attempt  # Exponential backoff
-                            logger.warning(f"Server error {response.status}. Retrying in {wait_time} seconds...")
-                            await asyncio.sleep(wait_time)
-                            continue
-                        else:
-                            logger.error(f"Server error {response.status} after {max_retries} retries")
-                            raise aiohttp.ClientResponseError(response.status, response.reason)
-                    else:
-                        logger.error(f"HTTP error {response.status}: {response.reason}")
-                        raise aiohttp.ClientResponseError(response.status, response.reason)
-
-            except aiohttp.ClientError as e:
-                if attempt < max_retries:
-                    wait_time = 2 ** attempt
-                    logger.warning(f"Network error (attempt {attempt + 1}): {e}. Retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                    continue
-                else:
-                    logger.error(f"Network error after {max_retries} retries: {e}")
-                    raise
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON decode error: {e}")
-                raise
-            except asyncio.TimeoutError as e:
-                if attempt < max_retries:
-                    wait_time = 2 ** attempt
-                    logger.warning(f"Timeout error (attempt {attempt + 1}): {e}. Retrying in {wait_time} seconds...")
-                    await asyncio.sleep(wait_time)
-                    continue
-                else:
-                    logger.error(f"Timeout error after {max_retries} retries: {e}")
-                    raise
-            except Exception as e:
-                logger.error(f"Unexpected error occurred: {e}")
-                raise
-
-        # 这里不应该到达，但作为安全网
-        raise Exception("Unexpected: All retries exhausted without success")
-
-    async def fetch_competitions(self) -> List[Dict[str, Any]]:
-        """获取所有可用的比赛"""
-        try:
-            data = await self._make_request('competitions')
-            return data.get('competitions', [])
-        except Exception as e:
-            logger.error(f"Failed to fetch competitions: {e}")
-            return []
-
-    async def fetch_teams(self, competition_id: str) -> List[Dict[str, Any]]:
-        """获取指定比赛的球队列表"""
-        try:
-            data = await self._make_request(f'competitions/{competition_id}/teams')
-            return data.get('teams', [])
-        except Exception as e:
-            logger.error(f"Failed to fetch teams for competition {competition_id}: {e}")
-            return []
-
-    async def fetch_matches(self, competition_id: str, **kwargs) -> List[Dict[str, Any]]:
-        """
-        获取比赛数据
-
-        Args:
-            competition_id: 比赛ID
-            **kwargs: 其他过滤参数 (status, matchday, dateFrom, dateTo等)
-        """
-        try:
-            data = await self._make_request(f'competitions/{competition_id}/matches', params=kwargs)
-            return data.get('matches', [])
-        except Exception as e:
-            logger.error(f"Failed to fetch matches for competition {competition_id}: {e}")
-            return []
-
-    async def fetch_standings(self, competition_id: str) -> List[Dict[str, Any]]:
-        """获取联赛积分榜"""
-        try:
-            data = await self._make_request(f'competitions/{competition_id}/standings')
-            return data.get('standings', [])
-        except Exception as e:
-            logger.error(f"Failed to fetch standings for competition {competition_id}: {e}")
-            return []
-
-    async def fetch_team_matches(self, team_id: str, **kwargs) -> List[Dict[str, Any]]:
-        """获取指定球队的比赛"""
-        try:
-            data = await self._make_request(f'teams/{team_id}/matches', params=kwargs)
-            return data.get('matches', [])
-        except Exception as e:
-            logger.error(f"Failed to fetch matches for team {team_id}: {e}")
-            return []
+    async def close(self):
+        """关闭会话"""
+        if self.session and not self.session.closed:
+            await self.session.close()
 
     @abstractmethod
-    async def collect_data(self) -> Dict[str, Any]:
-        """抽象方法：子类必须实现具体的数据采集逻辑"""
+    async def _get_headers(self) -> Dict[str, str]:
+        """获取请求头"""
         pass
 
-    def validate_api_key(self) -> bool:
-        """验证API密钥格式"""
-        return bool(self.api_key and len(self.api_key) == 32)
+    @abstractmethod
+    def _build_url(self, endpoint: str, **params) -> str:
+        """构建请求URL"""
+        pass
 
-    def get_supported_competitions(self) -> List[str]:
-        """获取支持的联赛列表"""
-        competitions_str = os.getenv('FOOTBALL_DATA_COMPETITIONS', 'PL,CL,BL,SA,PD,FL1,ELC')
-        return [comp.strip() for comp in competitions_str.split(',') if comp.strip()]
+    async def _rate_limit_wait(self):
+        """速率限制等待"""
+        current_time = asyncio.get_event_loop().time()
+        time_since_last_request = current_time - self._last_request_time
 
-    def validate_response_data(self, data: Dict[str, Any], data_type: str) -> Dict[str, Any]:
-        """
-        验证API响应数据
+        # 计算最小间隔时间 (60秒 / 每分钟请求数)
+        min_interval = 60.0 / self.rate_limit
 
-        Args:
-            data: API响应数据
-            data_type: 数据类型 (competitions, teams, matches, standings)
+        if time_since_last_request < min_interval:
+            wait_time = min_interval - time_since_last_request
+            logger.debug(f"Rate limiting: waiting {wait_time:.2f} seconds")
+            await asyncio.sleep(wait_time)
 
-        Returns:
-            验证后的数据
-        """
+        self._last_request_time = asyncio.get_event_loop().time()
+
+    @backoff.on_exception(
+        backoff.expo,
+        (aiohttp.ClientError, asyncio.TimeoutError),
+        max_tries=3,
+        base=1,
+        max_value=10
+    )
+    async def _make_request(
+        self,
+        method: str,
+        url: str,
+        **kwargs
+    ) -> CollectionResult:
+        """发起HTTP请求"""
+        start_time = asyncio.get_event_loop().time()
+
         try:
-            if not isinstance(data, dict):
-                raise ValueError(f"Expected dict for {data_type}, got {type(data)}")
+            await self._rate_limit_wait()
+            await self._ensure_session()
 
-            # 通用验证
-            if 'error' in data:
-                logger.warning(f"API returned error for {data_type}: {data['error']}")
-                return data
+            logger.debug(f"Making {method} request to: {url}")
 
-            # 特定数据类型验证
-            if data_type == 'competitions':
-                return self._validate_competitions_data(data)
-            elif data_type == 'teams':
-                return self._validate_teams_data(data)
-            elif data_type == 'matches':
-                return self._validate_matches_data(data)
-            elif data_type == 'standings':
-                return self._validate_standings_data(data)
-            else:
-                return data
+            async with self.session.request(method, url, **kwargs) as response:
+                response_time = asyncio.get_event_loop().time() - start_time
+                self._request_count += 1
+
+                # 记录请求统计
+                logger.debug(
+                    f"Request completed: {response.status} "
+                    f"in {response_time:.2f}s "
+                    f"(total requests: {self._request_count})"
+                )
+
+                if response.status == 200:
+                    data = await response.json()
+                    return CollectionResult(
+                        success=True,
+                        data=data,
+                        status_code=response.status,
+                        response_time=response_time
+                    )
+                else:
+                    error_text = await response.text()
+                    logger.error(f"API request failed: {response.status} - {error_text}")
+                    return CollectionResult(
+                        success=False,
+                        error=f"HTTP {response.status}: {error_text}",
+                        status_code=response.status,
+                        response_time=response_time
+                    )
+
+        except asyncio.TimeoutError:
+            response_time = asyncio.get_event_loop().time() - start_time
+            logger.error(f"Request timeout after {response_time:.2f}s")
+            return CollectionResult(
+                success=False,
+                error="Request timeout",
+                response_time=response_time
+            )
+
+        except aiohttp.ClientError as e:
+            response_time = asyncio.get_event_loop().time() - start_time
+            logger.error(f"Client error: {e}")
+            return CollectionResult(
+                success=False,
+                error=f"Client error: {str(e)}",
+                response_time=response_time
+            )
 
         except Exception as e:
-            logger.error(f"Error validating {data_type} data: {e}")
-            return {'error': f'Validation failed: {str(e)}', 'raw_data': data}
+            response_time = asyncio.get_event_loop().time() - start_time
+            logger.error(f"Unexpected error: {e}")
+            return CollectionResult(
+                success=False,
+                error=f"Unexpected error: {str(e)}",
+                response_time=response_time
+            )
 
-    def _validate_competitions_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证联赛数据"""
-        competitions = data.get('competitions', [])
-        if not isinstance(competitions, list):
-            raise ValueError("Expected competitions to be a list")
+    async def get(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None
+    ) -> CollectionResult:
+        """GET请求"""
+        url = self._build_url(endpoint, **(params or {}))
+        return await self._make_request('GET', url)
 
-        validated_competitions = []
-        for comp in competitions:
-            if self._validate_competition(comp):
-                validated_competitions.append(comp)
-            else:
-                logger.warning(f"Invalid competition data: {comp}")
+    async def post(
+        self,
+        endpoint: str,
+        data: Optional[Dict[str, Any]] = None
+    ) -> CollectionResult:
+        """POST请求"""
+        url = self._build_url(endpoint)
+        return await self._make_request('POST', url, json=data)
 
-        return {'competitions': validated_competitions, 'count': len(validated_competitions)}
+    @abstractmethod
+    async def collect_matches(
+        self,
+        league_id: Optional[int] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None
+    ) -> CollectionResult:
+        """采集比赛数据"""
+        pass
 
-    def _validate_teams_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证球队数据"""
-        teams = data.get('teams', [])
-        if not isinstance(teams, list):
-            raise ValueError("Expected teams to be a list")
+    @abstractmethod
+    async def collect_teams(
+        self,
+        league_id: Optional[int] = None
+    ) -> CollectionResult:
+        """采集球队数据"""
+        pass
 
-        validated_teams = []
-        for team in teams:
-            if self._validate_team(team):
-                validated_teams.append(team)
-            else:
-                logger.warning(f"Invalid team data: {team}")
+    @abstractmethod
+    async def collect_players(
+        self,
+        team_id: Optional[int] = None
+    ) -> CollectionResult:
+        """采集球员数据"""
+        pass
 
-        return {'teams': validated_teams, 'count': len(validated_teams)}
+    @abstractmethod
+    async def collect_leagues(self) -> CollectionResult:
+        """采集联赛数据"""
+        pass
 
-    def _validate_matches_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证比赛数据"""
-        matches = data.get('matches', [])
-        if not isinstance(matches, list):
-            raise ValueError("Expected matches to be a list")
-
-        validated_matches = []
-        for match in matches:
-            if self._validate_match(match):
-                validated_matches.append(match)
-            else:
-                logger.warning(f"Invalid match data: {match}")
-
-        return {'matches': validated_matches, 'count': len(validated_matches)}
-
-    def _validate_standings_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """验证积分榜数据"""
-        standings = data.get('standings', [])
-        if not isinstance(standings, list):
-            raise ValueError("Expected standings to be a list")
-
-        validated_standings = []
-        for standing in standings:
-            if self._validate_standing(standing):
-                validated_standings.append(standing)
-            else:
-                logger.warning(f"Invalid standing data: {standing}")
-
-        return {'standings': validated_standings, 'count': len(validated_standings)}
-
-    def _validate_competition(self, competition: Dict[str, Any]) -> bool:
-        """验证单个联赛数据"""
-        required_fields = ['id', 'name', 'code']
-        return all(competition.get(field) is not None for field in required_fields)
-
-    def _validate_team(self, team: Dict[str, Any]) -> bool:
-        """验证单个球队数据"""
-        required_fields = ['id', 'name']
-        return all(team.get(field) is not None for field in required_fields)
-
-    def _validate_match(self, match: Dict[str, Any]) -> bool:
-        """验证单个比赛数据"""
-        required_fields = ['id', 'homeTeam', 'awayTeam', 'status']
-        return all(match.get(field) is not None for field in required_fields)
-
-    def _validate_standing(self, standing: Dict[str, Any]) -> bool:
-        """验证单个积分榜数据"""
-        return 'table' in standing and isinstance(standing['table'], list)
-
-    def clean_data(self, data: Dict[str, Any], data_type: str) -> Dict[str, Any]:
-        """
-        清洗数据
-
-        Args:
-            data: 原始数据
-            data_type: 数据类型
-
-        Returns:
-            清洗后的数据
-        """
-        try:
-            if data_type == 'competitions':
-                return self._clean_competitions_data(data)
-            elif data_type == 'teams':
-                return self._clean_teams_data(data)
-            elif data_type == 'matches':
-                return self._clean_matches_data(data)
-            elif data_type == 'standings':
-                return self._clean_standings_data(data)
-            else:
-                return data
-
-        except Exception as e:
-            logger.error(f"Error cleaning {data_type} data: {e}")
-            return data
-
-    def _clean_competitions_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """清洗联赛数据"""
-        competitions = data.get('competitions', [])
-        cleaned_competitions = []
-
-        for comp in competitions:
-            cleaned_comp = {
-                'id': comp.get('id'),
-                'name': comp.get('name'),
-                'code': comp.get('code'),
-                'type': comp.get('type', 'LEAGUE'),
-                'emblem': comp.get('emblem'),
-                'area': {
-                    'id': comp.get('area', {}).get('id'),
-                    'name': comp.get('area', {}).get('name'),
-                    'code': comp.get('area', {}).get('code')
-                }
-            }
-            cleaned_competitions.append(cleaned_comp)
-
-        return {'competitions': cleaned_competitions}
-
-    def _clean_teams_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """清洗球队数据"""
-        teams = data.get('teams', [])
-        cleaned_teams = []
-
-        for team in teams:
-            cleaned_team = {
-                'id': team.get('id'),
-                'name': team.get('name'),
-                'short_name': team.get('shortName'),
-                'tla': team.get('tla'),
-                'crest': team.get('crest'),
-                'address': team.get('address'),
-                'website': team.get('website'),
-                'founded': team.get('founded'),
-                'club_colors': team.get('clubColors'),
-                'venue': team.get('venue'),
-                'area': team.get('area', {}),
-                'coach': team.get('coach', {}),
-                'squad': team.get('squad', [])
-            }
-            cleaned_teams.append(cleaned_team)
-
-        return {'teams': cleaned_teams}
-
-    def _clean_matches_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """清洗比赛数据"""
-        matches = data.get('matches', [])
-        cleaned_matches = []
-
-        for match in matches:
-            cleaned_match = {
-                'id': match.get('id'),
-                'utcDate': match.get('utcDate'),
-                'status': match.get('status'),
-                'matchday': match.get('matchday'),
-                'stage': match.get('stage'),
-                'group': match.get('group'),
-                'lastUpdated': match.get('lastUpdated'),
-                'homeTeam': match.get('homeTeam', {}),
-                'awayTeam': match.get('awayTeam', {}),
-                'score': match.get('score', {}),
-                'odds': match.get('odds'),
-                'referees': match.get('referees', [])
-            }
-            cleaned_matches.append(cleaned_match)
-
-        return {'matches': cleaned_matches}
-
-    def _clean_standings_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """清洗积分榜数据"""
-        standings = data.get('standings', [])
-        cleaned_standings = []
-
-        for standing in standings:
-            cleaned_standing = {
-                'stage': standing.get('stage'),
-                'type': standing.get('type', 'TOTAL'),
-                'group': standing.get('group'),
-                'table': standing.get('table', [])
-            }
-            cleaned_standings.append(cleaned_standing)
-
-        return {'standings': cleaned_standings}
-
-
-class FootballDataCollector(BaseCollector):
-    """Football-Data.org 数据采集器"""
-
-    def __init__(self):
-        super().__init__()
-        self.supported_competitions = self.get_supported_competitions()
-
-    async def collect_data(self) -> Dict[str, Any]:
-        """
-        收集所有支持的比赛数据
-
-        Returns:
-            包含比赛、球队、比赛数据等的字典
-        """
-        results = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'competitions': [],
-            'teams': {},
-            'matches': {},
-            'standings': {},
-            'errors': []
+    def get_request_stats(self) -> Dict[str, Any]:
+        """获取请求统计信息"""
+        return {
+            'total_requests': self._request_count,
+            'last_request_time': self._last_request_time,
+            'rate_limit': self.rate_limit
         }
 
-        if not self.validate_api_key():
-            results['errors'].append("Invalid API key")
-            return results
-
+    async def health_check(self) -> bool:
+        """健康检查"""
         try:
-            # 获取支持的联赛信息
-            all_competitions = await self.fetch_competitions()
-            supported_competitions = [
-                comp for comp in all_competitions
-                if comp.get('code') in self.supported_competitions
-            ]
-            results['competitions'] = supported_competitions
-
-            # 为每个联赛收集数据
-            for competition in supported_competitions:
-                comp_id = competition['id']
-                comp_code = competition['code']
-
-                try:
-                    logger.info(f"Collecting data for competition: {comp_code}")
-
-                    # 收集球队数据
-                    teams = await self.fetch_teams(str(comp_id))
-                    results['teams'][comp_code] = teams
-
-                    # 收集比赛数据（包含已结束、进行中、即将开始的比赛）
-                    matches = await self.fetch_matches(
-                        str(comp_id),
-                        status='FINISHED',  # 已结束的比赛
-                        limit=50
-                    )
-                    results['matches'][f"{comp_code}_finished"] = matches
-
-                    scheduled_matches = await self.fetch_matches(
-                        str(comp_id),
-                        status='SCHEDULED',  # 即将开始的比赛
-                        limit=20
-                    )
-                    results['matches'][f"{comp_code}_scheduled"] = scheduled_matches
-
-                    # 收集积分榜数据
-                    standings = await self.fetch_standings(str(comp_id))
-                    results['standings'][comp_code] = standings
-
-                    logger.info(f"Successfully collected data for {comp_code}")
-
-                except Exception as e:
-                    error_msg = f"Failed to collect data for {comp_code}: {e}"
-                    logger.error(error_msg)
-                    results['errors'].append(error_msg)
-                    continue
-
+            # 使用一个轻量级的端点进行健康检查
+            result = await self.get('/status')
+            return result.success
         except Exception as e:
-            error_msg = f"General collection error: {e}"
-            logger.error(error_msg)
-            results['errors'].append(error_msg)
+            logger.error(f"Health check failed: {e}")
+            return False
 
-        return results
 
-    async def collect_competition_data(self, competition_code: str) -> Dict[str, Any]:
-        """
-        收集特定联赛的数据
+class CollectorError(Exception):
+    """采集器异常"""
+    pass
 
-        Args:
-            competition_code: 联赛代码 (如 PL, CL等)
-        """
-        if competition_code not in self.supported_competitions:
-            raise ValueError(f"Unsupported competition: {competition_code}")
 
-        # 获取联赛信息
-        all_competitions = await self.fetch_competitions()
-        competition = next((comp for comp in all_competitions if comp.get('code') == competition_code), None)
+class RateLimitError(CollectorError):
+    """速率限制异常"""
+    pass
 
-        if not competition:
-            raise ValueError(f"Competition {competition_code} not found")
 
-        comp_id = competition['id']
+class AuthenticationError(CollectorError):
+    """认证异常"""
+    pass
 
-        results = {
-            'competition': competition,
-            'teams': await self.fetch_teams(str(comp_id)),
-            'matches': await self.fetch_matches(str(comp_id), limit=100),
-            'standings': await self.fetch_standings(str(comp_id)),
-            'timestamp': datetime.utcnow().isoformat()
-        }
 
-        return results
+class DataValidationError(CollectorError):
+    """数据验证异常"""
+    pass
+
+
