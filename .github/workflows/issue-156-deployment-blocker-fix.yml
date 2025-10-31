@@ -238,7 +238,7 @@ jobs:
         }
 
     - name: 📤 上传覆盖率报告
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: coverage-reports-${{ github.run_number }}
@@ -340,7 +340,7 @@ except:
         }
 
     - name: 📤 上传安全报告
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports-${{ github.run_number }}
@@ -458,7 +458,7 @@ EOF
         echo "📄 进度报告已生成"
 
     - name: 📤 上传进度报告
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: issue-156-progress-report-${{ github.run_number }}
         path: issue_156_ci_report.md
