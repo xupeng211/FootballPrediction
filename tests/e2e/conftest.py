@@ -88,7 +88,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
     # 注册
     try:
         await api_client.post("/api/v1/auth/register", json=user_data)
-            except Exception:
+    except Exception:
         pass  # 用户可能已存在
 
     # 登录获取 token
@@ -107,7 +107,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
 
     try:
         await api_client.post("/api/v1/auth/register", json={**admin_data, "role": "admin"})
-            except Exception:
+    except Exception:
         pass
 
     # 登录管理员
@@ -129,7 +129,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
 
     try:
         await api_client.post("/api/v1/auth/register", json={**analyst_data, "role": "analyst"})
-            except Exception:
+    except Exception:
         pass
 
     # 登录分析师
