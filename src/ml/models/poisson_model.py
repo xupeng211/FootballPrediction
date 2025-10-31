@@ -230,7 +230,6 @@ class PoissonModel(BaseModel):
         )
 
         # 确定预测结果
-        outcomes = ['home_win', 'draw', 'away_win']
         probabilities = (home_win_prob, draw_prob, away_win_prob)
         predicted_outcome = self.get_outcome_from_probabilities(probabilities)
         confidence = self.calculate_confidence(probabilities)

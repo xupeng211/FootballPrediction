@@ -232,8 +232,6 @@ class ExternalMatch(Base):
                 return False
 
             # 更新关键字段
-            home_team = data.get('homeTeam', {})
-            away_team = data.get('awayTeam', {})
             score = data.get('score', {})
             competition = data.get('competition', {})
 

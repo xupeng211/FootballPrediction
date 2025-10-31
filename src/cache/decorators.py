@@ -447,10 +447,17 @@ CACHE_CONFIGS = {
 }
 
 # 便捷装饰器
-short_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["short_term"], **kwargs})
-medium_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["medium_term"], **kwargs})
-long_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["long_term"], **kwargs})
-prediction_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["prediction"], **kwargs})
+def short_cached(**kwargs):
+    return cached(**{**CACHE_CONFIGS["short_term"], **kwargs})
+
+def medium_cached(**kwargs):
+    return cached(**{**CACHE_CONFIGS["medium_term"], **kwargs})
+
+def long_cached(**kwargs):
+    return cached(**{**CACHE_CONFIGS["long_term"], **kwargs})
+
+def prediction_cached(**kwargs):
+    return cached(**{**CACHE_CONFIGS["prediction"], **kwargs})
 
 
 # 向后兼容装饰器类

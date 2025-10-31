@@ -447,7 +447,7 @@ class UnifiedCacheManager:
                     loop = asyncio.get_event_loop()
                     if loop.is_running():
                         # 如果已经在事件循环中，创建任务
-                        task = asyncio.create_task(self._consistency_manager.get_statistics())
+                        asyncio.create_task(self._consistency_manager.get_statistics())
                         stats["consistency_stats"] = {"task_created": True}
                     else:
                         # 如果没有运行的事件循环，直接运行
