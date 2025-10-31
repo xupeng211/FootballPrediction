@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: football-prediction-minimal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: football_prediction_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: minimal_db_password_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-staging-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: football-prediction-minimal-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass minimal_redis_password_2024
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile.minimal-app
+    image: football-prediction:minimal
+    container_name: football-prediction-minimal-app
+    restart: unless-stopped
+    environment:
+      - ENV=staging
+      - PYTHONPATH=/app
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://postgres:minimal_db_password_2024@db:5432/football_prediction_staging
+      - REDIS_URL=redis://:minimal_redis_password_2024@redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
