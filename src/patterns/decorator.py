@@ -30,8 +30,9 @@ class BaseDecorator(Component):
     """装饰器基类"""
 
     def __init__(self, component: Component):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._component = component
         self.logger = get_logger(f"decorator.{self.__class__.__name__}")
 
@@ -44,8 +45,9 @@ class LoggingDecorator(BaseDecorator):
     """日志装饰器"""
 
     def __init__(self, component: Component, log_level: int = logging.INFO):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(component)
         self.log_level = log_level
 
@@ -133,8 +135,9 @@ class MetricsDecorator(BaseDecorator):
     """指标收集装饰器"""
 
     def __init__(self, component: Component):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(component)
         self.metrics_name = metrics_name or component.__class__.__name__
         self.metrics = {
@@ -398,8 +401,9 @@ class DatabaseService(Component):
     """数据库服务示例"""
 
     def __init__(self, name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.logger = get_logger(f"service.{name}")
 

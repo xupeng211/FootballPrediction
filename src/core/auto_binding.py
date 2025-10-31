@@ -39,8 +39,9 @@ class AutoBinder:
     """自动绑定器"""
 
     def __init__(self, container: DIContainer):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.container = container
         self._binding_rules: List[BindingRule] = []
         self._scanned_modules: List[str] = []

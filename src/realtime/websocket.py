@@ -29,8 +29,9 @@ class WebSocketMessage:
     """WebSocket 消息类"""
 
     def __init__(self, data: Any, message_type: str = "message"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.data = data
         self.type = message_type
         self.timestamp = datetime.now()
@@ -58,8 +59,9 @@ class WebSocketManager:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化 WebSocket 管理器"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.connections: Dict[str, "WebSocketConnection"] = {}
@@ -230,8 +232,9 @@ class WebSocketConnection:
     """
 
     def __init__(self, connection_id: str, websocket: Optional[Any], manager: WebSocketManager):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化连接
 

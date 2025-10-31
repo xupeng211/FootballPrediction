@@ -14,8 +14,9 @@ class StreamConfig:
     """流配置基类"""
 
     def __init__(self, name: str, bootstrap_servers: List[str], topics: List[str], **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if not name:
             raise ValueError("Name is required")
         if not bootstrap_servers:

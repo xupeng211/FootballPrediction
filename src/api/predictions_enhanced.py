@@ -126,8 +126,9 @@ class EnhancedPredictionService:
     """增强版预测服务"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.model_trainer = AdvancedModelTrainer()
         self.automl_pipeline = AutoMLPipeline()
         self.metrics = PredictionMetrics()

@@ -82,8 +82,7 @@ class PredictionSubject(Subject):
     """预测被观察者"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化预测被观察者"""
         self._predictions: List[PredictionEvent] = []
         self._observers: List[Observer] = []
 
@@ -130,8 +129,9 @@ class CacheSubject(Subject):
     """缓存被观察者"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._cache_events: List[CacheEvent] = []
         self._observers: List[Observer] = []
 
@@ -170,8 +170,9 @@ class AlertSubject(Subject):
     """告警被观察者"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._alerts: List[AlertEvent] = []
         self._observers: List[Observer] = []
 
@@ -211,8 +212,9 @@ class MetricsObserver(Observer):
     """指标观察者"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._metrics: Dict[str, Any] = {
             "total_predictions": 0,
             "successful_predictions": 0,
@@ -262,8 +264,9 @@ class ObserverManager:
     """观察者管理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._subjects: Dict[str, Subject] = {}
         self._observers: Dict[str, Observer] = {}
         self._initialize_default_subjects()

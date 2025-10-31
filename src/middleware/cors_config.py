@@ -56,8 +56,9 @@ class CorsConfig:
     enable_metrics: bool = True
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化后处理"""
         if self.allow_origins is None:
             self.allow_origins = []
@@ -197,8 +198,9 @@ class CorsOriginValidator:
     """CORS origin验证器"""
 
     def __init__(self, config: CorsConfig):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config
         self.logger = logging.getLogger(__name__)
         self._cached_validations: Dict[str, bool] = {}
@@ -247,8 +249,9 @@ class CorsOriginValidator:
         return False
 
     def clear_cache(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """清空验证缓存"""
         self._cached_validations.clear()
 
@@ -265,8 +268,9 @@ class PreflightRequest:
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """规范化请求头"""
         if isinstance(self.headers, ((str):
             self.headers = [self.headers]
@@ -284,8 +288,9 @@ class CorsPreflightResponse:
     content: bytes = b""
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """设置默认headers"""
         if "Content-Length" not in self.headers:
             self.headers["Content-Length"] = str(len(self.content))

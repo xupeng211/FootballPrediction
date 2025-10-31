@@ -37,31 +37,6 @@ class ConfigSource(ABC):
 class FileConfigSource(ConfigSource):
     """文件配置源"""
 
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-
-    async def load(self) -> Dict[str, Any]:
-        """从文件加载配置"""
-        try:
-            with open(self.file_path, 'r') as f:
-                content = f.read()
-            # 简化处理：假设文件包含有效的Python字典
-            return eval(content)  # 在实际环境中应该使用更安全的方法
-        except Exception as e:
-            logger.error(f"Failed to load config from {self.file_path}: {e}")
-            return {}
-
-    async def save(self, config: Dict[str, Any]) -> bool:
-        """保存配置到文件"""
-        try:
-            with open(self.file_path, 'w') as f:
-                f.write(str(config))
-            return True
-        except Exception as e:
-            logger.error(f"Failed to save config to {self.file_path}: {e}")
-            return False
-
-
 class EnvironmentConfigSource(ConfigSource):
     """环境变量配置源"""
 
@@ -87,8 +62,40 @@ class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
 
+class ConfigManager:
+    """配置管理器"""
+
+# 全局配置管理器实例
+_global_config_manager = None
+
+
+class ConfigManager:
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# 全局配置管理器实例
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+class ConfigManager:
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# 全局配置管理器实例
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+class ConfigManager:
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# 全局配置管理器实例
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+class ConfigManager:
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# 全局配置管理器实例
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
     def __init__(self):
-        self._rules: Dict[str, Callable[[Any], bool]] = {}
+        self.sources: List[ConfigSource] = []
+        self._config: Dict[str, Any] = {}
+        self._validator = ConfigValidator()
+        self._encryption_key = self._generate_encryption_key()
 
     def add_rule(self, key: str, validator: Callable[[Any], bool]) -> None:
         """添加验证规则"""
@@ -104,14 +111,6 @@ class ConfigValidator:
 
 
 class ConfigManager:
-    """配置管理器"""
-
-    def __init__(self):
-        self.sources: List[ConfigSource] = []
-        self._config: Dict[str, Any] = {}
-        self._validator = ConfigValidator()
-        self._encryption_key = self._generate_encryption_key()
-
     def add_source(self, source: ConfigSource) -> None:
         """添加配置源"""
         self.sources.append(source)
@@ -145,6 +144,8 @@ class ConfigManager:
         except Exception:
             return ""
 
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
+# TODO: 方法 def decrypt_value 过长(46行)，建议拆分
     def decrypt_value(self, encrypted_value: str) -> str:
         """解密配置值"""
         try:
@@ -191,9 +192,6 @@ class ConfigManager:
 
 
 # 全局配置管理器实例
-_global_config_manager = None
-
-
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
     global _global_config_manager
@@ -207,6 +205,8 @@ def get_default_config_manager() -> ConfigManager:
     return get_config_manager()
 
 
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(49行)，建议拆分
 def get_config_by_env(env: Optional[str] = None) -> Dict[str, Any]:
     """根据环境获取配置"""
     if env is None:

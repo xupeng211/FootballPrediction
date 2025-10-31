@@ -43,8 +43,9 @@ class ServiceConfig:
     config: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if self.config is None:
             self.config = {}
 
@@ -53,8 +54,9 @@ class DomainService(ABC, Generic[T]):
     """域服务基类"""
 
     def __init__(self, config: Optional[ServiceConfig] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
@@ -88,14 +90,16 @@ class DomainService(ABC, Generic[T]):
         pass
 
     def add_dependency(self, name: str, service: "DomainService"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """添加依赖服务"""
         self._dependencies[name] = service
 
     def add_repository(self, name: str, repository: BaseRepository):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """添加仓储"""
         self._repositories[name] = repository
 
@@ -108,8 +112,9 @@ class DomainService(ABC, Generic[T]):
         return self._repositories.get(name)
 
     def set_validation_engine(self, engine: ValidationEngine):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """设置验证引擎"""
         self._validation_engine = engine
 
@@ -128,8 +133,9 @@ class MatchDomainService(DomainService[Match]):
     """比赛域服务"""
 
     def __init__(self, config: Optional[ServiceConfig] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(config or ServiceConfig("MatchDomainService"))
         self.match_repo: Optional[BaseRepository] = None
         self.team_repo: Optional[BaseRepository] = None
@@ -197,8 +203,9 @@ class TeamDomainService(DomainService[Team]):
     """球队域服务"""
 
     def __init__(self, config: Optional[ServiceConfig] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(config or ServiceConfig("TeamDomainService"))
         self.team_repo: Optional[BaseRepository] = None
         self.logger = logging.getLogger(__name__)
@@ -252,8 +259,9 @@ class PredictionDomainService(DomainService[Prediction]):
     """预测域服务"""
 
     def __init__(self, config: Optional[ServiceConfig] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(config or ServiceConfig("PredictionDomainService"))
         self.prediction_repo: Optional[BaseRepository] = None
         self.logger = logging.getLogger(__name__)
@@ -312,16 +320,18 @@ class DomainServiceFactory:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._services: Dict[str, DomainService] = {}
         self._repositories: Dict[str, BaseRepository] = {}
         self._validation_engine = get_validation_engine()
         self.logger = logging.getLogger(__name__)
 
     def register_repository(self, name: str, repository: BaseRepository):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """注册仓储"""
         self._repositories[name] = repository
 

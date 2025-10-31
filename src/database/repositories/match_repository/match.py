@@ -16,8 +16,9 @@ class MatchRepository(AbstractRepository[Match]):
     """比赛数据仓储类"""
 
     def __init__(self, session: AsyncSession):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(session, Match)
 
     async def create(self, match_data: dict) -> Match:

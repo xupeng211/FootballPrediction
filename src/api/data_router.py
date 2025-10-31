@@ -125,9 +125,9 @@ async def get_leagues(
     country: Optional[str] = Query(None, description="国家筛选"),
     season: Optional[str] = Query(None, description="赛季"),
     limit: int = Query(
-        20,
+        20,  # TODO: 将魔法数字 20 提取为常量
         ge=1,
-        le=100,
+        le=100,  # TODO: 将魔法数字 100 提取为常量
         description="返回数量",  # TODO: 将魔法数字 20 提取为常量
     ),  # TODO: 将魔法数字 20 提取为常量
 ):
@@ -178,7 +178,7 @@ async def get_league(league_id: int):
     except Exception as e:
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(
-            status_code=404,
+            status_code=404,  # TODO: 将魔法数字 404 提取为常量
             detail="联赛不存在",  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
@@ -253,7 +253,7 @@ async def get_team(team_id: int):
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(
-            status_code=404,
+            status_code=404,  # TODO: 将魔法数字 404 提取为常量
             detail="球队不存在",  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
@@ -280,7 +280,7 @@ async def get_team_statistics(
     except Exception as e:
         logger.error(f"获取球队统计失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="获取统计失败",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -379,7 +379,7 @@ async def get_match(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(
-            status_code=404,
+            status_code=404,  # TODO: 将魔法数字 404 提取为常量
             detail="比赛不存在",  # TODO: 将魔法数字 404 提取为常量
         )  # TODO: 将魔法数字 404 提取为常量
 
@@ -405,7 +405,7 @@ async def get_match_statistics(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛统计失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="获取统计失败",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 
@@ -475,7 +475,7 @@ async def get_match_odds(match_id: int):
     except Exception as e:
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="获取赔率失败",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 

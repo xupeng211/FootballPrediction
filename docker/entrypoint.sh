@@ -92,9 +92,26 @@ run_migrations() {
     fi
 }
 
+# 安装缺失的Python依赖
+install_missing_deps() {
+    log_info "检查并安装缺失的Python依赖..."
+
+    # 检查是否安装了numpy
+    if ! python -c "import numpy" 2>/dev/null; then
+        log_info "正在安装numpy, pandas, scikit-learn..."
+        pip install --user numpy==2.3.4 pandas==2.3.3 scikit-learn==1.7.2
+        log_info "科学计算库安装完成"
+    else
+        log_info "科学计算库已安装"
+    fi
+}
+
 # 初始化应用
 init_app() {
     log_info "初始化应用..."
+
+    # 安装缺失的依赖
+    install_missing_deps
 
     # 创建必要的目录
     mkdir -p logs tmp coverage reports

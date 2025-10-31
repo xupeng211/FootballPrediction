@@ -58,8 +58,9 @@ class MatchInfo:
     subscribers: Set[str] = field(default_factory=set)
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if self.last_update is None:
             self.last_update = datetime.now()
 
@@ -109,8 +110,9 @@ class RealtimeMatchService:
     """实时比赛服务"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.websocket_manager = get_websocket_manager()
         self.subscription_manager = get_subscription_manager()
         self.logger = logging.getLogger(f"{__name__}.RealtimeMatchService")

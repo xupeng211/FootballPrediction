@@ -35,8 +35,9 @@ class TaskMonitor:
     """
 
     def __init__(self, registry: Optional[CollectorRegistry] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化任务监控器
 

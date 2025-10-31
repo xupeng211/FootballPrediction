@@ -75,8 +75,9 @@ class DataSourceAdapter(ABC):
     """数据源适配器基类"""
 
     def __init__(self, api_key: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.api_key = api_key
         self.base_url = ""
         self.headers = {}
@@ -107,8 +108,9 @@ class FootballDataOrgAdapter(DataSourceAdapter):
     """Football-Data.org API适配器"""
 
     def __init__(self, api_key: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(api_key)
         self.base_url = "https://api.football-data.org/v4"
         if self.api_key:
@@ -260,8 +262,9 @@ class MockDataAdapter(DataSourceAdapter):
     """模拟数据适配器 - 用于演示和测试"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__()
 
         # 模拟数据
@@ -383,8 +386,9 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     """
 
     def __init__(self, api_key: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(api_key)
         self.base_url = "https://api.football-data.org/v4"
         if self.api_key:
@@ -416,8 +420,9 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
         self.retry_delay = 1
 
     def _check_rate_limit(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """检查速率限制"""
         now = datetime.now()
         if (now - self.last_reset).total_seconds() >= 60:
@@ -690,14 +695,16 @@ class DataSourceManager:
     """数据源管理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.adapters = {}
         self._initialize_adapters()
 
     def _initialize_adapters(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化数据源适配器"""
 
         # 检查API密钥并初始化适配器

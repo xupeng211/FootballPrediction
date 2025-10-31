@@ -44,8 +44,9 @@ class ConnectionInfo:
     subscriptions: Set[str] = None
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if self.connected_at is None:
             self.connected_at = datetime.now()
         if self.last_activity is None:
@@ -195,8 +196,9 @@ class WebSocketManager:
     """WebSocket连接管理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.connections: Dict[str))
         self.logger = logging.getLogger(f"{__name__}.Manager")
 

@@ -67,8 +67,9 @@ class AdvancedMonitoringSystem:
     """高级质量监控系统"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.app = FastAPI(title="高级质量监控系统", version="1.0.0")
         self.metrics_history: List[QualityMetrics] = []
         self.quality_gates: List[QualityGate] = []
@@ -82,8 +83,9 @@ class AdvancedMonitoringSystem:
         self._init_quality_gates()
 
     def _init_quality_gates(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化质量门禁规则"""
         self.quality_gates = [
             QualityGate(
@@ -159,8 +161,9 @@ class AdvancedMonitoringSystem:
         ]
 
     def _setup_routes(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """设置API路由"""
 
         @self.app.get("/", response_class=HTMLResponse)
@@ -685,8 +688,9 @@ class AdvancedMonitoringSystem:
         """
 
     def run(self, host: str = "0.0.0.0", port: int = 8080):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """启动监控系统"""
         logger.info(f"启动高级质量监控系统: http://{host}:{port}")
         uvicorn.run(self.app, host=host, port=port, log_level="info")

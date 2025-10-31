@@ -36,8 +36,9 @@ class OddsCollector:
     """兼容性占位符类"""
 
     def __init__(self, *args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
 
@@ -49,8 +50,9 @@ class OddsCollectorFactory:
 
     @staticmethod
     def create(*args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
         return OddsCollector(*args, **kwargs)

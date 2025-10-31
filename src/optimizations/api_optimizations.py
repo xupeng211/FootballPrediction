@@ -64,8 +64,9 @@ class APICache:
     """API缓存管理器"""
 
     def __init__(self, redis_client: Optional[redis.Redis] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.redis_client = redis_client
         self.settings = get_settings()
         self._local_cache = {}  # 本地内存缓存作为后备
@@ -182,8 +183,9 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: ASGIApp):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.settings = get_settings()
         self.metrics: List[PerformanceMetrics] = []
@@ -434,8 +436,9 @@ class ConnectionPoolManager:
     """连接池管理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.settings = get_settings()
         self._pool_stats = {
             "active_connections": 0,
@@ -474,8 +477,9 @@ class APIOptimizer:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.settings = get_settings()
         self.cache_manager = APICache()
         self.connection_manager = ConnectionPoolManager()

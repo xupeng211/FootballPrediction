@@ -45,8 +45,9 @@ class APIAdapter(ABC):
     """API适配器抽象基类"""
 
     def __init__(self, external_api: ExternalAPI):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.external_api = external_api
         self.logger = get_logger(f"adapter.{self.__class__.__name__}")
 
@@ -70,8 +71,9 @@ class FootballAPIImpl(ExternalAPI):
     """足球API实现示例"""
 
     def __init__(self, api_key: str, base_url: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.football")
@@ -128,8 +130,9 @@ class WeatherAPIImpl(ExternalAPI):
     """天气API实现示例"""
 
     def __init__(self, api_key: str, base_url: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.weather")
@@ -172,8 +175,9 @@ class OddsAPIImpl(ExternalAPI):
     """赔率API实现示例"""
 
     def __init__(self, api_key: str, base_url: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.odds")
@@ -411,8 +415,9 @@ class AdapterFactory:
 
     @classmethod
     def register_adapter(cls, adapter_type: str, adapter_class: type):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """注册新的适配器类型"""
         cls._adapters[adapter_type] = adapter_class
 
@@ -423,14 +428,16 @@ class UnifiedDataCollector:
     """统一数据收集器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.adapters: Dict[str, APIAdapter] = {}
         self.logger = get_logger("collector.unified")
 
     def add_adapter(self, name: str, adapter: APIAdapter):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """添加适配器"""
         self.adapters[name] = adapter
         self.logger.info(f"Added adapter: {name}")

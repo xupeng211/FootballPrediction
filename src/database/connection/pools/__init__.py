@@ -18,8 +18,9 @@ class ConnectionPool:
     """Database connection pool manager"""
 
     def __init__(self, min_connections: int = 1, max_connections: int = 10):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """Initialize connection pool"""
         self.min_connections = min_connections
         self.max_connections = max_connections

@@ -22,8 +22,9 @@ except ImportError:
         """占位符类 - Kafka消费者"""
 
         def __init__(self, *args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             pass
 
     FootballKafkaConsumer = FootballKafkaConsumer
@@ -43,8 +44,9 @@ if StreamConfig is None:
         """占位符类 - 流配置"""
 
         def __init__(self, *args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             pass
 
     StreamConfig: Type = StreamConfig
@@ -64,8 +66,9 @@ if StreamProcessor is None:
         """占位符类 - 流处理器"""
 
         def __init__(self, *args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             pass
 
     StreamProcessor: Type = StreamProcessor

@@ -26,8 +26,9 @@ class CodeComplexityAnalyzer:
     """代码复杂度分析器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
 
     def analyze_file_complexity(self, file_path: Path) -> Dict[str, Any]:
@@ -106,8 +107,9 @@ class CodeComplexityAnalyzer:
         max_depth = 0
 
         def calculate_depth(node, current_depth=0):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             nonlocal max_depth
             max_depth = max(max_depth, current_depth)
 
@@ -189,8 +191,9 @@ class TechnicalDebtAnalyzer:
     """技术债务分析器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
 
     def analyze_technical_debt(self, directory: Path) -> Dict[str, Any]:
@@ -460,8 +463,9 @@ class PerformanceMetricsCollector:
     """性能指标收集器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
 
     def collect_system_metrics(self) -> Dict[str))
@@ -530,8 +534,9 @@ class AdvancedMetricsAnalyzer:
     """高级度量分析器主类"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.complexity_analyzer = CodeComplexityAnalyzer()
         self.debt_analyzer = TechnicalDebtAnalyzer()
         self.performance_collector = PerformanceMetricsCollector()

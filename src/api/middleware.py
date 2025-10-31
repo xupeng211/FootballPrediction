@@ -56,7 +56,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app,
-        calls: int = 100,
+        calls: int = 100,  # TODO: 将魔法数字 100 提取为常量
         period: int = 60,  # TODO: 将魔法数字 100 提取为常量
     ):  # TODO: 将魔法数字 100 提取为常量
         super().__init__(app)
@@ -94,8 +94,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     """简单的认证中间件"""
 
     def __init__(self, app, public_paths: list = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化认证中间件"""
         super().__init__(app)
         self.public_paths = public_paths or ["/health", "/docs", "/openapi.json"]
 
@@ -124,8 +123,9 @@ class CORSMiddleware(BaseHTTPMiddleware):
     """CORS中间件"""
 
     def __init__(self, app, allow_origins: list = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.allow_origins = allow_origins or ["*"]
 

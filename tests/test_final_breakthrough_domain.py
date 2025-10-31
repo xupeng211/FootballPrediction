@@ -169,7 +169,7 @@ class TestFinalBreakthroughDomain:
         score = MatchScore(home=2, away=1)
         assert score is not None
         assert score.home == 2
-        assert score.away == 1
+        assert score.away      == 1
 
         team_stats = TeamStats(wins=10, draws=5, losses=3)
         assert team_stats is not None

@@ -14,8 +14,9 @@ class APICache:
     """API缓存管理器"""
 
     def __init__(self, default_ttl: int = 300):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.cache = {}
         self.default_ttl = default_ttl
 
@@ -44,8 +45,9 @@ class APICache:
         return False
 
     def clear(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """清空缓存"""
         self.cache.clear()
 
@@ -60,12 +62,14 @@ def cache_api_response(ttl: int = 300):
     """API响应缓存装饰器"""
 
     def decorator(func):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         @wraps(func)
         def wrapper(*args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             # 生成缓存键
             cache_key = f"{func.__name__}_{str(args)}_{str(kwargs)}"
 

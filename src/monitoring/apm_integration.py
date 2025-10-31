@@ -22,8 +22,9 @@ class APMIntegration:
     """APM集成管理器"""
 
     def __init__(self, enabled: bool = True):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.enabled = enabled
         self.logger = logging.getLogger(__name__)
 
@@ -32,8 +33,9 @@ class APMIntegration:
         self.init_apm_client()
 
     def init_apm_client(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化APM客户端"""
         if not self.enabled:
             return None
@@ -102,8 +104,9 @@ class APMIntegration:
         return os.getenv("ENVIRONMENT", "development")
 
     def create_span(self, name: str, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """创建追踪span"""
         if not self.enabled or not hasattr(self, "tracer"):
             return _DummySpan()
@@ -111,8 +114,9 @@ class APMIntegration:
         return self.tracer.start_span(name, **kwargs)
 
     def record_metric(self, name: str, value: float, unit: str = "", **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录指标"""
         if not self.enabled or not hasattr(self, "meter"):
             return None
@@ -125,8 +129,9 @@ class APMIntegration:
             self.logger.warning(f"Failed to record metric {name}: {e}")
 
     def record_error(self, error: Exception, context: Optional[Dict] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录错误"""
         if not self.enabled:
             return None
@@ -140,8 +145,9 @@ class APMIntegration:
 
     @contextmanager
     def trace_operation(self, operation_name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """追踪操作上下文管理器"""
         span = self.create_span(operation_name)
         try:
@@ -171,8 +177,9 @@ class APMMiddleware(BaseHTTPMiddleware):
     """APM中间件"""
 
     def __init__(self, app, apm_integration: APMIntegration):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.apm = apm_integration
 
@@ -265,23 +272,27 @@ class _DummySpan:
     """虚拟Span,用于APM不可用时的fallback"""
 
     def __enter__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         pass
 
     def set_attribute(self, key, value):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         pass
 
     def add_event(self, name, attributes=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         pass
 
 
@@ -311,11 +322,13 @@ def trace_operation(operation_name: str):
     """追踪操作装饰器"""
 
     def decorator(func):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         def wrapper(*args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
             apm = get_apm()
             with apm.trace_operation(operation_name):
                 return func(*args, **kwargs)
@@ -331,8 +344,9 @@ def trace_async_operation(operation_name: str):
     """追踪异步操作装饰器"""
 
     def decorator(func):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         async def wrapper(*args, **kwargs):
             apm = get_apm()
             async with apm.trace_async_operation(operation_name):

@@ -82,8 +82,9 @@ class TenantService:
     """
 
     def __init__(self, db: AsyncSession):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.db = db
 
     # ==================== 租户生命周期管理 ====================

@@ -65,9 +65,9 @@ class PerformanceAnalysisRequest(BaseModel):
     """表现分析请求模型"""
 
     days_back: int = Field(
-        30,
+        30,  # TODO: 将魔法数字 30 提取为常量
         ge=1,
-        le=365,
+        le=365,  # TODO: 将魔法数字 365 提取为常量
         description="分析天数",  # TODO: 将魔法数字 30 提取为常量
     )  # TODO: 将魔法数字 30 提取为常量
     strategy_name: str = Field("srs_compliant", description="策略名称")
@@ -248,9 +248,9 @@ async def get_portfolio_recommendations(
 )
 async def get_performance_analysis(
     days_back: int = Query(
-        30,
+        30,  # TODO: 将魔法数字 30 提取为常量
         ge=1,
-        le=365,
+        le=365,  # TODO: 将魔法数字 365 提取为常量
         description="分析天数",  # TODO: 将魔法数字 30 提取为常量
     ),  # TODO: 将魔法数字 30 提取为常量
     strategy_name: str = Query("srs_compliant", description="策略名称"),
@@ -554,9 +554,7 @@ __all__ = [
 ]
 
 
-def register_betting_api(
-    app,
-):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def register_betting_api(app: FastAPI) -> None:
     """注册投注API路由"""
     app.include_router(router)
     logger.info("投注API路由注册完成")

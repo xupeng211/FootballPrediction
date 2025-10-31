@@ -20,8 +20,9 @@ class QualityMetricsCollector:
     """质量指标收集器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.project_root = Path(__file__).parent.parent.parent
 
     async def collect_all_metrics(self) -> Dict[str, Any]:

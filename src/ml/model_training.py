@@ -53,8 +53,9 @@ class TrainingConfig:
     """训练配置类"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化训练配置"""
         self.model_type = ModelType.RANDOM_FOREST
         self.test_size = 0.2
@@ -93,8 +94,9 @@ class ModelTrainer:
     """
 
     def __init__(self, config: Optional[TrainingConfig] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化模型训练器
 
@@ -392,8 +394,9 @@ class ModelRegistry:
     """模型注册表"""
 
     def __init__(self, registry_dir: str = "models/registry"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化模型注册表
 

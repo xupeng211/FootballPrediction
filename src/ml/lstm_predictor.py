@@ -81,8 +81,9 @@ class LSTMPredictor:
     """LSTM时间序列预测器"""
 
     def __init__(self, config: Optional[TrainingConfig] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config or TrainingConfig()
         self.logger = get_logger(self.__class__.__name__)
 

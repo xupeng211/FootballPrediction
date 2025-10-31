@@ -122,8 +122,9 @@ class AdvancedModelTrainer:
     """高级模型训练器,支持XGBoost和LightGBM"""
 
     def __init__(self, config: Dict[str, Any] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config or {}
         self.model = None
         self.is_trained = False
@@ -590,8 +591,9 @@ class EnsembleTrainer:
     """集成学习训练器,支持多种模型的集成"""
 
     def __init__(self, config: Dict[str, Any] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config or {}
         self.models: Dict[str, AdvancedModelTrainer] = {}
         self.weights: Dict[str, float] = {}

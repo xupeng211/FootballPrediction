@@ -21,8 +21,9 @@ class SmartDataValidator:
     """Smart Data Validator"""
 
     def __init__(self, config: Dict[str, Any] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config or {}
         self.status = "initialized"
         self.metrics = {"processed_items": 0, "errors": 0, "start_time": datetime.now()}

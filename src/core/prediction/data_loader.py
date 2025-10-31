@@ -17,8 +17,9 @@ class PredictionDataLoader:
     """Data loader for predictions"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """Initialize data loader"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 

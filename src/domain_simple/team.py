@@ -12,8 +12,9 @@ class TeamStatistics:
     """球队统计数据"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.matches_played = 0
         self.wins = 0
         self.draws = 0

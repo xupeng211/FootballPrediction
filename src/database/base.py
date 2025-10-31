@@ -74,10 +74,7 @@ class BaseModel(Base, TimestampMixin):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-        """
-        从字典创建模型实例
+        """从字典创建模型实例
 
         Args:
             data: 包含模型数据的字典

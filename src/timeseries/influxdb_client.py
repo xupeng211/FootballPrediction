@@ -79,8 +79,9 @@ class InfluxDBManager:
     """InfluxDB管理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = get_config()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -144,8 +145,9 @@ class InfluxDBManager:
             self.logger.info("InfluxDB连接已断开")
 
     def _ensure_connection(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """确保连接可用"""
         if not self.is_connected or not self.client:
             raise ConnectionError("InfluxDB未连接")

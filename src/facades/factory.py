@@ -54,8 +54,9 @@ class FacadeFactory:
     }
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._config_cache: Dict[str, FacadeConfig] = {}
         self._instance_cache: Dict[str, SystemFacade] = {}
         self.default_environment = os.getenv("ENVIRONMENT", "development")

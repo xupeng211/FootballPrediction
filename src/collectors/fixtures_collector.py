@@ -28,8 +28,9 @@ class FixturesCollector:
     """比赛赛程收集器"""
 
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.db_session = db_session
         self.redis_client = redis_client
         self.cache_timeout = 3600  # 1小时缓存

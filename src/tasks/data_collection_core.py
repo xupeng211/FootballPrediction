@@ -28,8 +28,9 @@ class DataCollectionTask:
     """数据收集任务基类"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化任务"""
         self.db_manager: Optional[DatabaseManager] = None
         self.orchestrator = DataCollectionOrchestrator()

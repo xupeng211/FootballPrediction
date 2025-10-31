@@ -27,8 +27,9 @@ class MatchRepository(BaseRepository[Match]):
     """
 
     def __init__(self, db_manager=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(Match, db_manager)
 
     # ========================================

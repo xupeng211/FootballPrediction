@@ -203,8 +203,9 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         return sorted_data[min(index, len(sorted_data) - 1)]
 
     def reset_stats(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """重置统计信息"""
         self.total_requests = 0
         self.max_concurrent_requests = 0
@@ -218,8 +219,9 @@ class DatabasePerformanceMiddleware:
     """数据库性能监控中间件"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.query_stats: Dict[str, Dict] = {}
         self.slow_queries: List[Dict] = []
         self.total_queries = 0
@@ -296,8 +298,9 @@ class CachePerformanceMiddleware:
     """缓存性能监控中间件"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.cache_stats = {
             "hits": 0,
             "misses": 0,
@@ -308,8 +311,9 @@ class CachePerformanceMiddleware:
         }
 
     def record_cache_hit(self, duration: float):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录缓存命中"""
         self.cache_stats["hits"] += 1
         self.cache_stats["hit_times"].append(duration)
@@ -317,14 +321,16 @@ class CachePerformanceMiddleware:
             self.cache_stats["hit_times"] = self.cache_stats["hit_times"][-1000:]
 
     def record_cache_miss(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录缓存未命中"""
         self.cache_stats["misses"] += 1
 
     def record_cache_set(self, duration: float):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录缓存设置"""
         self.cache_stats["sets"] += 1
         self.cache_stats["set_times"].append(duration)
@@ -332,8 +338,9 @@ class CachePerformanceMiddleware:
             self.cache_stats["set_times"] = self.cache_stats["set_times"][-1000:]
 
     def record_cache_delete(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """记录缓存删除"""
         self.cache_stats["deletes"] += 1
 
@@ -372,21 +379,24 @@ class BackgroundTaskPerformanceMonitor:
     """后台任务性能监控器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.task_stats: Dict[str, Dict] = {}
         self.active_tasks: Dict[str, float] = {}
         self.failed_tasks: List[Dict] = []
 
     def start_task(self, task_id: str, task_name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """开始任务跟踪"""
         self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}
 
     def end_task(self, task_id: str, success: bool = True, error: Optional[str] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """结束任务跟踪"""
         if task_id not in self.active_tasks:
             return None

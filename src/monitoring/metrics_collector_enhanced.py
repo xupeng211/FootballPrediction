@@ -23,20 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class EnhancedMetricsCollector:
-    """类文档字符串"""
-    pass  # 添加pass语句
     """简化的增强指标收集器"""
 
     @classmethod
     def initialize(cls):
-    """函数文档字符串"""
-    pass  # 添加pass语句
         """初始化指标收集器"""
         logger.info("✅ MetricsCollector initialized successfully")
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化增强指标收集器"""
         self.metrics = {}
 
     def collect(self) -> Dict[str, Any]:
@@ -44,26 +39,19 @@ class EnhancedMetricsCollector:
         return {"timestamp": datetime.utcnow(), "metrics": self.metrics}
 
     def add_metric(self, name: str, value: Any):
-    """函数文档字符串"""
-    pass  # 添加pass语句
         """添加指标"""
         self.metrics[name] = value
         logger.debug(f"Added metric: {name} = {value}")
 
 
 class MetricsAggregator:
-    """类文档字符串"""
-    pass  # 添加pass语句
     """指标聚合器 - 简化版本"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化指标聚合器"""
         self.aggregated_metrics = {}
 
     def aggregate(self, metrics: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
         """聚合指标"""
         for key, value in metrics.items():
             if key in self.aggregated_metrics:
@@ -81,13 +69,10 @@ class MetricsAggregator:
 
 
 class MetricPoint:
-    """类文档字符串"""
-    pass  # 添加pass语句
     """指标点 - 简化版本"""
 
     def __init__(self, name: str, value: float, timestamp: Optional[datetime] = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """初始化指标点"""
         self.name = name
         self.value = value
         self.timestamp = timestamp or datetime.utcnow()

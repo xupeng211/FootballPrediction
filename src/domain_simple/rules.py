@@ -13,8 +13,9 @@ class ValidationResult:
     """验证结果"""
 
     def __init__(self, is_valid: bool = True, message: str = ""):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.is_valid = is_valid
         self.message = message
         self.errors: List[str] = []
@@ -53,8 +54,9 @@ class Rule(ABC):
     """规则抽象基类"""
 
     def __init__(self, name: str, description: str = ""):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.name = name
         self.description = description
         self.enabled = True
@@ -102,8 +104,9 @@ class ValidationEngine:
     """验证引擎"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._rules: Dict[str, List[Rule]] = {}
         self._global_rules: List[Rule] = []
 

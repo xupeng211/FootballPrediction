@@ -87,8 +87,9 @@ class CacheEntry:
         return remaining if remaining > 0 else 0
 
     def __lt__(self, other):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         用于堆排序,比较过期时间
 

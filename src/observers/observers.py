@@ -25,8 +25,9 @@ class MetricsObserver(Observer):
     """
 
     def __init__(self, aggregation_window: int = 60):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化指标观察者"
 
         Args:
@@ -173,8 +174,9 @@ class LoggingObserver(Observer):
     """
 
     def __init__(self, log_level: int = logging.INFO):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化日志观察者"
 
         Args:
@@ -262,8 +264,9 @@ class AlertingObserver(Observer):
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
         self._alert_rules: Dict[str, Dict[str, Any]] = {}
@@ -428,8 +431,9 @@ class PerformanceObserver(Observer):
     """
 
     def __init__(self, window_size: int = 100):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化性能观察者"
 
         Args:

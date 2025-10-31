@@ -17,8 +17,9 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     """性能监控中间件"""
 
     def __init__(self, app, enabled: bool = True):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
 
@@ -58,8 +59,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """请求日志中间件"""
 
     def __init__(self, app, enabled: bool = True):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.enabled = enabled
 

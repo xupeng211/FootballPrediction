@@ -35,8 +35,6 @@ class TeamStats:
     goals_against: int = 0
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
         """验证统计数据"""
         if any(
             x < 0
@@ -107,8 +105,9 @@ class TeamForm:
     streak_type: str = ""  # 连续类型:win/draw/loss/none
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """验证状态数据"""
         if len(self.last_matches) > 10:
             raise DomainError("最近比赛记录最多保留10场")
@@ -215,8 +214,9 @@ class Team:
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("球队名称不能为空")

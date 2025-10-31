@@ -18,9 +18,15 @@ class AdapterRegistry:
     # 全局注册表实例
     # 全局注册表实例
     # 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化适配器注册表"""
         self._registry: Dict[str, Dict] = {}
         self._instances: Dict[str, Any] = {}

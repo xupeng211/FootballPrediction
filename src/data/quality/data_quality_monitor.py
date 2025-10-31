@@ -34,8 +34,9 @@ class DataQualityMonitor:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化数据质量监控器"""
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"quality.{self.__class__.__name__}")

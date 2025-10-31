@@ -27,8 +27,9 @@ class EventBus:
     """
 
     def __init__(self, max_workers: int = 10):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """初始化事件总线"
 
         Args:
@@ -382,8 +383,7 @@ def event_handler(event_types: List[str]):
         original_init = cls.__init__
 
         def __init__(self, *args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+            """初始化装饰器"""
             original_init(self, *args, **kwargs)
             # 自动订阅到事件总线
             bus = get_event_bus()

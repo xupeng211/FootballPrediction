@@ -35,8 +35,6 @@ class PredictionConfig(BaseModel):
     min_probability: float = Field(default=0.1, ge=0, le=1, description="最小概率阈值")
 
     class Config:
-    """类文档字符串"""
-    pass  # 添加pass语句
         """Pydantic配置"""
 
         frozen = False  # 允许修改配置

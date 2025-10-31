@@ -51,7 +51,7 @@ async def execute_advanced_prediction_api(
         )
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=str(e),  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
 

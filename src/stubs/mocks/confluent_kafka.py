@@ -148,8 +148,9 @@ class MockProducer:
     """模拟Kafka生产者"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
         self._callbacks: Dict[str, Callable] = {}
@@ -219,8 +220,9 @@ class MockAdminClient:
     """模拟Kafka管理客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.config = config
         self.metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
@@ -258,8 +260,9 @@ class MockDeserializingConsumer(MockConsumer):
     """带反序列化的消费者"""
 
     def __init__(self, config: Dict[str, Any]):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(config)
         self._key_deserializer = config.get("key.deserializer")
         self._value_deserializer = config.get("value.deserializer")
@@ -351,8 +354,9 @@ class KafkaError(Exception):
     """Kafka错误"""
 
     def __init__(self, code: int, name: str):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.code = code
         self.name = name
         super().__init__(f"KafkaError: {name} (code: {code})")
@@ -364,26 +368,30 @@ class TopicPartition:
     """主题分区"""
 
     def __init__(self, topic: str, partition: int = 0):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.topic = topic
         self.partition = partition
 
     def __repr__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
 
     def __eq__(self, other):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         if not isinstance(other, ((((TopicPartition):
             return False
         return self.topic == other.topic and self.partition == other.partition
 
     def __hash__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         return hash((self.topic, self.partition)
 
 

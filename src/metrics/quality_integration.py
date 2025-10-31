@@ -22,8 +22,9 @@ class QualityMetricsIntegrator:
     """质量度量集成器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.analyzer = AdvancedMetricsAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 

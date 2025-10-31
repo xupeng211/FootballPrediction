@@ -33,8 +33,9 @@ class CacheConsistencyManager:
     """缓存一致性管理类"""
 
     def __init__(self, redis_manager=None, db_manager=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """
         初始化缓存一致性管理器
         :param redis_manager: Redis管理器实例

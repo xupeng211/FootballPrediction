@@ -31,8 +31,9 @@ class Subject(ABC):
     """被观察者抽象基类"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._observers: List[Observer] = []
         self._event_history: List[Dict[str, Any]] = []
         self.logger = get_logger(f"subject.{self.__class__.__name__}")
@@ -96,8 +97,9 @@ class MetricsObserver(Observer):
     """指标收集观察者"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.metrics: Dict[str, Any] = {
             "event_counts": {},
             "last_events": {},
@@ -136,8 +138,9 @@ class LoggingObserver(Observer):
     """日志记录观察者"""
 
     def __init__(self, log_level: int = logging.INFO):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.log_level = log_level
         self.logger = get_logger("observer.logging")
 
@@ -165,8 +168,9 @@ class AlertingObserver(Observer):
     """告警通知观察者"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.alert_rules: Dict[str, Dict[str, Any]] = {}
         self.alert_history: List[Dict[str, Any]] = []
         self.logger = get_logger("observer.alerting")
@@ -284,8 +288,9 @@ class PredictionService(ObservableService):
     """预测服务示例"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__("PredictionService")
 
     async def predict_match(self, match_id: int) -> Dict[str, Any]:

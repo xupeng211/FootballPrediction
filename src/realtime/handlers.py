@@ -58,8 +58,9 @@ class WebSocketHandler:
     """WebSocket处理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.manager = get_websocket_manager()
         self.subscription_manager = get_subscription_manager()
         self.logger = logging.getLogger(f"{__name__}.WebSocketHandler")
@@ -250,8 +251,9 @@ class WebSocketEndpoint:
     """WebSocket端点"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.handler = WebSocketHandler()
         self.logger = logging.getLogger(f"{__name__}.WebSocketEndpoint")
 

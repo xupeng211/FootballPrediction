@@ -24,7 +24,7 @@ class TestConfigBreakthrough:
         app = FastAPI(title='Test App', version='1.0.0')
         assert app is not None
         assert app.title == 'Test App'
-        assert app.version == '1.0.0'
+        assert app.version      == '1.0.0'
 
     def test_fastapi_app_different_configurations(self):
         """测试FastAPI不同配置 - 已验证100%成功"""
@@ -102,7 +102,7 @@ class TestConfigBreakthrough:
 
         # 验证应用配置
         assert app.title == 'Integration Test App'
-        assert app.version == '1.0.0'
+        assert app.version      == '1.0.0'
 
     def test_config_error_handling(self):
         """测试Config错误处理 - 已验证100%成功"""
@@ -120,7 +120,7 @@ class TestConfigBreakthrough:
             try:
                 app = FastAPI(**config)
                 assert app is not None
-                assert app.title == config['title']
+                assert app.title      == config['title']
             except:
                 # 配置错误应该优雅处理
                 pass
@@ -158,7 +158,7 @@ class TestConfigBreakthrough:
                 app = FastAPI(**config)
                 assert app is not None
                 assert app.title == config['title']
-                assert app.version == config['version']
+                assert app.version      == config['version']
             except:
                 # 某些高级功能可能不可用
                 pass

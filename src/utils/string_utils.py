@@ -17,8 +17,6 @@ from typing import List
 
 
 class StringUtils:
-    """类文档字符串"""
-    pass  # 添加pass语句
     """字符串处理工具类"""
 
     # 编译正则表达式以提高性能
@@ -41,7 +39,7 @@ class StringUtils:
 
         if remove_special_chars:
             # 移除特殊字符,保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', "", cleaned)"'
+            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', "", cleaned)
 
         # 规范化空白字符
         cleaned = " ".join(cleaned.split())
@@ -223,8 +221,8 @@ class StringUtils:
             "&": "&amp;",
             "<": "&lt;",
             ">": "&gt;",
-            '"': "&quot;","
-            "'": "&#39;",'
+            '"': "&quot;",
+            "'": "&#39;",
         }
         return "".join(html_escape_map.get(char, char) for char in text)
 
@@ -238,8 +236,8 @@ class StringUtils:
             "&amp;": "&",
             "&lt;": "<",
             "&gt;": ">",
-            "&quot;": '"',"
-            "&#39;": "'",'
+            "&quot;": '"',
+            "&#39;": "'",
         }
 
         for html_char, char in html_unescape_map.items():

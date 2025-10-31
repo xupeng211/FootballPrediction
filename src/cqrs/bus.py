@@ -24,8 +24,9 @@ class CommandBus:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._handlers: Dict[Type[Command], CommandHandler] = {}
         self._middleware: list = []
 
@@ -88,8 +89,9 @@ class QueryBus:
     """
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._handlers: Dict[Type[Query], QueryHandler] = {}
         self._middleware: list = []
 
@@ -195,8 +197,9 @@ class MetricsMiddleware:
     """指标中间件"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self._metrics = {
             "commands_processed": 0,
             "queries_processed": 0,

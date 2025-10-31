@@ -82,7 +82,7 @@ class TestFinalBreakthroughCache:
             data = {"test": "data", "number": 123}
             serialized = json_serializer.serialize(data)
             deserialized = json_serializer.deserialize(serialized)
-            assert deserialized == data
+            assert deserialized   == data
         except:
             pass
 
@@ -94,7 +94,7 @@ class TestFinalBreakthroughCache:
             data = {"test": "data", "number": 123}
             serialized = pickle_serializer.serialize(data)
             deserialized = pickle_serializer.deserialize(serialized)
-            assert deserialized == data
+            assert deserialized   == data
         except:
             pass
 
@@ -110,7 +110,7 @@ class TestFinalBreakthroughCache:
         try:
             result1 = expensive_function("test")
             result2 = expensive_function("test")
-            assert result1 == result2
+            assert result1   == result2
         except:
             pass
 
@@ -151,7 +151,7 @@ class TestFinalBreakthroughCache:
         try:
             key1 = key_builder.build_key("predictions", 123)
             key2 = key_builder.build_key("matches", 456, "upcoming")
-            assert key1 != key2
+            assert key1   != key2
         except:
             pass
 

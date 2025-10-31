@@ -13,8 +13,9 @@ class PredictionStatistics:
     """预测统计类"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
         self.incorrect_predictions = 0
@@ -23,8 +24,9 @@ class PredictionStatistics:
         self.history: List[Dict] = []
 
     def add_prediction(self, is_correct: bool, model_version: str = "default"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         """添加预测记录"""
         self.total_predictions += 1
         if is_correct:

@@ -59,8 +59,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app, tenant_service: TenantService, auth_service: AuthService):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         super().__init__(app)
         self.tenant_service = tenant_service
         self.auth_service = auth_service

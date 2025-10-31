@@ -83,8 +83,9 @@ class SRSCompliantModelTrainer:
     """
 
     def __init__(self, model_save_dir: str = "models"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.logger = get_logger(self.__class__.__name__)
         self.model_save_dir = Path(model_save_dir)
         self.model_save_dir.mkdir(exist_ok=True)

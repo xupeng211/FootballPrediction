@@ -21,8 +21,9 @@ class FootballDataCleaner:
     """足球数据清理器"""
 
     def __init__(self):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.cleaning_stats = {}
 
     def clean_match_data(self, df: pd.DataFrame) -> pd.DataFrame:

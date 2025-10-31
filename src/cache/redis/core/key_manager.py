@@ -13,8 +13,9 @@ class RedisKeyManager:
     """管理Redis键的类"""
 
     def __init__(self, prefix: str = "fp"):
-    """函数文档字符串"""
-    pass  # 添加pass语句
+        """函数文档字符串"""
+        pass
+  # 添加pass语句
         self.prefix = prefix
 
     def _make_key(self, key: str) -> str:
