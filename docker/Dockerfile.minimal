@@ -1,0 +1,16 @@
+# 最小化 Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 只安装最基本的依赖
+RUN pip install fastapi uvicorn[standard]
+
+# 复制应用代码
+COPY src/ ./src/
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["uvicorn", "src.main_simple:app", "--host", "0.0.0.0", "--port", "8000"]
