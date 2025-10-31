@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy import Boolean, Column, DateTime, String, Text, JSON
 
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 
 class UserRole(str, Enum):

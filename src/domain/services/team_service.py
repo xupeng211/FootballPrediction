@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol
 
-from ..models.team import Team, TeamForm, TeamStats
+from src.domain.models.team import Team, TeamForm, TeamStats
 
 
 class TeamRepositoryProtocol(Protocol):

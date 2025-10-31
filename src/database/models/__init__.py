@@ -4,7 +4,7 @@
 包含所有SQLAlchemy数据模型定义.
 """
 
-from ..base import Base
+from src.database.base import Base
 from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
 from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLog
 from .features import Features, TeamType

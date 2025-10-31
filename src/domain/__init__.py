@@ -13,7 +13,7 @@ Implements core concepts of Domain-Driven Design (DDD), including:
 - Domain events
 """
 
-from .events import (
+from src.domain.events import (
     MatchCancelledEvent,
     MatchFinishedEvent,
     MatchPostponedEvent,
@@ -25,7 +25,7 @@ from .events import (
     PredictionPointsAdjustedEvent,
     PredictionUpdatedEvent,
 )
-from .models import (
+from src.domain.models import (
     ConfidenceScore,
     League,
     LeagueSeason,
@@ -42,8 +42,8 @@ from .models import (
     TeamForm,
     TeamStats,
 )
-from .services import MatchDomainService, PredictionDomainService, ScoringService
-from .strategies import (
+from src.domain.services import MatchDomainService, PredictionDomainService, ScoringService
+from src.domain.strategies import (
     EnsembleStrategy,
     HistoricalStrategy,
     MLModelStrategy,

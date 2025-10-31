@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-from ..models.prediction import Prediction
-from .base import (
+from src.domain.models.prediction import Prediction
+from src.domain.strategies.base import (
     PredictionInput,
     PredictionOutput,
     PredictionStrategy,

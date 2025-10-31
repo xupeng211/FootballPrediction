@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from ...core.exceptions import DomainError
+from src.core.exceptions import DomainError
 
 
 class MatchStatus(Enum):
@@ -164,7 +164,7 @@ class Match:
         self.updated_at = datetime.utcnow()
 
         # 发布领域事件
-        from ..events import MatchFinishedEvent
+        from src.domain.events import MatchFinishedEvent
 
         self._add_domain_event(
             MatchFinishedEvent(

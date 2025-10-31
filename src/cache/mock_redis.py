@@ -33,9 +33,13 @@ class MockRedisManager:
         self._check_expiration(key)
         return self.data.get(key)
 
-    def set(self, key: str, value: str) -> bool:
+    def set(self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None) -> bool:
         """设置缓存值"""
         self.data[key] = value
+        if ex is not None:
+            self._expirations[key] = time.time() + ex
+        elif px is not None:
+            self._expirations[key] = time.time() + (px / 1000)
         return True
 
     def setex(self, key: str, seconds: int, value: str) -> bool:
@@ -82,9 +86,9 @@ class MockRedisManager:
         """异步获取缓存值"""
         return self.get(key)
 
-    async def aset(self, key: str, value: str) -> bool:
+    async def aset(self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None) -> bool:
         """异步设置缓存值"""
-        return self.set(key, value)
+        return self.set(key, value, ex=ex, px=px)
 
     async def asetex(self, key: str, seconds: int, value: str) -> bool:
         """异步设置带TTL的缓存值"""
@@ -106,6 +110,38 @@ class MockRedisManager:
         """异步获取键的TTL"""
         return self.ttl(key)
 
+    async def aexpire(self, key: str, seconds: int) -> bool:
+        """异步设置键的过期时间"""
+        return self.expire(key, seconds)
+
+    async def apexpire(self, key: str, milliseconds: int) -> bool:
+        """异步设置键的毫秒过期时间"""
+        return self.pexpire(key, milliseconds)
+
+    async def apttl(self, key: str) -> int:
+        """异步获取键的毫秒TTL"""
+        return int(self.ttl(key) * 1000) if self.ttl(key) > 0 else self.ttl(key)
+
+    async def amget(self, keys: List[str]) -> List[Optional[str]]:
+        """异步批量获取缓存值"""
+        return self.mget(keys)
+
+    async def amset(self, mapping: Dict[str, str]) -> bool:
+        """异步批量设置缓存值"""
+        return self.mset(mapping)
+
+    async def aping(self) -> bool:
+        """异步健康检查"""
+        return self.ping()
+
+    async def aflushdb(self) -> bool:
+        """异步清空当前数据库"""
+        return self.flushdb()
+
+    async def aflushall(self) -> bool:
+        """异步清空所有数据库"""
+        return self.flushall()
+
     # 内部方法
     def _check_expiration(self, key: str) -> None:
         """检查键是否过期"""
@@ -120,6 +156,64 @@ class MockRedisManager:
         for key in expired_keys:
             self.data.pop(key, None)
             self._expirations.pop(key, None)
+
+    def incr(self, key: str, amount: int = 1) -> int:
+        """递增数值"""
+        current = self.get(key) or "0"
+        try:
+            new_value = int(current) + amount
+        except ValueError:
+            new_value = amount
+        self.set(key, str(new_value))
+        return new_value
+
+    def decr(self, key: str, amount: int = 1) -> int:
+        """递减数值"""
+        return self.incr(key, -amount)
+
+    def expire(self, key: str, seconds: int) -> bool:
+        """设置键的过期时间"""
+        if key in self.data:
+            self._expirations[key] = time.time() + seconds
+            return True
+        return False
+
+    def pexpire(self, key: str, milliseconds: int) -> bool:
+        """设置键的毫秒过期时间"""
+        return self.expire(key, milliseconds / 1000)
+
+    def keys(self, pattern: str = "*") -> List[str]:
+        """获取匹配模式的所有键"""
+        self._cleanup_expired()
+        if "*" in pattern:
+            import fnmatch
+            return [k for k in self.data.keys() if fnmatch.fnmatch(k, pattern)]
+        else:
+            return [k for k in self.data.keys() if k == pattern]
+
+    def mget(self, keys: List[str]) -> List[Optional[str]]:
+        """批量获取缓存值"""
+        return [self.get(k) for k in keys]
+
+    def mset(self, mapping: Dict[str, str]) -> bool:
+        """批量设置缓存值"""
+        for key, value in mapping.items():
+            self.set(key, value)
+        return True
+
+    def ping(self) -> bool:
+        """健康检查"""
+        return True
+
+    def flushdb(self) -> bool:
+        """清空当前数据库"""
+        self.clear()
+        return True
+
+    def flushall(self) -> bool:
+        """清空所有数据库"""
+        self.clear()
+        return True
 
     def clear(self) -> None:
         """清空所有缓存"""

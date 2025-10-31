@@ -9,14 +9,14 @@ Handles complex business logic related to matches.
 from datetime import datetime
 from typing import Any, List, Optional
 
-from ..events.match_events import (
+from src.domain.events.match_events import (
     MatchCancelledEvent,
     MatchFinishedEvent,
     MatchPostponedEvent,
     MatchStartedEvent,
 )
-from ..models.match import Match, MatchResult, MatchScore, MatchStatus
-from ..models.team import Team
+from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
+from src.domain.models.team import Team
 
 
 class MatchDomainService:

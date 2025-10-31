@@ -20,8 +20,8 @@ from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
 
-from ..services.betting.betting_service import create_betting_service, BettingService
-from ..core.logging_system import get_logger
+from src.services.betting.betting_service import create_betting_service, BettingService
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 

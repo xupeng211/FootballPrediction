@@ -9,7 +9,7 @@ Handles complex business logic related to prediction scoring.
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from ..models.prediction import PredictionPoints
+from src.domain.models.prediction import PredictionPoints
 
 
 class ScoringService:

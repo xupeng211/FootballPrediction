@@ -1,4 +1,4 @@
-from ..base import BaseModel
+from src.database.base import BaseModel
 
 """
 数据质量日志数据库模型

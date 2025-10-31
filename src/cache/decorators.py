@@ -1,192 +1,540 @@
 """
-decorators 主模块
+缓存装饰器模块
+Cache Decorators Module
 
-此文件由长文件拆分工具自动生成
-
-拆分策略: functional_split
+提供企业级缓存装饰器，支持同步和异步函数、多级缓存、智能失效等功能。
 """
 
-# 导入拆分的模块
-from .cache.decorators_cache import *
-from .cache.decorators_functions import *
+import asyncio
+import functools
+import hashlib
+import inspect
+import json
+import pickle
+import time
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional, Union, TypeVar, Awaitable
+from dataclasses import dataclass
+import logging
 
-# 导出所有公共接口
-__all__ = [
-    "CacheDecorator",
-    "UserCacheDecorator",
-    "InvalidateCacheDecorator",
-    "cache_result",
-    "cache_with_ttl",
-    "cache_by_user",
-    "cache_invalidate",
-    "cache_user_predictions",
-    "cache_match_data",
-    "cache_team_stats",
-]
+try:
+    from .consistency_manager import get_consistency_manager
+except ImportError:
+    # 如果一致性管理器不可用，提供备用实现
+    def get_consistency_manager():
+        return None
 
+logger = logging.getLogger(__name__)
 
-# 提供占位符函数以保持向后兼容
-def cache_result(*args, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """缓存结果装饰器 - 占位符实现"""
-    if args and callable(args[0]):
-        # 直接作为装饰器使用: @cache_result
-        return args[0]
-    else:
-        # 带参数使用: @cache_result(ttl=3600)
-        def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-            return func
-
-        return decorator
+F = TypeVar('F', bound=Callable[..., Any])
+AsyncF = TypeVar('AsyncF', bound=Callable[..., Awaitable[Any]])
 
 
-def cache_with_ttl(ttl_seconds, prefix=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """带TTL的缓存装饰器 - 占位符实现"""
-
-    def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        return func
-
-    return decorator
-
-
-def cache_by_user(user_id_param="user_id", user_param=None, ttl=None, prefix=None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """按用户缓存的装饰器 - 占位符实现"""
-    # 支持两种参数名称以保持兼容性
-    if user_param is not None:
-        user_id_param = user_param  # noqa: F841  # 占位符实现中暂时未使用
-
-    def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        return func
-
-    return decorator
+@dataclass
+class CacheConfig:
+    """缓存配置"""
+    ttl: int = 3600  # 生存时间（秒）
+    key_prefix: str = "cache"
+    version: str = "v1"
+    cache_store: str = "default"
+    use_consistency_manager: bool = True
+    invalidate_on_update: bool = False
+    key_builder: Optional[Callable] = None
+    condition: Optional[Callable[..., bool]] = None
+    unless: Optional[Callable[..., bool]] = None
+    max_size: Optional[int] = None
 
 
-def _make_cache_key(
-    func_or_name, args, kwargs, prefix=None, user_id=None, exclude_args=None
-):
-    """智能Mock兼容修复模式 - 生成缓存键的辅助函数"
+class CacheKeyBuilder:
+    """缓存键构建器"""
+
+    @staticmethod
+    def build_key(
+        func_name: str,
+        args: tuple,
+        kwargs: dict,
+        prefix: str = "cache",
+        version: str = "v1"
+    ) -> str:
+        """
+        构建缓存键
+
+        Args:
+            func_name: 函数名称
+            args: 位置参数
+            kwargs: 关键字参数
+            prefix: 键前缀
+            version: 版本号
+
+        Returns:
+            缓存键
+        """
+        # 创建参数指纹
+        args_hash = CacheKeyBuilder._hash_args(args, kwargs)
+
+        # 构建键
+        key_parts = [prefix, version, func_name, args_hash]
+        return ":".join(str(part) for part in key_parts)
+
+    @staticmethod
+    def _hash_args(args: tuple, kwargs: dict) -> str:
+        """哈希化参数"""
+        try:
+            # 尝试JSON序列化
+            serializable = []
+
+            # 处理位置参数
+            for arg in args:
+                if CacheKeyBuilder._is_json_serializable(arg):
+                    serializable.append(arg)
+                else:
+                    serializable.append(str(arg))
+
+            # 处理关键字参数
+            for k, v in sorted(kwargs.items()):
+                if CacheKeyBuilder._is_json_serializable(v):
+                    serializable.append((k, v))
+                else:
+                    serializable.append((k, str(v)))
+
+            # 生成哈希
+            json_str = json.dumps(serializable, sort_keys=True, default=str)
+            return hashlib.md5(json_str.encode()).hexdigest()[:16]
+
+        except Exception:
+            # 备用方案：简单字符串哈希
+            args_str = str(args) + str(sorted(kwargs.items()))
+            return hashlib.md5(args_str.encode()).hexdigest()[:16]
+
+    @staticmethod
+    def _is_json_serializable(obj: Any) -> bool:
+        """检查对象是否可以JSON序列化"""
+        try:
+            json.dumps(obj)
+            return True
+        except (TypeError, ValueError):
+            return False
+
+
+def cached(
+    ttl: int = 3600,
+    key_prefix: str = "cache",
+    version: str = "v1",
+    cache_store: str = "default",
+    use_consistency_manager: bool = True,
+    invalidate_on_update: bool = False,
+    key_builder: Optional[Callable] = None,
+    condition: Optional[Callable[..., bool]] = None,
+    unless: Optional[Callable[..., bool]] = None,
+    max_size: Optional[int] = None
+) -> Callable:
+    """
+    缓存装饰器 - 支持同步和异步函数
 
     Args:
-        func_or_name: 函数对象或函数名字符串
-        args: 位置参数元组
-        kwargs: 关键字参数字典
-        prefix: 键前缀
-        user_id: 用户ID（兼容性参数）
-        exclude_args: 要排除的参数名列表
+        ttl: 生存时间（秒）
+        key_prefix: 缓存键前缀
+        version: 缓存版本
+        cache_store: 缓存存储名称
+        use_consistency_manager: 是否使用一致性管理器
+        invalidate_on_update: 是否在更新时失效
+        key_builder: 自定义键构建器
+        condition: 缓存条件函数，返回True时缓存
+        unless: 排除条件函数，返回True时不缓存
+        max_size: 最大缓存大小
+
+    Returns:
+        装饰器函数
     """
-    import hashlib
+    config = CacheConfig(
+        ttl=ttl,
+        key_prefix=key_prefix,
+        version=version,
+        cache_store=cache_store,
+        use_consistency_manager=use_consistency_manager,
+        invalidate_on_update=invalidate_on_update,
+        key_builder=key_builder,
+        condition=condition,
+        unless=unless,
+        max_size=max_size
+    )
 
-    # 智能Mock兼容修复模式 - 支持函数对象和函数名两种输入
-    if callable(func_or_name):
-        # 如果是函数对象,提取模块和限定名
-        func_name = f"{func_or_name.__module__}:{func_or_name.__qualname__}"
-    else:
-        # 如果是字符串,直接使用
-        func_name = str(func_or_name)
+    def decorator(func: F) -> F:
+        # 获取函数信息
+        is_async = inspect.iscoroutinefunction(func)
+        func_name = f"{func.__module__}.{func.__qualname__}"
 
-    key_parts = []
-
-    # 添加前缀（如果提供）
-    if prefix:
-        key_parts.append(prefix)
-
-    # 添加函数名
-    key_parts.append(func_name)
-
-    # 添加用户ID（如果提供）
-    if user_id is not None:
-        key_parts.append(f"user:{user_id}")
-
-    # 智能Mock兼容修复模式 - 处理exclude_args
-    if exclude_args:
-        # 过滤掉要排除的参数
-        filtered_kwargs = {k: v for k, v in kwargs.items() if k not in exclude_args}
-    else:
-        filtered_kwargs = kwargs
-
-    # 添加参数到键中
-    if args:
-        key_parts.extend(str(arg) for arg in args)
-    if filtered_kwargs:
-        sorted_kwargs = sorted(filtered_kwargs.items())
-        key_parts.extend(f"{k}:{v}" for k, v in sorted_kwargs)
-
-    # 智能Mock兼容修复模式 - 生成可读的键格式,包含哈希避免过长
-    key_str = ":".join(key_parts)
-
-    # 如果键太长,生成哈希版本
-    if len(key_str) > 200:
-        return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
-
-    return key_str
-
-
-def cache_invalidate(pattern_func=None, pattern=None, key_generator=None, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """缓存失效装饰器 - 占位符实现"""
-
-    # 支持多种参数名称以保持兼容性
-    def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        return func
+        if is_async:
+            return _async_cached_wrapper(func, func_name, config)  # type: ignore
+        else:
+            return _sync_cached_wrapper(func, func_name, config)  # type: ignore
 
     return decorator
 
 
-def cache_user_predictions(ttl_seconds=None, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """用户预测缓存装饰器 - 占位符实现"""
+def _sync_cached_wrapper(func: F, func_name: str, config: CacheConfig) -> F:
+    """同步函数缓存包装器"""
 
-    def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        return func
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # 检查条件
+        if config.condition and not config.condition(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        if config.unless and config.unless(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        # 构建缓存键
+        if config.key_builder:
+            cache_key = config.key_builder(*args, **kwargs)
+        else:
+            cache_key = CacheKeyBuilder.build_key(
+                func_name, args, kwargs, config.key_prefix, config.version
+            )
+
+        try:
+            # 尝试从缓存获取
+            if config.use_consistency_manager:
+                manager = get_consistency_manager()
+                entry = asyncio.run(manager.get_cache_entry(cache_key, config.cache_store))
+                if entry and entry.value is not None:
+                    logger.debug(f"缓存命中: {cache_key}")
+                    return entry.value
+
+            # 缓存未命中，执行函数
+            logger.debug(f"缓存未命中: {cache_key}")
+            result = func(*args, **kwargs)
+
+            # 存储到缓存
+            if config.use_consistency_manager:
+                asyncio.run(manager.set_cache_entry(
+                    cache_key, result, config.ttl, config.cache_store
+                ))
+
+            logger.debug(f"缓存存储: {cache_key}")
+            return result
+
+        except Exception as e:
+            logger.error(f"缓存装饰器错误: {cache_key}, 错误: {e}")
+            # 缓存错误时直接执行函数
+            return func(*args, **kwargs)
+
+    return wrapper  # type: ignore
+
+
+def _async_cached_wrapper(func: AsyncF, func_name: str, config: CacheConfig) -> AsyncF:
+    """异步函数缓存包装器"""
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        # 检查条件
+        if config.condition and not config.condition(*args, **kwargs):
+            return await func(*args, **kwargs)
+
+        if config.unless and config.unless(*args, **kwargs):
+            return await func(*args, **kwargs)
+
+        # 构建缓存键
+        if config.key_builder:
+            cache_key = config.key_builder(*args, **kwargs)
+        else:
+            cache_key = CacheKeyBuilder.build_key(
+                func_name, args, kwargs, config.key_prefix, config.version
+            )
+
+        try:
+            # 尝试从缓存获取
+            if config.use_consistency_manager:
+                manager = get_consistency_manager()
+                entry = await manager.get_cache_entry(cache_key, config.cache_store)
+                if entry and entry.value is not None:
+                    logger.debug(f"缓存命中: {cache_key}")
+                    return entry.value
+
+            # 缓存未命中，执行函数
+            logger.debug(f"缓存未命中: {cache_key}")
+            result = await func(*args, **kwargs)
+
+            # 存储到缓存
+            if config.use_consistency_manager:
+                await manager.set_cache_entry(
+                    cache_key, result, config.ttl, config.cache_store
+                )
+
+            logger.debug(f"缓存存储: {cache_key}")
+            return result
+
+        except Exception as e:
+            logger.error(f"缓存装饰器错误: {cache_key}, 错误: {e}")
+            # 缓存错误时直接执行函数
+            return await func(*args, **kwargs)
+
+    return wrapper  # type: ignore
+
+
+def cache_invalidate(
+    pattern: str = None,
+    keys: List[str] = None,
+    reason: str = "decorator_invalidation"
+) -> Callable:
+    """
+    缓存失效装饰器
+
+    Args:
+        pattern: 失效模式
+        keys: 要失效的键列表
+        reason: 失效原因
+
+    Returns:
+        装饰器函数
+    """
+    def decorator(func: F) -> F:
+        is_async = inspect.iscoroutinefunction(func)
+
+        if is_async:
+            @functools.wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                result = await func(*args, **kwargs)
+
+                try:
+                    manager = get_consistency_manager()
+                    if keys:
+                        await manager.invalidate_cache(keys, reason)
+                    if pattern:
+                        await manager.invalidate_pattern(pattern, reason)
+                    logger.debug(f"缓存失效: keys={keys}, pattern={pattern}")
+                except Exception as e:
+                    logger.error(f"缓存失效错误: {e}")
+
+                return result
+            return async_wrapper  # type: ignore
+        else:
+            @functools.wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                result = func(*args, **kwargs)
+
+                try:
+                    manager = get_consistency_manager()
+                    if keys:
+                        asyncio.run(manager.invalidate_cache(keys, reason))
+                    if pattern:
+                        asyncio.run(manager.invalidate_pattern(pattern, reason))
+                    logger.debug(f"缓存失效: keys={keys}, pattern={pattern}")
+                except Exception as e:
+                    logger.error(f"缓存失效错误: {e}")
+
+                return result
+            return sync_wrapper  # type: ignore
 
     return decorator
 
 
-def cache_match_data(ttl_seconds=None, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """比赛数据缓存装饰器 - 占位符实现"""
+def multi_cached(
+    levels: List[Dict[str, Any]],
+    fallback: bool = True
+) -> Callable:
+    """
+    多级缓存装饰器
 
-    def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        return func
+    Args:
+        levels: 缓存级别配置列表
+        fallback: 是否启用降级
+
+    Returns:
+        装饰器函数
+    """
+    def decorator(func: F) -> F:
+        is_async = inspect.iscoroutinefunction(func)
+        func_name = f"{func.__module__}.{func.__qualname__}"
+
+        if is_async:
+            @functools.wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                # 按级别尝试获取缓存
+                for i, level_config in enumerate(levels):
+                    try:
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        entry = await manager.get_cache_entry(cache_key, config.cache_store)
+                        if entry and entry.value is not None:
+                            logger.debug(f"L{i+1}缓存命中: {cache_key}")
+                            return entry.value
+                    except Exception as e:
+                        logger.warning(f"L{i+1}缓存获取失败: {e}")
+                        if not fallback:
+                            break
+
+                # 所有缓存都未命中，执行函数
+                logger.debug("多级缓存全部未命中，执行函数")
+                result = await func(*args, **kwargs)
+
+                # 存储到所有缓存级别
+                for i, level_config in enumerate(levels):
+                    try:
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        await manager.set_cache_entry(
+                            cache_key, result, config.ttl, config.cache_store
+                        )
+                        logger.debug(f"L{i+1}缓存存储: {cache_key}")
+                    except Exception as e:
+                        logger.warning(f"L{i+1}缓存存储失败: {e}")
+
+                return result
+            return async_wrapper  # type: ignore
+        else:
+            @functools.wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                # 按级别尝试获取缓存
+                for i, level_config in enumerate(levels):
+                    try:
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        entry = asyncio.run(manager.get_cache_entry(cache_key, config.cache_store))
+                        if entry and entry.value is not None:
+                            logger.debug(f"L{i+1}缓存命中: {cache_key}")
+                            return entry.value
+                    except Exception as e:
+                        logger.warning(f"L{i+1}缓存获取失败: {e}")
+                        if not fallback:
+                            break
+
+                # 所有缓存都未命中，执行函数
+                logger.debug("多级缓存全部未命中，执行函数")
+                result = func(*args, **kwargs)
+
+                # 存储到所有缓存级别
+                for i, level_config in enumerate(levels):
+                    try:
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        asyncio.run(manager.set_cache_entry(
+                            cache_key, result, config.ttl, config.cache_store
+                        ))
+                        logger.debug(f"L{i+1}缓存存储: {cache_key}")
+                    except Exception as e:
+                        logger.warning(f"L{i+1}缓存存储失败: {e}")
+
+                return result
+            return sync_wrapper  # type: ignore
 
     return decorator
 
 
-def cache_team_stats(ttl_seconds=None, **kwargs):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """队伍统计缓存装饰器 - 占位符实现"""
+# 预定义配置
+CACHE_CONFIGS = {
+    "short_term": {"ttl": 300, "key_prefix": "short"},  # 5分钟
+    "medium_term": {"ttl": 3600, "key_prefix": "medium"},  # 1小时
+    "long_term": {"ttl": 86400, "key_prefix": "long"},  # 24小时
+    "prediction": {"ttl": 1800, "key_prefix": "prediction"},  # 30分钟
+    "user_session": {"ttl": 7200, "key_prefix": "session"},  # 2小时
+}
 
-    def decorator(func):
-        """函数文档字符串"""
-        pass
-  # 添加pass语句
-        return func
+# 便捷装饰器
+short_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["short_term"], **kwargs})
+medium_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["medium_term"], **kwargs})
+long_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["long_term"], **kwargs})
+prediction_cached = lambda **kwargs: cached(**{**CACHE_CONFIGS["prediction"], **kwargs})
 
-    return decorator
+
+# 向后兼容装饰器类
+class CacheDecorator:
+    """向后兼容缓存装饰器类"""
+
+    def __init__(self, ttl: int = 3600, key_prefix: str = "cache"):
+        self.ttl = ttl
+        self.key_prefix = key_prefix
+
+    def __call__(self, func: F) -> F:
+        return cached(ttl=self.ttl, key_prefix=self.key_prefix)(func)
+
+
+class UserCacheDecorator:
+    """用户缓存装饰器"""
+
+    def __init__(self, ttl: int = 1800):
+        self.ttl = ttl
+
+    def __call__(self, func: F) -> F:
+        def user_key_builder(*args, **kwargs):
+            # 尝试从参数中提取用户ID
+            user_id = None
+            if args:
+                user_id = args[0] if isinstance(args[0], (int, str)) else None
+            if not user_id and 'user_id' in kwargs:
+                user_id = kwargs['user_id']
+            if not user_id:
+                raise ValueError("无法从函数参数中提取用户ID")
+
+            func_name = f"{func.__module__}.{func.__qualname__}"
+            return f"user:{user_id}:{func_name}"
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # 检查是否有用户ID
+            if not args and 'user_id' not in kwargs:
+                raise ValueError("用户缓存装饰器需要用户ID参数")
+
+            # 使用缓存装饰器包装函数
+            cached_func = cached(ttl=self.ttl, key_prefix="user_cache", key_builder=user_key_builder)(func)
+            return cached_func(*args, **kwargs)
+
+        return wrapper
+
+
+class InvalidateCacheDecorator:
+    """缓存失效装饰器"""
+
+    def __init__(self, patterns: List[str] = None, keys: List[str] = None):
+        self.patterns = patterns or []
+        self.keys = keys or []
+
+    def __call__(self, func: F) -> F:
+        return cache_invalidate(pattern=self.patterns[0] if self.patterns else None, keys=self.keys)(func)
+
+
+# 向后兼容装饰器函数
+def cache_with_ttl(ttl: int = 3600, key_prefix: str = "cache"):
+    """带TTL的缓存装饰器"""
+    return cached(ttl=ttl, key_prefix=key_prefix)
+
+
+def cache_result(ttl: int = 3600):
+    """缓存结果装饰器"""
+    return cached(ttl=ttl)
+
+
+def cache_by_user(ttl: int = 1800):
+    """按用户缓存装饰器"""
+    return UserCacheDecorator(ttl=ttl)
+
+
+def cache_user_predictions(ttl: int = 900):
+    """缓存用户预测装饰器"""
+    return cached(ttl=ttl, key_prefix="user_predictions")
+
+
+def cache_match_data(ttl: int = 1800):
+    """缓存比赛数据装饰器"""
+    return cached(ttl=ttl, key_prefix="match_data")
+
+
+def cache_team_stats(ttl: int = 3600):
+    """缓存球队统计装饰器"""
+    return cached(ttl=ttl, key_prefix="team_stats")

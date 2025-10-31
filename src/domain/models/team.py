@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from ...core.exceptions import DomainError
+from src.core.exceptions import DomainError
 
 
 class TeamType(Enum):
