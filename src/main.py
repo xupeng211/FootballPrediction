@@ -24,6 +24,7 @@ except ImportError:
     SLOWAPI_AVAILABLE = False
 
 from src.api.health import router as health_router
+from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
 from src.core.event_application import initialize_event_system, shutdown_event_system
@@ -86,6 +87,7 @@ app.add_middleware(I18nMiddleware)
 
 # 注册路由
 app.include_router(health_router, prefix="/api", tags=["health"])
+app.include_router(prometheus_router, tags=["monitoring"])
 
 # 配置OpenAPI
 setup_openapi(app)
