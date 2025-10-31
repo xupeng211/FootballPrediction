@@ -1,0 +1,325 @@
+name: 📧 Smart Notifications and Alerts
+
+on:
+  workflow_run:
+    workflows: ["🔄 Enhanced CI/CD Monitoring", "🚪 Enhanced Quality Gate", "Enhanced CI Monitoring"]
+    types:
+      - completed
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'docker-compose*.yml'
+  pull_request:
+    branches: [main]
+    types: [opened, closed, ready_for_review]
+  schedule:
+    # 每日质量报告
+    - cron: '0 9 * * *'  # 每天9点
+  workflow_dispatch:
+    inputs:
+      notification_type:
+        description: 'Type of notification'
+        required: false
+        default: 'quality'
+        type: choice
+        options:
+        - quality
+        - performance
+        - security
+        - deployment
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # 1. CI/CD状态通知
+  ci-cd-notifications:
+    name: 📧 CI/CD Status Notifications
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml
+
+    - name: 🔍 Analyze Workflow Results
+      id: analyze-results
+      run: |
+        # 分析CI/CD工作流结果
+        echo "🔍 Analyzing workflow: ${{ github.event.workflow_run.name }}"
+        echo "🔍 Status: ${{ github.event.workflow_run.conclusion }}"
+        echo "🔍 Branch: ${{ github.event.workflow_run.head_branch }}"
+
+        # 获取工作流详情
+        curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+             "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}" \
+             > workflow_details.json
+
+        # 分析结果
+        python3 scripts/analyze_workflow_results.py
+
+    - name: 📧 Send Quality Report
+      if: always()
+      run: |
+        python3 scripts/send_notification.py \
+          --type quality \
+          --status ${{ job.status }} \
+          --workflow ${{ github.event.workflow_run.name }} \
+          --data workflow_details.json
+
+    - name: 📊 Generate Quality Metrics
+      if: always()
+      run: |
+        python3 scripts/generate_quality_metrics.py
+
+  # 2. 每日质量报告
+  daily-quality-report:
+    name: 📊 Daily Quality Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml pandas
+
+    - name: 📊 Generate Daily Report
+      run: |
+        python3 scripts/generate_daily_quality_report.py
+
+    - name: 📧 Send Daily Report
+      run: |
+        python3 scripts/send_daily_report.py
+
+    - name: 📤 Upload Daily Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: daily-quality-report
+        path: daily_quality_report_*.md
+        retention-days: 7
+
+  # 3. 性能监控告警
+  performance-alerts:
+    name: ⚡ Performance Monitoring Alerts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Performance Tools
+      run: |
+        pip install --upgrade pip
+        pip install requests pyyaml radon bandit
+
+    - name: 📊 Performance Analysis
+      run: |
+        python3 scripts/performance_analysis.py
+
+    - name: 🚨 Check Performance Thresholds
+      run: |
+        python3 scripts/check_performance_thresholds.py
+
+    - name: 📧 Send Performance Alerts
+      if: failure()
+      run: |
+        python3 scripts/send_performance_alerts.py
+
+  # 4. 安全漏洞告警
+  security-alerts:
+    name: 🛡️ Security Vulnerability Alerts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 Install Security Tools
+      run: |
+        pip install --upgrade pip
+        pip install bandit safety pip-audit requests
+
+    - name: 🛡️ Security Scan
+      run: |
+        # Bandit安全扫描
+        bandit -r src/ -f json -o bandit-report.json || true
+
+        # Safety依赖扫描
+        safety check --json --output safety-report.json || true
+
+        # pip-audit依赖审计
+        pip-audit --format=json --output audit-report.json || true
+
+    - name: 🚨 Analyze Security Issues
+      run: |
+        python3 scripts/analyze_security_issues.py
+
+    - name: 📧 Send Security Alerts
+      if: failure()
+      run: |
+        python3 scripts/send_security_alerts.py
+
+    - name: 📤 Upload Security Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          audit-report.json
+        retention-days: 30
+
+  # 5. PR状态通知
+  pr-notifications:
+    name: 🔔 PR Status Notifications
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: 🔔 PR Opened Notification
+      if: github.event.action == 'opened'
+      run: |
+        echo "📧 PR Opened: #${{ github.event.number }} - ${{ github.event.pull_request.title }}"
+
+    - name: 🔔 PR Ready for Review
+      if: github.event.action == 'ready_for_review'
+      run: |
+        echo "📧 PR Ready for Review: #${{ github.event.number }}"
+
+    - name: 🔔 PR Closed Notification
+      if: github.event.action == 'closed'
+      run: |
+        if [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+          echo "🎉 PR Merged: #${{ github.event.number }}"
+        else
+          echo "📝 PR Closed (not merged): #${{ github.event.number }}"
+        fi
+
+  # 6. 部署状态通知
+  deployment-notifications:
+    name: 🚀 Deployment Status Notifications
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🚀 Deployment Started
+      run: |
+        echo "🚀 Deployment started for commit: ${{ github.sha }}"
+
+    - name: 📧 Deployment Notification
+      run: |
+        python3 scripts/deployment_notification.py \
+          --commit ${{ github.sha }} \
+          --branch ${{ github.ref_name }} \
+          --status started
+
+    - name: ✅ Deployment Success
+      if: success()
+      run: |
+        python3 scripts/deployment_notification.py \
+          --commit ${{ github.sha }} \
+          --branch ${{ github.ref_name }} \
+          --status success
+
+    - name: ❌ Deployment Failed
+      if: failure()
+      run: |
+        python3 scripts/deployment_notification.py \
+          --commit ${{ github.sha }} \
+          --branch ${{ github.ref_name }} \
+          --status failed
+
+  # 7. 智能告警汇总
+  alert-summary:
+    name: 📊 Alert Summary
+    runs-on: ubuntu-latest
+    needs: [ci-cd-notifications, performance-alerts, security-alerts]
+    if: always()
+
+    steps:
+    - name: 📊 Generate Alert Summary
+      run: |
+        echo "📊 Generating alert summary..."
+
+        # 收集所有告警信息
+        ci_status="${{ needs.ci-cd-notifications.result }}"
+        perf_status="${{ needs.performance-alerts.result }}"
+        security_status="${{ needs.security-alerts.result }}"
+
+        cat > alert_summary.md << EOF
+        # 📊 Alert Summary Report
+
+        **Generated**: $(date '+%Y-%m-%d %H:%M:%S')
+        **Commit**: ${{ github.sha }}
+
+        ## 📋 Alert Status
+
+        - **CI/CD**: $ci_status
+        - **Performance**: $perf_status
+        - **Security**: $security_status
+
+        ## 🚨 Critical Issues
+
+        $(if [ "$ci_status" = "failure" ]; then echo "- ❌ CI/CD pipeline failed"; fi)
+        $(if [ "$perf_status" = "failure" ]; then echo "- ⚡ Performance issues detected"; fi)
+        $(if [ "$security_status" = "failure" ]; then echo "- 🛡️ Security vulnerabilities found"; fi)
+
+        ## 📈 Metrics
+
+        - Total alerts: $(( $(if [ "$ci_status" = "failure" ]; then echo 1; else echo 0; fi) + $(if [ "$perf_status" = "failure" ]; then echo 1; else echo 0; fi) + $(if [ "$security_status" = "failure" ]; then echo 1; else echo 0; fi) ))
+        - Success rate: $(( (3 - $(if [ "$ci_status" = "failure" ]; then echo 1; else echo 0; fi) - $(if [ "$perf_status" = "failure" ]; then echo 1; else echo 0; fi) - $(if [ "$security_status" = "failure" ]; then echo 1; else echo 0; fi)) * 100 / 3 ))%
+
+        ---
+        *Generated by Smart Notifications System*
+        EOF
+
+    - name: 📧 Send Alert Summary
+      run: |
+        python3 scripts/send_alert_summary.py
+
+    - name: 📤 Upload Alert Summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: alert-summary
+        path: alert_summary.md
+        retention-days: 7
