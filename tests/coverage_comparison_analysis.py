@@ -31,7 +31,7 @@ class CoverageComparisonAnalyzer:
                     if node.module:
                         imports.add(node.module)
             return imports
-        except:
+        except (SyntaxError, ValueError):
             return set()
 
     def filter_imports_v1(self, imports: Set[str]) -> Set[str]:
@@ -76,7 +76,7 @@ class CoverageComparisonAnalyzer:
                 relative_path = py_file.relative_to(self.src_root)
                 module_path = str(relative_path.with_suffix('')).replace("/", ".")
                 modules.add(module_path)
-            except:
+            except ValueError:
                 continue
 
         return modules
@@ -107,7 +107,7 @@ class CoverageComparisonAnalyzer:
         # 3. 发现项目模块
         project_modules = self.discover_project_modules()
 
-        print(f"\n📊 导入统计分析:")
+        print("\n📊 导入统计分析:")
         print(f"  🔍 总导入数: {len(all_imports)}")
         print(f"  📦 项目模块总数: {len(project_modules)}")
         print(f"  ✅ v1系统覆盖: {len(v1_covered)}个")
@@ -117,7 +117,7 @@ class CoverageComparisonAnalyzer:
         v1_coverage = (len(v1_covered) / len(project_modules) * 100) if project_modules else 0
         v2_coverage = (len(v2_covered) / len(project_modules) * 100) if project_modules else 0
 
-        print(f"\n📈 覆盖率计算:")
+        print("\n📈 覆盖率计算:")
         print(f"  🎯 v1系统覆盖率: {v1_coverage:.1f}%")
         print(f"  🚀 v2系统覆盖率: {v2_coverage:.1f}%")
         print(f"  📊 差异: +{v2_coverage - v1_coverage:.1f}个百分点")
@@ -147,18 +147,18 @@ class CoverageComparisonAnalyzer:
                 print(f"    ... 还有 {len(modules) - 10} 个")
 
         # 6. 核心发现总结
-        print(f"\n🎯 核心发现总结:")
+        print("\n🎯 核心发现总结:")
         print(f"  📈 覆盖率提升: {v2_coverage - v1_coverage:.1f}个百分点")
-        print(f"  🔧 提升原因: v2.0系统扩展了模块识别范围")
-        print(f"  📊 前缀扩展: 从7个增加到19个 (+171%)")
-        print(f"  ✨ 技术本质: 更全面的模块覆盖率统计")
+        print("  🔧 提升原因: v2.0系统扩展了模块识别范围")
+        print("  📊 前缀扩展: 从7个增加到19个 (+171%)")
+        print("  ✨ 技术本质: 更全面的模块覆盖率统计")
 
-        print(f"\n💡 结论:")
-        print(f"  v2.0系统的'惊人突破'主要是由于:")
-        print(f"  1. 扩展了内部模块的识别范围")
-        print(f"  2. 包含了更多项目模块类别")
-        print(f"  3. 更准确地反映了项目的真实模块覆盖情况")
-        print(f"  4. 不是性能突破，而是统计准确性的提升")
+        print("\n💡 结论:")
+        print("  v2.0系统的'惊人突破'主要是由于:")
+        print("  1. 扩展了内部模块的识别范围")
+        print("  2. 包含了更多项目模块类别")
+        print("  3. 更准确地反映了项目的真实模块覆盖情况")
+        print("  4. 不是性能突破，而是统计准确性的提升")
 
 def main():
     """主函数"""
