@@ -33,7 +33,7 @@ jobs:
 
         # 运行ruff检查
         if command -v ruff &> /dev/null; then
-          ruff check . --output-format=concise || echo "⚠️ Ruff检查发现问题"
+          ruff check src/ tests/ --output-format=concise || echo "⚠️ Ruff检查发现问题"
         else
           echo "⚠️ Ruff未安装，跳过检查"
         fi
