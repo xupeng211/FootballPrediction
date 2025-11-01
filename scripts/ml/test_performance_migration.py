@@ -154,7 +154,6 @@ def check_current_migration_status():
                 result = session.execute(text("SELECT version_num FROM alembic_version;"))
                 current_version = result.scalar()
                 print(f"📋 当前数据库版本: {current_version}")
-            except Exception:
                 print("⚠️ 无法获取数据库版本")
 
     except Exception as e:

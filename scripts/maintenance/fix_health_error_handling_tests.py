@@ -42,7 +42,6 @@ class TestHealthCheckerErrorHandling:
 
             try:
                 await checker.check_database()
-            except Exception:
                 # 应该能够处理数据库连接错误
                 pass
 
@@ -58,7 +57,6 @@ class TestHealthCheckerErrorHandling:
 
             try:
                 await checker.check_redis()
-            except Exception:
                 # 应该能够处理Redis连接错误
                 pass
 

@@ -12,9 +12,7 @@ import re
 from pathlib import Path
 from typing import List, Dict, Tuple
 import sys
-from src.core.config import 
-
-
+from src.core.config import *
 class FailedTestAnalyzer:
     """失败测试分析器"""
 

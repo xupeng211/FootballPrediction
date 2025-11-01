@@ -608,8 +608,9 @@ class QualityChecker:
 
             return False
 
-            except Exception:
-            return False
+            try:
+
+                pass
 
     def _auto_fix_lint_issues(self, details: Dict) -> bool:
         """自动修复lint问题"""
@@ -639,8 +640,9 @@ class QualityChecker:
 
             return result.returncode == 0
 
-            except Exception:
-            return False
+            try:
+
+                pass
 
     def _log_iteration(self, retry: int, passed: bool) -> None:
         """记录迭代日志"""

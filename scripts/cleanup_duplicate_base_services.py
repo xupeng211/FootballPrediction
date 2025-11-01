@@ -39,7 +39,6 @@ def main():
                             files_to_update.append(file_path)
                             print(f"   ⚠️ 需要更新: {file_path}")
                             break
-            except Exception:
                     pass
 
     if not files_to_update:

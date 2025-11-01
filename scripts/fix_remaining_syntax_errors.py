@@ -213,7 +213,6 @@ class SyntaxErrorFixer:
                     except SyntaxError:
                         remaining_errors += 1
                         print(f"  ❌ 仍有语法错误: {file_path}")
-            except Exception:
                         pass
 
         success_rate = (

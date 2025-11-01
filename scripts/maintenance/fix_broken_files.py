@@ -197,7 +197,6 @@ def main():
             # 有语法错误，尝试修复
             if fix_file_syntax(file_path):
                 fixed_count += 1
-            except Exception:
             pass
 
     print(f"\n✅ 完成！修复了 {fixed_count} 个文件")

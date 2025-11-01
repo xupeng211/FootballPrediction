@@ -733,7 +733,6 @@ class Test{class_name.replace('_', '')}DataDriven:
                     try:
                         method = getattr(repo_instance, method_name)
                         method()
-            except Exception:
                         print(f"   错误处理验证: {{method_name}} 正确处理了数据库错误")
 
         except ImportError as e:

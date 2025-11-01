@@ -72,7 +72,6 @@ class DocsAnalytics:
                     match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
                     if match:
                         return match.group(1)
-            except Exception:
             pass
         return "FootballPrediction"
 
@@ -82,7 +81,6 @@ class DocsAnalytics:
             result = subprocess.run(["du", "-sh", str(directory)], capture_output=True, text=True)
             if result.returncode == 0:
                 return result.stdout.split()[0]
-            except Exception:
             pass
         return "未知"
 
@@ -487,7 +485,6 @@ class DocsAnalytics:
                         if linked_path.exists():
                             linked_files.add(linked_path)
 
-            except Exception:
                     pass
 
             orphaned = all_md_files - linked_files
@@ -533,7 +530,6 @@ class DocsAnalytics:
 
                     file_connections[md_file] = len(links)
 
-            except Exception:
                     pass
 
             # 计算引用密度
@@ -672,7 +668,6 @@ class DocsAnalytics:
                         content = f.read()
                     if re.search(r"^# ", content, re.MULTILINE):
                         consistent_titles += 1
-            except Exception:
                     pass
 
             if len(md_files) > 0:
@@ -689,7 +684,6 @@ class DocsAnalytics:
                     links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
                     if links:
                         consistent_links += 1
-            except Exception:
                     pass
 
             if len(md_files) > 0:
@@ -749,7 +743,6 @@ class DocsAnalytics:
                         content = f.read()
                     if "## 📑 目录" in content or "## 目录" in content:
                         files_with_toc += 1
-            except Exception:
                     pass
 
             if len(md_files) > 0:

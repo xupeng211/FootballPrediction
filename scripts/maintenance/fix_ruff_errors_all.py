@@ -67,7 +67,6 @@ def check_ruff_errors():
                 for code, count in sorted(error_counts.items(), key=lambda x: x[1], reverse=True):
                     print(f"  - {code}: {count} 个")
 
-            except Exception:
                 print("❌ 无法解析错误输出")
 
             return False
@@ -131,7 +130,6 @@ def main():
         try:
             os.remove("fix_unused_vars.py")
             print("🗑️ 已清理临时脚本: fix_unused_vars.py")
-            except Exception:
             pass
 
     # 运行 ruff 自动修复

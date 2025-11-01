@@ -62,12 +62,10 @@ class {class_name}:
                         try:
                             instance = attr()
                             break
-            except Exception:
                             continue
 
             # 如果没有找到类，至少验证模块存在
             assert True
-            except Exception:
             pytest.skip("初始化测试跳过")
 
     def test_configuration_handling(self):
@@ -80,7 +78,6 @@ class {class_name}:
                 # 测试环境变量读取
                 config_value = os.environ.get('TEST_CONFIG')
                 assert config_value == 'test_value'
-            except Exception:
                 pytest.skip("配置处理测试跳过")
 
     def test_error_handling(self):
@@ -100,7 +97,6 @@ class {class_name}:
             result = mock_instance.process("test_input")
             assert result is None
 
-            except Exception:
             pytest.skip("错误处理测试跳过")
 
     def test_async_functionality(self):
@@ -118,7 +114,6 @@ class {class_name}:
         try:
             import asyncio
             asyncio.run(test_async())
-            except Exception:
             pytest.skip("异步功能测试跳过")
 
     def test_data_validation(self):
@@ -164,7 +159,6 @@ class {class_name}:
                 result = mock_processor.process(test_value)
                 assert result is not None
                 mock_processor.process.assert_called_with(test_value)
-            except Exception:
                 continue
 
     def test_concurrent_operations(self):

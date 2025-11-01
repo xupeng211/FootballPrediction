@@ -114,7 +114,6 @@ try:
     db = DatabaseManager()
     db.get_session()
     print("✓ Database Mock OK")
-            except Exception:
     print("✗ Database Mock Failed")
     sys.exit(1)
 
@@ -123,7 +122,6 @@ try:
     r = redis.Redis()
     r.ping()
     print("✓ Redis Mock OK")
-            except Exception:
     print("✗ Redis Mock Failed")
     sys.exit(1)
 
@@ -131,7 +129,6 @@ try:
     import mlflow
     mlflow.start_run()
     print("✓ MLflow Mock OK")
-            except Exception:
     print("✗ MLflow Mock Failed")
     sys.exit(1)
 

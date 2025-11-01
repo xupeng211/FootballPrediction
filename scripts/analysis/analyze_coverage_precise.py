@@ -23,10 +23,8 @@ def count_lines_of_code(file_path: str) -> int:
             if line and not line.startswith("#"):
                 code_lines += 1
         return code_lines
-    except Exception:
-        return 0
-
-
+    try:
+        pass
 def parse_coverage_xml() -> Dict[str, Tuple[int, int, float]]:
     """解析coverage.xml文件"""
     coverage_data = {}

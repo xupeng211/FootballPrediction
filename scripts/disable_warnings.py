@@ -5,9 +5,7 @@
 
 import warnings
 import os
-from src.core.config import 
-
-
+from src.core.config import *
 def configure_warnings():
     """配置警告过滤器"""
 

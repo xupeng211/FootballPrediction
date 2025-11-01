@@ -38,7 +38,7 @@ def add_imports_to_file(file_path: str, imports: list):
     # 查找导入区域
     lines = content.split("\n")
 
-    # 找到最后一个from typing import
+    # 找到最后一个from typing import *
     typing_import_line = -1
     for i, line in enumerate(lines):
         if line.strip().startswith("from typing import"):

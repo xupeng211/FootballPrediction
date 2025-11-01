@@ -28,7 +28,6 @@ def get_files_with_errors() -> List[str]:
             data = json.loads(result.stdout)
             for item in data:
                 files.add(item["filename"])
-            except Exception:
             pass
 
     return sorted(files)

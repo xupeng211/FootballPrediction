@@ -60,10 +60,8 @@ def check_file_syntax(filepath: str) -> bool:
             content = f.read()
         ast.parse(content)
         return True
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_all_import_indentations(directory: str) -> Tuple[int, int, Set[str]]:
     """修复目录下所有文件的导入语句缩进问题"""
     directory_path = Path(directory)

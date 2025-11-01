@@ -234,7 +234,6 @@ class Issue86P3Breakthrough:
                 # 检查异步函数
                 if "async def" in content:
                     score += 8
-            except Exception:
             pass
 
         return score

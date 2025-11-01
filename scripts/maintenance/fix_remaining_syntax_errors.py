@@ -34,10 +34,8 @@ def fix_broken_try_except_blocks(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_extra_indented_imports(file_path: Path) -> bool:
     """修复过度缩进的import语句"""
     try:
@@ -68,10 +66,8 @@ def fix_extra_indented_imports(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_unterminated_string(file_path: Path) -> bool:
     """修复未终止的三引号字符串"""
     try:
@@ -115,10 +111,8 @@ def fix_unterminated_string(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def main():
     print("🔧 精确修复剩余语法错误...")
 

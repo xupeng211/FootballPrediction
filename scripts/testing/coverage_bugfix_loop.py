@@ -23,11 +23,6 @@ def get_last_processed_id():
         try:
             data = json.loads(STATE_FILE.read_text())
             return data.get("last_processed_run_id")
-            except Exception:
-            return None
-    return None
-
-
 def set_last_processed_id(run_id):
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(STATE_FILE, "w", encoding="utf-8") as f:

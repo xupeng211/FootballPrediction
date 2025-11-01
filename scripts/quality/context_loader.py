@@ -368,7 +368,6 @@ class ProjectContextLoader:
                 try:
                     with open(py_file, "r", encoding="utf-8") as f:
                         total_lines += len(f.readlines())
-            except Exception:
                     pass
 
             stats["total_lines_of_code"] = total_lines

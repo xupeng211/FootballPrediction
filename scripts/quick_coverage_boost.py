@@ -34,10 +34,6 @@ def analyze_module(file_path):
             "has_async": any("async def" in content for _ in content.split("\n")),
             "has_exceptions": "Exception" in content or "raise" in content,
         }
-            except Exception:
-        return None
-
-
 def generate_smart_test(module_path, analysis):
     """根据分析结果生成智能测试"""
     module_name = module_path.replace("src/", "").replace("/", ".").replace(".py", "")

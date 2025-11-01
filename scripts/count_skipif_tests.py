@@ -55,7 +55,6 @@ def analyze_skipif_reasons():
                     )
                     for reason in matches:
                         reasons[reason] = reasons.get(reason, 0) + 1
-            except Exception:
                     pass
 
     return reasons

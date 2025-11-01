@@ -13,9 +13,6 @@ def analyze_function_lengths(file_path: Path) -> List[Tuple[str, int, int]]:
     with open(file_path, "r", encoding="utf-8") as f:
         try:
             tree = ast.parse(f.read())
-            except Exception:
-            return []
-
     functions = []
 
     for node in ast.walk(tree):

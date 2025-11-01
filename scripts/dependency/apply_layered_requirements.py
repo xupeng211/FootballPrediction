@@ -137,7 +137,6 @@ class LayeredDependencyManager:
                 )
                 if result.returncode == 0:
                     print(f"    ✓ 移除 {pkg}")
-            except Exception:
                 pass  # 忽略不存在的包
 
         return success

@@ -55,10 +55,8 @@ def check_imports(file_path: Path) -> Tuple[bool, List[str]]:
                     imports.append(f"from {module} import {alias.name}")
 
         return len(imports) > 0, imports
-            except Exception:
-        return False, []
-
-
+            try:
+                pass
 def verify_audit_service_mod() -> Dict[str, bool]:
     """验证audit_service_mod模块"""
     print("\n" + "=" * 60)

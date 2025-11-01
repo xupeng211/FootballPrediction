@@ -133,7 +133,6 @@ def clean_useless_ignores():
             with open(py_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
-            except Exception:
             # 忽略无法读取的文件
             pass
 

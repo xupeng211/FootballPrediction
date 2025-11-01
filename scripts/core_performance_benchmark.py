@@ -46,7 +46,6 @@ class CorePerformanceBenchmark:
         for _ in range(10):
             try:
                 func()
-            except Exception:
                 pass
 
         # 正式测试
@@ -168,7 +167,6 @@ class CorePerformanceBenchmark:
         for _ in range(10):
             try:
                 await async_prediction_record()
-            except Exception:
                 pass
 
         # 正式测试

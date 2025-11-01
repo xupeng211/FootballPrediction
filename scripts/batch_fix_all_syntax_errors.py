@@ -51,10 +51,8 @@ def fix_future_import_placement(file_path: Path) -> bool:
                 return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_pytest_import_in_try(file_path: Path) -> bool:
     """修复try块中的pytest导入问题"""
     try:
@@ -110,10 +108,8 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_duplicate_function_args(file_path: Path) -> bool:
     """修复重复的函数参数"""
     try:
@@ -139,10 +135,8 @@ def fix_duplicate_function_args(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_missing_except_block(file_path: Path) -> bool:
     """修复缺少except块的try语句"""
     try:
@@ -189,10 +183,8 @@ def fix_missing_except_block(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_async_function_error(file_path: Path) -> bool:
     """修复async/await在非异步函数中的错误"""
     try:
@@ -230,10 +222,8 @@ def fix_async_function_error(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_missing_comma(file_path: Path) -> bool:
     """修复缺少逗号的语法错误"""
     try:
@@ -263,10 +253,8 @@ def fix_missing_comma(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_indentation_errors(file_path: Path) -> bool:
     """修复缩进错误"""
     try:
@@ -312,10 +300,8 @@ def fix_indentation_errors(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_single_file(file_path: Path) -> Tuple[bool, List[str]]:
     """修复单个文件的语法错误"""
     fixes_applied = []

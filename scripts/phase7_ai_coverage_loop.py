@@ -187,9 +187,6 @@ class AICoverageOrchestrator:
                 return "medium"
             else:
                 return "complex"
-            except Exception:
-            return "simple"
-
     def _calculate_priority(
         self, module: str, complexity: str, coverage_data: Dict[str, float]
     ) -> int:
@@ -234,9 +231,6 @@ class AICoverageOrchestrator:
                         dependencies.append(node.module)
 
             return [dep for dep in dependencies if dep and not dep.startswith(".")]
-            except Exception:
-            return []
-
     def generate_unit_tests(self, target: CoverageTarget) -> AITestResult:
         """为目标模块生成单元测试"""
         print(f"\n🤖 为模块 {target.module_path} 生成单元测试...")

@@ -40,7 +40,6 @@ class IndentationFixer:
                             match = re.search(r"line (\d+)", str(e))
                             if match:
                                 errors.append((file_path, int(match.group(1))))
-            except Exception:
                         # 忽略其他类型的错误
                         pass
 
@@ -175,9 +174,8 @@ class IndentationFixer:
                 timeout=30,
             )
             return result.returncode == 0
-            except Exception:
-            return False
-
+            try:
+                pass
     def fix_all_indentation_errors(self):
         """修复所有缩进错误"""
         print("🔍 查找缩进错误...")
