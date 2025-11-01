@@ -20,8 +20,9 @@ def count_lines_of_code(file_path: str) -> int:
             if line and not line.startswith("#"):
                 code_lines += 1
         return code_lines
-    try:
-        pass
+    except Exception:
+        return 0
+
 def main():
     """主函数"""
     print("🚀 开始手动覆盖率分析...")

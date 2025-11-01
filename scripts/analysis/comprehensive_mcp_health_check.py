@@ -129,6 +129,8 @@ class MCPHealthChecker:
             except Exception as e2:
                 self.add_result("global_mcp", "Redis MCP", "❌ 异常", f"连接失败: {str(e2)}")
                 self.log(f"❌ Redis MCP: {str(e2)}")
+        except Exception:
+            self.add_result("global_mcp", "Redis MCP", "❌ 异常", "连接失败")
 
     def check_kafka_mcp(self):
         """Check Kafka MCP - List available topics"""

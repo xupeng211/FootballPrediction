@@ -550,6 +550,8 @@ if src_path.exists():
                     return True
 
             pass
+        except Exception:
+            pass
 
         return False
 
@@ -580,6 +582,8 @@ if src_path.exists():
                         return True
 
             pass
+        except Exception:
+            pass
 
         return False
 
@@ -607,6 +611,8 @@ if src_path.exists():
                         f.writelines(lines)
                     return True
 
+            pass
+        except Exception:
             pass
 
         return False

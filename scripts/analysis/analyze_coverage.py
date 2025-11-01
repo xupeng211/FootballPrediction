@@ -23,8 +23,9 @@ def count_lines_of_code(file_path: str) -> int:
             if line and not line.startswith("#"):
                 code_lines += 1
         return code_lines
-    try:
-        pass
+    except Exception:
+        return 0
+
 def get_coverage_data() -> Dict[str, Tuple[int, int, int, float]]:
     """获取覆盖率数据"""
     # 运行pytest并获取覆盖率报告
