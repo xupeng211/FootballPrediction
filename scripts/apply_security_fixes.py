@@ -48,7 +48,7 @@ class SecurityFixer:
                         a = int(parts[0].strip())
                         b = int(parts[1].strip())
                         return f'secrets.randbelow({b - a + 1}) + {a}'
-                except:
+                except (ValueError, IndexError):
                     pass
                 return match.group(0)
 
@@ -116,9 +116,9 @@ class SecurityFixer:
                 for line in lines:
                     if re.search(pattern, line):
                         # 在风险行前添加注释
-                        modified_lines.append(f'        # TODO: 使用参数化查询以避免SQL注入风险')
-                        modified_lines.append(f'        # 当前代码存在SQL注入风险，建议修改为:')
-                        modified_lines.append(f'        # cursor.execute("SELECT ... WHERE id = %s", (id,))')
+                        modified_lines.append('        # TODO: 使用参数化查询以避免SQL注入风险')
+                        modified_lines.append('        # 当前代码存在SQL注入风险，建议修改为:')
+                        modified_lines.append('        # cursor.execute("SELECT ... WHERE id = %s", (id,))')
                         modified_lines.append(line)
                     else:
                         modified_lines.append(line)
@@ -327,7 +327,7 @@ def main():
     fixer = SecurityFixer(project_root)
     results = fixer.apply_all_fixes()
 
-    print(f"\n📊 修复摘要:")
+    print("\n📊 修复摘要:")
     print(f"  - 成功修复: {results['total_fixes']} 个")
     print(f"  - 修复错误: {results['total_errors']} 个")
 
