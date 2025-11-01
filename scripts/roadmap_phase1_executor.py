@@ -536,9 +536,8 @@ mock_service.return_value = {"status": "success"}
                 timeout=60,
             )
             return result.returncode == 0
-            except Exception:
-            return False
-
+            try:
+                pass
     def establish_coverage_gate(self) -> bool:
         """建立覆盖率门禁"""
         try:
@@ -557,9 +556,8 @@ mock_service.return_value = {"status": "success"}
                 timeout=120,
             )
             return result.returncode == 0
-            except Exception:
-            return False
-
+            try:
+                pass
     def establish_security_gate(self) -> bool:
         """建立安全门禁"""
         try:
@@ -568,9 +566,8 @@ mock_service.return_value = {"status": "success"}
             )
             # 简单检查：只要有结果就算通过（具体检查可以后续优化）
             return True
-            except Exception:
-            return False
-
+            try:
+                pass
     def establish_integration_gate(self) -> bool:
         """建立集成测试门禁"""
         try:
@@ -581,9 +578,8 @@ mock_service.return_value = {"status": "success"}
                 timeout=180,
             )
             return result.returncode == 0
-            except Exception:
-            return False
-
+            try:
+                pass
     def generate_phase1_report(self):
         """生成阶段1报告"""
         duration = time.time() - self.phase_stats["start_time"]

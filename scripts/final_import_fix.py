@@ -193,10 +193,8 @@ def check_file_syntax(filepath: str) -> bool:
             content = f.read()
         ast.parse(content)
         return True
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_remaining_files(directory: str) -> Tuple[int, int, Set[str]]:
     """修复剩余的语法错误文件"""
     directory_path = Path(directory)

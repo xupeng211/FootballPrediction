@@ -126,7 +126,6 @@ def run_coverage_analysis(test_files: List[str]) -> Dict[str, Any]:
             if os.path.exists("coverage.json"):
                 with open("coverage.json", "r") as f:
                     coverage_data = json.load(f)
-            except Exception:
             pass
 
         # 从输出中提取总体覆盖率
@@ -143,7 +142,6 @@ def run_coverage_analysis(test_files: List[str]) -> Dict[str, Any]:
                         if part.endswith("%"):
                             overall_coverage = float(part.replace("%", ""))
                             break
-            except Exception:
                     pass
 
         return {
@@ -196,7 +194,6 @@ def analyze_test_quality(test_files: List[str]) -> Dict[str, Any]:
             try:
                 compile(content, test_file, "exec")
                 quality_metrics["syntax_valid"] += 1
-            except Exception:
                 continue
 
             # 检查导入成功

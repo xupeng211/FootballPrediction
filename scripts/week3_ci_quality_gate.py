@@ -45,7 +45,6 @@ class CIQualityGate:
                     content = f.read()
                 ast.parse(content)
                 healthy_files += 1
-            except Exception:
                 continue
 
         health_percentage = (healthy_files / total_files * 100) if total_files > 0 else 0

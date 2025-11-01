@@ -8,10 +8,8 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from src.core.config import 
-from src.core.config import 
-
-
+from src.core.config import *
+from src.core.config import *
 def generate_quality_summary():
     """
     生成质量检查摘要

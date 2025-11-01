@@ -179,11 +179,6 @@ if __name__ == "__main__":
             except SyntaxError:
                 return True
 
-            except Exception:
-            return True
-
-        return False
-
     def extract_metadata_from_file(self, file_path: Path) -> Dict[str, str]:
         """从文件中提取元数据"""
         try:
@@ -216,7 +211,6 @@ if __name__ == "__main__":
                 "file_name": file_path.name,
                 "created_time": "2025-10-26",
             }
-            except Exception:
             # 默认元数据
             return {
                 "module_name": file_path.stem,

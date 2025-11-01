@@ -51,10 +51,8 @@ def fix_future_import_in_file(file_path: Path) -> bool:
             return True
 
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def main():
     print("🔧 修复__future__ import位置...")
 

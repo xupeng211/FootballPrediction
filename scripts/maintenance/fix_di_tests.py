@@ -177,7 +177,6 @@ class TestDISetupAdvanced:
             await setup.initialize()
             # Mock不会抛出错误
             assert setup.initialized
-            except Exception:
             pytest.fail("初始化不应该失败")
 
     @pytest.mark.asyncio

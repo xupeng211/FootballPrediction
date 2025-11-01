@@ -376,7 +376,6 @@ if __name__ == "__main__":
                 if "environment" in func['args']:
                     result = {import_path}.{func_name}(test_case)
                     assert result is not None
-            except Exception:
                 # 某些边界条件可能抛出异常，这是正常的
                 pass
 '''
@@ -415,7 +414,6 @@ if __name__ == "__main__":
                         if method_name.startswith('get') or method_name.startswith('is_'):
                             result = method()
                             assert result is not None
-            except Exception:
                         # 某些方法可能需要参数或有副作用
                         pass
 

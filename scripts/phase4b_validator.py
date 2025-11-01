@@ -169,9 +169,8 @@ class Phase4BValidator:
 
             total_lines = sum(len(doc.split("\n")) for doc in docstrings)
             return total_lines
-            except Exception:
-            return 0
-
+            try:
+                pass
     def run_quick_test(self, file_path: Path) -> bool:
         """运行快速测试（仅收集，不执行）"""
         try:

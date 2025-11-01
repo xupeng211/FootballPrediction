@@ -100,9 +100,8 @@ class TestRefactorerV2:
                 timeout=10,
             )
             return result.returncode == 0
-            except Exception:
-            return False
-
+            try:
+                pass
     def analyze_source_code_deep(self, source_file):
         """深度分析源代码结构"""
         if not os.path.exists(source_file):

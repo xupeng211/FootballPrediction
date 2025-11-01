@@ -36,10 +36,8 @@ def fix_docstring_indentation(filepath):
             f.write(fixed_content)
 
         return True
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def main():
     """主函数"""
     print("🔧 修复docstring缩进问题")

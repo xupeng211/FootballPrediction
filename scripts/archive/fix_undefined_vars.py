@@ -103,9 +103,6 @@ class UndefinedVariableFixer:
                 context.append(f"{prefix}{i+1:3d}: {lines[i].rstrip()}")
 
             return context
-        except Exception:
-            return ["无法获取代码上下文"]
-
     def generate_suggestion(self, var_name: str, context: List[str]) -> str:
         """基于变量名和上下文生成修复建议"""
         suggestions = []

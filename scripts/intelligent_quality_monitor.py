@@ -167,9 +167,8 @@ class IntelligentQualityMonitor:
 
             # 如果没有语法错误，返回满分
             return 100.0 if result.returncode == 0 else 0.0
-            except Exception:
-            return 0.0
-
+            try:
+                pass
     def _calculate_style_score(self) -> float:
         """计算代码风格评分"""
         try:
@@ -195,9 +194,6 @@ class IntelligentQualityMonitor:
                     return 40.0
             else:
                 return 100.0
-            except Exception:
-            return 50.0
-
     def _calculate_type_score(self) -> float:
         """计算类型检查评分"""
         try:
@@ -222,9 +218,6 @@ class IntelligentQualityMonitor:
                     return 40.0
             else:
                 return 100.0
-            except Exception:
-            return 50.0
-
     def _calculate_security_score(self) -> float:
         """计算安全评分"""
         try:
@@ -258,9 +251,6 @@ class IntelligentQualityMonitor:
                     return 95.0
             else:
                 return 100.0
-            except Exception:
-            return 70.0
-
     def _calculate_test_score(self) -> float:
         """计算测试评分"""
         try:
@@ -292,18 +282,12 @@ class IntelligentQualityMonitor:
                                 else:
                                     return 60.0
             return 0.0
-            except Exception:
-            return 50.0
-
     def _calculate_coverage_score(self) -> float:
         """计算覆盖率评分"""
         try:
             # 这里可以集成实际的覆盖率报告
             # 暂时返回当前项目的实际覆盖率
             return 13.89  # 当前实际覆盖率
-            except Exception:
-            return 50.0
-
     def _calculate_complexity_score(self) -> float:
         """计算代码复杂度评分"""
         try:
@@ -326,9 +310,6 @@ class IntelligentQualityMonitor:
                 return 60.0
             else:
                 return 40.0
-            except Exception:
-            return 70.0
-
     def _count_code_metrics(self) -> Tuple[int, int]:
         """统计代码指标"""
         file_count = 0
@@ -342,9 +323,7 @@ class IntelligentQualityMonitor:
                     try:
                         with open(py_file, "r", encoding="utf-8") as f:
                             line_count += len(f.readlines())
-            except Exception:
                         continue
-            except Exception:
             pass
 
         return file_count, line_count

@@ -10,9 +10,7 @@ API性能优化 - 性能优化器
 import asyncio
 import time
 from typing import Dict, Any
-from src.core.config import 
-
-
+from src.core.config import *
 class API性能优化Optimizer:
     """API性能优化 优化器"""
 

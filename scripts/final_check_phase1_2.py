@@ -23,7 +23,6 @@ def check_phase1():
             else:
                 print("✗ pytest.ini 缺少 pythonpath 配置")
                 return False
-            except Exception:
         print("✗ 无法读取 pytest.ini")
         return False
 

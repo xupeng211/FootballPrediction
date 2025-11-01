@@ -33,7 +33,6 @@ def find_modules_missing_docs(directory: Path) -> List[Path]:
                 and isinstance(tree.body[0].value.value, str)
             ):
                 continue  # 有文档字符串
-            except Exception:
             pass
 
         modules_missing_docs.append(py_file)

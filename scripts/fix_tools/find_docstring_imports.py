@@ -37,10 +37,6 @@ def find_docstring_imports(filepath):
 
         return issues
 
-            except Exception:
-        return []
-
-
 def main():
     """主函数"""
     print("扫描所有Python文件...")

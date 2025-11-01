@@ -53,7 +53,6 @@ class TestPerformanceAnalyzer:
         try:
             with open("/tmp/test_results.json", "r") as f:
                 json_data = json.load(f)
-            except Exception:
             json_data = {"summary": {}, "tests": []}
 
         return {
@@ -260,7 +259,6 @@ class TestPerformanceAnalyzer:
                 if "patch(" in content:
                     mock_patterns["patch"] += 1
 
-            except Exception:
                 pass
 
         # 生成建议

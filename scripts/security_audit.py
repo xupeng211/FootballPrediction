@@ -380,7 +380,6 @@ class SecurityAuditor:
                         self.results["score"] -= 2
                         break
 
-            except Exception:
                 continue
 
     def audit_api_security(self):
@@ -427,7 +426,6 @@ class SecurityAuditor:
             if "cors" not in content.lower():
                 issues["no_cors"].append(str(file_path))
 
-            except Exception:
             pass
 
     def audit_database_security(self):
@@ -447,7 +445,6 @@ class SecurityAuditor:
                 if "password" in content.lower() and "hash" not in content.lower():
                     db_issues.append(f"{migration_file}: 可能包含未加密的密码")
 
-            except Exception:
                 pass
 
         if db_issues:

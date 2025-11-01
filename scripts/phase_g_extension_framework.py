@@ -81,7 +81,6 @@ class PythonCodeAnalyzer(CodeAnalyzer):
                         func_info['complexity'] = self.calculate_complexity(func_info)
                         functions.append(func_info)
 
-            except Exception:
                 continue
 
         self.functions = functions
@@ -133,7 +132,6 @@ class JavaScriptCodeAnalyzer(CodeAnalyzer):
                         func_info['complexity'] = self.calculate_complexity(func_info)
                         functions.append(func_info)
 
-            except Exception:
                 continue
 
         self.functions = functions

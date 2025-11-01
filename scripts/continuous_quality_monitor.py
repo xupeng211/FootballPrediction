@@ -31,9 +31,8 @@ class ContinuousQualityMonitor:
                 content = f.read()
             ast.parse(content)
             return True
-            except Exception:
-            return False
-
+            try:
+                pass
     def analyze_directory(self, directory: str) -> Dict:
         """分析目录的语法健康度"""
         python_files = list(Path(directory).rglob("*.py"))

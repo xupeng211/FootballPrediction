@@ -85,7 +85,6 @@ class PRAnalyzer:
                     try:
                         # 尝试分析Python文件的复杂性指标
                         self._analyze_python_file(filename, complexity_score, suggestions)
-                    except Exception:
                         pass
 
             # 检查配置文件变更

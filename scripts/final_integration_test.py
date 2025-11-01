@@ -305,7 +305,6 @@ class FinalIntegrationTester:
                     logger.warning(f"  ⚠️  {package_name} 导入失败")
                     self.test_results["overall"]["details"].append(f"Package {package_name}: IMPORT_FAIL")
                     all_installed = False
-            except Exception:
                 logger.warning(f"  ⚠️  {package_name} 导入失败")
                 self.test_results["overall"]["details"].append(f"Package {package_name}: EXCEPTION")
                 all_installed = False

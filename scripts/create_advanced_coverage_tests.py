@@ -10,11 +10,9 @@ import os
 import ast
 import re
 from typing import Dict, List, Tuple
-from src.core.config import 
-from src.core.config import 
-from src.core.config import 
-
-
+from src.core.config import *
+from src.core.config import *
+from src.core.config import *
 class AdvancedCoverageBooster:
     """高级覆盖率提升器"""
 
@@ -214,7 +212,6 @@ class {class_name}:
                     try:
                         instance = attr()
                         break
-            except Exception:
                         continue
 
             if instance is not None:
@@ -301,7 +298,6 @@ class {class_name}:
         try:
             import asyncio
             asyncio.run(test_async_operations())
-            except Exception:
             pytest.skip("异步功能测试跳过")
 
     def test_integration_with_dependencies(self):

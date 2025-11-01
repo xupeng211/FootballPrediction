@@ -32,10 +32,8 @@ def run_command(command: str, cwd: Path | None = None) -> bool:
     try:
         result = subprocess.run(command.split(), cwd=cwd, capture_output=True, text=True)
         return result.returncode == 0
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def setup_git(project_root: Path) -> bool:
     """初始化Git仓库"""
     logger.info("🌿 初始化Git仓库...")

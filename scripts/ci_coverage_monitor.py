@@ -134,7 +134,6 @@ class CICoverageMonitor:
         # 尝试使用并行执行
         try:
             cmd.extend(["-n", "auto"])
-            except Exception:
             logger.warning("⚠️ pytest-xdist不可用，使用单线程执行")
 
         subprocess.run(
@@ -382,7 +381,6 @@ class CICoverageMonitor:
                 if response.status_code != 200:
                     logger.warning("⚠️ 质量监控系统未响应")
                     return False
-            except Exception:
                 logger.warning("⚠️ 无法连接到质量监控系统")
                 return False
 

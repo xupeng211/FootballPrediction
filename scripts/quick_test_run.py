@@ -82,14 +82,12 @@ def test_import_module(module_path):
         if "passed" in result.stdout:
             try:
                 total_passed += int(result.stdout.split("passed")[0].split()[-1])
-            except Exception:
                 pass
 
         if "failed" in result.stdout:
             try:
                 failed = int(result.stdout.split("failed")[0].split()[-2])
                 total_failed += failed
-            except Exception:
                 pass
 
     print("\n✅ 测试完成！")

@@ -82,7 +82,6 @@ class Phase4BatchSyntaxFixer:
                                         errors.append(error_info)
                             except (ValueError, IndexError):
                                 continue
-        except Exception:
             pass
 
         return errors

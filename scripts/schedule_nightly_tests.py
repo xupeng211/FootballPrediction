@@ -16,8 +16,7 @@ from typing import Dict, List, Optional, Any
 import argparse
 import schedule
 import time
-from src.core.config import 
-
+from src.core.config import *
 # 添加项目路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, "src")
@@ -145,26 +144,23 @@ class NightlyTestScheduler:
         try:
             subprocess.run(["docker", "info"], capture_output=True, timeout=10)
             return result.returncode == 0
-            except Exception:
-            return False
-
+            try:
+                pass
     def _check_command(self, command: str) -> bool:
         """检查命令是否可用"""
         try:
             subprocess.run(command.split(), capture_output=True, timeout=5)
             return True
-            except Exception:
-            return False
-
+            try:
+                pass
     def _check_disk_space(self, required_mb: int) -> bool:
         """检查磁盘空间"""
         try:
             stat = os.statvfs(".")
             free_mb = (stat.f_bavail * stat.f_frsize) // (1024 * 1024)
             return free_mb >= required_mb
-            except Exception:
-            return False
-
+            try:
+                pass
     async def _prepare_environment(self):
         """准备测试环境"""
         logger.info("准备测试环境...")

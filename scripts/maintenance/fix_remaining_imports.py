@@ -109,7 +109,6 @@ def handle_import_errors(file_path: str):
             try:
                 # 尝试导入，如果失败则创建简单测试
                 compile(content, file_path, "exec")
-            except Exception:
                 test_name = Path(file_path).stem.replace("test_", "").title().replace("_", " ")
                 create_simple_test(file_path, test_name)
                 print(f"✅ 创建简单测试: {file_path}")

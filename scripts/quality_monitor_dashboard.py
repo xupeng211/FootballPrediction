@@ -150,7 +150,6 @@ class QualityMonitorDashboard:
                     )
                     if result.returncode != 0:
                         syntax_errors += 1
-            except Exception:
                     syntax_errors += 1
 
             return {"success": syntax_errors == 0, "errors": syntax_errors}

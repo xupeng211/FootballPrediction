@@ -266,7 +266,6 @@ class Test{class_name}Enhanced:
                 if callable(item):
                     try:
                         item()
-            except Exception:
                         pass  # 忽略调用错误，专注于性能
 
         end_time = time.time()

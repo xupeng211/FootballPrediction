@@ -128,9 +128,6 @@ class DependencyAnalyzer:
                 "current_version": conflict_version,
                 "severity": self._calculate_severity(pkg_name, conflict_pkg),
             }
-            except Exception:
-            return None
-
     def _calculate_severity(self, pkg1: str, pkg2: str) -> str:
         """计算冲突严重程度"""
         # 核心依赖

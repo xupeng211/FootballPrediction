@@ -303,7 +303,6 @@ class EnhancedMockContextManager:
         for patch_obj in self._patches:
             try:
                 patch_obj.stop()
-            except Exception:
                 pass
         self._patches.clear()
 

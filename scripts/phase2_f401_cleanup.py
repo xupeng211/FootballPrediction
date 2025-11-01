@@ -29,7 +29,6 @@ def get_f401_files():
                 files[file_path] = []
             files[file_path].append({"line": item["location"]["row"], "message": item["message"]})
         return files
-            except Exception:
         # 如果JSON解析失败，使用文本方式
         files = {}
         for line in result.stdout.split("\n"):

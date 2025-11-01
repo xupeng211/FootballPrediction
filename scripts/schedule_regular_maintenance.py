@@ -294,7 +294,6 @@ def load_maintenance_logs():
             with open(log_file, 'r', encoding='utf-8') as f:
                 logs = json.load(f)
             return logs[-5:]  # 返回最近5条日志
-            except Exception:
         pass
     return []
 

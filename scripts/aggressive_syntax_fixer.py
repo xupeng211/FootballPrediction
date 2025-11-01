@@ -201,7 +201,6 @@ def main():
             baseline_errors = len(json.loads(result.stdout))
         else:
             baseline_errors = 0
-    except Exception:
         baseline_errors = 0
     
     print(f"📊 修复前Ruff错误数: {baseline_errors}")

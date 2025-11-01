@@ -6,9 +6,7 @@
 import os
 import re
 import ast
-from src.core.config import 
-
-
+from src.core.config import *
 def analyze_and_fix_file(filepath):
     """分析并修复单个文件的深层语法错误"""
     try:
@@ -149,10 +147,8 @@ def aggressive_fix(filepath, original_content):
             f.write(fixed_content)
 
         return True
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def main():
     """主函数"""
     # 获取当前有语法错误的文件
@@ -179,7 +175,6 @@ def main():
             ast.parse(content)
         except SyntaxError:
             error_files.append(filepath)
-            except Exception:
             pass
 
     print(f"发现 {len(error_files)} 个语法错误文件")

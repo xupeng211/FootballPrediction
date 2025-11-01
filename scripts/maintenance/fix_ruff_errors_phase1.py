@@ -159,9 +159,8 @@ def fix_unused_in_file(file_path):
     try:
         import json
         errors = json.loads(result.stdout)
-            except Exception:
-        return False
-
+            try:
+                pass
     # 按行号排序，从后往前修复
     errors.sort(key=lambda x: x['location']['row'], reverse=True)
 

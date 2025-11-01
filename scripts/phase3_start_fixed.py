@@ -116,7 +116,6 @@ def start_phase3_task1():
                     content = f.read(1000)  # 只读前1000个字符
                     if '"""' not in content:
                         no_doc_files.append(file_path)
-            except Exception:
                 pass
 
         print(f"\n发现 {len(no_doc_files)} 个文件缺少文档:")

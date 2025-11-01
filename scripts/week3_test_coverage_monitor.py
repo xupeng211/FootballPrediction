@@ -200,7 +200,6 @@ class Test{module_name.replace("_", " ").title()}:
                     if "database" in content:
                         test_stats["test_types"]["database"] += test_count
 
-            except Exception:
                     continue
 
         return test_stats

@@ -133,7 +133,6 @@ class TestParameterizedInput:
                 result = str(invalid_data)
             # 确保没有崩溃
             assert result is not None
-            except Exception:
             # 期望的错误处理
             pass
 

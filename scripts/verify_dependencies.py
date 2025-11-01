@@ -195,7 +195,6 @@ class DependencyVerifier:
                 for line in result.stdout.split("\n"):
                     if line.startswith("Version:"):
                         return line.split(":")[1].strip()
-        except Exception:
             pass
         return None
 
@@ -216,9 +215,6 @@ class DependencyVerifier:
                 required_parts.extend([0] * (max_len - len(required_parts)))
 
                 return current_parts >= required_parts
-            except Exception:
-                return True  # 无法比较时假设版本OK
-
     def _check_version_compatibility(self):
         """检查版本兼容性"""
         print("🔍 检查版本兼容性...")

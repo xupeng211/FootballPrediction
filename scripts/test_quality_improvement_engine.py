@@ -219,9 +219,6 @@ class TestQualityImprovementEngine:
                 "issues": issues,
             }
 
-            except Exception:
-            return None
-
     def generate_improvement_plan(
         self, source_analysis: Dict[str, Any], test_analysis: Dict[str, Any]
     ) -> List[Dict[str, Any]]:

@@ -267,7 +267,6 @@ class MaterializedViewRefresher:
                         last_updated = last_updated_result.scalar()
                         if last_updated:
                             last_updated = last_updated.isoformat()
-            except Exception:
                         # 某些视图可能没有 last_updated 字段
                         pass
 

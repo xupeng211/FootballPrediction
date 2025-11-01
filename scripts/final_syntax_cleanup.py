@@ -28,10 +28,8 @@ def fix_first_line_indentation(filepath):
                     f.write(fixed_content)
                 return True
         return False
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_function_body(filepath):
     """修复函数体缺失问题"""
     try:
@@ -67,10 +65,8 @@ def fix_function_body(filepath):
             f.write(fixed_content)
 
         return True
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def fix_generic_indentation(filepath):
     """修复通用缩进问题"""
     try:
@@ -105,10 +101,8 @@ def fix_generic_indentation(filepath):
             f.write(fixed_content)
 
         return True
-            except Exception:
-        return False
-
-
+            try:
+                pass
 def main():
     """主函数"""
     print("🚀 P1任务: 最终语法错误清理")
@@ -126,7 +120,6 @@ def main():
                     ast.parse(content)
                 except SyntaxError:
                     error_files.append(filepath)
-            except Exception:
                     pass
 
     print(f"发现 {len(error_files)} 个语法错误文件")
@@ -176,7 +169,6 @@ def main():
                     ast.parse(content)
                 except SyntaxError:
                     final_errors.append(filepath)
-            except Exception:
                     pass
 
     print("\n🎯 最终结果:")

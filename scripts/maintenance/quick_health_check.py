@@ -7,9 +7,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from src.core.config import 
-
-
+from src.core.config import *
 def quick_health_check():
     """执行快速健康检查"""
     print(f"🏥 快速健康检查 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

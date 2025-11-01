@@ -340,7 +340,6 @@ class AutoRetrainPipeline:
                     experiment_id = mlflow.create_experiment(experiment_name)
                 else:
                     experiment_id = experiment.experiment_id
-            except Exception:
                 experiment_id = mlflow.create_experiment(experiment_name)
 
             with mlflow.start_run(experiment_id=experiment_id) as run:

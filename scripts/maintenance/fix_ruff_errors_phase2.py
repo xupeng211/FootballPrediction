@@ -54,7 +54,6 @@ def fix_e731_errors():
             try:
                 tree = ast.parse(content)
                 lambda_assigns = find_lambda_assignments(tree)
-            except Exception:
                 lambda_assigns = []
 
             # 修复每个 lambda 赋值

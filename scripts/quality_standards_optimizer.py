@@ -45,10 +45,8 @@ class QualityStandardsOptimizer:
                 with open(coverage_file, "r") as f:
                     data = json.load(f)
                 return data["totals"]["percent_covered"]
-            except Exception:
-                return 0.0
-        return 0.0
-
+            try:
+                pass
     def _get_test_count(self) -> int:
         """获取测试数量"""
         try:
@@ -81,7 +79,6 @@ class QualityStandardsOptimizer:
                         match = re.search(r"collected (\d+) items", line)
                         if match:
                             return int(match.group(1))
-        except Exception:
             pass
 
         return 0
@@ -94,7 +91,6 @@ class QualityStandardsOptimizer:
                 with open(quality_file, "r") as f:
                     data = json.load(f)
                 return data.get("metrics", {}).get("code_quality", 7.0)
-        except Exception:
             pass
 
         # 默认评分

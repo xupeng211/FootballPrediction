@@ -15,11 +15,8 @@ def get_coverage():
         for line in out.splitlines():
             if "TOTAL" in line:
                 return float(line.split()[-1].replace("%", ""))
-            except Exception:
-        return 0.0
-    return 0.0
-
-
+            try:
+                pass
 def execute_once():
     now = datetime.datetime.now().strftime("%Y%m%d%H%M")
     branch = f"chore/coverage-phase1-{now}"
