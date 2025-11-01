@@ -5,23 +5,22 @@
 
 import subprocess
 import sys
-from pathlib import Path
 
 def fix_indentation():
     """修复缩进问题"""
     try:
         # 使用ruff格式化修复缩进
         result = subprocess.run([
-            'ruff', 'format', 'src/', '--fix'
+            'ruff', 'format', 'src/', 'tests/', '--fix'
         ], capture_output=True, text=True)
-        
+
         return result.returncode == 0
     except Exception:
         return False
 
 if __name__ == '__main__':
     print("🔧 开始缩进修复...")
-    
+
     if fix_indentation():
         print("✅ 缩进修复完成")
         sys.exit(0)
