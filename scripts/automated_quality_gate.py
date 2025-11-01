@@ -5,7 +5,6 @@
 
 import subprocess
 import sys
-from pathlib import Path
 
 def run_syntax_check():
     """运行语法检查"""
@@ -13,7 +12,7 @@ def run_syntax_check():
         result = subprocess.run([
             'python3', '-m', 'py_compile', 'src/'
         ], capture_output=True, text=True)
-        
+
         return {
             'status': 'pass' if result.returncode == 0 else 'fail',
             'errors_fixed': 0,
@@ -30,9 +29,9 @@ def run_quality_check():
     """运行质量检查"""
     try:
         result = subprocess.run([
-            'ruff', 'check', 'src/', '--format=json'
+            'ruff', 'check', 'src/', 'tests/', '--format=json'
         ], capture_output=True, text=True)
-        
+
         return {
             'status': 'pass' if result.returncode == 0 else 'fail',
             'issues_count': result.returncode,
@@ -47,18 +46,18 @@ def run_quality_check():
 
 if __name__ == '__main__':
     print("🛡️ 执行质量检查...")
-    
+
     # 语法检查
     syntax_result = run_syntax_check()
     print(f"语法检查: {syntax_result['status']}")
-    
+
     # 质量检查
     quality_result = run_quality_check()
     print(f"质量检查: {quality_result['status']}")
-    
+
     # 综合结果
-    overall_status = 'pass' if (syntax_result['status'] == 'pass' and 
+    overall_status = 'pass' if (syntax_result['status'] == 'pass' and
                                quality_result['status'] == 'pass') else 'fail'
-    
+
     print(f"总体状态: {overall_status}")
     sys.exit(0 if overall_status == 'pass' else 1)
