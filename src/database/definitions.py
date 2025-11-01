@@ -18,6 +18,7 @@ class DatabaseRole(Enum):
 
 class DatabaseManager:
     """数据库管理器 - 简化版本"""
+
     pass
 
     _instance = None
@@ -113,21 +114,21 @@ def get_multi_user_database_manager() -> MultiUserDatabaseManager:
 
 # 初始化函数
 def initialize_database(database_url: Optional[str] = None):
-        """初始化数据库"""
-        manager = get_database_manager()
-        manager.initialize(database_url)
+    """初始化数据库"""
+    manager = get_database_manager()
+    manager.initialize(database_url)
 
 
 def initialize_multi_user_database(database_url: Optional[str] = None):
-        """初始化多用户数据库"""
-        manager = get_multi_user_database_manager()
-        manager.initialize(database_url)
+    """初始化多用户数据库"""
+    manager = get_multi_user_database_manager()
+    manager.initialize(database_url)
 
 
 def initialize_test_database():
-        """初始化测试数据库"""
-        # 测试数据库的特殊初始化
-        pass
+    """初始化测试数据库"""
+    # 测试数据库的特殊初始化
+    pass
 
 
 # 会话获取函数

@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class StrategyPredictionService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """基于策略模式的预测服务"
 

@@ -56,7 +56,7 @@ class Odds(Base):
     def __repr__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return f"<Odds(match_id={self.match_id}, bookmaker={self.bookmaker}, type={self.bet_type}, odds={self.odds_value})>"
 
     @property
@@ -85,7 +85,7 @@ class OddsHistory(Base):
     def __repr__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return f"<OddsHistory(odds_id={self.odds_id}, change={self.old_odds_value}->{self.new_odds_value})>"
 
 
@@ -107,7 +107,7 @@ class MarketAnalysis(Base):
     def __repr__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return f"<MarketAnalysis(match_id={self.match_id}, type={self.bet_type}, avg_odds={self.average_odds})>"
 
     @property

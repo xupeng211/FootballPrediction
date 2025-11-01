@@ -19,15 +19,18 @@ logger = logging.getLogger(__name__)
 
 class ConsistencyLevel(Enum):
     """缓存一致性级别"""
-    EVENTUAL = "eventual"     # 最终一致性
-    STRONG = "strong"          # 强一致性
-    WEAK = "weak"             # 弱一致性
+
+    EVENTUAL = "eventual"  # 最终一致性
+    STRONG = "strong"  # 强一致性
+    WEAK = "weak"  # 弱一致性
 
 
 class CacheEvent:
     """缓存事件"""
 
-    def __init__(self, event_type: str, key: str, data: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self, event_type: str, key: str, data: Optional[Dict[str, Any]] = None
+    ):
         self.event_type = event_type
         self.key = key
         self.data = data or {}
@@ -38,6 +41,7 @@ class CacheEvent:
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     ttl: int
@@ -66,7 +70,9 @@ class CacheConsistencyManager:
         self._running = False
         self._background_task = None
 
-        logger.info(f"缓存一致性管理器初始化完成，一致性级别: {consistency_level.value}")
+        logger.info(
+            f"缓存一致性管理器初始化完成，一致性级别: {consistency_level.value}"
+        )
 
     async def start(self) -> None:
         """启动一致性管理器"""
@@ -75,7 +81,9 @@ class CacheConsistencyManager:
                 return
 
             self._running = True
-            self._background_task = asyncio.create_task(self._process_invalidation_queue())
+            self._background_task = asyncio.create_task(
+                self._process_invalidation_queue()
+            )
             logger.info("缓存一致性管理器已启动")
 
     async def stop(self) -> None:
@@ -122,7 +130,7 @@ class CacheConsistencyManager:
         event = CacheEvent(
             event_type="invalidate",
             keys=keys,
-            data={"reason": reason, "count": len(keys)}
+            data={"reason": reason, "count": len(keys)},
         )
 
         # 根据一致性级别处理失效
@@ -153,7 +161,7 @@ class CacheConsistencyManager:
             keys_to_invalidate = []
             with self._lock:
                 for store_name, store in self._cache_stores.items():
-                    if hasattr(store, 'get_keys_by_pattern'):
+                    if hasattr(store, "get_keys_by_pattern"):
                         try:
                             keys = await store.get_keys_by_pattern(pattern)
                             keys_to_invalidate.extend(keys)
@@ -167,11 +175,13 @@ class CacheConsistencyManager:
             event = CacheEvent(
                 event_type="invalidate_pattern",
                 pattern=pattern,
-                data={"reason": reason}
+                data={"reason": reason},
             )
             await self._invalidation_queue.put((pattern, event))
 
-    async def get_cache_entry(self, key: str, store_name: str = "default") -> Optional[CacheEntry]:
+    async def get_cache_entry(
+        self, key: str, store_name: str = "default"
+    ) -> Optional[CacheEntry]:
         """
         获取缓存条目
 
@@ -188,7 +198,7 @@ class CacheConsistencyManager:
             return None
 
         try:
-            if hasattr(store, 'get'):
+            if hasattr(store, "get"):
                 value = await store.get(key)
                 if value is not None:
                     # 更新访问信息
@@ -199,14 +209,16 @@ class CacheConsistencyManager:
                         ttl=self._get_ttl(key, store_name),
                         created_at=datetime.utcnow(),
                         last_accessed=datetime.utcnow(),
-                        access_count=1
+                        access_count=1,
                     )
         except Exception as e:
             logger.error(f"从存储 {store_name} 获取缓存 {key} 失败: {e}")
 
         return None
 
-    async def set_cache_entry(self, key: str, value: Any, ttl: int, store_name: str = "default") -> bool:
+    async def set_cache_entry(
+        self, key: str, value: Any, ttl: int, store_name: str = "default"
+    ) -> bool:
         """
         设置缓存条目
 
@@ -225,14 +237,12 @@ class CacheConsistencyManager:
             return False
 
         try:
-            if hasattr(store, 'set'):
+            if hasattr(store, "set"):
                 await store.set(key, value, ttl)
 
                 # 记录设置事件
                 event = CacheEvent(
-                    event_type="set",
-                    key=key,
-                    data={"ttl": ttl, "store": store_name}
+                    event_type="set", key=key, data={"ttl": ttl, "store": store_name}
                 )
                 await self._notify_event_listeners(event)
 
@@ -303,16 +313,18 @@ class CacheConsistencyManager:
             stats = {
                 "consistency_level": self.consistency_level.value,
                 "registered_stores": list(self._cache_stores.keys()),
-                "subscriptions_count": sum(len(subs) for subs in self._subscriptions.values()),
+                "subscriptions_count": sum(
+                    len(subs) for subs in self._subscriptions.values()
+                ),
                 "event_listeners_count": len(self._event_listeners),
                 "queue_size": self._invalidation_queue.qsize(),
-                "is_running": self._running
+                "is_running": self._running,
             }
 
         # 获取存储后端统计
         store_stats = {}
         for name, store in self._cache_stores.items():
-            if hasattr(store, 'get_statistics'):
+            if hasattr(store, "get_statistics"):
                 try:
                     store_stats[name] = await store.get_statistics()
                 except Exception as e:
@@ -329,8 +341,7 @@ class CacheConsistencyManager:
             try:
                 # 等待失效任务，设置超时避免阻塞
                 task = await asyncio.wait_for(
-                    self._invalidation_queue.get(),
-                    timeout=1.0
+                    self._invalidation_queue.get(), timeout=1.0
                 )
 
                 if task:
@@ -346,14 +357,16 @@ class CacheConsistencyManager:
             except Exception as e:
                 logger.error(f"处理失效队列时发生错误: {e}")
 
-    async def _perform_invalidation(self, keys_or_pattern: Any, event: CacheEvent) -> None:
+    async def _perform_invalidation(
+        self, keys_or_pattern: Any, event: CacheEvent
+    ) -> None:
         """执行失效操作"""
         if isinstance(keys_or_pattern, list):
             # 具体键失效
             for store_name, store in self._cache_stores.items():
                 for key in keys_or_pattern:
                     try:
-                        if hasattr(store, 'delete'):
+                        if hasattr(store, "delete"):
                             await store.delete(key)
                     except Exception as e:
                         logger.error(f"从存储 {store_name} 删除缓存 {key} 失败: {e}")
@@ -361,7 +374,7 @@ class CacheConsistencyManager:
             # 模式失效
             pattern = keys_or_pattern
             for store_name, store in self._cache_stores.items():
-                if hasattr(store, 'delete_by_pattern'):
+                if hasattr(store, "delete_by_pattern"):
                     try:
                         await store.delete_by_pattern(pattern)
                     except Exception as e:
@@ -395,7 +408,7 @@ class CacheConsistencyManager:
     async def _update_access_info(self, key: str, store_name: str) -> None:
         """更新访问信息"""
         store = self._cache_stores.get(store_name)
-        if store and hasattr(store, 'update_access_info'):
+        if store and hasattr(store, "update_access_info"):
             try:
                 await store.update_access_info(key)
             except Exception as e:
@@ -404,7 +417,7 @@ class CacheConsistencyManager:
     def _get_ttl(self, key: str, store_name: str) -> int:
         """获取TTL"""
         store = self._cache_stores.get(store_name)
-        if store and hasattr(store, 'get_ttl'):
+        if store and hasattr(store, "get_ttl"):
             try:
                 return store.get_ttl(key)
             except Exception:
@@ -456,7 +469,9 @@ async def invalidate_entity_cache(entity_type: str, entity_id: str = None) -> No
     await manager.invalidate_cache(keys, f"entity_{entity_type}_change")
 
 
-async def sync_entity_cache(entity_type: str, entity_id: str = None, data: Any = None, ttl: int = 3600) -> None:
+async def sync_entity_cache(
+    entity_type: str, entity_id: str = None, data: Any = None, ttl: int = 3600
+) -> None:
     """
     同步实体缓存
 

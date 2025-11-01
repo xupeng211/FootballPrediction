@@ -171,6 +171,7 @@ RequireAnalystOrAdmin = require_permissions(["analyst", "admin"])
 
 class OptionalAuth:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     可选认证依赖类
@@ -181,7 +182,7 @@ class OptionalAuth:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         pass
 
     async def __call__(

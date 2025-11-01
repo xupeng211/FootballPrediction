@@ -14,11 +14,11 @@ from typing import Any, Dict, Optional
 class SubsystemStatus(Enum):
     """子系统状态枚举"""
 
-    ACTIVE = "active"          # 活跃状态
-    INACTIVE = "inactive"      # 非活跃状态
-    STARTING = "starting"      # 启动中
-    STOPPING = "stopping"      # 停止中
-    ERROR = "error"           # 错误状态
+    ACTIVE = "active"  # 活跃状态
+    INACTIVE = "inactive"  # 非活跃状态
+    STARTING = "starting"  # 启动中
+    STOPPING = "stopping"  # 停止中
+    ERROR = "error"  # 错误状态
     MAINTENANCE = "maintenance"  # 维护状态
 
 
@@ -65,12 +65,11 @@ class Subsystem(ABC):
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),
             "last_health_check": (
-                self.last_health_check.isoformat()
-                if self.last_health_check else None
+                self.last_health_check.isoformat() if self.last_health_check else None
             ),
             "error_message": self.error_message,
             "metrics": self.metrics.copy(),
-            "config": self.config.copy()
+            "config": self.config.copy(),
         }
 
     def set_error(self, error_message: str) -> None:
@@ -107,8 +106,7 @@ class Facade:
         }
 
         active_count = sum(
-            1 for status in subsystems_status.values()
-            if status["status"] == "active"
+            1 for status in subsystems_status.values() if status["status"] == "active"
         )
 
         return {
@@ -116,7 +114,7 @@ class Facade:
             "total_subsystems": len(self.subsystems),
             "active_subsystems": active_count,
             "created_at": self.created_at.isoformat(),
-            "subsystems": subsystems_status
+            "subsystems": subsystems_status,
         }
 
     def set_error(self, error_message: str) -> None:
@@ -192,10 +190,4 @@ class SystemFacade(Facade):
 
 
 # 导出的公共接口
-__all__ = [
-    "SubsystemStatus",
-    "Subsystem",
-    "Facade",
-    "SubsystemManager",
-    "SystemFacade"
-]
+__all__ = ["SubsystemStatus", "Subsystem", "Facade", "SubsystemManager", "SystemFacade"]

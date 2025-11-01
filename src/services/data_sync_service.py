@@ -24,7 +24,10 @@ class DataSyncService:
     """数据同步服务"""
 
     def __init__(self, database_url: Optional[str] = None):
-        self.database_url = database_url or os.getenv('DATABASE_URL', 'postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging')
+        self.database_url = database_url or os.getenv(
+            "DATABASE_URL",
+            "postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
+        )
         self.redis_manager = RedisManager()
         self.engine = None
         self.async_session = None
@@ -35,17 +38,12 @@ class DataSyncService:
         try:
             # 创建异步数据库引擎
             self.engine = create_async_engine(
-                self.database_url,
-                echo=False,
-                pool_size=10,
-                max_overflow=20
+                self.database_url, echo=False, pool_size=10, max_overflow=20
             )
 
             # 创建会话工厂
             self.async_session = sessionmaker(
-                self.engine,
-                class_=AsyncSession,
-                expire_on_commit=False
+                self.engine, class_=AsyncSession, expire_on_commit=False
             )
 
             logger.info("Database connection initialized successfully")
@@ -79,13 +77,13 @@ class DataSyncService:
             同步结果统计
         """
         results = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'sync_results': {
-                'upcoming_matches': {'success': 0, 'failed': 0, 'total': 0},
-                'recent_matches': {'success': 0, 'failed': 0, 'total': 0},
-                'total_processed': 0
+            "timestamp": datetime.utcnow().isoformat(),
+            "sync_results": {
+                "upcoming_matches": {"success": 0, "failed": 0, "total": 0},
+                "recent_matches": {"success": 0, "failed": 0, "total": 0},
+                "total_processed": 0,
             },
-            'errors': []
+            "errors": [],
         }
 
         try:
@@ -93,23 +91,25 @@ class DataSyncService:
 
             # 同步即将开始的比赛
             upcoming_result = await self.sync_upcoming_matches()
-            results['sync_results']['upcoming_matches'] = upcoming_result
+            results["sync_results"]["upcoming_matches"] = upcoming_result
 
             # 同步最近的比赛结果
             recent_result = await self.sync_recent_matches()
-            results['sync_results']['recent_matches'] = recent_result
+            results["sync_results"]["recent_matches"] = recent_result
 
             # 计算总处理数
-            results['sync_results']['total_processed'] = (
-                upcoming_result['success'] + recent_result['success']
+            results["sync_results"]["total_processed"] = (
+                upcoming_result["success"] + recent_result["success"]
             )
 
-            logger.info(f"Data synchronization completed. Processed {results['sync_results']['total_processed']} matches")
+            logger.info(
+                f"Data synchronization completed. Processed {results['sync_results']['total_processed']} matches"
+            )
 
         except Exception as e:
             error_msg = f"Failed to sync all data: {e}"
             logger.error(error_msg)
-            results['errors'].append(error_msg)
+            results["errors"].append(error_msg)
 
         return results
 
@@ -123,14 +123,14 @@ class DataSyncService:
         Returns:
             同步结果统计
         """
-        result = {'success': 0, 'failed': 0, 'total': 0}
+        result = {"success": 0, "failed": 0, "total": 0}
 
         try:
             logger.info(f"Syncing upcoming matches for next {days_ahead} days")
 
             # 从API获取即将开始的比赛
             upcoming_matches = await self.collector.collect_upcoming_matches(days_ahead)
-            result['total'] = len(upcoming_matches)
+            result["total"] = len(upcoming_matches)
 
             if not upcoming_matches:
                 logger.info("No upcoming matches found")
@@ -141,18 +141,22 @@ class DataSyncService:
                 for match_data in upcoming_matches:
                     try:
                         await self._process_match(session, match_data)
-                        result['success'] += 1
+                        result["success"] += 1
                     except Exception as e:
-                        logger.error(f"Failed to process upcoming match {match_data.get('id')}: {e}")
-                        result['failed'] += 1
+                        logger.error(
+                            f"Failed to process upcoming match {match_data.get('id')}: {e}"
+                        )
+                        result["failed"] += 1
 
                 await session.commit()
 
-            logger.info(f"Upcoming matches sync completed: {result['success']}/{result['total']} successful")
+            logger.info(
+                f"Upcoming matches sync completed: {result['success']}/{result['total']} successful"
+            )
 
         except Exception as e:
             logger.error(f"Failed to sync upcoming matches: {e}")
-            result['failed'] = result['total']
+            result["failed"] = result["total"]
 
         return result
 
@@ -166,14 +170,14 @@ class DataSyncService:
         Returns:
             同步结果统计
         """
-        result = {'success': 0, 'failed': 0, 'total': 0}
+        result = {"success": 0, "failed": 0, "total": 0}
 
         try:
             logger.info(f"Syncing recent matches from last {days_back} days")
 
             # 从API获取最近的比赛
             recent_matches = await self.collector.collect_recent_matches(days_back)
-            result['total'] = len(recent_matches)
+            result["total"] = len(recent_matches)
 
             if not recent_matches:
                 logger.info("No recent matches found")
@@ -184,22 +188,28 @@ class DataSyncService:
                 for match_data in recent_matches:
                     try:
                         await self._process_match(session, match_data)
-                        result['success'] += 1
+                        result["success"] += 1
                     except Exception as e:
-                        logger.error(f"Failed to process recent match {match_data.get('id')}: {e}")
-                        result['failed'] += 1
+                        logger.error(
+                            f"Failed to process recent match {match_data.get('id')}: {e}"
+                        )
+                        result["failed"] += 1
 
                 await session.commit()
 
-            logger.info(f"Recent matches sync completed: {result['success']}/{result['total']} successful")
+            logger.info(
+                f"Recent matches sync completed: {result['success']}/{result['total']} successful"
+            )
 
         except Exception as e:
             logger.error(f"Failed to sync recent matches: {e}")
-            result['failed'] = result['total']
+            result["failed"] = result["total"]
 
         return result
 
-    async def _process_match(self, session: AsyncSession, match_data: Dict[str, Any]) -> ExternalMatch:
+    async def _process_match(
+        self, session: AsyncSession, match_data: Dict[str, Any]
+    ) -> ExternalMatch:
         """
         处理单个比赛数据
 
@@ -210,7 +220,7 @@ class DataSyncService:
         Returns:
             处理后的比赛模型
         """
-        external_id = str(match_data.get('id'))
+        external_id = str(match_data.get("id"))
 
         # 检查是否已存在
         stmt = select(ExternalMatch).where(ExternalMatch.external_id == external_id)
@@ -232,7 +242,9 @@ class DataSyncService:
 
         return match_record
 
-    async def get_matches_by_status(self, status: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_matches_by_status(
+        self, status: str, limit: int = 50
+    ) -> List[Dict[str, Any]]:
         """
         根据状态获取比赛
 
@@ -268,11 +280,7 @@ class DataSyncService:
                 match_dicts = [match.to_dict() for match in matches]
 
                 # 缓存结果（30分钟）
-                await self.redis_manager.set(
-                    cache_key,
-                    match_dicts,
-                    expire=1800
-                )
+                await self.redis_manager.set(cache_key, match_dicts, expire=1800)
 
                 return match_dicts
 
@@ -301,7 +309,7 @@ class DataSyncService:
             async with self.async_session() as session:
                 stmt = (
                     select(ExternalMatch)
-                    .where(ExternalMatch.status.in_(['scheduled', 'timed']))
+                    .where(ExternalMatch.status.in_(["scheduled", "timed"]))
                     .where(ExternalMatch.is_active)
                     .where(ExternalMatch.match_date >= datetime.utcnow())
                     .order_by(ExternalMatch.match_date.asc())
@@ -314,11 +322,7 @@ class DataSyncService:
                 match_dicts = [match.to_dict() for match in matches]
 
                 # 缓存结果（15分钟）
-                await self.redis_manager.set(
-                    cache_key,
-                    match_dicts,
-                    expire=900
-                )
+                await self.redis_manager.set(cache_key, match_dicts, expire=900)
 
                 return match_dicts
 
@@ -326,7 +330,9 @@ class DataSyncService:
             logger.error(f"Failed to get upcoming matches: {e}")
             return []
 
-    async def get_recent_finished_matches(self, limit: int = 20) -> List[Dict[str, Any]]:
+    async def get_recent_finished_matches(
+        self, limit: int = 20
+    ) -> List[Dict[str, Any]]:
         """
         获取最近已结束的比赛
 
@@ -347,7 +353,7 @@ class DataSyncService:
             async with self.async_session() as session:
                 stmt = (
                     select(ExternalMatch)
-                    .where(ExternalMatch.status == 'finished')
+                    .where(ExternalMatch.status == "finished")
                     .where(ExternalMatch.is_active)
                     .order_by(ExternalMatch.match_date.desc())
                     .limit(limit)
@@ -359,11 +365,7 @@ class DataSyncService:
                 match_dicts = [match.to_dict() for match in matches]
 
                 # 缓存结果（30分钟）
-                await self.redis_manager.set(
-                    cache_key,
-                    match_dicts,
-                    expire=1800
-                )
+                await self.redis_manager.set(cache_key, match_dicts, expire=1800)
 
                 return match_dicts
 
@@ -388,7 +390,7 @@ class DataSyncService:
                 stmt = (
                     delete(ExternalMatch)
                     .where(ExternalMatch.match_date < cutoff_date)
-                    .where(ExternalMatch.status == 'finished')
+                    .where(ExternalMatch.status == "finished")
                 )
 
                 result = await session.execute(stmt)
@@ -414,11 +416,17 @@ class DataSyncService:
                 # 统计各种状态的比赛数量
                 stats = {}
 
-                for status in ['scheduled', 'live', 'finished', 'postponed', 'cancelled']:
+                for status in [
+                    "scheduled",
+                    "live",
+                    "finished",
+                    "postponed",
+                    "cancelled",
+                ]:
                     stmt = select(ExternalMatch).where(ExternalMatch.status == status)
                     result = await session.execute(stmt)
                     count = len(result.scalars().all())
-                    stats[f'{status}_count'] = count
+                    stats[f"{status}_count"] = count
 
                 # 获取最新的同步时间
                 stmt = (
@@ -430,14 +438,16 @@ class DataSyncService:
                 latest_match = result.scalar_one_or_none()
 
                 if latest_match:
-                    stats['last_sync_time'] = latest_match.updated_at.isoformat()
+                    stats["last_sync_time"] = latest_match.updated_at.isoformat()
                 else:
-                    stats['last_sync_time'] = None
+                    stats["last_sync_time"] = None
 
-                stats['total_matches'] = sum(stats[k] for k in stats.keys() if k.endswith('_count'))
+                stats["total_matches"] = sum(
+                    stats[k] for k in stats.keys() if k.endswith("_count")
+                )
 
                 return stats
 
         except Exception as e:
             logger.error(f"Failed to get sync statistics: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}

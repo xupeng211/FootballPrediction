@@ -30,6 +30,7 @@ class MatchResult(Enum):
 
 class Match:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛领域模型"""
 

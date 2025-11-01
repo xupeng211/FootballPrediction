@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ServiceConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """服务配置"""
 
@@ -41,6 +42,7 @@ class ServiceConfig:
 @dataclass
 class DIConfiguration:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """依赖注入配置"""
 
@@ -53,13 +55,14 @@ class DIConfiguration:
 
 class ConfigurationBinder:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """配置绑定器"""
 
     def __init__(self, container: DIContainer):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.container = container
         self.auto_binder = AutoBinder(container)
         self.config: Optional[DIConfiguration] = None
@@ -285,13 +288,14 @@ class ConfigurationBinder:
 
 class ConfigurationBuilder:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """配置构建器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.config = DIConfiguration()
 
     def add_service(

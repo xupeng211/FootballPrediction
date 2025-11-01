@@ -13,7 +13,9 @@ from .base_unified import SimpleService
 # 简化的UserProfile类定义
 class UserProfile:
     """类文档字符串"""
+
     pass  # 添加pass语句
+
     def __init__(
         self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]
     ):
@@ -35,11 +37,13 @@ class UserProfile:
 # 简化的User类定义
 class User:
     """类文档字符串"""
+
     pass  # 添加pass语句
+
     def __init__(self, id: str, username: str):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.id = id
         self.username = username
 

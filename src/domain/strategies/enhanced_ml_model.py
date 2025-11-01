@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnhancedMLConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """增强ML模型配置"""
     model_type: str = "ensemble"
@@ -47,6 +48,7 @@ class EnhancedMLConfig:
 @dataclass
 class PredictionCache:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测结果缓存"""
     cache: Dict[str, Any] = field(default_factory=dict)
@@ -89,17 +91,18 @@ class PredictionCache:
         total = self.hits + self.misses
         hit_rate = (self.hits / total * 100) if total > 0 else 0
         return {
-            'hits': self.hits,
-            'misses': self.misses,
-            'total': total,
-            'hit_rate': hit_rate,
-            'cache_size': len(self.cache)
+            "hits": self.hits,
+            "misses": self.misses,
+            "total": total,
+            "hit_rate": hit_rate,
+            "cache_size": len(self.cache),
         }
 
 
 @dataclass
 class FeatureEngine:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """特征工程器"""
     enabled: bool = True
@@ -113,14 +116,14 @@ class FeatureEngine:
         """设置特征配置"""
         # 特征重要性权重
         self.feature_weights = {
-            'team_form_last_5': 0.25,
-            'head_to_head': 0.20,
-            'home_away_performance': 0.15,
-            'league_position': 0.10,
-            'goal_difference': 0.10,
-            'injuries': 0.10,
-            'weather_conditions': 0.05,
-            'historical_h2h': 0.05
+            "team_form_last_5": 0.25,
+            "head_to_head": 0.20,
+            "home_away_performance": 0.15,
+            "league_position": 0.10,
+            "goal_difference": 0.10,
+            "injuries": 0.10,
+            "weather_conditions": 0.05,
+            "historical_h2h": 0.05,
         }
 
     @lru_cache(maxsize=100)
@@ -131,18 +134,24 @@ class FeatureEngine:
 
         # 基础球队特征
         features = {
-            'team_id': team_data.get('id', 0),
-            'league_position': team_data.get('position', 0),
-            'points': team_data.get('points', 0),
-            'goals_scored': team_data.get('goals_scored', 0),
-            'goals_conceded': team_data.get('goals_conceded', 0),
+            "team_id": team_data.get("id", 0),
+            "league_position": team_data.get("position", 0),
+            "points": team_data.get("points", 0),
+            "goals_scored": team_data.get("goals_scored", 0),
+            "goals_conceded": team_data.get("goals_conceded", 0),
         }
 
         # 计算派生特征
-        if features['goals_scored'] > 0:
-            features['goals_per_game'] = features['goals_scored'] / max(team_data.get('matches_played', 1), 1)
-            features['goal_difference'] = features['goals_scored'] - features['goals_conceded']
-            features['clean_sheet_rate'] = team_data.get('clean_sheets', 0) / max(team_data.get('matches_played', 1), 1)
+        if features["goals_scored"] > 0:
+            features["goals_per_game"] = features["goals_scored"] / max(
+                team_data.get("matches_played", 1), 1
+            )
+            features["goal_difference"] = (
+                features["goals_scored"] - features["goals_conceded"]
+            )
+            features["clean_sheet_rate"] = team_data.get("clean_sheets", 0) / max(
+                team_data.get("matches_played", 1), 1
+            )
 
         return features
 
@@ -153,19 +162,21 @@ class FeatureEngine:
             return {}
 
         features = {
-            'match_id': match_data.get('id', 0),
-            'home_team_id': match_data.get('home_team_id', 0),
-            'away_team_id': match_data.get('away_team_id', 0),
-            'home_goals': match_data.get('home_goals', 0),
-            'away_goals': match_data.get('away_goals', 0),
-            'home_odds': match_data.get('home_odds', 0),
-            'away_odds': match_data.get('away_odds', 0),
+            "match_id": match_data.get("id", 0),
+            "home_team_id": match_data.get("home_team_id", 0),
+            "away_team_id": match_data.get("away_team_id", 0),
+            "home_goals": match_data.get("home_goals", 0),
+            "away_goals": match_data.get("away_goals", 0),
+            "home_odds": match_data.get("home_odds", 0),
+            "away_odds": match_data.get("away_odds", 0),
         }
 
         # 计算比赛相关特征
-        features['total_goals'] = features['home_goals'] + features['away_goals']
-        features['goal_difference'] = features['home_goals'] - features['away_goals']
-        features['expected_goals'] = features['home_odds'] * 0.1 + features['away_odds'] * 0.1
+        features["total_goals"] = features["home_goals"] + features["away_goals"]
+        features["goal_difference"] = features["home_goals"] - features["away_goals"]
+        features["expected_goals"] = (
+            features["home_odds"] * 0.1 + features["away_odds"] * 0.1
+        )
 
         return features
 
@@ -173,7 +184,7 @@ class FeatureEngine:
         self,
         home_features: Dict[str, float],
         away_features: Dict[str, float],
-        match_features: Dict[str, float]
+        match_features: Dict[str, float],
     ) -> np.ndarray:
         """组合所有特征"""
         all_features = {}
@@ -189,7 +200,9 @@ class FeatureEngine:
 
         # 确保特征顺序一致
         feature_names = list(weighted_features.keys())
-        feature_vector = np.array([weighted_features.get(name, 0.0) for name in feature_names])
+        feature_vector = np.array(
+            [weighted_features.get(name, 0.0) for name in feature_names]
+        )
 
         return feature_vector
 
@@ -197,6 +210,7 @@ class FeatureEngine:
 @dataclass
 class PerformanceMetrics:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """性能指标收集器"""
     predictions_made: int = 0
@@ -257,13 +271,10 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         """初始化增强ML模型策略"""
         try:
             # 更新配置
-            if 'config' in config:
-                self.config = EnhancedMLConfig(**config['config'])
+            if "config" in config:
+                self.config = EnhancedMLConfig(**config["config"])
 
-            self.cache = PredictionCache(
-                max_size=self.config.cache_size,
-                ttl=300.0
-            )
+            self.cache = PredictionCache(max_size=self.config.cache_size, ttl=300.0)
 
             # 初始化特征工程
             if self.config.feature_engineering:
@@ -279,7 +290,9 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             # 初始化异步预测器
             self.async_predictor = self._create_async_predictor()
 
-            self.logger.info(f"Enhanced ML Model Strategy initialized: {self.model_name}")
+            self.logger.info(
+                f"Enhanced ML Model Strategy initialized: {self.model_name}"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to initialize Enhanced ML Model Strategy: {e}")
@@ -294,9 +307,9 @@ class EnhancedMLModelStrategy(PredictionStrategy):
 
             # 模拟加载不同的模型文件
             model_files = [
-                'team_performance_model.pkl',
-                'head_to_head_model.pkl',
-                'goals_prediction_model.pkl'
+                "team_performance_model.pkl",
+                "head_to_head_model.pkl",
+                "goals_prediction_model.pkl",
             ]
 
             for model_file in model_files:
@@ -328,23 +341,17 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             self.scaler = StandardScaler()
 
             # 简单的分类模型
-            self.models['simple_classifier'] = RandomForestClassifier(
-                n_estimators=10,
-                max_depth=5,
-                random_state=42
+            self.models["simple_classifier"] = RandomForestClassifier(
+                n_estimators=10, max_depth=5, random_state=42
             )
 
             # 回归模型（用于预测比分）
-            self.models['home_goals_regressor'] = RandomForestRegressor(
-                n_estimators=10,
-                max_depth=5,
-                random_state=42
+            self.models["home_goals_regressor"] = RandomForestRegressor(
+                n_estimators=10, max_depth=5, random_state=42
             )
 
-            self.models['away_goals_regressor'] = RandomForestRegressor(
-                n_estimators=10,
-                max_depth=5,
-                random_state=42
+            self.models["away_goals_regressor"] = RandomForestRegressor(
+                n_estimators=10, max_depth=5, random_state=42
             )
 
             self.logger.info("Created simple fallback models")
@@ -352,7 +359,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         except ImportError:
             self.logger.warning("scikit-learn not available, using dummy models")
             # 创建虚拟模型
-            self.models['dummy'] = type('DummyModel', (), {})
+            self.models["dummy"] = type("DummyModel", (), {})
 
     def _create_batch_predictor(self) -> Any:
         """创建批处理器"""
@@ -375,8 +382,7 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         try:
             # 检查缓存
             cache_key = self._get_cache_key(
-                prediction_input.home_team_id,
-                prediction_input.away_team_id
+                prediction_input.home_team_id, prediction_input.away_team_id
             )
 
             cached_result = self.cache.get(cache_key) if self.config.use_cache else None
@@ -416,28 +422,31 @@ class EnhancedMLModelStrategy(PredictionStrategy):
                 prediction_id=prediction_input.match_id,
                 home_team_id=prediction_input.home_team_id,
                 away_team_id=prediction_input.away_team_id,
-                home_score=prediction_result.get('home_score', 0),
-                away_score=prediction_result.get('away_score', 0),
+                home_score=prediction_result.get("home_score", 0),
+                away_score=prediction_result.get("away_score", 0),
                 confidence=confidence,
                 prediction_time=time.time() - start_time,
                 model_name=self.model_name,
-                features_used=list(prediction_result.get('features', [])),
+                features_used=list(prediction_result.get("features", [])),
                 timestamp=datetime.now(),
                 metadata={
-                    'strategy_type': 'enhanced_ml',
-                    'cache_enabled': self.config.use_cache,
-                    'feature_engineering': self.config.feature_engineering
-                }
+                    "strategy_type": "enhanced_ml",
+                    "cache_enabled": self.config.use_cache,
+                    "feature_engineering": self.config.feature_engineering,
+                },
             )
 
             # 缓存结果
             if self.config.use_cache:
-                self.cache.set(cache_key, {
-                    'prediction_id': output.prediction_id,
-                    'home_score': output.home_score,
-                    'away_score': output.away_score,
-                    'confidence': output.confidence
-                })
+                self.cache.set(
+                    cache_key,
+                    {
+                        "prediction_id": output.prediction_id,
+                        "home_score": output.home_score,
+                        "away_score": output.away_score,
+                        "confidence": output.confidence,
+                    },
+                )
 
             # 更新性能指标
             self._update_performance_metrics(output, confidence)
@@ -459,20 +468,25 @@ class EnhancedMLModelStrategy(PredictionStrategy):
                 prediction_time=time.time() - start_time,
                 model_name=self.model_name,
                 timestamp=datetime.now(),
-                metadata={'error': str(e)}
+                metadata={"error": str(e)},
             )
 
-    async def _predict_with_models(self, feature_vector: np.ndarray,
-                                 home_features: Dict[str, float],
-                                 away_features: Dict[str, float],
-                                 match_features: Dict[str, float]) -> Dict[str, Any]:
+    async def _predict_with_models(
+        self,
+        feature_vector: np.ndarray,
+        home_features: Dict[str, float],
+        away_features: Dict[str, float],
+        match_features: Dict[str, float],
+    ) -> Dict[str, Any]:
         """使用模型进行预测"""
         try:
             # 使用集成方法进行预测
             if self.config.use_ensemble and len(self.models) > 1:
                 return await self._ensemble_predict(feature_vector)
-            elif 'simple_classifier' in self.models:
-                return self._simple_predict(feature_vector, home_features, away_features)
+            elif "simple_classifier" in self.models:
+                return self._simple_predict(
+                    feature_vector, home_features, away_features
+                )
             else:
                 return self._dummy_predict(feature_vector)
 
@@ -486,12 +500,14 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             # 简单的集成方法
             predictions = []
             for model_name, model in self.models.items():
-                if hasattr(model, 'predict'):
+                if hasattr(model, "predict"):
                     try:
                         pred = model.predict(feature_vector.reshape(1, -1))
                         predictions.append(pred)
                     except Exception as e:
-                        self.logger.warning(f"Model {model_name} prediction failed: {e}")
+                        self.logger.warning(
+                            f"Model {model_name} prediction failed: {e}"
+                        )
 
             if predictions:
                 # 平均预测
@@ -500,10 +516,10 @@ class EnhancedMLModelStrategy(PredictionStrategy):
                 away_score = max(0, int(avg_prediction[1] * 100))
 
                 return {
-                    'home_score': home_score,
-                    'away_score': away_score,
-                    'predictions': predictions.tolist(),
-                    'method': 'ensemble_average'
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "predictions": predictions.tolist(),
+                    "method": "ensemble_average",
                 }
             else:
                 return self._dummy_predict(feature_vector)
@@ -513,20 +529,22 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             return self._dummy_predict(feature_vector)
 
     def _simple_predict(
-            self,
-            feature_vector: np.ndarray,
-            home_features: Dict[str, float],
-            away_features: Dict[str, float],
-            match_features: Dict[str, float]
-        ) -> Dict[str, Any]:
+        self,
+        feature_vector: np.ndarray,
+        home_features: Dict[str, float],
+        away_features: Dict[str, float],
+        match_features: Dict[str, float],
+    ) -> Dict[str, Any]:
         """简单预测"""
         try:
             # 使用简单的线性回归进行预测
-            home_goals = max(0, int(home_features.get('goals_scored', 0)))
-            away_goals = max(0, int(away_features.get('goals_scored', 0)))
+            home_goals = max(0, int(home_features.get("goals_scored", 0)))
+            away_goals = max(0, int(away_features.get("goals_scored", 0)))
 
             # 考虑历史数据
-            home_advantage = home_features.get('points', 0) / max(away_features.get('points', 1), 1)
+            home_advantage = home_features.get("points", 0) / max(
+                away_features.get("points", 1), 1
+            )
 
             # 调整预测
             if home_advantage > 1.5:
@@ -535,17 +553,19 @@ class EnhancedMLModelStrategy(PredictionStrategy):
                 home_goals = max(0, home_goals - 1)
 
             # 考虑主客场优势
-            if match_features.get('home_team_id') == match_features.get('home_team_id', 0):
+            if match_features.get("home_team_id") == match_features.get(
+                "home_team_id", 0
+            ):
                 home_goals = int(home_goals * 1.1)  # 主场优势
             else:
                 away_goals = int(away_goals * 1.1)  # 客场优势
 
             return {
-                'home_score': home_goals,
-                'away_score': away_goals,
-                'method': 'simple_rule_based',
-                'home_advantage': home_advantage,
-                'features_used': list(feature_vector.shape)
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "method": "simple_rule_based",
+                "home_advantage": home_advantage,
+                "features_used": list(feature_vector.shape),
             }
 
         except Exception as e:
@@ -555,29 +575,31 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     def _dummy_predict(self, feature_vector: np.ndarray) -> Dict[str, Any]:
         """虚拟预测（后备方案）"""
         return {
-            'home_score': 1,
-            'away_score': 1,
-            'method': 'dummy',
-            'features_used': len(feature_vector) if hasattr(feature_vector, 'shape') else 0
+            "home_score": 1,
+            "away_score": 1,
+            "method": "dummy",
+            "features_used": len(feature_vector)
+            if hasattr(feature_vector, "shape")
+            else 0,
         }
 
     def _calculate_confidence(self, prediction_result: Dict[str, Any]) -> float:
         """计算预测置信度"""
         try:
-            method = prediction_result.get('method', 'unknown')
+            method = prediction_result.get("method", "unknown")
 
-            if method == 'ensemble_average':
+            if method == "ensemble_average":
                 # 集成预测的置信度较高
-                predictions = prediction_result.get('predictions', [])
+                predictions = prediction_result.get("predictions", [])
                 if predictions and len(predictions) > 1:
                     # 计算预测的一致性
                     variance = np.var(predictions)
                     confidence = max(0.1, min(0.95, 1.0 - variance))
                 else:
                     confidence = 0.5
-            elif method == 'simple_rule_based':
+            elif method == "simple_rule_based":
                 # 规则基础的置信度较低
-                home_advantage = prediction_result.get('home_advantage', 0)
+                home_advantage = prediction_result.get("home_advantage", 0)
                 confidence = 0.3 + min(0.4, abs(home_advantage) / 3.0)
             else:
                 confidence = 0.5
@@ -588,7 +610,9 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         except Exception:
             return 0.5
 
-    def _update_performance_metrics(self, output: PredictionOutput, confidence: float) -> None:
+    def _update_performance_metrics(
+        self, output: PredictionOutput, confidence: float
+    ) -> None:
         """更新性能指标"""
         self.performance_metrics.predictions_made += 1
         self.performance_metrics.total_prediction_time += output.prediction_time
@@ -601,14 +625,16 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             strategy_type=StrategyType.ML_MODEL,
             predictions_made=self.performance_metrics.predictions_made,
             avg_prediction_time=self.performance_metrics.get_avg_prediction_time(),
-            cache_hit_rate=self.cache.get_stats()['hit_rate'],
+            cache_hit_rate=self.cache.get_stats()["hit_rate"],
             error_rate=self.performance_metrics.get_error_rate(),
             avg_confidence=self.performance_metrics.get_avg_confidence(),
             total_execution_time=time.time() - self.performance_metrics.start_time,
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )
 
-    async def batch_predict(self, inputs: List[PredictionInput]) -> List[PredictionOutput]:
+    async def batch_predict(
+        self, inputs: List[PredictionInput]
+    ) -> List[PredictionOutput]:
         """批量预测"""
         if not self.config.batch_prediction:
             # 逐个预测
@@ -631,7 +657,9 @@ class EnhancedMLModelStrategy(PredictionStrategy):
 
         batch_time = time.time() - start_time
 
-        self.logger.info(f"Batch prediction completed: {len(inputs)} inputs in {batch_time:.3f}s")
+        self.logger.info(
+            f"Batch prediction completed: {len(inputs)} inputs in {batch_time:.3f}s"
+        )
 
         return results
 
@@ -642,13 +670,13 @@ class EnhancedMLModelStrategy(PredictionStrategy):
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计"""
         return {
-            'predictions_made': self.performance_metrics.predictions_made,
-            'avg_prediction_time': self.performance_metrics.get_avg_prediction_time(),
-            'cache_hit_rate': self.cache.get_stats()['hit_rate'],
-            'error_rate': self.performance_metrics.get_error_rate(),
-            'avg_confidence': self.performance_metrics.get_avg_confidence(),
-            'throughput': self.performance_metrics.get_throughput(),
-            'total_time': time.time() - self.performance_metrics.start_time
+            "predictions_made": self.performance_metrics.predictions_made,
+            "avg_prediction_time": self.performance_metrics.get_avg_prediction_time(),
+            "cache_hit_rate": self.cache.get_stats()["hit_rate"],
+            "error_rate": self.performance_metrics.get_error_rate(),
+            "avg_confidence": self.performance_metrics.get_avg_confidence(),
+            "throughput": self.performance_metrics.get_throughput(),
+            "total_time": time.time() - self.performance_metrics.start_time,
         }
 
     async def cleanup(self) -> None:
@@ -666,10 +694,10 @@ def create_enhanced_ml_strategy() -> EnhancedMLModelStrategy:
 
 # 导出便捷函数
 __all__ = [
-    'EnhancedMLModelStrategy',
-    'create_enhanced_ml_strategy',
-    'EnhancedMLConfig',
-    'PredictionCache',
-    'FeatureEngine',
-    'PerformanceMetrics'
+    "EnhancedMLModelStrategy",
+    "create_enhanced_ml_strategy",
+    "EnhancedMLConfig",
+    "PredictionCache",
+    "FeatureEngine",
+    "PerformanceMetrics",
 ]

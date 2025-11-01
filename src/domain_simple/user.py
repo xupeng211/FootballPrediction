@@ -18,13 +18,14 @@ class UserRole(Enum):
 
 class UserPreferences:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户偏好设置"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.favorite_teams: List[int] = []
         self.favorite_leagues: List[int] = []
         self.notification_enabled = True
@@ -56,13 +57,14 @@ class UserPreferences:
 
 class UserStatistics:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户统计数据"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
         self.total_profit_loss = 0.0
@@ -116,6 +118,7 @@ class UserStatistics:
 
 class User:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户领域模型"""
 
@@ -294,13 +297,14 @@ class User:
 
 class UserProfile:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户档案（扩展的用户信息）"""
 
     def __init__(self, user: User):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._user = user
         self.prediction_history: List[Dict[str, Any]] = []
         self.following: List[int] = []  # 关注的用户ID列表

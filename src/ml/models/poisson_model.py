@@ -36,10 +36,10 @@ class PoissonModel(BaseModel):
 
         # 默认超参数
         self.hyperparameters = {
-            'home_advantage': 0.3,
-            'min_matches_per_team': 10,
-            'decay_factor': 0.9,  # 历史数据衰减因子
-            'max_goals': 10  # 最大考虑进球数
+            "home_advantage": 0.3,
+            "min_matches_per_team": 10,
+            "decay_factor": 0.9,  # 历史数据衰减因子
+            "max_goals": 10,  # 最大考虑进球数
         }
 
     def prepare_features(self, match_data: Dict[str, Any]) -> np.ndarray:
@@ -52,8 +52,8 @@ class PoissonModel(BaseModel):
         Returns:
             特征向量 [home_attack, home_defense, away_attack, away_defense]
         """
-        home_team = match_data.get('home_team')
-        away_team = match_data.get('away_team')
+        home_team = match_data.get("home_team")
+        away_team = match_data.get("away_team")
 
         # 获取球队强度
         home_attack = self.team_attack_strength.get(home_team, 1.0)
@@ -63,7 +63,11 @@ class PoissonModel(BaseModel):
 
         return np.array([home_attack, home_defense, away_attack, away_defense])
 
-    def train(self, training_data: pd.DataFrame, validation_data: Optional[pd.DataFrame] = None) -> TrainingResult:
+    def train(
+        self,
+        training_data: pd.DataFrame,
+        validation_data: Optional[pd.DataFrame] = None,
+    ) -> TrainingResult:
         """
         训练泊松分布模型
 
@@ -100,20 +104,29 @@ class PoissonModel(BaseModel):
         result = TrainingResult(
             model_name=self.model_name,
             model_version=self.model_version,
-            accuracy=metrics.get('accuracy', 0.0),
-            precision=metrics.get('precision', 0.0),
-            recall=metrics.get('recall', 0.0),
-            f1_score=metrics.get('f1_score', 0.0),
-            confusion_matrix=metrics.get('confusion_matrix', []),
+            accuracy=metrics.get("accuracy", 0.0),
+            precision=metrics.get("precision", 0.0),
+            recall=metrics.get("recall", 0.0),
+            f1_score=metrics.get("f1_score", 0.0),
+            confusion_matrix=metrics.get("confusion_matrix", []),
             training_samples=len(training_data),
-            validation_samples=len(validation_data) if validation_data is not None else 0,
+            validation_samples=len(validation_data)
+            if validation_data is not None
+            else 0,
             training_time=training_time,
-            features_used=['home_attack_strength', 'home_defense_strength', 'away_attack_strength', 'away_defense_strength'],
+            features_used=[
+                "home_attack_strength",
+                "home_defense_strength",
+                "away_attack_strength",
+                "away_defense_strength",
+            ],
             hyperparameters=self.hyperparameters.copy(),
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-        logger.info(f"PoissonModel training completed in {training_time:.2f}s. Accuracy: {result.accuracy:.3f}")
+        logger.info(
+            f"PoissonModel training completed in {training_time:.2f}s. Accuracy: {result.accuracy:.3f}"
+        )
 
         return result
 
@@ -127,8 +140,8 @@ class PoissonModel(BaseModel):
         logger.info("Calculating team strengths from training data")
 
         # 计算总体平均进球
-        total_home_goals = training_data['home_score'].sum()
-        total_away_goals = training_data['away_score'].sum()
+        total_home_goals = training_data["home_score"].sum()
+        total_away_goals = training_data["away_score"].sum()
         total_matches = len(training_data)
 
         self.average_goals_home = total_home_goals / total_matches
@@ -141,23 +154,31 @@ class PoissonModel(BaseModel):
 
         # 统计每个球队的进球和失球
         for _, match in training_data.iterrows():
-            home_team = match['home_team']
-            away_team = match['away_team']
-            home_score = match['home_score']
-            away_score = match['away_score']
+            home_team = match["home_team"]
+            away_team = match["away_team"]
+            home_score = match["home_score"]
+            away_score = match["away_score"]
 
             # 主队统计
-            team_goals_scored[home_team] = team_goals_scored.get(home_team, 0) + home_score
-            team_goals_conceded[home_team] = team_goals_conceded.get(home_team, 0) + away_score
+            team_goals_scored[home_team] = (
+                team_goals_scored.get(home_team, 0) + home_score
+            )
+            team_goals_conceded[home_team] = (
+                team_goals_conceded.get(home_team, 0) + away_score
+            )
             team_matches[home_team] = team_matches.get(home_team, 0) + 1
 
             # 客队统计
-            team_goals_scored[away_team] = team_goals_scored.get(away_team, 0) + away_score
-            team_goals_conceded[away_team] = team_goals_conceded.get(away_team, 0) + home_score
+            team_goals_scored[away_team] = (
+                team_goals_scored.get(away_team, 0) + away_score
+            )
+            team_goals_conceded[away_team] = (
+                team_goals_conceded.get(away_team, 0) + home_score
+            )
             team_matches[away_team] = team_matches.get(away_team, 0) + 1
 
         # 计算球队攻防强度
-        min_matches = self.hyperparameters['min_matches_per_team']
+        min_matches = self.hyperparameters["min_matches_per_team"]
 
         for team in team_matches:
             if team_matches[team] >= min_matches:
@@ -168,30 +189,44 @@ class PoissonModel(BaseModel):
                 avg_goals_conceded = team_goals_conceded[team] / matches
 
                 # 主客场分别计算
-                home_matches = training_data[training_data['home_team'] == team]
-                away_matches = training_data[training_data['away_team'] == team]
+                home_matches = training_data[training_data["home_team"] == team]
+                away_matches = training_data[training_data["away_team"] == team]
 
                 if len(home_matches) > 0:
-                    home_attack = (home_matches['home_score'].sum() / len(home_matches)) / self.average_goals_home
-                    home_defense = (home_matches['away_score'].sum() / len(home_matches)) / self.average_goals_away
+                    home_attack = (
+                        home_matches["home_score"].sum() / len(home_matches)
+                    ) / self.average_goals_home
+                    home_defense = (
+                        home_matches["away_score"].sum() / len(home_matches)
+                    ) / self.average_goals_away
                 else:
                     home_attack = avg_goals_scored / self.average_goals_home
                     home_defense = avg_goals_conceded / self.average_goals_away
 
                 if len(away_matches) > 0:
-                    away_attack = (away_matches['away_score'].sum() / len(away_matches)) / self.average_goals_away
-                    away_defense = (away_matches['home_score'].sum() / len(away_matches)) / self.average_goals_home
+                    away_attack = (
+                        away_matches["away_score"].sum() / len(away_matches)
+                    ) / self.average_goals_away
+                    away_defense = (
+                        away_matches["home_score"].sum() / len(away_matches)
+                    ) / self.average_goals_home
                 else:
                     away_attack = avg_goals_scored / self.average_goals_away
                     away_defense = avg_goals_conceded / self.average_goals_home
 
                 # 使用加权平均
-                self.team_attack_strength[team] = (home_attack * 0.6 + away_attack * 0.4)
-                self.team_defense_strength[team] = (home_defense * 0.6 + away_defense * 0.4)
+                self.team_attack_strength[team] = home_attack * 0.6 + away_attack * 0.4
+                self.team_defense_strength[team] = (
+                    home_defense * 0.6 + away_defense * 0.4
+                )
 
                 # 限制在合理范围内
-                self.team_attack_strength[team] = np.clip(self.team_attack_strength[team], 0.2, 3.0)
-                self.team_defense_strength[team] = np.clip(self.team_defense_strength[team], 0.2, 3.0)
+                self.team_attack_strength[team] = np.clip(
+                    self.team_attack_strength[team], 0.2, 3.0
+                )
+                self.team_defense_strength[team] = np.clip(
+                    self.team_defense_strength[team], 0.2, 3.0
+                )
             else:
                 # 数据不足的球队使用默认值
                 self.team_attack_strength[team] = 1.0
@@ -216,13 +251,17 @@ class PoissonModel(BaseModel):
         if not self.validate_prediction_input(match_data):
             raise ValueError("Invalid prediction input")
 
-        home_team = match_data['home_team']
-        away_team = match_data['away_team']
-        match_id = match_data.get('match_id', f"{home_team}_vs_{away_team}")
+        home_team = match_data["home_team"]
+        away_team = match_data["away_team"]
+        match_id = match_data.get("match_id", f"{home_team}_vs_{away_team}")
 
         # 计算期望进球数
-        home_expected_goals = self._calculate_expected_goals(home_team, away_team, is_home=True)
-        away_expected_goals = self._calculate_expected_goals(away_team, home_team, is_home=False)
+        home_expected_goals = self._calculate_expected_goals(
+            home_team, away_team, is_home=True
+        )
+        away_expected_goals = self._calculate_expected_goals(
+            away_team, home_team, is_home=False
+        )
 
         # 计算概率分布
         home_win_prob, draw_prob, away_win_prob = self._calculate_match_probabilities(
@@ -245,14 +284,18 @@ class PoissonModel(BaseModel):
             confidence=confidence,
             model_name=self.model_name,
             model_version=self.model_version,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-        logger.debug(f"Prediction for {home_team} vs {away_team}: {predicted_outcome} (confidence: {confidence:.3f})")
+        logger.debug(
+            f"Prediction for {home_team} vs {away_team}: {predicted_outcome} (confidence: {confidence:.3f})"
+        )
 
         return result
 
-    def _calculate_expected_goals(self, team: str, opponent: str, is_home: bool) -> float:
+    def _calculate_expected_goals(
+        self, team: str, opponent: str, is_home: bool
+    ) -> float:
         """
         计算期望进球数
 
@@ -269,16 +312,20 @@ class PoissonModel(BaseModel):
 
         if is_home:
             base_avg = self.average_goals_home
-            home_advantage = self.hyperparameters['home_advantage']
+            home_advantage = self.hyperparameters["home_advantage"]
         else:
             base_avg = self.average_goals_away
             home_advantage = 0
 
-        expected_goals = base_avg * team_attack * opponent_defense * (1 + home_advantage)
+        expected_goals = (
+            base_avg * team_attack * opponent_defense * (1 + home_advantage)
+        )
 
         return max(expected_goals, 0.1)  # 确保至少0.1
 
-    def _calculate_match_probabilities(self, home_expected: float, away_expected: float) -> Tuple[float, float, float]:
+    def _calculate_match_probabilities(
+        self, home_expected: float, away_expected: float
+    ) -> Tuple[float, float, float]:
         """
         计算比赛结果概率
 
@@ -289,7 +336,7 @@ class PoissonModel(BaseModel):
         Returns:
             (主胜概率, 平局概率, 客胜概率)
         """
-        max_goals = self.hyperparameters['max_goals']
+        max_goals = self.hyperparameters["max_goals"]
 
         home_win_prob = 0.0
         draw_prob = 0.0
@@ -332,13 +379,19 @@ class PoissonModel(BaseModel):
         if not self.is_trained:
             raise RuntimeError("Model must be trained before making predictions")
 
-        home_team = match_data['home_team']
-        away_team = match_data['away_team']
+        home_team = match_data["home_team"]
+        away_team = match_data["away_team"]
 
-        home_expected_goals = self._calculate_expected_goals(home_team, away_team, is_home=True)
-        away_expected_goals = self._calculate_expected_goals(away_team, home_team, is_home=False)
+        home_expected_goals = self._calculate_expected_goals(
+            home_team, away_team, is_home=True
+        )
+        away_expected_goals = self._calculate_expected_goals(
+            away_team, home_team, is_home=False
+        )
 
-        return self._calculate_match_probabilities(home_expected_goals, away_expected_goals)
+        return self._calculate_match_probabilities(
+            home_expected_goals, away_expected_goals
+        )
 
     def evaluate(self, test_data: pd.DataFrame) -> Dict[str, float]:
         """
@@ -358,15 +411,15 @@ class PoissonModel(BaseModel):
 
         for _, match in test_data.iterrows():
             match_data = {
-                'home_team': match['home_team'],
-                'away_team': match['away_team'],
-                'match_id': f"{match['home_team']}_vs_{match['away_team']}"
+                "home_team": match["home_team"],
+                "away_team": match["away_team"],
+                "match_id": f"{match['home_team']}_vs_{match['away_team']}",
             }
 
             try:
                 prediction = self.predict(match_data)
                 predictions.append(prediction.predicted_outcome)
-                actuals.append(match['result'])
+                actuals.append(match["result"])
             except Exception as e:
                 logger.warning(f"Failed to predict match {match_data['match_id']}: {e}")
                 continue
@@ -376,29 +429,39 @@ class PoissonModel(BaseModel):
             return {}
 
         # 计算评估指标
-        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+        from sklearn.metrics import (
+            accuracy_score,
+            precision_score,
+            recall_score,
+            f1_score,
+            confusion_matrix,
+        )
 
         accuracy = accuracy_score(actuals, predictions)
-        precision = precision_score(actuals, predictions, average='weighted', zero_division=0)
-        recall = recall_score(actuals, predictions, average='weighted', zero_division=0)
-        f1 = f1_score(actuals, predictions, average='weighted', zero_division=0)
+        precision = precision_score(
+            actuals, predictions, average="weighted", zero_division=0
+        )
+        recall = recall_score(actuals, predictions, average="weighted", zero_division=0)
+        f1 = f1_score(actuals, predictions, average="weighted", zero_division=0)
 
         cm = confusion_matrix(actuals, predictions).tolist()
 
         metrics = {
-            'accuracy': accuracy,
-            'precision': precision,
-            'recall': recall,
-            'f1_score': f1,
-            'confusion_matrix': cm,
-            'total_predictions': len(predictions)
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1,
+            "confusion_matrix": cm,
+            "total_predictions": len(predictions),
         }
 
         logger.info(f"Model evaluation: accuracy={accuracy:.3f}, f1={f1:.3f}")
 
         return metrics
 
-    def _cross_validate(self, training_data: pd.DataFrame, folds: int = 5) -> Dict[str, float]:
+    def _cross_validate(
+        self, training_data: pd.DataFrame, folds: int = 5
+    ) -> Dict[str, float]:
         """
         交叉验证
 
@@ -439,10 +502,10 @@ class PoissonModel(BaseModel):
         # 计算平均指标
         avg_metrics = {}
         if fold_metrics:
-            for key in ['accuracy', 'precision', 'recall', 'f1_score']:
+            for key in ["accuracy", "precision", "recall", "f1_score"]:
                 values = [m.get(key, 0) for m in fold_metrics]
                 avg_metrics[key] = np.mean(values)
-                avg_metrics[f'{key}_std'] = np.std(values)
+                avg_metrics[f"{key}_std"] = np.std(values)
 
         return avg_metrics
 
@@ -458,21 +521,21 @@ class PoissonModel(BaseModel):
         """
         try:
             model_data = {
-                'model_name': self.model_name,
-                'model_version': self.model_version,
-                'is_trained': self.is_trained,
-                'home_advantage': self.home_advantage,
-                'team_attack_strength': self.team_attack_strength,
-                'team_defense_strength': self.team_defense_strength,
-                'average_goals_home': self.average_goals_home,
-                'average_goals_away': self.average_goals_away,
-                'total_matches': self.total_matches,
-                'hyperparameters': self.hyperparameters,
-                'training_history': self.training_history,
-                'last_training_time': self.last_training_time
+                "model_name": self.model_name,
+                "model_version": self.model_version,
+                "is_trained": self.is_trained,
+                "home_advantage": self.home_advantage,
+                "team_attack_strength": self.team_attack_strength,
+                "team_defense_strength": self.team_defense_strength,
+                "average_goals_home": self.average_goals_home,
+                "average_goals_away": self.average_goals_away,
+                "total_matches": self.total_matches,
+                "hyperparameters": self.hyperparameters,
+                "training_history": self.training_history,
+                "last_training_time": self.last_training_time,
             }
 
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 pickle.dump(model_data, f)
 
             logger.info(f"Model saved to {file_path}")
@@ -497,22 +560,22 @@ class PoissonModel(BaseModel):
                 logger.error(f"Model file not found: {file_path}")
                 return False
 
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 model_data = pickle.load(f)
 
             # 恢复模型状态
-            self.model_name = model_data['model_name']
-            self.model_version = model_data['model_version']
-            self.is_trained = model_data['is_trained']
-            self.home_advantage = model_data['home_advantage']
-            self.team_attack_strength = model_data['team_attack_strength']
-            self.team_defense_strength = model_data['team_defense_strength']
-            self.average_goals_home = model_data['average_goals_home']
-            self.average_goals_away = model_data['average_goals_away']
-            self.total_matches = model_data['total_matches']
-            self.hyperparameters = model_data['hyperparameters']
-            self.training_history = model_data['training_history']
-            self.last_training_time = model_data['last_training_time']
+            self.model_name = model_data["model_name"]
+            self.model_version = model_data["model_version"]
+            self.is_trained = model_data["is_trained"]
+            self.home_advantage = model_data["home_advantage"]
+            self.team_attack_strength = model_data["team_attack_strength"]
+            self.team_defense_strength = model_data["team_defense_strength"]
+            self.average_goals_home = model_data["average_goals_home"]
+            self.average_goals_away = model_data["average_goals_away"]
+            self.total_matches = model_data["total_matches"]
+            self.hyperparameters = model_data["hyperparameters"]
+            self.training_history = model_data["training_history"]
+            self.last_training_time = model_data["last_training_time"]
 
             logger.info(f"Model loaded from {file_path}")
             return True

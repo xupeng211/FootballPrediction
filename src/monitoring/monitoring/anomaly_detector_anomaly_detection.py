@@ -20,6 +20,7 @@ CRITICAL = "critical"
 # 类定义
 class AnomalyType:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """异常类型枚举"""
 
@@ -28,6 +29,7 @@ class AnomalyType:
 
 class AnomalySeverity:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """异常严重程度"""
 
@@ -36,6 +38,7 @@ class AnomalySeverity:
 
 class AnomalyResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """异常检测结果"""
 
@@ -44,6 +47,7 @@ class AnomalyResult:
 
 class AnomalyDetector:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """统计学异常检测器主类"
 

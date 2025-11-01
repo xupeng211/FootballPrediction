@@ -39,7 +39,7 @@ class StatisticalStrategy(PredictionStrategy):
     def __init__(self, name: str = "statistical_analyzer"):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(name, StrategyType.STATISTICAL)
         self._team_stats = {}
         self._head_to_head_stats = {}

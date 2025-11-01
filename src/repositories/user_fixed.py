@@ -21,6 +21,7 @@ class UserRepository(BaseRepository):
         """初始化用户仓储"""
         # 假设有一个User模型类
         from ..database.models import User
+
         super().__init__(session, User)
 
     async def get_by_id(self, user_id: int) -> Optional["User"]:
@@ -47,7 +48,7 @@ class UserRepository(BaseRepository):
             role=user_data.get("role", "user"),
             is_active=user_data.get("is_active", True),
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         self.session.add(user)
@@ -55,13 +56,17 @@ class UserRepository(BaseRepository):
         await self.session.refresh(user)
         return user
 
-    async def update(self, user_id: int, update_data: Dict[str, Any]) -> Optional["User"]:
+    async def update(
+        self, user_id: int, update_data: Dict[str, Any]
+    ) -> Optional["User"]:
         """更新用户"""
         update_data["updated_at"] = datetime.utcnow()
 
-        query = update(self.model_class).where(
-            self.model_class.id == user_id
-        ).values(**update_data)
+        query = (
+            update(self.model_class)
+            .where(self.model_class.id == user_id)
+            .values(**update_data)
+        )
 
         await self.session.execute(query)
         await self.session.commit()
@@ -79,17 +84,13 @@ class UserRepository(BaseRepository):
 
     async def find_by_username(self, username: str) -> Optional["User"]:
         """根据用户名查找用户"""
-        query = select(self.model_class).where(
-            self.model_class.username == username
-        )
+        query = select(self.model_class).where(self.model_class.username == username)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def find_by_email(self, email: str) -> Optional["User"]:
         """根据邮箱查找用户"""
-        query = select(self.model_class).where(
-            self.model_class.email == email
-        )
+        query = select(self.model_class).where(self.model_class.email == email)
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
@@ -113,7 +114,7 @@ class UserRepository(BaseRepository):
                 role=user_data.get("role", "user"),
                 is_active=user_data.get("is_active", True),
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             users.append(user)
 
@@ -130,7 +131,7 @@ class UserRepository(BaseRepository):
         """修改密码"""
         update_data = {
             "password_hash": new_password,  # 实际应该哈希处理
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         result = await self.update(user_id, update_data)
@@ -138,20 +139,14 @@ class UserRepository(BaseRepository):
 
     async def deactivate_user(self, user_id: int) -> bool:
         """停用用户"""
-        update_data = {
-            "is_active": False,
-            "updated_at": datetime.utcnow()
-        }
+        update_data = {"is_active": False, "updated_at": datetime.utcnow()}
 
         result = await self.update(user_id, update_data)
         return result is not None
 
     async def activate_user(self, user_id: int) -> bool:
         """激活用户"""
-        update_data = {
-            "is_active": True,
-            "updated_at": datetime.utcnow()
-        }
+        update_data = {"is_active": True, "updated_at": datetime.utcnow()}
 
         result = await self.update(user_id, update_data)
         return result is not None
@@ -160,7 +155,7 @@ class UserRepository(BaseRepository):
         """更新最后登录时间"""
         update_data = {
             "last_login_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         result = await self.update(user_id, update_data)
@@ -171,7 +166,7 @@ class UserRepository(BaseRepository):
         filters = {
             "$or": [
                 {"username": {"$like": f"%{keyword}%"}},
-                {"email": {"$like": f"%{keyword}%"}}
+                {"email": {"$like": f"%{keyword}%"}},
             ]
         }
         return await self.find_by_filters(filters, limit)

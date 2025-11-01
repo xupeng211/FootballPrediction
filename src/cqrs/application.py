@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 class PredictionCQRSService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测CQRS服务"
 
@@ -51,7 +52,7 @@ class PredictionCQRSService:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -139,6 +140,7 @@ class PredictionCQRSService:
 
 class MatchCQRSService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛CQRS服务"
 
@@ -149,7 +151,7 @@ class MatchCQRSService:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -218,6 +220,7 @@ class MatchCQRSService:
 
 class UserCQRSService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户CQRS服务"
 
@@ -228,7 +231,7 @@ class UserCQRSService:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -261,6 +264,7 @@ class UserCQRSService:
 
 class AnalyticsCQRSService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """分析CQRS服务"
 
@@ -271,7 +275,7 @@ class AnalyticsCQRSService:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.query_bus = get_query_bus()
 
     async def get_prediction_analytics(
@@ -304,6 +308,7 @@ class AnalyticsCQRSService:
 # CQRS服务工厂
 class CQRSServiceFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """CQRS服务工厂"""
 

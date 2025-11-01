@@ -32,19 +32,21 @@ warnings.warn(
 # 创建兼容类
 class OddsCollector:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """兼容性占位符类"""
 
     def __init__(self, *args, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
 
 
 class OddsCollectorFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """兼容性占位符工厂类"""
 
@@ -52,7 +54,7 @@ class OddsCollectorFactory:
     def create(*args, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
         return OddsCollector(*args, **kwargs)

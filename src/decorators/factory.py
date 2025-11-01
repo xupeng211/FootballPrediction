@@ -19,6 +19,7 @@ from .base import Component, Decorator, decorator_registry
 @dataclass
 class DecoratorConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器配置"""
 
@@ -33,6 +34,7 @@ class DecoratorConfig:
 @dataclass
 class DecoratorChainConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器链配置"""
 
@@ -44,13 +46,14 @@ class DecoratorChainConfig:
 
 class DecoratorFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器工厂,用于创建装饰器实例"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._config_cache: Dict[str, DecoratorConfig] = {}
         self._chain_configs: Dict[str, DecoratorChainConfig] = {}
 
@@ -275,13 +278,14 @@ class DecoratorFactory:
 
 class DecoratorBuilder:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器构建器,使用构建器模式创建装饰器"""
 
     def __init__(self, decorator_type: str, component: Component):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.decorator_type = decorator_type
         self.component = component
         self.parameters: Dict[str, Any] = {}

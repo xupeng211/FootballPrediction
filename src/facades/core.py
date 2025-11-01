@@ -7,7 +7,4 @@ Facade Core Classes Module
 
 from .base import SubsystemManager, SystemFacade
 
-__all__ = [
-    "SubsystemManager",
-    "SystemFacade"
-]
+__all__ = ["SubsystemManager", "SystemFacade"]

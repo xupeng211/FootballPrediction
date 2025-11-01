@@ -35,6 +35,7 @@ class GateStatus(Enum):
 
 class GateResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """门禁检查结果"""
 
@@ -73,6 +74,7 @@ class GateResult:
 
 class QualityGate:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """单个质量门禁"""
 
@@ -151,7 +153,7 @@ class CodeQualityGate(QualityGate):
     def __init__(self, threshold: float = 8.0):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(
             name="代码质量",
             description="检查代码质量分数（Ruff + MyPy）",
@@ -188,7 +190,7 @@ class TestCoverageGate(QualityGate):
     def __init__(self, threshold: float = 80.0):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(
             name="测试覆盖率",
             description="检查测试覆盖率百分比",
@@ -209,7 +211,7 @@ class SecurityGate(QualityGate):
     def __init__(self, threshold: float = 9.0):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(
             name="安全检查",
             description="检查安全评分和漏洞扫描",
@@ -230,7 +232,7 @@ class OverallQualityGate(QualityGate):
     def __init__(self, threshold: float = 8.5):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(
             name="综合质量",
             description="综合质量分数（包含高级度量）",
@@ -257,7 +259,7 @@ class TechnicalDebtGate(QualityGate):
     def __init__(self, threshold: float = 60.0):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(
             name="技术债务",
             description="检查技术债务分数",
@@ -280,7 +282,7 @@ class ComplexityGate(QualityGate):
     def __init__(self, threshold: float = 70.0):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(
             name="代码复杂度",
             description="检查代码可维护性指数",
@@ -302,13 +304,14 @@ class ComplexityGate(QualityGate):
 
 class QualityGateSystem:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """质量门禁系统主类"""
 
     def __init__(self, config_path: Optional[str] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.config = self._load_config(config_path)
         self.gates = self._initialize_gates()
         self.logger = get_logger(self.__class__.__name__)

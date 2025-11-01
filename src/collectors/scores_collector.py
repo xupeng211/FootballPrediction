@@ -21,13 +21,14 @@ logger = get_logger(__name__)
 
 class ScoresCollector:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比分收集器"""
 
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.db_session = db_session
         self.redis_client = redis_client
         self.cache_timeout = 60  # 1分钟缓存,比分变化很快
@@ -120,6 +121,7 @@ class ScoresCollector:
 
 class ScoresCollectorFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比分收集器工厂类"""
 

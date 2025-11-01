@@ -10,6 +10,7 @@ from typing import Optional
 @dataclass
 class DatabaseConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """封装数据库连接配置及常用连接URL."""
 

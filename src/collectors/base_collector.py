@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CollectionResult:
     """数据采集结果"""
+
     success: bool
     data: Optional[Any] = None
     error: Optional[str] = None
@@ -38,7 +39,7 @@ class BaseCollector(ABC):
         rate_limit: int = 10,  # requests per minute
     ):
         self.api_key = api_key
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.max_retries = max_retries
         self.rate_limit = rate_limit
@@ -59,10 +60,7 @@ class BaseCollector(ABC):
         """确保会话存在"""
         if self.session is None or self.session.closed:
             headers = await self._get_headers()
-            self.session = aiohttp.ClientSession(
-                headers=headers,
-                timeout=self.timeout
-            )
+            self.session = aiohttp.ClientSession(headers=headers, timeout=self.timeout)
 
     async def close(self):
         """关闭会话"""
@@ -99,14 +97,9 @@ class BaseCollector(ABC):
         (aiohttp.ClientError, asyncio.TimeoutError),
         max_tries=3,
         base=1,
-        max_value=10
+        max_value=10,
     )
-    async def _make_request(
-        self,
-        method: str,
-        url: str,
-        **kwargs
-    ) -> CollectionResult:
+    async def _make_request(self, method: str, url: str, **kwargs) -> CollectionResult:
         """发起HTTP请求"""
         start_time = asyncio.get_event_loop().time()
 
@@ -133,25 +126,25 @@ class BaseCollector(ABC):
                         success=True,
                         data=data,
                         status_code=response.status,
-                        response_time=response_time
+                        response_time=response_time,
                     )
                 else:
                     error_text = await response.text()
-                    logger.error(f"API request failed: {response.status} - {error_text}")
+                    logger.error(
+                        f"API request failed: {response.status} - {error_text}"
+                    )
                     return CollectionResult(
                         success=False,
                         error=f"HTTP {response.status}: {error_text}",
                         status_code=response.status,
-                        response_time=response_time
+                        response_time=response_time,
                     )
 
         except asyncio.TimeoutError:
             response_time = asyncio.get_event_loop().time() - start_time
             logger.error(f"Request timeout after {response_time:.2f}s")
             return CollectionResult(
-                success=False,
-                error="Request timeout",
-                response_time=response_time
+                success=False, error="Request timeout", response_time=response_time
             )
 
         except aiohttp.ClientError as e:
@@ -160,7 +153,7 @@ class BaseCollector(ABC):
             return CollectionResult(
                 success=False,
                 error=f"Client error: {str(e)}",
-                response_time=response_time
+                response_time=response_time,
             )
 
         except Exception as e:
@@ -169,50 +162,40 @@ class BaseCollector(ABC):
             return CollectionResult(
                 success=False,
                 error=f"Unexpected error: {str(e)}",
-                response_time=response_time
+                response_time=response_time,
             )
 
     async def get(
-        self,
-        endpoint: str,
-        params: Optional[Dict[str, Any]] = None
+        self, endpoint: str, params: Optional[Dict[str, Any]] = None
     ) -> CollectionResult:
         """GET请求"""
         url = self._build_url(endpoint, **(params or {}))
-        return await self._make_request('GET', url)
+        return await self._make_request("GET", url)
 
     async def post(
-        self,
-        endpoint: str,
-        data: Optional[Dict[str, Any]] = None
+        self, endpoint: str, data: Optional[Dict[str, Any]] = None
     ) -> CollectionResult:
         """POST请求"""
         url = self._build_url(endpoint)
-        return await self._make_request('POST', url, json=data)
+        return await self._make_request("POST", url, json=data)
 
     @abstractmethod
     async def collect_matches(
         self,
         league_id: Optional[int] = None,
         date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None
+        date_to: Optional[datetime] = None,
     ) -> CollectionResult:
         """采集比赛数据"""
         pass
 
     @abstractmethod
-    async def collect_teams(
-        self,
-        league_id: Optional[int] = None
-    ) -> CollectionResult:
+    async def collect_teams(self, league_id: Optional[int] = None) -> CollectionResult:
         """采集球队数据"""
         pass
 
     @abstractmethod
-    async def collect_players(
-        self,
-        team_id: Optional[int] = None
-    ) -> CollectionResult:
+    async def collect_players(self, team_id: Optional[int] = None) -> CollectionResult:
         """采集球员数据"""
         pass
 
@@ -224,16 +207,16 @@ class BaseCollector(ABC):
     def get_request_stats(self) -> Dict[str, Any]:
         """获取请求统计信息"""
         return {
-            'total_requests': self._request_count,
-            'last_request_time': self._last_request_time,
-            'rate_limit': self.rate_limit
+            "total_requests": self._request_count,
+            "last_request_time": self._last_request_time,
+            "rate_limit": self.rate_limit,
         }
 
     async def health_check(self) -> bool:
         """健康检查"""
         try:
             # 使用一个轻量级的端点进行健康检查
-            result = await self.get('/status')
+            result = await self.get("/status")
             return result.success
         except Exception as e:
             logger.error(f"Health check failed: {e}")
@@ -242,21 +225,23 @@ class BaseCollector(ABC):
 
 class CollectorError(Exception):
     """采集器异常"""
+
     pass
 
 
 class RateLimitError(CollectorError):
     """速率限制异常"""
+
     pass
 
 
 class AuthenticationError(CollectorError):
     """认证异常"""
+
     pass
 
 
 class DataValidationError(CollectorError):
     """数据验证异常"""
+
     pass
-
-

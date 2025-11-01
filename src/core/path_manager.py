@@ -99,6 +99,7 @@ class PathManager:
         try:
             # 尝试导入src模块
             import src
+
             return True
         except ImportError as e:
             logger.warning(f"src导入验证失败: {e}")
@@ -121,7 +122,7 @@ class PathManager:
             "python_path": sys.path[:5],  # 只显示前5个路径
             "working_directory": os.getcwd(),
             "pythonpath_env": os.environ.get("PYTHONPATH", ""),
-            "is_configured": self._is_configured
+            "is_configured": self._is_configured,
         }
 
     def setup_environment_paths(self) -> Dict[str, bool]:
@@ -147,7 +148,9 @@ class PathManager:
             src_path_str = str(self.src_path)
 
             if src_path_str not in pythonpath:
-                new_pythonpath = f"{pythonpath}:{src_path_str}" if pythonpath else src_path_str
+                new_pythonpath = (
+                    f"{pythonpath}:{src_path_str}" if pythonpath else src_path_str
+                )
                 os.environ["PYTHONPATH"] = new_pythonpath
                 logger.info(f"设置PYTHONPATH: {new_pythonpath}")
 
@@ -160,7 +163,8 @@ class PathManager:
         """检测Docker环境"""
         docker_indicators = [
             "/.dockerenv",  # Docker容器标记文件
-            os.path.exists("/proc/1/cgroup") and "docker" in open("/proc/1/cgroup").read()
+            os.path.exists("/proc/1/cgroup")
+            and "docker" in open("/proc/1/cgroup").read(),
         ]
 
         is_docker = any(docker_indicators)
@@ -176,7 +180,7 @@ class PathManager:
         ide_indicators = [
             os.environ.get("VS_CODE_PID"),  # VS Code
             os.environ.get("PYCHARM_HOSTED"),  # PyCharm
-            os.environ.get("JETBRAINS_IDE")  # JetBrains IDEs
+            os.environ.get("JETBRAINS_IDE"),  # JetBrains IDEs
         ]
 
         is_ide = any(ide_indicators)
@@ -210,11 +214,12 @@ class PathManager:
                 "python.analysis.autoSearchPaths": True,
                 "python.analysis.diagnosticSeverityOverrides": {
                     "reportMissingImports": "none"
-                }
+                },
             }
 
             import json
-            with open(settings_file, 'w', encoding='utf-8') as f:
+
+            with open(settings_file, "w", encoding="utf-8") as f:
                 json.dump(settings_content, f, indent=2, ensure_ascii=False)
 
             logger.info("✅ VS Code配置文件已创建")
@@ -245,7 +250,7 @@ class PathManager:
 """
 
             pycharm_readme = self.project_root / "PYCHARM_SETUP.md"
-            with open(pycharm_readme, 'w', encoding='utf-8') as f:
+            with open(pycharm_readme, "w", encoding="utf-8") as f:
                 f.write(readme_content)
 
             logger.info("✅ PyCharm配置提示已创建")
@@ -261,12 +266,13 @@ class PathManager:
             "src_in_python_path": str(self.src_path) in sys.path,
             "src_importable": False,
             "environment_setup": {},
-            "errors": []
+            "errors": [],
         }
 
         # 测试src导入
         try:
             import src
+
             validation_results["src_importable"] = True
         except ImportError as e:
             validation_results["errors"].append(f"src导入失败: {e}")

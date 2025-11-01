@@ -21,13 +21,14 @@ from src.domain.models.team import Team
 
 class MatchDomainService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛领域服务"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._events: List[Any] = []
 
     def schedule_match(

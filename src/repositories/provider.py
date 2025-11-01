@@ -46,6 +46,7 @@ class RepositoryFactory(Protocol):
 
 class DefaultRepositoryFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """默认仓储工厂实现"""
 
@@ -79,6 +80,7 @@ class DefaultRepositoryFactory:
 
 class RepositoryProvider:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """仓储提供者"
 
@@ -89,7 +91,7 @@ class RepositoryProvider:
     def __init__(self, factory: RepositoryFactory = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._factory = factory or DefaultRepositoryFactory()
         self._repositories = {}
 
@@ -129,14 +131,14 @@ class RepositoryProvider:
     def clear_cache(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """清除仓储缓存"""
         self._repositories.clear()
 
     def set_factory(self, factory: RepositoryFactory):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """设置仓储工厂"""
         self._factory = factory
         self.clear_cache()

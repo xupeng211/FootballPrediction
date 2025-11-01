@@ -42,7 +42,11 @@ from src.domain.models import (
     TeamForm,
     TeamStats,
 )
-from src.domain.services import MatchDomainService, PredictionDomainService, ScoringService
+from src.domain.services import (
+    MatchDomainService,
+    PredictionDomainService,
+    ScoringService,
+)
 from src.domain.strategies import (
     EnsembleStrategy,
     HistoricalStrategy,

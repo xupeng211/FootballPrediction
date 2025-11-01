@@ -14,6 +14,7 @@ from src.core.logging import get_logger
 
 class ServiceConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """服务配置类"""
 
@@ -35,13 +36,14 @@ class ServiceConfig:
 
 class ServiceMetrics:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """服务指标收集器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.metrics = {
             "calls": 0,
             "errors": 0,
@@ -53,7 +55,7 @@ class ServiceMetrics:
     def record_call(self, duration: float, success: bool = True):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """记录调用"""
         self.metrics["calls"] += 1
         self.metrics["total_time"] += duration
@@ -77,7 +79,7 @@ class EnhancedBaseService(ABC):
     def __init__(self, config: Optional[ServiceConfig] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化服务"
 
         Args:
@@ -220,7 +222,7 @@ class EnhancedBaseService(ABC):
     def add_dependency(self, name: str, service: "EnhancedBaseService"):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """添加依赖服务"""
         self._dependencies[name] = service
         self.logger.debug(f"Added dependency: {name}")
@@ -265,7 +267,7 @@ class BaseService(EnhancedBaseService):
     def __init__(self, name: str = "BaseService"):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)
 
@@ -285,7 +287,7 @@ class AbstractBaseService(EnhancedBaseService):
     def __init__(self, name: str):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)
 

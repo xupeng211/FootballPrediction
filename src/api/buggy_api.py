@@ -46,7 +46,9 @@ async def buggy_query(
 
 class SomeAsyncService:
     """类文档字符串"""
+
     pass  # 添加pass语句
+
     async def get_status(self):
         return "real_status"
 

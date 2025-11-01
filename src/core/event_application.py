@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class EventDrivenApplication:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """事件驱动应用程序"
 
@@ -28,7 +29,7 @@ class EventDrivenApplication:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化应用程序"""
         self._event_bus = get_event_bus()
         self._settings = get_settings()

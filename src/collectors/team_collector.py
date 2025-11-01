@@ -27,25 +27,26 @@ class TeamCollector(FootballDataCollector):
             包含球队数据的字典
         """
         results = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'teams': {},
-            'competitions': [],
-            'errors': []
+            "timestamp": datetime.utcnow().isoformat(),
+            "teams": {},
+            "competitions": [],
+            "errors": [],
         }
 
         try:
             # 获取支持的联赛
             all_competitions = await self.fetch_competitions()
             supported_competitions = [
-                comp for comp in all_competitions
-                if comp.get('code') in self.supported_competitions
+                comp
+                for comp in all_competitions
+                if comp.get("code") in self.supported_competitions
             ]
-            results['competitions'] = supported_competitions
+            results["competitions"] = supported_competitions
 
             # 收集各联赛的球队数据
             for competition in supported_competitions:
-                comp_id = competition['id']
-                comp_code = competition['code']
+                comp_id = competition["id"]
+                comp_code = competition["code"]
 
                 try:
                     logger.info(f"Collecting teams for competition: {comp_code}")
@@ -56,26 +57,30 @@ class TeamCollector(FootballDataCollector):
                     normalized_teams = []
                     for team in teams:
                         normalized_team = self.normalize_team_data(team)
-                        if normalized_team and 'error' not in normalized_team:
+                        if normalized_team and "error" not in normalized_team:
                             normalized_teams.append(normalized_team)
 
-                    results['teams'][comp_code] = normalized_teams
-                    logger.info(f"Collected {len(normalized_teams)} teams for {comp_code}")
+                    results["teams"][comp_code] = normalized_teams
+                    logger.info(
+                        f"Collected {len(normalized_teams)} teams for {comp_code}"
+                    )
 
                 except Exception as e:
                     error_msg = f"Failed to collect teams for {comp_code}: {e}"
                     logger.error(error_msg)
-                    results['errors'].append(error_msg)
+                    results["errors"].append(error_msg)
                     continue
 
         except Exception as e:
             error_msg = f"General team collection error: {e}"
             logger.error(error_msg)
-            results['errors'].append(error_msg)
+            results["errors"].append(error_msg)
 
         return results
 
-    async def collect_competition_teams(self, competition_code: str) -> List[Dict[str, Any]]:
+    async def collect_competition_teams(
+        self, competition_code: str
+    ) -> List[Dict[str, Any]]:
         """
         收集特定联赛的球队数据
 
@@ -90,12 +95,15 @@ class TeamCollector(FootballDataCollector):
 
         # 获取联赛信息
         all_competitions = await self.fetch_competitions()
-        competition = next((comp for comp in all_competitions if comp.get('code') == competition_code), None)
+        competition = next(
+            (comp for comp in all_competitions if comp.get("code") == competition_code),
+            None,
+        )
 
         if not competition:
             raise ValueError(f"Competition {competition_code} not found")
 
-        comp_id = competition['id']
+        comp_id = competition["id"]
 
         try:
             teams = await self.fetch_teams(str(comp_id))
@@ -103,15 +111,17 @@ class TeamCollector(FootballDataCollector):
 
             for team in teams:
                 normalized_team = self.normalize_team_data(team)
-                if normalized_team and 'error' not in normalized_team:
-                    normalized_team['competition_info'] = {
-                        'id': competition['id'],
-                        'name': competition['name'],
-                        'code': competition['code']
+                if normalized_team and "error" not in normalized_team:
+                    normalized_team["competition_info"] = {
+                        "id": competition["id"],
+                        "name": competition["name"],
+                        "code": competition["code"],
                     }
                     normalized_teams.append(normalized_team)
 
-            logger.info(f"Collected {len(normalized_teams)} teams for {competition_code}")
+            logger.info(
+                f"Collected {len(normalized_teams)} teams for {competition_code}"
+            )
             return normalized_teams
 
         except Exception as e:
@@ -130,36 +140,38 @@ class TeamCollector(FootballDataCollector):
         """
         try:
             return {
-                'external_id': str(team.get('id')),
-                'name': team.get('name'),
-                'short_name': team.get('shortName'),
-                'tla': team.get('tla'),  # Three Letter Abbreviation
-                'crest': team.get('crest'),
-                'address': team.get('address'),
-                'website': team.get('website'),
-                'founded': team.get('founded'),
-                'club_colors': team.get('clubColors'),
-                'venue': team.get('venue'),
-                'area': {
-                    'id': team.get('area', {}).get('id'),
-                    'name': team.get('area', {}).get('name'),
-                    'code': team.get('area', {}).get('code'),
-                    'flag': team.get('area', {}).get('flag')
+                "external_id": str(team.get("id")),
+                "name": team.get("name"),
+                "short_name": team.get("shortName"),
+                "tla": team.get("tla"),  # Three Letter Abbreviation
+                "crest": team.get("crest"),
+                "address": team.get("address"),
+                "website": team.get("website"),
+                "founded": team.get("founded"),
+                "club_colors": team.get("clubColors"),
+                "venue": team.get("venue"),
+                "area": {
+                    "id": team.get("area", {}).get("id"),
+                    "name": team.get("area", {}).get("name"),
+                    "code": team.get("area", {}).get("code"),
+                    "flag": team.get("area", {}).get("flag"),
                 },
-                'coach': self._normalize_coach_data(team.get('coach', {})),
-                'squad': self._normalize_squad_data(team.get('squad', [])),
-                'running_competitions': self._normalize_competitions_data(team.get('runningCompetitions', [])),
-                'last_updated': team.get('lastUpdated'),
-                'staff': team.get('staff', [])
+                "coach": self._normalize_coach_data(team.get("coach", {})),
+                "squad": self._normalize_squad_data(team.get("squad", [])),
+                "running_competitions": self._normalize_competitions_data(
+                    team.get("runningCompetitions", [])
+                ),
+                "last_updated": team.get("lastUpdated"),
+                "staff": team.get("staff", []),
             }
 
         except Exception as e:
             logger.error(f"Error normalizing team data: {e}")
             return {
-                'external_id': str(team.get('id', '')),
-                'name': team.get('name', 'Unknown Team'),
-                'error': str(e),
-                'raw_data': team
+                "external_id": str(team.get("id", "")),
+                "name": team.get("name", "Unknown Team"),
+                "error": str(e),
+                "raw_data": team,
             }
 
     def _normalize_coach_data(self, coach: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -169,32 +181,34 @@ class TeamCollector(FootballDataCollector):
 
         try:
             return {
-                'id': coach.get('id'),
-                'first_name': coach.get('firstName'),
-                'last_name': coach.get('lastName'),
-                'name': coach.get('name'),
-                'date_of_birth': coach.get('dateOfBirth'),
-                'nationality': coach.get('nationality'),
-                'contract': coach.get('contract', {})
+                "id": coach.get("id"),
+                "first_name": coach.get("firstName"),
+                "last_name": coach.get("lastName"),
+                "name": coach.get("name"),
+                "date_of_birth": coach.get("dateOfBirth"),
+                "nationality": coach.get("nationality"),
+                "contract": coach.get("contract", {}),
             }
         except Exception as e:
             logger.error(f"Error normalizing coach data: {e}")
             return None
 
-    def _normalize_squad_data(self, squad: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _normalize_squad_data(
+        self, squad: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """标准化阵容数据"""
         normalized_squad = []
 
         for player in squad:
             try:
                 normalized_player = {
-                    'id': player.get('id'),
-                    'name': player.get('name'),
-                    'position': player.get('position'),
-                    'date_of_birth': player.get('dateOfBirth'),
-                    'nationality': player.get('nationality'),
-                    'shirt_number': None,  # API中不包含球衣号码
-                    'contract_until': None
+                    "id": player.get("id"),
+                    "name": player.get("name"),
+                    "position": player.get("position"),
+                    "date_of_birth": player.get("dateOfBirth"),
+                    "nationality": player.get("nationality"),
+                    "shirt_number": None,  # API中不包含球衣号码
+                    "contract_until": None,
                 }
                 normalized_squad.append(normalized_player)
             except Exception as e:
@@ -203,18 +217,20 @@ class TeamCollector(FootballDataCollector):
 
         return normalized_squad
 
-    def _normalize_competitions_data(self, competitions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _normalize_competitions_data(
+        self, competitions: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """标准化参赛联赛数据"""
         normalized_competitions = []
 
         for comp in competitions:
             try:
                 normalized_comp = {
-                    'id': comp.get('id'),
-                    'name': comp.get('name'),
-                    'code': comp.get('code'),
-                    'type': comp.get('type'),
-                    'emblem': comp.get('emblem')
+                    "id": comp.get("id"),
+                    "name": comp.get("name"),
+                    "code": comp.get("code"),
+                    "type": comp.get("type"),
+                    "emblem": comp.get("emblem"),
                 }
                 normalized_competitions.append(normalized_comp)
             except Exception as e:
@@ -239,26 +255,29 @@ class TeamCollector(FootballDataCollector):
             # 我们需要从联赛的球队列表中找到该球队
             all_competitions = await self.fetch_competitions()
             supported_competitions = [
-                comp for comp in all_competitions
-                if comp.get('code') in self.supported_competitions
+                comp
+                for comp in all_competitions
+                if comp.get("code") in self.supported_competitions
             ]
 
             for competition in supported_competitions:
                 try:
-                    teams = await self.fetch_teams(str(competition['id']))
-                    team = next((t for t in teams if str(t.get('id')) == team_id), None)
+                    teams = await self.fetch_teams(str(competition["id"]))
+                    team = next((t for t in teams if str(t.get("id")) == team_id), None)
 
                     if team:
                         normalized_team = self.normalize_team_data(team)
-                        normalized_team['competition_info'] = {
-                            'id': competition['id'],
-                            'name': competition['name'],
-                            'code': competition['code']
+                        normalized_team["competition_info"] = {
+                            "id": competition["id"],
+                            "name": competition["name"],
+                            "code": competition["code"],
                         }
                         return normalized_team
 
                 except Exception as e:
-                    logger.error(f"Failed to get team {team_id} from competition {competition.get('code')}: {e}")
+                    logger.error(
+                        f"Failed to get team {team_id} from competition {competition.get('code')}: {e}"
+                    )
                     continue
 
             logger.warning(f"Team {team_id} not found in any supported competition")
@@ -268,7 +287,9 @@ class TeamCollector(FootballDataCollector):
             logger.error(f"Failed to collect team details for {team_id}: {e}")
             return None
 
-    async def collect_team_matches(self, team_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+    async def collect_team_matches(
+        self, team_id: str, limit: int = 20
+    ) -> List[Dict[str, Any]]:
         """
         收集特定球队的比赛数据
 
@@ -288,67 +309,71 @@ class TeamCollector(FootballDataCollector):
                 if normalized_match:
                     normalized_matches.append(normalized_match)
 
-            logger.info(f"Collected {len(normalized_matches)} matches for team {team_id}")
+            logger.info(
+                f"Collected {len(normalized_matches)} matches for team {team_id}"
+            )
             return normalized_matches
 
         except Exception as e:
             logger.error(f"Failed to collect matches for team {team_id}: {e}")
             return []
 
-    def _normalize_match_for_team(self, match: Dict[str, Any], team_id: str) -> Optional[Dict[str, Any]]:
+    def _normalize_match_for_team(
+        self, match: Dict[str, Any], team_id: str
+    ) -> Optional[Dict[str, Any]]:
         """为球队视角标准化比赛数据"""
         try:
-            home_team = match.get('homeTeam', {})
-            away_team = match.get('awayTeam', {})
-            score = match.get('score', {})
+            home_team = match.get("homeTeam", {})
+            away_team = match.get("awayTeam", {})
+            score = match.get("score", {})
 
             # 判断球队是主队还是客队
-            is_home_team = str(home_team.get('id')) == team_id
+            is_home_team = str(home_team.get("id")) == team_id
             opponent = away_team if is_home_team else home_team
 
             # 获取比分
-            full_time_score = score.get('fullTime', {})
+            full_time_score = score.get("fullTime", {})
             if is_home_team:
-                team_score = full_time_score.get('home') or 0
-                opponent_score = full_time_score.get('away') or 0
+                team_score = full_time_score.get("home") or 0
+                opponent_score = full_time_score.get("away") or 0
             else:
-                team_score = full_time_score.get('away') or 0
-                opponent_score = full_time_score.get('home') or 0
+                team_score = full_time_score.get("away") or 0
+                opponent_score = full_time_score.get("home") or 0
 
             # 判断比赛结果
-            winner = score.get('winner')
-            if winner == 'HOME_TEAM' and is_home_team:
-                result = 'win'
-            elif winner == 'AWAY_TEAM' and not is_home_team:
-                result = 'win'
-            elif winner == 'DRAW':
-                result = 'draw'
+            winner = score.get("winner")
+            if winner == "HOME_TEAM" and is_home_team:
+                result = "win"
+            elif winner == "AWAY_TEAM" and not is_home_team:
+                result = "win"
+            elif winner == "DRAW":
+                result = "draw"
             else:
-                result = 'loss' if winner else None
+                result = "loss" if winner else None
 
             return {
-                'external_id': str(match.get('id')),
-                'match_date': match.get('utcDate'),
-                'status': match.get('status', '').lower(),
-                'is_home_team': is_home_team,
-                'opponent': {
-                    'id': opponent.get('id'),
-                    'name': opponent.get('name'),
-                    'short_name': opponent.get('shortName'),
-                    'crest': opponent.get('crest')
+                "external_id": str(match.get("id")),
+                "match_date": match.get("utcDate"),
+                "status": match.get("status", "").lower(),
+                "is_home_team": is_home_team,
+                "opponent": {
+                    "id": opponent.get("id"),
+                    "name": opponent.get("name"),
+                    "short_name": opponent.get("shortName"),
+                    "crest": opponent.get("crest"),
                 },
-                'team_score': team_score,
-                'opponent_score': opponent_score,
-                'result': result,
-                'matchday': match.get('matchday'),
-                'stage': match.get('stage'),
-                'competition': {
-                    'id': match.get('competition', {}).get('id'),
-                    'name': match.get('competition', {}).get('name'),
-                    'code': match.get('competition', {}).get('code')
+                "team_score": team_score,
+                "opponent_score": opponent_score,
+                "result": result,
+                "matchday": match.get("matchday"),
+                "stage": match.get("stage"),
+                "competition": {
+                    "id": match.get("competition", {}).get("id"),
+                    "name": match.get("competition", {}).get("name"),
+                    "code": match.get("competition", {}).get("code"),
                 },
-                'venue': match.get('venue'),
-                'last_updated': match.get('lastUpdated')
+                "venue": match.get("venue"),
+                "last_updated": match.get("lastUpdated"),
             }
 
         except Exception as e:
@@ -372,41 +397,45 @@ class TeamCollector(FootballDataCollector):
             # 在所有支持的联赛中搜索
             all_competitions = await self.fetch_competitions()
             supported_competitions = [
-                comp for comp in all_competitions
-                if comp.get('code') in self.supported_competitions
+                comp
+                for comp in all_competitions
+                if comp.get("code") in self.supported_competitions
             ]
 
             for competition in supported_competitions:
                 try:
-                    teams = await self.fetch_teams(str(competition['id']))
+                    teams = await self.fetch_teams(str(competition["id"]))
 
                     for team in teams:
-                        team_name = team.get('name', '').lower()
-                        short_name = team.get('shortName', '').lower()
-                        tla = team.get('tla', '').lower()
+                        team_name = team.get("name", "").lower()
+                        short_name = team.get("shortName", "").lower()
+                        tla = team.get("tla", "").lower()
 
                         # 检查是否匹配搜索词
-                        if (search_term_lower in team_name or
-                            search_term_lower in short_name or
-                            search_term_lower in tla):
-
+                        if (
+                            search_term_lower in team_name
+                            or search_term_lower in short_name
+                            or search_term_lower in tla
+                        ):
                             normalized_team = self.normalize_team_data(team)
-                            if normalized_team and 'error' not in normalized_team:
-                                normalized_team['competition_info'] = {
-                                    'id': competition['id'],
-                                    'name': competition['name'],
-                                    'code': competition['code']
+                            if normalized_team and "error" not in normalized_team:
+                                normalized_team["competition_info"] = {
+                                    "id": competition["id"],
+                                    "name": competition["name"],
+                                    "code": competition["code"],
                                 }
                                 all_teams.append(normalized_team)
 
                 except Exception as e:
-                    logger.error(f"Failed to search teams in competition {competition.get('code')}: {e}")
+                    logger.error(
+                        f"Failed to search teams in competition {competition.get('code')}: {e}"
+                    )
                     continue
 
             # 去重（基于external_id）
             unique_teams = {}
             for team in all_teams:
-                team_id = team['external_id']
+                team_id = team["external_id"]
                 if team_id not in unique_teams:
                     unique_teams[team_id] = team
 

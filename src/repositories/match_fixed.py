@@ -17,6 +17,7 @@ from .base import BaseRepository, QuerySpec
 
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
+
     SCHEDULED = "scheduled"
     LIVE = "live"
     FINISHED = "finished"
@@ -31,6 +32,7 @@ class MatchRepository(BaseRepository):
         """初始化比赛仓储"""
         # 假设有一个Match模型类
         from ..database.models import Match
+
         super().__init__(session, Match)
 
     async def get_by_id(self, match_id: int) -> Optional["Match"]:
@@ -60,7 +62,7 @@ class MatchRepository(BaseRepository):
             home_score=match_data.get("home_score", 0),
             away_score=match_data.get("away_score", 0),
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         self.session.add(match)
@@ -68,13 +70,17 @@ class MatchRepository(BaseRepository):
         await self.session.refresh(match)
         return match
 
-    async def update(self, match_id: int, update_data: Dict[str, Any]) -> Optional["Match"]:
+    async def update(
+        self, match_id: int, update_data: Dict[str, Any]
+    ) -> Optional["Match"]:
         """更新比赛"""
         update_data["updated_at"] = datetime.utcnow()
 
-        query = update(self.model_class).where(
-            self.model_class.id == match_id
-        ).values(**update_data)
+        query = (
+            update(self.model_class)
+            .where(self.model_class.id == match_id)
+            .values(**update_data)
+        )
 
         await self.session.execute(query)
         await self.session.commit()
@@ -90,37 +96,34 @@ class MatchRepository(BaseRepository):
             return True
         return False
 
-    async def find_by_team(self, team_id: int, limit: Optional[int] = None) -> List["Match"]:
+    async def find_by_team(
+        self, team_id: int, limit: Optional[int] = None
+    ) -> List["Match"]:
         """根据球队ID查找比赛"""
-        filters = {
-            "$or": [
-                {"home_team_id": team_id},
-                {"away_team_id": team_id}
-            ]
-        }
+        filters = {"$or": [{"home_team_id": team_id}, {"away_team_id": team_id}]}
         return await self.find_by_filters(filters, limit)
 
-    async def find_by_status(self, status: MatchStatus, limit: Optional[int] = None) -> List["Match"]:
+    async def find_by_status(
+        self, status: MatchStatus, limit: Optional[int] = None
+    ) -> List["Match"]:
         """根据状态查找比赛"""
         filters = {"status": status}
         return await self.find_by_filters(filters, limit)
 
-    async def find_upcoming_matches(self, days: int = 7, limit: int = 50) -> List["Match"]:
+    async def find_upcoming_matches(
+        self, days: int = 7, limit: int = 50
+    ) -> List["Match"]:
         """查找即将到来的比赛"""
         start_time = datetime.utcnow()
         end_time = start_time + timedelta(days=days)
 
         filters = {
             "match_time": {"$gte": start_time, "$lte": end_time},
-            "status": MatchStatus.SCHEDULED
+            "status": MatchStatus.SCHEDULED,
         }
         order_by = ["match_time"]
 
-        query_spec = QuerySpec(
-            filters=filters,
-            order_by=order_by,
-            limit=limit
-        )
+        query_spec = QuerySpec(filters=filters, order_by=order_by, limit=limit)
 
         return await self.get_all(query_spec)
 
@@ -129,30 +132,27 @@ class MatchRepository(BaseRepository):
         filters = {"status": MatchStatus.LIVE}
         return await self.find_by_filters(filters)
 
-    async def find_recent_finished_matches(self, days: int = 7, limit: int = 50) -> List["Match"]:
+    async def find_recent_finished_matches(
+        self, days: int = 7, limit: int = 50
+    ) -> List["Match"]:
         """查找最近结束的比赛"""
         start_time = datetime.utcnow() - timedelta(days=days)
 
-        filters = {
-            "match_time": {"$gte": start_time},
-            "status": MatchStatus.FINISHED
-        }
+        filters = {"match_time": {"$gte": start_time}, "status": MatchStatus.FINISHED}
         order_by = ["-match_time"]
 
-        query_spec = QuerySpec(
-            filters=filters,
-            order_by=order_by,
-            limit=limit
-        )
+        query_spec = QuerySpec(filters=filters, order_by=order_by, limit=limit)
 
         return await self.get_all(query_spec)
 
-    async def update_match_score(self, match_id: int, home_score: int, away_score: int) -> bool:
+    async def update_match_score(
+        self, match_id: int, home_score: int, away_score: int
+    ) -> bool:
         """更新比赛比分"""
         update_data = {
             "home_score": home_score,
             "away_score": away_score,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         result = await self.update(match_id, update_data)
@@ -160,21 +160,20 @@ class MatchRepository(BaseRepository):
 
     async def start_match(self, match_id: int) -> bool:
         """开始比赛"""
-        update_data = {
-            "status": MatchStatus.LIVE,
-            "updated_at": datetime.utcnow()
-        }
+        update_data = {"status": MatchStatus.LIVE, "updated_at": datetime.utcnow()}
 
         result = await self.update(match_id, update_data)
         return result is not None
 
-    async def finish_match(self, match_id: int, home_score: int, away_score: int) -> bool:
+    async def finish_match(
+        self, match_id: int, home_score: int, away_score: int
+    ) -> bool:
         """结束比赛"""
         update_data = {
             "status": MatchStatus.FINISHED,
             "home_score": home_score,
             "away_score": away_score,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         result = await self.update(match_id, update_data)
@@ -185,7 +184,7 @@ class MatchRepository(BaseRepository):
         update_data = {
             "status": MatchStatus.POSTPONED,
             "postponed_reason": reason,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         result = await self.update(match_id, update_data)
@@ -196,7 +195,7 @@ class MatchRepository(BaseRepository):
         update_data = {
             "status": MatchStatus.CANCELLED,
             "cancelled_reason": reason,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         result = await self.update(match_id, update_data)
@@ -206,12 +205,10 @@ class MatchRepository(BaseRepository):
         self,
         start_date: datetime,
         end_date: datetime,
-        status: Optional[MatchStatus] = None
+        status: Optional[MatchStatus] = None,
     ) -> List["Match"]:
         """根据日期范围获取比赛"""
-        filters = {
-            "match_time": {"$gte": start_date, "$lte": end_date}
-        }
+        filters = {"match_time": {"$gte": start_date, "$lte": end_date}}
 
         if status:
             filters["status"] = status
@@ -219,25 +216,18 @@ class MatchRepository(BaseRepository):
         return await self.find_by_filters(filters)
 
     async def get_head_to_head_matches(
-        self,
-        team1_id: int,
-        team2_id: int,
-        limit: int = 10
+        self, team1_id: int, team2_id: int, limit: int = 10
     ) -> List["Match"]:
         """获取两支球队的历史交锋记录"""
         filters = {
             "$or": [
                 {"home_team_id": team1_id, "away_team_id": team2_id},
-                {"home_team_id": team2_id, "away_team_id": team1_id}
+                {"home_team_id": team2_id, "away_team_id": team1_id},
             ]
         }
         order_by = ["-match_time"]
 
-        query_spec = QuerySpec(
-            filters=filters,
-            order_by=order_by,
-            limit=limit
-        )
+        query_spec = QuerySpec(filters=filters, order_by=order_by, limit=limit)
 
         return await self.get_all(query_spec)
 
@@ -262,7 +252,7 @@ class MatchRepository(BaseRepository):
                 home_score=match_data.get("home_score", 0),
                 away_score=match_data.get("away_score", 0),
                 created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.utcnow(),
             )
             matches.append(match)
 

@@ -25,7 +25,7 @@ class SystemMetricsSubject(Subject):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
         self._metrics: Dict[str, float] = {}
@@ -165,7 +165,7 @@ class PredictionMetricsSubject(Subject):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化预测指标被观察者"""
         super().__init__("PredictionMetrics")
         self._prediction_counts: Dict[str, int] = defaultdict(int)
@@ -325,7 +325,7 @@ class AlertSubject(Subject):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化告警被观察者"""
         super().__init__("AlertManager")
         self._alert_counts: Dict[str, int] = defaultdict(int)
@@ -439,7 +439,7 @@ class CacheSubject(Subject):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化缓存被观察者"""
         super().__init__("CacheMonitor")
         self._cache_stats = {

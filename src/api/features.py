@@ -50,7 +50,8 @@ def validate_match_id(match_id: int) -> None:
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
         raise HTTPException(
-            status_code=400, detail="比赛ID必须大于0"  # TODO: 将魔法数字 400 提取为常量
+            status_code=400,
+            detail="比赛ID必须大于0",  # TODO: 将魔法数字 400 提取为常量
         )  # TODO: 将魔法数字 400 提取为常量
 
 
@@ -165,15 +166,14 @@ def build_response_data(
     if include_raw and features:
         response_data["raw_features"] = {
             "feature_count": len(features),
-            "feature_keys": list(features.keys()) if isinstance(features, dict) else []
+            "feature_keys": list(features.keys()) if isinstance(features, dict) else [],
         }
 
     return response_data
 
 
 @router.get("/{match_id}")
-async def get_match_features_improved(
-    match_id: int) -> Dict[str, Any]:
+async def get_match_features_improved(match_id: int) -> Dict[str, Any]:
     """
     改进版本:获取比赛特征
 

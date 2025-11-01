@@ -27,16 +27,13 @@ class MatchProcessor:
             "away_team",
             "match_date",
             "home_score",
-            "away_score"
+            "away_score",
         }
-        self.optional_fields = {
-            "venue",
-            "competition",
-            "season",
-            "match_status"
-        }
+        self.optional_fields = {"venue", "competition", "season", "match_status"}
 
-    async def process_raw_match_data(self, raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def process_raw_match_data(
+        self, raw_data: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """处理原始比赛数据"""
         processed_matches = []
 
@@ -51,7 +48,9 @@ class MatchProcessor:
 
         return processed_matches
 
-    async def _process_single_match(self, match_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def _process_single_match(
+        self, match_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """处理单个比赛数据"""
         # 验证必需字段
         if not await self._validate_required_fields(match_data):
@@ -88,7 +87,9 @@ class MatchProcessor:
 
         # 清洗日期字段
         if "match_date" in match_data:
-            cleaned_data["match_date"] = await self._parse_date(match_data["match_date"])
+            cleaned_data["match_date"] = await self._parse_date(
+                match_data["match_date"]
+            )
 
         # 清洗其他字段
         for field, value in match_data.items():
@@ -109,7 +110,7 @@ class MatchProcessor:
                 "%Y-%m-%d %H:%M:%S",
                 "%d/%m/%Y",
                 "%d/%m/%Y %H:%M:%S",
-                "%Y%m%d"
+                "%Y%m%d",
             ]
 
             for fmt in date_formats:
@@ -121,7 +122,9 @@ class MatchProcessor:
         self.logger.warning(f"无法解析日期: {date_value}")
         return None
 
-    async def _standardize_match_data(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _standardize_match_data(
+        self, match_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """标准化比赛数据格式"""
         standardized = {
             "match_id": str(match_data.get("match_id", "")),
@@ -134,15 +137,18 @@ class MatchProcessor:
             "competition": str(match_data.get("competition", "")).title(),
             "season": str(match_data.get("season", "")),
             "match_status": str(match_data.get("match_status", "finished")).lower(),
-            "processed_at": datetime.utcnow()
+            "processed_at": datetime.utcnow(),
         }
 
         # 计算衍生字段
-        standardized["total_goals"] = standardized["home_score"] + standardized["away_score"]
-        standardized["goal_difference"] = standardized["home_score"] - standardized["away_score"]
+        standardized["total_goals"] = (
+            standardized["home_score"] + standardized["away_score"]
+        )
+        standardized["goal_difference"] = (
+            standardized["home_score"] - standardized["away_score"]
+        )
         standardized["winner"] = await self._determine_winner(
-            standardized["home_score"],
-            standardized["away_score"]
+            standardized["home_score"], standardized["away_score"]
         )
 
         return standardized
@@ -160,7 +166,7 @@ class MatchProcessor:
         """处理DataFrame格式的比赛数据"""
         try:
             # 转换为字典列表处理
-            raw_data = df.to_dict('records')
+            raw_data = df.to_dict("records")
             processed_data = await self.process_raw_match_data(raw_data)
 
             # 转换回DataFrame
@@ -197,25 +203,33 @@ class MatchProcessor:
             self.logger.warning(f"比赛数据完整性验证失败: {e}")
             return False
 
-    async def get_processing_stats(self, original_count: int, processed_count: int) -> Dict[str, Any]:
+    async def get_processing_stats(
+        self, original_count: int, processed_count: int
+    ) -> Dict[str, Any]:
         """获取处理统计信息"""
-        success_rate = (processed_count / original_count * 100) if original_count > 0 else 0
+        success_rate = (
+            (processed_count / original_count * 100) if original_count > 0 else 0
+        )
 
         return {
             "original_count": original_count,
             "processed_count": processed_count,
             "failed_count": original_count - processed_count,
             "success_rate": round(success_rate, 2),
-            "processed_at": datetime.utcnow()
+            "processed_at": datetime.utcnow(),
         }
 
-    async def batch_process(self, data_batches: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    async def batch_process(
+        self, data_batches: List[List[Dict[str, Any]]]
+    ) -> List[Dict[str, Any]]:
         """批量处理多批次数据"""
         all_processed = []
         total_stats = {"original": 0, "processed": 0}
 
         for i, batch in enumerate(data_batches):
-            self.logger.info(f"处理批次 {i+1}/{len(data_batches)}, 数据量: {len(batch)}")
+            self.logger.info(
+                f"处理批次 {i + 1}/{len(data_batches)}, 数据量: {len(batch)}"
+            )
 
             batch_processed = await self.process_raw_match_data(batch)
             all_processed.extend(batch_processed)
@@ -225,8 +239,7 @@ class MatchProcessor:
 
         # 记录整体统计
         stats = await self.get_processing_stats(
-            total_stats["original"],
-            total_stats["processed"]
+            total_stats["original"], total_stats["processed"]
         )
         self.logger.info(f"批量处理完成: {stats}")
 

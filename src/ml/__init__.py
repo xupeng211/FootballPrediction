@@ -7,8 +7,4 @@ from .models.base_model import BaseModel
 from .models.poisson_model import PoissonModel
 from .models.elo_model import EloModel
 
-__all__ = [
-    'BaseModel',
-    'PoissonModel',
-    'EloModel'
-]
+__all__ = ["BaseModel", "PoissonModel", "EloModel"]

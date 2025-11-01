@@ -20,13 +20,14 @@ class Compatibility(Enum):
 
 class CompatibleQueryBuilder:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """兼容性查询构建器"""
 
     def __init__(self, dialect: str = "postgresql"):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化查询构建器"
 
         Args:
@@ -97,13 +98,14 @@ class CompatibleQueryBuilder:
 
 class SQLCompatibilityHelper:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """SQL兼容性助手"""
 
     def __init__(self, source_dialect: str, target_dialect: str):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化兼容性助手"
 
         Args:
@@ -155,7 +157,7 @@ class SQLCompatibilityHelper:
                 "TEXT": "TEXT",
                 "TRUE": "1",
                 "FALSE": "0",
-                '"': '`',
+                '"': "`",
             },
         }
 

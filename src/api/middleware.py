@@ -125,7 +125,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, allow_origins: list = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(app)
         self.allow_origins = allow_origins or ["*"]
 

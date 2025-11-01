@@ -62,7 +62,9 @@ class ScoringService:
         )
 
         score_bonus = Decimal(exact_score_points)
-        outcome_total = Decimal(outcome_points + goal_diff_points + streak_bonus + difficulty_bonus)
+        outcome_total = Decimal(
+            outcome_points + goal_diff_points + streak_bonus + difficulty_bonus
+        )
         confidence_bonus_value = Decimal(confidence_bonus)
 
         total_points = score_bonus + outcome_total + confidence_bonus_value
@@ -84,7 +86,8 @@ class ScoringService:
         """计算精确比分得分"""
         if predicted_home == actual_home and predicted_away == actual_away:
             return int(
-                self.config["exact_score"]["points"] * self.config["exact_score"]["multiplier"]
+                self.config["exact_score"]["points"]
+                * self.config["exact_score"]["multiplier"]
             )
         return 0
 
@@ -101,7 +104,8 @@ class ScoringService:
 
         if predicted_outcome == actual_outcome:
             return int(
-                self.config["outcome_only"]["points"] * self.config["outcome_only"]["multiplier"]
+                self.config["outcome_only"]["points"]
+                * self.config["outcome_only"]["multiplier"]
             )
         return 0
 
@@ -182,7 +186,9 @@ class ScoringService:
         else:
             return "draw"
 
-    def calculate_leaderboard_position(self, user_points: int, all_users_points: List[int]) -> int:
+    def calculate_leaderboard_position(
+        self, user_points: int, all_users_points: List[int]
+    ) -> int:
         """计算排行榜位置"""
         # 排序（降序）
         sorted_points = sorted(all_users_points, reverse=True)

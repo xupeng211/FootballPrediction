@@ -29,7 +29,7 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, db_manager=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(User, db_manager)
 
     # ========================================

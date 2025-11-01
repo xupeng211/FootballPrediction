@@ -127,13 +127,14 @@ class BatchPredictionResponse(BaseModel):
 
 class SimplePredictionService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """简化版预测服务 - 不依赖数据库"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.request_count = 0
         self._rate_limit_cache = {}
 

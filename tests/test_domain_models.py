@@ -33,7 +33,7 @@ class TestTeamModel:
             from src.domain.models.team import Team
 
             # 测试属性存在
-            if hasattr(Team, '__init__'):
+            if hasattr(Team, "__init__"):
                 assert True
             else:
                 pytest.skip("Team模型缺少初始化方法")
@@ -51,6 +51,7 @@ class TestMatchModel:
         """测试比赛模型创建"""
         try:
             from src.domain.models.match import Match
+
             assert Match is not None
 
         except ImportError:
@@ -62,7 +63,7 @@ class TestMatchModel:
         try:
             from src.domain.models.match import Match
 
-            if hasattr(Match, '__init__'):
+            if hasattr(Match, "__init__"):
                 assert True
             else:
                 pytest.skip("Match模型缺少初始化方法")
@@ -80,6 +81,7 @@ class TestPredictionModel:
         """测试预测模型创建"""
         try:
             from src.domain.models.prediction import Prediction
+
             assert Prediction is not None
 
         except ImportError:
@@ -91,7 +93,7 @@ class TestPredictionModel:
         try:
             from src.domain.models.prediction import Prediction
 
-            if hasattr(Prediction, '__init__'):
+            if hasattr(Prediction, "__init__"):
                 assert True
             else:
                 pytest.skip("Prediction模型缺少初始化方法")
@@ -108,6 +110,7 @@ class TestLeagueModel:
         """测试联赛模型创建"""
         try:
             from src.domain.models.league import League
+
             assert League is not None
 
         except ImportError:

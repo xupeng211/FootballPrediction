@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class EventBus:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """事件总线"
 
@@ -29,7 +30,7 @@ class EventBus:
     def __init__(self, max_workers: int = 10):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化事件总线"
 
         Args:

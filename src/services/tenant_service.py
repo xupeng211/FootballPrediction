@@ -33,6 +33,7 @@ class TenantManagementError(Exception):
 @dataclass
 class TenantCreationRequest:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """租户创建请求"""
 
@@ -50,6 +51,7 @@ class TenantCreationRequest:
 @dataclass
 class ResourceQuotaCheck:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """资源配额检查结果"""
 
@@ -63,6 +65,7 @@ class ResourceQuotaCheck:
 @dataclass
 class PermissionCheckResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """权限检查结果"""
 
@@ -74,6 +77,7 @@ class PermissionCheckResult:
 
 class TenantService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     企业级多租户管理服务
@@ -84,7 +88,7 @@ class TenantService:
     def __init__(self, db: AsyncSession):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.db = db
 
     # ==================== 租户生命周期管理 ====================
@@ -703,6 +707,7 @@ class TenantService:
 
 class TenantServiceFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """租户服务工厂"""
 

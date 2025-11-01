@@ -61,6 +61,7 @@ except ImportError as e:
     @dataclass
     class BettingOdds:
         """投注赔率数据类"""
+
         match_id: int
         home_win: float
         draw: float
@@ -78,6 +79,7 @@ except ImportError as e:
     @dataclass
     class PredictionProbabilities:
         """预测概率数据类"""
+
         home_win: float
         draw: float
         away_win: float
@@ -91,6 +93,7 @@ except ImportError as e:
     @dataclass
     class EVCalculation:
         """期望值计算结果"""
+
         bet_type: BetType
         probability: float
         odds: float
@@ -107,6 +110,7 @@ except ImportError as e:
     @dataclass
     class BettingStrategy:
         """投注策略配置"""
+
         name: str
         description: str
         max_kelly_fraction: float = 0.25
@@ -123,6 +127,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class KellyOptimizationResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """Kelly准则优化结果"""
 
@@ -137,6 +142,7 @@ class KellyOptimizationResult:
 @dataclass
 class EnhancedValueRating:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """增强价值评级结果"""
 
@@ -152,13 +158,14 @@ class EnhancedValueRating:
 
 class EnhancedKellyCalculator:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """增强Kelly准则计算器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.logger = logger
         # 优化后的Kelly参数
         self.fractional_kelly_multiplier = 0.25  # 分数Kelly乘数
@@ -437,13 +444,14 @@ class EnhancedKellyCalculator:
 
 class EnhancedValueRatingCalculator:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """增强价值评级计算器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.logger = logger
         # 评级权重配置
         self.weights = {
@@ -701,13 +709,14 @@ class EnhancedValueRatingCalculator:
 
 class EnhancedEVCalculator:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """增强EV计算器主类"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.kelly_calculator = EnhancedKellyCalculator()
         self.value_calculator = EnhancedValueRatingCalculator()
         self.logger = logger

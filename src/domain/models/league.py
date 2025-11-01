@@ -36,6 +36,7 @@ class LeagueStatus(Enum):
 @dataclass
 class LeagueSeason:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """联赛赛季值对象"""
 
@@ -49,7 +50,7 @@ class LeagueSeason:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """验证赛季信息"""
         if not self.season:
             raise DomainError("赛季名称不能为空")
@@ -106,6 +107,7 @@ class LeagueSeason:
 @dataclass
 class LeagueSettings:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """联赛设置值对象"""
 
@@ -123,7 +125,7 @@ class LeagueSettings:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """验证设置"""
         if any(
             x < 0
@@ -166,6 +168,7 @@ class LeagueSettings:
 @dataclass
 class League:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     联赛领域模型
@@ -195,7 +198,7 @@ class League:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("联赛名称不能为空")

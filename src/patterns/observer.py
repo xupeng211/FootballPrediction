@@ -20,7 +20,7 @@ class Observer(ABC):
     """
 
     @abstractmethod
-    def update(self, subject: 'Subject', data: Optional[Any] = None) -> None:
+    def update(self, subject: "Subject", data: Optional[Any] = None) -> None:
         """接收主题更新的通知
 
         Args:
@@ -176,7 +176,7 @@ class ConcreteSubject(Subject):
             "timestamp": datetime.utcnow().isoformat(),
             "key": key,
             "old_value": old_value,
-            "new_value": new_value
+            "new_value": new_value,
         }
         self._history.append(change_record)
 
@@ -223,9 +223,9 @@ class ConcreteObserver(Observer):
         """
         notification = {
             "timestamp": datetime.utcnow().isoformat(),
-            "subject": getattr(subject, 'name', 'Unknown'),
+            "subject": getattr(subject, "name", "Unknown"),
             "observer_id": self.observer_id,
-            "data": data
+            "data": data,
         }
 
         self.notifications.append(notification)
@@ -240,7 +240,9 @@ class ConcreteObserver(Observer):
             except Exception as e:
                 print(f"回调执行失败 {self.observer_id}: {e}")
 
-        print(f"观察者 {self.observer_id} 收到来自 {getattr(subject, 'name', 'Unknown')} 的通知")
+        print(
+            f"观察者 {self.observer_id} 收到来自 {getattr(subject, 'name', 'Unknown')} 的通知"
+        )
 
     def get_observer_id(self) -> str:
         """获取观察者ID"""
@@ -288,8 +290,8 @@ class LoggingObserver(Observer):
             "timestamp": datetime.utcnow().isoformat(),
             "level": "INFO",
             "observer_id": self.observer_id,
-            "subject": getattr(subject, 'name', 'Unknown'),
-            "data": data
+            "subject": getattr(subject, "name", "Unknown"),
+            "data": data,
         }
 
         self.log_entries.append(log_entry)
@@ -327,7 +329,7 @@ class MetricsObserver(Observer):
         self.metrics: Dict[str, Any] = {
             "notification_count": 0,
             "subjects_notified": set(),
-            "last_notification": None
+            "last_notification": None,
         }
 
     def update(self, subject: Subject, data: Optional[Any] = None) -> None:
@@ -338,11 +340,11 @@ class MetricsObserver(Observer):
             data: 更新的数据
         """
         self.metrics["notification_count"] += 1
-        self.metrics["subjects_notified"].add(getattr(subject, 'name', 'Unknown'))
+        self.metrics["subjects_notified"].add(getattr(subject, "name", "Unknown"))
         self.metrics["last_notification"] = {
             "timestamp": datetime.utcnow().isoformat(),
-            "subject": getattr(subject, 'name', 'Unknown'),
-            "data": data
+            "subject": getattr(subject, "name", "Unknown"),
+            "data": data,
         }
 
     def get_observer_id(self) -> str:
@@ -364,7 +366,7 @@ class MetricsObserver(Observer):
         self.metrics = {
             "notification_count": 0,
             "subjects_notified": set(),
-            "last_notification": None
+            "last_notification": None,
         }
 
 
@@ -374,8 +376,11 @@ class AlertingObserver(Observer):
     根据条件触发告警.
     """
 
-    def __init__(self, observer_id: str = "alerting_observer",
-                 alert_conditions: Optional[List[Callable]] = None):
+    def __init__(
+        self,
+        observer_id: str = "alerting_observer",
+        alert_conditions: Optional[List[Callable]] = None,
+    ):
         """初始化告警观察者
 
         Args:
@@ -407,10 +412,10 @@ class AlertingObserver(Observer):
                     alert = {
                         "timestamp": datetime.utcnow().isoformat(),
                         "observer_id": self.observer_id,
-                        "subject": getattr(subject, 'name', 'Unknown'),
+                        "subject": getattr(subject, "name", "Unknown"),
                         "condition_id": i,
                         "data": data,
-                        "message": f"告警条件 {i} 被触发"
+                        "message": f"告警条件 {i} 被触发",
                     }
                     self.alerts.append(alert)
                     print(f"[ALERT] {json.dumps(alert, ensure_ascii=False)}")
@@ -453,7 +458,9 @@ class EventQueue:
         """启动事件处理"""
         if not self._running:
             self._running = True
-            self._worker_thread = threading.Thread(target=self._process_events, daemon=True)
+            self._worker_thread = threading.Thread(
+                target=self._process_events, daemon=True
+            )
             self._worker_thread.start()
 
     def stop(self) -> None:
@@ -552,8 +559,10 @@ def create_observer_system() -> tuple[ConcreteSubject, List[Observer]]:
 
     # 添加告警条件
     alerting_observer.add_alert_condition(
-        lambda subject, data: data and isinstance(data, dict) and
-        data.get("key") == "error_count" and data.get("new_value", 0) > 10
+        lambda subject, data: data
+        and isinstance(data, dict)
+        and data.get("key") == "error_count"
+        and data.get("new_value", 0) > 10
     )
 
     observers = [logging_observer, metrics_observer, alerting_observer]
@@ -630,11 +639,13 @@ class ObservableService(Subject):
             metrics: 指标数据
         """
         self._metrics.update(metrics)
-        self.notify({
-            "event": "metrics_updated",
-            "service": self.service_name,
-            "metrics": metrics
-        })
+        self.notify(
+            {
+                "event": "metrics_updated",
+                "service": self.service_name,
+                "metrics": metrics,
+            }
+        )
 
     def get_status(self) -> str:
         """获取服务状态"""
@@ -672,8 +683,8 @@ def create_observer_system(service_name: str) -> Dict[str, Any]:
         "observers": {
             "logging": logging_observer,
             "metrics": metrics_observer,
-            "alerting": alerting_observer
-        }
+            "alerting": alerting_observer,
+        },
     }
 
 
@@ -698,11 +709,13 @@ def setup_service_observers(service: ObservableService) -> Dict[str, Any]:
         service.attach(metrics_observer)
         service.attach(alerting_observer)
 
-        observers.update({
-            "logging": logging_observer,
-            "metrics": metrics_observer,
-            "alerting": alerting_observer
-        })
+        observers.update(
+            {
+                "logging": logging_observer,
+                "metrics": metrics_observer,
+                "alerting": alerting_observer,
+            }
+        )
 
     elif "database" in service.service_name.lower():
         logging_observer = LoggingObserver(f"{service.service_name}_db_logger")
@@ -711,10 +724,7 @@ def setup_service_observers(service: ObservableService) -> Dict[str, Any]:
         service.attach(logging_observer)
         service.attach(metrics_observer)
 
-        observers.update({
-            "logging": logging_observer,
-            "metrics": metrics_observer
-        })
+        observers.update({"logging": logging_observer, "metrics": metrics_observer})
 
     else:
         # 默认配置
@@ -740,5 +750,5 @@ __all__ = [
     "AsyncSubject",
     "create_observer_system",
     "setup_service_observers",
-    "demonstrate_observer_pattern"
+    "demonstrate_observer_pattern",
 ]

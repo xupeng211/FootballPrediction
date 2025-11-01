@@ -101,7 +101,7 @@ class CreatePredictionHandler(CommandHandler):
     def command_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return CreatePredictionCommand
 
     async def handle(self, command: CreatePredictionCommand) -> CommandResult:
@@ -163,7 +163,7 @@ class UpdatePredictionHandler(CommandHandler):
     def command_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return UpdatePredictionCommand
 
     async def handle(self, command: UpdatePredictionCommand) -> CommandResult:
@@ -221,7 +221,7 @@ class DeletePredictionHandler(CommandHandler):
     def command_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return DeletePredictionCommand
 
     async def handle(self, command: DeletePredictionCommand) -> CommandResult:
@@ -254,7 +254,7 @@ class CreateUserHandler(CommandHandler):
     def command_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return CreateUserCommand
 
     async def handle(self, command: CreateUserCommand) -> CommandResult:
@@ -303,7 +303,7 @@ class GetPredictionByIdHandler(QueryHandler):
     def query_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return GetPredictionByIdQuery
 
     async def handle(self, query: GetPredictionByIdQuery) -> Optional[PredictionDTO]:
@@ -341,7 +341,7 @@ class GetPredictionsByUserHandler(QueryHandler):
     def query_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return GetPredictionsByUserQuery
 
     async def handle(self, query: GetPredictionsByUserQuery) -> List[PredictionDTO]:
@@ -407,7 +407,7 @@ class GetUserStatsHandler(QueryHandler):
     def query_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return GetUserStatsQuery
 
     async def handle(self, query: GetUserStatsQuery) -> Optional[PredictionStatsDTO]:
@@ -529,7 +529,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
     def query_type(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         return GetUpcomingMatchesQuery
 
     async def handle(self, query: GetUpcomingMatchesQuery) -> List[MatchDTO]:
@@ -586,13 +586,14 @@ class GetUpcomingMatchesHandler(QueryHandler):
 # 处理器集合类
 class PredictionCommandHandlers:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测命令处理器集合"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
         self.delete = DeletePredictionHandler()
@@ -600,13 +601,14 @@ class PredictionCommandHandlers:
 
 class PredictionQueryHandlers:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测查询处理器集合"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.get_by_id = GetPredictionByIdHandler()
         self.get_by_user = GetPredictionsByUserHandler()
         self.get_stats = GetUserStatsHandler()
@@ -615,13 +617,14 @@ class PredictionQueryHandlers:
 
 class UserCommandHandlers:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户命令处理器集合"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.create = CreateUserHandler()
         # TODO: 实现UpdateUserHandler - 临时注释以解决启动问题
         # self.update = UpdateUserHandler()
@@ -629,39 +632,42 @@ class UserCommandHandlers:
 
 class UserQueryHandlers:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户查询处理器集合"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
 
 
 class MatchCommandHandlers:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛命令处理器集合"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
 
 
 class MatchQueryHandlers:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛查询处理器集合"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.get_by_id = GetMatchByIdHandler()
         self.get_upcoming = GetUpcomingMatchesHandler()
         self.get_predictions = GetMatchPredictionsHandler()

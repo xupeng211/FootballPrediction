@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 @dataclass
 class Team:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """Team data model"""
 
@@ -23,7 +24,7 @@ class Team:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         if self.metadata is None:
             self.metadata = {}
 

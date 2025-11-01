@@ -8,7 +8,13 @@ import time
 from typing import Dict, Any
 
 from fastapi import APIRouter, Response
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import (
+    Counter,
+    Histogram,
+    Gauge,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,53 +23,36 @@ router = APIRouter(prefix="/metrics", tags=["monitoring"])
 
 # HTTP请求计数器
 http_requests_total = Counter(
-    'http_requests_total',
-    'Total HTTP requests',
-    ['method', 'endpoint', 'status_code']
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status_code"]
 )
 
 # HTTP请求响应时间直方图
 http_request_duration_seconds = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request duration in seconds',
-    ['method', 'endpoint'],
-    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+    "http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "endpoint"],
+    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
 )
 
 # 业务指标计数器
 prediction_requests_total = Counter(
-    'prediction_requests_total',
-    'Total prediction requests',
-    ['model_type', 'status']
+    "prediction_requests_total", "Total prediction requests", ["model_type", "status"]
 )
 
 # 活跃用户数
-active_users = Gauge(
-    'active_users',
-    'Number of active users'
-)
+active_users = Gauge("active_users", "Number of active users")
 
 # 数据库连接池状态
-db_connections_active = Gauge(
-    'db_connections_active',
-    'Active database connections'
-)
+db_connections_active = Gauge("db_connections_active", "Active database connections")
 
 # Redis连接状态
-redis_connections_active = Gauge(
-    'redis_connections_active',
-    'Active Redis connections'
-)
+redis_connections_active = Gauge("redis_connections_active", "Active Redis connections")
 
 # 系统资源使用
-system_cpu_usage = Gauge(
-    'system_cpu_usage_percent',
-    'System CPU usage percentage'
-)
+system_cpu_usage = Gauge("system_cpu_usage_percent", "System CPU usage percentage")
 
 system_memory_usage = Gauge(
-    'system_memory_usage_percent',
-    'System memory usage percentage'
+    "system_memory_usage_percent", "System memory usage percentage"
 )
 
 
@@ -78,16 +67,10 @@ async def prometheus_metrics():
 
         # 返回Prometheus格式的指标
         metrics_data = generate_latest()
-        return Response(
-            content=metrics_data,
-            media_type=CONTENT_TYPE_LATEST
-        )
+        return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
     except Exception as e:
         logger.error(f"Error generating metrics: {e}")
-        return Response(
-            content="# Error generating metrics",
-            media_type="text/plain"
-        )
+        return Response(content="# Error generating metrics", media_type="text/plain")
 
 
 async def update_system_metrics():
@@ -103,7 +86,9 @@ async def update_system_metrics():
         memory = psutil.virtual_memory()
         system_memory_usage.set(memory.percent)
 
-        logger.debug(f"Updated system metrics: CPU={cpu_percent}%, Memory={memory.percent}%")
+        logger.debug(
+            f"Updated system metrics: CPU={cpu_percent}%, Memory={memory.percent}%"
+        )
 
     except Exception as e:
         logger.error(f"Error updating system metrics: {e}")
@@ -113,15 +98,12 @@ def record_http_request(method: str, endpoint: str, status_code: int, duration: 
     """记录HTTP请求指标"""
     try:
         http_requests_total.labels(
-            method=method,
-            endpoint=endpoint,
-            status_code=str(status_code)
+            method=method, endpoint=endpoint, status_code=str(status_code)
         ).inc()
 
-        http_request_duration_seconds.labels(
-            method=method,
-            endpoint=endpoint
-        ).observe(duration)
+        http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(
+            duration
+        )
 
     except Exception as e:
         logger.error(f"Error recording HTTP request metrics: {e}")
@@ -130,10 +112,7 @@ def record_http_request(method: str, endpoint: str, status_code: int, duration: 
 def record_prediction_request(model_type: str, status: str):
     """记录预测请求指标"""
     try:
-        prediction_requests_total.labels(
-            model_type=model_type,
-            status=status
-        ).inc()
+        prediction_requests_total.labels(model_type=model_type, status=status).inc()
 
     except Exception as e:
         logger.error(f"Error recording prediction request metrics: {e}")

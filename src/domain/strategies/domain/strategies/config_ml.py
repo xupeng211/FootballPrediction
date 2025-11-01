@@ -12,6 +12,7 @@ JSON = "json"
 # 类定义
 class MLModelConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """ML模型策略配置"""
 

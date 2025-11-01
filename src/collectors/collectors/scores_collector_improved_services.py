@@ -8,6 +8,7 @@
 # 类定义
 class ScoresCollector:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """实时比分收集器"
     Real-time Scores Collector

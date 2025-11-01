@@ -36,13 +36,14 @@ LogCategory = {
 
 class StructuredLogger:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """结构化日志记录器"""
 
     def __init__(self, name: str, category: Optional[str] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化结构化日志记录器"""
         self.logger = logging.getLogger(name)
         self.category = category or LogCategory["SYSTEM"]
@@ -50,7 +51,7 @@ class StructuredLogger:
     def info(self, message: str, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """记录信息日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.info(message, extra=extra)
@@ -58,7 +59,7 @@ class StructuredLogger:
     def error(self, message: str, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """记录错误日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.error(message, extra=extra)
@@ -66,7 +67,7 @@ class StructuredLogger:
     def warning(self, message: str, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """记录警告日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.warning(message, extra=extra)
@@ -74,7 +75,7 @@ class StructuredLogger:
     def debug(self, message: str, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """记录调试日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.debug(message, extra=extra)
@@ -82,6 +83,7 @@ class StructuredLogger:
 
 class LoggerManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """日志管理器 - 统一日志配置和管理"""
 
@@ -91,7 +93,7 @@ class LoggerManager:
     def __new__(cls):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance

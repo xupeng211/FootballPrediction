@@ -18,13 +18,14 @@ class LeagueStatus(Enum):
 
 class LeagueTable:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """联赛积分榜"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.standings: List[Dict[str, Any]] = []
         self.last_updated = datetime.now()
 
@@ -50,6 +51,7 @@ class LeagueTable:
 
 class League:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """联赛领域模型"""
 

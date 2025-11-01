@@ -28,13 +28,14 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 class AuthService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户认证服务"""
 
     def __init__(self, db: AsyncSession):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.db = db
         self.user_repo = AuthUserRepository(db)
 

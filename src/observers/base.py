@@ -42,7 +42,7 @@ class Observer(ABC):
         self.created_at = datetime.utcnow()
 
     @abstractmethod
-    def update(self, subject: 'Subject', data: Optional[Any] = None) -> None:
+    def update(self, subject: "Subject", data: Optional[Any] = None) -> None:
         """接收通知的方法"""
         pass
 
@@ -73,7 +73,7 @@ class Subject(ABC):
         """通知所有观察者"""
         event = ObservableEvent(
             event_type=f"{self.name}_notification",
-            data={"data": data, "subject": self.name}
+            data={"data": data, "subject": self.name},
         )
         self._event_history.append(event)
 
@@ -158,5 +158,5 @@ __all__ = [
     "ObservableEvent",
     "Observer",
     "Subject",
-    "EventManager"
+    "EventManager",
 ]

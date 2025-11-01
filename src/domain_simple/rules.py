@@ -9,13 +9,14 @@ from typing import Any, Callable, Dict, List, Optional
 
 class ValidationResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """验证结果"""
 
     def __init__(self, is_valid: bool = True, message: str = ""):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.is_valid = is_valid
         self.message = message
         self.errors: List[str] = []
@@ -56,7 +57,7 @@ class Rule(ABC):
     def __init__(self, name: str, description: str = ""):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.name = name
         self.description = description
         self.enabled = True
@@ -100,13 +101,14 @@ class BusinessRule(Rule):
 
 class ValidationEngine:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """验证引擎"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._rules: Dict[str, List[Rule]] = {}
         self._global_rules: List[Rule] = []
 
@@ -212,6 +214,7 @@ class ValidationEngine:
 
 class BusinessRules:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预定义的业务规则集合"""
 

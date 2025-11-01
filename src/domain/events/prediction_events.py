@@ -136,7 +136,7 @@ class PredictionExpiredEvent(DomainEvent):
     def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(aggregate_id=prediction_id)
         self.prediction_id = prediction_id
         self.match_id = match_id

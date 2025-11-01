@@ -9,6 +9,7 @@ import logging
 
 class Logger:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """日志管理类"""
 

@@ -12,13 +12,14 @@ logger = get_logger(__name__)
 
 class PredictionCacheManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """Cache manager for predictions"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """Initialize cache manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._cache = {}

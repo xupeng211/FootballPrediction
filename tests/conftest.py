@@ -11,14 +11,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 def pytest_configure(config):
     """pytest配置"""
-    config.addinivalue_line(
-        "markers", "unit: 单元测试"
-    )
-    config.addinivalue_line(
-        "markers", "integration: 集成测试"
-    )
-    config.addinivalue_line(
-        "markers", "critical: 关键功能测试"
-    )
+    config.addinivalue_line("markers", "unit: 单元测试")
+    config.addinivalue_line("markers", "integration: 集成测试")
+    config.addinivalue_line("markers", "critical: 关键功能测试")

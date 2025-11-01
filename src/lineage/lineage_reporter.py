@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class LineageReporter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     数据血缘报告器

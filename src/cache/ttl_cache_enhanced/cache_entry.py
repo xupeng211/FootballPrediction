@@ -11,6 +11,7 @@ from typing import Any, Optional
 
 class CacheEntry:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """缓存条目"
 
@@ -89,7 +90,7 @@ class CacheEntry:
     def __lt__(self, other):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """
         用于堆排序,比较过期时间
 

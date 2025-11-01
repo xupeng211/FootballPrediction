@@ -19,7 +19,7 @@ security = HTTPBearer(auto_error=False)
 
 async def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
-    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager)
+    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ) -> Optional[TokenData]:
     """
     获取当前用户（可选认证）
@@ -46,7 +46,7 @@ async def get_current_user_optional(
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Security(security),
-    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager)
+    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ) -> TokenData:
     """
     获取当前用户（必需认证）
@@ -90,7 +90,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
 ) -> TokenData:
     """
     获取当前活跃用户
@@ -124,13 +124,13 @@ def require_roles(*allowed_roles: str):
     Returns:
         权限检查依赖函数
     """
+
     async def role_checker(
-        current_user: TokenData = Depends(get_current_active_user)
+        current_user: TokenData = Depends(get_current_active_user),
     ) -> TokenData:
         if current_user.role not in allowed_roles:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="权限不足"
+                status_code=status.HTTP_403_FORBIDDEN, detail="权限不足"
             )
         return current_user
 
@@ -169,8 +169,7 @@ class RateLimiter:
         # 清理过期记录
         if key in self.requests:
             self.requests[key] = [
-                req_time for req_time in self.requests[key]
-                if req_time > window_start
+                req_time for req_time in self.requests[key] if req_time > window_start
             ]
         else:
             self.requests[key] = []
@@ -185,13 +184,17 @@ class RateLimiter:
 
 
 # 全局速率限制器实例
-login_rate_limiter = RateLimiter(max_requests=5, window_seconds=900)  # 15分钟5次登录尝试
-api_rate_limiter = RateLimiter(max_requests=1000, window_seconds=3600)  # 1小时1000次API请求
+login_rate_limiter = RateLimiter(
+    max_requests=5, window_seconds=900
+)  # 15分钟5次登录尝试
+api_rate_limiter = RateLimiter(
+    max_requests=1000, window_seconds=3600
+)  # 1小时1000次API请求
 
 
 async def rate_limit_login(
     user_identifier: str,
-    rate_limiter: RateLimiter = Depends(lambda: login_rate_limiter)
+    rate_limiter: RateLimiter = Depends(lambda: login_rate_limiter),
 ) -> None:
     """
     登录速率限制
@@ -206,13 +209,13 @@ async def rate_limit_login(
     if not await rate_limiter.is_allowed(user_identifier):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="登录尝试过于频繁，请稍后再试"
+            detail="登录尝试过于频繁，请稍后再试",
         )
 
 
 async def rate_limit_api(
     current_user: TokenData = Depends(get_current_user),
-    rate_limiter: RateLimiter = Depends(lambda: api_rate_limiter)
+    rate_limiter: RateLimiter = Depends(lambda: api_rate_limiter),
 ) -> None:
     """
     API速率限制
@@ -227,7 +230,7 @@ async def rate_limit_api(
     if not await rate_limiter.is_allowed(str(current_user.user_id)):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="API请求过于频繁，请稍后再试"
+            detail="API请求过于频繁，请稍后再试",
         )
 
 
@@ -297,10 +300,7 @@ class AuthContext:
         Args:
             token_data: 用户token数据
         """
-        await self.auth_manager.blacklist_token(
-            jti=token_data.jti,
-            exp=token_data.exp
-        )
+        await self.auth_manager.blacklist_token(jti=token_data.jti, exp=token_data.exp)
         logger.info(f"用户 {token_data.username} 已登出")
 
     async def logout_all_sessions(self, user_id: int) -> None:
@@ -316,7 +316,7 @@ class AuthContext:
 
 
 def get_auth_context(
-    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager)
+    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ) -> AuthContext:
     """获取认证上下文"""
     return AuthContext(auth_manager)

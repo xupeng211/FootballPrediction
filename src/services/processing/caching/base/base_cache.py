@@ -14,7 +14,7 @@ class BaseCache(ABC):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化缓存"""
         self.logger = logging.getLogger(f"cache.{self.__class__.__name__}")
         self.cache_enabled = True
@@ -42,13 +42,14 @@ class BaseCache(ABC):
 
 class CacheKeyManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """缓存键管理器"""
 
     def __init__(self, prefix: str = "fp"):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化键管理器"
 
         Args:

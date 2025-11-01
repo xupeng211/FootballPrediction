@@ -33,6 +33,7 @@ from .user_profile import UserProfileService
 
 class ServiceManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 

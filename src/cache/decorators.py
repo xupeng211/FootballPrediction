@@ -24,15 +24,17 @@ except ImportError:
     def get_consistency_manager():
         return None
 
+
 logger = logging.getLogger(__name__)
 
-F = TypeVar('F', bound=Callable[..., Any])
-AsyncF = TypeVar('AsyncF', bound=Callable[..., Awaitable[Any]])
+F = TypeVar("F", bound=Callable[..., Any])
+AsyncF = TypeVar("AsyncF", bound=Callable[..., Awaitable[Any]])
 
 
 @dataclass
 class CacheConfig:
     """缓存配置"""
+
     ttl: int = 3600  # 生存时间（秒）
     key_prefix: str = "cache"
     version: str = "v1"
@@ -54,7 +56,7 @@ class CacheKeyBuilder:
         args: tuple,
         kwargs: dict,
         prefix: str = "cache",
-        version: str = "v1"
+        version: str = "v1",
     ) -> str:
         """
         构建缓存键
@@ -126,7 +128,7 @@ def cached(
     key_builder: Optional[Callable] = None,
     condition: Optional[Callable[..., bool]] = None,
     unless: Optional[Callable[..., bool]] = None,
-    max_size: Optional[int] = None
+    max_size: Optional[int] = None,
 ) -> Callable:
     """
     缓存装饰器 - 支持同步和异步函数
@@ -156,7 +158,7 @@ def cached(
         key_builder=key_builder,
         condition=condition,
         unless=unless,
-        max_size=max_size
+        max_size=max_size,
     )
 
     def decorator(func: F) -> F:
@@ -196,7 +198,9 @@ def _sync_cached_wrapper(func: F, func_name: str, config: CacheConfig) -> F:
             # 尝试从缓存获取
             if config.use_consistency_manager:
                 manager = get_consistency_manager()
-                entry = asyncio.run(manager.get_cache_entry(cache_key, config.cache_store))
+                entry = asyncio.run(
+                    manager.get_cache_entry(cache_key, config.cache_store)
+                )
                 if entry and entry.value is not None:
                     logger.debug(f"缓存命中: {cache_key}")
                     return entry.value
@@ -207,9 +211,11 @@ def _sync_cached_wrapper(func: F, func_name: str, config: CacheConfig) -> F:
 
             # 存储到缓存
             if config.use_consistency_manager:
-                asyncio.run(manager.set_cache_entry(
-                    cache_key, result, config.ttl, config.cache_store
-                ))
+                asyncio.run(
+                    manager.set_cache_entry(
+                        cache_key, result, config.ttl, config.cache_store
+                    )
+                )
 
             logger.debug(f"缓存存储: {cache_key}")
             return result
@@ -273,9 +279,7 @@ def _async_cached_wrapper(func: AsyncF, func_name: str, config: CacheConfig) -> 
 
 
 def cache_invalidate(
-    pattern: str = None,
-    keys: List[str] = None,
-    reason: str = "decorator_invalidation"
+    pattern: str = None, keys: List[str] = None, reason: str = "decorator_invalidation"
 ) -> Callable:
     """
     缓存失效装饰器
@@ -288,10 +292,12 @@ def cache_invalidate(
     Returns:
         装饰器函数
     """
+
     def decorator(func: F) -> F:
         is_async = inspect.iscoroutinefunction(func)
 
         if is_async:
+
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
                 result = await func(*args, **kwargs)
@@ -307,8 +313,10 @@ def cache_invalidate(
                     logger.error(f"缓存失效错误: {e}")
 
                 return result
+
             return async_wrapper  # type: ignore
         else:
+
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs):
                 result = func(*args, **kwargs)
@@ -324,15 +332,13 @@ def cache_invalidate(
                     logger.error(f"缓存失效错误: {e}")
 
                 return result
+
             return sync_wrapper  # type: ignore
 
     return decorator
 
 
-def multi_cached(
-    levels: List[Dict[str, Any]],
-    fallback: bool = True
-) -> Callable:
+def multi_cached(levels: List[Dict[str, Any]], fallback: bool = True) -> Callable:
     """
     多级缓存装饰器
 
@@ -343,11 +349,13 @@ def multi_cached(
     Returns:
         装饰器函数
     """
+
     def decorator(func: F) -> F:
         is_async = inspect.iscoroutinefunction(func)
         func_name = f"{func.__module__}.{func.__qualname__}"
 
         if is_async:
+
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
                 # 按级别尝试获取缓存
@@ -359,12 +367,14 @@ def multi_cached(
                         )
 
                         manager = get_consistency_manager()
-                        entry = await manager.get_cache_entry(cache_key, config.cache_store)
+                        entry = await manager.get_cache_entry(
+                            cache_key, config.cache_store
+                        )
                         if entry and entry.value is not None:
-                            logger.debug(f"L{i+1}缓存命中: {cache_key}")
+                            logger.debug(f"L{i + 1}缓存命中: {cache_key}")
                             return entry.value
                     except Exception as e:
-                        logger.warning(f"L{i+1}缓存获取失败: {e}")
+                        logger.warning(f"L{i + 1}缓存获取失败: {e}")
                         if not fallback:
                             break
 
@@ -384,13 +394,15 @@ def multi_cached(
                         await manager.set_cache_entry(
                             cache_key, result, config.ttl, config.cache_store
                         )
-                        logger.debug(f"L{i+1}缓存存储: {cache_key}")
+                        logger.debug(f"L{i + 1}缓存存储: {cache_key}")
                     except Exception as e:
-                        logger.warning(f"L{i+1}缓存存储失败: {e}")
+                        logger.warning(f"L{i + 1}缓存存储失败: {e}")
 
                 return result
+
             return async_wrapper  # type: ignore
         else:
+
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs):
                 # 按级别尝试获取缓存
@@ -402,12 +414,14 @@ def multi_cached(
                         )
 
                         manager = get_consistency_manager()
-                        entry = asyncio.run(manager.get_cache_entry(cache_key, config.cache_store))
+                        entry = asyncio.run(
+                            manager.get_cache_entry(cache_key, config.cache_store)
+                        )
                         if entry and entry.value is not None:
-                            logger.debug(f"L{i+1}缓存命中: {cache_key}")
+                            logger.debug(f"L{i + 1}缓存命中: {cache_key}")
                             return entry.value
                     except Exception as e:
-                        logger.warning(f"L{i+1}缓存获取失败: {e}")
+                        logger.warning(f"L{i + 1}缓存获取失败: {e}")
                         if not fallback:
                             break
 
@@ -424,14 +438,17 @@ def multi_cached(
                         )
 
                         manager = get_consistency_manager()
-                        asyncio.run(manager.set_cache_entry(
-                            cache_key, result, config.ttl, config.cache_store
-                        ))
-                        logger.debug(f"L{i+1}缓存存储: {cache_key}")
+                        asyncio.run(
+                            manager.set_cache_entry(
+                                cache_key, result, config.ttl, config.cache_store
+                            )
+                        )
+                        logger.debug(f"L{i + 1}缓存存储: {cache_key}")
                     except Exception as e:
-                        logger.warning(f"L{i+1}缓存存储失败: {e}")
+                        logger.warning(f"L{i + 1}缓存存储失败: {e}")
 
                 return result
+
             return sync_wrapper  # type: ignore
 
     return decorator
@@ -446,15 +463,19 @@ CACHE_CONFIGS = {
     "user_session": {"ttl": 7200, "key_prefix": "session"},  # 2小时
 }
 
+
 # 便捷装饰器
 def short_cached(**kwargs):
     return cached(**{**CACHE_CONFIGS["short_term"], **kwargs})
 
+
 def medium_cached(**kwargs):
     return cached(**{**CACHE_CONFIGS["medium_term"], **kwargs})
 
+
 def long_cached(**kwargs):
     return cached(**{**CACHE_CONFIGS["long_term"], **kwargs})
+
 
 def prediction_cached(**kwargs):
     return cached(**{**CACHE_CONFIGS["prediction"], **kwargs})
@@ -484,8 +505,8 @@ class UserCacheDecorator:
             user_id = None
             if args:
                 user_id = args[0] if isinstance(args[0], (int, str)) else None
-            if not user_id and 'user_id' in kwargs:
-                user_id = kwargs['user_id']
+            if not user_id and "user_id" in kwargs:
+                user_id = kwargs["user_id"]
             if not user_id:
                 raise ValueError("无法从函数参数中提取用户ID")
 
@@ -495,11 +516,13 @@ class UserCacheDecorator:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # 检查是否有用户ID
-            if not args and 'user_id' not in kwargs:
+            if not args and "user_id" not in kwargs:
                 raise ValueError("用户缓存装饰器需要用户ID参数")
 
             # 使用缓存装饰器包装函数
-            cached_func = cached(ttl=self.ttl, key_prefix="user_cache", key_builder=user_key_builder)(func)
+            cached_func = cached(
+                ttl=self.ttl, key_prefix="user_cache", key_builder=user_key_builder
+            )(func)
             return cached_func(*args, **kwargs)
 
         return wrapper
@@ -513,7 +536,9 @@ class InvalidateCacheDecorator:
         self.keys = keys or []
 
     def __call__(self, func: F) -> F:
-        return cache_invalidate(pattern=self.patterns[0] if self.patterns else None, keys=self.keys)(func)
+        return cache_invalidate(
+            pattern=self.patterns[0] if self.patterns else None, keys=self.keys
+        )(func)
 
 
 # 向后兼容装饰器函数

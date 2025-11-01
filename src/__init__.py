@@ -22,6 +22,7 @@ try:
 
     # 使用路径管理器
     from .core.path_manager import PathManager
+
     path_manager = PathManager()
     path_manager.setup_src_path()
 
@@ -35,6 +36,7 @@ except ImportError as e:
 # 🔧 设置警告过滤器 - 确保测试日志清洁,不再充满第三方库警告
 try:
     from .utils.warning_filters import setup_warning_filters
+
     setup_warning_filters()
 except ImportError:
     # 如果警告过滤器模块不可用,不影响正常功能
@@ -52,26 +54,26 @@ else:
         modules_to_import = []
 
         try:
-            importlib.import_module('.services', __name__)
-            modules_to_import.append('services')
+            importlib.import_module(".services", __name__)
+            modules_to_import.append("services")
         except ImportError as e:
             print(f"警告: services模块导入失败: {e}")
 
         try:
-            importlib.import_module('.core', __name__)
-            modules_to_import.append('core')
+            importlib.import_module(".core", __name__)
+            modules_to_import.append("core")
         except ImportError as e:
             print(f"警告: core模块导入失败: {e}")
 
         try:
-            importlib.import_module('.models', __name__)
-            modules_to_import.append('models')
+            importlib.import_module(".models", __name__)
+            modules_to_import.append("models")
         except ImportError as e:
             print(f"警告: models模块导入失败: {e}")
 
         try:
-            importlib.import_module('.utils', __name__)
-            modules_to_import.append('utils')
+            importlib.import_module(".utils", __name__)
+            modules_to_import.append("utils")
         except ImportError as e:
             print(f"警告: utils模块导入失败: {e}")
 
@@ -79,7 +81,9 @@ else:
 
         # 如果成功导入了模块，将它们添加到当前命名空间
         for module_name in modules_to_import:
-            globals()[module_name] = importlib.import_module(f'.{module_name}', __name__)
+            globals()[module_name] = importlib.import_module(
+                f".{module_name}", __name__
+            )
 
     except Exception as e:
         print(f"警告: 模块导入过程中出现错误: {e}")

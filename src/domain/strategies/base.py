@@ -29,6 +29,7 @@ class StrategyType(Enum):
 @dataclass
 class PredictionInput:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测输入数据"""
 
@@ -43,6 +44,7 @@ class PredictionInput:
 @dataclass
 class PredictionOutput:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测输出结果"""
 
@@ -59,6 +61,7 @@ class PredictionOutput:
 @dataclass
 class StrategyMetrics:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """策略性能指标"""
 
@@ -76,7 +79,7 @@ class PredictionStrategy(ABC):
     def __init__(self, name: str, strategy_type: StrategyType):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.name = name
         self.strategy_type = strategy_type
         self._metrics: Optional[StrategyMetrics] = None
@@ -199,6 +202,7 @@ class PredictionStrategy(ABC):
 @dataclass
 class PredictionContext:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测上下文"
 

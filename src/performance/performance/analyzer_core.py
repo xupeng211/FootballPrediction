@@ -8,6 +8,7 @@
 # 类定义
 class PerformanceAnalyzer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """性能分析器主类"""
 

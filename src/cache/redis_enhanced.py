@@ -16,6 +16,7 @@ import logging
 try:
     import redis
     import redis.asyncio as aioredis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RedisConfig:
     """Redis配置"""
+
     host: str = "localhost"
     port: int = 6379
     db: int = 0
@@ -97,38 +99,39 @@ class EnhancedRedisManager:
             if self.config.cluster_mode and self.config.cluster_nodes:
                 # 集群模式
                 from rediscluster import RedisCluster
+
                 client = RedisCluster(
                     startup_nodes=self.config.cluster_nodes,
                     decode_responses=self.config.decode_responses,
                     skip_full_coverage_check=True,
-                    **(self.config.connection_pool_kwargs or {})
+                    **(self.config.connection_pool_kwargs or {}),
                 )
             elif self.config.sentinel_mode and self.config.sentinel_servers:
                 # 哨兵模式
                 sentinel = redis.Sentinel(
-                    [(s['host'], s['port']) for s in self.config.sentinel_servers],
+                    [(s["host"], s["port"]) for s in self.config.sentinel_servers],
                     socket_timeout=self.config.socket_timeout,
-                    **(self.config.connection_pool_kwargs or {})
+                    **(self.config.connection_pool_kwargs or {}),
                 )
                 client = sentinel.master_for(
                     self.config.sentinel_service_name,
-                    decode_responses=self.config.decode_responses
+                    decode_responses=self.config.decode_responses,
                 )
             else:
                 # 单机模式
                 pool_kwargs = {
-                    'host': self.config.host,
-                    'port': self.config.port,
-                    'db': self.config.db,
-                    'password': self.config.password,
-                    'encoding': self.config.encoding,
-                    'decode_responses': self.config.decode_responses,
-                    'socket_timeout': self.config.socket_timeout,
-                    'socket_connect_timeout': self.config.socket_connect_timeout,
-                    'retry_on_timeout': self.config.retry_on_timeout,
-                    'health_check_interval': self.config.health_check_interval,
-                    'max_connections': self.config.max_connections,
-                    **(self.config.connection_pool_kwargs or {})
+                    "host": self.config.host,
+                    "port": self.config.port,
+                    "db": self.config.db,
+                    "password": self.config.password,
+                    "encoding": self.config.encoding,
+                    "decode_responses": self.config.decode_responses,
+                    "socket_timeout": self.config.socket_timeout,
+                    "socket_connect_timeout": self.config.socket_connect_timeout,
+                    "retry_on_timeout": self.config.retry_on_timeout,
+                    "health_check_interval": self.config.health_check_interval,
+                    "max_connections": self.config.max_connections,
+                    **(self.config.connection_pool_kwargs or {}),
                 }
 
                 self._connection_pool = redis.ConnectionPool(**pool_kwargs)
@@ -153,17 +156,17 @@ class EnhancedRedisManager:
 
         try:
             pool_kwargs = {
-                'host': self.config.host,
-                'port': self.config.port,
-                'db': self.config.db,
-                'password': self.config.password,
-                'encoding': self.config.encoding,
-                'decode_responses': self.config.decode_responses,
-                'socket_timeout': self.config.socket_timeout,
-                'socket_connect_timeout': self.config.socket_connect_timeout,
-                'retry_on_timeout': self.config.retry_on_timeout,
-                'max_connections': self.config.max_connections,
-                **(self.config.connection_pool_kwargs or {})
+                "host": self.config.host,
+                "port": self.config.port,
+                "db": self.config.db,
+                "password": self.config.password,
+                "encoding": self.config.encoding,
+                "decode_responses": self.config.decode_responses,
+                "socket_timeout": self.config.socket_timeout,
+                "socket_connect_timeout": self.config.socket_connect_timeout,
+                "retry_on_timeout": self.config.retry_on_timeout,
+                "max_connections": self.config.max_connections,
+                **(self.config.connection_pool_kwargs or {}),
             }
 
             self._async_connection_pool = aioredis.ConnectionPool(**pool_kwargs)
@@ -197,7 +200,9 @@ class EnhancedRedisManager:
         """获取缓存值"""
         return self.sync_client.get(key)
 
-    def set(self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None) -> bool:
+    def set(
+        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+    ) -> bool:
         """设置缓存值"""
         return self.sync_client.set(key, value, ex=ex, px=px)
 
@@ -262,7 +267,9 @@ class EnhancedRedisManager:
         else:
             return await self.async_client.get(key)
 
-    async def aset(self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None) -> bool:
+    async def aset(
+        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+    ) -> bool:
         """异步设置缓存值"""
         if self.use_mock:
             return self.sync_client.aset(key, value, ex=ex, px=px)
@@ -403,7 +410,9 @@ class EnhancedRedisManager:
         """添加到有序集合"""
         return self.sync_client.zadd(name, mapping)
 
-    def zrange(self, name: str, start: int = 0, end: int = -1, desc: bool = False) -> List[str]:
+    def zrange(
+        self, name: str, start: int = 0, end: int = -1, desc: bool = False
+    ) -> List[str]:
         """获取有序集合范围内的元素"""
         return self.sync_client.zrange(name, start, end, desc=desc)
 
@@ -473,14 +482,14 @@ class EnhancedRedisManager:
         """关闭连接"""
         if self._connection_pool:
             self._connection_pool.disconnect()
-        if self._sync_client and hasattr(self._sync_client, 'close'):
+        if self._sync_client and hasattr(self._sync_client, "close"):
             self._sync_client.close()
 
     async def aclose(self):
         """异步关闭连接"""
         if self._async_connection_pool:
             await self._async_connection_pool.disconnect()
-        if self._async_client and hasattr(self._async_client, 'close'):
+        if self._async_client and hasattr(self._async_client, "close"):
             await self._async_client.close()
 
     def __enter__(self):
@@ -500,7 +509,9 @@ class EnhancedRedisManager:
 _global_redis_manager: Optional[EnhancedRedisManager] = None
 
 
-def get_redis_manager(config: RedisConfig = None, use_mock: bool = None) -> EnhancedRedisManager:
+def get_redis_manager(
+    config: RedisConfig = None, use_mock: bool = None
+) -> EnhancedRedisManager:
     """获取全局Redis管理器实例"""
     global _global_redis_manager
     if _global_redis_manager is None:
