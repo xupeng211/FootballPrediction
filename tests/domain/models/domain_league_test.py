@@ -373,8 +373,7 @@ class TestLeagueBusinessLogic:
             if hasattr(calculate_points, '__call__'):
                 result = calculate_points(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -431,8 +430,7 @@ class TestLeagueBusinessLogic:
             if hasattr(calculate_revenue_sharing, '__call__'):
                 result = calculate_revenue_sharing(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

@@ -427,8 +427,7 @@ class TestBaseBusinessLogic:
             if hasattr(to_prediction_input, '__call__'):
                 result = to_prediction_input(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

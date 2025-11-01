@@ -157,8 +157,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(create_prediction, '__call__'):
                 result = create_prediction(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -215,8 +214,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(update_prediction, '__call__'):
                 result = update_prediction(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -273,8 +271,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(evaluate_prediction, '__call__'):
                 result = evaluate_prediction(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -331,8 +328,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(cancel_prediction, '__call__'):
                 result = cancel_prediction(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -389,8 +385,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(expire_prediction, '__call__'):
                 result = expire_prediction(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -447,8 +442,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(adjust_prediction_points, '__call__'):
                 result = adjust_prediction_points(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -505,8 +499,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(calculate_prediction_confidence, '__call__'):
                 result = calculate_prediction_confidence(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -563,8 +556,7 @@ class TestPrediction_ServiceBusinessLogic:
             if hasattr(validate_prediction_rules, '__call__'):
                 result = validate_prediction_rules(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

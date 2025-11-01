@@ -265,8 +265,7 @@ class TestFactoryBusinessLogic:
             if hasattr(validate_strategy_config, '__call__'):
                 result = validate_strategy_config(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

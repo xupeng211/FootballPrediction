@@ -373,8 +373,7 @@ class TestTeam_ServiceBusinessLogic:
             if hasattr(calculate_league_table, '__call__'):
                 result = calculate_league_table(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

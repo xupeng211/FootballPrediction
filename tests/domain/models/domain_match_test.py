@@ -319,8 +319,7 @@ class TestMatchBusinessLogic:
             if hasattr(can_be_predicted, '__call__'):
                 result = can_be_predicted(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
