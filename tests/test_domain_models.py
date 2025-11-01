@@ -19,12 +19,6 @@ class TestTeamModel:
             from src.domain.models.team import Team
 
             # 测试创建团队对象
-            team_data = {
-                'id': 1,
-                'name': 'Real Madrid',
-                'country': 'Spain',
-                'founded': 1902
-            }
 
             # 这里只是测试模型是否能正常导入
             assert Team is not None
