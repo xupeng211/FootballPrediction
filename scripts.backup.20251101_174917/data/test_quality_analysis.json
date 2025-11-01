@@ -1,0 +1,26 @@
+{
+  "source_analysis": {},
+  "test_analysis": {
+    "total_files": 0,
+    "total_tests": 0,
+    "coverage_by_module": {},
+    "problematic_tests": [],
+    "missing_tests": {}
+  },
+  "improvement_plan": [
+    {
+      "phase": 4,
+      "title": "\u96c6\u6210\u6d4b\u8bd5\u589e\u5f3a",
+      "priority": "medium",
+      "estimated_time": "2-3\u5929",
+      "tasks": [
+        "API\u7aef\u70b9\u5b8c\u6574\u6d4b\u8bd5",
+        "\u6570\u636e\u5e93\u4e8b\u52a1\u6d4b\u8bd5",
+        "\u7f13\u5b58\u96c6\u6210\u6d4b\u8bd5",
+        "\u670d\u52a1\u95f4\u901a\u4fe1\u6d4b\u8bd5"
+      ],
+      "expected_coverage_increase": "3-6%"
+    }
+  ],
+  "generated_at": "2025-10-27T12:08:31.523883"
+}
