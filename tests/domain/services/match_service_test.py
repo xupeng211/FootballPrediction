@@ -157,8 +157,7 @@ class TestMatch_ServiceBusinessLogic:
             if hasattr(validate_match_schedule, '__call__'):
                 result = validate_match_schedule(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -215,8 +214,7 @@ class TestMatch_ServiceBusinessLogic:
             if hasattr(calculate_match_importance, '__call__'):
                 result = calculate_match_importance(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

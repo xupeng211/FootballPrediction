@@ -319,8 +319,7 @@ class TestTeamBusinessLogic:
             if hasattr(calculate_strength, '__call__'):
                 result = calculate_strength(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

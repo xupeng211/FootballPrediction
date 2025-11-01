@@ -427,8 +427,7 @@ class TestEntitiesBusinessLogic:
             if hasattr(validate_prediction_confidence, '__call__'):
                 result = validate_prediction_confidence(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 

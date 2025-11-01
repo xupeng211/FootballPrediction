@@ -157,8 +157,7 @@ class TestScoring_ServiceBusinessLogic:
             if hasattr(calculate_prediction_points, '__call__'):
                 result = calculate_prediction_points(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -215,8 +214,7 @@ class TestScoring_ServiceBusinessLogic:
             if hasattr(calculate_leaderboard_position, '__call__'):
                 result = calculate_leaderboard_position(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
@@ -273,8 +271,7 @@ class TestScoring_ServiceBusinessLogic:
             if hasattr(calculate_rank_percentile, '__call__'):
                 result = calculate_rank_percentile(modified_data)
                 assert result is not None
-        except:
-            # 函数可能不存在,这是正常的
+        except (AttributeError, ImportError):
             pass
 
 
