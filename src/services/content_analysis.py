@@ -32,6 +32,7 @@ class UserRole(Enum):
 
 class Content:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """内容类"""
 
@@ -45,6 +46,7 @@ class Content:
 
 class UserProfile:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户配置文件类"""
 
@@ -57,6 +59,7 @@ class UserProfile:
 
 class AnalysisResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """分析结果类"""
 

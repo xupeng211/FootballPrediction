@@ -112,8 +112,7 @@ class ProcessingCache:
             # 清空内存缓存
             if pattern:
                 keys_to_delete = [
-                    key for key in self._memory_cache.keys()
-                    if pattern in key
+                    key for key in self._memory_cache.keys() if pattern in key
                 ]
                 for key in keys_to_delete:
                     del self._memory_cache[key]
@@ -132,7 +131,9 @@ class ProcessingCache:
                         # 使用SCAN查找匹配的键
                         cursor = 0
                         while True:
-                            cursor, keys = await self.redis_client.scan(cursor, match=f"*{pattern}*", count=100)
+                            cursor, keys = await self.redis_client.scan(
+                                cursor, match=f"*{pattern}*", count=100
+                            )
                             if keys:
                                 await self.redis_client.delete(*keys)
                                 cleared_count += len(keys)
@@ -151,7 +152,9 @@ class ProcessingCache:
             self.logger.error(f"清空缓存失败: {e}")
             return 0
 
-    async def get_or_compute(self, cache_key: str, compute_func, ttl: Optional[int] = None, *args, **kwargs) -> Any:
+    async def get_or_compute(
+        self, cache_key: str, compute_func, ttl: Optional[int] = None, *args, **kwargs
+    ) -> Any:
         """获取缓存数据或计算新数据"""
         # 尝试从缓存获取
         cached_data = await self.get(cache_key)
@@ -215,7 +218,9 @@ class ProcessingCache:
         except Exception:
             return None
 
-    async def _set_memory_cache(self, cache_key: str, data: Any, ttl: Optional[int] = None) -> None:
+    async def _set_memory_cache(
+        self, cache_key: str, data: Any, ttl: Optional[int] = None
+    ) -> None:
         """设置内存缓存"""
         try:
             self._memory_cache[cache_key] = data
@@ -224,8 +229,10 @@ class ProcessingCache:
             # 限制内存缓存大小
             if len(self._memory_cache) > 1000:  # 最大缓存条目数
                 # 删除最旧的条目
-                oldest_key = min(self._memory_cache_timestamps.keys(),
-                               key=lambda k: self._memory_cache_timestamps[k])
+                oldest_key = min(
+                    self._memory_cache_timestamps.keys(),
+                    key=lambda k: self._memory_cache_timestamps[k],
+                )
                 del self._memory_cache[oldest_key]
                 del self._memory_cache_timestamps[oldest_key]
 
@@ -237,7 +244,7 @@ class ProcessingCache:
         try:
             data = await self.redis_client.get(cache_key)
             if data:
-                return json.loads(data.decode('utf-8'))
+                return json.loads(data.decode("utf-8"))
             return None
 
         except (RedisError, json.JSONDecodeError, UnicodeDecodeError) as e:
@@ -262,7 +269,7 @@ class ProcessingCache:
                 "memory_cache_size": len(self._memory_cache),
                 "cache_enabled": self.cache_enabled,
                 "default_ttl": self.default_ttl,
-                "has_redis_client": self.redis_client is not None
+                "has_redis_client": self.redis_client is not None,
             }
 
             # Redis统计

@@ -19,6 +19,7 @@ from .entities import MatchEntity, TeamEntity
 @dataclass
 class RecentPerformanceFeatures:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     近期战绩特征
@@ -80,6 +81,7 @@ class RecentPerformanceFeatures:
 @dataclass
 class HistoricalMatchupFeatures:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     历史对战特征
@@ -156,6 +158,7 @@ class HistoricalMatchupFeatures:
 @dataclass
 class OddsFeatures:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     赔率特征
@@ -264,6 +267,7 @@ class OddsFeatures:
 @dataclass
 class AllMatchFeatures:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     比赛完整特征集合
@@ -291,6 +295,7 @@ class AllMatchFeatures:
 @dataclass
 class AllTeamFeatures:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     球队完整特征集合

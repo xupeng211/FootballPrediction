@@ -17,6 +17,7 @@ class TestCorePredictionSystem:
         # 测试预测基本结构是否存在
         try:
             from src.domain.models.prediction import Prediction
+
             assert Prediction is not None
         except ImportError:
             pytest.skip("Prediction模型未找到")
@@ -27,6 +28,7 @@ class TestCorePredictionSystem:
         """测试基本团队结构"""
         try:
             from src.domain.models.team import Team
+
             assert Team is not None
         except ImportError:
             pytest.skip("Team模型未找到")
@@ -36,6 +38,7 @@ class TestCorePredictionSystem:
         """测试基本比赛结构"""
         try:
             from src.domain.models.match import Match
+
             assert Match is not None
         except ImportError:
             pytest.skip("Match模型未找到")
@@ -50,6 +53,7 @@ class TestBasicAPI:
         """测试API导入"""
         try:
             from src.api.app import app
+
             assert app is not None
         except ImportError:
             pytest.skip("FastAPI应用未找到")
@@ -59,8 +63,9 @@ class TestBasicAPI:
         """测试基本路由"""
         try:
             from src.api.app import app
+
             # 测试应用是否有路由
-            assert hasattr(app, 'routes')
+            assert hasattr(app, "routes")
         except ImportError:
             pytest.skip("API路由未找到")
 
@@ -74,11 +79,11 @@ class TestBasicConfiguration:
         import os
 
         # 检查关键目录是否存在
-        src_dir = os.path.exists('src')
+        src_dir = os.path.exists("src")
         assert src_dir, "src目录应该存在"
 
         # 检查配置文件
-        pyproject_exists = os.path.exists('pyproject.toml')
+        pyproject_exists = os.path.exists("pyproject.toml")
         assert pyproject_exists, "pyproject.toml应该存在"
 
     @pytest.mark.unit
@@ -86,7 +91,8 @@ class TestBasicConfiguration:
         """测试基本导入"""
         try:
             import sys
-            assert 'src' in sys.path or '.' in sys.path
+
+            assert "src" in sys.path or "." in sys.path
         except Exception:
             pytest.skip("Python路径配置异常")
 
@@ -99,6 +105,7 @@ class TestQualityChecks:
         """测试代码质量工具可用性"""
         try:
             import ruff
+
             assert True  # ruff可用
         except ImportError:
             pytest.skip("ruff未安装")
@@ -108,6 +115,7 @@ class TestQualityChecks:
         """测试类型检查工具"""
         try:
             import mypy
+
             assert True  # mypy可用
         except ImportError:
             pytest.skip("mypy未安装")

@@ -28,6 +28,7 @@ class PredictionConfidence(Enum):
 
 class Prediction:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测领域模型"""
 

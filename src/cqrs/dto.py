@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class PredictionDTO:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测DTO"""
 
@@ -53,6 +54,7 @@ class PredictionDTO:
 @dataclass
 class UserDTO:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """用户DTO"""
 
@@ -84,6 +86,7 @@ class UserDTO:
 @dataclass
 class MatchDTO:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛DTO"""
 
@@ -119,6 +122,7 @@ class MatchDTO:
 @dataclass
 class PredictionStatsDTO:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测统计DTO"""
 
@@ -148,6 +152,7 @@ class PredictionStatsDTO:
 @dataclass
 class MatchStatsDTO:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛统计DTO"""
 
@@ -175,6 +180,7 @@ class MatchStatsDTO:
 @dataclass
 class CommandResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """命令执行结果"""
 

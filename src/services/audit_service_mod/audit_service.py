@@ -15,13 +15,14 @@ logger = logging.getLogger(__name__)
 
 class AuditService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """审计服务"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.events: List[AuditEvent] = []
 
     def log_event(
@@ -72,6 +73,7 @@ class AuditService:
 
 class DataSanitizer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """数据清理器"""
 
@@ -93,6 +95,7 @@ class DataSanitizer:
 
 class SeverityAnalyzer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """严重程度分析器"""
 

@@ -210,10 +210,7 @@ def cache_decorator(max_size: int = 128) -> Callable:
 
         # 添加缓存管理方法
         wrapper.cache_clear = lambda: cache.clear()
-        wrapper.cache_info = lambda: {
-            "size": len(cache),
-            "max_size": max_size
-        }
+        wrapper.cache_info = lambda: {"size": len(cache), "max_size": max_size}
 
         return wrapper
 
@@ -267,7 +264,7 @@ class DecoratorChain:
         """初始化装饰器链"""
         self.decorators: list[Callable] = []
 
-    def add_decorator(self, decorator: Callable) -> 'DecoratorChain':
+    def add_decorator(self, decorator: Callable) -> "DecoratorChain":
         """添加装饰器到链中
 
         Args:
@@ -293,7 +290,7 @@ class DecoratorChain:
             result = decorator(result)
         return result
 
-    def clear(self) -> 'DecoratorChain':
+    def clear(self) -> "DecoratorChain":
         """清除装饰器链
 
         Returns:
@@ -331,8 +328,9 @@ def unstable_function(should_fail: bool = False) -> str:
 
 
 # 便捷函数
-def create_component_chain(base_component: Component,
-                          decorators: list[type]) -> Component:
+def create_component_chain(
+    base_component: Component, decorators: list[type]
+) -> Component:
     """创建组件装饰链
 
     Args:
@@ -461,7 +459,9 @@ class MetricsDecorator(BaseDecorator):
         duration = time.time() - start_time
         self.total_time += duration
 
-        print(f"[指标] 调用次数: {self.call_count}, 耗时: {duration:.4f}s, 平均耗时: {self.total_time/self.call_count:.4f}s")
+        print(
+            f"[指标] 调用次数: {self.call_count}, 耗时: {duration:.4f}s, 平均耗时: {self.total_time / self.call_count:.4f}s"
+        )
         return result
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -469,7 +469,9 @@ class MetricsDecorator(BaseDecorator):
         return {
             "call_count": self.call_count,
             "total_time": self.total_time,
-            "avg_time": self.total_time / self.call_count if self.call_count > 0 else 0.0
+            "avg_time": self.total_time / self.call_count
+            if self.call_count > 0
+            else 0.0,
         }
 
 
@@ -504,7 +506,9 @@ class RetryDecorator(BaseDecorator):
             except Exception as e:
                 last_exception = e
                 if attempt < self.max_retries:
-                    print(f"[重试] 第{attempt + 1}次尝试失败，{self.delay}秒后重试: {e}")
+                    print(
+                        f"[重试] 第{attempt + 1}次尝试失败，{self.delay}秒后重试: {e}"
+                    )
                     time.sleep(self.delay)
                 else:
                     print("[重试] 所有重试均失败")
@@ -593,13 +597,14 @@ class CacheDecorator(BaseDecorator):
         return {
             "cache_size": len(self._cache),
             "max_size": self.cache_size,
-            "hit_rate": 0.0  # 简化实现
+            "hit_rate": 0.0,  # 简化实现
         }
 
 
 # 异步装饰器
 def async_log(log_level: str = "INFO"):
     """异步日志装饰器"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -611,12 +616,15 @@ def async_log(log_level: str = "INFO"):
             except Exception as e:
                 print(f"[{log_level}] 异步函数异常: {func.__name__}, 错误: {e}")
                 raise
+
         return wrapper
+
     return decorator
 
 
 def async_metrics(func):
     """异步指标装饰器"""
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -629,11 +637,13 @@ def async_metrics(func):
             duration = time.time() - start_time
             print(f"[异步指标] {func.__name__} 异常，耗时: {duration:.4f}s")
             raise
+
     return wrapper
 
 
 def async_retry(max_retries: int = 3, delay: float = 1.0):
     """异步重试装饰器"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -648,13 +658,17 @@ def async_retry(max_retries: int = 3, delay: float = 1.0):
                 except Exception as e:
                     last_exception = e
                     if attempt < max_retries:
-                        print(f"[异步重试] 第{attempt + 1}次尝试失败，{delay}秒后重试: {e}")
+                        print(
+                            f"[异步重试] 第{attempt + 1}次尝试失败，{delay}秒后重试: {e}"
+                        )
                         await asyncio.sleep(delay)
                     else:
                         print("[异步重试] 所有重试均失败")
 
             raise last_exception
+
         return wrapper
+
     return decorator
 
 
@@ -702,5 +716,5 @@ __all__ = [
     "unstable_function",
     "create_component_chain",
     "demonstrate_decorator_pattern",
-    "create_decorated_service"
+    "create_decorated_service",
 ]

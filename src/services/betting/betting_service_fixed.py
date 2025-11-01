@@ -16,6 +16,7 @@ from dataclasses import dataclass
 @dataclass
 class BettingOdds:
     """投注赔率数据"""
+
     home_win: float
     draw: float
     away_win: float
@@ -26,6 +27,7 @@ class BettingOdds:
 @dataclass
 class PredictionProbabilities:
     """预测概率数据"""
+
     home_win: float
     draw: float
     away_win: float
@@ -36,6 +38,7 @@ class PredictionProbabilities:
 @dataclass
 class EVCalculation:
     """期望值计算结果"""
+
     ev_home_win: float
     ev_draw: float
     ev_away_win: float
@@ -50,6 +53,7 @@ class EVCalculation:
 @dataclass
 class BettingRecommendation:
     """投注建议"""
+
     match_id: str
     bet_type: str
     odds: float
@@ -96,9 +100,7 @@ class EVCalculator:
         return max(0.0, min(kelly, 0.25))  # 最大25%
 
     def calculate_match_ev(
-        self,
-        odds: BettingOdds,
-        probabilities: PredictionProbabilities
+        self, odds: BettingOdds, probabilities: PredictionProbabilities
     ) -> EVCalculation:
         """计算整场比赛的期望值"""
 
@@ -130,7 +132,19 @@ class EVCalculator:
             )
 
         # 确定最佳推荐
-        ev_values = [ev for ev in [ev_home, ev_draw, ev_away, ev_over_2_5, ev_under_2_5, ev_bts_yes, ev_bts_no] if ev is not None]
+        ev_values = [
+            ev
+            for ev in [
+                ev_home,
+                ev_draw,
+                ev_away,
+                ev_over_2_5,
+                ev_under_2_5,
+                ev_bts_yes,
+                ev_bts_no,
+            ]
+            if ev is not None
+        ]
 
         if not ev_values:
             recommendation = "no_bet"
@@ -156,7 +170,7 @@ class EVCalculator:
             ev_bts_yes=ev_bts_yes,
             ev_bts_no=ev_bts_no,
             recommendation=recommendation,
-            confidence=confidence
+            confidence=confidence,
         )
 
 
@@ -168,10 +182,7 @@ class BettingRecommendationEngine:
         self.logger = logging.getLogger(f"{__name__}.BettingRecommendationEngine")
 
     def generate_recommendations(
-        self,
-        match_id: str,
-        odds: BettingOdds,
-        probabilities: PredictionProbabilities
+        self, match_id: str, odds: BettingOdds, probabilities: PredictionProbabilities
     ) -> List[BettingRecommendation]:
         """生成投注建议"""
         ev_calc = self.ev_calculator.calculate_match_ev(odds, probabilities)
@@ -179,59 +190,79 @@ class BettingRecommendationEngine:
 
         # 主胜推荐
         if ev_calc.ev_home_win > 1.0:
-            recommendations.append(BettingRecommendation(
-                match_id=match_id,
-                bet_type="home_win",
-                odds=odds.home_win,
-                probability=probabilities.home_win,
-                ev=ev_calc.ev_home_win,
-                kelly_fraction=self.ev_calculator.calculate_kelly_fraction(ev_calc.ev_home_win, odds.home_win),
-                confidence=ev_calc.confidence,
-                reasoning=f"EV: {ev_calc.ev_home_win:.2f}%, 概率: {probabilities.home_win:.2f}",
-                created_at=datetime.utcnow()
-            ))
+            recommendations.append(
+                BettingRecommendation(
+                    match_id=match_id,
+                    bet_type="home_win",
+                    odds=odds.home_win,
+                    probability=probabilities.home_win,
+                    ev=ev_calc.ev_home_win,
+                    kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
+                        ev_calc.ev_home_win, odds.home_win
+                    ),
+                    confidence=ev_calc.confidence,
+                    reasoning=f"EV: {ev_calc.ev_home_win:.2f}%, 概率: {probabilities.home_win:.2f}",
+                    created_at=datetime.utcnow(),
+                )
+            )
 
         # 平局推荐
         if ev_calc.ev_draw > 1.0:
-            recommendations.append(BettingRecommendation(
-                match_id=match_id,
-                bet_type="draw",
-                odds=odds.draw,
-                probability=probabilities.draw,
-                ev=ev_calc.ev_draw,
-                kelly_fraction=self.ev_calculator.calculate_kelly_fraction(ev_calc.ev_draw, odds.draw),
-                confidence=ev_calc.confidence,
-                reasoning=f"EV: {ev_calc.ev_draw:.2f}%, 概率: {probabilities.draw:.2f}",
-                created_at=datetime.utcnow()
-            ))
+            recommendations.append(
+                BettingRecommendation(
+                    match_id=match_id,
+                    bet_type="draw",
+                    odds=odds.draw,
+                    probability=probabilities.draw,
+                    ev=ev_calc.ev_draw,
+                    kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
+                        ev_calc.ev_draw, odds.draw
+                    ),
+                    confidence=ev_calc.confidence,
+                    reasoning=f"EV: {ev_calc.ev_draw:.2f}%, 概率: {probabilities.draw:.2f}",
+                    created_at=datetime.utcnow(),
+                )
+            )
 
         # 客胜推荐
         if ev_calc.ev_away_win > 1.0:
-            recommendations.append(BettingRecommendation(
-                match_id=match_id,
-                bet_type="away_win",
-                odds=odds.away_win,
-                probability=probabilities.away_win,
-                ev=ev_calc.ev_away_win,
-                kelly_fraction=self.ev_calculator.calculate_kelly_fraction(ev_calc.ev_away_win, odds.away_win),
-                confidence=ev_calc.confidence,
-                reasoning=f"EV: {ev_calc.ev_away_win:.2f}%, 概率: {probabilities.away_win:.2f}",
-                created_at=datetime.utcnow()
-            ))
+            recommendations.append(
+                BettingRecommendation(
+                    match_id=match_id,
+                    bet_type="away_win",
+                    odds=odds.away_win,
+                    probability=probabilities.away_win,
+                    ev=ev_calc.ev_away_win,
+                    kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
+                        ev_calc.ev_away_win, odds.away_win
+                    ),
+                    confidence=ev_calc.confidence,
+                    reasoning=f"EV: {ev_calc.ev_away_win:.2f}%, 概率: {probabilities.away_win:.2f}",
+                    created_at=datetime.utcnow(),
+                )
+            )
 
         # 大小球推荐
         if ev_calc.ev_over_2_5 and ev_calc.ev_over_2_5 > 1.0:
-            recommendations.append(BettingRecommendation(
-                match_id=match_id,
-                bet_type="over_2_5",
-                odds=odds.over_under_2_5[0] if odds.over_under_2_5 else 0.0,
-                probability=probabilities.over_under_2_5[0] if probabilities.over_under_2_5 else 0.0,
-                ev=ev_calc.ev_over_2_5,
-                kelly_fraction=self.ev_calculator.calculate_kelly_fraction(ev_calc.ev_over_2_5, odds.over_under_2_5[0]) if odds.over_under_2_5 else None,
-                confidence=ev_calc.confidence,
-                reasoning=f"EV: {ev_calc.ev_over_2_5:.2f}%, 大小球推荐",
-                created_at=datetime.utcnow()
-            ))
+            recommendations.append(
+                BettingRecommendation(
+                    match_id=match_id,
+                    bet_type="over_2_5",
+                    odds=odds.over_under_2_5[0] if odds.over_under_2_5 else 0.0,
+                    probability=probabilities.over_under_2_5[0]
+                    if probabilities.over_under_2_5
+                    else 0.0,
+                    ev=ev_calc.ev_over_2_5,
+                    kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
+                        ev_calc.ev_over_2_5, odds.over_under_2_5[0]
+                    )
+                    if odds.over_under_2_5
+                    else None,
+                    confidence=ev_calc.confidence,
+                    reasoning=f"EV: {ev_calc.ev_over_2_5:.2f}%, 大小球推荐",
+                    created_at=datetime.utcnow(),
+                )
+            )
 
         return recommendations
 
@@ -248,7 +279,7 @@ class BettingService:
             "ev_margin": 0.05,
             "min_ev_threshold": 1.0,
             "max_kelly_fraction": 0.25,
-            "confidence_threshold": 0.1
+            "confidence_threshold": 0.1,
         }
 
         # 初始化组件
@@ -259,10 +290,7 @@ class BettingService:
         self.recommendation_history: List[BettingRecommendation] = []
 
     async def analyze_match(
-        self,
-        match_id: str,
-        odds_data: Dict[str, Any],
-        prediction_data: Dict[str, Any]
+        self, match_id: str, odds_data: Dict[str, Any], prediction_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """分析单场比赛"""
         try:
@@ -288,8 +316,10 @@ class BettingService:
                 "match_id": match_id,
                 "ev_calculation": ev_calculation,
                 "recommendations": recommendations,
-                "analysis_summary": self._generate_analysis_summary(ev_calculation, recommendations),
-                "analyzed_at": datetime.utcnow().isoformat()
+                "analysis_summary": self._generate_analysis_summary(
+                    ev_calculation, recommendations
+                ),
+                "analyzed_at": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
@@ -305,18 +335,24 @@ class BettingService:
                 away_win=float(odds_data.get("away_win", 0)),
                 over_under_2_5=(
                     float(odds_data.get("over_2_5", 0)),
-                    float(odds_data.get("under_2_5", 0))
-                ) if odds_data.get("over_2_5") and odds_data.get("under_2_5") else None,
+                    float(odds_data.get("under_2_5", 0)),
+                )
+                if odds_data.get("over_2_5") and odds_data.get("under_2_5")
+                else None,
                 both_teams_score=(
                     float(odds_data.get("bts_yes", 0)),
-                    float(odds_data.get("bts_no", 0))
-                ) if odds_data.get("bts_yes") and odds_data.get("bts_no") else None
+                    float(odds_data.get("bts_no", 0)),
+                )
+                if odds_data.get("bts_yes") and odds_data.get("bts_no")
+                else None,
             )
         except (ValueError, TypeError) as e:
             self.logger.warning(f"赔率数据解析失败: {e}")
             return None
 
-    def _parse_prediction_data(self, prediction_data: Dict[str, Any]) -> Optional[PredictionProbabilities]:
+    def _parse_prediction_data(
+        self, prediction_data: Dict[str, Any]
+    ) -> Optional[PredictionProbabilities]:
         """解析预测数据"""
         try:
             return PredictionProbabilities(
@@ -325,21 +361,25 @@ class BettingService:
                 away_win=float(prediction_data.get("away_win_prob", 0)),
                 over_under_2_5=(
                     float(prediction_data.get("over_2_5_prob", 0)),
-                    float(prediction_data.get("under_2_5_prob", 0))
-                ) if prediction_data.get("over_2_5_prob") and prediction_data.get("under_2_5_prob") else None,
+                    float(prediction_data.get("under_2_5_prob", 0)),
+                )
+                if prediction_data.get("over_2_5_prob")
+                and prediction_data.get("under_2_5_prob")
+                else None,
                 both_teams_score=(
                     float(prediction_data.get("bts_yes_prob", 0)),
-                    float(prediction_data.get("bts_no_prob", 0))
-                ) if prediction_data.get("bts_yes_prob") and prediction_data.get("bts_no_prob") else None
+                    float(prediction_data.get("bts_no_prob", 0)),
+                )
+                if prediction_data.get("bts_yes_prob")
+                and prediction_data.get("bts_no_prob")
+                else None,
             )
         except (ValueError, TypeError) as e:
             self.logger.warning(f"预测数据解析失败: {e}")
             return None
 
     def _generate_analysis_summary(
-        self,
-        ev_calc: EVCalculation,
-        recommendations: List[BettingRecommendation]
+        self, ev_calc: EVCalculation, recommendations: List[BettingRecommendation]
     ) -> Dict[str, Any]:
         """生成分析摘要"""
         return {
@@ -348,21 +388,20 @@ class BettingService:
             "best_bet": {
                 "type": recommendations[0].bet_type if recommendations else None,
                 "ev": recommendations[0].ev if recommendations else 0.0,
-                "kelly_fraction": recommendations[0].kelly_fraction if recommendations else None
+                "kelly_fraction": recommendations[0].kelly_fraction
+                if recommendations
+                else None,
             },
             "recommendation_count": len(recommendations),
-            "max_ev": max([r.ev for r in recommendations]) if recommendations else 0.0
+            "max_ev": max([r.ev for r in recommendations]) if recommendations else 0.0,
         }
 
     async def get_recommendations_by_confidence(
-        self,
-        min_confidence: float = 0.1,
-        limit: int = 10
+        self, min_confidence: float = 0.1, limit: int = 10
     ) -> List[BettingRecommendation]:
         """根据置信度获取推荐"""
         filtered = [
-            r for r in self.recommendation_history
-            if r.confidence >= min_confidence
+            r for r in self.recommendation_history if r.confidence >= min_confidence
         ]
 
         # 按EV排序
@@ -371,9 +410,7 @@ class BettingService:
         return filtered[:limit]
 
     async def calculate_portfolio_performance(
-        self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
     ) -> Dict[str, Any]:
         """计算投资组合表现"""
         if not self.recommendation_history:
@@ -381,7 +418,9 @@ class BettingService:
 
         # 过滤时间范围
         if start_date:
-            history = [r for r in self.recommendation_history if r.created_at >= start_date]
+            history = [
+                r for r in self.recommendation_history if r.created_at >= start_date
+            ]
         else:
             history = self.recommendation_history
 
@@ -406,11 +445,15 @@ class BettingService:
             "total_ev": round(total_ev, 2),
             "high_confidence_count": high_confidence_count,
             "high_confidence_ev": round(high_confidence_ev, 2),
-            "high_confidence_ratio": round(high_confidence_count / total_recommendations, 3) if total_recommendations > 0 else 0,
+            "high_confidence_ratio": round(
+                high_confidence_count / total_recommendations, 3
+            )
+            if total_recommendations > 0
+            else 0,
             "period": {
                 "start": start_date.isoformat() if start_date else None,
-                "end": end_date.isoformat() if end_date else None
-            }
+                "end": end_date.isoformat() if end_date else None,
+            },
         }
 
     def get_service_stats(self) -> Dict[str, Any]:
@@ -420,7 +463,7 @@ class BettingService:
             "config": self.config,
             "components": {
                 "ev_calculator": "initialized",
-                "recommendation_engine": "initialized"
+                "recommendation_engine": "initialized",
             },
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }

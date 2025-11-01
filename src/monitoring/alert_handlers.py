@@ -15,6 +15,7 @@ from .alert_manager_mod.models import Alert, AlertChannel
 
 class PrometheusMetrics:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """Prometheus 指标管理"""
 
@@ -68,6 +69,7 @@ class PrometheusMetrics:
 
 class AlertHandler:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """告警处理器基类"""
 

@@ -43,7 +43,7 @@ except ImportError:
 
 
 #     class TeamInfo(BaseModel):
-    #         id: int  # 重复定义已注释
+#         id: int  # 重复定义已注释
 #         name: str  # 重复定义已注释
 
 __all__ = ["LeagueInfo", "MatchInfo", "OddsInfo", "TeamInfo"]

@@ -219,6 +219,7 @@ def should_collect_live_scores() -> bool:
 # 任务重试配置
 class TaskRetryConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """任务重试配置"""
 
@@ -248,6 +249,7 @@ class TaskRetryConfig:
 # 监控配置
 class MonitoringConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """监控配置"""
 

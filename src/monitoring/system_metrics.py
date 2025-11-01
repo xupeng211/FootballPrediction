@@ -17,6 +17,7 @@ from src.database.connection import DatabaseManager
 
 class SystemMetricsCollector:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """系统指标收集器"""
 

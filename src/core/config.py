@@ -33,13 +33,14 @@ except ImportError:
 
 class Config:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
@@ -220,6 +221,7 @@ class Settings(SettingsClass):
             # Fallback for older versions
             class Config:
                 """类文档字符串"""
+
                 pass  # 添加pass语句
 
                 env_file = ".env"
@@ -228,13 +230,16 @@ class Settings(SettingsClass):
                 extra = "allow"  # Allow extra fields from environment
 
     else:
+
         def __init__(self, **kwargs):
             """函数文档字符串"""
             pass
 
         # 设置默认值
         self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-        self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
+        self.test_database_url = (
+            "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
+        )
         self.redis_url = "redis://redis:6379/0"
         self.api_host = "localhost"
         self.api_port = 8000
@@ -274,23 +279,23 @@ class Settings(SettingsClass):
     def _load_from_env(self):
         """从环境变量加载配置"""
         env_mapping = {
-                "DATABASE_URL": "database_url",
-                "TEST_DATABASE_URL": "test_database_url",
-                "REDIS_URL": "redis_url",
-                "API_HOST": "api_host",
-                "API_PORT": "api_port",
-                "ENVIRONMENT": "environment",
-                "LOG_LEVEL": "log_level",
-                "MLFLOW_TRACKING_URI": "mlflow_tracking_uri",
-                "API_FOOTBALL_KEY": "api_football_key",
-                "API_FOOTBALL_URL": "api_football_url",
-                "METRICS_ENABLED": "metrics_enabled",
-                "METRICS_TABLES": "metrics_tables",
-                "METRICS_COLLECTION_INTERVAL": "metrics_collection_interval",
-                "MISSING_DATA_DEFAULTS_PATH": "missing_data_defaults_path",
-                "MISSING_DATA_DEFAULTS_JSON": "missing_data_defaults_json",
-                "ENABLED_SERVICES": "enabled_services",
-            }
+            "DATABASE_URL": "database_url",
+            "TEST_DATABASE_URL": "test_database_url",
+            "REDIS_URL": "redis_url",
+            "API_HOST": "api_host",
+            "API_PORT": "api_port",
+            "ENVIRONMENT": "environment",
+            "LOG_LEVEL": "log_level",
+            "MLFLOW_TRACKING_URI": "mlflow_tracking_uri",
+            "API_FOOTBALL_KEY": "api_football_key",
+            "API_FOOTBALL_URL": "api_football_url",
+            "METRICS_ENABLED": "metrics_enabled",
+            "METRICS_TABLES": "metrics_tables",
+            "METRICS_COLLECTION_INTERVAL": "metrics_collection_interval",
+            "MISSING_DATA_DEFAULTS_PATH": "missing_data_defaults_path",
+            "MISSING_DATA_DEFAULTS_JSON": "missing_data_defaults_json",
+            "ENABLED_SERVICES": "enabled_services",
+        }
 
         for env_key, attr_name in env_mapping.items():
             env_value = os.getenv(env_key)

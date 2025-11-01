@@ -12,10 +12,12 @@ from .base import Subsystem, Facade, SystemFacade
 class FacadeConfig:
     """外观配置类"""
 
-    def __init__(self,
-                 name: str,
-                 subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
-                 global_config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        name: str,
+        subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
+        global_config: Optional[Dict[str, Any]] = None,
+    ):
         """初始化外观配置
 
         Args:
@@ -44,7 +46,7 @@ class FacadeConfig:
             "subsystem_configs": self.subsystem_configs,
             "global_config": self.global_config,
             "auto_start": self.auto_start,
-            "health_check_interval": self.health_check_interval
+            "health_check_interval": self.health_check_interval,
         }
 
 
@@ -75,7 +77,9 @@ class FacadeFactory:
         """
         self._facade_registry[name] = facade_class
 
-    def create_subsystem(self, name: str, config: Optional[Dict[str, Any]] = None) -> Optional[Subsystem]:
+    def create_subsystem(
+        self, name: str, config: Optional[Dict[str, Any]] = None
+    ) -> Optional[Subsystem]:
         """创建子系统实例
 
         Args:
@@ -130,8 +134,9 @@ class FacadeFactory:
         """
         return self._created_instances.get(name)
 
-    def create_system_facade(self, name: str = "System",
-                           config: Optional[Dict[str, Any]] = None) -> SystemFacade:
+    def create_system_facade(
+        self, name: str = "System", config: Optional[Dict[str, Any]] = None
+    ) -> SystemFacade:
         """创建系统外观的便捷方法
 
         Args:
@@ -166,9 +171,11 @@ facade_factory = FacadeFactory()
 
 
 # 便捷函数
-def create_facade(name: str,
-                 subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
-                 global_config: Optional[Dict[str, Any]] = None) -> Optional[Facade]:
+def create_facade(
+    name: str,
+    subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
+    global_config: Optional[Dict[str, Any]] = None,
+) -> Optional[Facade]:
     """创建外观的便捷函数
 
     Args:
@@ -183,8 +190,9 @@ def create_facade(name: str,
     return facade_factory.create_facade(config)
 
 
-def create_system_facade(name: str = "System",
-                        config: Optional[Dict[str, Any]] = None) -> SystemFacade:
+def create_system_facade(
+    name: str = "System", config: Optional[Dict[str, Any]] = None
+) -> SystemFacade:
     """创建系统外观的便捷函数
 
     Args:
@@ -203,5 +211,5 @@ __all__ = [
     "FacadeFactory",
     "facade_factory",
     "create_facade",
-    "create_system_facade"
+    "create_system_facade",
 ]

@@ -17,6 +17,7 @@ class Base(DeclarativeBase):
 
 class TimestampMixin:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """时间戳混入类,为模型添加创建时间和更新时间字段"""
 

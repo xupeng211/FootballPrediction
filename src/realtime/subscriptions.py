@@ -57,6 +57,7 @@ class SubscriptionType(str, Enum):
 @dataclass
 class SubscriptionFilter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """订阅过滤器"""
 
@@ -93,6 +94,7 @@ class SubscriptionFilter:
 @dataclass
 class Subscription:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """订阅信息"""
 
@@ -119,13 +121,14 @@ class Subscription:
 
 class SubscriptionManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """订阅管理器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.subscriptions: Dict[
             str, List[Subscription]
         ] = {}  # connection_id -> subscriptions

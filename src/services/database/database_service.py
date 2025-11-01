@@ -15,13 +15,14 @@ from .repositories.user_repository import UserRepository
 
 class DatabaseService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """数据库服务类 - 提供高级数据库操作接口"""
 
     def __init__(self, session: AsyncSession):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.session = session
         self.match_repo = MatchRepository(session)
         self.prediction_repo = PredictionRepository(session)

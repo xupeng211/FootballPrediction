@@ -81,6 +81,7 @@ def get_current_language() -> str:
 
 class I18nUtils:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """国际化工具类"""
 

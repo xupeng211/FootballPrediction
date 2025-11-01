@@ -9,6 +9,7 @@ from fastapi import FastAPI
 
 class OpenAPIConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """OpenAPI 配置管理类"""
 

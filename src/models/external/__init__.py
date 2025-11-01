@@ -7,8 +7,4 @@ from .match import ExternalMatch
 from .team import ExternalTeam
 from .competition import ExternalCompetition
 
-__all__ = [
-    'ExternalMatch',
-    'ExternalTeam',
-    'ExternalCompetition'
-]
+__all__ = ["ExternalMatch", "ExternalTeam", "ExternalCompetition"]

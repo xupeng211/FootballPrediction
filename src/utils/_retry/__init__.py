@@ -17,6 +17,7 @@ T = TypeVar("T")
 
 class RetryConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """重试配置类"""
 
@@ -149,6 +150,7 @@ retry_async = async_retry
 
 class CircuitState:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """熔断器状态枚举"""
 
@@ -159,6 +161,7 @@ class CircuitState:
 
 class CircuitBreaker:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """熔断器实现"""
 

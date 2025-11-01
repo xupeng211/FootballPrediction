@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class TaskMonitor:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     任务监控器
@@ -37,7 +38,7 @@ class TaskMonitor:
     def __init__(self, registry: Optional[CollectorRegistry] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """
         初始化任务监控器
 

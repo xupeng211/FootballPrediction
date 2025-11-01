@@ -15,6 +15,7 @@ DYNAMIC_WEIGHTING = "dynamic_weighting"
 # 类定义
 class EnsembleMethod:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """集成方法枚举"""
 
@@ -23,6 +24,7 @@ class EnsembleMethod:
 
 class EnsembleResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """集成结果"""
 
@@ -31,6 +33,7 @@ class EnsembleResult:
 
 class EnsembleStrategy:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """集成预测策略"
 

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TokenData:
     """Token数据模型"""
+
     user_id: int
     username: str
     email: str
@@ -35,6 +36,7 @@ class TokenData:
 @dataclass
 class UserAuth:
     """用户认证数据"""
+
     id: int
     username: str
     email: str
@@ -52,7 +54,7 @@ class JWTAuthManager:
         algorithm: str = "HS256",
         access_token_expire_minutes: int = 30,
         refresh_token_expire_days: int = 7,
-        redis_url: Optional[str] = None
+        redis_url: Optional[str] = None,
     ):
         """
         初始化JWT认证管理器
@@ -64,7 +66,9 @@ class JWTAuthManager:
             refresh_token_expire_days: 刷新令牌过期时间（天）
             redis_url: Redis连接URL，用于token黑名单
         """
-        self.secret_key = secret_key or os.getenv("JWT_SECRET_KEY") or self._generate_secret_key()
+        self.secret_key = (
+            secret_key or os.getenv("JWT_SECRET_KEY") or self._generate_secret_key()
+        )
         self.algorithm = algorithm
         self.access_token_expire_minutes = access_token_expire_minutes
         self.refresh_token_expire_days = refresh_token_expire_days
@@ -85,9 +89,7 @@ class JWTAuthManager:
         return secrets.token_urlsafe(64)
 
     def create_access_token(
-        self,
-        data: Dict[str, Any],
-        expires_delta: Optional[timedelta] = None
+        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
     ) -> str:
         """
         创建访问令牌
@@ -104,22 +106,24 @@ class JWTAuthManager:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
+            expire = datetime.utcnow() + timedelta(
+                minutes=self.access_token_expire_minutes
+            )
 
-        to_encode.update({
-            "exp": expire,
-            "iat": datetime.utcnow(),
-            "type": "access",
-            "jti": secrets.token_urlsafe(16)  # JWT ID，用于黑名单
-        })
+        to_encode.update(
+            {
+                "exp": expire,
+                "iat": datetime.utcnow(),
+                "type": "access",
+                "jti": secrets.token_urlsafe(16),  # JWT ID，用于黑名单
+            }
+        )
 
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
     def create_refresh_token(
-        self,
-        data: Dict[str, Any],
-        expires_delta: Optional[timedelta] = None
+        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
     ) -> str:
         """
         创建刷新令牌
@@ -138,12 +142,14 @@ class JWTAuthManager:
         else:
             expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days)
 
-        to_encode.update({
-            "exp": expire,
-            "iat": datetime.utcnow(),
-            "type": "refresh",
-            "jti": secrets.token_urlsafe(16)
-        })
+        to_encode.update(
+            {
+                "exp": expire,
+                "iat": datetime.utcnow(),
+                "type": "refresh",
+                "jti": secrets.token_urlsafe(16),
+            }
+        )
 
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
@@ -190,7 +196,7 @@ class JWTAuthManager:
                 token_type=token_type,
                 exp=exp,
                 iat=iat,
-                jti=jti
+                jti=jti,
             )
 
         except jwt.ExpiredSignatureError:
@@ -251,7 +257,7 @@ class JWTAuthManager:
             哈希后的密码
         """
         # bcrypt限制密码长度为72字节
-        if len(password.encode('utf-8')) > 72:
+        if len(password.encode("utf-8")) > 72:
             password = password[:72]
         return self.pwd_context.hash(password)
 
@@ -267,7 +273,7 @@ class JWTAuthManager:
             密码是否正确
         """
         # bcrypt限制密码长度为72字节
-        if len(plain_password.encode('utf-8')) > 72:
+        if len(plain_password.encode("utf-8")) > 72:
             plain_password = plain_password[:72]
         return self.pwd_context.verify(plain_password, hashed_password)
 
@@ -285,12 +291,14 @@ class JWTAuthManager:
         to_encode = {"email": email, "type": "password_reset"}
         expire = datetime.utcnow() + delta
 
-        to_encode.update({
-            "exp": expire,
-            "iat": datetime.utcnow(),
-            "type": "password_reset",
-            "jti": secrets.token_urlsafe(16)
-        })
+        to_encode.update(
+            {
+                "exp": expire,
+                "iat": datetime.utcnow(),
+                "type": "password_reset",
+                "jti": secrets.token_urlsafe(16),
+            }
+        )
 
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
@@ -382,7 +390,7 @@ def init_jwt_auth_manager(
     algorithm: str = "HS256",
     access_token_expire_minutes: int = 30,
     refresh_token_expire_days: int = 7,
-    redis_url: Optional[str] = None
+    redis_url: Optional[str] = None,
 ) -> JWTAuthManager:
     """
     初始化JWT认证管理器
@@ -403,6 +411,6 @@ def init_jwt_auth_manager(
         algorithm=algorithm,
         access_token_expire_minutes=access_token_expire_minutes,
         refresh_token_expire_days=refresh_token_expire_days,
-        redis_url=redis_url
+        redis_url=redis_url,
     )
     return _jwt_auth_manager

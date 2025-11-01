@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class CommandBus:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     命令总线
@@ -26,7 +27,7 @@ class CommandBus:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._handlers: Dict[Type[Command], CommandHandler] = {}
         self._middleware: list = []
 
@@ -81,6 +82,7 @@ class CommandBus:
 
 class QueryBus:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     查询总线
@@ -91,7 +93,7 @@ class QueryBus:
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._handlers: Dict[Type[Query], QueryHandler] = {}
         self._middleware: list = []
 
@@ -166,6 +168,7 @@ def get_query_bus() -> QueryBus:
 # 中间件示例
 class LoggingMiddleware:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """日志中间件"""
 
@@ -178,6 +181,7 @@ class LoggingMiddleware:
 
 class ValidationMiddleware:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """验证中间件"""
 
@@ -193,13 +197,14 @@ class ValidationMiddleware:
 
 class MetricsMiddleware:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """指标中间件"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._metrics = {
             "commands_processed": 0,
             "queries_processed": 0,

@@ -13,6 +13,7 @@ from .ttl_cache import TTLCache
 
 class AsyncTTLCache:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     异步TTL缓存包装器
@@ -213,14 +214,14 @@ class AsyncTTLCache:
     def start_auto_cleanup(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """启动自动清理"""
         self._cache.start_auto_cleanup()
 
     def stop_auto_cleanup(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """停止自动清理"""
         self._cache.stop_auto_cleanup()
 

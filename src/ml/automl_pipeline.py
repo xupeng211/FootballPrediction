@@ -26,13 +26,14 @@ logger = logging.getLogger(__name__)
 
 class AutoMLPipeline:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """AutoML Pipeline"""
 
     def __init__(self, config: Dict[str, Any] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.config = config or {}
         self.model = None
         self.is_trained = False

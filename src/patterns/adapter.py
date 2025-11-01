@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExternalData:
     """外部数据结构"""
+
     source: str
     data: Dict[str, Any]
     timestamp: datetime
@@ -48,7 +49,9 @@ class ExternalAPI(ABC):
         pass
 
     @abstractmethod
-    async def fetch_data(self, endpoint: str, params: Optional[Dict] = None) -> ExternalData:
+    async def fetch_data(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> ExternalData:
         """获取数据"""
         pass
 
@@ -98,7 +101,9 @@ class FootballApiAdapter(APIAdapter):
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         super().__init__("football_api", base_url, api_key)
 
-    async def fetch_data(self, endpoint: str, params: Optional[Dict] = None) -> ExternalData:
+    async def fetch_data(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> ExternalData:
         """获取足球数据"""
         if not self.is_connected:
             await self.connect()
@@ -109,19 +114,19 @@ class FootballApiAdapter(APIAdapter):
         mock_data = {
             "matches": [
                 {"id": 1, "home": "Team A", "away": "Team B", "score": "2-1"},
-                {"id": 2, "home": "Team C", "away": "Team D", "score": "1-1"}
+                {"id": 2, "home": "Team C", "away": "Team D", "score": "1-1"},
             ],
             "teams": [
                 {"id": 1, "name": "Team A", "league": "Premier League"},
-                {"id": 2, "name": "Team B", "league": "Premier League"}
-            ]
+                {"id": 2, "name": "Team B", "league": "Premier League"},
+            ],
         }
 
         return ExternalData(
             source=self.name,
             data=mock_data,
             timestamp=datetime.utcnow(),
-            metadata={"endpoint": endpoint, "params": params}
+            metadata={"endpoint": endpoint, "params": params},
         )
 
 
@@ -131,7 +136,9 @@ class WeatherApiAdapter(APIAdapter):
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         super().__init__("weather_api", base_url, api_key)
 
-    async def fetch_data(self, endpoint: str, params: Optional[Dict] = None) -> ExternalData:
+    async def fetch_data(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> ExternalData:
         """获取天气数据"""
         if not self.is_connected:
             await self.connect()
@@ -144,14 +151,14 @@ class WeatherApiAdapter(APIAdapter):
             "humidity": 65,
             "condition": "partly_cloudy",
             "wind_speed": 15,
-            "location": params.get("location", "Unknown") if params else "Unknown"
+            "location": params.get("location", "Unknown") if params else "Unknown",
         }
 
         return ExternalData(
             source=self.name,
             data=mock_data,
             timestamp=datetime.utcnow(),
-            metadata={"endpoint": endpoint, "params": params}
+            metadata={"endpoint": endpoint, "params": params},
         )
 
 
@@ -161,7 +168,9 @@ class OddsApiAdapter(APIAdapter):
     def __init__(self, base_url: str, api_key: Optional[str] = None):
         super().__init__("odds_api", base_url, api_key)
 
-    async def fetch_data(self, endpoint: str, params: Optional[Dict] = None) -> ExternalData:
+    async def fetch_data(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> ExternalData:
         """获取赔率数据"""
         if not self.is_connected:
             await self.connect()
@@ -172,16 +181,16 @@ class OddsApiAdapter(APIAdapter):
         mock_data = {
             "odds": [
                 {"match_id": 1, "home_win": 2.1, "draw": 3.2, "away_win": 3.8},
-                {"match_id": 2, "home_win": 1.8, "draw": 3.5, "away_win": 4.2}
+                {"match_id": 2, "home_win": 1.8, "draw": 3.5, "away_win": 4.2},
             ],
-            "bookmakers": ["Bookmaker A", "Bookmaker B"]
+            "bookmakers": ["Bookmaker A", "Bookmaker B"],
         }
 
         return ExternalData(
             source=self.name,
             data=mock_data,
             timestamp=datetime.utcnow(),
-            metadata={"endpoint": endpoint, "params": params}
+            metadata={"endpoint": endpoint, "params": params},
         )
 
 
@@ -226,7 +235,9 @@ class UnifiedDataCollector:
             await asyncio.gather(*tasks, return_exceptions=True)
             logger.info("Shutdown all adapters")
 
-    async def collect_all_data(self, endpoint: str, params: Optional[Dict] = None) -> List[ExternalData]:
+    async def collect_all_data(
+        self, endpoint: str, params: Optional[Dict] = None
+    ) -> List[ExternalData]:
         """从所有适配器收集数据"""
         if not self.is_initialized:
             await self.initialize_all()
@@ -273,17 +284,23 @@ class AdapterFactory:
     """适配器工厂类"""
 
     @staticmethod
-    def create_football_adapter(base_url: str, api_key: Optional[str] = None) -> FootballApiAdapter:
+    def create_football_adapter(
+        base_url: str, api_key: Optional[str] = None
+    ) -> FootballApiAdapter:
         """创建足球API适配器"""
         return FootballApiAdapter(base_url, api_key)
 
     @staticmethod
-    def create_weather_adapter(base_url: str, api_key: Optional[str] = None) -> WeatherApiAdapter:
+    def create_weather_adapter(
+        base_url: str, api_key: Optional[str] = None
+    ) -> WeatherApiAdapter:
         """创建天气API适配器"""
         return WeatherApiAdapter(base_url, api_key)
 
     @staticmethod
-    def create_odds_adapter(base_url: str, api_key: Optional[str] = None) -> OddsApiAdapter:
+    def create_odds_adapter(
+        base_url: str, api_key: Optional[str] = None
+    ) -> OddsApiAdapter:
         """创建赔率API适配器"""
         return OddsApiAdapter(base_url, api_key)
 
@@ -293,7 +310,9 @@ class AdapterFactory:
         return UnifiedDataCollector()
 
     @staticmethod
-    def create_adapter(adapter_type: str, base_url: str, api_key: Optional[str] = None) -> APIAdapter:
+    def create_adapter(
+        adapter_type: str, base_url: str, api_key: Optional[str] = None
+    ) -> APIAdapter:
         """根据类型创建适配器"""
         adapter_map = {
             "football": AdapterFactory.create_football_adapter,
@@ -315,8 +334,7 @@ class AdapterFactory:
         if "football_api" in config:
             football_config = config["football_api"]
             football_adapter = cls.create_football_adapter(
-                football_config["base_url"],
-                football_config.get("api_key")
+                football_config["base_url"], football_config.get("api_key")
             )
             collector.register_adapter(football_adapter)
 
@@ -324,8 +342,7 @@ class AdapterFactory:
         if "weather_api" in config:
             weather_config = config["weather_api"]
             weather_adapter = cls.create_weather_adapter(
-                weather_config["base_url"],
-                weather_config.get("api_key")
+                weather_config["base_url"], weather_config.get("api_key")
             )
             collector.register_adapter(weather_adapter)
 
@@ -333,8 +350,7 @@ class AdapterFactory:
         if "odds_api" in config:
             odds_config = config["odds_api"]
             odds_adapter = cls.create_odds_adapter(
-                odds_config["base_url"],
-                odds_config.get("api_key")
+                odds_config["base_url"], odds_config.get("api_key")
             )
             collector.register_adapter(odds_adapter)
 
@@ -350,5 +366,5 @@ __all__ = [
     "WeatherApiAdapter",
     "OddsApiAdapter",
     "UnifiedDataCollector",
-    "AdapterFactory"
+    "AdapterFactory",
 ]

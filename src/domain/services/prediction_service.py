@@ -24,13 +24,14 @@ from src.domain.models.prediction import Prediction, PredictionPoints, Predictio
 
 class PredictionDomainService:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测领域服务"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._events: List[Any] = []
 
     def create_prediction(

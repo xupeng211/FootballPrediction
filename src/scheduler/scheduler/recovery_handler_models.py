@@ -21,6 +21,7 @@ SKIP_AND_CONTINUE = "skip_and_continue"
 # 类定义
 class FailureType:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """失败类型枚举"""
 
@@ -29,6 +30,7 @@ class FailureType:
 
 class RecoveryStrategy:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """恢复策略枚举"""
 
@@ -37,6 +39,7 @@ class RecoveryStrategy:
 
 class TaskFailure:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """任务失败记录类"""
 

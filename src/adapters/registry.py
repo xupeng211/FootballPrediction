@@ -29,11 +29,14 @@ class AdapterRegistry:
         """创建默认工厂"""
         try:
             from src.adapters.factory_simple import get_global_factory
+
             return get_global_factory()
         except ImportError:
             return None
 
-    def register(self, name: str, adapter: Adapter, group: Optional[str] = None):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def register(
+        self, name: str, adapter: Adapter, group: Optional[str] = None
+    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """注册适配器"""
         self.adapters[name] = adapter
         if group:
@@ -55,7 +58,9 @@ class AdapterRegistry:
         """列出所有适配器名称"""
         return list(self.adapters.keys())
 
-    def unregister(self, name: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def unregister(
+        self, name: str
+    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """注销适配器"""
         if name in self.adapters:
             del self.adapters[name]
@@ -64,7 +69,9 @@ class AdapterRegistry:
         for group_name, adapters in self.groups.items():
             self.groups[group_name] = [a for a in adapters if name not in str(type(a))]
 
-    def clear(self):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def clear(
+        self,
+    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """清空注册表"""
         self.adapters.clear()
         self.groups.clear()

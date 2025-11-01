@@ -35,6 +35,7 @@ class MatchResult(Enum):
 @dataclass
 class MatchScore:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛比分值对象"""
 
@@ -73,6 +74,7 @@ class MatchScore:
 @dataclass
 class Match:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     比赛领域模型
@@ -101,7 +103,7 @@ class Match:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化后的验证"""
         if self.home_team_id == self.away_team_id:
             raise DomainError("主队和客队不能相同")

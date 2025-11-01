@@ -11,6 +11,7 @@ from typing import Any
 
 class DataValidator:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """数据验证工具类"""
 

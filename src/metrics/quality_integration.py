@@ -18,13 +18,14 @@ logger = get_logger(__name__)
 
 class QualityMetricsIntegrator:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """质量度量集成器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.analyzer = AdvancedMetricsAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 

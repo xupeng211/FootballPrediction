@@ -27,6 +27,7 @@ class PredictionStatus(Enum):
 @dataclass
 class ConfidenceScore:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """置信度值对象"""
 
@@ -56,6 +57,7 @@ class ConfidenceScore:
 @dataclass
 class PredictionScore:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测比分值对象"""
 
@@ -67,7 +69,7 @@ class PredictionScore:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
             raise DomainError("预测比分不能为负数")
@@ -128,6 +130,7 @@ class PredictionScore:
 @dataclass
 class PredictionPoints:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测积分值对象"""
 
@@ -139,7 +142,7 @@ class PredictionPoints:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
@@ -163,6 +166,7 @@ class PredictionPoints:
 @dataclass
 class Prediction:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     预测领域模型
@@ -189,7 +193,7 @@ class Prediction:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化后的验证"""
         if self.user_id <= 0:
             raise DomainError("用户ID必须大于0")

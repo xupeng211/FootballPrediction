@@ -36,6 +36,7 @@ logger = get_logger(__name__)
 @dataclass
 class PredictionResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测结果数据模型"""
 
@@ -61,6 +62,7 @@ class PredictionResult:
 @dataclass
 class TrainingConfig:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """LSTM训练配置"""
 
@@ -77,13 +79,14 @@ class TrainingConfig:
 
 class LSTMPredictor:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """LSTM时间序列预测器"""
 
     def __init__(self, config: Optional[TrainingConfig] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.config = config or TrainingConfig()
         self.logger = get_logger(self.__class__.__name__)
 

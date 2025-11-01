@@ -7,6 +7,7 @@
 # 桩实现 - 添加基本的类定义以解决导入问题
 class OddsCollector:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """桩 OddsCollector 类"""
 
@@ -15,6 +16,7 @@ class OddsCollector:
 
 class OddsCollectorManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """桩 OddsCollectorManager 类"""
 
@@ -23,6 +25,7 @@ class OddsCollectorManager:
 
 class OddsSourceManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """桩 OddsSourceManager 类"""
 
@@ -31,6 +34,7 @@ class OddsSourceManager:
 
 class OddsProcessor:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """桩 OddsProcessor 类"""
 
@@ -39,6 +43,7 @@ class OddsProcessor:
 
 class OddsAnalyzer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """桩 OddsAnalyzer 类"""
 
@@ -47,6 +52,7 @@ class OddsAnalyzer:
 
 class OddsStorage:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """桩 OddsStorage 类"""
 

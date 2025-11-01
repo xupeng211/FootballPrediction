@@ -31,13 +31,14 @@ logger = logging.getLogger(__name__)
 
 class TaskErrorLogger:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """任务错误日志记录器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.db_manager = DatabaseManager()
         self._db_type = None
         self._query_builder = None

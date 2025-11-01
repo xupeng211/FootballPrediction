@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 
 class MockRedisManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """模拟Redis管理器"""
 
@@ -33,7 +34,9 @@ class MockRedisManager:
         self._check_expiration(key)
         return self.data.get(key)
 
-    def set(self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None) -> bool:
+    def set(
+        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+    ) -> bool:
         """设置缓存值"""
         self.data[key] = value
         if ex is not None:
@@ -86,7 +89,9 @@ class MockRedisManager:
         """异步获取缓存值"""
         return self.get(key)
 
-    async def aset(self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None) -> bool:
+    async def aset(
+        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+    ) -> bool:
         """异步设置缓存值"""
         return self.set(key, value, ex=ex, px=px)
 
@@ -187,6 +192,7 @@ class MockRedisManager:
         self._cleanup_expired()
         if "*" in pattern:
             import fnmatch
+
             return [k for k in self.data.keys() if fnmatch.fnmatch(k, pattern)]
         else:
             return [k for k in self.data.keys() if k == pattern]
@@ -228,6 +234,7 @@ class MockRedisManager:
 
 class CacheKeyManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """缓存键管理器"""
 

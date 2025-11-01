@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BindingRule:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """绑定规则"""
 
@@ -35,13 +36,14 @@ class BindingRule:
 
 class AutoBinder:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """自动绑定器"""
 
     def __init__(self, container: DIContainer):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.container = container
         self._binding_rules: List[BindingRule] = []
         self._scanned_modules: List[str] = []
@@ -322,6 +324,7 @@ class AutoBinder:
 
 class ConventionBinder:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """约定绑定器"""
 

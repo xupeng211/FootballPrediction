@@ -17,12 +17,7 @@ class TestSystemIntegration:
         import os
 
         # 检查关键目录结构
-        required_dirs = [
-            'src',
-            'src/domain',
-            'src/api',
-            'tests'
-        ]
+        required_dirs = ["src", "src/domain", "src/api", "tests"]
 
         for dir_path in required_dirs:
             assert os.path.exists(dir_path), f"目录 {dir_path} 应该存在"
@@ -33,11 +28,7 @@ class TestSystemIntegration:
         import os
 
         # 检查关键配置文件
-        config_files = [
-            'pyproject.toml',
-            'pytest.ini',
-            'README.md'
-        ]
+        config_files = ["pyproject.toml", "pytest.ini", "README.md"]
 
         for config_file in config_files:
             if os.path.exists(config_file):
@@ -51,7 +42,9 @@ class TestSystemIntegration:
         import sys
 
         # 检查项目路径是否在Python路径中
-        project_paths = [path for path in sys.path if 'FootballPrediction' in path or '.' in path]
+        project_paths = [
+            path for path in sys.path if "FootballPrediction" in path or "." in path
+        ]
         assert len(project_paths) >= 0
 
 
@@ -62,9 +55,9 @@ class TestModuleImports:
     def test_domain_module_imports(self):
         """测试领域模块导入"""
         domain_modules = [
-            'src.domain.models',
-            'src.domain.services',
-            'src.domain.strategies'
+            "src.domain.models",
+            "src.domain.services",
+            "src.domain.strategies",
         ]
 
         for module_name in domain_modules:
@@ -77,10 +70,7 @@ class TestModuleImports:
     @pytest.mark.integration
     def test_api_module_imports(self):
         """测试API模块导入"""
-        api_modules = [
-            'src.api.app',
-            'src.api.routes'
-        ]
+        api_modules = ["src.api.app", "src.api.routes"]
 
         for module_name in api_modules:
             try:
@@ -96,10 +86,7 @@ class TestDatabaseIntegration:
     @pytest.mark.integration
     def test_database_imports(self):
         """测试数据库相关导入"""
-        database_modules = [
-            'src.database.base',
-            'src.database.models'
-        ]
+        database_modules = ["src.database.base", "src.database.models"]
 
         for module_name in database_modules:
             try:
@@ -112,13 +99,10 @@ class TestDatabaseIntegration:
     def test_connection_configuration(self):
         """测试连接配置概念"""
         # 测试连接配置的基本概念
-        config = {
-            'database_url': 'sqlite:///test.db',
-            'echo': True
-        }
+        config = {"database_url": "sqlite:///test.db", "echo": True}
 
         assert isinstance(config, dict)
-        assert 'database_url' in config
+        assert "database_url" in config
 
 
 class TestCacheIntegration:
@@ -129,6 +113,7 @@ class TestCacheIntegration:
         """测试缓存相关导入"""
         try:
             import redis
+
             assert True
         except ImportError:
             pytest.skip("Redis未安装")
@@ -136,14 +121,10 @@ class TestCacheIntegration:
     @pytest.mark.integration
     def test_cache_configuration(self):
         """测试缓存配置"""
-        cache_config = {
-            'host': 'localhost',
-            'port': 6379,
-            'db': 0
-        }
+        cache_config = {"host": "localhost", "port": 6379, "db": 0}
 
         assert isinstance(cache_config, dict)
-        assert cache_config['port'] == 6379
+        assert cache_config["port"] == 6379
 
 
 class TestExternalServicesIntegration:
@@ -154,6 +135,7 @@ class TestExternalServicesIntegration:
         """测试HTTP客户端配置"""
         try:
             import aiohttp
+
             assert True
         except ImportError:
             pytest.skip("aiohttp未安装")
@@ -162,16 +144,14 @@ class TestExternalServicesIntegration:
     def test_api_client_structure(self):
         """测试API客户端结构"""
         client_config = {
-            'base_url': 'https://api.football-data.org',
-            'timeout': 30,
-            'headers': {
-                'Content-Type': 'application/json'
-            }
+            "base_url": "https://api.football-data.org",
+            "timeout": 30,
+            "headers": {"Content-Type": "application/json"},
         }
 
         assert isinstance(client_config, dict)
-        assert 'base_url' in client_config
-        assert client_config['timeout'] == 30
+        assert "base_url" in client_config
+        assert client_config["timeout"] == 30
 
 
 class TestLoggingIntegration:
@@ -183,7 +163,7 @@ class TestLoggingIntegration:
         import logging
 
         # 测试基本日志配置
-        logger = logging.getLogger('test')
+        logger = logging.getLogger("test")
         assert logger is not None
 
         # 测试日志级别
@@ -196,7 +176,7 @@ class TestLoggingIntegration:
         import logging
 
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         assert formatter is not None
 
@@ -216,11 +196,7 @@ class TestErrorHandling:
     @pytest.mark.integration
     def test_error_response_structure(self):
         """测试错误响应结构"""
-        error_response = {
-            'error': True,
-            'message': '处理失败',
-            'details': {}
-        }
+        error_response = {"error": True, "message": "处理失败", "details": {}}
 
-        assert error_response['error'] is True
-        assert 'message' in error_response
+        assert error_response["error"] is True
+        assert "message" in error_response

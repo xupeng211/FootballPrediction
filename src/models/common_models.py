@@ -50,7 +50,7 @@ class DataValidationResult(BaseModel):
     def add_error(self, error: str):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """添加错误"""
         self.errors.append(error)
         self.is_valid = False
@@ -58,7 +58,7 @@ class DataValidationResult(BaseModel):
     def add_warning(self, warning: str):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """添加警告"""
         self.warnings.append(warning)
 
@@ -78,7 +78,7 @@ class FeatureVector(BaseModel):
     def set_feature(self, name: str, value: float):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """设置特征值"""
         self.features[name] = value
         if name not in self.feature_names:
@@ -121,7 +121,7 @@ class ModelMetrics(BaseModel):
     def update_metrics(self, predictions: int, correct: int):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """更新指标"""
         self.total_predictions += predictions
         self.correct_predictions += correct

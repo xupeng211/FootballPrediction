@@ -14,11 +14,14 @@ from src.database.base import Base
 
 class User(Base):
     """用户模型"""
+
     __tablename__ = "users"
 
     # 基本信息
     id = Column(Integer, primary_key=True, index=True, comment="用户ID")
-    username = Column(String(50), unique=True, index=True, nullable=False, comment="用户名")
+    username = Column(
+        String(50), unique=True, index=True, nullable=False, comment="用户名"
+    )
     email = Column(String(100), unique=True, index=True, nullable=False, comment="邮箱")
     hashed_password = Column(String(255), nullable=False, comment="哈希密码")
 
@@ -29,18 +32,32 @@ class User(Base):
 
     # 状态和角色
     is_active = Column(Boolean, default=True, nullable=False, comment="是否激活")
-    is_verified = Column(Boolean, default=False, nullable=False, comment="是否已验证邮箱")
+    is_verified = Column(
+        Boolean, default=False, nullable=False, comment="是否已验证邮箱"
+    )
     role = Column(String(20), default="user", nullable=False, comment="用户角色")
 
     # 时间戳
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), comment="更新时间")
-    last_login_at = Column(DateTime(timezone=True), nullable=True, comment="最后登录时间")
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), comment="创建时间"
+    )
+    updated_at = Column(
+        DateTime(timezone=True), onupdate=func.now(), comment="更新时间"
+    )
+    last_login_at = Column(
+        DateTime(timezone=True), nullable=True, comment="最后登录时间"
+    )
 
     # 安全相关
-    failed_login_attempts = Column(Integer, default=0, nullable=False, comment="失败登录次数")
-    locked_until = Column(DateTime(timezone=True), nullable=True, comment="锁定到期时间")
-    password_changed_at = Column(DateTime(timezone=True), nullable=True, comment="密码修改时间")
+    failed_login_attempts = Column(
+        Integer, default=0, nullable=False, comment="失败登录次数"
+    )
+    locked_until = Column(
+        DateTime(timezone=True), nullable=True, comment="锁定到期时间"
+    )
+    password_changed_at = Column(
+        DateTime(timezone=True), nullable=True, comment="密码修改时间"
+    )
 
     # 偏好设置
     timezone = Column(String(50), default="UTC", comment="时区")
@@ -54,12 +71,12 @@ class User(Base):
 
     # 索引
     __table_args__ = (
-        Index('idx_users_username', 'username'),
-        Index('idx_users_email', 'email'),
-        Index('idx_users_active', 'is_active'),
-        Index('idx_users_role', 'role'),
-        Index('idx_users_created', 'created_at'),
-        Index('idx_users_last_login', 'last_login_at'),
+        Index("idx_users_username", "username"),
+        Index("idx_users_email", "email"),
+        Index("idx_users_active", "is_active"),
+        Index("idx_users_role", "role"),
+        Index("idx_users_created", "created_at"),
+        Index("idx_users_last_login", "last_login_at"),
     )
 
     def __repr__(self):
@@ -81,6 +98,7 @@ class User(Base):
         if not self.locked_until:
             return False
         from datetime import datetime
+
         return datetime.utcnow() < self.locked_until
 
     def to_dict(self) -> dict:
@@ -97,7 +115,9 @@ class User(Base):
             "role": self.role,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None,
+            "last_login_at": self.last_login_at.isoformat()
+            if self.last_login_at
+            else None,
             "timezone": self.timezone,
             "language": self.language,
             "email_notifications": self.email_notifications,
@@ -106,12 +126,17 @@ class User(Base):
 
 class UserSession(Base):
     """用户会话模型"""
+
     __tablename__ = "user_sessions"
 
     id = Column(Integer, primary_key=True, index=True, comment="会话ID")
     user_id = Column(Integer, nullable=False, comment="用户ID")
-    session_token = Column(String(255), unique=True, index=True, nullable=False, comment="会话令牌")
-    refresh_token = Column(String(255), unique=True, index=True, nullable=True, comment="刷新令牌")
+    session_token = Column(
+        String(255), unique=True, index=True, nullable=False, comment="会话令牌"
+    )
+    refresh_token = Column(
+        String(255), unique=True, index=True, nullable=True, comment="刷新令牌"
+    )
 
     # 会话信息
     ip_address = Column(String(45), nullable=True, comment="IP地址")
@@ -119,8 +144,12 @@ class UserSession(Base):
     device_info = Column(Text, nullable=True, comment="设备信息")
 
     # 时间戳
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
-    last_activity_at = Column(DateTime(timezone=True), server_default=func.now(), comment="最后活动时间")
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), comment="创建时间"
+    )
+    last_activity_at = Column(
+        DateTime(timezone=True), server_default=func.now(), comment="最后活动时间"
+    )
     expires_at = Column(DateTime(timezone=True), nullable=False, comment="过期时间")
 
     # 状态
@@ -129,11 +158,11 @@ class UserSession(Base):
 
     # 索引
     __table_args__ = (
-        Index('idx_user_sessions_user_id', 'user_id'),
-        Index('idx_user_sessions_token', 'session_token'),
-        Index('idx_user_sessions_refresh_token', 'refresh_token'),
-        Index('idx_user_sessions_active', 'is_active'),
-        Index('idx_user_sessions_expires', 'expires_at'),
+        Index("idx_user_sessions_user_id", "user_id"),
+        Index("idx_user_sessions_token", "session_token"),
+        Index("idx_user_sessions_refresh_token", "refresh_token"),
+        Index("idx_user_sessions_active", "is_active"),
+        Index("idx_user_sessions_expires", "expires_at"),
     )
 
     def __repr__(self):
@@ -142,6 +171,7 @@ class UserSession(Base):
 
 class AuditLog(Base):
     """审计日志模型"""
+
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True, comment="日志ID")
@@ -160,16 +190,20 @@ class AuditLog(Base):
     user_agent = Column(Text, nullable=True, comment="用户代理")
 
     # 时间戳
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), comment="创建时间"
+    )
 
     # 索引
     __table_args__ = (
-        Index('idx_audit_logs_user_id', 'user_id'),
-        Index('idx_audit_logs_action', 'action'),
-        Index('idx_audit_logs_resource', 'resource_type', 'resource_id'),
-        Index('idx_audit_logs_created', 'created_at'),
-        Index('idx_audit_logs_ip', 'ip_address'),
+        Index("idx_audit_logs_user_id", "user_id"),
+        Index("idx_audit_logs_action", "action"),
+        Index("idx_audit_logs_resource", "resource_type", "resource_id"),
+        Index("idx_audit_logs_created", "created_at"),
+        Index("idx_audit_logs_ip", "ip_address"),
     )
 
     def __repr__(self):
-        return f"<AuditLog(id={self.id}, user_id={self.user_id}, action='{self.action}')>"
+        return (
+            f"<AuditLog(id={self.id}, user_id={self.user_id}, action='{self.action}')>"
+        )

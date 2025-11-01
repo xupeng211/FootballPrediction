@@ -17,8 +17,9 @@ class TestFastAPIApplication:
         """测试FastAPI应用存在"""
         try:
             from src.api.app import app
+
             assert app is not None
-            assert hasattr(app, 'title')
+            assert hasattr(app, "title")
         except ImportError:
             pytest.skip("FastAPI应用未找到")
 
@@ -29,10 +30,10 @@ class TestFastAPIApplication:
             from src.api.app import app
 
             # 测试基本配置
-            if hasattr(app, 'title'):
+            if hasattr(app, "title"):
                 assert app.title is not None
 
-            if hasattr(app, 'version'):
+            if hasattr(app, "version"):
                 assert app.version is not None
 
         except ImportError:
@@ -51,7 +52,7 @@ class TestBasicRoutes:
 
             # 检查是否有健康检查路由
             routes = [route.path for route in app.routes]
-            health_routes = [r for r in routes if 'health' in r.lower()]
+            health_routes = [r for r in routes if "health" in r.lower()]
 
             # 如果没有健康检查端点，这是正常的
             assert isinstance(health_routes, list)
@@ -67,7 +68,7 @@ class TestBasicRoutes:
 
             # 检查根路由
             routes = [route.path for route in app.routes]
-            root_routes = [r for r in routes if r == '/']
+            root_routes = [r for r in routes if r == "/"]
 
             assert isinstance(root_routes, list)
 
@@ -98,7 +99,7 @@ class TestAPIStructure:
             from src.api.app import app
 
             # 检查中间件
-            if hasattr(app, 'middleware_stack'):
+            if hasattr(app, "middleware_stack"):
                 assert app.middleware_stack is not None
 
         except ImportError:
@@ -112,10 +113,7 @@ class TestAPIResponse:
     def test_json_response_format(self):
         """测试JSON响应格式"""
         # 测试基本的JSON响应概念
-        test_response = {
-            "status": "success",
-            "message": "API响应测试"
-        }
+        test_response = {"status": "success", "message": "API响应测试"}
 
         assert isinstance(test_response, dict)
         assert "status" in test_response
@@ -125,11 +123,7 @@ class TestAPIResponse:
     def test_error_response_format(self):
         """测试错误响应格式"""
         # 测试错误响应格式
-        error_response = {
-            "status": "error",
-            "message": "测试错误信息",
-            "code": 400
-        }
+        error_response = {"status": "error", "message": "测试错误信息", "code": 400}
 
         assert isinstance(error_response, dict)
         assert error_response["status"] == "error"
@@ -143,10 +137,7 @@ class TestAPIValidation:
     def test_request_validation(self):
         """测试请求验证"""
         # 测试请求数据验证概念
-        valid_request = {
-            "team_name": "Real Madrid",
-            "opponent": "Barcelona"
-        }
+        valid_request = {"team_name": "Real Madrid", "opponent": "Barcelona"}
 
         # 基本的数据结构验证
         assert isinstance(valid_request, dict)
@@ -160,7 +151,7 @@ class TestAPIValidation:
         prediction_response = {
             "prediction_id": "pred_123",
             "confidence": 0.85,
-            "predicted_winner": "Real Madrid"
+            "predicted_winner": "Real Madrid",
         }
 
         assert isinstance(prediction_response, dict)

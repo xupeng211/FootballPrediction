@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 
 class FileUtils:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """文件处理工具类"""
 

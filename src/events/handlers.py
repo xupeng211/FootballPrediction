@@ -31,7 +31,7 @@ class MetricsEventHandler(EventHandler):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__("MetricsCollector")
         self.metrics: Dict[str, Any] = {
             "events_processed": 0,
@@ -71,7 +71,7 @@ class LoggingEventHandler(EventHandler):
     def __init__(self, log_level: int = logging.INFO):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__("EventLogger")
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         self.logger.setLevel(log_level)
@@ -116,7 +116,7 @@ class CacheInvalidationHandler(EventHandler):
     def __init__(self, cache_manager=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__("CacheInvalidator")
         self.cache_manager = cache_manager
 
@@ -172,7 +172,7 @@ class NotificationEventHandler(EventHandler):
     def __init__(self, notification_service=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__("NotificationHandler")
         self.notification_service = notification_service
         self.notification_queue = asyncio.Queue()
@@ -244,7 +244,7 @@ class AnalyticsEventHandler(EventHandler):
     def __init__(self, analytics_service=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
         self.analytics_data: Dict[str, Any] = {
@@ -342,7 +342,7 @@ class AlertEventHandler(EventHandler):
     def __init__(self, alert_service=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__("AlertHandler")
         self.alert_service = alert_service
         self.alert_rules = {

@@ -31,6 +31,7 @@ class ServiceState(Enum):
 @dataclass
 class ServiceInfo:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """服务信息"""
 
@@ -53,13 +54,14 @@ class ServiceLifecycleError(Exception):
 
 class ServiceLifecycleManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """服务生命周期管理器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._services: Dict[str, ServiceInfo] = {}
         self._lock = threading.RLock()
         self._shutdown_event = threading.Event()

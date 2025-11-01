@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class ModelMetricsExporter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     模型指标导出器
@@ -29,7 +30,7 @@ class ModelMetricsExporter:
     def __init__(self, registry=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化Prometheus指标"""
         # 使用自定义registry避免重复注册错误
         if registry is None:

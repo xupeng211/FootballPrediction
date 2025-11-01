@@ -38,6 +38,7 @@ class StrategyConfigurationError(Exception):
 
 class PredictionStrategyFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测策略工厂类"
 
@@ -47,7 +48,7 @@ class PredictionStrategyFactory:
     def __init__(self, config_path: Optional[Union[str, Path]] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化策略工厂"
 
         Args:

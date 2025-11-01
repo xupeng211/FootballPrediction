@@ -16,13 +16,14 @@ class CacheLevel(Enum):
 
 class MultiLevelCache:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """多级缓存管理器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.l1_cache = {}  # 内存缓存
         self.l2_cache = {}  # Redis缓存（模拟）
         self.l3_cache = {}  # 数据库缓存（模拟）
@@ -96,7 +97,7 @@ class MultiLevelCache:
     def invalidate(self, key: str):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """使缓存失效"""
         for cache in [self.l1_cache, self.l2_cache, self.l3_cache]:
             if key in cache:
@@ -105,7 +106,7 @@ class MultiLevelCache:
     def clear_level(self, level: CacheLevel):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """清空指定级别的缓存"""
         if level == CacheLevel.L1_MEMORY:
             self.l1_cache.clear()

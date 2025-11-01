@@ -7,7 +7,6 @@ Repository Pattern API Endpoints
 Demonstrates query and management features of the repository pattern.
 """
 
-
 from fastapi import APIRouter
 
 

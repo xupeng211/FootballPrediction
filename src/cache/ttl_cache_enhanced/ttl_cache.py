@@ -47,7 +47,7 @@ class TTLCache:
         self,
         max_size: int = 1000,
         default_ttl: Optional[float] = None,
-        cleanup_interval: float = 60.0
+        cleanup_interval: float = 60.0,
     ):
         """
         初始化TTL缓存
@@ -295,8 +295,7 @@ class TTLCache:
         """
         with self._lock:
             expired_keys = [
-                key for key, entry in self._cache.items()
-                if entry.is_expired()
+                key for key, entry in self._cache.items() if entry.is_expired()
             ]
 
             for key in expired_keys:
@@ -317,7 +316,7 @@ class TTLCache:
                 "deletes": self._deletes,
                 "hit_rate": hit_rate,
                 "size": len(self._cache),
-                "max_size": self.max_size
+                "max_size": self.max_size,
             }
 
     def reset_stats(self) -> None:
@@ -333,10 +332,7 @@ class TTLCache:
         if not self._cache:
             return
 
-        lru_key = min(
-            self._cache.keys(),
-            key=lambda k: self._cache[k].last_accessed
-        )
+        lru_key = min(self._cache.keys(), key=lambda k: self._cache[k].last_accessed)
         del self._cache[lru_key]
 
     def _cleanup_worker(self) -> None:
@@ -353,8 +349,7 @@ class TTLCache:
         if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
             self._running = True
             self._cleanup_thread = threading.Thread(
-                target=self._cleanup_worker,
-                daemon=True
+                target=self._cleanup_worker, daemon=True
             )
             self._cleanup_thread.start()
 

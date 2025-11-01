@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class CacheBackend(Enum):
     """缓存后端类型"""
+
     MEMORY = "memory"
     REDIS = "redis"
     MULTI_LEVEL = "multi_level"
@@ -30,6 +31,7 @@ class CacheBackend(Enum):
 @dataclass
 class UnifiedCacheConfig:
     """统一缓存配置"""
+
     backend: CacheBackend = CacheBackend.MEMORY
     memory_config: Optional[Dict[str, Any]] = None
     redis_config: Optional[RedisConfig] = None
@@ -77,9 +79,9 @@ class MemoryCacheAdapter(CacheInterface):
 
     def __init__(self, config: Dict[str, Any] = None):
         default_config = {
-            'max_size': 1000,
-            'default_ttl': 3600,
-            'cleanup_interval': 60.0
+            "max_size": 1000,
+            "default_ttl": 3600,
+            "cleanup_interval": 60.0,
         }
         final_config = {**default_config, **(config or {})}
         self._cache = TTLCache(**final_config)
@@ -124,17 +126,19 @@ class RedisCacheAdapter(CacheInterface):
             return str(value)
         elif isinstance(value, (dict, list)):
             import json
+
             return json.dumps(value, ensure_ascii=False)
         else:
             import pickle
             import base64
+
             return base64.b64encode(pickle.dumps(value)).decode()
 
     def _deserialize_value(self, value: str) -> Any:
         """反序列化值"""
         # 尝试解析为数字
         try:
-            if '.' in value:
+            if "." in value:
                 return float(value)
             return int(value)
         except ValueError:
@@ -143,6 +147,7 @@ class RedisCacheAdapter(CacheInterface):
         # 尝试解析为JSON
         try:
             import json
+
             return json.loads(value)
         except json.JSONDecodeError:
             pass
@@ -151,6 +156,7 @@ class RedisCacheAdapter(CacheInterface):
         try:
             import pickle
             import base64
+
             return pickle.loads(base64.b64decode(value.encode()))
         except Exception:
             pass
@@ -188,16 +194,15 @@ class RedisCacheAdapter(CacheInterface):
         return len(self._manager.keys())
 
     def get_stats(self) -> Dict[str, Any]:
-        return {
-            "redis_info": self._manager.info(),
-            "ping": self._manager.ping()
-        }
+        return {"redis_info": self._manager.info(), "ping": self._manager.ping()}
 
 
 class MultiLevelCacheAdapter(CacheInterface):
     """多级缓存适配器"""
 
-    def __init__(self, memory_config: Dict[str, Any] = None, redis_config: RedisConfig = None):
+    def __init__(
+        self, memory_config: Dict[str, Any] = None, redis_config: RedisConfig = None
+    ):
         self._l1_cache = MemoryCacheAdapter(memory_config)
         self._l2_cache = RedisCacheAdapter(redis_config, use_mock=True)
 
@@ -240,7 +245,7 @@ class MultiLevelCacheAdapter(CacheInterface):
     def get_stats(self) -> Dict[str, Any]:
         return {
             "l1_stats": self._l1_cache.get_stats(),
-            "l2_stats": self._l2_cache.get_stats()
+            "l2_stats": self._l2_cache.get_stats(),
         }
 
 
@@ -265,8 +270,7 @@ class UnifiedCacheManager:
             return RedisCacheAdapter(self.config.redis_config)
         elif self.config.backend == CacheBackend.MULTI_LEVEL:
             return MultiLevelCacheAdapter(
-                self.config.memory_config,
-                self.config.redis_config
+                self.config.memory_config, self.config.redis_config
             )
         else:
             raise ValueError(f"不支持的缓存后端: {self.config.backend}")
@@ -285,15 +289,19 @@ class UnifiedCacheManager:
             try:
                 loop = asyncio.get_running_loop()
                 # 如果有运行的事件循环，创建任务
-                loop.create_task(self._consistency_manager.set_cache_entry(
-                    key, value, ttl or self.config.default_ttl
-                ))
+                loop.create_task(
+                    self._consistency_manager.set_cache_entry(
+                        key, value, ttl or self.config.default_ttl
+                    )
+                )
             except RuntimeError:
                 # 没有运行的事件循环，创建新的事件循环
                 try:
-                    asyncio.run(self._consistency_manager.set_cache_entry(
-                        key, value, ttl or self.config.default_ttl
-                    ))
+                    asyncio.run(
+                        self._consistency_manager.set_cache_entry(
+                            key, value, ttl or self.config.default_ttl
+                        )
+                    )
                 except Exception as e:
                     logger.warning(f"一致性管理器通知失败: {e}")
 
@@ -328,9 +336,11 @@ class UnifiedCacheManager:
 
         if self._consistency_manager:
             # 清空一致性管理器中的所有缓存
-            asyncio.create_task(self._consistency_manager.invalidate_cache(
-                self._adapter.keys() if hasattr(self._adapter, 'keys') else []
-            ))
+            asyncio.create_task(
+                self._consistency_manager.invalidate_cache(
+                    self._adapter.keys() if hasattr(self._adapter, "keys") else []
+                )
+            )
 
     def size(self) -> int:
         """获取缓存大小"""
@@ -378,9 +388,9 @@ class UnifiedCacheManager:
 
     def ttl(self, key: str) -> int:
         """获取键的TTL"""
-        if hasattr(self._adapter, '_cache') and hasattr(self._adapter._cache, 'ttl'):
+        if hasattr(self._adapter, "_cache") and hasattr(self._adapter._cache, "ttl"):
             return self._adapter._cache.ttl(key)
-        elif hasattr(self._adapter, '_manager'):
+        elif hasattr(self._adapter, "_manager"):
             return self._adapter._manager.ttl(key)
         else:
             return -1
@@ -403,15 +413,19 @@ class UnifiedCacheManager:
                 return func
 
             # 使用统一的缓存设置
-            @cached(ttl=ttl, key_prefix=key_prefix, use_consistency_manager=False, **kwargs)
+            @cached(
+                ttl=ttl, key_prefix=key_prefix, use_consistency_manager=False, **kwargs
+            )
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
 
             return wrapper
+
         return decorator
 
     def cache_invalidate(self, pattern: str = None, keys: List[str] = None):
         """缓存失效装饰器"""
+
         def decorator(func):
             if not self.config.enable_decorators:
                 return func
@@ -421,6 +435,7 @@ class UnifiedCacheManager:
                 return func(*args, **kwargs)
 
             return wrapper
+
         return decorator
 
     # 统计和监控
@@ -432,17 +447,18 @@ class UnifiedCacheManager:
             "config": {
                 "default_ttl": self.config.default_ttl,
                 "use_consistency_manager": self.config.use_consistency_manager,
-                "enable_decorators": self.config.enable_decorators
-            }
+                "enable_decorators": self.config.enable_decorators,
+            },
         }
 
-        if hasattr(self._adapter, 'get_stats'):
+        if hasattr(self._adapter, "get_stats"):
             stats["adapter_stats"] = self._adapter.get_stats()
 
         if self._consistency_manager:
             # 获取一致性管理器统计信息（同步版本）
             try:
                 import asyncio
+
                 try:
                     loop = asyncio.get_event_loop()
                     if loop.is_running():
@@ -470,7 +486,7 @@ class UnifiedCacheManager:
             "status": "healthy",
             "backend": self.config.backend.value,
             "adapter_healthy": True,
-            "consistency_healthy": True
+            "consistency_healthy": True,
         }
 
         # 检查适配器健康状态
@@ -557,8 +573,16 @@ def cache_set_many(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
 
 # 导出所有便捷函数
 __all__ = [
-    'UnifiedCacheManager', 'UnifiedCacheConfig', 'CacheBackend',
-    'get_cache_manager', 'reset_cache_manager',
-    'cache_get', 'cache_set', 'cache_delete', 'cache_exists',
-    'cache_clear', 'cache_get_many', 'cache_set_many'
+    "UnifiedCacheManager",
+    "UnifiedCacheConfig",
+    "CacheBackend",
+    "get_cache_manager",
+    "reset_cache_manager",
+    "cache_get",
+    "cache_set",
+    "cache_delete",
+    "cache_exists",
+    "cache_clear",
+    "cache_get_many",
+    "cache_set_many",
 ]

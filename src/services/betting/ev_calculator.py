@@ -66,6 +66,7 @@ class RiskLevel(Enum):
 @dataclass
 class BettingOdds:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """赔率数据结构"""
 
@@ -89,6 +90,7 @@ class BettingOdds:
 @dataclass
 class PredictionProbabilities:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """预测概率数据结构"""
 
@@ -108,7 +110,7 @@ class PredictionProbabilities:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         if self.prediction_time is None:
             self.prediction_time = datetime.now()
         # 确保概率总和为1（针对主要结果）
@@ -123,6 +125,7 @@ class PredictionProbabilities:
 @dataclass
 class EVCalculation:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """EV计算结果"""
 
@@ -145,6 +148,7 @@ class EVCalculation:
 @dataclass
 class BettingStrategy:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """投注策略配置"""
 
@@ -165,13 +169,14 @@ class BettingStrategy:
 
 class EVCalculator:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """期望价值计算器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.config = get_config()
         self.redis_manager = get_redis_manager()
         self.logger = logger
@@ -343,13 +348,14 @@ class EVCalculator:
 
 class BettingStrategyOptimizer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """投注策略优化器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.logger = logger
         self.strategies = self._initialize_strategies()
 
@@ -517,13 +523,14 @@ class BettingStrategyOptimizer:
 
 class BettingRecommendationEngine:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """投注建议引擎"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.ev_calculator = EVCalculator()
         self.optimizer = BettingStrategyOptimizer()
         self.logger = logger

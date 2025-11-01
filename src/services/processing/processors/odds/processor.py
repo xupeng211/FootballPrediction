@@ -10,6 +10,7 @@ This module was split from the original file.
 # 示例代码结构
 class ExampleClass:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """示例类"""
 

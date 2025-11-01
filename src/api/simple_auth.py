@@ -30,6 +30,7 @@ class SimpleUser(BaseModel):
 
     class Config:
         """Pydantic配置"""
+
         json_encoders = {datetime: lambda v: v.isoformat()}
 
 
@@ -50,11 +51,13 @@ class SimpleTokenResponse(BaseModel):
 # 简化的认证服务
 class SimpleAuthService:
     """类文档字符串"""
+
     pass  # 添加pass语句
+
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         # 简化的用户存储（实际应用中应该使用数据库）
         self.users = {
             "admin": {

@@ -20,6 +20,7 @@ QueryResultType = TypeVar("QueryResultType")
 @dataclass
 class BaseMessage:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """消息基类"""
 
@@ -30,7 +31,7 @@ class BaseMessage:
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
         self.metadata = metadata or {}
@@ -46,7 +47,7 @@ class Command(BaseMessage, ABC):
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(metadata)
         self.correlation_id: Optional[str] = None
         self.causation_id: Optional[str] = None
@@ -62,7 +63,7 @@ class Query(BaseMessage, ABC):
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(metadata)
 
 
@@ -106,13 +107,14 @@ class QueryHandler(ABC, Generic[QueryResultType]):
 
 class ValidationResult:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """验证结果"""
 
     def __init__(self, is_valid: bool, errors: Optional[list] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.is_valid = is_valid
         self.errors = errors or []
 

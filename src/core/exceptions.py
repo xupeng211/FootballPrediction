@@ -35,7 +35,7 @@ class ServiceError(FootballPredictionError):
     def __init__(self, message: str, service_name: str = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.message = message
         self.service_name = service_name
         super().__init__(message)

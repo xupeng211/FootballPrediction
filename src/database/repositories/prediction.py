@@ -23,6 +23,7 @@ Prediction = Predictions
 # 预测状态常量
 class PredictionStatus:
     """类文档字符串"""
+
     pass  # 添加pass语句
     PENDING = "pending"
     COMPLETED = "completed"
@@ -41,7 +42,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     def __init__(self, db_manager=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(Predictions, db_manager)
 
     # ========================================

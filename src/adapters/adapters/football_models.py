@@ -15,6 +15,7 @@ CANCELLED = "CANCELLED"
 # 类定义
 class MatchStatus:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛状态"""
 
@@ -23,6 +24,7 @@ class MatchStatus:
 
 class FootballMatch:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球比赛数据模型"""
 
@@ -31,6 +33,7 @@ class FootballMatch:
 
 class FootballTeam:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球队数据模型"""
 
@@ -39,6 +42,7 @@ class FootballTeam:
 
 class FootballPlayer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球运动员数据模型"""
 
@@ -47,6 +51,7 @@ class FootballPlayer:
 
 class FootballApiAdaptee:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球API被适配者基类"""
 
@@ -55,6 +60,7 @@ class FootballApiAdaptee:
 
 class ApiFootballAdaptee:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """API-Football被适配者"""
 
@@ -63,6 +69,7 @@ class ApiFootballAdaptee:
 
 class OptaDataAdaptee:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """Opta数据被适配者"""
 
@@ -71,6 +78,7 @@ class OptaDataAdaptee:
 
 class FootballDataTransformer:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球数据转换器"""
 
@@ -79,6 +87,7 @@ class FootballDataTransformer:
 
 class FootballApiAdapter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球API适配器基类"""
 
@@ -87,6 +96,7 @@ class FootballApiAdapter:
 
 class ApiFootballAdapter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """API-Football适配器"""
 
@@ -95,6 +105,7 @@ class ApiFootballAdapter:
 
 class OptaDataAdapter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """Opta数据适配器"""
 
@@ -103,6 +114,7 @@ class OptaDataAdapter:
 
 class CompositeFootballAdapter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """复合适配器,集成多个足球数据源"""
 
@@ -111,6 +123,7 @@ class CompositeFootballAdapter:
 
 class FootballDataAdapter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """足球数据适配器（简化版用于测试）"""
 

@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 @dataclass
 class MatchData:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """比赛数据结构"""
 
@@ -43,6 +44,7 @@ class MatchData:
 @dataclass
 class TeamData:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """球队数据结构"""
 
@@ -58,6 +60,7 @@ class TeamData:
 @dataclass
 class OddsData:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """赔率数据结构"""
 
@@ -77,7 +80,7 @@ class DataSourceAdapter(ABC):
     def __init__(self, api_key: Optional[str] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.api_key = api_key
         self.base_url = ""
         self.headers = {}
@@ -110,7 +113,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
     def __init__(self, api_key: Optional[str] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(api_key)
         self.base_url = "https://api.football-data.org/v4"
         if self.api_key:
@@ -264,7 +267,7 @@ class MockDataAdapter(DataSourceAdapter):
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__()
 
         # 模拟数据
@@ -388,7 +391,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     def __init__(self, api_key: Optional[str] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(api_key)
         self.base_url = "https://api.football-data.org/v4"
         if self.api_key:
@@ -422,7 +425,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     def _check_rate_limit(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """检查速率限制"""
         now = datetime.now()
         if (now - self.last_reset).total_seconds() >= 60:
@@ -691,20 +694,21 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
 class DataSourceManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """数据源管理器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.adapters = {}
         self._initialize_adapters()
 
     def _initialize_adapters(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化数据源适配器"""
 
         # 检查API密钥并初始化适配器

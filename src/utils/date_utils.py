@@ -90,7 +90,9 @@ class DateUtils:
         age = today.year - birth_date.year
 
         # 检查是否还没到生日
-        if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
+        if today.month < birth_date.month or (
+            today.month == birth_date.month and today.day < birth_date.day
+        ):
             age -= 1
 
         return max(0, age)
@@ -159,7 +161,7 @@ class DateUtils:
         return {
             "is_holiday": bool(holiday_name),
             "holiday_name": holiday_name or "",
-            "is_weekend": DateUtils.is_weekend(dt)
+            "is_weekend": DateUtils.is_weekend(dt),
         }
 
     @staticmethod

@@ -24,6 +24,7 @@ class TeamType(Enum):
 @dataclass
 class TeamStats:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """球队统计值对象"""
 
@@ -97,6 +98,7 @@ class TeamStats:
 @dataclass
 class TeamForm:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """球队状态值对象"""
 
@@ -107,7 +109,7 @@ class TeamForm:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """验证状态数据"""
         if len(self.last_matches) > 10:
             raise DomainError("最近比赛记录最多保留10场")
@@ -184,6 +186,7 @@ class TeamForm:
 @dataclass
 class Team:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """
     球队领域模型
@@ -216,7 +219,7 @@ class Team:
     def __post_init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("球队名称不能为空")

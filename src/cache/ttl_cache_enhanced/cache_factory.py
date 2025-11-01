@@ -14,6 +14,7 @@ from .ttl_cache import TTLCache
 
 class CacheFactory:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """缓存工厂类"
 

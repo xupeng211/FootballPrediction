@@ -19,10 +19,11 @@ from dataclasses import dataclass, field
 @dataclass
 class ProfileStats:
     """性能统计信息"""
+
     call_count: int = 0
     total_time: float = 0.0
     avg_time: float = 0.0
-    min_time: float = float('inf')
+    min_time: float = float("inf")
     max_time: float = 0.0
     recent_calls: deque = field(default_factory=lambda: deque(maxlen=100))
     error_count: int = 0
@@ -38,7 +39,13 @@ class APIEndpointProfiler:
         self.lock = threading.RLock()
         self.enabled = True
 
-    def record_call(self, endpoint: str, duration: float, success: bool = True, error: Optional[str] = None):
+    def record_call(
+        self,
+        endpoint: str,
+        duration: float,
+        success: bool = True,
+        error: Optional[str] = None,
+    ):
         """记录API调用"""
         if not self.enabled:
             return
@@ -57,7 +64,9 @@ class APIEndpointProfiler:
                 stats.error_count += 1
                 stats.last_error = error
 
-    def get_stats(self, endpoint: Optional[str] = None) -> Union[ProfileStats, Dict[str, ProfileStats]]:
+    def get_stats(
+        self, endpoint: Optional[str] = None
+    ) -> Union[ProfileStats, Dict[str, ProfileStats]]:
         """获取性能统计"""
         with self.lock:
             if endpoint:
@@ -68,11 +77,13 @@ class APIEndpointProfiler:
         """获取最慢的端点"""
         with self.lock:
             return sorted(
-                [(name, stats.avg_time, stats.call_count)
-                 for name, stats in self.stats.items()
-                 if stats.call_count > 0],
+                [
+                    (name, stats.avg_time, stats.call_count)
+                    for name, stats in self.stats.items()
+                    if stats.call_count > 0
+                ],
                 key=lambda x: x[1],
-                reverse=True
+                reverse=True,
             )[:limit]
 
     def get_recent_performance(self, endpoint: str, minutes: int = 5) -> Dict[str, Any]:
@@ -82,23 +93,19 @@ class APIEndpointProfiler:
         with self.lock:
             stats = self.stats[endpoint]
             recent_times = [
-                duration for i, duration in enumerate(stats.recent_calls)
+                duration
+                for i, duration in enumerate(stats.recent_calls)
                 if datetime.utcnow() - timedelta(seconds=i) >= _cutoff_time
             ]
 
             if not recent_times:
-                return {
-                    "avg_time": 0,
-                    "call_count": 0,
-                    "min_time": 0,
-                    "max_time": 0
-                }
+                return {"avg_time": 0, "call_count": 0, "min_time": 0, "max_time": 0}
 
             return {
                 "avg_time": sum(recent_times) / len(recent_times),
                 "call_count": len(recent_times),
                 "min_time": min(recent_times),
-                "max_time": max(recent_times)
+                "max_time": max(recent_times),
             }
 
     def clear_stats(self, endpoint: Optional[str] = None):
@@ -120,8 +127,10 @@ class APIEndpointProfiler:
 
     def profile_endpoint(self, endpoint_name: str):
         """装饰器：分析API端点性能"""
+
         def decorator(func: Callable):
             if asyncio.iscoroutinefunction(func):
+
                 @functools.wraps(func)
                 async def async_wrapper(*args, **kwargs):
                     if not self.enabled:
@@ -135,10 +144,14 @@ class APIEndpointProfiler:
                         return result
                     except Exception as e:
                         duration = time.time() - start_time
-                        self.record_call(endpoint_name, duration, success=False, error=str(e))
+                        self.record_call(
+                            endpoint_name, duration, success=False, error=str(e)
+                        )
                         raise
+
                 return async_wrapper
             else:
+
                 @functools.wraps(func)
                 def sync_wrapper(*args, **kwargs):
                     if not self.enabled:
@@ -152,9 +165,13 @@ class APIEndpointProfiler:
                         return result
                     except Exception as e:
                         duration = time.time() - start_time
-                        self.record_call(endpoint_name, duration, success=False, error=str(e))
+                        self.record_call(
+                            endpoint_name, duration, success=False, error=str(e)
+                        )
                         raise
+
                 return sync_wrapper
+
         return decorator
 
     def get_summary_report(self) -> Dict[str, Any]:
@@ -169,7 +186,7 @@ class APIEndpointProfiler:
                     "total_errors": 0,
                     "error_rate": 0.0,
                     "top_slowest": [],
-                    "endpoint_count": 0
+                    "endpoint_count": 0,
                 }
 
             return {
@@ -177,7 +194,7 @@ class APIEndpointProfiler:
                 "total_errors": total_errors,
                 "error_rate": (total_errors / total_calls) * 100,
                 "top_slowest": self.get_top_slowest(5),
-                "endpoint_count": len(self.stats)
+                "endpoint_count": len(self.stats),
             }
 
 
@@ -220,7 +237,7 @@ class DatabaseQueryProfiler:
             self.queries[query_type].append(duration)
             # 保留最近的查询记录
             if len(self.queries[query_type]) > self.max_history:
-                self.queries[query_type] = self.queries[query_type][-self.max_history:]
+                self.queries[query_type] = self.queries[query_type][-self.max_history :]
 
     def get_query_stats(self, query_type: str) -> Dict[str, float]:
         """获取查询统计"""
@@ -232,7 +249,7 @@ class DatabaseQueryProfiler:
                     "min_time": 0.0,
                     "max_time": 0.0,
                     "count": 0,
-                    "total_time": 0.0
+                    "total_time": 0.0,
                 }
 
             return {
@@ -240,7 +257,7 @@ class DatabaseQueryProfiler:
                 "min_time": min(times),
                 "max_time": max(times),
                 "count": len(times),
-                "total_time": sum(times)
+                "total_time": sum(times),
             }
 
     def get_all_stats(self) -> Dict[str, Dict[str, float]]:
@@ -279,7 +296,7 @@ class MemoryProfiler:
                 "vms": memory_info.vms,  # 虚拟内存
                 "percent": process.memory_percent(),
                 "gc_count": tuple(gc.get_count()),
-                "gc_objects": len(gc.get_objects())
+                "gc_objects": len(gc.get_objects()),
             }
 
             with self.lock:
@@ -298,25 +315,20 @@ class MemoryProfiler:
 
         with self.lock:
             recent_samples = [
-                sample for sample in self.samples
-                if sample["timestamp"] >= cutoff_time
+                sample for sample in self.samples if sample["timestamp"] >= cutoff_time
             ]
 
             if not recent_samples:
-                return {
-                    "avg_rss": 0,
-                    "avg_vms": 0,
-                    "avg_percent": 0,
-                    "sample_count": 0
-                }
+                return {"avg_rss": 0, "avg_vms": 0, "avg_percent": 0, "sample_count": 0}
 
             return {
                 "avg_rss": sum(s["rss"] for s in recent_samples) / len(recent_samples),
                 "avg_vms": sum(s["vms"] for s in recent_samples) / len(recent_samples),
-                "avg_percent": sum(s["percent"] for s in recent_samples) / len(recent_samples),
+                "avg_percent": sum(s["percent"] for s in recent_samples)
+                / len(recent_samples),
                 "sample_count": len(recent_samples),
                 "max_rss": max(s["rss"] for s in recent_samples),
-                "min_rss": min(s["rss"] for s in recent_samples)
+                "min_rss": min(s["rss"] for s in recent_samples),
             }
 
 
@@ -336,7 +348,7 @@ class PerformanceProfiler:
             "api_stats": self.api_profiler.get_summary_report(),
             "db_stats": self.db_profiler.get_all_stats(),
             "memory_trend": self.memory_profiler.get_memory_trend(),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     def enable_all(self):
@@ -381,18 +393,13 @@ class SystemProfiler:
         with self.lock:
             values = self.metrics.get(name, [])
             if not values:
-                return {
-                    "avg": 0.0,
-                    "min": 0.0,
-                    "max": 0.0,
-                    "count": 0
-                }
+                return {"avg": 0.0, "min": 0.0, "max": 0.0, "count": 0}
 
             return {
                 "avg": sum(values) / len(values),
                 "min": min(values),
                 "max": max(values),
-                "count": len(values)
+                "count": len(values),
             }
 
 
@@ -413,19 +420,23 @@ def get_system_profiler() -> SystemProfiler:
 # 装饰器函数
 def profile_function(func: Callable) -> Callable:
     """函数性能分析装饰器"""
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         profiler = get_profiler()
         return profiler.profile_function(func.__name__)(func)(*args, **kwargs)
+
     return wrapper
 
 
 def profile_method(method: Callable) -> Callable:
     """方法性能分析装饰器"""
+
     @functools.wraps(method)
     def wrapper(*args, **kwargs):
         profiler = get_profiler()
         return profiler.profile_method(method.__name__)(method)(*args, **kwargs)
+
     return wrapper
 
 
@@ -473,5 +484,5 @@ __all__ = [
     "stop_profiling",
     "is_profiling_enabled",
     "get_system_profiler",
-    "get_performance_report"
+    "get_performance_report",
 ]

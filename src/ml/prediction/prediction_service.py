@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class PredictionStrategy(Enum):
     """预测策略"""
+
     SINGLE_MODEL = "single_model"
     WEIGHTED_ENSEMBLE = "weighted_ensemble"
     MAJORITY_VOTE = "majority_vote"
@@ -28,6 +29,7 @@ class PredictionStrategy(Enum):
 @dataclass
 class EnsemblePrediction:
     """集成预测结果"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -43,17 +45,17 @@ class EnsemblePrediction:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'match_id': self.match_id,
-            'home_team': self.home_team,
-            'away_team': self.away_team,
-            'predictions': [p.to_dict() for p in self.predictions],
-            'ensemble_home_win_prob': self.ensemble_home_win_prob,
-            'ensemble_draw_prob': self.ensemble_draw_prob,
-            'ensemble_away_win_prob': self.ensemble_away_win_prob,
-            'ensemble_predicted_outcome': self.ensemble_predicted_outcome,
-            'ensemble_confidence': self.ensemble_confidence,
-            'strategy': self.strategy,
-            'created_at': self.created_at.isoformat()
+            "match_id": self.match_id,
+            "home_team": self.home_team,
+            "away_team": self.away_team,
+            "predictions": [p.to_dict() for p in self.predictions],
+            "ensemble_home_win_prob": self.ensemble_home_win_prob,
+            "ensemble_draw_prob": self.ensemble_draw_prob,
+            "ensemble_away_win_prob": self.ensemble_away_win_prob,
+            "ensemble_predicted_outcome": self.ensemble_predicted_outcome,
+            "ensemble_confidence": self.ensemble_confidence,
+            "strategy": self.strategy,
+            "created_at": self.created_at.isoformat(),
         }
 
 
@@ -75,10 +77,7 @@ class PredictionService:
         self.register_model("elo", EloModel())
 
         # 默认权重
-        self.model_weights = {
-            "poisson": 0.4,
-            "elo": 0.6
-        }
+        self.model_weights = {"poisson": 0.4, "elo": 0.6}
 
     def register_model(self, name: str, model: BaseModel, weight: float = 1.0):
         """
@@ -137,7 +136,7 @@ class PredictionService:
         self,
         match_data: Dict[str, Any],
         model_name: Optional[str] = None,
-        strategy: Optional[PredictionStrategy] = None
+        strategy: Optional[PredictionStrategy] = None,
     ) -> Any:
         """
         预测比赛结果
@@ -166,9 +165,7 @@ class PredictionService:
         return self._ensemble_predict(match_data, strategy)
 
     def _ensemble_predict(
-        self,
-        match_data: Dict[str, Any],
-        strategy: PredictionStrategy
+        self, match_data: Dict[str, Any], strategy: PredictionStrategy
     ) -> EnsemblePrediction:
         """
         集成预测
@@ -207,22 +204,22 @@ class PredictionService:
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
 
-        home_team = match_data['home_team']
-        away_team = match_data['away_team']
-        match_id = match_data.get('match_id', f"{home_team}_vs_{away_team}")
+        home_team = match_data["home_team"]
+        away_team = match_data["away_team"]
+        match_id = match_data.get("match_id", f"{home_team}_vs_{away_team}")
 
         return EnsemblePrediction(
             match_id=match_id,
             home_team=home_team,
             away_team=away_team,
             predictions=predictions,
-            ensemble_home_win_prob=ensemble_result['home_win_prob'],
-            ensemble_draw_prob=ensemble_result['draw_prob'],
-            ensemble_away_win_prob=ensemble_result['away_win_prob'],
-            ensemble_predicted_outcome=ensemble_result['predicted_outcome'],
-            ensemble_confidence=ensemble_result['confidence'],
+            ensemble_home_win_prob=ensemble_result["home_win_prob"],
+            ensemble_draw_prob=ensemble_result["draw_prob"],
+            ensemble_away_win_prob=ensemble_result["away_win_prob"],
+            ensemble_predicted_outcome=ensemble_result["predicted_outcome"],
+            ensemble_confidence=ensemble_result["confidence"],
             strategy=strategy.value,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
     def _weighted_ensemble(self, predictions: List[PredictionResult]) -> Dict[str, Any]:
@@ -267,11 +264,11 @@ class PredictionService:
         confidence = self._calculate_confidence(probabilities)
 
         return {
-            'home_win_prob': weighted_home_win,
-            'draw_prob': weighted_draw,
-            'away_win_prob': weighted_away_win,
-            'predicted_outcome': predicted_outcome,
-            'confidence': confidence
+            "home_win_prob": weighted_home_win,
+            "draw_prob": weighted_draw,
+            "away_win_prob": weighted_away_win,
+            "predicted_outcome": predicted_outcome,
+            "confidence": confidence,
         }
 
     def _majority_vote(self, predictions: List[PredictionResult]) -> Dict[str, Any]:
@@ -285,23 +282,23 @@ class PredictionService:
             集成预测结果
         """
         # 统计各结果的投票数
-        vote_counts = {'home_win': 0, 'draw': 0, 'away_win': 0}
-        probabilities_sum = {'home_win': 0.0, 'draw': 0.0, 'away_win': 0.0}
+        vote_counts = {"home_win": 0, "draw": 0, "away_win": 0}
+        probabilities_sum = {"home_win": 0.0, "draw": 0.0, "away_win": 0.0}
 
         for prediction in predictions:
             vote_counts[prediction.predicted_outcome] += 1
-            probabilities_sum['home_win'] += prediction.home_win_prob
-            probabilities_sum['draw'] += prediction.draw_prob
-            probabilities_sum['away_win'] += prediction.away_win_prob
+            probabilities_sum["home_win"] += prediction.home_win_prob
+            probabilities_sum["draw"] += prediction.draw_prob
+            probabilities_sum["away_win"] += prediction.away_win_prob
 
         # 确定多数投票结果
         predicted_outcome = max(vote_counts, key=vote_counts.get)
 
         # 平均概率
         num_predictions = len(predictions)
-        avg_home_win = probabilities_sum['home_win'] / num_predictions
-        avg_draw = probabilities_sum['draw'] / num_predictions
-        avg_away_win = probabilities_sum['away_win'] / num_predictions
+        avg_home_win = probabilities_sum["home_win"] / num_predictions
+        avg_draw = probabilities_sum["draw"] / num_predictions
+        avg_away_win = probabilities_sum["away_win"] / num_predictions
 
         # 归一化
         total_prob = avg_home_win + avg_draw + avg_away_win
@@ -315,11 +312,11 @@ class PredictionService:
         confidence = max_votes / num_predictions
 
         return {
-            'home_win_prob': avg_home_win,
-            'draw_prob': avg_draw,
-            'away_win_prob': avg_away_win,
-            'predicted_outcome': predicted_outcome,
-            'confidence': confidence
+            "home_win_prob": avg_home_win,
+            "draw_prob": avg_draw,
+            "away_win_prob": avg_away_win,
+            "predicted_outcome": predicted_outcome,
+            "confidence": confidence,
         }
 
     def _best_performing(self, predictions: List[PredictionResult]) -> Dict[str, Any]:
@@ -337,8 +334,10 @@ class PredictionService:
             best_prediction = predictions[0]
         else:
             # 选择性能最好的模型
-            best_model_name = max(self.model_performance.keys(),
-                                key=lambda x: self.model_performance[x].get('accuracy', 0))
+            best_model_name = max(
+                self.model_performance.keys(),
+                key=lambda x: self.model_performance[x].get("accuracy", 0),
+            )
             best_prediction = None
             for prediction in predictions:
                 if prediction.model_name == best_model_name:
@@ -349,16 +348,18 @@ class PredictionService:
                 best_prediction = predictions[0]
 
         return {
-            'home_win_prob': best_prediction.home_win_prob,
-            'draw_prob': best_prediction.draw_prob,
-            'away_win_prob': best_prediction.away_win_prob,
-            'predicted_outcome': best_prediction.predicted_outcome,
-            'confidence': best_prediction.confidence
+            "home_win_prob": best_prediction.home_win_prob,
+            "draw_prob": best_prediction.draw_prob,
+            "away_win_prob": best_prediction.away_win_prob,
+            "predicted_outcome": best_prediction.predicted_outcome,
+            "confidence": best_prediction.confidence,
         }
 
-    def _get_outcome_from_probabilities(self, probabilities: Tuple[float, float, float]) -> str:
+    def _get_outcome_from_probabilities(
+        self, probabilities: Tuple[float, float, float]
+    ) -> str:
         """从概率分布获取预测结果"""
-        outcomes = ['home_win', 'draw', 'away_win']
+        outcomes = ["home_win", "draw", "away_win"]
         max_index = max(range(3), key=lambda i: probabilities[i])
         return outcomes[max_index]
 
@@ -373,7 +374,7 @@ class PredictionService:
         self,
         matches_data: List[Dict[str, Any]],
         model_name: Optional[str] = None,
-        strategy: Optional[PredictionStrategy] = None
+        strategy: Optional[PredictionStrategy] = None,
     ) -> List[Any]:
         """
         批量预测
@@ -392,7 +393,9 @@ class PredictionService:
                 result = self.predict_match(match_data, model_name, strategy)
                 results.append(result)
             except Exception as e:
-                logger.error(f"Failed to predict match {match_data.get('match_id', 'unknown')}: {e}")
+                logger.error(
+                    f"Failed to predict match {match_data.get('match_id', 'unknown')}: {e}"
+                )
                 continue
 
         return results
@@ -409,7 +412,9 @@ class PredictionService:
                 self.model_weights[model_name] = weight
                 logger.info(f"Updated weight for {model_name}: {weight}")
 
-    def set_model_performance(self, model_name: str, performance_metrics: Dict[str, float]):
+    def set_model_performance(
+        self, model_name: str, performance_metrics: Dict[str, float]
+    ):
         """
         设置模型性能指标
 
@@ -430,19 +435,19 @@ class PredictionService:
         models_info = {}
         for name, model in self.models.items():
             models_info[name] = {
-                'type': model.__class__.__name__,
-                'version': model.model_version,
-                'is_trained': model.is_trained,
-                'weight': self.model_weights.get(name, 1.0),
-                'performance': self.model_performance.get(name, {})
+                "type": model.__class__.__name__,
+                "version": model.model_version,
+                "is_trained": model.is_trained,
+                "weight": self.model_weights.get(name, 1.0),
+                "performance": self.model_performance.get(name, {}),
             }
 
         return {
-            'total_models': len(self.models),
-            'trained_models': len(self.get_trained_models()),
-            'default_strategy': self.default_strategy.value,
-            'models': models_info,
-            'weights': self.model_weights.copy()
+            "total_models": len(self.models),
+            "trained_models": len(self.get_trained_models()),
+            "default_strategy": self.default_strategy.value,
+            "models": models_info,
+            "weights": self.model_weights.copy(),
         }
 
     def train_all_models(self, training_data, validation_data=None) -> Dict[str, Any]:
@@ -467,34 +472,38 @@ class PredictionService:
                 training_time = (datetime.now() - start_time).total_seconds()
 
                 training_results[name] = {
-                    'success': True,
-                    'training_time': training_time,
-                    'metrics': result.to_dict()
+                    "success": True,
+                    "training_time": training_time,
+                    "metrics": result.to_dict(),
                 }
 
                 # 更新性能指标
-                self.set_model_performance(name, {
-                    'accuracy': result.accuracy,
-                    'precision': result.precision,
-                    'recall': result.recall,
-                    'f1_score': result.f1_score
-                })
+                self.set_model_performance(
+                    name,
+                    {
+                        "accuracy": result.accuracy,
+                        "precision": result.precision,
+                        "recall": result.recall,
+                        "f1_score": result.f1_score,
+                    },
+                )
 
-                logger.info(f"Model {name} trained successfully in {training_time:.2f}s")
+                logger.info(
+                    f"Model {name} trained successfully in {training_time:.2f}s"
+                )
 
             except Exception as e:
                 logger.error(f"Failed to train model {name}: {e}")
-                training_results[name] = {
-                    'success': False,
-                    'error': str(e)
-                }
+                training_results[name] = {"success": False, "error": str(e)}
 
         total_time = (datetime.now() - total_start_time).total_seconds()
-        successful_trainings = sum(1 for r in training_results.values() if r.get('success', False))
+        successful_trainings = sum(
+            1 for r in training_results.values() if r.get("success", False)
+        )
 
         return {
-            'total_time': total_time,
-            'successful_trainings': successful_trainings,
-            'total_models': len(self.models),
-            'training_results': training_results
+            "total_time": total_time,
+            "successful_trainings": successful_trainings,
+            "total_models": len(self.models),
+            "training_results": training_results,
         }

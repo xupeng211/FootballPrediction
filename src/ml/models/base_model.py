@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PredictionResult:
     """预测结果"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -32,23 +33,24 @@ class PredictionResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'match_id': self.match_id,
-            'home_team': self.home_team,
-            'away_team': self.away_team,
-            'home_win_prob': self.home_win_prob,
-            'draw_prob': self.draw_prob,
-            'away_win_prob': self.away_win_prob,
-            'predicted_outcome': self.predicted_outcome,
-            'confidence': self.confidence,
-            'model_name': self.model_name,
-            'model_version': self.model_version,
-            'created_at': self.created_at.isoformat()
+            "match_id": self.match_id,
+            "home_team": self.home_team,
+            "away_team": self.away_team,
+            "home_win_prob": self.home_win_prob,
+            "draw_prob": self.draw_prob,
+            "away_win_prob": self.away_win_prob,
+            "predicted_outcome": self.predicted_outcome,
+            "confidence": self.confidence,
+            "model_name": self.model_name,
+            "model_version": self.model_version,
+            "created_at": self.created_at.isoformat(),
         }
 
 
 @dataclass
 class TrainingResult:
     """训练结果"""
+
     model_name: str
     model_version: str
     accuracy: float
@@ -66,19 +68,19 @@ class TrainingResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'model_name': self.model_name,
-            'model_version': self.model_version,
-            'accuracy': self.accuracy,
-            'precision': self.precision,
-            'recall': self.recall,
-            'f1_score': self.f1_score,
-            'confusion_matrix': self.confusion_matrix,
-            'training_samples': self.training_samples,
-            'validation_samples': self.validation_samples,
-            'training_time': self.training_time,
-            'features_used': self.features_used,
-            'hyperparameters': self.hyperparameters,
-            'created_at': self.created_at.isoformat()
+            "model_name": self.model_name,
+            "model_version": self.model_version,
+            "accuracy": self.accuracy,
+            "precision": self.precision,
+            "recall": self.recall,
+            "f1_score": self.f1_score,
+            "confusion_matrix": self.confusion_matrix,
+            "training_samples": self.training_samples,
+            "validation_samples": self.validation_samples,
+            "training_time": self.training_time,
+            "features_used": self.features_used,
+            "hyperparameters": self.hyperparameters,
+            "created_at": self.created_at.isoformat(),
         }
 
 
@@ -109,7 +111,11 @@ class BaseModel(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def train(self, training_data: pd.DataFrame, validation_data: Optional[pd.DataFrame] = None) -> TrainingResult:
+    def train(
+        self,
+        training_data: pd.DataFrame,
+        validation_data: Optional[pd.DataFrame] = None,
+    ) -> TrainingResult:
         """
         训练模型
 
@@ -194,7 +200,7 @@ class BaseModel(abc.ABC):
         Returns:
             特征重要性字典
         """
-        if not hasattr(self.model, 'feature_importances_'):
+        if not hasattr(self.model, "feature_importances_"):
             return {}
 
         if not self.feature_names:
@@ -210,15 +216,15 @@ class BaseModel(abc.ABC):
             模型信息字典
         """
         return {
-            'model_name': self.model_name,
-            'model_version': self.model_version,
-            'is_trained': self.is_trained,
-            'feature_count': len(self.feature_names),
-            'feature_names': self.feature_names,
-            'hyperparameters': self.hyperparameters,
-            'last_training_time': self.last_training_time,
-            'training_history_count': len(self.training_history),
-            'feature_importance': self.get_feature_importance()
+            "model_name": self.model_name,
+            "model_version": self.model_version,
+            "is_trained": self.is_trained,
+            "feature_count": len(self.feature_names),
+            "feature_names": self.feature_names,
+            "hyperparameters": self.hyperparameters,
+            "last_training_time": self.last_training_time,
+            "training_history_count": len(self.training_history),
+            "feature_importance": self.get_feature_importance(),
         }
 
     def validate_prediction_input(self, match_data: Dict[str, Any]) -> bool:
@@ -231,7 +237,7 @@ class BaseModel(abc.ABC):
         Returns:
             是否有效
         """
-        required_fields = ['home_team', 'away_team']
+        required_fields = ["home_team", "away_team"]
 
         for field in required_fields:
             if field not in match_data:
@@ -239,7 +245,7 @@ class BaseModel(abc.ABC):
                 return False
 
         # 检查主客队不能相同
-        if match_data['home_team'] == match_data['away_team']:
+        if match_data["home_team"] == match_data["away_team"]:
             logger.error("Home team and away team cannot be the same")
             return False
 
@@ -272,7 +278,9 @@ class BaseModel(abc.ABC):
 
         return min(max(confidence, 0.1), 1.0)  # 限制在0.1-1.0之间
 
-    def get_outcome_from_probabilities(self, probabilities: Tuple[float, float, float]) -> str:
+    def get_outcome_from_probabilities(
+        self, probabilities: Tuple[float, float, float]
+    ) -> str:
         """
         从概率分布获取预测结果
 
@@ -282,7 +290,7 @@ class BaseModel(abc.ABC):
         Returns:
             预测结果
         """
-        outcomes = ['home_win', 'draw', 'away_win']
+        outcomes = ["home_win", "draw", "away_win"]
         max_index = np.argmax(probabilities)
         return outcomes[max_index]
 
@@ -300,7 +308,7 @@ class BaseModel(abc.ABC):
             logger.error("Training data is empty")
             return False
 
-        required_columns = ['home_team', 'away_team', 'result']
+        required_columns = ["home_team", "away_team", "result"]
         for col in required_columns:
             if col not in training_data.columns:
                 logger.error(f"Missing required column: {col}")
@@ -313,7 +321,9 @@ class BaseModel(abc.ABC):
         # 检查样本数量
         min_samples = 100
         if len(training_data) < min_samples:
-            logger.warning(f"Training data has only {len(training_data)} samples, which may be insufficient")
+            logger.warning(
+                f"Training data has only {len(training_data)} samples, which may be insufficient"
+            )
 
         return True
 
@@ -325,11 +335,7 @@ class BaseModel(abc.ABC):
             step: 训练步骤
             metrics: 评估指标
         """
-        log_entry = {
-            'step': step,
-            'timestamp': datetime.now(),
-            'metrics': metrics
-        }
+        log_entry = {"step": step, "timestamp": datetime.now(), "metrics": metrics}
         self.training_history.append(log_entry)
 
         logger.info(f"Training step {step}: {metrics}")
@@ -345,8 +351,10 @@ class BaseModel(abc.ABC):
             return {}
 
         curves = {}
-        for metric_name in self.training_history[0]['metrics'].keys():
-            curves[metric_name] = [entry['metrics'][metric_name] for entry in self.training_history]
+        for metric_name in self.training_history[0]["metrics"].keys():
+            curves[metric_name] = [
+                entry["metrics"][metric_name] for entry in self.training_history
+            ]
 
         return curves
 

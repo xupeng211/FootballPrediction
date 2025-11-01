@@ -34,7 +34,7 @@ class ConcreteComponent(Component):
     def __init__(self, name: str, func: Callable):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.name = name
         self.func = func
         self._wrapped = self._wrap_function(func)
@@ -64,7 +64,7 @@ class Decorator(Component):
     def __init__(self, component: Component, name: Optional[str] = None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.component = component
         self.name = name or f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
         self.execution_count = 0
@@ -160,13 +160,14 @@ class DecoratorComponent(Decorator):
 
 class DecoratorChain:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器链,用于管理多个装饰器的执行顺序"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.decorators: list[Decorator] = []
 
     def add_decorator(self, decorator: Decorator) -> "DecoratorChain":
@@ -203,13 +204,14 @@ class DecoratorChain:
 # 装饰器上下文管理器
 class DecoratorContext:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器执行上下文,用于在装饰器之间传递数据"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self.data: Dict[str, Any] = {}
         self.start_time = time.time()
         self.trace_id = str(uuid.uuid4())
@@ -248,13 +250,14 @@ class DecoratorContext:
 # 装饰器注册表
 class DecoratorRegistry:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """装饰器注册表,用于管理全局装饰器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         self._decorators: Dict[str, type[Decorator]] = {}
         self._instances: Dict[str, Decorator] = {}
 
