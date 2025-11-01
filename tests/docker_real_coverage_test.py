@@ -17,7 +17,7 @@ def check_docker_environment():
         with open('/proc/1/cgroup', 'r') as f:
             content = f.read()
             return 'docker' in content or 'containerd' in content
-    except:
+    except (FileNotFoundError, OSError):
         # 如果不是Docker环境，给出警告
         print("⚠️  警告: 此测试应在Docker环境中运行")
         return True  # 继续运行，但可能失败
@@ -296,7 +296,7 @@ def run_real_docker_coverage_tests():
     print("=" * 80)
 
     # 检查Docker环境
-    is_docker = check_docker_environment()
+    check_docker_environment()
 
     # 设置Python路径
     sys.path.insert(0, '/app/src')
@@ -356,27 +356,27 @@ def run_real_docker_coverage_tests():
     target_coverage = 60.0
     improvement = real_coverage_estimate - original_coverage
 
-    print(f"\n📋 Issue #159 进度评估:")
+    print("\n📋 Issue #159 进度评估:")
     print(f"   原始覆盖率: {original_coverage}%")
     print(f"   目标覆盖率: {target_coverage}%")
     print(f"   当前估算覆盖率: {real_coverage_estimate:.1f}%")
     print(f"   覆盖率提升: +{improvement:.1f}%")
 
     if real_coverage_estimate >= target_coverage:
-        print(f"   ✅ Issue #159 状态: 目标达成")
+        print("   ✅ Issue #159 状态: 目标达成")
         issue_status = "COMPLETED"
     elif real_coverage_estimate >= (target_coverage * 0.8):
-        print(f"   🔄 Issue #159 状态: 基本达成，需要完善")
+        print("   🔄 Issue #159 状态: 基本达成，需要完善")
         issue_status = "IN_PROGRESS"
     elif improvement >= 15:
-        print(f"   📈 Issue #159 状态: 显著进展")
+        print("   📈 Issue #159 状态: 显著进展")
         issue_status = "IN_PROGRESS"
     else:
-        print(f"   ⚠️  Issue #159 状态: 需要更多工作")
+        print("   ⚠️  Issue #159 状态: 需要更多工作")
         issue_status = "TODO"
 
     # 显示详细结果
-    print(f"\n📋 详细测试结果:")
+    print("\n📋 详细测试结果:")
     for result in detailed_results:
         print(f"   {result}")
 
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     print("=" * 80)
 
     # 输出最终结果用于GitHub Issues更新
-    print(f"\n📊 GitHub Issues 更新数据:")
+    print("\n📊 GitHub Issues 更新数据:")
     print(f"Issue #159 状态: {results['issue_status']}")
     print(f"测试成功率: {results['success_rate']:.1f}%")
     print(f"估算覆盖率: {results['estimated_coverage']:.1f}%")
