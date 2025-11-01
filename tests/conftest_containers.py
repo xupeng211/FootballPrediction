@@ -119,7 +119,7 @@ def pytest_configure(config):
         client = docker.from_env()
         client.ping()
         # Docker可用，可以使用真实容器
-            except Exception:
+    except Exception:
         # Docker不可用,添加标记以跳过需要真实容器的测试
         config.addinivalue_line(
             "markers", "requires_docker: mark test as requiring Docker"

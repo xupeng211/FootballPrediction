@@ -57,7 +57,7 @@ class TestBasicOperations:
         """测试错误处理"""
         # 除零错误
         try:
-            result = 10 / 0
+            10 / 0
             assert False, "应该抛出异常"
         except ZeroDivisionError:
             assert True
@@ -65,7 +65,7 @@ class TestBasicOperations:
         # 索引错误
         try:
             numbers = [1, 2, 3]
-            result = numbers[10]
+            numbers[10]
             assert False, "应该抛出异常"
         except IndexError:
             assert True
@@ -231,11 +231,16 @@ class TestEdgeCases:
 
     def test_boolean_logic(self):
         """测试布尔逻辑"""
-        assert True and True == True
-        assert True and False == False
-        assert False or True == True
-        assert not False == True
-        assert not True == False
+        # 测试基本布尔值
+        assert True
+        assert not False
+
+        # 测试布尔运算
+        assert True and True
+        assert not (True and False)
+        assert False or True
+        assert not False
+        assert not True
 
 
 def run_all_tests():
