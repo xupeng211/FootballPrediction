@@ -1,0 +1,3819 @@
+{
+  "total_scripts": 102,
+  "python_scripts": 91,
+  "shell_scripts": 11,
+  "tool_categories": {
+    "deployment": 7,
+    "integration": 3,
+    "testing": 85,
+    "quality": 1,
+    "monitoring": 4,
+    "github": 2
+  },
+  "functionality_analysis": {
+    ".venv/lib/python3.11/site-packages/setuptools/_distutils/command/build_scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/setuptools/_distutils/command/build_scripts.py",
+      "size_lines": 173,
+      "functions": [
+        "class:build_scripts",
+        "initialize_options",
+        "finalize_options",
+        "get_source_files",
+        "run",
+        "copy_scripts",
+        "_copy_script",
+        "_change_modes",
+        "_change_mode",
+        "_validate_shebang"
+      ],
+      "imports": [
+        "os",
+        "re",
+        "stat",
+        "distutils",
+        "distutils.core",
+        "distutils.dep_util",
+        "distutils.util",
+        "distutils",
+        "tokenize"
+      ],
+      "features": [],
+      "quality_score": 55,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    ".venv/lib/python3.11/site-packages/setuptools/_distutils/command/install_scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/setuptools/_distutils/command/install_scripts.py",
+      "size_lines": 61,
+      "functions": [
+        "class:install_scripts",
+        "initialize_options",
+        "finalize_options",
+        "run",
+        "get_inputs",
+        "get_outputs"
+      ],
+      "imports": [
+        "os",
+        "distutils.core",
+        "distutils",
+        "stat"
+      ],
+      "features": [],
+      "quality_score": 32,
+      "category": "integration",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    ".venv/lib/python3.11/site-packages/setuptools/command/install_scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/setuptools/command/install_scripts.py",
+      "size_lines": 70,
+      "functions": [
+        "class:install_scripts",
+        "initialize_options",
+        "run",
+        "write_script"
+      ],
+      "imports": [
+        "distutils",
+        "distutils.command.install_scripts",
+        "distutils.errors",
+        "os",
+        "sys",
+        "pkg_resources",
+        "_path",
+        "setuptools.command.easy_install",
+        "setuptools.command.easy_install"
+      ],
+      "features": [],
+      "quality_score": 23,
+      "category": "integration",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": false,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    ".venv/lib/python3.11/site-packages/pip/_vendor/distlib/scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/pip/_vendor/distlib/scripts.py",
+      "size_lines": 447,
+      "functions": [
+        "enquote_executable",
+        "class:ScriptMaker",
+        "__init__",
+        "_get_alternate_executable",
+        "_build_shebang",
+        "_get_shebang",
+        "_get_script_text",
+        "get_manifest",
+        "_write_script",
+        "get_script_filenames",
+        "_make_script",
+        "_copy_script",
+        "dry_run",
+        "dry_run",
+        "make",
+        "make_multiple",
+        "_is_shell",
+        "_fix_jython_executable",
+        "_get_launcher"
+      ],
+      "imports": [
+        "io",
+        "logging",
+        "os",
+        "re",
+        "struct",
+        "sys",
+        "time",
+        "zipfile",
+        "compat",
+        "resources",
+        "util",
+        "java"
+      ],
+      "features": [
+        "networking",
+        "logging",
+        "git_integration"
+      ],
+      "quality_score": 44,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": false,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    ".venv/lib/python3.11/site-packages/psutil/tests/test_scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/psutil/tests/test_scripts.py",
+      "size_lines": 239,
+      "functions": [
+        "class:TestExampleScripts",
+        "class:TestInternalScripts",
+        "class:TestSetupScript",
+        "assert_stdout",
+        "assert_syntax",
+        "test_coverage",
+        "test_executable",
+        "test_disk_usage",
+        "test_free",
+        "test_meminfo",
+        "test_procinfo",
+        "test_who",
+        "test_ps",
+        "test_pstree",
+        "test_netstat",
+        "test_ifconfig",
+        "test_pmap",
+        "test_procsmem",
+        "test_killall",
+        "test_nettop",
+        "test_top",
+        "test_iotop",
+        "test_pidof",
+        "test_winservices",
+        "test_cpu_distribution",
+        "test_temperatures",
+        "test_fans",
+        "test_battery",
+        "test_sensors",
+        "ls",
+        "test_syntax_all",
+        "test_import_all",
+        "test_invocation",
+        "test_python2"
+      ],
+      "imports": [
+        "ast",
+        "os",
+        "shutil",
+        "stat",
+        "subprocess",
+        "pytest",
+        "psutil",
+        "psutil",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests",
+        "psutil.tests"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 61,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    ".venv/lib/python3.11/site-packages/numpy/tests/test_scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/numpy/tests/test_scripts.py",
+      "size_lines": 49,
+      "functions": [
+        "find_f2py_commands",
+        "test_f2py",
+        "test_pep338"
+      ],
+      "imports": [
+        "os",
+        "subprocess",
+        "sys",
+        "os.path",
+        "os.path",
+        "pytest",
+        "numpy",
+        "numpy.testing"
+      ],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 29,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    ".venv/lib/python3.11/site-packages/numpy/distutils/command/build_scripts.py": {
+      "path": ".venv/lib/python3.11/site-packages/numpy/distutils/command/build_scripts.py",
+      "size_lines": 49,
+      "functions": [
+        "class:build_scripts",
+        "generate_scripts",
+        "run",
+        "get_source_files"
+      ],
+      "imports": [
+        "distutils.command.build_scripts",
+        "numpy.distutils",
+        "numpy.distutils.misc_util",
+        "numpy.distutils.misc_util"
+      ],
+      "features": [],
+      "quality_score": 28,
+      "category": "integration",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "scripts/production_deployment_automation.py": {
+      "path": "scripts/production_deployment_automation.py",
+      "size_lines": 1390,
+      "functions": [
+        "class:DeploymentStatus",
+        "class:Environment",
+        "class:SecurityLevel",
+        "class:DeploymentConfig",
+        "class:SecurityConfig",
+        "class:MonitoringConfig",
+        "class:DeploymentResult",
+        "class:ProductionDeploymentAutomation",
+        "main",
+        "__init__",
+        "_generate_deployment_id",
+        "create_production_deployment_config",
+        "_generate_alert_rules",
+        "_generate_monitoring_dashboards",
+        "_get_environment_specific_config",
+        "generate_production_docker_compose",
+        "generate_ssl_automation_script",
+        "generate_deployment_verification_script",
+        "create_secrets_files",
+        "execute_deployment",
+        "_generate_monitoring_configs",
+        "_run_pre_deployment_checks",
+        "export_deployment_report",
+        "log_message",
+        "check_port"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "time",
+        "os",
+        "subprocess",
+        "hashlib",
+        "secrets",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "enum",
+        "tempfile",
+        "shutil",
+        "argparse",
+        "socket",
+        "traceback"
+      ],
+      "features": [
+        "networking",
+        "database",
+        "cli",
+        "automation"
+      ],
+      "quality_score": 82,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/simple_api_test.py": {
+      "path": "scripts/simple_api_test.py",
+      "size_lines": 148,
+      "functions": [],
+      "imports": [
+        "asyncio",
+        "aiohttp",
+        "json",
+        "datetime"
+      ],
+      "features": [
+        "networking"
+      ],
+      "quality_score": 38,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quick_ml_validation.py": {
+      "path": "scripts/quick_ml_validation.py",
+      "size_lines": 329,
+      "functions": [
+        "generate_test_data",
+        "test_xgboost",
+        "test_lightgbm",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "logging",
+        "time",
+        "datetime",
+        "typing",
+        "numpy",
+        "pandas",
+        "sklearn.metrics",
+        "sklearn.model_selection",
+        "sklearn.preprocessing",
+        "xgboost",
+        "lightgbm"
+      ],
+      "features": [
+        "logging"
+      ],
+      "quality_score": 61,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/phase_g_simulation_demo.py": {
+      "path": "scripts/phase_g_simulation_demo.py",
+      "size_lines": 238,
+      "functions": [
+        "simulate_phase_g_complete",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "datetime",
+        "pathlib"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 57,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/coverage_dashboard.py": {
+      "path": "scripts/coverage_dashboard.py",
+      "size_lines": 304,
+      "functions": [
+        "class:CoverageSnapshot",
+        "class:CoverageDashboard",
+        "main",
+        "__init__",
+        "get_current_coverage",
+        "save_snapshot",
+        "load_history",
+        "show_dashboard",
+        "generate_report",
+        "watch_mode"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "time",
+        "datetime",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "argparse"
+      ],
+      "features": [
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/coverage_booster.py": {
+      "path": "scripts/coverage_booster.py",
+      "size_lines": 428,
+      "functions": [
+        "get_current_coverage",
+        "create_targeted_tests",
+        "run_coverage_test",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "subprocess",
+        "re",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "database",
+        "logging",
+        "coverage_analysis"
+      ],
+      "quality_score": 70,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/code_review_automation.py": {
+      "path": "scripts/code_review_automation.py",
+      "size_lines": 557,
+      "functions": [
+        "class:ReviewCheckResult",
+        "class:PRReviewMetrics",
+        "class:CodeReviewAutomation",
+        "main",
+        "__init__",
+        "run_quality_checks",
+        "_run_check",
+        "_analyze_failure",
+        "generate_review_report",
+        "analyze_review_trends",
+        "_generate_mock_metrics",
+        "_calculate_trend",
+        "_calculate_quality_trend",
+        "suggest_review_improvements",
+        "setup_review_hooks",
+        "create_review_template"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "os",
+        "subprocess",
+        "sys",
+        "time",
+        "datetime",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "argparse",
+        "logging",
+        "rich.console",
+        "rich.table",
+        "rich.progress",
+        "rich.panel",
+        "rich.tree",
+        "random"
+      ],
+      "features": [
+        "logging",
+        "cli",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 82,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/smart_coverage_strategy.py": {
+      "path": "scripts/smart_coverage_strategy.py",
+      "size_lines": 438,
+      "functions": [
+        "analyze_current_coverage",
+        "create_high_impact_tests",
+        "run_targeted_coverage_test",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "subprocess",
+        "re",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "database",
+        "logging",
+        "coverage_analysis"
+      ],
+      "quality_score": 70,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/sync_github_issues.py": {
+      "path": "scripts/sync_github_issues.py",
+      "size_lines": 488,
+      "functions": [
+        "class:GitHubIssueSynchronizer",
+        "main",
+        "__init__",
+        "check_git_status",
+        "_get_current_branch",
+        "get_commit_history",
+        "generate_issue_update_comment",
+        "generate_sync_report",
+        "save_sync_report",
+        "create_update_instructions",
+        "save_update_instructions",
+        "run_synchronization"
+      ],
+      "imports": [
+        "json",
+        "subprocess",
+        "os",
+        "datetime",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "networking",
+        "git_integration"
+      ],
+      "quality_score": 76,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quick_review.py": {
+      "path": "scripts/quick_review.py",
+      "size_lines": 89,
+      "functions": [
+        "run_command",
+        "quick_checks"
+      ],
+      "imports": [
+        "subprocess",
+        "sys",
+        "time",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 42,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/fix_api_routes.py": {
+      "path": "scripts/fix_api_routes.py",
+      "size_lines": 298,
+      "functions": [
+        "class:APIRouteFixer",
+        "__init__",
+        "log_test",
+        "analyze_problems",
+        "suggest_fixes",
+        "generate_fix_report"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "time",
+        "datetime",
+        "httpx"
+      ],
+      "features": [
+        "networking"
+      ],
+      "quality_score": 50,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/integrated_coverage_improver.py": {
+      "path": "scripts/integrated_coverage_improver.py",
+      "size_lines": 261,
+      "functions": [
+        "class:IntegratedCoverageImprover",
+        "main",
+        "__init__",
+        "log",
+        "check_current_state",
+        "apply_quality_fixes",
+        "expand_test_coverage",
+        "generate_real_report",
+        "run_integrated_improvement"
+      ],
+      "imports": [
+        "sys",
+        "os",
+        "json",
+        "datetime",
+        "subprocess",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 71,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/ci_dashboard_generator.py": {
+      "path": "scripts/ci_dashboard_generator.py",
+      "size_lines": 523,
+      "functions": [
+        "class:DashboardMetrics",
+        "class:DashboardReport",
+        "class:CICDDashboard",
+        "main",
+        "__init__",
+        "collect_dashboard_metrics",
+        "_analyze_ci_history",
+        "_analyze_coverage_trends",
+        "_calculate_quality_score",
+        "_count_active_issues",
+        "generate_dashboard_markdown",
+        "_get_grade",
+        "_get_performance_grade",
+        "_generate_coverage_chart",
+        "_generate_performance_chart",
+        "_generate_dashboard_recommendations",
+        "_generate_dashboard_alerts",
+        "export_dashboard_report",
+        "create_github_issue_dashboard",
+        "_get_emoji",
+        "_get_performance_emoji",
+        "_get_quality_emoji"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "cli",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/fix_test_imports.py": {
+      "path": "scripts/fix_test_imports.py",
+      "size_lines": 196,
+      "functions": [
+        "analyze_module_structure",
+        "fix_test_imports",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "re",
+        "ast",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "logging"
+      ],
+      "quality_score": 62,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/tool_integration_optimizer.py": {
+      "path": "scripts/tool_integration_optimizer.py",
+      "size_lines": 417,
+      "functions": [
+        "class:ToolInfo",
+        "class:ToolIntegrationOptimizer",
+        "main",
+        "__init__",
+        "discover_tools",
+        "_analyze_tool",
+        "_extract_imports",
+        "_identify_dependencies",
+        "_extract_functionality",
+        "_check_tool_status",
+        "calculate_dependents",
+        "analyze_integration",
+        "_find_dependency_chains",
+        "generate_optimization_suggestions",
+        "create_integration_workflow",
+        "generate_report",
+        "dfs"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "ast"
+      ],
+      "features": [
+        "networking",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/git_flow_automation.py": {
+      "path": "scripts/git_flow_automation.py",
+      "size_lines": 421,
+      "functions": [
+        "class:GitFlowAutomation",
+        "main",
+        "__init__",
+        "_load_config",
+        "_get_current_branch",
+        "run_git_command",
+        "validate_branch_name",
+        "start_feature",
+        "finish_feature",
+        "start_release",
+        "finish_release",
+        "start_hotfix",
+        "finish_hotfix",
+        "show_status",
+        "init_git_flow"
+      ],
+      "imports": [
+        "subprocess",
+        "sys",
+        "argparse",
+        "re",
+        "typing",
+        "pathlib",
+        "json",
+        "datetime"
+      ],
+      "features": [
+        "cli",
+        "git_integration"
+      ],
+      "quality_score": 76,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/test_framework_builder.py": {
+      "path": "scripts/test_framework_builder.py",
+      "size_lines": 1025,
+      "functions": [
+        "class:TestFrameworkStatus",
+        "class:QualityGateStatus",
+        "class:TestIssue",
+        "class:TestFrameworkReport",
+        "class:TestFrameworkBuilder",
+        "main",
+        "__init__",
+        "analyze_test_framework",
+        "_scan_test_files",
+        "_dry_run_pytest_collection",
+        "_identify_test_issues",
+        "_check_file_imports",
+        "_get_suggested_fix",
+        "_generate_framework_recommendations",
+        "build_basic_test_framework",
+        "_apply_test_fixes",
+        "_create_basic_tests",
+        "_generate_health_check_test",
+        "_generate_config_test",
+        "_generate_api_test",
+        "_generate_domain_test",
+        "_optimize_pytest_config",
+        "_setup_quality_gates",
+        "_create_test_scripts",
+        "export_framework_report"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "os",
+        "subprocess",
+        "shutil",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "enum",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "testing",
+        "database",
+        "cli",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 85,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/phase35_ai_coverage_master.py": {
+      "path": "scripts/phase35_ai_coverage_master.py",
+      "size_lines": 696,
+      "functions": [
+        "class:Phase35AICoverageMaster",
+        "main",
+        "__init__",
+        "intelligent_coverage_analysis",
+        "_collect_base_coverage_data",
+        "_deep_module_analysis",
+        "_calculate_function_complexity",
+        "_analyze_test_correlation",
+        "_identify_module_patterns",
+        "_identify_coverage_patterns",
+        "_predict_improvement_opportunities",
+        "_generate_intelligent_strategy",
+        "execute_intelligent_strategy",
+        "_execute_phase_1",
+        "_execute_phase_2",
+        "_create_ai_generated_basic_tests",
+        "_create_ai_comprehensive_tests",
+        "_generate_smart_basic_tests",
+        "_generate_comprehensive_test_suite",
+        "verify_ai_improvement"
+      ],
+      "imports": [
+        "ast",
+        "subprocess",
+        "json",
+        "pathlib",
+        "typing",
+        "re",
+        "collections"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/integrate_real_database.py": {
+      "path": "scripts/integrate_real_database.py",
+      "size_lines": 578,
+      "functions": [
+        "class:DatabaseIntegrator",
+        "__init__",
+        "log_test",
+        "check_if_real_data",
+        "generate_integration_report"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "time",
+        "datetime",
+        "httpx",
+        "sqlalchemy",
+        "src.database.connection"
+      ],
+      "features": [
+        "networking",
+        "database"
+      ],
+      "quality_score": 51,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/enhanced_real_data_integration.py": {
+      "path": "scripts/enhanced_real_data_integration.py",
+      "size_lines": 535,
+      "functions": [
+        "class:RealDataIntegrationSystem",
+        "main",
+        "__init__",
+        "generate_srs_based_realistic_data",
+        "_add_srs_correlations",
+        "optimize_model_parameters",
+        "evaluate_ensemble_performance",
+        "_get_trained_model",
+        "run_complete_optimization"
+      ],
+      "imports": [
+        "json",
+        "logging",
+        "time",
+        "datetime",
+        "typing",
+        "numpy",
+        "pandas",
+        "sklearn.metrics",
+        "sklearn.model_selection",
+        "sklearn.preprocessing",
+        "xgboost",
+        "lightgbm"
+      ],
+      "features": [
+        "logging"
+      ],
+      "quality_score": 71,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/prepare_for_deployment.py": {
+      "path": "scripts/prepare_for_deployment.py",
+      "size_lines": 541,
+      "functions": [
+        "class:DeploymentPreparation",
+        "main",
+        "__init__",
+        "create_pyproject_toml",
+        "create_requirements_txt",
+        "create_docker_compose",
+        "create_env_example",
+        "create_nginx_config",
+        "create_db_init_script",
+        "create_deployment_scripts",
+        "create_health_check",
+        "run_preparation"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "networking",
+        "database",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 85,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/enhanced_ml_training_system.py": {
+      "path": "scripts/enhanced_ml_training_system.py",
+      "size_lines": 703,
+      "functions": [
+        "class:EnhancedMLTrainingSystem",
+        "__init__",
+        "generate_enhanced_training_data",
+        "_validate_data_quality",
+        "analyze_feature_importance",
+        "save_training_results"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "logging",
+        "os",
+        "sys",
+        "time",
+        "datetime",
+        "pathlib",
+        "typing",
+        "numpy",
+        "pandas",
+        "sklearn.metrics",
+        "sklearn.model_selection",
+        "sklearn.preprocessing",
+        "src.ml.advanced_model_trainer",
+        "xgboost",
+        "lightgbm",
+        "sklearn.ensemble"
+      ],
+      "features": [
+        "logging",
+        "coverage_analysis"
+      ],
+      "quality_score": 53,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/analyze_intelligent_tools.py": {
+      "path": "scripts/analyze_intelligent_tools.py",
+      "size_lines": 523,
+      "functions": [
+        "class:IntelligentToolAnalyzer",
+        "main",
+        "__init__",
+        "scan_all_scripts",
+        "analyze_script_functionality",
+        "analyze_python_script",
+        "analyze_shell_script",
+        "categorize_script",
+        "calculate_quality_score",
+        "generate_optimization_suggestions",
+        "generate_integration_opportunities",
+        "create_optimization_plan",
+        "generate_report"
+      ],
+      "imports": [
+        "os",
+        "re",
+        "ast",
+        "json",
+        "pathlib",
+        "typing",
+        "datetime",
+        "subprocess"
+      ],
+      "features": [
+        "testing",
+        "networking",
+        "database",
+        "logging",
+        "cli",
+        "automation",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 90,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/development_environment_checker.py": {
+      "path": "scripts/development_environment_checker.py",
+      "size_lines": 617,
+      "functions": [
+        "class:Colors",
+        "color_print",
+        "class:DevelopmentEnvironmentChecker",
+        "main",
+        "__init__",
+        "_get_system_info",
+        "run_command",
+        "check_system_requirements",
+        "check_required_tools",
+        "check_optional_tools",
+        "check_python_packages",
+        "check_project_structure",
+        "check_configuration_files",
+        "check_git_configuration",
+        "check_docker_environment",
+        "run_functional_tests",
+        "generate_report",
+        "run_all_checks"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "subprocess",
+        "json",
+        "platform",
+        "pathlib",
+        "typing",
+        "datetime",
+        "argparse",
+        "shutil"
+      ],
+      "features": [
+        "testing",
+        "cli",
+        "git_integration"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/fix_syntax_errors.py": {
+      "path": "scripts/fix_syntax_errors.py",
+      "size_lines": 151,
+      "functions": [
+        "fix_python_syntax",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "ast",
+        "sys",
+        "pathlib",
+        "re"
+      ],
+      "features": [
+        "git_integration"
+      ],
+      "quality_score": 57,
+      "category": "quality",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/smart_quality_fixer.py": {
+      "path": "scripts/smart_quality_fixer.py",
+      "size_lines": 935,
+      "functions": [
+        "class:SmartQualityFixer",
+        "main",
+        "__init__",
+        "_load_quality_standards",
+        "run_comprehensive_fix",
+        "fix_syntax_errors",
+        "_apply_syntax_fixes",
+        "fix_import_errors",
+        "_fix_single_import_error",
+        "_find_similar_files",
+        "fix_mypy_errors",
+        "_fix_mypy_error",
+        "_fix_name_defined_error",
+        "_fix_attr_defined_error",
+        "_fix_assignment_error",
+        "_fix_return_value_error",
+        "fix_ruff_issues",
+        "fix_test_issues",
+        "_fix_test_file",
+        "_fix_test_imports",
+        "_fix_test_fixtures",
+        "_fix_test_assertions",
+        "generate_fix_report",
+        "_generate_recommendations",
+        "fix_code_review_issues",
+        "_apply_code_review_rules",
+        "apply_refactor_suggestions",
+        "_apply_refactor_patterns",
+        "fix_dependency_issues",
+        "_fix_dependency_content",
+        "generate_enhanced_fix_report",
+        "_generate_ai_analysis",
+        "_generate_enhanced_recommendations",
+        "_calculate_quality_score",
+        "print_summary"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "re",
+        "ast",
+        "pathlib",
+        "typing",
+        "datetime",
+        "logging",
+        "argparse"
+      ],
+      "features": [
+        "testing",
+        "networking",
+        "logging",
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 85,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/real_api_verification.py": {
+      "path": "scripts/real_api_verification.py",
+      "size_lines": 203,
+      "functions": [
+        "class:RealAPIVerifier",
+        "__init__",
+        "log_test",
+        "generate_verification_report"
+      ],
+      "imports": [
+        "asyncio",
+        "time",
+        "datetime",
+        "httpx"
+      ],
+      "features": [
+        "networking"
+      ],
+      "quality_score": 46,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/manage_github_issues.py": {
+      "path": "scripts/manage_github_issues.py",
+      "size_lines": 387,
+      "functions": [
+        "class:GitHubCLIManager",
+        "main",
+        "__init__",
+        "run_gh_command",
+        "get_issue_status",
+        "add_issue_comment",
+        "close_issue",
+        "add_issue_labels",
+        "read_comment_file",
+        "process_single_issue",
+        "process_all_issues",
+        "generate_summary_report"
+      ],
+      "imports": [
+        "subprocess",
+        "json",
+        "time",
+        "pathlib",
+        "typing",
+        "json"
+      ],
+      "features": [
+        "git_integration"
+      ],
+      "quality_score": 73,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/setup_git_flow.py": {
+      "path": "scripts/setup_git_flow.py",
+      "size_lines": 625,
+      "functions": [
+        "class:GitFlowSetup",
+        "main",
+        "__init__",
+        "_validate_environment",
+        "_api_request",
+        "setup_branch_protection",
+        "_update_branch_protection",
+        "create_initial_branches",
+        "_check_branch_exists",
+        "_create_branch_from",
+        "setup_teams",
+        "create_workflow_files",
+        "create_git_hooks",
+        "setup_git_config",
+        "create_initial_docs",
+        "run_full_setup",
+        "print_next_steps"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "pathlib",
+        "typing",
+        "requests",
+        "datetime"
+      ],
+      "features": [
+        "networking",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/complete_seed_user_test.py": {
+      "path": "scripts/complete_seed_user_test.py",
+      "size_lines": 508,
+      "functions": [
+        "class:SeedUserTester",
+        "__init__",
+        "log_test",
+        "generate_seed_user_report"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "time",
+        "random",
+        "datetime",
+        "httpx"
+      ],
+      "features": [
+        "networking"
+      ],
+      "quality_score": 46,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/coverage_improvement_executor.py": {
+      "path": "scripts/coverage_improvement_executor.py",
+      "size_lines": 692,
+      "functions": [
+        "class:CoverageMetrics",
+        "class:CoverageIssue",
+        "class:ImprovementAction",
+        "class:CoverageAnalyzer",
+        "class:TestGenerator",
+        "class:CoverageImprovementExecutor",
+        "main",
+        "__init__",
+        "collect_coverage_data",
+        "analyze_coverage_issues",
+        "_analyze_uncovered_code",
+        "_group_consecutive_lines",
+        "_is_function_definition",
+        "_is_error_handling",
+        "_is_complex_logic",
+        "__init__",
+        "generate_tests_for_issues",
+        "_generate_function_tests",
+        "_generate_error_tests",
+        "_generate_logic_tests",
+        "_generate_coverage_tests",
+        "_get_test_file_path",
+        "__init__",
+        "run_analysis",
+        "_generate_report",
+        "_propose_improvements",
+        "_implement_improvements"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "ast",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "collections",
+        "re",
+        "time",
+        "datetime"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/create_issues_final.py": {
+      "path": "scripts/create_issues_final.py",
+      "size_lines": 204,
+      "functions": [
+        "class:QualityIssuesCreator",
+        "main",
+        "__init__",
+        "create_all_issues",
+        "generate_issues_report",
+        "create_github_issues_batch"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "pathlib",
+        "typing",
+        "datetime"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 71,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/demo_phase_g_complete.py": {
+      "path": "scripts/demo_phase_g_complete.py",
+      "size_lines": 241,
+      "functions": [
+        "create_demo_source_code",
+        "run_phase_g_demo"
+      ],
+      "imports": [
+        "sys",
+        "json",
+        "os",
+        "pathlib",
+        "datetime",
+        "intelligent_test_gap_analyzer",
+        "auto_test_generator",
+        "shutil"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 42,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/coverage_optimizer.py": {
+      "path": "scripts/coverage_optimizer.py",
+      "size_lines": 451,
+      "functions": [
+        "class:CoverageReport",
+        "class:CoverageOptimizer",
+        "main",
+        "covered_statements",
+        "__init__",
+        "run_coverage_analysis",
+        "_parse_coverage_report",
+        "_get_empty_report",
+        "_cleanup_coverage_files",
+        "analyze_coverage_gaps",
+        "_suggest_tests_for_file",
+        "generate_improvement_plan",
+        "create_targeted_tests",
+        "_generate_basic_test"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "coverage",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "argparse",
+        "shutil"
+      ],
+      "features": [
+        "testing",
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/ci_cd_monitor_optimizer.py": {
+      "path": "scripts/ci_cd_monitor_optimizer.py",
+      "size_lines": 1073,
+      "functions": [
+        "class:MonitoringStatus",
+        "class:OptimizationType",
+        "class:CIPerformanceMetric",
+        "class:OptimizationResult",
+        "class:MonitoringReport",
+        "class:CICDMonitor",
+        "main",
+        "__init__",
+        "analyze_current_ci_performance",
+        "_analyze_workflow",
+        "_estimate_workflow_duration",
+        "_analyze_recent_ci_runs",
+        "identify_optimization_opportunities",
+        "_calculate_cache_improvement",
+        "_calculate_parallel_improvement",
+        "_calculate_performance_improvement",
+        "generate_optimized_ci_config",
+        "setup_monitoring_alerts",
+        "run_comprehensive_monitoring",
+        "_generate_monitoring_recommendations",
+        "_generate_next_actions",
+        "_evaluate_overall_status",
+        "export_monitoring_report",
+        "create_optimized_workflow_files",
+        "_generate_optimized_ci_workflow",
+        "_generate_monitoring_workflow"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "time",
+        "subprocess",
+        "asyncio",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "enum",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "testing",
+        "networking",
+        "cli",
+        "automation",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 88,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quality_guardian.py": {
+      "path": "scripts/quality_guardian.py",
+      "size_lines": 583,
+      "functions": [
+        "class:QualityGuardian",
+        "main",
+        "__init__",
+        "run_full_quality_check",
+        "_collect_quality_metrics",
+        "_analyze_code_quality",
+        "_check_test_health",
+        "_check_security",
+        "_assess_overall_quality",
+        "_generate_quality_report",
+        "_analyze_quality_trends",
+        "_compare_with_benchmarks",
+        "_generate_action_items",
+        "_print_quality_summary",
+        "run_auto_fix",
+        "optimize_quality_standards",
+        "run_guardian_cycle"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "subprocess",
+        "argparse",
+        "pathlib",
+        "typing",
+        "datetime",
+        "logging",
+        "smart_quality_fixer"
+      ],
+      "features": [
+        "testing",
+        "logging",
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 82,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/final_coverage_push.py": {
+      "path": "scripts/final_coverage_push.py",
+      "size_lines": 714,
+      "functions": [
+        "create_massive_test_suite",
+        "run_massive_coverage_test",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "subprocess",
+        "re",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "database",
+        "logging",
+        "coverage_analysis"
+      ],
+      "quality_score": 68,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/create_quality_issues_simple.py": {
+      "path": "scripts/create_quality_issues_simple.py",
+      "size_lines": 659,
+      "functions": [],
+      "imports": [],
+      "features": [],
+      "quality_score": 0,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": false,
+      "has_error_handling": false,
+      "uses_async": false,
+      "syntax_error": true
+    },
+    "scripts/create_quality_issues.py": {
+      "path": "scripts/create_quality_issues.py",
+      "size_lines": 837,
+      "functions": [],
+      "imports": [],
+      "features": [],
+      "quality_score": 0,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": false,
+      "has_error_handling": false,
+      "uses_async": false,
+      "syntax_error": true
+    },
+    "scripts/simple_quality_enhancer.py": {
+      "path": "scripts/simple_quality_enhancer.py",
+      "size_lines": 114,
+      "functions": [
+        "enhance_code_quality",
+        "main"
+      ],
+      "imports": [
+        "subprocess",
+        "re",
+        "pathlib"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 57,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/create_service_tests.py": {
+      "path": "scripts/create_service_tests.py",
+      "size_lines": 1323,
+      "functions": [
+        "class:TestConfig",
+        "class:ServiceAnalyzer",
+        "class:ServiceTestGenerator",
+        "class:ServiceTestExecutor",
+        "create_prediction_service_test",
+        "create_data_processing_service_test",
+        "create_monitoring_service_test",
+        "main",
+        "__init__",
+        "analyze_service_module",
+        "_analyze_class",
+        "_analyze_function",
+        "_analyze_runtime_class",
+        "_analyze_runtime_function",
+        "__init__",
+        "generate_tests_for_service",
+        "_generate_fixtures",
+        "_generate_class_tests",
+        "_generate_method_tests",
+        "_generate_function_tests",
+        "__init__",
+        "discover_services",
+        "generate_tests_for_service",
+        "generate_all_service_tests",
+        "_generate_generation_report"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "ast",
+        "json",
+        "inspect",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "collections",
+        "re",
+        "datetime"
+      ],
+      "features": [
+        "testing",
+        "networking",
+        "database"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/create_simple_working_tests.py": {
+      "path": "scripts/create_simple_working_tests.py",
+      "size_lines": 145,
+      "functions": [
+        "create_basic_test_file",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "pathlib"
+      ],
+      "features": [
+        "testing",
+        "logging"
+      ],
+      "quality_score": 60,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/verify_data_integrity.py": {
+      "path": "scripts/verify_data_integrity.py",
+      "size_lines": 430,
+      "functions": [
+        "class:DataIntegrityVerifier",
+        "__init__",
+        "log_test",
+        "analyze_data_quality",
+        "check_data_consistency",
+        "generate_verification_report"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "time",
+        "datetime",
+        "httpx",
+        "re"
+      ],
+      "features": [
+        "networking"
+      ],
+      "quality_score": 50,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/setup_development_environment.py": {
+      "path": "scripts/setup_development_environment.py",
+      "size_lines": 732,
+      "functions": [
+        "class:DevelopmentEnvironmentSetup",
+        "main",
+        "__init__",
+        "log_info",
+        "log_success",
+        "log_warning",
+        "log_error",
+        "run_command",
+        "check_system_requirements",
+        "setup_python_environment",
+        "setup_docker_environment",
+        "setup_ide_configurations",
+        "setup_git_hooks",
+        "setup_environment_files",
+        "create_basic_makefile",
+        "run_validation_tests",
+        "generate_setup_report",
+        "run_full_setup"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "subprocess",
+        "json",
+        "pathlib",
+        "typing",
+        "platform",
+        "shutil",
+        "datetime",
+        "time",
+        "sys"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/create_api_tests.py": {
+      "path": "scripts/create_api_tests.py",
+      "size_lines": 533,
+      "functions": [
+        "create_api_health_test",
+        "create_api_predictions_test",
+        "create_api_data_test",
+        "create_api_features_test",
+        "create_api_monitoring_test",
+        "main"
+      ],
+      "imports": [
+        "pathlib"
+      ],
+      "features": [
+        "testing",
+        "networking",
+        "database"
+      ],
+      "quality_score": 56,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "scripts/quick_start_seed_test.py": {
+      "path": "scripts/quick_start_seed_test.py",
+      "size_lines": 199,
+      "functions": [
+        "class:SeedTestQuickStarter",
+        "__init__",
+        "print_banner",
+        "open_test_environment",
+        "print_test_instructions",
+        "print_feedback_info",
+        "print_quick_test_commands",
+        "print_success_message"
+      ],
+      "imports": [
+        "asyncio",
+        "webbrowser",
+        "time",
+        "datetime",
+        "httpx"
+      ],
+      "features": [
+        "networking",
+        "database",
+        "git_integration"
+      ],
+      "quality_score": 60,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/seed_user_test.py": {
+      "path": "scripts/seed_user_test.py",
+      "size_lines": 405,
+      "functions": [
+        "class:SeedUserTester",
+        "__init__",
+        "log_test",
+        "generate_test_report"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "random",
+        "time",
+        "datetime",
+        "typing",
+        "httpx",
+        "passlib.context"
+      ],
+      "features": [
+        "networking",
+        "database"
+      ],
+      "quality_score": 49,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/simple_coverage_analyzer.py": {
+      "path": "scripts/simple_coverage_analyzer.py",
+      "size_lines": 173,
+      "functions": [
+        "class:SimpleCoverageReport",
+        "analyze_coverage",
+        "generate_improvement_suggestions",
+        "main"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "pathlib",
+        "typing",
+        "dataclasses"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 61,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/simple_test_runner.py": {
+      "path": "scripts/simple_test_runner.py",
+      "size_lines": 91,
+      "functions": [
+        "run_test_file",
+        "main"
+      ],
+      "imports": [
+        "sys",
+        "importlib",
+        "os",
+        "pathlib"
+      ],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 57,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/auto_fix_indentation.py": {
+      "path": "scripts/auto_fix_indentation.py",
+      "size_lines": 29,
+      "functions": [
+        "fix_indentation"
+      ],
+      "imports": [
+        "subprocess",
+        "sys"
+      ],
+      "features": [],
+      "quality_score": 37,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/fix_generated_tests.py": {
+      "path": "scripts/fix_generated_tests.py",
+      "size_lines": 305,
+      "functions": [
+        "analyze_module_structure",
+        "create_realistic_test_file",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "re",
+        "ast",
+        "pathlib",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "logging"
+      ],
+      "quality_score": 62,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/test_performance.py": {
+      "path": "scripts/test_performance.py",
+      "size_lines": 355,
+      "functions": [
+        "class:PerformanceTester",
+        "__init__",
+        "_percentile",
+        "monitor_system_resources",
+        "_get_system_info",
+        "_calculate_performance_score",
+        "save_results",
+        "print_summary"
+      ],
+      "imports": [
+        "asyncio",
+        "aiohttp",
+        "time",
+        "statistics",
+        "json",
+        "typing",
+        "concurrent.futures",
+        "requests",
+        "psutil",
+        "os"
+      ],
+      "features": [
+        "networking"
+      ],
+      "quality_score": 54,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/automated_quality_gate.py": {
+      "path": "scripts/automated_quality_gate.py",
+      "size_lines": 63,
+      "functions": [
+        "run_syntax_check",
+        "run_quality_check"
+      ],
+      "imports": [
+        "subprocess",
+        "sys"
+      ],
+      "features": [],
+      "quality_score": 39,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/PHASE_3_4_API_MOCK_FIX_BATCH.py": {
+      "path": "scripts/PHASE_3_4_API_MOCK_FIX_BATCH.py",
+      "size_lines": 187,
+      "functions": [
+        "create_mock_api_template",
+        "fix_api_file",
+        "batch_fix_api_files",
+        "main"
+      ],
+      "imports": [
+        "os",
+        "re",
+        "typing"
+      ],
+      "features": [
+        "testing",
+        "database"
+      ],
+      "quality_score": 64,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/analysis/analyze_coverage.py": {
+      "path": "scripts/analysis/analyze_coverage.py",
+      "size_lines": 63,
+      "functions": [
+        "count_lines_of_code",
+        "get_coverage_data",
+        "main"
+      ],
+      "imports": [
+        "subprocess",
+        "sys",
+        "pathlib"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 62,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/performance/system_performance_optimizer.py": {
+      "path": "scripts/performance/system_performance_optimizer.py",
+      "size_lines": 937,
+      "functions": [
+        "class:PerformanceMetrics",
+        "class:OptimizationTarget",
+        "class:OptimizationResult",
+        "class:SystemPerformanceOptimizer",
+        "__init__",
+        "_load_optimization_config",
+        "identify_optimization_targets",
+        "_generate_optimization_report",
+        "_generate_recommendations",
+        "save_optimization_report",
+        "print_optimization_summary"
+      ],
+      "imports": [
+        "asyncio",
+        "json",
+        "logging",
+        "os",
+        "sys",
+        "time",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "datetime",
+        "subprocess",
+        "psutil",
+        "yaml",
+        "src.core.config",
+        "src.core.logging"
+      ],
+      "features": [
+        "networking",
+        "database",
+        "logging"
+      ],
+      "quality_score": 64,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/test_maintenance_automation.py": {
+      "path": "scripts/maintenance/test_maintenance_automation.py",
+      "size_lines": 803,
+      "functions": [
+        "class:MaintenanceStatus",
+        "class:MaintenanceTask",
+        "class:MaintenanceConfig",
+        "class:MaintenanceTaskResult",
+        "class:TestMaintenanceAutomation",
+        "__init__",
+        "_init_database",
+        "save_task_result",
+        "should_run_task",
+        "get_status_summary",
+        "shutdown"
+      ],
+      "imports": [
+        "json",
+        "sqlite3",
+        "sys",
+        "time",
+        "asyncio",
+        "subprocess",
+        "datetime",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "enum",
+        "threading",
+        "argparse",
+        "test_health_monitor",
+        "coverage_trend_analyzer",
+        "ci_cd_quality_gate",
+        "test_report_generator",
+        "traceback"
+      ],
+      "features": [
+        "database",
+        "cli",
+        "automation",
+        "coverage_analysis"
+      ],
+      "quality_score": 67,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/maintenance_logger.py": {
+      "path": "scripts/maintenance/maintenance_logger.py",
+      "size_lines": 312,
+      "functions": [
+        "class:MaintenanceRecord",
+        "class:MaintenanceLogger",
+        "main",
+        "__init__",
+        "_init_database",
+        "log_maintenance",
+        "log_health_snapshot",
+        "get_maintenance_history",
+        "get_health_trends",
+        "generate_maintenance_report",
+        "save_maintenance_report",
+        "cleanup_old_logs"
+      ],
+      "imports": [
+        "json",
+        "sqlite3",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses"
+      ],
+      "features": [
+        "database"
+      ],
+      "quality_score": 73,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/health_monitor.py": {
+      "path": "scripts/maintenance/health_monitor.py",
+      "size_lines": 550,
+      "functions": [
+        "class:HealthAlert",
+        "class:HealthMonitor",
+        "main",
+        "__init__",
+        "_load_config",
+        "_save_config",
+        "_load_alerts",
+        "_save_alerts",
+        "_check_root_files_count",
+        "_check_health_score",
+        "_check_empty_directories",
+        "_check_naming_violations",
+        "_check_misplaced_files",
+        "_check_project_size",
+        "check_health",
+        "save_monitoring_report",
+        "get_health_trends",
+        "generate_health_dashboard",
+        "_generate_recommendations",
+        "run_monitoring"
+      ],
+      "imports": [
+        "json",
+        "smtplib",
+        "sys",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "scripts.maintenance.directory_maintenance",
+        "scripts.maintenance.maintenance_logger",
+        "email.mime.text",
+        "email.mime.multipart",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "cli",
+        "automation"
+      ],
+      "quality_score": 76,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/scheduled_maintenance.py": {
+      "path": "scripts/maintenance/scheduled_maintenance.py",
+      "size_lines": 368,
+      "functions": [
+        "class:ScheduledMaintenance",
+        "main",
+        "__init__",
+        "_signal_handler",
+        "_load_scheduler_state",
+        "_save_scheduler_state",
+        "_should_run_task",
+        "_execute_maintenance_task",
+        "run_maintenance_cycle",
+        "run_daemon_mode",
+        "run_once"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "time",
+        "json",
+        "signal",
+        "pathlib",
+        "datetime",
+        "typing",
+        "scripts.maintenance.directory_maintenance",
+        "scripts.maintenance.maintenance_logger",
+        "argparse"
+      ],
+      "features": [
+        "cli",
+        "automation"
+      ],
+      "quality_score": 76,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/ci_cd_quality_gate.py": {
+      "path": "scripts/maintenance/ci_cd_quality_gate.py",
+      "size_lines": 594,
+      "functions": [
+        "class:GateResult",
+        "class:QualityLevel",
+        "class:QualityMetric",
+        "class:GateReport",
+        "class:QualityGate",
+        "main",
+        "__init__",
+        "run_test_checks",
+        "run_code_quality_checks",
+        "run_security_checks",
+        "_evaluate_metric",
+        "_extract_execution_time",
+        "evaluate_quality_gate",
+        "_generate_recommendations",
+        "_generate_summary",
+        "export_report"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "subprocess",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "enum",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "testing",
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/directory_maintenance.py": {
+      "path": "scripts/maintenance/directory_maintenance.py",
+      "size_lines": 634,
+      "functions": [
+        "class:DirectoryMaintenance",
+        "main",
+        "__init__",
+        "clean_temp_files",
+        "clean_cache_dirs",
+        "check_misplaced_files",
+        "find_empty_dirs",
+        "check_naming_conventions",
+        "archive_old_reports",
+        "_extract_date_from_filename",
+        "generate_health_report",
+        "save_health_report",
+        "auto_fix_issues",
+        "run_maintenance"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "json",
+        "shutil",
+        "argparse",
+        "subprocess",
+        "pathlib",
+        "datetime",
+        "typing",
+        "re"
+      ],
+      "features": [
+        "testing",
+        "cli",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 82,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/test_report_generator.py": {
+      "path": "scripts/maintenance/test_report_generator.py",
+      "size_lines": 817,
+      "functions": [
+        "class:ReportData",
+        "class:TestReportGenerator",
+        "main",
+        "__init__",
+        "_load_monitoring_data",
+        "_generate_summary",
+        "_generate_recommendations",
+        "_generate_trends_analysis",
+        "generate_html_report",
+        "_create_html_content",
+        "_format_alert_html",
+        "_format_trends_html",
+        "generate_json_report",
+        "generate_markdown_report",
+        "_format_trends_markdown",
+        "generate_recommendations",
+        "generate_all_reports"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/test_health_monitor.py": {
+      "path": "scripts/maintenance/test_health_monitor.py",
+      "size_lines": 641,
+      "functions": [
+        "class:TestHealthMetrics",
+        "class:TestHealthAlert",
+        "class:TestHealthMonitor",
+        "main",
+        "__init__",
+        "_load_config",
+        "_save_config",
+        "_run_pytest_collection",
+        "_run_pytest_execution",
+        "_get_coverage_percentage",
+        "_calculate_health_score",
+        "_check_coverage_alert",
+        "_check_pass_rate_alert",
+        "_check_error_rate_alert",
+        "_check_health_score_alert",
+        "run_test_health_check",
+        "_save_metrics",
+        "_save_alerts",
+        "get_test_health_trends"
+      ],
+      "imports": [
+        "json",
+        "sys",
+        "subprocess",
+        "time",
+        "pathlib",
+        "datetime",
+        "typing",
+        "dataclasses",
+        "scripts.maintenance.maintenance_logger",
+        "argparse",
+        "traceback"
+      ],
+      "features": [
+        "testing",
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/maintenance/coverage_trend_analyzer.py": {
+      "path": "scripts/maintenance/coverage_trend_analyzer.py",
+      "size_lines": 769,
+      "functions": [
+        "class:CoverageData",
+        "class:TrendAnalysis",
+        "class:ModuleAnalysis",
+        "class:CoverageTrendAnalyzer",
+        "main",
+        "__init__",
+        "_init_database",
+        "collect_current_coverage",
+        "store_coverage_data",
+        "get_historical_data",
+        "calculate_trend",
+        "predict_coverage",
+        "analyze_trends",
+        "analyze_modules",
+        "generate_report",
+        "_generate_recommendations",
+        "export_report",
+        "generate_html_report"
+      ],
+      "imports": [
+        "json",
+        "sqlite3",
+        "sys",
+        "datetime",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "statistics",
+        "math",
+        "argparse",
+        "subprocess",
+        "traceback"
+      ],
+      "features": [
+        "testing",
+        "database",
+        "cli",
+        "coverage_analysis"
+      ],
+      "quality_score": 82,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/backup/data_migration.py": {
+      "path": "scripts/backup/data_migration.py",
+      "size_lines": 43,
+      "functions": [
+        "class:DataMigrationService",
+        "__init__",
+        "process",
+        "get_status"
+      ],
+      "imports": [
+        "logging",
+        "typing",
+        "datetime"
+      ],
+      "features": [
+        "logging"
+      ],
+      "quality_score": 31,
+      "category": "monitoring",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "scripts/backup/disaster_recovery.py": {
+      "path": "scripts/backup/disaster_recovery.py",
+      "size_lines": 43,
+      "functions": [
+        "class:DisasterRecoveryPlan",
+        "__init__",
+        "process",
+        "get_status"
+      ],
+      "imports": [
+        "logging",
+        "typing",
+        "datetime"
+      ],
+      "features": [
+        "logging"
+      ],
+      "quality_score": 31,
+      "category": "monitoring",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "scripts/backup/automated_backup.py": {
+      "path": "scripts/backup/automated_backup.py",
+      "size_lines": 43,
+      "functions": [
+        "class:AutomatedBackupSystem",
+        "__init__",
+        "process",
+        "get_status"
+      ],
+      "imports": [
+        "logging",
+        "typing",
+        "datetime"
+      ],
+      "features": [
+        "logging"
+      ],
+      "quality_score": 31,
+      "category": "monitoring",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "scripts/quality/continuous_improvement_engine.py": {
+      "path": "scripts/quality/continuous_improvement_engine.py",
+      "size_lines": 936,
+      "functions": [
+        "class:QualityImprovementAction",
+        "class:QualityImprovementPlan",
+        "class:QualityTrendAnalysis",
+        "class:ContinuousImprovementEngine",
+        "main",
+        "__init__",
+        "_init_database",
+        "analyze_current_quality_state",
+        "_calculate_overall_status",
+        "generate_improvement_actions",
+        "create_improvement_plan",
+        "analyze_quality_trends",
+        "_calculate_trend",
+        "_linear_regression_slope",
+        "_correlation",
+        "_generate_trend_recommendations",
+        "prioritize_actions",
+        "save_improvement_plan",
+        "generate_improvement_report",
+        "_generate_overall_recommendations",
+        "_action_to_dict",
+        "_plan_to_dict",
+        "print_improvement_report",
+        "save_report_to_file",
+        "_generate_html_report",
+        "calculate_priority_score"
+      ],
+      "imports": [
+        "json",
+        "time",
+        "sqlite3",
+        "datetime",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "collections",
+        "statistics"
+      ],
+      "features": [
+        "database",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quality/quality_metrics_dashboard.py": {
+      "path": "scripts/quality/quality_metrics_dashboard.py",
+      "size_lines": 917,
+      "functions": [
+        "class:QualityMetricSnapshot",
+        "class:QualityAlert",
+        "class:QualityTrend",
+        "class:QualityMetricsDatabase",
+        "class:QualityThresholds",
+        "class:QualityMetricsDashboard",
+        "main",
+        "__init__",
+        "_init_database",
+        "store_metric_snapshot",
+        "store_alert",
+        "get_recent_metrics",
+        "get_active_alerts",
+        "check_thresholds",
+        "__init__",
+        "collect_current_metrics",
+        "update_metrics",
+        "calculate_trends",
+        "generate_dashboard_report",
+        "_generate_recommendations",
+        "print_dashboard",
+        "save_dashboard_html",
+        "_generate_html_dashboard",
+        "_generate_alerts_html",
+        "_generate_trends_html",
+        "_generate_recommendations_html"
+      ],
+      "imports": [
+        "json",
+        "time",
+        "threading",
+        "datetime",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "collections",
+        "sqlite3",
+        "os"
+      ],
+      "features": [
+        "database",
+        "coverage_analysis"
+      ],
+      "quality_score": 76,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quality/intelligent_quality_gate.py": {
+      "path": "scripts/quality/intelligent_quality_gate.py",
+      "size_lines": 794,
+      "functions": [
+        "class:QualityLevel",
+        "class:QualityMetric",
+        "class:QualityResult",
+        "class:IntelligentQualityGate",
+        "main",
+        "__init__",
+        "_load_config",
+        "run_quality_assessment",
+        "_assess_basic_metrics",
+        "_assess_test_coverage",
+        "_assess_code_quality",
+        "_assess_security",
+        "_assess_performance",
+        "_assess_documentation",
+        "_assess_maintainability",
+        "_run_ai_analysis",
+        "_pattern_recognition_analysis",
+        "_defect_prediction_analysis",
+        "_optimization_analysis",
+        "_get_quality_level",
+        "_calculate_final_result",
+        "_generate_recommendations",
+        "_make_deployment_decision",
+        "generate_report"
+      ],
+      "imports": [
+        "os",
+        "json",
+        "sys",
+        "time",
+        "subprocess",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "enum",
+        "ast",
+        "re"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 73,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quality/intelligent_quality_analyzer.py": {
+      "path": "scripts/quality/intelligent_quality_analyzer.py",
+      "size_lines": 685,
+      "functions": [
+        "class:QualityTrend",
+        "class:QualityPattern",
+        "class:QualityInsight",
+        "class:IntelligentQualityAnalyzer",
+        "main",
+        "__init__",
+        "_initialize_quality_patterns",
+        "analyze_project_quality",
+        "_collect_project_data",
+        "_parse_coverage_output",
+        "_analyze_test_quality",
+        "_has_good_assertions",
+        "_has_error_handling",
+        "_has_edge_case_tests",
+        "_analyze_code_metrics",
+        "_identify_quality_patterns",
+        "_generate_quality_insights",
+        "_calculate_current_trend",
+        "_calculate_comprehensive_score",
+        "_generate_comprehensive_recommendations",
+        "_load_trend_data",
+        "_save_trend_data",
+        "generate_quality_report"
+      ],
+      "imports": [
+        "ast",
+        "json",
+        "time",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "datetime",
+        "threading",
+        "subprocess",
+        "re",
+        "os"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 73,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quality/quality_gate_system.py": {
+      "path": "scripts/quality/quality_gate_system.py",
+      "size_lines": 473,
+      "functions": [
+        "class:QualityLevel",
+        "class:QualityStatus",
+        "class:QualityIssue",
+        "class:QualityMetrics",
+        "class:QualityGateResult",
+        "class:QualityRule",
+        "class:CoverageRule",
+        "class:TestQualityRule",
+        "class:CodeComplexityRule",
+        "class:SecurityRule",
+        "class:PerformanceRule",
+        "class:QualityGateSystem",
+        "main",
+        "__init__",
+        "check",
+        "__init__",
+        "check",
+        "__init__",
+        "check",
+        "__init__",
+        "check",
+        "__init__",
+        "check",
+        "__init__",
+        "check",
+        "__init__",
+        "add_rule",
+        "remove_rule",
+        "run_quality_gate",
+        "_calculate_metrics",
+        "_determine_status",
+        "_generate_recommendations"
+      ],
+      "imports": [
+        "ast",
+        "time",
+        "json",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "enum",
+        "threading",
+        "datetime"
+      ],
+      "features": [
+        "coverage_analysis"
+      ],
+      "quality_score": 73,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "scripts/quality/intelligent_quality_analyzer_v2.py": {
+      "path": "scripts/quality/intelligent_quality_analyzer_v2.py",
+      "size_lines": 1179,
+      "functions": [
+        "class:QualitySeverity",
+        "class:IssueCategory",
+        "class:QualityIssue",
+        "class:FileQualityMetrics",
+        "class:ProjectQualityReport",
+        "class:QualityRule",
+        "class:SyntaxErrorRule",
+        "class:ImportAnalysisRule",
+        "class:ComplexityAnalysisRule",
+        "class:SecurityAnalysisRule",
+        "class:IntelligentQualityAnalyzerV2",
+        "main",
+        "__init__",
+        "analyze",
+        "generate_issue_id",
+        "__init__",
+        "analyze",
+        "_extract_error_line",
+        "__init__",
+        "analyze",
+        "_check_unused_imports",
+        "_check_circular_imports",
+        "_check_import_ordering",
+        "_compare_import_types",
+        "_check_builtin_shadowing",
+        "__init__",
+        "analyze",
+        "_analyze_function_complexity",
+        "_analyze_class_complexity",
+        "_calculate_cyclomatic_complexity",
+        "__init__",
+        "analyze",
+        "_check_dangerous_functions",
+        "_check_hardcoded_secrets",
+        "_check_sql_injection",
+        "__init__",
+        "_is_python_file",
+        "discover_python_files",
+        "parse_file_cached",
+        "analyze_single_file",
+        "_calculate_file_metrics",
+        "_calculate_documentation_score",
+        "_generate_suggestions",
+        "analyze_project_parallel",
+        "_generate_project_report",
+        "_severity_weight",
+        "_calculate_grade",
+        "_generate_improvement_roadmap",
+        "_generate_recommendations",
+        "_create_empty_report",
+        "print_report"
+      ],
+      "imports": [
+        "ast",
+        "time",
+        "json",
+        "os",
+        "re",
+        "threading",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "enum",
+        "datetime",
+        "collections",
+        "concurrent.futures",
+        "functools",
+        "hashlib"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis",
+        "git_integration"
+      ],
+      "quality_score": 79,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_coverage_improvement_executor.py": {
+      "path": "tests/unit/scripts/test_coverage_improvement_executor.py",
+      "size_lines": 88,
+      "functions": [
+        "class:TestCoverageImprovementExecutor",
+        "setup_method",
+        "test_initialization",
+        "test_log_result",
+        "test_syntax_check",
+        "test_help_functionality",
+        "test_diagnosis_mode",
+        "teardown_method"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "coverage_improvement_executor",
+        "subprocess",
+        "subprocess",
+        "shutil"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 42,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_smart_quality_fixer_extended.py": {
+      "path": "tests/unit/scripts/test_smart_quality_fixer_extended.py",
+      "size_lines": 252,
+      "functions": [
+        "class:TestSmartQualityFixerExtended",
+        "setup_method",
+        "test_fix_ruff_issues_detailed",
+        "test_fix_test_issues",
+        "test_apply_refactor_suggestions",
+        "test_fix_mypy_errors_functional",
+        "test_fix_import_errors_functional",
+        "test_fix_syntax_errors_functional",
+        "test_quality_standards_loading_from_nonexistent_file",
+        "test_error_count_accumulation",
+        "test_files_processed_counting",
+        "test_recommendations_generation",
+        "test_print_summary_functionality",
+        "test_run_comprehensive_fix_functionality",
+        "test_project_root_path_validation",
+        "test_src_directory_validation",
+        "test_test_directory_validation",
+        "test_initialization_with_custom_project_root",
+        "test_timestamp_initialization",
+        "test_quality_standards_structure",
+        "test_recommendations_content"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "smart_quality_fixer",
+        "datetime"
+      ],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 58,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "tests/unit/scripts/__init__.py": {
+      "path": "tests/unit/scripts/__init__.py",
+      "size_lines": 0,
+      "functions": [],
+      "imports": [],
+      "features": [],
+      "quality_score": 0,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": false,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_coverage_improvement_integration.py": {
+      "path": "tests/unit/scripts/test_coverage_improvement_integration.py",
+      "size_lines": 117,
+      "functions": [
+        "class:TestCoverageImprovementIntegration",
+        "test_smart_quality_fixer_integration",
+        "test_coverage_executor_integration",
+        "test_ai_coverage_master_integration",
+        "test_tool_chain_collaboration",
+        "test_coverage_improvement_workflow",
+        "test_improvement_metrics"
+      ],
+      "imports": [
+        "pytest",
+        "subprocess",
+        "sys",
+        "pathlib",
+        "smart_quality_fixer",
+        "coverage_improvement_executor",
+        "phase35_ai_coverage_master",
+        "smart_quality_fixer",
+        "coverage_improvement_executor",
+        "phase35_ai_coverage_master",
+        "phase35_ai_coverage_master",
+        "coverage_improvement_executor",
+        "smart_quality_fixer",
+        "smart_quality_fixer",
+        "coverage_improvement_executor",
+        "phase35_ai_coverage_master"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 55,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_smart_quality_fixer.py": {
+      "path": "tests/unit/scripts/test_smart_quality_fixer.py",
+      "size_lines": 128,
+      "functions": [
+        "class:TestSmartQualityFixer",
+        "setup_method",
+        "test_init_default_project_root",
+        "test_init_custom_project_root",
+        "test_fix_results_initialization",
+        "test_syntax_error_fixing",
+        "test_import_error_fixing",
+        "test_quality_standards_loading",
+        "test_fix_ruff_issues_dry_run",
+        "test_help_functionality",
+        "test_dry_run_mode",
+        "teardown_method"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "smart_quality_fixer",
+        "subprocess",
+        "subprocess",
+        "shutil"
+      ],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 43,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_coverage_improvement_executor_extended.py": {
+      "path": "tests/unit/scripts/test_coverage_improvement_executor_extended.py",
+      "size_lines": 165,
+      "functions": [
+        "class:TestCoverageImprovementExecutorExtended",
+        "setup_method",
+        "test_run_existing_tests_file_not_found",
+        "test_phase1_basic_modules_success",
+        "test_generate_progress_report",
+        "test_project_root_properties",
+        "test_results_log_structure",
+        "test_run_comprehensive_flow",
+        "test_error_handling_in_syntax_check",
+        "test_start_time_initialization",
+        "test_log_result_with_none_success",
+        "test_coverage_improvement_executor_initialization_with_custom_root",
+        "test_results_log_persistence"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "subprocess",
+        "coverage_improvement_executor",
+        "datetime",
+        "time"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 46,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_create_service_tests.py": {
+      "path": "tests/unit/scripts/test_create_service_tests.py",
+      "size_lines": 71,
+      "functions": [
+        "class:TestCreateServiceTests",
+        "setup_method",
+        "test_create_prediction_service_test",
+        "test_generated_test_file_structure",
+        "teardown_method"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "create_service_tests",
+        "shutil"
+      ],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 33,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_create_api_tests.py": {
+      "path": "tests/unit/scripts/test_create_api_tests.py",
+      "size_lines": 89,
+      "functions": [
+        "class:TestCreateAPITests",
+        "setup_method",
+        "test_create_api_health_test",
+        "test_generated_api_test_file_structure",
+        "test_api_test_content_quality",
+        "teardown_method"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "create_api_tests",
+        "shutil"
+      ],
+      "features": [
+        "testing",
+        "database"
+      ],
+      "quality_score": 38,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_phase35_ai_coverage_master.py": {
+      "path": "tests/unit/scripts/test_phase35_ai_coverage_master.py",
+      "size_lines": 76,
+      "functions": [
+        "class:TestPhase35AICoverageMaster",
+        "setup_method",
+        "test_initialization",
+        "test_intelligent_coverage_analysis",
+        "test_collect_base_coverage_data",
+        "test_identify_coverage_patterns",
+        "test_predict_improvement_opportunities",
+        "test_generate_intelligent_strategy",
+        "test_main_functionality",
+        "teardown_method"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "phase35_ai_coverage_master"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 61,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": true,
+      "has_docstring": true,
+      "has_error_handling": false,
+      "uses_async": false
+    },
+    "tests/unit/scripts/test_phase35_ai_coverage_master_extended.py": {
+      "path": "tests/unit/scripts/test_phase35_ai_coverage_master_extended.py",
+      "size_lines": 273,
+      "functions": [
+        "class:TestPhase35AICoverageMasterExtended",
+        "setup_method",
+        "test_collect_base_coverage_data_functional",
+        "test_identify_coverage_patterns_with_empty_data",
+        "test_predict_improvement_opportunities_with_empty_data",
+        "test_generate_intelligent_strategy_with_empty_data",
+        "test_coverage_data_initialization",
+        "test_intelligence_data_initialization",
+        "test_generated_tests_initialization",
+        "test_ai_insights_initialization",
+        "test_intelligent_coverage_analysis_comprehensive",
+        "test_analysis_components_types",
+        "test_analysis_components_consistency",
+        "test_coverage_analysis_workflow",
+        "test_error_handling_in_coverage_collection",
+        "test_coverage_data_persistence",
+        "test_intelligence_data_accumulation",
+        "test_multiple_analysis_consistency",
+        "test_strategy_generation_with_predictions",
+        "test_pattern_recognition_functionality",
+        "test_ai_insights_generation",
+        "test_method_chaining",
+        "test_data_validation"
+      ],
+      "imports": [
+        "pytest",
+        "tempfile",
+        "os",
+        "pathlib",
+        "sys",
+        "phase35_ai_coverage_master"
+      ],
+      "features": [
+        "testing",
+        "coverage_analysis"
+      ],
+      "quality_score": 61,
+      "category": "testing",
+      "complexity": "medium",
+      "has_main": false,
+      "has_docstring": true,
+      "has_error_handling": true,
+      "uses_async": false
+    },
+    "frontend/node_modules/damerau-levenshtein/scripts/update-changelog.sh": {
+      "path": "frontend/node_modules/damerau-levenshtein/scripts/update-changelog.sh",
+      "size_lines": 21,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "git"
+      ],
+      "quality_score": 28,
+      "category": "github",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": true,
+      "uses_variables": true
+    },
+    "scripts/ssl_manager.sh": {
+      "path": "scripts/ssl_manager.sh",
+      "size_lines": 178,
+      "functions": [
+        "log",
+        "error_exit",
+        "check_certificate_expiry",
+        "generate_self_signed_cert",
+        "request_letsencrypt_cert",
+        "setup_auto_renewal",
+        "verify_certificate",
+        "main"
+      ],
+      "imports": [],
+      "features": [
+        "docker"
+      ],
+      "quality_score": 44,
+      "category": "github",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": true,
+      "uses_variables": true
+    },
+    "scripts/deploy.sh": {
+      "path": "scripts/deploy.sh",
+      "size_lines": 35,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "docker"
+      ],
+      "quality_score": 13,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": false,
+      "uses_variables": false
+    },
+    "scripts/run_tests.sh": {
+      "path": "scripts/run_tests.sh",
+      "size_lines": 27,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 28,
+      "category": "testing",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": true,
+      "uses_variables": false
+    },
+    "scripts/deploy_verify.sh": {
+      "path": "scripts/deploy_verify.sh",
+      "size_lines": 239,
+      "functions": [
+        "log",
+        "error_exit",
+        "success",
+        "check_service_health",
+        "check_database_connection",
+        "check_redis_connection",
+        "check_api_endpoints",
+        "check_ssl_certificate",
+        "check_monitoring_services",
+        "run_performance_tests",
+        "run_security_scan",
+        "generate_verification_report",
+        "main"
+      ],
+      "imports": [],
+      "features": [
+        "docker",
+        "service_management"
+      ],
+      "quality_score": 51,
+      "category": "testing",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": true,
+      "uses_variables": true
+    },
+    "scripts/test_health.sh": {
+      "path": "scripts/test_health.sh",
+      "size_lines": 24,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 28,
+      "category": "testing",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": true,
+      "uses_variables": false
+    },
+    "scripts/system_status.sh": {
+      "path": "scripts/system_status.sh",
+      "size_lines": 22,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "docker"
+      ],
+      "quality_score": 13,
+      "category": "monitoring",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": false,
+      "uses_variables": true
+    },
+    "scripts/create_quality_issues.sh": {
+      "path": "scripts/create_quality_issues.sh",
+      "size_lines": 473,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "testing",
+        "service_management"
+      ],
+      "quality_score": 16,
+      "category": "testing",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": false,
+      "uses_variables": false
+    },
+    "scripts/quick_test.sh": {
+      "path": "scripts/quick_test.sh",
+      "size_lines": 9,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 13,
+      "category": "testing",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": false,
+      "uses_variables": false
+    },
+    "scripts/start_monitoring.sh": {
+      "path": "scripts/start_monitoring.sh",
+      "size_lines": 26,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "testing"
+      ],
+      "quality_score": 13,
+      "category": "deployment",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": false,
+      "uses_variables": true
+    },
+    "scripts/commit_issue_98_completion.sh": {
+      "path": "scripts/commit_issue_98_completion.sh",
+      "size_lines": 100,
+      "functions": [],
+      "imports": [],
+      "features": [
+        "git"
+      ],
+      "quality_score": 13,
+      "category": "testing",
+      "complexity": "medium",
+      "has_shebang": true,
+      "has_error_handling": false,
+      "uses_variables": false
+    }
+  },
+  "optimization_suggestions": [
+    {
+      "type": "quality_improvement",
+      "priority": "high",
+      "description": "整体脚本质量分数较低(56.3/100)，建议添加文档字符串、错误处理和主函数",
+      "affected_scripts": "multiple"
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现21个脚本都有'networking'功能，考虑创建统一的工具库",
+      "feature": "networking",
+      "count": 21
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现18个脚本都有'logging'功能，考虑创建统一的工具库",
+      "feature": "logging",
+      "count": 18
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现18个脚本都有'git_integration'功能，考虑创建统一的工具库",
+      "feature": "git_integration",
+      "count": 18
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现45个脚本都有'testing'功能，考虑创建统一的工具库",
+      "feature": "testing",
+      "count": 45
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现44个脚本都有'coverage_analysis'功能，考虑创建统一的工具库",
+      "feature": "coverage_analysis",
+      "count": 44
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现20个脚本都有'database'功能，考虑创建统一的工具库",
+      "feature": "database",
+      "count": 20
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现20个脚本都有'cli'功能，考虑创建统一的工具库",
+      "feature": "cli",
+      "count": 20
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现6个脚本都有'automation'功能，考虑创建统一的工具库",
+      "feature": "automation",
+      "count": 6
+    },
+    {
+      "type": "consolidation",
+      "priority": "medium",
+      "description": "发现4个脚本都有'docker'功能，考虑创建统一的工具库",
+      "feature": "docker",
+      "count": 4
+    },
+    {
+      "type": "missing_feature",
+      "priority": "medium",
+      "description": "缺少error_handling相关的工具，建议添加相应的脚本",
+      "feature": "error_handling"
+    },
+    {
+      "type": "missing_feature",
+      "priority": "medium",
+      "description": "缺少configuration相关的工具，建议添加相应的脚本",
+      "feature": "configuration"
+    },
+    {
+      "type": "missing_feature",
+      "priority": "medium",
+      "description": "缺少documentation相关的工具，建议添加相应的脚本",
+      "feature": "documentation"
+    }
+  ],
+  "integration_opportunities": [
+    {
+      "type": "tool_chain",
+      "category": "testing",
+      "description": "可以创建测试工具链，整合85个测试相关脚本",
+      "scripts": [
+        ".venv/lib/python3.11/site-packages/pip/_vendor/distlib/scripts.py",
+        ".venv/lib/python3.11/site-packages/psutil/tests/test_scripts.py",
+        ".venv/lib/python3.11/site-packages/numpy/tests/test_scripts.py",
+        "scripts/production_deployment_automation.py",
+        "scripts/simple_api_test.py"
+      ]
+    },
+    {
+      "type": "tool_chain",
+      "category": "deployment",
+      "description": "可以创建部署工具链，整合7个部署相关脚本",
+      "scripts": [
+        ".venv/lib/python3.11/site-packages/setuptools/_distutils/command/build_scripts.py",
+        "scripts/sync_github_issues.py",
+        "scripts/git_flow_automation.py",
+        "scripts/maintenance/health_monitor.py",
+        "scripts/maintenance/scheduled_maintenance.py"
+      ]
+    }
+  ],
+  "quality_metrics": {
+    "average_quality_score": 56.294117647058826,
+    "high_quality_scripts": 10,
+    "medium_quality_scripts": 44,
+    "low_quality_scripts": 48
+  }
+}
