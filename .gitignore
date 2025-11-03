@@ -3,13 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# 临时报告文件
+# 临时报告文件 (已整理到reports/目录)
 bandit*.json
 coverage*.json
 coverage_analysis*.json
 ruff*.json
 *_REPORT_*.md
 *_REPORT_*.txt
+# 注意: 已将报告文件移动到reports/目录
 
 # 测试临时文件
 .coverage
