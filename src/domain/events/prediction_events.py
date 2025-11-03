@@ -6,12 +6,37 @@ Prediction Domain Events
 Defines domain events related to predictions.
 """
 
+from datetime import datetime
 from typing import Any
 
 from src.domain.events.base import DomainEvent
 
 
-class PredictionCreatedEvent(DomainEvent):
+class PredictionEvent(DomainEvent):
+    """预测事件基类"""
+
+    def __init__(
+        self,
+        prediction_id: str,
+        event_type: str,
+        data: dict[str, Any] = None,
+        timestamp: datetime = None
+    ):
+        if timestamp is None:
+            timestamp = datetime.now()
+        if data is None:
+            data = {}
+
+        super().__init__(
+            event_id=f"prediction_{prediction_id}_{event_type}",
+            aggregate_id=prediction_id,
+            event_type=event_type,
+            data=data,
+            timestamp=timestamp
+        )
+
+
+class PredictionCreatedEvent(PredictionEvent):
     """预测创建事件"""
 
     def __init__(

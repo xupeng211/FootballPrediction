@@ -26,6 +26,7 @@ class AdapterRegistry:
 # 全局注册表实例
 # 全局注册表实例
 # 全局注册表实例
+# 全局注册表实例
     def __init__(self, factory=None):
         """初始化适配器注册表"""
         self.factory = factory or self._create_default_factory()

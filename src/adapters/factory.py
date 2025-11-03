@@ -284,6 +284,22 @@ class AdapterFactory:
 # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
 # 全局适配器工厂实例]
 
+# TODO: 方法 def create_adapter 过长(27行)，建议拆分
+# TODO: 方法 def create_adapter 过长(28行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(28行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(29行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(33行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(42行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(43行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(44行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(45行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(26行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(27行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例]
+
     def __init__(self):
         """函数文档字符串"""
         pass

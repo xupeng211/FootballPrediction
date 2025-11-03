@@ -1,17 +1,17 @@
 {
-  "timestamp": "2025-11-03T22:04:58.995964",
+  "timestamp": "2025-11-03T22:19:36.419897",
   "fixes_applied": {
     "syntax_errors": 0,
     "import_errors": 0,
     "mypy_errors": 0,
     "ruff_issues": 0,
     "test_issues": 9,
-    "code_review_issues": 9,
+    "code_review_issues": 7,
     "refactor_suggestions": 7,
     "dependency_issues": 3
   },
-  "errors_fixed": 28,
-  "files_processed": 9,
+  "errors_fixed": 26,
+  "files_processed": 7,
   "recommendations": [
     "🤖 基于Issue #98方法论：建议定期运行智能修复保持代码质量",
     "📊 质量门禁集成：将此工具集成到CI/CD流水线中",
@@ -21,7 +21,7 @@
     "📦 依赖管理：建议定期更新依赖包版本",
     "👥 团队培训：建议进行代码规范培训"
   ],
-  "total_fixes": 28,
+  "total_fixes": 26,
   "ai_analysis": {
     "code_health": "良好",
     "complexity_trend": "稳定",

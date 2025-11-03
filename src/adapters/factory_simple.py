@@ -40,11 +40,15 @@ class AdapterNames:
     MESSAGE_QUEUE = "message_queue"
     FILE_STORAGE = "file_storage"
 
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# 预定义的适配器名称
+) -> Adapter:
     def __init__(self):
         """初始化适配器工厂"""
         self.adapters = {}
         self.singletons = {}
 
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
 # TODO: 方法 def create_adapter 过长(33行)，建议拆分
     def create_adapter(
         """TODO: 添加函数文档"""
