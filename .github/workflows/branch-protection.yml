@@ -1,0 +1,57 @@
+name: Branch Protection
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  protection-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install
+
+      - name: Load project context
+        run: make context
+
+      - name: Environment check
+        run: make env-check
+
+      - name: Run unit tests
+        run: make test.unit
+
+      - name: Run integration tests
+        run: make test.int
+
+      - name: Code quality check
+        run: make lint
+
+      - name: Security check
+        run: make security
+
+      - name: Coverage report
+        run: make coverage
+
+      - name: Pre-push validation
+        run: make prepush
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella

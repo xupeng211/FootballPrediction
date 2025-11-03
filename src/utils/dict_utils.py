@@ -256,7 +256,7 @@ def has_key(d: Dict[str, Any], key: str) -> bool:
 
 def get_nested_value(d: Dict[str, Any], key_path: str, default: Any = None) -> Any:
     """获取嵌套字典中的值"""
-    keys = key_path.split('.')
+    keys = key_path.split(".")
     current = d
     try:
         for key in keys:
@@ -268,7 +268,7 @@ def get_nested_value(d: Dict[str, Any], key_path: str, default: Any = None) -> A
 
 def set_nested_value(d: Dict[str, Any], key_path: str, value: Any) -> Dict[str, Any]:
     """设置嵌套字典中的值"""
-    keys = key_path.split('.')
+    keys = key_path.split(".")
     current = d
     for key in keys[:-1]:
         if key not in current:
@@ -278,9 +278,10 @@ def set_nested_value(d: Dict[str, Any], key_path: str, value: Any) -> Dict[str, 
     return d
 
 
-def flatten_dict(d: Dict[str, Any], separator: str = '.') -> Dict[str, Any]:
+def flatten_dict(d: Dict[str, Any], separator: str = ".") -> Dict[str, Any]:
     """扁平化嵌套字典"""
-    def _flatten(obj, parent_key='', sep='.'):
+
+    def _flatten(obj, parent_key="", sep="."):
         items = []
         for k, v in obj.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else str(k)

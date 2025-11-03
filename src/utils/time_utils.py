@@ -281,6 +281,6 @@ def parse_iso_datetime(date_str: str) -> Optional[datetime]:
     if not date_str:
         return None
     try:
-        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
     except ValueError:
         return parse_datetime(date_str)

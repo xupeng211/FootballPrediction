@@ -5,7 +5,7 @@ Enhanced JWT Authentication Dependencies
 提供完整的JWT认证、权限控制和速率限制功能
 """
 
-from typing import Optional
+from typing import Optional, Dict
 from fastapi import Depends, HTTPException, status, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.security.jwt_auth import JWTAuthManager, get_jwt_auth_manager, TokenData
@@ -178,7 +178,7 @@ class SecurityHeaders:
     """安全头部配置"""
 
     @staticmethod
-async def add_security_headers():
+async def add_security_headers() -> Dict[str, str]:
     """添加安全头部的中间件依赖"""
     return SecurityHeaders.get_security_headers()
 
@@ -187,7 +187,7 @@ async def add_security_headers():
 class AuthContext:
     """认证上下文管理器"""
 
-) -> AuthContext:
+def get_auth_context(auth_manager) -> AuthContext:
     """获取认证上下文"""
     return AuthContext(auth_manager)
 
@@ -209,7 +209,16 @@ class SecurityHeaders:
 async def add_security_headers():
 ) -> AuthContext:
 # TODO: 方法 def require_roles 过长(24行)，建议拆分
-def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+# 常用角色权限检查
+# TODO: 方法 def __init__ 过长(26行)，建议拆分
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+class SecurityHeaders:
+# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
+async def add_security_headers():
+) -> AuthContext:
+# TODO: 方法 def require_roles 过长(24行)，建议拆分
+def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """
     角色权限装饰器工厂
 

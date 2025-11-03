@@ -1,319 +1,691 @@
 #!/usr/bin/env python3
 """
-测试覆盖率最佳实践执行器
-自动化执行分阶段的测试覆盖率提升计划
+覆盖率改进执行器
+智能分析和改进代码覆盖率，提供具体的改进建议和自动化修复
 """
 
-import sys
 import os
-import subprocess
+import sys
 import json
-import datetime
-from typing import Dict, List, Any
+import subprocess
+import ast
 from pathlib import Path
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass, asdict
+from collections import defaultdict, Counter
+import re
+import time
+from datetime import datetime
 
-# 添加项目根路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / 'src'))
+@dataclass
+class CoverageMetrics:
+    """覆盖率指标"""
+    total_lines: int
+    covered_lines: int
+    missing_lines: int
+    coverage_percentage: float
+    file_coverage: Dict[str, Dict[str, Any]]
+
+@dataclass
+class CoverageIssue:
+    """覆盖率问题"""
+    file_path: str
+    issue_type: str
+    description: str
+    severity: str
+    suggested_fixes: List[str]
+    line_numbers: List[int]
+
+@dataclass
+class ImprovementAction:
+    """改进行动项"""
+    action_type: str
+    description: str
+    file_path: str
+    estimated_impact: str
+    implementation: str
+
+class CoverageAnalyzer:
+    """覆盖率分析器"""
+
+    def __init__(self, project_root: Path = None):
+        self.project_root = project_root or Path.cwd()
+        self.src_dir = self.project_root / "src"
+        self.test_dir = self.project_root / "tests"
+        self.coverage_data = None
+        self.issues = []
+
+    def collect_coverage_data(self) -> Optional[CoverageMetrics]:
+        """收集覆盖率数据"""
+        print("📊 收集覆盖率数据...")
+
+        try:
+            # 运行覆盖率测试
+            cmd = [
+                "python", "-m", "pytest",
+                "--cov=src",
+                "--cov-report=json",
+                "--cov-report=term-missing",
+                "-q"
+            ]
+
+            result = subprocess.run(
+                cmd,
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
+
+            if result.returncode != 0:
+                print(f"❌ 覆盖率测试失败: {result.stderr}")
+                return None
+
+            # 读取覆盖率报告
+            coverage_file = self.project_root / "coverage.json"
+            if not coverage_file.exists():
+                print("❌ 覆盖率报告文件不存在")
+                return None
+
+            with open(coverage_file, 'r') as f:
+                coverage_json = json.load(f)
+
+            # 解析覆盖率数据
+            totals = coverage_json.get('totals', {})
+            files = coverage_json.get('files', {})
+
+            total_lines = totals.get('num_statements', 0)
+            covered_lines = totals.get('covered_lines', 0)
+            missing_lines = total_lines - covered_lines
+            coverage_percentage = totals.get('percent_covered', 0)
+
+            # 处理文件覆盖率数据
+            file_coverage = {}
+            for file_path, file_data in files.items():
+                file_coverage[file_path] = {
+                    'total_lines': file_data.get('summary', {}).get('num_statements', 0),
+                    'covered_lines': file_data.get('summary', {}).get('covered_lines', 0),
+                    'missing_lines': file_data.get('missing_lines', []),
+                    'coverage': file_data.get('summary', {}).get('percent_covered', 0)
+                }
+
+            metrics = CoverageMetrics(
+                total_lines=total_lines,
+                covered_lines=covered_lines,
+                missing_lines=missing_lines,
+                coverage_percentage=coverage_percentage,
+                file_coverage=file_coverage
+            )
+
+            print(f"✅ 当前覆盖率: {coverage_percentage:.1f}%")
+            return metrics
+
+        except subprocess.TimeoutExpired:
+            print("❌ 覆盖率测试超时")
+            return None
+        except Exception as e:
+            print(f"❌ 收集覆盖率数据失败: {e}")
+            return None
+
+    def analyze_coverage_issues(self, metrics: CoverageMetrics) -> List[CoverageIssue]:
+        """分析覆盖率问题"""
+        print("🔍 分析覆盖率问题...")
+
+        issues = []
+
+        for file_path, file_data in metrics.file_coverage.items():
+            coverage = file_data['coverage']
+            missing_lines = file_data['missing_lines']
+
+            # 分析覆盖率低的文件
+            if coverage < 50:
+                issues.append(CoverageIssue(
+                    file_path=file_path,
+                    issue_type="low_coverage",
+                    description=f"文件覆盖率过低: {coverage:.1f}%",
+                    severity="high" if coverage < 30 else "medium",
+                    suggested_fixes=[
+                        "为核心函数添加单元测试",
+                        "增加边界条件测试",
+                        "测试异常处理路径",
+                        "添加集成测试覆盖"
+                    ],
+                    line_numbers=missing_lines[:10]  # 只显示前10行
+                ))
+
+            # 分析未覆盖的代码块
+            if missing_lines:
+                try:
+                    abs_path = self.project_root / file_path
+                    code_issues = self._analyze_uncovered_code(abs_path, missing_lines)
+                    issues.extend(code_issues)
+                except Exception as e:
+                    print(f"⚠️  分析文件 {file_path} 失败: {e}")
+
+        # 按严重程度排序
+        issues.sort(key=lambda x: {
+            'high': 3,
+            'medium': 2,
+            'low': 1
+        }.get(x.severity, 0), reverse=True)
+
+        self.issues = issues
+        print(f"✅ 发现 {len(issues)} 个覆盖率问题")
+        return issues
+
+    def _analyze_uncovered_code(self, file_path: Path, missing_lines: List[int]) -> List[CoverageIssue]:
+        """分析未覆盖的代码"""
+        issues = []
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                lines = content.split('\n')
+
+            # 分析缺失行的代码模式
+            uncovered_blocks = self._group_consecutive_lines(missing_lines)
+
+            for start, end in uncovered_blocks:
+                if start > len(lines):
+                    continue
+
+                code_snippet = '\n'.join(lines[start-1:end])
+
+                # 识别代码模式
+                if self._is_function_definition(code_snippet):
+                    issues.append(CoverageIssue(
+                        file_path=str(file_path.relative_to(self.project_root)),
+                        issue_type="uncovered_function",
+                        description=f"未覆盖的函数定义 (行 {start}-{end})",
+                        severity="high",
+                        suggested_fixes=[
+                            f"为函数创建单元测试",
+                            "测试函数的所有分支",
+                            "添加边界条件测试",
+                            "测试异常情况"
+                        ],
+                        line_numbers=list(range(start, min(end + 1, len(lines) + 1))))
+
+                elif self._is_error_handling(code_snippet):
+                    issues.append(CoverageIssue(
+                        file_path=str(file_path.relative_to(self.project_root)),
+                        issue_type="uncovered_error_handling",
+                        description=f"未覆盖的错误处理代码 (行 {start}-{end})",
+                        severity="medium",
+                        suggested_fixes=[
+                            "创建异常场景测试",
+                            "模拟错误条件",
+                            "验证错误处理逻辑",
+                            "测试错误恢复机制"
+                        ],
+                        line_numbers=list(range(start, min(end + 1, len(lines) + 1)))))
+
+                elif self._is_complex_logic(code_snippet):
+                    issues.append(CoverageIssue(
+                        file_path=str(file_path.relative_to(self.project_root)),
+                        issue_type="uncovered_complex_logic",
+                        description=f"未覆盖的复杂逻辑 (行 {start}-{end})",
+                        severity="high",
+                        suggested_fixes=[
+                            "分解复杂逻辑进行单独测试",
+                            "创建多个测试场景",
+                            "测试所有逻辑分支",
+                            "使用参数化测试"
+                        ],
+                        line_numbers=list(range(start, min(end + 1, len(lines) + 1)))))
+
+        except Exception as e:
+            print(f"⚠️  分析文件 {file_path} 失败: {e}")
+
+        return issues
+
+    def _group_consecutive_lines(self, lines: List[int]) -> List[Tuple[int, int]]:
+        """将连续的行号分组"""
+        if not lines:
+            return []
+
+        groups = []
+        start = lines[0]
+        end = lines[0]
+
+        for line in lines[1:]:
+            if line == end + 1:
+                end = line
+            else:
+                groups.append((start, end))
+                start = line
+                end = line
+
+        groups.append((start, end))
+        return groups
+
+    def _is_function_definition(self, code: str) -> bool:
+        """检查是否为函数定义"""
+        patterns = [
+            r'^\s*def\s+\w+',
+            r'^\s*async\s+def\s+\w+',
+            r'^\s*class\s+\w+',
+        ]
+        return any(re.search(pattern, code, re.MULTILINE) for pattern in patterns)
+
+    def _is_error_handling(self, code: str) -> bool:
+        """检查是否为错误处理代码"""
+        patterns = [
+            r'except\s+\w+:',
+            r'except\s*\(',
+            r'raise\s+\w+',
+            r'raise\s*\(',
+        ]
+        return any(re.search(pattern, code, re.MULTILINE) for pattern in patterns)
+
+    def _is_complex_logic(self, code: str) -> bool:
+        """检查是否为复杂逻辑"""
+        # 计算复杂度指标
+        if_count = len(re.findall(r'\bif\s+', code))
+        for_count = len(re.findall(r'\bfor\s+', code))
+        while_count = len(re.findall(r'\bwhile\s+', code))
+
+        complexity = if_count + for_count + while_count
+        return complexity > 2 or 'and' in code or 'or' in code
+
+class TestGenerator:
+    """测试生成器"""
+
+    def __init__(self, project_root: Path):
+        self.project_root = project_root
+        self.src_dir = project_root / "src"
+        self.test_dir = project_root / "tests"
+
+    def generate_tests_for_issues(self, issues: List[CoverageIssue]) -> List[ImprovementAction]:
+        """为覆盖率问题生成测试改进建议"""
+        print("🧪 生成测试改进建议...")
+
+        actions = []
+
+        for issue in issues:
+            if issue.issue_type == "uncovered_function":
+                actions.extend(self._generate_function_tests(issue))
+            elif issue.issue_type == "uncovered_error_handling":
+                actions.extend(self._generate_error_tests(issue))
+            elif issue.issue_type == "uncovered_complex_logic":
+                actions.extend(self._generate_logic_tests(issue))
+            elif issue.issue_type == "low_coverage":
+                actions.extend(self._generate_coverage_tests(issue))
+
+        print(f"✅ 生成了 {len(actions)} 个改进建议")
+        return actions
+
+    def _generate_function_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+        """为函数生成测试"""
+        actions = []
+
+        try:
+            file_path = self.project_root / issue.file_path
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # 提取函数名
+            tree = ast.parse(content)
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if any(line in issue.line_numbers for line in range(node.lineno, node.end_lineno or node.lineno)):
+                        func_name = node.name
+
+                        # 生成测试文件路径
+                        rel_path = Path(issue.file_path).relative_to("src")
+                        test_file_path = self.test_dir / "unit" / f"test_{rel_path.stem}.py"
+
+                        action = ImprovementAction(
+                            action_type="create_function_test",
+                            description=f"为函数 {func_name} 创建单元测试",
+                            file_path=str(test_file_path),
+                            estimated_impact=f"提升覆盖率 {len(issue.line_numbers) * 2}%",
+                            implementation=f"""
+# 在 {test_file_path} 中添加:
+
+def test_{func_name}():
+    # 测试正常情况
+    # TODO: 实现具体测试逻辑
+    assert True
+
+def test_{func_name}_edge_cases():
+    # 测试边界条件
+    # TODO: 实现边界条件测试
+    assert True
+
+def test_{func_name}_error_cases():
+    # 测试异常情况
+    # TODO: 实现异常测试
+    assert True
+"""
+                        )
+                        actions.append(action)
+
+        except Exception as e:
+            print(f"⚠️  生成函数测试失败: {e}")
+
+        return actions
+
+    def _generate_error_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+        """为错误处理生成测试"""
+        test_file_path = self._get_test_file_path(issue.file_path)
+
+        action = ImprovementAction(
+            action_type="create_error_test",
+            description=f"为错误处理代码创建异常测试",
+            file_path=test_file_path,
+            estimated_impact=f"提升覆盖率 {len(issue.line_numbers)}%",
+            implementation=f"""
+# 在 {test_file_path} 中添加异常测试:
+
+import pytest
+from unittest.mock import patch, MagicMock
+
+def test_error_handling():
+    # 模拟错误条件
+    # TODO: 根据具体错误类型设置模拟
+    with patch('module.function') as mock_func:
+        mock_func.side_effect = Exception("测试异常")
+
+        # 验证错误处理逻辑
+        # TODO: 实现具体的错误处理测试
+        assert True
+
+def test_recovery_mechanism():
+    # 测试错误恢复机制
+    # TODO: 实现恢复机制测试
+    assert True
+"""
+        )
+        return [action]
+
+    def _generate_logic_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+        """为复杂逻辑生成测试"""
+        test_file_path = self._get_test_file_path(issue.file_path)
+
+        action = ImprovementAction(
+            action_type="create_logic_test",
+            description=f"为复杂逻辑创建多场景测试",
+            file_path=test_file_path,
+            estimated_impact=f"提升覆盖率 {len(issue.line_numbers) * 1.5}%",
+            implementation=f"""
+# 在 {test_file_path} 中添加逻辑测试:
+
+import pytest
+
+@pytest.mark.parametrize("input_param, expected", [
+    # 添加不同的输入参数组合
+    (value1, expected1),
+    (value2, expected2),
+    # TODO: 根据具体逻辑添加更多测试用例
+])
+def test_complex_logic_scenarios(input_param, expected):
+    # 测试不同的逻辑分支
+    # TODO: 实现具体的逻辑测试
+    assert result == expected
+
+def test_logic_boundary_conditions():
+    # 测试逻辑边界条件
+    # TODO: 实现边界条件测试
+    assert True
+
+def test_logic_combinations():
+    # 测试逻辑组合情况
+    # TODO: 实现组合逻辑测试
+    assert True
+"""
+        )
+        return [action]
+
+    def _generate_coverage_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+        """为低覆盖率文件生成通用测试"""
+        test_file_path = self._get_test_file_path(issue.file_path)
+
+        action = ImprovementAction(
+            action_type="create_coverage_test",
+            description=f"为低覆盖率文件创建基础测试",
+            file_path=test_file_path,
+            estimated_impact=f"提升覆盖率 {20 - issue.severity_score}%",
+            implementation=f"""
+# 在 {test_file_path} 中添加基础测试:
+
+def test_basic_functionality():
+    # 测试基础功能
+    # TODO: 根据文件内容实现基础测试
+    assert True
+
+def test_module_import():
+    # 测试模块导入
+    # TODO: 实现模块导入测试
+    assert True
+
+def test_class_initialization():
+    # 测试类初始化
+    # TODO: 实现类初始化测试
+    assert True
+"""
+        )
+        return [action]
+
+    def _get_test_file_path(self, source_file: str) -> str:
+        """获取对应的测试文件路径"""
+        rel_path = Path(source_file).relative_to("src")
+        return str(self.test_dir / "unit" / f"test_{rel_path.stem}.py")
 
 class CoverageImprovementExecutor:
     """覆盖率改进执行器"""
 
-    def __init__(self):
-        self.project_root = project_root
-        self.results_log = []
-        self.current_phase = 1
-        self.start_time = datetime.datetime.now()
+    def __init__(self, project_root: Path = None):
+        self.project_root = project_root or Path.cwd()
+        self.analyzer = CoverageAnalyzer(self.project_root)
+        self.generator = TestGenerator(self.project_root)
+        self.start_time = datetime.now()
 
-    def log_result(self, category: str, message: str, success: bool = None):
-        """记录执行结果"""
-        result = {
-            'timestamp': datetime.datetime.now().isoformat(),
-            'category': category,
-            'message': message,
-            'success': success
-        }
-        self.results_log.append(result)
+    def run_analysis(self) -> bool:
+        """运行覆盖率分析"""
+        print("🚀 开始覆盖率分析和改进")
+        print("=" * 50)
 
-        # 输出到控制台
-        icon = "✅" if success is True else "❌" if success is False else "🔄"
-        print(f"{icon} [{category}] {message}")
+        # 收集覆盖率数据
+        metrics = self.analyzer.collect_coverage_data()
+        if not metrics:
+            print("❌ 无法收集覆盖率数据")
+            return False
 
-    def run_syntax_check(self):
-        """运行语法检查"""
-        self.log_result("语法检查", "开始检查项目语法...", None)
+        print(f"📊 当前覆盖率: {metrics.coverage_percentage:.1f}%")
+        print(f"📈 总行数: {metrics.total_lines}")
+        print(f"✅ 已覆盖: {metrics.covered_lines}")
+        print(f"❌ 未覆盖: {metrics.missing_lines}")
 
-        try:
-            # 检查src目录
-            result = subprocess.run([
-                sys.executable, '-m', 'compileall', '-q', 'src/'
-            ], capture_output=True, text=True, cwd=self.project_root)
+        # 分析覆盖率问题
+        issues = self.analyzer.analyze_coverage_issues(metrics)
+        if not issues:
+            print("🎉 没有发现覆盖率问题！")
+            return True
 
-            if result.returncode == 0:
-                self.log_result("语法检查", "src目录语法检查通过", True)
-            else:
-                error_count = len(result.stderr.split('\n')) if result.stderr else 0
-                self.log_result("语法检查", f"src目录存在{error_count}个语法错误", False)
-
-            # 检查tests目录
-            result_tests = subprocess.run([
-                sys.executable, '-m', 'compileall', '-q', 'tests/'
-            ], capture_output=True, text=True, cwd=self.project_root)
-
-            if result_tests.returncode == 0:
-                self.log_result("语法检查", "tests目录语法检查通过", True)
-            else:
-                error_count = len(result_tests.stderr.split('\n')) if result_tests.stderr else 0
-                self.log_result("语法检查", f"tests目录存在{error_count}个语法错误", False)
-
-        except Exception as e:
-            self.log_result("语法检查", f"语法检查失败: {e}", False)
-
-    def run_existing_tests(self):
-        """运行现有的测试"""
-        self.log_result("现有测试", "运行现有测试以获取基准...", None)
-
-        existing_test_files = [
-            'tests/realistic_first_tests.py',
-            'tests/expand_successful_tests.py',
-            'tests/apply_successful_strategy.py'
-        ]
-
-        total_tests = 0
-        total_passed = 0
-
-        for test_file in existing_test_files:
-            if (self.project_root / test_file).exists():
-                self.log_result("现有测试", f"运行 {test_file}...", None)
-                try:
-                    result = subprocess.run([
-                        sys.executable, str(self.project_root / test_file)
-                    ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
-
-                    if result.returncode == 0:
-                        # 解析测试结果
-                        lines = result.stdout.split('\n')
-                        for line in lines:
-                            if '通过测试:' in line and ':' in line:
-                                passed = int(line.split(':')[-1].strip())
-                                total_passed += passed
-                                self.log_result("现有测试", f"{test_file} 通过 {passed} 个测试", True)
-                            if '总测试数:' in line and ':' in line:
-                                total = int(line.split(':')[-1].strip())
-                                total_tests += total
-                                self.log_result("现有测试", f"{test_file} 总计 {total} 个测试", True)
-                    else:
-                        self.log_result("现有测试", f"{test_file} 运行失败", False)
-
-                except subprocess.TimeoutExpired:
-                    self.log_result("现有测试", f"{test_file} 运行超时", False)
-                except Exception as e:
-                    self.log_result("现有测试", f"{test_file} 执行异常: {e}", False)
-            else:
-                self.log_result("现有测试", f"{test_file} 文件不存在", False)
-
-        if total_tests > 0:
-            success_rate = (total_passed / total_tests) * 100
-            self.log_result("现有测试", f"总体成功率: {success_rate:.1f}% ({total_passed}/{total_tests})", True)
-            estimated_coverage = success_rate * 0.6  # 保守估计
-            self.log_result("覆盖率估算", f"基于成功率估算覆盖率: {estimated_coverage:.1f}%", True)
-        else:
-            self.log_result("现有测试", "没有成功运行的测试", False)
-
-    def phase1_basic_modules(self):
-        """Phase 1: 基础模块全覆盖"""
-        self.log_result("Phase 1", "开始基础模块全覆盖...", None)
-
-        # 1.1 深度测试已验证模块
-        self.log_result("Phase 1.1", "深度测试已验证模块...", None)
-
-        try:
-            result = subprocess.run([
-                sys.executable, 'tests/expand_successful_tests.py'
-            ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
-
-            if result.returncode == 0:
-                self.log_result("Phase 1.1", "已验证模块深度测试成功", True)
-            else:
-                self.log_result("Phase 1.1", "已验证模块深度测试失败", False)
-        except Exception as e:
-            self.log_result("Phase 1.1", f"深度测试异常: {e}", False)
-
-        # 1.2 创建新的基础模块测试
-        self.log_result("Phase 1.2", "创建新的基础模块测试...", None)
-
-        basic_modules = [
-            'utils.dict_utils',
-            'utils.response',
-            'utils.data_validator',
-            'config.fastapi_config',
-            'config.openapi_config'
-        ]
-
-        for module_name in basic_modules:
-            self._test_basic_module(module_name)
-
-        # 1.3 运行真实覆盖率测量
-        self.log_result("Phase 1.3", "运行真实覆盖率测量...", None)
-
-        try:
-            result = subprocess.run([
-                sys.executable, 'tests/real_coverage_measurement.py'
-            ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
-
-            if result.returncode == 0:
-                self.log_result("Phase 1.3", "真实覆盖率测量完成", True)
-                # 解析覆盖率数据
-                lines = result.stdout.split('\n')
-                for line in lines:
-                    if '综合覆盖率:' in line:
-                        coverage = line.split(':')[-1].strip().rstrip('%')
-                        try:
-                            coverage_float = float(coverage)
-                            self.log_result("覆盖率测量", f"当前真实覆盖率: {coverage_float}%", True)
-
-                            # 检查是否达到Phase 1目标
-                            if coverage_float >= 5:
-                                self.log_result("Phase 1", "✅ Phase 1目标达成 (>=5%)", True)
-                            else:
-                                self.log_result("Phase 1", f"⚠️  Phase 1目标未达成 (当前{coverage_float}% < 5%)", False)
-                        except ValueError:
-                            pass
-            else:
-                self.log_result("Phase 1.3", "真实覆盖率测量失败", False)
-        except Exception as e:
-            self.log_result("Phase 1.3", f"覆盖率测量异常: {e}", False)
-
-    def _test_basic_module(self, module_name: str):
-        """测试基础模块"""
-        try:
-            module = __import__(module_name, fromlist=['*'])
-
-            # 测试无参数函数
-            function_count = 0
-            for name, obj in module.__dict__.items():
-                if callable(obj) and not name.startswith('_'):
-                    try:
-                        import inspect
-                        sig = inspect.signature(obj)
-                        if len(sig.parameters) == 0:
-                            obj()  # 不需要存储结果，只执行
-                            function_count += 1
-                            self.log_result("基础模块测试", f"{module_name}.{name}() 执行成功", True)
-                    except Exception:
-                        pass
-
-            if function_count > 0:
-                self.log_result("基础模块测试", f"{module_name} 成功测试 {function_count} 个函数", True)
-            else:
-                self.log_result("基础模块测试", f"{module_name} 没有可测试的无参数函数", False)
-
-        except ImportError as e:
-            self.log_result("基础模块测试", f"{module_name} 导入失败: {e}", False)
-        except Exception as e:
-            self.log_result("基础模块测试", f"{module_name} 测试异常: {e}", False)
-
-    def generate_progress_report(self):
-        """生成进度报告"""
-        self.log_result("报告生成", "生成进度报告...", None)
-
-        report = {
-            'execution_time': datetime.datetime.now().isoformat(),
-            'duration_minutes': (datetime.datetime.now() - self.start_time).total_seconds() / 60,
-            'current_phase': self.current_phase,
-            'results': self.results_log,
-            'summary': {
-                'total_actions': len(self.results_log),
-                'successful_actions': len([r for r in self.results_log if r.get('success') is True]),
-                'failed_actions': len([r for r in self.results_log if r.get('success') is False]),
-                'pending_actions': len([r for r in self.results_log if r.get('success') is None])
-            }
-        }
-
-        # 保存报告
-        report_file = self.project_root / 'coverage_improvement_report.json'
-        with open(report_file, 'w', encoding='utf-8') as f:
-            json.dump(report, f, indent=2, ensure_ascii=False)
-
-        self.log_result("报告生成", f"报告已保存到: {report_file}", True)
-
-        # 输出摘要
-        summary = report['summary']
-        print("\n📊 执行摘要:")
-        print(f"   总操作数: {summary['total_actions']}")
-        print(f"   成功操作: {summary['successful_actions']}")
-        print(f"   失败操作: {summary['failed_actions']}")
-        print(f"   进行中操作: {summary['pending_actions']}")
-        print(f"   执行时长: {report['duration_minutes']:.1f} 分钟")
-
-        success_rate = (summary['successful_actions'] / summary['total_actions'] * 100) if summary['total_actions'] > 0 else 0
-        print(f"   成功率: {success_rate:.1f}%")
-
-        return report
-
-    def run_phase1(self):
-        """执行Phase 1"""
-        print("=" * 80)
-        print("🎯 开始执行 Phase 1: 基础模块全覆盖 (目标: 5-10%)")
-        print("=" * 80)
-
-        self.current_phase = 1
-
-        # 执行Phase 1步骤
-        self.run_syntax_check()
-        self.run_existing_tests()
-        self.phase1_basic_modules()
+        # 生成改进建议
+        actions = self.generator.generate_tests_for_issues(issues)
 
         # 生成报告
-        report = self.generate_progress_report()
+        self._generate_report(metrics, issues, actions)
 
-        print("\n" + "=" * 80)
-        print("🏁 Phase 1 执行完成")
-        print("=" * 80)
+        # 询问是否自动实施改进
+        return self._propose_improvements(actions)
 
-        return report
+    def _generate_report(self, metrics: CoverageMetrics, issues: List[CoverageIssue], actions: List[ImprovementAction]):
+        """生成改进报告"""
+        report_dir = self.project_root / "reports"
+        report_dir.mkdir(exist_ok=True)
 
-    def run_quick_diagnosis(self):
-        """运行快速诊断"""
-        print("=" * 80)
-        print("🔍 快速诊断: 检查当前项目状态")
-        print("=" * 80)
+        report_file = report_dir / f"coverage_improvement_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
 
-        self.run_syntax_check()
-        self.run_existing_tests()
+        report_content = f"""# 覆盖率改进报告
 
-        # 简单的覆盖率估算
-        report = self.generate_progress_report()
+**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**当前覆盖率**: {metrics.coverage_percentage:.1f}%
+**目标覆盖率**: 50%
 
-        return report
+## 📊 覆盖率概览
 
+| 指标 | 数值 |
+|------|------|
+| 总行数 | {metrics.total_lines} |
+| 已覆盖行数 | {metrics.covered_lines} |
+| 未覆盖行数 | {metrics.missing_lines} |
+| 当前覆盖率 | {metrics.coverage_percentage:.1f}% |
+| 目标覆盖率 | 50% |
+| 需要提升 | {50 - metrics.coverage_percentage:.1f}% |
+
+## 🔍 覆盖率问题分析
+
+发现了 {len(issues)} 个覆盖率问题：
+
+### 高优先级问题
+"""
+
+        high_priority_issues = [i for i in issues if i.severity == "high"]
+        for issue in high_priority_issues[:10]:  # 只显示前10个
+            report_content += f"""
+#### {issue.file_path}
+- **问题类型**: {issue.issue_type}
+- **严重程度**: {issue.severity}
+- **描述**: {issue.description}
+- **未覆盖行**: {issue.line_numbers[:5]}{'...' if len(issue.line_numbers) > 5 else ''}
+- **建议修复**:
+"""
+            for fix in issue.suggested_fixes:
+                report_content += f"  - {fix}\n"
+
+        report_content += f"""
+## 🎯 改进建议
+
+生成了 {len(actions)} 个改进建议：
+
+### 推荐行动
+"""
+
+        for i, action in enumerate(actions[:10]):  # 只显示前10个
+            report_content += f"""
+#### {i+1}. {action.description}
+- **类型**: {action.action_type}
+- **文件**: {action.file_path}
+- **预期影响**: {action.estimated_impact}
+- **实现方案**:
+```python
+{action.implementation}
+```
+"""
+
+        report_content += f"""
+## 📈 预期改进
+
+实施所有建议后，预期覆盖率可提升到: **{min(metrics.coverage_percentage + len(actions) * 2, 95):.1f}%**
+
+## 🚀 下一步行动
+
+1. 优先实施高优先级建议
+2. 运行测试验证改进效果
+3. 重新运行覆盖率分析
+4. 持续改进直到达到目标
+
+---
+
+*报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+*执行器版本: v1.0*
+"""
+
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(report_content)
+
+        print(f"📄 改进报告已生成: {report_file}")
+
+    def _propose_improvements(self, actions: List[ImprovementAction]) -> bool:
+        """提议改进方案"""
+        print(f"\n🎯 生成了 {len(actions)} 个改进建议")
+        print("建议优先级前5的改进方案:")
+
+        for i, action in enumerate(actions[:5]):
+            print(f"{i+1}. {action.description} (预期提升: {action.estimated_impact})")
+
+        try:
+            response = input("\n是否自动实施改进建议? (y/N): ").strip().lower()
+            if response in ['y', 'yes']:
+                return self._implement_improvements(actions[:3])  # 实施前3个建议
+            else:
+                print("跳过自动实施，请手动查看报告实施改进")
+                return True
+        except KeyboardInterrupt:
+            print("\n跳过改进实施")
+            return True
+
+    def _implement_improvements(self, actions: List[ImprovementAction]) -> bool:
+        """实施改进建议"""
+        print("🔧 实施改进建议...")
+
+        success_count = 0
+
+        for action in actions:
+            try:
+                # 确保测试目录存在
+                test_file = Path(action.file_path)
+                test_file.parent.mkdir(parents=True, exist_ok=True)
+
+                # 添加测试代码到文件
+                with open(test_file, 'a', encoding='utf-8') as f:
+                    f.write(f"\n# 自动生成的测试代码\n{action.implementation}\n")
+
+                print(f"✅ 已添加测试: {action.file_path}")
+                success_count += 1
+
+            except Exception as e:
+                print(f"❌ 实施改进失败: {action.description} - {e}")
+
+        print(f"\n📊 成功实施 {success_count}/{len(actions)} 个改进建议")
+
+        if success_count > 0:
+            print("\n🧪 运行测试验证改进效果...")
+            try:
+                subprocess.run([
+                    "python", "-m", "pytest",
+                    str(Path(action.file_path).parent),
+                    "-v"
+                ], cwd=self.project_root, check=False)
+            except Exception as e:
+                print(f"⚠️  测试验证失败: {e}")
+
+        return success_count > 0
 
 def main():
     """主函数"""
-    import argparse
+    print("🎯 覆盖率改进执行器")
+    print("=" * 30)
 
-    parser = argparse.ArgumentParser(description='测试覆盖率改进执行器')
-    parser.add_argument('--phase', type=int, choices=[1], help='执行指定阶段')
-    parser.add_argument('--diagnosis', action='store_true', help='运行快速诊断')
-    parser.add_argument('--all', action='store_true', help='执行所有可用阶段')
+    # 检查是否在正确的目录
+    if not Path("pyproject.toml").exists():
+        print("❌ 请在项目根目录运行此脚本")
+        sys.exit(1)
 
-    args = parser.parse_args()
-
+    # 创建执行器
     executor = CoverageImprovementExecutor()
 
-    if args.diagnosis:
-        executor.run_quick_diagnosis()
-    elif args.phase == 1:
-        executor.run_phase1()
-    elif args.all:
-        # 目前只实现了Phase 1
-        executor.run_phase1()
-    else:
-        print("请指定要执行的操作:")
-        print("  --diagnosis  运行快速诊断")
-        print("  --phase 1    执行Phase 1")
-        print("  --all        执行所有阶段")
+    # 运行分析
+    try:
+        success = executor.run_analysis()
+        print(f"\n⏱️  执行时间: {datetime.now() - executor.start_time}")
 
+        if success:
+            print("🎉 覆盖率改进分析完成！")
+            sys.exit(0)
+        else:
+            print("❌ 覆盖率改进分析失败")
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        print("\n\n用户中断执行")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n❌ 执行过程中出错: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

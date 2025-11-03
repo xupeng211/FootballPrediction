@@ -16,7 +16,11 @@ app = FastAPI(
 @app.get("/")
 async def root():
     """根端点"""
-    return {"message": "Football Prediction API", "version": "2.0.0", "status": "healthy"}
+    return {
+        "message": "Football Prediction API",
+        "version": "2.0.0",
+        "status": "healthy",
+    }
 
 
 @app.get("/health")
@@ -27,6 +31,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app:app",
         host="0.0.0.0",

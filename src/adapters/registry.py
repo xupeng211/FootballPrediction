@@ -19,9 +19,10 @@ except ImportError:
 class AdapterRegistry:
     """适配器注册表"""
 
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
+    # 全局注册表实例
+    # 全局注册表实例
+    # 全局注册表实例
+    # 全局注册表实例
     def __init__(self, factory=None):
         """初始化适配器注册表"""
         self.factory = factory or self._create_default_factory()
@@ -38,9 +39,8 @@ class AdapterRegistry:
             return None
 
     def register(
-        """TODO: 添加函数文档"""
         self, name: str, adapter: Adapter, group: Optional[str] = None
-    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    ) -> None:  # TODO: 添加函数文档
         """注册适配器"""
         self.adapters[name] = adapter
         if group:
@@ -62,10 +62,7 @@ class AdapterRegistry:
         """列出所有适配器名称"""
         return list(self.adapters.keys())
 
-    def unregister(
-        """TODO: 添加函数文档"""
-        self, name: str
-    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def unregister(self, name: str) -> None:  # TODO: 添加函数文档
         """注销适配器"""
         if name in self.adapters:
             del self.adapters[name]
@@ -74,10 +71,7 @@ class AdapterRegistry:
         for group_name, adapters in self.groups.items():
             self.groups[group_name] = [a for a in adapters if name not in str(type(a))]
 
-    def clear(
-        """TODO: 添加函数文档"""
-        self,
-    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def clear(self) -> None:  # TODO: 添加函数文档
         """清空注册表"""
         self.adapters.clear()
         self.groups.clear()

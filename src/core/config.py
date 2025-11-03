@@ -356,7 +356,7 @@ def load_config(config_file: Optional[str] = None) -> Config:
     """
     if config_file and Path(config_file).exists():
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
             return Config(**config_data)
         except (json.JSONDecodeError, IOError) as e:

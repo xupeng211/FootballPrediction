@@ -34,29 +34,47 @@ class TenantCreationRequestModel(BaseModel):
     """租户创建请求模型"""
 
     name: str = Field(
-        ..., min_length=1, max_length=100, description="租户名称"  # TODO: 将魔法数字 100 提取为常量
+        ...,
+        min_length=1,
+        max_length=100,
+        description="租户名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     slug: str = Field(
-        ..., min_length=1, max_length=50, description="租户标识符"  # TODO: 将魔法数字 50 提取为常量
+        ...,
+        min_length=1,
+        max_length=50,
+        description="租户标识符",  # TODO: 将魔法数字 50 提取为常量
     )  # TODO: 将魔法数字 50 提取为常量
     contact_email: str = Field(..., description="联系邮箱")
     company_name: Optional[str] = Field(
-        None, max_length=100, description="公司名称"  # TODO: 将魔法数字 100 提取为常量
+        None,
+        max_length=100,
+        description="公司名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     description: Optional[str] = Field(
-        None, max_length=500, description="租户描述"  # TODO: 将魔法数字 500 提取为常量
+        None,
+        max_length=500,
+        description="租户描述",  # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
     plan: TenantPlan = Field(TenantPlan.BASIC, description="租户计划")
     max_users: int = Field(
-        10, ge=1, le=10000, description="最大用户数"  # TODO: 将魔法数字 10000 提取为常量
+        10,
+        ge=1,
+        le=10000,
+        description="最大用户数",  # TODO: 将魔法数字 10000 提取为常量
     )  # TODO: 将魔法数字 10000 提取为常量
     trial_days: int = Field(
-        30, ge=1, le=365, description="试用天数"  # TODO: 将魔法数字 30 提取为常量
+        30,
+        ge=1,
+        le=365,
+        description="试用天数",  # TODO: 将魔法数字 30 提取为常量
     )  # TODO: 将魔法数字 30 提取为常量
     custom_settings: Optional[Dict[str, Any]] = Field(None, description="自定义设置")
 
     @validator("slug")
-    def validate_slug(cls, v):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def validate_slug(
+        cls, v
+    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """验证租户标识符"""
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
@@ -67,20 +85,31 @@ class TenantUpdateRequestModel(BaseModel):
     """租户更新请求模型"""
 
     name: Optional[str] = Field(
-        None, min_length=1, max_length=100, description="租户名称"  # TODO: 将魔法数字 100 提取为常量
+        None,
+        min_length=1,
+        max_length=100,
+        description="租户名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     description: Optional[str] = Field(
-        None, max_length=500, description="租户描述"  # TODO: 将魔法数字 500 提取为常量
+        None,
+        max_length=500,
+        description="租户描述",  # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
     contact_email: Optional[str] = Field(None, description="联系邮箱")
     contact_phone: Optional[str] = Field(
-        None, max_length=50, description="联系电话"  # TODO: 将魔法数字 50 提取为常量
+        None,
+        max_length=50,
+        description="联系电话",  # TODO: 将魔法数字 50 提取为常量
     )  # TODO: 将魔法数字 50 提取为常量
     company_name: Optional[str] = Field(
-        None, max_length=100, description="公司名称"  # TODO: 将魔法数字 100 提取为常量
+        None,
+        max_length=100,
+        description="公司名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     company_address: Optional[str] = Field(
-        None, max_length=500, description="公司地址"  # TODO: 将魔法数字 500 提取为常量
+        None,
+        max_length=500,
+        description="公司地址",  # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
     settings: Optional[Dict[str, Any]] = Field(None, description="租户设置")
     features: Optional[Dict[str, bool]] = Field(None, description="功能配置")
@@ -409,7 +438,10 @@ async def update_usage_metrics(tenant_id: int, metrics: Dict[str, Any]):
 async def list_tenants(
     skip: int = Query(0, ge=0, description="跳过数量"),
     limit: int = Query(
-        50, ge=1, le=100, description="返回数量"  # TODO: 将魔法数字 50 提取为常量
+        50,
+        ge=1,
+        le=100,
+        description="返回数量",  # TODO: 将魔法数字 50 提取为常量
     ),  # TODO: 将魔法数字 50 提取为常量
     status: Optional[TenantStatus] = Query(None, description="状态筛选"),
     plan: Optional[TenantPlan] = Query(None, description="计划筛选"),
