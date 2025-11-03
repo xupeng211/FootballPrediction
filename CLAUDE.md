@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 🧪 **完整测试**: 385个测试用例，19种标准化测试标记，覆盖率阈值30%（渐进式改进策略）
 - 🐳 **容器化**: Docker + docker-compose完整部署方案，支持开发/测试/生产环境
 - 🛡️ **质量保证**: Ruff + MyPy + bandit完整质量检查体系，零容忍类型检查
-- 🤖 **智能修复**: 600+个自动化脚本，智能质量修复和测试危机处理
+- 🤖 **智能修复**: 85+个自动化脚本，智能质量修复和测试危机处理
 - ⚠️ **当前状态**: 企业级生产就绪，推荐使用Docker环境，覆盖率持续改进中
 
 **技术栈：** Python 3.11+，异步架构，Docker化部署，多环境支持
@@ -44,7 +44,7 @@ make env-check
 source .venv/bin/activate
 pip install pandas numpy aiohttp psutil scikit-learn
 
-# 🎯 智能修复工具（600+个脚本可用）
+# 🎯 智能修复工具（85+个脚本可用）
 python3 scripts/smart_quality_fixer.py               # 智能自动修复
 python3 scripts/quality_guardian.py --check-only    # 全面质量检查
 python3 scripts/fix_test_crisis.py                  # 测试危机修复
@@ -57,10 +57,11 @@ python3 scripts/continuous_improvement_engine.py    # 持续改进引擎
 ```bash
 make context          # 加载项目上下文（⭐ 开发前必做）
 make env-check        # 环境健康检查
-make test             # 运行所有测试（覆盖率阈值30%）
-make test.unit        # 仅单元测试
-make test.int         # 集成测试
-make coverage         # 覆盖率报告
+make install          # 安装项目依赖
+make test.unit        # 仅单元测试（标记为'unit'）
+make test.int         # 集成测试（标记为'integration'）
+make test.e2e         # 端到端测试（标记为'e2e'）
+make coverage         # 覆盖率报告（HTML和终端输出）
 make prepush          # 提交前完整验证
 make ci               # CI/CD流水线验证
 ```
@@ -74,16 +75,20 @@ docker-compose exec app pytest -m "unit"  # 容器中运行测试
 
 ### 🧪 测试执行
 ```bash
-make test             # 运行所有测试（覆盖率阈值30%）
-make test.unit        # 仅单元测试
-make test.int         # 集成测试
+make test.unit        # 单元测试（标记为'unit'）
+make test.int         # 集成测试（标记为'integration'）
+make test.e2e         # 端到端测试（标记为'e2e'）
+make test.slow        # 慢速测试（标记为'slow'）
 make coverage         # 覆盖率报告（生成htmlcov/index.html）
+make coverage-unit    # 单元测试覆盖率
+make coverage-fast    # 快速覆盖率（仅单元测试，无慢速测试）
 
 # 精准测试（基于标记）
 pytest -m "unit and not slow"     # 单元测试（排除慢速）
 pytest -m "api and critical"      # API关键功能测试
 pytest -m "domain or services"    # 领域和服务层测试
 pytest -m "issue94"               # 特定Issue相关测试
+pytest -m "ml"                    # 机器学习模块测试
 
 # 直接使用pytest的场景（调试和特殊情况）
 pytest tests/unit/api/test_predictions.py::test_prediction_simple -v  # 调试特定测试
@@ -97,7 +102,7 @@ pytest --cov=src --cov-report=term-missing  # 查看具体覆盖情况
 ruff check src/ tests/     # 代码检查（替代make lint）
 ruff format src/ tests/    # 代码格式化（替代make fmt）
 
-# 🎯 智能修复工具（600+个自动化脚本）
+# 🎯 智能修复工具（85+个自动化脚本）
 python3 scripts/smart_quality_fixer.py          # 智能自动修复
 python3 scripts/quality_guardian.py --check-only # 全面质量检查
 python3 scripts/fix_test_crisis.py             # 测试危机修复
@@ -125,10 +130,11 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 - 快速反馈：`pytest -m "not slow" --maxfail=3`
 
 ### 📝 配置文件说明
-- **pytest.ini**: 19种标准化测试标记，包含详细的测试分类体系
+- **pytest.ini**: 19种标准化测试标记，覆盖率阈值30%，并行测试配置
+- **pyproject.toml**: 项目构建配置，包含Ruff、MyPy、pytest等工具配置（注意：存在大量TODO注释需要清理）
 - **.ruffignore**: Ruff忽略规则，排除有问题的脚本文件
-- **Makefile**: 600+个命令，完整开发工具链，包含CI/CD自动化
-- **scripts/**: 600+个自动化脚本，涵盖修复、测试、部署等全流程
+- **Makefile**: 85+个命令，完整开发工具链，包含CI/CD自动化
+- **scripts/**: 85+个自动化脚本，涵盖修复、测试、部署等全流程
 - **requirements.txt**: 锁定的依赖版本，确保环境一致性
 
 ## 🏗️ 系统架构
@@ -164,29 +170,49 @@ prediction = await prediction_service.create_prediction(match_data, team_data)
 from src.cqrs.commands import CreatePredictionCommand, UpdatePredictionCommand
 from src.cqrs.queries import GetPredictionsQuery
 from src.cqrs.handlers import CommandHandler, QueryHandler
+from src.cqrs.bus import CommandBus, QueryBus
 
 # 命令侧 - 写操作
-command = CreatePredictionCommand(match_id=123, user_id=456, prediction_data={})
-await command_handler.handle(command)
+command = CreatePredictionCommand(
+    match_id=123,
+    user_id=456,
+    predicted_home=2,
+    predicted_away=1,
+    confidence=0.85,
+    strategy_used="ml_model"
+)
+await command_bus.handle(command)
 
 # 查询侧 - 读操作
-query = GetPredictionsQuery(user_id=456, filters={})
-predictions = await query_handler.handle(query)
+query = GetPredictionsQuery(user_id=456, filters={"limit": 10})
+predictions = await query_bus.handle(query)
+
+# 支持的命令类型
+# - CreatePredictionCommand: 创建预测
+# - UpdatePredictionCommand: 更新预测
+# - DeletePredictionCommand: 删除预测
+# - CreateMatchCommand: 创建比赛
 ```
 
 #### 4. 依赖注入容器 (`src/core/di.py`)
 ```python
 from src.core.di import Container
+from src.core.di import ServiceLifetime
 
 # 创建容器并注册服务
 container = Container()
-container.register_singleton(DatabaseManager)
-container.register_scoped(PredictionService)
-container.register_transient(UserRepository)
+container.register_singleton(DatabaseManager, ServiceLifetime.SINGLETON)
+container.register_scoped(PredictionService, ServiceLifetime.SCOPED)
+container.register_transient(UserRepository, ServiceLifetime.TRANSIENT)
 
 # 自动装配依赖
 prediction_service = container.resolve(PredictionService)
 # 自动注入所需的 DatabaseManager 和 UserRepository
+
+# 支持的生命周期
+# - SINGLETON: 整个容器生命周期内只创建一次
+# - SCOPED: 每个作用域内创建一次
+# - TRANSIENT: 每次请求都创建新实例
 ```
 
 #### 5. 数据库架构 (`src/database/`)
@@ -203,7 +229,7 @@ prediction_service = container.resolve(PredictionService)
 - **质量工具**: Ruff代码检查 + MyPy类型检查 + bandit安全扫描
 
 ### 配置文件要点
-- **pytest.ini**: 19种标准化测试标记，支持完整测试分类体系，覆盖率阈值5%
+- **pytest.ini**: 19种标准化测试标记，支持完整测试分类体系，覆盖率阈值30%
 - **.ruffignore**: 智能忽略有问题的文件，确保代码检查顺畅
 - **requirements.txt**: 锁定依赖版本，确保开发环境一致性
 - **Makefile**: 600+个命令，完整开发工具链，包含CI/CD自动化
@@ -364,69 +390,71 @@ make github-actions-test   # GitHub Actions本地测试
 - **MyPy**: 类型检查（零容忍，有完整的忽略规则）
 - **bandit**: 安全漏洞扫描
 - **pip-audit**: 依赖漏洞检查
-- **智能修复**: 600+个自动化脚本支持智能问题修复
+- **智能修复**: 85+个自动化脚本支持智能问题修复
 
-### 🤖 AI辅助开发系统（600+智能脚本）
+### 🤖 AI辅助开发系统（85+智能脚本）
 ```bash
-# 🎯 质量守护工具
-python3 scripts/quality_guardian.py --check-only      # 全面质量检查
-python3 scripts/smart_quality_fixer.py               # 智能自动修复
-python3 scripts/continuous_improvement_engine.py --automated  # 自动改进
+# 🎯 核心质量工具
+python3 scripts/smart_quality_fixer.py               # 智能自动修复（34KB核心脚本）
+python3 scripts/automated_quality_gate.py            # 自动化质量门禁
 
-# 🚨 测试危机修复工具
-python3 scripts/fix_test_crisis.py                   # 测试危机修复
-python3 scripts/precise_error_fixer.py              # 精确错误修复
-python3 scripts/launch_test_crisis_solution.py      # 交互式修复工具
+# 📊 覆盖率专项工具
+python3 scripts/coverage_improvement_executor.py     # 覆盖率改进执行器（23KB）
+python3 scripts/coverage_booster.py                  # 覆盖率增强工具（13KB）
+python3 scripts/coverage_optimizer.py               # 覆盖率优化器（16KB）
+python3 scripts/coverage_dashboard.py               # 覆盖率面板（16KB）
+python3 scripts/enhanced_coverage_analysis.py       # 增强覆盖率分析（18KB）
 
-# 📊 覆盖率提升工具
-python3 scripts/coverage_improvement_executor.py     # 覆盖率改进执行器
-python3 scripts/phase35_ai_coverage_master.py        # AI覆盖率大师
-python3 scripts/integrated_coverage_improver.py      # 集成覆盖率改进器
+# 🔧 质量问题创建和修复
+python3 scripts/create_quality_issues.py            # 质量问题生成器（26KB）
+python3 scripts/create_quality_issues_simple.py     # 简化质量问题生成器（21KB）
+python3 scripts/final_coverage_push.py              # 最终覆盖率推送（25KB）
 
-# 🔧 语法错误修复
-python3 scripts/comprehensive_syntax_fixer.py       # 全面语法修复器
-python3 scripts/phase4_precision_syntax_fixer.py    # 精确语法修复器
-python3 scripts/aggressive_syntax_fixer.py          # 激进语法修复器
+# 📈 覆盖率策略工具
+python3 scripts/smart_coverage_strategy.py          # 智能覆盖率策略（15KB）
 
-# 🎭 GitHub集成工具
-python3 scripts/github_issue_manager.py              # GitHub问题管理器
-python3 scripts/github_automation.sh                 # GitHub自动化脚本
-python3 scripts/github_actions_validator.sh          # GitHub Actions验证器
-
-# 🚀 部署和监控工具
-python3 scripts/deploy_production.sh                 # 生产部署脚本
-python3 scripts/monitoring-dashboard.sh              # 监控面板脚本
-python3 scripts/load_balancer_monitor.sh             # 负载均衡监控
+# 🎯 其他专项工具
+python3 scripts/create_quality_issues.sh            # 质量问题创建脚本（15KB）
 ```
 
 ## ⚡ 快速故障排除
 
 ### 常见问题解决方案
 ```bash
-# 环境问题 - 首选本地开发
-make install && make env-check
+# 🔧 环境问题修复
+make install && make env-check           # 完整环境安装和检查
 
-# 依赖缺失问题
+# 📦 依赖缺失问题
 source .venv/bin/activate
-pip install pandas numpy aiohttp psutil scikit-learn
+pip install pandas numpy aiohttp psutil scikit-learn  # 安装核心依赖
 
-# 代码质量问题
-make quality           # 完整质量检查
-python3 scripts/smart_quality_fixer.py  # 智能修复
+# 🛡️ 代码质量问题
+ruff check src/ tests/                   # Ruff代码检查
+python3 scripts/smart_quality_fixer.py   # 智能自动修复（34KB核心脚本）
 
-# 测试问题
-make test-crisis-fix  # 测试危机修复
+# 🧪 测试问题
+make test.unit                           # 运行单元测试
+python3 scripts/coverage_improvement_executor.py  # 覆盖率改进
 
-# 完全环境重置
+# 🚨 大量测试失败时的应急流程
+python3 scripts/smart_quality_fixer.py   # 1. 智能质量修复
+make test.unit                           # 2. 验证修复结果
+
+# 🔄 完全环境重置
 make clean && make install && make test.unit
+
+# 📊 覆盖率问题
+make coverage                            # 生成覆盖率报告
+python3 scripts/coverage_booster.py     # 覆盖率增强
 ```
 
 ### 关键提醒
 - **推荐使用本地开发环境**，虚拟环境确保依赖隔离
 - **优先使用Makefile命令**而非直接pytest
 - **智能修复工具**可解决80%的常见问题
-- **600+个自动化脚本**覆盖开发全生命周期
-- **覆盖率渐进式改进**，当前阈值5%
+- **85+个自动化脚本**覆盖开发全生命周期
+- **覆盖率渐进式改进**，当前阈值30%
+- **核心脚本**: `smart_quality_fixer.py` (34KB) 是主要的智能修复工具
 
 ---
 
@@ -476,7 +504,7 @@ make test.unit                           # 3. 验证修复结果
 - **架构**: DDD + CQRS + 依赖注入 + 异步架构 + 事件驱动
 - **测试**: 385个测试用例，19种标准化标记，覆盖率阈值30%（渐进式改进策略）
 - **质量**: A+代码质量，Ruff + MyPy + bandit完整工具链
-- **智能化**: 600+个自动化脚本，AI辅助开发，智能质量修复
+- **智能化**: 85+个自动化脚本，AI辅助开发，智能质量修复
 - **推荐**: 使用Docker环境避免依赖问题，遵循渐进式改进方法
 
 ## 🔍 高级功能
@@ -534,7 +562,7 @@ python3 scripts/intelligent_quality_monitor.py # 智能质量监控
 ## 📚 项目独特优势
 
 ### 🤖 智能化开发体验
-- **600+个自动化脚本**：覆盖开发、测试、部署、监控全流程
+- **85+个自动化脚本**：覆盖开发、测试、部署、监控全流程
 - **AI辅助修复**：智能识别和修复常见问题
 - **危机自动处理**：测试失败时的自动化恢复机制
 - **持续改进引擎**：代码质量的自动优化
@@ -554,7 +582,7 @@ python3 scripts/intelligent_quality_monitor.py # 智能质量监控
 ### 覆盖率策略调整
 根据项目实际测量和配置分析，项目采用**渐进式覆盖率改进策略**：
 
-- **实际覆盖率配置**: pytest.ini中设置 `--cov-fail-under=30`，但描述为5%阈值
+- **实际覆盖率配置**: pytest.ini中设置 `--cov-fail-under=30`，已统一配置
 - **README显示**: 测试覆盖率29.0%，覆盖utils和domain模块
 - **建议策略**: 使用当前30%阈值，逐步提升到企业级标准
 
@@ -566,4 +594,5 @@ python3 scripts/intelligent_quality_monitor.py # 智能质量监控
 
 ---
 
-*文档版本: v7.0 (架构验证版) | 维护者: Claude Code*
+*文档版本: v8.0 (架构优化版) | 维护者: Claude Code*
+*更新内容: 修正覆盖率阈值描述、完善CQRS示例、更新脚本数量、优化故障排除指南*
