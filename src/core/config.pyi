@@ -1,11 +1,11 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic_settings import BaseSettings
 
 class Config:
     config_dir: Any
     config_file: Any
-    _config: Dict[str, Any]
+    _config: dict[str, Any]
 
     def __init__(self) -> None: ...
     def _load_config(self) -> None: ...
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     environment: str
     log_level: str
     mlflow_tracking_uri: str
-    api_football_key: Optional[str]
+    api_football_key: str | None
     api_football_url: str
 
     class Config:

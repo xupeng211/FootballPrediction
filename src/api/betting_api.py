@@ -16,12 +16,13 @@ Betting API Module
 Issue: #116 EV计算和投注策略
 """
 
-from typing import Dict, List, Optional, Any
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
+from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from src.services.betting.betting_service import create_betting_service, BettingService
 from src.core.logging_system import get_logger
+from src.services.betting.betting_service import BettingService, create_betting_service
 
 logger = get_logger(__name__)
 
@@ -36,10 +37,10 @@ class BettingOddsRequest(BaseModel):
     home_win: float = Field(..., gt=1.0, description="主胜赔率")
     draw: float = Field(..., gt=1.0, description="平局赔率")
     away_win: float = Field(..., gt=1.0, description="客胜赔率")
-    over_2_5: Optional[float] = Field(None, gt=1.0, description="大2.5球赔率")
-    under_2_5: Optional[float] = Field(None, gt=1.0, description="小2.5球赔率")
-    btts_yes: Optional[float] = Field(None, gt=1.0, description="双方进球赔率")
-    btts_no: Optional[float] = Field(None, gt=1.0, description="双方不进球赔率")
+    over_2_5: float | None = Field(None, gt=1.0, description="大2.5球赔率")
+    under_2_5: float | None = Field(None, gt=1.0, description="小2.5球赔率")
+    btts_yes: float | None = Field(None, gt=1.0, description="双方进球赔率")
+    btts_no: float | None = Field(None, gt=1.0, description="双方不进球赔率")
     source: str = Field("unknown", description="赔率来源")
     confidence: float = Field(1.0, ge=0.0, le=1.0, description="赔率置信度")
 
@@ -47,7 +48,7 @@ class BettingOddsRequest(BaseModel):
 class PortfolioRequest(BaseModel):
     """组合投注请求模型"""
 
-    match_ids: List[str] = Field(
+    match_ids: list[str] = Field(
         ..., min_items=1, max_items=10, description="比赛ID列表"
     )
     strategy_name: str = Field("srs_compliant", description="策略名称")
@@ -87,33 +88,33 @@ class BettingRecommendationResponse(BaseResponse):
 
     match_id: str
     strategy_used: str
-    individual_bets: List[Dict[str, Any]]
-    portfolio_optimization: Dict[str, Any]
-    overall_recommendation: Dict[str, Any]
-    srs_compliance: Dict[str, Any]
-    risk_summary: Dict[str, Any]
+    individual_bets: list[dict[str, Any]]
+    portfolio_optimization: dict[str, Any]
+    overall_recommendation: dict[str, Any]
+    srs_compliance: dict[str, Any]
+    risk_summary: dict[str, Any]
 
 
 class PortfolioRecommendationResponse(BaseResponse):
     """组合投注建议响应模型"""
 
     matches_analyzed: int
-    valid_matches: List[str]
-    portfolio_optimization: Dict[str, Any]
-    risk_assessment: Dict[str, Any]
-    srs_portfolio_compliance: Dict[str, Any]
-    summary: Dict[str, Any]
+    valid_matches: list[str]
+    portfolio_optimization: dict[str, Any]
+    risk_assessment: dict[str, Any]
+    srs_portfolio_compliance: dict[str, Any]
+    summary: dict[str, Any]
 
 
 class PerformanceAnalysisResponse(BaseResponse):
     """表现分析响应模型"""
 
-    analysis_period: Dict[str, Any]
+    analysis_period: dict[str, Any]
     total_bets_analyzed: int
-    performance_metrics: Dict[str, Any]
-    srs_compliance_analysis: Dict[str, Any]
-    risk_analysis: Dict[str, Any]
-    improvement_suggestions: List[str]
+    performance_metrics: dict[str, Any]
+    srs_compliance_analysis: dict[str, Any]
+    risk_analysis: dict[str, Any]
+    improvement_suggestions: list[str]
 
 
 # 依赖注入

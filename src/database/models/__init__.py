@@ -5,6 +5,7 @@
 """
 
 from src.database.base import Base
+
 from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
 from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLog
 from .features import Features, TeamType
@@ -14,18 +15,18 @@ from .odds import MarketType, Odds
 from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
-from .user import User
 from .tenant import (
-    Tenant,
-    TenantRole,
-    TenantPermission,
-    RolePermission,
-    UserRoleAssignment,
-    TenantStatus,
-    TenantPlan,
     PermissionScope,
     ResourceType,
+    RolePermission,
+    Tenant,
+    TenantPermission,
+    TenantPlan,
+    TenantRole,
+    TenantStatus,
+    UserRoleAssignment,
 )
+from .user import User
 
 # 为API兼容性创建别名
 Prediction = Predictions

@@ -6,7 +6,7 @@ Prediction Domain Events
 Defines domain events related to predictions.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.domain.events.base import DomainEvent
 
@@ -21,7 +21,7 @@ class PredictionCreatedEvent(DomainEvent):
         match_id: int,
         predicted_home: int,
         predicted_away: int,
-        confidence: Optional[float] = None,
+        confidence: float | None = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -32,7 +32,7 @@ class PredictionCreatedEvent(DomainEvent):
         self.predicted_away = predicted_away
         self.confidence = confidence
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
             "user_id": self.user_id,
@@ -62,7 +62,7 @@ class PredictionUpdatedEvent(DomainEvent):
         self.new_predicted_home = new_predicted_home
         self.new_predicted_away = new_predicted_away
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
             "old_prediction": {
@@ -85,8 +85,8 @@ class PredictionEvaluatedEvent(DomainEvent):
         actual_home: int,
         actual_away: int,
         is_correct: bool,
-        points_earned: Optional[int] = None,
-        accuracy_score: Optional[float] = None,
+        points_earned: int | None = None,
+        accuracy_score: float | None = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -97,7 +97,7 @@ class PredictionEvaluatedEvent(DomainEvent):
         self.points_earned = points_earned
         self.accuracy_score = accuracy_score
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
             "actual_score": {"home": self.actual_home, "away": self.actual_away},
@@ -114,7 +114,7 @@ class PredictionCancelledEvent(DomainEvent):
         self,
         prediction_id: int,
         reason: str,
-        cancelled_by: Optional[int] = None,
+        cancelled_by: int | None = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -122,7 +122,7 @@ class PredictionCancelledEvent(DomainEvent):
         self.reason = reason
         self.cancelled_by = cancelled_by
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
             "reason": self.reason,
@@ -142,7 +142,7 @@ class PredictionExpiredEvent(DomainEvent):
         self.match_id = match_id
         self.expired_at = expired_at
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
             "match_id": self.match_id,
@@ -169,7 +169,7 @@ class PredictionPointsAdjustedEvent(DomainEvent):
         self.new_points = new_points
         self.adjustment_reason = adjustment_reason
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "prediction_id": self.prediction_id,
             "user_id": self.user_id,

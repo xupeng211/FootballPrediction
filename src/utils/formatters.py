@@ -4,7 +4,7 @@ Data formatters
 
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
@@ -12,7 +12,7 @@ def format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
     return dt.strftime(format_str)
 
 
-def format_json(data: Any, indent: Optional[int] = 2) -> str:
+def format_json(data: Any, indent: int | None = 2) -> str:
     """Format data as JSON string"""
     return json.dumps(data, indent=indent, ensure_ascii=False)
 

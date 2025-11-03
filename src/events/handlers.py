@@ -9,7 +9,7 @@ Provides implementations for various event handlers.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from .base import Event, EventHandler
 from .bus import get_event_bus
@@ -33,7 +33,7 @@ class MetricsEventHandler(EventHandler):
         pass
         # 添加pass语句
         super().__init__("MetricsCollector")
-        self.metrics: Dict[str, Any] = {
+        self.metrics: dict[str, Any] = {
             "events_processed": 0,
             "event_counts": {},
             "last_event_time": None,
@@ -50,7 +50,7 @@ class MetricsEventHandler(EventHandler):
 
         logger.debug(f"Collected metrics for event: {event_type}")
 
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         return [
             MatchCreatedEvent.get_event_type(),
             MatchUpdatedEvent.get_event_type(),
@@ -60,7 +60,7 @@ class MetricsEventHandler(EventHandler):
             TeamStatsUpdatedEvent.get_event_type(),
         ]
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取收集的指标"""
         return self.metrics.copy()
 
@@ -99,7 +99,7 @@ class LoggingEventHandler(EventHandler):
         # 记录详细数据（调试级别）
         self.logger.debug(f"Event details: {event_data}")
 
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         return [
             MatchCreatedEvent.get_event_type(),
             MatchUpdatedEvent.get_event_type(),
@@ -156,7 +156,7 @@ class CacheInvalidationHandler(EventHandler):
                 ) as e:
                     logger.error(f"Failed to invalidate cache {pattern}: {e}")
 
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         return [
             MatchCreatedEvent.get_event_type(),
             MatchUpdatedEvent.get_event_type(),
@@ -219,14 +219,14 @@ class NotificationEventHandler(EventHandler):
         }
         await self.notification_queue.put(notification)
 
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         return [
             MatchCreatedEvent.get_event_type(),
             PredictionMadeEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
         ]
 
-    async def get_notifications(self) -> List[Dict[str, Any]]:
+    async def get_notifications(self) -> list[dict[str, Any]]:
         """获取待发送的通知"""
         notifications = []
         while not self.notification_queue.empty():
@@ -247,7 +247,7 @@ class AnalyticsEventHandler(EventHandler):
         # 添加pass语句
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
-        self.analytics_data: Dict[str, Any] = {
+        self.analytics_data: dict[str, Any] = {
             "daily_predictions": {},
             "user_activity": {},
             "match_predictions": {},
@@ -324,14 +324,14 @@ class AnalyticsEventHandler(EventHandler):
         # 这里可以发送到分析服务
         logger.info(f"New match created: {event.data.match_id}")
 
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         return [
             PredictionMadeEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
             MatchCreatedEvent.get_event_type(),
         ]
 
-    def get_analytics_data(self) -> Dict[str, Any]:
+    def get_analytics_data(self) -> dict[str, Any]:
         """获取分析数据"""
         return self.analytics_data.copy()
 
@@ -368,7 +368,7 @@ class AlertEventHandler(EventHandler):
         # 这里应该实现实际的预测量检查逻辑
         pass
 
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         return [
             PredictionMadeEvent.get_event_type(),
         ]

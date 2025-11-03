@@ -7,7 +7,7 @@ Match Data Processor - Rewritten Version
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import pandas as pd
 
@@ -32,8 +32,8 @@ class MatchProcessor:
         self.optional_fields = {"venue", "competition", "season", "match_status"}
 
     async def process_raw_match_data(
-        self, raw_data: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, raw_data: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """处理原始比赛数据"""
         processed_matches = []
 
@@ -49,8 +49,8 @@ class MatchProcessor:
         return processed_matches
 
     async def _process_single_match(
-        self, match_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        self, match_data: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """处理单个比赛数据"""
         # 验证必需字段
         if not await self._validate_required_fields(match_data):
@@ -64,11 +64,11 @@ class MatchProcessor:
 
         return standardized_data
 
-    async def _validate_required_fields(self, match_data: Dict[str, Any]) -> bool:
+    async def _validate_required_fields(self, match_data: dict[str, Any]) -> bool:
         """验证必需字段"""
         return all(field in match_data for field in self.required_fields)
 
-    async def _clean_match_data(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _clean_match_data(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """清洗比赛数据"""
         cleaned_data = {}
 
@@ -98,7 +98,7 @@ class MatchProcessor:
 
         return cleaned_data
 
-    async def _parse_date(self, date_value: Union[str, datetime]) -> Optional[datetime]:
+    async def _parse_date(self, date_value: str | datetime) -> datetime | None:
         """解析日期字段"""
         if isinstance(date_value, datetime):
             return date_value
@@ -123,8 +123,8 @@ class MatchProcessor:
         return None
 
     async def _standardize_match_data(
-        self, match_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, match_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """标准化比赛数据格式"""
         standardized = {
             "match_id": str(match_data.get("match_id", "")),
@@ -179,7 +179,7 @@ class MatchProcessor:
             self.logger.error(f"处理DataFrame失败: {e}")
             return pd.DataFrame()
 
-    async def validate_match_integrity(self, match_data: Dict[str, Any]) -> bool:
+    async def validate_match_integrity(self, match_data: dict[str, Any]) -> bool:
         """验证比赛数据完整性"""
         try:
             # 检查比分合理性
@@ -205,7 +205,7 @@ class MatchProcessor:
 
     async def get_processing_stats(
         self, original_count: int, processed_count: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取处理统计信息"""
         success_rate = (
             (processed_count / original_count * 100) if original_count > 0 else 0
@@ -220,8 +220,8 @@ class MatchProcessor:
         }
 
     async def batch_process(
-        self, data_batches: List[List[Dict[str, Any]]]
-    ) -> List[Dict[str, Any]]:
+        self, data_batches: list[list[dict[str, Any]]]
+    ) -> list[dict[str, Any]]:
         """批量处理多批次数据"""
         all_processed = []
         total_stats = {"original": 0, "processed": 0}

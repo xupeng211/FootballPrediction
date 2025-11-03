@@ -4,7 +4,7 @@ Configuration loader utilities
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 try:
     import yaml
@@ -12,13 +12,13 @@ except ImportError:
     yaml = None
 
 
-def load_config_from_file(file_path: str) -> Dict[str, Any]:
+def load_config_from_file(file_path: str) -> dict[str, Any]:
     """Load configuration from file"""
     if not os.path.exists(file_path):
         return {}
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             if file_path.endswith(".json"):
                 return json.load(f)
             elif file_path.endswith(".yaml") or file_path.endswith(".yml"):

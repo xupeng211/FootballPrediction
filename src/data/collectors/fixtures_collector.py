@@ -1,5 +1,3 @@
-from typing import Set
-
 """
 
 # mypy: ignore-errors
@@ -19,7 +17,7 @@ from typing import Set
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base_collector import CollectionResult, DataCollector
 
@@ -35,7 +33,7 @@ class FixturesCollector(DataCollector):
     def __init__(
         self,
         data_source: str = "football_api",
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         base_url: str = "https://api.football-data.org/v4",
         **kwargs,
     ):
@@ -52,15 +50,15 @@ class FixturesCollector(DataCollector):
         self.base_url = base_url
 
         # 防重复:记录已处理的比赛ID
-        self._processed_matches: Set[str] = set()
+        self._processed_matches: set[str] = set()
         # 防丢失:记录应该存在但缺失的比赛
-        self._missing_matches: List[Dict[str, Any]] = []
+        self._missing_matches: list[dict[str, Any]] = []
 
     async def collect_fixtures(
         self,
-        leagues: Optional[List[str]] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        leagues: list[str] | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         **kwargs,
     ) -> CollectionResult:
         """
@@ -236,7 +234,7 @@ class FixturesCollector(DataCollector):
             status="skipped",
         )
 
-    async def _get_active_leagues(self) -> List[str]:
+    async def _get_active_leagues(self) -> list[str]:
         """
         获取活跃的联赛列表
 
@@ -296,7 +294,7 @@ class FixturesCollector(DataCollector):
 
     async def _collect_league_fixtures(
         self, league_code: str, date_from: datetime, date_to: datetime
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         采集指定联赛的赛程数据
 
@@ -320,7 +318,7 @@ class FixturesCollector(DataCollector):
 
             response = await self._make_request(url=url, headers=headers, params=params)
 
-            return response.get(str("matches"), [])
+            return response.get("matches", [])
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(
@@ -328,7 +326,7 @@ class FixturesCollector(DataCollector):
             )
             return []
 
-    def _generate_match_key(self, fixture_data: Dict[str, Any]) -> str:
+    def _generate_match_key(self, fixture_data: dict[str, Any]) -> str:
         """
         生成比赛唯一键（防重复）
 
@@ -340,18 +338,18 @@ class FixturesCollector(DataCollector):
         """
         # 使用外部ID、主队,客队,比赛时间生成唯一键
         key_components = [
-            str(fixture_data.get(str("id"), "")),
-            str(fixture_data.get(str("homeTeam"), {}).get(str("id"), "")),
-            str(fixture_data.get(str("awayTeam"), {}).get(str("id"), "")),
-            str(fixture_data.get(str("utcDate"), "")),
+            str(fixture_data.get("id", "")),
+            str(fixture_data.get("homeTeam", {}).get("id", "")),
+            str(fixture_data.get("awayTeam", {}).get("id", "")),
+            str(fixture_data.get("utcDate", "")),
         ]
 
         key_string = "|".join(key_components)
         return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
     async def _clean_fixture_data(
-        self, raw_fixture: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+        self, raw_fixture: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         清洗和标准化赛程数据
 
@@ -376,13 +374,13 @@ class FixturesCollector(DataCollector):
             cleaned_data = {
                 "external_match_id": str(raw_fixture["id"]),
                 "external_league_id": str(
-                    raw_fixture.get(str("competition"), {}).get(str("id"), "")
+                    raw_fixture.get("competition", {}).get("id", "")
                 ),
                 "external_home_team_id": str(raw_fixture["homeTeam"]["id"]),
                 "external_away_team_id": str(raw_fixture["awayTeam"]["id"]),
                 "match_time": match_time.isoformat(),
-                "status": raw_fixture.get(str("status"), "SCHEDULED"),
-                "season": raw_fixture.get(str("season"), {}).get("id"),
+                "status": raw_fixture.get("status", "SCHEDULED"),
+                "season": raw_fixture.get("season", {}).get("id"),
                 "matchday": raw_fixture.get("matchday"),
                 "raw_data": raw_fixture,
                 "collected_at": datetime.now().isoformat(),
@@ -397,7 +395,7 @@ class FixturesCollector(DataCollector):
 
     async def _detect_missing_matches(
         self,
-        collected_data: List[Dict[str, Any]],
+        collected_data: list[dict[str, Any]],
         date_from: datetime,
         date_to: datetime,
     ) -> None:

@@ -1,7 +1,7 @@
 # mypy: ignore-errors
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
 
@@ -94,7 +94,7 @@ class DataCollectionLog(BaseModel):
         return status
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """计算采集耗时（秒）"""
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()
@@ -133,7 +133,7 @@ class DataCollectionLog(BaseModel):
         records_collected: int = 0,
         success_count: int = 0,
         error_count: int = 0,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """
         标记采集完成
@@ -165,7 +165,7 @@ class DataCollectionLog(BaseModel):
             f")>"
         )
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,

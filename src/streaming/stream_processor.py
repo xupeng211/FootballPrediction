@@ -5,7 +5,7 @@ Stream Data Processor
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from src.core.logging import get_logger
 
@@ -37,7 +37,7 @@ class StreamProcessor:
         self.is_running = False
         self.logger.info("Stream processor stopped")
 
-    async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_message(self, message: dict[str, Any]) -> dict[str, Any]:
         """处理消息"""
         try:
             # 简单处理逻辑
@@ -133,7 +133,7 @@ class ProcessingStatistics:
         """记录错误"""
         self.total_errors += 1
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         duration = 0
         if self.start_time and self.end_time:

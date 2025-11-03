@@ -5,7 +5,7 @@ Authentication User Database Model
 用于JWT认证的用户数据模型定义
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Index
+from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
 from sqlalchemy.sql import func
 
 from src.database.base import Base

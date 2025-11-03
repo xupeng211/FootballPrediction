@@ -4,11 +4,11 @@
 解决Python模块导入路径问题，支持多种环境配置。
 """
 
-import sys
-import os
-from pathlib import Path
-from typing import Optional, Dict, Any
 import logging
+import os
+import sys
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PathManager:
     """统一路径管理器 - 解决Python路径配置问题"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         """
         初始化路径管理器
 
@@ -113,7 +113,7 @@ class PathManager:
         # 如果无法导入，尝试重新配置路径
         return self.setup_src_path(force=True)
 
-    def get_environment_info(self) -> Dict[str, Any]:
+    def get_environment_info(self) -> dict[str, Any]:
         """获取环境信息"""
         return {
             "project_root": str(self.project_root),
@@ -125,7 +125,7 @@ class PathManager:
             "is_configured": self._is_configured,
         }
 
-    def setup_environment_paths(self) -> Dict[str, bool]:
+    def setup_environment_paths(self) -> dict[str, bool]:
         """设置多环境路径配置"""
         results = {}
 
@@ -189,7 +189,7 @@ class PathManager:
 
         return is_ide
 
-    def create_ide_config_files(self) -> Dict[str, bool]:
+    def create_ide_config_files(self) -> dict[str, bool]:
         """创建IDE配置文件"""
         results = {}
 
@@ -259,7 +259,7 @@ class PathManager:
             logger.error(f"PyCharm配置提示创建失败: {e}")
             return False
 
-    def validate_configuration(self) -> Dict[str, Any]:
+    def validate_configuration(self) -> dict[str, Any]:
         """验证路径配置"""
         validation_results = {
             "src_path_exists": self.src_path.exists(),
@@ -284,7 +284,7 @@ class PathManager:
 
 
 # 全局路径管理器实例
-_path_manager: Optional[PathManager] = None
+_path_manager: PathManager | None = None
 
 
 def get_path_manager() -> PathManager:

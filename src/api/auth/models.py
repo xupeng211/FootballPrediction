@@ -4,9 +4,9 @@
 定义认证相关的请求和响应模型
 """
 
-from typing import Optional, Dict, Any
+from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRegisterRequest(BaseModel):
@@ -15,8 +15,8 @@ class UserRegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     email: EmailStr = Field(..., description="邮箱地址")
     password: str = Field(..., min_length=6, max_length=100, description="密码")
-    first_name: Optional[str] = Field(None, max_length=50, description="名")
-    last_name: Optional[str] = Field(None, max_length=50, description="姓")
+    first_name: str | None = Field(None, max_length=50, description="名")
+    last_name: str | None = Field(None, max_length=50, description="姓")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -37,22 +37,22 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
     full_name: str
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
+    avatar_url: str | None = None
+    bio: str | None = None
     is_active: bool
     is_verified: bool
     is_premium: bool
     is_admin: bool
     role: str
-    last_login: Optional[str] = None
-    preferences: Optional[Dict[str, Any]] = None
-    statistics: Optional[Dict[str, Any]] = None
+    last_login: str | None = None
+    preferences: dict[str, Any] | None = None
+    statistics: dict[str, Any] | None = None
     level: str
     experience_points: str
-    achievements: Optional[list] = None
+    achievements: list | None = None
     created_at: str
     updated_at: str
 
@@ -174,11 +174,11 @@ class MessageResponse(BaseModel):
 class UserUpdateRequest(BaseModel):
     """用户更新请求模型"""
 
-    first_name: Optional[str] = Field(None, max_length=50, description="名")
-    last_name: Optional[str] = Field(None, max_length=50, description="姓")
-    avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
-    bio: Optional[str] = Field(None, max_length=1000, description="个人简介")
-    preferences: Optional[Dict[str, Any]] = Field(None, description="偏好设置")
+    first_name: str | None = Field(None, max_length=50, description="名")
+    last_name: str | None = Field(None, max_length=50, description="姓")
+    avatar_url: str | None = Field(None, max_length=500, description="头像URL")
+    bio: str | None = Field(None, max_length=1000, description="个人简介")
+    preferences: dict[str, Any] | None = Field(None, description="偏好设置")
 
     model_config = ConfigDict(
         json_schema_extra={

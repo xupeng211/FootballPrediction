@@ -1,6 +1,6 @@
 # 简化版模块: confluent_kafka
-from typing import Any, Dict
 from datetime import datetime
+from typing import Any
 
 
 class Confluent_Kafka:
@@ -17,7 +17,7 @@ class Confluent_Kafka:
             if key not in ["id", "created_at", "updated_at"]:
                 setattr(self, key, value)
 
-    def process(self, data: Any = None) -> Dict[str, Any]:
+    def process(self, data: Any = None) -> dict[str, Any]:
         """处理数据"""
         return {
             "status": "processed",

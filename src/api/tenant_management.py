@@ -5,24 +5,23 @@ Multi-Tenant Management API
 提供企业级多租户系统的REST API接口.
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, status, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field, validator
 
 from src.database.base import get_db_session
-from src.services.tenant_service import (
-    TenantService,
-    TenantCreationRequest,
-)
+from src.database.models.tenant import TenantPlan, TenantStatus
 from src.middleware.tenant_middleware import (
+    check_resource_quota,
     get_tenant_context,
     require_permission,
-    check_resource_quota,
 )
-from src.database.models.tenant import TenantStatus, TenantPlan
-
+from src.services.tenant_service import (
+    TenantCreationRequest,
+    TenantService,
+)
 
 router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])
 
@@ -36,45 +35,43 @@ class TenantCreationRequestModel(BaseModel):
     name: str = Field(
         ...,
         min_length=1,
-        max_length=100,
+        max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="租户名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
     slug: str = Field(
         ...,
         min_length=1,
-        max_length=50,
+        max_length=50,  # TODO: 将魔法数字 50 提取为常量
         description="租户标识符",  # TODO: 将魔法数字 50 提取为常量
     )  # TODO: 将魔法数字 50 提取为常量
     contact_email: str = Field(..., description="联系邮箱")
-    company_name: Optional[str] = Field(
+    company_name: str | None = Field(
         None,
-        max_length=100,
+        max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="公司名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
-        max_length=500,
+        max_length=500,  # TODO: 将魔法数字 500 提取为常量
         description="租户描述",  # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
     plan: TenantPlan = Field(TenantPlan.BASIC, description="租户计划")
     max_users: int = Field(
         10,
         ge=1,
-        le=10000,
+        le=10000,  # TODO: 将魔法数字 10000 提取为常量
         description="最大用户数",  # TODO: 将魔法数字 10000 提取为常量
     )  # TODO: 将魔法数字 10000 提取为常量
     trial_days: int = Field(
-        30,
+        30,  # TODO: 将魔法数字 30 提取为常量
         ge=1,
-        le=365,
+        le=365,  # TODO: 将魔法数字 365 提取为常量
         description="试用天数",  # TODO: 将魔法数字 30 提取为常量
     )  # TODO: 将魔法数字 30 提取为常量
-    custom_settings: Optional[Dict[str, Any]] = Field(None, description="自定义设置")
+    custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
     @validator("slug")
-    def validate_slug(
-        cls, v
-    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def validate_slug(cls, v):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """验证租户标识符"""
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
@@ -84,36 +81,36 @@ class TenantCreationRequestModel(BaseModel):
 class TenantUpdateRequestModel(BaseModel):
     """租户更新请求模型"""
 
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         min_length=1,
-        max_length=100,
+        max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="租户名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
-        max_length=500,
+        max_length=500,  # TODO: 将魔法数字 500 提取为常量
         description="租户描述",  # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
-    contact_email: Optional[str] = Field(None, description="联系邮箱")
-    contact_phone: Optional[str] = Field(
+    contact_email: str | None = Field(None, description="联系邮箱")
+    contact_phone: str | None = Field(
         None,
-        max_length=50,
+        max_length=50,  # TODO: 将魔法数字 50 提取为常量
         description="联系电话",  # TODO: 将魔法数字 50 提取为常量
     )  # TODO: 将魔法数字 50 提取为常量
-    company_name: Optional[str] = Field(
+    company_name: str | None = Field(
         None,
-        max_length=100,
+        max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="公司名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
-    company_address: Optional[str] = Field(
+    company_address: str | None = Field(
         None,
-        max_length=500,
+        max_length=500,  # TODO: 将魔法数字 500 提取为常量
         description="公司地址",  # TODO: 将魔法数字 500 提取为常量
     )  # TODO: 将魔法数字 500 提取为常量
-    settings: Optional[Dict[str, Any]] = Field(None, description="租户设置")
-    features: Optional[Dict[str, bool]] = Field(None, description="功能配置")
-    branding: Optional[Dict[str, Any]] = Field(None, description="品牌定制")
+    settings: dict[str, Any] | None = Field(None, description="租户设置")
+    features: dict[str, bool] | None = Field(None, description="功能配置")
+    branding: dict[str, Any] | None = Field(None, description="品牌定制")
 
 
 class TenantResponseModel(BaseModel):
@@ -122,9 +119,9 @@ class TenantResponseModel(BaseModel):
     id: int
     name: str
     slug: str
-    domain: Optional[str]
-    description: Optional[str]
-    company_name: Optional[str]
+    domain: str | None
+    description: str | None
+    company_name: str | None
     contact_email: str
     status: TenantStatus
     plan: TenantPlan
@@ -134,7 +131,7 @@ class TenantResponseModel(BaseModel):
     storage_quota_mb: int
     is_trial: bool
     is_subscription_active: bool
-    days_until_expiry: Optional[int]
+    days_until_expiry: int | None
     usage_percentage: float
     created_at: str
     updated_at: str
@@ -149,14 +146,14 @@ class RoleAssignmentRequestModel(BaseModel):
     """角色分配请求模型"""
 
     role_code: str = Field(..., description="角色代码")
-    expires_at: Optional[datetime] = Field(None, description="过期时间")
+    expires_at: datetime | None = Field(None, description="过期时间")
 
 
 class PermissionCheckRequestModel(BaseModel):
     """权限检查请求模型"""
 
     permission_code: str = Field(..., description="权限代码")
-    resource_context: Optional[Dict[str, Any]] = Field(None, description="资源上下文")
+    resource_context: dict[str, Any] | None = Field(None, description="资源上下文")
 
 
 class QuotaCheckResponseModel(BaseModel):
@@ -166,17 +163,17 @@ class QuotaCheckResponseModel(BaseModel):
     current_usage: int
     max_limit: int
     usage_percentage: float
-    reason: Optional[str]
+    reason: str | None
 
 
 class TenantStatisticsResponseModel(BaseModel):
     """租户统计响应模型"""
 
-    tenant_info: Dict[str, Any]
-    user_statistics: Dict[str, Any]
-    prediction_statistics: Dict[str, Any]
-    api_statistics: Dict[str, Any]
-    quota_status: Dict[str, QuotaCheckResponseModel]
+    tenant_info: dict[str, Any]
+    user_statistics: dict[str, Any]
+    prediction_statistics: dict[str, Any]
+    api_statistics: dict[str, Any]
+    quota_status: dict[str, QuotaCheckResponseModel]
 
 
 # ==================== 租户管理端点 ==================== None
@@ -275,7 +272,7 @@ async def suspend_tenant(
 @router.post("/{tenant_id}/activate")
 @require_permission("tenant.manage")
 async def activate_tenant(
-    tenant_id: int, plan: Optional[TenantPlan] = Query(None, description="租户计划")
+    tenant_id: int, plan: TenantPlan | None = Query(None, description="租户计划")
 ):
     """
     激活租户
@@ -418,7 +415,7 @@ async def check_resource_quota(
 
 @router.post("/{tenant_id}/usage/update")
 @require_permission("usage.update")
-async def update_usage_metrics(tenant_id: int, metrics: Dict[str, Any]):
+async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
     """
     更新使用指标
 
@@ -433,19 +430,19 @@ async def update_usage_metrics(tenant_id: int, metrics: Dict[str, Any]):
 # ==================== 租户列表和搜索 ==================== None
 
 
-@router.get("/", response_model=List[TenantResponseModel])
+@router.get("/", response_model=list[TenantResponseModel])
 @require_permission("tenant.list")
 async def list_tenants(
     skip: int = Query(0, ge=0, description="跳过数量"),
     limit: int = Query(
-        50,
+        50,  # TODO: 将魔法数字 50 提取为常量
         ge=1,
-        le=100,
+        le=100,  # TODO: 将魔法数字 100 提取为常量
         description="返回数量",  # TODO: 将魔法数字 50 提取为常量
     ),  # TODO: 将魔法数字 50 提取为常量
-    status: Optional[TenantStatus] = Query(None, description="状态筛选"),
-    plan: Optional[TenantPlan] = Query(None, description="计划筛选"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
+    status: TenantStatus | None = Query(None, description="状态筛选"),
+    plan: TenantPlan | None = Query(None, description="计划筛选"),
+    search: str | None = Query(None, description="搜索关键词"),
 ):
     """
     获取租户列表

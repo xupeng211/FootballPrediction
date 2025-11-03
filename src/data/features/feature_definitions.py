@@ -8,7 +8,7 @@
 """
 
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Optional
 
 
 class FeatureDefinitions:
@@ -73,7 +73,7 @@ class MockEntity:
 
     pass  # 添加pass语句
 
-    def __init__(self, name: str, description: str, join_keys: List[str]) -> None:
+    def __init__(self, name: str, description: str, join_keys: list[str]) -> None:
         self.name = name
         self.description = description
         self.join_keys = join_keys
@@ -87,10 +87,10 @@ class MockFeatureView:
     def __init__(
         self,
         name: str,
-        entities: Optional[List[MockEntity]] = None,
-        ttl: Optional[timedelta] = None,
+        entities: list[MockEntity] | None = None,
+        ttl: timedelta | None = None,
         source: Optional["MockFileSource"] = None,
-        tags: Optional[Dict[str, str]] = None,
+        tags: dict[str, str] | None = None,
     ) -> None:
         self.name = name
         self.entities = entities or []

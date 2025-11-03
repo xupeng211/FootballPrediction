@@ -7,7 +7,7 @@ Database Compatibility Module
 
 import re
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 
 class Compatibility(Enum):
@@ -36,7 +36,7 @@ class CompatibleQueryBuilder:
         self.dialect = dialect
         self.compatibility_rules = self._get_compatibility_rules()
 
-    def _get_compatibility_rules(self) -> Dict[str, Any]:
+    def _get_compatibility_rules(self) -> dict[str, Any]:
         """获取兼容性规则"""
         rules = {
             "postgresql": {
@@ -116,7 +116,7 @@ class SQLCompatibilityHelper:
         self.target_dialect = target_dialect
         self.transformation_rules = self._load_transformation_rules()
 
-    def _load_transformation_rules(self) -> Dict[str, Dict[str, str]]:
+    def _load_transformation_rules(self) -> dict[str, dict[str, str]]:
         """加载转换规则"""
         return {
             "postgresql_to_mysql": {

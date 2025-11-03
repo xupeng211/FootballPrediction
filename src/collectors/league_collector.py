@@ -4,8 +4,8 @@ League Data Collector for Football-Data.org API
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
 from .base_collector import FootballDataCollector
 
@@ -18,7 +18,7 @@ class LeagueCollector(FootballDataCollector):
     def __init__(self):
         super().__init__()
 
-    async def collect_data(self) -> Dict[str, Any]:
+    async def collect_data(self) -> dict[str, Any]:
         """
         收集所有支持的联赛数据
 
@@ -80,7 +80,7 @@ class LeagueCollector(FootballDataCollector):
 
         return results
 
-    async def collect_league_details(self, competition_code: str) -> Dict[str, Any]:
+    async def collect_league_details(self, competition_code: str) -> dict[str, Any]:
         """
         收集特定联赛的完整数据
 
@@ -136,7 +136,7 @@ class LeagueCollector(FootballDataCollector):
             )
             raise
 
-    def normalize_league_data(self, competition: Dict[str, Any]) -> Dict[str, Any]:
+    def normalize_league_data(self, competition: dict[str, Any]) -> dict[str, Any]:
         """
         标准化联赛数据格式
 
@@ -172,7 +172,7 @@ class LeagueCollector(FootballDataCollector):
                 "raw_data": competition,
             }
 
-    def _normalize_season_data(self, season: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_season_data(self, season: dict[str, Any]) -> dict[str, Any]:
         """标准化赛季数据"""
         if not season:
             return {}
@@ -190,8 +190,8 @@ class LeagueCollector(FootballDataCollector):
             return {}
 
     def normalize_standings_data(
-        self, standings: List[Dict[str, Any]], competition: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, standings: list[dict[str, Any]], competition: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         标准化积分榜数据格式
 
@@ -251,7 +251,7 @@ class LeagueCollector(FootballDataCollector):
 
         return normalized_standings
 
-    async def collect_league_statistics(self, competition_code: str) -> Dict[str, Any]:
+    async def collect_league_statistics(self, competition_code: str) -> dict[str, Any]:
         """
         收集联赛统计数据
 
@@ -313,7 +313,7 @@ class LeagueCollector(FootballDataCollector):
 
     async def collect_top_teams(
         self, competition_code: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集联赛排名靠前的球队
 
@@ -341,8 +341,8 @@ class LeagueCollector(FootballDataCollector):
             return []
 
     async def collect_league_matches_by_round(
-        self, competition_code: str, matchday: Optional[int] = None
-    ) -> Dict[str, Any]:
+        self, competition_code: str, matchday: int | None = None
+    ) -> dict[str, Any]:
         """
         收集特定轮次的比赛
 
@@ -401,7 +401,7 @@ class LeagueCollector(FootballDataCollector):
             )
             return {}
 
-    async def search_competitions(self, search_term: str) -> List[Dict[str, Any]]:
+    async def search_competitions(self, search_term: str) -> list[dict[str, Any]]:
         """
         搜索联赛
 
@@ -438,7 +438,7 @@ class LeagueCollector(FootballDataCollector):
             logger.error(f"Failed to search competitions: {e}")
             return []
 
-    async def get_available_seasons(self, competition_code: str) -> List[int]:
+    async def get_available_seasons(self, competition_code: str) -> list[int]:
         """
         获取联赛可用的赛季
 

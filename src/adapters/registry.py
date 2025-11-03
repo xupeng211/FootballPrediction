@@ -2,11 +2,10 @@
 适配器注册表
 """
 
-from typing import Dict, Optional, List
 
 try:
-    from src.core.exceptions import AdapterError
     from src.adapters.base import Adapter
+    from src.core.exceptions import AdapterError
 except ImportError:
     # Fallback classes
     class AdapterError(Exception):
@@ -23,11 +22,15 @@ class AdapterRegistry:
     # 全局注册表实例
     # 全局注册表实例
     # 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
     def __init__(self, factory=None):
         """初始化适配器注册表"""
         self.factory = factory or self._create_default_factory()
-        self.adapters: Dict[str, Adapter] = {}
-        self.groups: Dict[str, List[Adapter]] = {}
+        self.adapters: dict[str, Adapter] = {}
+        self.groups: dict[str, list[Adapter]] = {}
 
     def _create_default_factory(self):
         """创建默认工厂"""
@@ -39,7 +42,8 @@ class AdapterRegistry:
             return None
 
     def register(
-        self, name: str, adapter: Adapter, group: Optional[str] = None
+        """TODO: 添加函数文档"""
+        self, name: str, adapter: Adapter, group: str | None = None
     ) -> None:  # TODO: 添加函数文档
         """注册适配器"""
         self.adapters[name] = adapter
@@ -54,11 +58,11 @@ class AdapterRegistry:
             raise AdapterError(f"Adapter '{name}' not found")
         return self.adapters[name]
 
-    def get_group(self, group: str) -> List[Adapter]:
+    def get_group(self, group: str) -> list[Adapter]:
         """获取适配器组"""
         return self.groups.get(group, [])
 
-    def list_adapters(self) -> List[str]:
+    def list_adapters(self) -> list[str]:
         """列出所有适配器名称"""
         return list(self.adapters.keys())
 

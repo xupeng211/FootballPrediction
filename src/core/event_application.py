@@ -7,10 +7,10 @@ Provides event system initialization and lifecycle management.
 """
 
 import logging
-from typing import Optional
 
 from src.events import get_event_bus, start_event_bus, stop_event_bus
 from src.events.handlers import register_default_handlers
+
 from .config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class EventDrivenApplication:
 
 
 # 全局应用程序实例
-_app_instance: Optional[EventDrivenApplication] = None
+_app_instance: EventDrivenApplication | None = None
 
 
 def get_event_application() -> EventDrivenApplication:

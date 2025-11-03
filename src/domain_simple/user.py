@@ -4,7 +4,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class UserRole(Enum):
@@ -26,8 +26,8 @@ class UserPreferences:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.favorite_teams: List[int] = []
-        self.favorite_leagues: List[int] = []
+        self.favorite_teams: list[int] = []
+        self.favorite_leagues: list[int] = []
         self.notification_enabled = True
         self.email_notifications = True
         self.language = "zh-CN"
@@ -77,8 +77,8 @@ class UserStatistics:
         self,
         is_correct: bool,
         profit_loss: float,
-        odds: Optional[float] = None,
-        confidence: Optional[float] = None,
+        odds: float | None = None,
+        confidence: float | None = None,
     ) -> None:
         """更新预测统计"""
         self.total_predictions += 1
@@ -124,7 +124,7 @@ class User:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         username: str = "",
         email: str = "",
         role: UserRole = UserRole.USER,
@@ -143,7 +143,7 @@ class User:
         # 状态
         self.is_active = True
         self.is_verified = False
-        self.last_login: Optional[datetime] = None
+        self.last_login: datetime | None = None
 
         # 偏好和统计
         self.preferences = UserPreferences()
@@ -152,7 +152,7 @@ class User:
         # 等级和成就
         self.level = 1
         self.experience_points = 0
-        self.achievements: List[str] = []
+        self.achievements: list[str] = []
 
         # 时间戳
         self.created_at = datetime.now()
@@ -194,7 +194,7 @@ class User:
         if achievement not in self.achievements:
             self.achievements.append(achievement)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -239,7 +239,7 @@ class User:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "User":
+    def from_dict(cls, data: dict[str, Any]) -> "User":
         """从字典创建实例"""
         _user = cls(
             id=data.get("id"),
@@ -306,9 +306,9 @@ class UserProfile:
         pass
         # 添加pass语句
         self._user = user
-        self.prediction_history: List[Dict[str, Any]] = []
-        self.following: List[int] = []  # 关注的用户ID列表
-        self.followers: List[int] = []  # 粉丝列表
+        self.prediction_history: list[dict[str, Any]] = []
+        self.following: list[int] = []  # 关注的用户ID列表
+        self.followers: list[int] = []  # 粉丝列表
         self.reputation_score = 0.0
 
     def follow_user(self, user_id: int) -> None:
@@ -335,7 +335,7 @@ class UserProfile:
         """更新声誉分数"""
         self.reputation_score = max(0, min(100, score))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "user": self._user.to_dict(),

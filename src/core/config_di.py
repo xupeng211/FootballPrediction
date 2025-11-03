@@ -10,7 +10,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any
 
 import yaml
 
@@ -29,14 +29,14 @@ class ServiceConfig:
     """服务配置"""
 
     name: str
-    implementation: Optional[str] = None
+    implementation: str | None = None
     lifetime: str = "transient"  # singleton, scoped, transient
-    factory: Optional[str] = None
-    instance: Optional[str] = None
-    dependencies: List[str] = field(default_factory=list)
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    factory: str | None = None
+    instance: str | None = None
+    dependencies: list[str] = field(default_factory=list)
+    parameters: dict[str, Any] = field(default_factory=dict)
     enabled: bool = True
-    condition: Optional[str] = None
+    condition: str | None = None
 
 
 @dataclass
@@ -46,11 +46,11 @@ class DIConfiguration:
     pass  # 添加pass语句
     """依赖注入配置"""
 
-    services: Dict[str, ServiceConfig] = field(default_factory=dict)
-    auto_scan: List[str] = field(default_factory=list)
-    conventions: List[str] = field(default_factory=list)
-    profiles: List[str] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
+    services: dict[str, ServiceConfig] = field(default_factory=dict)
+    auto_scan: list[str] = field(default_factory=list)
+    conventions: list[str] = field(default_factory=list)
+    profiles: list[str] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
 
 
 class ConfigurationBinder:
@@ -65,10 +65,10 @@ class ConfigurationBinder:
         # 添加pass语句
         self.container = container
         self.auto_binder = AutoBinder(container)
-        self.config: Optional[DIConfiguration] = None
-        self._active_profile: Optional[str] = None
+        self.config: DIConfiguration | None = None
+        self._active_profile: str | None = None
 
-    def load_from_file(self, config_path: Union[str, Path]) -> None:
+    def load_from_file(self, config_path: str | Path) -> None:
         """从文件加载配置"""
         config_path = Path(config_path)
 
@@ -76,7 +76,7 @@ class ConfigurationBinder:
             raise DependencyInjectionError(f"配置文件不存在: {config_path}")
 
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yml", ".yaml"]:
                     data = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
@@ -96,7 +96,7 @@ class ConfigurationBinder:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise DependencyInjectionError(f"加载配置文件失败: {e}") from e
 
-    def load_from_dict(self, config_data: Dict[str, Any]) -> None:
+    def load_from_dict(self, config_data: dict[str, Any]) -> None:
         """从字典加载配置"""
         self.config = self._parse_config(config_data)
         logger.info("从字典加载配置")
@@ -141,7 +141,7 @@ class ConfigurationBinder:
 
         logger.info("配置应用完成")
 
-    def _parse_config(self, data: Dict[str, Any]) -> DIConfiguration:
+    def _parse_config(self, data: dict[str, Any]) -> DIConfiguration:
         """解析配置"""
         config = DIConfiguration()
 
@@ -240,7 +240,7 @@ class ConfigurationBinder:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"注册服务失败 {service_name}: {e}")
 
-    def _get_type(self, type_name: str) -> Type:
+    def _get_type(self, type_name: str) -> type:
         """获取类型"""
         # 尝试导入类型
         module_path, class_name = type_name.rsplit(".", 1)
@@ -301,7 +301,7 @@ class ConfigurationBuilder:
     def add_service(
         self,
         name: str,
-        implementation: Optional[str] = None,
+        implementation: str | None = None,
         lifetime: str = "transient",
         **kwargs,
     ) -> "ConfigurationBuilder":
@@ -332,14 +332,14 @@ class ConfigurationBuilder:
         return self.config
 
 
-def create_config_from_file(config_path: Union[str, Path]) -> DIConfiguration:
+def create_config_from_file(config_path: str | Path) -> DIConfiguration:
     """从文件创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_file(config_path)
     return binder.config
 
 
-def create_config_from_dict(config_data: Dict[str, Any]) -> DIConfiguration:
+def create_config_from_dict(config_data: dict[str, Any]) -> DIConfiguration:
     """从字典创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_dict(config_data)

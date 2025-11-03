@@ -11,7 +11,7 @@ Strategy implementation using statistical methods and mathematical models for pr
 import math
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -48,7 +48,7 @@ class StatisticalStrategy(PredictionStrategy):
         self._min_sample_size = 5
         self.logger = logging.getLogger(__name__)
 
-    async def initialize(self, config: Dict[str, Any]) -> None:
+    async def initialize(self, config: dict[str, Any]) -> None:
         """初始化统计策略"
 
         Args:
@@ -143,8 +143,8 @@ class StatisticalStrategy(PredictionStrategy):
         return output
 
     async def batch_predict(
-        self, inputs: List[PredictionInput]
-    ) -> List[PredictionOutput]:
+        self, inputs: list[PredictionInput]
+    ) -> list[PredictionOutput]:
         """批量预测"""
         outputs = []
         for input_data in inputs:
@@ -152,7 +152,7 @@ class StatisticalStrategy(PredictionStrategy):
             outputs.append(output)
         return outputs
 
-    async def _poisson_prediction(self, input_data: PredictionInput) -> Tuple[int, int]:
+    async def _poisson_prediction(self, input_data: PredictionInput) -> tuple[int, int]:
         """使用泊松分布预测比分"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -202,7 +202,7 @@ class StatisticalStrategy(PredictionStrategy):
 
     async def _historical_average_prediction(
         self, input_data: PredictionInput
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """基于历史平均得分预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -226,7 +226,7 @@ class StatisticalStrategy(PredictionStrategy):
 
     async def _team_form_prediction(
         self, input_data: PredictionInput
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """基于球队近期状态预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -273,7 +273,7 @@ class StatisticalStrategy(PredictionStrategy):
 
     async def _head_to_head_prediction(
         self, input_data: PredictionInput
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """基于对战历史预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -309,8 +309,8 @@ class StatisticalStrategy(PredictionStrategy):
         return (int(round(avg_home)), int(round(avg_away)))
 
     async def _ensemble_predictions(
-        self, predictions: Dict[str, Tuple[int, int]]
-    ) -> Tuple[int, int]:
+        self, predictions: dict[str, tuple[int, int]]
+    ) -> tuple[int, int]:
         """集成多个预测结果"""
         weights = self._model_params["model_weights"]
         total_home = 0
@@ -333,7 +333,7 @@ class StatisticalStrategy(PredictionStrategy):
         return (int(round(avg_home)), int(round(avg_away)))
 
     async def _calculate_confidence(
-        self, input_data: PredictionInput, prediction: Tuple[int, int]
+        self, input_data: PredictionInput, prediction: tuple[int, int]
     ) -> float:
         """计算预测置信度"""
         confidence_factors = []
@@ -365,8 +365,8 @@ class StatisticalStrategy(PredictionStrategy):
         return np.mean(confidence_factors)
 
     async def _calculate_probability_distribution(
-        self, input_data: PredictionInput, prediction: Tuple[int, int]
-    ) -> Dict[str, float]:
+        self, input_data: PredictionInput, prediction: tuple[int, int]
+    ) -> dict[str, float]:
         """计算结果概率分布"""
         # 基于泊松分布计算概率
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -406,31 +406,31 @@ class StatisticalStrategy(PredictionStrategy):
         # 模拟数据,实际应从数据库获取
         return 1.5 if is_home else 1.2
 
-    async def _get_team_home_scores(self, team_id: int) -> List[Tuple[int, int]]:
+    async def _get_team_home_scores(self, team_id: int) -> list[tuple[int, int]]:
         """获取球队主场比分历史"""
         # 模拟数据
         return [(2, 1), (1, 1), (3, 0), (1, 2), (2, 0)]
 
-    async def _get_team_away_scores(self, team_id: int) -> List[Tuple[int, int]]:
+    async def _get_team_away_scores(self, team_id: int) -> list[tuple[int, int]]:
         """获取球队客场比分历史"""
         # 模拟数据
         return [(1, 2), (0, 1), (2, 2), (1, 3), (0, 0)]
 
     async def _get_recent_games(
         self, team_id: int, limit: int
-    ) -> List[Tuple[int, int, bool]]:
+    ) -> list[tuple[int, int, bool]]:
         """获取最近比赛"""
         # 模拟数据,返回(主场得分, 客场得分, 是否主场)
         return [(2, 1, True), (1, 2, False), (3, 0, True), (0, 0, False), (2, 1, True)]
 
-    async def _get_team_games(self, team_id: int) -> List[Dict[str, Any]]:
+    async def _get_team_games(self, team_id: int) -> list[dict[str, Any]]:
         """获取球队所有比赛"""
         # 模拟数据
         return [{"game_id": i} for i in range(20)]
 
     async def _get_head_to_head_games(
         self, home_team_id: int, away_team_id: int, limit: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """获取对战历史"""
         # 模拟数据
         return [
@@ -449,7 +449,7 @@ class StatisticalStrategy(PredictionStrategy):
         ]
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: list[tuple[Prediction, dict[str, Any]]]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:

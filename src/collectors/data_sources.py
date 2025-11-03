@@ -1,18 +1,15 @@
-from typing import List
-from typing import Optional
-from typing import Dict
-
 """
 数据源配置和适配器
 提供多种足球数据API的统一接口
 """
 
-import os
-import aiohttp
-from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from dataclasses import dataclass
 import asyncio
+import os
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+import aiohttp
 
 from src.core.logging_system import get_logger
 
@@ -29,16 +26,16 @@ class MatchData:
     id: int
     home_team: str
     away_team: str
-    home_team_id: Optional[int] = None
-    away_team_id: Optional[int] = None
+    home_team_id: int | None = None
+    away_team_id: int | None = None
     match_date: datetime = None
     league: str = ""
-    league_id: Optional[int] = None
+    league_id: int | None = None
     status: str = "upcoming"  # upcoming, live, finished, postponed
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    round: Optional[str] = None
-    venue: Optional[str] = None
+    home_score: int | None = None
+    away_score: int | None = None
+    round: str | None = None
+    venue: str | None = None
 
 
 @dataclass
@@ -50,11 +47,11 @@ class TeamData:
 
     id: int
     name: str
-    short_name: Optional[str] = None
-    crest: Optional[str] = None
-    founded: Optional[int] = None
-    venue: Optional[str] = None
-    website: Optional[str] = None
+    short_name: str | None = None
+    crest: str | None = None
+    founded: int | None = None
+    venue: str | None = None
+    website: str | None = None
 
 
 @dataclass
@@ -70,14 +67,14 @@ class OddsData:
     away_win: float
     source: str
     timestamp: datetime = None
-    over_under: Optional[float] = None
-    asian_handicap: Optional[float] = None
+    over_under: float | None = None
+    asian_handicap: float | None = None
 
 
 class DataSourceAdapter(ABC):
     """数据源适配器基类"""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -89,20 +86,20 @@ class DataSourceAdapter(ABC):
     @abstractmethod
     async def get_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> List[MatchData]:
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> list[MatchData]:
         """获取比赛列表"""
         pass
 
     @abstractmethod
-    async def get_teams(self, league_id: Optional[int] = None) -> List[TeamData]:
+    async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取球队列表"""
         pass
 
     @abstractmethod
-    async def get_odds(self, match_id: int) -> List[OddsData]:
+    async def get_odds(self, match_id: int) -> list[OddsData]:
         """获取赔率数据"""
         pass
 
@@ -110,7 +107,7 @@ class DataSourceAdapter(ABC):
 class FootballDataOrgAdapter(DataSourceAdapter):
     """Football-Data.org API适配器"""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -121,10 +118,10 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
     async def get_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> List[MatchData]:
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> list[MatchData]:
         """获取比赛列表"""
 
         try:
@@ -145,7 +142,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"获取比赛数据失败: {e}")
             return []
 
-    async def _fetch_matches_from_url(self, url: str, params: Dict) -> List[MatchData]:
+    async def _fetch_matches_from_url(self, url: str, params: dict) -> list[MatchData]:
         """从URL获取比赛数据"""
         matches = []
 
@@ -164,7 +161,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
         return matches
 
-    def _parse_match_data(self, match: Dict) -> Optional[MatchData]:
+    def _parse_match_data(self, match: dict) -> MatchData | None:
         """解析比赛数据"""
         try:
             # 解析状态
@@ -209,7 +206,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"解析比赛数据失败: {e}")
             return None
 
-    async def get_teams(self, league_id: Optional[int] = None) -> List[TeamData]:
+    async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取球队列表"""
         teams = []
 
@@ -237,7 +234,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
         return teams
 
-    def _parse_team_data(self, team: Dict) -> Optional[TeamData]:
+    def _parse_team_data(self, team: dict) -> TeamData | None:
         """解析球队数据"""
         try:
             return TeamData(
@@ -253,7 +250,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"解析球队数据失败: {e}")
             return None
 
-    async def get_odds(self, match_id: int) -> List[OddsData]:
+    async def get_odds(self, match_id: int) -> list[OddsData]:
         """获取赔率数据"""
         # Football-Data.org 的赔率API需要付费订阅
         # 这里返回空列表,实际项目中需要订阅服务
@@ -286,10 +283,10 @@ class MockDataAdapter(DataSourceAdapter):
 
     async def get_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> List[MatchData]:
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> list[MatchData]:
         """获取模拟比赛数据"""
         matches = []
 
@@ -336,7 +333,7 @@ class MockDataAdapter(DataSourceAdapter):
         leagues = ["英超", "西甲", "意甲", "德甲", "法甲", "欧冠"]
         return random.choice(leagues)
 
-    async def get_teams(self, league_id: Optional[int] = None) -> List[TeamData]:
+    async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取模拟球队数据"""
         return [
             TeamData(
@@ -349,7 +346,7 @@ class MockDataAdapter(DataSourceAdapter):
             for team in self.teams
         ]
 
-    async def get_odds(self, match_id: int) -> List[OddsData]:
+    async def get_odds(self, match_id: int) -> list[OddsData]:
         """获取模拟赔率数据"""
         import random
 
@@ -388,7 +385,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     支持完整的联赛管理,错误处理,速率限制和数据验证
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -440,7 +437,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 self.request_count = 0
                 self.last_reset = datetime.now()
 
-    async def _make_request(self, url: str, params: Optional[Dict] = None) -> Dict:
+    async def _make_request(self, url: str, params: dict | None = None) -> dict:
         """安全的API请求,包含重试逻辑"""
         self._check_rate_limit()
 
@@ -468,7 +465,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                         else:
                             raise Exception(f"未知错误: {response.status}")
 
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            except (TimeoutError, aiohttp.ClientError) as e:
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2**attempt)
                     logger.warning(
@@ -478,7 +475,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 else:
                     raise e
 
-    async def get_competitions(self) -> List[Dict]:
+    async def get_competitions(self) -> list[dict]:
         """获取所有支持的联赛"""
         try:
             url = f"{self.base_url}/competitions"
@@ -500,11 +497,11 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
     async def get_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        status: Optional[str] = None,
-    ) -> List[MatchData]:
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        status: str | None = None,
+    ) -> list[MatchData]:
         """获取比赛列表,支持多种筛选条件"""
         try:
             # 构建URL
@@ -540,7 +537,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"获取比赛数据失败: {e}")
             return []
 
-    async def get_teams(self, league_id: Optional[int] = None) -> List[TeamData]:
+    async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取球队列表"""
         try:
             if not league_id:
@@ -563,7 +560,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"获取球队数据失败: {e}")
             return []
 
-    async def get_standings(self, league_id: int) -> List[Dict]:
+    async def get_standings(self, league_id: int) -> list[dict]:
         """获取联赛积分榜"""
         try:
             url = f"{self.base_url}/competitions/{league_id}/standings"
@@ -581,14 +578,14 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"获取积分榜失败: {e}")
             return []
 
-    async def get_matches_by_date(self, target_date: datetime) -> List[MatchData]:
+    async def get_matches_by_date(self, target_date: datetime) -> list[MatchData]:
         """获取指定日期的所有比赛"""
         date_from = target_date.replace(hour=0, minute=0, second=0)
         date_to = target_date.replace(hour=23, minute=59, second=59)
 
         return await self.get_matches(date_from=date_from, date_to=date_to)
 
-    async def get_upcoming_matches(self, days: int = 7) -> List[MatchData]:
+    async def get_upcoming_matches(self, days: int = 7) -> list[MatchData]:
         """获取未来几天的比赛"""
         date_from = datetime.now()
         date_to = date_from + timedelta(days=days)
@@ -597,7 +594,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             date_from=date_from, date_to=date_to, status="SCHEDULED"
         )
 
-    def _parse_match_data(self, match: Dict) -> Optional[MatchData]:
+    def _parse_match_data(self, match: dict) -> MatchData | None:
         """解析比赛数据,增强错误处理"""
         try:
             # 验证必要字段
@@ -659,7 +656,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"解析比赛数据失败 (ID: {match.get('id', 'unknown')}): {e}")
             return None
 
-    def _parse_team_data(self, team: Dict) -> Optional[TeamData]:
+    def _parse_team_data(self, team: dict) -> TeamData | None:
         """解析球队数据,增强错误处理"""
         try:
             # 验证必要字段
@@ -750,7 +747,7 @@ class DataSourceManager:
         else:
             return self.adapters["mock"]
 
-    async def validate_adapters(self) -> Dict[str, bool]:
+    async def validate_adapters(self) -> dict[str, bool]:
         """验证所有适配器的可用性"""
         results = {}
         for name, adapter in self.adapters.items():
@@ -766,15 +763,15 @@ class DataSourceManager:
                 logger.error(f"适配器 {name} 验证失败: {e}")
         return results
 
-    def get_adapter(self, source_name: str = "mock") -> Optional[DataSourceAdapter]:
+    def get_adapter(self, source_name: str = "mock") -> DataSourceAdapter | None:
         """获取数据源适配器"""
         return self.adapters.get(source_name)
 
-    def get_available_sources(self) -> List[str]:
+    def get_available_sources(self) -> list[str]:
         """获取可用的数据源列表"""
         return list(self.adapters.keys())
 
-    async def collect_all_matches(self, days_ahead: int = 30) -> List[MatchData]:
+    async def collect_all_matches(self, days_ahead: int = 30) -> list[MatchData]:
         """从所有可用数据源收集比赛数据"""
         all_matches = []
         date_from = datetime.now()

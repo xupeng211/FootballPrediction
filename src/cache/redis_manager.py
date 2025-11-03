@@ -7,8 +7,8 @@ Redis Cache Manager
 
 import logging
 
-from .redis_enhanced import EnhancedRedisManager, get_redis_manager
 from .mock_redis import CacheKeyManager
+from .redis_enhanced import EnhancedRedisManager, get_redis_manager
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ from .mock_redis import (
     mget_cache,
     mset_cache,
     set_cache,
-    ttl_cache,
     startup_warmup,
+    ttl_cache,
 )
 
 # 导出所有公共接口

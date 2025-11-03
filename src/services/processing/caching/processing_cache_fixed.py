@@ -9,7 +9,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 from redis.exceptions import RedisError
 
@@ -31,7 +31,7 @@ class ProcessingCache:
         self._memory_cache = {}
         self._memory_cache_timestamps = {}
 
-    async def get(self, cache_key: str) -> Optional[Any]:
+    async def get(self, cache_key: str) -> Any | None:
         """获取缓存数据"""
         if not self.cache_enabled:
             return None
@@ -56,7 +56,7 @@ class ProcessingCache:
             self.logger.warning(f"获取缓存失败 {cache_key}: {e}")
             return None
 
-    async def set(self, cache_key: str, data: Any, ttl: Optional[int] = None) -> bool:
+    async def set(self, cache_key: str, data: Any, ttl: int | None = None) -> bool:
         """设置缓存数据"""
         if not self.cache_enabled:
             return False
@@ -104,7 +104,7 @@ class ProcessingCache:
             self.logger.warning(f"删除缓存失败 {cache_key}: {e}")
             return False
 
-    async def clear(self, pattern: Optional[str] = None) -> int:
+    async def clear(self, pattern: str | None = None) -> int:
         """清空缓存"""
         try:
             cleared_count = 0
@@ -153,7 +153,7 @@ class ProcessingCache:
             return 0
 
     async def get_or_compute(
-        self, cache_key: str, compute_func, ttl: Optional[int] = None, *args, **kwargs
+        self, cache_key: str, compute_func, ttl: int | None = None, *args, **kwargs
     ) -> Any:
         """获取缓存数据或计算新数据"""
         # 尝试从缓存获取
@@ -202,7 +202,7 @@ class ProcessingCache:
             self.logger.warning(f"生成缓存键失败: {e}")
             return f"{prefix}:{datetime.utcnow().timestamp()}"
 
-    async def _get_from_memory(self, cache_key: str) -> Optional[Any]:
+    async def _get_from_memory(self, cache_key: str) -> Any | None:
         """从内存缓存获取数据"""
         try:
             # 检查是否过期
@@ -219,7 +219,7 @@ class ProcessingCache:
             return None
 
     async def _set_memory_cache(
-        self, cache_key: str, data: Any, ttl: Optional[int] = None
+        self, cache_key: str, data: Any, ttl: int | None = None
     ) -> None:
         """设置内存缓存"""
         try:
@@ -239,7 +239,7 @@ class ProcessingCache:
         except Exception as e:
             self.logger.warning(f"设置内存缓存失败: {e}")
 
-    async def _get_from_redis(self, cache_key: str) -> Optional[Any]:
+    async def _get_from_redis(self, cache_key: str) -> Any | None:
         """从Redis获取数据"""
         try:
             data = await self.redis_client.get(cache_key)
@@ -262,7 +262,7 @@ class ProcessingCache:
             self.logger.warning(f"Redis设置失败 {cache_key}: {e}")
             return False
 
-    async def get_cache_stats(self) -> Dict[str, Any]:
+    async def get_cache_stats(self) -> dict[str, Any]:
         """获取缓存统计信息"""
         try:
             stats = {

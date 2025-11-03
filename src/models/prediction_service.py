@@ -70,8 +70,8 @@ Provides real-time match prediction functionality, including:
 """
 
 # 为了向后兼容性,从新的模块化结构中导入所有内容
-from .prediction import PredictionCache  # 数据模型; 核心服务; 缓存; 监控指标
 from .prediction import (
+    PredictionCache,  # 数据模型; 核心服务; 缓存; 监控指标
     PredictionResult,
     PredictionService,
     cache_hit_ratio,

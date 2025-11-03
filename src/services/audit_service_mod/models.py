@@ -6,7 +6,7 @@ Audit Service Models (Compatibility Version)
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class AuditAction(Enum):
@@ -42,10 +42,10 @@ class AuditEvent:
     severity: AuditSeverity
     user_id: str
     resource_type: str
-    resource_id: Optional[str]
+    resource_id: str | None
     message: str
     timestamp: datetime
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         """函数文档字符串"""

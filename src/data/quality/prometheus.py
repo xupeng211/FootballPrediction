@@ -8,7 +8,7 @@ Prometheus Exporter Module
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 
 class PrometheusCollector:
@@ -22,7 +22,7 @@ class PrometheusCollector:
         pass
         # 添加pass语句
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self.metrics: Dict[str, Any] = {}
+        self.metrics: dict[str, Any] = {}
 
     def register_metric(self, name: str, metric_type: str, help_text: str):
         """函数文档字符串"""
@@ -39,7 +39,7 @@ class PrometheusCollector:
         if name in self.metrics:
             self.metrics[name]["value"] = value
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取所有指标"""
         return self.metrics
 
@@ -59,7 +59,7 @@ class PrometheusExporter:
 
     def export(self) -> str:
         """导出指标格式"""
-        output: List[Any] = []
+        output: list[Any] = []
         for name, metric in self.collector.get_metrics().items():
             output.append(f"# HELP {name} {metric['help']}")
             output.append(f"# TYPE {name} {metric['type']}")
@@ -71,6 +71,6 @@ class PrometheusExporter:
 collector = PrometheusCollector()
 exporter = PrometheusExporter(collector)
 metrics = {}
-utils: Dict[str, Any] = {}
+utils: dict[str, Any] = {}
 
 __all__ = ["collector", "exporter", "metrics", "utils"]

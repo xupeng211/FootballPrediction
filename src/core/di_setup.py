@@ -9,9 +9,9 @@ Provides initialization and configuration for dependency injection.
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 from src.database.repositories.base import BaseRepository
+
 from .auto_binding import AutoBinder
 from .config_di import ConfigurationBinder
 from .di import DIContainer, ServiceCollection, ServiceLifetime
@@ -26,18 +26,18 @@ class DISetup:
     pass  # 添加pass语句
     """依赖注入设置类"""
 
-    def __init__(self, profile: Optional[str] = None):
+    def __init__(self, profile: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
         self.profile = profile or os.getenv("APP_PROFILE", "development")
-        self.container: Optional[DIContainer] = None
-        self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
+        self.container: DIContainer | None = None
+        self.lifecycle_manager: ServiceLifecycleManager | None = None
 
     def initialize(
         self,
-        config_file: Optional[str] = None,
-        auto_scan_modules: Optional[list] = None,
+        config_file: str | None = None,
+        auto_scan_modules: list | None = None,
     ) -> DIContainer:
         """初始化依赖注入"""
         logger.info(f"初始化依赖注入,配置文件: {config_file}, 环境: {self.profile}")
@@ -132,7 +132,7 @@ class DISetup:
 
 
 # 全局DI设置实例
-_di_setup: Optional[DISetup] = None
+_di_setup: DISetup | None = None
 
 
 def get_di_setup() -> DISetup:
@@ -144,9 +144,9 @@ def get_di_setup() -> DISetup:
 
 
 def configure_di(
-    config_file: Optional[str] = None,
-    profile: Optional[str] = None,
-    auto_scan_modules: Optional[list] = None,
+    config_file: str | None = None,
+    profile: str | None = None,
+    auto_scan_modules: list | None = None,
 ) -> DIContainer:
     """配置依赖注入（便捷函数）"""
     setup = DISetup(profile)
@@ -156,8 +156,8 @@ def configure_di(
 # 装饰器:自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-    interface: Optional[type] = None,
-    name: Optional[str] = None,
+    interface: type | None = None,
+    name: str | None = None,
 ):
     """自动注册服务装饰器"""
 

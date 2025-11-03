@@ -11,7 +11,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .entities import MatchEntity, TeamEntity
 
@@ -58,7 +58,7 @@ class RecentPerformanceFeatures:
         total_games = self.recent_5_wins + self.recent_5_draws + self.recent_5_losses
         return self.recent_5_goals_for / total_games if total_games > 0 else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "team_id": self.team_id,
@@ -134,7 +134,7 @@ class HistoricalMatchupFeatures:
             else 0.0
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "home_team_id": self.home_team_id,
@@ -171,29 +171,29 @@ class OddsFeatures:
     calculation_date: datetime
 
     # 赔率数据
-    home_odds_avg: Optional[Decimal] = None  # 主胜平均赔率
-    draw_odds_avg: Optional[Decimal] = None  # 平局平均赔率
-    away_odds_avg: Optional[Decimal] = None  # 客胜平均赔率
+    home_odds_avg: Decimal | None = None  # 主胜平均赔率
+    draw_odds_avg: Decimal | None = None  # 平局平均赔率
+    away_odds_avg: Decimal | None = None  # 客胜平均赔率
 
     # 赔率特征
-    home_implied_probability: Optional[float] = None  # 主胜隐含概率
-    draw_implied_probability: Optional[float] = None  # 平局隐含概率
-    away_implied_probability: Optional[float] = None  # 客胜隐含概率
+    home_implied_probability: float | None = None  # 主胜隐含概率
+    draw_implied_probability: float | None = None  # 平局隐含概率
+    away_implied_probability: float | None = None  # 客胜隐含概率
 
     # 市场共识特征
     bookmaker_count: int = 0  # 参与博彩公司数量
-    odds_variance_home: Optional[float] = None  # 主胜赔率方差
-    odds_variance_draw: Optional[float] = None  # 平局赔率方差
-    odds_variance_away: Optional[float] = None  # 客胜赔率方差
+    odds_variance_home: float | None = None  # 主胜赔率方差
+    odds_variance_draw: float | None = None  # 平局赔率方差
+    odds_variance_away: float | None = None  # 客胜赔率方差
 
     # 价值特征
-    max_home_odds: Optional[Decimal] = None  # 最高主胜赔率
-    min_home_odds: Optional[Decimal] = None  # 最低主胜赔率
-    odds_range_home: Optional[float] = None  # 主胜赔率范围
+    max_home_odds: Decimal | None = None  # 最高主胜赔率
+    min_home_odds: Decimal | None = None  # 最低主胜赔率
+    odds_range_home: float | None = None  # 主胜赔率范围
 
     # 计算属性
     @property
-    def bookmaker_consensus(self) -> Optional[float]:
+    def bookmaker_consensus(self) -> float | None:
         """博彩公司共识度 (1 - 平均方差)"""
         if all(
             v is not None
@@ -217,7 +217,7 @@ class OddsFeatures:
         return None
 
     @property
-    def market_efficiency(self) -> Optional[float]:
+    def market_efficiency(self) -> float | None:
         """市场效率 (总隐含概率)"""
         if all(
             p is not None
@@ -241,7 +241,7 @@ class OddsFeatures:
             return home_prob + draw_prob + away_prob
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "match_id": self.match_id,
@@ -281,7 +281,7 @@ class AllMatchFeatures:
     historical_matchup: HistoricalMatchupFeatures
     odds_features: OddsFeatures
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "match_entity": self.match_entity.to_dict(),
@@ -306,7 +306,7 @@ class AllTeamFeatures:
     team_entity: TeamEntity
     recent_performance: RecentPerformanceFeatures
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "team_entity": self.team_entity.to_dict(),

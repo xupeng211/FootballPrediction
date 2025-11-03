@@ -4,7 +4,7 @@ Mock Redis Manager for Testing and Development
 """
 
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 
 class MockRedisManager:
@@ -14,8 +14,8 @@ class MockRedisManager:
     """模拟Redis管理器"""
 
     _instance: Optional["MockRedisManager"] = None
-    data: Dict[str, Any]
-    _expirations: Dict[str, float]
+    data: dict[str, Any]
+    _expirations: dict[str, float]
 
     def __new__(cls) -> "MockRedisManager":
         if cls._instance is None:
@@ -29,13 +29,13 @@ class MockRedisManager:
         """获取单例实例"""
         return cls()
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """获取缓存值"""
         self._check_expiration(key)
         return self.data.get(key)
 
     def set(
-        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+        self, key: str, value: str, ex: int | None = None, px: int | None = None
     ) -> bool:
         """设置缓存值"""
         self.data[key] = value
@@ -65,7 +65,7 @@ class MockRedisManager:
         self._check_expiration(key)
         return key in self.data
 
-    def keys(self, pattern: str) -> List[str]:
+    def keys(self, pattern: str) -> list[str]:
         """获取匹配模式的所有键"""
         self._cleanup_expired()
         if "*" in pattern:
@@ -85,12 +85,12 @@ class MockRedisManager:
         return max(0, int(remaining))
 
     # 异步方法
-    async def aget(self, key: str) -> Optional[str]:
+    async def aget(self, key: str) -> str | None:
         """异步获取缓存值"""
         return self.get(key)
 
     async def aset(
-        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+        self, key: str, value: str, ex: int | None = None, px: int | None = None
     ) -> bool:
         """异步设置缓存值"""
         return self.set(key, value, ex=ex, px=px)
@@ -107,7 +107,7 @@ class MockRedisManager:
         """异步检查键是否存在"""
         return self.exists(key)
 
-    async def akeys(self, pattern: str) -> List[str]:
+    async def akeys(self, pattern: str) -> list[str]:
         """异步获取匹配模式的所有键"""
         return self.keys(pattern)
 
@@ -127,11 +127,11 @@ class MockRedisManager:
         """异步获取键的毫秒TTL"""
         return int(self.ttl(key) * 1000) if self.ttl(key) > 0 else self.ttl(key)
 
-    async def amget(self, keys: List[str]) -> List[Optional[str]]:
+    async def amget(self, keys: list[str]) -> list[str | None]:
         """异步批量获取缓存值"""
         return self.mget(keys)
 
-    async def amset(self, mapping: Dict[str, str]) -> bool:
+    async def amset(self, mapping: dict[str, str]) -> bool:
         """异步批量设置缓存值"""
         return self.mset(mapping)
 
@@ -187,7 +187,7 @@ class MockRedisManager:
         """设置键的毫秒过期时间"""
         return self.expire(key, milliseconds / 1000)
 
-    def keys(self, pattern: str = "*") -> List[str]:
+    def keys(self, pattern: str = "*") -> list[str]:
         """获取匹配模式的所有键"""
         self._cleanup_expired()
         if "*" in pattern:
@@ -197,11 +197,11 @@ class MockRedisManager:
         else:
             return [k for k in self.data.keys() if k == pattern]
 
-    def mget(self, keys: List[str]) -> List[Optional[str]]:
+    def mget(self, keys: list[str]) -> list[str | None]:
         """批量获取缓存值"""
         return [self.get(k) for k in keys]
 
-    def mset(self, mapping: Dict[str, str]) -> bool:
+    def mset(self, mapping: dict[str, str]) -> bool:
         """批量设置缓存值"""
         for key, value in mapping.items():
             self.set(key, value)
@@ -244,7 +244,7 @@ class CacheKeyManager:
         return ":".join(str(part) for part in parts)
 
     @staticmethod
-    def user_key(user_id: Union[int, str], suffix: str = "") -> str:
+    def user_key(user_id: int | str, suffix: str = "") -> str:
         """构建用户相关键"""
         key = f"user:{user_id}"
         if suffix:
@@ -252,7 +252,7 @@ class CacheKeyManager:
         return key
 
     @staticmethod
-    def match_key(match_id: Union[int, str], suffix: str = "") -> str:
+    def match_key(match_id: int | str, suffix: str = "") -> str:
         """构建比赛相关键"""
         key = f"match:{match_id}"
         if suffix:
@@ -260,7 +260,7 @@ class CacheKeyManager:
         return key
 
     @staticmethod
-    def team_key(team_id: Union[int, str], suffix: str = "") -> str:
+    def team_key(team_id: int | str, suffix: str = "") -> str:
         """构建球队相关键"""
         key = f"team:{team_id}"
         if suffix:
@@ -268,7 +268,7 @@ class CacheKeyManager:
         return key
 
     @staticmethod
-    def prediction_key(user_id: Union[int, str], match_id: Union[int, str]) -> str:
+    def prediction_key(user_id: int | str, match_id: int | str) -> str:
         """构建预测相关键"""
         return f"prediction:{user_id}:{match_id}"
 
@@ -279,12 +279,12 @@ def get_redis_manager() -> MockRedisManager:
 
 
 # 向后兼容的便捷函数
-def get_cache(key: str) -> Optional[str]:
+def get_cache(key: str) -> str | None:
     """获取缓存"""
     return get_redis_manager().get(key)
 
 
-def set_cache(key: str, value: str, ttl: Optional[int] = None) -> bool:
+def set_cache(key: str, value: str, ttl: int | None = None) -> bool:
     """设置缓存"""
     manager = get_redis_manager()
     if ttl:
@@ -307,13 +307,13 @@ def ttl_cache(key: str) -> int:
     return get_redis_manager().ttl(key)
 
 
-def mget_cache(*keys: str) -> List[Optional[str]]:
+def mget_cache(*keys: str) -> list[str | None]:
     """批量获取缓存"""
     manager = get_redis_manager()
     return [manager.get(k) for k in keys]
 
 
-def mset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
+def mset_cache(mapping: dict[str, str], ttl: int | None = None) -> bool:
     """批量设置缓存"""
     manager = get_redis_manager()
     for key, value in mapping.items():
@@ -325,12 +325,12 @@ def mset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
 
 
 # 异步便捷函数
-async def aget_cache(key: str) -> Optional[str]:
+async def aget_cache(key: str) -> str | None:
     """异步获取缓存"""
     return await get_redis_manager().aget(key)
 
 
-async def aset_cache(key: str, value: str, ttl: Optional[int] = None) -> bool:
+async def aset_cache(key: str, value: str, ttl: int | None = None) -> bool:
     """异步设置缓存"""
     manager = get_redis_manager()
     if ttl:
@@ -353,13 +353,13 @@ async def attl_cache(key: str) -> int:
     return await get_redis_manager().attl(key)
 
 
-async def amget_cache(*keys: str) -> List[Optional[str]]:
+async def amget_cache(*keys: str) -> list[str | None]:
     """异步批量获取缓存"""
     manager = get_redis_manager()
     return [await manager.aget(k) for k in keys]
 
 
-async def amset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
+async def amset_cache(mapping: dict[str, str], ttl: int | None = None) -> bool:
     """异步批量设置缓存"""
     manager = get_redis_manager()
     for key, value in mapping.items():

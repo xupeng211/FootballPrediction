@@ -7,7 +7,7 @@ Provides HTTP interface for CQRS pattern.
 """
 
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -23,22 +23,22 @@ class CreatePredictionRequest(BaseModel):
     """创建预测请求"""
 
     match_id: int = Field(..., description="比赛ID")
-    user_id: Optional[int] = Field(None, description="用户ID")
+    user_id: int | None = Field(None, description="用户ID")
     predicted_home: int = Field(..., ge=0, description="主队预测得分")
     predicted_away: int = Field(..., ge=0, description="客队预测得分")
     confidence: float = Field(..., ge=0, le=1, description="置信度")
-    strategy_used: Optional[str] = Field(None, description="使用的策略")
-    notes: Optional[str] = Field(None, description="备注")
+    strategy_used: str | None = Field(None, description="使用的策略")
+    notes: str | None = Field(None, description="备注")
 
 
 class UpdatePredictionRequest(BaseModel):
     """更新预测请求"""
 
-    predicted_home: Optional[int] = Field(None, ge=0, description="主队预测得分")
-    predicted_away: Optional[int] = Field(None, ge=0, description="客队预测得分")
-    confidence: Optional[float] = Field(None, ge=0, le=1, description="置信度")
-    strategy_used: Optional[str] = Field(None, description="使用的策略")
-    notes: Optional[str] = Field(None, description="备注")
+    predicted_home: int | None = Field(None, ge=0, description="主队预测得分")
+    predicted_away: int | None = Field(None, ge=0, description="客队预测得分")
+    confidence: float | None = Field(None, ge=0, le=1, description="置信度")
+    strategy_used: str | None = Field(None, description="使用的策略")
+    notes: str | None = Field(None, description="备注")
 
 
 class CreateUserRequest(BaseModel):
@@ -55,8 +55,8 @@ class CreateMatchRequest(BaseModel):
     home_team: str = Field(..., description="主队名称")
     away_team: str = Field(..., description="客队名称")
     match_date: datetime = Field(..., description="比赛时间")
-    competition: Optional[str] = Field(None, description="赛事")
-    venue: Optional[str] = Field(None, description="场地")
+    competition: str | None = Field(None, description="赛事")
+    venue: str | None = Field(None, description="场地")
 
 
 # 响应模型
@@ -65,8 +65,8 @@ class CommandResponse(BaseModel):
 
     success: bool
     message: str
-    data: Optional[Dict[str, Any]] = None
-    errors: Optional[List[str]] = None
+    data: dict[str, Any] | None = None
+    errors: list[str] | None = None
 
 
 # 依赖注入
@@ -185,10 +185,10 @@ async def get_prediction(
 @router.get("/users/{user_id}/predictions", summary="获取用户预测列表")
 async def get_user_predictions(
     user_id: int,
-    limit: Optional[int] = Query(10, ge=1, le=100),  # TODO: 将魔法数字 100 提取为常量
-    offset: Optional[int] = Query(0, ge=0),
-    start_date: Optional[date] = Query(None),
-    end_date: Optional[date] = Query(None),
+    limit: int | None = Query(10, ge=1, le=100),  # TODO: 将魔法数字 100 提取为常量
+    offset: int | None = Query(0, ge=0),
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
     service=Depends(get_prediction_cqrs_service),
 ):
     """获取用户的所有预测"""
@@ -268,9 +268,9 @@ async def get_match(
 @router.get("/matches/upcoming", summary="获取即将到来的比赛")
 async def get_upcoming_matches(
     days_ahead: int = Query(7, ge=1, le=30),  # TODO: 将魔法数字 30 提取为常量
-    competition: Optional[str] = Query(None),
-    limit: Optional[int] = Query(10, ge=1, le=100),  # TODO: 将魔法数字 100 提取为常量
-    offset: Optional[int] = Query(0, ge=0),
+    competition: str | None = Query(None),
+    limit: int | None = Query(10, ge=1, le=100),  # TODO: 将魔法数字 100 提取为常量
+    offset: int | None = Query(0, ge=0),
     service=Depends(get_match_cqrs_service),
 ):
     """获取即将到来的比赛列表"""
@@ -350,22 +350,22 @@ async def get_cqrs_system_status():
 # 预测命令端点
 # 预测命令端点
 # 预测命令端点
-def get_prediction_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_prediction_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取预测CQRS服务"""
     return CQRSServiceFactory.create_prediction_service()
 
 
-def get_match_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_match_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取比赛CQRS服务"""
     return CQRSServiceFactory.create_match_service()
 
 
-def get_user_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_user_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取用户CQRS服务"""
     return CQRSServiceFactory.create_user_service()
 
 
-def get_analytics_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def get_analytics_cqrs_service():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """获取分析CQRS服务"""
     return CQRSServiceFactory.create_analytics_service()
 

@@ -5,7 +5,6 @@ import os
 from alembic import context, op
 from sqlalchemy import text
 
-
 # revision identifiers, used by Alembic.
 
 

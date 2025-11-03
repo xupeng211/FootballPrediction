@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from src.domain.models.match import Match
 from src.domain.models.prediction import Prediction
@@ -36,8 +36,8 @@ class PredictionInput:
     match: Match
     home_team: Team
     away_team: Team
-    historical_data: Optional[Dict[str, Any]] = None
-    additional_features: Optional[Dict[str, Any]] = field(default_factory=dict)
+    historical_data: dict[str, Any] | None = None
+    additional_features: dict[str, Any] | None = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -51,11 +51,11 @@ class PredictionOutput:
     predicted_home_score: int
     predicted_away_score: int
     confidence: float
-    probability_distribution: Optional[Dict[str, float]] = None
-    feature_importance: Optional[Dict[str, float]] = None
-    metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
-    strategy_used: Optional[str] = None
-    execution_time_ms: Optional[float] = None
+    probability_distribution: dict[str, float] | None = None
+    feature_importance: dict[str, float] | None = None
+    metadata: dict[str, Any] | None = field(default_factory=dict)
+    strategy_used: str | None = None
+    execution_time_ms: float | None = None
 
 
 @dataclass
@@ -82,12 +82,12 @@ class PredictionStrategy(ABC):
         # 添加pass语句
         self.name = name
         self.strategy_type = strategy_type
-        self._metrics: Optional[StrategyMetrics] = None
+        self._metrics: StrategyMetrics | None = None
         self._is_initialized = False
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
 
     @abstractmethod
-    async def initialize(self, config: Dict[str, Any]) -> None:
+    async def initialize(self, config: dict[str, Any]) -> None:
         """初始化策略"
 
         Args:
@@ -109,8 +109,8 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def batch_predict(
-        self, inputs: List[PredictionInput]
-    ) -> List[PredictionOutput]:
+        self, inputs: list[PredictionInput]
+    ) -> list[PredictionOutput]:
         """批量预测"
 
         Args:
@@ -123,7 +123,7 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: list[tuple[Prediction, dict[str, Any]]]
     ) -> None:
         """更新策略性能指标"
 
@@ -132,7 +132,7 @@ class PredictionStrategy(ABC):
         """
         pass
 
-    def get_metrics(self) -> Optional[StrategyMetrics]:
+    def get_metrics(self) -> StrategyMetrics | None:
         """获取策略性能指标"""
         return self._metrics
 
@@ -140,11 +140,11 @@ class PredictionStrategy(ABC):
         """检查策略是否健康可用"""
         return self._is_initialized and self._metrics is not None
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict[str, Any]:
         """获取策略配置"""
         return self.config.copy()
 
-    def update_config(self, new_config: Dict[str, Any]) -> None:
+    def update_config(self, new_config: dict[str, Any]) -> None:
         """更新策略配置"""
         self.config.update(new_config)
 
@@ -215,17 +215,17 @@ class PredictionContext:
     away_team: Team
 
     # 配置参数
-    strategy_config: Dict[str, Any] = field(default_factory=dict)
-    global_config: Dict[str, Any] = field(default_factory=dict)
+    strategy_config: dict[str, Any] = field(default_factory=dict)
+    global_config: dict[str, Any] = field(default_factory=dict)
 
     # 中间数据
-    historical_data: Optional[Dict[str, Any]] = None
-    team_form: Optional[Dict[str, Any]] = None
-    head_to_head: Optional[List[Dict[str, Any]]] = None
+    historical_data: dict[str, Any] | None = None
+    team_form: dict[str, Any] | None = None
+    head_to_head: list[dict[str, Any]] | None = None
 
     # 元数据
-    request_id: Optional[str] = None
-    user_id: Optional[int] = None
+    request_id: str | None = None
+    user_id: int | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def to_prediction_input(self) -> PredictionInput:

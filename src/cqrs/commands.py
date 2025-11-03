@@ -7,9 +7,10 @@ Defines all write operation commands.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.database.models import Match, Prediction, User
+
 from .base import ValidatableCommand, ValidationResult
 
 
@@ -23,9 +24,9 @@ class CreatePredictionCommand(ValidatableCommand):
         predicted_home: int,
         predicted_away: int,
         confidence: float,
-        strategy_used: Optional[str] = None,
-        notes: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        strategy_used: str | None = None,
+        notes: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.match_id = match_id
@@ -67,12 +68,12 @@ class UpdatePredictionCommand(ValidatableCommand):
     def __init__(
         self,
         prediction_id: int,
-        predicted_home: Optional[int] = None,
-        predicted_away: Optional[int] = None,
-        confidence: Optional[float] = None,
-        strategy_used: Optional[str] = None,
-        notes: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        predicted_home: int | None = None,
+        predicted_away: int | None = None,
+        confidence: float | None = None,
+        strategy_used: str | None = None,
+        notes: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.prediction_id = prediction_id
@@ -119,7 +120,7 @@ class DeletePredictionCommand(ValidatableCommand):
     def __init__(
         self,
         prediction_id: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.prediction_id = prediction_id
@@ -153,7 +154,7 @@ class CreateUserCommand(ValidatableCommand):
         username: str,
         email: str,
         password_hash: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.username = username
@@ -200,10 +201,10 @@ class UpdateUserCommand(ValidatableCommand):
     def __init__(
         self,
         user_id: int,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        username: str | None = None,
+        email: str | None = None,
+        is_active: bool | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.user_id = user_id
@@ -238,9 +239,9 @@ class CreateMatchCommand(ValidatableCommand):
         home_team: str,
         away_team: str,
         match_date: datetime,
-        competition: Optional[str] = None,
-        venue: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        competition: str | None = None,
+        venue: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.home_team = home_team
@@ -278,12 +279,12 @@ class UpdateMatchCommand(ValidatableCommand):
     def __init__(
         self,
         match_id: int,
-        home_score: Optional[int] = None,
-        away_score: Optional[int] = None,
-        status: Optional[str] = None,
-        competition: Optional[str] = None,
-        venue: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        home_score: int | None = None,
+        away_score: int | None = None,
+        status: str | None = None,
+        competition: str | None = None,
+        venue: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(metadata)
         self.match_id = match_id

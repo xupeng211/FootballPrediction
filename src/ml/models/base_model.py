@@ -5,9 +5,10 @@ Base Prediction Model for Football Matches
 
 import abc
 import logging
-from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -30,7 +31,7 @@ class PredictionResult:
     model_version: str
     created_at: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "match_id": self.match_id,
@@ -57,15 +58,15 @@ class TrainingResult:
     precision: float
     recall: float
     f1_score: float
-    confusion_matrix: List[List[int]]
+    confusion_matrix: list[list[int]]
     training_samples: int
     validation_samples: int
     training_time: float
-    features_used: List[str]
-    hyperparameters: Dict[str, Any]
+    features_used: list[str]
+    hyperparameters: dict[str, Any]
     created_at: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "model_name": self.model_name,
@@ -98,7 +99,7 @@ class BaseModel(abc.ABC):
         self.last_training_time = None
 
     @abc.abstractmethod
-    def prepare_features(self, match_data: Dict[str, Any]) -> np.ndarray:
+    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
         """
         准备特征
 
@@ -114,7 +115,7 @@ class BaseModel(abc.ABC):
     def train(
         self,
         training_data: pd.DataFrame,
-        validation_data: Optional[pd.DataFrame] = None,
+        validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
         """
         训练模型
@@ -129,7 +130,7 @@ class BaseModel(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def predict(self, match_data: Dict[str, Any]) -> PredictionResult:
+    def predict(self, match_data: dict[str, Any]) -> PredictionResult:
         """
         预测比赛结果
 
@@ -142,7 +143,7 @@ class BaseModel(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def predict_proba(self, match_data: Dict[str, Any]) -> Tuple[float, float, float]:
+    def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
         """
         预测概率分布
 
@@ -155,7 +156,7 @@ class BaseModel(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def evaluate(self, test_data: pd.DataFrame) -> Dict[str, float]:
+    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
         """
         评估模型性能
 
@@ -193,7 +194,7 @@ class BaseModel(abc.ABC):
         """
         pass
 
-    def get_feature_importance(self) -> Dict[str, float]:
+    def get_feature_importance(self) -> dict[str, float]:
         """
         获取特征重要性
 
@@ -206,9 +207,11 @@ class BaseModel(abc.ABC):
         if not self.feature_names:
             return {}
 
-        return dict(zip(self.feature_names, self.model.feature_importances_))
+        return dict(
+            zip(self.feature_names, self.model.feature_importances_, strict=False)
+        )
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """
         获取模型信息
 
@@ -227,7 +230,7 @@ class BaseModel(abc.ABC):
             "feature_importance": self.get_feature_importance(),
         }
 
-    def validate_prediction_input(self, match_data: Dict[str, Any]) -> bool:
+    def validate_prediction_input(self, match_data: dict[str, Any]) -> bool:
         """
         验证预测输入数据
 
@@ -251,7 +254,7 @@ class BaseModel(abc.ABC):
 
         return True
 
-    def calculate_confidence(self, probabilities: Tuple[float, float, float]) -> float:
+    def calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
         """
         计算预测置信度
 
@@ -279,7 +282,7 @@ class BaseModel(abc.ABC):
         return min(max(confidence, 0.1), 1.0)  # 限制在0.1-1.0之间
 
     def get_outcome_from_probabilities(
-        self, probabilities: Tuple[float, float, float]
+        self, probabilities: tuple[float, float, float]
     ) -> str:
         """
         从概率分布获取预测结果
@@ -327,7 +330,7 @@ class BaseModel(abc.ABC):
 
         return True
 
-    def log_training_step(self, step: int, metrics: Dict[str, float]):
+    def log_training_step(self, step: int, metrics: dict[str, float]):
         """
         记录训练步骤
 
@@ -340,7 +343,7 @@ class BaseModel(abc.ABC):
 
         logger.info(f"Training step {step}: {metrics}")
 
-    def get_training_curve(self) -> Dict[str, List[float]]:
+    def get_training_curve(self) -> dict[str, list[float]]:
         """
         获取训练曲线
 

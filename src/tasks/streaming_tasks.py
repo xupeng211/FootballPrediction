@@ -9,7 +9,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from celery import Task
 
@@ -54,7 +54,7 @@ class StreamingTask(Task):
 @app.task(base=StreamingTask, bind=True)
 def consume_kafka_streams_task(
     self,
-    topics: Optional[List[str]] = None,
+    topics: list[str] | None = None,
     batch_size: int = 100,
     timeout: float = 30.0,
 ):
@@ -126,7 +126,7 @@ def consume_kafka_streams_task(
 
 @app.task(base=StreamingTask, bind=True)
 def start_continuous_consumer_task(
-    self, topics: Optional[List[str]] = None, consumer_group_id: Optional[str] = None
+    self, topics: list[str] | None = None, consumer_group_id: str | None = None
 ):
     """
     启动持续Kafka消费任务
@@ -192,9 +192,9 @@ def start_continuous_consumer_task(
 @app.task(base=StreamingTask, bind=True)
 def produce_to_kafka_stream_task(
     self,
-    data_list: List[Dict[str, Any]],
+    data_list: list[dict[str, Any]],
     data_type: str,
-    key_field: Optional[str] = None,
+    key_field: str | None = None,
 ):
     """
     生产数据到Kafka流任务
@@ -308,7 +308,7 @@ def stream_health_check_task(self):
 @app.task(base=StreamingTask, bind=True)
 def stream_data_processing_task(
     self,
-    topics: Optional[List[str]] = None,
+    topics: list[str] | None = None,
     processing_duration: int = 300,  # 5分钟
 ):
     """
@@ -338,7 +338,7 @@ def stream_data_processing_task(
             # 等待处理任务完成
             try:
                 await asyncio.wait_for(processing_task, timeout=10.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 processing_task.cancel()
 
             # 获取处理统计
@@ -383,7 +383,7 @@ def stream_data_processing_task(
 
 
 @app.task(base=StreamingTask, bind=True)
-def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = None):
+def kafka_topic_management_task(self, action: str, topic_name: str | None = None):
     """函数文档字符串"""
     pass  # 添加pass语句
     """

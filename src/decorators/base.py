@@ -10,8 +10,9 @@ import inspect
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Any
 
 
 class Component(ABC):
@@ -61,14 +62,14 @@ class ConcreteComponent(Component):
 class Decorator(Component):
     """装饰器基类,实现了组件接口并持有一个组件引用"""
 
-    def __init__(self, component: Component, name: Optional[str] = None):
+    def __init__(self, component: Component, name: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
         self.component = component
         self.name = name or f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
         self.execution_count = 0
-        self.last_execution_time: Optional[datetime] = None
+        self.last_execution_time: datetime | None = None
         self.total_execution_time = 0.0
         self.error_count = 0
 
@@ -99,7 +100,7 @@ class Decorator(Component):
     def get_name(self) -> str:
         return self.name
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取装饰器执行统计信息"""
         return {
             "name": self.name,
@@ -128,7 +129,7 @@ class DecoratorComponent(Decorator):
         self,
         func: Callable,
         decorators: list[Decorator],
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         # 创建具体组件
         component = ConcreteComponent(name or func.__name__, func)
@@ -148,7 +149,7 @@ class DecoratorComponent(Decorator):
         # 执行最外层的装饰器
         return await current_component.execute(*args, **kwargs)
 
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """获取所有装饰器的统计信息"""
         stats = {"function": self.func.__name__, "decorators": []}
 
@@ -193,7 +194,7 @@ class DecoratorChain:
 
         return current_component.execute(*args, **kwargs)
 
-    def get_chain_stats(self) -> Dict[str, Any]:
+    def get_chain_stats(self) -> dict[str, Any]:
         """获取装饰器链的统计信息"""
         return {
             "chain_length": len(self.decorators),
@@ -212,7 +213,7 @@ class DecoratorContext:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.data: Dict[str, Any] = {}
+        self.data: dict[str, Any] = {}
         self.start_time = time.time()
         self.trace_id = str(uuid.uuid4())
         self.execution_path: list[str] = []
@@ -237,7 +238,7 @@ class DecoratorContext:
         """获取执行时间"""
         return time.time() - self.start_time
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "trace_id": self.trace_id,
@@ -258,8 +259,8 @@ class DecoratorRegistry:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._decorators: Dict[str, type[Decorator]] = {}
-        self._instances: Dict[str, Decorator] = {}
+        self._decorators: dict[str, type[Decorator]] = {}
+        self._instances: dict[str, Decorator] = {}
 
     def register(self, name: str, decorator_class: type[Decorator]) -> None:
         """注册装饰器类"""
@@ -270,13 +271,13 @@ class DecoratorRegistry:
         self._decorators.pop(name, None)
         self._instances.pop(name, None)
 
-    def get_decorator_class(self, name: str) -> Optional[type[Decorator]]:
+    def get_decorator_class(self, name: str) -> type[Decorator] | None:
         """获取装饰器类"""
         return self._decorators.get(name)
 
     def get_decorator_instance(
         self, name: str, component: Component, **kwargs
-    ) -> Optional[Decorator]:
+    ) -> Decorator | None:
         """获取装饰器实例（单例模式）"""
         decorator_class = self._decorators.get(name)
         if not decorator_class:

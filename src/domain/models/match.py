@@ -9,7 +9,7 @@ Encapsulates match-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.exceptions import DomainError
 
@@ -82,23 +82,23 @@ class Match:
     封装比赛的核心业务逻辑和不变性约束.
     """
 
-    id: Optional[int] = None
+    id: int | None = None
     home_team_id: int = 0
     away_team_id: int = 0
     league_id: int = 0
     season: str = ""
     match_date: datetime = field(default_factory=datetime.utcnow)
     status: MatchStatus = MatchStatus.SCHEDULED
-    score: Optional[MatchScore] = None
-    venue: Optional[str] = None
-    referee: Optional[str] = None
-    weather: Optional[str] = None
-    attendance: Optional[int] = None
+    score: MatchScore | None = None
+    venue: str | None = None
+    referee: str | None = None
+    weather: str | None = None
+    attendance: int | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -178,7 +178,7 @@ class Match:
             )
         )
 
-    def cancel_match(self, reason: Optional[str] = None) -> None:
+    def cancel_match(self, reason: str | None = None) -> None:
         """取消比赛"""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法再次取消")
@@ -186,7 +186,7 @@ class Match:
         self.status = MatchStatus.CANCELLED
         self.updated_at = datetime.utcnow()
 
-    def postpone_match(self, new_date: Optional[datetime] = None) -> None:
+    def postpone_match(self, new_date: datetime | None = None) -> None:
         """延期比赛"""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法延期")
@@ -208,7 +208,7 @@ class Match:
         """检查是否是客队"""
         return team_id == self.away_team_id
 
-    def get_opponent_id(self, team_id: int) -> Optional[int]:
+    def get_opponent_id(self, team_id: int) -> int | None:
         """获取对手ID"""
         if team_id == self.home_team_id:
             return self.away_team_id
@@ -250,7 +250,7 @@ class Match:
             return max(0, delta.days)
         return 0
 
-    def get_duration(self) -> Optional[int]:
+    def get_duration(self) -> int | None:
         """获取比赛时长（分钟）"""
         if self.status == MatchStatus.FINISHED and self.created_at:
             # 这里简化处理,实际应该记录开始时间
@@ -265,7 +265,7 @@ class Match:
         """添加领域事件"""
         self._domain_events.append(event)
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """获取领域事件"""
         return self._domain_events.copy()
 
@@ -277,7 +277,7 @@ class Match:
     # 序列化方法
     # ========================================
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -305,7 +305,7 @@ class Match:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Match":
+    def from_dict(cls, data: dict[str, Any]) -> "Match":
         """从字典创建实例"""
         score_data = data.pop("score", None)
         score = None

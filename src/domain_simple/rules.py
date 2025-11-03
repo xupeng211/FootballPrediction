@@ -3,8 +3,9 @@
 """
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 
 class ValidationResult:
@@ -19,8 +20,8 @@ class ValidationResult:
         # 添加pass语句
         self.is_valid = is_valid
         self.message = message
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
         self.timestamp = datetime.now()
 
     def add_error(self, message: str) -> None:
@@ -40,7 +41,7 @@ class ValidationResult:
         """是否有警告"""
         return len(self.warnings) > 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "is_valid": self.is_valid,
@@ -109,8 +110,8 @@ class ValidationEngine:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._rules: Dict[str, List[Rule]] = {}
-        self._global_rules: List[Rule] = []
+        self._rules: dict[str, list[Rule]] = {}
+        self._global_rules: list[Rule] = []
 
     def add_rule(self, entity_type: str, rule: Rule) -> None:
         """为特定实体类型添加规则"""
@@ -131,7 +132,7 @@ class ValidationEngine:
             return True
         return False
 
-    def get_rules(self, entity_type: Optional[str] = None) -> List[Rule]:
+    def get_rules(self, entity_type: str | None = None) -> list[Rule]:
         """获取规则"""
         rules = self._global_rules.copy()
 
@@ -140,7 +141,7 @@ class ValidationEngine:
 
         return rules
 
-    def validate(self, obj: Any, entity_type: Optional[str] = None) -> ValidationResult:
+    def validate(self, obj: Any, entity_type: str | None = None) -> ValidationResult:
         """验证对象"""
         result = ValidationResult()
 
@@ -170,8 +171,8 @@ class ValidationEngine:
         return result
 
     def validate_batch(
-        self, objects: List[Any], entity_type: Optional[str] = None
-    ) -> List[ValidationResult]:
+        self, objects: list[Any], entity_type: str | None = None
+    ) -> list[ValidationResult]:
         """批量验证"""
         results = []
 
@@ -203,7 +204,7 @@ class ValidationEngine:
             if rule.name == rule_name:
                 rule.enabled = False
 
-    def clear_rules(self, entity_type: Optional[str] = None) -> None:
+    def clear_rules(self, entity_type: str | None = None) -> None:
         """清除规则"""
         if entity_type:
             self._rules[entity_type] = []
@@ -219,7 +220,7 @@ class BusinessRules:
     """预定义的业务规则集合"""
 
     @staticmethod
-    def create_match_rules() -> List[Rule]:
+    def create_match_rules() -> list[Rule]:
         """创建比赛相关的业务规则"""
         rules = []
 
@@ -260,7 +261,7 @@ class BusinessRules:
         return rules
 
     @staticmethod
-    def create_prediction_rules() -> List[Rule]:
+    def create_prediction_rules() -> list[Rule]:
         """创建预测相关的业务规则"""
         rules = []
 
@@ -297,7 +298,7 @@ class BusinessRules:
         return rules
 
     @staticmethod
-    def create_team_rules() -> List[Rule]:
+    def create_team_rules() -> list[Rule]:
         """创建球队相关的业务规则"""
         rules = []
 

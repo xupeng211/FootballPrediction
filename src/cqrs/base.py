@@ -10,7 +10,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 # 定义泛型类型
 CommandResultType = TypeVar("CommandResultType")
@@ -26,9 +26,9 @@ class BaseMessage:
 
     message_id: str
     timestamp: datetime
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: dict[str, Any] | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -44,13 +44,13 @@ class Command(BaseMessage, ABC):
     Commands represent intentions to change system state.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: dict[str, Any] | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
         super().__init__(metadata)
-        self.correlation_id: Optional[str] = None
-        self.causation_id: Optional[str] = None
+        self.correlation_id: str | None = None
+        self.causation_id: str | None = None
 
 
 class Query(BaseMessage, ABC):
@@ -60,7 +60,7 @@ class Query(BaseMessage, ABC):
     Queries represent requests to retrieve system data.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: dict[str, Any] | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -111,7 +111,7 @@ class ValidationResult:
     pass  # 添加pass语句
     """验证结果"""
 
-    def __init__(self, is_valid: bool, errors: Optional[list] = None):
+    def __init__(self, is_valid: bool, errors: list | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句

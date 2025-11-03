@@ -8,7 +8,7 @@ Provides high-level CQRS operation interfaces.
 
 import logging
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .bus import get_command_bus, get_query_bus
 from .commands import (
@@ -64,8 +64,8 @@ class PredictionCQRSService:
         predicted_home: int,
         predicted_away: int,
         confidence: float,
-        strategy_used: Optional[str] = None,
-        notes: Optional[str] = None,
+        strategy_used: str | None = None,
+        notes: str | None = None,
     ) -> CommandResult:
         """创建预测"""
         command = CreatePredictionCommand(
@@ -82,11 +82,11 @@ class PredictionCQRSService:
     async def update_prediction(
         self,
         prediction_id: int,
-        predicted_home: Optional[int] = None,
-        predicted_away: Optional[int] = None,
-        confidence: Optional[float] = None,
-        strategy_used: Optional[str] = None,
-        notes: Optional[str] = None,
+        predicted_home: int | None = None,
+        predicted_away: int | None = None,
+        confidence: float | None = None,
+        strategy_used: str | None = None,
+        notes: str | None = None,
     ) -> CommandResult:
         """更新预测"""
         command = UpdatePredictionCommand(
@@ -105,7 +105,7 @@ class PredictionCQRSService:
         return await self.command_bus.dispatch(command)
 
     # 查询操作
-    async def get_prediction_by_id(self, prediction_id: int) -> Optional[PredictionDTO]:
+    async def get_prediction_by_id(self, prediction_id: int) -> PredictionDTO | None:
         """根据ID获取预测"""
         query = GetPredictionByIdQuery(prediction_id=prediction_id)
         return await self.query_bus.dispatch(query)
@@ -113,11 +113,11 @@ class PredictionCQRSService:
     async def get_predictions_by_user(
         self,
         user_id: int,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> List[PredictionDTO]:
+        limit: int | None = None,
+        offset: int | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[PredictionDTO]:
         """获取用户的所有预测"""
         query = GetPredictionsByUserQuery(
             user_id=user_id,
@@ -130,7 +130,7 @@ class PredictionCQRSService:
 
     async def get_user_stats(
         self, user_id: int, include_predictions: bool = False
-    ) -> Optional[PredictionStatsDTO]:
+    ) -> PredictionStatsDTO | None:
         """获取用户统计"""
         query = GetUserStatsQuery(
             user_id=user_id, include_predictions=include_predictions
@@ -161,8 +161,8 @@ class MatchCQRSService:
         home_team: str,
         away_team: str,
         match_date: datetime,
-        competition: Optional[str] = None,
-        venue: Optional[str] = None,
+        competition: str | None = None,
+        venue: str | None = None,
     ) -> CommandResult:
         """创建比赛"""
         command = CreateMatchCommand(
@@ -177,11 +177,11 @@ class MatchCQRSService:
     async def update_match(
         self,
         match_id: int,
-        home_score: Optional[int] = None,
-        away_score: Optional[int] = None,
-        status: Optional[str] = None,
-        competition: Optional[str] = None,
-        venue: Optional[str] = None,
+        home_score: int | None = None,
+        away_score: int | None = None,
+        status: str | None = None,
+        competition: str | None = None,
+        venue: str | None = None,
     ) -> CommandResult:
         """更新比赛"""
         command = UpdateMatchCommand(
@@ -197,7 +197,7 @@ class MatchCQRSService:
     # 查询操作
     async def get_match_by_id(
         self, match_id: int, include_predictions: bool = False
-    ) -> Optional[MatchDTO]:
+    ) -> MatchDTO | None:
         """根据ID获取比赛"""
         query = GetMatchByIdQuery(
             match_id=match_id, include_predictions=include_predictions
@@ -207,10 +207,10 @@ class MatchCQRSService:
     async def get_upcoming_matches(
         self,
         days_ahead: int = 7,
-        competition: Optional[str] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-    ) -> List[MatchDTO]:
+        competition: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[MatchDTO]:
         """获取即将到来的比赛"""
         query = GetUpcomingMatchesQuery(
             days_ahead=days_ahead, competition=competition, limit=limit, offset=offset
@@ -251,9 +251,9 @@ class UserCQRSService:
     async def update_user(
         self,
         user_id: int,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-        is_active: Optional[bool] = None,
+        username: str | None = None,
+        email: str | None = None,
+        is_active: bool | None = None,
     ) -> CommandResult:
         """更新用户"""
         command = UpdateUserCommand(
@@ -280,11 +280,11 @@ class AnalyticsCQRSService:
 
     async def get_prediction_analytics(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        strategy_filter: Optional[str] = None,
-        user_id: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        start_date: date | None = None,
+        end_date: date | None = None,
+        strategy_filter: str | None = None,
+        user_id: int | None = None,
+    ) -> dict[str, Any]:
         """获取预测分析"""
         query = GetPredictionAnalyticsQuery(
             start_date=start_date,
@@ -297,9 +297,9 @@ class AnalyticsCQRSService:
     async def get_leaderboard(
         self,
         period: str = "all_time",
-        limit: Optional[int] = 10,
-        offset: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        limit: int | None = 10,
+        offset: int | None = None,
+    ) -> list[dict[str, Any]]:
         """获取排行榜"""
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)
         return await self.query_bus.dispatch(query)

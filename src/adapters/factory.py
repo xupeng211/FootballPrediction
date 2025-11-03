@@ -10,7 +10,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any
 
 import yaml
 
@@ -29,10 +29,10 @@ class AdapterConfig:
     adapter_type: str
     enabled: bool = True
     priority: int = 0
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    rate_limits: Optional[Dict[str, int]] = None
-    cache_config: Optional[Dict[str, Any]] = None
-    retry_config: Optional[Dict[str, Any]] = None
+    parameters: dict[str, Any] = field(default_factory=dict)
+    rate_limits: dict[str, int] | None = None
+    cache_config: dict[str, Any] | None = None
+    retry_config: dict[str, Any] | None = None
 
 
 @dataclass
@@ -43,8 +43,8 @@ class AdapterGroupConfig:
     """适配器组配置"""
 
     name: str
-    adapters: List[str]
-    primary_adapter: Optional[str] = None
+    adapters: list[str]
+    primary_adapter: str | None = None
     fallback_strategy: str = "sequential"  # sequential, parallel, random
 
 
@@ -255,13 +255,42 @@ class AdapterFactory:
     # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     # 全局适配器工厂实例]
+    # 全局适配器工厂实例]
+
+# 全局适配器工厂实例]
+
+# TODO: 方法 def create_adapter 过长(27行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(28行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(42行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(44行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(26行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例]
+
+# TODO: 方法 def create_adapter 过长(27行)，建议拆分
+# TODO: 方法 def create_adapter 过长(28行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(28行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(29行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(33行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(42行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(43行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(44行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(45行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(26行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(27行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例]
+
     def __init__(self):
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._adapter_types: Dict[str, Type[Adapter]] = {}
-        self._configs: Dict[str, AdapterConfig] = {}
-        self._group_configs: Dict[str, AdapterGroupConfig] = {}
+        self._adapter_types: dict[str, type[Adapter]] = {}
+        self._configs: dict[str, AdapterConfig] = {}
+        self._group_configs: dict[str, AdapterGroupConfig] = {}
 
         # 注册内置适配器类型
         self._register_builtin_adapters()
@@ -272,7 +301,7 @@ class AdapterFactory:
         self.register_adapter_type("opta-data", OptaDataAdapter)
         self.register_adapter_type("composite-football", CompositeFootballAdapter)
 
-    def register_adapter_type(self, name: str, adapter_class: Type[Adapter]) -> None:
+    def register_adapter_type(self, name: str, adapter_class: type[Adapter]) -> None:
         """注册适配器类型"""
         self._adapter_types[name] = adapter_class
 
@@ -286,6 +315,9 @@ class AdapterFactory:
     # TODO: 方法 def create_adapter 过长(23行)，建议拆分
     # TODO: 方法 def create_adapter 过长(24行)，建议拆分
     # TODO: 方法 def create_adapter 过长(25行)，建议拆分
+    # TODO: 方法 def create_adapter 过长(26行)，建议拆分
+# TODO: 方法 def create_adapter 过长(27行)，建议拆分
+# TODO: 方法 def create_adapter 过长(28行)，建议拆分
     def create_adapter(self, config: AdapterConfig) -> Adapter:
         """创建适配器实例"""
         if not config.enabled:
@@ -312,7 +344,10 @@ class AdapterFactory:
     # TODO: 方法 def _resolve_parameters 过长(24行)，建议拆分
     # TODO: 方法 def _resolve_parameters 过长(25行)，建议拆分
     # TODO: 方法 def _resolve_parameters 过长(26行)，建议拆分
-    def _resolve_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    # TODO: 方法 def _resolve_parameters 过长(27行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(28行)，建议拆分
+# TODO: 方法 def _resolve_parameters 过长(29行)，建议拆分
+    def _resolve_parameters(self, parameters: dict[str, Any]) -> dict[str, Any]:
         """解析参数,从环境变量替换敏感信息"""
         resolved = {}
         for key, value in parameters.items():
@@ -339,6 +374,9 @@ class AdapterFactory:
     # TODO: 方法 def create_adapter_group 过长(29行)，建议拆分
     # TODO: 方法 def create_adapter_group 过长(29行)，建议拆分
     # TODO: 方法 def create_adapter_group 过长(30行)，建议拆分
+    # TODO: 方法 def create_adapter_group 过长(31行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(32行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(33行)，建议拆分
     def create_adapter_group(self, group_config: AdapterGroupConfig) -> Adapter:
         """创建适配器组"""
         if group_config.adapters:
@@ -370,6 +408,9 @@ class AdapterFactory:
     # TODO: 方法 def load_config_from_file 过长(38行)，建议拆分
     # TODO: 方法 def load_config_from_file 过长(39行)，建议拆分
     # TODO: 方法 def load_config_from_file 过长(40行)，建议拆分
+    # TODO: 方法 def load_config_from_file 过长(41行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(42行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(43行)，建议拆分
     def load_config_from_file(self) -> None:
         """从文件加载适配器配置"""
         file_path = Path(file_path)
@@ -379,10 +420,10 @@ class AdapterFactory:
 
         # 根据文件扩展名选择解析器
         if file_path.suffix.lower() in [".yaml", ".yml"]:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
@@ -411,7 +452,10 @@ class AdapterFactory:
     # TODO: 方法 def save_config_to_file 过长(40行)，建议拆分
     # TODO: 方法 def save_config_to_file 过长(41行)，建议拆分
     # TODO: 方法 def save_config_to_file 过长(42行)，建议拆分
-    def save_config_to_file(self, file_path: Union[str, Path]) -> None:
+    # TODO: 方法 def save_config_to_file 过长(43行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(44行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(45行)，建议拆分
+    def save_config_to_file(self, file_path: str | Path) -> None:
         """保存配置到文件"""
         file_path = Path(file_path)
 
@@ -454,7 +498,10 @@ class AdapterFactory:
     # TODO: 方法 def _mask_sensitive_parameters 过长(22行)，建议拆分
     # TODO: 方法 def _mask_sensitive_parameters 过长(23行)，建议拆分
     # TODO: 方法 def _mask_sensitive_parameters 过长(24行)，建议拆分
-    def _mask_sensitive_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    # TODO: 方法 def _mask_sensitive_parameters 过长(25行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(26行)，建议拆分
+# TODO: 方法 def _mask_sensitive_parameters 过长(27行)，建议拆分
+    def _mask_sensitive_parameters(self, parameters: dict[str, Any]) -> dict[str, Any]:
         """屏蔽敏感参数"""
         sensitive_keys = ["api_key", "password", "secret", "token"]
         masked = {}
@@ -479,6 +526,9 @@ class AdapterFactory:
     # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+    # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     def create_default_configs(self) -> None:
         """创建默认配置"""
         # API Football配置
@@ -516,23 +566,23 @@ class AdapterFactory:
         )
         self._group_configs["football_sources"] = football_group
 
-    def get_config(self, name: str) -> Optional[AdapterConfig]:
+    def get_config(self, name: str) -> AdapterConfig | None:
         """获取适配器配置"""
         return self._configs.get(name)
 
-    def get_group_config(self, name: str) -> Optional[AdapterGroupConfig]:
+    def get_group_config(self, name: str) -> AdapterGroupConfig | None:
         """获取适配器组配置"""
         return self._group_configs.get(name)
 
-    def list_configs(self) -> List[str]:
+    def list_configs(self) -> list[str]:
         """列出所有配置"""
         return list(self._configs.keys())
 
-    def list_group_configs(self) -> List[str]:
+    def list_group_configs(self) -> list[str]:
         """列出所有组配置"""
         return list(self._group_configs.keys())
 
-    def validate_config(self, config: AdapterConfig) -> List[str]:
+    def validate_config(self, config: AdapterConfig) -> list[str]:
         """验证配置"""
         errors = []
 

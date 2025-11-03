@@ -4,8 +4,7 @@
 提供时间和日期处理相关的工具函数.
 """
 
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 try:
     from zoneinfo import ZoneInfo
@@ -23,12 +22,12 @@ class TimeUtils:
     @staticmethod
     def now_utc() -> datetime:
         """获取当前UTC时间"""
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     @staticmethod
     def get_utc_now() -> datetime:
         """获取当前UTC时间（别名方法）"""
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     @staticmethod
     def get_local_now() -> datetime:
@@ -38,7 +37,7 @@ class TimeUtils:
     @staticmethod
     def timestamp_to_datetime(timestamp: float) -> datetime:
         """时间戳转datetime"""
-        return datetime.fromtimestamp(timestamp, timezone.utc)
+        return datetime.fromtimestamp(timestamp, UTC)
 
     @staticmethod
     def datetime_to_timestamp(dt: datetime) -> float:
@@ -199,10 +198,10 @@ class TimeUtils:
         return not (end1 < start2 or end2 < start1)
 
     @staticmethod
-    def convert_timezone(dt: datetime, tz_name: str) -> Optional[datetime]:
+    def convert_timezone(dt: datetime, tz_name: str) -> datetime | None:
         """转换时区"""
         try:
-            from_tz = timezone.utc
+            from_tz = UTC
             to_tz = ZoneInfo(tz_name)
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=from_tz)
@@ -229,12 +228,12 @@ class TimeUtils:
 # 为了向后兼容,添加常用函数别名
 def utc_now() -> datetime:
     """获取当前UTC时间（向后兼容性函数）"""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def parse_datetime(
-    date_str: Optional[str], format_str: str = "%Y-%m-%d %H:%M:%S"
-) -> Optional[datetime]:
+    date_str: str | None, format_str: str = "%Y-%m-%d %H:%M:%S"
+) -> datetime | None:
     """解析日期时间字符串（向后兼容性函数）"""
     if date_str is None:
         return None
@@ -276,7 +275,7 @@ def format_duration(seconds: float) -> str:
         return f"{hours:.1f}小时"
 
 
-def parse_iso_datetime(date_str: str) -> Optional[datetime]:
+def parse_iso_datetime(date_str: str) -> datetime | None:
     """解析ISO格式日期时间"""
     if not date_str:
         return None

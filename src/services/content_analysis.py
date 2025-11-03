@@ -6,7 +6,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base_unified import SimpleService
 
@@ -36,7 +36,7 @@ class Content:
     pass  # 添加pass语句
     """内容类"""
 
-    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
+    def __init__(self, content_id: str, content_type: str, data: dict[str, Any]):
         """函数文档字符串"""
         pass  # 添加pass语句
         self.id = content_id
@@ -50,7 +50,7 @@ class UserProfile:
     pass  # 添加pass语句
     """用户配置文件类"""
 
-    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):
+    def __init__(self, user_id: str, preferences: dict[str, Any] = None):
         """函数文档字符串"""
         pass  # 添加pass语句
         self.user_id = user_id
@@ -67,9 +67,9 @@ class AnalysisResult:
         self,
         id: str = "",
         analysis_type: str = "",
-        result: Dict[str, Any] = None,
+        result: dict[str, Any] = None,
         confidence: float = 0.0,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
         content_id: str = "",
     ):
         self.id = id
@@ -107,7 +107,7 @@ class ContentAnalysisService(SimpleService):
         self.logger.info(f"正在关闭 {self.name}")
         self._models_loaded = False
 
-    async def _get_service_info(self) -> Dict[str, Any]:
+    async def _get_service_info(self) -> dict[str, Any]:
         """获取服务信息"""
         return {
             "name": self.name,
@@ -117,7 +117,7 @@ class ContentAnalysisService(SimpleService):
             "models_loaded": self._models_loaded,
         }
 
-    async def analyze_content(self, content: Content) -> Optional[AnalysisResult]:
+    async def analyze_content(self, content: Content) -> AnalysisResult | None:
         """分析内容"""
         if not self._initialized:
             raise RuntimeError("服务未初始化")
@@ -152,9 +152,9 @@ class ContentAnalysisService(SimpleService):
             content_id=content.id,
         )
 
-    async def batch_analyze(self, contents: List[Content]) -> List[AnalysisResult]:
+    async def batch_analyze(self, contents: list[Content]) -> list[AnalysisResult]:
         """批量分析内容"""
-        results: List[AnalysisResult] = []
+        results: list[AnalysisResult] = []
         for content in contents:
             result = await self.analyze_content(content)
             if result:

@@ -3,18 +3,19 @@
 External Team Data Model
 """
 
+from datetime import datetime
+from typing import Any
+
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
+    DateTime,
     Integer,
     String,
     Text,
-    DateTime,
-    Boolean,
-    JSON,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
-from typing import Optional, Dict, Any
 
 Base = declarative_base()
 
@@ -86,7 +87,7 @@ class ExternalTeam(Base):
         premium_fields = ["address", "website", "founded", "club_colors", "venue"]
         return sum(1 for field in premium_fields if getattr(self, field)) >= 3
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -122,7 +123,7 @@ class ExternalTeam(Base):
 
     @classmethod
     def from_api_data(
-        cls, data: Dict[str, Any], competition_info: Optional[Dict[str, Any]] = None
+        cls, data: dict[str, Any], competition_info: dict[str, Any] | None = None
     ) -> "ExternalTeam":
         """从API数据创建实例"""
         try:
@@ -182,7 +183,7 @@ class ExternalTeam(Base):
             )
 
     @staticmethod
-    def _calculate_data_quality_score(data: Dict[str, Any]) -> int:
+    def _calculate_data_quality_score(data: dict[str, Any]) -> int:
         """计算数据质量评分"""
         score = 0
 
@@ -207,7 +208,7 @@ class ExternalTeam(Base):
 
         return min(score, 100)  # 最高100分
 
-    def update_from_api_data(self, data: Dict[str, Any]) -> bool:
+    def update_from_api_data(self, data: dict[str, Any]) -> bool:
         """从API数据更新实例"""
         try:
             # 检查外部ID是否匹配
@@ -260,7 +261,7 @@ class ExternalTeam(Base):
             logger.error(f"Error updating team {self.external_id}: {e}")
             return False
 
-    def merge_competition_info(self, competition_info: Dict[str, Any]) -> None:
+    def merge_competition_info(self, competition_info: dict[str, Any]) -> None:
         """合并联赛信息"""
         if competition_info:
             self.competition_id = competition_info.get("id")

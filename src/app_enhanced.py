@@ -4,12 +4,11 @@ Enhanced FastAPI Application with Data Access Layer
 """
 
 import os
-from typing import List
 from contextlib import asynccontextmanager
 
+import asyncpg
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import asyncpg
 
 # 数据库配置
 DATABASE_URL = os.getenv(
@@ -108,7 +107,8 @@ async def get_db_connection():
     """获取数据库连接"""
     if not db_pool:
         raise HTTPException(
-            status_code=503, detail="Database not available"
+            status_code=503,  # TODO: 将魔法数字 503 提取为常量
+            detail="Database not available",  # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
     return db_pool
 
@@ -146,12 +146,13 @@ async def health_check():
     )
 
 
-@app.get("/predictions", response_model=List[PredictionResponse])
+@app.get("/predictions", response_model=list[PredictionResponse])
 async def get_predictions():
     """获取所有预测"""
     if not db_pool:
         raise HTTPException(
-            status_code=503, detail="Database not available"
+            status_code=503,  # TODO: 将魔法数字 503 提取为常量
+            detail="Database not available",  # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
@@ -176,12 +177,14 @@ async def create_prediction(match_id: int, predicted_winner: str, confidence: fl
     """创建新预测"""
     if not db_pool:
         raise HTTPException(
-            status_code=503, detail="Database not available"
+            status_code=503,  # TODO: 将魔法数字 503 提取为常量
+            detail="Database not available",  # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     if confidence < 0 or confidence > 1:
         raise HTTPException(
-            status_code=400, detail="Confidence must be between 0 and 1"
+            status_code=400,  # TODO: 将魔法数字 400 提取为常量
+            detail="Confidence must be between 0 and 1",  # TODO: 将魔法数字 400 提取为常量
         )  # TODO: 将魔法数字 400 提取为常量
 
     async with db_pool.acquire() as conn:
@@ -210,7 +213,8 @@ async def get_prediction(prediction_id: int):
     """获取特定预测"""
     if not db_pool:
         raise HTTPException(
-            status_code=503, detail="Database not available"
+            status_code=503,  # TODO: 将魔法数字 503 提取为常量
+            detail="Database not available",  # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
@@ -220,7 +224,8 @@ async def get_prediction(prediction_id: int):
 
         if not row:
             raise HTTPException(
-                status_code=404, detail="Prediction not found"
+                status_code=404,  # TODO: 将魔法数字 404 提取为常量
+                detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
         return PredictionResponse(
@@ -237,7 +242,8 @@ async def delete_prediction(prediction_id: int):
     """删除预测"""
     if not db_pool:
         raise HTTPException(
-            status_code=503, detail="Database not available"
+            status_code=503,  # TODO: 将魔法数字 503 提取为常量
+            detail="Database not available",  # TODO: 将魔法数字 503 提取为常量
         )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
@@ -247,7 +253,8 @@ async def delete_prediction(prediction_id: int):
 
         if result == "DELETE 0":
             raise HTTPException(
-                status_code=404, detail="Prediction not found"
+                status_code=404,  # TODO: 将魔法数字 404 提取为常量
+                detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
 
         return {"message": "Prediction deleted successfully"}

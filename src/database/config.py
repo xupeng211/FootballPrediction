@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -18,7 +17,7 @@ class DatabaseConfig:
     port: int
     database: str
     username: str
-    password: Optional[str]
+    password: str | None
     pool_size: int = 10
     max_overflow: int = 20
     pool_timeout: int = 30
@@ -86,7 +85,7 @@ def _parse_int(key: str, default: int) -> int:
         return default
 
 
-def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
+def get_database_config(environment: str | None = None) -> DatabaseConfig:
     """根据环境返回数据库配置."""
 
     env = (
@@ -150,7 +149,7 @@ def get_production_database_config() -> DatabaseConfig:
     return get_database_config("production")
 
 
-def get_database_url(environment: Optional[str] = None) -> str:
+def get_database_url(environment: str | None = None) -> str:
     """根据环境返回数据库连接URL."""
 
     config = get_database_config(environment)

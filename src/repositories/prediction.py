@@ -8,11 +8,12 @@ Implements data access logic for predictions.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import func, select
 
 from src.database.models import Prediction
+
 from .base import QuerySpec, ReadOnlyRepository, Repository
 
 
@@ -25,7 +26,7 @@ class PredictionRepositoryInterface(Repository[Prediction, int]):
 class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
     """只读预测仓储"""
 
-    async def find_one(self, query_spec: QuerySpec) -> Optional[Prediction]:
+    async def find_one(self, query_spec: QuerySpec) -> Prediction | None:
         """查找单个预测"""
         query = select(Prediction)
 
@@ -38,7 +39,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         result = await self.session.execute(query)
         return result.scalars().first()
 
-    async def find_many(self, query_spec: QuerySpec) -> List[Prediction]:
+    async def find_many(self, query_spec: QuerySpec) -> list[Prediction]:
         """查找多个预测"""
         query = select(Prediction)
 
@@ -57,13 +58,13 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def get_by_id(self, id: int) -> Optional[Prediction]:
+    async def get_by_id(self, id: int) -> Prediction | None:
         """根据ID获取预测"""
         query = select(Prediction).where(Prediction.id == id)
         result = await self.session.execute(query)
         return result.scalars().first()
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Prediction]:
+    async def get_all(self, query_spec: QuerySpec | None = None) -> list[Prediction]:
         """获取所有预测"""
         return await self.find_many(query_spec or QuerySpec())
 
@@ -84,11 +85,11 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
     async def get_predictions_by_user(
         self,
         user_id: int,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[Prediction]:
+    ) -> list[Prediction]:
         """获取用户的所有预测"""
         filters = {"user_id": user_id}
         if start_date:
@@ -108,7 +109,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
 
     async def get_predictions_by_match(
         self, match_id: int, include_user_details: bool = False
-    ) -> List[Prediction]:
+    ) -> list[Prediction]:
         """获取比赛的所有预测"""
         filters = {"match_id": match_id}
         includes = ["match"]
@@ -122,8 +123,8 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         return await self.find_many(query_spec)
 
     async def get_user_statistics(
-        self, user_id: int, period_days: Optional[int] = None
-    ) -> Dict[str, Any]:
+        self, user_id: int, period_days: int | None = None
+    ) -> dict[str, Any]:
         """获取用户统计信息"""
         query = select(
             func.count(Prediction.id).label("total_predictions"),
@@ -163,7 +164,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
             "average_confidence": float(stats.avg_confidence or 0),
         }
 
-    async def get_match_statistics(self, match_id: int) -> Dict[str, Any]:
+    async def get_match_statistics(self, match_id: int) -> dict[str, Any]:
         """获取比赛统计信息"""
         query = select(
             func.count(Prediction.id).label("total_predictions"),
@@ -204,13 +205,13 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
 class PredictionRepository(PredictionRepositoryInterface):
     """预测仓储实现"""
 
-    async def get_by_id(self, id: int) -> Optional[Prediction]:
+    async def get_by_id(self, id: int) -> Prediction | None:
         """根据ID获取预测"""
         query = select(Prediction).where(Prediction.id == id)
         result = await self.session.execute(query)
         return result.scalars().first()
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Prediction]:
+    async def get_all(self, query_spec: QuerySpec | None = None) -> list[Prediction]:
         """获取所有预测"""
         query = select(Prediction)
 
@@ -229,7 +230,7 @@ class PredictionRepository(PredictionRepositoryInterface):
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def find_one(self, query_spec: QuerySpec) -> Optional[Prediction]:
+    async def find_one(self, query_spec: QuerySpec) -> Prediction | None:
         """查找单个预测"""
         query = select(Prediction)
 
@@ -242,7 +243,7 @@ class PredictionRepository(PredictionRepositoryInterface):
         result = await self.session.execute(query)
         return result.scalars().first()
 
-    async def find_many(self, query_spec: QuerySpec) -> List[Prediction]:
+    async def find_many(self, query_spec: QuerySpec) -> list[Prediction]:
         """查找多个预测"""
         return await self.get_all(query_spec)
 
@@ -273,7 +274,7 @@ class PredictionRepository(PredictionRepositoryInterface):
         result = await self.session.execute(query)
         return result.scalar() > 0
 
-    async def create(self, entity_data: Dict[str, Any]) -> Prediction:
+    async def create(self, entity_data: dict[str, Any]) -> Prediction:
         """创建新预测"""
         _prediction = Prediction(
             match_id=entity_data["match_id"],
@@ -292,8 +293,8 @@ class PredictionRepository(PredictionRepositoryInterface):
         return prediction
 
     async def update_by_id(
-        self, id: int, update_data: Dict[str, Any]
-    ) -> Optional[Prediction]:
+        self, id: int, update_data: dict[str, Any]
+    ) -> Prediction | None:
         """根据ID更新预测"""
         query = update(Prediction).where(Prediction.id == id)
 
@@ -323,8 +324,8 @@ class PredictionRepository(PredictionRepositoryInterface):
         return result.rowcount > 0
 
     async def bulk_create(
-        self, entities_data: List[Dict[str, Any]]
-    ) -> List[Prediction]:
+        self, entities_data: list[dict[str, Any]]
+    ) -> list[Prediction]:
         """批量创建预测"""
         predictions = []
         for data in entities_data:

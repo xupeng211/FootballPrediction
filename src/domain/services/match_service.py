@@ -7,7 +7,7 @@ Handles complex business logic related to matches.
 """
 
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from src.domain.events.match_events import (
     MatchCancelledEvent,
@@ -29,15 +29,15 @@ class MatchDomainService:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._events: List[Any] = []
+        self._events: list[Any] = []
 
     def schedule_match(
         self,
         home_team: Team,
         away_team: Team,
         match_time: datetime,
-        venue: Optional[str] = None,
-        round_number: Optional[int] = None,
+        venue: str | None = None,
+        round_number: int | None = None,
     ) -> Match:
         """安排新比赛"""
         if home_team.id == away_team.id:
@@ -81,7 +81,7 @@ class MatchDomainService:
         match: Match,
         home_score: int,
         away_score: int,
-        minute: Optional[int] = None,
+        minute: int | None = None,
     ) -> None:
         """更新比赛比分"""
         if match.status != MatchStatus.LIVE:
@@ -141,7 +141,7 @@ class MatchDomainService:
         )
         self._events.append(event)
 
-    def validate_match_schedule(self, match: Match) -> List[str]:
+    def validate_match_schedule(self, match: Match) -> list[str]:
         """验证比赛安排"""
         errors = []
 
@@ -170,9 +170,9 @@ class MatchDomainService:
     def calculate_match_importance(
         self,
         match: Match,
-        home_team_position: Optional[int] = None,
-        away_team_position: Optional[int] = None,
-        total_teams: Optional[int] = None,
+        home_team_position: int | None = None,
+        away_team_position: int | None = None,
+        total_teams: int | None = None,
     ) -> float:
         """计算比赛重要性"""
         importance = 0.5  # 基础重要性
@@ -199,7 +199,7 @@ class MatchDomainService:
 
         return min(importance, 1.0)
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """获取领域事件"""
         return self._events.copy()
 

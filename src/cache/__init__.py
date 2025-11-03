@@ -39,8 +39,8 @@ from .decorators import (
 )
 
 # Redis缓存管理
-from .redis_manager import CacheKeyManager  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
 from .redis_manager import (
+    CacheKeyManager,  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
     RedisManager,
     adelete_cache,
     aexists_cache,
@@ -72,9 +72,6 @@ from .ttl_cache import (
     config_cache,
     feature_cache,
     get_all_stats,
-)
-from .ttl_cache import get_cache as get_ttl_cache
-from .ttl_cache import (
     odds_cache,
     prediction_cache,
     session_cache,
@@ -82,6 +79,7 @@ from .ttl_cache import (
     stop_auto_cleanup,
     temp_cache,
 )
+from .ttl_cache import get_cache as get_ttl_cache
 
 # 向后兼容别名
 # 为了保持向后兼容,提供一些常用别名

@@ -1,8 +1,5 @@
-from typing import Optional
-from typing import Any
-from typing import List
-from typing import Dict
 from datetime import datetime
+from typing import Any
 
 #!/usr/bin/env python3
 """
@@ -16,8 +13,8 @@ import json
 from enum import Enum
 from pathlib import Path
 
-from src.core.logging_system import get_logger
 from scripts.quality_guardian import QualityGuardian
+from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
 from src.metrics.quality_integration import QualityMetricsIntegrator
 
@@ -46,8 +43,8 @@ class GateResult:
         score: float,
         threshold: float,
         message: str,
-        details: Optional[Dict[str, Any]] = None,
-        duration_ms: Optional[int] = None,
+        details: dict[str, Any] | None = None,
+        duration_ms: int | None = None,
     ):
         self.gate_name = gate_name
         self.status = status
@@ -58,7 +55,7 @@ class GateResult:
         self.duration_ms = duration_ms
         self.timestamp = datetime.now().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "gate_name": self.gate_name,
@@ -308,7 +305,7 @@ class QualityGateSystem:
     pass  # 添加pass语句
     """质量门禁系统主类"""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -316,7 +313,7 @@ class QualityGateSystem:
         self.gates = self._initialize_gates()
         self.logger = get_logger(self.__class__.__name__)
 
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | None) -> dict[str, Any]:
         """加载门禁配置"""
         default_config = {
             "gates": {
@@ -341,7 +338,7 @@ class QualityGateSystem:
 
         if config_path and Path(config_path).exists():
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     user_config = json.load(f)
                 default_config.update(user_config)
             except Exception as e:
@@ -349,7 +346,7 @@ class QualityGateSystem:
 
         return default_config
 
-    def _initialize_gates(self) -> List[QualityGate]:
+    def _initialize_gates(self) -> list[QualityGate]:
         """初始化门禁列表"""
         gates_config = self.config.get("gates", {})
         gates = []
@@ -380,7 +377,7 @@ class QualityGateSystem:
 
         return gates
 
-    def run_all_checks(self) -> Dict[str, Any]:
+    def run_all_checks(self) -> dict[str, Any]:
         """运行所有门禁检查"""
         self.logger.info("开始运行质量门禁检查...")
         start_time = datetime.now()
@@ -452,7 +449,7 @@ class QualityGateSystem:
         self.logger.info(f"质量门禁检查完成: {overall_status} ({duration:.2f}s)")
         return gate_report
 
-    def generate_report(self, results: Dict[str, Any]) -> str:
+    def generate_report(self, results: dict[str, Any]) -> str:
         """生成门禁检查报告"""
         report_lines = [
             "# 质量门禁检查报告",
@@ -500,7 +497,7 @@ class QualityGateSystem:
 
         return "\n".join(report_lines)
 
-    def should_block_merge(self, results: Dict[str, Any]) -> bool:
+    def should_block_merge(self, results: dict[str, Any]) -> bool:
         """判断是否应该阻止合并"""
         return results.get("should_block", False)
 

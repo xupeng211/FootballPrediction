@@ -10,7 +10,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class FileUtils:
@@ -20,24 +20,24 @@ class FileUtils:
     """文件处理工具类"""
 
     @staticmethod
-    def ensure_dir(path: Union[str, Path]) -> Path:
+    def ensure_dir(path: str | Path) -> Path:
         """确保目录存在"""
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
         return path
 
     @staticmethod
-    def read_json(file_path: Union[str, Path]) -> Dict[str, Any]:
+    def read_json(file_path: str | Path) -> dict[str, Any]:
         """读取JSON文件"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}")
 
     @staticmethod
     def write_json(
-        data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True
+        data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
     ) -> None:
         """写入JSON文件"""
         file_path = Path(file_path)
@@ -48,7 +48,7 @@ class FileUtils:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def get_file_hash(file_path: Union[str, Path]) -> str:
+    def get_file_hash(file_path: str | Path) -> str:
         """获取文件MD5哈希值"""
         hash_md5 = hashlib.md5(usedforsecurity=False)
         with open(file_path, "rb") as f:
@@ -57,7 +57,7 @@ class FileUtils:
         return hash_md5.hexdigest()
 
     @staticmethod
-    def get_file_size(file_path: Union[str, Path]) -> int:
+    def get_file_size(file_path: str | Path) -> int:
         """获取文件大小（字节）"""
         try:
             if not os.path.exists(file_path):
@@ -67,12 +67,12 @@ class FileUtils:
             return 0
 
     @staticmethod
-    def ensure_directory(path: Union[str, Path]) -> Path:
+    def ensure_directory(path: str | Path) -> Path:
         """确保目录存在（别名方法）"""
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+    def read_json_file(file_path: str | Path) -> dict[str, Any] | None:
         """读取JSON文件（别名方法）"""
         try:
             return FileUtils.read_json(file_path)
@@ -81,7 +81,7 @@ class FileUtils:
 
     @staticmethod
     def write_json_file(
-        data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True
+        data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
     ) -> bool:
         """写入JSON文件（别名方法）"""
         try:
@@ -91,7 +91,7 @@ class FileUtils:
             return False
 
     @staticmethod
-    def cleanup_old_files(directory: Union[str, Path], days: int = 30) -> int:
+    def cleanup_old_files(directory: str | Path, days: int = 30) -> int:
         """清理旧文件"""
 
         directory = Path(directory)
@@ -112,7 +112,7 @@ class FileUtils:
         return removed_count
 
     @staticmethod
-    def copy_file(src: Union[str, Path], dst: Union[str, Path]) -> bool:
+    def copy_file(src: str | Path, dst: str | Path) -> bool:
         """复制文件"""
         try:
             src_path = Path(src)
@@ -123,7 +123,7 @@ class FileUtils:
             return False
 
     @staticmethod
-    def move_file(src: Union[str, Path], dst: Union[str, Path]) -> bool:
+    def move_file(src: str | Path, dst: str | Path) -> bool:
         """移动文件"""
         try:
             src_path = Path(src)
@@ -135,7 +135,7 @@ class FileUtils:
             return False
 
     @staticmethod
-    def delete_file(file_path: Union[str, Path]) -> bool:
+    def delete_file(file_path: str | Path) -> bool:
         """删除文件"""
         try:
             path = Path(file_path)
@@ -147,22 +147,22 @@ class FileUtils:
             return False
 
     @staticmethod
-    def file_exists(file_path: Union[str, Path]) -> bool:
+    def file_exists(file_path: str | Path) -> bool:
         """检查文件是否存在"""
         return Path(file_path).exists()
 
     @staticmethod
-    def is_file(file_path: Union[str, Path]) -> bool:
+    def is_file(file_path: str | Path) -> bool:
         """检查路径是否为文件"""
         return Path(file_path).is_file()
 
     @staticmethod
-    def is_directory(dir_path: Union[str, Path]) -> bool:
+    def is_directory(dir_path: str | Path) -> bool:
         """检查路径是否为目录"""
         return Path(dir_path).is_dir()
 
     @staticmethod
-    def list_files(directory: Union[str, Path], pattern: str = "*") -> List[Path]:
+    def list_files(directory: str | Path, pattern: str = "*") -> list[Path]:
         """列出目录中的文件"""
         try:
             dir_path = Path(directory)
@@ -173,9 +173,7 @@ class FileUtils:
             return []
 
     @staticmethod
-    def list_files_recursive(
-        directory: Union[str, Path], pattern: str = "*"
-    ) -> List[Path]:
+    def list_files_recursive(directory: str | Path, pattern: str = "*") -> list[Path]:
         """递归列出目录中的所有文件"""
         try:
             dir_path = Path(directory)
@@ -186,24 +184,24 @@ class FileUtils:
             return []
 
     @staticmethod
-    def get_file_extension(file_path: Union[str, Path]) -> str:
+    def get_file_extension(file_path: str | Path) -> str:
         """获取文件扩展名"""
         return Path(file_path).suffix
 
     @staticmethod
-    def get_file_name(file_path: Union[str, Path]) -> str:
+    def get_file_name(file_path: str | Path) -> str:
         """获取文件名（不含扩展名）"""
         return Path(file_path).stem
 
     @staticmethod
-    def get_file_full_name(file_path: Union[str, Path]) -> str:
+    def get_file_full_name(file_path: str | Path) -> str:
         """获取文件全名（含扩展名）"""
         return Path(file_path).name
 
     @staticmethod
     def create_backup(
-        file_path: Union[str, Path], backup_dir: Optional[Union[str, Path]] = None
-    ) -> Optional[Path]:
+        file_path: str | Path, backup_dir: str | Path | None = None
+    ) -> Path | None:
         """创建文件备份"""
         try:
             src_path = Path(file_path)
@@ -225,12 +223,10 @@ class FileUtils:
             return None
 
     @staticmethod
-    def read_text_file(
-        file_path: Union[str, Path], encoding: str = "utf-8"
-    ) -> Optional[str]:
+    def read_text_file(file_path: str | Path, encoding: str = "utf-8") -> str | None:
         """读取文本文件"""
         try:
-            with open(file_path, "r", encoding=encoding) as f:
+            with open(file_path, encoding=encoding) as f:
                 return f.read()
         except (FileNotFoundError, UnicodeDecodeError, OSError):
             return None
@@ -238,7 +234,7 @@ class FileUtils:
     @staticmethod
     def write_text_file(
         content: str,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         encoding: str = "utf-8",
         ensure_dir: bool = True,
     ) -> bool:
@@ -256,7 +252,7 @@ class FileUtils:
 
     @staticmethod
     def append_to_file(
-        content: str, file_path: Union[str, Path], encoding: str = "utf-8"
+        content: str, file_path: str | Path, encoding: str = "utf-8"
     ) -> bool:
         """追加内容到文件"""
         try:
@@ -267,7 +263,7 @@ class FileUtils:
             return False
 
     @staticmethod
-    def get_directory_size(directory: Union[str, Path]) -> int:
+    def get_directory_size(directory: str | Path) -> int:
         """获取目录总大小（字节）"""
         try:
             dir_path = Path(directory)
@@ -283,7 +279,7 @@ class FileUtils:
             return 0
 
     @staticmethod
-    def count_files(directory: Union[str, Path]) -> int:
+    def count_files(directory: str | Path) -> int:
         """统计目录中的文件数量"""
         try:
             dir_path = Path(directory)
@@ -295,7 +291,7 @@ class FileUtils:
             return 0
 
     @staticmethod
-    def safe_remove_directory(directory: Union[str, Path]) -> bool:
+    def safe_remove_directory(directory: str | Path) -> bool:
         """安全删除目录（仅删除空目录）"""
         try:
             dir_path = Path(directory)
@@ -307,7 +303,7 @@ class FileUtils:
             return False
 
     @staticmethod
-    def remove_directory_force(directory: Union[str, Path]) -> bool:
+    def remove_directory_force(directory: str | Path) -> bool:
         """强制删除目录及其内容"""
         try:
             dir_path = Path(directory)

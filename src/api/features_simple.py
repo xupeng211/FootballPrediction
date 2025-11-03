@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
 
-@router.get("/match/{match_id}", response_model=Dict[str, Any])
+@router.get("/match/{match_id}", response_model=dict[str, Any])
 async def get_match_features(
     match_id: int, db: AsyncSession = Depends(get_async_db)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取指定比赛的简单特征
 
@@ -69,8 +69,8 @@ async def get_match_features(
         raise HTTPException(status_code=500, detail="服务器内部错误")
 
 
-@router.get("/health", response_model=Dict[str, str])
-async def health_check() -> Dict[str, str]:
+@router.get("/health", response_model=dict[str, str])
+async def health_check() -> dict[str, str]:
     """
     简单的健康检查端点
     """
@@ -85,8 +85,8 @@ async def health_check() -> Dict[str, str]:
         raise HTTPException(status_code=500, detail="健康检查失败")
 
 
-@router.get("/", response_model=Dict[str, Any])
-async def get_features_info() -> Dict[str, Any]:
+@router.get("/", response_model=dict[str, Any])
+async def get_features_info() -> dict[str, Any]:
     """
     获取特征服务信息
     """

@@ -8,7 +8,7 @@ Database Subsystem Implementation
 """
 
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.facades.base import Subsystem, SubsystemStatus
 
@@ -16,7 +16,7 @@ from src.facades.base import Subsystem, SubsystemStatus
 class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
-    def __init__(self, name: str = "database", config: Optional[Dict] = None):
+    def __init__(self, name: str = "database", config: dict | None = None):
         """初始化数据库子系统"""
         super().__init__(name)
         self.connection_pool = None
@@ -61,8 +61,8 @@ class DatabaseSubsystem(Subsystem):
         await self.stop()
 
     async def execute_query(
-        self, query: str, params: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+        self, query: str, params: dict | None = None
+    ) -> dict[str, Any]:
         """执行查询"""
         if self.status != SubsystemStatus.ACTIVE:
             raise RuntimeError("Database subsystem is not active")
@@ -90,7 +90,7 @@ class DatabaseSubsystem(Subsystem):
             self.error_message = str(e)
             return False
 
-    async def get_detailed_status(self) -> Dict[str, Any]:
+    async def get_detailed_status(self) -> dict[str, Any]:
         """获取详细状态"""
         return {
             "status": self.status.value,

@@ -5,8 +5,8 @@ Observer Pattern Base Implementation
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import Any
 
 
 class ObservableEventType(Enum):
@@ -27,7 +27,7 @@ class ObservableEventType(Enum):
 class ObservableEvent:
     """可观察事件基类"""
 
-    def __init__(self, event_type: str, data: Optional[Dict[str, Any]] = None):
+    def __init__(self, event_type: str, data: dict[str, Any] | None = None):
         self.event_type = event_type
         self.data = data or {}
         self.timestamp = datetime.utcnow()
@@ -42,7 +42,7 @@ class Observer(ABC):
         self.created_at = datetime.utcnow()
 
     @abstractmethod
-    def update(self, subject: "Subject", data: Optional[Any] = None) -> None:
+    def update(self, subject: "Subject", data: Any | None = None) -> None:
         """接收通知的方法"""
         pass
 
@@ -55,8 +55,8 @@ class Subject(ABC):
 
     def __init__(self, name: str):
         self.name = name
-        self._observers: List[Observer] = []
-        self._event_history: List[ObservableEvent] = []
+        self._observers: list[Observer] = []
+        self._event_history: list[ObservableEvent] = []
         self.created_at = datetime.utcnow()
 
     def attach(self, observer: Observer) -> None:
@@ -69,7 +69,7 @@ class Subject(ABC):
         if observer in self._observers:
             self._observers.remove(observer)
 
-    def notify(self, data: Optional[Any] = None) -> None:
+    def notify(self, data: Any | None = None) -> None:
         """通知所有观察者"""
         event = ObservableEvent(
             event_type=f"{self.name}_notification",
@@ -94,11 +94,11 @@ class Subject(ABC):
             except Exception as e:
                 print(f"Observer {observer.name} notification failed: {e}")
 
-    def get_observers(self) -> List[Observer]:
+    def get_observers(self) -> list[Observer]:
         """获取所有观察者"""
         return self._observers.copy()
 
-    def get_event_history(self) -> List[ObservableEvent]:
+    def get_event_history(self) -> list[ObservableEvent]:
         """获取事件历史"""
         return self._event_history.copy()
 
@@ -114,8 +114,8 @@ class EventManager:
     """事件管理器"""
 
     def __init__(self):
-        self._subjects: Dict[str, Subject] = {}
-        self._global_observers: List[Observer] = []
+        self._subjects: dict[str, Subject] = {}
+        self._global_observers: list[Observer] = []
 
     def register_subject(self, subject: Subject) -> None:
         """注册被观察者"""
@@ -126,7 +126,7 @@ class EventManager:
         if subject_name in self._subjects:
             del self._subjects[subject_name]
 
-    def get_subject(self, name: str) -> Optional[Subject]:
+    def get_subject(self, name: str) -> Subject | None:
         """获取被观察者"""
         return self._subjects.get(name)
 
@@ -147,7 +147,7 @@ class EventManager:
             except Exception as e:
                 print(f"Global observer {observer.name} notification failed: {e}")
 
-    def get_all_subjects(self) -> Dict[str, Subject]:
+    def get_all_subjects(self) -> dict[str, Subject]:
         """获取所有被观察者"""
         return self._subjects.copy()
 

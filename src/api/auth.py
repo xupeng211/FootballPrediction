@@ -5,20 +5,21 @@ Authentication API Endpoints
 提供用户登录、注册、token刷新等认证相关API
 """
 
-from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel, EmailStr, Field
 import logging
+from datetime import timedelta
 
-from src.security.jwt_auth import JWTAuthManager, get_jwt_auth_manager, UserAuth
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, EmailStr, Field
+
 from src.api.auth_dependencies import (
-    get_current_user,
-    get_current_active_user,
-    rate_limit_login,
-    get_client_ip,
     AuthContext,
     get_auth_context,
+    get_client_ip,
+    get_current_active_user,
+    get_current_user,
+    rate_limit_login,
 )
+from src.security.jwt_auth import JWTAuthManager, UserAuth, get_jwt_auth_manager
 
 logger = logging.getLogger(__name__)
 

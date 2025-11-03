@@ -8,7 +8,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -20,9 +20,9 @@ class FeatureEntity:
 
     id: str
     feature_type: str
-    data: Dict[str, Any]
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    data: dict[str, Any]
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
@@ -43,7 +43,7 @@ class MatchEntity:
     match_time: datetime
     season: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "match_id": self.match_id,
@@ -55,7 +55,7 @@ class MatchEntity:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MatchEntity":
+    def from_dict(cls, data: dict[str, Any]) -> "MatchEntity":
         """从字典创建实体"""
         return cls(
             match_id=data["match_id"],
@@ -81,9 +81,9 @@ class TeamEntity:
     team_id: int
     team_name: str
     league_id: int
-    home_venue: Optional[str] = None
+    home_venue: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "team_id": self.team_id,
@@ -93,7 +93,7 @@ class TeamEntity:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TeamEntity":
+    def from_dict(cls, data: dict[str, Any]) -> "TeamEntity":
         """从字典创建实体"""
         return cls(
             team_id=data["team_id"],

@@ -1,12 +1,12 @@
 # Stubs for requests library
-from typing import Any, Dict
+from typing import Any
 
 class Response:
     status_code: int
     text: str
     content: bytes
 
-    def json(self) -> Dict[str, Any]: ...
+    def json(self) -> dict[str, Any]: ...
     def raise_for_status(self) -> None: ...
 
 def get(url: str, **kwargs: Any) -> Response: ...

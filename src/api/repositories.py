@@ -9,7 +9,6 @@ Demonstrates query and management features of the repository pattern.
 
 from fastapi import APIRouter
 
-
 router = APIRouter(prefix="/repositories", tags=["Repositories"])
 
 

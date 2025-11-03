@@ -1,7 +1,3 @@
-from typing import Set
-from typing import Dict
-from typing import List
-
 #!/usr/bin/env python3
 """
 实时质量监控WebSocket服务器
@@ -14,10 +10,10 @@ import asyncio
 import json
 from datetime import datetime
 
-import redis
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+import redis
 from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
 from src.quality_gates.gate_system import QualityGateSystem
@@ -51,7 +47,7 @@ class QualityMonitorServer:
         )
 
         # 连接管理
-        self.active_connections: Set[WebSocket] = set()
+        self.active_connections: set[WebSocket] = set()
 
         # 数据存储
         self.redis_client = redis.Redis(
@@ -171,7 +167,7 @@ class QualityMonitorServer:
         except Exception as e:
             self.logger.error(f"处理客户端消息失败: {e}")
 
-    async def collect_quality_metrics(self) -> Dict:
+    async def collect_quality_metrics(self) -> dict:
         """收集质量指标"""
         try:
             # 获取基础质量指标
@@ -227,7 +223,7 @@ class QualityMonitorServer:
                 "overall_status": "ERROR",
             }
 
-    async def get_trend_data(self, hours: int = 24) -> Dict:
+    async def get_trend_data(self, hours: int = 24) -> dict:
         """获取趋势数据"""
         try:
             # 从Redis获取历史数据
@@ -261,7 +257,7 @@ class QualityMonitorServer:
             self.logger.error(f"获取趋势数据失败: {e}")
             return {"data_points": 0, "trend": []}
 
-    async def get_active_alerts(self) -> List[Dict]:
+    async def get_active_alerts(self) -> list[dict]:
         """获取活跃告警"""
         try:
             alerts = []
@@ -311,7 +307,7 @@ class QualityMonitorServer:
             self.logger.error(f"获取活跃告警失败: {e}")
             return []
 
-    async def broadcast_quality_update(self, data: Dict):
+    async def broadcast_quality_update(self, data: dict):
         """广播质量更新给所有连接的客户端"""
         if not self.active_connections:
             return None
@@ -357,7 +353,7 @@ class QualityMonitorServer:
                 self.logger.error(f"后台监控任务失败: {e}")
                 await asyncio.sleep(60)  # 出错时等待1分钟后重试
 
-    async def check_alert_conditions(self, metrics: Dict):
+    async def check_alert_conditions(self, metrics: dict):
         """检查告警条件"""
         try:
             alerts = []

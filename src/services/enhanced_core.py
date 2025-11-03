@@ -6,8 +6,9 @@
 
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
 
 from src.core.logging import get_logger
 
@@ -23,8 +24,8 @@ class ServiceConfig:
         name: str,
         version: str = "1.0.0",
         description: str = "",
-        dependencies: Optional[List[str]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        dependencies: list[str] | None = None,
+        config: dict[str, Any] | None = None,
     ):
         self.name = name
         self.version = version
@@ -64,7 +65,7 @@ class ServiceMetrics:
         if not success:
             self.metrics["errors"] += 1
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取指标"""
         return self.metrics.copy()
 
@@ -76,7 +77,7 @@ class EnhancedBaseService(ABC):
     并添加了指标收集,配置管理,健康检查等功能.
     """
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: ServiceConfig | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -96,7 +97,7 @@ class EnhancedBaseService(ABC):
         # 服务状态
         self._running = False
         self._initialized = False
-        self._startup_time: Optional[datetime] = None
+        self._startup_time: datetime | None = None
 
         # 指标收集
         self.metrics = ServiceMetrics()
@@ -108,7 +109,7 @@ class EnhancedBaseService(ABC):
         }
 
         # 依赖管理
-        self._dependencies: Dict[str, "EnhancedBaseService"] = {}
+        self._dependencies: dict[str, EnhancedBaseService] = {}
 
     @abstractmethod
     async def initialize(self) -> None:
@@ -165,7 +166,7 @@ class EnhancedBaseService(ABC):
         """检查服务是否健康"""
         return self._health_status["status"] == "healthy"
 
-    def get_health_info(self) -> Dict[str, Any]:
+    def get_health_info(self) -> dict[str, Any]:
         """获取健康信息"""
         health_info = self._health_status.copy()
         health_info.update(
@@ -180,7 +181,7 @@ class EnhancedBaseService(ABC):
         )
         return health_info
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """执行健康检查 - 子类可以重写"""
         # 检查依赖
         unhealthy_deps = []
@@ -236,7 +237,7 @@ class EnhancedBaseService(ABC):
         return self.config.config.get(key, default)
 
     def _update_health_status(
-        self, status: str, message: str, details: Optional[Dict[str, Any]] = None
+        self, status: str, message: str, details: dict[str, Any] | None = None
     ):
         """更新健康状态"""
         self._health_status.update(
@@ -248,7 +249,7 @@ class EnhancedBaseService(ABC):
             }
         )
 
-    def _get_uptime_seconds(self) -> Optional[float]:
+    def _get_uptime_seconds(self) -> float | None:
         """获取运行时间（秒）"""
         if self._startup_time:
             return (datetime.now() - self._startup_time).total_seconds()

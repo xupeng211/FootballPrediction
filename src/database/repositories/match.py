@@ -7,13 +7,14 @@ Provides match data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.database.models.match import Match, MatchResult, MatchStatus
+
 from .base import BaseRepository
 
 
@@ -40,9 +41,9 @@ class MatchRepository(BaseRepository[Match]):
         self,
         start_date: datetime,
         end_date: datetime,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         获取指定日期范围内的比赛
 
@@ -76,9 +77,9 @@ class MatchRepository(BaseRepository[Match]):
     async def get_by_status(
         self,
         status: MatchStatus,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         根据状态获取比赛
 
@@ -97,9 +98,9 @@ class MatchRepository(BaseRepository[Match]):
     async def get_upcoming_matches(
         self,
         days: int = 7,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         获取即将到来的比赛
 
@@ -137,8 +138,8 @@ class MatchRepository(BaseRepository[Match]):
             return result.scalars().all()
 
     async def get_live_matches(
-        self, session: Optional[AsyncSession] = None
-    ) -> Optional[List[Match]]:
+        self, session: AsyncSession | None = None
+    ) -> list[Match] | None:
         """
         获取正在进行的比赛
 
@@ -153,9 +154,9 @@ class MatchRepository(BaseRepository[Match]):
     async def get_finished_matches(
         self,
         days: int = 7,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         获取已结束的比赛
 
@@ -192,11 +193,11 @@ class MatchRepository(BaseRepository[Match]):
 
     async def get_by_team(
         self,
-        team_id: Union[int, str],
-        home_or_away: Optional[str] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        team_id: int | str,
+        home_or_away: str | None = None,
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         根据球队获取比赛
 
@@ -232,11 +233,11 @@ class MatchRepository(BaseRepository[Match]):
 
     async def get_head_to_head(
         self,
-        team1_id: Union[int, str],
-        team2_id: Union[int, str],
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        team1_id: int | str,
+        team2_id: int | str,
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         获取两支球队的历史对战记录
 
@@ -278,11 +279,11 @@ class MatchRepository(BaseRepository[Match]):
 
     async def get_matches_by_league(
         self,
-        league_id: Union[int, str],
-        season: Optional[str] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[List[Match]]:
+        league_id: int | str,
+        season: str | None = None,
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Match] | None:
         """
         根据联赛获取比赛
 
@@ -305,10 +306,10 @@ class MatchRepository(BaseRepository[Match]):
 
     async def update_match_status(
         self,
-        match_id: Union[int, str],
+        match_id: int | str,
         status: MatchStatus,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[Match]:
+        session: AsyncSession | None = None,
+    ) -> Match | None:
         """
         更新比赛状态
 
@@ -326,11 +327,11 @@ class MatchRepository(BaseRepository[Match]):
 
     async def update_match_score(
         self,
-        match_id: Union[int, str],
-        home_score: Optional[int],
-        away_score: Optional[int],
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[Match]:
+        match_id: int | str,
+        home_score: int | None,
+        away_score: int | None,
+        session: AsyncSession | None = None,
+    ) -> Match | None:
         """
         更新比赛比分
 
@@ -357,12 +358,12 @@ class MatchRepository(BaseRepository[Match]):
 
     async def finish_match(
         self,
-        match_id: Union[int, str],
+        match_id: int | str,
         home_score: int,
         away_score: int,
-        result: Optional[MatchResult] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[Match]:
+        result: MatchResult | None = None,
+        session: AsyncSession | None = None,
+    ) -> Match | None:
         """
         结束比赛
 
@@ -402,9 +403,9 @@ class MatchRepository(BaseRepository[Match]):
 
     async def get_related_data(
         self,
-        obj_id: Union[int, str],
+        obj_id: int | str,
         relation_name: str,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ) -> Any:
         """
         获取比赛的关联数据
@@ -462,10 +463,10 @@ class MatchRepository(BaseRepository[Match]):
 
     async def get_team_form(
         self,
-        team_id: Union[int, str],
+        team_id: int | str,
         last_matches: int = 5,
-        session: Optional[AsyncSession] = None,
-    ) -> Dict[str, Any]:
+        session: AsyncSession | None = None,
+    ) -> dict[str, Any]:
         """
         获取球队近期状态
 

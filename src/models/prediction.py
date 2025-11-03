@@ -8,7 +8,7 @@ Provides prediction-related data models and services.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.services.base_unified import SimpleService
 
@@ -28,7 +28,7 @@ class PredictionResult:
     confidence: float
     prediction_time: datetime
     model_version: str
-    features: Dict[str, Any] = None
+    features: dict[str, Any] = None
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -51,7 +51,7 @@ class PredictionCache:
         # 添加pass语句
         self._cache = {}
 
-    def get(self, key: str) -> Optional[PredictionResult]:
+    def get(self, key: str) -> PredictionResult | None:
         """获取缓存的预测结果"""
         return self._cache.get(key)
 
@@ -87,8 +87,8 @@ class PredictionService(SimpleService):
         )
 
     async def batch_predict_matches(
-        self, match_ids: List[int]
-    ) -> List[PredictionResult]:
+        self, match_ids: list[int]
+    ) -> list[PredictionResult]:
         """批量预测比赛"""
         results = []
         for match_id in match_ids:
@@ -100,7 +100,7 @@ class PredictionService(SimpleService):
         """验证预测结果"""
         return True
 
-    async def get_prediction_statistics(self) -> Dict[str, Any]:
+    async def get_prediction_statistics(self) -> dict[str, Any]:
         """获取预测统计信息"""
         return {"total_predictions": 0, "accuracy": 0.0, "model_version": "v1.0.0"}
 
@@ -143,7 +143,7 @@ class Histogram:
         # 添加pass语句
         self.name = name
         self.description = description
-        self.values: List[Any] = []
+        self.values: list[Any] = []
 
     def observe(self, value: float):
         """函数文档字符串"""

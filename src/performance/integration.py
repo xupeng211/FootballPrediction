@@ -10,8 +10,6 @@ Performance Monitoring Integration Module
 - 性能监控初始化
 """
 
-from typing import Optional
-
 from fastapi import FastAPI
 
 from src.core.config import get_settings
@@ -190,7 +188,7 @@ class PerformanceMonitoringIntegration:
         except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to update performance monitoring config: {str(e)}")
 
-    def create_performance_report(self) -> Optional[str]:
+    def create_performance_report(self) -> str | None:
         """创建性能报告"""
         if not self.enabled:
             return None
@@ -270,7 +268,7 @@ def get_performance_integration() -> PerformanceMonitoringIntegration:
 
 
 def setup_performance_monitoring(
-    app: Optional[FastAPI] = None,
+    app: FastAPI | None = None,
 ) -> PerformanceMonitoringIntegration:
     """设置性能监控"""
     integration = get_performance_integration()
@@ -310,6 +308,6 @@ def stop_performance_profiling() -> None:
     get_performance_integration().stop_profiling()
 
 
-def generate_performance_report() -> Optional[str]:
+def generate_performance_report() -> str | None:
     """生成性能报告（便捷函数）"""
     return get_performance_integration().create_performance_report()

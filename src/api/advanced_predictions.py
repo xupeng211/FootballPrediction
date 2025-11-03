@@ -7,7 +7,7 @@ Advanced Prediction API
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
@@ -18,15 +18,15 @@ router = APIRouter()
 class AdvancedPredictionAPIRequest(BaseModel):
     """请求模型"""
 
-    config: Dict[str, Any] = {}
-    parameters: Dict[str, Any] = {}
+    config: dict[str, Any] = {}
+    parameters: dict[str, Any] = {}
 
 
 class AdvancedPredictionAPIResponse(BaseModel):
     """响应模型"""
 
     success: bool
-    data: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] | None = None
     message: str
     timestamp: datetime
 

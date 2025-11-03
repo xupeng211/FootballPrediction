@@ -7,13 +7,14 @@ Provides user data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from sqlalchemy import and_, asc, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.database.models.user import User
+
 from .base import BaseRepository
 
 
@@ -37,8 +38,8 @@ class UserRepository(BaseRepository[User]):
     # ========================================
 
     async def get_by_username(
-        self, username: str, session: Optional[AsyncSession] = None
-    ) -> Optional[User]:
+        self, username: str, session: AsyncSession | None = None
+    ) -> User | None:
         """
         根据用户名获取用户
 
@@ -52,8 +53,8 @@ class UserRepository(BaseRepository[User]):
         return await self.find_one_by(filters={"username": username}, session=session)
 
     async def get_by_email(
-        self, email: str, session: Optional[AsyncSession] = None
-    ) -> Optional[User]:
+        self, email: str, session: AsyncSession | None = None
+    ) -> User | None:
         """
         根据邮箱获取用户
 
@@ -69,8 +70,8 @@ class UserRepository(BaseRepository[User]):
     async def username_exists(
         self,
         username: str,
-        exclude_id: Optional[Union[int, str]] = None,
-        session: Optional[AsyncSession] = None,
+        exclude_id: int | str | None = None,
+        session: AsyncSession | None = None,
     ) -> bool:
         """
         检查用户名是否存在
@@ -92,8 +93,8 @@ class UserRepository(BaseRepository[User]):
     async def email_exists(
         self,
         email: str,
-        exclude_id: Optional[Union[int, str]] = None,
-        session: Optional[AsyncSession] = None,
+        exclude_id: int | str | None = None,
+        session: AsyncSession | None = None,
     ) -> bool:
         """
         检查邮箱是否存在
@@ -113,8 +114,8 @@ class UserRepository(BaseRepository[User]):
         return await self.exists(filters=filters, session=session)
 
     async def get_active_users(
-        self, limit: Optional[int] = None, session: Optional[AsyncSession] = None
-    ) -> List[User]:
+        self, limit: int | None = None, session: AsyncSession | None = None
+    ) -> list[User]:
         """
         获取活跃用户
 
@@ -149,9 +150,9 @@ class UserRepository(BaseRepository[User]):
     async def get_inactive_users(
         self,
         days: int = 90,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> List[User]:
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[User]:
         """
         获取非活跃用户
 
@@ -186,10 +187,10 @@ class UserRepository(BaseRepository[User]):
     async def search_users(
         self,
         query: str,
-        search_fields: Optional[List[str]] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> List[User]:
+        search_fields: list[str] | None = None,
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[User]:
         """
         搜索用户
 
@@ -224,8 +225,8 @@ class UserRepository(BaseRepository[User]):
             return result.scalars().all()
 
     async def update_last_login(
-        self, user_id: Union[int, str], session: Optional[AsyncSession] = None
-    ) -> Optional[User]:
+        self, user_id: int | str, session: AsyncSession | None = None
+    ) -> User | None:
         """
         更新用户最后登录时间
 
@@ -244,10 +245,10 @@ class UserRepository(BaseRepository[User]):
 
     async def change_password(
         self,
-        user_id: Union[int, str],
+        user_id: int | str,
         hashed_password: str,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[User]:
+        session: AsyncSession | None = None,
+    ) -> User | None:
         """
         修改用户密码
 
@@ -269,8 +270,8 @@ class UserRepository(BaseRepository[User]):
         )
 
     async def activate_user(
-        self, user_id: Union[int, str], session: Optional[AsyncSession] = None
-    ) -> Optional[User]:
+        self, user_id: int | str, session: AsyncSession | None = None
+    ) -> User | None:
         """
         激活用户
 
@@ -289,10 +290,10 @@ class UserRepository(BaseRepository[User]):
 
     async def deactivate_user(
         self,
-        user_id: Union[int, str],
-        reason: Optional[str] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[User]:
+        user_id: int | str,
+        reason: str | None = None,
+        session: AsyncSession | None = None,
+    ) -> User | None:
         """
         停用用户
 
@@ -316,8 +317,8 @@ class UserRepository(BaseRepository[User]):
     # ========================================
 
     async def get_user_stats(
-        self, days: Optional[int] = None, session: Optional[AsyncSession] = None
-    ) -> Dict[str, Any]:
+        self, days: int | None = None, session: AsyncSession | None = None
+    ) -> dict[str, Any]:
         """
         获取用户统计信息
 
@@ -380,8 +381,8 @@ class UserRepository(BaseRepository[User]):
             }
 
     async def get_user_growth_stats(
-        self, days: int = 30, session: Optional[AsyncSession] = None
-    ) -> List[Dict[str, Any]]:
+        self, days: int = 30, session: AsyncSession | None = None
+    ) -> list[dict[str, Any]]:
         """
         获取用户增长统计
 
@@ -434,9 +435,9 @@ class UserRepository(BaseRepository[User]):
 
     async def get_related_data(
         self,
-        obj_id: Union[int, str],
+        obj_id: int | str,
         relation_name: str,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ) -> Any:
         """
         获取用户的关联数据

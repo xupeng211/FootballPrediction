@@ -5,8 +5,9 @@ Facade Factory Module
 提供外观和子系统的工厂创建功能.
 """
 
-from typing import Any, Dict, Optional, Type
-from .base import Subsystem, Facade, SystemFacade
+from typing import Any
+
+from .base import Facade, Subsystem, SystemFacade
 
 
 class FacadeConfig:
@@ -15,8 +16,8 @@ class FacadeConfig:
     def __init__(
         self,
         name: str,
-        subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
-        global_config: Optional[Dict[str, Any]] = None,
+        subsystem_configs: dict[str, dict[str, Any]] | None = None,
+        global_config: dict[str, Any] | None = None,
     ):
         """初始化外观配置
 
@@ -31,15 +32,15 @@ class FacadeConfig:
         self.auto_start = True
         self.health_check_interval = 30
 
-    def add_subsystem_config(self, name: str, config: Dict[str, Any]) -> None:
+    def add_subsystem_config(self, name: str, config: dict[str, Any]) -> None:
         """添加子系统配置"""
         self.subsystem_configs[name] = config
 
-    def get_subsystem_config(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_subsystem_config(self, name: str) -> dict[str, Any] | None:
         """获取子系统配置"""
         return self.subsystem_configs.get(name)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "name": self.name,
@@ -55,11 +56,11 @@ class FacadeFactory:
 
     def __init__(self):
         """初始化工厂"""
-        self._subsystem_registry: Dict[str, Type[Subsystem]] = {}
-        self._facade_registry: Dict[str, Type[Facade]] = {}
-        self._created_instances: Dict[str, Facade] = {}
+        self._subsystem_registry: dict[str, type[Subsystem]] = {}
+        self._facade_registry: dict[str, type[Facade]] = {}
+        self._created_instances: dict[str, Facade] = {}
 
-    def register_subsystem(self, name: str, subsystem_class: Type[Subsystem]) -> None:
+    def register_subsystem(self, name: str, subsystem_class: type[Subsystem]) -> None:
         """注册子系统类型
 
         Args:
@@ -68,7 +69,7 @@ class FacadeFactory:
         """
         self._subsystem_registry[name] = subsystem_class
 
-    def register_facade(self, name: str, facade_class: Type[Facade]) -> None:
+    def register_facade(self, name: str, facade_class: type[Facade]) -> None:
         """注册外观类型
 
         Args:
@@ -78,8 +79,8 @@ class FacadeFactory:
         self._facade_registry[name] = facade_class
 
     def create_subsystem(
-        self, name: str, config: Optional[Dict[str, Any]] = None
-    ) -> Optional[Subsystem]:
+        self, name: str, config: dict[str, Any] | None = None
+    ) -> Subsystem | None:
         """创建子系统实例
 
         Args:
@@ -95,7 +96,7 @@ class FacadeFactory:
         subsystem_class = self._subsystem_registry[name]
         return subsystem_class(name, config)
 
-    def create_facade(self, config: FacadeConfig) -> Optional[Facade]:
+    def create_facade(self, config: FacadeConfig) -> Facade | None:
         """创建外观实例
 
         Args:
@@ -123,7 +124,7 @@ class FacadeFactory:
 
         return facade
 
-    def get_facade(self, name: str) -> Optional[Facade]:
+    def get_facade(self, name: str) -> Facade | None:
         """获取已创建的外观实例
 
         Args:
@@ -135,7 +136,7 @@ class FacadeFactory:
         return self._created_instances.get(name)
 
     def create_system_facade(
-        self, name: str = "System", config: Optional[Dict[str, Any]] = None
+        self, name: str = "System", config: dict[str, Any] | None = None
     ) -> SystemFacade:
         """创建系统外观的便捷方法
 
@@ -173,9 +174,9 @@ facade_factory = FacadeFactory()
 # 便捷函数
 def create_facade(
     name: str,
-    subsystem_configs: Optional[Dict[str, Dict[str, Any]]] = None,
-    global_config: Optional[Dict[str, Any]] = None,
-) -> Optional[Facade]:
+    subsystem_configs: dict[str, dict[str, Any]] | None = None,
+    global_config: dict[str, Any] | None = None,
+) -> Facade | None:
     """创建外观的便捷函数
 
     Args:
@@ -191,7 +192,7 @@ def create_facade(
 
 
 def create_system_facade(
-    name: str = "System", config: Optional[Dict[str, Any]] = None
+    name: str = "System", config: dict[str, Any] | None = None
 ) -> SystemFacade:
     """创建系统外观的便捷函数
 

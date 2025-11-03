@@ -4,9 +4,8 @@ Football Prediction FastAPI Application
 """
 
 import logging
-from contextlib import asynccontextmanager
-
 import warnings
+from contextlib import asynccontextmanager
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 

@@ -8,19 +8,20 @@ Multi-channel Notification Manager
 
 import json
 import smtplib
-from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.html import MIMEText as MIMEHtml
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from datetime import datetime
+from email.mime.html import MIMEText as MIMEHtml
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
+from typing import Any
 
 import aiohttp
 import jinja2
-from src.core.logging_system import get_logger
-from src.core.config import get_config
+
 from src.alerting.alert_engine import Alert, AlertSeverity
+from src.core.config import get_config
+from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
@@ -36,8 +37,8 @@ class NotificationChannel:
     name: str
     type: str  # email, slack, wechat, dingtalk
     enabled: bool
-    config: Dict[str, Any]
-    filters: Optional[Dict[str, Any]] = None  # 告警过滤条件
+    config: dict[str, Any]
+    filters: dict[str, Any] | None = None  # 告警过滤条件
 
 
 class EmailClient:
@@ -46,7 +47,7 @@ class EmailClient:
     pass  # 添加pass语句
     """邮件通知客户端"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -58,7 +59,7 @@ class EmailClient:
         self.use_tls = config.get("use_tls", True)
         self.logger = get_logger(self.__class__.__name__)
 
-    async def send_alert_email(self, alert: Alert, recipients: List[str]) -> bool:
+    async def send_alert_email(self, alert: Alert, recipients: list[str]) -> bool:
         """发送告警邮件"""
         try:
             # 创建邮件内容
@@ -224,7 +225,7 @@ class EmailClient:
         template = jinja2.Template(template_str)
         return template.render(alert=alert, now=datetime.now())
 
-    async def _send_email(self, msg: MIMEMultipart, recipients: List[str]):
+    async def _send_email(self, msg: MIMEMultipart, recipients: list[str]):
         """发送邮件"""
         # 在实际实现中,这里应该使用异步SMTP库
         # 目前使用同步方式作为示例
@@ -241,7 +242,7 @@ class SlackClient:
     pass  # 添加pass语句
     """Slack通知客户端"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -275,7 +276,7 @@ class SlackClient:
             self.logger.error(f"发送Slack告警失败: {e}")
             return False
 
-    def _build_slack_message(self, alert: Alert) -> Dict[str, Any]:
+    def _build_slack_message(self, alert: Alert) -> dict[str, Any]:
         """构建Slack消息格式"""
         # 根据严重程度选择颜色
         color_map = {
@@ -339,7 +340,7 @@ class WeChatClient:
     pass  # 添加pass语句
     """企业微信通知客户端"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -376,7 +377,7 @@ class WeChatClient:
             self.logger.error(f"发送企业微信告警失败: {e}")
             return False
 
-    def _build_wechat_message(self, alert: Alert) -> Dict[str, Any]:
+    def _build_wechat_message(self, alert: Alert) -> dict[str, Any]:
         """构建企业微信消息格式"""
         # 根据严重程度选择颜色
         color_map = {
@@ -426,7 +427,7 @@ class DingTalkClient:
     pass  # 添加pass语句
     """钉钉通知客户端"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -465,7 +466,7 @@ class DingTalkClient:
             self.logger.error(f"发送钉钉告警失败: {e}")
             return False
 
-    def _build_dingtalk_message(self, alert: Alert) -> Dict[str, Any]:
+    def _build_dingtalk_message(self, alert: Alert) -> dict[str, Any]:
         """构建钉钉消息格式"""
         # 根据严重程度选择表情符号
         emoji_map = {
@@ -519,8 +520,8 @@ class NotificationManager:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.channels: Dict[str, NotificationChannel] = {}
-        self.clients: Dict[str, Any] = {}
+        self.channels: dict[str, NotificationChannel] = {}
+        self.clients: dict[str, Any] = {}
         self.config = get_config()
         self.logger = get_logger(self.__class__.__name__)
 
@@ -543,7 +544,7 @@ class NotificationManager:
             # 尝试从配置文件加载渠道
             config_file = Path("config/notification_channels.json")
             if config_file.exists():
-                with open(config_file, "r", encoding="utf-8") as f:
+                with open(config_file, encoding="utf-8") as f:
                     channels_config = json.load(f)
 
                 for channel_config in channels_config:
@@ -583,7 +584,7 @@ class NotificationManager:
         except Exception as e:
             self.logger.error(f"初始化通知客户端失败 {channel.id}: {e}")
 
-    async def send_alert_notification(self, alert: Alert) -> Dict[str, bool]:
+    async def send_alert_notification(self, alert: Alert) -> dict[str, bool]:
         """发送告警通知到所有启用的渠道"""
         results = {}
 
@@ -704,7 +705,7 @@ class NotificationManager:
                 del self.clients[channel_id]
             self.logger.info(f"已移除通知渠道: {channel_id}")
 
-    def get_channel_status(self) -> Dict[str, Dict[str, Any]]:
+    def get_channel_status(self) -> dict[str, dict[str, Any]]:
         """获取所有渠道的状态"""
         status = {}
         for channel_id, channel in self.channels.items():

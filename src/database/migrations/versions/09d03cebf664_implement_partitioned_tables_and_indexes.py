@@ -1,13 +1,8 @@
 import logging
-
-from alembic import op
-
+from collections.abc import Sequence
 
 # mypy: ignore-errors
-
-from typing import Sequence, Union
-
-from alembic import context
+from alembic import context, op
 from sqlalchemy import text
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
@@ -76,9 +71,9 @@ Revises: c1d8ae5075f0
 Create Date: 2025-09-12 12:48:23.849021
 """
 revision: str = "09d03cebf664"
-down_revision: Union[str, None] = "c1d8ae5075f0"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "c1d8ae5075f0"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def is_sqlite():

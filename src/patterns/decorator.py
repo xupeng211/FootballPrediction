@@ -5,11 +5,12 @@ Decorator Pattern Module
 提供装饰器模式的实现，允许动态地添加对象的功能.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional
-from functools import wraps
-import time
 import asyncio
+import time
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
 
 
 class Component(ABC):
@@ -183,7 +184,7 @@ def cache_decorator(max_size: int = 128) -> Callable:
     """
 
     def decorator(func: Callable) -> Callable:
-        cache: Dict[str, Any] = {}
+        cache: dict[str, Any] = {}
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -464,7 +465,7 @@ class MetricsDecorator(BaseDecorator):
         )
         return result
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取性能指标"""
         return {
             "call_count": self.call_count,
@@ -522,7 +523,7 @@ class ValidationDecorator(BaseDecorator):
     为组件添加输入验证功能.
     """
 
-    def __init__(self, component: Component, validator: Optional[Callable] = None):
+    def __init__(self, component: Component, validator: Callable | None = None):
         """初始化验证装饰器
 
         Args:
@@ -592,7 +593,7 @@ class CacheDecorator(BaseDecorator):
         self._cache.clear()
         print("[缓存] 缓存已清空")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
         return {
             "cache_size": len(self._cache),

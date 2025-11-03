@@ -7,7 +7,7 @@ Handles complex business logic related to prediction scoring.
 """
 
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.domain.models.prediction import PredictionPoints
 
@@ -15,11 +15,11 @@ from src.domain.models.prediction import PredictionPoints
 class ScoringService:
     """计分服务"""
 
-    def __init__(self, scoring_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, scoring_config: dict[str, Any] | None = None):
         """初始化计分服务"""
         self.config = scoring_config or self._default_scoring_config()
 
-    def _default_scoring_config(self) -> Dict[str, Any]:
+    def _default_scoring_config(self) -> dict[str, Any]:
         """默认计分配置"""
         return {
             "exact_score": {"points": 10, "multiplier": 1.0},
@@ -36,7 +36,7 @@ class ScoringService:
         predicted_away: int,
         actual_home: int,
         actual_away: int,
-        confidence: Optional[float] = None,
+        confidence: float | None = None,
         match_importance: float = 0.5,
         user_streak: int = 0,
     ) -> PredictionPoints:
@@ -127,7 +127,7 @@ class ScoringService:
             )
         return 0
 
-    def _calculate_confidence_bonus(self, confidence: Optional[float]) -> int:
+    def _calculate_confidence_bonus(self, confidence: float | None) -> int:
         """计算信心度奖励"""
         if not confidence:
             return 0
@@ -187,7 +187,7 @@ class ScoringService:
             return "draw"
 
     def calculate_leaderboard_position(
-        self, user_points: int, all_users_points: List[int]
+        self, user_points: int, all_users_points: list[int]
     ) -> int:
         """计算排行榜位置"""
         # 排序（降序）
@@ -208,7 +208,7 @@ class ScoringService:
         percentile = (position - 1) / total_users * 100
         return round(percentile, 2)
 
-    def update_scoring_config(self, new_config: Dict[str, Any]) -> None:
+    def update_scoring_config(self, new_config: dict[str, Any]) -> None:
         """更新计分配置"""
         # 验证配置
         self._validate_config(new_config)
@@ -216,7 +216,7 @@ class ScoringService:
         # 合并配置
         self.config.update(new_config)
 
-    def _validate_config(self, config: Dict[str, Any]) -> None:
+    def _validate_config(self, config: dict[str, Any]) -> None:
         """验证计分配置"""
         required_keys = ["exact_score", "outcome_only", "goal_difference"]
 
@@ -233,7 +233,7 @@ class ScoringService:
             if config[key]["points"] < 0:
                 raise ValueError(f"计分配置 {key}.points 不能为负数")
 
-    def get_scoring_rules_summary(self) -> Dict[str, Any]:
+    def get_scoring_rules_summary(self) -> dict[str, Any]:
         """获取计分规则摘要"""
         return {
             "exact_score": f"{self.config['exact_score']['points']}分",

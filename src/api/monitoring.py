@@ -1,25 +1,20 @@
-import redis
 import os
-
-
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import psutil
-from requests.exceptions import HTTPError, RequestException
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse
+from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+import redis
 from src.core.logger import get_logger
 from src.database.dependencies import get_db
-
-
 from src.monitoring.metrics_collector import get_metrics_collector
 from src.monitoring.metrics_exporter import get_metrics_exporter
-
 
 # mypy: ignore-errors
 # 监控收集器与导出器（保留原功能,迁移到 /collector/* 与 /metrics/prometheus）
@@ -52,7 +47,7 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["monitoring"])
 
 
-async def _get_database_metrics(db: Session) -> Dict[str, Any]:
+async def _get_database_metrics(db: Session) -> dict[str, Any]:
     """获取数据库健康与统计指标."
     返回结构:
     {
@@ -65,7 +60,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
     }
     """
     start = time.time()
-    stats: Dict[str, Any] = {
+    stats: dict[str, Any] = {
         "healthy": False,
         "statistics": {
             "active_connections": 0,
@@ -103,7 +98,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
     return stats
 
 
-async def _get_business_metrics(db: Session) -> Dict[str, Any]:
+async def _get_business_metrics(db: Session) -> dict[str, Any]:
     """获取业务层关键指标。异常时各项返回 None."
     返回结构:
     {
@@ -113,7 +108,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
         "last_updated": str
     }
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "24h_predictions": None,
         "upcoming_matches_7d": None,
         "model_accuracy_30d": None,
@@ -136,7 +131,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
             ") t"
         )
 
-        def _val(res: Any) -> Optional[float]:
+        def _val(res: Any) -> float | None:
             try:
                 row = res.fetchone()
                 if row is None:
@@ -233,10 +228,10 @@ async def get_monitoring_stats():
 
 
 @router.get("/metrics")
-async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def get_metrics(db: Session = Depends(get_db)) -> dict[str, Any]:
     """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200."""
     start = time.time()
-    response: Dict[str, Any] = {
+    response: dict[str, Any] = {
         "status": "ok",
         "response_time_ms": 0.0,
         "system": {},
@@ -293,7 +288,7 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
 
 
 @router.get("/status")
-async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def get_service_status(db: Session = Depends(get_db)) -> dict[str, Any]:
     """服务健康状态（JSON）."""
     api_health = True
     try:
@@ -324,7 +319,7 @@ async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
     }
 
 
-@router.get(str("/metrics/prometheus"), response_class=PlainTextResponse)
+@router.get("/metrics/prometheus", response_class=PlainTextResponse)
 async def prometheus_metrics():
     """Prometheus 指标端点（文本）."""
     try:
@@ -337,7 +332,7 @@ async def prometheus_metrics():
 
 
 @router.get("/collector/health")
-async def collector_health() -> Dict[str, Any]:
+async def collector_health() -> dict[str, Any]:
     try:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
@@ -353,7 +348,7 @@ async def collector_health() -> Dict[str, Any]:
 
 
 @router.post("/collector/collect")
-async def manual_collect() -> Dict[str, Any]:
+async def manual_collect() -> dict[str, Any]:
     try:
         collector = get_metrics_collector()
         result = await collector.collect_once()
@@ -364,7 +359,7 @@ async def manual_collect() -> Dict[str, Any]:
 
 
 @router.get("/collector/status")
-async def collector_status() -> Dict[str, Any]:
+async def collector_status() -> dict[str, Any]:
     try:
         collector = get_metrics_collector()
         return collector.get_status()
@@ -374,7 +369,7 @@ async def collector_status() -> Dict[str, Any]:
 
 
 @router.post("/collector/start")
-async def start_collector() -> Dict[str, str]:
+async def start_collector() -> dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.start()
@@ -385,7 +380,7 @@ async def start_collector() -> Dict[str, str]:
 
 
 @router.post("/collector/stop")
-async def stop_collector() -> Dict[str, str]:
+async def stop_collector() -> dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.stop()

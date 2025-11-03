@@ -5,11 +5,11 @@
 
 import json
 import logging
-import subprocess
-import re
-from pathlib import Path
-from typing import Dict, Any
 import os
+import re
+import subprocess
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class QualityMetricsCollector:
         # 添加pass语句
         self.project_root = Path(__file__).parent.parent.parent
 
-    async def collect_all_metrics(self) -> Dict[str, Any]:
+    async def collect_all_metrics(self) -> dict[str, Any]:
         """收集所有质量指标"""
         try:
             metrics = {
@@ -295,7 +295,7 @@ class QualityMetricsCollector:
             # 检查是否存在ML训练结果
             ml_results_path = self.project_root / "ml_results.json"
             if ml_results_path.exists():
-                with open(ml_results_path, "r") as f:
+                with open(ml_results_path) as f:
                     results = json.load(f)
                     return results.get("accuracy", 65.0)
 
@@ -304,7 +304,7 @@ class QualityMetricsCollector:
             if log_files:
                 # 简单解析最新日志文件
                 latest_log = max(log_files, key=os.path.getmtime)
-                with open(latest_log, "r") as f:
+                with open(latest_log) as f:
                     content = f.read()
                     # 查找准确率信息
                     accuracy_match = re.search(
@@ -408,7 +408,7 @@ class QualityMetricsCollector:
 
         return 250.0  # 默认值
 
-    def _calculate_overall_score(self, metrics: Dict[str, Any]) -> float:
+    def _calculate_overall_score(self, metrics: dict[str, Any]) -> float:
         """计算综合质量分数"""
         weights = {
             "test_coverage": 0.15,
@@ -446,7 +446,7 @@ class QualityMetricsCollector:
 
         return round(min(total_score, 10.0), 2)
 
-    def _get_default_metrics(self) -> Dict[str, Any]:
+    def _get_default_metrics(self) -> dict[str, Any]:
         """获取默认指标（出错时使用）"""
         return {
             "overall_score": 7.0,

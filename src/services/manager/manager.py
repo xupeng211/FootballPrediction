@@ -14,8 +14,6 @@ Manager - 服务模块
 - [待补充 - 使用注意事项]
 """
 
-from typing import Dict, Optional
-
 from src.core import logger
 from src.core.config import get_settings
 
@@ -38,7 +36,7 @@ class ServiceManager:
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 
     def __init__(self) -> None:
-        self._services: Dict[str, BaseService] = {}
+        self._services: dict[str, BaseService] = {}
         self.logger = logger
 
     def register_service(self, name: str, service: BaseService) -> None:
@@ -58,16 +56,16 @@ class ServiceManager:
         self._services[name] = service
         self.logger.info(f"已注册服务: {name}")
 
-    def get_service(self, name: str) -> Optional[BaseService]:
+    def get_service(self, name: str) -> BaseService | None:
         """获取服务实例 - 提供类型安全的服务访问接口"""
         return self._services.get(name)
 
-    def list_services(self) -> Dict[str, BaseService]:
+    def list_services(self) -> dict[str, BaseService]:
         """获取所有服务列表"""
         return self._services.copy()
 
     @property
-    def services(self) -> Dict[str, BaseService]:
+    def services(self) -> dict[str, BaseService]:
         """服务字典属性 - 兼容测试代码"""
         return self._services
 

@@ -4,13 +4,14 @@ Poisson Distribution Model for Football Match Prediction
 """
 
 import logging
+import os
+import pickle
 from datetime import datetime
-from typing import Dict, Any, Tuple, Optional
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from scipy import stats
-import pickle
-import os
 
 from .base_model import BaseModel, PredictionResult, TrainingResult
 
@@ -42,7 +43,7 @@ class PoissonModel(BaseModel):
             "max_goals": 10,  # 最大考虑进球数
         }
 
-    def prepare_features(self, match_data: Dict[str, Any]) -> np.ndarray:
+    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
         """
         准备特征 - 泊松模型主要依赖历史统计数据
 
@@ -66,7 +67,7 @@ class PoissonModel(BaseModel):
     def train(
         self,
         training_data: pd.DataFrame,
-        validation_data: Optional[pd.DataFrame] = None,
+        validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
         """
         训练泊松分布模型
@@ -235,7 +236,7 @@ class PoissonModel(BaseModel):
         self.total_matches = total_matches
         logger.info(f"Calculated strengths for {len(self.team_attack_strength)} teams")
 
-    def predict(self, match_data: Dict[str, Any]) -> PredictionResult:
+    def predict(self, match_data: dict[str, Any]) -> PredictionResult:
         """
         预测比赛结果
 
@@ -325,7 +326,7 @@ class PoissonModel(BaseModel):
 
     def _calculate_match_probabilities(
         self, home_expected: float, away_expected: float
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """
         计算比赛结果概率
 
@@ -366,7 +367,7 @@ class PoissonModel(BaseModel):
 
         return home_win_prob, draw_prob, away_win_prob
 
-    def predict_proba(self, match_data: Dict[str, Any]) -> Tuple[float, float, float]:
+    def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
         """
         预测概率分布
 
@@ -393,7 +394,7 @@ class PoissonModel(BaseModel):
             home_expected_goals, away_expected_goals
         )
 
-    def evaluate(self, test_data: pd.DataFrame) -> Dict[str, float]:
+    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
         """
         评估模型性能
 
@@ -431,10 +432,10 @@ class PoissonModel(BaseModel):
         # 计算评估指标
         from sklearn.metrics import (
             accuracy_score,
+            confusion_matrix,
+            f1_score,
             precision_score,
             recall_score,
-            f1_score,
-            confusion_matrix,
         )
 
         accuracy = accuracy_score(actuals, predictions)
@@ -461,7 +462,7 @@ class PoissonModel(BaseModel):
 
     def _cross_validate(
         self, training_data: pd.DataFrame, folds: int = 5
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         交叉验证
 

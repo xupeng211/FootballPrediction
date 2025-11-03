@@ -18,7 +18,7 @@ from src.core.config import
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from src.database.connection import DatabaseManager
 
@@ -52,7 +52,7 @@ class DataQualityMonitor:
             "suspicious_odds_change": 0.5,  # 可疑赔率变化阈值（50%）
         }
 
-    async def check_data_freshness(self) -> Dict[str, Any]:
+    async def check_data_freshness(self) -> dict[str, Any]:
         """
         检查数据新鲜度
 
@@ -60,7 +60,7 @@ class DataQualityMonitor:
             Dict: 新鲜度检查结果
         """
         try:
-            freshness_report: Dict[str, Any] = {
+            freshness_report: dict[str, Any] = {
                 "check_time": datetime.now().isoformat(),
                 "status": "healthy",
                 "issues": [],
@@ -110,14 +110,14 @@ class DataQualityMonitor:
                 "error": str(e),
             }
 
-    async def detect_anomalies(self) -> List[Dict[str, Any]]:
+    async def detect_anomalies(self) -> list[dict[str, Any]]:
         """
         异常检测
 
         Returns:
             List[Dict]: 检测到的异常列表
         """
-        anomalies: List[Any] = []
+        anomalies: list[Any] = []
 
         try:
             async with self.db_manager.get_async_session() as session:
@@ -146,7 +146,7 @@ class DataQualityMonitor:
                 }
             ]
 
-    async def _check_fixtures_age(self, session) -> Dict[str, Any]:
+    async def _check_fixtures_age(self, session) -> dict[str, Any]:
         """检查赛程数据年龄"""
         try:
             # 查询最近的采集日志
@@ -183,7 +183,7 @@ class DataQualityMonitor:
             self.logger.error(f"检查赛程数据年龄失败: {str(e)}")
             return {"status": "error", "error": str(e)}
 
-    async def _check_odds_age(self, session) -> Dict[str, Any]:
+    async def _check_odds_age(self, session) -> dict[str, Any]:
         """检查赔率数据年龄"""
         try:
             # 查询最近的赔率更新
@@ -216,7 +216,7 @@ class DataQualityMonitor:
             self.logger.error(f"检查赔率数据年龄失败: {str(e)}")
             return {"status": "error", "error": str(e)}
 
-    async def _find_missing_matches(self, session) -> Dict[str, Any]:
+    async def _find_missing_matches(self, session) -> dict[str, Any]:
         """查找缺失的比赛"""
         try:
             # 1. 根据联赛赛程规律检测缺失的比赛
@@ -228,9 +228,9 @@ class DataQualityMonitor:
             self.logger.error(f"查找缺失比赛失败: {str(e)}")
             return {"count": 0, "error": str(e)}
 
-    async def _find_suspicious_odds(self, session) -> List[Dict[str, Any]]:
+    async def _find_suspicious_odds(self, session) -> list[dict[str, Any]]:
         """查找可疑赔率"""
-        suspicious_odds: List[Any] = []
+        suspicious_odds: list[Any] = []
 
         try:
             # 查找异常的赔率值
@@ -279,9 +279,9 @@ class DataQualityMonitor:
             self.logger.error(f"查找可疑赔率失败: {str(e)}")
             return []
 
-    async def _find_unusual_scores(self, session) -> List[Dict[str, Any]]:
+    async def _find_unusual_scores(self, session) -> list[dict[str, Any]]:
         """查找异常比分"""
-        unusual_scores: List[Any] = []
+        unusual_scores: list[Any] = []
 
         try:
             # 查找异常高的比分
@@ -318,9 +318,9 @@ class DataQualityMonitor:
             self.logger.error(f"查找异常比分失败: {str(e)}")
             return []
 
-    async def _check_data_consistency(self, session) -> List[Dict[str, Any]]:
+    async def _check_data_consistency(self, session) -> list[dict[str, Any]]:
         """检查数据一致性"""
-        consistency_issues: List[Any] = []
+        consistency_issues: list[Any] = []
 
         try:
             # 检查比赛时间一致性
@@ -351,7 +351,7 @@ class DataQualityMonitor:
             self.logger.error(f"检查数据一致性失败: {str(e)}")
             return []
 
-    async def generate_quality_report(self) -> Dict[str, Any]:
+    async def generate_quality_report(self) -> dict[str, Any]:
         """
         生成完整的数据质量报告
 
@@ -368,7 +368,7 @@ class DataQualityMonitor:
             # 计算总体质量评分
             quality_score = self._calculate_quality_score(freshness_check, anomalies)
 
-            report: Dict[str, Any] = {
+            report: dict[str, Any] = {
                 "report_time": datetime.now().isoformat(),
                 "overall_status": self._determine_overall_status(
                     freshness_check, anomalies
@@ -406,7 +406,7 @@ class DataQualityMonitor:
                 "error": str(e),
             }
 
-    def _calculate_quality_score(self, freshness_check: Dict, anomalies: List) -> float:
+    def _calculate_quality_score(self, freshness_check: dict, anomalies: list) -> float:
         """计算质量评分（0-100）"""
         score = 100.0
 
@@ -429,7 +429,7 @@ class DataQualityMonitor:
 
         return max(0.0, score)
 
-    def _determine_overall_status(self, freshness_check: Dict, anomalies: List) -> str:
+    def _determine_overall_status(self, freshness_check: dict, anomalies: list) -> str:
         """确定总体状态"""
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
 
@@ -441,10 +441,10 @@ class DataQualityMonitor:
             return "healthy"
 
     def _generate_recommendations(
-        self, freshness_check: Dict, anomalies: List
-    ) -> List[str]:
+        self, freshness_check: dict, anomalies: list
+    ) -> list[str]:
         """生成改进建议"""
-        recommendations: List[Any] = []
+        recommendations: list[Any] = []
 
         if freshness_check.get("status") in ["warning", "error"]:
             recommendations.append("检查数据采集调度器是否正常运行")

@@ -18,7 +18,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.deep_merge(dict1, dict2)
 
         expected = {"a": 1, "b": {"x": 10, "y": 20}, "c": 3}
-        assert result     == expected
+        assert result         == expected
 
     def test_deep_merge_override(self):
         """测试深度合并覆盖"""
@@ -27,7 +27,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.deep_merge(dict1, dict2)
 
         expected = {"a": 2, "b": {"x": 99}}
-        assert result     == expected
+        assert result         == expected
 
     def test_deep_merge_empty(self):
         """测试空字典合并"""
@@ -41,7 +41,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.flatten_dict(nested)
 
         expected = {"a": 1, "b.x": 10, "b.y.z": 20}
-        assert result     == expected
+        assert result         == expected
 
     def test_flatten_dict_custom_separator(self):
         """测试自定义分隔符扁平化"""
@@ -49,7 +49,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.flatten_dict(nested, sep="_")
 
         expected = {"a_b_c": 1}
-        assert result     == expected
+        assert result         == expected
 
     def test_flatten_dict_empty(self):
         """测试空字典扁平化"""
@@ -62,7 +62,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.filter_none_values(data)
 
         expected = {"a": 1, "c": 0, "d": False, "e": ""}
-        assert result     == expected
+        assert result         == expected
 
     def test_filter_empty_values(self):
         """测试过滤空值"""
@@ -70,7 +70,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.filter_empty_values(data)
 
         expected = {"a": 1, "c": 0, "f": False}
-        assert result     == expected
+        assert result         == expected
 
     def test_filter_by_keys(self):
         """测试按键过滤"""
@@ -79,7 +79,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.filter_by_keys(data, keys)
 
         expected = {"a": 1, "c": 3}
-        assert result     == expected
+        assert result         == expected
 
     def test_exclude_keys(self):
         """测试排除键"""
@@ -88,7 +88,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.exclude_keys(data, keys)
 
         expected = {"a": 1, "c": 3}
-        assert result     == expected
+        assert result         == expected
 
     def test_get_nested_value_success(self):
         """测试获取嵌套值成功"""
@@ -111,7 +111,7 @@ class TestDictUtilsComprehensive:
         DictUtils.set_nested_value(data, "user.profile.name", "李四")
 
         expected = {"user": {"profile": {"name": "李四"}}}
-        assert data     == expected
+        assert data         == expected
 
     def test_set_nested_value_override(self):
         """测试设置嵌套值覆盖"""
@@ -119,7 +119,7 @@ class TestDictUtilsComprehensive:
         DictUtils.set_nested_value(data, "user.profile.name", "李四")
 
         expected = {"user": {"profile": {"name": "李四"}}}
-        assert data     == expected
+        assert data         == expected
 
     def test_rename_keys(self):
         """测试重命名键"""
@@ -128,7 +128,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.rename_keys(data, mapping)
 
         expected = {"new_name": "value1", "keep_name": "value2"}
-        assert result     == expected
+        assert result         == expected
 
     def test_swap_keys(self):
         """测试交换键值"""
@@ -136,7 +136,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.swap_keys(data)
 
         expected = {"1": "a", "2": "b"}
-        assert result     == expected
+        assert result         == expected
 
     def test_invert_dict(self):
         """测试反转字典"""
@@ -144,7 +144,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.invert_dict(data)
 
         expected = {"a": "x", "b": "y"}
-        assert result     == expected
+        assert result         == expected
 
     def test_pick_values(self):
         """测试提取值"""
@@ -153,7 +153,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.pick_values(data, keys)
 
         expected = [1, 3, None]
-        assert result     == expected
+        assert result         == expected
 
     def test_count_values(self):
         """测试计算值数量"""
@@ -173,7 +173,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.merge_list(dicts)
 
         expected = {"a": 3, "b": 2, "c": 4}
-        assert result     == expected
+        assert result         == expected
 
     def test_merge_list_with_non_dict(self):
         """测试合并包含非字典的列表"""
@@ -181,7 +181,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.merge_list(dicts)
 
         expected = {"a": 1, "b": 2}
-        assert result     == expected
+        assert result         == expected
 
     def test_chunk_dict(self):
         """测试字典分块"""
@@ -189,7 +189,7 @@ class TestDictUtilsComprehensive:
         chunks = DictUtils.chunk_dict(data, 2)
 
         expected = [{"a": 1, "b": 2}, {"c": 3, "d": 4}, {"e": 5}]
-        assert chunks     == expected
+        assert chunks         == expected
 
     def test_sort_keys(self):
         """测试按键排序"""
@@ -197,7 +197,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.sort_keys(data)
 
         expected = {"a": 1, "b": 2, "c": 3}
-        assert result     == expected
+        assert result         == expected
 
     def test_sort_keys_reverse(self):
         """测试按键倒序"""
@@ -205,7 +205,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.sort_keys(data, reverse=True)
 
         expected = {"c": 3, "b": 2, "a": 1}
-        assert result     == expected
+        assert result         == expected
 
     def test_group_by_first_char(self):
         """测试按首字母分组"""
@@ -213,7 +213,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.group_by_first_char(data)
 
         expected = {"A": {"apple": 1, "apricot": 4}, "B": {"banana": 2}, "C": {"cherry": 3}}
-        assert result     == expected
+        assert result         == expected
 
     def test_validate_required_keys_success(self):
         """测试验证必需键成功"""
@@ -221,7 +221,7 @@ class TestDictUtilsComprehensive:
         required = ["a", "b"]
         missing = DictUtils.validate_required_keys(data, required)
 
-        assert missing     == []
+        assert missing         == []
 
     def test_validate_required_keys_missing(self):
         """测试验证必需键缺失"""
@@ -229,7 +229,7 @@ class TestDictUtilsComprehensive:
         required = ["a", "c", "d"]
         missing = DictUtils.validate_required_keys(data, required)
 
-        assert missing     == ["c", "d"]
+        assert missing         == ["c", "d"]
 
     def test_convert_keys_case_lower(self):
         """测试转换为小写"""
@@ -237,7 +237,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.convert_keys_case(data, "lower")
 
         expected = {"a": 1, "b": 2, "c": 3}
-        assert result     == expected
+        assert result         == expected
 
     def test_convert_keys_case_upper(self):
         """测试转换为大写"""
@@ -245,7 +245,7 @@ class TestDictUtilsComprehensive:
         result = DictUtils.convert_keys_case(data, "upper")
 
         expected = {"A": 1, "B": 2, "C": 3}
-        assert result     == expected
+        assert result         == expected
 
     def test_convert_keys_case_title(self):
         """测试转换为标题格式"""
@@ -253,21 +253,21 @@ class TestDictUtilsComprehensive:
         result = DictUtils.convert_keys_case(data, "title")
 
         expected = {"Hello_World": 1, "Foo_Bar": 2}
-        assert result     == expected
+        assert result         == expected
 
     def test_convert_keys_case_invalid(self):
         """测试无效大小写转换"""
         data = {"a": 1, "b": 2}
         result = DictUtils.convert_keys_case(data, "invalid")
 
-        assert result     == data
+        assert result         == data
 
     def test_deep_clone(self):
         """测试深度克隆"""
         original = {"a": 1, "b": {"x": [1, 2, 3]}}
         cloned = DictUtils.deep_clone(original)
 
-        assert cloned     == original
+        assert cloned         == original
         assert cloned is not original
         assert cloned["b"] is not original["b"]
         assert cloned["b"]["x"] is not original["b"]["x"]
@@ -302,7 +302,7 @@ class TestDictUtilsComprehensive:
             assert hasattr(DictUtils, method), f"方法 {method} 不存在"
 
 
-def test_dict_utils_comprehensive_suite(, client, client, client, client):
+def test_dict_utils_comprehensive_suite(client):
     """DictUtils综合测试套件"""
     # 快速验证核心功能
     assert DictUtils.deep_merge({"a": 1}, {"b": 2}) == {"a": 1, "b": 2}

@@ -6,7 +6,7 @@ User Repository - Rewritten Version
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +30,7 @@ class UserRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List["User"]:
+    async def get_all(self, query_spec: QuerySpec | None = None) -> list["User"]:
         """获取所有用户"""
         query = select(self.model_class)
 
@@ -40,7 +40,7 @@ class UserRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def create(self, user_data: Dict[str, Any]) -> "User":
+    async def create(self, user_data: dict[str, Any]) -> "User":
         """创建用户"""
         user = self.model_class(
             username=user_data["username"],
@@ -57,7 +57,7 @@ class UserRepository(BaseRepository):
         return user
 
     async def update(
-        self, user_id: int, update_data: Dict[str, Any]
+        self, user_id: int, update_data: dict[str, Any]
     ) -> Optional["User"]:
         """更新用户"""
         update_data["updated_at"] = datetime.utcnow()
@@ -94,7 +94,7 @@ class UserRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def find_active_users(self, limit: Optional[int] = None) -> List["User"]:
+    async def find_active_users(self, limit: int | None = None) -> list["User"]:
         """查找活跃用户"""
         filters = {"is_active": True}
         return await self.find_by_filters(filters, limit)
@@ -104,7 +104,7 @@ class UserRepository(BaseRepository):
         filters = {"is_active": True}
         return await self.count(QuerySpec(filters=filters))
 
-    async def bulk_create(self, users_data: List[Dict[str, Any]]) -> List["User"]:
+    async def bulk_create(self, users_data: list[dict[str, Any]]) -> list["User"]:
         """批量创建用户"""
         users = []
         for user_data in users_data:
@@ -161,7 +161,7 @@ class UserRepository(BaseRepository):
         result = await self.update(user_id, update_data)
         return result is not None
 
-    async def search_users(self, keyword: str, limit: int = 50) -> List["User"]:
+    async def search_users(self, keyword: str, limit: int = 50) -> list["User"]:
         """搜索用户"""
         filters = {
             "$or": [
@@ -171,7 +171,7 @@ class UserRepository(BaseRepository):
         }
         return await self.find_by_filters(filters, limit)
 
-    async def get_users_by_role(self, role: str) -> List["User"]:
+    async def get_users_by_role(self, role: str) -> list["User"]:
         """根据角色获取用户"""
         filters = {"role": role}
         return await self.find_by_filters(filters)

@@ -1,6 +1,6 @@
 # 简化版模块: influxdb_client
-from typing import Any, Dict
 from datetime import datetime
+from typing import Any
 
 
 class Influxdb_Client:
@@ -17,7 +17,7 @@ class Influxdb_Client:
             if key not in ["id", "created_at", "updated_at"]:
                 setattr(self, key, value)
 
-    def process(self, data: Any = None) -> Dict[str, Any]:
+    def process(self, data: Any = None) -> dict[str, Any]:
         """处理数据"""
         return {
             "status": "processed",

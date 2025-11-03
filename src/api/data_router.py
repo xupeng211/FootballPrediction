@@ -12,7 +12,6 @@ Provides complete data management API endpoints, including:
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -31,8 +30,8 @@ class LeagueInfo(BaseModel):
     id: int
     name: str
     country: str
-    logo_url: Optional[str] = None
-    season: Optional[str] = None
+    logo_url: str | None = None
+    season: str | None = None
 
 
 class TeamInfo(BaseModel):
@@ -40,16 +39,16 @@ class TeamInfo(BaseModel):
 
     id: int
     name: str
-    short_name: Optional[str] = None
-    logo_url: Optional[str] = None
-    country: Optional[str] = None
-    league_id: Optional[int] = None
+    short_name: str | None = None
+    logo_url: str | None = None
+    country: str | None = None
+    league_id: int | None = None
     # 用户建议的新增字段
-    founded_year: Optional[int] = None
-    stadium_name: Optional[str] = None
-    stadium_capacity: Optional[int] = None
-    website_url: Optional[str] = None
-    team_color: Optional[str] = None
+    founded_year: int | None = None
+    stadium_name: str | None = None
+    stadium_capacity: int | None = None
+    website_url: str | None = None
+    team_color: str | None = None
 
 
 class MatchInfo(BaseModel):
@@ -64,16 +63,16 @@ class MatchInfo(BaseModel):
     league_name: str
     match_date: datetime
     status: str = Field(..., description="pending|live|finished|cancelled")
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
+    home_score: int | None = None
+    away_score: int | None = None
     # 用户建议的新增比赛统计字段
-    attendance: Optional[int] = None
-    referee: Optional[str] = None
-    weather: Optional[str] = None
-    venue: Optional[str] = None
-    match_week: Optional[int] = None
-    home_team_form: Optional[str] = None  # 最近战绩
-    away_team_form: Optional[str] = None  # 最近战绩
+    attendance: int | None = None
+    referee: str | None = None
+    weather: str | None = None
+    venue: str | None = None
+    match_week: int | None = None
+    home_team_form: str | None = None  # 最近战绩
+    away_team_form: str | None = None  # 最近战绩
 
 
 class OddsInfo(BaseModel):
@@ -92,14 +91,14 @@ class MatchStatistics(BaseModel):
     """比赛统计"""
 
     match_id: int
-    possession_home: Optional[float] = None
-    possession_away: Optional[float] = None
-    shots_home: Optional[int] = None
-    shots_away: Optional[int] = None
-    shots_on_target_home: Optional[int] = None
-    shots_on_target_away: Optional[int] = None
-    corners_home: Optional[int] = None
-    corners_away: Optional[int] = None
+    possession_home: float | None = None
+    possession_away: float | None = None
+    shots_home: int | None = None
+    shots_away: int | None = None
+    shots_on_target_home: int | None = None
+    shots_on_target_away: int | None = None
+    corners_home: int | None = None
+    corners_away: int | None = None
 
 
 class TeamStatistics(BaseModel):
@@ -120,10 +119,10 @@ class TeamStatistics(BaseModel):
 # ============================================================================
 
 
-@router.get("/leagues", response_model=List[LeagueInfo])
+@router.get("/leagues", response_model=list[LeagueInfo])
 async def get_leagues(
-    country: Optional[str] = Query(None, description="国家筛选"),
-    season: Optional[str] = Query(None, description="赛季"),
+    country: str | None = Query(None, description="国家筛选"),
+    season: str | None = Query(None, description="赛季"),
     limit: int = Query(
         20,  # TODO: 将魔法数字 20 提取为常量
         ge=1,
@@ -188,11 +187,11 @@ async def get_league(league_id: int):
 # ============================================================================
 
 
-@router.get("/teams", response_model=List[TeamInfo])
+@router.get("/teams", response_model=list[TeamInfo])
 async def get_teams(
-    league_id: Optional[int] = Query(None, description="联赛ID"),
-    country: Optional[str] = Query(None, description="国家"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
+    league_id: int | None = Query(None, description="联赛ID"),
+    country: str | None = Query(None, description="国家"),
+    search: str | None = Query(None, description="搜索关键词"),
     limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
 ):
     """
@@ -260,7 +259,7 @@ async def get_team(team_id: int):
 
 @router.get("/teams/{team_id}/statistics", response_model=TeamStatistics)
 async def get_team_statistics(
-    team_id: int, season: Optional[str] = Query(None, description="赛季")
+    team_id: int, season: str | None = Query(None, description="赛季")
 ):
     """获取球队统计数据"""
     logger.info(f"获取球队 {team_id} 统计")
@@ -290,13 +289,13 @@ async def get_team_statistics(
 # ============================================================================
 
 
-@router.get("/matches", response_model=List[MatchInfo])
+@router.get("/matches", response_model=list[MatchInfo])
 async def get_matches(
-    league_id: Optional[int] = Query(None, description="联赛ID"),
-    team_id: Optional[int] = Query(None, description="球队ID"),
-    date_from: Optional[str] = Query(None, description="开始日期 YYYY-MM-DD"),
-    date_to: Optional[str] = Query(None, description="结束日期 YYYY-MM-DD"),
-    status: Optional[str] = Query(None, description="比赛状态"),
+    league_id: int | None = Query(None, description="联赛ID"),
+    team_id: int | None = Query(None, description="球队ID"),
+    date_from: str | None = Query(None, description="开始日期 YYYY-MM-DD"),
+    date_to: str | None = Query(None, description="结束日期 YYYY-MM-DD"),
+    status: str | None = Query(None, description="比赛状态"),
     limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
 ):
     """
@@ -415,10 +414,10 @@ async def get_match_statistics(match_id: int):
 # ============================================================================
 
 
-@router.get("/odds", response_model=List[OddsInfo])
+@router.get("/odds", response_model=list[OddsInfo])
 async def get_odds(
-    match_id: Optional[int] = Query(None, description="比赛ID"),
-    bookmaker: Optional[str] = Query(None, description="博彩公司"),
+    match_id: int | None = Query(None, description="比赛ID"),
+    bookmaker: str | None = Query(None, description="博彩公司"),
     limit: int = Query(20, ge=1, le=100),  # TODO: 将魔法数字 20 提取为常量
 ):
     """
@@ -453,7 +452,7 @@ async def get_odds(
         )  # TODO: 将魔法数字 500 提取为常量
 
 
-@router.get("/odds/{match_id}", response_model=List[OddsInfo])
+@router.get("/odds/{match_id}", response_model=list[OddsInfo])
 async def get_match_odds(match_id: int):
     """获取指定比赛的所有赔率"""
     logger.info(f"获取比赛 {match_id} 的赔率")

@@ -6,7 +6,7 @@ Health Checker
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 from src.database.connection import DatabaseManager
@@ -34,9 +34,9 @@ class HealthChecker:
         pass
         # 添加pass语句
         """初始化健康检查器"""
-        self.db_manager: Optional[DatabaseManager] = None
-        self.redis_manager: Optional[RedisConnectionManager] = None
-        self.last_checks: Dict[str, datetime] = {}
+        self.db_manager: DatabaseManager | None = None
+        self.redis_manager: RedisConnectionManager | None = None
+        self.last_checks: dict[str, datetime] = {}
 
     def set_database_manager(self, db_manager: DatabaseManager) -> None:
         """设置数据库管理器"""
@@ -46,7 +46,7 @@ class HealthChecker:
         """设置Redis管理器"""
         self.redis_manager = redis_manager
 
-    async def check_database(self) -> Dict[str, Any]:
+    async def check_database(self) -> dict[str, Any]:
         """检查数据库健康状态"""
         health = {
             "status": HealthStatus.HEALTHY,
@@ -98,7 +98,7 @@ class HealthChecker:
 
         return health
 
-    async def check_redis(self) -> Dict[str, Any]:
+    async def check_redis(self) -> dict[str, Any]:
         """检查Redis健康状态"""
         health = {
             "status": HealthStatus.HEALTHY,
@@ -161,7 +161,7 @@ class HealthChecker:
 
         return health
 
-    async def check_system_resources(self) -> Dict[str, Any]:
+    async def check_system_resources(self) -> dict[str, Any]:
         """检查系统资源健康状态"""
         import psutil
 
@@ -251,7 +251,7 @@ class HealthChecker:
 
         return health
 
-    async def check_application_health(self) -> Dict[str, Any]:
+    async def check_application_health(self) -> dict[str, Any]:
         """检查应用程序健康状态"""
         health = {
             "status": HealthStatus.HEALTHY,

@@ -4,23 +4,23 @@
 提供用户注册,登录,令牌管理等认证相关的API端点
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.auth.models import (
+    MessageResponse,
+    PasswordChangeRequest,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     TokenResponse,
     UserRegisterRequest,
     UserResponse,
-    PasswordChangeRequest,
-    PasswordResetRequest,
-    PasswordResetConfirm,
-    MessageResponse,
 )
-from src.database.models.user import User
 from src.database.connection import get_async_session
+from src.database.models.user import User
 from src.services.auth_service import AuthService
 
 # 暂时移除监控指标,避免导入问题
@@ -122,7 +122,7 @@ async def register(
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     用户登录接口
 
@@ -150,13 +150,13 @@ async def login(
 
 @router.post(
     "/refresh",
-    response_model=Dict[str, str],
+    response_model=dict[str, str],
     summary="刷新访问令牌",
 )
 async def refresh_token(
     refresh_token: str,
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     使用刷新令牌获取新的访问令牌
     """
@@ -192,7 +192,7 @@ async def get_current_user_info(
     summary="更新当前用户信息",
 )
 async def update_current_user(
-    user_update: Dict[str, Any],
+    user_update: dict[str, Any],
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
@@ -229,7 +229,7 @@ async def change_password(
     password_data: PasswordChangeRequest,
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     修改当前用户密码
 
@@ -260,7 +260,7 @@ async def change_password(
 async def request_password_reset(
     reset_request: PasswordResetRequest,
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     请求密码重置,发送重置令牌到用户邮箱
 
@@ -290,7 +290,7 @@ async def request_password_reset(
 async def reset_password(
     reset_data: PasswordResetConfirm,
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     使用重置令牌设置新密码
 
@@ -318,7 +318,7 @@ async def reset_password(
 async def verify_email(
     verification_token: str,
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     验证用户邮箱
 
@@ -343,7 +343,7 @@ async def verify_email(
 async def resend_verification_email(
     current_user: User = Depends(get_current_user),
     auth_service: AuthService = Depends(get_auth_service),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     为当前用户重新发送邮箱验证邮件
     """
@@ -368,7 +368,7 @@ async def resend_verification_email(
 )
 async def logout(
     current_user: User = Depends(get_current_user),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     用户登出接口
 

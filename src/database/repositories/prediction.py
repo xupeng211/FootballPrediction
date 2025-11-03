@@ -7,13 +7,14 @@ Provides prediction data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.database.models.predictions import Predictions
+
 from .base import BaseRepository
 
 # 类型别名
@@ -51,11 +52,11 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_by_match(
         self,
-        match_id: Union[int, str],
-        status: Optional[PredictionStatus] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> List[Prediction]:
+        match_id: int | str,
+        status: PredictionStatus | None = None,
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Prediction]:
         """
         获取指定比赛的预测
 
@@ -74,7 +75,7 @@ class PredictionRepository(BaseRepository[Predictions]):
 
         return await self.find_by(filters=filters, limit=limit)
 
-    async def get_by_user(self, user_id: str) -> List[Prediction]:
+    async def get_by_user(self, user_id: str) -> list[Prediction]:
         """
         获取指定用户的预测
 
@@ -95,7 +96,7 @@ class PredictionRepository(BaseRepository[Predictions]):
 
         return await self.find_by(filters=filters)
 
-    async def get_by_status(self, status: PredictionStatus) -> List[Prediction]:
+    async def get_by_status(self, status: PredictionStatus) -> list[Prediction]:
         """
         根据状态获取预测
 
@@ -117,8 +118,8 @@ class PredictionRepository(BaseRepository[Predictions]):
         )
 
     async def get_pending_predictions(
-        self, limit: Optional[int] = None
-    ) -> List[Prediction]:
+        self, limit: int | None = None
+    ) -> list[Prediction]:
         """
         获取待处理的预测
 
@@ -134,9 +135,9 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_completed_predictions(
         self,
         days: int = 7,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> List[Prediction]:
+        limit: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> list[Prediction]:
         """
         获取已完成的预测
 
@@ -173,10 +174,10 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_user_prediction_for_match(
         self,
-        user_id: Union[int, str],
-        match_id: Union[int, str],
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[Prediction]:
+        user_id: int | str,
+        match_id: int | str,
+        session: AsyncSession | None = None,
+    ) -> Prediction | None:
         """
         获取用户对特定比赛的预测
 
@@ -194,13 +195,13 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def create_prediction(
         self,
-        user_id: Union[int, str],
-        match_id: Union[int, str],
+        user_id: int | str,
+        match_id: int | str,
         predicted_home_score: int,
         predicted_away_score: int,
-        confidence: Optional[float] = None,
-        model_version: Optional[str] = None,
-        session: Optional[AsyncSession] = None,
+        confidence: float | None = None,
+        model_version: str | None = None,
+        session: AsyncSession | None = None,
     ) -> Prediction:
         """
         创建新预测
@@ -235,13 +236,13 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def update_prediction_result(
         self,
-        prediction_id: Union[int, str],
+        prediction_id: int | str,
         actual_home_score: int,
         actual_away_score: int,
         is_correct: bool,
-        points_earned: Optional[float] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[Prediction]:
+        points_earned: float | None = None,
+        session: AsyncSession | None = None,
+    ) -> Prediction | None:
         """
         更新预测结果
 
@@ -273,10 +274,10 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def cancel_prediction(
         self,
-        prediction_id: Union[int, str],
-        reason: Optional[str] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Optional[Prediction]:
+        prediction_id: int | str,
+        reason: str | None = None,
+        session: AsyncSession | None = None,
+    ) -> Prediction | None:
         """
         取消预测
 
@@ -306,10 +307,10 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_user_prediction_stats(
         self,
-        user_id: Union[int, str],
-        days: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
-    ) -> Dict[str, Any]:
+        user_id: int | str,
+        days: int | None = None,
+        session: AsyncSession | None = None,
+    ) -> dict[str, Any]:
         """
         获取用户预测统计
 
@@ -390,8 +391,8 @@ class PredictionRepository(BaseRepository[Predictions]):
             return stats
 
     async def get_match_prediction_summary(
-        self, match_id: Union[int, str], session: Optional[AsyncSession] = None
-    ) -> Dict[str, Any]:
+        self, match_id: int | str, session: AsyncSession | None = None
+    ) -> dict[str, Any]:
         """
         获取比赛预测汇总
 
@@ -469,8 +470,8 @@ class PredictionRepository(BaseRepository[Predictions]):
             return summary
 
     async def get_top_predictors(
-        self, days: int = 30, limit: int = 10, session: Optional[AsyncSession] = None
-    ) -> List[Dict[str, Any]]:
+        self, days: int = 30, limit: int = 10, session: AsyncSession | None = None
+    ) -> list[dict[str, Any]]:
         """
         获取顶级预测者排行榜
 
@@ -539,9 +540,9 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_related_data(
         self,
-        obj_id: Union[int, str],
+        obj_id: int | str,
         relation_name: str,
-        session: Optional[AsyncSession] = None,
+        session: AsyncSession | None = None,
     ) -> Any:
         """
         获取预测的关联数据

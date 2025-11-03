@@ -13,7 +13,7 @@
 import logging
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import text
 
@@ -48,7 +48,7 @@ class TaskErrorLogger:
         task_name: str,
         task_id: str,
         error: Exception,
-        context: Optional[Dict[str, Any]] = None,
+        context: dict[str, Any] | None = None,
         retry_count: int = 0,
     ) -> None:
         """
@@ -100,10 +100,10 @@ class TaskErrorLogger:
         self,
         task_name: str,
         api_endpoint: str,
-        http_status: Optional[int],
+        http_status: int | None,
         error_message: str,
         retry_count: int = 0,
-        response_data: Optional[Dict[str, Any]] = None,
+        response_data: dict[str, Any] | None = None,
     ) -> None:
         """
         记录 API 调用失败日志
@@ -152,7 +152,7 @@ class TaskErrorLogger:
         records_processed: int = 0,
         success_count: int = 0,
         error_count: int = 0,
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         记录数据采集错误到 data_collection_logs 表
 
@@ -197,7 +197,7 @@ class TaskErrorLogger:
             logger.error(f"记录数据采集错误失败: {str(log_error)}")
             return None
 
-    async def _save_error_to_db(self, error_details: Dict[str, Any]) -> None:
+    async def _save_error_to_db(self, error_details: dict[str, Any]) -> None:
         """
         保存错误详情到数据库
 
@@ -229,8 +229,8 @@ class TaskErrorLogger:
                         "error_type": error_details.get("error_type"),
                         "error_message": error_details.get("error_message"),
                         "traceback": error_details.get("traceback"),
-                        "retry_count": error_details.get(str("retry_count"), 0),
-                        "context_data": str(error_details.get(str("context"), {})),
+                        "retry_count": error_details.get("retry_count", 0),
+                        "context_data": str(error_details.get("context", {})),
                         "created_at": datetime.now(),
                     },
                 )
@@ -275,7 +275,7 @@ class TaskErrorLogger:
         except (RuntimeError, ValueError, ConnectionError) as create_error:
             logger.warning(f"创建 error_logs 表失败: {str(create_error)}")
 
-    async def get_error_statistics(self, hours: int = 24) -> Dict[str, Any]:
+    async def get_error_statistics(self, hours: int = 24) -> dict[str, Any]:
         """
         获取错误统计信息
 

@@ -8,7 +8,7 @@ Facade Base Module
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class SubsystemStatus(Enum):
@@ -28,7 +28,7 @@ class Subsystem(ABC):
     为所有子系统提供统一的接口和生命周期管理.
     """
 
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, config: dict[str, Any] | None = None):
         """初始化子系统
 
         Args:
@@ -40,8 +40,8 @@ class Subsystem(ABC):
         self.status = SubsystemStatus.INACTIVE
         self.created_at = datetime.utcnow()
         self.last_health_check = None
-        self.error_message: Optional[str] = None
-        self.metrics: Dict[str, Any] = {}
+        self.error_message: str | None = None
+        self.metrics: dict[str, Any] = {}
 
     @abstractmethod
     async def start(self) -> bool:
@@ -58,7 +58,7 @@ class Subsystem(ABC):
         """健康检查"""
         pass
 
-    def get_status_info(self) -> Dict[str, Any]:
+    def get_status_info(self) -> dict[str, Any]:
         """获取状态信息"""
         return {
             "name": self.name,
@@ -87,18 +87,18 @@ class Facade:
     def __init__(self, name: str):
         """初始化外观"""
         self.name = name
-        self.subsystems: Dict[str, Subsystem] = {}
+        self.subsystems: dict[str, Subsystem] = {}
         self.created_at = datetime.utcnow()
 
     def register_subsystem(self, subsystem: Subsystem) -> None:
         """注册子系统"""
         self.subsystems[subsystem.name] = subsystem
 
-    def get_subsystem(self, name: str) -> Optional[Subsystem]:
+    def get_subsystem(self, name: str) -> Subsystem | None:
         """获取子系统"""
         return self.subsystems.get(name)
 
-    def get_overall_status(self) -> Dict[str, Any]:
+    def get_overall_status(self) -> dict[str, Any]:
         """获取整体状态"""
         subsystems_status = {
             name: subsystem.get_status_info()
@@ -128,8 +128,8 @@ class SubsystemManager:
     """子系统管理器"""
 
     def __init__(self):
-        self.subsystems: Dict[str, Subsystem] = {}
-        self.facades: Dict[str, Facade] = {}
+        self.subsystems: dict[str, Subsystem] = {}
+        self.facades: dict[str, Facade] = {}
 
     def register_subsystem(self, subsystem: Subsystem) -> None:
         """注册子系统"""
@@ -139,7 +139,7 @@ class SubsystemManager:
         """注册外观"""
         self.facades[facade.name] = facade
 
-    def get_subsystem(self, name: str) -> Optional[Subsystem]:
+    def get_subsystem(self, name: str) -> Subsystem | None:
         """获取子系统"""
         return self.subsystems.get(name)
 
@@ -147,12 +147,12 @@ class SubsystemManager:
 class SystemFacade(Facade):
     """系统外观"""
 
-    def __init__(self, name: str = "System", config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str = "System", config: dict[str, Any] | None = None):
         super().__init__(name)
         self.config = config or {}
         self.initialized = False
 
-    async def start_all(self) -> Dict[str, bool]:
+    async def start_all(self) -> dict[str, bool]:
         """启动所有子系统"""
         results = {}
         for name, subsystem in self.subsystems.items():
@@ -164,7 +164,7 @@ class SystemFacade(Facade):
                 subsystem.set_error(str(e))
         return results
 
-    async def stop_all(self) -> Dict[str, bool]:
+    async def stop_all(self) -> dict[str, bool]:
         """停止所有子系统"""
         results = {}
         for name, subsystem in self.subsystems.items():
@@ -176,7 +176,7 @@ class SystemFacade(Facade):
                 subsystem.set_error(str(e))
         return results
 
-    async def health_check_all(self) -> Dict[str, bool]:
+    async def health_check_all(self) -> dict[str, bool]:
         """检查所有子系统健康状态"""
         results = {}
         for name, subsystem in self.subsystems.items():

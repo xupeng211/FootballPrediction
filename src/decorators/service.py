@@ -6,10 +6,12 @@ Decorator Service
 Provides high-level management and services for decorators.
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from src.core.logger import get_logger
+
 from .base import ConcreteComponent, DecoratorComponent, DecoratorContext
 from .factory import DecoratorConfig, DecoratorFactory
 
@@ -22,16 +24,16 @@ class DecoratorService:
     pass  # 添加pass语句
     """装饰器服务,管理和应用装饰器"""
 
-    def __init__(self, factory: Optional[DecoratorFactory] = None):
+    def __init__(self, factory: DecoratorFactory | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
         self.factory = factory or DecoratorFactory()
-        self._decorated_functions: Dict[str, DecoratorComponent] = {}
-        self._global_decorators: List[DecoratorConfig] = []
-        self._function_decorators: Dict[str, List[DecoratorConfig]] = {}
+        self._decorated_functions: dict[str, DecoratorComponent] = {}
+        self._global_decorators: list[DecoratorConfig] = []
+        self._function_decorators: dict[str, list[DecoratorConfig]] = {}
 
-    def load_configuration(self, config_path: Union[str, Path]) -> None:
+    def load_configuration(self, config_path: str | Path) -> None:
         """加载装饰器配置文件"""
         self.factory.load_config_from_file(config_path)
 
@@ -55,7 +57,7 @@ class DecoratorService:
         self.factory._config_cache[config.name] = config
 
     def apply_decorators(
-        self, func: Callable, decorator_names: Optional[List[str]] = None, **kwargs
+        self, func: Callable, decorator_names: list[str] | None = None, **kwargs
     ) -> Callable:
         """应用装饰器到函数"""
         func_name = func.__name__
@@ -103,7 +105,7 @@ class DecoratorService:
         # 返回包装后的函数
         return self._create_wrapper(decorator_component)
 
-    def _matches_function(self, func_name: str, patterns: List[str]) -> bool:
+    def _matches_function(self, func_name: str, patterns: list[str]) -> bool:
         """检查函数名是否匹配模式"""
         for pattern in patterns:
             if pattern.endswith("*"):
@@ -153,13 +155,13 @@ class DecoratorService:
 
         return wrapper
 
-    def get_function_stats(self, func_name: str) -> Optional[Dict[str, Any]]:
+    def get_function_stats(self, func_name: str) -> dict[str, Any] | None:
         """获取函数的装饰器统计信息"""
         if func_name in self._decorated_functions:
             return self._decorated_functions[func_name].get_all_stats()
         return None
 
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """获取所有装饰器的统计信息"""
         stats = {"total_functions": len(self._decorated_functions), "functions": {}}
 
@@ -190,9 +192,7 @@ class DecoratorService:
 
 
 # 便捷装饰器函数
-def decorate(
-    decorator_names: Optional[List[str]] = None, **decorator_kwargs
-) -> Callable:
+def decorate(decorator_names: list[str] | None = None, **decorator_kwargs) -> Callable:
     """装饰器工厂函数,用于装饰其他函数"""
 
     def decorator(func: Callable) -> Callable:
@@ -234,7 +234,7 @@ def with_retry(
 
 
 def with_metrics(
-    metric_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None, **kwargs
+    metric_name: str | None = None, tags: dict[str, str] | None = None, **kwargs
 ) -> Callable:
     """添加指标装饰器"""
     return decorate(
@@ -245,7 +245,7 @@ def with_metrics(
     )
 
 
-def with_cache(ttl: Optional[int] = None, **kwargs) -> Callable:
+def with_cache(ttl: int | None = None, **kwargs) -> Callable:
     """添加缓存装饰器"""
     return decorate(decorator_names=["default_cache"], ttl=ttl, **kwargs)
 
@@ -260,7 +260,7 @@ def with_timeout(timeout_seconds: float = 30.0, **kwargs) -> Callable:
 def with_all(
     log_level: str = "INFO",
     retry_attempts: int = 3,
-    cache_ttl: Optional[int] = None,
+    cache_ttl: int | None = None,
     timeout_seconds: float = 30.0,
     **kwargs,
 ) -> Callable:

@@ -1,14 +1,9 @@
 import logging
 
-from alembic import op
-
 # from datetime import datetime, timezone  # Temporarily commented to fix F401
-
-
 # mypy: ignore-errors
-
 import sqlalchemy as sa
-from alembic import context
+from alembic import context, op
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError

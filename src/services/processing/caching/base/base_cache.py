@@ -5,7 +5,7 @@ Base Cache Classes
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any
 
 
 class BaseCache(ABC):
@@ -20,7 +20,7 @@ class BaseCache(ABC):
         self.cache_enabled = True
 
     @abstractmethod
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """获取缓存值"""
         pass
 
@@ -68,7 +68,7 @@ class CacheKeyManager:
         """
         return f"{self.prefix}:" + ":".join(parts)
 
-    def parse_key(self, key: str) -> List[str]:
+    def parse_key(self, key: str) -> list[str]:
         """解析缓存键"
 
         Args:

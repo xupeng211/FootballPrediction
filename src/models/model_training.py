@@ -11,7 +11,7 @@ import logging
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 # 尝试导入科学计算库，如果失败则使用模拟
 try:
@@ -175,7 +175,7 @@ class BaselineModelTrainer:
         y: pd.Series,
         test_size: float = 0.2,
         random_state: int = 42,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """准备训练和测试数据"""
         if not HAS_SCIPY:
             # 简单的模拟数据分割
@@ -211,10 +211,10 @@ class BaselineModelTrainer:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: Optional[pd.DataFrame] = None,
-        y_val: Optional[pd.Series] = None,
+        X_val: pd.DataFrame | None = None,
+        y_val: pd.Series | None = None,
         **model_params,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """训练模型"""
         try:
             if self.use_mlflow:
@@ -237,10 +237,10 @@ class BaselineModelTrainer:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: Optional[pd.DataFrame],
-        y_val: Optional[pd.Series],
+        X_val: pd.DataFrame | None,
+        y_val: pd.Series | None,
         **model_params,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """不使用MLflow训练模型"""
         # 根据模型类型创建模型
         self.model = self._create_model(**model_params)
@@ -310,7 +310,7 @@ class BaselineModelTrainer:
 
     def _evaluate_model(
         self, X_test: pd.DataFrame, y_test: pd.Series
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """评估模型性能"""
         if not HAS_SCIPY:
             # 返回模拟评估结果
@@ -318,9 +318,9 @@ class BaselineModelTrainer:
 
         from sklearn.metrics import (
             accuracy_score,
+            f1_score,
             precision_score,
             recall_score,
-            f1_score,
         )
 
         y_pred = self.model.predict(X_test)

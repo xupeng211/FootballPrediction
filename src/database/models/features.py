@@ -16,7 +16,7 @@ Features - 数据库模块
 - 使用SQLAlchemy 2.0语法
 """
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from .match import Match
@@ -26,8 +26,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import DECIMAL, DateTime
-from sqlalchemy import Index, Integer, String, Text
+from sqlalchemy import DECIMAL, DateTime, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.base import BaseModel
@@ -57,8 +56,8 @@ class FeatureEntity(BaseModel):
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    feature_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    feature_numeric: Mapped[Optional[Decimal]] = mapped_column(
+    feature_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    feature_numeric: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 4), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -82,9 +81,9 @@ class Features(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     match_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    team_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     feature_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    feature_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+    feature_data: Mapped[dict[str, Any] | None] = mapped_column(
         Text, nullable=True
     )  # JSON as text
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

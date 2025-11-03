@@ -6,8 +6,8 @@
 """
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from openlineage.client import OpenLineageClient
@@ -47,17 +47,17 @@ class LineageReporter:
         """
         self.client = OpenLineageClient(url=marquez_url)
         self.namespace = namespace
-        self._active_runs: Dict[str, str] = {}  # job_name -> run_id
+        self._active_runs: dict[str, str] = {}  # job_name -> run_id
 
     def start_job_run(
         self,
         job_name: str,
         job_type: str = "BATCH",
-        inputs: Optional[List[Dict[str, Any]]] = None,
-        description: Optional[str] = None,
-        source_location: Optional[str] = None,
-        parent_run_id: Optional[str] = None,
-        transformation_sql: Optional[str] = None,
+        inputs: list[dict[str, Any]] | None = None,
+        description: str | None = None,
+        source_location: str | None = None,
+        parent_run_id: str | None = None,
+        transformation_sql: str | None = None,
     ) -> str:
         """
         开始一个作业运行
@@ -94,7 +94,7 @@ class LineageReporter:
             job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)
 
         # 构建运行信息
-        run_facets: Dict[str, Any] = {}
+        run_facets: dict[str, Any] = {}
         # 实现parent_run功能
         if parent_run_id:
             from openlineage.client.facet_v2 import parent_run
@@ -108,8 +108,8 @@ class LineageReporter:
         # 构建输入数据集
         input_datasets = []
         for input_info in inputs:
-            dataset_name = input_info.get(str("name"), "unknown")
-            dataset_namespace = input_info.get(str("namespace"), self.namespace)
+            dataset_name = input_info.get("name", "unknown")
+            dataset_namespace = input_info.get("namespace", self.namespace)
 
             dataset_facets = {}
             if "schema" in input_info:
@@ -128,7 +128,7 @@ class LineageReporter:
         # 发送开始事件
         event = RunEvent(
             eventType="START",
-            eventTime=datetime.now(timezone.utc).isoformat(),
+            eventTime=datetime.now(UTC).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets=job_facets),
             inputs=input_datasets,
@@ -147,9 +147,9 @@ class LineageReporter:
     def complete_job_run(
         self,
         job_name: str,
-        outputs: Optional[List[Dict[str, Any]]] = None,
-        metrics: Optional[Dict[str, Any]] = None,
-        run_id: Optional[str] = None,
+        outputs: list[dict[str, Any]] | None = None,
+        metrics: dict[str, Any] | None = None,
+        run_id: str | None = None,
     ) -> bool:
         """
         完成一个作业运行
@@ -176,8 +176,8 @@ class LineageReporter:
         # 构建输出数据集
         output_datasets = []
         for output_info in outputs:
-            dataset_name = output_info.get(str("name"), "unknown")
-            dataset_namespace = output_info.get(str("namespace"), self.namespace)
+            dataset_name = output_info.get("name", "unknown")
+            dataset_namespace = output_info.get("namespace", self.namespace)
 
             dataset_facets = {}
             if "schema" in output_info:
@@ -198,7 +198,7 @@ class LineageReporter:
             )
 
         # 构建运行指标
-        run_facets: Dict[str, Any] = {}
+        run_facets: dict[str, Any] = {}
         if metrics:
             run_facets["processing_engine"] = {
                 "processing_engine": {
@@ -211,7 +211,7 @@ class LineageReporter:
         # 发送完成事件
         event = RunEvent(
             eventType="COMPLETE",
-            eventTime=datetime.now(timezone.utc).isoformat(),
+            eventTime=datetime.now(UTC).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
@@ -232,7 +232,7 @@ class LineageReporter:
             return False
 
     def fail_job_run(
-        self, job_name: str, error_message: str, run_id: Optional[str] = None
+        self, job_name: str, error_message: str, run_id: str | None = None
     ) -> bool:
         """
         标记作业运行失败
@@ -262,7 +262,7 @@ class LineageReporter:
         # 发送失败事件
         event = RunEvent(
             eventType="FAIL",
-            eventTime=datetime.now(timezone.utc).isoformat(),
+            eventTime=datetime.now(UTC).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
@@ -291,7 +291,7 @@ class LineageReporter:
         target_table: str,
         records_collected: int,
         collection_time: datetime,
-        source_config: Optional[Dict[str, Any]] = None,
+        source_config: dict[str, Any] | None = None,
     ) -> str:
         """
         报告数据采集过程
@@ -313,7 +313,7 @@ class LineageReporter:
             {
                 "name": source_name,
                 "namespace": "external",
-                "schema": source_config.get(str("schema"), {}) if source_config else {},
+                "schema": source_config.get("schema", {}) if source_config else {},
             }
         ]
 
@@ -353,7 +353,7 @@ class LineageReporter:
 
     def report_data_transformation(
         self,
-        source_tables: List[str],
+        source_tables: list[str],
         target_table: str,
         transformation_sql: str,
         records_processed: int,
@@ -415,7 +415,7 @@ class LineageReporter:
 
         return run_id
 
-    def get_active_runs(self) -> Dict[str, str]:
+    def get_active_runs(self) -> dict[str, str]:
         """
         获取当前活跃的运行
 

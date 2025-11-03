@@ -10,9 +10,10 @@ import functools
 import hashlib
 import inspect
 import json
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Awaitable
-from dataclasses import dataclass
 import logging
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from typing import Any, TypeVar
 
 try:
     from .consistency_manager import get_consistency_manager
@@ -38,10 +39,10 @@ class CacheConfig:
     cache_store: str = "default"
     use_consistency_manager: bool = True
     invalidate_on_update: bool = False
-    key_builder: Optional[Callable] = None
-    condition: Optional[Callable[..., bool]] = None
-    unless: Optional[Callable[..., bool]] = None
-    max_size: Optional[int] = None
+    key_builder: Callable | None = None
+    condition: Callable[..., bool] | None = None
+    unless: Callable[..., bool] | None = None
+    max_size: int | None = None
 
 
 class CacheKeyBuilder:
@@ -122,10 +123,10 @@ def cached(
     cache_store: str = "default",
     use_consistency_manager: bool = True,
     invalidate_on_update: bool = False,
-    key_builder: Optional[Callable] = None,
-    condition: Optional[Callable[..., bool]] = None,
-    unless: Optional[Callable[..., bool]] = None,
-    max_size: Optional[int] = None,
+    key_builder: Callable | None = None,
+    condition: Callable[..., bool] | None = None,
+    unless: Callable[..., bool] | None = None,
+    max_size: int | None = None,
 ) -> Callable:
     """
     缓存装饰器 - 支持同步和异步函数
@@ -276,7 +277,7 @@ def _async_cached_wrapper(func: AsyncF, func_name: str, config: CacheConfig) -> 
 
 
 def cache_invalidate(
-    pattern: str = None, keys: List[str] = None, reason: str = "decorator_invalidation"
+    pattern: str = None, keys: list[str] = None, reason: str = "decorator_invalidation"
 ) -> Callable:
     """
     缓存失效装饰器
@@ -335,7 +336,7 @@ def cache_invalidate(
     return decorator
 
 
-def multi_cached(levels: List[Dict[str, Any]], fallback: bool = True) -> Callable:
+def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callable:
     """
     多级缓存装饰器
 
@@ -528,7 +529,7 @@ class UserCacheDecorator:
 class InvalidateCacheDecorator:
     """缓存失效装饰器"""
 
-    def __init__(self, patterns: List[str] = None, keys: List[str] = None):
+    def __init__(self, patterns: list[str] = None, keys: list[str] = None):
         self.patterns = patterns or []
         self.keys = keys or []
 

@@ -7,22 +7,22 @@ LSTM Time Series Prediction Model
 """
 
 import pickle
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.preprocessing import MinMaxScaler
 
 try:
     import tensorflow as tf
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
-    from tensorflow.keras.optimizers import Adam
     from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+    from tensorflow.keras.layers import LSTM, BatchNormalization, Dense, Dropout
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.optimizers import Adam
 except ImportError:
     print("警告: TensorFlow未安装,LSTM功能将不可用")
     tf = None
@@ -41,16 +41,16 @@ class PredictionResult:
     """预测结果数据模型"""
 
     timestamp: datetime
-    predicted_values: List[float]
-    confidence_intervals: List[Tuple[float, float]]  # (lower, upper)
-    actual_values: Optional[List[float]] = None
+    predicted_values: list[float]
+    confidence_intervals: list[tuple[float, float]]  # (lower, upper)
+    actual_values: list[float] | None = None
     model_version: str = "1.0"
     prediction_horizon: int = 12  # 预测未来12个时间点
-    mae: Optional[float] = None
-    rmse: Optional[float] = None
-    r2: Optional[float] = None
+    mae: float | None = None
+    rmse: float | None = None
+    r2: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         data = asdict(self)
         data["timestamp"] = self.timestamp.isoformat()
@@ -68,7 +68,7 @@ class TrainingConfig:
 
     sequence_length: int = 24  # 使用过去24个时间点
     prediction_horizon: int = 12  # 预测未来12个时间点
-    lstm_units: List[int] = (64, 32)  # LSTM层单元数
+    lstm_units: list[int] = (64, 32)  # LSTM层单元数
     dropout_rate: float = 0.2
     batch_size: int = 32
     epochs: int = 100
@@ -83,7 +83,7 @@ class LSTMPredictor:
     pass  # 添加pass语句
     """LSTM时间序列预测器"""
 
-    def __init__(self, config: Optional[TrainingConfig] = None):
+    def __init__(self, config: TrainingConfig | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -108,8 +108,8 @@ class LSTMPredictor:
         self.scaler_path = self.model_dir / "scalers.pkl"
 
     def prepare_data(
-        self, data: List[Dict[str, Any]], target_column: str = "overall_score"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, data: list[dict[str, Any]], target_column: str = "overall_score"
+    ) -> tuple[np.ndarray, np.ndarray]:
         """准备训练数据"""
         try:
             # 转换为DataFrame
@@ -150,7 +150,7 @@ class LSTMPredictor:
 
     def _create_sequences(
         self, features: np.ndarray, target: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """创建时间序列数据"""
         X, y = [], []
 
@@ -173,7 +173,7 @@ class LSTMPredictor:
 
         return np.array(X), np.array(y)
 
-    def build_model(self, input_shape: Tuple[int, int]) -> None:
+    def build_model(self, input_shape: tuple[int, int]) -> None:
         """构建LSTM模型"""
         if tf is None:
             raise ImportError("TensorFlow未安装,无法构建LSTM模型")
@@ -218,8 +218,8 @@ class LSTMPredictor:
         self,
         X: np.ndarray,
         y: np.ndarray,
-        validation_data: Optional[Tuple[np.ndarray, np.ndarray]] = None,
-    ) -> Dict[str, Any]:
+        validation_data: tuple[np.ndarray, np.ndarray] | None = None,
+    ) -> dict[str, Any]:
         """训练LSTM模型"""
         if self.model is None:
             self.build_model(input_shape=(X.shape[1], X.shape[2]))
@@ -414,7 +414,7 @@ class LSTMPredictor:
 
     def evaluate_model(
         self, test_X: np.ndarray, test_y: np.ndarray
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """评估模型性能"""
         try:
             # 预测
@@ -492,7 +492,7 @@ class LSTMPredictor:
             self.logger.error(f"加载模型失败: {e}")
             return False
 
-    async def train_with_historical_data(self, days: int = 30) -> Dict[str, Any]:
+    async def train_with_historical_data(self, days: int = 30) -> dict[str, Any]:
         """使用历史数据训练模型"""
         try:
             self.logger.info(f"开始使用历史数据训练模型 (过去{days}天)")
@@ -534,7 +534,7 @@ lstm_predictor = LSTMPredictor()
 
 
 # 辅助函数
-async def train_lstm_model(days: int = 30) -> Dict[str, Any]:
+async def train_lstm_model(days: int = 30) -> dict[str, Any]:
     """训练LSTM模型"""
     return await lstm_predictor.train_with_historical_data(days)
 

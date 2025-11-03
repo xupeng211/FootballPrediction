@@ -1,15 +1,9 @@
-from typing import Set
-from typing import Optional
-from typing import Any
-from typing import List
-from typing import Dict
-import logging
-from datetime import datetime
-from dataclasses import dataclass, field
-from enum import Enum
-
-
 import asyncio
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 # 检查比赛ID
 # 检查联赛
@@ -61,16 +55,14 @@ class SubscriptionFilter:
     pass  # 添加pass语句
     """订阅过滤器"""
 
-    match_ids: Optional[List[int]] = field(default_factory=list)  # 特定比赛ID
-    leagues: Optional[List[str]] = field(default_factory=list)  # 特定联赛
-    users: Optional[List[str]] = field(default_factory=list)  # 特定用户
-    min_confidence: Optional[float] = None  # 最小置信度
-    event_sources: Optional[List[str]] = field(default_factory=list)  # 事件源
-    custom_filters: Optional[Dict[str, Any]] = field(
-        default_factory=dict
-    )  # 自定义过滤器
+    match_ids: list[int] | None = field(default_factory=list)  # 特定比赛ID
+    leagues: list[str] | None = field(default_factory=list)  # 特定联赛
+    users: list[str] | None = field(default_factory=list)  # 特定用户
+    min_confidence: float | None = None  # 最小置信度
+    event_sources: list[str] | None = field(default_factory=list)  # 事件源
+    custom_filters: dict[str, Any] | None = field(default_factory=dict)  # 自定义过滤器
 
-    def matches(self, event_data: Dict[str, Any]) -> bool:
+    def matches(self, event_data: dict[str, Any]) -> bool:
         """检查事件是否匹配过滤器"""
         if self.match_ids and event_data.get("match_id") not in self.match_ids:
             return False
@@ -100,7 +92,7 @@ class Subscription:
 
     connection_id: str
     subscription_type: SubscriptionType
-    event_types: Set[EventType]
+    event_types: set[EventType]
     filters: SubscriptionFilter
     created_at: datetime = field(default_factory=datetime.now)
     last_activity: datetime = field(default_factory=datetime.now)
@@ -129,11 +121,11 @@ class SubscriptionManager:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.subscriptions: Dict[
-            str, List[Subscription]
+        self.subscriptions: dict[
+            str, list[Subscription]
         ] = {}  # connection_id -> subscriptions
-        self.event_subscribers: Dict[
-            EventType, Set[str]
+        self.event_subscribers: dict[
+            EventType, set[str]
         ] = {}  # event_type -> connection_ids
         self.logger = logging.getLogger(f"{__name__}.SubscriptionManager")
         asyncio.create_task(self._cleanup_inactive_subscriptions())
@@ -143,7 +135,7 @@ class SubscriptionManager:
         self,
         connection_id: str,
         event_type: EventType,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         subscription_type: SubscriptionType = SubscriptionType.SPECIFIC_EVENT,
     ) -> bool:
         """订阅事件"""
@@ -201,8 +193,8 @@ class SubscriptionManager:
         self.logger.info(f"Removed all subscriptions for connection {connection_id}")
 
     def get_subscribers(
-        self, event_type: EventType, event_data: Dict[str, Any]
-    ) -> List[str]:
+        self, event_type: EventType, event_data: dict[str, Any]
+    ) -> list[str]:
         """获取事件的订阅者"""
         if event_type not in self.event_subscribers:
             return []
@@ -221,7 +213,7 @@ class SubscriptionManager:
                         break
         return list(subscribers)
 
-    def get_connection_subscriptions(self, connection_id: str) -> List[Dict[str, Any]]:
+    def get_connection_subscriptions(self, connection_id: str) -> list[dict[str, Any]]:
         """获取连接的所有订阅"""
         if connection_id not in self.subscriptions:
             return []
@@ -254,7 +246,7 @@ class SubscriptionManager:
         """获取总订阅数"""
         return sum(len(subs) for subs in self.subscriptions.values())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         event_type_counts = {}
         for subscriptions in self.subscriptions.values():
@@ -303,8 +295,8 @@ class SubscriptionManager:
 
 def subscribe_to_predictions(
     connection_id: str,
-    match_ids: Optional[List[int]] = None,
-    min_confidence: Optional[float] = None,
+    match_ids: list[int] | None = None,
+    min_confidence: float | None = None,
 ) -> bool:
     """订阅预测事件"""
     filters = {}
@@ -323,8 +315,8 @@ def subscribe_to_predictions(
 
 def subscribe_to_matches(
     connection_id: str,
-    match_ids: Optional[List[int]] = None,
-    leagues: Optional[List[str]] = None,
+    match_ids: list[int] | None = None,
+    leagues: list[str] | None = None,
 ) -> bool:
     """订阅比赛事件"""
     filters = {}
@@ -350,8 +342,8 @@ def subscribe_to_matches(
 
 def subscribe_to_odds(
     connection_id: str,
-    match_ids: Optional[List[int]] = None,
-    bookmakers: Optional[List[str]] = None,
+    match_ids: list[int] | None = None,
+    bookmakers: list[str] | None = None,
 ) -> bool:
     """订阅赔率事件"""
     filters = {}
@@ -371,7 +363,7 @@ def subscribe_to_odds(
 
 
 def subscribe_to_system_alerts(
-    connection_id: str, severity_levels: Optional[List[str]] = None
+    connection_id: str, severity_levels: list[str] | None = None
 ) -> bool:
     """订阅系统告警"""
     filters = {}
@@ -383,7 +375,7 @@ def subscribe_to_system_alerts(
     )
 
 
-_global_subscription_manager: Optional[SubscriptionManager] = None
+_global_subscription_manager: SubscriptionManager | None = None
 
 
 def get_subscription_manager() -> SubscriptionManager:

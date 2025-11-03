@@ -10,7 +10,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from .base import Event, EventFilter, EventHandler
 
@@ -36,11 +36,11 @@ class EventBus:
         Args:
             max_workers: 最大工作线程数
         """
-        self._subscribers: Dict[str, List[EventHandler]] = defaultdict(list)
-        self._filters: Dict[EventHandler, List[EventFilter]] = {}
-        self._queues: Dict[str, asyncio.Queue] = {}
+        self._subscribers: dict[str, list[EventHandler]] = defaultdict(list)
+        self._filters: dict[EventHandler, list[EventFilter]] = {}
+        self._queues: dict[str, asyncio.Queue] = {}
         self._running = False
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: list[asyncio.Task] = []
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._lock = asyncio.Lock()
 
@@ -108,7 +108,7 @@ class EventBus:
         self,
         event_type: str,
         handler: EventHandler,
-        filters: Optional[List[EventFilter]] = None,
+        filters: list[EventFilter] | None = None,
     ) -> None:
         """订阅事件"
 
@@ -232,7 +232,7 @@ class EventBus:
 
                     queue.task_done()
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # 超时继续,保持运行
                     continue
                 except (
@@ -308,7 +308,7 @@ class EventBus:
         """
         return len(self._subscribers.get(event_type, []))
 
-    def get_all_event_types(self) -> List[str]:
+    def get_all_event_types(self) -> list[str]:
         """获取所有已注册的事件类型"
 
         Returns:
@@ -323,7 +323,7 @@ class EventBus:
             self._filters.clear()
             logger.info("EventBus cleared")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取事件总线统计信息"
 
         Returns:
@@ -341,7 +341,7 @@ class EventBus:
 
 
 # 全局事件总线实例
-_event_bus: Optional[EventBus] = None
+_event_bus: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:
@@ -371,7 +371,7 @@ async def stop_event_bus() -> None:
 
 
 # 装饰器:自动注册事件处理器
-def event_handler(event_types: List[str]):
+def event_handler(event_types: list[str]):
     """函数文档字符串"""
     pass  # 添加pass语句
     """事件处理器装饰器"
@@ -380,7 +380,7 @@ def event_handler(event_types: List[str]):
         event_types: 处理的事件类型列表
     """
 
-    def decorator(cls: Type[EventHandler]) -> Type[EventHandler]:
+    def decorator(cls: type[EventHandler]) -> type[EventHandler]:
         original_init = cls.__init__
 
         def __init__(self, *args, **kwargs):

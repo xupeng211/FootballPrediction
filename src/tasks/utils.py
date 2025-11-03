@@ -8,7 +8,6 @@
 """
 
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 from sqlalchemy import text
 
@@ -54,7 +53,7 @@ async def should_collect_live_scores() -> bool:
         return False
 
 
-async def get_upcoming_matches(hours: int = 24) -> List[dict]:
+async def get_upcoming_matches(hours: int = 24) -> list[dict]:
     """
     获取未来N小时内的比赛
 
@@ -108,7 +107,7 @@ async def get_upcoming_matches(hours: int = 24) -> List[dict]:
         return []
 
 
-def is_match_day(date: Optional[datetime] = None) -> bool:
+def is_match_day(date: datetime | None = None) -> bool:
     """
     检查指定日期是否有比赛
 
@@ -126,7 +125,7 @@ def is_match_day(date: Optional[datetime] = None) -> bool:
     return weekday in [5, 6]  # 周六,周日
 
 
-async def get_active_leagues() -> List[str]:
+async def get_active_leagues() -> list[str]:
     """
     获取当前活跃的联赛列表
 

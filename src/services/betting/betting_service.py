@@ -6,10 +6,9 @@ Betting Service - Rewritten Version
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
-
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -19,8 +18,8 @@ class BettingOdds:
     home_win: float
     draw: float
     away_win: float
-    over_under_2_5: Optional[Tuple[float, float]] = None  # (over, under)
-    both_teams_score: Optional[Tuple[float, float]] = None  # (yes, no)
+    over_under_2_5: tuple[float, float] | None = None  # (over, under)
+    both_teams_score: tuple[float, float] | None = None  # (yes, no)
 
 
 @dataclass
@@ -30,8 +29,8 @@ class PredictionProbabilities:
     home_win: float
     draw: float
     away_win: float
-    over_under_2_5: Optional[Tuple[float, float]] = None
-    both_teams_score: Optional[Tuple[float, float]] = None
+    over_under_2_5: tuple[float, float] | None = None
+    both_teams_score: tuple[float, float] | None = None
 
 
 @dataclass
@@ -41,10 +40,10 @@ class EVCalculation:
     ev_home_win: float
     ev_draw: float
     ev_away_win: float
-    ev_over_2_5: Optional[float] = None
-    ev_under_2_5: Optional[float] = None
-    ev_bts_yes: Optional[float] = None
-    ev_bts_no: Optional[float] = None
+    ev_over_2_5: float | None = None
+    ev_under_2_5: float | None = None
+    ev_bts_yes: float | None = None
+    ev_bts_no: float | None = None
     recommendation: str
     confidence: float
 
@@ -58,7 +57,7 @@ class BettingRecommendation:
     odds: float
     probability: float
     ev: float
-    kelly_fraction: Optional[float]
+    kelly_fraction: float | None
     confidence: float
     reasoning: str
     created_at: datetime
@@ -86,7 +85,7 @@ class EVCalculator:
 
         return (actual_prob * odds - 1.0) * 100  # 返回百分比
 
-    def calculate_kelly_fraction(self, ev: float, odds: float) -> Optional[float]:
+    def calculate_kelly_fraction(self, ev: float, odds: float) -> float | None:
         """计算凯利投注比例"""
         if ev <= 0:
             return 0.0
@@ -182,7 +181,7 @@ class BettingRecommendationEngine:
 
     def generate_recommendations(
         self, match_id: str, odds: BettingOdds, probabilities: PredictionProbabilities
-    ) -> List[BettingRecommendation]:
+    ) -> list[BettingRecommendation]:
         """生成投注建议"""
         ev_calc = self.ev_calculator.calculate_match_ev(odds, probabilities)
         recommendations = []
@@ -269,7 +268,7 @@ class BettingRecommendationEngine:
 class BettingService:
     """投注服务主类 - 简化版本"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """初始化投注服务"""
         self.logger = logging.getLogger(f"{__name__}.BettingService")
 
@@ -286,11 +285,11 @@ class BettingService:
         self.recommendation_engine = BettingRecommendationEngine(self.ev_calculator)
 
         # 历史记录
-        self.recommendation_history: List[BettingRecommendation] = []
+        self.recommendation_history: list[BettingRecommendation] = []
 
     async def analyze_match(
-        self, match_id: str, odds_data: Dict[str, Any], prediction_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, match_id: str, odds_data: dict[str, Any], prediction_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """分析单场比赛"""
         try:
             # 转换数据格式
@@ -325,7 +324,7 @@ class BettingService:
             self.logger.error(f"分析比赛 {match_id} 失败: {e}")
             return {"error": str(e)}
 
-    def _parse_odds_data(self, odds_data: Dict[str, Any]) -> Optional[BettingOdds]:
+    def _parse_odds_data(self, odds_data: dict[str, Any]) -> BettingOdds | None:
         """解析赔率数据"""
         try:
             return BettingOdds(
@@ -350,8 +349,8 @@ class BettingService:
             return None
 
     def _parse_prediction_data(
-        self, prediction_data: Dict[str, Any]
-    ) -> Optional[PredictionProbabilities]:
+        self, prediction_data: dict[str, Any]
+    ) -> PredictionProbabilities | None:
         """解析预测数据"""
         try:
             return PredictionProbabilities(
@@ -378,8 +377,8 @@ class BettingService:
             return None
 
     def _generate_analysis_summary(
-        self, ev_calc: EVCalculation, recommendations: List[BettingRecommendation]
-    ) -> Dict[str, Any]:
+        self, ev_calc: EVCalculation, recommendations: list[BettingRecommendation]
+    ) -> dict[str, Any]:
         """生成分析摘要"""
         return {
             "overall_recommendation": ev_calc.recommendation,
@@ -397,7 +396,7 @@ class BettingService:
 
     async def get_recommendations_by_confidence(
         self, min_confidence: float = 0.1, limit: int = 10
-    ) -> List[BettingRecommendation]:
+    ) -> list[BettingRecommendation]:
         """根据置信度获取推荐"""
         filtered = [
             r for r in self.recommendation_history if r.confidence >= min_confidence
@@ -409,8 +408,8 @@ class BettingService:
         return filtered[:limit]
 
     async def calculate_portfolio_performance(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> dict[str, Any]:
         """计算投资组合表现"""
         if not self.recommendation_history:
             return {"error": "没有推荐历史"}
@@ -455,7 +454,7 @@ class BettingService:
             },
         }
 
-    def get_service_stats(self) -> Dict[str, Any]:
+    def get_service_stats(self) -> dict[str, Any]:
         """获取服务统计信息"""
         return {
             "total_recommendations": len(self.recommendation_history),

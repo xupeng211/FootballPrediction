@@ -8,7 +8,6 @@ Advanced Authentication System
 
 import logging
 from datetime import datetime
-from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class AdvancedAuthenticationSystem:
         self.logger = logging.getLogger(__name__)
         self.logger.info("初始化security特性: Advanced Authentication System")
 
-    def process(self, data: Dict) -> Dict:
+    def process(self, data: dict) -> dict:
         """处理数据"""
         result = {
             "status": "success",
@@ -36,7 +35,7 @@ class AdvancedAuthenticationSystem:
         }
         return result
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         """获取状态"""
         return {
             "feature": "Advanced Authentication System",

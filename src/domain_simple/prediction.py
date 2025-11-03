@@ -4,7 +4,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class PredictionType(Enum):
@@ -34,13 +34,13 @@ class Prediction:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         match_id: int = 0,
         user_id: int = 0,
         prediction_type: PredictionType = PredictionType.MATCH_RESULT,
         predicted_value: str = "",
         confidence: float = 0.5,
-        odds: Optional[float] = None,
+        odds: float | None = None,
         stake: float = 1.0,
     ):
         self.id = id
@@ -62,15 +62,15 @@ class Prediction:
         # 时间戳
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
-        self.settled_at: Optional[datetime] = None
+        self.settled_at: datetime | None = None
 
         # 附加信息
         self.reasoning: str = ""
-        self.analysis_data: Dict[str, Any] = {}
+        self.analysis_data: dict[str, Any] = {}
 
         # 兼容性属性
-        self.predicted_home: Optional[int] = None
-        self.predicted_away: Optional[int] = None
+        self.predicted_home: int | None = None
+        self.predicted_away: int | None = None
 
         # 如果 predicted_value 包含比分,解析它
         if ":" in predicted_value:
@@ -174,7 +174,7 @@ class Prediction:
             return 0.0
         return (self.profit_loss / self.stake) * 100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -202,7 +202,7 @@ class Prediction:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Prediction":
+    def from_dict(cls, data: dict[str, Any]) -> "Prediction":
         """从字典创建实例"""
         _prediction = cls(
             id=data.get("id"),

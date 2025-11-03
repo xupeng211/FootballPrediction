@@ -8,7 +8,6 @@
 import logging
 import time
 from datetime import datetime
-from typing import List, Optional, Tuple
 
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -23,7 +22,6 @@ from prometheus_client import (
 from sqlalchemy import text
 
 from src.core.config import get_settings
-
 from src.database.connection import get_async_session
 
 logger = logging.getLogger(__name__)
@@ -46,8 +44,8 @@ class MetricsExporter:
 
     def __init__(
         self,
-        registry: Optional[CollectorRegistry] = None,
-        tables_to_monitor: Optional[List[str]] = None,
+        registry: CollectorRegistry | None = None,
+        tables_to_monitor: list[str] | None = None,
     ):
         """
         初始化指标导出器
@@ -73,7 +71,7 @@ class MetricsExporter:
             "raw_scores_data",
             "data_collection_logs",
         ]
-        self._tables_to_monitor: List[str] = list(tables_to_monitor or default_tables)
+        self._tables_to_monitor: list[str] = list(tables_to_monitor or default_tables)
 
         # 数据采集指标
         self.data_collection_total = self._get_or_create_counter(
@@ -185,7 +183,7 @@ class MetricsExporter:
             }
         )
 
-    def set_tables_to_monitor(self, tables: List[str]) -> None:
+    def set_tables_to_monitor(self, tables: list[str]) -> None:
         """设置需要统计行数的表列表."""
 
         self._tables_to_monitor = list(tables)
@@ -196,7 +194,7 @@ class MetricsExporter:
         collection_type: str,
         success: bool,
         duration: float,
-        error_type: Optional[str] = None,
+        error_type: str | None = None,
         records_count: int = 0,
     ) -> None:
         """
@@ -233,7 +231,7 @@ class MetricsExporter:
         data_type: str,
         success: bool,
         duration: float,
-        error_type: Optional[str] = None,
+        error_type: str | None = None,
         records_processed: int = 1,
     ) -> None:
         """
@@ -315,7 +313,7 @@ class MetricsExporter:
         actual_start_time: datetime,
         duration: float,
         success: bool,
-        failure_reason: Optional[str] = None,
+        failure_reason: str | None = None,
     ) -> None:
         """
         记录调度任务指标
@@ -364,7 +362,7 @@ class MetricsExporter:
                 task_name=task_name, failure_reason="test_failure"
             ).inc()
 
-    def update_table_row_counts(self, table_counts: Optional[dict] = None) -> None:
+    def update_table_row_counts(self, table_counts: dict | None = None) -> None:
         """
         更新数据表行数统计 - 兼容测试接口
 
@@ -479,7 +477,7 @@ class MetricsExporter:
         duration = time.time() - start_time
         logger.debug(f"指标收集耗时: {duration:.2f}秒")
 
-    def get_metrics(self) -> Tuple[str, str]:
+    def get_metrics(self) -> tuple[str, str]:
         """
         获取 Prometheus 格式的指标数据
 
@@ -543,7 +541,7 @@ _metrics_exporter_instance = None
 
 
 def get_metrics_exporter(
-    registry: Optional[CollectorRegistry] = None,
+    registry: CollectorRegistry | None = None,
 ) -> MetricsExporter:
     """
     获取指标导出器实例 - 支持自定义注册表

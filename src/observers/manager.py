@@ -6,9 +6,9 @@ ObserverManager
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class PredictionEvent:
     strategy_name: str
     response_time_ms: float
     success: bool
-    confidence: Optional[float] = None
-    timestamp: Optional[datetime] = None
+    confidence: float | None = None
+    timestamp: datetime | None = None
 
 
 @dataclass
@@ -37,7 +37,7 @@ class CacheEvent:
     cache_name: str
     key: str
     hit: bool
-    timestamp: Optional[datetime] = None
+    timestamp: datetime | None = None
 
 
 @dataclass
@@ -50,7 +50,7 @@ class AlertEvent:
     alert_type: str
     severity: str
     message: str
-    timestamp: Optional[datetime] = None
+    timestamp: datetime | None = None
 
 
 class Subject:
@@ -88,15 +88,15 @@ class PredictionSubject(Subject):
 
     def __init__(self):
         """初始化预测被观察者"""
-        self._predictions: List[PredictionEvent] = []
-        self._observers: List[Observer] = []
+        self._predictions: list[PredictionEvent] = []
+        self._observers: list[Observer] = []
 
     async def record_prediction(
         self,
         strategy_name: str,
         response_time_ms: float,
         success: bool,
-        confidence: Optional[float] = None,
+        confidence: float | None = None,
     ) -> None:
         """记录预测事件"""
         event = PredictionEvent(
@@ -116,7 +116,7 @@ class PredictionSubject(Subject):
             except Exception as e:
                 logger.error(f"观察者更新失败: {e}")
 
-    def get_predictions(self, limit: int = 100) -> List[PredictionEvent]:
+    def get_predictions(self, limit: int = 100) -> list[PredictionEvent]:
         """获取预测记录"""
         return self._predictions[-limit:]
 
@@ -137,8 +137,8 @@ class CacheSubject(Subject):
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._cache_events: List[CacheEvent] = []
-        self._observers: List[Observer] = []
+        self._cache_events: list[CacheEvent] = []
+        self._observers: list[Observer] = []
 
     async def record_cache_hit(
         self, cache_name: str, key: str, hit: bool = True
@@ -157,7 +157,7 @@ class CacheSubject(Subject):
             except Exception as e:
                 logger.error(f"缓存观察者更新失败: {e}")
 
-    def get_cache_events(self, limit: int = 100) -> List[CacheEvent]:
+    def get_cache_events(self, limit: int = 100) -> list[CacheEvent]:
         """获取缓存事件"""
         return self._cache_events[-limit:]
 
@@ -178,8 +178,8 @@ class AlertSubject(Subject):
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._alerts: List[AlertEvent] = []
-        self._observers: List[Observer] = []
+        self._alerts: list[AlertEvent] = []
+        self._observers: list[Observer] = []
 
     async def trigger_alert(self, alert_type: str, severity: str, message: str) -> None:
         """触发告警事件"""
@@ -199,7 +199,7 @@ class AlertSubject(Subject):
             except Exception as e:
                 logger.error(f"告警观察者更新失败: {e}")
 
-    def get_alerts(self, limit: int = 100) -> List[AlertEvent]:
+    def get_alerts(self, limit: int = 100) -> list[AlertEvent]:
         """获取告警记录"""
         return self._alerts[-limit:]
 
@@ -220,7 +220,7 @@ class MetricsObserver(Observer):
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._metrics: Dict[str, Any] = {
+        self._metrics: dict[str, Any] = {
             "total_predictions": 0,
             "successful_predictions": 0,
             "failed_predictions": 0,
@@ -258,7 +258,7 @@ class MetricsObserver(Observer):
         elif isinstance(event_data, AlertEvent):
             self._metrics["total_alerts"] += 1
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取指标"""
         return self._metrics.copy()
 
@@ -273,8 +273,8 @@ class ObserverManager:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._subjects: Dict[str, Subject] = {}
-        self._observers: Dict[str, Observer] = {}
+        self._subjects: dict[str, Subject] = {}
+        self._observers: dict[str, Observer] = {}
         self._initialize_default_subjects()
 
     @classmethod
@@ -299,19 +299,19 @@ class ObserverManager:
         for subject in self._subjects.values():
             subject.add_observer(metrics_observer)
 
-    def get_prediction_subject(self) -> Optional[PredictionSubject]:
+    def get_prediction_subject(self) -> PredictionSubject | None:
         """获取预测被观察者"""
         return self._subjects.get("prediction")
 
-    def get_cache_subject(self) -> Optional[CacheSubject]:
+    def get_cache_subject(self) -> CacheSubject | None:
         """获取缓存被观察者"""
         return self._subjects.get("cache")
 
-    def get_alert_subject(self) -> Optional[AlertSubject]:
+    def get_alert_subject(self) -> AlertSubject | None:
         """获取告警被观察者"""
         return self._subjects.get("alert")
 
-    def get_metrics_observer(self) -> Optional[MetricsObserver]:
+    def get_metrics_observer(self) -> MetricsObserver | None:
         """获取指标观察者"""
         return self._observers.get("metrics")
 
@@ -320,7 +320,7 @@ class ObserverManager:
         strategy_name: str,
         response_time_ms: float,
         success: bool,
-        confidence: Optional[float] = None,
+        confidence: float | None = None,
     ) -> None:
         """记录预测事件"""
         subject = self.get_prediction_subject()
@@ -346,24 +346,24 @@ class ObserverManager:
         if subject:
             await subject.trigger_alert(alert_type, severity, message)
 
-    def get_all_metrics(self) -> Dict[str, Any]:
+    def get_all_metrics(self) -> dict[str, Any]:
         """获取所有指标"""
         metrics_observer = self.get_metrics_observer()
         if metrics_observer:
             return metrics_observer.get_metrics()
         return {}
 
-    def get_subject(self, name: str) -> Optional[Subject]:
+    def get_subject(self, name: str) -> Subject | None:
         """获取被观察者"""
         return self._subjects.get(name)
 
-    def get_observer(self, name: str) -> Optional[Observer]:
+    def get_observer(self, name: str) -> Observer | None:
         """获取观察者"""
         return self._observers.get(name)
 
 
 # 全局观察者管理器实例
-_observer_manager: Optional[ObserverManager] = None
+_observer_manager: ObserverManager | None = None
 
 
 def get_observer_manager() -> ObserverManager:

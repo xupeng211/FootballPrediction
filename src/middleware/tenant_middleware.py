@@ -5,18 +5,18 @@ Multi-Tenant Permission Management Middleware
 提供HTTP层面的多租户权限控制和访问管理.
 """
 
-from typing import Optional, Dict, Any, List, Callable
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 from fastapi import HTTPException, Request, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 from src.database.models.tenant import Tenant
-from src.services.tenant_service import TenantService
 from src.services.auth_service import AuthService
-
+from src.services.tenant_service import TenantService
 
 security = HTTPBearer(auto_error=False)
 
@@ -29,10 +29,10 @@ class TenantContext:
 
     def __init__(
         self,
-        tenant: Optional[Tenant] = None,
-        user_id: Optional[int] = None,
-        permissions: Optional[List[str]] = None,
-        restrictions: Optional[Dict[str, Any]] = None,
+        tenant: Tenant | None = None,
+        user_id: int | None = None,
+        permissions: list[str] | None = None,
+        restrictions: dict[str, Any] | None = None,
     ):
         self.tenant = tenant
         self.user_id = user_id
@@ -40,11 +40,11 @@ class TenantContext:
         self.restrictions = restrictions or {}
 
     @property
-    def tenant_id(self) -> Optional[int]:
+    def tenant_id(self) -> int | None:
         return self.tenant.id if self.tenant else None
 
     @property
-    def tenant_slug(self) -> Optional[str]:
+    def tenant_slug(self) -> str | None:
         return self.tenant.slug if self.tenant else None
 
     @property
@@ -116,7 +116,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 detail="内部服务器错误",
             ) from e
 
-    async def _extract_tenant(self, request: Request) -> Optional[Tenant]:
+    async def _extract_tenant(self, request: Request) -> Tenant | None:
         """
         从请求中提取租户信息
 
@@ -175,7 +175,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
     async def _extract_user_context(
         self, request: Request, tenant: Tenant
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         从请求中提取用户上下文
         """
@@ -185,7 +185,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         authorization = request.headers.get("Authorization")
         if authorization:
             try:
-                credentials: Optional[HTTPAuthorizationCredentials] = await security(
+                credentials: HTTPAuthorizationCredentials | None = await security(
                     request
                 )
                 if credentials:
@@ -236,7 +236,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
 
 def require_permission(
-    permission_code: str, resource_context: Optional[Dict[str, Any]] = None
+    permission_code: str, resource_context: dict[str, Any] | None = None
 ):
     """
     权限检查装饰器
@@ -266,7 +266,7 @@ def require_permission(
                     detail="无法获取请求上下文",
                 )
 
-            tenant_context: Optional[TenantContext] = getattr(
+            tenant_context: TenantContext | None = getattr(
                 request.state, "tenant_context", None
             )
             if not tenant_context or not tenant_context.is_authenticated:
@@ -332,7 +332,7 @@ def require_tenant_role(role_code: str):
                     detail="无法获取请求上下文",
                 )
 
-            tenant_context: Optional[TenantContext] = getattr(
+            tenant_context: TenantContext | None = getattr(
                 request.state, "tenant_context", None
             )
             if not tenant_context or not tenant_context.is_authenticated:
@@ -400,7 +400,7 @@ def check_resource_quota(resource_type: str, amount: int = 1):
                     detail="无法获取请求上下文",
                 )
 
-            tenant_context: Optional[TenantContext] = getattr(
+            tenant_context: TenantContext | None = getattr(
                 request.state, "tenant_context", None
             )
             if not tenant_context or not tenant_context.is_authenticated:
@@ -436,18 +436,18 @@ def check_resource_quota(resource_type: str, amount: int = 1):
 # ==================== 辅助函数 ====================
 
 
-def get_tenant_context(request: Request) -> Optional[TenantContext]:
+def get_tenant_context(request: Request) -> TenantContext | None:
     """从请求中获取租户上下文"""
     return getattr(request.state, "tenant_context", None)
 
 
-def get_current_tenant(request: Request) -> Optional[Tenant]:
+def get_current_tenant(request: Request) -> Tenant | None:
     """获取当前租户"""
     tenant_context = get_tenant_context(request)
     return tenant_context.tenant if tenant_context else None
 
 
-def get_current_user_id(request: Request) -> Optional[int]:
+def get_current_user_id(request: Request) -> int | None:
     """获取当前用户ID"""
     tenant_context = get_tenant_context(request)
     return tenant_context.user_id if tenant_context else None
