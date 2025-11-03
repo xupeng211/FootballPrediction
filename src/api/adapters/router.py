@@ -11,6 +11,7 @@ Provides API endpoints for adapter management, football data retrieval, and demo
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 import logging
+from fastapi import APIRouter, Query
 
 from src.adapters import AdapterRegistry, AdapterFactory
 
