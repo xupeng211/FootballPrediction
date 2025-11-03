@@ -1,98 +1,31 @@
-# Prometheus生产环境配置
-# Prometheus Production Configuration
-
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# 告警规则文件
 rule_files:
   - "alert_rules.yml"
-  - "recording_rules.yml"
 
-# 告警管理器配置
+scrape_configs:
+  - job_name: 'footballprediction-app'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['db:5432']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
           - alertmanager:9093
-
-# 抓取配置
-scrape_configs:
-  # Prometheus自监控
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
-  # Nginx监控
-  - job_name: 'nginx'
-    static_configs:
-      - targets: ['nginx:9113']
-    scrape_interval: 10s
-    metrics_path: /metrics
-    scheme: http
-
-  # 主应用监控
-  - job_name: 'football-app'
-    static_configs:
-      - targets: ['football-app-prod:8000']
-    scrape_interval: 15s
-    metrics_path: /metrics
-    scheme: http
-
-  # PostgreSQL监控
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres-exporter:9187']
-    scrape_interval: 30s
-
-  # Redis监控
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['redis-exporter:9121']
-    scrape_interval: 30s
-
-  # Node Exporter（系统监控）
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-    scrape_interval: 30s
-
-  # Docker容器监控
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
-    scrape_interval: 30s
-
-  # Celery监控（通过Flower）
-  - job_name: 'celery'
-    static_configs:
-      - targets: ['football-flower-prod:5555']
-    scrape_interval: 30s
-    metrics_path: /metrics
-    scheme: http
-
-  # Blackbox监控（网站可用性）
-  - job_name: 'blackbox'
-    metrics_path: /probe
-    params:
-      module: [http_2xx]
-    static_configs:
-      - targets:
-        - http://football-app-prod:8000/health
-        - https://football-prediction.com/health
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
-      - target_label: __address__
-        replacement: blackbox-exporter:9115
-
-  # 自定义业务指标
-  - job_name: 'business-metrics'
-    static_configs:
-      - targets: ['football-app-prod:8000']
-    scrape_interval: 60s
-    metrics_path: /business/metrics
-    scheme: http
