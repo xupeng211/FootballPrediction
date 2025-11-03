@@ -61,6 +61,22 @@ class AdapterNames:
 # 预定义的适配器名称
 # TODO: 方法 def create_adapter 过长(46行)，建议拆分
 # 全局工厂实例
+) -> Adapter:
+# 预定义的适配器名称
+# TODO: 方法 def create_adapter 过长(46行)，建议拆分
+# 全局工厂实例
+) -> Adapter:
+# 预定义的适配器名称
+# TODO: 方法 def create_adapter 过长(46行)，建议拆分
+# 全局工厂实例
+) -> Adapter:
+# 预定义的适配器名称
+# TODO: 方法 def create_adapter 过长(46行)，建议拆分
+# 全局工厂实例
+) -> Adapter:
+# 预定义的适配器名称
+# TODO: 方法 def create_adapter 过长(46行)，建议拆分
+# 全局工厂实例
 def get_adapter(
     """TODO: 添加函数文档"""
     name: str,

@@ -1,0 +1,143 @@
+{
+  "phase": 2,
+  "title": "P1-高优先级: 扩展单元测试覆盖",
+  "github_issue": 210,
+  "target": "50个测试用例",
+  "expansion_plan": {
+    "core_modules": {
+      "domain": {
+        "priority": "P0",
+        "current_tests": 10,
+        "target_tests": 20,
+        "modules": [
+          "test_events.py (已完成)",
+          "test_models.py",
+          "test_services.py"
+        ],
+        "actions": [
+          "修复domain模块测试错误",
+          "增加领域模型测试用例",
+          "扩展领域服务测试覆盖"
+        ]
+      },
+      "services": {
+        "priority": "P0",
+        "current_tests": 10,
+        "target_tests": 15,
+        "modules": [
+          "test_content_analysis.py (已完成)",
+          "test_prediction_service.py",
+          "test_monitoring_service.py"
+        ],
+        "actions": [
+          "修复services模块导入错误",
+          "完善服务层测试用例",
+          "添加异步服务测试"
+        ]
+      },
+      "utils": {
+        "priority": "P1",
+        "current_tests": 6,
+        "target_tests": 10,
+        "modules": [
+          "test_dict_utils.py",
+          "test_string_utils.py",
+          "test_time_utils.py"
+        ],
+        "actions": [
+          "修复utils测试逻辑错误",
+          "扩展工具函数测试覆盖",
+          "添加边界条件测试"
+        ]
+      },
+      "api": {
+        "priority": "P1",
+        "current_tests": 5,
+        "target_tests": 5,
+        "modules": [
+          "test_api_endpoint.py",
+          "test_data_extended.py",
+          "test_features_new.py"
+        ],
+        "actions": [
+          "确保API测试稳定性",
+          "修复API端点测试错误",
+          "验证API响应测试"
+        ]
+      }
+    }
+  },
+  "implementation_steps": [
+    {
+      "step": 1,
+      "title": "修复现有测试错误",
+      "target": "将16个错误减少到5个以内",
+      "modules": [
+        "domain",
+        "services",
+        "utils"
+      ],
+      "estimated_time": "2-3小时"
+    },
+    {
+      "step": 2,
+      "title": "扩展核心模块测试",
+      "target": "domain+services模块达到30个测试",
+      "focus": [
+        "test_models.py",
+        "test_prediction_service.py"
+      ],
+      "estimated_time": "3-4小时"
+    },
+    {
+      "step": 3,
+      "title": "完善工具模块测试",
+      "target": "utils模块达到10个测试",
+      "focus": [
+        "test_dict_utils.py",
+        "test_string_utils.py"
+      ],
+      "estimated_time": "2-3小时"
+    },
+    {
+      "step": 4,
+      "title": "生成智能测试用例",
+      "target": "使用智能工具生成15个测试",
+      "tools": [
+        "create_service_tests.py",
+        "create_api_tests.py"
+      ],
+      "estimated_time": "2-3小时"
+    },
+    {
+      "step": 5,
+      "title": "验证和优化",
+      "target": "确保50个测试稳定通过",
+      "actions": [
+        "运行完整测试套件",
+        "优化测试性能"
+      ],
+      "estimated_time": "1-2小时"
+    }
+  ],
+  "success_metrics": {
+    "quantitative": [
+      "测试通过数量: 11 → 50",
+      "单元测试错误: 16 → <5",
+      "覆盖率: 6.06% → 15-20%",
+      "测试执行时间: <3分钟"
+    ],
+    "qualitative": [
+      "核心模块测试覆盖率>50%",
+      "所有domain模块测试可执行",
+      "服务层测试基础架构完善",
+      "工具模块测试边界条件覆盖"
+    ]
+  },
+  "risk_mitigation": [
+    "测试生成工具兼容性问题",
+    "异步测试执行稳定性",
+    "测试依赖注入配置",
+    "测试数据管理复杂性"
+  ]
+}
