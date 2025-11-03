@@ -144,8 +144,9 @@ class DIContainer:
         )
 
         self._services[interface] = descriptor
+        impl_name = implementation.__name__ if hasattr(implementation, '__name__') else str(implementation)
         logger.debug(
-            f"注册服务: {interface.__name__} -> {implementation.__name__ if implementation else 'Factory'}"
+            f"注册服务: {interface.__name__} -> {impl_name if implementation else 'Factory'}"
         )
 
         return self

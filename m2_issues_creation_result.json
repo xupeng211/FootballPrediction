@@ -1,0 +1,206 @@
+{
+  "milestone": {
+    "title": "M2: 50% Coverage Target",
+    "description": "Achieve 50% code coverage through systematic testing across 4 phases",
+    "due_date": "2025-12-01"
+  },
+  "created_issues": 1,
+  "skipped_issues": 1,
+  "failed_issues": 18,
+  "total_issues": 20,
+  "success_rate": 10.0,
+  "created_at": "2025-11-03T23:07:59.906378",
+  "created": [
+    {
+      "number": 213,
+      "title": "[M2-P1-01] 扩展core.di模块依赖注入测试",
+      "url": "https://github.com/xupeng211/FootballPrediction/issues/213"
+    }
+  ],
+  "skipped": [
+    {
+      "number": 214,
+      "title": "[M2-P1-05] 完善测试工具链和报告自动化",
+      "url": "https://github.com/xupeng211/FootballPrediction/issues/214"
+    }
+  ],
+  "failed": [
+    {
+      "title": "[M2-P1-02] 完善core.config_di配置管理测试",
+      "labels": [
+        "M2-P1",
+        "core",
+        "testing",
+        "configuration",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P1-03] 优化core.service_lifecycle生命周期测试",
+      "labels": [
+        "M2-P1",
+        "core",
+        "testing",
+        "lifecycle",
+        "medium-priority"
+      ]
+    },
+    {
+      "title": "[M2-P1-04] 扩展core.auto_binding自动绑定测试",
+      "labels": [
+        "M2-P1",
+        "core",
+        "testing",
+        "auto-binding",
+        "medium-priority"
+      ]
+    },
+    {
+      "title": "[M2-P2-01] 实现api.auth认证系统测试",
+      "labels": [
+        "M2-P2",
+        "api",
+        "auth",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P2-02] 建立api.predictions预测服务测试",
+      "labels": [
+        "M2-P2",
+        "api",
+        "predictions",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P2-03] 实现API集成测试套件",
+      "labels": [
+        "M2-P2",
+        "api",
+        "integration",
+        "testing",
+        "medium-priority"
+      ]
+    },
+    {
+      "title": "[M2-P2-04] 建立Mock数据和服务系统",
+      "labels": [
+        "M2-P2",
+        "mock",
+        "testing",
+        "data",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P2-05] 完善API文档和测试报告",
+      "labels": [
+        "M2-P2",
+        "api",
+        "documentation",
+        "reporting",
+        "medium-priority"
+      ]
+    },
+    {
+      "title": "[M2-P3-01] 数据库操作测试",
+      "labels": [
+        "M2-P3",
+        "database",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P3-02] 数据模型验证测试",
+      "labels": [
+        "M2-P3",
+        "database",
+        "models",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P3-03] 业务规则测试",
+      "labels": [
+        "M2-P3",
+        "domain",
+        "business-rules",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P3-04] ML模型测试",
+      "labels": [
+        "M2-P3",
+        "ml",
+        "models",
+        "testing",
+        "medium-priority"
+      ]
+    },
+    {
+      "title": "[M2-P3-05] 集成测试完善",
+      "labels": [
+        "M2-P3",
+        "integration",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P4-01] 领域服务测试",
+      "labels": [
+        "M2-P4",
+        "domain",
+        "services",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P4-02] 策略模式测试",
+      "labels": [
+        "M2-P4",
+        "domain",
+        "strategies",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P4-03] 事件驱动测试",
+      "labels": [
+        "M2-P4",
+        "domain",
+        "events",
+        "testing",
+        "medium-priority"
+      ]
+    },
+    {
+      "title": "[M2-P4-04] CQRS模式测试",
+      "labels": [
+        "M2-P4",
+        "cqrs",
+        "testing",
+        "high-priority"
+      ]
+    },
+    {
+      "title": "[M2-P4-05] 系统集成和性能优化",
+      "labels": [
+        "M2-P4",
+        "integration",
+        "performance",
+        "testing",
+        "high-priority"
+      ]
+    }
+  ]
+}
