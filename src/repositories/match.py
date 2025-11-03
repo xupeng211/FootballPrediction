@@ -7,7 +7,7 @@ Match Repository - Rewritten Version
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,7 +41,7 @@ class MatchRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List["Match"]:
+    async def get_all(self, query_spec: QuerySpec | None = None) -> list["Match"]:
         """获取所有比赛"""
         query = select(self.model_class)
 
@@ -51,7 +51,7 @@ class MatchRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def create(self, match_data: Dict[str, Any]) -> "Match":
+    async def create(self, match_data: dict[str, Any]) -> "Match":
         """创建比赛"""
         match = self.model_class(
             home_team_id=match_data["home_team_id"],
@@ -71,7 +71,7 @@ class MatchRepository(BaseRepository):
         return match
 
     async def update(
-        self, match_id: int, update_data: Dict[str, Any]
+        self, match_id: int, update_data: dict[str, Any]
     ) -> Optional["Match"]:
         """更新比赛"""
         update_data["updated_at"] = datetime.utcnow()
@@ -97,22 +97,22 @@ class MatchRepository(BaseRepository):
         return False
 
     async def find_by_team(
-        self, team_id: int, limit: Optional[int] = None
-    ) -> List["Match"]:
+        self, team_id: int, limit: int | None = None
+    ) -> list["Match"]:
         """根据球队ID查找比赛"""
         filters = {"$or": [{"home_team_id": team_id}, {"away_team_id": team_id}]}
         return await self.find_by_filters(filters, limit)
 
     async def find_by_status(
-        self, status: MatchStatus, limit: Optional[int] = None
-    ) -> List["Match"]:
+        self, status: MatchStatus, limit: int | None = None
+    ) -> list["Match"]:
         """根据状态查找比赛"""
         filters = {"status": status}
         return await self.find_by_filters(filters, limit)
 
     async def find_upcoming_matches(
         self, days: int = 7, limit: int = 50
-    ) -> List["Match"]:
+    ) -> list["Match"]:
         """查找即将到来的比赛"""
         start_time = datetime.utcnow()
         end_time = start_time + timedelta(days=days)
@@ -127,14 +127,14 @@ class MatchRepository(BaseRepository):
 
         return await self.get_all(query_spec)
 
-    async def find_live_matches(self) -> List["Match"]:
+    async def find_live_matches(self) -> list["Match"]:
         """查找正在进行的比赛"""
         filters = {"status": MatchStatus.LIVE}
         return await self.find_by_filters(filters)
 
     async def find_recent_finished_matches(
         self, days: int = 7, limit: int = 50
-    ) -> List["Match"]:
+    ) -> list["Match"]:
         """查找最近结束的比赛"""
         start_time = datetime.utcnow() - timedelta(days=days)
 
@@ -205,8 +205,8 @@ class MatchRepository(BaseRepository):
         self,
         start_date: datetime,
         end_date: datetime,
-        status: Optional[MatchStatus] = None,
-    ) -> List["Match"]:
+        status: MatchStatus | None = None,
+    ) -> list["Match"]:
         """根据日期范围获取比赛"""
         filters = {"match_time": {"$gte": start_date, "$lte": end_date}}
 
@@ -217,7 +217,7 @@ class MatchRepository(BaseRepository):
 
     async def get_head_to_head_matches(
         self, team1_id: int, team2_id: int, limit: int = 10
-    ) -> List["Match"]:
+    ) -> list["Match"]:
         """获取两支球队的历史交锋记录"""
         filters = {
             "$or": [
@@ -231,7 +231,7 @@ class MatchRepository(BaseRepository):
 
         return await self.get_all(query_spec)
 
-    async def count_matches_by_status(self) -> Dict[str, int]:
+    async def count_matches_by_status(self) -> dict[str, int]:
         """统计各种状态的比赛数量"""
         result = {}
         for status in MatchStatus:
@@ -239,7 +239,7 @@ class MatchRepository(BaseRepository):
             result[status.value] = count
         return result
 
-    async def bulk_create(self, matches_data: List[Dict[str, Any]]) -> List["Match"]:
+    async def bulk_create(self, matches_data: list[dict[str, Any]]) -> list["Match"]:
         """批量创建比赛"""
         matches = []
         for match_data in matches_data:

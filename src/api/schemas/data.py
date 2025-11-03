@@ -1,11 +1,9 @@
-from typing import List
-from typing import Optional
-
 """
 数据集成相关的Pydantic模型
 """
 
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -16,10 +14,10 @@ class DataCollectionRequest(BaseModel):
     days_ahead: int = Field(30, ge=1, le=365, description="向前收集的天数")
     force_refresh: bool = Field(False, description="是否强制刷新缓存")
     data_source: str = Field("mock", description="数据源名称")
-    team_name: Optional[str] = Field(
+    team_name: str | None = Field(
         None, description="球队名称（当collection_type为team时）"
     )
-    league_name: Optional[str] = Field(
+    league_name: str | None = Field(
         None, description="联赛名称（当collection_type为league时）"
     )
 
@@ -38,11 +36,11 @@ class DataCollectionResponse(BaseModel):
 class DataSourceStatusResponse(BaseModel):
     """数据源状态响应模型"""
 
-    available_sources: List[str] = Field(..., description="可用的数据源列表")
+    available_sources: list[str] = Field(..., description="可用的数据源列表")
     primary_source: str = Field(..., description="主要数据源")
     database_matches: int = Field(..., description="数据库中的比赛数量")
     database_teams: int = Field(..., description="数据库中的球队数量")
-    last_update: Optional[str] = Field(None, description="最后更新时间")
+    last_update: str | None = Field(None, description="最后更新时间")
     is_healthy: bool = Field(..., description="数据源是否健康")
 
 
@@ -55,9 +53,9 @@ class MatchResponse(BaseModel):
     match_date: datetime = Field(..., description="比赛时间")
     league: str = Field(..., description="联赛名称")
     status: str = Field(..., description="比赛状态")
-    home_score: Optional[int] = Field(None, description="主队得分")
-    away_score: Optional[int] = Field(None, description="客队得分")
-    venue: Optional[str] = Field(None, description="比赛场地")
+    home_score: int | None = Field(None, description="主队得分")
+    away_score: int | None = Field(None, description="客队得分")
+    venue: str | None = Field(None, description="比赛场地")
 
 
 class TeamResponse(BaseModel):
@@ -65,9 +63,9 @@ class TeamResponse(BaseModel):
 
     id: int = Field(..., description="球队ID")
     name: str = Field(..., description="球队名称")
-    short_name: Optional[str] = Field(None, description="简称")
-    venue: Optional[str] = Field(None, description="主场")
-    website: Optional[str] = Field(None, description="官网")
+    short_name: str | None = Field(None, description="简称")
+    venue: str | None = Field(None, description="主场")
+    website: str | None = Field(None, description="官网")
 
 
 class DataSourceTestResponse(BaseModel):
@@ -78,7 +76,7 @@ class DataSourceTestResponse(BaseModel):
     test_matches: int = Field(..., description="测试获取的比赛数量")
     test_teams: int = Field(..., description="测试获取的球队数量")
     message: str = Field(..., description="测试结果消息")
-    error: Optional[str] = Field(None, description="错误信息")
+    error: str | None = Field(None, description="错误信息")
 
 
 class DataStatsResponse(BaseModel):

@@ -4,17 +4,17 @@ Data Sync Service for Football-Data.org API
 """
 
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta
+from typing import Any
 
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, delete
 
+from src.cache.redis_manager import RedisManager
 from src.collectors.match_collector import MatchCollector
 from src.models.external.match import ExternalMatch
-from src.cache.redis_manager import RedisManager
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class DataSyncService:
     """数据同步服务"""
 
-    def __init__(self, database_url: Optional[str] = None):
+    def __init__(self, database_url: str | None = None):
         self.database_url = database_url or os.getenv(
             "DATABASE_URL",
             "postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
@@ -68,7 +68,7 @@ class DataSyncService:
         await self.collector.__aexit__(exc_type, exc_val, exc_tb)
         await self.close()
 
-    async def sync_all_data(self) -> Dict[str, Any]:
+    async def sync_all_data(self) -> dict[str, Any]:
         """
         同步所有数据
 
@@ -112,7 +112,7 @@ class DataSyncService:
 
         return results
 
-    async def sync_upcoming_matches(self, days_ahead: int = 7) -> Dict[str, int]:
+    async def sync_upcoming_matches(self, days_ahead: int = 7) -> dict[str, int]:
         """
         同步即将开始的比赛
 
@@ -159,7 +159,7 @@ class DataSyncService:
 
         return result
 
-    async def sync_recent_matches(self, days_back: int = 7) -> Dict[str, int]:
+    async def sync_recent_matches(self, days_back: int = 7) -> dict[str, int]:
         """
         同步最近的比赛结果
 
@@ -207,7 +207,7 @@ class DataSyncService:
         return result
 
     async def _process_match(
-        self, session: AsyncSession, match_data: Dict[str, Any]
+        self, session: AsyncSession, match_data: dict[str, Any]
     ) -> ExternalMatch:
         """
         处理单个比赛数据
@@ -243,7 +243,7 @@ class DataSyncService:
 
     async def get_matches_by_status(
         self, status: str, limit: int = 50
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         根据状态获取比赛
 
@@ -287,7 +287,7 @@ class DataSyncService:
             logger.error(f"Failed to get matches by status {status}: {e}")
             return []
 
-    async def get_upcoming_matches(self, limit: int = 20) -> List[Dict[str, Any]]:
+    async def get_upcoming_matches(self, limit: int = 20) -> list[dict[str, Any]]:
         """
         获取即将开始的比赛
 
@@ -331,7 +331,7 @@ class DataSyncService:
 
     async def get_recent_finished_matches(
         self, limit: int = 20
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         获取最近已结束的比赛
 
@@ -403,7 +403,7 @@ class DataSyncService:
             logger.error(f"Failed to cleanup old matches: {e}")
             return 0
 
-    async def get_sync_statistics(self) -> Dict[str, Any]:
+    async def get_sync_statistics(self) -> dict[str, Any]:
         """
         获取同步统计信息
 

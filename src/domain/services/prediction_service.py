@@ -8,7 +8,7 @@ Handles complex business logic related to predictions.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.domain.events.prediction_events import (
     PredictionCancelledEvent,
@@ -32,7 +32,7 @@ class PredictionDomainService:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._events: List[Any] = []
+        self._events: list[Any] = []
 
     def create_prediction(
         self,
@@ -40,8 +40,8 @@ class PredictionDomainService:
         match: Match,
         predicted_home: int,
         predicted_away: int,
-        confidence: Optional[float] = None,
-        notes: Optional[str] = None,
+        confidence: float | None = None,
+        notes: str | None = None,
     ) -> Prediction:
         """创建预测"""
         # 验证比赛状态
@@ -97,8 +97,8 @@ class PredictionDomainService:
         prediction: Prediction,
         new_predicted_home: int,
         new_predicted_away: int,
-        new_confidence: Optional[float] = None,
-        new_notes: Optional[str] = None,
+        new_confidence: float | None = None,
+        new_notes: str | None = None,
     ) -> None:
         """更新预测"""
         # 验证预测状态
@@ -136,7 +136,7 @@ class PredictionDomainService:
         prediction: Prediction,
         actual_home: int,
         actual_away: int,
-        scoring_rules: Optional[Dict[str, Any]] = None,
+        scoring_rules: dict[str, Any] | None = None,
     ) -> None:
         """评估预测"""
         if prediction.status != PredictionStatus.PENDING:
@@ -227,9 +227,9 @@ class PredictionDomainService:
 
     def calculate_prediction_confidence(
         self,
-        user_history: Dict[str, Any],
+        user_history: dict[str, Any],
         match重要性: float,
-        team_form_diff: Optional[float] = None,
+        team_form_diff: float | None = None,
     ) -> float:
         """计算预测信心度"""
         base_confidence = 0.5
@@ -254,7 +254,7 @@ class PredictionDomainService:
         prediction: Prediction,
         user_predictions_today: int,
         max_predictions_per_day: int = 10,
-    ) -> List[str]:
+    ) -> list[str]:
         """验证预测规则"""
         errors = []
 
@@ -281,7 +281,7 @@ class PredictionDomainService:
 
         return errors
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """获取领域事件"""
         return self._events.copy()
 

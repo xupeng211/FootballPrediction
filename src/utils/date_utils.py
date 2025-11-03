@@ -6,7 +6,7 @@
 
 from datetime import date, datetime, timedelta
 from functools import lru_cache
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 
 class DateUtils:
@@ -35,7 +35,7 @@ class DateUtils:
             return ""
 
     @staticmethod
-    def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> Optional[datetime]:
+    def parse_date(date_str: str, format_str: str = "%Y-%m-%d") -> datetime | None:
         """解析日期字符串"""
         if not isinstance(date_str, str):
             return None
@@ -80,7 +80,7 @@ class DateUtils:
         return not DateUtils.is_weekend(dt)
 
     @staticmethod
-    def get_age(birth_date: Union[datetime, date]) -> int:
+    def get_age(birth_date: datetime | date) -> int:
         """计算年龄"""
         if isinstance(birth_date, datetime):
             birth_date = birth_date.date()
@@ -146,7 +146,7 @@ class DateUtils:
         return dt + timedelta(hours=timezone_offset)
 
     @staticmethod
-    def get_holiday_info(dt: datetime) -> Dict[str, Any]:
+    def get_holiday_info(dt: datetime) -> dict[str, Any]:
         """获取节假日信息（简化版本）"""
         # 这里简化处理，实际项目中应该使用节假日库
         date_str = dt.strftime("%m-%d")

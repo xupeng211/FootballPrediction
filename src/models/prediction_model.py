@@ -10,7 +10,7 @@ Temporary implementation to resolve import errors.
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import joblib
 import numpy as np
@@ -65,7 +65,7 @@ class PredictionModel:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.is_trained = False
         self.model = None
-        self.feature_columns: List[str] = []
+        self.feature_columns: list[str] = []
         self.target_column = "result"
         self.metadata = {
             "created_at": datetime.now().isoformat(),
@@ -74,7 +74,7 @@ class PredictionModel:
         }
         self.logger.info(f"PredictionModel initialized: {model_name}")
 
-    def train(self, X: pd.DataFrame, y: pd.Series, **kwargs) -> Dict[str, Any]:
+    def train(self, X: pd.DataFrame, y: pd.Series, **kwargs) -> dict[str, Any]:
         """
         训练模型
 
@@ -156,7 +156,7 @@ class PredictionModel:
 
         return proba
 
-    def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
+    def evaluate(self, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
         """
         评估模型
 
@@ -237,7 +237,7 @@ class PredictionModel:
             self.logger.error(f"Failed to load model: {e}")
             return False
 
-    def get_feature_importance(self) -> Dict[str, float]:
+    def get_feature_importance(self) -> dict[str, float]:
         """
         获取特征重要性
 
@@ -256,7 +256,7 @@ class PredictionModel:
 
         return importance
 
-    def explain_prediction(self, X: pd.DataFrame) -> Dict[str, Any]:
+    def explain_prediction(self, X: pd.DataFrame) -> dict[str, Any]:
         """
         解释预测结果
 
@@ -304,8 +304,8 @@ class FootballPredictionModel(PredictionModel):
         self.target_classes = ["home_win", "draw", "away_win"]
 
     def predict_match(
-        self, home_team: str, away_team: str, features: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, home_team: str, away_team: str, features: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         预测比赛结果
 
@@ -339,7 +339,7 @@ class FootballPredictionModel(PredictionModel):
 
         return result
 
-    def batch_predict(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def batch_predict(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         批量预测
 
@@ -362,7 +362,7 @@ class FootballPredictionModel(PredictionModel):
 
 
 # 模型注册表
-_model_registry: Dict[str, PredictionModel] = {}
+_model_registry: dict[str, PredictionModel] = {}
 
 
 def register_model(model: PredictionModel) -> None:
@@ -371,12 +371,12 @@ def register_model(model: PredictionModel) -> None:
     logging.getLogger(__name__).info(f"Model registered: {model.model_name}")
 
 
-def get_model(model_name: str) -> Optional[PredictionModel]:
+def get_model(model_name: str) -> PredictionModel | None:
     """获取模型"""
     return _model_registry.get(model_name)
 
 
-def list_models() -> List[str]:
+def list_models() -> list[str]:
     """列出所有模型"""
     return list(_model_registry.keys())
 

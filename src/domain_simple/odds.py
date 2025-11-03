@@ -4,7 +4,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class MarketType(Enum):
@@ -82,13 +82,13 @@ class Odds:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         match_id: int = 0,
         market_type: MarketType = MarketType.MATCH_RESULT,
         bookmaker: str = "",
-        home_odds: Optional[float] = None,
-        draw_odds: Optional[float] = None,
-        away_odds: Optional[float] = None,
+        home_odds: float | None = None,
+        draw_odds: float | None = None,
+        away_odds: float | None = None,
     ):
         self.id = id
         self.match_id = match_id
@@ -101,14 +101,14 @@ class Odds:
         self.away_odds = away_odds
 
         # 扩展赔率（用于其他市场）
-        self.over_odds: Optional[float] = None
-        self.under_odds: Optional[float] = None
-        self.handicap: Optional[float] = None
-        self.handicap_home_odds: Optional[float] = None
-        self.handicap_away_odds: Optional[float] = None
+        self.over_odds: float | None = None
+        self.under_odds: float | None = None
+        self.handicap: float | None = None
+        self.handicap_home_odds: float | None = None
+        self.handicap_away_odds: float | None = None
 
         # 历史变化
-        self.movements: List[OddsMovement] = []
+        self.movements: list[OddsMovement] = []
 
         # 状态
         self.is_active = True
@@ -117,13 +117,13 @@ class Odds:
         # 时间戳
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
-        self.last_movement: Optional[datetime] = None
+        self.last_movement: datetime | None = None
 
     def update_odds(
         self,
-        home_odds: Optional[float] = None,
-        draw_odds: Optional[float] = None,
-        away_odds: Optional[float] = None,
+        home_odds: float | None = None,
+        draw_odds: float | None = None,
+        away_odds: float | None = None,
     ) -> None:
         """更新赔率"""
         # 记录变化
@@ -153,7 +153,7 @@ class Odds:
         self.updated_at = datetime.now()
         self.last_movement = datetime.now()
 
-    def get_implied_probability(self) -> Dict[str, float]:
+    def get_implied_probability(self) -> dict[str, float]:
         """获取隐含概率"""
         probabilities = {}
 
@@ -177,7 +177,7 @@ class Odds:
             return total_prob - 100
         return 0.0
 
-    def get_true_probability(self) -> Dict[str, float]:
+    def get_true_probability(self) -> dict[str, float]:
         """获取真实概率（去除抽水）"""
         implied = self.get_implied_probability()
         vig = self.get_vig_percentage()
@@ -193,8 +193,8 @@ class Odds:
         return adjusted
 
     def find_value_bets(
-        self, predicted_probs: Dict[str, float], threshold: float = 1.0
-    ) -> List[ValueBet]:
+        self, predicted_probs: dict[str, float], threshold: float = 1.0
+    ) -> list[ValueBet]:
         """寻找价值投注"""
         value_bets = []
 
@@ -221,7 +221,7 @@ class Odds:
 
         return value_bets
 
-    def convert_format(self, target_format: OddsFormat) -> Dict[str, float]:
+    def convert_format(self, target_format: OddsFormat) -> dict[str, float]:
         """转换赔率格式"""
         result = {}
 
@@ -285,12 +285,12 @@ class Odds:
         self.is_active = True
         self.updated_at = datetime.now()
 
-    def get_recent_movements(self, hours: int = 24) -> List[OddsMovement]:
+    def get_recent_movements(self, hours: int = 24) -> list[OddsMovement]:
         """获取最近的赔率变化"""
         cutoff = datetime.now().timestamp() - (hours * 3600)
         return [m for m in self.movements if m.timestamp.timestamp() > cutoff]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -317,7 +317,7 @@ class Odds:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Odds":
+    def from_dict(cls, data: dict[str, Any]) -> "Odds":
         """从字典创建实例"""
         odds = cls(
             id=data.get("id"),

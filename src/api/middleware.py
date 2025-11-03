@@ -10,7 +10,8 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -62,7 +63,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.calls = calls
         self.period = period
-        self.clients: Dict[str, list] = {}
+        self.clients: dict[str, list] = {}
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         client_ip = request.client.host
@@ -172,7 +173,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         cache_timeout: int = 300,  # TODO: 将魔法数字 300 提取为常量
     ):  # TODO: 将魔法数字 300 提取为常量
         super().__init__(app)
-        self.cache: Dict[str, Dict[str, Any]] = {}
+        self.cache: dict[str, dict[str, Any]] = {}
         self.cache_timeout = cache_timeout
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

@@ -1,5 +1,3 @@
-from typing import Optional
-from typing import Dict
 from typing import Any
 
 """
@@ -13,11 +11,12 @@ Provides HTTP API endpoints for real-time match status functionality
 
 import logging
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from .match_service import get_realtime_match_service, MatchStatus
 from .manager import get_websocket_manager
+from .match_service import MatchStatus, get_realtime_match_service
 
 router = APIRouter(prefix="/matches", tags=["realtime-matches"])
 logger = logging.getLogger(__name__)
@@ -36,11 +35,11 @@ class MatchInfo(BaseModel):
     away_team: str = Field(..., description="客队")
     league: str = Field(..., description="联赛")
     status: str = Field(..., description="比赛状态")
-    home_score: Optional[int] = Field(None, description="主队得分")
-    away_score: Optional[int] = Field(None, description="客队得分")
-    minute: Optional[int] = Field(None, description="比赛分钟")
-    start_time: Optional[str] = Field(None, description="开始时间")
-    last_update: Optional[str] = Field(None, description="最后更新时间")
+    home_score: int | None = Field(None, description="主队得分")
+    away_score: int | None = Field(None, description="客队得分")
+    minute: int | None = Field(None, description="比赛分钟")
+    start_time: str | None = Field(None, description="开始时间")
+    last_update: str | None = Field(None, description="最后更新时间")
 
 
 class AddMatchRequest(BaseModel):
@@ -51,7 +50,7 @@ class AddMatchRequest(BaseModel):
     away_team: str = Field(..., description="客队")
     league: str = Field(..., description="联赛")
     status: str = Field("upcoming", description="比赛状态")
-    start_time: Optional[str] = Field(None, description="开始时间")
+    start_time: str | None = Field(None, description="开始时间")
 
 
 class UpdateScoreRequest(BaseModel):
@@ -59,14 +58,14 @@ class UpdateScoreRequest(BaseModel):
 
     home_score: int = Field(..., ge=0, description="主队得分")
     away_score: int = Field(..., ge=0, description="客队得分")
-    minute: Optional[int] = Field(None, ge=0, le=120, description="比赛分钟")
+    minute: int | None = Field(None, ge=0, le=120, description="比赛分钟")
 
 
 class UpdateStatusRequest(BaseModel):
     """更新状态请求模型"""
 
     status: str = Field(..., description="新状态")
-    current_time: Optional[str] = Field(None, description="当前时间")
+    current_time: str | None = Field(None, description="当前时间")
 
 
 class MatchStatsResponse(BaseModel):
@@ -314,7 +313,7 @@ async def get_match_info(match_id: int):
 @router.get("/league/{league}", summary="获取联赛比赛")
 async def get_league_matches(
     league: str,
-    status: Optional[str] = Query(None, description="状态过滤"),
+    status: str | None = Query(None, description="状态过滤"),
     limit: int = Query(50, ge=1, le=200, description="返回数量限制"),
 ):
     """
@@ -355,7 +354,7 @@ async def get_league_matches(
 
 @router.get("/live", summary="获取直播比赛")
 async def get_live_matches(
-    league: Optional[str] = Query(None, description="联赛过滤"),
+    league: str | None = Query(None, description="联赛过滤"),
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
 ):
     """
@@ -490,7 +489,7 @@ async def unsubscribe_from_match_updates(
 @router.post("/broadcast/alert", summary="广播比赛告警")
 async def broadcast_match_alert(
     message: str,
-    match_id: Optional[int] = None,
+    match_id: int | None = None,
     alert_type: str = "info",
     severity: str = "low",
     component: str = "match_api",
@@ -541,7 +540,7 @@ async def broadcast_match_alert(
 
 
 async def _send_match_notification(
-    match_id: int, action: str, data: Dict[str, Any]
+    match_id: int, action: str, data: dict[str, Any]
 ) -> None:
     """发送比赛通知"""
     try:

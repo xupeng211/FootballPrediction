@@ -8,19 +8,19 @@ football 主模块
 
 # 导入拆分的模块
 from .adapters.football_models import (
-    MatchStatus,
-    FootballMatch,
-    FootballTeam,
-    FootballPlayer,
-    FootballApiAdaptee,
     ApiFootballAdaptee,
-    OptaDataAdaptee,
-    FootballDataTransformer,
-    FootballApiAdapter,
     ApiFootballAdapter,
-    OptaDataAdapter,
     CompositeFootballAdapter,
+    FootballApiAdaptee,
+    FootballApiAdapter,
     FootballDataAdapter,
+    FootballDataTransformer,
+    FootballMatch,
+    FootballPlayer,
+    FootballTeam,
+    MatchStatus,
+    OptaDataAdaptee,
+    OptaDataAdapter,
 )
 
 # 导出所有公共接口

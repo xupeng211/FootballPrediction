@@ -3,7 +3,6 @@ Redis connection manager
 """
 
 import os
-from typing import Optional
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
@@ -19,8 +18,8 @@ class RedisConnectionManager:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._pool: Optional[aioredis.ConnectionPool] = None
-        self._redis: Optional[aioredis.Redis] = None
+        self._pool: aioredis.ConnectionPool | None = None
+        self._redis: aioredis.Redis | None = None
 
     async def connect(self) -> aioredis.Redis:
         """建立Redis连接"""

@@ -9,7 +9,7 @@ Provides data processing and transformation functionality.
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class DataProcessor(ABC):
     """数据处理器基类"""
 
     @abstractmethod
-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理数据"""
         pass
 
@@ -26,7 +26,7 @@ class DataProcessor(ABC):
 class MatchDataProcessor(DataProcessor):
     """比赛数据处理器"""
 
-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理比赛数据"""
         logger.debug(f"Processing match data: {data.get('id')}")
 
@@ -36,7 +36,7 @@ class MatchDataProcessor(DataProcessor):
 class OddsDataProcessor(DataProcessor):
     """赔率数据处理器"""
 
-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理赔率数据"""
         logger.debug(f"Processing odds data: {data.get('match_id')}")
 
@@ -46,7 +46,7 @@ class OddsDataProcessor(DataProcessor):
 class ScoresDataProcessor(DataProcessor):
     """比分数据处理器"""
 
-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理比分数据"""
         logger.debug(f"Processing scores data: {data.get('match_id')}")
 
@@ -56,7 +56,7 @@ class ScoresDataProcessor(DataProcessor):
 class FeaturesDataProcessor(DataProcessor):
     """特征数据处理器"""
 
-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理特征数据"""
         logger.debug(f"Processing features data: {data.get('match_id')}")
 
@@ -75,7 +75,7 @@ class DataQualityValidator:
         # 添加pass语句
         self.errors = []
 
-    def validate(self, data: Dict[str, Any]) -> bool:
+    def validate(self, data: dict[str, Any]) -> bool:
         """验证数据质量"""
         self.errors.clear()
 
@@ -104,7 +104,7 @@ class AnomalyDetector:
         # 添加pass语句
         self.threshold = 3.0  # 标准差阈值
 
-    def detect(self, data: Dict[str, Any]) -> List[str]:
+    def detect(self, data: dict[str, Any]) -> list[str]:
         """检测异常"""
         anomalies = []
 
@@ -125,7 +125,7 @@ class MissingDataHandler:
     pass  # 添加pass语句
     """缺失数据处理基类"""
 
-    def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def handle(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理缺失球队信息"""
         if "home_team" not in data:
             data["home_team"] = "Unknown"
@@ -148,7 +148,7 @@ class BronzeToSilverProcessor:
         self.detectors = [AnomalyDetector()]
         self.handlers = [MissingDataHandler(), MissingDataHandler()]
 
-    async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理数据从青铜层到银层"""
         # 验证数据
         for validator in self.validators:
@@ -196,7 +196,7 @@ class DataProcessingService:
         self.initialized = True
         logger.info("DataProcessingService initialized")
 
-    async def process_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理数据"""
         if not self.initialized:
             await self.initialize()
@@ -213,8 +213,8 @@ class DataProcessingService:
         return result
 
     async def batch_process(
-        self, data_list: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, data_list: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """批量处理数据"""
         results = []
         for data in data_list:

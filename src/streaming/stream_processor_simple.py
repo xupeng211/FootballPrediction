@@ -2,8 +2,9 @@
 简化的流处理器实现
 """
 
+from collections.abc import AsyncIterator, Callable
 from datetime import datetime, timedelta
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional
+from typing import Any
 
 
 class StreamProcessor:
@@ -13,7 +14,7 @@ class StreamProcessor:
     """流处理器基类"""
 
     def __init__(
-        self, consumer, producer, input_topics: List[str], output_topics: List[str]
+        self, consumer, producer, input_topics: list[str], output_topics: list[str]
     ):
         self.consumer = consumer
         self.producer = producer
@@ -41,7 +42,7 @@ class StreamProcessor:
         max_messages: int = None,
         error_handler: Callable = None,
         dead_letter_topic: str = None,
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         """处理消息流"""
         processed = 0
         async for message in self.consumer.consume():
@@ -90,7 +91,7 @@ class StreamProcessor:
 
     async def process_batch(
         self, batch_func: Callable, batch_size: int = 10
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         """批量处理消息"""
         batch = []
         async for message in self.consumer.consume():
@@ -116,8 +117,8 @@ class StreamProcessor:
                 self.metrics["messages_failed"] += len(batch)
 
     async def transform_message(
-        self, message: Dict[str, Any], transformation: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, message: dict[str, Any], transformation: dict[str, Any]
+    ) -> dict[str, Any]:
         """转换消息"""
         result = {"key": message["key"], "value": {}, "topic": message.get("topic")}
 
@@ -137,7 +138,7 @@ class StreamProcessor:
 
     async def aggregate(
         self, aggregate_func: Callable, window_size: timedelta, key_extractor: Callable
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         """聚合消息"""
         windows = {}
 
@@ -164,7 +165,7 @@ class StreamProcessor:
                 except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch["messages"])
 
-    async def filter(self, filter_func: Callable) -> AsyncIterator[Dict[str, Any]]:
+    async def filter(self, filter_func: Callable) -> AsyncIterator[dict[str, Any]]:
         """过滤消息"""
         async for message in self.consumer.consume():
             if filter_func(message):
@@ -172,7 +173,7 @@ class StreamProcessor:
 
     async def join(
         self, stream1: str, stream2: str, join_func: Callable, window: timedelta
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         """连接两个流"""
         # 简化实现
         stream1_buffer = {}
@@ -194,7 +195,7 @@ class StreamProcessor:
                 stream1_buffer.pop(key, None)
                 stream2_buffer.pop(key, None)
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取处理指标"""
         return self.metrics.copy()
 
@@ -203,7 +204,7 @@ class StreamProcessor:
         window_func: Callable,
         window_size: timedelta,
         timestamp_extractor: Callable,
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         """窗口处理"""
         windows = {}
 
@@ -244,7 +245,7 @@ class MessageProcessor:
         self.name = name
         self.input_topic = input_topic
         self.output_topic = output_topic
-        self.handlers: Dict[str, Any] = {}
+        self.handlers: dict[str, Any] = {}
 
     def add_handler(self, event_type: str, handler: Callable):
         """函数文档字符串"""
@@ -260,7 +261,7 @@ class MessageProcessor:
         """移除事件处理器"""
         self.handlers.pop(event_type, None)
 
-    def get_handler(self, event_type: str) -> Optional[Callable]:
+    def get_handler(self, event_type: str) -> Callable | None:
         """获取事件处理器"""
         return self.handlers.get(event_type)
 
@@ -278,10 +279,10 @@ class BatchProcessor:
         self.name = name
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
-        self.current_batch: List[Any] = []
+        self.current_batch: list[Any] = []
         self.metrics = {"batches_processed": 0, "total_messages_processed": 0}
 
-    def add_to_batch(self, message: Dict[str, Any]):
+    def add_to_batch(self, message: dict[str, Any]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -297,12 +298,12 @@ class BatchProcessor:
         pass
         # 添加pass语句
         """清空批次"""
-        self.current_batch: List[Any] = []
+        self.current_batch: list[Any] = []
 
-    def get_batch(self) -> List[Dict[str, Any]]:
+    def get_batch(self) -> list[dict[str, Any]]:
         """获取当前批次"""
         return self.current_batch.copy()
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取批次指标"""
         return {**self.metrics, "current_batch_size": len(self.current_batch)}

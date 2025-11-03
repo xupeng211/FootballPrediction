@@ -7,13 +7,13 @@ Performance Profiler Module
 
 import asyncio
 import functools
-import time
 import threading
+import time
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Union
-
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any
 
 
 @dataclass
@@ -27,7 +27,7 @@ class ProfileStats:
     max_time: float = 0.0
     recent_calls: deque = field(default_factory=lambda: deque(maxlen=100))
     error_count: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
 
 class APIEndpointProfiler:
@@ -35,7 +35,7 @@ class APIEndpointProfiler:
 
     def __init__(self, max_history: int = 1000):
         self.max_history = max_history
-        self.stats: Dict[str, ProfileStats] = defaultdict(ProfileStats)
+        self.stats: dict[str, ProfileStats] = defaultdict(ProfileStats)
         self.lock = threading.RLock()
         self.enabled = True
 
@@ -44,7 +44,7 @@ class APIEndpointProfiler:
         endpoint: str,
         duration: float,
         success: bool = True,
-        error: Optional[str] = None,
+        error: str | None = None,
     ):
         """记录API调用"""
         if not self.enabled:
@@ -65,15 +65,15 @@ class APIEndpointProfiler:
                 stats.last_error = error
 
     def get_stats(
-        self, endpoint: Optional[str] = None
-    ) -> Union[ProfileStats, Dict[str, ProfileStats]]:
+        self, endpoint: str | None = None
+    ) -> ProfileStats | dict[str, ProfileStats]:
         """获取性能统计"""
         with self.lock:
             if endpoint:
                 return self.stats[endpoint]
             return dict(self.stats)
 
-    def get_top_slowest(self, limit: int = 10) -> List[tuple]:
+    def get_top_slowest(self, limit: int = 10) -> list[tuple]:
         """获取最慢的端点"""
         with self.lock:
             return sorted(
@@ -86,7 +86,7 @@ class APIEndpointProfiler:
                 reverse=True,
             )[:limit]
 
-    def get_recent_performance(self, endpoint: str, minutes: int = 5) -> Dict[str, Any]:
+    def get_recent_performance(self, endpoint: str, minutes: int = 5) -> dict[str, Any]:
         """获取最近的性能数据"""
         _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
@@ -108,7 +108,7 @@ class APIEndpointProfiler:
                 "max_time": max(recent_times),
             }
 
-    def clear_stats(self, endpoint: Optional[str] = None):
+    def clear_stats(self, endpoint: str | None = None):
         """清空统计数据"""
         with self.lock:
             if endpoint:
@@ -174,7 +174,7 @@ class APIEndpointProfiler:
 
         return decorator
 
-    def get_summary_report(self) -> Dict[str, Any]:
+    def get_summary_report(self) -> dict[str, Any]:
         """获取摘要报告"""
         with self.lock:
             total_calls = sum(stats.call_count for stats in self.stats.values())
@@ -199,7 +199,7 @@ class APIEndpointProfiler:
 
 
 # 全局性能分析器实例
-_profiler_instance: Optional[APIEndpointProfiler] = None
+_profiler_instance: APIEndpointProfiler | None = None
 _profiler_lock = threading.Lock()
 
 
@@ -224,7 +224,7 @@ class DatabaseQueryProfiler:
 
     def __init__(self, max_history: int = 1000):
         self.max_history = max_history
-        self.queries: Dict[str, List[float]] = defaultdict(list)
+        self.queries: dict[str, list[float]] = defaultdict(list)
         self.lock = threading.Lock()
         self.enabled = True
 
@@ -239,7 +239,7 @@ class DatabaseQueryProfiler:
             if len(self.queries[query_type]) > self.max_history:
                 self.queries[query_type] = self.queries[query_type][-self.max_history :]
 
-    def get_query_stats(self, query_type: str) -> Dict[str, float]:
+    def get_query_stats(self, query_type: str) -> dict[str, float]:
         """获取查询统计"""
         with self.lock:
             times = self.queries.get(query_type, [])
@@ -260,7 +260,7 @@ class DatabaseQueryProfiler:
                 "total_time": sum(times),
             }
 
-    def get_all_stats(self) -> Dict[str, Dict[str, float]]:
+    def get_all_stats(self) -> dict[str, dict[str, float]]:
         """获取所有查询统计"""
         with self.lock:
             return {
@@ -274,7 +274,7 @@ class MemoryProfiler:
     """内存性能分析器"""
 
     def __init__(self):
-        self.samples: List[Dict[str, Any]] = []
+        self.samples: list[dict[str, Any]] = []
         self.lock = threading.Lock()
         self.enabled = True
 
@@ -284,8 +284,9 @@ class MemoryProfiler:
             return
 
         try:
-            import psutil
             import gc
+
+            import psutil
 
             process = psutil.Process()
             memory_info = process.memory_info()
@@ -309,7 +310,7 @@ class MemoryProfiler:
             # psutil不可用时跳过内存采样
             pass
 
-    def get_memory_trend(self, minutes: int = 5) -> Dict[str, Any]:
+    def get_memory_trend(self, minutes: int = 5) -> dict[str, Any]:
         """获取内存使用趋势"""
         cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
@@ -342,7 +343,7 @@ class PerformanceProfiler:
         self.memory_profiler = MemoryProfiler()
         self.system_profiler = SystemProfiler()
 
-    def get_comprehensive_report(self) -> Dict[str, Any]:
+    def get_comprehensive_report(self) -> dict[str, Any]:
         """获取综合性能报告"""
         return {
             "api_stats": self.api_profiler.get_summary_report(),
@@ -364,7 +365,7 @@ class PerformanceProfiler:
         self.memory_profiler.enabled = False
 
 
-def get_performance_report() -> Dict[str, Any]:
+def get_performance_report() -> dict[str, Any]:
     """获取性能报告的便捷函数"""
     profiler = PerformanceProfiler()
     return profiler.get_comprehensive_report()
@@ -375,7 +376,7 @@ class SystemProfiler:
     """系统性能分析器"""
 
     def __init__(self):
-        self.metrics: Dict[str, List[float]] = defaultdict(list)
+        self.metrics: dict[str, list[float]] = defaultdict(list)
         self.lock = threading.Lock()
 
     def record_metric(self, name: str, value: float):
@@ -386,7 +387,7 @@ class SystemProfiler:
             if len(self.metrics[name]) > 1000:
                 self.metrics[name] = self.metrics[name][-1000:]
 
-    def get_metric_summary(self, name: str, minutes: int = 5) -> Dict[str, float]:
+    def get_metric_summary(self, name: str, minutes: int = 5) -> dict[str, float]:
         """获取指标摘要"""
         _cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
@@ -404,7 +405,7 @@ class SystemProfiler:
 
 
 # 全局系统分析器
-_system_profiler: Optional[SystemProfiler] = None
+_system_profiler: SystemProfiler | None = None
 
 
 def get_system_profiler() -> SystemProfiler:

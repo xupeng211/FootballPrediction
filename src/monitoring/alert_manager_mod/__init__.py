@@ -5,10 +5,11 @@ Alert Manager Module (Compatibility Version)
 
 import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 # mypy: ignore-errors
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
@@ -73,7 +74,7 @@ class Alert:
     message: str
     timestamp: datetime
     status: AlertStatus = AlertStatus.ACTIVE
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -117,7 +118,7 @@ class LogHandler:
                 f"[{alert.level.value.upper()}] {alert.name}: {alert.message}"
             )
 
-    def get_logs(self, level: AlertLevel = None, limit: int = 100) -> List[str]:
+    def get_logs(self, level: AlertLevel = None, limit: int = 100) -> list[str]:
         """获取日志（简化版本）"""
         # 在实际应用中,这里会从日志文件或日志系统读取
         return [f"Log entry for {level.value if level else 'all'}"]
@@ -147,13 +148,13 @@ class AlertAggregator:
             "window": 300,  # 5分钟窗口
         }
 
-    def aggregate_alerts(self, alerts: List[Alert]) -> List[Alert]:
+    def aggregate_alerts(self, alerts: list[Alert]) -> list[Alert]:
         """聚合告警"""
         # 简化的聚合逻辑
         aggregated = []
 
         # 按告警名称分组
-        grouped: Dict[str, List[Alert]] = {}
+        grouped: dict[str, list[Alert]] = {}
         for alert in alerts:
             if alert.name not in grouped:
                 grouped[alert.name] = []
@@ -191,15 +192,15 @@ class AlertManager:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.alerts: Dict[str, Alert] = {}
-        self.rules: List[AlertRule] = []
+        self.alerts: dict[str, Alert] = {}
+        self.rules: list[AlertRule] = []
 
     def create_alert(
         self,
         name: str,
         level: AlertLevel,
         message: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Alert:
         """创建告警"""
         alert_id = str(uuid.uuid4())
@@ -222,7 +223,7 @@ class AlertManager:
         if alert_id in self.alerts:
             self.alerts[alert_id].status = AlertStatus.RESOLVED
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """获取活跃告警"""
         return [a for a in self.alerts.values() if a.status == AlertStatus.ACTIVE]
 
@@ -248,7 +249,7 @@ class AlertRuleEngine:
         rule = {"name": name, "condition": condition, "level": level, "enabled": True}
         self.rules.append(rule)
 
-    def evaluate_rules(self, metrics: Dict[str, Any]) -> List[Alert]:
+    def evaluate_rules(self, metrics: dict[str, Any]) -> list[Alert]:
         """评估所有规则"""
         alerts = []
 
@@ -294,7 +295,7 @@ class AlertRuleEngine:
             if rule["name"] == name:
                 rule["enabled"] = False
 
-    def get_rule_results(self) -> Dict[str, Any]:
+    def get_rule_results(self) -> dict[str, Any]:
         """获取规则执行结果"""
         return self.rule_results
 
@@ -318,7 +319,7 @@ class AlertChannelManager:
         """注册通道处理器"""
         self.channels[channel_type] = handler
 
-    def send_alert(self, alert: Alert, channels: List[AlertChannel]):
+    def send_alert(self, alert: Alert, channels: list[AlertChannel]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -370,7 +371,7 @@ class EmailHandler:
         self.username = username
         self.password = password
 
-    def send_alert(self, alert: Alert, recipients: List[str]):
+    def send_alert(self, alert: Alert, recipients: list[str]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -381,7 +382,7 @@ class EmailHandler:
         logger.info(f"Email alert sent to {recipients}: {subject}")
 
     def send_html_alert(
-        self, alert: Alert, recipients: List[str], template: str = None
+        self, alert: Alert, recipients: list[str], template: str = None
     ):
         """发送HTML格式的告警邮件"""
         # 简化的HTML邮件发送逻辑
@@ -449,7 +450,7 @@ class PrometheusHandler:
         metric_name = f"alerts_total_{alert.level.value}"
         self.metrics.inc(metric_name)
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """获取指标摘要"""
         return {
             "total_metrics": len(self.metrics.metrics),
@@ -485,7 +486,7 @@ class PrometheusMetrics:
         self.metrics[name] = {"type": "gauge", "value": 0, "doc": documentation}
         return self
 
-    def histogram(self, name: str, documentation: str, buckets: List[float] = None):
+    def histogram(self, name: str, documentation: str, buckets: list[float] = None):
         """函数文档字符串"""
         pass
         # 添加pass语句

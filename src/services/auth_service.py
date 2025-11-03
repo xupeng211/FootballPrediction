@@ -6,7 +6,7 @@
 
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -14,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.user import User, UserRole
 from src.repositories.auth_user import AuthUserRepository
-
 
 # 密码加密上下文
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -50,7 +49,7 @@ class AuthService:
         return pwd_context.hash(password)
 
     def create_access_token(
-        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
         """创建访问令牌"""
         to_encode = data.copy()
@@ -64,7 +63,7 @@ class AuthService:
         return encoded_jwt
 
     def create_refresh_token(
-        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
         """创建刷新令牌"""
         to_encode = data.copy()
@@ -79,7 +78,7 @@ class AuthService:
 
     def verify_token(
         self, token: str, token_type: str = "access"
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """验证令牌"""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -94,8 +93,8 @@ class AuthService:
         username: str,
         email: str,
         password: str,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
         role: UserRole = UserRole.USER,
     ) -> User:
         """注册新用户"""
@@ -147,7 +146,7 @@ class AuthService:
         created_user = await self.user_repo.create(user)
         return created_user
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    async def authenticate_user(self, username: str, password: str) -> User | None:
         """验证用户凭据"""
         user = await self.user_repo.get_by_username(username)
         if not user:
@@ -165,9 +164,7 @@ class AuthService:
 
         return user
 
-    async def login_user(
-        self, username: str, password: str
-    ) -> Optional[Dict[str, Any]]:
+    async def login_user(self, username: str, password: str) -> dict[str, Any] | None:
         """用户登录,返回令牌信息"""
         user = await self.authenticate_user(username, password)
         if not user:
@@ -196,7 +193,7 @@ class AuthService:
             "user": user.to_dict(),
         }
 
-    async def refresh_access_token(self, refresh_token: str) -> Optional[str]:
+    async def refresh_access_token(self, refresh_token: str) -> str | None:
         """使用刷新令牌获取新的访问令牌"""
         payload = self.verify_token(refresh_token, "refresh")
         if not payload:
@@ -216,7 +213,7 @@ class AuthService:
         }
         return self.create_access_token(access_token_data)
 
-    async def get_current_user(self, token: str) -> Optional[User]:
+    async def get_current_user(self, token: str) -> User | None:
         """从令牌获取当前用户"""
         payload = self.verify_token(token, "access")
         if not payload:
@@ -243,7 +240,7 @@ class AuthService:
         await self.user_repo.update(user)
         return True
 
-    async def reset_password_request(self, email: str) -> Optional[str]:
+    async def reset_password_request(self, email: str) -> str | None:
         """请求密码重置"""
         user = await self.user_repo.get_by_email(email)
         if not user:

@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class TeamStatistics:
@@ -68,10 +68,10 @@ class Team:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         name: str = "",
         short_name: str = "",
-        founded_year: Optional[int] = None,
+        founded_year: int | None = None,
         stadium: str = "",
         league_id: int = 0,
     ):
@@ -88,7 +88,7 @@ class Team:
         self.away_stats = TeamStatistics()
 
         # 近期状态
-        self.recent_form: List[str] = []  # W/D/L序列
+        self.recent_form: list[str] = []  # W/D/L序列
         self.current_streak = {"type": "", "count": 0}
 
         # 实力评分
@@ -205,7 +205,7 @@ class Team:
 
         return wins >= 2 or (wins >= 1 and draws >= 2)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -235,7 +235,7 @@ class Team:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Team":
+    def from_dict(cls, data: dict[str, Any]) -> "Team":
         """从字典创建实例"""
         team = cls(
             id=data.get("id"),

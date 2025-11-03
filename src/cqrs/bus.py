@@ -7,7 +7,7 @@ Implements dispatching mechanism for commands and queries.
 """
 
 import logging
-from typing import Any, Dict, Optional, Type
+from typing import Any
 
 from .base import Command, CommandHandler, Query, QueryHandler
 
@@ -28,11 +28,11 @@ class CommandBus:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._handlers: Dict[Type[Command], CommandHandler] = {}
+        self._handlers: dict[type[Command], CommandHandler] = {}
         self._middleware: list = []
 
     def register_handler(
-        self, command_type: Type[Command], handler: CommandHandler
+        self, command_type: type[Command], handler: CommandHandler
     ) -> None:
         """注册命令处理器"""
         self._handlers[command_type] = handler
@@ -72,7 +72,7 @@ class CommandBus:
 
         return result
 
-    def get_registered_commands(self) -> Dict[str, str]:
+    def get_registered_commands(self) -> dict[str, str]:
         """获取已注册的命令"""
         return {
             cmd_type.__name__: handler.__class__.__name__
@@ -94,10 +94,10 @@ class QueryBus:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._handlers: Dict[Type[Query], QueryHandler] = {}
+        self._handlers: dict[type[Query], QueryHandler] = {}
         self._middleware: list = []
 
-    def register_handler(self, query_type: Type[Query], handler: QueryHandler) -> None:
+    def register_handler(self, query_type: type[Query], handler: QueryHandler) -> None:
         """注册查询处理器"""
         self._handlers[query_type] = handler
         logger.info(
@@ -136,7 +136,7 @@ class QueryBus:
 
         return result
 
-    def get_registered_queries(self) -> Dict[str, str]:
+    def get_registered_queries(self) -> dict[str, str]:
         """获取已注册的查询"""
         return {
             query_type.__name__: handler.__class__.__name__
@@ -145,8 +145,8 @@ class QueryBus:
 
 
 # 全局实例
-_command_bus: Optional[CommandBus] = None
-_query_bus: Optional[QueryBus] = None
+_command_bus: CommandBus | None = None
+_query_bus: QueryBus | None = None
 
 
 def get_command_bus() -> CommandBus:
@@ -225,6 +225,6 @@ class MetricsMiddleware:
 
         return message
 
-    def get_metrics(self) -> Dict[str, int]:
+    def get_metrics(self) -> dict[str, int]:
         """获取处理指标"""
         return self._metrics

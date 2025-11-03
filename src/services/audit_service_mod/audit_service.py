@@ -6,7 +6,7 @@ Audit Service (Compatibility Version)
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .models import AuditAction, AuditEvent, AuditSeverity
 
@@ -23,17 +23,17 @@ class AuditService:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.events: List[AuditEvent] = []
+        self.events: list[AuditEvent] = []
 
     def log_event(
         self,
         action: AuditAction,
         user_id: str,
         resource_type: str,
-        resource_id: Optional[str] = None,
+        resource_id: str | None = None,
         message: str = "",
         severity: AuditSeverity = AuditSeverity.LOW,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """记录审计事件"""
         event = AuditEvent(
@@ -53,11 +53,11 @@ class AuditService:
 
     def get_events(
         self,
-        user_id: Optional[str] = None,
-        action: Optional[AuditAction] = None,
-        severity: Optional[AuditSeverity] = None,
+        user_id: str | None = None,
+        action: AuditAction | None = None,
+        severity: AuditSeverity | None = None,
         limit: int = 100,
-    ) -> List[AuditEvent]:
+    ) -> list[AuditEvent]:
         """获取审计事件"""
         filtered = self.events
 

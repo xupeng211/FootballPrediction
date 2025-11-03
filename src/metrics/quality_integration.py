@@ -8,7 +8,7 @@ Advanced Quality Metrics Integration
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from src.core.logging_system import get_logger
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
@@ -29,7 +29,7 @@ class QualityMetricsIntegrator:
         self.analyzer = AdvancedMetricsAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
 
-    def enhance_quality_report(self, existing_report: Dict[str, Any]) -> Dict[str, Any]:
+    def enhance_quality_report(self, existing_report: dict[str, Any]) -> dict[str, Any]:
         """增强现有质量报告"""
         try:
             # 获取高级度量数据
@@ -58,7 +58,7 @@ class QualityMetricsIntegrator:
             self.logger.error(f"集成高级度量失败: {e}")
             return existing_report
 
-    def _calculate_enhanced_overall_score(self, report: Dict[str, Any]) -> float:
+    def _calculate_enhanced_overall_score(self, report: dict[str, Any]) -> float:
         """计算增强的综合分数"""
         scores = []
 
@@ -85,15 +85,15 @@ class QualityMetricsIntegrator:
             # 原始分数 30%，高级度量 40%,代码质量 15%,安全 15%
             weights = [0.3, 0.4, 0.15, 0.15]
             weighted_score = sum(
-                score * weight for score, weight in zip(scores, weights)
+                score * weight for score, weight in zip(scores, weights, strict=False)
             )
             return round(weighted_score, 2)
 
         return 0.0
 
     def _create_advanced_summary(
-        self, advanced_metrics: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, advanced_metrics: dict[str, Any]
+    ) -> dict[str, Any]:
         """创建高级度量摘要"""
         summary = {}
 
@@ -143,7 +143,7 @@ class QualityMetricsIntegrator:
 
         return summary
 
-    def _generate_recommendations(self, summary: Dict[str, Any]) -> list:
+    def _generate_recommendations(self, summary: dict[str, Any]) -> list:
         """生成改进建议"""
         recommendations = []
 

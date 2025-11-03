@@ -5,17 +5,16 @@ Performance Management API
 提供系统性能监控,优化和管理的API接口.
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, status, Query, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from src.database.base import get_db_session
-from src.optimizations.database_optimizations import DatabaseOptimizerFactory
-from src.optimizations.api_optimizations import APIOptimizer
 from src.middleware.tenant_middleware import require_permission
-
+from src.optimizations.api_optimizations import APIOptimizer
+from src.optimizations.database_optimizations import DatabaseOptimizerFactory
 
 router = APIRouter(prefix="/api/v1/performance", tags=["性能管理"])
 
@@ -30,15 +29,15 @@ class OptimizationRequestModel(BaseModel):
     """优化请求模型"""
 
     optimization_type: str = Field(..., description="优化类型")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="优化参数")
+    parameters: dict[str, Any] | None = Field(None, description="优化参数")
 
 
 class CacheOperationModel(BaseModel):
     """缓存操作模型"""
 
     operation: str = Field(..., description="操作类型: clear, warm, analyze")
-    pattern: Optional[str] = Field(None, description="缓存模式")
-    keys: Optional[List[str]] = Field(None, description="特定键列表")
+    pattern: str | None = Field(None, description="缓存模式")
+    keys: list[str] | None = Field(None, description="特定键列表")
 
 
 class PerformanceAnalysisModel(BaseModel):
@@ -66,7 +65,7 @@ class DatabaseOptimizationModel(BaseModel):
 @require_permission("performance.view")
 async def get_performance_metrics(
     time_range_minutes: int = Query(60, ge=1, le=1440, description="时间范围（分钟）"),
-    endpoint_filter: Optional[str] = Query(None, description="端点过滤"),
+    endpoint_filter: str | None = Query(None, description="端点过滤"),
 ):
     """
     获取性能指标
@@ -174,8 +173,8 @@ async def get_performance_dashboard():
 @router.get("/alerts")
 @require_permission("performance.view")
 async def get_performance_alerts(
-    severity: Optional[str] = Query(None, description="严重级别过滤"),
-    status_filter: Optional[str] = Query(None, description="状态过滤"),
+    severity: str | None = Query(None, description="严重级别过滤"),
+    status_filter: str | None = Query(None, description="状态过滤"),
 ):
     """
     获取性能告警
@@ -487,7 +486,7 @@ async def get_api_performance_analysis():
 
 
 async def _run_database_optimization(
-    optimization_id: str, optimization_config: Dict[str, Any]
+    optimization_id: str, optimization_config: dict[str, Any]
 ):
     """运行数据库优化后台任务"""
     async with get_db_session() as db:
@@ -526,7 +525,7 @@ async def _clear_cache_by_pattern(pattern: str):
     print(f"缓存清理完成: {result}")
 
 
-async def _clear_cache_by_keys(keys: List[str]):
+async def _clear_cache_by_keys(keys: list[str]):
     """按键清理缓存"""
     from src.optimizations.api_optimizations import APICache
 
@@ -545,13 +544,13 @@ async def _clear_all_cache():
     await _clear_cache_by_pattern("*")
 
 
-async def _warm_cache(warm_config: Dict[str, Any]):
+async def _warm_cache(warm_config: dict[str, Any]):
     """缓存预热"""
     # 这里应该实现具体的缓存预热逻辑
     print(f"缓存预热任务开始: {warm_config}")
 
 
-async def _analyze_cache_performance() -> Dict[str, Any]:
+async def _analyze_cache_performance() -> dict[str, Any]:
     """分析缓存性能"""
     # 这里应该实现具体的缓存性能分析逻辑
     return {
@@ -563,10 +562,10 @@ async def _analyze_cache_performance() -> Dict[str, Any]:
 
 
 def _generate_database_recommendations(
-    table_sizes: List[Dict[str, Any]],
-    index_usage: Dict[str, Any],
-    connection_pool: Dict[str, Any],
-) -> List[str]:
+    table_sizes: list[dict[str, Any]],
+    index_usage: dict[str, Any],
+    connection_pool: dict[str, Any],
+) -> list[str]:
     """生成数据库优化建议"""
     recommendations = []
 

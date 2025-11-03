@@ -1,13 +1,11 @@
 # mypy: ignore-errors
 import logging
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DatabaseError, SQLAlchemyError
-
-from alembic import op
-
 
 # revision identifiers, used by Alembic.
 
@@ -74,9 +72,9 @@ Revises: f48d412852cc
 Create Date: 2025-09-10 18:20:30.000000
 """
 revision: str = "002_add_raw_scores_data_and_upgrade_jsonb"
-down_revision: Union[str, None] = "f48d412852cc"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "f48d412852cc"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

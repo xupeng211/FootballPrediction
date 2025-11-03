@@ -11,7 +11,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any
 
 import yaml
 
@@ -45,7 +45,7 @@ class PredictionStrategyFactory:
     负责根据配置创建和管理各种预测策略实例.
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: str | Path | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -55,13 +55,13 @@ class PredictionStrategyFactory:
             config_path: 策略配置文件路径
         """
         self._config_path = config_path or "configs/strategies.yaml"
-        self._strategies: Dict[str, PredictionStrategy] = {}
-        self._strategy_configs: Dict[str, Dict[str, Any]] = {}
-        self._default_config: Dict[str, Any] = {}
-        self._environment_overrides: Dict[str, Any] = {}
+        self._strategies: dict[str, PredictionStrategy] = {}
+        self._strategy_configs: dict[str, dict[str, Any]] = {}
+        self._default_config: dict[str, Any] = {}
+        self._environment_overrides: dict[str, Any] = {}
 
         # 策略类型映射
-        self._strategy_registry: Dict[str, Type[PredictionStrategy]] = {
+        self._strategy_registry: dict[str, type[PredictionStrategy]] = {
             "ml_model": MLModelStrategy,
             "statistical": StatisticalStrategy,
             "historical": HistoricalStrategy,
@@ -72,7 +72,7 @@ class PredictionStrategyFactory:
         self._load_configuration()
 
     def register_strategy(
-        self, strategy_type: str, strategy_class: Type[PredictionStrategy]
+        self, strategy_type: str, strategy_class: type[PredictionStrategy]
     ) -> None:
         """注册新的策略类型"
 
@@ -96,8 +96,8 @@ class PredictionStrategyFactory:
     async def create_strategy(
         self,
         strategy_name: str,
-        strategy_type: Optional[str] = None,
-        config: Optional[Dict[str, Any]] = None,
+        strategy_type: str | None = None,
+        config: dict[str, Any] | None = None,
         overwrite: bool = False,
     ) -> PredictionStrategy:
         """创建策略实例"
@@ -154,7 +154,7 @@ class PredictionStrategyFactory:
         return strategy
 
     async def _create_ensemble_strategy(
-        self, strategy_name: str, config: Dict[str, Any]
+        self, strategy_name: str, config: dict[str, Any]
     ) -> EnsembleStrategy:
         """创建集成策略（特殊处理）"""
         ensemble = EnsembleStrategy(strategy_name)
@@ -192,7 +192,7 @@ class PredictionStrategyFactory:
 
         return ensemble
 
-    def get_strategy(self, strategy_name: str) -> Optional[PredictionStrategy]:
+    def get_strategy(self, strategy_name: str) -> PredictionStrategy | None:
         """获取策略实例"
 
         Args:
@@ -203,13 +203,13 @@ class PredictionStrategyFactory:
         """
         return self._strategies.get(strategy_name)
 
-    def get_all_strategies(self) -> Dict[str, PredictionStrategy]:
+    def get_all_strategies(self) -> dict[str, PredictionStrategy]:
         """获取所有策略实例"""
         return self._strategies.copy()
 
     def get_strategies_by_type(
         self, strategy_type: StrategyType
-    ) -> List[PredictionStrategy]:
+    ) -> list[PredictionStrategy]:
         """根据类型获取策略列表"
 
         Args:
@@ -225,8 +225,8 @@ class PredictionStrategyFactory:
         ]
 
     async def create_multiple_strategies(
-        self, strategy_configs: List[Dict[str, Any]]
-    ) -> Dict[str, PredictionStrategy]:
+        self, strategy_configs: list[dict[str, Any]]
+    ) -> dict[str, PredictionStrategy]:
         """批量创建策略"
 
         Args:
@@ -297,7 +297,7 @@ class PredictionStrategyFactory:
             self._create_default_config()
             return None
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
                     config = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
@@ -434,7 +434,7 @@ class PredictionStrategyFactory:
                 self._environment_overrides[config_key] = parsed_value
                 logger.debug(f"环境变量覆盖: {config_key} = {parsed_value}")
 
-    def _get_strategy_config(self, strategy_name: str) -> Dict[str, Any]:
+    def _get_strategy_config(self, strategy_name: str) -> dict[str, Any]:
         """获取策略配置"
 
         Args:
@@ -474,15 +474,15 @@ class PredictionStrategyFactory:
 
         return config
 
-    def list_available_strategies(self) -> List[str]:
+    def list_available_strategies(self) -> list[str]:
         """列出可用的策略类型"""
         return list(self._strategy_registry.keys())
 
-    def list_configured_strategies(self) -> List[str]:
+    def list_configured_strategies(self) -> list[str]:
         """列出配置的策略"""
         return list(self._strategy_configs.keys())
 
-    def validate_strategy_config(self, config: Dict[str, Any]) -> List[str]:
+    def validate_strategy_config(self, config: dict[str, Any]) -> list[str]:
         """验证策略配置"
 
         Args:
@@ -521,7 +521,7 @@ class PredictionStrategyFactory:
 
         return errors
 
-    async def health_check(self) -> Dict[str, Dict[str, Any]]:
+    async def health_check(self) -> dict[str, dict[str, Any]]:
         """检查所有策略的健康状态"""
         health_report = {}
 

@@ -17,7 +17,7 @@ Provides comprehensive business and system metrics collection:
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class EnhancedMetricsCollector:
         """初始化增强指标收集器"""
         self.metrics = {}
 
-    def collect(self) -> Dict[str, Any]:
+    def collect(self) -> dict[str, Any]:
         """收集指标"""
         return {"timestamp": datetime.utcnow(), "metrics": self.metrics}
 
@@ -51,7 +51,7 @@ class MetricsAggregator:
         """初始化指标聚合器"""
         self.aggregated_metrics = {}
 
-    def aggregate(self, metrics: Dict[str, Any]):
+    def aggregate(self, metrics: dict[str, Any]):
         """聚合指标"""
         for key, value in metrics.items():
             if key in self.aggregated_metrics:
@@ -63,7 +63,7 @@ class MetricsAggregator:
                 self.aggregated_metrics[key] = value
         logger.debug(f"Aggregated {len(metrics)} metrics")
 
-    def get_aggregated(self) -> Dict[str, Any]:
+    def get_aggregated(self) -> dict[str, Any]:
         """获取聚合后的指标"""
         return self.aggregated_metrics
 
@@ -71,13 +71,13 @@ class MetricsAggregator:
 class MetricPoint:
     """指标点 - 简化版本"""
 
-    def __init__(self, name: str, value: float, timestamp: Optional[datetime] = None):
+    def __init__(self, name: str, value: float, timestamp: datetime | None = None):
         """初始化指标点"""
         self.name = name
         self.value = value
         self.timestamp = timestamp or datetime.utcnow()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {"name": self.name, "value": self.value, "timestamp": self.timestamp}
 

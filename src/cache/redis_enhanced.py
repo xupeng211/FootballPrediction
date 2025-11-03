@@ -7,10 +7,10 @@ Enhanced Redis Cache Manager
 
 import asyncio
 import json
-import pickle
-from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass
 import logging
+import pickle
+from dataclasses import dataclass
+from typing import Any
 
 try:
     import redis
@@ -34,7 +34,7 @@ class RedisConfig:
     host: str = "localhost"
     port: int = 6379
     db: int = 0
-    password: Optional[str] = None
+    password: str | None = None
     encoding: str = "utf-8"
     decode_responses: bool = True
     socket_timeout: float = 5.0
@@ -42,23 +42,23 @@ class RedisConfig:
     retry_on_timeout: bool = True
     health_check_interval: int = 30
     max_connections: int = 50
-    connection_pool_kwargs: Optional[Dict] = None
+    connection_pool_kwargs: dict | None = None
 
     # 集群配置
-    cluster_nodes: Optional[List[Dict[str, Union[str, int]]]] = None
+    cluster_nodes: list[dict[str, str | int]] | None = None
     cluster_mode: bool = False
 
     # 哨兵配置
-    sentinel_servers: Optional[List[Dict[str, Union[str, int]]]] = None
-    sentinel_service_name: Optional[str] = None
+    sentinel_servers: list[dict[str, str | int]] | None = None
+    sentinel_service_name: str | None = None
     sentinel_mode: bool = False
 
     # SSL配置
     ssl: bool = False
-    ssl_cert_reqs: Optional[str] = None
-    ssl_ca_certs: Optional[str] = None
-    ssl_certfile: Optional[str] = None
-    ssl_keyfile: Optional[str] = None
+    ssl_cert_reqs: str | None = None
+    ssl_ca_certs: str | None = None
+    ssl_certfile: str | None = None
+    ssl_keyfile: str | None = None
 
 
 class EnhancedRedisManager:
@@ -195,12 +195,12 @@ class EnhancedRedisManager:
         return self._async_client
 
     # 基础操作方法
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         """获取缓存值"""
         return self.sync_client.get(key)
 
     def set(
-        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+        self, key: str, value: str, ex: int | None = None, px: int | None = None
     ) -> bool:
         """设置缓存值"""
         return self.sync_client.set(key, value, ex=ex, px=px)
@@ -237,7 +237,7 @@ class EnhancedRedisManager:
         """获取键的TTL（毫秒）"""
         return self.sync_client.pttl(key)
 
-    def keys(self, pattern: str = "*") -> List[str]:
+    def keys(self, pattern: str = "*") -> list[str]:
         """获取匹配模式的所有键"""
         return self.sync_client.keys(pattern)
 
@@ -250,16 +250,16 @@ class EnhancedRedisManager:
         return self.sync_client.flushall()
 
     # 批量操作
-    def mget(self, keys: List[str]) -> List[Optional[str]]:
+    def mget(self, keys: list[str]) -> list[str | None]:
         """批量获取缓存值"""
         return self.sync_client.mget(keys)
 
-    def mset(self, mapping: Dict[str, str]) -> bool:
+    def mset(self, mapping: dict[str, str]) -> bool:
         """批量设置缓存值"""
         return self.sync_client.mset(mapping)
 
     # 异步操作
-    async def aget(self, key: str) -> Optional[str]:
+    async def aget(self, key: str) -> str | None:
         """异步获取缓存值"""
         if self.use_mock:
             return self.sync_client.aget(key)
@@ -267,7 +267,7 @@ class EnhancedRedisManager:
             return await self.async_client.get(key)
 
     async def aset(
-        self, key: str, value: str, ex: Optional[int] = None, px: Optional[int] = None
+        self, key: str, value: str, ex: int | None = None, px: int | None = None
     ) -> bool:
         """异步设置缓存值"""
         if self.use_mock:
@@ -331,21 +331,21 @@ class EnhancedRedisManager:
         else:
             return await self.async_client.pttl(key)
 
-    async def akeys(self, pattern: str = "*") -> List[str]:
+    async def akeys(self, pattern: str = "*") -> list[str]:
         """异步获取匹配模式的所有键"""
         if self.use_mock:
             return self.sync_client.akeys(pattern)
         else:
             return await self.async_client.keys(pattern)
 
-    async def amget(self, keys: List[str]) -> List[Optional[str]]:
+    async def amget(self, keys: list[str]) -> list[str | None]:
         """异步批量获取缓存值"""
         if self.use_mock:
             return self.sync_client.amget(keys)
         else:
             return await self.async_client.mget(keys)
 
-    async def amset(self, mapping: Dict[str, str]) -> bool:
+    async def amset(self, mapping: dict[str, str]) -> bool:
         """异步批量设置缓存值"""
         if self.use_mock:
             return self.sync_client.amset(mapping)
@@ -361,15 +361,15 @@ class EnhancedRedisManager:
         """递减数值"""
         return self.sync_client.decr(key, amount)
 
-    def hget(self, name: str, key: str) -> Optional[str]:
+    def hget(self, name: str, key: str) -> str | None:
         """获取哈希字段值"""
         return self.sync_client.hget(name, key)
 
-    def hset(self, name: str, mapping: Dict[str, str]) -> int:
+    def hset(self, name: str, mapping: dict[str, str]) -> int:
         """设置哈希字段值"""
         return self.sync_client.hset(name, mapping=mapping)
 
-    def hgetall(self, name: str) -> Dict[str, str]:
+    def hgetall(self, name: str) -> dict[str, str]:
         """获取所有哈希字段值"""
         return self.sync_client.hgetall(name)
 
@@ -381,15 +381,15 @@ class EnhancedRedisManager:
         """右侧推入列表"""
         return self.sync_client.rpush(name, *values)
 
-    def lpop(self, name: str) -> Optional[str]:
+    def lpop(self, name: str) -> str | None:
         """左侧弹出列表元素"""
         return self.sync_client.lpop(name)
 
-    def rpop(self, name: str) -> Optional[str]:
+    def rpop(self, name: str) -> str | None:
         """右侧弹出列表元素"""
         return self.sync_client.rpop(name)
 
-    def lrange(self, name: str, start: int = 0, end: int = -1) -> List[str]:
+    def lrange(self, name: str, start: int = 0, end: int = -1) -> list[str]:
         """获取列表范围内的元素"""
         return self.sync_client.lrange(name, start, end)
 
@@ -405,13 +405,13 @@ class EnhancedRedisManager:
         """获取集合所有成员"""
         return self.sync_client.smembers(name)
 
-    def zadd(self, name: str, mapping: Dict[str, float]) -> int:
+    def zadd(self, name: str, mapping: dict[str, float]) -> int:
         """添加到有序集合"""
         return self.sync_client.zadd(name, mapping)
 
     def zrange(
         self, name: str, start: int = 0, end: int = -1, desc: bool = False
-    ) -> List[str]:
+    ) -> list[str]:
         """获取有序集合范围内的元素"""
         return self.sync_client.zrange(name, start, end, desc=desc)
 
@@ -420,12 +420,12 @@ class EnhancedRedisManager:
         return self.sync_client.zrem(name, *values)
 
     # 序列化操作
-    def set_json(self, key: str, obj: Any, ex: Optional[int] = None) -> bool:
+    def set_json(self, key: str, obj: Any, ex: int | None = None) -> bool:
         """设置JSON对象"""
         json_str = json.dumps(obj, ensure_ascii=False)
         return self.set(key, json_str, ex=ex)
 
-    def get_json(self, key: str) -> Optional[Any]:
+    def get_json(self, key: str) -> Any | None:
         """获取JSON对象"""
         value = self.get(key)
         if value is None:
@@ -435,12 +435,12 @@ class EnhancedRedisManager:
         except json.JSONDecodeError:
             return value
 
-    def set_pickle(self, key: str, obj: Any, ex: Optional[int] = None) -> bool:
+    def set_pickle(self, key: str, obj: Any, ex: int | None = None) -> bool:
         """设置pickle对象"""
         pickle_bytes = pickle.dumps(obj)
         return self.sync_client.set(key, pickle_bytes, ex=ex)
 
-    def get_pickle(self, key: str) -> Optional[Any]:
+    def get_pickle(self, key: str) -> Any | None:
         """获取pickle对象"""
         value = self.sync_client.get(key)
         if value is None:
@@ -467,7 +467,7 @@ class EnhancedRedisManager:
         except Exception:
             return False
 
-    def info(self) -> Dict[str, Any]:
+    def info(self) -> dict[str, Any]:
         """获取Redis信息"""
         try:
             info = self.sync_client.info()
@@ -505,7 +505,7 @@ class EnhancedRedisManager:
 
 
 # 全局实例
-_global_redis_manager: Optional[EnhancedRedisManager] = None
+_global_redis_manager: EnhancedRedisManager | None = None
 
 
 def get_redis_manager(

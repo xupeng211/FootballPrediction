@@ -9,8 +9,9 @@ Provides concrete implementations for various observers.
 import logging
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .base import ObservableEvent, ObservableEventType, Observer
 
@@ -35,10 +36,10 @@ class MetricsObserver(Observer):
         """
         super().__init__("MetricsObserver")
         self._aggregation_window = aggregation_window
-        self._metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
-        self._counters: Dict[str, int] = defaultdict(int)
-        self._gauges: Dict[str, float] = {}
-        self._histograms: Dict[str, List[float]] = defaultdict(list)
+        self._metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self._counters: dict[str, int] = defaultdict(int)
+        self._gauges: dict[str, float] = {}
+        self._histograms: dict[str, list[float]] = defaultdict(list)
         self._last_cleanup = time.time()
 
     async def update(self, event: ObservableEvent) -> None:
@@ -100,7 +101,7 @@ class MetricsObserver(Observer):
             while values and values[0][0] < cutoff_time:
                 values.popleft()
 
-    def get_observed_event_types(self) -> List[ObservableEventType]:
+    def get_observed_event_types(self) -> list[ObservableEventType]:
         """返回观察的事件类型"""
         return [
             ObservableEventType.METRIC_UPDATE,
@@ -110,7 +111,7 @@ class MetricsObserver(Observer):
             ObservableEventType.ERROR_OCCURRED,
         ]
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取聚合后的指标"""
         result = {
             "counters": dict(self._counters),
@@ -152,7 +153,7 @@ class MetricsObserver(Observer):
 
         return result
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取观察者统计信息"""
         stats = super().get_stats()
         stats.update(
@@ -185,7 +186,7 @@ class LoggingObserver(Observer):
         super().__init__("LoggingObserver")
         self._logger = logging.getLogger(f"{__name__}.{self.name}")
         self._logger.setLevel(log_level)
-        self._log_counts: Dict[str, int] = defaultdict(int)
+        self._log_counts: dict[str, int] = defaultdict(int)
 
     async def update(self, event: ObservableEvent) -> None:
         """记录事件到日志"""
@@ -235,16 +236,16 @@ class LoggingObserver(Observer):
 
         return " | ".join(parts)
 
-    def get_observed_event_types(self) -> List[ObservableEventType]:
+    def get_observed_event_types(self) -> list[ObservableEventType]:
         """返回观察的事件类型"""
         # 日志观察者观察所有事件类型
         return list(ObservableEventType)
 
-    def get_log_counts(self) -> Dict[str, int]:
+    def get_log_counts(self) -> dict[str, int]:
         """获取日志计数统计"""
         return dict(self._log_counts)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取观察者统计信息"""
         stats = super().get_stats()
         stats.update(
@@ -269,9 +270,9 @@ class AlertingObserver(Observer):
         # 添加pass语句
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
-        self._alert_rules: Dict[str, Dict[str, Any]] = {}
+        self._alert_rules: dict[str, dict[str, Any]] = {}
         self._alert_history: deque = deque(maxlen=1000)
-        self._alert_cooldown: Dict[str, datetime] = {}
+        self._alert_cooldown: dict[str, datetime] = {}
         self._default_cooldown = timedelta(minutes=5)
 
     def add_alert_rule(
@@ -306,7 +307,7 @@ class AlertingObserver(Observer):
             await self._check_rule(rule_name, rule, event)
 
     async def _check_rule(
-        self, rule_name: str, rule: Dict[str, Any], event: ObservableEvent
+        self, rule_name: str, rule: dict[str, Any], event: ObservableEvent
     ) -> None:
         """检查单个告警规则"""
         # 检查冷却时间
@@ -318,7 +319,7 @@ class AlertingObserver(Observer):
             await self._trigger_alert(rule_name, rule, event)
 
     async def _trigger_alert(
-        self, rule_name: str, rule: Dict[str, Any], event: ObservableEvent
+        self, rule_name: str, rule: dict[str, Any], event: ObservableEvent
     ) -> None:
         """触发告警"""
         # 更新规则统计
@@ -349,7 +350,7 @@ class AlertingObserver(Observer):
         # 发送告警通知
         await self._send_alert(alert)
 
-    async def _send_alert(self, alert: Dict[str, Any]) -> None:
+    async def _send_alert(self, alert: dict[str, Any]) -> None:
         """发送告警通知"""
         # 这里可以集成各种通知渠道:
         # - 邮件
@@ -368,7 +369,7 @@ class AlertingObserver(Observer):
                 f"Source: {alert['event'].source}"
             )
 
-    def get_observed_event_types(self) -> List[ObservableEventType]:
+    def get_observed_event_types(self) -> list[ObservableEventType]:
         """返回观察的事件类型"""
         return [
             ObservableEventType.SYSTEM_ALERT,
@@ -379,10 +380,10 @@ class AlertingObserver(Observer):
 
     def get_alert_history(
         self,
-        severity: Optional[str] = None,
-        since: Optional[datetime] = None,
+        severity: str | None = None,
+        since: datetime | None = None,
         limit: int = 50,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """获取告警历史"""
         history = list(self._alert_history)
 
@@ -398,7 +399,7 @@ class AlertingObserver(Observer):
         history.sort(key=lambda x: x["timestamp"], reverse=True)
         return history[:limit]
 
-    def get_alert_rules(self) -> Dict[str, Dict[str, Any]]:
+    def get_alert_rules(self) -> dict[str, dict[str, Any]]:
         """获取所有告警规则"""
         return {
             name: {
@@ -410,7 +411,7 @@ class AlertingObserver(Observer):
             for name, rule in self._alert_rules.items()
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取观察者统计信息"""
         stats = super().get_stats()
         stats.update(
@@ -443,7 +444,7 @@ class PerformanceObserver(Observer):
         self._window_size = window_size
         self._response_times: deque = deque(maxlen=window_size)
         self._throughput_data: deque = deque(maxlen=window_size)
-        self._error_rates: Dict[str, deque] = defaultdict(
+        self._error_rates: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=window_size)
         )
         self._last_throughput_calc = time.time()
@@ -493,7 +494,7 @@ class PerformanceObserver(Observer):
             f"Performance degradation detected: {degradation_type} = {degradation_value}"
         )
 
-    def get_observed_event_types(self) -> List[ObservableEventType]:
+    def get_observed_event_types(self) -> list[ObservableEventType]:
         """返回观察的事件类型"""
         return [
             ObservableEventType.PREDICTION_COMPLETED,
@@ -501,7 +502,7 @@ class PerformanceObserver(Observer):
             ObservableEventType.PERFORMANCE_DEGRADATION,
         ]
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """获取性能指标"""
         result = {}
 
@@ -537,7 +538,7 @@ class PerformanceObserver(Observer):
 
         return result
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取观察者统计信息"""
         stats = super().get_stats()
         stats.update(

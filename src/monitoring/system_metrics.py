@@ -6,7 +6,7 @@ System Metrics Collector
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import psutil
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
@@ -21,10 +21,10 @@ class SystemMetricsCollector:
     pass  # 添加pass语句
     """系统指标收集器"""
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None) -> None:
+    def __init__(self, registry: CollectorRegistry | None = None) -> None:
         self.registry = registry or CollectorRegistry()
-        self.db_manager: Optional[DatabaseManager] = None
-        self.redis_manager: Optional[RedisConnectionManager] = None
+        self.db_manager: DatabaseManager | None = None
+        self.redis_manager: RedisConnectionManager | None = None
 
         # 系统指标
         self.cpu_usage = Gauge(
@@ -76,7 +76,7 @@ class SystemMetricsCollector:
         """设置Redis管理器"""
         self.redis_manager = redis_manager
 
-    async def collect_system_metrics(self) -> Dict[str, Any]:
+    async def collect_system_metrics(self) -> dict[str, Any]:
         """收集系统指标"""
         metrics = {}
 
@@ -136,7 +136,7 @@ class SystemMetricsCollector:
 
         return metrics
 
-    async def collect_database_metrics(self) -> Dict[str, Any]:
+    async def collect_database_metrics(self) -> dict[str, Any]:
         """收集数据库指标"""
         if not self.db_manager:
             return {"error": "Database manager not set"}
@@ -170,7 +170,7 @@ class SystemMetricsCollector:
 
         return metrics
 
-    async def collect_cache_metrics(self) -> Dict[str, Any]:
+    async def collect_cache_metrics(self) -> dict[str, Any]:
         """收集缓存指标"""
         if not self.redis_manager:
             return {"error": "Redis manager not set"}
@@ -215,7 +215,7 @@ class SystemMetricsCollector:
 
         return metrics
 
-    async def collect_application_metrics(self) -> Dict[str, Any]:
+    async def collect_application_metrics(self) -> dict[str, Any]:
         """收集应用程序指标"""
         metrics = {}
 

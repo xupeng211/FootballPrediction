@@ -5,7 +5,7 @@
 
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +42,7 @@ class ScoresCollector:
             logger.warning("未设置 FOOTBALL_API_TOKEN 环境变量")
         self.headers = {"X-Auth-Token": api_token} if api_token else {}
 
-    async def collect_live_scores(self, force_refresh: bool = False) -> Dict[str, Any]:
+    async def collect_live_scores(self, force_refresh: bool = False) -> dict[str, Any]:
         """
         收集所有正在进行的比赛比分
 
@@ -93,7 +93,7 @@ class ScoresCollector:
             logger.error(f"收集实时比分失败: {e}")
             return {"error": str(e)}
 
-    async def _get_live_matches_from_db(self) -> List[Match]:
+    async def _get_live_matches_from_db(self) -> list[Match]:
         """从数据库获取正在进行的比赛"""
         result = await self.db_session.execute(
             select(Match).where(
@@ -102,7 +102,7 @@ class ScoresCollector:
         )
         return result.scalars().all()
 
-    async def _get_match_score(self, match: Match) -> Dict[str, int]:
+    async def _get_match_score(self, match: Match) -> dict[str, int]:
         """获取比赛比分"""
         if match.home_score is not None:
             return {"home": match.home_score, "away": match.away_score}

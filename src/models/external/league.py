@@ -3,20 +3,21 @@
 External League Data Model
 """
 
+from datetime import datetime
+from typing import Any
+
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
-    DateTime,
-    Boolean,
-    JSON,
-    ForeignKey,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
-from typing import Optional, Dict, Any
 
 Base = declarative_base()
 
@@ -86,7 +87,7 @@ class ExternalLeague(Base):
         return self.current_season_start <= now <= self.current_season_end
 
     @property
-    def season_progress(self) -> Optional[float]:
+    def season_progress(self) -> float | None:
         """赛季进度百分比"""
         if (
             not self.current_season_start
@@ -100,7 +101,7 @@ class ExternalLeague(Base):
         progress = (self.current_matchday / total_matchdays) * 100
         return min(progress, 100.0)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -143,7 +144,7 @@ class ExternalLeague(Base):
 
     @classmethod
     def from_api_data(
-        cls, data: Dict[str, Any], is_supported: bool = False
+        cls, data: dict[str, Any], is_supported: bool = False
     ) -> "ExternalLeague":
         """从API数据创建实例"""
         try:
@@ -222,7 +223,7 @@ class ExternalLeague(Base):
             )
 
     @staticmethod
-    def _calculate_data_quality_score(data: Dict[str, Any]) -> int:
+    def _calculate_data_quality_score(data: dict[str, Any]) -> int:
         """计算数据质量评分"""
         score = 0
 
@@ -248,7 +249,7 @@ class ExternalLeague(Base):
 
         return min(int(score), 100)  # 最高100分
 
-    def update_from_api_data(self, data: Dict[str, Any]) -> bool:
+    def update_from_api_data(self, data: dict[str, Any]) -> bool:
         """从API数据更新实例"""
         try:
             # 检查外部ID是否匹配
@@ -414,7 +415,7 @@ class ExternalLeagueStandings(Base):
         """显示进球记录"""
         return f"{self.goals_for}:{self.goals_against}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -451,7 +452,7 @@ class ExternalLeagueStandings(Base):
 
     @classmethod
     def from_api_data(
-        cls, data: Dict[str, Any], league_id: int, external_league_id: str
+        cls, data: dict[str, Any], league_id: int, external_league_id: str
     ) -> "ExternalLeagueStandings":
         """从API数据创建实例"""
         try:

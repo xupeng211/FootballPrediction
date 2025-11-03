@@ -9,7 +9,7 @@ Provides audit logging functionality for system operations.
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +47,8 @@ class AuditContext:
     def __init__(
         self,
         user_id: str,
-        session_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        session_id: str | None = None,
+        ip_address: str | None = None,
     ):
         self.user_id = user_id
         self.session_id = session_id
@@ -67,7 +67,7 @@ class AuditLog:
         action: str,
         context: AuditContext,
         severity: AuditSeverity,
-        details: Dict[str, Any],
+        details: dict[str, Any],
     ):
         self.action = action
         self.context = context
@@ -97,7 +97,7 @@ class DataSanitizer:
     pass  # 添加pass语句
     """数据清理器 - 简化版本"""
 
-    def sanitize(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def sanitize(self, data: dict[str, Any]) -> dict[str, Any]:
         """清理敏感数据"""
         # 简化的清理逻辑
         sanitized = data.copy()
@@ -131,7 +131,7 @@ class AuditEvent:
     """审计事件"""
 
     def __init__(
-        self, action: str, user: str, severity: AuditSeverity, details: Dict[str, Any]
+        self, action: str, user: str, severity: AuditSeverity, details: dict[str, Any]
     ):
         self.action = action
         self._user = user
@@ -150,11 +150,11 @@ class AuditService:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.events: List[AuditEvent] = []
+        self.events: list[AuditEvent] = []
         self.sanitizer = DataSanitizer()
         self.analyzer = SeverityAnalyzer()
 
-    def log_event(self, action: str, user: str, details: Dict[str, Any]):
+    def log_event(self, action: str, user: str, details: dict[str, Any]):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -172,7 +172,7 @@ class AuditService:
         logger.info(f"Audit event logged: {action} by {user}")
         return event
 
-    def get_events(self, limit: int = 100) -> List[AuditEvent]:
+    def get_events(self, limit: int = 100) -> list[AuditEvent]:
         """获取审计事件"""
         return self.events[-limit:]
 

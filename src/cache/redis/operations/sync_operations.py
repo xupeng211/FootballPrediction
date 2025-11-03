@@ -6,7 +6,7 @@ Redis synchronous operations
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class RedisSyncOperations:
         self.client = redis_client
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get value from Redis"""
         if not self.client:
             return None
@@ -38,7 +38,7 @@ class RedisSyncOperations:
             self.logger.error(f"Error getting key {key}: {str(e)}")
             return None
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Set value in Redis"""
         if not self.client:
             return False

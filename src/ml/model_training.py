@@ -14,7 +14,7 @@ import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -95,7 +95,7 @@ class ModelTrainer:
     Model Trainer (Stub Implementation)
     """
 
-    def __init__(self, config: Optional[TrainingConfig] = None):
+    def __init__(self, config: TrainingConfig | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -107,14 +107,14 @@ class ModelTrainer:
         """
         self.config = config or TrainingConfig()
         import logging
-        from typing import Any, Dict, List
+        from typing import Any
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None
 
-        self.training_history: List[Dict[str, Any]] = []
-        self.metrics_history: Dict[str, Any] = {}
-        self.feature_importance: Dict[str, float] = {}
+        self.training_history: list[dict[str, Any]] = []
+        self.metrics_history: dict[str, Any] = {}
+        self.feature_importance: dict[str, float] = {}
         self.status = TrainingStatus.PENDING
         self.start_time = None
         self.end_time = None
@@ -125,8 +125,8 @@ class ModelTrainer:
         self,
         data: pd.DataFrame,
         target_column: str,
-        feature_columns: Optional[List[str]] = None,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+        feature_columns: list[str] | None = None,
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """
         准备训练数据
 
@@ -180,9 +180,9 @@ class ModelTrainer:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        X_val: Optional[pd.DataFrame] = None,
-        y_val: Optional[pd.Series] = None,
-    ) -> Dict[str, Any]:
+        X_val: pd.DataFrame | None = None,
+        y_val: pd.Series | None = None,
+    ) -> dict[str, Any]:
         """
         训练模型
 
@@ -261,7 +261,7 @@ class ModelTrainer:
 
     async def evaluate(
         self, X_test: pd.DataFrame, y_test: pd.Series
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         评估模型
 
@@ -348,7 +348,7 @@ class ModelTrainer:
             # 加载训练历史
             history_path = file_path.replace(".pkl", "_history.json")
             if os.path.exists(history_path):
-                with open(history_path, "r") as f:
+                with open(history_path) as f:
                     history_data = json.load(f)
                     self.training_history = history_data.get("training_history", [])
                     self.metrics_history = {
@@ -359,7 +359,7 @@ class ModelTrainer:
 
         return success
 
-    def get_training_summary(self) -> Dict[str, Any]:
+    def get_training_summary(self) -> dict[str, Any]:
         """
         获取训练摘要
 
@@ -409,14 +409,14 @@ class ModelRegistry:
         self.registry_dir = Path(registry_dir)
         self.registry_dir.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._models: Dict[str, Dict[str, Any]] = {}
+        self._models: dict[str, dict[str, Any]] = {}
 
     def register_model(
         self,
         model: PredictionModel,
         name: str,
         version: str = "1.0.0",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """
         注册模型
@@ -453,7 +453,7 @@ class ModelRegistry:
         self.logger.info(f"Model registered: {model_id}")
         return model_id
 
-    def list_models(self, name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_models(self, name: str | None = None) -> list[dict[str, Any]]:
         """
         列出模型
 
@@ -470,7 +470,7 @@ class ModelRegistry:
 
         return sorted(models, key=lambda x: x["created_at"], reverse=True)
 
-    def get_model(self, model_id: str) -> Optional[Dict[str, Any]]:
+    def get_model(self, model_id: str) -> dict[str, Any] | None:
         """
         获取模型信息
 
@@ -512,7 +512,7 @@ class ModelRegistry:
 
 
 # 全局模型注册表
-_global_registry: Optional[ModelRegistry] = None
+_global_registry: ModelRegistry | None = None
 
 
 def get_model_registry() -> ModelRegistry:
@@ -527,9 +527,9 @@ def get_model_registry() -> ModelRegistry:
 async def train_football_model(
     data: pd.DataFrame,
     target_column: str = "result",
-    feature_columns: Optional[List[str]] = None,
+    feature_columns: list[str] | None = None,
     model_name: str = "football_prediction_model",
-) -> Tuple[PredictionModel, Dict[str, Any]]:
+) -> tuple[PredictionModel, dict[str, Any]]:
     """
     训练足球预测模型
 

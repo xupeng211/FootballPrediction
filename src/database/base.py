@@ -5,7 +5,7 @@ SQLAlchemy基础模型
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import DeclarativeBase
@@ -48,7 +48,7 @@ class BaseModel(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="主键ID")
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
         """
         将模型对象转换为字典
 
@@ -61,7 +61,7 @@ class BaseModel(Base, TimestampMixin):
         if exclude_fields is None:
             exclude_fields = set()
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for column in self.__table__.columns:
             column_name = column.name
             if column_name not in exclude_fields:
@@ -74,7 +74,7 @@ class BaseModel(Base, TimestampMixin):
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(cls, data: dict[str, Any]):
         """从字典创建模型实例
 
         Args:
@@ -90,7 +90,7 @@ class BaseModel(Base, TimestampMixin):
         }
         return cls(**filtered_data)
 
-    def update_from_dict(self, data: Dict[str, Any]) -> None:
+    def update_from_dict(self, data: dict[str, Any]) -> None:
         """
         从字典更新模型对象
 

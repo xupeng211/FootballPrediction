@@ -6,7 +6,7 @@ Async TTL Cache Wrapper
 Provides async interface for TTLCache.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .ttl_cache import TTLCache
 
@@ -26,7 +26,7 @@ class AsyncTTLCache:
     def __init__(
         self,
         max_size: int = 1000,
-        default_ttl: Optional[float] = None,
+        default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
     ):
         """
@@ -56,7 +56,7 @@ class AsyncTTLCache:
         self,
         key: str,
         value: Any,
-        ttl: Optional[float] = None,
+        ttl: float | None = None,
     ) -> None:
         """
         异步设置缓存值
@@ -97,19 +97,19 @@ class AsyncTTLCache:
         """
         return self._cache.pop(key, default)
 
-    async def keys(self) -> List[str]:
+    async def keys(self) -> list[str]:
         """异步获取所有键"""
         return self._cache.keys()
 
-    async def values(self) -> List[Any]:
+    async def values(self) -> list[Any]:
         """异步获取所有值"""
         return self._cache.values()
 
-    async def items(self) -> List[tuple]:
+    async def items(self) -> list[tuple]:
         """异步获取所有键值对"""
         return self._cache.items()
 
-    async def get_many(self, keys: List[str]) -> Dict[str, Any]:
+    async def get_many(self, keys: list[str]) -> dict[str, Any]:
         """
         异步批量获取
 
@@ -123,8 +123,8 @@ class AsyncTTLCache:
 
     async def set_many(
         self,
-        mapping: Dict[str, Any],
-        ttl: Optional[float] = None,
+        mapping: dict[str, Any],
+        ttl: float | None = None,
     ) -> None:
         """
         异步批量设置
@@ -135,7 +135,7 @@ class AsyncTTLCache:
         """
         self._cache.set_many(mapping, ttl)
 
-    async def delete_many(self, keys: List[str]) -> int:
+    async def delete_many(self, keys: list[str]) -> int:
         """
         异步批量删除
 
@@ -161,7 +161,7 @@ class AsyncTTLCache:
         """
         return self._cache.increment(key, delta, default)
 
-    async def touch(self, key: str, ttl: Optional[float] = None) -> bool:
+    async def touch(self, key: str, ttl: float | None = None) -> bool:
         """
         异步更新缓存项的TTL
 
@@ -174,7 +174,7 @@ class AsyncTTLCache:
         """
         return self._cache.touch(key, ttl)
 
-    async def ttl(self, key: str) -> Optional[int]:
+    async def ttl(self, key: str) -> int | None:
         """
         异步获取剩余TTL
 
@@ -203,7 +203,7 @@ class AsyncTTLCache:
         """
         return self._cache.cleanup_expired()
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """异步获取统计信息"""
         return self._cache.get_stats()
 

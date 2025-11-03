@@ -5,7 +5,7 @@ Predictions Health Check Endpoint
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -16,7 +16,7 @@ health_router = APIRouter(prefix="/predictions", tags=["predictions"])
 
 
 @health_router.get("/health", summary="预测服务健康检查")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """
     检查预测服务的健康状态
 

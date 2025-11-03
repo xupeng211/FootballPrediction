@@ -4,12 +4,13 @@ ELO Rating Model for Football Match Prediction
 """
 
 import logging
+import os
+import pickle
 from datetime import datetime
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Any
+
 import numpy as np
 import pandas as pd
-import pickle
-import os
 
 from .base_model import BaseModel, PredictionResult, TrainingResult
 
@@ -42,7 +43,7 @@ class EloModel(BaseModel):
             "max_elo_difference": 400.0,  # 最大ELO差异限制
         }
 
-    def prepare_features(self, match_data: Dict[str, Any]) -> np.ndarray:
+    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
         """
         准备ELO特征
 
@@ -65,7 +66,7 @@ class EloModel(BaseModel):
     def train(
         self,
         training_data: pd.DataFrame,
-        validation_data: Optional[pd.DataFrame] = None,
+        validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
         """
         训练ELO模型（计算历史ELO评分）
@@ -236,7 +237,7 @@ class EloModel(BaseModel):
 
     def _get_actual_scores(
         self, home_score: int, away_score: int
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         获取实际得分
 
@@ -254,7 +255,7 @@ class EloModel(BaseModel):
         else:
             return 0.5, 0.5  # 平局
 
-    def predict(self, match_data: Dict[str, Any]) -> PredictionResult:
+    def predict(self, match_data: dict[str, Any]) -> PredictionResult:
         """
         预测比赛结果
 
@@ -319,7 +320,7 @@ class EloModel(BaseModel):
 
     def _convert_expected_scores_to_probabilities(
         self, home_expected: float, away_expected: float, elo_difference: float
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """
         将期望得分转换为胜平负概率
 
@@ -361,7 +362,7 @@ class EloModel(BaseModel):
 
         return home_win_prob, draw_prob, away_win_prob
 
-    def predict_proba(self, match_data: Dict[str, Any]) -> Tuple[float, float, float]:
+    def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
         """
         预测概率分布
 
@@ -389,7 +390,7 @@ class EloModel(BaseModel):
             home_expected, away_expected, home_elo - away_elo
         )
 
-    def evaluate(self, test_data: pd.DataFrame) -> Dict[str, float]:
+    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
         """
         评估模型性能
 
@@ -427,10 +428,10 @@ class EloModel(BaseModel):
         # 计算评估指标
         from sklearn.metrics import (
             accuracy_score,
+            confusion_matrix,
+            f1_score,
             precision_score,
             recall_score,
-            f1_score,
-            confusion_matrix,
         )
 
         accuracy = accuracy_score(actuals, predictions)
@@ -457,7 +458,7 @@ class EloModel(BaseModel):
 
     def _cross_validate(
         self, training_data: pd.DataFrame, folds: int = 5
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         交叉验证
 
@@ -521,7 +522,7 @@ class EloModel(BaseModel):
         """
         return self.team_elos.get(team, self.initial_elo)
 
-    def get_team_elo_history(self, team: str) -> List[float]:
+    def get_team_elo_history(self, team: str) -> list[float]:
         """
         获取球队ELO历史
 
@@ -533,7 +534,7 @@ class EloModel(BaseModel):
         """
         return self.elo_history.get(team, [self.initial_elo])
 
-    def get_top_teams(self, limit: int = 20) -> List[Tuple[str, float]]:
+    def get_top_teams(self, limit: int = 20) -> list[tuple[str, float]]:
         """
         获取ELO评分最高的球队
 

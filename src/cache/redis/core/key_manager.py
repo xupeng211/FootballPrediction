@@ -4,7 +4,6 @@ Redis key manager
 
 import hashlib
 import json
-from typing import Optional
 
 
 class RedisKeyManager:
@@ -39,7 +38,7 @@ class RedisKeyManager:
         """生成健康检查键"""
         return self._make_key(f"health:{service}")
 
-    def metrics_key(self, metric_name: str, timestamp: Optional[int] = None) -> str:
+    def metrics_key(self, metric_name: str, timestamp: int | None = None) -> str:
         """生成指标键"""
         if timestamp:
             return self._make_key(f"metrics:{metric_name}:{timestamp}")

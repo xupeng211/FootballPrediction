@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.exceptions import DomainError
 
@@ -63,8 +63,8 @@ class PredictionScore:
 
     predicted_home: int
     predicted_away: int
-    actual_home: Optional[int] = None
-    actual_away: Optional[int] = None
+    actual_home: int | None = None
+    actual_away: int | None = None
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -150,7 +150,7 @@ class PredictionPoints:
         self.confidence_bonus = self.confidence_bonus.quantize(Decimal("0.01"))
 
     @property
-    def breakdown(self) -> Dict[str, Decimal]:
+    def breakdown(self) -> dict[str, Decimal]:
         """积分明细"""
         return {
             "score_bonus": self.score_bonus,
@@ -174,21 +174,21 @@ class Prediction:
     封装预测的核心业务逻辑和不变性约束.
     """
 
-    id: Optional[int] = None
+    id: int | None = None
     user_id: int = 0
     match_id: int = 0
-    score: Optional[PredictionScore] = None
-    confidence: Optional[ConfidenceScore] = None
+    score: PredictionScore | None = None
+    confidence: ConfidenceScore | None = None
     status: PredictionStatus = PredictionStatus.PENDING
-    model_version: Optional[str] = None
-    points: Optional[PredictionPoints] = None
+    model_version: str | None = None
+    points: PredictionPoints | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
-    evaluated_at: Optional[datetime] = None
-    cancelled_at: Optional[datetime] = None
-    cancellation_reason: Optional[str] = None
+    evaluated_at: datetime | None = None
+    cancelled_at: datetime | None = None
+    cancellation_reason: str | None = None
 
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -208,8 +208,8 @@ class Prediction:
         self,
         predicted_home: int,
         predicted_away: int,
-        confidence: Optional[float] = None,
-        model_version: Optional[str] = None,
+        confidence: float | None = None,
+        model_version: str | None = None,
     ) -> None:
         """创建预测"""
         if self.status != PredictionStatus.PENDING:
@@ -243,7 +243,7 @@ class Prediction:
         self,
         actual_home: int,
         actual_away: int,
-        scoring_rules: Optional[Dict[str, Decimal]] = None,
+        scoring_rules: dict[str, Decimal] | None = None,
     ) -> None:
         """评估预测结果"""
         if self.status != PredictionStatus.PENDING:
@@ -279,7 +279,7 @@ class Prediction:
             )
         )
 
-    def cancel(self, reason: Optional[str] = None) -> None:
+    def cancel(self, reason: str | None = None) -> None:
         """取消预测"""
         if self.status in [PredictionStatus.EVALUATED, PredictionStatus.CANCELLED]:
             raise DomainError(f"预测状态为 {self.status.value},无法取消")
@@ -296,7 +296,7 @@ class Prediction:
         self.status = PredictionStatus.EXPIRED
 
     @staticmethod
-    def _default_scoring_rules() -> Dict[str, Decimal]:
+    def _default_scoring_rules() -> dict[str, Decimal]:
         """默认积分规则"""
         return {
             "exact_score": Decimal("10"),  # 精确比分
@@ -304,7 +304,7 @@ class Prediction:
             "confidence_multiplier": Decimal("1"),  # 置信度倍数
         }
 
-    def _calculate_points(self, rules: Dict[str, Decimal]) -> PredictionPoints:
+    def _calculate_points(self, rules: dict[str, Decimal]) -> PredictionPoints:
         """计算积分"""
         points = PredictionPoints()
 
@@ -370,7 +370,7 @@ class Prediction:
         # 加权平均
         return score_accuracy * 0.7 + result_accuracy * 0.3
 
-    def get_prediction_summary(self) -> Dict[str, Any]:
+    def get_prediction_summary(self) -> dict[str, Any]:
         """获取预测摘要"""
         if not self.score:
             return {"status": "no_prediction"}
@@ -401,7 +401,7 @@ class Prediction:
         """添加领域事件"""
         self._domain_events.append(event)
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """获取领域事件"""
         return self._domain_events.copy()
 
@@ -413,7 +413,7 @@ class Prediction:
     # 序列化方法
     # ========================================
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -453,7 +453,7 @@ class Prediction:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Prediction":
+    def from_dict(cls, data: dict[str, Any]) -> "Prediction":
         """从字典创建实例"""
         score_data = data.pop("score", None)
         score = PredictionScore(**score_data) if score_data else None

@@ -5,7 +5,7 @@ FastAPI 依赖注入模块
 支持同步和异步会话管理.
 """
 
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession

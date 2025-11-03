@@ -4,8 +4,6 @@
 提供获取当前用户,认证服务等依赖函数
 """
 
-from typing import Optional
-
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -137,7 +135,7 @@ async def get_current_premium_user(
     return current_user
 
 
-def require_permissions(required_roles: Optional[list] = None):
+def require_permissions(required_roles: list | None = None):
     """函数文档字符串"""
     pass  # 添加pass语句
     """
@@ -187,9 +185,9 @@ class OptionalAuth:
 
     async def __call__(
         self,
-        token: Optional[str] = Depends(oauth2_scheme),
+        token: str | None = Depends(oauth2_scheme),
         auth_service: AuthService = Depends(get_auth_service),
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         可选获取当前用户
 

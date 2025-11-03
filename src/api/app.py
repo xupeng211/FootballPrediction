@@ -1,8 +1,19 @@
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Union
 
+# 全局异常处理
+# 根路径
+# 健康检查
+# Metrics 端点
+# 简单的占位符指标
+# TYPE http_requests_total counter
+# HELP request_duration_seconds Request duration in seconds
+# TYPE request_duration_seconds histogram
+# HELP api_health_status API health status
+# TYPE api_health_status gauge
+# 测试端点
+import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,88 +23,37 @@ from requests.exceptions import HTTPError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from src.api.adapters.router import router as adapters_router
+
+# 全局预测引擎实例
+# 不抛出异常,允许应用继续启动
+# 如果预测引擎有清理方法,在这里调用
+# 启动时初始化
+# 关闭时清理
+# 创建FastAPI应用
+# 设置自定义OpenAPI schema
+# 中间件配置
+# 记录请求开始
+# 处理请求
+# 记录请求完成
+# 添加处理时间到响应头
+# 记录错误
+# 添加请求日志中间件
+# 注册路由
+# 导入并注册数据集成路由
+from src.api.data_integration import router as data_integration_router
 from src.api.data_router import router as data_router
 from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
-from src.api.adapters.router import router as adapters_router
-from src.config.openapi_config import setup_openapi
-from src.core.logging import get_logger
-from src.core.prediction import PredictionEngine
-
-
-# 全局预测引擎实例
-
-
-# 不抛出异常,允许应用继续启动
-
-
-# 如果预测引擎有清理方法,在这里调用
-
-
-# 启动时初始化
-
-
-# 关闭时清理
-
-
-# 创建FastAPI应用
-
-# 设置自定义OpenAPI schema
-
-# 中间件配置
-
-
-# 记录请求开始
-
-# 处理请求
-
-# 记录请求完成
-
-# 添加处理时间到响应头
-
-
-# 记录错误
-
-
-# 添加请求日志中间件
-
-# 注册路由
-
-# 导入并注册数据集成路由
-from src.api.data_integration import router as data_integration_router
-
 
 # 导入并注册SRS规范增强预测路由
 from src.api.predictions_enhanced import router as predictions_enhanced_router
 
-
 # 导入并注册SRS规范简化预测路由（不依赖数据库）
 from src.api.predictions_srs_simple import router as predictions_srs_simple_router
-
-
-# 全局异常处理
-
-
-# 根路径
-
-
-# 健康检查
-
-
-# Metrics 端点
-# 简单的占位符指标
-# TYPE http_requests_total counter
-
-# HELP request_duration_seconds Request duration in seconds
-# TYPE request_duration_seconds histogram
-
-# HELP api_health_status API health status
-# TYPE api_health_status gauge
-
-
-# 测试端点
-
-import uvicorn
+from src.config.openapi_config import setup_openapi
+from src.core.logging import get_logger
+from src.core.prediction import PredictionEngine
 
 # 开发环境配置
 """
@@ -103,7 +63,7 @@ FastAPI Main Application
 Integrates all API routes and middleware.
 """
 logger = get_logger(__name__)
-prediction_engine: Union[PredictionEngine, None] = None
+prediction_engine: PredictionEngine | None = None
 
 
 async def init_prediction_engine():

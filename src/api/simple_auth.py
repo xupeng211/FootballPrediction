@@ -1,4 +1,3 @@
-from typing import Optional
 from datetime import datetime
 
 """
@@ -7,7 +6,7 @@ from datetime import datetime
 提供基本的用户认证功能,避免复杂依赖问题
 """
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
@@ -80,7 +79,7 @@ class SimpleAuthService:
         """简单密码验证（实际应用中应该使用bcrypt）"""
         return plain_password == stored_password
 
-    def authenticate_user(self, username: str, password: str) -> Optional[SimpleUser]:
+    def authenticate_user(self, username: str, password: str) -> SimpleUser | None:
         """验证用户凭据"""
         user_data = self.users.get(username)
         if not user_data:
@@ -135,7 +134,7 @@ class SimpleAuthService:
             "role": user.role,
         }
 
-    def get_user(self, username: str) -> Optional[SimpleUser]:
+    def get_user(self, username: str) -> SimpleUser | None:
         """获取用户对象"""
         user_data = self.users.get(username)
         if not user_data:
@@ -157,7 +156,7 @@ class SimpleAuthService:
         token_data = f"{user.username}:{user.id}:{timestamp}"
         return f"Bearer {token_data}"
 
-    def verify_token(self, token: str) -> Optional[SimpleUser]:
+    def verify_token(self, token: str) -> SimpleUser | None:
         """验证访问令牌"""
         if not token.startswith("Bearer "):
             return None
@@ -192,7 +191,7 @@ class SimpleAuthService:
         except (ValueError, IndexError):
             return None
 
-    def get_user_by_username(self, username: str) -> Optional[SimpleUser]:
+    def get_user_by_username(self, username: str) -> SimpleUser | None:
         """根据用户名获取用户"""
         user_data = self.users.get(username)
         if not user_data:

@@ -20,7 +20,7 @@ Health Utils - API模块
 import asyncio
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 
 class HealthChecker:
@@ -41,7 +41,7 @@ class HealthChecker:
         # 添加pass语句
         self.timeout = 5.0  # 默认超时时间（秒）
 
-    async def check_all_services(self) -> Dict[str, Any]:
+    async def check_all_services(self) -> dict[str, Any]:
         """检查所有服务的健康状态"
 
         Returns:
@@ -85,7 +85,7 @@ class HealthChecker:
             "services": checks,
         }
 
-    async def check_database(self) -> Dict[str, Any]:
+    async def check_database(self) -> dict[str, Any]:
         """检查数据库连接健康状态"
 
         Returns:
@@ -113,7 +113,7 @@ class HealthChecker:
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def check_redis(self) -> Dict[str, Any]:
+    async def check_redis(self) -> dict[str, Any]:
         """检查 Redis 连接健康状态"
 
         Returns:
@@ -141,7 +141,7 @@ class HealthChecker:
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def check_prediction_service(self) -> Dict[str, Any]:
+    async def check_prediction_service(self) -> dict[str, Any]:
         """检查预测服务健康状态"
 
         Returns:

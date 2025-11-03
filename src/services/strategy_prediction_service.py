@@ -8,7 +8,7 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.di import DIContainer
 from src.database.repositories import MatchRepository, PredictionRepository
@@ -57,7 +57,7 @@ class StrategyPredictionService:
         self._match_repository = match_repository
         self._prediction_repository = prediction_repository
         self._default_strategy = default_strategy
-        self._current_strategies: Dict[str, PredictionStrategy] = {}
+        self._current_strategies: dict[str, PredictionStrategy] = {}
 
     async def initialize(self) -> None:
         """初始化服务"""
@@ -76,9 +76,9 @@ class StrategyPredictionService:
         self,
         match_id: int,
         user_id: int,
-        strategy_name: Optional[str] = None,
-        confidence: Optional[float] = None,
-        notes: Optional[str] = None,
+        strategy_name: str | None = None,
+        confidence: float | None = None,
+        notes: str | None = None,
     ) -> Prediction:
         """预测单场比赛"
 
@@ -142,8 +142,8 @@ class StrategyPredictionService:
         return prediction
 
     async def batch_predict(
-        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
-    ) -> List[Prediction]:
+        self, match_ids: list[int], user_id: int, strategy_name: str | None = None
+    ) -> list[Prediction]:
         """批量预测比赛"
 
         Args:
@@ -184,7 +184,7 @@ class StrategyPredictionService:
 
         # 创建预测对象
         predictions = []
-        for context, output in zip(contexts, prediction_outputs):
+        for context, output in zip(contexts, prediction_outputs, strict=False):
             _prediction = self._prediction_domain_service.create_prediction(
                 user_id=user_id,
                 match=context.match,
@@ -202,8 +202,8 @@ class StrategyPredictionService:
         return predictions
 
     async def compare_strategies(
-        self, match_id: int, strategy_names: Optional[List[str]] = None
-    ) -> Dict[str, PredictionOutput]:
+        self, match_id: int, strategy_names: list[str] | None = None
+    ) -> dict[str, PredictionOutput]:
         """比较不同策略的预测结果"
 
         Args:
@@ -252,7 +252,7 @@ class StrategyPredictionService:
 
     async def get_strategy_performance(
         self, strategy_name: str, days: int = 30
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """获取策略性能指标"
 
         Args:
@@ -295,7 +295,7 @@ class StrategyPredictionService:
             "recent_predictions_count": len(recent_predictions),
         }
 
-    async def update_strategy_weights(self, strategy_weights: Dict[str, float]) -> None:
+    async def update_strategy_weights(self, strategy_weights: dict[str, float]) -> None:
         """更新集成策略的权重"
 
         Args:
@@ -321,7 +321,7 @@ class StrategyPredictionService:
         self._default_strategy = strategy_name
         logger.info(f"默认策略从 {old_strategy} 切换到 {strategy_name}")
 
-    async def get_available_strategies(self) -> Dict[str, Dict[str, Any]]:
+    async def get_available_strategies(self) -> dict[str, dict[str, Any]]:
         """获取所有可用策略信息"""
         health_report = await self._strategy_factory.health_check()
 
@@ -377,7 +377,7 @@ class StrategyPredictionService:
 
     async def _collect_historical_data(
         self, context: PredictionContext
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """收集历史数据"""
         # 这里应该从数据库或缓存获取历史数据
         # 简化实现,返回模拟数据
@@ -425,8 +425,8 @@ class StrategyPredictionService:
         logger.info(f"预测详情: {details}")
 
     async def _calculate_actual_performance(
-        self, predictions: List[Prediction]
-    ) -> Dict[str, Any]:
+        self, predictions: list[Prediction]
+    ) -> dict[str, Any]:
         """计算实际性能"""
         if not predictions:
             return {}

@@ -1,6 +1,3 @@
-from typing import List
-from typing import Optional
-from typing import Dict
 from typing import Any
 
 #!/usr/bin/env python3
@@ -21,19 +18,20 @@ Issue: #116 EV计算和投注策略
 """
 
 import json
-import numpy as np
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
 import sys
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
+
+import numpy as np
 
 # 添加项目根目录到Python路径
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    from src.core.logging_system import get_logger
     from src.core.config import get_config
+    from src.core.logging_system import get_logger
 
     logger = get_logger(__name__)
 except ImportError as e:
@@ -73,13 +71,13 @@ class BettingOdds:
     home_win: float
     draw: float
     away_win: float
-    over_2_5: Optional[float] = None
-    under_2_5: Optional[float] = None
-    btts_yes: Optional[float] = None
-    btts_no: Optional[float] = None
-    correct_score_home: Optional[float] = None
-    correct_score_draw: Optional[float] = None
-    correct_score_away: Optional[float] = None
+    over_2_5: float | None = None
+    under_2_5: float | None = None
+    btts_yes: float | None = None
+    btts_no: float | None = None
+    correct_score_home: float | None = None
+    correct_score_draw: float | None = None
+    correct_score_away: float | None = None
 
     # 赔率来源和置信度
     source: str = "unknown"
@@ -97,10 +95,10 @@ class PredictionProbabilities:
     home_win: float
     draw: float
     away_win: float
-    over_2_5: Optional[float] = None
-    under_2_5: Optional[float] = None
-    btts_yes: Optional[float] = None
-    btts_no: Optional[float] = None
+    over_2_5: float | None = None
+    under_2_5: float | None = None
+    btts_yes: float | None = None
+    btts_no: float | None = None
 
     # 置信度和元数据
     confidence: float = 1.0
@@ -359,7 +357,7 @@ class BettingStrategyOptimizer:
         self.logger = logger
         self.strategies = self._initialize_strategies()
 
-    def _initialize_strategies(self) -> Dict[str, BettingStrategy]:
+    def _initialize_strategies(self) -> dict[str, BettingStrategy]:
         """初始化预定义策略"""
         return {
             "conservative": BettingStrategy(
@@ -418,10 +416,10 @@ class BettingStrategyOptimizer:
 
     def optimize_portfolio(
         self,
-        ev_calculations: List[EVCalculation],
+        ev_calculations: list[EVCalculation],
         strategy: BettingStrategy,
         max_total_stake: float = 0.1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """优化投注组合"""
 
         # 过滤符合条件的投注
@@ -483,7 +481,7 @@ class BettingStrategyOptimizer:
             "strategy_used": strategy.name,
         }
 
-    def _assess_portfolio_risk(self, bets: List[EVCalculation]) -> str:
+    def _assess_portfolio_risk(self, bets: list[EVCalculation]) -> str:
         """评估组合风险"""
         if not bets:
             return "low"
@@ -499,7 +497,7 @@ class BettingStrategyOptimizer:
             return "high"
 
     def _calculate_optimization_score(
-        self, bets: List[EVCalculation], strategy: BettingStrategy
+        self, bets: list[EVCalculation], strategy: BettingStrategy
     ) -> float:
         """计算优化分数 (0-100)"""
         if not bets:
@@ -542,7 +540,7 @@ class BettingRecommendationEngine:
         odds: BettingOdds,
         probabilities: PredictionProbabilities,
         strategy_name: str = "srs_compliant",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """为单场比赛生成投注建议"""
 
         strategy = self.optimizer.strategies.get(strategy_name)
@@ -606,8 +604,8 @@ class BettingRecommendationEngine:
         return result
 
     def _generate_overall_recommendation(
-        self, portfolio: Dict[str, Any], strategy: BettingStrategy
-    ) -> Dict[str, Any]:
+        self, portfolio: dict[str, Any], strategy: BettingStrategy
+    ) -> dict[str, Any]:
         """生成总体建议"""
         recommended_bets = portfolio["recommended_bets"]
 
@@ -645,8 +643,8 @@ class BettingRecommendationEngine:
         }
 
     def _check_srs_compliance(
-        self, ev_calculations: List[EVCalculation], portfolio: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, ev_calculations: list[EVCalculation], portfolio: dict[str, Any]
+    ) -> dict[str, Any]:
         """检查SRS合规性"""
         srs_requirements = {
             "min_ev_threshold_met": all(
@@ -682,8 +680,8 @@ class BettingRecommendationEngine:
         return srs_requirements
 
     def _generate_risk_summary(
-        self, ev_calculations: List[EVCalculation]
-    ) -> Dict[str, Any]:
+        self, ev_calculations: list[EVCalculation]
+    ) -> dict[str, Any]:
         """生成风险摘要"""
         if not ev_calculations:
             return {"overall_risk": "low", "risk_factors": []}
@@ -711,7 +709,7 @@ class BettingRecommendationEngine:
         }
 
     async def _cache_recommendations(
-        self, match_id: str, recommendations: Dict[str, Any]
+        self, match_id: str, recommendations: dict[str, Any]
     ):
         """缓存投注建议"""
         try:

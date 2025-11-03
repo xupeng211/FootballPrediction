@@ -4,14 +4,14 @@ Prediction Service for Football Match Predictions
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from ..models.base_model import BaseModel, PredictionResult
-from ..models.poisson_model import PoissonModel
 from ..models.elo_model import EloModel
+from ..models.poisson_model import PoissonModel
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class EnsemblePrediction:
     match_id: str
     home_team: str
     away_team: str
-    predictions: List[PredictionResult]
+    predictions: list[PredictionResult]
     ensemble_home_win_prob: float
     ensemble_draw_prob: float
     ensemble_away_win_prob: float
@@ -41,7 +41,7 @@ class EnsemblePrediction:
     strategy: str
     created_at: datetime
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "match_id": self.match_id,
@@ -103,7 +103,7 @@ class PredictionService:
             del self.model_weights[name]
             logger.info(f"Unregistered model: {name}")
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """
         获取可用模型列表
 
@@ -112,7 +112,7 @@ class PredictionService:
         """
         return list(self.models.keys())
 
-    def get_trained_models(self) -> List[str]:
+    def get_trained_models(self) -> list[str]:
         """
         获取已训练的模型列表
 
@@ -133,9 +133,9 @@ class PredictionService:
 
     def predict_match(
         self,
-        match_data: Dict[str, Any],
-        model_name: Optional[str] = None,
-        strategy: Optional[PredictionStrategy] = None,
+        match_data: dict[str, Any],
+        model_name: str | None = None,
+        strategy: PredictionStrategy | None = None,
     ) -> Any:
         """
         预测比赛结果
@@ -164,7 +164,7 @@ class PredictionService:
         return self._ensemble_predict(match_data, strategy)
 
     def _ensemble_predict(
-        self, match_data: Dict[str, Any], strategy: PredictionStrategy
+        self, match_data: dict[str, Any], strategy: PredictionStrategy
     ) -> EnsemblePrediction:
         """
         集成预测
@@ -221,7 +221,7 @@ class PredictionService:
             created_at=datetime.now(),
         )
 
-    def _weighted_ensemble(self, predictions: List[PredictionResult]) -> Dict[str, Any]:
+    def _weighted_ensemble(self, predictions: list[PredictionResult]) -> dict[str, Any]:
         """
         加权集成预测
 
@@ -270,7 +270,7 @@ class PredictionService:
             "confidence": confidence,
         }
 
-    def _majority_vote(self, predictions: List[PredictionResult]) -> Dict[str, Any]:
+    def _majority_vote(self, predictions: list[PredictionResult]) -> dict[str, Any]:
         """
         多数投票预测
 
@@ -318,7 +318,7 @@ class PredictionService:
             "confidence": confidence,
         }
 
-    def _best_performing(self, predictions: List[PredictionResult]) -> Dict[str, Any]:
+    def _best_performing(self, predictions: list[PredictionResult]) -> dict[str, Any]:
         """
         选择表现最好的模型的预测
 
@@ -355,14 +355,14 @@ class PredictionService:
         }
 
     def _get_outcome_from_probabilities(
-        self, probabilities: Tuple[float, float, float]
+        self, probabilities: tuple[float, float, float]
     ) -> str:
         """从概率分布获取预测结果"""
         outcomes = ["home_win", "draw", "away_win"]
         max_index = max(range(3), key=lambda i: probabilities[i])
         return outcomes[max_index]
 
-    def _calculate_confidence(self, probabilities: Tuple[float, float, float]) -> float:
+    def _calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
         """计算预测置信度"""
         max_prob = max(probabilities)
         min_prob = min(probabilities)
@@ -371,10 +371,10 @@ class PredictionService:
 
     def predict_batch(
         self,
-        matches_data: List[Dict[str, Any]],
-        model_name: Optional[str] = None,
-        strategy: Optional[PredictionStrategy] = None,
-    ) -> List[Any]:
+        matches_data: list[dict[str, Any]],
+        model_name: str | None = None,
+        strategy: PredictionStrategy | None = None,
+    ) -> list[Any]:
         """
         批量预测
 
@@ -399,7 +399,7 @@ class PredictionService:
 
         return results
 
-    def update_model_weights(self, weights: Dict[str, float]):
+    def update_model_weights(self, weights: dict[str, float]):
         """
         更新模型权重
 
@@ -412,7 +412,7 @@ class PredictionService:
                 logger.info(f"Updated weight for {model_name}: {weight}")
 
     def set_model_performance(
-        self, model_name: str, performance_metrics: Dict[str, float]
+        self, model_name: str, performance_metrics: dict[str, float]
     ):
         """
         设置模型性能指标
@@ -424,7 +424,7 @@ class PredictionService:
         self.model_performance[model_name] = performance_metrics
         logger.info(f"Updated performance metrics for {model_name}")
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """
         获取模型信息
 
@@ -449,7 +449,7 @@ class PredictionService:
             "weights": self.model_weights.copy(),
         }
 
-    def train_all_models(self, training_data, validation_data=None) -> Dict[str, Any]:
+    def train_all_models(self, training_data, validation_data=None) -> dict[str, Any]:
         """
         训练所有模型
 

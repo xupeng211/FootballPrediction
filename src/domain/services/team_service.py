@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 from src.domain.models.team import Team, TeamForm, TeamStats
 
@@ -47,7 +47,7 @@ class TeamProfileUpdatedEvent:
     """球队资料更新事件."""
 
     team_id: int
-    updated_fields: Dict[str, Any]
+    updated_fields: dict[str, Any]
     occurred_at: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -68,8 +68,8 @@ class TeamDomainService:
     pass  # 添加pass语句
     """球队领域服务"""
 
-    def __init__(self, repository: Optional[TeamRepositoryProtocol] = None) -> None:
-        self._events: List[Any] = []
+    def __init__(self, repository: TeamRepositoryProtocol | None = None) -> None:
+        self._events: list[Any] = []
         self._repository = repository
 
     def attach_repository(self, repository: TeamRepositoryProtocol) -> None:
@@ -79,10 +79,10 @@ class TeamDomainService:
     def update_team_profile(
         self,
         team: Team,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        stadium: Optional[str] = None,
-        capacity: Optional[int] = None,
+        name: str | None = None,
+        short_name: str | None = None,
+        stadium: str | None = None,
+        capacity: int | None = None,
     ) -> None:
         """批量更新球队基础信息."""
         original = {
@@ -96,7 +96,7 @@ class TeamDomainService:
             name=name, short_name=short_name, stadium=stadium, capacity=capacity
         )
 
-        changed_fields: Dict[str, Any] = {}
+        changed_fields: dict[str, Any] = {}
         if name is not None and team.name != original["name"]:
             changed_fields["name"] = team.name
         if short_name is not None and team.short_name != original["short_name"]:
@@ -147,7 +147,7 @@ class TeamDomainService:
         self._events.append(TeamPerformanceResetEvent(team_id=team.id or 0))
         self._persist(team)
 
-    def calculate_league_table(self, teams: List[Team]) -> List[Dict[str, Any]]:
+    def calculate_league_table(self, teams: list[Team]) -> list[dict[str, Any]]:
         """根据球队当前统计生成积分榜."""
         table = []
         for team in teams:
@@ -173,7 +173,7 @@ class TeamDomainService:
         )
         return table
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """返回当前收集到的领域事件快照."""
         return self._events.copy()
 

@@ -4,7 +4,7 @@ Machine Learning Module for Football Prediction
 """
 
 from .models.base_model import BaseModel
-from .models.poisson_model import PoissonModel
 from .models.elo_model import EloModel
+from .models.poisson_model import PoissonModel
 
 __all__ = ["BaseModel", "PoissonModel", "EloModel"]

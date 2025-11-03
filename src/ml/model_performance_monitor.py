@@ -9,7 +9,7 @@ Model Performance Monitor
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 import joblib
 import numpy as np
@@ -30,7 +30,7 @@ class ModelPerformanceMonitor:
     pass  # 添加pass语句
     """Model Performance Monitor"""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -46,7 +46,7 @@ class ModelPerformanceMonitor:
         y: pd.Series,
         model_type: str = "random_forest",
         hyperparameter_tuning: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """训练模型"""
         try:
             logger.info(f"开始训练模型: {model_type}")
@@ -129,7 +129,7 @@ class ModelPerformanceMonitor:
             logger.error(f"模型训练失败: {e}")
             return {"success": False, "error": str(e)}
 
-    async def predict(self, features: pd.DataFrame) -> Dict[str, Any]:
+    async def predict(self, features: pd.DataFrame) -> dict[str, Any]:
         """预测"""
         try:
             if not self.is_trained:
@@ -156,7 +156,7 @@ class ModelPerformanceMonitor:
 
     async def monitor_performance(
         self, test_data: pd.DataFrame, test_labels: pd.Series
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """监控模型性能"""
         try:
             if not self.is_trained:

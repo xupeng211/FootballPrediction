@@ -3,7 +3,7 @@ Prediction cache manager
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.core.logging import get_logger
 
@@ -24,11 +24,11 @@ class PredictionCacheManager:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._cache = {}
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> dict[str, Any] | None:
         """Get cached prediction"""
         return self._cache.get(key)
 
-    def set(self, key: str, value: Dict[str, Any], ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: dict[str, Any], ttl: int | None = None) -> None:
         """Cache prediction"""
         self._cache[key] = value
 

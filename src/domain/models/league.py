@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.exceptions import DomainError
 
@@ -176,24 +176,24 @@ class League:
     封装联赛的核心业务逻辑和不变性约束.
     """
 
-    id: Optional[int] = None
+    id: int | None = None
     name: str = ""
-    short_name: Optional[str] = None
-    code: Optional[str] = None
+    short_name: str | None = None
+    code: str | None = None
     type: LeagueType = LeagueType.DOMESTIC_LEAGUE
     country: str = ""
     level: int = 1  # 联赛级别
     is_active: bool = True
-    founded_year: Optional[int] = None
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
-    current_season: Optional[LeagueSeason] = None
-    settings: Optional[LeagueSettings] = None
+    founded_year: int | None = None
+    website: str | None = None
+    logo_url: str | None = None
+    current_season: LeagueSeason | None = None
+    settings: LeagueSettings | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -230,7 +230,7 @@ class League:
         season: str,
         start_date: datetime,
         end_date: datetime,
-        total_rounds: Optional[int] = None,
+        total_rounds: int | None = None,
     ) -> LeagueSeason:
         """开始新赛季"""
         if self.current_season and self.current_season.is_active:
@@ -251,10 +251,10 @@ class League:
 
     def update_info(
         self,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        website: Optional[str] = None,
-        logo_url: Optional[str] = None,
+        name: str | None = None,
+        short_name: str | None = None,
+        website: str | None = None,
+        logo_url: str | None = None,
     ) -> None:
         """更新联赛信息"""
         if name:
@@ -270,10 +270,10 @@ class League:
 
     def update_settings(
         self,
-        points_for_win: Optional[int] = None,
-        points_for_draw: Optional[int] = None,
-        points_for_loss: Optional[int] = None,
-        max_foreign_players: Optional[int] = None,
+        points_for_win: int | None = None,
+        points_for_draw: int | None = None,
+        points_for_loss: int | None = None,
+        max_foreign_players: int | None = None,
     ) -> None:
         """更新联赛设置"""
         if points_for_win is not None:
@@ -330,7 +330,7 @@ class League:
         return self.short_name or self.name
 
     @property
-    def age(self) -> Optional[int]:
+    def age(self) -> int | None:
         """联赛年龄"""
         if self.founded_year:
             return datetime.utcnow().year - self.founded_year
@@ -384,7 +384,7 @@ class League:
         """添加领域事件"""
         self._domain_events.append(event)
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """获取领域事件"""
         return self._domain_events.copy()
 
@@ -396,7 +396,7 @@ class League:
     # 序列化方法
     # ========================================
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -441,7 +441,7 @@ class League:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "League":
+    def from_dict(cls, data: dict[str, Any]) -> "League":
         """从字典创建实例"""
         season_data = data.pop("current_season", None)
         current_season = None

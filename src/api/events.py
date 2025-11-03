@@ -1,15 +1,13 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from requests.exceptions import HTTPError
 
-
 from src.core.event_application import get_event_application
 from src.events import get_event_bus
 from src.events.handlers import AnalyticsEventHandler, MetricsEventHandler
-
 
 # 获取各处理器的指标
 
@@ -52,14 +50,14 @@ router = APIRouter(prefix="/events", tags=["事件系统"])
 
 
 @router.get("/health", summary="事件系统健康检查")
-async def event_health_check() -> Dict[str, Any]:
+async def event_health_check() -> dict[str, Any]:
     """检查事件系统的健康状态"""
     app = get_event_application()
     return await app.health_check()
 
 
 @router.get("/stats", summary="获取事件统计")
-async def get_event_statistics() -> Dict[str, Any]:
+async def get_event_statistics() -> dict[str, Any]:
     """获取事件系统统计信息"""
     bus = get_event_bus()
     stats = bus.get_stats()
@@ -74,7 +72,7 @@ async def get_event_statistics() -> Dict[str, Any]:
 
 
 @router.get("/types", summary="获取所有事件类型")
-async def get_event_types() -> List[str]:
+async def get_event_types() -> list[str]:
     """获取所有已注册的事件类型"""
     bus = get_event_bus()
     return bus.get_all_event_types()
@@ -82,8 +80,8 @@ async def get_event_types() -> List[str]:
 
 @router.get("/subscribers", summary="获取订阅者信息")
 async def get_subscribers_info(
-    event_type: Optional[str] = Query(None, description="特定事件类型"),
-) -> Dict[str, Any]:
+    event_type: str | None = Query(None, description="特定事件类型"),
+) -> dict[str, Any]:
     """获取事件订阅者信息"""
     bus = get_event_bus()
     if event_type:
@@ -104,7 +102,7 @@ async def get_subscribers_info(
 
 
 @router.post("/restart", summary="重启事件系统")
-async def restart_event_system() -> Dict[str, str]:
+async def restart_event_system() -> dict[str, str]:
     """重启事件系统（谨慎使用）"""
     try:
         app = get_event_application()
@@ -116,7 +114,7 @@ async def restart_event_system() -> Dict[str, str]:
 
 
 @router.get("/metrics", summary="获取详细指标")
-async def get_detailed_metrics() -> Dict[str, Any]:
+async def get_detailed_metrics() -> dict[str, Any]:
     """获取事件系统的详细指标"""
     metrics = {}
     metrics_handler = _find_handler(MetricsEventHandler)
@@ -142,7 +140,7 @@ async def get_detailed_metrics() -> Dict[str, Any]:
 @router.get("/predictions/recent", summary="获取最近的预测统计")
 async def get_recent_prediction_stats(
     days: int = Query(7, ge=1, le=30, description="统计天数"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取最近的预测统计信息"""
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if not analytics_handler:
@@ -171,7 +169,7 @@ async def get_recent_prediction_stats(
 @router.get("/users/activity", summary="获取用户活动统计")
 async def get_user_activity_stats(
     limit: int = Query(10, ge=1, le=100, description="返回用户数量限制"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取用户活动统计"""
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if not analytics_handler:

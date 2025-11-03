@@ -6,14 +6,14 @@ common_models.py
 
 import warnings
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-# 从基础模块导入
-from .base_models import base_models as base_models_mod
 from src.common import api_models
 
+# 从基础模块导入
+from .base_models import base_models as base_models_mod
 
 # 基础配置
 base_models = base_models_mod
@@ -44,8 +44,8 @@ class DataValidationResult(BaseModel):
     """数据验证结果"""
 
     is_valid: bool
-    errors: List[str] = Field(default_factory=list)
-    warnings: List[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
 
     def add_error(self, error: str):
         """函数文档字符串"""
@@ -67,11 +67,11 @@ class FeatureVector(BaseModel):
     """特征向量"""
 
     match_id: int
-    features: Dict[str, float]
-    feature_names: List[str]
+    features: dict[str, float]
+    feature_names: list[str]
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    def get_feature(self, name: str) -> Optional[float]:
+    def get_feature(self, name: str) -> float | None:
         """获取特征值"""
         return self.features.get(name)
 
@@ -94,10 +94,10 @@ class MatchData(BaseModel):
     league: str
     match_date: datetime
     status: str
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    odds: Optional[Dict[str, float]] = None
-    features: Optional[FeatureVector] = None
+    home_score: int | None = None
+    away_score: int | None = None
+    odds: dict[str, float] | None = None
+    features: FeatureVector | None = None
 
 
 class ModelMetrics(BaseModel):
@@ -134,7 +134,7 @@ class APIResponse(BaseModel):
 
     success: bool = True
     message: str = "Success"
-    data: Optional[Any] = None
+    data: Any | None = None
     timestamp: datetime = datetime.utcnow()
 
 
@@ -143,6 +143,6 @@ class ErrorResponse(BaseModel):
 
     success: bool = False
     message: str
-    error_code: Optional[str] = None
-    details: Optional[dict] = None
+    error_code: str | None = None
+    details: dict | None = None
     timestamp: datetime = datetime.utcnow()

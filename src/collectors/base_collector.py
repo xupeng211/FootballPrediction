@@ -6,9 +6,10 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, Optional
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
 import aiohttp
 import backoff
 
@@ -20,10 +21,10 @@ class CollectionResult:
     """数据采集结果"""
 
     success: bool
-    data: Optional[Any] = None
-    error: Optional[str] = None
-    status_code: Optional[int] = None
-    response_time: Optional[float] = None
+    data: Any | None = None
+    error: str | None = None
+    status_code: int | None = None
+    response_time: float | None = None
     cached: bool = False
 
 
@@ -43,7 +44,7 @@ class BaseCollector(ABC):
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.max_retries = max_retries
         self.rate_limit = rate_limit
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self._last_request_time = 0.0
         self._request_count = 0
 
@@ -68,7 +69,7 @@ class BaseCollector(ABC):
             await self.session.close()
 
     @abstractmethod
-    async def _get_headers(self) -> Dict[str, str]:
+    async def _get_headers(self) -> dict[str, str]:
         """获取请求头"""
         pass
 
@@ -140,7 +141,7 @@ class BaseCollector(ABC):
                         response_time=response_time,
                     )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time = asyncio.get_event_loop().time() - start_time
             logger.error(f"Request timeout after {response_time:.2f}s")
             return CollectionResult(
@@ -166,14 +167,14 @@ class BaseCollector(ABC):
             )
 
     async def get(
-        self, endpoint: str, params: Optional[Dict[str, Any]] = None
+        self, endpoint: str, params: dict[str, Any] | None = None
     ) -> CollectionResult:
         """GET请求"""
         url = self._build_url(endpoint, **(params or {}))
         return await self._make_request("GET", url)
 
     async def post(
-        self, endpoint: str, data: Optional[Dict[str, Any]] = None
+        self, endpoint: str, data: dict[str, Any] | None = None
     ) -> CollectionResult:
         """POST请求"""
         url = self._build_url(endpoint)
@@ -182,20 +183,20 @@ class BaseCollector(ABC):
     @abstractmethod
     async def collect_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
     ) -> CollectionResult:
         """采集比赛数据"""
         pass
 
     @abstractmethod
-    async def collect_teams(self, league_id: Optional[int] = None) -> CollectionResult:
+    async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
         """采集球队数据"""
         pass
 
     @abstractmethod
-    async def collect_players(self, team_id: Optional[int] = None) -> CollectionResult:
+    async def collect_players(self, team_id: int | None = None) -> CollectionResult:
         """采集球员数据"""
         pass
 
@@ -204,7 +205,7 @@ class BaseCollector(ABC):
         """采集联赛数据"""
         pass
 
-    def get_request_stats(self) -> Dict[str, Any]:
+    def get_request_stats(self) -> dict[str, Any]:
         """获取请求统计信息"""
         return {
             "total_requests": self._request_count,

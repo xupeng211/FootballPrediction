@@ -3,8 +3,8 @@
 External Data Models for Football-Data.org API
 """
 
+from .competition import ExternalCompetition
 from .match import ExternalMatch
 from .team import ExternalTeam
-from .competition import ExternalCompetition
 
 __all__ = ["ExternalMatch", "ExternalTeam", "ExternalCompetition"]

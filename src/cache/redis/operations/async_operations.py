@@ -4,11 +4,10 @@ Redis asynchronous operations
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
-
 from src.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -20,13 +19,13 @@ class RedisAsyncOperations:
     pass  # 添加pass语句
     """Asynchronous Redis operations"""
 
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
         """Initialize async operations"""
         self.redis_url = redis_url or "redis://localhost:6379"
-        self.client: Optional[aioredis.Redis] = None
+        self.client: aioredis.Redis | None = None
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     async def connect(self):
@@ -40,7 +39,7 @@ class RedisAsyncOperations:
             await self.client.close()
             self.client = None
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get value from Redis"""
         if not self.client:
             await self.connect()
@@ -53,7 +52,7 @@ class RedisAsyncOperations:
             self.logger.error(f"Error getting key {key}: {str(e)}")
             return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Set value in Redis"""
         if not self.client:
             await self.connect()

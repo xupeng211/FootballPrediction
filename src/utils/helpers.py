@@ -5,7 +5,7 @@ Helper functions
 import hashlib
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 def generate_uuid() -> str:
@@ -23,7 +23,7 @@ def generate_hash(data: str, algorithm: str = "sha256") -> str:
         return hashlib.sha256(data.encode()).hexdigest()
 
 
-def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> Any:
+def safe_get(data: dict[str, Any] | None, key: str, default: Any = None) -> Any:
     """Safely get value from dict using dot notation"""
     if data is None:
         return default
@@ -49,7 +49,7 @@ def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> A
         return default
 
 
-def format_timestamp(dt: Optional[datetime] = None) -> str:
+def format_timestamp(dt: datetime | None = None) -> str:
     """Format timestamp to ISO format"""
     if dt is None:
         dt = datetime.utcnow()

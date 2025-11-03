@@ -5,7 +5,7 @@
 """
 
 import json
-from typing import Any, Union
+from typing import Any
 
 from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
@@ -34,7 +34,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             # 对于SQLite和其他数据库,使用TEXT
             return dialect.type_descriptor(Text())
 
-    def process_bind_param(self, value: Any, dialect) -> Union[str, Any]:
+    def process_bind_param(self, value: Any, dialect) -> str | Any:
         """处理绑定参数（Python值 -> 数据库值）"""
         if value is None:
             return None
@@ -95,7 +95,7 @@ class CompatibleJSON(TypeDecorator):
         else:
             return dialect.type_descriptor(Text())
 
-    def process_bind_param(self, value: Any, dialect: Dialect) -> Union[str, None]:
+    def process_bind_param(self, value: Any, dialect: Dialect) -> str | None:
         return json.dumps(value) if value is not None else None
 
     def process_result_value(self, value: Any, dialect: Dialect) -> Any:

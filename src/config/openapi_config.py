@@ -2,7 +2,7 @@
 OpenAPI 配置和文档增强
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -32,7 +32,7 @@ class OpenAPIConfig:
     @staticmethod
     # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
     # TODO: 方法 def get_tags_metadata 过长(22行),建议拆分
-    def get_tags_metadata() -> List[Dict[str, Any]]:
+    def get_tags_metadata() -> list[dict[str, Any]]:
         """获取API标签元数据"""
         return [
             {"name": "预测", "description": "比赛预测相关操作"},

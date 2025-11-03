@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +13,7 @@ from src.core.logging_system import get_logger
 from src.database.models.match import Match
 from src.database.models.team import Team
 
-from .data_sources import data_source_manager, MatchData, TeamData
+from .data_sources import MatchData, TeamData, data_source_manager
 
 logger = get_logger(__name__)
 
@@ -38,7 +38,7 @@ class EnhancedFixturesCollector:
         days_ahead: int = 30,
         force_refresh: bool = False,
         preferred_source: str = "mock",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集所有未来比赛
 
@@ -108,7 +108,7 @@ class EnhancedFixturesCollector:
         days_ahead: int = 30,
         force_refresh: bool = False,
         preferred_source: str = "mock",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集指定球队的未来比赛
 
@@ -178,7 +178,7 @@ class EnhancedFixturesCollector:
         days_ahead: int = 30,
         force_refresh: bool = False,
         preferred_source: str = "mock",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集联赛的比赛赛程
 
@@ -241,10 +241,10 @@ class EnhancedFixturesCollector:
 
     async def collect_teams(
         self,
-        league_name: Optional[str] = None,
+        league_name: str | None = None,
         force_refresh: bool = False,
         preferred_source: str = "mock",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集球队信息
 
@@ -299,7 +299,7 @@ class EnhancedFixturesCollector:
             logger.error(f"收集球队信息失败: {e}")
             return []
 
-    def _convert_match_data_to_dict(self, match_data: MatchData) -> Dict[str, Any]:
+    def _convert_match_data_to_dict(self, match_data: MatchData) -> dict[str, Any]:
         """将MatchData转换为字典格式"""
         return {
             "id": match_data.id,
@@ -320,7 +320,7 @@ class EnhancedFixturesCollector:
             "data_source": "enhanced_collector",
         }
 
-    def _convert_team_data_to_dict(self, team_data: TeamData) -> Dict[str, Any]:
+    def _convert_team_data_to_dict(self, team_data: TeamData) -> dict[str, Any]:
         """将TeamData转换为字典格式"""
         return {
             "id": team_data.id,
@@ -333,7 +333,7 @@ class EnhancedFixturesCollector:
             "data_source": "enhanced_collector",
         }
 
-    async def _save_fixture_to_db(self, fixture_dict: Dict[str, Any]) -> bool:
+    async def _save_fixture_to_db(self, fixture_dict: dict[str, Any]) -> bool:
         """保存比赛到数据库"""
         try:
             # 检查比赛是否已存在
@@ -359,7 +359,7 @@ class EnhancedFixturesCollector:
             await self.db_session.rollback()
             return False
 
-    async def _save_team_to_db(self, team_dict: Dict[str, Any]) -> bool:
+    async def _save_team_to_db(self, team_dict: dict[str, Any]) -> bool:
         """保存球队到数据库"""
         try:
             # 检查球队是否已存在
@@ -385,7 +385,7 @@ class EnhancedFixturesCollector:
             await self.db_session.rollback()
             return False
 
-    async def get_data_source_status(self) -> Dict[str, Any]:
+    async def get_data_source_status(self) -> dict[str, Any]:
         """获取数据源状态"""
         available_sources = self.data_source_manager.get_available_sources()
 

@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
@@ -245,7 +245,7 @@ class ModelMetricsExporter:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"导出模型加载时间指标失败: {e}")
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """
         获取指标摘要
 

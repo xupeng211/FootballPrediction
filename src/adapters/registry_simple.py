@@ -2,7 +2,7 @@
 简化的适配器注册表
 """
 
-from typing import Any, Dict, Optional, Type
+from typing import Any
 
 from src.core.exceptions import AdapterError
 
@@ -28,15 +28,19 @@ class AdapterRegistry:
     # 全局注册表实例
     # 全局注册表实例
     # 全局注册表实例
+    # 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
     def __init__(self):
         """函数文档字符串"""
         pass
         # 添加pass语句
         """初始化适配器注册表"""
-        self._registry: Dict[str, Dict] = {}
-        self._instances: Dict[str, Any] = {}
+        self._registry: dict[str, dict] = {}
+        self._instances: dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: Type, **kwargs) -> None:
+    def register(self, name: str, adapter_class: type, **kwargs) -> None:
         """注册适配器"""
         self._registry[name] = {"class": adapter_class, **kwargs}
 
@@ -46,7 +50,7 @@ class AdapterRegistry:
             raise AdapterError(f"No adapter registered with name '{name}'")
         del self._registry[name]
 
-    def get_adapter_class(self, name: str) -> Optional[Type]:
+    def get_adapter_class(self, name: str) -> type | None:
         """获取适配器类"""
         if name in self._registry:
             return self._registry[name]["class"]
@@ -67,7 +71,7 @@ class AdapterRegistry:
         self._instances[name] = instance
         return instance
 
-    def get_adapter(self, name: str) -> Optional[Any]:
+    def get_adapter(self, name: str) -> Any | None:
         """获取适配器实例"""
         return self._instances.get(name)
 

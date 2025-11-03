@@ -6,10 +6,10 @@ TTL Cache Implementation
 Provides in-memory cache with time-to-live functionality.
 """
 
-import time
-import threading
-from typing import Any, Dict, List, Optional, Tuple
 import logging
+import threading
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class CacheEntry:
     """缓存条目"""
 
-    def __init__(self, value: Any, ttl: Optional[float] = None):
+    def __init__(self, value: Any, ttl: float | None = None):
         self.value = value
         self.created_at = time.time()
         self.ttl = ttl
@@ -30,7 +30,7 @@ class CacheEntry:
             return False
         return time.time() - self.created_at > self.ttl
 
-    def get_ttl_remaining(self) -> Optional[float]:
+    def get_ttl_remaining(self) -> float | None:
         """获取剩余TTL"""
         if self.ttl is None:
             return None
@@ -45,7 +45,7 @@ class TTLCache:
     def __init__(
         self,
         max_size: int = 1000,
-        default_ttl: Optional[float] = None,
+        default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
     ):
         """
@@ -59,7 +59,7 @@ class TTLCache:
         self.max_size = max_size
         self.default_ttl = default_ttl
         self.cleanup_interval = cleanup_interval
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._lock = threading.RLock()
         self._cleanup_thread = None
         self._running = False
@@ -101,7 +101,7 @@ class TTLCache:
             self._hits += 1
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[float] = None) -> None:
+    def set(self, key: str, value: Any, ttl: float | None = None) -> None:
         """
         设置缓存值
 
@@ -158,22 +158,22 @@ class TTLCache:
             self.delete(key)
             return value
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """获取所有键"""
         with self._lock:
             return list(self._cache.keys())
 
-    def values(self) -> List[Any]:
+    def values(self) -> list[Any]:
         """获取所有值"""
         with self._lock:
             return [entry.value for entry in self._cache.values()]
 
-    def items(self) -> List[Tuple[str, Any]]:
+    def items(self) -> list[tuple[str, Any]]:
         """获取所有键值对"""
         with self._lock:
             return [(key, entry.value) for key, entry in self._cache.items()]
 
-    def get_many(self, keys: List[str]) -> Dict[str, Any]:
+    def get_many(self, keys: list[str]) -> dict[str, Any]:
         """
         批量获取
 
@@ -190,7 +190,7 @@ class TTLCache:
                 result[key] = value
         return result
 
-    def set_many(self, mapping: Dict[str, Any], ttl: Optional[float] = None) -> None:
+    def set_many(self, mapping: dict[str, Any], ttl: float | None = None) -> None:
         """
         批量设置
 
@@ -201,7 +201,7 @@ class TTLCache:
         for key, value in mapping.items():
             self.set(key, value, ttl)
 
-    def delete_many(self, keys: List[str]) -> int:
+    def delete_many(self, keys: list[str]) -> int:
         """
         批量删除
 
@@ -236,7 +236,7 @@ class TTLCache:
         self.set(key, new_value)
         return new_value
 
-    def touch(self, key: str, ttl: Optional[float] = None) -> bool:
+    def touch(self, key: str, ttl: float | None = None) -> bool:
         """
         更新缓存项的TTL
 
@@ -257,7 +257,7 @@ class TTLCache:
             entry.created_at = time.time()
             return True
 
-    def ttl(self, key: str) -> Optional[int]:
+    def ttl(self, key: str) -> int | None:
         """
         获取剩余TTL
 
@@ -302,7 +302,7 @@ class TTLCache:
 
             return len(expired_keys)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             total_requests = self._hits + self._misses

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
-from sqlalchemy import Boolean, Column, DateTime, String, Text, JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text
 
 from src.database.base import BaseModel
 
@@ -80,7 +79,7 @@ class User(BaseModel):
         """更新最后登录时间"""
         self.last_login = datetime.utcnow()
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> dict:
+    def to_dict(self, exclude_fields: set | None = None) -> dict:
         """转换为字典,排除敏感字段"""
         if exclude_fields is None:
             exclude_fields = {"password_hash"}

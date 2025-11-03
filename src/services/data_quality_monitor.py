@@ -8,9 +8,9 @@ Data Quality Monitor
 
 import asyncio
 import logging
+from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class DataQualityMonitor:
     pass  # 添加pass语句
     """Data Quality Monitor"""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -31,7 +31,7 @@ class DataQualityMonitor:
 
     async def process_data(
         self, data_source: str
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    ) -> AsyncGenerator[dict[str, Any], None]:
         """处理数据流"""
         try:
             # TODO: 实现具体的数据处理逻辑
@@ -57,7 +57,7 @@ class DataQualityMonitor:
             self.metrics["errors"] += 1
             raise
 
-    async def validate_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """验证数据质量"""
         try:
             # TODO: 实现数据验证逻辑
@@ -79,7 +79,7 @@ class DataQualityMonitor:
                 "recommendations": ["检查数据格式"],
             }
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取处理指标"""
         return {
             **self.metrics,

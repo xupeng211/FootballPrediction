@@ -7,22 +7,22 @@ Enterprise Multi-Tenant System Data Models
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List, Dict, Any
+from typing import Any
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
     String,
     Text,
-    Integer,
-    ForeignKey,
-    JSON,
-    DateTime,
     UniqueConstraint,
-    Index,
 )
-from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, relationship
 
 from src.database.base import BaseModel
 
@@ -113,13 +113,13 @@ class Tenant(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False, comment="是否激活")
 
     # 关系
-    users: Mapped[List["User"]] = relationship(
+    users: Mapped[list["User"]] = relationship(
         "User", back_populates="tenant", cascade="all, delete-orphan"
     )
-    tenant_roles: Mapped[List["TenantRole"]] = relationship(
+    tenant_roles: Mapped[list["TenantRole"]] = relationship(
         "TenantRole", back_populates="tenant", cascade="all, delete-orphan"
     )
-    tenant_permissions: Mapped[List["TenantPermission"]] = relationship(
+    tenant_permissions: Mapped[list["TenantPermission"]] = relationship(
         "TenantPermission", back_populates="tenant", cascade="all, delete-orphan"
     )
 
@@ -146,7 +146,7 @@ class Tenant(BaseModel):
         return datetime.utcnow() < self.subscription_ends_at
 
     @hybrid_property
-    def days_until_expiry(self) -> Optional[int]:
+    def days_until_expiry(self) -> int | None:
         """距离过期的天数"""
         if self.subscription_ends_at is None:
             return None
@@ -196,13 +196,13 @@ class Tenant(BaseModel):
             return False
         return self.features.get(feature_name, False)
 
-    def update_usage_metrics(self, metrics: Dict[str, Any]) -> None:
+    def update_usage_metrics(self, metrics: dict[str, Any]) -> None:
         """更新使用指标"""
         if self.usage_metrics is None:
             self.usage_metrics = {}
         self.usage_metrics.update(metrics)
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> dict:
+    def to_dict(self, exclude_fields: set | None = None) -> dict:
         """转换为字典"""
         result = super().to_dict(exclude_fields)
         # 添加计算属性
@@ -271,7 +271,7 @@ class TenantPermission(BaseModel):
     tenant: Mapped["Tenant"] = relationship(
         "Tenant", back_populates="tenant_permissions"
     )
-    role_permissions: Mapped[List["RolePermission"]] = relationship(
+    role_permissions: Mapped[list["RolePermission"]] = relationship(
         "RolePermission", back_populates="permission", cascade="all, delete-orphan"
     )
 
@@ -283,7 +283,7 @@ class TenantPermission(BaseModel):
     )
 
     def can_perform_action(
-        self, action: str, resource_context: Optional[Dict[str, Any]] = None
+        self, action: str, resource_context: dict[str, Any] | None = None
     ) -> bool:
         """检查是否可以执行指定动作"""
         if not self.is_active:
@@ -299,7 +299,7 @@ class TenantPermission(BaseModel):
 
         return True
 
-    def _evaluate_conditions(self, context: Dict[str, Any]) -> bool:
+    def _evaluate_conditions(self, context: dict[str, Any]) -> bool:
         """评估权限条件"""
         # 简单的条件评估逻辑,可根据需要扩展
         for condition_key, condition_value in self.conditions.items():
@@ -347,10 +347,10 @@ class TenantRole(BaseModel):
 
     # 关系
     tenant: Mapped["Tenant"] = relationship("Tenant", back_populates="tenant_roles")
-    role_permissions: Mapped[List["RolePermission"]] = relationship(
+    role_permissions: Mapped[list["RolePermission"]] = relationship(
         "RolePermission", back_populates="role", cascade="all, delete-orphan"
     )
-    user_roles: Mapped[List["UserRoleAssignment"]] = relationship(
+    user_roles: Mapped[list["UserRoleAssignment"]] = relationship(
         "UserRoleAssignment", back_populates="role", cascade="all, delete-orphan"
     )
 

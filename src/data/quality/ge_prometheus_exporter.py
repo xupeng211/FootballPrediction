@@ -1,12 +1,9 @@
 import warnings
 
-from .prometheus import collector, exporter, metrics, utils
-
-
 # 从新模块导入所有内容
-
 # 为了向后兼容,创建别名
 from .prometheus import PrometheusExporter as GEPrometheusExporter
+from .prometheus import collector, exporter, metrics, utils
 
 # 导出所有类
 """

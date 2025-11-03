@@ -1,12 +1,10 @@
 # mypy: ignore-errors
 import logging
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.exc import DatabaseError, SQLAlchemyError
-
 from alembic import context, op
-
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 # revision identifiers, used by Alembic.
 
@@ -47,9 +45,9 @@ Revises: 006_missing_indexes
 Create Date: 2025-09-12 12:41:21.259691
 """
 revision: str = "c1d8ae5075f0"
-down_revision: Union[str, None] = "006_missing_indexes"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "006_missing_indexes"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def is_sqlite():

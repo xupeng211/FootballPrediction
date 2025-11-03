@@ -5,11 +5,12 @@ Enhanced JWT Authentication Dependencies
 提供完整的JWT认证、权限控制和速率限制功能
 """
 
-from typing import Optional, Dict
-from fastapi import Depends, HTTPException, status, Security, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from src.security.jwt_auth import JWTAuthManager, get_jwt_auth_manager, TokenData
 import logging
+
+from fastapi import Depends, HTTPException, Request, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from src.security.jwt_auth import JWTAuthManager, TokenData, get_jwt_auth_manager
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +19,9 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
-) -> Optional[TokenData]:
+) -> TokenData | None:
     """
     获取当前用户（可选认证）
 
@@ -125,11 +126,11 @@ class RateLimiter:
 
 # 全局速率限制器实例
 login_rate_limiter = RateLimiter(
-    max_requests=5, window_seconds=900  # TODO: 将魔法数字 900 提取为常量
-)  # 15分钟5次登录尝试
+    max_requests=5, window_seconds=900  # 15分钟5次登录尝试
+)
 api_rate_limiter = RateLimiter(
-    max_requests=1000, window_seconds=3600  # TODO: 将魔法数字 1000 提取为常量
-)  # 1小时1000次API请求
+    max_requests=1000, window_seconds=3600  # 1小时1000次API请求
+)
 
 
 async def rate_limit_login(
@@ -178,47 +179,39 @@ class SecurityHeaders:
     """安全头部配置"""
 
     @staticmethod
-async def add_security_headers() -> Dict[str, str]:
-    """添加安全头部的中间件依赖"""
-    return SecurityHeaders.get_security_headers()
+    async def add_security_headers() -> Dict[str, str]:
+        """添加安全头部的中间件依赖"""
+        return SecurityHeaders.get_security_headers()
+
+    @staticmethod
+    def get_security_headers() -> Dict[str, str]:
+        """获取安全头部配置"""
+        return {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Content-Security-Policy": (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' https:; "
+                "connect-src 'self' https:; "
+                "frame-ancestors 'none';"
+            ),
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",  # TODO: 将魔法数字 31536000 提取为常量
+        }
 
 
-# 上下文管理器，用于认证相关操作
 class AuthContext:
     """认证上下文管理器"""
 
-def get_auth_context(auth_manager) -> AuthContext:
-    """获取认证上下文"""
-    return AuthContext(auth_manager)
+    def __init__(self, auth_manager: JWTAuthManager):
+        self.auth_manager = auth_manager
 
-# TODO: 方法 def require_roles 过长(24行)，建议拆分
-# 常用角色权限检查
-# TODO: 方法 def __init__ 过长(25行)，建议拆分
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-class SecurityHeaders:
-# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
-async def add_security_headers():
-) -> AuthContext:
-# TODO: 方法 def require_roles 过长(24行)，建议拆分
-# 常用角色权限检查
-# TODO: 方法 def __init__ 过长(26行)，建议拆分
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-class SecurityHeaders:
-# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
-async def add_security_headers():
-) -> AuthContext:
-# TODO: 方法 def require_roles 过长(24行)，建议拆分
-# 常用角色权限检查
-# TODO: 方法 def __init__ 过长(26行)，建议拆分
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-class SecurityHeaders:
-# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
-async def add_security_headers():
-) -> AuthContext:
-# TODO: 方法 def require_roles 过长(24行)，建议拆分
-def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+
+def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """
     角色权限装饰器工厂
 
@@ -228,7 +221,6 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
     Returns:
         权限检查依赖函数
     """
-
     async def role_checker(
         current_user: TokenData = Depends(get_current_active_user),
     ) -> TokenData:
@@ -242,7 +234,7 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
 
 
 # 常用角色权限检查
-# TODO: 方法 def __init__ 过长(26行)，建议拆分
+# TODO: 方法 def __init__ 过长(25行)，建议拆分
     def __init__(self, auth_manager: JWTAuthManager):
         self.auth_manager = auth_manager
 
@@ -268,34 +260,8 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
         logger.info(f"用户 {user_id} 的所有会话已清除")
 
 
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
-def get_client_ip(request: Request) -> str:
-    """
-    获取客户端IP地址
-
-    Args:
-        request: FastAPI请求对象
-
-    Returns:
-        客户端IP地址
-    """
-    # 检查代理头
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip
-
-    # 回退到直接连接IP
-    return request.client.host if request.client else "unknown"
-
-
-class SecurityHeaders:
-# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
-    def get_security_headers() -> dict:
+# TODO: 方法 def get_security_headers 过长(26行)，建议拆分
+    def get_security_headers() -> dict[str, str]:
         """获取安全头部配置"""
         return {
             "X-Content-Type-Options": "nosniff",
@@ -314,9 +280,34 @@ class SecurityHeaders:
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",  # TODO: 将魔法数字 31536000 提取为常量
         }
 
+    @staticmethod
+    async def add_security_headers() -> dict[str, str]:
+        """添加安全头部的中间件依赖"""
+        return SecurityHeaders.get_security_headers()
 
-async def add_security_headers():
-def get_auth_context(
-    """TODO: 添加函数文档"""
-    auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
-) -> AuthContext:
+
+class AuthContext:
+    """认证上下文管理器"""
+
+    @staticmethod
+    def get_client_ip(request: Request) -> str:
+        """
+        获取客户端IP地址
+
+        Args:
+        request: FastAPI请求对象
+
+    Returns:
+        客户端IP地址
+        """
+        # 检查代理头
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+
+        real_ip = request.headers.get("x-real-ip")
+        if real_ip:
+            return real_ip
+
+        # 回退到直接连接IP
+        return request.client.host if request.client else "unknown"

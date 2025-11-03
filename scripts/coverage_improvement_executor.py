@@ -204,7 +204,8 @@ class CoverageAnalyzer:
                             "添加边界条件测试",
                             "测试异常情况"
                         ],
-                        line_numbers=list(range(start, min(end + 1, len(lines) + 1))))
+                        line_numbers=list(range(start, min(end + 1, len(lines) + 1)))
+                    ))
 
                 elif self._is_error_handling(code_snippet):
                     issues.append(CoverageIssue(

@@ -1,7 +1,6 @@
 """数据库相关的定义,用于替代connection_mod"""
 
 from enum import Enum
-from typing import Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -38,7 +37,7 @@ class DatabaseManager:
         if not hasattr(self, "initialized"):
             self.initialized = False
 
-    def initialize(self, database_url: Optional[str] = None):
+    def initialize(self, database_url: str | None = None):
         """初始化数据库连接"""
         if self.initialized:
             return None
@@ -113,13 +112,13 @@ def get_multi_user_database_manager() -> MultiUserDatabaseManager:
 
 
 # 初始化函数
-def initialize_database(database_url: Optional[str] = None):
+def initialize_database(database_url: str | None = None):
     """初始化数据库"""
     manager = get_database_manager()
     manager.initialize(database_url)
 
 
-def initialize_multi_user_database(database_url: Optional[str] = None):
+def initialize_multi_user_database(database_url: str | None = None):
     """初始化多用户数据库"""
     manager = get_multi_user_database_manager()
     manager.initialize(database_url)

@@ -7,10 +7,10 @@
 import asyncio
 import functools
 import random
-import time
-from typing import Callable, Optional, TypeVar
-
 import secrets
+import time
+from collections.abc import Callable
+from typing import Optional, TypeVar
 
 T = TypeVar("T")
 
@@ -110,7 +110,7 @@ async def async_retry_with_exponential_backoff(
     return decorator
 
 
-def retry(config: Optional[RetryConfig] = None):
+def retry(config: RetryConfig | None = None):
     """函数文档字符串"""
     pass  # 添加pass语句
     """通用的重试装饰器"""
@@ -124,7 +124,7 @@ def retry(config: Optional[RetryConfig] = None):
     )
 
 
-def async_retry(config: Optional[RetryConfig] = None):
+def async_retry(config: RetryConfig | None = None):
     """函数文档字符串"""
     pass  # 添加pass语句
     """通用的异步重试装饰器"""

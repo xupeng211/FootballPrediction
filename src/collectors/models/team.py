@@ -3,7 +3,7 @@ Team model for data collection
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -15,11 +15,11 @@ class Team:
 
     id: int
     name: str
-    short_name: Optional[str] = None
+    short_name: str | None = None
     country: str = ""
     league: str = ""
-    founded_year: Optional[int] = None
-    metadata: Optional[Dict[str, Any]] = None
+    founded_year: int | None = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -28,7 +28,7 @@ class Team:
         if self.metadata is None:
             self.metadata = {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         return {
             "id": self.id,
@@ -41,7 +41,7 @@ class Team:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Team":
+    def from_dict(cls, data: dict[str, Any]) -> "Team":
         """Create from dictionary"""
         return cls(
             id=data["id"],

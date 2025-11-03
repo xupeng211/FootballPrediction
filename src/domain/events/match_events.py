@@ -6,10 +6,10 @@ Match Domain Events
 Defines domain events related to matches.
 """
 
-from typing import Any, Dict
+from typing import Any
 
-from src.domain.models.match import MatchResult, MatchScore
 from src.domain.events.base import DomainEvent
+from src.domain.models.match import MatchResult, MatchScore
 
 
 class MatchStartedEvent(DomainEvent):
@@ -24,7 +24,7 @@ class MatchStartedEvent(DomainEvent):
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "match_id": self.match_id,
             "home_team_id": self.home_team_id,
@@ -51,7 +51,7 @@ class MatchFinishedEvent(DomainEvent):
         self.final_score = final_score
         self.result = result
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "match_id": self.match_id,
             "home_team_id": self.home_team_id,
@@ -75,7 +75,7 @@ class MatchCancelledEvent(DomainEvent):
         self.match_id = match_id
         self.reason = reason
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {"match_id": self.match_id, "reason": self.reason}
 
 
@@ -91,7 +91,7 @@ class MatchPostponedEvent(DomainEvent):
         self.new_date = new_date
         self.reason = reason
 
-    def _get_event_data(self) -> Dict[str, Any]:
+    def _get_event_data(self) -> dict[str, Any]:
         return {
             "match_id": self.match_id,
             "new_date": self.new_date,

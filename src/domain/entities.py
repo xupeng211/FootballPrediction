@@ -5,7 +5,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class MatchStatus(Enum):
@@ -36,8 +35,8 @@ class Team:
     id: int
     name: str
     status: TeamStatus
-    league_id: Optional[int] = None
-    created_at: Optional[datetime] = None
+    league_id: int | None = None
+    created_at: datetime | None = None
 
 
 @dataclass
@@ -52,11 +51,11 @@ class Match:
     away_team_id: int
     league_id: int
     status: MatchStatus
-    scheduled_at: Optional[datetime] = None
-    started_at: Optional[datetime] = None
-    finished_at: Optional[datetime] = None
-    home_score: Optional[int] = 0
-    away_score: Optional[int] = 0
+    scheduled_at: datetime | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    home_score: int | None = 0
+    away_score: int | None = 0
 
 
 @dataclass
@@ -86,7 +85,7 @@ class Prediction:
     predicted_result: str
     confidence: float
     created_at: datetime
-    is_correct: Optional[bool] = None
+    is_correct: bool | None = None
 
 
 # 导出常用函数

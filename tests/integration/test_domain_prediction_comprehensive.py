@@ -24,29 +24,29 @@ class TestConfidenceScoreComprehensive:
         """测试有效置信度范围"""
         # 边界值测试
         score = ConfidenceScore(Decimal("0"))
-        assert score.value     == Decimal("0")
-        assert score.level     == "low"
+        assert score.value         == Decimal("0")
+        assert score.level         == "low"
 
         score = ConfidenceScore(Decimal("1"))
-        assert score.value     == Decimal("1")
-        assert score.level     == "high"
+        assert score.value         == Decimal("1")
+        assert score.level         == "high"
 
         score = ConfidenceScore(Decimal("0.8"))
-        assert score.level     == "high"
+        assert score.level         == "high"
 
         score = ConfidenceScore(Decimal("0.6"))
-        assert score.level     == "medium"
+        assert score.level         == "medium"
 
         score = ConfidenceScore(Decimal("0.59"))
-        assert score.level     == "low"
+        assert score.level         == "low"
 
     def test_confidence_score_quantization(self):
         """测试置信度四舍五入"""
         score = ConfidenceScore(Decimal("0.856"))
-        assert score.value     == Decimal("0.86")
+        assert score.value         == Decimal("0.86")
 
         score = ConfidenceScore(Decimal("0.123"))
-        assert score.value     == Decimal("0.12")
+        assert score.value         == Decimal("0.12")
 
     def test_confidence_score_invalid_range(self):
         """测试无效置信度范围"""
@@ -75,7 +75,7 @@ class TestPredictionScoreComprehensive:
         """测试预测比分创建"""
         score = PredictionScore(predicted_home=2, predicted_away=1)
         assert score.predicted_home == 2
-        assert score.predicted_away     == 1
+        assert score.predicted_away         == 1
         assert score.actual_home is None
         assert score.actual_away is None
         assert not score.is_evaluated
@@ -144,11 +144,11 @@ class TestPredictionScoreComprehensive:
         # 评估后计算误差
         score.actual_home = 3
         score.actual_away = 1
-        assert score.goal_difference_error     == 1  # (2-1) - (3-1) = -1, abs=1
+        assert score.goal_difference_error         == 1  # (2-1) - (3-1) = -1, abs=1
 
         score.actual_home = 1
         score.actual_away = 3
-        assert score.goal_difference_error     == 3  # (2-1) - (1-3) = 3
+        assert score.goal_difference_error         == 3  # (2-1) - (1-3) = 3
 
     def test_prediction_score_string_representation(self):
         """测试比分字符串表示"""
@@ -168,10 +168,10 @@ class TestPredictionPointsComprehensive:
     def test_prediction_points_default(self):
         """测试默认积分"""
         points = PredictionPoints()
-        assert points.total     == Decimal("0")
-        assert points.score_bonus     == Decimal("0")
-        assert points.result_bonus     == Decimal("0")
-        assert points.confidence_bonus     == Decimal("0")
+        assert points.total         == Decimal("0")
+        assert points.score_bonus         == Decimal("0")
+        assert points.result_bonus         == Decimal("0")
+        assert points.confidence_bonus         == Decimal("0")
 
     def test_prediction_points_quantization(self):
         """测试积分四舍五入"""
@@ -182,10 +182,10 @@ class TestPredictionPointsComprehensive:
             confidence_bonus=Decimal("1.456"),
         )
 
-        assert points.total     == Decimal("10.57")
-        assert points.score_bonus     == Decimal("5.23")
-        assert points.result_bonus     == Decimal("3.88")
-        assert points.confidence_bonus     == Decimal("1.46")
+        assert points.total         == Decimal("10.57")
+        assert points.score_bonus         == Decimal("5.23")
+        assert points.result_bonus         == Decimal("3.88")
+        assert points.confidence_bonus         == Decimal("1.46")
 
     def test_prediction_points_breakdown(self):
         """测试积分明细"""
@@ -203,7 +203,7 @@ class TestPredictionPointsComprehensive:
             "confidence_bonus": Decimal("2.50"),
             "total": Decimal("15.50"),
         }
-        assert breakdown     == expected
+        assert breakdown         == expected
 
     def test_prediction_points_string_representation(self):
         """测试积分字符串表示"""
@@ -220,7 +220,7 @@ class TestPredictionDomainComprehensive:
 
         assert prediction.user_id == 1
         assert prediction.match_id == 100
-        assert prediction.status     == PredictionStatus.PENDING
+        assert prediction.status         == PredictionStatus.PENDING
         assert prediction.is_pending
         assert not prediction.is_evaluated
         assert not prediction.is_cancelled
@@ -255,9 +255,9 @@ class TestPredictionDomainComprehensive:
 
         assert prediction.score.predicted_home == 2
         assert prediction.score.predicted_away == 1
-        assert prediction.confidence.value     == Decimal("0.85")
+        assert prediction.confidence.value         == Decimal("0.85")
         assert prediction.confidence.level == "high"
-        assert prediction.model_version     == "v1.0"
+        assert prediction.model_version         == "v1.0"
 
     def test_make_prediction_invalid_confidence(self):
         """测试无效置信度创建预测"""
@@ -290,7 +290,7 @@ class TestPredictionDomainComprehensive:
         assert prediction.score.is_correct_score
         assert prediction.points is not None
         assert prediction.points.score_bonus > 0
-        assert prediction.accuracy_score     == 1.0
+        assert prediction.accuracy_score         == 1.0
 
     def test_evaluate_prediction_correct_result(self):
         """测试评估预测结果正确"""
@@ -304,7 +304,7 @@ class TestPredictionDomainComprehensive:
         assert not prediction.score.is_correct_score
         assert prediction.score.is_correct_result
         assert prediction.points.result_bonus > 0
-        assert prediction.points.score_bonus     == 0
+        assert prediction.points.score_bonus         == 0
 
     def test_evaluate_prediction_incorrect(self):
         """测试评估预测错误"""
@@ -317,7 +317,7 @@ class TestPredictionDomainComprehensive:
         assert prediction.is_evaluated
         assert not prediction.score.is_correct_score
         assert not prediction.score.is_correct_result
-        assert prediction.points.total     == Decimal("0")
+        assert prediction.points.total         == Decimal("0")
 
     def test_evaluate_prediction_no_score(self):
         """测试评估没有比分的预测"""
@@ -345,7 +345,7 @@ class TestPredictionDomainComprehensive:
         assert prediction.is_cancelled
         assert prediction.status == PredictionStatus.CANCELLED
         assert prediction.cancelled_at is not None
-        assert prediction.cancellation_reason     == "用户主动取消"
+        assert prediction.cancellation_reason         == "用户主动取消"
 
     def test_cancel_prediction_evaluated(self):
         """测试取消已评估的预测"""
@@ -373,7 +373,7 @@ class TestPredictionDomainComprehensive:
         prediction.mark_expired()
 
         assert prediction.is_expired
-        assert prediction.status     == PredictionStatus.EXPIRED
+        assert prediction.status         == PredictionStatus.EXPIRED
 
     def test_mark_expired_non_pending(self):
         """测试标记非待处理状态为过期"""
@@ -396,7 +396,7 @@ class TestPredictionDomainComprehensive:
         prediction.make_prediction(2, 1, confidence=0.9)
         prediction.evaluate(2, 1, custom_rules)
 
-        assert prediction.points.score_bonus     == Decimal("15")
+        assert prediction.points.score_bonus         == Decimal("15")
         assert prediction.points.total > Decimal("15")  # 包含置信度奖励
 
     def test_confidence_bonus_calculation(self):
@@ -423,11 +423,11 @@ class TestPredictionDomainComprehensive:
         prediction.make_prediction(2, 1, confidence=0.8)
 
         # 未评估时准确度为0
-        assert prediction.accuracy_score     == 0.0
+        assert prediction.accuracy_score         == 0.0
 
         # 精确比分
         prediction.evaluate(2, 1)
-        assert prediction.accuracy_score     == 1.0
+        assert prediction.accuracy_score         == 1.0
 
         # 只有结果正确
         prediction2 = Prediction(user_id=1, match_id=101)
@@ -446,11 +446,11 @@ class TestPredictionDomainComprehensive:
 
         assert summary["predicted"] == "2-1"
         assert summary["actual"] == "2-1"
-        assert summary["confidence"]     == "0.85 (high)"
+        assert summary["confidence"]         == "0.85 (high)"
         assert summary["points"] is not None
         assert summary["is_correct_score"] is True
         assert summary["is_correct_result"] is True
-        assert summary["accuracy"]     == 1.0
+        assert summary["accuracy"]         == 1.0
 
     def test_get_prediction_summary_no_prediction(self):
         """测试获取无预测的摘要"""
@@ -458,7 +458,7 @@ class TestPredictionDomainComprehensive:
 
         summary = prediction.get_prediction_summary()
 
-        assert summary["status"]     == "no_prediction"
+        assert summary["status"]         == "no_prediction"
 
     def test_domain_event_management(self):
         """测试领域事件管理"""
@@ -496,7 +496,7 @@ class TestPredictionDomainComprehensive:
         assert data["score"]["predicted_home"] == 2
         assert data["score"]["predicted_away"] == 1
         assert data["score"]["actual_home"] == 2
-        assert data["score"]["actual_away"]     == 1
+        assert data["score"]["actual_away"]         == 1
         assert data["points"]["total"] > 0
 
     def test_from_dict_deserialization(self):
@@ -524,10 +524,10 @@ class TestPredictionDomainComprehensive:
         assert prediction.match_id == 200
         assert prediction.status == PredictionStatus.EVALUATED
         assert prediction.model_version == "v1.0"
-        assert prediction.confidence.value     == Decimal("0.85")
+        assert prediction.confidence.value         == Decimal("0.85")
         assert prediction.score.predicted_home == 2
         assert prediction.score.actual_home == 2
-        assert prediction.points.total     == Decimal("12.50")
+        assert prediction.points.total         == Decimal("12.50")
 
     def test_string_representation(self):
         """测试字符串表示"""
@@ -546,7 +546,7 @@ class TestPredictionDomainComprehensive:
         assert "evaluated" in str(prediction)
 
 
-def test_prediction_domain_comprehensive_suite(, client, client, client, client):
+def test_prediction_domain_comprehensive_suite(client):
     """预测领域模型综合测试套件"""
     # 快速验证核心功能
     prediction = Prediction(user_id=1, match_id=100)

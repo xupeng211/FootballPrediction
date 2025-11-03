@@ -1,26 +1,26 @@
 [build-system]
 requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
-build-backend = "setuptools.build_meta"
+build-backend = "setuptools.build_meta"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [project]
-name = "football-prediction"
-version = "1.0.0"
-description = "企业级足球预测系统"
-readme = "README.md"
-license = {text = "MIT"}
-authors = [
-    {name = "Football Prediction Team", email = "team@footballprediction.com"}
-]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-]
+name = "football-prediction"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+version = "1.0.0"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+description = "企业级足球预测系统"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+readme = "README.md"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+license = {text = "MIT"}  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+authors = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    {name = "Football Prediction Team", email = "team@footballprediction.com"}  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+classifiers = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "Development Status :: 4 - Beta",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "Intended Audience :: Developers",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "License :: OSI Approved :: MIT License",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "Programming Language :: Python :: 3",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "Programming Language :: Python :: 3.11",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "Programming Language :: Python :: 3.12",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 requires-python = ">=3.11"
-dependencies = [
+dependencies = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "sqlalchemy>=2.0.0",
@@ -36,10 +36,10 @@ dependencies = [
     "pandas>=2.1.0",
     "numpy>=1.25.0",
     "scikit-learn>=1.3.0",
-]
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [project.optional-dependencies]
-dev = [
+dev = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
@@ -49,91 +49,93 @@ dev = [
     "black>=23.0.0",
     "pre-commit>=3.5.0",
     "pip-audit>=2.6.0",
-]
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [project.urls]
-Homepage = "https://github.com/xupeng211/FootballPrediction"
-Repository = "https://github.com/xupeng211/FootballPrediction.git"
-Issues = "https://github.com/xupeng211/FootballPrediction/issues"
+Homepage = "https://github.com/xupeng211/FootballPrediction"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+Repository = "https://github.com/xupeng211/FootballPrediction.git"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+Issues = "https://github.com/xupeng211/FootballPrediction/issues"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["src"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.ruff]
-line-length = 88
-target-version = "py311"
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "T20"]
-ignore = ["E501", "B008"]
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-]
+line-length = 88  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+target-version = "py311"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "T20"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+ignore = ["E501", "B008"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+exclude = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".bzr",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".direnv",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".eggs",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".git",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".hg",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".mypy_cache",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".nox",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".pants.d",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".ruff_cache",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".svn",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".tox",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    ".venv",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "__pypackages__",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "_build",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "buck-out",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "build",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "dist",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "node_modules",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "venv",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
+quote-style = "double"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+indent-style = "space"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+skip-magic-trailing-comma = false  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+line-ending = "auto"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-exclude = [
-    "tests/",
-    "scripts/",
-]
+python_version = "3.11"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+warn_return_any = true  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+warn_unused_configs = true  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+disallow_untyped_defs = true  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+exclude = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "tests/",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "scripts/",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q --strict-markers --strict-config"
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
-    "e2e: End-to-end tests",
-    "slow: Slow running tests",
-    "api: API related tests",
-    "database: Database related tests",
-    "auth: Authentication tests",
-]
+minversion = "7.0"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+addopts = "-ra -q --strict-markers --strict-config"  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+testpaths = ["tests"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+python_files = ["test_*.py", "*_test.py"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+python_classes = ["Test*"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+python_functions = ["test_*"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+markers = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "unit: Unit tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "integration: Integration tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "e2e: End-to-end tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "slow: Slow running tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "api: API related tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "database: Database related tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "auth: Authentication tests",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.coverage.run]
-source = ["src"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__pycache__/*",
-    "*/venv/*",
-    "*/.venv/*",
-]
+source = ["src"]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+omit = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "*/tests/*",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "*/test_*",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "*/__pycache__/*",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "*/venv/*",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "*/.venv/*",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
 
 [tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
+exclude_lines = [  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "pragma: no cover",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "def __repr__",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "raise AssertionError",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
+    "raise NotImplementedError",  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束
     "if __name__ == .__main__.:",
-]
+]  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束  # TODO: 添加版本约束

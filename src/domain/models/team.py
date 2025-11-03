@@ -9,7 +9,7 @@ Encapsulates team-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.core.exceptions import DomainError
 
@@ -73,7 +73,7 @@ class TeamStats:
         return self.wins / self.matches_played
 
     @property
-    def form(self) -> List[str]:
+    def form(self) -> list[str]:
         """最近状态（简化表示）"""
         # 这里应该从历史记录计算,简化处理
         return []
@@ -102,7 +102,7 @@ class TeamForm:
     pass  # 添加pass语句
     """球队状态值对象"""
 
-    last_matches: List[str] = field(default_factory=list)  # 最近比赛结果:W/D/L
+    last_matches: list[str] = field(default_factory=list)  # 最近比赛结果:W/D/L
     current_streak: int = 0  # 当前连续纪录（胜/负为正数,平为0）
     streak_type: str = ""  # 连续类型:win/draw/loss/none
 
@@ -194,27 +194,27 @@ class Team:
     封装球队的核心业务逻辑和不变性约束.
     """
 
-    id: Optional[int] = None
+    id: int | None = None
     name: str = ""
-    short_name: Optional[str] = None
-    code: Optional[str] = None
+    short_name: str | None = None
+    code: str | None = None
     type: TeamType = TeamType.CLUB
     country: str = ""
-    founded_year: Optional[int] = None
-    stadium: Optional[str] = None
-    capacity: Optional[int] = None
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
+    founded_year: int | None = None
+    stadium: str | None = None
+    capacity: int | None = None
+    website: str | None = None
+    logo_url: str | None = None
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 值对象
-    stats: Optional[TeamStats] = None
-    form: Optional[TeamForm] = None
+    stats: TeamStats | None = None
+    form: TeamForm | None = None
 
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    _domain_events: list[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self):
         """函数文档字符串"""
@@ -250,10 +250,10 @@ class Team:
 
     def update_info(
         self,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        stadium: Optional[str] = None,
-        capacity: Optional[int] = None,
+        name: str | None = None,
+        short_name: str | None = None,
+        stadium: str | None = None,
+        capacity: int | None = None,
     ) -> None:
         """更新球队信息"""
         if name:
@@ -274,7 +274,7 @@ class Team:
         result: str,
         goals_for: int,
         goals_against: int,
-        is_home: Optional[bool] = None,
+        is_home: bool | None = None,
     ) -> None:
         """添加比赛结果"""
         if result not in ["win", "draw", "loss"]:
@@ -347,7 +347,7 @@ class Team:
         return self.short_name or self.name
 
     @property
-    def age(self) -> Optional[int]:
+    def age(self) -> int | None:
         """球队年龄"""
         if self.founded_year:
             return datetime.utcnow().year - self.founded_year
@@ -371,7 +371,7 @@ class Team:
         else:
             return "保级"
 
-    def get_rival_team_ids(self) -> List[int]:
+    def get_rival_team_ids(self) -> list[int]:
         """获取死敌球队ID（需要从外部配置）"""
         # 这里应该从配置或数据库获取
         return []
@@ -388,7 +388,7 @@ class Team:
         """添加领域事件"""
         self._domain_events.append(event)
 
-    def get_domain_events(self) -> List[Any]:
+    def get_domain_events(self) -> list[Any]:
         """获取领域事件"""
         return self._domain_events.copy()
 
@@ -400,7 +400,7 @@ class Team:
     # 序列化方法
     # ========================================
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -447,7 +447,7 @@ class Team:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Team":
+    def from_dict(cls, data: dict[str, Any]) -> "Team":
         """从字典创建实例"""
         stats_data = data.pop("stats", None)
         stats = None

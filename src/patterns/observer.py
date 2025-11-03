@@ -5,12 +5,13 @@ Observer Pattern Module
 提供观察者模式的实现，定义对象间的一对多依赖关系.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Callable
-from datetime import datetime
-import threading
-import queue
 import json
+import queue
+import threading
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any
 
 
 class Observer(ABC):
@@ -20,7 +21,7 @@ class Observer(ABC):
     """
 
     @abstractmethod
-    def update(self, subject: "Subject", data: Optional[Any] = None) -> None:
+    def update(self, subject: "Subject", data: Any | None = None) -> None:
         """接收主题更新的通知
 
         Args:
@@ -43,7 +44,7 @@ class Subject(ABC):
 
     def __init__(self):
         """初始化主题"""
-        self._observers: List[Observer] = []
+        self._observers: list[Observer] = []
         self._changed = False
         self._lock = threading.Lock()
 
@@ -67,7 +68,7 @@ class Subject(ABC):
             if observer in self._observers:
                 self._observers.remove(observer)
 
-    def notify(self, data: Optional[Any] = None) -> None:
+    def notify(self, data: Any | None = None) -> None:
         """通知所有观察者
 
         Args:
@@ -118,8 +119,8 @@ class ConcreteSubject(Subject):
         """
         super().__init__()
         self.name = name
-        self._state: Dict[str, Any] = {}
-        self._history: List[Dict[str, Any]] = []
+        self._state: dict[str, Any] = {}
+        self._history: list[dict[str, Any]] = []
 
     def get_state(self, key: str) -> Any:
         """获取状态值
@@ -147,7 +148,7 @@ class ConcreteSubject(Subject):
             self._record_change(key, old_value, value)
             self.notify({"key": key, "old_value": old_value, "new_value": value})
 
-    def get_all_states(self) -> Dict[str, Any]:
+    def get_all_states(self) -> dict[str, Any]:
         """获取所有状态
 
         Returns:
@@ -155,7 +156,7 @@ class ConcreteSubject(Subject):
         """
         return self._state.copy()
 
-    def update_states(self, states: Dict[str, Any]) -> None:
+    def update_states(self, states: dict[str, Any]) -> None:
         """批量更新状态
 
         Args:
@@ -184,7 +185,7 @@ class ConcreteSubject(Subject):
         if len(self._history) > 1000:
             self._history = self._history[-500:]
 
-    def get_change_history(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_change_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """获取变化历史
 
         Args:
@@ -202,7 +203,7 @@ class ConcreteObserver(Observer):
     实现具体的观察逻辑.
     """
 
-    def __init__(self, observer_id: str, callback: Optional[Callable] = None):
+    def __init__(self, observer_id: str, callback: Callable | None = None):
         """初始化具体观察者
 
         Args:
@@ -211,10 +212,10 @@ class ConcreteObserver(Observer):
         """
         self.observer_id = observer_id
         self.callback = callback
-        self.notifications: List[Dict[str, Any]] = []
+        self.notifications: list[dict[str, Any]] = []
         self.created_at = datetime.utcnow()
 
-    def update(self, subject: Subject, data: Optional[Any] = None) -> None:
+    def update(self, subject: Subject, data: Any | None = None) -> None:
         """接收更新通知
 
         Args:
@@ -248,7 +249,7 @@ class ConcreteObserver(Observer):
         """获取观察者ID"""
         return self.observer_id
 
-    def get_notifications(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_notifications(self, limit: int = 50) -> list[dict[str, Any]]:
         """获取通知记录
 
         Args:
@@ -277,9 +278,9 @@ class LoggingObserver(Observer):
             observer_id: 观察者ID
         """
         self.observer_id = observer_id
-        self.log_entries: List[Dict[str, Any]] = []
+        self.log_entries: list[dict[str, Any]] = []
 
-    def update(self, subject: Subject, data: Optional[Any] = None) -> None:
+    def update(self, subject: Subject, data: Any | None = None) -> None:
         """记录日志
 
         Args:
@@ -301,7 +302,7 @@ class LoggingObserver(Observer):
         """获取观察者ID"""
         return self.observer_id
 
-    def get_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_logs(self, limit: int = 100) -> list[dict[str, Any]]:
         """获取日志记录
 
         Args:
@@ -326,13 +327,13 @@ class MetricsObserver(Observer):
             observer_id: 观察者ID
         """
         self.observer_id = observer_id
-        self.metrics: Dict[str, Any] = {
+        self.metrics: dict[str, Any] = {
             "notification_count": 0,
             "subjects_notified": set(),
             "last_notification": None,
         }
 
-    def update(self, subject: Subject, data: Optional[Any] = None) -> None:
+    def update(self, subject: Subject, data: Any | None = None) -> None:
         """更新指标
 
         Args:
@@ -351,7 +352,7 @@ class MetricsObserver(Observer):
         """获取观察者ID"""
         return self.observer_id
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取指标数据
 
         Returns:
@@ -379,7 +380,7 @@ class AlertingObserver(Observer):
     def __init__(
         self,
         observer_id: str = "alerting_observer",
-        alert_conditions: Optional[List[Callable]] = None,
+        alert_conditions: list[Callable] | None = None,
     ):
         """初始化告警观察者
 
@@ -389,7 +390,7 @@ class AlertingObserver(Observer):
         """
         self.observer_id = observer_id
         self.alert_conditions = alert_conditions or []
-        self.alerts: List[Dict[str, Any]] = []
+        self.alerts: list[dict[str, Any]] = []
 
     def add_alert_condition(self, condition: Callable) -> None:
         """添加告警条件
@@ -399,7 +400,7 @@ class AlertingObserver(Observer):
         """
         self.alert_conditions.append(condition)
 
-    def update(self, subject: Subject, data: Optional[Any] = None) -> None:
+    def update(self, subject: Subject, data: Any | None = None) -> None:
         """检查告警条件
 
         Args:
@@ -426,7 +427,7 @@ class AlertingObserver(Observer):
         """获取观察者ID"""
         return self.observer_id
 
-    def get_alerts(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_alerts(self, limit: int = 50) -> list[dict[str, Any]]:
         """获取告警记录
 
         Args:
@@ -452,7 +453,7 @@ class EventQueue:
         """
         self._queue = queue.Queue(maxsize=max_size)
         self._running = False
-        self._worker_thread: Optional[threading.Thread] = None
+        self._worker_thread: threading.Thread | None = None
 
     def start(self) -> None:
         """启动事件处理"""
@@ -530,7 +531,7 @@ class AsyncSubject(Subject):
         """停止异步通知"""
         self.event_queue.stop()
 
-    def notify(self, data: Optional[Any] = None) -> None:
+    def notify(self, data: Any | None = None) -> None:
         """异步通知观察者
 
         Args:
@@ -544,7 +545,7 @@ class AsyncSubject(Subject):
 
 
 # 便捷函数
-def create_observer_system() -> tuple[ConcreteSubject, List[Observer]]:
+def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
     """创建观察者系统
 
     Returns:
@@ -632,7 +633,7 @@ class ObservableService(Subject):
         self._status = "stopped"
         self.notify({"event": "service_stopped", "service": self.service_name})
 
-    def update_metrics(self, metrics: Dict[str, Any]):
+    def update_metrics(self, metrics: dict[str, Any]):
         """更新服务指标
 
         Args:
@@ -651,12 +652,12 @@ class ObservableService(Subject):
         """获取服务状态"""
         return self._status
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取服务指标"""
         return self._metrics.copy()
 
 
-def create_observer_system(service_name: str) -> Dict[str, Any]:
+def create_observer_system(service_name: str) -> dict[str, Any]:
     """创建观察者系统
 
     Args:
@@ -688,7 +689,7 @@ def create_observer_system(service_name: str) -> Dict[str, Any]:
     }
 
 
-def setup_service_observers(service: ObservableService) -> Dict[str, Any]:
+def setup_service_observers(service: ObservableService) -> dict[str, Any]:
     """设置服务观察者
 
     Args:

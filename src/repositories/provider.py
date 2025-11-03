@@ -7,11 +7,12 @@ Provides creation and dependency injection configuration for repository instance
 """
 
 from functools import lru_cache
-from typing import Protocol, Type, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Match, Prediction, User
+
 from .base import BaseRepository, Repository
 from .match import MatchRepository, ReadOnlyMatchRepository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
@@ -167,7 +168,7 @@ def set_repository_provider(provider: RepositoryProvider):
 @lru_cache(maxsize=32)
 def _get_repository_cached(
     repository_type: str, session_id: int, read_only: bool
-) -> Type[BaseRepository]:
+) -> type[BaseRepository]:
     """缓存的仓储类型获取"""
     if repository_type == "prediction":
         return ReadOnlyPredictionRepository if read_only else PredictionRepository

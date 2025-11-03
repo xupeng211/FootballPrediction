@@ -11,7 +11,7 @@ import logging
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T", bound="Event")
 
@@ -28,11 +28,11 @@ class EventData:
 
     def __init__(
         self,
-        source: Optional[str] = None,
+        source: str | None = None,
         version: str = "1.0",
-        metadata: Optional[Dict[str, Any]] = None,
-        event_id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        metadata: dict[str, Any] | None = None,
+        event_id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         """初始化事件数据"""
         self.event_id = event_id or str(uuid.uuid4())
@@ -76,7 +76,7 @@ class Event(ABC):
         return self.data.timestamp
 
     @property
-    def source(self) -> Optional[str]:
+    def source(self) -> str | None:
         """获取事件源"""
         return self.data.source
 
@@ -86,7 +86,7 @@ class Event(ABC):
         return self.data.version
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """获取事件元数据"""
         return self.data.metadata
 
@@ -101,7 +101,7 @@ class Event(ABC):
         pass
 
     @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """将事件转换为字典"
 
         Returns:
@@ -111,7 +111,7 @@ class Event(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
+    def from_dict(cls: type[T], data: dict[str, Any]) -> T:
         """从字典创建事件"
 
         Args:
@@ -136,7 +136,7 @@ class EventHandler(ABC):
     Defines the interface that all event handlers must implement.
     """
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -146,7 +146,7 @@ class EventHandler(ABC):
             name: 处理器名称
         """
         self.name = name or self.__class__.__name__
-        self._subscribed_events: Dict[str, asyncio.Queue] = {}
+        self._subscribed_events: dict[str, asyncio.Queue] = {}
 
     @abstractmethod
     async def handle(self, event: Event) -> None:

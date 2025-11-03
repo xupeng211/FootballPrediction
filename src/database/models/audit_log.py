@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Index, Integer, String, Text, func
 from sqlalchemy.sql import func
@@ -77,7 +77,7 @@ class AuditLog(BaseModel):
         {"extend_existing": True},
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,
@@ -114,7 +114,7 @@ class AuditLogSummary(BaseModel):
     # 索引定义
     __table_args__ = (Index("idx_summary_date", "date"), {"extend_existing": True})
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,

@@ -3,17 +3,18 @@
 External Match Data Model
 """
 
+from datetime import datetime
+
 from sqlalchemy import (
+    JSON,
+    Boolean,
     Column,
+    DateTime,
     Integer,
     String,
-    DateTime,
     Text,
-    Boolean,
-    JSON,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
 
 Base = declarative_base()
 

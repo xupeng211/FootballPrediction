@@ -6,22 +6,22 @@ Enterprise Multi-Tenant Management Service
 权限控制,资源配额管理等.
 """
 
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any
 
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
+from src.core.exceptions import ResourceNotFoundError, ValidationError
 from src.database.models.tenant import (
     Tenant,
-    TenantRole,
-    UserRoleAssignment,
-    TenantStatus,
     TenantPlan,
+    TenantRole,
+    TenantStatus,
+    UserRoleAssignment,
 )
-from src.core.exceptions import ValidationError, ResourceNotFoundError
 
 
 class TenantManagementError(Exception):
@@ -40,12 +40,12 @@ class TenantCreationRequest:
     name: str
     slug: str
     contact_email: str
-    company_name: Optional[str] = None
-    description: Optional[str] = None
+    company_name: str | None = None
+    description: str | None = None
     plan: TenantPlan = TenantPlan.BASIC
     max_users: int = 10
     trial_days: int = 30
-    custom_settings: Optional[Dict[str, Any]] = None
+    custom_settings: dict[str, Any] | None = None
 
 
 @dataclass
@@ -59,7 +59,7 @@ class ResourceQuotaCheck:
     current_usage: int
     max_limit: int
     usage_percentage: float
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 @dataclass
@@ -70,9 +70,9 @@ class PermissionCheckResult:
     """权限检查结果"""
 
     granted: bool
-    permissions: List[str]
-    restrictions: Dict[str, Any]
-    reason: Optional[str] = None
+    permissions: list[str]
+    restrictions: dict[str, Any]
+    reason: str | None = None
 
 
 class TenantService:
@@ -94,7 +94,7 @@ class TenantService:
     # ==================== 租户生命周期管理 ====================
 
     async def create_tenant(
-        self, request: TenantCreationRequest, creator_id: Optional[int] = None
+        self, request: TenantCreationRequest, creator_id: int | None = None
     ) -> Tenant:
         """
         创建新租户
@@ -175,17 +175,17 @@ class TenantService:
         await self.db.commit()
         return tenant
 
-    async def get_tenant_by_id(self, tenant_id: int) -> Optional[Tenant]:
+    async def get_tenant_by_id(self, tenant_id: int) -> Tenant | None:
         """根据ID获取租户"""
         result = await self.db.execute(select(Tenant).where(Tenant.id == tenant_id))
         return result.scalar_one_or_none()
 
-    async def get_tenant_by_slug(self, slug: str) -> Optional[Tenant]:
+    async def get_tenant_by_slug(self, slug: str) -> Tenant | None:
         """根据标识符获取租户"""
         result = await self.db.execute(select(Tenant).where(Tenant.slug == slug))
         return result.scalar_one_or_none()
 
-    async def update_tenant(self, tenant_id: int, updates: Dict[str, Any]) -> Tenant:
+    async def update_tenant(self, tenant_id: int, updates: dict[str, Any]) -> Tenant:
         """更新租户信息"""
         tenant = await self.get_tenant_by_id(tenant_id)
         if not tenant:
@@ -226,7 +226,7 @@ class TenantService:
         return tenant
 
     async def activate_tenant(
-        self, tenant_id: int, plan: Optional[TenantPlan] = None
+        self, tenant_id: int, plan: TenantPlan | None = None
     ) -> Tenant:
         """激活租户"""
         tenant = await self.get_tenant_by_id(tenant_id)
@@ -250,7 +250,7 @@ class TenantService:
         user_id: int,
         tenant_id: int,
         permission_code: str,
-        resource_context: Optional[Dict[str, Any]] = None,
+        resource_context: dict[str, Any] | None = None,
     ) -> PermissionCheckResult:
         """
         检查用户权限
@@ -316,7 +316,7 @@ class TenantService:
         tenant_id: int,
         role_code: str,
         assigned_by: int,
-        expires_at: Optional[datetime] = None,
+        expires_at: datetime | None = None,
     ) -> UserRoleAssignment:
         """
         为用户分配角色
@@ -426,7 +426,7 @@ class TenantService:
         )
 
     async def update_usage_metrics(
-        self, tenant_id: int, metrics: Dict[str, Any]
+        self, tenant_id: int, metrics: dict[str, Any]
     ) -> None:
         """更新使用指标"""
         tenant = await self.get_tenant_by_id(tenant_id)
@@ -437,7 +437,7 @@ class TenantService:
 
     # ==================== 租户统计和分析 ====================
 
-    async def get_tenant_statistics(self, tenant_id: int) -> Dict[str, Any]:
+    async def get_tenant_statistics(self, tenant_id: int) -> dict[str, Any]:
         """获取租户统计信息"""
         tenant = await self.get_tenant_by_id(tenant_id)
         if not tenant:
@@ -480,7 +480,7 @@ class TenantService:
 
     # ==================== 私有辅助方法 ====================
 
-    def _get_default_features_for_plan(self, plan: TenantPlan) -> Dict[str, bool]:
+    def _get_default_features_for_plan(self, plan: TenantPlan) -> dict[str, bool]:
         """获取计划对应的默认功能"""
         features = {
             "basic_predictions": True,
@@ -600,7 +600,7 @@ class TenantService:
 
     async def _get_user_roles(
         self, user_id: int, tenant_id: int
-    ) -> List[UserRoleAssignment]:
+    ) -> list[UserRoleAssignment]:
         """获取用户在租户内的角色"""
         result = await self.db.execute(
             select(UserRoleAssignment)
@@ -617,7 +617,7 @@ class TenantService:
 
     async def _get_tenant_role(
         self, tenant_id: int, role_code: str
-    ) -> Optional[TenantRole]:
+    ) -> TenantRole | None:
         """获取租户角色"""
         result = await self.db.execute(
             select(TenantRole).where(
@@ -630,7 +630,7 @@ class TenantService:
         )
         return result.scalar_one_or_none()
 
-    async def _get_role_permissions(self, role_id: int) -> List["RolePermission"]:
+    async def _get_role_permissions(self, role_id: int) -> list["RolePermission"]:
         """获取角色权限"""
         result = await self.db.execute(
             select(RolePermission)
@@ -641,7 +641,7 @@ class TenantService:
 
     async def _get_user_role_assignment(
         self, user_id: int, tenant_id: int, role_id: int
-    ) -> Optional[UserRoleAssignment]:
+    ) -> UserRoleAssignment | None:
         """获取用户角色分配"""
         result = await self.db.execute(
             select(UserRoleAssignment).where(
@@ -654,7 +654,7 @@ class TenantService:
         )
         return result.scalar_one_or_none()
 
-    def _get_resource_limit(self, tenant: Tenant, resource_type: str) -> Optional[int]:
+    def _get_resource_limit(self, tenant: Tenant, resource_type: str) -> int | None:
         """获取资源限制"""
         limits = {
             "users": tenant.max_users,
@@ -670,7 +670,7 @@ class TenantService:
         # 暂时返回模拟数据
         return 0
 
-    async def _get_tenant_user_stats(self, tenant_id: int) -> Dict[str, Any]:
+    async def _get_tenant_user_stats(self, tenant_id: int) -> dict[str, Any]:
         """获取租户用户统计"""
         # 模拟统计数据
         return {
@@ -680,7 +680,7 @@ class TenantService:
             "users_by_role": {"tenant_admin": 1, "analyst": 2, "user": 2},
         }
 
-    async def _get_tenant_prediction_stats(self, tenant_id: int) -> Dict[str, Any]:
+    async def _get_tenant_prediction_stats(self, tenant_id: int) -> dict[str, Any]:
         """获取租户预测统计"""
         # 模拟统计数据
         return {
@@ -691,7 +691,7 @@ class TenantService:
             "average_confidence": 0.75,
         }
 
-    async def _get_tenant_api_stats(self, tenant_id: int) -> Dict[str, Any]:
+    async def _get_tenant_api_stats(self, tenant_id: int) -> dict[str, Any]:
         """获取租户API统计"""
         # 模拟统计数据
         return {

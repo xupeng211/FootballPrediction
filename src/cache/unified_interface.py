@@ -7,15 +7,15 @@ Unified Cache Interface
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
 from abc import ABC, abstractmethod
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
-from .ttl_cache_enhanced.ttl_cache import TTLCache
-from .redis_enhanced import EnhancedRedisManager, RedisConfig
 from .consistency_manager import get_consistency_manager
-from .decorators import cached, cache_invalidate
+from .decorators import cache_invalidate, cached
+from .redis_enhanced import EnhancedRedisManager, RedisConfig
+from .ttl_cache_enhanced.ttl_cache import TTLCache
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +33,8 @@ class UnifiedCacheConfig:
     """统一缓存配置"""
 
     backend: CacheBackend = CacheBackend.MEMORY
-    memory_config: Optional[Dict[str, Any]] = None
-    redis_config: Optional[RedisConfig] = None
+    memory_config: dict[str, Any] | None = None
+    redis_config: RedisConfig | None = None
     use_consistency_manager: bool = True
     enable_decorators: bool = True
     default_ttl: int = 3600
@@ -49,7 +49,7 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """设置缓存值"""
         pass
 
@@ -77,7 +77,7 @@ class CacheInterface(ABC):
 class MemoryCacheAdapter(CacheInterface):
     """内存缓存适配器"""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         default_config = {
             "max_size": 1000,
             "default_ttl": 3600,
@@ -89,7 +89,7 @@ class MemoryCacheAdapter(CacheInterface):
     def get(self, key: str, default: Any = None) -> Any:
         return self._cache.get(key, default)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         try:
             self._cache.set(key, value, ttl)
             return True
@@ -108,7 +108,7 @@ class MemoryCacheAdapter(CacheInterface):
     def size(self) -> int:
         return self._cache.size()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return self._cache.get_stats()
 
 
@@ -129,8 +129,8 @@ class RedisCacheAdapter(CacheInterface):
 
             return json.dumps(value, ensure_ascii=False)
         else:
-            import pickle
             import base64
+            import pickle
 
             return base64.b64encode(pickle.dumps(value)).decode()
 
@@ -154,8 +154,8 @@ class RedisCacheAdapter(CacheInterface):
 
         # 尝试解析为pickle
         try:
-            import pickle
             import base64
+            import pickle
 
             return pickle.loads(base64.b64decode(value.encode()))
         except Exception:
@@ -170,7 +170,7 @@ class RedisCacheAdapter(CacheInterface):
             return default
         return self._deserialize_value(value)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         try:
             serialized = self._serialize_value(value)
             if ttl:
@@ -193,7 +193,7 @@ class RedisCacheAdapter(CacheInterface):
     def size(self) -> int:
         return len(self._manager.keys())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {"redis_info": self._manager.info(), "ping": self._manager.ping()}
 
 
@@ -201,7 +201,7 @@ class MultiLevelCacheAdapter(CacheInterface):
     """多级缓存适配器"""
 
     def __init__(
-        self, memory_config: Dict[str, Any] = None, redis_config: RedisConfig = None
+        self, memory_config: dict[str, Any] = None, redis_config: RedisConfig = None
     ):
         self._l1_cache = MemoryCacheAdapter(memory_config)
         self._l2_cache = RedisCacheAdapter(redis_config, use_mock=True)
@@ -221,7 +221,7 @@ class MultiLevelCacheAdapter(CacheInterface):
 
         return default
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         l1_success = self._l1_cache.set(key, value, ttl)
         l2_success = self._l2_cache.set(key, value, ttl)
         return l1_success and l2_success
@@ -242,7 +242,7 @@ class MultiLevelCacheAdapter(CacheInterface):
         # 返回L1缓存大小（实际缓存的数据量）
         return self._l1_cache.size()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         return {
             "l1_stats": self._l1_cache.get_stats(),
             "l2_stats": self._l2_cache.get_stats(),
@@ -280,7 +280,7 @@ class UnifiedCacheManager:
         """获取缓存值"""
         return self._adapter.get(key, default)
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """设置缓存值"""
         success = self._adapter.set(key, value, ttl)
 
@@ -347,7 +347,7 @@ class UnifiedCacheManager:
         return self._adapter.size()
 
     # 批量操作
-    def get_many(self, keys: List[str]) -> Dict[str, Any]:
+    def get_many(self, keys: list[str]) -> dict[str, Any]:
         """批量获取缓存值"""
         result = {}
         for key in keys:
@@ -356,7 +356,7 @@ class UnifiedCacheManager:
                 result[key] = value
         return result
 
-    def set_many(self, mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+    def set_many(self, mapping: dict[str, Any], ttl: int | None = None) -> bool:
         """批量设置缓存值"""
         success_count = 0
         for key, value in mapping.items():
@@ -364,7 +364,7 @@ class UnifiedCacheManager:
                 success_count += 1
         return success_count == len(mapping)
 
-    def delete_many(self, keys: List[str]) -> int:
+    def delete_many(self, keys: list[str]) -> int:
         """批量删除缓存项"""
         success_count = 0
         for key in keys:
@@ -423,7 +423,7 @@ class UnifiedCacheManager:
 
         return decorator
 
-    def cache_invalidate(self, pattern: str = None, keys: List[str] = None):
+    def cache_invalidate(self, pattern: str = None, keys: list[str] = None):
         """缓存失效装饰器"""
 
         def decorator(func):
@@ -439,7 +439,7 @@ class UnifiedCacheManager:
         return decorator
 
     # 统计和监控
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取缓存统计信息"""
         stats = {
             "backend": self.config.backend.value,
@@ -480,7 +480,7 @@ class UnifiedCacheManager:
 
         return stats
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """健康检查"""
         health = {
             "status": "healthy",
@@ -518,7 +518,7 @@ class UnifiedCacheManager:
 
 
 # 全局实例
-_global_cache_manager: Optional[UnifiedCacheManager] = None
+_global_cache_manager: UnifiedCacheManager | None = None
 
 
 def get_cache_manager(config: UnifiedCacheConfig = None) -> UnifiedCacheManager:
@@ -541,7 +541,7 @@ def cache_get(key: str, default: Any = None) -> Any:
     return get_cache_manager().get(key, default)
 
 
-def cache_set(key: str, value: Any, ttl: Optional[int] = None) -> bool:
+def cache_set(key: str, value: Any, ttl: int | None = None) -> bool:
     """便捷设置缓存"""
     return get_cache_manager().set(key, value, ttl)
 
@@ -561,12 +561,12 @@ def cache_clear() -> None:
     get_cache_manager().clear()
 
 
-def cache_get_many(keys: List[str]) -> Dict[str, Any]:
+def cache_get_many(keys: list[str]) -> dict[str, Any]:
     """便捷批量获取缓存"""
     return get_cache_manager().get_many(keys)
 
 
-def cache_set_many(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+def cache_set_many(mapping: dict[str, Any], ttl: int | None = None) -> bool:
     """便捷批量设置缓存"""
     return get_cache_manager().set_many(mapping, ttl)
 

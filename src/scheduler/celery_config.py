@@ -1,6 +1,7 @@
-import redis
 import os
 from datetime import datetime
+
+import redis
 
 # mypy: ignore-errors
 """

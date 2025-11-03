@@ -6,8 +6,6 @@ Cache Factory
 Provides factory methods for creating different types of caches.
 """
 
-from typing import Optional, Union
-
 from .async_cache import AsyncTTLCache
 from .ttl_cache import TTLCache
 
@@ -26,9 +24,9 @@ class CacheFactory:
     def create_cache(
         cache_type: str = "sync",
         max_size: int = 1000,
-        default_ttl: Optional[float] = None,
+        default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
-    ) -> Union[TTLCache, AsyncTTLCache]:
+    ) -> TTLCache | AsyncTTLCache:
         """
         创建缓存实例
 

@@ -8,7 +8,7 @@ Defines DTOs used in CQRS pattern.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -24,14 +24,14 @@ class PredictionDTO:
     predicted_home: int
     predicted_away: int
     confidence: float
-    strategy_used: Optional[str] = None
-    points_earned: Optional[int] = None
-    accuracy_score: Optional[float] = None
-    notes: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    strategy_used: str | None = None
+    points_earned: int | None = None
+    accuracy_score: float | None = None
+    notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -65,10 +65,10 @@ class UserDTO:
     total_points: int
     prediction_count: int
     success_rate: float
-    created_at: Optional[datetime] = None
-    last_login: Optional[datetime] = None
+    created_at: datetime | None = None
+    last_login: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -93,16 +93,16 @@ class MatchDTO:
     id: int
     home_team: str
     away_team: str
-    home_score: Optional[int]
-    away_score: Optional[int]
+    home_score: int | None
+    away_score: int | None
     match_date: datetime
     status: str
-    competition: Optional[str] = None
-    venue: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    competition: str | None = None
+    venue: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -132,10 +132,10 @@ class PredictionStatsDTO:
     success_rate: float
     total_points: int
     average_confidence: float
-    strategy_breakdown: Dict[str, Dict[str, Any]]
-    recent_performance: List[Dict[str, Any]]
+    strategy_breakdown: dict[str, dict[str, Any]]
+    recent_performance: list[dict[str, Any]]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "user_id": self.user_id,
@@ -158,13 +158,13 @@ class MatchStatsDTO:
 
     match_id: int
     total_predictions: int
-    prediction_distribution: Dict[str, int]
+    prediction_distribution: dict[str, int]
     average_confidence: float
     home_win_percentage: float
     draw_percentage: float
     away_win_percentage: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "match_id": self.match_id,
@@ -185,9 +185,9 @@ class CommandResult:
     """命令执行结果"""
 
     success: bool
-    message: Optional[str] = None
-    data: Optional[Any] = None
-    errors: Optional[List[str]] = None
+    message: str | None = None
+    data: Any | None = None
+    errors: list[str] | None = None
 
     @classmethod
     def success_result(
@@ -198,7 +198,7 @@ class CommandResult:
 
     @classmethod
     def failure_result(
-        cls, errors: List[str], message: str = "操作失败"
+        cls, errors: list[str], message: str = "操作失败"
     ) -> "CommandResult":
         """创建失败结果"""
         return cls(success=False, message=message, errors=errors)

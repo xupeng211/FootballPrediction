@@ -10,7 +10,7 @@ import asyncio
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base import ObservableEvent, ObservableEventType, Subject
 
@@ -28,9 +28,9 @@ class SystemMetricsSubject(Subject):
         # 添加pass语句
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
-        self._metrics: Dict[str, float] = {}
-        self._thresholds: Dict[str, Dict[str, float]] = {}
-        self._last_notification: Dict[str, float] = {}
+        self._metrics: dict[str, float] = {}
+        self._thresholds: dict[str, dict[str, float]] = {}
+        self._last_notification: dict[str, float] = {}
         self._notification_interval = 60  # 秒
 
     def set_metric(self, name: str, value: float) -> None:
@@ -49,8 +49,8 @@ class SystemMetricsSubject(Subject):
     def set_threshold(
         self,
         metric_name: str,
-        warning: Optional[float] = None,
-        critical: Optional[float] = None,
+        warning: float | None = None,
+        critical: float | None = None,
         direction: str = "above",
     ) -> None:
         """设置指标阈值"
@@ -68,7 +68,7 @@ class SystemMetricsSubject(Subject):
         }
 
     async def _check_thresholds(
-        self, metric_name: str, old_value: Optional[float], new_value: float
+        self, metric_name: str, old_value: float | None, new_value: float
     ) -> None:
         """检查指标是否超过阈值"""
         if metric_name not in self._thresholds:
@@ -150,7 +150,7 @@ class SystemMetricsSubject(Subject):
         for name, value in metrics.items():
             self.set_metric(name, value)
 
-    def get_metrics(self) -> Dict[str, float]:
+    def get_metrics(self) -> dict[str, float]:
         """获取所有指标"""
         return dict(self._metrics)
 
@@ -168,18 +168,18 @@ class PredictionMetricsSubject(Subject):
         # 添加pass语句
         """初始化预测指标被观察者"""
         super().__init__("PredictionMetrics")
-        self._prediction_counts: Dict[str, int] = defaultdict(int)
-        self._accuracy_metrics: Dict[str, List[float]] = defaultdict(list)
-        self._response_times: List[float] = []
-        self._strategy_performance: Dict[str, Dict[str, Any]] = defaultdict(dict)
+        self._prediction_counts: dict[str, int] = defaultdict(int)
+        self._accuracy_metrics: dict[str, list[float]] = defaultdict(list)
+        self._response_times: list[float] = []
+        self._strategy_performance: dict[str, dict[str, Any]] = defaultdict(dict)
 
     async def record_prediction(
         self,
         strategy_name: str,
         response_time_ms: float,
         success: bool = True,
-        confidence: Optional[float] = None,
-        actual_result: Optional[Dict[str, Any]] = None,
+        confidence: float | None = None,
+        actual_result: dict[str, Any] | None = None,
     ) -> None:
         """记录预测事件"
 
@@ -227,8 +227,8 @@ class PredictionMetricsSubject(Subject):
         self,
         strategy_name: str,
         success: bool,
-        confidence: Optional[float],
-        actual_result: Optional[Dict[str, Any]],
+        confidence: float | None,
+        actual_result: dict[str, Any] | None,
     ) -> None:
         """更新策略性能统计"""
         perf = self._strategy_performance[strategy_name]
@@ -290,7 +290,7 @@ class PredictionMetricsSubject(Subject):
                 )
                 await self.notify(event)
 
-    def get_prediction_metrics(self) -> Dict[str, Any]:
+    def get_prediction_metrics(self) -> dict[str, Any]:
         """获取预测指标"""
         result = {
             "total_predictions": sum(
@@ -328,17 +328,17 @@ class AlertSubject(Subject):
         # 添加pass语句
         """初始化告警被观察者"""
         super().__init__("AlertManager")
-        self._alert_counts: Dict[str, int] = defaultdict(int)
-        self._alert_levels: Dict[str, List[datetime]] = defaultdict(list)
-        self._suppression_rules: Dict[str, Dict[str, Any]] = {}
+        self._alert_counts: dict[str, int] = defaultdict(int)
+        self._alert_levels: dict[str, list[datetime]] = defaultdict(list)
+        self._suppression_rules: dict[str, dict[str, Any]] = {}
 
     async def trigger_alert(
         self,
         alert_type: str,
         severity: str,
         message: str,
-        source: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        source: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> None:
         """触发告警"
 
@@ -374,7 +374,7 @@ class AlertSubject(Subject):
         await self.notify(event)
 
     async def _is_suppressed(
-        self, alert_type: str, severity: str, source: Optional[str]
+        self, alert_type: str, severity: str, source: str | None
     ) -> bool:
         """检查告警是否被抑制"""
         key = f"{alert_type}:{severity}:{source or 'default'}"
@@ -399,7 +399,7 @@ class AlertSubject(Subject):
         self,
         alert_type: str,
         severity: str,
-        source: Optional[str] = None,
+        source: str | None = None,
         max_alerts: int = 5,
         time_window: int = 300,
     ) -> None:
@@ -418,7 +418,7 @@ class AlertSubject(Subject):
             "time_window": time_window,
         }
 
-    def get_alert_statistics(self) -> Dict[str, Any]:
+    def get_alert_statistics(self) -> dict[str, Any]:
         """获取告警统计"""
         return {
             "alert_counts": dict(self._alert_counts),
@@ -448,8 +448,8 @@ class CacheSubject(Subject):
             "sets": 0,
             "deletes": 0,
         }
-        self._cache_sizes: Dict[str, int] = {}
-        self._hit_rates: Dict[str, float] = {}
+        self._cache_sizes: dict[str, int] = {}
+        self._hit_rates: dict[str, float] = {}
 
     async def record_cache_hit(self, cache_name: str, key: str) -> None:
         """记录缓存命中"""
@@ -482,7 +482,7 @@ class CacheSubject(Subject):
         await self.notify(event)
 
     async def record_cache_set(
-        self, cache_name: str, key: str, ttl: Optional[int] = None
+        self, cache_name: str, key: str, ttl: int | None = None
     ) -> None:
         """记录缓存设置"""
         self._cache_stats["sets"] += 1
@@ -500,7 +500,7 @@ class CacheSubject(Subject):
         if total > 0:
             self._hit_rates[cache_name] = hits / total
 
-    def get_cache_statistics(self) -> Dict[str, Any]:
+    def get_cache_statistics(self) -> dict[str, Any]:
         """获取缓存统计"""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
         hit_rate = (

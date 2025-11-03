@@ -4,7 +4,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class LeagueStatus(Enum):
@@ -26,22 +26,22 @@ class LeagueTable:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.standings: List[Dict[str, Any]] = []
+        self.standings: list[dict[str, Any]] = []
         self.last_updated = datetime.now()
 
-    def update_table(self, match_results: List[Dict[str, Any]]) -> None:
+    def update_table(self, match_results: list[dict[str, Any]]) -> None:
         """更新积分榜"""
         # 简化实现,实际会更复杂
         self.last_updated = datetime.now()
 
-    def get_position(self, team_id: int) -> Optional[int]:
+    def get_position(self, team_id: int) -> int | None:
         """获取球队排名"""
         for i, standing in enumerate(self.standings):
             if standing["team_id"] == team_id:
                 return i + 1
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "standings": self.standings,
@@ -57,7 +57,7 @@ class League:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         name: str = "",
         country: str = "",
         season: str = "",
@@ -113,7 +113,7 @@ class League:
             return 0.0
         return (self.completed_matches / self.total_matches) * 100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -134,7 +134,7 @@ class League:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "League":
+    def from_dict(cls, data: dict[str, Any]) -> "League":
         """从字典创建实例"""
         league = cls(
             id=data.get("id"),

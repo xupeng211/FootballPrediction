@@ -1,10 +1,9 @@
 """CORS配置管理"""
 
 import os
-from typing import List
 
 
-def get_cors_origins() -> List[str]:
+def get_cors_origins() -> list[str]:
     """获取CORS允许的源"""
     env = os.getenv("ENVIRONMENT", "development")
 

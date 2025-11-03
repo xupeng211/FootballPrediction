@@ -3,10 +3,10 @@
 专门负责采集和管理比赛相关数据
 """
 
+import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-import logging
+from typing import Any
 
 from .base_collector import BaseCollector, CollectionResult
 
@@ -17,7 +17,7 @@ class MatchCollector(BaseCollector):
     """比赛数据采集器"""
 
     def __init__(
-        self, api_key: Optional[str] = None, base_url: Optional[str] = None, **kwargs
+        self, api_key: str | None = None, base_url: str | None = None, **kwargs
     ):
         # 从环境变量获取默认值
         api_key = api_key or os.getenv("FOOTBALL_DATA_API_KEY", "")
@@ -42,7 +42,7 @@ class MatchCollector(BaseCollector):
             "AWARDED": "finished",
         }
 
-    async def _get_headers(self) -> Dict[str, str]:
+    async def _get_headers(self) -> dict[str, str]:
         """获取请求头"""
         return {"X-Auth-Token": self.api_key, "Content-Type": "application/json"}
 
@@ -62,10 +62,10 @@ class MatchCollector(BaseCollector):
 
     async def collect_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        status: Optional[str] = None,
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        status: str | None = None,
     ) -> CollectionResult:
         """采集比赛数据"""
         try:
@@ -100,13 +100,13 @@ class MatchCollector(BaseCollector):
                 success=False, error=f"Failed to collect matches: {str(e)}"
             )
 
-    async def collect_teams(self, league_id: Optional[int] = None) -> CollectionResult:
+    async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
         """采集球队数据 - MatchCollector不实现此功能"""
         return CollectionResult(
             success=False, error="MatchCollector does not support team collection"
         )
 
-    async def collect_players(self, team_id: Optional[int] = None) -> CollectionResult:
+    async def collect_players(self, team_id: int | None = None) -> CollectionResult:
         """采集球员数据 - MatchCollector不实现此功能"""
         return CollectionResult(
             success=False, error="MatchCollector does not support player collection"
@@ -119,7 +119,7 @@ class MatchCollector(BaseCollector):
         )
 
     # 兼容性方法 - 保持向后兼容
-    async def fetch_competitions(self) -> List[Dict[str, Any]]:
+    async def fetch_competitions(self) -> list[dict[str, Any]]:
         """获取所有可用的比赛"""
         try:
             result = await self.get("competitions")
@@ -130,7 +130,7 @@ class MatchCollector(BaseCollector):
             logger.error(f"Failed to fetch competitions: {e}")
             return []
 
-    async def fetch_teams(self, competition_id: str) -> List[Dict[str, Any]]:
+    async def fetch_teams(self, competition_id: str) -> list[dict[str, Any]]:
         """获取指定比赛的球队列表"""
         try:
             result = await self.get(f"competitions/{competition_id}/teams")
@@ -143,7 +143,7 @@ class MatchCollector(BaseCollector):
 
     async def fetch_matches(
         self, competition_id: str, **kwargs
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """获取比赛数据"""
         try:
             result = await self.get(
@@ -160,7 +160,7 @@ class MatchCollector(BaseCollector):
 
     async def collect_upcoming_matches(
         self, days_ahead: int = 7
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集未来指定天数内的比赛
 
@@ -220,7 +220,7 @@ class MatchCollector(BaseCollector):
 
         return upcoming_matches
 
-    async def collect_recent_matches(self, days_back: int = 7) -> List[Dict[str, Any]]:
+    async def collect_recent_matches(self, days_back: int = 7) -> list[dict[str, Any]]:
         """
         收集过去指定天数内的比赛结果
 
@@ -280,7 +280,7 @@ class MatchCollector(BaseCollector):
 
         return recent_matches
 
-    def normalize_match_data(self, match: Dict[str, Any]) -> Dict[str, Any]:
+    def normalize_match_data(self, match: dict[str, Any]) -> dict[str, Any]:
         """
         标准化比赛数据格式
 
@@ -362,7 +362,7 @@ class MatchCollector(BaseCollector):
 
     async def collect_normalized_matches(
         self, match_type: str = "all"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集并标准化比赛数据
 

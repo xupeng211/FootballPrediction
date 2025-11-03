@@ -6,7 +6,7 @@ Alert Handlers
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
@@ -19,7 +19,7 @@ class PrometheusMetrics:
     pass  # 添加pass语句
     """Prometheus 指标管理"""
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None) -> None:
+    def __init__(self, registry: CollectorRegistry | None = None) -> None:
         self.registry = registry or CollectorRegistry()
 
         # 定义指标
@@ -50,7 +50,7 @@ class PrometheusMetrics:
             severity=alert.severity.value, type=alert.type.value, source=alert.source
         ).inc()
 
-    def set_active_gauge(self, alerts: List[Alert]) -> None:
+    def set_active_gauge(self, alerts: list[Alert]) -> None:
         """设置活跃告警数量"""
         # 重置所有活跃告警
         self.active_alerts.clear()
@@ -142,7 +142,7 @@ class PrometheusHandler(AlertHandler):
 class WebhookHandler(AlertHandler):
     """Webhook 告警处理器"""
 
-    def __init__(self, url: str, headers: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, url: str, headers: dict[str, str] | None = None) -> None:
         super().__init__(AlertChannel.WEBHOOK)
         self.url = url
         self.headers = headers or {}
@@ -174,7 +174,7 @@ class WebhookHandler(AlertHandler):
 class EmailHandler(AlertHandler):
     """邮件告警处理器"""
 
-    def __init__(self, smtp_config: Dict[str, Any]) -> None:
+    def __init__(self, smtp_config: dict[str, Any]) -> None:
         super().__init__(AlertChannel.EMAIL)
         self.smtp_config = smtp_config
 

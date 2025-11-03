@@ -4,8 +4,8 @@ Team Data Collector for Football-Data.org API
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
 from .base_collector import FootballDataCollector
 
@@ -18,7 +18,7 @@ class TeamCollector(FootballDataCollector):
     def __init__(self):
         super().__init__()
 
-    async def collect_data(self) -> Dict[str, Any]:
+    async def collect_data(self) -> dict[str, Any]:
         """
         收集所有支持的联赛中的球队数据
 
@@ -79,7 +79,7 @@ class TeamCollector(FootballDataCollector):
 
     async def collect_competition_teams(
         self, competition_code: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集特定联赛的球队数据
 
@@ -127,7 +127,7 @@ class TeamCollector(FootballDataCollector):
             logger.error(f"Failed to collect teams for {competition_code}: {e}")
             raise
 
-    def normalize_team_data(self, team: Dict[str, Any]) -> Dict[str, Any]:
+    def normalize_team_data(self, team: dict[str, Any]) -> dict[str, Any]:
         """
         标准化球队数据格式
 
@@ -173,7 +173,7 @@ class TeamCollector(FootballDataCollector):
                 "raw_data": team,
             }
 
-    def _normalize_coach_data(self, coach: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _normalize_coach_data(self, coach: dict[str, Any]) -> dict[str, Any] | None:
         """标准化教练数据"""
         if not coach:
             return None
@@ -193,8 +193,8 @@ class TeamCollector(FootballDataCollector):
             return None
 
     def _normalize_squad_data(
-        self, squad: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, squad: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """标准化阵容数据"""
         normalized_squad = []
 
@@ -217,8 +217,8 @@ class TeamCollector(FootballDataCollector):
         return normalized_squad
 
     def _normalize_competitions_data(
-        self, competitions: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, competitions: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """标准化参赛联赛数据"""
         normalized_competitions = []
 
@@ -238,7 +238,7 @@ class TeamCollector(FootballDataCollector):
 
         return normalized_competitions
 
-    async def collect_team_details(self, team_id: str) -> Optional[Dict[str, Any]]:
+    async def collect_team_details(self, team_id: str) -> dict[str, Any] | None:
         """
         收集特定球队的详细信息
 
@@ -288,7 +288,7 @@ class TeamCollector(FootballDataCollector):
 
     async def collect_team_matches(
         self, team_id: str, limit: int = 20
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         收集特定球队的比赛数据
 
@@ -318,8 +318,8 @@ class TeamCollector(FootballDataCollector):
             return []
 
     def _normalize_match_for_team(
-        self, match: Dict[str, Any], team_id: str
-    ) -> Optional[Dict[str, Any]]:
+        self, match: dict[str, Any], team_id: str
+    ) -> dict[str, Any] | None:
         """为球队视角标准化比赛数据"""
         try:
             home_team = match.get("homeTeam", {})
@@ -379,7 +379,7 @@ class TeamCollector(FootballDataCollector):
             logger.error(f"Error normalizing match data for team {team_id}: {e}")
             return None
 
-    async def search_teams(self, search_term: str) -> List[Dict[str, Any]]:
+    async def search_teams(self, search_term: str) -> list[dict[str, Any]]:
         """
         搜索球队
 

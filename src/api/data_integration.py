@@ -3,19 +3,20 @@
 提供数据收集和管理的API接口
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import Any
 
-from src.database.connection import get_async_session
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.cache.redis_manager import RedisManager, get_redis_manager
+from src.collectors.data_sources import data_source_manager
+from src.collectors.enhanced_fixtures_collector import EnhancedFixturesCollector
 from src.core.logging_system import get_logger
+from src.database.connection import get_async_session
 from src.database.models.match import Match
 from src.database.models.team import Team
-from src.collectors.enhanced_fixtures_collector import EnhancedFixturesCollector
-from src.collectors.data_sources import data_source_manager
 
 from .schemas.data import (
     DataCollectionRequest,
@@ -194,11 +195,11 @@ async def get_data_source_status(
         raise HTTPException(status_code=500, detail=f"获取数据源状态失败: {str(e)}")
 
 
-@router.get("/matches", response_model=List[MatchResponse])
+@router.get("/matches", response_model=list[MatchResponse])
 async def get_matches(
-    league: Optional[str] = None,
-    team: Optional[str] = None,
-    status: Optional[str] = None,
+    league: str | None = None,
+    team: str | None = None,
+    status: str | None = None,
     limit: int = 100,
     offset: int = 0,
     db_session: AsyncSession = Depends(get_async_session),
@@ -245,9 +246,9 @@ async def get_matches(
         raise HTTPException(status_code=500, detail=f"获取比赛列表失败: {str(e)}")
 
 
-@router.get("/teams", response_model=List[TeamResponse])
+@router.get("/teams", response_model=list[TeamResponse])
 async def get_teams(
-    league: Optional[str] = None,
+    league: str | None = None,
     limit: int = 100,
     offset: int = 0,
     db_session: AsyncSession = Depends(get_async_session),
@@ -284,7 +285,7 @@ async def get_teams(
         raise HTTPException(status_code=500, detail=f"获取球队列表失败: {str(e)}")
 
 
-@router.get("/stats", response_model=Dict[str, Any])
+@router.get("/stats", response_model=dict[str, Any])
 async def get_data_stats(
     db_session: AsyncSession = Depends(get_async_session),
     redis_client: RedisManager = Depends(get_redis_manager),

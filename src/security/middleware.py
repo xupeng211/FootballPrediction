@@ -12,7 +12,8 @@ Security Middleware
 import logging
 import os
 import time
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import HTTPException, Request, Response, status
 
@@ -42,7 +43,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.enabled = enabled
         self.headers = self._get_security_headers()
 
-    def _get_security_headers(self) -> Dict[str, str]:
+    def _get_security_headers(self) -> dict[str, str]:
         """获取安全头配置"""
         return {
             "X-Frame-Options": os.getenv("X_FRAME_OPTIONS", "DENY"),
@@ -420,7 +421,7 @@ class SecurityConfig:
 
         return True
 
-    def get_session_config(self) -> Dict[str, Any]:
+    def get_session_config(self) -> dict[str, Any]:
         """获取会话配置"""
         return {
             "max_age": self.session_timeout_minutes * 60,

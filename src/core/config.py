@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Pydantic compatibility logic
 try:
@@ -44,14 +44,14 @@ class Config:
         # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
         self._load_config()
 
     def _load_config(self) -> None:
         """加载配置文件 - 自动处理文件不存在或格式错误的情况"""
         if self.config_file.exists():
             try:
-                with open(self.config_file, "r", encoding="utf-8") as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     self.config = json.load(f)
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 配置文件损坏时记录警告,但不中断程序执行
@@ -133,7 +133,7 @@ class Settings(SettingsClass):
     )
 
     # 外部API配置
-    api_football_key: Optional[str] = (
+    api_football_key: str | None = (
         Field(default=None, description="API-Football密钥") if HAS_PYDANTIC else None
     )
     api_football_url: str = (
@@ -150,7 +150,7 @@ class Settings(SettingsClass):
         if HAS_PYDANTIC
         else True
     )
-    metrics_tables: List[str] = (
+    metrics_tables: list[str] = (
         Field(
             default_factory=lambda: [
                 "matches",
@@ -181,17 +181,17 @@ class Settings(SettingsClass):
     metrics_collection_interval: int = (
         Field(default=30, description="指标收集间隔（秒）") if HAS_PYDANTIC else 30
     )
-    missing_data_defaults_path: Optional[str] = (
+    missing_data_defaults_path: str | None = (
         Field(default=None, description="缺失值默认配置文件路径")
         if HAS_PYDANTIC
         else None
     )
-    missing_data_defaults_json: Optional[str] = (
+    missing_data_defaults_json: str | None = (
         Field(default=None, description="缺失值默认配置JSON字符串")
         if HAS_PYDANTIC
         else None
     )
-    enabled_services: List[str] = (
+    enabled_services: list[str] = (
         Field(
             default_factory=lambda: [
                 "ContentAnalysisService",
@@ -314,7 +314,7 @@ class Settings(SettingsClass):
 
             setattr(self, attr_name, env_value)
 
-    def _parse_list_env(self, value: str) -> List[str]:
+    def _parse_list_env(self, value: str) -> list[str]:
         value = value.strip()
         if not value:
             return []
@@ -344,7 +344,7 @@ def get_settings() -> Settings:
     return Settings()
 
 
-def load_config(config_file: Optional[str] = None) -> Config:
+def load_config(config_file: str | None = None) -> Config:
     """
     加载配置文件
 
@@ -356,10 +356,10 @@ def load_config(config_file: Optional[str] = None) -> Config:
     """
     if config_file and Path(config_file).exists():
         try:
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 config_data = json.load(f)
             return Config(**config_data)
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             logging.warning(f"无法加载配置文件 {config_file}: {e}")
 
     # 返回默认配置

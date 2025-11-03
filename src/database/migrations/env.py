@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from src.database.base import Base  # noqa: E402
 from src.database.config import get_database_config  # noqa: E402
 from src.database.models import Odds  # noqa: F401, E402
+
 # 导入所有模型以确保它们被注册到Base.metadata
 
 # this is the Alembic Config object, which provides

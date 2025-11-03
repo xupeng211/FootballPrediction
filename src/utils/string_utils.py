@@ -13,7 +13,6 @@
 import re
 import unicodedata
 from functools import lru_cache
-from typing import List
 
 
 class StringUtils:
@@ -160,7 +159,7 @@ class StringUtils:
         return ""
 
     @staticmethod
-    def extract_numbers(text: str) -> List[float]:
+    def extract_numbers(text: str) -> list[float]:
         """从文本中提取数字"""
         if not isinstance(text, str):
             return []
@@ -328,12 +327,12 @@ def cached_slug(text: str) -> str:
     return StringUtils.slugify(text)
 
 
-def batch_clean_strings(strings: List[str]) -> List[str]:
+def batch_clean_strings(strings: list[str]) -> list[str]:
     """批量清理字符串"""
     return [StringUtils.clean_string(s) for s in strings]
 
 
-def validate_batch_emails(emails: List[str]) -> dict:
+def validate_batch_emails(emails: list[str]) -> dict:
     """批量验证邮箱"""
     return {email: StringUtils.validate_email(email) for email in emails}
 

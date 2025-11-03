@@ -3,9 +3,10 @@
 External Competition Data Model
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 

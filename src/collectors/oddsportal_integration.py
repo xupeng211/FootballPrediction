@@ -9,13 +9,14 @@ OddsPortal Scraper Integration Module
 """
 
 import asyncio
-import yaml
 import json
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any
 
-from src.collectors.oddsportal_scraper import OddsPortalScraper, OddsPortalMatch
+import yaml
+
 from src.collectors.data_sources import DataSourceAdapter, MatchData, OddsData, TeamData
+from src.collectors.oddsportal_scraper import OddsPortalMatch, OddsPortalScraper
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
@@ -27,7 +28,7 @@ class OddsPortalIntegration:
     pass  # 添加pass语句
     """OddsPortal爬虫集成管理器"""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -45,7 +46,7 @@ class OddsPortalIntegration:
         # 验证配置
         self._validate_config()
 
-    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
         """加载配置文件"""
         if config_path is None:
             config_path = (
@@ -55,7 +56,7 @@ class OddsPortalIntegration:
             )
 
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = yaml.safe_load(f)
             logger.info(f"Loaded OddsPortal configuration from {config_path}")
             return config
@@ -68,7 +69,7 @@ class OddsPortalIntegration:
             logger.error(f"Error parsing configuration file: {e}")
             raise
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """获取默认配置"""
         return {
             "basic": {
@@ -133,7 +134,7 @@ class OddsPortalIntegration:
             await self.scraper.session.close()
             self.logger.info("OddsPortal scraper cleaned up")
 
-    async def scrape_today_matches(self) -> List[MatchData]:
+    async def scrape_today_matches(self) -> list[MatchData]:
         """抓取今日比赛数据"""
         if not self.is_initialized:
             await self.initialize()
@@ -160,7 +161,7 @@ class OddsPortalIntegration:
             self.logger.error(f"Error scraping today matches: {e}")
             return []
 
-    async def scrape_live_matches(self) -> List[MatchData]:
+    async def scrape_live_matches(self) -> list[MatchData]:
         """抓取实时比赛数据"""
         if not self.is_initialized:
             await self.initialize()
@@ -187,7 +188,7 @@ class OddsPortalIntegration:
             self.logger.error(f"Error scraping live matches: {e}")
             return []
 
-    async def scrape_league_matches(self, league_key: str) -> List[MatchData]:
+    async def scrape_league_matches(self, league_key: str) -> list[MatchData]:
         """抓取指定联赛的比赛数据"""
         if not self.is_initialized:
             await self.initialize()
@@ -225,7 +226,7 @@ class OddsPortalIntegration:
             self.logger.error(f"Error scraping league matches for {league_key}: {e}")
             return []
 
-    def _convert_to_match_data(self, match: OddsPortalMatch) -> Optional[MatchData]:
+    def _convert_to_match_data(self, match: OddsPortalMatch) -> MatchData | None:
         """将OddsPortalMatch转换为MatchData"""
         try:
             # 创建比赛数据（MatchData不包含odds字段）
@@ -252,7 +253,7 @@ class OddsPortalIntegration:
             self.logger.error(f"Error converting match data: {e}")
             return None
 
-    async def get_source_info(self) -> Dict[str, Any]:
+    async def get_source_info(self) -> dict[str, Any]:
         """获取数据源信息"""
         return {
             "name": self.config["basic"]["name"],
@@ -283,7 +284,7 @@ class OddsPortalIntegration:
             self.logger.error(f"Connection test failed: {e}")
             return False
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
         try:
             # 测试连接
@@ -318,19 +319,17 @@ class OddsPortalIntegration:
 class OddsPortalAdapter(DataSourceAdapter):
     """OddsPortal适配器,实现DataSourceAdapter接口"""
 
-    def __init__(
-        self, config_path: Optional[str] = None, api_key: Optional[str] = None
-    ):
+    def __init__(self, config_path: str | None = None, api_key: str | None = None):
         super().__init__(api_key)
         self.integration = OddsPortalIntegration(config_path)
         self.logger = get_logger(self.__class__.__name__)
 
     async def get_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> List[MatchData]:
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> list[MatchData]:
         """获取比赛列表"""
         try:
             # OddsPortal使用联赛名称而非ID
@@ -369,7 +368,7 @@ class OddsPortalAdapter(DataSourceAdapter):
             self.logger.error(f"Error fetching matches: {e}")
             return []
 
-    async def get_teams(self, league_id: Optional[int] = None) -> List[TeamData]:
+    async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取球队列表"""
         try:
             # 从比赛数据中提取球队信息
@@ -399,7 +398,7 @@ class OddsPortalAdapter(DataSourceAdapter):
             self.logger.error(f"Error fetching teams: {e}")
             return []
 
-    async def get_odds(self, match_id: int) -> List[OddsData]:
+    async def get_odds(self, match_id: int) -> list[OddsData]:
         """获取赔率数据"""
         try:
             # 获取所有比赛并创建赔率数据
@@ -439,8 +438,8 @@ class OddsPortalAdapter(DataSourceAdapter):
 
     # 保留原有的便利方法
     async def fetch_matches(
-        self, league: Optional[str] = None, limit: Optional[int] = None
-    ) -> List[MatchData]:
+        self, league: str | None = None, limit: int | None = None
+    ) -> list[MatchData]:
         """获取比赛数据（便利方法）"""
         try:
             if league:
@@ -461,13 +460,13 @@ class OddsPortalAdapter(DataSourceAdapter):
         """测试连接"""
         return await self.integration.test_connection()
 
-    async def get_source_info(self) -> Dict[str, Any]:
+    async def get_source_info(self) -> dict[str, Any]:
         """获取数据源信息"""
         return await self.integration.get_source_info()
 
 
 # 全局实例
-_oddsportal_instance: Optional[OddsPortalIntegration] = None
+_oddsportal_instance: OddsPortalIntegration | None = None
 
 
 async def get_oddsportal_integration() -> OddsPortalIntegration:

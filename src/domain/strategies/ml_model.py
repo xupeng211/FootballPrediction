@@ -9,7 +9,7 @@ Strategy implementation using machine learning models for prediction.
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -43,7 +43,7 @@ class MLModelStrategy(PredictionStrategy):
         self._model_loaded_at = None
         self.logger = logging.getLogger(__name__)
 
-    async def initialize(self, config: Dict[str, Any]) -> None:
+    async def initialize(self, config: dict[str, Any]) -> None:
         """初始化ML模型策略"
 
         Args:
@@ -80,7 +80,7 @@ class MLModelStrategy(PredictionStrategy):
         self._is_initialized = True
         self.logger.info(f"ML模型策略 '{self.name}' 初始化成功")
 
-    async def _load_model(self, config: Dict[str, Any]) -> None:
+    async def _load_model(self, config: dict[str, Any]) -> None:
         """加载ML模型"""
         if not self._mlflow_client:
             self.logger.warning("MLflow client not available, using mock model")
@@ -114,7 +114,7 @@ class MLModelStrategy(PredictionStrategy):
             self._model_version = "mock_v1.0"
             self._model_loaded_at = datetime.utcnow()
 
-    async def _initialize_feature_processor(self, config: Dict[str, Any]) -> None:
+    async def _initialize_feature_processor(self, config: dict[str, Any]) -> None:
         """初始化特征处理器"""
         # 这里应该根据实际的特征处理器来初始化
         # 暂时使用简单的配置
@@ -180,8 +180,8 @@ class MLModelStrategy(PredictionStrategy):
         return output
 
     async def batch_predict(
-        self, inputs: List[PredictionInput]
-    ) -> List[PredictionOutput]:
+        self, inputs: list[PredictionInput]
+    ) -> list[PredictionOutput]:
         """批量预测"""
         if not self._is_initialized:
             raise RuntimeError("策略未初始化")
@@ -234,7 +234,7 @@ class MLModelStrategy(PredictionStrategy):
         # 格式化输出
         outputs = []
         for i, (input_data, pred_result) in enumerate(
-            zip(processed_inputs, prediction_results)
+            zip(processed_inputs, prediction_results, strict=False)
         ):
             pred_proba = prediction_probas[i] if prediction_probas is not None else None
             output = await self._format_output(pred_result, pred_proba, input_data)
@@ -255,7 +255,7 @@ class MLModelStrategy(PredictionStrategy):
             base_away = max(0, base_home - 1)
         return np.array([base_home, base_away])
 
-    def _mock_probabilities(self, feature_vector: np.ndarray) -> List[float]:
+    def _mock_probabilities(self, feature_vector: np.ndarray) -> list[float]:
         """根据特征向量生成稳定的概率分布"""
         advantage = float(np.sum(feature_vector[: len(feature_vector) // 2])) - float(
             np.sum(feature_vector[len(feature_vector) // 2 :])
@@ -309,7 +309,7 @@ class MLModelStrategy(PredictionStrategy):
     async def _format_output(
         self,
         prediction_result: Any,
-        prediction_proba: Optional[Any],
+        prediction_proba: Any | None,
         input_data: PredictionInput,
     ) -> PredictionOutput:
         """格式化预测输出"""
@@ -364,7 +364,7 @@ class MLModelStrategy(PredictionStrategy):
 
     async def _convert_prediction_to_score(
         self, prediction_value: float, input_data: PredictionInput
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """将预测值转换为具体比分"""
         # 这里需要根据实际模型的输出进行调整
         # 简单示例:假设预测值是主场进球数
@@ -380,7 +380,7 @@ class MLModelStrategy(PredictionStrategy):
         return home_goals, away_goals
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: list[tuple[Prediction, dict[str, Any]]]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:

@@ -9,7 +9,7 @@ Define core interfaces and abstract classes for the adapter pattern.
 import asyncio
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class AdapterStatus(Enum):
@@ -76,20 +76,20 @@ class CompositeAdapter(Adapter):
     # TODO: 方法 def get_adapter 过长(23行)，建议拆分
     # TODO: 方法 def get_adapter 过长(23行),建议拆分
     # TODO: 方法 def get_adapter 过长(23行),建议拆分
-    def get_source_schema(self) -> Dict[str, Any]:
+    def get_source_schema(self) -> dict[str, Any]:
         """获取源数据结构"""
         return {}
 
     @abstractmethod
-    def get_target_schema(self) -> Dict[str, Any]:
+    def get_target_schema(self) -> dict[str, Any]:
         """获取目标数据结构"""
         pass
 
     def __init__(self, name: str = "CompositeAdapter"):
         """初始化组合适配器"""
         self.name = name
-        self.adapters: List[Adapter] = []
-        self.adapter_registry: Dict[str, Adapter] = {}
+        self.adapters: list[Adapter] = []
+        self.adapter_registry: dict[str, Adapter] = {}
         self.metrics = {
             "total_requests": 0,
             "successful_requests": 0,
@@ -100,7 +100,7 @@ class CompositeAdapter(Adapter):
         self.status = AdapterStatus.ACTIVE
         self.last_error = None
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取适配器指标"""
         return {
             "name": self.name,
@@ -133,7 +133,7 @@ class CompositeAdapter(Adapter):
     # TODO: 方法 def get_adapter 过长(25行)，建议拆分
     # TODO: 方法 def get_adapter 过长(25行),建议拆分
     # TODO: 方法 def get_adapter 过长(23行),建议拆分
-    def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
+    def get_adapter(self, adapter_name: str) -> Adapter | None:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
 

@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional
 
 from .logger import Logger as _BaseLogger
 
@@ -40,7 +39,7 @@ class StructuredLogger:
     pass  # 添加pass语句
     """结构化日志记录器"""
 
-    def __init__(self, name: str, category: Optional[str] = None):
+    def __init__(self, name: str, category: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -135,7 +134,7 @@ def log_audit(action: str, user: str, resource: str, **kwargs):
     logger.info(f"Audit: {action} by {user} on {resource}", **kwargs)
 
 
-def get_logger(name: str, level: Optional[str] = "INFO") -> logging.Logger:
+def get_logger(name: str, level: str | None = "INFO") -> logging.Logger:
     """获取指定名称的日志器。"
 
     Args:

@@ -10,10 +10,10 @@ Performance Monitoring Middleware
 - 端点性能分析
 """
 
-import time
-from typing import Callable, Dict, List, Optional
-
 import secrets
+import time
+from collections.abc import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -52,10 +52,10 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         self.api_profiler = APIEndpointProfiler(self.profiler)
 
         # 并发请求跟踪
-        self.active_requests: Dict[str, float] = {}
+        self.active_requests: dict[str, float] = {}
         self.max_concurrent_requests = 0
         self.total_requests = 0
-        self.request_times: List[float] = []
+        self.request_times: list[float] = []
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """处理请求并收集性能指标"""
@@ -168,7 +168,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             if self.track_concurrency and request_id in self.active_requests:
                 del self.active_requests[request_id]
 
-    def get_performance_stats(self) -> Dict:
+    def get_performance_stats(self) -> dict:
         """获取性能统计信息"""
         stats = {
             "total_requests": self.total_requests,
@@ -194,7 +194,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
 
         return stats
 
-    def _percentile(self, data: List[float], percentile: float) -> float:
+    def _percentile(self, data: list[float], percentile: float) -> float:
         """计算百分位数"""
         if not data:
             return 0
@@ -223,8 +223,8 @@ class DatabasePerformanceMiddleware:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.query_stats: Dict[str, Dict] = {}
-        self.slow_queries: List[Dict] = []
+        self.query_stats: dict[str, dict] = {}
+        self.slow_queries: list[dict] = []
         self.total_queries = 0
 
     async def track_query(
@@ -232,7 +232,7 @@ class DatabasePerformanceMiddleware:
         query: str,
         duration: float,
         rows_affected: int = 0,
-        error: Optional[str] = None,
+        error: str | None = None,
     ):
         """跟踪数据库查询性能"""
         self.total_queries += 1
@@ -271,7 +271,7 @@ class DatabasePerformanceMiddleware:
             if len(self.slow_queries) > 100:
                 self.slow_queries = self.slow_queries[-100:]
 
-    def get_query_stats(self) -> Dict:
+    def get_query_stats(self) -> dict:
         """获取查询统计信息"""
         stats = {"total_queries": self.total_queries, "query_types": {}}
 
@@ -346,7 +346,7 @@ class CachePerformanceMiddleware:
         """记录缓存删除"""
         self.cache_stats["deletes"] += 1
 
-    def get_cache_stats(self) -> Dict:
+    def get_cache_stats(self) -> dict:
         """获取缓存统计信息"""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
         hit_rate = (
@@ -385,9 +385,9 @@ class BackgroundTaskPerformanceMonitor:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self.task_stats: Dict[str, Dict] = {}
-        self.active_tasks: Dict[str, float] = {}
-        self.failed_tasks: List[Dict] = []
+        self.task_stats: dict[str, dict] = {}
+        self.active_tasks: dict[str, float] = {}
+        self.failed_tasks: list[dict] = []
 
     def start_task(self, task_id: str, task_name: str):
         """函数文档字符串"""
@@ -396,7 +396,7 @@ class BackgroundTaskPerformanceMonitor:
         """开始任务跟踪"""
         self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}
 
-    def end_task(self, task_id: str, success: bool = True, error: Optional[str] = None):
+    def end_task(self, task_id: str, success: bool = True, error: str | None = None):
         """函数文档字符串"""
         pass
         # 添加pass语句
@@ -443,7 +443,7 @@ class BackgroundTaskPerformanceMonitor:
 
         del self.active_tasks[task_id]
 
-    def get_task_stats(self) -> Dict:
+    def get_task_stats(self) -> dict:
         """获取任务统计信息"""
         stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
 

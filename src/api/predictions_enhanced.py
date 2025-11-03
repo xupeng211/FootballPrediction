@@ -12,20 +12,19 @@ SRS Compliant Enhanced Prediction API
 - Token校验与请求频率限制
 """
 
-import time
 import asyncio
-from typing import Dict, List, Optional, Union
+import time
 from dataclasses import dataclass
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import get_async_session
 from src.cache.redis_manager import get_redis_manager
 from src.core.logging_system import get_logger
+from src.database.connection import get_async_session
 from src.ml.advanced_model_trainer import AdvancedModelTrainer
 from src.ml.automl_pipeline import AutoMLPipeline
 
@@ -68,7 +67,7 @@ class MatchInfo(BaseModel):
     away_team: str = Field(..., description="客队名称", max_length=100)
     league: str = Field(..., description="联赛名称", max_length=100)
     match_date: datetime = Field(..., description="比赛时间")
-    venue: Optional[str] = Field(None, description="比赛场地", max_length=200)
+    venue: str | None = Field(None, description="比赛场地", max_length=200)
 
 
 class PredictionRequest(BaseModel):
@@ -85,13 +84,13 @@ class PredictionResponse(BaseModel):
     success: bool = Field(..., description="预测是否成功")
     match_id: int = Field(..., description="比赛ID")
     prediction: PredictionResult = Field(..., description="预测结果")
-    probabilities: Dict[str, float] = Field(..., description="胜平负概率")
-    confidence: Optional[float] = Field(None, description="置信度")
-    feature_analysis: Optional[Dict[str, float]] = Field(None, description="特征分析")
-    model_info: Dict[str, str] = Field(..., description="模型信息")
+    probabilities: dict[str, float] = Field(..., description="胜平负概率")
+    confidence: float | None = Field(None, description="置信度")
+    feature_analysis: dict[str, float] | None = Field(None, description="特征分析")
+    model_info: dict[str, str] = Field(..., description="模型信息")
     processing_time_ms: float = Field(..., description="处理时间(毫秒)")
     timestamp: datetime = Field(default_factory=datetime.now, description="预测时间")
-    srs_compliance: Dict[str, Union[str, float, bool]] = Field(
+    srs_compliance: dict[str, str | float | bool] = Field(
         ..., description="SRS合规性信息"
     )
 
@@ -99,7 +98,7 @@ class PredictionResponse(BaseModel):
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
 
-    matches: List[MatchInfo] = Field(
+    matches: list[MatchInfo] = Field(
         ..., description="比赛列表", min_items=1, max_items=1000
     )
     include_confidence: bool = Field(True, description="是否包含置信度")
@@ -113,10 +112,10 @@ class BatchPredictionResponse(BaseModel):
     total_matches: int = Field(..., description="总比赛数")
     successful_predictions: int = Field(..., description="成功预测数")
     failed_predictions: int = Field(..., description="失败预测数")
-    predictions: List[PredictionResponse] = Field(..., description="预测结果列表")
+    predictions: list[PredictionResponse] = Field(..., description="预测结果列表")
     batch_processing_time_ms: float = Field(..., description="批量处理时间")
     average_response_time_ms: float = Field(..., description="平均响应时间")
-    srs_compliance: Dict[str, Union[str, float, bool]] = Field(
+    srs_compliance: dict[str, str | float | bool] = Field(
         ..., description="SRS合规性信息"
     )
 
@@ -186,7 +185,7 @@ class EnhancedPredictionService:
             logger.error(f"频率限制检查失败: {e}")
             return True  # 如果redis出错,不限制请求
 
-    async def generate_prediction(self, match_info: MatchInfo) -> Dict:
+    async def generate_prediction(self, match_info: MatchInfo) -> dict:
         """生成单个预测"""
         start_time = time.time()
 
@@ -223,7 +222,7 @@ class EnhancedPredictionService:
                 detail=f"Prediction failed: {str(e)}",
             )
 
-    async def _extract_features(self, match_info: MatchInfo) -> Dict:
+    async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
         # 模拟特征提取
         import numpy as np
@@ -237,7 +236,7 @@ class EnhancedPredictionService:
             "league_importance": 0.8,
         }
 
-    async def _predict_with_model(self, features: Dict) -> Dict:
+    async def _predict_with_model(self, features: dict) -> dict:
         """使用模型进行预测"""
         # 模拟预测逻辑
         import numpy as np
@@ -377,7 +376,7 @@ async def predict_batch(
     # 并发预测处理
     semaphore = asyncio.Semaphore(request.max_concurrent)
 
-    async def predict_single(match_info: MatchInfo) -> Optional[PredictionResponse]:
+    async def predict_single(match_info: MatchInfo) -> PredictionResponse | None:
         async with semaphore:
             try:
                 prediction_data = await prediction_service.generate_prediction(

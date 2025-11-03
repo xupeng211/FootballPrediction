@@ -8,10 +8,11 @@ ServiceLifecycleManager
 import asyncio
 import logging
 import threading
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +39,12 @@ class ServiceInfo:
     name: str
     service: Any
     state: ServiceState
-    dependencies: List[str]
-    dependents: List[str]
-    health_check: Optional[Callable] = None
+    dependencies: list[str]
+    dependents: list[str]
+    health_check: Callable | None = None
     startup_timeout: float = 30.0
     shutdown_timeout: float = 10.0
-    last_health_check: Optional[datetime] = None
+    last_health_check: datetime | None = None
 
 
 class ServiceLifecycleError(Exception):
@@ -62,18 +63,18 @@ class ServiceLifecycleManager:
         """函数文档字符串"""
         pass
         # 添加pass语句
-        self._services: Dict[str, ServiceInfo] = {}
+        self._services: dict[str, ServiceInfo] = {}
         self._lock = threading.RLock()
         self._shutdown_event = threading.Event()
-        self._monitoring_task: Optional[asyncio.Task] = None
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._monitoring_task: asyncio.Task | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     def register_service(
         self,
         name: str,
         service: Any,
-        dependencies: Optional[List[str]] = None,
-        health_check: Optional[Callable] = None,
+        dependencies: list[str] | None = None,
+        health_check: Callable | None = None,
         startup_timeout: float = 30.0,
         shutdown_timeout: float = 10.0,
     ) -> None:
@@ -214,7 +215,7 @@ class ServiceLifecycleManager:
             await asyncio.wait_for(
                 service_info.service.start(), timeout=service_info.startup_timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise ServiceLifecycleError(f"服务启动超时: {name}")
 
     async def _stop_service_async(self, name: str) -> None:
@@ -224,10 +225,10 @@ class ServiceLifecycleManager:
             await asyncio.wait_for(
                 service_info.service.stop(), timeout=service_info.shutdown_timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"服务停止超时: {name}")
 
-    async def health_check(self) -> Dict[str, bool]:
+    async def health_check(self) -> dict[str, bool]:
         """健康检查"""
         health_results = {}
 
@@ -260,12 +261,12 @@ class ServiceLifecycleManager:
 
         return health_results
 
-    def get_service_status(self, name: str) -> Optional[ServiceInfo]:
+    def get_service_status(self, name: str) -> ServiceInfo | None:
         """获取服务状态"""
         with self._lock:
             return self._services.get(name)
 
-    def get_all_services(self) -> Dict[str, ServiceInfo]:
+    def get_all_services(self) -> dict[str, ServiceInfo]:
         """获取所有服务"""
         with self._lock:
             return self._services.copy()
@@ -348,7 +349,7 @@ class ServiceLifecycleManager:
 
 
 # 全局服务生命周期管理器实例
-_lifecycle_manager: Optional[ServiceLifecycleManager] = None
+_lifecycle_manager: ServiceLifecycleManager | None = None
 
 
 def get_lifecycle_manager() -> ServiceLifecycleManager:

@@ -16,7 +16,7 @@ Provides FastAPI dependency injection functions, including:
 """
 
 import os
-from typing import Dict, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
@@ -29,7 +29,7 @@ except ImportError:
     class JWTError(Exception):
         pass
 
-        def jwt(*args, **kwargs):
+        def jwt(*args, **kwargs):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
             """JWT函数占位符"""
             raise ImportError("Please install python-jose: pip install python-jose")
 
@@ -51,7 +51,7 @@ security = HTTPBearer()
 
 
 # 验证密钥强度
-def validate_secret_key():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def validate_secret_key():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """验证JWT密钥强度"""
     if SECRET_KEY in ["your-secret-key-here", "your-jwt-secret-key-change-this"]:
         logger.warning("⚠️ 使用默认JWT密钥,请立即更改！")
@@ -65,7 +65,7 @@ validate_secret_key()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> Dict:
+) -> dict:
     """
     获取当前用户
 
@@ -100,7 +100,7 @@ async def get_current_user(
         raise credentials_exception
 
 
-async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict:
+async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
     """
     获取管理员用户
 
@@ -140,7 +140,7 @@ async def get_redis_manager():
 
 
 async def verify_prediction_permission(
-    match_id: int, current_user: Dict = Depends(get_current_user)
+    match_id: int, current_user: dict = Depends(get_current_user)
 ):
     """
     验证预测权限
@@ -157,7 +157,7 @@ async def verify_prediction_permission(
     return True
 
 
-async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
+async def rate_limit_check(current_user: dict = Depends(get_current_user)):
     """
     速率限制检查
 

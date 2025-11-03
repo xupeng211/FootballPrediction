@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from requests.exceptions import HTTPError, RequestException
@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
 # 全局特征存储实例（惰性初始化,避免导入时报错）
-feature_store: Optional[FootballFeatureStore] = None
+feature_store: FootballFeatureStore | None = None
 
 
-def get_feature_store() -> Optional[FootballFeatureStore]:
+def get_feature_store() -> FootballFeatureStore | None:
     """获取（或初始化）特征存储实例."""
     global feature_store
     if feature_store is not None:
@@ -105,7 +105,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         )  # TODO: 将魔法数字 500 提取为常量
 
 
-async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any], str]:
+async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any], str]:
     """获取特征数据（支持优雅降级）"""
     store = get_feature_store()
     if store is None:
@@ -139,10 +139,10 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
 def build_response_data(
     match: Match,
-    features: Dict[str, Any],
+    features: dict[str, Any],
     features_error: str,
     include_raw: bool,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """构造响应数据"""
     response_data = {
         "match_id": match.id,
@@ -172,7 +172,7 @@ def build_response_data(
 
 
 @router.get("/{match_id}")
-async def get_match_features_improved(match_id: int) -> Dict[str, Any]:
+async def get_match_features_improved(match_id: int) -> dict[str, Any]:
     """
     改进版本:获取比赛特征
 
@@ -205,7 +205,7 @@ async def get_match_features_improved(match_id: int) -> Dict[str, Any]:
 
 
 @router.get("/health", summary="特征服务健康检查")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """特征服务健康检查"""
     return {
         "service": "特征获取服务",

@@ -1,8 +1,4 @@
-from typing import Optional
 from typing import Any
-from typing import Tuple
-from typing import List
-from typing import Dict
 
 #!/usr/bin/env python3
 """
@@ -22,22 +18,23 @@ Issue: #121 EV计算算法参数调优
 
 import logging
 import math
-import numpy as np
-from enum import Enum
 import sys
+from enum import Enum
 from pathlib import Path
+
+import numpy as np
 
 # 添加项目根目录到Python路径
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
     from src.services.betting.ev_calculator import (
-        BetType,
-        RiskLevel,
         BettingOdds,
-        PredictionProbabilities,
-        EVCalculation,
         BettingStrategy,
+        BetType,
+        EVCalculation,
+        PredictionProbabilities,
+        RiskLevel,
     )
 except ImportError as e:
     print(f"基础EV计算器导入错误: {e}")
@@ -66,14 +63,14 @@ except ImportError as e:
         home_win: float
         draw: float
         away_win: float
-        over_under: Optional[float] = None
-        asian_handicap: Optional[float] = None
+        over_under: float | None = None
+        asian_handicap: float | None = None
         home_win: float
         draw: float
         away_win: float
-        over_2_5: Optional[float] = None
-        under_2_5: Optional[float] = None
-        btts_yes: Optional[float] = None
+        over_2_5: float | None = None
+        under_2_5: float | None = None
+        btts_yes: float | None = None
         source: str = "unknown"
 
     @dataclass
@@ -83,11 +80,11 @@ except ImportError as e:
         home_win: float
         draw: float
         away_win: float
-        over_2_5: Optional[float] = None
-        btts_yes: Optional[float] = None
-        over_2_5: Optional[float] = None
-        under_2_5: Optional[float] = None
-        btts_yes: Optional[float] = None
+        over_2_5: float | None = None
+        btts_yes: float | None = None
+        over_2_5: float | None = None
+        under_2_5: float | None = None
+        btts_yes: float | None = None
         confidence: float = 1.0
 
     @dataclass
@@ -134,8 +131,8 @@ class KellyOptimizationResult:
     optimal_fraction: float
     expected_growth: float
     risk_of_ruin: float
-    confidence_interval: Tuple[float, float]
-    sensitivity_analysis: Dict[str, float]
+    confidence_interval: tuple[float, float]
+    sensitivity_analysis: dict[str, float]
     recommended_adjustment: str
 
 
@@ -153,7 +150,7 @@ class EnhancedValueRating:
     market_efficiency_score: float
     risk_adjusted_score: float
     historical_performance_score: float
-    rating_breakdown: Dict[str, float]
+    rating_breakdown: dict[str, float]
 
 
 class EnhancedKellyCalculator:
@@ -180,7 +177,7 @@ class EnhancedKellyCalculator:
         decimal_odds: float,
         confidence: float = 1.0,
         bankroll: float = 1000.0,
-        historical_performance: Optional[Dict[str, float]] = None,
+        historical_performance: dict[str, float] | None = None,
     ) -> KellyOptimizationResult:
         """
         计算优化的分数Kelly准则
@@ -248,7 +245,7 @@ class EnhancedKellyCalculator:
         probability: float,
         net_odds: float,
         confidence: float,
-        historical_performance: Optional[Dict[str, float]],
+        historical_performance: dict[str, float] | None,
     ) -> float:
         """应用Kelly准则优化"""
 
@@ -291,7 +288,7 @@ class EnhancedKellyCalculator:
         penalty = min(volatility * 0.1, 0.5)
         return penalty
 
-    def _calculate_performance_factor(self, historical: Dict[str, float]) -> float:
+    def _calculate_performance_factor(self, historical: dict[str, float]) -> float:
         """基于历史表现计算调整因子"""
         if not historical:
             return 1.0
@@ -319,7 +316,9 @@ class EnhancedKellyCalculator:
             factors.append(factor)
 
         # 加权平均
-        performance_factor = sum(f * w for f, w in zip(factors, weights.values()))
+        performance_factor = sum(
+            f * w for f, w in zip(factors, weights.values(), strict=False)
+        )
         return max(0.5, min(performance_factor, 1.5))
 
     def _calculate_expected_growth(
@@ -372,7 +371,7 @@ class EnhancedKellyCalculator:
         probability: float,
         net_odds: float,
         confidence: float,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """计算Kelly分数的置信区间"""
         if kelly_fraction <= 0:
             return (0.0, 0.0)
@@ -387,7 +386,7 @@ class EnhancedKellyCalculator:
 
     def _perform_sensitivity_analysis(
         self, kelly_fraction: float, probability: float, net_odds: float
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """执行敏感性分析"""
         sensitivity = {}
 
@@ -468,8 +467,8 @@ class EnhancedValueRatingCalculator:
         probability: float,
         odds: float,
         confidence: float,
-        market_data: Optional[Dict[str, Any]] = None,
-        historical_data: Optional[Dict[str, Any]] = None,
+        market_data: dict[str, Any] | None = None,
+        historical_data: dict[str, Any] | None = None,
     ) -> EnhancedValueRating:
         """
         计算增强价值评级
@@ -582,7 +581,7 @@ class EnhancedValueRatingCalculator:
             return max(0.0, 2.0 - odds_deviation)
 
     def _calculate_market_efficiency_score(
-        self, probability: float, odds: float, market_data: Optional[Dict[str, Any]]
+        self, probability: float, odds: float, market_data: dict[str, Any] | None
     ) -> float:
         """计算市场效率分数 (0-10)"""
         if not market_data:
@@ -667,7 +666,7 @@ class EnhancedValueRatingCalculator:
         return max(0.0, min(risk_adjusted_score, 10.0))
 
     def _calculate_historical_performance_score(
-        self, historical_data: Optional[Dict[str, Any]]
+        self, historical_data: dict[str, Any] | None
     ) -> float:
         """计算历史表现分数 (0-10)"""
         if not historical_data:
@@ -725,7 +724,7 @@ class EnhancedEVCalculator:
         # 优化后的策略配置
         self.optimized_strategies = self._create_optimized_strategies()
 
-    def _create_optimized_strategies(self) -> Dict[str, BettingStrategy]:
+    def _create_optimized_strategies(self) -> dict[str, BettingStrategy]:
         """创建优化后的策略"""
         return {
             "ultra_conservative": BettingStrategy(
@@ -787,8 +786,8 @@ class EnhancedEVCalculator:
         odds: float,
         confidence: float = 1.0,
         strategy_name: str = "srs_premium",
-        market_data: Optional[Dict[str, Any]] = None,
-        historical_data: Optional[Dict[str, Any]] = None,
+        market_data: dict[str, Any] | None = None,
+        historical_data: dict[str, Any] | None = None,
     ) -> EVCalculation:
         """
         计算增强EV
@@ -890,9 +889,9 @@ class EnhancedEVCalculator:
     async def backtest_strategy(
         self,
         strategy_name: str,
-        historical_bets: List[Dict[str, Any]],
+        historical_bets: list[dict[str, Any]],
         initial_bankroll: float = 1000.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         回测策略效果
         """

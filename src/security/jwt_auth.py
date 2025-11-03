@@ -5,15 +5,17 @@ JWT Authentication Manager Module
 提供完整的JWT token管理、用户认证和授权功能
 """
 
+import logging
 import os
 import secrets
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any
+
 import jwt
 from passlib.context import CryptContext
+
 import redis.asyncio as redis
-from dataclasses import dataclass
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +51,11 @@ class JWTAuthManager:
 
     def __init__(
         self,
-        secret_key: Optional[str] = None,
+        secret_key: str | None = None,
         algorithm: str = "HS256",
         access_token_expire_minutes: int = 30,
         refresh_token_expire_days: int = 7,
-        redis_url: Optional[str] = None,
+        redis_url: str | None = None,
     ):
         """
         初始化JWT认证管理器
@@ -76,7 +78,7 @@ class JWTAuthManager:
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
         # Redis连接（用于token黑名单）
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: redis.Redis | None = None
         if redis_url:
             try:
                 self.redis_client = redis.from_url(redis_url, decode_responses=True)
@@ -88,7 +90,7 @@ class JWTAuthManager:
         return secrets.token_urlsafe(64)
 
     def create_access_token(
-        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
         """
         创建访问令牌
@@ -122,7 +124,7 @@ class JWTAuthManager:
         return encoded_jwt
 
     def create_refresh_token(
-        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
         """
         创建刷新令牌
@@ -225,7 +227,7 @@ class JWTAuthManager:
         except Exception as e:
             logger.error(f"将token加入黑名单失败: {e}")
 
-    async def _is_token_blacklisted(self, jti: Optional[str]) -> bool:
+    async def _is_token_blacklisted(self, jti: str | None) -> bool:
         """
         检查token是否在黑名单中
 
@@ -373,7 +375,7 @@ class JWTAuthManager:
 
 
 # 全局JWT认证管理器实例
-_jwt_auth_manager: Optional[JWTAuthManager] = None
+_jwt_auth_manager: JWTAuthManager | None = None
 
 
 def get_jwt_auth_manager() -> JWTAuthManager:
@@ -385,11 +387,11 @@ def get_jwt_auth_manager() -> JWTAuthManager:
 
 
 def init_jwt_auth_manager(
-    secret_key: Optional[str] = None,
+    secret_key: str | None = None,
     algorithm: str = "HS256",
     access_token_expire_minutes: int = 30,
     refresh_token_expire_days: int = 7,
-    redis_url: Optional[str] = None,
+    redis_url: str | None = None,
 ) -> JWTAuthManager:
     """
     初始化JWT认证管理器

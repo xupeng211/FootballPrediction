@@ -8,12 +8,13 @@ Adapter API Router
 Provides API endpoints for adapter management, football data retrieval, and demo features.
 """
 
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
 import logging
-from fastapi import APIRouter, Query
+from typing import Any
 
-from src.adapters import AdapterRegistry, AdapterFactory
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
+
+from src.adapters import AdapterFactory, AdapterRegistry
 
 router = APIRouter(prefix="/adapters", tags=["adapters"])
 logger = logging.getLogger(__name__)
@@ -52,9 +53,9 @@ class RegistryStatusResponse(BaseModel):
     active_adapters: int = 0
     inactive_adapters: int = 0
     total_groups: int = 0
-    last_health_check: Optional[datetime] = None
-    adapters: Dict[str, Any] = {}
-    groups: Dict[str, Any] = {}
+    last_health_check: datetime | None = None
+    adapters: dict[str, Any] = {}
+    groups: dict[str, Any] = {}
 
 
 class ConfigLoadRequest(BaseModel):
@@ -62,13 +63,13 @@ class ConfigLoadRequest(BaseModel):
 
     name: str
     adapter_type: str
-    config: Dict[str, Any] = {}
+    config: dict[str, Any] = {}
 
 
 class ConfigResponse(BaseModel):
     """配置响应"""
 
-    configs: List[Dict[str, Any]] = []
+    configs: list[dict[str, Any]] = []
 
 
 class FootballMatch(BaseModel):
@@ -80,7 +81,7 @@ class FootballMatch(BaseModel):
     league: str
     date: str
     status: str
-    score: Optional[str] = None
+    score: str | None = None
 
 
 class FootballTeam(BaseModel):
@@ -90,7 +91,7 @@ class FootballTeam(BaseModel):
     name: str
     league: str
     country: str
-    founded: Optional[int] = None
+    founded: int | None = None
 
 
 class FootballPlayer(BaseModel):
@@ -107,16 +108,16 @@ class DemoComparisonResponse(BaseModel):
     """演示比较响应"""
 
     match_id: int
-    adapters: List[Dict[str, Any]]
-    comparison_data: Dict[str, Any]
+    adapters: list[dict[str, Any]]
+    comparison_data: dict[str, Any]
 
 
 class DemoTransformationResponse(BaseModel):
     """演示转换响应"""
 
-    input_data: Dict[str, Any]
-    transformed_data: Dict[str, Any]
-    transformation_steps: List[str]
+    input_data: dict[str, Any]
+    transformed_data: dict[str, Any]
+    transformation_steps: list[str]
 
 
 # 适配器服务根路径
@@ -414,11 +415,11 @@ async def load_adapter_config(config_data: ConfigLoadRequest):
 # Football data endpoints
 @router.get("/football/matches")
 async def get_football_matches(
-    league_id: Optional[int] = Query(None, description="联赛ID"),
-    team_id: Optional[int] = Query(None, description="球队ID"),
-    date_from: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
-    date_to: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
-    live: Optional[bool] = Query(None, description="仅直播比赛"),
+    league_id: int | None = Query(None, description="联赛ID"),
+    team_id: int | None = Query(None, description="球队ID"),
+    date_from: str | None = Query(None, description="开始日期 (YYYY-MM-DD)"),
+    date_to: str | None = Query(None, description="结束日期 (YYYY-MM-DD)"),
+    live: bool | None = Query(None, description="仅直播比赛"),
 ):
     """获取足球比赛列表"""
     try:
@@ -549,8 +550,8 @@ async def get_football_match(match_id: int):
 
 @router.get("/football/teams")
 async def get_football_teams(
-    league_id: Optional[int] = Query(None, description="联赛ID"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
+    league_id: int | None = Query(None, description="联赛ID"),
+    search: str | None = Query(None, description="搜索关键词"),
 ):
     """获取足球队列表"""
     try:
@@ -593,7 +594,7 @@ async def get_football_teams(
 
 @router.get("/football/teams/{team_id}/players")
 async def get_team_players(
-    team_id: int, season: Optional[int] = Query(None, description="赛季")
+    team_id: int, season: int | None = Query(None, description="赛季")
 ):
     """获取球队球员列表"""
     try:

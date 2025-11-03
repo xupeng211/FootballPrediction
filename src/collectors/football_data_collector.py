@@ -3,10 +3,9 @@ Football-Data.org API数据采集器
 提供完整的足球数据采集功能
 """
 
+import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-import logging
 from urllib.parse import urljoin
 
 from .base_collector import BaseCollector, CollectionResult, CollectorError
@@ -19,7 +18,7 @@ class FootballDataCollector(BaseCollector):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         base_url: str = "https://api.football-data.org/v4",
         **kwargs,
     ):
@@ -45,7 +44,7 @@ class FootballDataCollector(BaseCollector):
             "WC",  # World Cup
         ]
 
-    async def _get_headers(self) -> Dict[str, str]:
+    async def _get_headers(self) -> dict[str, str]:
         """获取Football-Data.org API请求头"""
         return {
             "X-Auth-Token": self.api_key,
@@ -61,10 +60,10 @@ class FootballDataCollector(BaseCollector):
 
     async def collect_matches(
         self,
-        league_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        status: Optional[str] = None,
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        status: str | None = None,
         limit: int = 100,
     ) -> CollectionResult:
         """采集比赛数据"""
@@ -107,7 +106,7 @@ class FootballDataCollector(BaseCollector):
             )
 
     async def collect_teams(
-        self, league_id: Optional[int] = None, limit: int = 100
+        self, league_id: int | None = None, limit: int = 100
     ) -> CollectionResult:
         """采集球队数据"""
         try:
@@ -141,7 +140,7 @@ class FootballDataCollector(BaseCollector):
             )
 
     async def collect_players(
-        self, team_id: Optional[int] = None, limit: int = 50
+        self, team_id: int | None = None, limit: int = 50
     ) -> CollectionResult:
         """采集球员数据"""
         try:
@@ -183,9 +182,7 @@ class FootballDataCollector(BaseCollector):
                 success=False, error=f"Failed to collect players: {str(e)}"
             )
 
-    async def collect_leagues(
-        self, areas: Optional[List[int]] = None
-    ) -> CollectionResult:
+    async def collect_leagues(self, areas: list[int] | None = None) -> CollectionResult:
         """采集联赛数据"""
         try:
             endpoint = "competitions"
@@ -262,7 +259,7 @@ class FootballDataCollector(BaseCollector):
 
     async def collect_comprehensive_data(
         self,
-        competition_codes: Optional[List[str]] = None,
+        competition_codes: list[str] | None = None,
         days_back: int = 30,
         days_forward: int = 7,
     ) -> CollectionResult:
@@ -472,11 +469,11 @@ class FootballDataCollector(BaseCollector):
             logger.error(f"Health check failed: {e}")
             return False
 
-    def get_supported_competitions(self) -> List[str]:
+    def get_supported_competitions(self) -> list[str]:
         """获取支持的联赛代码列表"""
         return self.supported_competitions.copy()
 
-    async def get_competition_id_by_code(self, code: str) -> Optional[int]:
+    async def get_competition_id_by_code(self, code: str) -> int | None:
         """根据联赛代码获取联赛ID"""
         try:
             result = await self.collect_leagues()
