@@ -12,14 +12,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **核心特性：**
 - 🏗️ **现代架构**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL全异步架构
-- 🎯 **设计模式**: DDD分层架构 + CQRS模式 + 依赖注入容器
-- 🧪 **完整测试**: 385个测试用例，19种标准化测试标记，29.0%覆盖率
-- 🐳 **容器化**: Docker + docker-compose完整部署方案，支持多环境配置
-- 🛡️ **质量保证**: Ruff + MyPy + bandit完整质量检查体系
+- 🎯 **设计模式**: DDD分层架构 + CQRS模式 + 依赖注入容器 + 事件驱动架构
+- 🧪 **完整测试**: 385个测试用例，19种标准化测试标记，覆盖率阈值5%（渐进式改进策略）
+- 🐳 **容器化**: Docker + docker-compose完整部署方案，支持开发/测试/生产环境
+- 🛡️ **质量保证**: Ruff + MyPy + bandit完整质量检查体系，零容忍类型检查
 - 🤖 **智能修复**: 600+个自动化脚本，智能质量修复和测试危机处理
-- ⚠️ **当前状态**: 企业级生产就绪，推荐使用Docker环境
+- ⚠️ **当前状态**: 企业级生产就绪，推荐使用Docker环境，覆盖率持续改进中
 
-**技术栈：** Python 3.11+，异步架构，Docker化部署
+**技术栈：** Python 3.11+，异步架构，Docker化部署，多环境支持
 
 ## 🚀 快速开始
 
@@ -54,7 +54,10 @@ python3 scripts/continuous_improvement_engine.py    # 持续改进引擎
 ```bash
 make context          # 加载项目上下文（⭐ 开发前必做）
 make env-check        # 环境健康检查
-make test-phase1      # 核心功能测试
+make test             # 运行所有测试（覆盖率阈值5%）
+make test.unit        # 仅单元测试
+make test.int         # 集成测试
+make coverage         # 覆盖率报告
 make prepush          # 提交前完整验证
 make ci               # CI/CD流水线验证
 ```
@@ -68,20 +71,22 @@ docker-compose exec app pytest -m "unit"  # 容器中运行测试
 
 ### 🧪 测试执行
 ```bash
-make test             # 运行所有测试
+make test             # 运行所有测试（覆盖率阈值5%）
 make test.unit        # 仅单元测试
 make test.int         # 集成测试
-make coverage         # 覆盖率报告
+make coverage         # 覆盖率报告（生成htmlcov/index.html）
 
 # 精准测试（基于标记）
 pytest -m "unit and not slow"     # 单元测试（排除慢速）
 pytest -m "api and critical"      # API关键功能测试
 pytest -m "domain or services"    # 领域和服务层测试
+pytest -m "issue94"               # 特定Issue相关测试
 
 # 直接使用pytest的场景（调试和特殊情况）
 pytest tests/unit/api/test_predictions.py::test_prediction_simple -v  # 调试特定测试
 pytest -m "unit and api" -v        # 功能域测试
 pytest -m "not slow" --maxfail=3   # 快速反馈测试
+pytest --cov=src --cov-report=term-missing  # 查看具体覆盖情况
 ```
 
 ### 🛠️ 代码质量
@@ -104,9 +109,10 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 
 **⚠️ 重要规则：**
 - 优先使用Makefile命令而非直接pytest
-- 永远不要对单个文件使用 `--cov-fail-under`
+- 永远不要对单个文件使用 `--cov-fail-under`（项目采用渐进式覆盖率改进）
 - 推荐使用Docker环境避免依赖问题
 - 使用`ruff check`替代`make lint`（项目已迁移到ruff）
+- 覆盖率阈值设置为5%，采用渐进式改进策略
 - **智能修复工具可解决80%的常见问题**
 
 ### pytest使用场景
@@ -128,9 +134,9 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 
 #### 1. DDD分层架构
 - **领域层** (`src/domain/`): 业务实体、领域服务、策略模式、事件系统
-- **应用层** (`src/api/`): FastAPI路由、CQRS实现、依赖注入
-- **基础设施层** (`src/database/`, `src/cache/`): PostgreSQL、Redis、仓储模式
-- **服务层** (`src/services/`): 数据处理、缓存、审计服务
+- **应用层** (`src/api/`): FastAPI路由、CQRS实现、依赖注入、中间件
+- **基础设施层** (`src/database/`, `src/cache/`): PostgreSQL、Redis、仓储模式、迁移管理
+- **服务层** (`src/services/`): 数据处理、缓存、审计服务、ML模型服务
 
 #### 2. 预测策略工厂模式
 ```python
@@ -201,13 +207,14 @@ prediction_service = container.resolve(PredictionService)
 ### 应用入口点说明
 系统提供多个应用入口点，适应不同使用场景：
 
-#### 简化入口（快速启动和调试）
-- **`app.py`** - 基础FastAPI应用（约36行代码），适合快速测试
+#### 主要入口点
+- **`src/main.py`** - 生产环境主应用入口，完整功能支持，包含生命周期管理、CQRS、事件系统等
+- **`app.py`** - 基础FastAPI应用，适合快速测试和调试
 - **`src/main_simple.py`** - 简化版入口点，包含核心功能
-- **`app_enhanced.py`** - 增强版，完整数据访问层支持
 
-#### 生产环境入口
-- **`src/main.py`** - 主要生产应用入口，完整功能支持
+#### Docker环境入口
+- **Docker Compose**: 通过`docker-compose.yml`配置，支持多环境切换（开发/测试/生产）
+- **环境变量**: 通过`ENV`环境变量控制不同配置加载
 
 ### 开发工作流
 ```bash
@@ -280,14 +287,16 @@ make db-check
 项目使用19种标准化测试标记，支持精准测试执行：
 
 **核心测试类型：**
-- `unit`: 单元测试 (85%) - 测试单个函数或类
-- `integration`: 集成测试 (12%) - 测试多个组件交互
-- `e2e`: 端到端测试 (2%) - 完整用户流程
-- `performance`: 性能测试 (1%) - 基准测试
+- `unit`: 单元测试 - 测试单个函数或类
+- `integration`: 集成测试 - 测试多个组件交互
+- `e2e`: 端到端测试 - 完整用户流程
+- `performance`: 性能测试 - 基准测试和性能分析
 
 **功能域标记：** `api`, `domain`, `services`, `database`, `cache`, `auth`, `monitoring`, `streaming`, `collectors`, `middleware`, `utils`, `core`, `decorators`
 
 **执行特征标记：** `slow`, `smoke`, `critical`, `regression`, `metrics`
+
+**Issue特定标记：** `issue94` - Issue #94 API模块系统性修复专用标记
 
 ### 测试执行示例
 ```bash
@@ -451,11 +460,11 @@ make test.unit                           # 3. 验证修复结果
 
 ### 项目状态
 - **成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
-- **架构**: DDD + CQRS + 依赖注入 + 异步架构
-- **测试**: 385个测试用例，19种标准化标记，29.0%覆盖率
-- **质量**: A+代码质量，完整工具链
-- **智能化**: 600+个自动化脚本，AI辅助开发
-- **推荐**: 使用Docker环境避免依赖问题
+- **架构**: DDD + CQRS + 依赖注入 + 异步架构 + 事件驱动
+- **测试**: 385个测试用例，19种标准化标记，覆盖率阈值5%（渐进式改进策略）
+- **质量**: A+代码质量，Ruff + MyPy + bandit完整工具链
+- **智能化**: 600+个自动化脚本，AI辅助开发，智能质量修复
+- **推荐**: 使用Docker环境避免依赖问题，遵循渐进式改进方法
 
 ## 🔍 高级功能
 
