@@ -1,3 +1,37 @@
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+
+@dataclass
+class MatchEvent:
+    """比赛事件基类"""
+    match_id: str
+    timestamp: datetime
+    event_type: str
+    data: dict[str, Any] = None
+
+    def __post_init__(self):
+        if self.data is None:
+            self.data = {}
+
+
+@dataclass
+class MatchStartedEvent(MatchEvent):
+    """比赛开始事件"""
+    event_type: str = "match_started"
+    home_team: str = ""
+    away_team: str = ""
+
+
+@dataclass
+class MatchEndedEvent(MatchEvent):
+    """比赛结束事件"""
+    event_type: str = "match_ended"
+    final_score: str = ""
+    winner: str | None = None
+
 """
 比赛领域事件
 Match Domain Events
