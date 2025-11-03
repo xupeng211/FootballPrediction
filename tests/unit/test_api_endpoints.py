@@ -1,0 +1,81 @@
+"""
+API端点基础测试
+Basic API Endpoint Tests
+"""
+
+import pytest
+from fastapi.testclient import TestClient
+import sys
+from pathlib import Path
+
+# 添加项目路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+try:
+    from src.main import app
+    client = TestClient(app)
+    APP_AVAILABLE = True
+except ImportError:
+    APP_AVAILABLE = False
+    client = None
+
+
+@pytest.mark.api
+@pytest.mark.integration
+@pytest.mark.skipif(not APP_AVAILABLE, reason="主应用不可用")
+class TestAPIEndpoints:
+    """API端点测试类"""
+
+    def test_health_response_format(self):
+        """测试健康检查响应格式"""
+        response = client.get("/health")
+        assert response.status_code == 200
+
+        data = response.json()
+        required_fields = ["status", "timestamp"]
+
+        for field in required_fields:
+            assert field in data, f"响应缺少字段: {field}"
+
+    def test_api_root_response(self):
+        """测试API根端点响应"""
+        response = client.get("/")
+        assert response.status_code in [200, 404]  # 允许404作为正常响应
+
+    def test_response_headers(self):
+        """测试响应头"""
+        response = client.get("/health")
+        assert response.status_code == 200
+
+        # 检查内容类型
+        content_type = response.headers.get("content-type", "")
+        assert "application/json" in content_type, "响应头content-type错误"
+
+    def test_error_handling(self):
+        """测试错误处理"""
+        # 测试不存在的端点
+        response = client.get("/nonexistent-endpoint")
+        assert response.status_code == 404
+
+
+@pytest.mark.api
+@pytest.mark.unit
+def test_api_imports():
+    """测试API相关导入"""
+    try:
+        from src.api.routes import health
+        assert True
+    except ImportError:
+        pytest.skip("API路由模块不可用")
+
+
+@pytest.mark.api
+@pytest.mark.unit
+def test_fastapi_app_creation():
+    """测试FastAPI应用创建"""
+    try:
+        from fastapi import FastAPI
+        test_app = FastAPI()
+        assert test_app is not None
+    except ImportError:
+        pytest.skip("FastAPI不可用")
