@@ -35,7 +35,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main_simple:app",
         host="0.0.0.0",
-        port=8000,
+        port=8000,  # TODO: 将魔法数字 8000 提取为常量
         reload=True,
         log_level="info",
     )

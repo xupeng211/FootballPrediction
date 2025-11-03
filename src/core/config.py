@@ -342,3 +342,25 @@ def get_config() -> Config:
 def get_settings() -> Settings:
     """获取应用程序设置实例"""
     return Settings()
+
+
+def load_config(config_file: Optional[str] = None) -> Config:
+    """
+    加载配置文件
+
+    Args:
+        config_file: 配置文件路径，如果为None则使用默认配置
+
+    Returns:
+        Config: 配置实例
+    """
+    if config_file and Path(config_file).exists():
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+            return Config(**config_data)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.warning(f"无法加载配置文件 {config_file}: {e}")
+
+    # 返回默认配置
+    return Config()

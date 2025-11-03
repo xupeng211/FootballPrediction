@@ -5,7 +5,7 @@ Football-Data.org API数据采集器
 
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 import logging
 from urllib.parse import urljoin
 

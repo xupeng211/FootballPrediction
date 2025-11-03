@@ -7,7 +7,7 @@
 import sys
 import os
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

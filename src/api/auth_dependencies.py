@@ -5,7 +5,7 @@ Enhanced JWT Authentication Dependencies
 提供完整的JWT认证、权限控制和速率限制功能
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from fastapi import Depends, HTTPException, status, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.security.jwt_auth import JWTAuthManager, get_jwt_auth_manager, TokenData
@@ -114,29 +114,6 @@ async def get_current_active_user(
     return current_user
 
 
-def require_roles(*allowed_roles: str):
-    """
-    角色权限装饰器工厂
-
-    Args:
-        allowed_roles: 允许的角色列表
-
-    Returns:
-        权限检查依赖函数
-    """
-
-    async def role_checker(
-        current_user: TokenData = Depends(get_current_active_user),
-    ) -> TokenData:
-        if current_user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="权限不足"
-            )
-        return current_user
-
-    return role_checker
-
-
 # 常用角色权限检查
 get_current_admin = require_roles("admin")
 get_current_manager = require_roles("admin", "manager")
@@ -146,49 +123,12 @@ get_current_user_or_admin = require_roles("admin", "manager", "user")
 class RateLimiter:
     """简单的速率限制器"""
 
-    def __init__(self, max_requests: int = 100, window_seconds: int = 3600):
-        self.max_requests = max_requests
-        self.window_seconds = window_seconds
-        self.requests = {}  # 简单内存存储，生产环境建议使用Redis
-
-    async def is_allowed(self, key: str) -> bool:
-        """
-        检查是否允许请求
-
-        Args:
-            key: 限制键（通常是用户ID或IP）
-
-        Returns:
-            是否允许请求
-        """
-        import time
-
-        now = time.time()
-        window_start = now - self.window_seconds
-
-        # 清理过期记录
-        if key in self.requests:
-            self.requests[key] = [
-                req_time for req_time in self.requests[key] if req_time > window_start
-            ]
-        else:
-            self.requests[key] = []
-
-        # 检查是否超过限制
-        if len(self.requests[key]) >= self.max_requests:
-            return False
-
-        # 记录当前请求
-        self.requests[key].append(now)
-        return True
-
-
 # 全局速率限制器实例
 login_rate_limiter = RateLimiter(
-    max_requests=5, window_seconds=900
+    max_requests=5, window_seconds=900  # TODO: 将魔法数字 900 提取为常量
 )  # 15分钟5次登录尝试
 api_rate_limiter = RateLimiter(
-    max_requests=1000, window_seconds=3600
+    max_requests=1000, window_seconds=3600  # TODO: 将魔法数字 1000 提取为常量
 )  # 1小时1000次API请求
 
 
@@ -234,53 +174,10 @@ async def rate_limit_api(
         )
 
 
-def get_client_ip(request: Request) -> str:
-    """
-    获取客户端IP地址
-
-    Args:
-        request: FastAPI请求对象
-
-    Returns:
-        客户端IP地址
-    """
-    # 检查代理头
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip
-
-    # 回退到直接连接IP
-    return request.client.host if request.client else "unknown"
-
-
 class SecurityHeaders:
     """安全头部配置"""
 
     @staticmethod
-    def get_security_headers() -> dict:
-        """获取安全头部配置"""
-        return {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY",
-            "X-XSS-Protection": "1; mode=block",
-            "Referrer-Policy": "strict-origin-when-cross-origin",
-            "Content-Security-Policy": (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-                "style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data: https:; "
-                "font-src 'self' https:; "
-                "connect-src 'self' https:; "
-                "frame-ancestors 'none';"
-            ),
-            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-        }
-
-
 async def add_security_headers():
     """添加安全头部的中间件依赖"""
     return SecurityHeaders.get_security_headers()
@@ -290,6 +187,53 @@ async def add_security_headers():
 class AuthContext:
     """认证上下文管理器"""
 
+) -> AuthContext:
+    """获取认证上下文"""
+    return AuthContext(auth_manager)
+
+# TODO: 方法 def require_roles 过长(24行)，建议拆分
+# 常用角色权限检查
+# TODO: 方法 def __init__ 过长(25行)，建议拆分
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+class SecurityHeaders:
+# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
+async def add_security_headers():
+) -> AuthContext:
+# TODO: 方法 def require_roles 过长(24行)，建议拆分
+# 常用角色权限检查
+# TODO: 方法 def __init__ 过长(26行)，建议拆分
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+class SecurityHeaders:
+# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
+async def add_security_headers():
+) -> AuthContext:
+# TODO: 方法 def require_roles 过长(24行)，建议拆分
+def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    """
+    角色权限装饰器工厂
+
+    Args:
+        allowed_roles: 允许的角色列表
+
+    Returns:
+        权限检查依赖函数
+    """
+
+    async def role_checker(
+        current_user: TokenData = Depends(get_current_active_user),
+    ) -> TokenData:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="权限不足"
+            )
+        return current_user
+
+    return role_checker
+
+
+# 常用角色权限检查
+# TODO: 方法 def __init__ 过长(26行)，建议拆分
     def __init__(self, auth_manager: JWTAuthManager):
         self.auth_manager = auth_manager
 
@@ -315,8 +259,55 @@ class AuthContext:
         logger.info(f"用户 {user_id} 的所有会话已清除")
 
 
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+# TODO: 方法 def get_client_ip 过长(24行)，建议拆分
+def get_client_ip(request: Request) -> str:
+    """
+    获取客户端IP地址
+
+    Args:
+        request: FastAPI请求对象
+
+    Returns:
+        客户端IP地址
+    """
+    # 检查代理头
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip
+
+    # 回退到直接连接IP
+    return request.client.host if request.client else "unknown"
+
+
+class SecurityHeaders:
+# TODO: 方法 def get_security_headers 过长(21行)，建议拆分
+    def get_security_headers() -> dict:
+        """获取安全头部配置"""
+        return {
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Content-Security-Policy": (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' https:; "
+                "connect-src 'self' https:; "
+                "frame-ancestors 'none';"
+            ),
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",  # TODO: 将魔法数字 31536000 提取为常量
+        }
+
+
+async def add_security_headers():
 def get_auth_context(
+    """TODO: 添加函数文档"""
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ) -> AuthContext:
-    """获取认证上下文"""
-    return AuthContext(auth_manager)

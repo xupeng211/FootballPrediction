@@ -3,10 +3,9 @@
 Team Data Collector for Football-Data.org API
 """
 
-import asyncio
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from .base_collector import FootballDataCollector
 

@@ -7,7 +7,6 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
-import asyncio
 from enum import Enum
 
 from ..models.base_model import BaseModel, PredictionResult

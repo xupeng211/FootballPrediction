@@ -6,8 +6,8 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
+from typing import Any, Dict, Optional
 from dataclasses import dataclass
 import aiohttp
 import backoff

@@ -336,3 +336,17 @@ def batch_clean_strings(strings: List[str]) -> List[str]:
 def validate_batch_emails(emails: List[str]) -> dict:
     """批量验证邮箱"""
     return {email: StringUtils.validate_email(email) for email in emails}
+
+
+def normalize_string(text: str) -> str:
+    """标准化字符串"""
+    if not text:
+        return ""
+    return StringUtils.clean_string(text).lower().strip()
+
+
+def truncate_string(text: str, max_length: int, suffix: str = "...") -> str:
+    """截断字符串"""
+    if not text or len(text) <= max_length:
+        return text
+    return text[:max_length - len(suffix)] + suffix

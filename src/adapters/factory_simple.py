@@ -8,6 +8,21 @@ from typing import Any, Dict, Optional, Type
 class AdapterFactory:
     """适配器工厂"""
 
+# 全局工厂实例
+_global_factory = AdapterFactory()
+
+
+) -> Any:
+    """获取适配器实例（便捷函数）"""
+    return _global_factory.create_adapter(name, config, singleton)
+
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# 全局工厂实例
+) -> Any:
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# 全局工厂实例
+) -> Any:
     def __init__(self):
         """初始化适配器工厂"""
         self._adapters: Dict[str, Type] = {}
@@ -17,7 +32,10 @@ class AdapterFactory:
         """注册适配器"""
         self._adapters[name] = adapter_class
 
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
+# TODO: 方法 def create_adapter 过长(21行)，建议拆分
     def create_adapter(
+        """TODO: 添加函数文档"""
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
     ) -> Any:
         """创建适配器实例"""
@@ -37,11 +55,7 @@ class AdapterFactory:
 
 
 # 全局工厂实例
-_global_factory = AdapterFactory()
-
-
 def get_adapter(
+    """TODO: 添加函数文档"""
     name: str, config: Optional[Dict] = None, singleton: bool = False
 ) -> Any:
-    """获取适配器实例（便捷函数）"""
-    return _global_factory.create_adapter(name, config, singleton)

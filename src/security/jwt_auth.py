@@ -8,10 +8,9 @@ JWT Authentication Manager Module
 import os
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 import jwt
 from passlib.context import CryptContext
-from passlib.hash import bcrypt
 import redis.asyncio as redis
 from dataclasses import dataclass
 import logging

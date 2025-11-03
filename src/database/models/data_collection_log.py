@@ -20,7 +20,6 @@ from src.database.base import BaseModel
 from sqlalchemy import Enum
 from sqlalchemy.orm import validates
 
-from src.database.base import BaseModel
 
 
 class CollectionStatus(Enum):

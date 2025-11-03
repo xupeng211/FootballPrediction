@@ -7,15 +7,15 @@ Unified Cache Interface
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Union, Callable, Type
+from typing import Any, Dict, List, Optional
 from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
 
 from .ttl_cache_enhanced.ttl_cache import TTLCache
 from .redis_enhanced import EnhancedRedisManager, RedisConfig
-from .consistency_manager import CacheConsistencyManager, get_consistency_manager
-from .decorators import cached, cache_invalidate, multi_cached
+from .consistency_manager import get_consistency_manager
+from .decorators import cached, cache_invalidate
 
 logger = logging.getLogger(__name__)
 

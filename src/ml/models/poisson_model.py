@@ -5,7 +5,7 @@ Poisson Distribution Model for Football Match Prediction
 
 import logging
 from datetime import datetime
-from typing import Dict, Any, List, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional
 import numpy as np
 import pandas as pd
 from scipy import stats

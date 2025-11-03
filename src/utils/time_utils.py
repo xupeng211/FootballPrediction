@@ -255,3 +255,32 @@ def parse_datetime(
             except ValueError:
                 continue
         return None
+
+
+def format_datetime(dt: datetime, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+    """格式化日期时间"""
+    if dt is None:
+        return ""
+    return dt.strftime(fmt)
+
+
+def format_duration(seconds: float) -> str:
+    """格式化时间间隔"""
+    if seconds < 60:
+        return f"{seconds:.1f}秒"
+    elif seconds < 3600:
+        minutes = seconds / 60
+        return f"{minutes:.1f}分钟"
+    else:
+        hours = seconds / 3600
+        return f"{hours:.1f}小时"
+
+
+def parse_iso_datetime(date_str: str) -> Optional[datetime]:
+    """解析ISO格式日期时间"""
+    if not date_str:
+        return None
+    try:
+        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+    except ValueError:
+        return parse_datetime(date_str)

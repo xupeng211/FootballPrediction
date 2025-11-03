@@ -7,8 +7,7 @@ Cache Consistency Manager
 
 import asyncio
 import threading
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Callable
 from dataclasses import dataclass

@@ -4,8 +4,6 @@ Prometheus指标API端点
 """
 
 import logging
-import time
-from typing import Dict, Any
 
 from fastapi import APIRouter, Response
 from prometheus_client import (

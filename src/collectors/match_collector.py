@@ -3,13 +3,12 @@
 专门负责采集和管理比赛相关数据
 """
 
-import asyncio
 import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import logging
 
-from .base_collector import BaseCollector, CollectionResult, DataValidationError
+from .base_collector import BaseCollector, CollectionResult
 
 logger = logging.getLogger(__name__)
 

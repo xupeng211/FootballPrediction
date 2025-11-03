@@ -11,10 +11,8 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     JSON,
-    ForeignKey,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 from datetime import datetime
 from typing import Optional, Dict, Any
 

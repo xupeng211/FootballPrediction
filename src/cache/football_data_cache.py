@@ -7,9 +7,9 @@ Football Data Cache Strategy
 
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any, Union
-from dataclasses import dataclass, asdict
+from datetime import datetime
+from typing import Optional, Dict, List, Any
+from dataclasses import dataclass
 
 from .redis_manager import get_redis_manager
 from .mock_redis import CacheKeyManager
