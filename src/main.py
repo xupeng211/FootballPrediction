@@ -34,6 +34,7 @@ from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import MetricsCollector
 from src.observers import ObserverManager
 from src.performance.integration import setup_performance_monitoring
+from src.performance.middleware import PerformanceMonitoringMiddleware
 
 # 配置日志
 logging.basicConfig(
@@ -80,6 +81,16 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# 添加性能监控中间件
+app.add_middleware(
+    PerformanceMonitoringMiddleware,
+    track_memory=True,
+    track_concurrency=True,
+    sample_rate=1.0,
+    slow_request_threshold=500.0,
+    enable_auto_optimization=True
 )
 
 # 添加中间件
