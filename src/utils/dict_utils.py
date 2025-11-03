@@ -290,3 +290,17 @@ def flatten_dict(d: dict[str, Any], separator: str = ".") -> dict[str, Any]:
         return dict(items)
 
     return _flatten(d, separator=separator)
+
+
+def filter_dict(d: dict[str, Any], keys: list[str]) -> dict[str, Any]:
+    """过滤字典，只保留指定的键"""
+    return {key: d[key] for key in keys if key in d}
+
+
+def rename_keys(d: dict[str, Any], key_map: dict[str, str]) -> dict[str, Any]:
+    """重命名字典中的键"""
+    result = {}
+    for key, value in d.items():
+        new_key = key_map.get(key, key)
+        result[new_key] = value
+    return result

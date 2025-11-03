@@ -283,3 +283,23 @@ def parse_iso_datetime(date_str: str) -> datetime | None:
         return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
     except ValueError:
         return parse_datetime(date_str)
+
+
+def calculate_duration(start_time: datetime, end_time: datetime) -> timedelta:
+    """计算时间差"""
+    return end_time - start_time
+
+
+def get_current_timestamp() -> float:
+    """获取当前时间戳"""
+    import time
+    return time.time()
+
+
+def is_valid_datetime_format(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> bool:
+    """验证日期时间格式是否有效"""
+    try:
+        datetime.strptime(date_str, format_str)
+        return True
+    except ValueError:
+        return False

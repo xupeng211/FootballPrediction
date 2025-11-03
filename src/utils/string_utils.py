@@ -349,3 +349,31 @@ def truncate_string(text: str, max_length: int, suffix: str = "...") -> str:
     if not text or len(text) <= max_length:
         return text
     return text[: max_length - len(suffix)] + suffix
+
+
+def is_empty(text: str) -> bool:
+    """检查字符串是否为空"""
+    return not text or not text.strip()
+
+
+def strip_html(text: str) -> str:
+    """移除HTML标签"""
+    import re
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
+
+def format_currency(amount: float, currency: str = "CNY") -> str:
+    """格式化货币"""
+    return f"{currency} {amount:,.2f}"
+
+
+# 模块级别的包装函数，用于向后兼容
+def snake_to_camel(name: str) -> str:
+    """下划线命名转驼峰命名（包装函数）"""
+    return StringUtils.snake_to_camel(name)
+
+
+def camel_to_snake(name: str) -> str:
+    """驼峰命名转下划线命名（包装函数）"""
+    return StringUtils.camel_to_snake(name)
