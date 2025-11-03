@@ -12,8 +12,9 @@ import sys
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "scripts"))
 
-from scripts.smart_quality_fixer import SmartQualityFixer
+from smart_quality_fixer import SmartQualityFixer
 
 
 class TestSmartQualityFixer:

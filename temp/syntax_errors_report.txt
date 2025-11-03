@@ -1,0 +1,430 @@
+语法错误详细报告
+========================================
+
+OTHER 目录:
+--------------------
+文件: src/bad_example.py
+错误:   File "src/bad_example.py", line 17
+    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/config/config_manager.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 72 (config_manager.py, line 76)
+----------------------------------------
+文件: src/timeseries/influxdb_client.py
+错误:   File "src/timeseries/influxdb_client.py", line 432
+    ]
+    ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '(' on line 431
+
+----------------------------------------
+文件: src/stubs/mocks/feast.py
+错误:   File "src/stubs/mocks/feast.py", line 96
+    elif isinstance(obj, Entity))))):
+                                  ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/stubs/mocks/confluent_kafka.py
+错误:   File "src/stubs/mocks/confluent_kafka.py", line 40
+    if isinstance(self._value, bytes))))):
+                                       ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/facades/base.py
+错误: Sorry: IndentationError: expected an indented block after function definition on line 119 (base.py, line 120)
+----------------------------------------
+文件: src/facades/factory.py
+错误:   File "src/facades/factory.py", line 196
+    def _convert_type(self, value: str))))) -> Union[str)) in ["true")) == "true"
+                                         ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/patterns/decorator.py
+错误:   File "src/patterns/decorator.py", line 144
+    "calls": 0)))) -> Any:
+              ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on line 143
+
+----------------------------------------
+文件: src/patterns/observer.py
+错误:   File "src/patterns/observer.py", line 222
+    elif condition == "timeout" and isinstance(data, dict))))) and data.get("timeout"):
+                                                            ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/patterns/facade_simple.py
+错误:   File "src/patterns/facade_simple.py", line 69
+    """执行预测（一站式服务）"""
+           ^
+SyntaxError: invalid character '（' (U+FF08)
+
+----------------------------------------
+文件: src/patterns/adapter.py
+错误:   File "src/patterns/adapter.py", line 274
+    "id": raw_data.get("id"), "name": raw_data.get("name")))))).get("fullTime")).get("home"),
+                                                          ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on line 273
+
+----------------------------------------
+文件: src/monitoring/advanced_monitoring_system.py
+错误:   File "src/monitoring/advanced_monitoring_system.py", line 4
+    from src.core.config 
+                         ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/monitoring/apm_integration.py
+错误:   File "src/monitoring/apm_integration.py", line 142
+    except Exception:
+    ^^^^^^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/monitoring/alert_manager.py
+错误:   File "src/monitoring/alert_manager.py", line 223
+    alert_id = alert.get("id", "")))))
+                                    ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/performance/profiler.py
+错误: Sorry: IndentationError: expected an indented block after function definition on line 342 (profiler.py, line 343)
+----------------------------------------
+文件: src/ml/enhanced_feature_engineering.py
+错误:   File "src/ml/enhanced_feature_engineering.py", line 283
+    home_team_id, match_date)))))
+                               ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/ml/advanced_model_trainer.py
+错误: Sorry: IndentationError: unexpected indent (advanced_model_trainer.py, line 28)
+----------------------------------------
+文件: src/ml/enhanced_real_model_training.py
+错误: Sorry: IndentationError: unexpected indent (enhanced_real_model_training.py, line 29)
+----------------------------------------
+文件: src/ml/real_model_training.py
+错误:   File "src/ml/real_model_training.py", line 438
+    if isinstance(trainer, ((EnsembleTrainer):
+                                             ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/models/model_training_broken.py
+错误: Sorry: IndentationError: expected an indented block after function definition on line 85 (model_training_broken.py, line 86)
+----------------------------------------
+文件: src/models/raw_data.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 108 (raw_data.py, line 109)
+----------------------------------------
+文件: src/models/base_models.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 26 (base_models.py, line 27)
+----------------------------------------
+文件: src/middleware/cors_config.py
+错误:   File "src/middleware/cors_config.py", line 92
+    "GET", "POST") not in valid_methods:
+                 ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on line 91
+
+----------------------------------------
+文件: src/decorators/implementations/logging.py
+错误:   File "src/decorators/implementations/logging.py", line 71
+    "event": "function_success")))):
+                               ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '{' on line 70
+
+----------------------------------------
+文件: src/realtime/prediction_api.py
+错误:   File "src/realtime/prediction_api.py", line 16
+    from src.core.config 
+                         ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/realtime/prediction_service.py
+错误: Sorry: IndentationError: unexpected indent (prediction_service.py, line 19)
+----------------------------------------
+文件: src/realtime/match_service.py
+错误:   File "src/realtime/match_service.py", line 19
+    from src.core.config 
+    ^^^^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/realtime/events.py
+错误:   File "src/realtime/events.py", line 385
+    if not isinstance(event.data, dict))))):
+                                        ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/realtime/handlers.py
+错误:   File "src/realtime/handlers.py", line 17
+    from src.core.config 
+    ^^^^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/realtime/manager.py
+错误:   File "src/realtime/manager.py", line 131
+    elif isinstance(message, RealtimeEvent))))):
+                                             ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/realtime/websocket.py
+错误:   File "src/realtime/websocket.py", line 267
+    elif isinstance(message, WebSocketMessage))))):
+                                                ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/realtime/router.py
+错误: Sorry: IndentationError: unexpected indent (router.py, line 8)
+----------------------------------------
+文件: src/streaming/kafka_components.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 19 (kafka_components.py, line 20)
+----------------------------------------
+文件: src/streaming/kafka_producer.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 36 (kafka_producer.py, line 37)
+----------------------------------------
+文件: src/streaming/kafka_consumer_simple.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 201 (kafka_consumer_simple.py, line 202)
+----------------------------------------
+文件: src/streaming/stream_config_simple.py
+错误:   File "src/streaming/stream_config_simple.py", line 91
+    result[key] = os.getenv(env_var, value)))))
+                                             ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/streaming/kafka_producer_simple.py
+错误:   File "src/streaming/kafka_producer_simple.py", line 97
+    elif isinstance(value, str))))):
+                                 ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/streaming/kafka_components_simple.py
+错误:   File "src/streaming/kafka_components_simple.py", line 313
+    if isinstance(value, (int, float):
+                                     ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/alerting/alert_engine.py
+错误:   File "src/alerting/alert_engine.py", line 345
+    id="quality_score_low")),
+                           ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '[' on line 343
+
+----------------------------------------
+文件: src/optimizations/api_optimizations.py
+错误:   File "src/optimizations/api_optimizations.py", line 235
+    except Exception:
+    ^^^^^^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/optimizations/database_optimizations.py
+错误:   File "src/optimizations/database_optimizations.py", line 201
+    ""","
+        ^
+SyntaxError: unterminated string literal (detected at line 201)
+
+----------------------------------------
+文件: src/cache/consistency_manager.py
+错误:   File "src/cache/consistency_manager.py", line 117
+    except (RedisError)) as e:
+                       ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/cache/api_cache.py
+错误: Sorry: IndentationError: expected an indented block after function definition on line 69 (api_cache.py, line 70)
+----------------------------------------
+文件: src/cache/examples.py
+错误:   File "src/cache/examples.py", line 12
+    from src.core.config 
+    ^^^^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/cache/decorators.py
+错误: Sorry: IndentationError: expected an indented block after function definition on line 38 (decorators.py, line 39)
+----------------------------------------
+文件: src/cache/ttl_cache_enhanced/ttl_cache.py
+错误:   File "src/cache/ttl_cache_enhanced/ttl_cache.py", line 354
+    self._cache.pop(key))
+                        ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/domain_simple/services.py
+错误:   File "src/domain_simple/services.py", line 426
+    """获取全局域服务工厂实例"""
+                  ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 430)
+
+----------------------------------------
+文件: src/dependencies/optional.py
+错误:   File "src/dependencies/optional.py", line 81
+    warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)))))
+                                                                     ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/collectors/oddsportal_scraper.py
+错误:   File "src/collectors/oddsportal_scraper.py", line 469
+    self.logger.info(f"Scraping today's matches from: {today_url}")'
+                                                                   ^
+SyntaxError: unterminated string literal (detected at line 469)
+
+----------------------------------------
+文件: src/collectors/fixtures_collector.py
+错误:   File "src/collectors/fixtures_collector.py", line 20
+    from src.core.config 
+                         ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/collectors/models/match.py
+错误:   File "src/collectors/models/match.py", line 51
+    if isinstance(match_date, ((str):
+                                    ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/observers/base.py
+错误:   File "src/observers/base.py", line 129
+    """获取观察者统计信息"
+                ^
+SyntaxError: unterminated string literal (detected at line 129)
+
+----------------------------------------
+文件: src/features/features/feature_calculator_calculators.py
+错误:   File "src/features/features/feature_calculator_calculators.py", line 873
+    """计算主客队对比特征"""
+                ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 909)
+
+----------------------------------------
+文件: src/tasks/data_collection_core.py
+错误:   File "src/tasks/data_collection_core.py", line 303
+    """验证比赛数据"""
+             ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 309)
+
+----------------------------------------
+文件: src/tasks/backup/manual.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 32 (manual.py, line 33)
+----------------------------------------
+文件: src/tasks/backup/manual/validators.py
+错误:   File "src/tasks/backup/manual/validators.py", line 52
+    if backup_type not in ["full", "incremental")
+                                                ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '['
+
+----------------------------------------
+文件: src/quality_dashboard/api/main.py
+错误: Sorry: IndentationError: unexpected indent (main.py, line 16)
+----------------------------------------
+文件: src/data/storage/lake.py
+错误:   File "src/data/storage/lake.py", line 247
+    illegal_chars = ["\\", ":"):
+                              ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '['
+
+----------------------------------------
+文件: src/data/processing/missing_data_handler.py
+错误:   File "src/data/processing/missing_data_handler.py", line 248
+    self.logger.warning("默认均值配置必须是对象（来源: %s）", source)))))
+                                                        ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/data/processing/football_data_cleaner.py
+错误:   File "src/data/processing/football_data_cleaner.py", line 50
+    cleaned["match_time"] = cleaned["match_time"].replace("T", " ")))))
+                                                                     ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/data/processing/football_data_cleaner_mod/__init__.py
+错误:   File "src/data/processing/football_data_cleaner_mod/__init__.py", line 111
+    except Exception:
+    ^^^^^^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/data/quality/great_expectations_config.py
+错误: Sorry: IndentationError: expected an indented block after class definition on line 32 (great_expectations_config.py, line 33)
+----------------------------------------
+文件: src/data/quality/anomaly_detector.py
+错误:   File "src/data/quality/anomaly_detector.py", line 39
+    def detect_missing_values(self, df: pd.DataFrame) -> Dict[str)).sum() / len(df)
+                                                                 ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '['
+
+----------------------------------------
+文件: src/data/quality/exception_handler.py
+错误:   File "src/data/quality/exception_handler.py", line 125
+    return {"valid": False, "data": str(data)))))}
+                                             ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '{'
+
+----------------------------------------
+文件: src/data/quality/exception_handler_mod/__init__.py
+错误:   File "src/data/quality/exception_handler_mod/__init__.py", line 196
+    """检测异常值（基于Z-score）"""
+            ^
+SyntaxError: invalid character '（' (U+FF08)
+
+----------------------------------------
+文件: src/data/collectors/scores_collector.py
+错误:   File "src/data/collectors/scores_collector.py", line 3
+    from src.core.config 
+                         ^
+SyntaxError: invalid syntax
+
+----------------------------------------
+文件: src/data/collectors/odds_collector.py
+错误: Sorry: IndentationError: unexpected indent (odds_collector.py, line 24)
+----------------------------------------
+文件: src/data/collectors/base_collector.py
+错误:   File "src/data/collectors/base_collector.py", line 300
+    match_time_str.replace("Z", "+00:00")))))
+                                            ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/data/features/feature_store.py
+错误:   File "src/data/features/feature_store.py", line 343
+    return training_df.to_df() if isinstance(training_df.to_df())) else {}
+                                                                 ^
+SyntaxError: unmatched ')'
+
+----------------------------------------
+文件: src/data/features/examples.py
+错误:   File "src/data/features/examples.py", line 345
+    1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}")"
+      ^
+SyntaxError: invalid decimal literal
+
+----------------------------------------
+文件: src/scheduler/job_manager.py
+错误: Sorry: IndentationError: expected an indented block after function definition on line 108 (job_manager.py, line 109)
+----------------------------------------
+文件: src/metrics/advanced_analyzer.py
+错误:   File "src/metrics/advanced_analyzer.py", line 50
+    [node for node in ast.walk(tree) if isinstance(node, ((ast.FunctionDef)]
+                                                                           ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '('
+
+----------------------------------------
+

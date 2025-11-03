@@ -23,19 +23,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚀 快速开始
 
-### 🐳 Docker环境（强烈推荐）
+### 🐳 Docker环境（配置中）
 ```bash
-# 一键启动完整开发环境
-make install && make up
+# 注意：Docker配置文件正在完善中
+# 当前推荐使用本地开发环境
 
-# 运行测试（推荐在Docker中）
-docker-compose exec app pytest -m "unit"
+# 安装依赖
+make install
+
+# 运行测试
+make test.unit
 
 # 验证环境
 make env-check
 ```
 
-### ⚠️ 本地环境（如遇到问题请使用Docker）
+### ⚠️ 本地环境（推荐使用）
 ```bash
 # 安装缺失依赖
 source .venv/bin/activate
@@ -122,10 +125,11 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 - 快速反馈：`pytest -m "not slow" --maxfail=3`
 
 ### 📝 配置文件说明
-- **pyproject.toml**: Ruff配置，行长度88，忽略测试文件中的常见错误
 - **pytest.ini**: 19种标准化测试标记，包含详细的测试分类体系
-- **Makefile**: 935行613个命令，完整开发工具链，包含CI/CD自动化
+- **.ruffignore**: Ruff忽略规则，排除有问题的脚本文件
+- **Makefile**: 600+个命令，完整开发工具链，包含CI/CD自动化
 - **scripts/**: 600+个自动化脚本，涵盖修复、测试、部署等全流程
+- **requirements.txt**: 锁定的依赖版本，确保环境一致性
 
 ## 🏗️ 系统架构
 
@@ -199,10 +203,11 @@ prediction_service = container.resolve(PredictionService)
 - **质量工具**: Ruff代码检查 + MyPy类型检查 + bandit安全扫描
 
 ### 配置文件要点
-- **pyproject.toml**: Ruff配置（行长度88，包含大量重复TODO注释需清理）
-- **pytest.ini**: 19种标准化测试标记，支持完整测试分类体系
-- **docker-compose.yml**: 多环境支持（开发/测试/生产），完整监控栈
-- **Makefile**: 935行613个命令，完整开发工具链，包含CI/CD自动化
+- **pytest.ini**: 19种标准化测试标记，支持完整测试分类体系，覆盖率阈值5%
+- **.ruffignore**: 智能忽略有问题的文件，确保代码检查顺畅
+- **requirements.txt**: 锁定依赖版本，确保开发环境一致性
+- **Makefile**: 600+个命令，完整开发工具链，包含CI/CD自动化
+- **GitHub Actions**: 完整的CI/CD流水线配置，支持质量门禁
 
 ### 应用入口点说明
 系统提供多个应用入口点，适应不同使用场景：
@@ -212,9 +217,10 @@ prediction_service = container.resolve(PredictionService)
 - **`app.py`** - 基础FastAPI应用，适合快速测试和调试
 - **`src/main_simple.py`** - 简化版入口点，包含核心功能
 
-#### Docker环境入口
-- **Docker Compose**: 通过`docker-compose.yml`配置，支持多环境切换（开发/测试/生产）
-- **环境变量**: 通过`ENV`环境变量控制不同配置加载
+#### 开发环境入口
+- **本地开发**: 直接使用Python虚拟环境，支持快速开发和调试
+- **Makefile驱动**: 通过600+个Makefile命令管理完整的开发流程
+- **环境变量**: 通过`.env`文件管理不同环境的配置
 
 ### 开发工作流
 ```bash
@@ -315,26 +321,29 @@ pytest -m "(unit or integration) and critical"  # 关键功能测试
 
 ## 📦 部署和容器化
 
-### Docker架构
-- **app**: FastAPI应用 (端口8000) 含健康检查和自动重载
-- **db**: PostgreSQL (端口5432) 含健康检查和数据持久化
-- **redis**: Redis (端口6379) 注释状态（可选启用）
-- **nginx**: 反向代理 (端口80) 生产环境启用
-- **监控服务**: Prometheus + Grafana + Loki + Celery（生产环境）
+### 本地开发架构（当前推荐）
+- **虚拟环境**: Python 3.11 + 依赖隔离
+- **FastAPI应用**: 开发服务器支持热重载 (端口8000)
+- **数据库**: PostgreSQL连接 (端口5432)
+- **缓存**: Redis支持 (可选启用)
+- **智能工具**: 600+个自动化脚本支持开发全流程
 
 ### 环境配置
 ```bash
+# 安装和初始化
+make install && make env-check
+
 # 开发环境 (默认)
-docker-compose up
+make test.unit          # 运行单元测试
 
-# 生产环境
-ENV=production docker-compose --profile production up -d
+# 质量检查
+make quality           # 完整质量检查
 
-# 测试环境
-ENV=test docker-compose run --rm app pytest
+# 智能修复
+make smart-fix         # 运行智能质量修复
 
-# 监控环境
-docker-compose --profile monitoring up -d
+# 模拟CI
+make ci                # 本地CI验证
 ```
 
 ### CI/CD集成
@@ -351,10 +360,11 @@ make github-actions-test   # GitHub Actions本地测试
 ## 📊 代码质量和工具
 
 ### 质量检查工具
-- **Ruff**: 代码检查和格式化（行长度88）
-- **MyPy**: 类型检查（零容忍）
+- **Ruff**: 代码检查和格式化（配置在.pyproject.toml中）
+- **MyPy**: 类型检查（零容忍，有完整的忽略规则）
 - **bandit**: 安全漏洞扫描
 - **pip-audit**: 依赖漏洞检查
+- **智能修复**: 600+个自动化脚本支持智能问题修复
 
 ### 🤖 AI辅助开发系统（600+智能脚本）
 ```bash
@@ -393,27 +403,30 @@ python3 scripts/load_balancer_monitor.sh             # 负载均衡监控
 
 ### 常见问题解决方案
 ```bash
-# 环境问题 - 首选Docker
-docker-compose up -d && docker-compose exec app pytest -m "unit"
+# 环境问题 - 首选本地开发
+make install && make env-check
 
 # 依赖缺失问题
 source .venv/bin/activate
 pip install pandas numpy aiohttp psutil scikit-learn
 
 # 代码质量问题
-ruff check src/ tests/ && ruff format src/ tests/
-python3 scripts/smart_quality_fixer.py
+make quality           # 完整质量检查
+python3 scripts/smart_quality_fixer.py  # 智能修复
+
+# 测试问题
+make test-crisis-fix  # 测试危机修复
 
 # 完全环境重置
-make down && make clean-env && make install && make up
+make clean && make install && make test.unit
 ```
 
 ### 关键提醒
-- **推荐使用Docker环境**避免依赖问题
+- **推荐使用本地开发环境**，虚拟环境确保依赖隔离
 - **优先使用Makefile命令**而非直接pytest
-- **使用ruff**进行代码检查（替代flake8）
 - **智能修复工具**可解决80%的常见问题
 - **600+个自动化脚本**覆盖开发全生命周期
+- **覆盖率渐进式改进**，当前阈值5%
 
 ---
 
