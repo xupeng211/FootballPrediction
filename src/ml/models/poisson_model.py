@@ -90,6 +90,9 @@ class PoissonModel(BaseModel):
         # 计算基础统计
         self._calculate_team_strengths(training_data)
 
+        # 先设置为已训练状态
+        self.is_trained = True
+
         # 评估模型
         if validation_data is not None:
             metrics = self.evaluate(validation_data)
@@ -97,7 +100,6 @@ class PoissonModel(BaseModel):
             # 使用交叉验证
             metrics = self._cross_validate(training_data)
 
-        self.is_trained = True
         self.last_training_time = start_time
 
         training_time = (datetime.now() - start_time).total_seconds()

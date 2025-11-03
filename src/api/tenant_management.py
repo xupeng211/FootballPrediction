@@ -71,7 +71,7 @@ class TenantCreationRequestModel(BaseModel):
     custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
     @validator("slug")
-    def validate_slug(cls, v):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def validate_slug(cls, v):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """验证租户标识符"""
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
