@@ -1,10 +1,589 @@
 #!/usr/bin/env python3
 """
-创建服务层测试以提升测试覆盖率
+服务测试生成器
+自动为业务服务生成完整的单元测试和集成测试
 """
 
+import os
+import sys
+import ast
+import json
+import inspect
 from pathlib import Path
+from typing import Dict, List, Any, Optional, Tuple, Set
+from dataclasses import dataclass
+from collections import defaultdict
+import re
+from datetime import datetime
 
+@dataclass
+class TestConfig:
+    """测试配置"""
+    target_module: str
+    output_file: str
+    test_types: List[str]
+    include_mocks: bool = True
+    include_fixtures: bool = True
+    include_parametrized: bool = True
+
+class ServiceAnalyzer:
+    """服务分析器"""
+
+    def __init__(self, project_root: Path):
+        self.project_root = project_root
+        self.src_dir = project_root / "src"
+
+    def analyze_service_module(self, module_path: str) -> Dict[str, Any]:
+        """分析服务模块"""
+        print(f"🔍 分析服务模块: {module_path}")
+
+        try:
+            # 导入模块
+            sys.path.insert(0, str(self.src_dir))
+            module = __import__(module_path, fromlist=['*'])
+
+            analysis = {
+                'module_name': module_path,
+                'classes': [],
+                'functions': [],
+                'imports': [],
+                'dependencies': set()
+            }
+
+            # 分析AST结构
+            module_file = self.src_dir / f"{module_path.replace('.', '/')}.py"
+            if module_file.exists():
+                with open(module_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                tree = ast.parse(content)
+
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ClassDef):
+                        class_info = self._analyze_class(node, module)
+                        analysis['classes'].append(class_info)
+                    elif isinstance(node, ast.FunctionDef):
+                        if not node.name.startswith('_'):
+                            func_info = self._analyze_function(node)
+                            analysis['functions'].append(func_info)
+                    elif isinstance(node, ast.Import):
+                        for alias in node.names:
+                            analysis['imports'].append(alias.name)
+                    elif isinstance(node, ast.ImportFrom):
+                        if node.module:
+                            analysis['imports'].append(node.module)
+
+            # 分析运行时信息
+            for name, obj in module.__dict__.items():
+                if inspect.isclass(obj) and not name.startswith('_'):
+                    if name not in [c['name'] for c in analysis['classes']]:
+                        class_info = self._analyze_runtime_class(obj)
+                        analysis['classes'].append(class_info)
+                elif inspect.isfunction(obj) and not name.startswith('_'):
+                    if name not in [f['name'] for f in analysis['functions']]:
+                        func_info = self._analyze_runtime_function(obj)
+                        analysis['functions'].append(func_info)
+
+            print(f"✅ 发现 {len(analysis['classes'])} 个类, {len(analysis['functions'])} 个函数")
+            return analysis
+
+        except Exception as e:
+            print(f"❌ 分析模块失败: {e}")
+            return {}
+
+    def _analyze_class(self, node: ast.ClassDef, module) -> Dict[str, Any]:
+        """分析类定义"""
+        methods = []
+        properties = []
+        dependencies = set()
+
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef):
+                method_info = self._analyze_function(item)
+                methods.append(method_info)
+                # 分析方法依赖
+                for decorator in item.decorator_list:
+                    if isinstance(decorator, ast.Name):
+                        dependencies.add(decorator.id)
+
+        return {
+            'name': node.name,
+            'type': 'class',
+            'methods': methods,
+            'properties': properties,
+            'dependencies': list(dependencies),
+            'base_classes': [base.id if isinstance(base, ast.Name) else str(base) for base in node.bases]
+        }
+
+    def _analyze_function(self, node: ast.FunctionDef) -> Dict[str, Any]:
+        """分析函数定义"""
+        args = []
+        returns = None
+        dependencies = set()
+
+        # 分析参数
+        for arg in node.args.args:
+            args.append({
+                'name': arg.arg,
+                'type': None,  # 可以进一步分析类型注解
+                'default': None
+            })
+
+        # 分析返回类型
+        if node.returns:
+            if isinstance(node.returns, ast.Name):
+                returns = node.returns.id
+            else:
+                returns = 'complex_type'
+
+        # 分析函数体中的依赖
+        for sub_node in ast.walk(node):
+            if isinstance(sub_node, ast.Call):
+                if isinstance(sub_node.func, ast.Name):
+                    dependencies.add(sub_node.func.id)
+                elif isinstance(sub_node.func, ast.Attribute):
+                    dependencies.add(sub_node.func.attr)
+
+        return {
+            'name': node.name,
+            'type': 'function',
+            'args': args,
+            'returns': returns,
+            'dependencies': list(dependencies),
+            'is_async': isinstance(node, ast.AsyncFunctionDef),
+            'decorators': [d.id if isinstance(d, ast.Name) else str(d) for d in node.decorator_list if isinstance(d, ast.Name)]
+        }
+
+    def _analyze_runtime_class(self, cls) -> Dict[str, Any]:
+        """分析运行时类"""
+        methods = []
+        dependencies = set()
+
+        for name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
+            if not name.startswith('_'):
+                method_info = self._analyze_runtime_function(method)
+                method_info['name'] = name
+                methods.append(method_info)
+
+        return {
+            'name': cls.__name__,
+            'type': 'class',
+            'methods': methods,
+            'properties': [],
+            'dependencies': list(dependencies),
+            'base_classes': [base.__name__ for base in cls.__bases__]
+        }
+
+    def _analyze_runtime_function(self, func) -> Dict[str, Any]:
+        """分析运行时函数"""
+        try:
+            sig = inspect.signature(func)
+            args = []
+
+            for param_name, param in sig.parameters.items():
+                args.append({
+                    'name': param_name,
+                    'type': param.annotation if param.annotation != inspect.Parameter.empty else None,
+                    'default': param.default if param.default != inspect.Parameter.empty else None
+                })
+
+            return {
+                'name': func.__name__,
+                'type': 'function',
+                'args': args,
+                'returns': sig.return_annotation if sig.return_annotation != inspect.Signature.empty else None,
+                'dependencies': [],
+                'is_async': inspect.iscoroutinefunction(func),
+                'decorators': []
+            }
+        except Exception as e:
+            print(f"⚠️  分析函数失败: {func.__name__} - {e}")
+            return {
+                'name': func.__name__,
+                'type': 'function',
+                'args': [],
+                'returns': None,
+                'dependencies': [],
+                'is_async': False,
+                'decorators': []
+            }
+
+class ServiceTestGenerator:
+    """服务测试生成器"""
+
+    def __init__(self, project_root: Path):
+        self.project_root = project_root
+        self.src_dir = project_root / "src"
+        self.test_dir = project_root / "tests"
+
+    def generate_tests_for_service(self, analysis: Dict[str, Any], config: TestConfig) -> str:
+        """为服务生成测试"""
+        print(f"🧪 为服务 {analysis['module_name']} 生成测试...")
+
+        test_content = f'''"""
+自动生成的服务测试
+模块: {analysis['module_name']}
+生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+注意: 这是一个自动生成的测试文件，请根据实际业务逻辑进行调整和完善
+"""
+
+import pytest
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
+import asyncio
+from datetime import datetime, timedelta
+from typing import Any, Dict, List
+
+# 导入目标模块
+'''
+
+        # 添加导入语句
+        test_content += f"from {analysis['module_name']} import (\n"
+
+        # 导入类
+        for cls in analysis['classes']:
+            test_content += f"    {cls['name']},\n"
+
+        # 导入独立函数
+        for func in analysis['functions']:
+            test_content += f"    {func['name']},\n"
+
+        test_content += ")\n\n"
+
+        # 添加fixtures
+        if config.include_fixtures:
+            test_content += self._generate_fixtures(analysis)
+
+        # 为每个类生成测试
+        for cls in analysis['classes']:
+            test_content += self._generate_class_tests(cls, config)
+
+        # 为每个函数生成测试
+        for func in analysis['functions']:
+            test_content += self._generate_function_tests(func, config)
+
+        return test_content
+
+    def _generate_fixtures(self, analysis: Dict[str, Any]) -> str:
+        """生成测试fixtures"""
+        fixtures = '''
+@pytest.fixture
+def sample_data():
+    """示例数据fixture"""
+    return {
+        "id": 1,
+        "name": "test",
+        "created_at": datetime.now(),
+        "updated_at": datetime.now()
+    }
+
+@pytest.fixture
+def mock_repository():
+    """模拟仓库fixture"""
+    repo = Mock()
+    repo.get_by_id.return_value = Mock()
+    repo.get_all.return_value = []
+    repo.save.return_value = Mock()
+    repo.delete.return_value = True
+    return repo
+
+@pytest.fixture
+def mock_service():
+    """模拟服务fixture"""
+    service = Mock()
+    service.process.return_value = {"status": "success"}
+    service.validate.return_value = True
+    return service
+
+'''
+        return fixtures
+
+    def _generate_class_tests(self, cls: Dict[str, Any], config: TestConfig) -> str:
+        """为类生成测试"""
+        class_name = cls['name']
+        tests = f"""
+class Test{class_name}:
+    \"\"\"{class_name} 测试类\"\"\"
+
+    def setup_method(self):
+        \"\"\"每个测试方法前的设置\"\"\"
+        self.instance = {class_name}()
+
+    def teardown_method(self):
+        \"\"\"每个测试方法后的清理\"\"\"
+        pass
+
+    def test_init(self):
+        \"\"\"测试初始化\"\"\"
+        assert self.instance is not None
+        assert isinstance(self.instance, {class_name})
+
+"""
+
+        # 为每个方法生成测试
+        for method in cls['methods']:
+            tests += self._generate_method_tests(class_name, method, config)
+
+        return tests
+
+    def _generate_method_tests(self, class_name: str, method: Dict[str, Any], config: TestConfig) -> str:
+        """为方法生成测试"""
+        method_name = method['name']
+        tests = f"""
+    def test_{method_name}_basic(self):
+        \"\"\"测试 {method_name} 基本功能\"\"\"
+        # TODO: 实现具体的测试逻辑
+        result = self.instance.{method_name}()
+        assert result is not None
+
+"""
+
+        # 如果方法有参数，生成参数化测试
+        if method['args'] and len(method['args']) > 1:  # 排除self
+            tests += f"""
+    @pytest.mark.parametrize("test_input, expected", [
+        # TODO: 添加测试参数组合
+        (None, None),
+    ])
+    def test_{method_name}_parametrized(self, test_input, expected):
+        \"\"\"测试 {method_name} 参数化\"\"\"
+        # TODO: 实现参数化测试
+        if test_input is not None:
+            result = self.instance.{method_name}(test_input)
+            assert result == expected
+
+"""
+
+        # 如果是异步方法，生成异步测试
+        if method['is_async']:
+            tests = tests.replace("def test_", "async def test_")
+            tests = tests.replace("assert result is not None", "result = await result")
+
+        # 如果需要mock，生成mock测试
+        if config.include_mocks and method['dependencies']:
+            tests += f"""
+    @patch('object_to_mock')
+    def test_{method_name}_with_mock(self, mock_obj):
+        \"\"\"测试 {method_name} 使用mock\"\"\"
+        # TODO: 配置mock对象
+        mock_obj.return_value = "mocked_result"
+
+        result = self.instance.{method_name}()
+        assert result is not None
+        mock_obj.assert_called_once()
+
+"""
+
+        return tests
+
+    def _generate_function_tests(self, func: Dict[str, Any], config: TestConfig) -> str:
+        """为函数生成测试"""
+        func_name = func['name']
+        tests = f"""
+
+def test_{func_name}_basic():
+    \"\"\"测试 {func_name} 基本功能\"\"\"
+    # TODO: 实现具体的测试逻辑
+    from {func.get('module', 'src')} import {func_name}
+
+    result = {func_name}()
+    assert result is not None
+
+"""
+
+        # 如果函数有参数，生成参数化测试
+        if func['args'] and config.include_parametrized:
+            tests += f"""
+@pytest.mark.parametrize("test_input, expected", [
+    # TODO: 添加测试参数组合
+    (None, None),
+    ({{"key": "value"}}, {{"processed": True}}),
+])
+def test_{func_name}_parametrized(test_input, expected):
+    \"\"\"测试 {func_name} 参数化\"\"\"
+    from {func.get('module', 'src')} import {func_name}
+
+    result = {func_name}(test_input)
+    assert result == expected
+
+"""
+
+        # 如果是异步函数，生成异步测试
+        if func['is_async']:
+            tests = tests.replace("def test_", "async def test_")
+            tests = tests.replace("result = ", "result = await ")
+
+        # 如果需要mock，生成mock测试
+        if config.include_mocks and func['dependencies']:
+            tests += f"""
+@patch('dependency_to_mock')
+def test_{func_name}_with_mock(mock_obj):
+    \"\"\"测试 {func_name} 使用mock\"\"\"
+    from {func.get('module', 'src')} import {func_name}
+
+    # TODO: 配置mock对象
+    mock_obj.return_value = "mocked_value"
+
+    result = {func_name}()
+    assert result is not None
+    mock_obj.assert_called_once()
+
+"""
+
+        return tests
+
+class ServiceTestExecutor:
+    """服务测试执行器"""
+
+    def __init__(self, project_root: Path = None):
+        self.project_root = project_root or Path.cwd()
+        self.analyzer = ServiceAnalyzer(self.project_root)
+        self.generator = ServiceTestGenerator(self.project_root)
+
+    def discover_services(self) -> List[str]:
+        """发现服务模块"""
+        print("🔍 发现服务模块...")
+
+        services = []
+        src_dir = self.project_root / "src"
+
+        # 查找服务目录
+        service_dirs = [
+            "services",
+            "domain/services",
+            "business",
+            "core"
+        ]
+
+        for service_dir in service_dirs:
+            service_path = src_dir / service_dir
+            if service_path.exists():
+                for file_path in service_path.glob("*.py"):
+                    if file_path.name != "__init__.py":
+                        # 构建模块路径
+                        rel_path = file_path.relative_to(src_dir)
+                        module_name = str(rel_path.with_suffix("")).replace("/", ".")
+                        services.append(module_name)
+
+        # 查找其他可能的服务文件
+        for pattern in ["*_service.py", "*_service_impl.py", "service_*.py"]:
+            for file_path in src_dir.rglob(pattern):
+                rel_path = file_path.relative_to(src_dir)
+                module_name = str(rel_path.with_suffix("")).replace("/", ".")
+                if module_name not in services:
+                    services.append(module_name)
+
+        print(f"✅ 发现 {len(services)} 个服务模块")
+        return sorted(services)
+
+    def generate_tests_for_service(self, service_module: str) -> bool:
+        """为指定服务生成测试"""
+        print(f"🎯 为服务 {service_module} 生成测试...")
+
+        # 分析服务模块
+        analysis = self.analyzer.analyze_service_module(service_module)
+        if not analysis:
+            print(f"❌ 无法分析服务模块: {service_module}")
+            return False
+
+        # 创建测试配置
+        config = TestConfig(
+            target_module=service_module,
+            output_file=f"tests/unit/test_{service_module.replace('.', '_')}.py",
+            test_types=["unit", "integration"],
+            include_mocks=True,
+            include_fixtures=True,
+            include_parametrized=True
+        )
+
+        # 生成测试代码
+        test_content = self.generator.generate_tests_for_service(analysis, config)
+
+        # 保存测试文件
+        test_file = self.project_root / config.output_file
+        test_file.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            with open(test_file, 'w', encoding='utf-8') as f:
+                f.write(test_content)
+            print(f"✅ 测试文件已生成: {test_file}")
+            return True
+        except Exception as e:
+            print(f"❌ 保存测试文件失败: {e}")
+            return False
+
+    def generate_all_service_tests(self) -> Dict[str, bool]:
+        """为所有服务生成测试"""
+        print("🚀 开始为所有服务生成测试")
+        print("=" * 50)
+
+        services = self.discover_services()
+        results = {}
+
+        for service in services:
+            print(f"\n📋 处理服务: {service}")
+            success = self.generate_tests_for_service(service)
+            results[service] = success
+
+        # 生成报告
+        self._generate_generation_report(results)
+
+        return results
+
+    def _generate_generation_report(self, results: Dict[str, bool]):
+        """生成测试生成报告"""
+        total_services = len(results)
+        successful_services = sum(1 for success in results.values() if success)
+        failed_services = total_services - successful_services
+
+        report = f"""# 服务测试生成报告
+
+**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**总服务数**: {total_services}
+**成功生成**: {successful_services}
+**生成失败**: {failed_services}
+**成功率**: {(successful_services / total_services * 100):.1f}%
+
+## 📊 详细结果
+
+### ✅ 成功生成的服务
+"""
+
+        for service, success in results.items():
+            if success:
+                report += f"- {service}\n"
+
+        if failed_services > 0:
+            report += "\n### ❌ 生成失败的服务\n"
+            for service, success in results.items():
+                if not success:
+                    report += f"- {service}\n"
+
+        report += f"""
+## 🚀 下一步行动
+
+1. **检查生成的测试**: 查看生成的测试文件，根据实际业务逻辑调整
+2. **完善测试逻辑**: 补充TODO标记的测试实现
+3. **运行测试验证**: 执行生成的测试确保可正常运行
+4. **集成到CI/CD**: 将测试集成到持续集成流程
+
+## 📁 生成的测试文件
+
+"""
+
+        for service, success in results.items():
+            if success:
+                test_file = f"tests/unit/test_{service.replace('.', '_')}.py"
+                report += f"- `{test_file}`\n"
+
+        # 保存报告
+        report_dir = self.project_root / "reports"
+        report_dir.mkdir(exist_ok=True)
+        report_file = report_dir / f"service_test_generation_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(report)
+
+        print(f"\n📄 生成报告已保存: {report_file}")
 
 def create_prediction_service_test():
     """创建预测服务测试"""
@@ -485,8 +1064,7 @@ class TestSystemMonitor:
     def test_health_check(self, monitor):
         """测试健康检查"""
         # 设置模拟返回
-        with patch('monitor.database_check') as mock_db, \
-             patch('monitor.redis_check') as mock_redis:
+        with patch('monitor.database_check') as mock_db,              patch('monitor.redis_check') as mock_redis:
             mock_db.return_value = {"status": "healthy", "response_time": 10}
             mock_redis.return_value = {"status": "healthy", "response_time": 5}
 
@@ -583,8 +1161,7 @@ class TestSystemMonitor:
     def test_generate_monitoring_report(self, monitor):
         """测试生成监控报告"""
         # 设置模拟数据
-        with patch.object(monitor, 'get_system_metrics') as mock_metrics, \
-             patch.object(monitor, 'check_health') as mock_health:
+        with patch.object(monitor, 'get_system_metrics') as mock_metrics,              patch.object(monitor, 'check_health') as mock_health:
             mock_metrics.return_value = {"cpu": 50, "memory": 60}
             mock_health.return_value = {"status": "healthy"}
 
@@ -700,9 +1277,7 @@ class TestMetricsCollector:
 
     def test_collect_all_metrics(self, collector):
         """测试收集所有指标"""
-        with patch.object(collector, 'collect_cpu_usage', return_value=50), \
-             patch.object(collector, 'collect_memory_usage', return_value=60), \
-             patch.object(collector, 'collect_disk_usage', return_value=30):
+        with patch.object(collector, 'collect_cpu_usage', return_value=50),              patch.object(collector, 'collect_memory_usage', return_value=60),              patch.object(collector, 'collect_disk_usage', return_value=30):
 
             # 调用方法
             metrics = collector.collect_all()
@@ -720,268 +1295,8 @@ class TestMetricsCollector:
     print(f"✅ 创建文件: {file_path}")
 
 
-def create_audit_service_test():
-    """创建审计服务测试"""
-    content = '''"""审计服务测试"""
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from datetime import datetime
-from src.services.audit_service import AuditService
-
-class TestAuditService:
-    """审计服务测试"""
-
-    @pytest.fixture
-    def mock_repository(self):
-        """模拟审计仓库"""
-        return Mock()
-
-    @pytest.fixture
-    def mock_logger(self):
-        """模拟日志记录器"""
-        return Mock()
-
-    @pytest.fixture
-    def service(self, mock_repository, mock_logger):
-        """创建审计服务"""
-        return AuditService(
-            repository=mock_repository,
-            logger=mock_logger
-        )
-
-    def test_log_user_action(self, service, mock_repository, mock_logger):
-        """测试记录用户操作"""
-        # 准备测试数据
-        user_id = 123
-        action = "create_prediction"
-        details = {
-            "match_id": 456,
-            "prediction": "home_win"
-        }
-
-        # 设置模拟返回
-        mock_repository.save_audit_log.return_value = True
-
-        # 调用方法
-        result = service.log_user_action(user_id, action, details)
-
-        # 验证
-        assert result is True
-        mock_repository.save_audit_log.assert_called_once()
-        mock_logger.info.assert_called_once()
-
-    def test_log_system_event(self, service, mock_repository):
-        """测试记录系统事件"""
-        # 准备测试数据
-        event_type = "model_training"
-        details = {
-            "model_version": "v1.0.0",
-            "accuracy": 0.85,
-            "duration": 3600
-        }
-
-        # 调用方法
-        result = service.log_system_event(event_type, details)
-
-        # 验证
-        assert result is True
-        mock_repository.save_audit_log.assert_called_once()
-
-    def test_log_api_access(self, service, mock_repository):
-        """测试记录API访问"""
-        # 准备测试数据
-        request_data = {
-            "endpoint": "/api/predictions",
-            "method": "POST",
-            "user_id": 123,
-            "ip_address": "192.168.1.1",
-            "status_code": 200,
-            "response_time": 150
-        }
-
-        # 调用方法
-        result = service.log_api_access(request_data)
-
-        # 验证
-        assert result is True
-        mock_repository.save_audit_log.assert_called_once()
-
-    def test_log_data_access(self, service, mock_repository):
-        """测试记录数据访问"""
-        # 准备测试数据
-        access_data = {
-            "table": "matches",
-            "operation": "SELECT",
-            "user_id": 123,
-            "query": "SELECT * FROM matches WHERE date > '2024-01-01'",
-            "records_affected": 50
-        }
-
-        # 调用方法
-        result = service.log_data_access(access_data)
-
-        # 验证
-        assert result is True
-        mock_repository.save_audit_log.assert_called_once()
-
-    def test_log_security_event(self, service, mock_repository):
-        """测试记录安全事件"""
-        # 准备测试数据
-        security_data = {
-            "event_type": "failed_login",
-            "user_id": 123,
-            "ip_address": "192.168.1.1",
-            "details": "Invalid password attempt"
-        }
-
-        # 调用方法
-        result = service.log_security_event(security_data)
-
-        # 验证
-        assert result is True
-        mock_repository.save_audit_log.assert_called_once()
-
-    def test_get_user_activity(self, service, mock_repository):
-        """测试获取用户活动"""
-        # 准备测试数据
-        user_id = 123
-        start_date = datetime(2024, 1, 1)
-        end_date = datetime(2024, 1, 31)
-
-        # 设置模拟返回
-        mock_activities = [
-            {
-                "id": 1,
-                "user_id": user_id,
-                "action": "login",
-                "timestamp": datetime(2024, 1, 15, 10, 0)
-            },
-            {
-                "id": 2,
-                "user_id": user_id,
-                "action": "create_prediction",
-                "timestamp": datetime(2024, 1, 15, 11, 0)
-            }
-        ]
-        mock_repository.get_user_activities.return_value = mock_activities
-
-        # 调用方法
-        activities = service.get_user_activity(user_id, start_date, end_date)
-
-        # 验证
-        assert len(activities) == 2
-        assert all(a["user_id"] == user_id for a in activities)
-
-    def test_generate_audit_report(self, service, mock_repository):
-        """测试生成审计报告"""
-        # 准备测试数据
-        start_date = datetime(2024, 1, 1)
-        end_date = datetime(2024, 1, 31)
-
-        # 设置模拟返回
-        mock_repository.get_audit_summary.return_value = {
-            "total_actions": 1000,
-            "user_actions": 800,
-            "system_events": 150,
-            "api_accesses": 400,
-            "security_events": 5
-        }
-
-        # 调用方法
-        report = service.generate_audit_report(start_date, end_date)
-
-        # 验证
-        assert "summary" in report
-        assert "period" in report
-        assert report["summary"]["total_actions"] == 1000
-
-    def test_check_compliance(self, service, mock_repository):
-        """测试合规性检查"""
-        # 设置模拟返回
-        mock_repository.get_failed_logins.return_value = 10
-        mock_repository.get_unauthorized_access.return_value = 2
-
-        # 调用方法
-        compliance = service.check_compliance()
-
-        # 验证
-        assert "failed_login_count" in compliance
-        assert "unauthorized_access_count" in compliance
-        assert compliance["failed_login_count"] == 10
-
-    def test_anonymize_sensitive_data(self, service):
-        """测试敏感数据匿名化"""
-        # 准备包含敏感信息的数据
-        data = {
-            "user_id": 123,
-            "email": "user@example.com",
-            "ip_address": "192.168.1.1",
-            "credit_card": "4111-1111-1111-1111"
-        }
-
-        # 调用方法
-        anonymized = service.anonymize_sensitive_data(data)
-
-        # 验证
-        assert anonymized["user_id"] == 123  # 非敏感数据保留
-        assert "@" in anonymized["email"]  # 邮箱部分保留
-        assert anonymized["credit_card"] == "****-****-****-1111"  # 信用卡匿名化
-
-    def test_archive_old_logs(self, service, mock_repository):
-        """测试归档旧日志"""
-        # 准备测试数据
-        days_threshold = 90
-
-        # 设置模拟返回
-        mock_repository.archive_logs.return_value = 1000  # 归档了1000条记录
-
-        # 调用方法
-        archived_count = service.archive_old_logs(days_threshold)
-
-        # 验证
-        assert archived_count == 1000
-        mock_repository.archive_logs.assert_called_once()
-
-    def test_export_audit_logs(self, service, mock_repository):
-        """测试导出审计日志"""
-        # 准备测试数据
-        start_date = datetime(2024, 1, 1)
-        end_date = datetime(2024, 1, 31)
-        format_type = "csv"
-
-        # 设置模拟返回
-        mock_logs = [
-            {
-                "id": 1,
-                "action": "login",
-                "user_id": 123,
-                "timestamp": datetime(2024, 1, 15)
-            },
-            {
-                "id": 2,
-                "action": "logout",
-                "user_id": 123,
-                "timestamp": datetime(2024, 1, 15)
-            }
-        ]
-        mock_repository.get_logs_for_export.return_value = mock_logs
-
-        # 调用方法
-        export_data = service.export_audit_logs(start_date, end_date, format_type)
-
-        # 验证
-        assert len(export_data) == 2
-        assert export_data[0]["action"] == "login"
-'''
-
-    file_path = Path("tests/unit/services/test_audit_service_new.py")
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    file_path.write_text(content)
-    print(f"✅ 创建文件: {file_path}")
-
-
 def main():
-    """创建所有服务层测试文件"""
+    """主函数"""
     print("🚀 开始创建服务层测试文件...")
 
     # 创建服务测试目录
@@ -992,15 +1307,16 @@ def main():
     create_prediction_service_test()
     create_data_processing_service_test()
     create_monitoring_service_test()
-    create_audit_service_test()
 
-    print("\n✅ 已创建4个服务层测试文件!")
-    print("\n📝 测试文件列表:")
-    for file in service_test_dir.glob("test_*.py"):
-        print(f"   - {file}")
+    # 使用自动化生成器
+    executor = ServiceTestExecutor()
+    results = executor.generate_all_service_tests()
+
+    print(f"\n✅ 已创建服务测试文件!")
+    print(f"\n📝 自动生成结果: {sum(1 for success in results.values() if success)}/{len(results)}")
 
     print("\n🏃 运行测试:")
-    print("   make test-unit")
+    print("   make test.unit")
 
 
 if __name__ == "__main__":

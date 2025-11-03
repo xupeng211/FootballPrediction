@@ -349,4 +349,4 @@ def truncate_string(text: str, max_length: int, suffix: str = "...") -> str:
     """截断字符串"""
     if not text or len(text) <= max_length:
         return text
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix

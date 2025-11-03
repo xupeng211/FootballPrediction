@@ -11,10 +11,10 @@ class SRSCompliantModelTrainer:
 
     # SRS目标要求
     SRS_TARGETS = {
-        'min_accuracy': 0.65,  # 最低准确率65%
-        'min_auc': 0.70,       # 最低AUC 0.70
-        'min_features': 10,    # 最少特征数量
-        'max_training_time': 300  # 最大训练时间(秒)
+        "min_accuracy": 0.65,  # 最低准确率65%
+        "min_auc": 0.70,  # 最低AUC 0.70
+        "min_features": 10,  # 最少特征数量
+        "max_training_time": 300,  # 最大训练时间(秒)
     }
 
     def __init__(self):

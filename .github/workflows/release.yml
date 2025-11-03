@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run tests
+        run: make test
+
+      - name: Build package
+        run: python -m build
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Build Docker image
+        run: |
+          docker build -t football-prediction:${{ github.ref_name }} .
+          docker tag football-prediction:${{ github.ref_name }} football-prediction:latest
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploy to staging environment"
+          # 这里添加部署到测试环境的命令

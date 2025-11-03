@@ -89,8 +89,8 @@ app.add_middleware(
     track_memory=True,
     track_concurrency=True,
     sample_rate=1.0,
-    slow_request_threshold=500.0,
-    enable_auto_optimization=True
+    slow_request_threshold=500.0,  # TODO: 将魔法数字 500 提取为常量
+    enable_auto_optimization=True,
 )
 
 # 添加中间件

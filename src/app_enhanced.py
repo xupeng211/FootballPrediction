@@ -14,14 +14,15 @@ import asyncpg
 # 数据库配置
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging"  # TODO: 将魔法数字 5433 提取为常量
+    "postgresql://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",  # TODO: 将魔法数字 5433 提取为常量
 )
 
 # Redis 配置
 REDIS_URL = os.getenv(
     "REDIS_URL",
-    "redis://:minimal_redis_password_2024@localhost:6379/0"  # TODO: 将魔法数字 6379 提取为常量
+    "redis://:minimal_redis_password_2024@localhost:6379/0",  # TODO: 将魔法数字 6379 提取为常量
 )
+
 
 # 简单的数据模型
 class HealthResponse(BaseModel):
@@ -30,6 +31,7 @@ class HealthResponse(BaseModel):
     database: str
     redis: str
 
+
 class PredictionResponse(BaseModel):
     id: int
     match_id: int
@@ -37,8 +39,10 @@ class PredictionResponse(BaseModel):
     confidence: float
     created_at: str
 
+
 # 数据库连接池
 db_pool = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,11 +53,7 @@ async def lifespan(app: FastAPI):
 
     # 初始化数据库连接池
     try:
-        db_pool = await asyncpg.create_pool(
-            DATABASE_URL,
-            min_size=2,
-            max_size=10
-        )
+        db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
         print("✅ Database connection pool created")
 
         # 创建基础表结构
@@ -74,6 +74,7 @@ async def lifespan(app: FastAPI):
         print("🔄 Database connections closed")
 
     print("✅ Shutdown complete")
+
 
 async def create_tables():
     """创建基础表结构"""
@@ -102,11 +103,15 @@ async def create_tables():
             )
         """)
 
+
 async def get_db_connection():
     """获取数据库连接"""
     if not db_pool:
-        raise HTTPException(status_code=503, detail="Database not available")  # TODO: 将魔法数字 503 提取为常量
+        raise HTTPException(
+            status_code=503, detail="Database not available"
+        )  # TODO: 将魔法数字 503 提取为常量
     return db_pool
+
 
 # 创建 FastAPI 应用
 app = FastAPI(
@@ -116,6 +121,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 @app.get("/")
 async def root():
     """根端点"""
@@ -123,8 +129,9 @@ async def root():
         "message": "Football Prediction API - Enhanced",
         "version": "2.1.0",
         "status": "healthy",
-        "features": ["database", "redis", "predictions"]
+        "features": ["database", "redis", "predictions"],
     }
+
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -135,17 +142,17 @@ async def health_check():
     redis_status = "connected"  # 这里可以添加实际的 Redis 检查
 
     return HealthResponse(
-        status="healthy",
-        version="2.1.0",
-        database=db_status,
-        redis=redis_status
+        status="healthy", version="2.1.0", database=db_status, redis=redis_status
     )
+
 
 @app.get("/predictions", response_model=List[PredictionResponse])
 async def get_predictions():
     """获取所有预测"""
     if not db_pool:
-        raise HTTPException(status_code=503, detail="Database not available")  # TODO: 将魔法数字 503 提取为常量
+        raise HTTPException(
+            status_code=503, detail="Database not available"
+        )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         rows = await conn.fetch(
@@ -158,19 +165,24 @@ async def get_predictions():
                 match_id=row["match_id"],
                 predicted_winner=row["predicted_winner"],
                 confidence=row["confidence"],
-                created_at=row["created_at"].isoformat()
+                created_at=row["created_at"].isoformat(),
             )
             for row in rows
         ]
+
 
 @app.post("/predictions", response_model=PredictionResponse)
 async def create_prediction(match_id: int, predicted_winner: str, confidence: float):
     """创建新预测"""
     if not db_pool:
-        raise HTTPException(status_code=503, detail="Database not available")  # TODO: 将魔法数字 503 提取为常量
+        raise HTTPException(
+            status_code=503, detail="Database not available"
+        )  # TODO: 将魔法数字 503 提取为常量
 
     if confidence < 0 or confidence > 1:
-        raise HTTPException(status_code=400, detail="Confidence must be between 0 and 1")  # TODO: 将魔法数字 400 提取为常量
+        raise HTTPException(
+            status_code=400, detail="Confidence must be between 0 and 1"
+        )  # TODO: 将魔法数字 400 提取为常量
 
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -179,7 +191,9 @@ async def create_prediction(match_id: int, predicted_winner: str, confidence: fl
             VALUES ($1, $2, $3)
             RETURNING id, match_id, predicted_winner, confidence, created_at
             """,
-            match_id, predicted_winner, confidence
+            match_id,
+            predicted_winner,
+            confidence,
         )
 
         return PredictionResponse(
@@ -187,51 +201,61 @@ async def create_prediction(match_id: int, predicted_winner: str, confidence: fl
             match_id=row["match_id"],
             predicted_winner=row["predicted_winner"],
             confidence=row["confidence"],
-            created_at=row["created_at"].isoformat()
+            created_at=row["created_at"].isoformat(),
         )
+
 
 @app.get("/predictions/{prediction_id}", response_model=PredictionResponse)
 async def get_prediction(prediction_id: int):
     """获取特定预测"""
     if not db_pool:
-        raise HTTPException(status_code=503, detail="Database not available")  # TODO: 将魔法数字 503 提取为常量
+        raise HTTPException(
+            status_code=503, detail="Database not available"
+        )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT * FROM predictions WHERE id = $1",
-            prediction_id
+            "SELECT * FROM predictions WHERE id = $1", prediction_id
         )
 
         if not row:
-            raise HTTPException(status_code=404, detail="Prediction not found")  # TODO: 将魔法数字 404 提取为常量
+            raise HTTPException(
+                status_code=404, detail="Prediction not found"
+            )  # TODO: 将魔法数字 404 提取为常量
 
         return PredictionResponse(
             id=row["id"],
             match_id=row["match_id"],
             predicted_winner=row["predicted_winner"],
             confidence=row["confidence"],
-            created_at=row["created_at"].isoformat()
+            created_at=row["created_at"].isoformat(),
         )
+
 
 @app.delete("/predictions/{prediction_id}")
 async def delete_prediction(prediction_id: int):
     """删除预测"""
     if not db_pool:
-        raise HTTPException(status_code=503, detail="Database not available")  # TODO: 将魔法数字 503 提取为常量
+        raise HTTPException(
+            status_code=503, detail="Database not available"
+        )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         result = await conn.execute(
-            "DELETE FROM predictions WHERE id = $1",
-            prediction_id
+            "DELETE FROM predictions WHERE id = $1", prediction_id
         )
 
         if result == "DELETE 0":
-            raise HTTPException(status_code=404, detail="Prediction not found")  # TODO: 将魔法数字 404 提取为常量
+            raise HTTPException(
+                status_code=404, detail="Prediction not found"
+            )  # TODO: 将魔法数字 404 提取为常量
 
         return {"message": "Prediction deleted successfully"}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app_enhanced:app",
         host="0.0.0.0",

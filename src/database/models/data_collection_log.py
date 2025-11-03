@@ -21,7 +21,6 @@ from sqlalchemy import Enum
 from sqlalchemy.orm import validates
 
 
-
 class CollectionStatus(Enum):
     """采集状态枚举"""
 

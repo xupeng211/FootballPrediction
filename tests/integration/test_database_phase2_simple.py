@@ -53,7 +53,7 @@ class TestDatabaseSimplePhase2:
         """测试DatabaseRole枚举"""
         assert DatabaseRole.READER.value == "reader"
         assert DatabaseRole.WRITER.value == "writer"
-        assert DatabaseRole.ADMIN.value    == "admin"
+        assert DatabaseRole.ADMIN.value     == "admin"
 
         # 测试枚举成员
         assert len(DatabaseRole) == 3
@@ -82,7 +82,7 @@ class TestDatabaseSimplePhase2:
         assert hasattr(Match, "__tablename__")
         assert hasattr(Predictions, "__tablename__")
 
-        assert League.__tablename__    == "leagues"
+        assert League.__tablename__     == "leagues"
 
     def test_database_manager_methods(self):
         """测试DatabaseManager方法存在"""
@@ -124,7 +124,7 @@ class TestDatabaseSimplePhase2:
         assert models is not None
 
 
-def test_all_database_simple_functionality(, client, client, client):
+def test_all_database_simple_functionality(, client, client, client, client):
     """测试所有database简化功能的综合测试"""
 
     # 测试核心组件
