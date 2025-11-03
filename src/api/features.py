@@ -7,13 +7,12 @@
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.dependencies import get_async_db
 from src.database.models import Match
 from src.features.feature_store import FootballFeatureStore
 

@@ -9,14 +9,11 @@ from sqlalchemy import (
     String,
     DateTime,
     Text,
-    ForeignKey,
     Boolean,
     JSON,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 from datetime import datetime
-from typing import Optional
 
 Base = declarative_base()
 

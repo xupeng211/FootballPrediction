@@ -9,6 +9,10 @@ class FootballPredictionError(Exception):
     """足球预测系统基础异常类"""
 
 
+# 别名，保持向后兼容
+FootballPredictionException = FootballPredictionError
+
+
 class ConfigError(FootballPredictionError):
     """配置相关异常"""
 
@@ -127,3 +131,9 @@ class AdapterError(FootballPredictionError):
 
 class StreamingError(FootballPredictionError):
     """流式处理相关异常"""
+
+
+# 添加别名以兼容测试文件
+DataValidationError = ValidationError
+ConfigurationError = ConfigError
+ServiceUnavailableError = ServiceError

@@ -3,7 +3,6 @@
 Data Sync Service for Football-Data.org API
 """
 
-import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
@@ -11,7 +10,7 @@ import os
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, delete
 
 from src.collectors.match_collector import MatchCollector
 from src.models.external.match import ExternalMatch

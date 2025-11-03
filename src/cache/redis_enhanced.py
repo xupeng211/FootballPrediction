@@ -8,8 +8,7 @@ Enhanced Redis Cache Manager
 import asyncio
 import json
 import pickle
-import time
-from typing import Any, Dict, List, Optional, Union, Callable
+from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
 import logging
 

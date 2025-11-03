@@ -1,5 +1,5 @@
 # 简化版模块: confluent_kafka
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from datetime import datetime
 
 

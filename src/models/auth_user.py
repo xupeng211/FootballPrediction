@@ -7,7 +7,6 @@ Authentication User Database Model
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Index
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 
 from src.database.base import Base
 

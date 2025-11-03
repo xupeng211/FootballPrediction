@@ -1,8 +1,0 @@
-{
-  "dependency_check": true,
-  "syntax_check": false,
-  "quality_check": false,
-  "test_check": false,
-  "docker_check": false,
-  "overall_status": false
-}

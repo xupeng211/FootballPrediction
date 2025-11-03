@@ -124,7 +124,7 @@ class TestCacheIntegration:
         cache_config = {"host": "localhost", "port": 6379, "db": 0}
 
         assert isinstance(cache_config, dict)
-        assert cache_config["port"] == 6379
+        assert cache_config["port"]    == 6379
 
 
 class TestExternalServicesIntegration:
@@ -151,7 +151,7 @@ class TestExternalServicesIntegration:
 
         assert isinstance(client_config, dict)
         assert "base_url" in client_config
-        assert client_config["timeout"] == 30
+        assert client_config["timeout"]    == 30
 
 
 class TestLoggingIntegration:
@@ -168,7 +168,7 @@ class TestLoggingIntegration:
 
         # 测试日志级别
         logger.setLevel(logging.INFO)
-        assert logger.level == logging.INFO
+        assert logger.level    == logging.INFO
 
     @pytest.mark.integration
     def test_log_formatting(self):

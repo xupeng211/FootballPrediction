@@ -9,7 +9,6 @@ Provides in-memory cache with time-to-live functionality.
 import time
 import threading
 from typing import Any, Dict, List, Optional, Tuple
-from collections import OrderedDict
 import logging
 
 logger = logging.getLogger(__name__)

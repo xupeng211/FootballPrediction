@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import pickle
 import os
-import math
 
 from .base_model import BaseModel, PredictionResult, TrainingResult
 

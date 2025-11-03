@@ -5,11 +5,10 @@ Redis Cache Manager
 实现Redis连接池、基础操作方法，支持异步和同步两种模式，以及集群、哨兵等高级特性。
 """
 
-from typing import Optional, Dict, List, Any, Union
 import logging
 
-from .redis_enhanced import EnhancedRedisManager, RedisConfig, get_redis_manager
-from .mock_redis import MockRedisManager, CacheKeyManager
+from .redis_enhanced import EnhancedRedisManager, get_redis_manager
+from .mock_redis import CacheKeyManager
 
 logger = logging.getLogger(__name__)
 

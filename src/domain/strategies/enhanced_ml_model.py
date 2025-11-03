@@ -6,17 +6,14 @@ Phase G Week 4 P2任务:智能预测增强
 专注于性能优化和预测准确性提升.
 """
 
-import asyncio
-import json
 import logging
 import time
 import numpy as np
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from functools import lru_cache
 
-from src.domain.models.prediction import Prediction
 from src.domain.strategies.base import (
     PredictionInput,
     PredictionOutput,
@@ -303,7 +300,6 @@ class EnhancedMLModelStrategy(PredictionStrategy):
         try:
             # 这里可以加载多个预训练模型
             # 模拟模型加载过程
-            import joblib
 
             # 模拟加载不同的模型文件
             model_files = [
@@ -332,7 +328,6 @@ class EnhancedMLModelStrategy(PredictionStrategy):
 
     def _create_simple_models(self) -> None:
         """创建简单的后备模型"""
-        from sklearn.linear_model import LogisticRegression
         from sklearn.preprocessing import StandardScaler
         from sklearn.ensemble import RandomForestClassifier
 

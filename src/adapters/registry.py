@@ -19,6 +19,9 @@ except ImportError:
 class AdapterRegistry:
     """适配器注册表"""
 
+# 全局注册表实例
+# 全局注册表实例
+# 全局注册表实例
     def __init__(self, factory=None):
         """初始化适配器注册表"""
         self.factory = factory or self._create_default_factory()
@@ -35,6 +38,7 @@ class AdapterRegistry:
             return None
 
     def register(
+        """TODO: 添加函数文档"""
         self, name: str, adapter: Adapter, group: Optional[str] = None
     ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """注册适配器"""
@@ -59,6 +63,7 @@ class AdapterRegistry:
         return list(self.adapters.keys())
 
     def unregister(
+        """TODO: 添加函数文档"""
         self, name: str
     ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """注销适配器"""
@@ -70,6 +75,7 @@ class AdapterRegistry:
             self.groups[group_name] = [a for a in adapters if name not in str(type(a))]
 
     def clear(
+        """TODO: 添加函数文档"""
         self,
     ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """清空注册表"""

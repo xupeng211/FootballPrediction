@@ -5,9 +5,8 @@
 Betting Service - Rewritten Version
 """
 
-import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from dataclasses import dataclass

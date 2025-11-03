@@ -226,3 +226,68 @@ class DictUtils:
     def filter_keys(d: Dict[str, Any], filter_func) -> Dict[str, Any]:
         """根据过滤函数筛选键值对"""
         return {k: v for k, v in d.items() if filter_func(k)}
+
+
+# 顶级函数，用于直接导入
+def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+    """深度合并字典 - 递归合并嵌套字典,dict2的值会覆盖dict1中的同名键"""
+    return DictUtils.deep_merge(dict1, dict2)
+
+
+def merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+    """浅度合并字典 - dict2的值会覆盖dict1中的同名键"""
+    return DictUtils.merge(dict1, dict2)
+
+
+def deep_clone(d: Dict[str, Any]) -> Dict[str, Any]:
+    """深度克隆字典"""
+    return DictUtils.deep_clone(d)
+
+
+def get(d: Dict[str, Any], key: str, default: Any = None) -> Any:
+    """获取字典值，支持默认值"""
+    return DictUtils.get(d, key, default)
+
+
+def has_key(d: Dict[str, Any], key: str) -> bool:
+    """检查字典是否包含指定键"""
+    return DictUtils.has_key(d, key)
+
+
+def get_nested_value(d: Dict[str, Any], key_path: str, default: Any = None) -> Any:
+    """获取嵌套字典中的值"""
+    keys = key_path.split('.')
+    current = d
+    try:
+        for key in keys:
+            current = current[key]
+        return current
+    except (KeyError, TypeError):
+        return default
+
+
+def set_nested_value(d: Dict[str, Any], key_path: str, value: Any) -> Dict[str, Any]:
+    """设置嵌套字典中的值"""
+    keys = key_path.split('.')
+    current = d
+    for key in keys[:-1]:
+        if key not in current:
+            current[key] = {}
+        current = current[key]
+    current[keys[-1]] = value
+    return d
+
+
+def flatten_dict(d: Dict[str, Any], separator: str = '.') -> Dict[str, Any]:
+    """扁平化嵌套字典"""
+    def _flatten(obj, parent_key='', sep='.'):
+        items = []
+        for k, v in obj.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else str(k)
+            if isinstance(v, dict):
+                items.extend(_flatten(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
+
+    return _flatten(d, separator=separator)
