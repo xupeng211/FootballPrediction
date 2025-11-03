@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 
-def test_domain_models(client, client):
+def test_domain_models(client, client, client, client, client, client):
     """测试领域模型基本功能"""
     print("🧪 测试领域模型...")
 
@@ -48,7 +48,7 @@ def test_domain_models(client, client):
         return False
 
 
-def test_prediction_logic(client, client):
+def test_prediction_logic(client, client, client, client, client, client):
     """测试预测逻辑"""
     print("🧪 测试预测逻辑...")
 
@@ -73,7 +73,7 @@ def test_prediction_logic(client, client):
         return False
 
 
-def test_api_models(client, client):
+def test_api_models(client, client, client, client, client, client):
     """测试API数据模型"""
     print("🧪 测试API数据模型...")
 
@@ -91,7 +91,7 @@ def test_api_models(client, client):
         return False
 
 
-def test_utils_functionality(client, client):
+def test_utils_functionality(client, client, client, client, client, client):
     """测试工具函数"""
     print("🧪 测试工具函数...")
 

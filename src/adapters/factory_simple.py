@@ -43,6 +43,22 @@ class AdapterNames:
 # TODO: 方法 def create_adapter 过长(33行)，建议拆分
 # 预定义的适配器名称
 ) -> Adapter:
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# 预定义的适配器名称
+) -> Adapter:
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# 预定义的适配器名称
+) -> Adapter:
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# 预定义的适配器名称
+) -> Adapter:
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# TODO: 方法 def create_adapter 过长(33行)，建议拆分
+# 预定义的适配器名称
+) -> Adapter:
     def __init__(self):
         """初始化适配器工厂"""
         self.adapters = {}
