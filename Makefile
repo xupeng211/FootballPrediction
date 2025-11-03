@@ -201,6 +201,62 @@ coverage-unit: ## Test: Unit test coverage only
 	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
 
 # ============================================================================
+# 🔧 M2测试工具链 (Issue #214)
+# ============================================================================
+test-enhanced-coverage: ## M2: Run enhanced coverage analysis with detailed reporting (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚀 运行增强覆盖率分析...$(RESET)" && \
+	$(PYTHON) scripts/enhanced_coverage_analysis.py --test-pattern "tests/unit" && \
+	echo "$(GREEN)✅ 增强覆盖率分析完成$(RESET)"
+
+test-enhanced-full: ## M2: Run enhanced analysis with full test suite (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚀 运行完整增强测试分析...$(RESET)" && \
+	$(PYTHON) scripts/enhanced_coverage_analysis.py && \
+	echo "$(GREEN)✅ 完整增强分析完成$(RESET)"
+
+test-report-generate: ## M2: Generate comprehensive test report in multiple formats (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📊 生成综合测试报告...$(RESET)" && \
+	$(PYTHON) scripts/generate_test_report.py --format all && \
+	echo "$(GREEN)✅ 测试报告生成完成$(RESET)"
+
+test-report-html: ## M2: Generate HTML test report (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🌐 生成HTML测试报告...$(RESET)" && \
+	$(PYTHON) scripts/generate_test_report.py --format html && \
+	echo "$(GREEN)✅ HTML报告生成完成$(RESET)"
+
+test-ci-integration: ## M2: Run CI/CD test integration (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚀 运行CI/CD测试集成...$(RESET)" && \
+	$(PYTHON) scripts/ci_test_integration.py --test && \
+	echo "$(GREEN)✅ CI集成验证完成$(RESET)"
+
+test-ci-full: ## M2: Run complete CI pipeline (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚀 运行完整CI流水线...$(RESET)" && \
+	$(PYTHON) scripts/ci_test_integration.py && \
+	echo "$(GREEN)✅ CI流水线完成$(RESET)"
+
+test-m2-toolchain: ## M2: Complete M2 toolchain test (coverage + report + CI) (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🚀 执行M2完整工具链测试...$(RESET)" && \
+	echo "$(BLUE)步骤1: 增强覆盖率分析$(RESET)" && \
+	$(PYTHON) scripts/enhanced_coverage_analysis.py --test-pattern "tests/unit" && \
+	echo "$(BLUE)步骤2: 生成测试报告$(RESET)" && \
+	$(PYTHON) scripts/generate_test_report.py --format markdown && \
+	echo "$(BLUE)步骤3: CI集成验证$(RESET)" && \
+	$(PYTHON) scripts/ci_test_integration.py --test && \
+	echo "$(GREEN)✅ M2工具链测试完成$(RESET)"
+
+test-coverage-monitor: ## M2: Monitor coverage trends and generate dashboard (Issue #214)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📈 监控覆盖率趋势...$(RESET)" && \
+	$(PYTHON) scripts/coverage_dashboard.py && \
+	echo "$(GREEN)✅ 覆盖率监控完成$(RESET)"
+
+# ============================================================================
 # 🚨 测试覆盖率危机解决方案
 # ============================================================================
 test-crisis-fix: ## Test: Fix test collection errors and import conflicts (P0 Priority)
