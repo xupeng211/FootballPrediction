@@ -17,6 +17,7 @@ class TestModuleFunctionality:
 
     def test_module_import(self):
         """测试模块导入"""
+        module_name = "core.service_lifecycle"
         try:
             exec(f"import {module_name}")
             assert True

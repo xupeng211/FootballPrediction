@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **核心特性：**
 - 🏗️ **现代架构**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL全异步架构
 - 🎯 **设计模式**: DDD分层架构 + CQRS模式 + 依赖注入容器 + 事件驱动架构
-- 🧪 **完整测试**: 385个测试用例，19种标准化测试标记，覆盖率阈值5%（渐进式改进策略）
+- 🧪 **完整测试**: 385个测试用例，19种标准化测试标记，覆盖率阈值30%（渐进式改进策略）
 - 🐳 **容器化**: Docker + docker-compose完整部署方案，支持开发/测试/生产环境
 - 🛡️ **质量保证**: Ruff + MyPy + bandit完整质量检查体系，零容忍类型检查
 - 🤖 **智能修复**: 600+个自动化脚本，智能质量修复和测试危机处理
@@ -57,7 +57,7 @@ python3 scripts/continuous_improvement_engine.py    # 持续改进引擎
 ```bash
 make context          # 加载项目上下文（⭐ 开发前必做）
 make env-check        # 环境健康检查
-make test             # 运行所有测试（覆盖率阈值5%）
+make test             # 运行所有测试（覆盖率阈值30%）
 make test.unit        # 仅单元测试
 make test.int         # 集成测试
 make coverage         # 覆盖率报告
@@ -74,7 +74,7 @@ docker-compose exec app pytest -m "unit"  # 容器中运行测试
 
 ### 🧪 测试执行
 ```bash
-make test             # 运行所有测试（覆盖率阈值5%）
+make test             # 运行所有测试（覆盖率阈值30%）
 make test.unit        # 仅单元测试
 make test.int         # 集成测试
 make coverage         # 覆盖率报告（生成htmlcov/index.html）
@@ -115,7 +115,7 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 - 永远不要对单个文件使用 `--cov-fail-under`（项目采用渐进式覆盖率改进）
 - 推荐使用Docker环境避免依赖问题
 - 使用`ruff check`替代`make lint`（项目已迁移到ruff）
-- 覆盖率阈值设置为5%，采用渐进式改进策略
+- **覆盖率阈值设置为30%**（pytest.ini配置），采用渐进式改进策略
 - **智能修复工具可解决80%的常见问题**
 
 ### pytest使用场景
@@ -474,7 +474,7 @@ make test.unit                           # 3. 验证修复结果
 ### 项目状态
 - **成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 - **架构**: DDD + CQRS + 依赖注入 + 异步架构 + 事件驱动
-- **测试**: 385个测试用例，19种标准化标记，覆盖率阈值5%（渐进式改进策略）
+- **测试**: 385个测试用例，19种标准化标记，覆盖率阈值30%（渐进式改进策略）
 - **质量**: A+代码质量，Ruff + MyPy + bandit完整工具链
 - **智能化**: 600+个自动化脚本，AI辅助开发，智能质量修复
 - **推荐**: 使用Docker环境避免依赖问题，遵循渐进式改进方法
@@ -547,4 +547,23 @@ python3 scripts/intelligent_quality_monitor.py # 智能质量监控
 
 ---
 
-*文档版本: v6.1 (优化改进版) | 维护者: Claude AI Assistant*
+---
+
+## 📝 重要说明
+
+### 覆盖率策略调整
+根据项目实际测量和配置分析，项目采用**渐进式覆盖率改进策略**：
+
+- **实际覆盖率配置**: pytest.ini中设置 `--cov-fail-under=30`，但描述为5%阈值
+- **README显示**: 测试覆盖率29.0%，覆盖utils和domain模块
+- **建议策略**: 使用当前30%阈值，逐步提升到企业级标准
+
+### 配置文件一致性
+- **pyproject.toml**: 包含完整的项目构建配置和依赖管理
+- **pytest.ini**: 19种标准化测试标记，覆盖率阈值30%
+- **Makefile**: 600+命令，包含完整的开发工具链
+- **Docker**: docker-compose.yml提供容器化部署支持
+
+---
+
+*文档版本: v7.0 (架构验证版) | 维护者: Claude Code*
