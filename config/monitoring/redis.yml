@@ -1,0 +1,47 @@
+# Redis性能优化配置
+# Redis Performance Optimization Configuration
+
+# 内存配置
+maxmemory: 256mb
+maxmemory-policy: allkeys-lru
+
+# 持久化配置
+save:
+  - 900 1    # 15分钟内有1个key改变就保存
+  - 300 10   # 5分钟内有10个key改变就保存
+  - 60 10000 # 1分钟内有10000个key改变就保存
+
+# AOF配置
+appendonly: yes
+appendfsync: everysec
+no-appendfsync-on-rewrite: no
+auto-aof-rewrite-percentage: 100
+auto-aof-rewrite-min-size: 64mb
+
+# 网络配置
+tcp-keepalive: 300
+timeout: 0
+
+# 客户端配置
+maxclients: 10000
+
+# 慢查询日志
+slowlog-log-slower-than: 10000  # 10毫秒
+slowlog-max-len: 128
+
+# 内存优化
+hash-max-ziplist-entries: 512
+hash-max-ziplist-value: 64
+list-max-ziplist-size: -2
+list-compress-depth: 0
+set-max-intset-entries: 512
+zset-max-ziplist-entries: 128
+zset-max-ziplist-value: 64
+
+# 键过期配置
+hz: 10
+dynamic-hz: yes
+
+# 其他优化
+rdbcompression: yes
+rdbchecksum: yes
