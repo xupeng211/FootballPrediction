@@ -425,8 +425,7 @@ class MatchCollector(BaseCollector):
         valid_matches = [match for match in all_matches if "error" not in match]
 
         logger.info(
-                        f"Collected and
-                normalized {len(valid_matches)} matches (type: {match_type})"
+                        f"Collected and normalized {len(valid_matches)} matches (type: {match_type})"
         )
 
         return valid_matches
