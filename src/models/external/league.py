@@ -27,103 +27,55 @@ class ExternalLeague(Base):
 
     __tablename__ = "external_leagues"
 
-    id = Column(Integer,
-    primary_key=True,
-    autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     external_id = Column(
         String(50),
-    unique=True,
-    nullable=False,
-    index=True,
-    comment="外部API的联赛ID"
+        unique=True,
+        nullable=False,
+        index=True,
+        comment="外部API的联赛ID"
     )
 
     # 联赛基本信息
-    name = Column(String(100),
-    nullable=False,
-    comment="联赛名称")
-    code = Column(String(10),
-    nullable=True,
-    comment="联赛代码")
-    type = Column(String(20),
-    nullable=True,
-    comment="联赛类型(LEAGUE/CUP)")
-    emblem = Column(Text,
-    nullable=True,
-    comment="联赛标志URL")
+    name = Column(String(100), nullable=False, comment="联赛名称")
+    code = Column(String(10), nullable=True, comment="联赛代码")
+    type = Column(String(20), nullable=True, comment="联赛类型(LEAGUE/CUP)")
+    emblem = Column(Text, nullable=True, comment="联赛标志URL")
 
     # 地理信息
-    area_id = Column(Integer,
-    nullable=True,
-    comment="地区ID")
-    area_name = Column(String(100),
-    nullable=True,
-    comment="地区名称")
-    area_code = Column(String(3),
-    nullable=True,
-    comment="地区代码")
-    area_flag = Column(Text,
-    nullable=True,
-    comment="地区旗帜URL")
+    area_id = Column(Integer, nullable=True, comment="地区ID")
+    area_name = Column(String(100), nullable=True, comment="地区名称")
+    area_code = Column(String(3), nullable=True, comment="地区代码")
+    area_flag = Column(Text, nullable=True, comment="地区旗帜URL")
 
     # 当前赛季信息
-    current_season_id = Column(Integer,
-    nullable=True,
-    comment="当前赛季ID")
-    current_season_start = Column(DateTime,
-    nullable=True,
-    comment="当前赛季开始时间")
-    current_season_end = Column(DateTime,
-    nullable=True,
-    comment="当前赛季结束时间")
-    current_matchday = Column(Integer,
-    nullable=True,
-    comment="当前轮次")
-    season_winner = Column(JSON,
-    nullable=True,
-    comment="赛季冠军信息")
+    current_season_id = Column(Integer, nullable=True, comment="当前赛季ID")
+    current_season_start = Column(DateTime, nullable=True, comment="当前赛季开始时间")
+    current_season_end = Column(DateTime, nullable=True, comment="当前赛季结束时间")
+    current_matchday = Column(Integer, nullable=True, comment="当前轮次")
+    season_winner = Column(JSON, nullable=True, comment="赛季冠军信息")
 
     # 元数据
-    last_updated = Column(DateTime,
-    nullable=True,
-    comment="API最后更新时间")
-    raw_data = Column(JSON,
-    nullable=True,
-    comment="原始API数据")
-    created_at = Column(DateTime,
-    default=datetime.utcnow,
-    comment="创建时间")
+    last_updated = Column(DateTime, nullable=True, comment="API最后更新时间")
+    raw_data = Column(JSON, nullable=True, comment="原始API数据")
+    created_at = Column(DateTime, default=datetime.utcnow, comment="创建时间")
     updated_at = Column(
         DateTime,
-    default=datetime.utcnow,
-    onupdate=datetime.utcnow,
-    comment="更新时间"
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        comment="更新时间"
     )
 
     # 状态标志
-    is_processed = Column(Boolean,
-    default=False,
-    comment="是否已处理")
-    is_active = Column(Boolean,
-    default=True,
-    comment="是否激活")
-    is_supported = Column(Boolean,
-    default=False,
-    comment="是否为支持的联赛")
-    data_quality_score = Column(Integer,
-    default=0,
-    comment="数据质量评分(0-100)")
+    is_processed = Column(Boolean, default=False, comment="是否已处理")
+    is_active = Column(Boolean, default=True, comment="是否激活")
+    is_supported = Column(Boolean, default=False, comment="是否为支持的联赛")
+    data_quality_score = Column(Integer, default=0, comment="数据质量评分(0-100)")
 
     # 统计信息
-    total_teams = Column(Integer,
-    default=0,
-    comment="总球队数")
-    total_matches = Column(Integer,
-    default=0,
-    comment="总比赛数")
-    last_sync_at = Column(DateTime,
-    nullable=True,
-    comment="最后同步时间")
+    total_teams = Column(Integer, default=0, comment="总球队数")
+    total_matches = Column(Integer, default=0, comment="总比赛数")
+    last_sync_at = Column(DateTime, nullable=True, comment="最后同步时间")
 
     def __repr__(self):
         return f"<ExternalLeague(id={self.id}, external_id={self.external_id}, name={self.name})>"
@@ -175,19 +127,17 @@ class ExternalLeague(Base):
                 if self.current_season_start
                 else None
             ),
-    "current_season_end": (
+            "current_season_end": (
                 self.current_season_end.isoformat() if self.current_season_end else None
             ),
-    "current_matchday": self.current_matchday,
-    "season_winner": self.season_winner,
-    
+            "current_matchday": self.current_matchday,
+            "season_winner": self.season_winner,
             "last_updated": (
                 self.last_updated.isoformat() if self.last_updated else None
             ),
-    "created_at": self.created_at.isoformat() if self.created_at else None,
-    "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-    "is_processed": self.is_processed,
-    
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "is_processed": self.is_processed,
             "is_active": self.is_active,
             "is_supported": self.is_supported,
             "data_quality_score": self.data_quality_score,
@@ -196,24 +146,21 @@ class ExternalLeague(Base):
             "last_sync_at": (
                 self.last_sync_at.isoformat() if self.last_sync_at else None
             ),
-    "display_name": self.display_name,
-    "is_current_season_active": self.is_current_season_active,
-    "season_progress": self.season_progress,
-    
+            "display_name": self.display_name,
+            "is_current_season_active": self.is_current_season_active,
+            "season_progress": self.season_progress,
         }
 
     @classmethod
     def from_api_data(
         cls,
-    data: dict[str,
-    Any],
-    is_supported: bool = False
+        data: dict[str, Any],
+        is_supported: bool = False
     ) -> "ExternalLeague":
         """从API数据创建实例"""
         try:
             # 解析地区信息
-            area = data.get("area",
-    {})
+            area = data.get("area", {})
 
             # 解析赛季信息
             season = data.get("season", {})
@@ -230,16 +177,14 @@ class ExternalLeague(Base):
                 if start_date_str:
                     try:
                         current_season_start = datetime.fromisoformat(
-                            start_date_str.replace("Z",
-    "+00:00")
+                            start_date_str.replace("Z", "+00:00")
                         )
                     except ValueError:
                         pass
                 if end_date_str:
                     try:
                         current_season_end = datetime.fromisoformat(
-                            end_date_str.replace("Z",
-    "+00:00")
+                            end_date_str.replace("Z", "+00:00")
                         )
                     except ValueError:
                         pass
@@ -250,8 +195,7 @@ class ExternalLeague(Base):
             if last_updated_str:
                 try:
                     last_updated = datetime.fromisoformat(
-                        last_updated_str.replace("Z",
-    "+00:00")
+                        last_updated_str.replace("Z", "+00:00")
                     )
                 except ValueError:
                     pass
@@ -261,17 +205,14 @@ class ExternalLeague(Base):
 
             return cls(
                 external_id=str(data.get("id")),
-    
                 name=data.get("name"),
-    code=data.get("code"),
-    type=data.get("type"),
-    emblem=data.get("emblem"),
-    
+                code=data.get("code"),
+                type=data.get("type"),
+                emblem=data.get("emblem"),
                 area_id=area.get("id"),
-    area_name=area.get("name"),
-    area_code=area.get("code"),
-    area_flag=area.get("flag"),
-    
+                area_name=area.get("name"),
+                area_code=area.get("code"),
+                area_flag=area.get("flag"),
                 current_season_id=current_season_id,
                 current_season_start=current_season_start,
                 current_season_end=current_season_end,
@@ -286,19 +227,14 @@ class ExternalLeague(Base):
         except Exception as e:
             # 创建错误记录
             return cls(
-                external_id=str(data.get("id",
-    "")),
-    name=data.get("name",
-    "Unknown League"),
-    
-                raw_data={"error": str(e),
-    "original_data": data},
-    data_quality_score=0,
-    )
+                external_id=str(data.get("id", "")),
+                name=data.get("name", "Unknown League"),
+                raw_data={"error": str(e), "original_data": data},
+                data_quality_score=0,
+            )
 
     @staticmethod
-    def _calculate_data_quality_score(data: dict[str,
-    Any]) -> int:
+    def _calculate_data_quality_score(data: dict[str, Any]) -> int:
         """计算数据质量评分"""
         score = 0
 
@@ -307,252 +243,24 @@ class ExternalLeague(Base):
         score += sum(10 for field in basic_fields if data.get(field))
 
         # 地理信息 (20分)
-        if data.get("area") and isinstance(data["area"],
-    dict):
+        if data.get("area") and isinstance(data["area"], dict):
             area_data = data["area"]
-            area_keys = ["id",
-    "name",
-    "code",
-    "flag"]
+            area_keys = ["id", "name", "code", "flag"]
             score += sum(5 for key in area_keys if area_data.get(key))
 
         # 赛季信息 (30分)
-        if data.get("season") and isinstance(data["season"],
-    dict):
+        if data.get("season") and isinstance(data["season"], dict):
             season_data = data["season"]
-            season_keys = ["id",
-    "startDate",
-    "endDate",
-    "currentMatchday"]
+            season_keys = ["id", "startDate", "endDate", "currentMatchday"]
             score += sum(7.5 for key in season_keys if season_data.get(key))
 
         # 更新时间 (10分)
         if data.get("lastUpdated"):
             score += 10
 
-        return min(int(score),
-    100)  # 最高100分
+        return min(int(score), 100)  # 最高100分
 
-def _update_from_api_data_check_condition():
-                self.area_id = area.get("id",
-    self.area_id)
-                self.area_name = area.get("name",
-    self.area_name)
-                self.area_code = area.get("code",
-    self.area_code)
-                self.area_flag = area.get("flag",
-    self.area_flag)
-
-            # 更新赛季信息
-            season = data.get("season", {})
-
-def _update_from_api_data_check_condition():
-                self.current_season_id = season.get("id",
-    self.current_season_id)
-                self.current_matchday = season.get(
-                    "currentMatchday",
-    self.current_matchday
-                )
-                self.season_winner = season.get("winner",
-    self.season_winner)
-
-                # 更新赛季时间
-                start_date_str = season.get("startDate")
-                end_date_str = season.get("endDate")
-
-def _update_from_api_data_handle_error():
-                        self.current_season_start = datetime.fromisoformat(
-                            start_date_str.replace("Z",
-    "+00:00")
-                        )
-                    except ValueError:
-                        pass
-
-def _update_from_api_data_handle_error():
-                        self.current_season_end = datetime.fromisoformat(
-                            end_date_str.replace("Z", "+00:00")
-                        )
-                    except ValueError:
-                        pass
-
-def _update_from_api_data_handle_error():
-                    self.last_updated = datetime.fromisoformat(
-                        last_updated_str.replace("Z", "+00:00")
-                    )
-                except ValueError:
-                    pass
-
-def _update_from_api_data_process_logic():
-        self,
-    total_teams: int = None,
-    total_matches: int = None
-    ) -> None:
-        """更新统计信息"""
-
-def _update_from_api_data_check_condition():
-            self.total_matches = total_matches
-        self.last_sync_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
-
-
-def _update_from_api_data_process_logic():
-        """标记为已处理"""
-        self.is_processed = True
-        self.updated_at = datetime.utcnow()
-
-
-def _update_from_api_data_process_logic():
-        """激活支持"""
-        self.is_supported = True
-        self.updated_at = datetime.utcnow()
-
-
-def _update_from_api_data_process_logic():
-        """取消支持"""
-        self.is_supported = False
-        self.updated_at = datetime.utcnow()
-
-
-    # 联赛积分榜模型
-
-def _update_from_api_data_process_logic():
-    """外部联赛积分榜模型"""
-
-    __tablename__ = "external_league_standings"
-
-    id = Column(Integer,
-    primary_key=True,
-    autoincrement=True)
-    league_id = Column(
-        Integer,
-    ForeignKey("external_leagues.id"),
-    nullable=False,
-    comment="联赛ID"
-    )
-    external_league_id = Column(String(50),
-    nullable=False,
-    comment="外部联赛ID")
-
-    # 积分榜信息
-    position = Column(Integer,
-    nullable=False,
-    comment="排名")
-    team_id = Column(Integer,
-    nullable=False,
-    comment="球队ID")
-    team_external_id = Column(String(50),
-    nullable=False,
-    comment="球队外部ID")
-    team_name = Column(String(100),
-    nullable=False,
-    comment="球队名称")
-    team_short_name = Column(String(50),
-    nullable=True,
-    comment="球队简称")
-    team_crest = Column(Text,
-    nullable=True,
-    comment="球队队徽")
-    team_tla = Column(String(3),
-    nullable=True,
-    comment="球队三字母代码")
-
-    # 比赛统计
-    played_games = Column(Integer,
-    default=0,
-    comment="已比赛数")
-    won = Column(Integer,
-    default=0,
-    comment="胜场数")
-    draw = Column(Integer,
-    default=0,
-    comment="平局数")
-    lost = Column(Integer,
-    default=0,
-    comment="负场数")
-
-    # 进球统计
-    goals_for = Column(Integer,
-    default=0,
-    comment="进球数")
-    goals_against = Column(Integer,
-    default=0,
-    comment="失球数")
-    goal_difference = Column(Integer,
-    default=0,
-    comment="净胜球")
-    points = Column(Integer,
-    default=0,
-    comment="积分")
-
-    # 分组信息
-    group = Column(String(10),
-    nullable=True,
-    comment="分组")
-    stage = Column(String(50),
-    nullable=True,
-    comment="阶段")
-    table_type = Column(String(20),
-    default="TOTAL",
-    comment="积分榜类型")
-
-    # 状态信息
-    form = Column(String(20),
-    nullable=True,
-    comment="近期战绩")
-    status = Column(String(20),
-    default="active",
-    comment="状态")
-
-    # 元数据
-    last_updated = Column(DateTime,
-    nullable=True,
-    comment="最后更新时间")
-    raw_data = Column(JSON,
-    nullable=True,
-    comment="原始API数据")
-    created_at = Column(DateTime,
-    default=datetime.utcnow,
-    comment="创建时间")
-    updated_at = Column(
-        DateTime,
-    default=datetime.utcnow,
-    onupdate=datetime.utcnow,
-    comment="更新时间"
-    )
-
-    # 关联关系
-    league = relationship("ExternalLeague", backref="standings")
-
-
-def _update_from_api_data_process_logic():
-        """显示战绩"""
-        return f"{self.won}胜{self.draw}平{self.lost}负"
-
-def _update_from_api_data_process_logic():
-        """显示进球记录"""
-        return f"{self.goals_for}:{self.goals_against}"
-
-def _update_from_api_data_process_logic():
-        """转换为字典"""
-        return {
-
-def _update_from_api_data_process_logic():
-        cls,
-    data: dict[str,
-    Any],
-    league_id: int,
-    external_league_id: str
-    ) -> "ExternalLeagueStandings":
-        """从API数据创建实例"""
-
-def _update_from_api_data_handle_error():
-            team = data.get("team", {})
-
-            return cls(
-
-    def update_from_api_data(self,
-    data: dict[str,
-    Any]) -> bool:
+    def update_from_api_data(self, data: dict[str, Any]) -> bool:
         """从API数据更新实例"""
         try:
             # 检查外部ID是否匹配
@@ -560,53 +268,40 @@ def _update_from_api_data_handle_error():
                 return False
 
             # 更新基础信息
-            self.name = data.get("name",
-    self.name)
-            self.code = data.get("code",
-    self.code)
-            self.type = data.get("type",
-    self.type)
-            self.emblem = data.get("emblem",
-    self.emblem)
+            self.name = data.get("name", self.name)
+            self.code = data.get("code", self.code)
+            self.type = data.get("type", self.type)
+            self.emblem = data.get("emblem", self.emblem)
 
             # 更新地理信息
-            area = data.get("area",
-    {})
-            _update_from_api_data_check_condition()
-                self.area_id = area.get("id",
-    self.area_id)
-                self.area_name = area.get("name",
-    self.area_name)
-                self.area_code = area.get("code",
-    self.area_code)
-                self.area_flag = area.get("flag",
-    self.area_flag)
+            area = data.get("area", {})
+            if area:
+                self.area_id = area.get("id", self.area_id)
+                self.area_name = area.get("name", self.area_name)
+                self.area_code = area.get("code", self.area_code)
+                self.area_flag = area.get("flag", self.area_flag)
 
             # 更新赛季信息
             season = data.get("season", {})
-            _update_from_api_data_check_condition()
-                self.current_season_id = season.get("id",
-    self.current_season_id)
+            if season:
+                self.current_season_id = season.get("id", self.current_season_id)
                 self.current_matchday = season.get(
-                    "currentMatchday",
-    self.current_matchday
+                    "currentMatchday", self.current_matchday
                 )
-                self.season_winner = season.get("winner",
-    self.season_winner)
+                self.season_winner = season.get("winner", self.season_winner)
 
                 # 更新赛季时间
                 start_date_str = season.get("startDate")
                 end_date_str = season.get("endDate")
                 if start_date_str:
-                    _update_from_api_data_handle_error()
+                    try:
                         self.current_season_start = datetime.fromisoformat(
-                            start_date_str.replace("Z",
-    "+00:00")
+                            start_date_str.replace("Z", "+00:00")
                         )
                     except ValueError:
                         pass
                 if end_date_str:
-                    _update_from_api_data_handle_error()
+                    try:
                         self.current_season_end = datetime.fromisoformat(
                             end_date_str.replace("Z", "+00:00")
                         )
@@ -620,7 +315,7 @@ def _update_from_api_data_handle_error():
             # 更新最后更新时间
             last_updated_str = data.get("lastUpdated")
             if last_updated_str:
-                _update_from_api_data_handle_error()
+                try:
                     self.last_updated = datetime.fromisoformat(
                         last_updated_str.replace("Z", "+00:00")
                     )
@@ -633,144 +328,93 @@ def _update_from_api_data_handle_error():
         except Exception as e:
             # 记录错误但不抛出异常
             import logging
-
             logger = logging.getLogger(__name__)
             logger.error(f"Error updating league {self.external_id}: {e}")
             return False
 
-    _update_from_api_data_process_logic()
+    def update_statistics(
         self,
-    total_teams: int = None,
-    total_matches: int = None
+        total_teams: int = None,
+        total_matches: int = None
     ) -> None:
         """更新统计信息"""
         if total_teams is not None:
             self.total_teams = total_teams
-        _update_from_api_data_check_condition()
+        if total_matches is not None:
             self.total_matches = total_matches
         self.last_sync_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
-    _update_from_api_data_process_logic()
+    def mark_as_processed(self) -> None:
         """标记为已处理"""
         self.is_processed = True
         self.updated_at = datetime.utcnow()
 
-    _update_from_api_data_process_logic()
+    def activate_support(self) -> None:
         """激活支持"""
         self.is_supported = True
         self.updated_at = datetime.utcnow()
 
-    _update_from_api_data_process_logic()
+    def deactivate_support(self) -> None:
         """取消支持"""
         self.is_supported = False
         self.updated_at = datetime.utcnow()
 
 
 # 联赛积分榜模型
-_update_from_api_data_process_logic()
+class ExternalLeagueStandings(Base):
     """外部联赛积分榜模型"""
 
     __tablename__ = "external_league_standings"
 
-    id = Column(Integer,
-    primary_key=True,
-    autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     league_id = Column(
         Integer,
-    ForeignKey("external_leagues.id"),
-    nullable=False,
-    comment="联赛ID"
+        ForeignKey("external_leagues.id"),
+        nullable=False,
+        comment="联赛ID"
     )
-    external_league_id = Column(String(50),
-    nullable=False,
-    comment="外部联赛ID")
+    external_league_id = Column(String(50), nullable=False, comment="外部联赛ID")
 
     # 积分榜信息
-    position = Column(Integer,
-    nullable=False,
-    comment="排名")
-    team_id = Column(Integer,
-    nullable=False,
-    comment="球队ID")
-    team_external_id = Column(String(50),
-    nullable=False,
-    comment="球队外部ID")
-    team_name = Column(String(100),
-    nullable=False,
-    comment="球队名称")
-    team_short_name = Column(String(50),
-    nullable=True,
-    comment="球队简称")
-    team_crest = Column(Text,
-    nullable=True,
-    comment="球队队徽")
-    team_tla = Column(String(3),
-    nullable=True,
-    comment="球队三字母代码")
+    position = Column(Integer, nullable=False, comment="排名")
+    team_id = Column(Integer, nullable=False, comment="球队ID")
+    team_external_id = Column(String(50), nullable=False, comment="球队外部ID")
+    team_name = Column(String(100), nullable=False, comment="球队名称")
+    team_short_name = Column(String(50), nullable=True, comment="球队简称")
+    team_crest = Column(Text, nullable=True, comment="球队队徽")
+    team_tla = Column(String(3), nullable=True, comment="球队三字母代码")
 
     # 比赛统计
-    played_games = Column(Integer,
-    default=0,
-    comment="已比赛数")
-    won = Column(Integer,
-    default=0,
-    comment="胜场数")
-    draw = Column(Integer,
-    default=0,
-    comment="平局数")
-    lost = Column(Integer,
-    default=0,
-    comment="负场数")
+    played_games = Column(Integer, default=0, comment="已比赛数")
+    won = Column(Integer, default=0, comment="胜场数")
+    draw = Column(Integer, default=0, comment="平局数")
+    lost = Column(Integer, default=0, comment="负场数")
 
     # 进球统计
-    goals_for = Column(Integer,
-    default=0,
-    comment="进球数")
-    goals_against = Column(Integer,
-    default=0,
-    comment="失球数")
-    goal_difference = Column(Integer,
-    default=0,
-    comment="净胜球")
-    points = Column(Integer,
-    default=0,
-    comment="积分")
+    goals_for = Column(Integer, default=0, comment="进球数")
+    goals_against = Column(Integer, default=0, comment="失球数")
+    goal_difference = Column(Integer, default=0, comment="净胜球")
+    points = Column(Integer, default=0, comment="积分")
 
     # 分组信息
-    group = Column(String(10),
-    nullable=True,
-    comment="分组")
-    stage = Column(String(50),
-    nullable=True,
-    comment="阶段")
-    table_type = Column(String(20),
-    default="TOTAL",
-    comment="积分榜类型")
+    group = Column(String(10), nullable=True, comment="分组")
+    stage = Column(String(50), nullable=True, comment="阶段")
+    table_type = Column(String(20), default="TOTAL", comment="积分榜类型")
 
     # 状态信息
-    form = Column(String(20),
-    nullable=True,
-    comment="近期战绩")
-    status = Column(String(20),
-    default="active",
-    comment="状态")
+    form = Column(String(20), nullable=True, comment="近期战绩")
+    status = Column(String(20), default="active", comment="状态")
 
     # 元数据
-    last_updated = Column(DateTime,
-    nullable=True,
-    comment="最后更新时间")
-    raw_data = Column(JSON,
-    nullable=True,
-    comment="原始API数据")
-    created_at = Column(DateTime,
-    default=datetime.utcnow,
-    comment="创建时间")
+    last_updated = Column(DateTime, nullable=True, comment="最后更新时间")
+    raw_data = Column(JSON, nullable=True, comment="原始API数据")
+    created_at = Column(DateTime, default=datetime.utcnow, comment="创建时间")
     updated_at = Column(
         DateTime,
-    default=datetime.utcnow,
-    onupdate=datetime.utcnow,
-    comment="更新时间"
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        comment="更新时间"
     )
 
     # 关联关系
@@ -780,16 +424,16 @@ _update_from_api_data_process_logic()
         return f"<ExternalLeagueStandings(league_id={self.league_id}, position={self.position}, team={self.team_name})>"
 
     @property
-    _update_from_api_data_process_logic()
+    def display_record(self) -> str:
         """显示战绩"""
         return f"{self.won}胜{self.draw}平{self.lost}负"
 
     @property
-    _update_from_api_data_process_logic()
+    def goal_record(self) -> str:
         """显示进球记录"""
         return f"{self.goals_for}:{self.goals_against}"
 
-    _update_from_api_data_process_logic()
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -818,36 +462,32 @@ _update_from_api_data_process_logic()
             "last_updated": (
                 self.last_updated.isoformat() if self.last_updated else None
             ),
-    "created_at": self.created_at.isoformat() if self.created_at else None,
-    "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-    "display_record": self.display_record,
-    
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "display_record": self.display_record,
             "goal_record": self.goal_record,
         }
 
     @classmethod
-    _update_from_api_data_process_logic()
+    def from_api_data(
         cls,
-    data: dict[str,
-    Any],
-    league_id: int,
-    external_league_id: str
+        data: dict[str, Any],
+        league_id: int,
+        external_league_id: str
     ) -> "ExternalLeagueStandings":
         """从API数据创建实例"""
-        _update_from_api_data_handle_error()
+        try:
             team = data.get("team", {})
 
             return cls(
                 league_id=league_id,
-    external_league_id=external_league_id,
-    team_id=team.get("id"),
-    team_external_id=str(team.get("id")),
-    
+                external_league_id=external_league_id,
+                team_id=team.get("id"),
+                team_external_id=str(team.get("id")),
                 team_name=team.get("name"),
-    team_short_name=team.get("shortName"),
-    team_crest=team.get("crest"),
-    team_tla=team.get("tla"),
-    
+                team_short_name=team.get("shortName"),
+                team_crest=team.get("crest"),
+                team_tla=team.get("tla"),
                 played_games=data.get("playedGames", 0),
                 won=data.get("won", 0),
                 draw=data.get("draw", 0),
@@ -857,11 +497,9 @@ _update_from_api_data_process_logic()
                 goal_difference=data.get("goalDifference", 0),
                 points=data.get("points", 0),
                 form=data.get("form"),
-    group=data.get("group"),
-    stage=data.get("stage"),
-    table_type=data.get("type",
-    "TOTAL"),
-    
+                group=data.get("group"),
+                stage=data.get("stage"),
+                table_type=data.get("type", "TOTAL"),
                 raw_data=data,
             )
 
@@ -870,10 +508,8 @@ _update_from_api_data_process_logic()
             team = data.get("team", {})
             return cls(
                 league_id=league_id,
-    external_league_id=external_league_id,
-    team_external_id=str(team.get("id",
-    "")),
-    
+                external_league_id=external_league_id,
+                team_external_id=str(team.get("id", "")),
                 team_name=team.get("name", "Unknown Team"),
                 raw_data={"error": str(e), "original_data": data},
             )
