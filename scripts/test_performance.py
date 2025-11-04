@@ -68,7 +68,10 @@ class PerformanceTester:
         else:
             return {"error": "所有请求都失败了"}
 
-    async def test_concurrent_requests(self, concurrent_users: int = 50, requests_per_user: int = 10) -> Dict[str, Any]:
+    async def test_concurrent_requests(self,
+    concurrent_users: int = 50,
+    requests_per_user: int = 10) -> Dict[str,
+    Any]:
         """测试并发请求处理能力"""
         print(f"🔥 测试并发请求处理 ({concurrent_users}个并发用户, 每用户{requests_per_user}个请求)...")
 
@@ -181,7 +184,8 @@ class PerformanceTester:
             results["concurrent_test"] = concurrent_results
             if "error" not in concurrent_results:
                 print(f"   吞吐量: {concurrent_results.get('throughput', 0):.2f} req/s")
-                print(f"   平均响应时间: {concurrent_results.get('average_response_time', 0):.2f}ms")
+                print(f"   平均响应时间: {concurrent_results.get('average_response_time',
+    0):.2f}ms")
                 print(f"   成功率: {concurrent_results.get('success_rate', 0):.2f}%")
 
             # 3. 系统资源监控
@@ -286,8 +290,13 @@ class PerformanceTester:
 
         # 基本信息
         print(f"测试时间: {results.get('test_date', 'Unknown')}")
-        print(f"系统信息: CPU核心数 {results.get('system_info', {}).get('cpu_count', 'Unknown')}, "
-              f"总内存 {results.get('system_info', {}).get('memory_total', 'Unknown'):.1f}GB")
+        print(f"系统信息: CPU核心数 {results.get('system_info',
+    {}).get('cpu_count',
+    'Unknown')},
+    "
+              f"总内存 {results.get('system_info',
+    {}).get('memory_total',
+    'Unknown'):.1f}GB")
 
         # 响应时间
         response_test = results.get("response_time_test", {})

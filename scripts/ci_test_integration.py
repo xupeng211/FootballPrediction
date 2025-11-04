@@ -32,7 +32,8 @@ class CITestIntegration:
 
         # CI环境变量
         self.github_token = os.getenv("GITHUB_TOKEN")
-        self.github_repository = os.getenv("GITHUB_REPOSITORY", "xupeng211/FootballPrediction")
+        self.github_repository = os.getenv("GITHUB_REPOSITORY",
+    "xupeng211/FootballPrediction")
         self.github_sha = os.getenv("GITHUB_SHA", "unknown")
         self.github_ref = os.getenv("GITHUB_REF", "unknown")
         self.github_event_name = os.getenv("GITHUB_EVENT_NAME", "unknown")
@@ -141,7 +142,9 @@ class CITestIntegration:
             results["error"] = str(e)
             return False, results
 
-    def _run_command(self, cmd: List[str], timeout: int = 300) -> subprocess.CompletedProcess:
+    def _run_command(self,
+    cmd: List[str],
+    timeout: int = 300) -> subprocess.CompletedProcess:
         """运行命令并返回结果"""
         try:
             start_time = time.time()
@@ -195,7 +198,11 @@ class CITestIntegration:
 
         # Ruff检查
         try:
-            ruff_result = self._run_command(["ruff", "check", "src/", "tests/"], timeout=120)
+            ruff_result = self._run_command(["ruff",
+    "check",
+    "src/",
+    "tests/"],
+    timeout=120)
             results["ruff"] = {
                 "success": ruff_result.returncode == 0,
                 "issues": ruff_result.stdout.count('\n') if ruff_result.stdout else 0,
@@ -221,6 +228,7 @@ class CITestIntegration:
             results["bandit"] = {
                 "success": bandit_result.returncode == 0,
                 "issues": bandit_result.stdout.count('\n') if bandit_result.stdout else 0,
+    
                 "execution_time": bandit_result.execution_time
             }
         except Exception as e:
@@ -236,7 +244,11 @@ class CITestIntegration:
         try:
             start_time = time.time()
             import_result = self._run_command([
-                "python", "-c", "import sys; sys.path.insert(0, 'src'); import core.di, core.config_di"
+                "python",
+    "-c",
+    "import sys; sys.path.insert(0,
+    'src'); import core.di,
+    core.config_di"
             ], timeout=30)
             import_time = time.time() - start_time
 
@@ -280,20 +292,29 @@ class CITestIntegration:
 
         # 测试结果
         unit_success = results["test_results"].get("unit", {}).get("success", False)
-        integration_success = results["test_results"].get("integration", {}).get("success", False)
+        integration_success = results["test_results"].get("integration",
+    {}).get("success",
+    False)
 
         report_lines.extend([
             f"| 测试类型 | 状态 | 耗时 |",
             f"|----------|------|------|",
-            f"| 单元测试 | {'✅ 通过' if unit_success else '❌ 失败'} | {results['test_results'].get('unit', {}).get('execution_time', 0):.2f}s |",
-            f"| 集成测试 | {'✅ 通过' if integration_success else '❌ 失败'} | {results['test_results'].get('integration', {}).get('execution_time', 0):.2f}s |",
+            f"| 单元测试 | {'✅ 通过' if unit_success else '❌ 失败'} | {results['test_results'].get('unit',
+    {}).get('execution_time',
+    0):.2f}s |",
+    
+            f"| 集成测试 | {'✅ 通过' if integration_success else '❌ 失败'} | {results['test_results'].get('integration',
+    {}).get('execution_time',
+    0):.2f}s |",
+    
             f""
         ])
 
         # 覆盖率结果
         coverage = results.get("coverage_results", {})
         if "error" not in coverage:
-            coverage_status = "✅ 达标" if coverage.get("m2_target_met", False) else "❌ 未达标"
+            coverage_status = "✅ 达标" if coverage.get("m2_target_met",
+    False) else "❌ 未达标"
             report_lines.extend([
                 f"## 📈 覆盖率分析",
                 f"",
@@ -398,7 +419,9 @@ class CITestIntegration:
 
         # 测试通过门禁
         unit_success = results["test_results"].get("unit", {}).get("success", False)
-        integration_success = results["test_results"].get("integration", {}).get("success", False)
+        integration_success = results["test_results"].get("integration",
+    {}).get("success",
+    False)
 
         if not unit_success:
             gates_passed = False
@@ -468,7 +491,9 @@ class CITestIntegration:
         print(f"📅 时间: {results['timestamp'][:19]}")
         print(f"🎯 总体状态: {'✅ 通过' if success else '❌ 失败'}")
         print(f"⏱️ 总耗时: {results.get('execution_time', 0):.2f}s")
-        print(f"📊 覆盖率: {results.get('coverage_results', {}).get('total_coverage', 0):.1f}%")
+        print(f"📊 覆盖率: {results.get('coverage_results',
+    {}).get('total_coverage',
+    0):.1f}%")
         print("="*60)
 
         return 0 if (success and gates_passed) else 1

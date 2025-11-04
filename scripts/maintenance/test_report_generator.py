@@ -69,7 +69,10 @@ class TestReportGenerator:
 
         return metrics, alerts
 
-    def _generate_summary(self, metrics: List[Dict], alerts: List[Dict]) -> Dict[str, Any]:
+    def _generate_summary(self,
+    metrics: List[Dict],
+    alerts: List[Dict]) -> Dict[str,
+    Any]:
         """生成报告摘要"""
         if not metrics:
             return {
@@ -122,7 +125,9 @@ class TestReportGenerator:
             "last_check": latest_metric["timestamp"]
         }
 
-    def _generate_recommendations(self, metrics: List[Dict], alerts: List[Dict]) -> List[str]:
+    def _generate_recommendations(self,
+    metrics: List[Dict],
+    alerts: List[Dict]) -> List[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -260,7 +265,9 @@ class TestReportGenerator:
         }
 
         # 获取状态颜色
-        status_color = status_colors.get(data.summary.get("status", "no_data"), "#6c757d")
+        status_color = status_colors.get(data.summary.get("status",
+    "no_data"),
+    "#6c757d")
 
         html = f"""
 <!DOCTYPE html>
@@ -420,7 +427,7 @@ class TestReportGenerator:
 
             <div class="metric-card">
                 <h3>📈 覆盖率</h3>
-                <div class="metric-value">{data.summary.get("latest_coverage", 0):.1f}%</div>
+    <div class="metric-value">{data.summary.get("latest_coverage", 0):.1f}%</div>;
                 <div class="metric-label">测试覆盖率</div>
             </div>
 
@@ -433,7 +440,10 @@ class TestReportGenerator:
             <div class="metric-card">
                 <h3>✅ 通过率</h3>
                 <div class="metric-value">
-                    {((data.summary.get("passed_tests", 0) / max(data.summary.get("total_tests", 1), 1)) * 100):.1f}%
+                    {((data.summary.get("passed_tests",
+    0) / max(data.summary.get("total_tests",
+    1),
+    1)) * 100):.1f}%
                 </div>
                 <div class="metric-label">测试通过率</div>
             </div>
@@ -499,12 +509,12 @@ class TestReportGenerator:
         for key, data in trends.items():
             if isinstance(data, dict) and "trend" in data:
                 trend_icon = "📈" if data["trend"] == "improving" else "📉" if data["trend"] == "declining" else "➡️"
-                change_text = f" (+{data.get('change', 0):+d})" if data.get('change', 0) > 0 else f" ({data.get('change', 0):+d})" if data.get('change', 0) < 0 else ""
+    change_text = f" (+{data.get('change', 0):+d})" if data.get('change', 0) > 0 else f" ({data.get('change', 0):+d})" if data.get('change', 0) < 0 else "";
 
                 html_parts.append(f"""
                 <div class="trend-item">
-                    <span class="trend-label">{trend_icon} {key.title().replace('_', ' ')}:</span>
-                    <span class="trend-value">{data.get('current', 0):.1f}{change_text}</span>
+    <span class="trend-label">{trend_icon} {key.title().replace('_', ' ')}:</span>;
+    <span class="trend-value">{data.get('current', 0):.1f}{change_text}</span>;
                 </div>
                 """)
 
@@ -604,7 +614,10 @@ class TestReportGenerator:
 
 ## 🚨 最近警报
 
-{chr(10).join([f"- **{alert.get('title', '未知')}**: {alert.get('message', '')} ({alert.get('timestamp', '')})" for alert in alerts[:5]])}
+{chr(10).join([f"- **{alert.get('title',
+    '未知')}**: {alert.get('message',
+    '')} ({alert.get('timestamp',
+    '')})" for alert in alerts[:5]])}
 
 ---
 *报告由 FootballPrediction 测试健康监控系统自动生成*
@@ -631,13 +644,17 @@ class TestReportGenerator:
         for key, data in trends.items():
             if isinstance(data, dict) and "trend" in data:
                 trend_emoji = "📈" if data["trend"] == "improving" else "📉" if data["trend"] == "declining" else "➡️"
-                change_text = f" (+{data.get('change', 0):+d})" if data.get('change', 0) > 0 else f" ({data.get('change', 0):+d})" if data.get('change', 0) < 0 else ""
+    change_text = f" (+{data.get('change', 0):+d})" if data.get('change', 0) > 0 else f" ({data.get('change', 0):+d})" if data.get('change', 0) < 0 else "";
 
-                lines.append(f"- **{trend_emoji} {key.title().replace('_', ' ')}**: {data.get('current', 0):.1f}{change_text}")
+                lines.append(f"- **{trend_emoji} {key.title().replace('_',
+    ' ')}**: {data.get('current',
+    0):.1f}{change_text}")
 
         return "\n".join(lines)
 
-    def generate_recommendations(self, metrics: List[Dict], alerts: List[Dict]) -> List[str]:
+    def generate_recommendations(self,
+    metrics: List[Dict],
+    alerts: List[Dict]) -> List[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -672,7 +689,8 @@ class TestReportGenerator:
                 recommendations.append("✅ 测试失败率可接受(<10%)，继续监控")
 
         # 基于警报的建议
-        critical_alerts = [a for a in alerts if a.get("severity") == "critical" and not a.get("resolved", True)]
+        critical_alerts = [a for a in alerts if a.get("severity") == "critical" and not a.get("resolved",
+    True)]
         if critical_alerts:
             recommendations.append(f"🚨 存在{len(critical_alerts)}个未解决的严重警报，需要立即处理")
 

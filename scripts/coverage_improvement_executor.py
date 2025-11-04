@@ -103,8 +103,14 @@ class CoverageAnalyzer:
             file_coverage = {}
             for file_path, file_data in files.items():
                 file_coverage[file_path] = {
-                    'total_lines': file_data.get('summary', {}).get('num_statements', 0),
-                    'covered_lines': file_data.get('summary', {}).get('covered_lines', 0),
+                    'total_lines': file_data.get('summary',
+    {}).get('num_statements',
+    0),
+    
+                    'covered_lines': file_data.get('summary',
+    {}).get('covered_lines',
+    0),
+    
                     'missing_lines': file_data.get('missing_lines', []),
                     'coverage': file_data.get('summary', {}).get('percent_covered', 0)
                 }
@@ -173,7 +179,9 @@ class CoverageAnalyzer:
         print(f"✅ 发现 {len(issues)} 个覆盖率问题")
         return issues
 
-    def _analyze_uncovered_code(self, file_path: Path, missing_lines: List[int]) -> List[CoverageIssue]:
+    def _analyze_uncovered_code(self,
+    file_path: Path,
+    missing_lines: List[int]) -> List[CoverageIssue]:
         """分析未覆盖的代码"""
         issues = []
 
@@ -297,7 +305,8 @@ class TestGenerator:
         self.src_dir = project_root / "src"
         self.test_dir = project_root / "tests"
 
-    def generate_tests_for_issues(self, issues: List[CoverageIssue]) -> List[ImprovementAction]:
+    def generate_tests_for_issues(self,
+    issues: List[CoverageIssue]) -> List[ImprovementAction]:
         """为覆盖率问题生成测试改进建议"""
         print("🧪 生成测试改进建议...")
 
@@ -329,7 +338,8 @@ class TestGenerator:
             tree = ast.parse(content)
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    if any(line in issue.line_numbers for line in range(node.lineno, node.end_lineno or node.lineno)):
+                    if any(line in issue.line_numbers for line in range(node.lineno,
+    node.end_lineno or node.lineno)):
                         func_name = node.name
 
                         # 生成测试文件路径
@@ -513,7 +523,10 @@ class CoverageImprovementExecutor:
         # 询问是否自动实施改进
         return self._propose_improvements(actions)
 
-    def _generate_report(self, metrics: CoverageMetrics, issues: List[CoverageIssue], actions: List[ImprovementAction]):
+    def _generate_report(self,
+    metrics: CoverageMetrics,
+    issues: List[CoverageIssue],
+    actions: List[ImprovementAction]):
         """生成改进报告"""
         report_dir = self.project_root / "reports"
         report_dir.mkdir(exist_ok=True)

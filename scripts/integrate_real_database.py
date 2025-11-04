@@ -22,7 +22,11 @@ class DatabaseIntegrator:
         self.test_results = []
         self.db_session = None
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(self,
+    test_name: str,
+    success: bool,
+    details: str = "",
+    duration: float = 0):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -91,7 +95,10 @@ class DatabaseIntegrator:
                     total_records += count
 
                     if count > 0:
-                        self.log_test(f"{display_name}数据检查", True, f"{count}条记录", duration)
+                        self.log_test(f"{display_name}数据检查",
+    True,
+    f"{count}条记录",
+    duration)
                     else:
                         self.log_test(f"{display_name}数据检查", False, "无数据", duration)
             except Exception as e:
@@ -107,7 +114,8 @@ class DatabaseIntegrator:
         print("\n🌱 步骤3: 创建示例数据（如果需要）")
 
         # 检查是否需要创建数据
-        tables_needing_data = [table for table, count in existing_data.items() if count == 0]
+        tables_needing_data = [table for table,
+    count in existing_data.items() if count == 0]
 
         if not tables_needing_data:
             self.log_test("示例数据创建", True, "数据库已有数据，跳过创建")
@@ -197,7 +205,9 @@ class DatabaseIntegrator:
 
         # 创建未来两周的比赛
         for i in range(20):  # 创建20场比赛
-            match_date = current_date + timedelta(days=i * 2, hours=random.randint(18, 21))
+            match_date = current_date + timedelta(days=i * 2,
+    hours=random.randint(18,
+    21))
 
             # 随机选择球队
             home_team_id = random.randint(1, 10)
@@ -219,8 +229,18 @@ class DatabaseIntegrator:
             await session.execute(
                 text(
                     """
-                    INSERT INTO matches (home_team_id, away_team_id, league_id, match_date, status, created_at)
-                    VALUES (:home_team_id, :away_team_id, :league_id, :match_date, :status, NOW())
+                    INSERT INTO matches (home_team_id,
+    away_team_id,
+    league_id,
+    match_date,
+    status,
+    created_at)
+                    VALUES (:home_team_id,
+    :away_team_id,
+    :league_id,
+    :match_date,
+    :status,
+    NOW())
                 """
                 ),
                 match,
@@ -348,7 +368,8 @@ class DatabaseIntegrator:
                 return False
 
         # 检查是否有合理的ID和数据结构
-        if "id" in data_item and isinstance(data_item["id"], int) and data_item["id"] > 0:
+        if "id" in data_item and isinstance(data_item["id"],
+    int) and data_item["id"] > 0:
             return True
 
         return False

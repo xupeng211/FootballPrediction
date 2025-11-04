@@ -102,9 +102,15 @@ class CoverageOptimizer:
                 # 只包含src目录下的文件
                 if filename.startswith('src/'):
                     file_reports[filename] = {
-                        'statements': file_data.get('summary', {}).get('num_statements', 0),
+                        'statements': file_data.get('summary',
+    {}).get('num_statements',
+    0),
+    
                         'missing': len(file_data.get('missing_lines', [])),
-                        'coverage': file_data.get('summary', {}).get('percent_covered', 0),
+                        'coverage': file_data.get('summary',
+    {}).get('percent_covered',
+    0),
+    
                         'missing_lines': file_data.get('missing_lines', [])
                     }
 
@@ -178,7 +184,8 @@ class CoverageOptimizer:
                     'missing_lines': len(file_data['missing_lines']),
                     'priority': priority,
                     'module_type': module_type,
-                    'test_suggestions': self._suggest_tests_for_file(filename, module_type)
+                    'test_suggestions': self._suggest_tests_for_file(filename,
+    module_type)
                 })
 
         return gaps
@@ -224,7 +231,9 @@ class CoverageOptimizer:
 
         return suggestions
 
-    def generate_improvement_plan(self, coverage_report: CoverageReport) -> Dict[str, Any]:
+    def generate_improvement_plan(self,
+    coverage_report: CoverageReport) -> Dict[str,
+    Any]:
         """生成覆盖率改进计划"""
         print("📋 生成覆盖率改进计划...")
 
@@ -243,6 +252,7 @@ class CoverageOptimizer:
                 'total_coverage': current_coverage,
                 'total_files': len(coverage_report.file_reports),
                 'tested_files': len([f for f in coverage_report.file_reports.values() if f['coverage'] > 0]),
+    
                 'total_statements': coverage_report.total_statements,
                 'covered_statements': coverage_report.covered_statements
             },
@@ -279,7 +289,10 @@ class CoverageOptimizer:
 
         return plan
 
-    def create_targeted_tests(self, gaps: List[Dict[str, Any]], max_tests: int = 5) -> List[str]:
+    def create_targeted_tests(self,
+    gaps: List[Dict[str,
+    Any]],
+    max_tests: int = 5) -> List[str]:
         """为高优先级缺口创建针对性测试"""
         print(f"🎯 为前{max_tests}个高优先级文件创建测试...")
 
@@ -293,9 +306,11 @@ class CoverageOptimizer:
             # 确定测试文件路径
             if filename.startswith('src/'):
                 relative_path = filename[4:]  # 移除'src/'前缀
-                test_path = self.tests_dir / "unit" / relative_path.replace('.py', '_test.py')
+                test_path = self.tests_dir / "unit" / relative_path.replace('.py',
+    '_test.py')
             else:
-                test_path = self.tests_dir / "unit" / filename.replace('.py', '_test.py')
+                test_path = self.tests_dir / "unit" / filename.replace('.py',
+    '_test.py')
 
             # 确保目录存在
             test_path.parent.mkdir(parents=True, exist_ok=True)
@@ -313,7 +328,10 @@ class CoverageOptimizer:
 
         return created_tests
 
-    def _generate_basic_test(self, filename: str, module_type: str, test_path: Path) -> str:
+    def _generate_basic_test(self,
+    filename: str,
+    module_type: str,
+    test_path: Path) -> str:
         """生成基础测试内容"""
         module_name = Path(filename).stem
 

@@ -179,7 +179,9 @@ class IntelligentQualityAnalyzer:
             "insights": insights,
             "trend": current_trend,
             "overall_score": quality_score,
-            "recommendations": self._generate_comprehensive_recommendations(analysis_data, patterns_found, insights)
+            "recommendations": self._generate_comprehensive_recommendations(analysis_data,
+    patterns_found,
+    insights)
         }
 
         return analysis_result
@@ -233,6 +235,55 @@ class IntelligentQualityAnalyzer:
 
         return coverage_data
 
+def __analyze_test_quality_manage_resource():
+                    content = f.read()
+
+                tree = ast.parse(content)
+
+                # 统计测试类和方法
+
+def __analyze_test_quality_check_condition():
+                        quality_metrics["test_classes"] += 1
+
+
+def __analyze_test_quality_check_condition():
+    ast.FunctionDef) and item.name.startswith('test_'):
+                                quality_metrics["total_test_methods"] += 1
+
+                # 检查断言质量
+
+def __analyze_test_quality_check_condition():
+                    quality_metrics["files_with_good_assertions"] += 1
+
+                # 检查错误处理
+
+def __analyze_test_quality_check_condition():
+                    quality_metrics["files_with_error_handling"] += 1
+
+                # 检查边界条件
+
+def __analyze_test_quality_check_condition():
+                    quality_metrics["files_with_edge_cases"] += 1
+
+            except Exception as e:
+                print(f"    ⚠️ 分析测试文件失败 {test_file.name}: {e}")
+
+        # 计算平均值
+
+def __analyze_test_quality_check_condition():
+            quality_metrics["average_methods_per_file"] = (
+                quality_metrics["total_test_methods"] / quality_metrics["total_test_files"]
+            )
+
+        # 计算测试复杂度分数
+        quality_metrics["test_complexity_score"] = min(100, (
+            (quality_metrics["files_with_good_assertions"] / quality_metrics["total_test_files"]) * 40 +
+            (quality_metrics["files_with_error_handling"] / quality_metrics["total_test_files"]) * 30 +
+            (quality_metrics["files_with_edge_cases"] / quality_metrics["total_test_files"]) * 30
+        ))
+
+        return quality_metrics
+
     def _analyze_test_quality(self) -> Dict[str, Any]:
         """分析测试质量"""
         test_files = list(self.tests_root.glob("test_*.py"))
@@ -250,37 +301,38 @@ class IntelligentQualityAnalyzer:
 
         for test_file in test_files:
             try:
-                with open(test_file, 'r', encoding='utf-8') as f:
+                __analyze_test_quality_manage_resource()
                     content = f.read()
 
                 tree = ast.parse(content)
 
                 # 统计测试类和方法
                 for node in ast.walk(tree):
-                    if isinstance(node, ast.ClassDef) and node.name.startswith('Test'):
+                    __analyze_test_quality_check_condition()
                         quality_metrics["test_classes"] += 1
 
                         for item in node.body:
-                            if isinstance(item, ast.FunctionDef) and item.name.startswith('test_'):
+                            __analyze_test_quality_check_condition()
+    ast.FunctionDef) and item.name.startswith('test_'):
                                 quality_metrics["total_test_methods"] += 1
 
                 # 检查断言质量
-                if self._has_good_assertions(content):
+                __analyze_test_quality_check_condition()
                     quality_metrics["files_with_good_assertions"] += 1
 
                 # 检查错误处理
-                if self._has_error_handling(content):
+                __analyze_test_quality_check_condition()
                     quality_metrics["files_with_error_handling"] += 1
 
                 # 检查边界条件
-                if self._has_edge_case_tests(content):
+                __analyze_test_quality_check_condition()
                     quality_metrics["files_with_edge_cases"] += 1
 
             except Exception as e:
                 print(f"    ⚠️ 分析测试文件失败 {test_file.name}: {e}")
 
         # 计算平均值
-        if quality_metrics["total_test_files"] > 0:
+        __analyze_test_quality_check_condition()
             quality_metrics["average_methods_per_file"] = (
                 quality_metrics["total_test_methods"] / quality_metrics["total_test_files"]
             )
@@ -335,7 +387,9 @@ class IntelligentQualityAnalyzer:
             r"test.*edge"
         ]
 
-        return any(re.search(pattern, content, re.IGNORECASE) for pattern in edge_case_patterns)
+        return any(re.search(pattern,
+    content,
+    re.IGNORECASE) for pattern in edge_case_patterns)
 
     def _analyze_code_metrics(self) -> Dict[str, Any]:
         """分析代码指标"""
@@ -398,7 +452,10 @@ class IntelligentQualityAnalyzer:
 
         return code_metrics
 
-    def _identify_quality_patterns(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _identify_quality_patterns(self,
+    analysis_data: Dict[str,
+    Any]) -> List[Dict[str,
+    Any]]:
         """识别质量模式"""
         patterns_found = []
 
@@ -440,7 +497,12 @@ class IntelligentQualityAnalyzer:
 
         return patterns_found
 
-    def _generate_quality_insights(self, analysis_data: Dict[str, Any], patterns_found: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _generate_quality_insights(self,
+    analysis_data: Dict[str,
+    Any],
+    patterns_found: List[Dict[str,
+    Any]]) -> List[Dict[str,
+    Any]]:
         """生成质量洞察"""
         insights = []
 
@@ -506,7 +568,11 @@ class IntelligentQualityAnalyzer:
             date=datetime.now(),
             coverage_percentage=coverage_data.get("coverage_percentage", 0),
             test_count=test_quality.get("total_test_methods", 0),
-            complexity_score=10.0 - (code_metrics.get("complex_files_count", 0) / max(code_metrics.get("total_python_files", 1), 1)),
+            complexity_score=10.0 - (code_metrics.get("complex_files_count",
+    0) / max(code_metrics.get("total_python_files",
+    1),
+    1)),
+    
             security_score=85.0,  # 基于当前项目估算
             performance_score=90.0,  # 基于当前项目估算
             overall_score=self._calculate_comprehensive_score(analysis_data)
@@ -532,7 +598,13 @@ class IntelligentQualityAnalyzer:
 
         return comprehensive_score
 
-    def _generate_comprehensive_recommendations(self, analysis_data: Dict[str, Any], patterns_found: List[Dict[str, Any]], insights: List[Dict[str, Any]]) -> List[str]:
+    def _generate_comprehensive_recommendations(self,
+    analysis_data: Dict[str,
+    Any],
+    patterns_found: List[Dict[str,
+    Any]],
+    insights: List[Dict[str,
+    Any]]) -> List[str]:
         """生成综合建议"""
         recommendations = []
 

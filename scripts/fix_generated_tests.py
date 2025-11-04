@@ -10,10 +10,50 @@ import ast
 from pathlib import Path
 from typing import Dict, List, Set, Optional
 
+def _analyze_module_structure_manage_resource():
+            content = f.read()
+
+        tree = ast.parse(content)
+
+        structure = {
+            'classes': {},
+            'functions': [],
+            'imports': []
+        }
+
+        # 收集导入
+
+def _analyze_module_structure_iterate_items():
+                        structure['imports'].append(f"{node.module}.{alias.name}")
+
+        # 收集类和函数
+
+def _analyze_module_structure_check_condition():
+                        methods.append(item.name)
+
+                structure['classes'][node.name] = {
+                    'methods': methods,
+                    'docstring': ast.get_docstring(node) or ""
+                }
+
+
+def _analyze_module_structure_check_condition():
+                # 检查是否是模块级函数（不是类的方法）
+                parent_class = None
+
+def _analyze_module_structure_check_condition():
+                            parent_class = parent.name
+                            break
+
+def _analyze_module_structure_check_condition():
+                    structure['functions'].append(node.name)
+
+        return structure
+
 def analyze_module_structure(module_path: str) -> Dict:
     """深度分析模块结构，区分类方法、模块函数等"""
     try:
-        with open(module_path, 'r', encoding='utf-8') as f:
+        _analyze_module_structure_manage_resource()
             content = f.read()
 
         tree = ast.parse(content)
@@ -31,7 +71,7 @@ def analyze_module_structure(module_path: str) -> Dict:
                     structure['imports'].append(alias.name)
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
-                    for alias in node.names:
+                    _analyze_module_structure_iterate_items()
                         structure['imports'].append(f"{node.module}.{alias.name}")
 
         # 收集类和函数
@@ -39,7 +79,7 @@ def analyze_module_structure(module_path: str) -> Dict:
             if isinstance(node, ast.ClassDef):
                 methods = []
                 for item in node.body:
-                    if isinstance(item, ast.FunctionDef):
+                    _analyze_module_structure_check_condition()
                         methods.append(item.name)
 
                 structure['classes'][node.name] = {
@@ -47,16 +87,16 @@ def analyze_module_structure(module_path: str) -> Dict:
                     'docstring': ast.get_docstring(node) or ""
                 }
 
-            elif isinstance(node, ast.FunctionDef):
+            _analyze_module_structure_check_condition()
                 # 检查是否是模块级函数（不是类的方法）
                 parent_class = None
                 for parent in ast.walk(tree):
                     if isinstance(parent, ast.ClassDef):
-                        if node in parent.body:
+                        _analyze_module_structure_check_condition()
                             parent_class = parent.name
                             break
 
-                if not parent_class:
+                _analyze_module_structure_check_condition()
                     structure['functions'].append(node.name)
 
         return structure
@@ -65,19 +105,78 @@ def analyze_module_structure(module_path: str) -> Dict:
         print(f"分析模块失败 {module_path}: {e}")
         return {'classes': {}, 'functions': [], 'imports': []}
 
-def create_realistic_test_file(test_file_path: str, module_name: str, structure: Dict) -> bool:
+def _create_realistic_test_file_handle_error():
+        # 解析模块名获取类名
+        class_name = None
+
+def _create_realistic_test_file_check_condition():
+    '').lower() in module_name.replace('_',
+    '').lower():
+                class_name = cls_name
+                break
+
+def _create_realistic_test_file_check_condition():
+            class_name = list(structure['classes'].keys())[0]
+
+        # 生成测试内容
+        test_content = f'''"""
+    自动生成的服务测试
+    模块: {module_name}
+    生成时间: 2025-11-03 22:25:02
+
+    注意: 这是一个自动生成的测试文件，请根据实际业务逻辑进行调整和完善
+    """
+
+    import pytest
+    from unittest.mock import Mock, patch, AsyncMock, MagicMock
+    import asyncio
+    from datetime import datetime, timedelta
+    from typing import Any, Dict, List
+
+    # 导入目标模块
+    from {module_name} import {', '.join(structure['functions'])}
+    '''
+
+        # 添加类导入
+
+def _create_realistic_test_file_check_condition():
+            test_content += f'''
+    from {module_name} import {class_name}
+    '''
+
+        # 添加导入
+
+def _create_realistic_test_file_check_condition():
+                    unique_imports.append(imp.split('.')[0])
+
+
+def _create_realistic_test_file_check_condition():
+                test_content += f'''
+    # 额外需要的导入
+    {chr(10).join(f"import {imp}" for imp in unique_imports[:5])}
+    '''
+
+        # 添加fixtures
+        test_content += '''
+    @pytest.fixture
+
+def create_realistic_test_file(test_file_path: str,
+    module_name: str,
+    structure: Dict) -> bool:
     """基于实际模块结构创建真实的测试文件"""
-    try:
+    _create_realistic_test_file_handle_error()
         # 解析模块名获取类名
         class_name = None
         for cls_name in structure['classes'].keys():
             # 查找主要的类（通常是模块名的变体）
-            if cls_name.replace('_', '').lower() in module_name.replace('_', '').lower():
+            _create_realistic_test_file_check_condition()
+    '').lower() in module_name.replace('_',
+    '').lower():
                 class_name = cls_name
                 break
 
         # 如果没有找到明显的主类，使用第一个类
-        if not class_name and structure['classes']:
+        _create_realistic_test_file_check_condition()
             class_name = list(structure['classes'].keys())[0]
 
         # 生成测试内容
@@ -100,7 +199,7 @@ from {module_name} import {', '.join(structure['functions'])}
 '''
 
         # 添加类导入
-        if class_name:
+        _create_realistic_test_file_check_condition()
             test_content += f'''
 from {module_name} import {class_name}
 '''
@@ -109,10 +208,10 @@ from {module_name} import {class_name}
         if structure['imports']:
             unique_imports = []
             for imp in structure['imports']:
-                if '.' in imp and not any(unique_imp in imp for unique_imp in unique_imports):
+                _create_realistic_test_file_check_condition()
                     unique_imports.append(imp.split('.')[0])
 
-            if unique_imports:
+            _create_realistic_test_file_check_condition()
                 test_content += f'''
 # 额外需要的导入
 {chr(10).join(f"import {imp}" for imp in unique_imports[:5])}
@@ -249,8 +348,12 @@ def main():
         ('core.path_manager', 'tests/unit/test_core_path_manager.py'),
         ('core.prediction_engine', 'tests/unit/test_core_prediction_engine.py'),
         ('core.service_lifecycle', 'tests/unit/test_core_service_lifecycle.py'),
-        ('ml.prediction.prediction_service', 'tests/unit/test_ml_prediction_prediction_service.py'),
-        ('security.encryption_service', 'tests/unit/test_security_encryption_service.py'),
+        ('ml.prediction.prediction_service',
+    'tests/unit/test_ml_prediction_prediction_service.py'),
+    
+        ('security.encryption_service',
+    'tests/unit/test_security_encryption_service.py'),
+    
     ]
 
     fixed_count = 0

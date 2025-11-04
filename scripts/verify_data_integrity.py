@@ -19,7 +19,11 @@ class DataIntegrityVerifier:
         self.api_base_url = "http://localhost:8000"
         self.test_results = []
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(self,
+    test_name: str,
+    success: bool,
+    details: str = "",
+    duration: float = 0):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -70,7 +74,8 @@ class DataIntegrityVerifier:
 
         # 检查数据丰富度
         rich_data_indicators = 0
-        if "id" in sample_item and isinstance(sample_item["id"], int) and sample_item["id"] > 0:
+        if "id" in sample_item and isinstance(sample_item["id"],
+    int) and sample_item["id"] > 0:
             rich_data_indicators += 1
         if (
             "name" in sample_item
@@ -138,7 +143,9 @@ class DataIntegrityVerifier:
                             {
                                 "name": name,
                                 "quality": quality,
-                                "data_count": len(data) if isinstance(data, list) else 0,
+                                "data_count": len(data) if isinstance(data,
+    list) else 0,
+    
                             }
                         )
                     else:
@@ -197,7 +204,9 @@ class DataIntegrityVerifier:
                                 self.log_test(
                                     name,
                                     True,
-                                    f"HTTP {response.status_code}, 状态: {data.get('status')}",
+                                    f"HTTP {response.status_code},
+    状态: {data.get('status')}",
+    
                                     duration,
                                 )
                                 success_count += 1
@@ -318,9 +327,14 @@ class DataIntegrityVerifier:
         consistency_ok = await self.test_data_consistency()
 
         # 生成验证报告
-        self.generate_verification_report(quality_results, completeness_ok, consistency_ok)
+        self.generate_verification_report(quality_results,
+    completeness_ok,
+    consistency_ok)
 
-    def generate_verification_report(self, quality_results, completeness_ok, consistency_ok):
+    def generate_verification_report(self,
+    quality_results,
+    completeness_ok,
+    consistency_ok):
         """生成验证报告"""
         print("\n" + "=" * 60)
         print("📊 数据完整性验证报告")

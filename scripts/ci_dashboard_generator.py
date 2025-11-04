@@ -376,7 +376,9 @@ class CICDDashboard:
 
         return "\n".join(alerts)
 
-    def export_dashboard_report(self, dashboard_content: str, output_file: Optional[Path] = None) -> Path:
+    def export_dashboard_report(self,
+    dashboard_content: str,
+    output_file: Optional[Path] = None) -> Path:
         """导出仪表板报告"""
         if output_file is None:
             output_file = self.project_root / "docs" / "reports" / "ci_dashboard.md"
@@ -485,7 +487,8 @@ def main():
         if args.generate_dashboard:
             # 生成完整仪表板
             dashboard_content = dashboard.generate_dashboard_markdown(metrics)
-            dashboard_file = dashboard.export_dashboard_report(dashboard_content, args.output_file)
+            dashboard_file = dashboard.export_dashboard_report(dashboard_content,
+    args.output_file)
 
             print(f"📊 CI/CD仪表板已生成: {dashboard_file}")
             print(f"📈 关键指标:")

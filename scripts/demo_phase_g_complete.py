@@ -133,7 +133,8 @@ def run_phase_g_demo():
 
     print(f"✅ 识别了 {len(gaps)} 个测试缺口:")
     for i, gap in enumerate(gaps, 1):
-        print(f"   {i}. {gap['function_name']} - 优先级: {gap['priority']}, 复杂度: {gap['complexity']}")
+        print(f"   {i}. {gap['function_name']} - 优先级: {gap['priority']},
+    复杂度: {gap['complexity']}")
 
     # 4. 创建模拟分析报告
     analysis_report = {

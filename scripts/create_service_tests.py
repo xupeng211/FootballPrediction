@@ -83,7 +83,8 @@ class ServiceAnalyzer:
                         func_info = self._analyze_runtime_function(obj)
                         analysis['functions'].append(func_info)
 
-            print(f"✅ 发现 {len(analysis['classes'])} 个类, {len(analysis['functions'])} 个函数")
+            print(f"✅ 发现 {len(analysis['classes'])} 个类,
+    {len(analysis['functions'])} 个函数")
             return analysis
 
         except Exception as e:
@@ -111,7 +112,8 @@ class ServiceAnalyzer:
             'methods': methods,
             'properties': properties,
             'dependencies': list(dependencies),
-            'base_classes': [base.id if isinstance(base, ast.Name) else str(base) for base in node.bases]
+            'base_classes': [base.id if isinstance(base,
+    ast.Name) else str(base) for base in node.bases]
         }
 
     def _analyze_function(self, node: ast.FunctionDef) -> Dict[str, Any]:
@@ -150,7 +152,9 @@ class ServiceAnalyzer:
             'returns': returns,
             'dependencies': list(dependencies),
             'is_async': isinstance(node, ast.AsyncFunctionDef),
-            'decorators': [d.id if isinstance(d, ast.Name) else str(d) for d in node.decorator_list if isinstance(d, ast.Name)]
+            'decorators': [d.id if isinstance(d,
+    ast.Name) else str(d) for d in node.decorator_list if isinstance(d,
+    ast.Name)]
         }
 
     def _analyze_runtime_class(self, cls) -> Dict[str, Any]:
@@ -215,7 +219,10 @@ class ServiceTestGenerator:
         self.src_dir = project_root / "src"
         self.test_dir = project_root / "tests"
 
-    def generate_tests_for_service(self, analysis: Dict[str, Any], config: TestConfig) -> str:
+    def generate_tests_for_service(self,
+    analysis: Dict[str,
+    Any],
+    config: TestConfig) -> str:
         """为服务生成测试"""
         print(f"🧪 为服务 {analysis['module_name']} 生成测试...")
 
@@ -325,7 +332,11 @@ class Test{class_name}:
 
         return tests
 
-    def _generate_method_tests(self, class_name: str, method: Dict[str, Any], config: TestConfig) -> str:
+    def _generate_method_tests(self,
+    class_name: str,
+    method: Dict[str,
+    Any],
+    config: TestConfig) -> str:
         """为方法生成测试"""
         method_name = method['name']
         tests = f"""
@@ -1064,7 +1075,8 @@ class TestSystemMonitor:
     def test_health_check(self, monitor):
         """测试健康检查"""
         # 设置模拟返回
-        with patch('monitor.database_check') as mock_db,              patch('monitor.redis_check') as mock_redis:
+        with patch('monitor.database_check') as mock_db,
+    patch('monitor.redis_check') as mock_redis:
             mock_db.return_value = {"status": "healthy", "response_time": 10}
             mock_redis.return_value = {"status": "healthy", "response_time": 5}
 
@@ -1161,7 +1173,10 @@ class TestSystemMonitor:
     def test_generate_monitoring_report(self, monitor):
         """测试生成监控报告"""
         # 设置模拟数据
-        with patch.object(monitor, 'get_system_metrics') as mock_metrics,              patch.object(monitor, 'check_health') as mock_health:
+        with patch.object(monitor,
+    'get_system_metrics') as mock_metrics,
+    patch.object(monitor,
+    'check_health') as mock_health:
             mock_metrics.return_value = {"cpu": 50, "memory": 60}
             mock_health.return_value = {"status": "healthy"}
 
@@ -1277,7 +1292,15 @@ class TestMetricsCollector:
 
     def test_collect_all_metrics(self, collector):
         """测试收集所有指标"""
-        with patch.object(collector, 'collect_cpu_usage', return_value=50),              patch.object(collector, 'collect_memory_usage', return_value=60),              patch.object(collector, 'collect_disk_usage', return_value=30):
+        with patch.object(collector,
+    'collect_cpu_usage',
+    return_value=50),
+    patch.object(collector,
+    'collect_memory_usage',
+    return_value=60),
+    patch.object(collector,
+    'collect_disk_usage',
+    return_value=30):
 
             # 调用方法
             metrics = collector.collect_all()

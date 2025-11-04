@@ -100,7 +100,10 @@ class ConnectionPoolOptimizer:
         logger.info(f"✅ 创建引擎 {config_name}: {config['description']}")
         return engine
 
-    async def test_connection_pool(self, config_name: str, concurrent_connections: int = 20) -> dict[str, Any]:
+    async def test_connection_pool(self,
+    config_name: str,
+    concurrent_connections: int = 20) -> dict[str,
+    Any]:
         """测试连接池性能"""
         logger.info(f"🧪 测试连接池配置: {config_name}")
 
@@ -204,7 +207,8 @@ class ConnectionPoolOptimizer:
 
         for config_name in configs_to_test:
             try:
-                results = await self.test_connection_pool(config_name, concurrent_connections=20)
+                results = await self.test_connection_pool(config_name,
+    concurrent_connections=20)
                 comparison_results[config_name] = results
 
                 # 短暂休息以避免连接池冲突
@@ -257,7 +261,9 @@ class ConnectionPoolOptimizer:
 
         return pool_usage_data
 
-    async def generate_optimization_recommendations(self, comparison_results: dict[str, Any]) -> list[str]:
+    async def generate_optimization_recommendations(self,
+    comparison_results: dict[str,
+    Any]) -> list[str]:
         """生成优化建议"""
         logger.info("💡 生成连接池优化建议...")
 
@@ -273,7 +279,8 @@ class ConnectionPoolOptimizer:
             return ["❌ 所有连接池配置测试都失败，请检查数据库连接"]
 
         # 找出最佳配置
-        best_config = min(successful_configs.items(), key=lambda x: x[1]['average_response_time'])
+        best_config = min(successful_configs.items(),
+    key=lambda x: x[1]['average_response_time'])
         best_config_name, best_config_results = best_config
 
         recommendations.append(f"🎯 推荐使用连接池配置: {best_config_name}")
@@ -334,8 +341,12 @@ class ConnectionPoolOptimizer:
                 'summary': {
                     'total_configs_tested': len(comparison_results),
                     'successful_configs': len([r for r in comparison_results.values() if 'error' not in r]),
+    
                     'best_config': max(
-                        [(name, results) for name, results in comparison_results.items() if 'error' not in results],
+                        [(name,
+    results) for name,
+    results in comparison_results.items() if 'error' not in results],
+    
                         key=lambda x: x[1]['successful_connections']
                     )[0] if comparison_results else None
                 }
@@ -369,7 +380,9 @@ async def main():
 
         # 保存分析报告
         import json
-        with open('connection_pool_optimization_report.json', 'w', encoding='utf-8') as f:
+        with open('connection_pool_optimization_report.json',
+    'w',
+    encoding='utf-8') as f:
             json.dump(report, f, ensure_ascii=False, indent=2, default=str)
 
         logger.info("📄 优化报告已保存到 connection_pool_optimization_report.json")

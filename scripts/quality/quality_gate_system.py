@@ -172,7 +172,10 @@ class CodeComplexityRule(QualityRule):
         test_analysis = context.get('test_analysis', {})
         coverage_data = context.get('coverage_data', {})
 
-        complexity_score = len(test_analysis.get('test_files', [])) / max(coverage_data.get('covered_modules', 1), 1) * 10
+        complexity_score = len(test_analysis.get('test_files',
+    [])) / max(coverage_data.get('covered_modules',
+    1),
+    1) * 10
 
         if complexity_score > self.max_complexity:
             issues.append(QualityIssue(
@@ -203,7 +206,10 @@ class SecurityRule(QualityRule):
         security_test_count = 0
         for test_file in test_files:
             file_path = test_file if isinstance(test_file, str) else str(test_file)
-            if any(keyword in file_path.lower() for keyword in ['auth', 'security', 'permission', 'rbac']):
+            if any(keyword in file_path.lower() for keyword in ['auth',
+    'security',
+    'permission',
+    'rbac']):
                 security_test_count += 1
 
         if security_test_count == 0:
@@ -235,7 +241,10 @@ class PerformanceRule(QualityRule):
         performance_test_count = 0
         for test_file in test_files:
             file_path = test_file if isinstance(test_file, str) else str(test_file)
-            if any(keyword in file_path.lower() for keyword in ['performance', 'perf', 'benchmark', 'load']):
+            if any(keyword in file_path.lower() for keyword in ['performance',
+    'perf',
+    'benchmark',
+    'load']):
                 performance_test_count += 1
 
         if performance_test_count < 3:
@@ -331,7 +340,10 @@ class QualityGateSystem:
 
         return result
 
-    def _calculate_metrics(self, context: Dict[str, Any], issues: List[QualityIssue]) -> QualityMetrics:
+    def _calculate_metrics(self,
+    context: Dict[str,
+    Any],
+    issues: List[QualityIssue]) -> QualityMetrics:
         """计算质量指标"""
         coverage_data = context.get('coverage_data', {})
         test_analysis = context.get('test_analysis', {})
@@ -371,7 +383,9 @@ class QualityGateSystem:
             overall_quality_score=overall_quality_score
         )
 
-    def _determine_status(self, issues: List[QualityIssue], metrics: QualityMetrics) -> QualityStatus:
+    def _determine_status(self,
+    issues: List[QualityIssue],
+    metrics: QualityMetrics) -> QualityStatus:
         """确定质量状态"""
         critical_issues = [i for i in issues if i.level == QualityLevel.CRITICAL]
         high_issues = [i for i in issues if i.level == QualityLevel.HIGH]
@@ -385,7 +399,9 @@ class QualityGateSystem:
         else:
             return QualityStatus.PASSED
 
-    def _generate_recommendations(self, issues: List[QualityIssue], metrics: QualityMetrics) -> List[str]:
+    def _generate_recommendations(self,
+    issues: List[QualityIssue],
+    metrics: QualityMetrics) -> List[str]:
         """生成改进建议"""
         recommendations = []
 

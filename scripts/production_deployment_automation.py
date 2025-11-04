@@ -24,7 +24,6 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
 import tempfile
-import shutil
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).resolve().parent.parent
@@ -157,9 +156,12 @@ class ProductionDeploymentAutomation:
         random_suffix = secrets_module.token_hex(4)
         return f"deploy_{timestamp}_{random_suffix}"
 
-    def create_production_deployment_config(self, environment: Environment) -> Dict[str, Any]:
+    def create_production_deployment_config(self,
+    environment: Environment) -> Dict[str,
+    Any]:
         """创建生产环境部署配置"""
-        base_config = self.default_configs.get(environment, self.default_configs[Environment.PRODUCTION])
+        base_config = self.default_configs.get(environment,
+    self.default_configs[Environment.PRODUCTION])
 
         # 安全配置
         security_config = SecurityConfig(
@@ -277,7 +279,9 @@ class ProductionDeploymentAutomation:
             }
         ]
 
-    def _get_environment_specific_config(self, environment: Environment) -> Dict[str, Any]:
+    def _get_environment_specific_config(self,
+    environment: Environment) -> Dict[str,
+    Any]:
         """获取环境特定配置"""
         configs = {
             Environment.PRODUCTION: {
@@ -339,7 +343,8 @@ services:
       resources:
         limits:
           memory: {config["deployment"]["resource_limits"]["memory"]}
-          cpus: '{float(config["deployment"]["resource_limits"]["cpu"].replace("m", "")) / 1000}'
+          cpus: '{float(config["deployment"]["resource_limits"]["cpu"].replace("m",
+    "")) / 1000}'
         reservations:
           memory: 512Mi
           cpus: '0.25'
@@ -607,7 +612,9 @@ generate_self_signed_cert() {{
         -keyout "$KEY_FILE" \\
         -out "$CERT_FILE" \\
         -subj "/C=CN/ST=Beijing/L=Beijing/O=FootballPrediction/CN=$DOMAIN" \\
-        -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\\nsubjectAltName=DNS:$DOMAIN,DNS:www.$DNS,DNS:localhost"))
+        -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\\nsubjectAltName=DNS:$DOMAIN,
+    DNS:www.$DNS,
+    DNS:localhost"))
 
     log "自签名证书生成完成"
 }}
@@ -875,7 +882,7 @@ run_performance_tests() {{
     log "运行性能基准测试..."
 
     # 简单的响应时间测试
-    local response_time=$(curl -o /dev/null -s -w '%{{time_total}}' http://localhost:8000/health)
+    local response_time=$(curl -o /dev/null -s -w '%{{time_total}}' http://localhost:8000/health);
     local response_time_ms=$(echo "$response_time * 1000" | bc)
 
     if (( $(echo "$response_time_ms < 200" | bc -l) )); then
@@ -1222,7 +1229,10 @@ limits_config:
 
         # 检查Docker Compose是否可用
         try:
-            subprocess.run(["docker-compose", "version"], check=True, capture_output=True)
+            subprocess.run(["docker-compose",
+    "version"],
+    check=True,
+    capture_output=True)
             results["docker_compose"] = True
         except (subprocess.CalledProcessError, FileNotFoundError):
             results["docker_compose"] = False
@@ -1241,7 +1251,9 @@ limits_config:
 
         return results
 
-    def export_deployment_report(self, result: DeploymentResult, output_file: Optional[Path] = None) -> Path:
+    def export_deployment_report(self,
+    result: DeploymentResult,
+    output_file: Optional[Path] = None) -> Path:
         """导出部署报告"""
         if output_file is None:
             output_file = self.project_root / "reports" / f"deployment_report_{result.deployment_id}.json"

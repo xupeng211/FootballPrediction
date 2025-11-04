@@ -115,7 +115,8 @@ class CodeReviewAutomation:
                 ))
 
                 if self.console:
-                    progress.update(task, description=f"✓ {check_name} - {result['status']}")
+                    progress.update(task,
+    description=f"✓ {check_name} - {result['status']}")
 
         return results
 
@@ -139,7 +140,8 @@ class CodeReviewAutomation:
                 }
             else:
                 # 分析失败原因并提供建议
-                suggestions = self._analyze_failure(name, result.stderr or result.stdout)
+                suggestions = self._analyze_failure(name,
+    result.stderr or result.stdout)
                 return {
                     "status": "FAIL",
                     "details": f"检查失败: {result.stderr[:200] if result.stderr else result.stdout[:200]}",
@@ -248,7 +250,10 @@ class CodeReviewAutomation:
 
         # 详细结果
         for result in results:
-            status_icon = {"PASS": "✅", "FAIL": "❌", "WARN": "⚠️"}.get(result.status, "❓")
+            status_icon = {"PASS": "✅",
+    "FAIL": "❌",
+    "WARN": "⚠️"}.get(result.status,
+    "❓")
             report_lines.append(f"## {status_icon} {result.name}")
             report_lines.append(f"**状态**: {result.status}")
             report_lines.append(f"**耗时**: {result.duration:.2f}秒")
@@ -276,7 +281,9 @@ class CodeReviewAutomation:
             "period_days": days,
             "total_prs": len(mock_data),
             "average_review_time": sum(m.review_duration_hours for m in mock_data) / len(mock_data) if mock_data else 0,
+    
             "average_test_coverage": sum(m.test_coverage for m in mock_data) / len(mock_data) if mock_data else 0,
+    
             "pr_count_trend": self._calculate_trend([m.created_at for m in mock_data]),
             "quality_score_trend": self._calculate_quality_trend(mock_data)
         }
@@ -322,7 +329,9 @@ class CodeReviewAutomation:
         else:
             return "➡️ 稳定"
 
-    def _calculate_quality_trend(self, metrics: List[PRReviewMetrics]) -> Dict[str, str]:
+    def _calculate_quality_trend(self,
+    metrics: List[PRReviewMetrics]) -> Dict[str,
+    str]:
         """计算质量趋势"""
         if not metrics:
             return {"coverage": "无数据", "review_time": "无数据"}
@@ -346,7 +355,8 @@ class CodeReviewAutomation:
             "review_time": f"{time_trend} ({recent_time:.1f}h)"
         }
 
-    def suggest_review_improvements(self, results: List[ReviewCheckResult]) -> List[str]:
+    def suggest_review_improvements(self,
+    results: List[ReviewCheckResult]) -> List[str]:
         """基于检查结果提出改进建议"""
         suggestions = []
 
@@ -484,7 +494,9 @@ def main():
             if automation.console:
                 automation.console.print("⚡ [bold yellow]运行快速检查...[/bold yellow]")
             # 快速检查只运行核心项目
-            automation._run_check = lambda name, command: automation._run_check(name, command)
+            automation._run_check = lambda name,
+    command: automation._run_check(name,
+    command)
             # 这里可以定制快速检查逻辑
 
         results = automation.run_quality_checks()

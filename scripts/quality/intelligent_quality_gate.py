@@ -118,7 +118,9 @@ class IntelligentQualityGate:
             value=coverage_score,
             threshold=self.config["thresholds"]["test_coverage"],
             weight=self.config["weights"]["test_coverage"],
-            status=self._get_quality_level(coverage_score, self.config["thresholds"]["test_coverage"]),
+            status=self._get_quality_level(coverage_score,
+    self.config["thresholds"]["test_coverage"]),
+    
             description="Test coverage percentage"
         ))
 
@@ -140,7 +142,9 @@ class IntelligentQualityGate:
             value=security_score,
             threshold=self.config["thresholds"]["security_score"],
             weight=self.config["weights"]["security"],
-            status=self._get_quality_level(security_score, self.config["thresholds"]["security_score"]),
+            status=self._get_quality_level(security_score,
+    self.config["thresholds"]["security_score"]),
+    
             description="Security vulnerability assessment"
         ))
 
@@ -151,7 +155,9 @@ class IntelligentQualityGate:
             value=performance_score,
             threshold=self.config["thresholds"]["performance_score"],
             weight=self.config["weights"]["performance"],
-            status=self._get_quality_level(performance_score, self.config["thresholds"]["performance_score"]),
+            status=self._get_quality_level(performance_score,
+    self.config["thresholds"]["performance_score"]),
+    
             description="Performance and efficiency"
         ))
 
@@ -208,7 +214,8 @@ class IntelligentQualityGate:
             density_bonus = min(test_density, 10.0)
 
             total_score = min(base_score + density_bonus, 100.0)
-            print(f"    📊 Test files: {len(test_files)}, Source files: {len(_src_files)}")
+            print(f"    📊 Test files: {len(test_files)},
+    Source files: {len(_src_files)}")
             print(f"    🎯 Phase 4 coverage: {phase4_count}/4 files")
             print(f"    📈 Test coverage score: {total_score:.1f}")
 
@@ -270,7 +277,8 @@ class IntelligentQualityGate:
             base_score -= issue_penalty
 
             final_score = max(0, min(100, base_score))
-            print(f"    📊 Total files: {len(src_files)}, Complex files: {complex_files}")
+            print(f"    📊 Total files: {len(src_files)},
+    Complex files: {complex_files}")
             print(f"    🔍 Total issues: {total_issues}, Lines: {total_lines}")
             print(f"    📈 Code quality score: {final_score:.1f}")
 
@@ -432,7 +440,9 @@ class IntelligentQualityGate:
 
             final_score = min(100, maintainability_score)
             print(f"    📊 Project structure: organized={organized_structure}")
-            print(f"    📊 Has tests: {has_tests}, docs: {has_docs}, requirements: {has_requirements}")
+            print(f"    📊 Has tests: {has_tests},
+    docs: {has_docs},
+    requirements: {has_requirements}")
             print(f"    📈 Maintainability score: {final_score:.1f}")
 
             return final_score
@@ -603,7 +613,8 @@ class IntelligentQualityGate:
             overall_score = 0.0
 
         # 确定整体状态
-        overall_status = self._get_quality_level(overall_score, self.config["thresholds"]["overall_score"])
+        overall_status = self._get_quality_level(overall_score,
+    self.config["thresholds"]["overall_score"])
 
         analysis_time = time.time() - self.start_time
 

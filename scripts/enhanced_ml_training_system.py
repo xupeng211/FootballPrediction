@@ -55,7 +55,6 @@ except ImportError as e:
 
 # 尝试导入XGBoost和LightGBM
 try:
-    import xgboost as xgb
 
     XGB_AVAILABLE = True
     logger.info("XGBoost可用")
@@ -64,7 +63,6 @@ except ImportError:
     logger.warning("XGBoost不可用，请安装: pip install xgboost")
 
 try:
-    import lightgbm as lgb
 
     LGB_AVAILABLE = True
     logger.info("LightGBM可用")
@@ -313,7 +311,10 @@ class EnhancedMLTrainingSystem:
 
         return max(0.0, quality_score)
 
-    async def train_enhanced_models(self, X: pd.DataFrame, y: pd.Series) -> Dict[str, Any]:
+    async def train_enhanced_models(self,
+    X: pd.DataFrame,
+    y: pd.Series) -> Dict[str,
+    Any]:
         """训练增强模型集合"""
         logger.info("开始训练增强模型集合...")
 
@@ -337,7 +338,9 @@ class EnhancedMLTrainingSystem:
 
         # 标准化特征
         X_train_scaled = pd.DataFrame(
-            self.scaler.fit_transform(X_train), columns=X_train.columns, index=X_train.index
+            self.scaler.fit_transform(X_train),
+    columns=X_train.columns,
+    index=X_train.index
         )
         X_test_scaled = pd.DataFrame(
             self.scaler.transform(X_test), columns=X_test.columns, index=X_test.index
@@ -415,7 +418,8 @@ class EnhancedMLTrainingSystem:
                             best_accuracy = accuracy
                             best_model_name = model_name
                             self.best_model = trainer.model
-                            self.feature_importance = result.get("feature_importance", {})
+                            self.feature_importance = result.get("feature_importance",
+    {})
 
                         logger.info(
                             f"  {model_name}: 准确率={accuracy:.4f}, 训练时间={training_time:.2f}s"
@@ -500,7 +504,9 @@ class EnhancedMLTrainingSystem:
                     "type": name.lower().replace(" ", "_"),
                     "accuracy": accuracy,
                     "training_time": training_time,
-                    "feature_importance": dict(zip(X_train.columns, model.feature_importances_)),
+                    "feature_importance": dict(zip(X_train.columns,
+    model.feature_importances_)),
+    
                 }
 
                 if accuracy > best_accuracy:
@@ -553,7 +559,9 @@ class EnhancedMLTrainingSystem:
             return {"error": "没有可用的特征重要性数据"}
 
         # 排序特征重要性
-        sorted_features = sorted(self.feature_importance.items(), key=lambda x: x[1], reverse=True)
+        sorted_features = sorted(self.feature_importance.items(),
+    key=lambda x: x[1],
+    reverse=True)
 
         top_features = sorted_features[:top_n]
 
@@ -567,15 +575,25 @@ class EnhancedMLTrainingSystem:
         }
 
         for feature, importance in top_features:
-            if any(keyword in feature.lower() for keyword in ["attack", "goal", "shot", "xg"]):
+            if any(keyword in feature.lower() for keyword in ["attack",
+    "goal",
+    "shot",
+    "xg"]):
                 feature_categories["进攻特征"].append((feature, importance))
             elif any(
-                keyword in feature.lower() for keyword in ["defense", "clean", "conceded", "xga"]
+                keyword in feature.lower() for keyword in ["defense",
+    "clean",
+    "conceded",
+    "xga"]
             ):
                 feature_categories["防守特征"].append((feature, importance))
-            elif any(keyword in feature.lower() for keyword in ["market", "odds", "betting"]):
+            elif any(keyword in feature.lower() for keyword in ["market",
+    "odds",
+    "betting"]):
                 feature_categories["市场特征"].append((feature, importance))
-            elif any(keyword in feature.lower() for keyword in ["form", "momentum", "recent"]):
+            elif any(keyword in feature.lower() for keyword in ["form",
+    "momentum",
+    "recent"]):
                 feature_categories["形态特征"].append((feature, importance))
             else:
                 feature_categories["其他特征"].append((feature, importance))
@@ -589,7 +607,8 @@ class EnhancedMLTrainingSystem:
             * 100,
         }
 
-    def save_training_results(self, filepath: str = "enhanced_ml_training_results.json") -> bool:
+    def save_training_results(self,
+    filepath: str = "enhanced_ml_training_results.json") -> bool:
         """保存训练结果"""
         try:
             results = {
@@ -636,11 +655,16 @@ class EnhancedMLTrainingSystem:
             logger.info("📋 步骤4: 生成训练报告")
             training_results["summary"] = {
                 "total_models_trained": len(training_results.get("models", {})),
-                "best_model_accuracy": training_results.get("best_model", {}).get("accuracy", 0),
+                "best_model_accuracy": training_results.get("best_model",
+    {}).get("accuracy",
+    0),
+    
                 "ensemble_accuracy": training_results.get("ensemble_result", {}).get(
                     "ensemble_accuracy", 0
                 ),
-                "improvement_over_srs": training_results.get("improvement_over_srs", {}),
+                "improvement_over_srs": training_results.get("improvement_over_srs",
+    {}),
+    
                 "xgboost_available": XGB_AVAILABLE,
                 "lightgbm_available": LGB_AVAILABLE,
                 "advanced_trainer_available": ADVANCED_TRAINER_AVAILABLE,
@@ -659,7 +683,8 @@ class EnhancedMLTrainingSystem:
 
             logger.info(f"🏆 最佳模型: {best_model.get('name', 'N/A')}")
             logger.info(f"📊 最佳准确率: {best_model.get('accuracy', 0):.4f}")
-            logger.info(f"📈 相对SRS改进: {improvement.get('improvement_percentage', 0):+.2f}%")
+            logger.info(f"📈 相对SRS改进: {improvement.get('improvement_percentage',
+    0):+.2f}%")
             logger.info(f"📋 数据增量: {improvement.get('data_increase', 0):+.1f}%")
             logger.info(f"🔧 特征增量: {improvement.get('feature_increase', 0):+.1f}%")
 

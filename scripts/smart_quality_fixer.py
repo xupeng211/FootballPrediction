@@ -18,7 +18,8 @@ from datetime import datetime
 import logging
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -587,6 +588,30 @@ class SmartQualityFixer:
 
         return fix_count
 
+def __apply_code_review_rules_check_condition():
+                    "#"
+                ):
+                    # 为公共函数添加文档字符串占位符
+
+def __apply_code_review_rules_check_condition():
+                        indent = len(line) - len(line.lstrip())
+                        fixed_lines.append(line)
+                        fixed_lines.append(" " * (indent + 4) + '"""TODO: 添加函数文档"""')
+                        continue
+
+def __apply_code_review_rules_check_condition():
+                    comment_line = line + "  # TODO: 考虑拆分为普通循环提高可读性"
+                    fixed_lines.append(comment_line)
+                    continue
+
+def __apply_code_review_rules_check_condition():
+                        fixed_lines.append(line + "  # TODO: 添加返回类型注解")
+                        continue
+
+def __apply_code_review_rules_check_condition():
+                        fixed_lines.append(line + f"  # TODO: 将魔法数字 {num} 提取为常量")
+                        break
+
     def _apply_code_review_rules(self, content: str, file_path: Path) -> str:
         """应用代码审查规则"""
         lines = content.split("\n")
@@ -596,11 +621,11 @@ class SmartQualityFixer:
             # 1. 添加缺失的文档字符串
             if line.strip().startswith("def ") and i + 1 < len(lines):
                 next_line = lines[i + 1] if i + 1 < len(lines) else ""
-                if not next_line.strip().startswith('"""') and not next_line.strip().startswith(
+                __apply_code_review_rules_check_condition()
                     "#"
                 ):
                     # 为公共函数添加文档字符串占位符
-                    if "def _" not in line:  # 不是私有函数
+                    __apply_code_review_rules_check_condition()
                         indent = len(line) - len(line.lstrip())
                         fixed_lines.append(line)
                         fixed_lines.append(" " * (indent + 4) + '"""TODO: 添加函数文档"""')
@@ -609,7 +634,7 @@ class SmartQualityFixer:
             # 2. 修复过于复杂的列表推导
             if "for" in line and "if" in line and line.count("[") >= 2:
                 # 建议拆分复杂的列表推导
-                if line.count("for") > 1 or line.count("if") > 1:
+                __apply_code_review_rules_check_condition()
                     comment_line = line + "  # TODO: 考虑拆分为普通循环提高可读性"
                     fixed_lines.append(comment_line)
                     continue
@@ -619,7 +644,7 @@ class SmartQualityFixer:
                 # 为没有返回类型注解的函数添加提示
                 if ":" in line and "(" in line:
                     func_name = line.split("(")[0].split()[-1]
-                    if not func_name.startswith("_"):  # 公共函数
+                    __apply_code_review_rules_check_condition()
                         fixed_lines.append(line + "  # TODO: 添加返回类型注解")
                         continue
 
@@ -627,7 +652,7 @@ class SmartQualityFixer:
             magic_numbers = re.findall(r"\b\d{2,}\b", line)
             if magic_numbers and "#" not in line:
                 for num in magic_numbers:
-                    if int(num) > 10:  # 只标记较大的数字
+                    __apply_code_review_rules_check_condition()
                         fixed_lines.append(line + f"  # TODO: 将魔法数字 {num} 提取为常量")
                         break
                 else:

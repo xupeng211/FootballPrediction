@@ -60,11 +60,14 @@ class Phase35AICoverageMaster:
 
                 for line in output_lines:
                     if '综合覆盖率分数:' in line:
-                        coverage_data['overall'] = float(line.split(':')[-1].strip().replace('%', ''))
+                        coverage_data['overall'] = float(line.split(':')[-1].strip().replace('%',
+    ''))
                     elif '函数覆盖率:' in line:
-                        coverage_data['function'] = float(line.split(':')[-1].strip().replace('%', ''))
+                        coverage_data['function'] = float(line.split(':')[-1].strip().replace('%',
+    ''))
                     elif '估算行覆盖率:' in line:
-                        coverage_data['line'] = float(line.split(':')[-1].strip().replace('%', ''))
+                        coverage_data['line'] = float(line.split(':')[-1].strip().replace('%',
+    ''))
 
                 # 深度模块分析
                 modules = ['src/utils', 'src/api', 'src/config', 'src/domain', 'src/services', 'src/repositories']
@@ -115,12 +118,15 @@ class Phase35AICoverageMaster:
                         analysis['function_complexity'][func_name] = complexity
 
                         # 检查测试关联
-                        test_file = str(file_path).replace('src/', 'tests/').replace('.py', '_test.py')
+                        test_file = str(file_path).replace('src/',
+    'tests/').replace('.py',
+    '_test.py')
                         has_test = Path(test_file).exists()
 
                         if has_test:
                             test_content = Path(test_file).read_text(encoding='utf-8')
-                            test_correlation = self._analyze_test_correlation(node.name, test_content)
+                            test_correlation = self._analyze_test_correlation(node.name,
+    test_content)
                             analysis['test_correlation'][func_name] = test_correlation
 
                             if test_correlation['confidence'] > 0.5:
@@ -399,7 +405,9 @@ class Phase35AICoverageMaster:
             'improvement': improvement
         }
 
-    def _create_ai_generated_basic_tests(self, module: str, function_count: int) -> Dict:
+    def _create_ai_generated_basic_tests(self,
+    module: str,
+    function_count: int) -> Dict:
         """创建AI生成的基础测试"""
         print(f"      🔧 为 {module} 创建AI基础测试...")
 
@@ -455,7 +463,9 @@ class Phase35AICoverageMaster:
             python_files = [f for f in python_files if '__pycache__' not in str(f) and f.name != '__init__.py']
 
             for file_path in python_files[:max_functions]:
-                test_file_path = str(file_path).replace('src/', 'tests/').replace('.py', '_ai_test.py')
+                test_file_path = str(file_path).replace('src/',
+    'tests/').replace('.py',
+    '_ai_test.py')
                 test_path = Path(test_file_path)
 
                 # 确保测试目录存在
@@ -513,7 +523,9 @@ if __name__ == "__main__":
 
         return test_files
 
-    def _generate_comprehensive_test_suite(self, module: str, max_functions: int) -> List[str]:
+    def _generate_comprehensive_test_suite(self,
+    module: str,
+    max_functions: int) -> List[str]:
         """生成综合测试套件"""
         test_files = []
 
@@ -523,7 +535,9 @@ if __name__ == "__main__":
             python_files = [f for f in python_files if '__pycache__' not in str(f) and f.name != '__init__.py']
 
             for file_path in python_files[:max_functions]:
-                test_file_path = str(file_path).replace('src/', 'tests/').replace('.py', '_comprehensive_test.py')
+                test_file_path = str(file_path).replace('src/',
+    'tests/').replace('.py',
+    '_comprehensive_test.py')
                 test_path = Path(test_file_path)
 
                 # 确保测试目录存在
@@ -625,7 +639,8 @@ if __name__ == "__main__":
 
                 for line in output_lines:
                     if '综合覆盖率分数:' in line:
-                        new_coverage = float(line.split(':')[-1].strip().replace('%', ''))
+                        new_coverage = float(line.split(':')[-1].strip().replace('%',
+    ''))
                         break
 
                 improvement = new_coverage - original_coverage
@@ -676,7 +691,8 @@ def main():
     print(f"   - 预期改进: {results['total_improvement']:.1f}%")
 
     # 3. 验证改进效果
-    verification = ai_master.verify_ai_improvement(analysis['base_coverage'].get('overall', 55.4))
+    verification = ai_master.verify_ai_improvement(analysis['base_coverage'].get('overall',
+    55.4))
 
     print("\n🏆 AI改进验证:")
     print(f"   - 原始覆盖率: {verification['original_coverage']:.1f}%")

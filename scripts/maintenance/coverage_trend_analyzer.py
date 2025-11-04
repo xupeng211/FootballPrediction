@@ -100,9 +100,7 @@ class CoverageTrendAnalyzer:
                 ON coverage_history(timestamp)
             """)
 
-    def collect_current_coverage(self) -> Optional[CoverageData]:
-        """收集当前覆盖率数据"""
-        try:
+def _collect_current_coverage_handle_error():
             # 运行pytest生成覆盖率报告
             import subprocess
 
@@ -114,17 +112,73 @@ class CoverageTrendAnalyzer:
                 timeout=600
             )
 
-            if result.returncode != 0:
+
+def _collect_current_coverage_check_condition():
+                print(f"⚠️ 测试运行失败: {result.stderr}")
+                return None
+
+def _collect_current_coverage_check_condition():
+                print("⚠️ 覆盖率报告文件不存在")
+                return None
+
+def _collect_current_coverage_manage_resource():
+                coverage_data = json.load(f)
+
+            # 提取总覆盖率
+            total_coverage = coverage_data.get("totals", {}).get("percent_covered", 0.0)
+
+            # 提取模块覆盖率
+            module_coverage = {}
+
+def _collect_current_coverage_check_condition():
+                    module_name = file_path.split("src/")[1].split("/")[0]
+                    module_coverage[module_name] = file_data.get("summary",
+    {}).get("percent_covered",
+    0.0)
+
+            # 解析测试结果
+            test_output = result.stdout
+            total_tests = passed_tests = failed_tests = error_tests = 0
+            execution_time = 0.0
+
+            lines = test_output.split('\n')
+
+def _collect_current_coverage_check_condition():
+                            error_tests = int(part.replace('error', ''))
+                    total_tests = passed_tests + failed_tests + error_tests
+
+
+def _collect_current_coverage_handle_error():
+                        time_part = line.split('=')[1].strip()
+                        execution_time = float(time_part.split()[0])
+                    except (IndexError, ValueError):
+                        continue
+
+    def collect_current_coverage(self) -> Optional[CoverageData]:
+        """收集当前覆盖率数据"""
+        _collect_current_coverage_handle_error()
+            # 运行pytest生成覆盖率报告
+            import subprocess
+
+            result = subprocess.run(
+                ["pytest", "--cov=src", "--cov-report=json", "--tb=short"],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=600
+            )
+
+            _collect_current_coverage_check_condition()
                 print(f"⚠️ 测试运行失败: {result.stderr}")
                 return None
 
             # 读取覆盖率报告
             coverage_file = self.project_root / "coverage.json"
-            if not coverage_file.exists():
+            _collect_current_coverage_check_condition()
                 print("⚠️ 覆盖率报告文件不存在")
                 return None
 
-            with open(coverage_file, 'r') as f:
+            _collect_current_coverage_manage_resource()
                 coverage_data = json.load(f)
 
             # 提取总覆盖率
@@ -133,9 +187,11 @@ class CoverageTrendAnalyzer:
             # 提取模块覆盖率
             module_coverage = {}
             for file_path, file_data in coverage_data.get("files", {}).items():
-                if "src/" in file_path:
+                _collect_current_coverage_check_condition()
                     module_name = file_path.split("src/")[1].split("/")[0]
-                    module_coverage[module_name] = file_data.get("summary", {}).get("percent_covered", 0.0)
+                    module_coverage[module_name] = file_data.get("summary",
+    {}).get("percent_covered",
+    0.0)
 
             # 解析测试结果
             test_output = result.stdout
@@ -151,12 +207,12 @@ class CoverageTrendAnalyzer:
                             passed_tests = int(part.replace('passed', ''))
                         elif part.endswith('failed'):
                             failed_tests = int(part.replace('failed', ''))
-                        elif part.endswith('error'):
+                        _collect_current_coverage_check_condition()
                             error_tests = int(part.replace('error', ''))
                     total_tests = passed_tests + failed_tests + error_tests
 
                 if 'seconds' in line and '=' in line:
-                    try:
+                    _collect_current_coverage_handle_error()
                         time_part = line.split('=')[1].strip()
                         execution_time = float(time_part.split()[0])
                     except (IndexError, ValueError):
@@ -401,7 +457,8 @@ class CoverageTrendAnalyzer:
 
         # 按优先级排序
         priority_order = {"high": 0, "medium": 1, "low": 2}
-        module_analyses.sort(key=lambda x: (priority_order[x.priority], -x.current_coverage))
+        module_analyses.sort(key=lambda x: (priority_order[x.priority],
+    -x.current_coverage))
 
         return module_analyses
 
@@ -420,7 +477,8 @@ class CoverageTrendAnalyzer:
         module_analyses = self.analyze_modules(days)
 
         # 生成建议
-        recommendations = self._generate_recommendations(trend_analysis, module_analyses)
+        recommendations = self._generate_recommendations(trend_analysis,
+    module_analyses)
 
         # 构建报告
         report = {
@@ -432,18 +490,23 @@ class CoverageTrendAnalyzer:
             "recommendations": recommendations,
             "summary": {
                 "overall_trend": f"{trend_analysis.trend_direction} ({trend_analysis.trend_strength:.2f})",
+    
                 "current_coverage": current_data.total_coverage if current_data else 0.0,
                 "prediction_7d": trend_analysis.prediction_7d,
                 "prediction_30d": trend_analysis.prediction_30d,
                 "high_priority_modules": len([m for m in module_analyses if m.priority == "high"]),
+    
                 "improving_modules": len([m for m in module_analyses if m.trend_direction == "improving"]),
+    
                 "declining_modules": len([m for m in module_analyses if m.trend_direction == "declining"])
             }
         }
 
         return report
 
-    def _generate_recommendations(self, trend: TrendAnalysis, modules: List[ModuleAnalysis]) -> List[str]:
+    def _generate_recommendations(self,
+    trend: TrendAnalysis,
+    modules: List[ModuleAnalysis]) -> List[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -478,7 +541,10 @@ class CoverageTrendAnalyzer:
 
         return recommendations
 
-    def export_report(self, report: Dict[str, Any], output_file: Optional[Path] = None) -> Path:
+    def export_report(self,
+    report: Dict[str,
+    Any],
+    output_file: Optional[Path] = None) -> Path:
         """导出趋势分析报告"""
         if output_file is None:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -611,7 +677,7 @@ class CoverageTrendAnalyzer:
         <div class="header">
             <h1>📈 覆盖率趋势分析报告</h1>
             <p>生成时间: {report['timestamp'][:19].replace('T', ' ')}</p>
-            <p>分析期间: 最近 {report['analysis_period_days']} 天 ({report['total_data_points']} 个数据点)</p>
+    <p>分析期间: 最近 {report['analysis_period_days']} 天 ({report['total_data_points']} 个数据点)</p>;
         </div>
 
         <div class="trend-overview">

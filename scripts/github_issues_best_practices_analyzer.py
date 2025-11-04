@@ -673,8 +673,14 @@ Issue的工作量应该在1-3天内完成
             "best_principles_count": len(principles)
         })
 
-        with open("github_issues_best_practices_analysis.json", "w", encoding="utf-8") as f:
-            json.dump(self.analysis_results, f, indent=2, ensure_ascii=False, default=str)
+        with open("github_issues_best_practices_analysis.json",
+    "w",
+    encoding="utf-8") as f:
+            json.dump(self.analysis_results,
+    f,
+    indent=2,
+    ensure_ascii=False,
+    default=str)
 
         with open("github_issues_best_practices_report.md", "w", encoding="utf-8") as f:
             f.write(report)

@@ -95,11 +95,16 @@ class GitFlowAutomation:
 
         if self.current_branch != self.config["develop_branch"]:
             print(f"🔄 切换到 {self.config['develop_branch']} 分支...")
-            if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
+            if not self.run_git_command(['git',
+    'checkout',
+    self.config['develop_branch']]):
                 return False
 
         print(f"📥 拉取最新的 {self.config['develop_branch']} 分支...")
-        if not self.run_git_command(['git', 'pull', 'origin', self.config['develop_branch']]):
+        if not self.run_git_command(['git',
+    'pull',
+    'origin',
+    self.config['develop_branch']]):
             return False
 
         print(f"🚀 创建功能分支: {feature_branch}")
@@ -124,11 +129,16 @@ class GitFlowAutomation:
 
         if self.current_branch == feature_branch:
             print("🔄 切换到develop分支...")
-            if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
+            if not self.run_git_command(['git',
+    'checkout',
+    self.config['develop_branch']]):
                 return False
 
         print(f"📥 拉取最新的develop分支...")
-        if not self.run_git_command(['git', 'pull', 'origin', self.config['develop_branch']]):
+        if not self.run_git_command(['git',
+    'pull',
+    'origin',
+    self.config['develop_branch']]):
             return False
 
         print(f"🔄 合并功能分支 {feature_branch} 到 develop...")
@@ -139,7 +149,10 @@ class GitFlowAutomation:
         self.run_git_command(['git', 'branch', '-d', feature_branch])
 
         print("📤 推送更新到远程develop分支...")
-        if not self.run_git_command(['git', 'push', 'origin', self.config['develop_branch']]):
+        if not self.run_git_command(['git',
+    'push',
+    'origin',
+    self.config['develop_branch']]):
             return False
 
         print("✅ 功能开发完成！")
@@ -156,11 +169,16 @@ class GitFlowAutomation:
 
         if self.current_branch != self.config["develop_branch"]:
             print(f"🔄 切换到 {self.config['develop_branch']} 分支...")
-            if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
+            if not self.run_git_command(['git',
+    'checkout',
+    self.config['develop_branch']]):
                 return False
 
         print(f"📥 拉取最新的develop分支...")
-        if not self.run_git_command(['git', 'pull', 'origin', self.config['develop_branch']]):
+        if not self.run_git_command(['git',
+    'pull',
+    'origin',
+    self.config['develop_branch']]):
             return False
 
         print(f"🚀 创建发布分支: {release_branch}")
@@ -186,7 +204,10 @@ class GitFlowAutomation:
             return False
 
         print(f"📥 拉取最新的 {self.config['main_branch']} 分支...")
-        if not self.run_git_command(['git', 'pull', 'origin', self.config['main_branch']]):
+        if not self.run_git_command(['git',
+    'pull',
+    'origin',
+    self.config['main_branch']]):
             return False
 
         print(f"🔄 合并发布分支 {release_branch} 到 main...")
@@ -198,7 +219,10 @@ class GitFlowAutomation:
             return False
 
         print(f"📤 推送main分支和标签到远程...")
-        if not self.run_git_command(['git', 'push', 'origin', self.config['main_branch']]):
+        if not self.run_git_command(['git',
+    'push',
+    'origin',
+    self.config['main_branch']]):
             return False
         if not self.run_git_command(['git', 'push', 'origin', version]):
             return False
@@ -208,7 +232,10 @@ class GitFlowAutomation:
             return False
         if not self.run_git_command(['git', 'merge', release_branch, '--no-ff']):
             return False
-        if not self.run_git_command(['git', 'push', 'origin', self.config['develop_branch']]):
+        if not self.run_git_command(['git',
+    'push',
+    'origin',
+    self.config['develop_branch']]):
             return False
 
         print(f"🗑️  删除发布分支 {release_branch}...")
@@ -227,11 +254,16 @@ class GitFlowAutomation:
 
         if self.current_branch != self.config["main_branch"]:
             print(f"🔄 切换到 {self.config['main_branch']} 分支...")
-            if not self.run_git_command(['git', 'checkout', self.config['main_branch']]):
+            if not self.run_git_command(['git',
+    'checkout',
+    self.config['main_branch']]):
                 return False
 
         print(f"📥 拉取最新的 {self.config['main_branch']} 分支...")
-        if not self.run_git_command(['git', 'pull', 'origin', self.config['main_branch']]):
+        if not self.run_git_command(['git',
+    'pull',
+    'origin',
+    self.config['main_branch']]):
             return False
 
         print(f"🚀 创建热修复分支: {hotfix_branch}")
@@ -256,7 +288,10 @@ class GitFlowAutomation:
             return False
 
         print(f"📥 拉取最新的 {self.config['main_branch']} 分支...")
-        if not self.run_git_command(['git', 'pull', 'origin', self.config['main_branch']]):
+        if not self.run_git_command(['git',
+    'pull',
+    'origin',
+    self.config['main_branch']]):
             return False
 
         print(f"🔄 合并热修复分支 {hotfix_branch} 到 main...")
@@ -273,7 +308,10 @@ class GitFlowAutomation:
             return False
 
         print(f"📤 紧急推送到远程...")
-        if not self.run_git_command(['git', 'push', 'origin', self.config['main_branch']]):
+        if not self.run_git_command(['git',
+    'push',
+    'origin',
+    self.config['main_branch']]):
             return False
         if not self.run_git_command(['git', 'push', 'origin', patch_version]):
             return False
@@ -283,7 +321,10 @@ class GitFlowAutomation:
             return False
         if not self.run_git_command(['git', 'merge', hotfix_branch, '--no-ff']):
             return False
-        if not self.run_git_command(['git', 'push', 'origin', self.config['develop_branch']]):
+        if not self.run_git_command(['git',
+    'push',
+    'origin',
+    self.config['develop_branch']]):
             return False
 
         print(f"🗑️  删除热修复分支 {hotfix_branch}...")

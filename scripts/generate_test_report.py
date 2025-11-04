@@ -87,10 +87,17 @@ class TestReportGenerator:
     <title>测试报告 - {{ timestamp }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,
+    0,
+    0,
+    0.1); }
         .header { text-align: center; margin-bottom: 30px; }
-        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .summary-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit,
+    minmax(200px,
+    1fr)); gap: 20px; margin-bottom: 30px; }
+        .summary-card { background: linear-gradient(135deg,
+    #667eea 0%,
+    #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
         .summary-card h3 { margin: 0 0 10px 0; font-size: 1.2em; }
         .summary-card .number { font-size: 2.5em; font-weight: bold; }
         .success { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
@@ -107,7 +114,9 @@ class TestReportGenerator:
         .status-error { color: #fd7e14; }
         .status-skipped { color: #6c757d; }
         .progress-bar { width: 100%; height: 20px; background-color: #e9ecef; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #28a745, #20c997); transition: width 0.3s ease; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg,
+    #28a745,
+    #20c997); transition: width 0.3s ease; }
         .chart-container { margin: 20px 0; text-align: center; }
         .pie-chart { width: 200px; height: 200px; margin: 0 auto; position: relative; }
         .pie-slice { position: absolute; width: 100%; height: 100%; }
@@ -144,7 +153,7 @@ class TestReportGenerator:
             <div class="progress-bar">
                 <div class="progress-fill" style="width: {{ success_rate }}%"></div>
             </div>
-            <p><strong>成功率:</strong> {{ success_rate }}% | <strong>总测试数:</strong> {{ total_tests }} | <strong>执行时间:</strong> {{ execution_time }}s</p>
+    <p><strong>成功率:</strong> {{ success_rate }}% | <strong>总测试数:</strong> {{ total_tests }} | <strong>执行时间:</strong> {{ execution_time }}s</p>;
         </div>
 
         {% if coverage_data %}
@@ -152,7 +161,7 @@ class TestReportGenerator:
             <h2>📈 覆盖率统计</h2>
             <p><strong>总体覆盖率:</strong> {{ coverage_data.total_coverage }}%</p>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: {{ coverage_data.total_coverage }}%"></div>
+    <div class="progress-fill" style="width: {{ coverage_data.total_coverage }}%"></div>;
             </div>
         </div>
         {% endif %}
@@ -450,6 +459,7 @@ class TestReportGenerator:
             f"## 📈 进度",
             f"",
             f"![Progress](https://progress-bar.dev/{int(report.success_rate)}?scale=100&title=Success%20Rate)",
+    
             f""
         ]
 
@@ -556,7 +566,13 @@ class TestReportGenerator:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="测试报告生成器")
-    parser.add_argument("--format", choices=["all", "json", "html", "markdown"], default="all", help="报告格式")
+    parser.add_argument("--format",
+    choices=["all",
+    "json",
+    "html",
+    "markdown"],
+    default="all",
+    help="报告格式")
     parser.add_argument("--output-dir", help="输出目录 (默认: test_reports)")
     parser.add_argument("--junit-file", help="JUnit XML文件路径 (默认: test_results.xml)")
     parser.add_argument("--coverage-file", help="覆盖率JSON文件路径 (默认: coverage.json)")

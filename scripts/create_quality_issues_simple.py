@@ -567,9 +567,13 @@ Bandit安全扫描检测到多个安全问题需要修复，主要涉及测试�
                 },
                 "by_category": {
                     "syntax_errors": len([i for i in self.issues if "syntax" in i["labels"]]),
+    
                     "import_errors": len([i for i in self.issues if "import-error" in i["labels"]]),
+    
                     "test_issues": len([i for i in self.issues if "test" in i["labels"]]),
+    
                     "security_issues": len([i for i in self.issues if "security" in i["labels"]]),
+    
                     "configuration": len([i for i in self.issues if "configuration" in i["labels"]])
                 },
                 "estimated_total_time": "6-10天"
@@ -650,7 +654,8 @@ def main():
     print("  - P0 (阻塞):", len([i for i in creator.issues if "P0" in i["labels"]]))
     print("  - P1 (高):", len([i for i in creator.issues if "P1" in i["labels"]]))
     print("  - P2 (中):", len([i for i in creator.issues if "P2" in i["labels"]]))
-    print("  - 低优先级:", len([i for i in creator.issues if "low-priority" in i["labels"]]))
+    print("  - 低优先级:",
+    len([i for i in creator.issues if "low-priority" in i["labels"]]))
 
     print(f"\n⏰ 总预估时间: 6-10天")
     print("🎯 建议按优先级顺序修复，先解决P0和P1级别问题。")

@@ -66,7 +66,8 @@ def analyze_coverage() -> SimpleCoverageReport:
         return None
 
 
-def generate_improvement_suggestions(report: SimpleCoverageReport) -> List[Dict[str, Any]]:
+def generate_improvement_suggestions(report: SimpleCoverageReport) -> List[Dict[str,
+    Any]]:
     """生成改进建议"""
     suggestions = []
 

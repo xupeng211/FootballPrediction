@@ -43,7 +43,9 @@ class SeedTestQuickStarter:
                     if "database" in checks:
                         db_info = checks["database"]
                         print(
-                            f"✅ 数据库: {db_info.get('status', 'unknown')} (延迟: {db_info.get('latency_ms', 'N/A')}ms)"
+                            f"✅ 数据库: {db_info.get('status',
+    'unknown')} (延迟: {db_info.get('latency_ms',
+    'N/A')}ms)"
                         )
 
                     print("✅ 系统就绪，可以开始测试！")

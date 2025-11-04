@@ -29,7 +29,8 @@ except ImportError as e:
 QualityStandardsOptimizer = None
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -150,7 +151,9 @@ class QualityGuardian:
             if coverage_file.exists():
                 with open(coverage_file) as f:
                     coverage_data = json.load(f)
-                metrics["coverage"] = coverage_data.get("totals", {}).get("percent_covered", 0)
+                metrics["coverage"] = coverage_data.get("totals",
+    {}).get("percent_covered",
+    0)
         except Exception as e:
             logger.warning(f"覆盖率检查失败: {e}")
 
@@ -345,8 +348,12 @@ class QualityGuardian:
                 with open(history_files[-2]) as f:
                     previous_data = json.load(f)
 
-                latest_coverage = latest_data.get("current_status", {}).get("coverage", 0)
-                previous_coverage = previous_data.get("current_status", {}).get("coverage", 0)
+                latest_coverage = latest_data.get("current_status",
+    {}).get("coverage",
+    0)
+                previous_coverage = previous_data.get("current_status",
+    {}).get("coverage",
+    0)
 
                 if latest_coverage > previous_coverage + 2:
                     trends["coverage_trend"] = "improving"

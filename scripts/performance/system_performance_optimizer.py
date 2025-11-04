@@ -191,7 +191,8 @@ class SystemPerformanceOptimizer:
             )
 
             self.current_metrics = metrics
-            logger.info(f"性能指标收集完成: API响应时间={api_response_time:.2f}ms, 内存使用={metrics.memory_usage:.2f}MB")
+            logger.info(f"性能指标收集完成: API响应时间={api_response_time:.2f}ms,
+    内存使用={metrics.memory_usage:.2f}MB")
 
             return metrics
 
@@ -524,7 +525,10 @@ class SystemPerformanceOptimizer:
                 docker_config['services']['app']['deploy']['replicas'] = app_config['workers']
 
                 with open(docker_compose_path, 'w', encoding='utf-8') as f:
-                    yaml.dump(docker_config, f, default_flow_style=False, allow_unicode=True)
+                    yaml.dump(docker_config,
+    f,
+    default_flow_style=False,
+    allow_unicode=True)
 
                 logger.info(f"Docker worker数量已更新为 {app_config['workers']}")
 
@@ -760,7 +764,9 @@ class SystemPerformanceOptimizer:
                 "initial_metrics": asdict(initial_metrics),
                 "final_metrics": asdict(final_metrics),
                 "optimization_targets": [asdict(target) for target in optimization_targets],
+    
                 "optimization_results": [asdict(result) for result in optimization_results],
+    
                 "report": optimization_report
             }
 
@@ -819,7 +825,9 @@ class SystemPerformanceOptimizer:
 
         return report
 
-    def _generate_recommendations(self, final_metrics: PerformanceMetrics, results: List[OptimizationResult]) -> List[str]:
+    def _generate_recommendations(self,
+    final_metrics: PerformanceMetrics,
+    results: List[OptimizationResult]) -> List[str]:
         """生成改进建议"""
         recommendations = []
 

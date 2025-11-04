@@ -211,7 +211,9 @@ class ContinuousImprovementEngine:
         else:
             return "REQUIRES_ACTION"
 
-    def generate_improvement_actions(self, quality_state: Dict[str, Any]) -> List[QualityImprovementAction]:
+    def generate_improvement_actions(self,
+    quality_state: Dict[str,
+    Any]) -> List[QualityImprovementAction]:
         """生成改进行动"""
         actions = []
         gaps = quality_state["gaps"]
@@ -344,7 +346,9 @@ class ContinuousImprovementEngine:
 
         return actions
 
-    def create_improvement_plan(self, actions: List[QualityImprovementAction], timeframe: str = "WEEKLY") -> QualityImprovementPlan:
+    def create_improvement_plan(self,
+    actions: List[QualityImprovementAction],
+    timeframe: str = "WEEKLY") -> QualityImprovementPlan:
         """创建改进计划"""
         plan_id = f"plan_{int(time.time())}"
 
@@ -409,7 +413,9 @@ class ContinuousImprovementEngine:
 
         return trends
 
-    def _calculate_trend(self, metric_name: str, values: List[float]) -> QualityTrendAnalysis:
+    def _calculate_trend(self,
+    metric_name: str,
+    values: List[float]) -> QualityTrendAnalysis:
         """计算单个指标的趋势"""
         current_value = values[-1]
 
@@ -459,7 +465,11 @@ class ContinuousImprovementEngine:
                 risk_level = "LOW"
 
         # 生成建议
-        recommendations = self._generate_trend_recommendations(metric_name, trend_direction, risk_level, current_value, target_value)
+        recommendations = self._generate_trend_recommendations(metric_name,
+    trend_direction,
+    risk_level,
+    current_value,
+    target_value)
 
         return QualityTrendAnalysis(
             metric_name=metric_name,
@@ -506,7 +516,12 @@ class ContinuousImprovementEngine:
 
         return numerator / denominator
 
-    def _generate_trend_recommendations(self, metric_name: str, trend_direction: str, risk_level: str, current_value: float, target_value: float) -> List[str]:
+    def _generate_trend_recommendations(self,
+    metric_name: str,
+    trend_direction: str,
+    risk_level: str,
+    current_value: float,
+    target_value: float) -> List[str]:
         """生成趋势建议"""
         recommendations = []
 
@@ -530,7 +545,8 @@ class ContinuousImprovementEngine:
 
         return recommendations
 
-    def prioritize_actions(self, actions: List[QualityImprovementAction]) -> List[QualityImprovementAction]:
+    def prioritize_actions(self,
+    actions: List[QualityImprovementAction]) -> List[QualityImprovementAction]:
         """优先级排序改进行动"""
         def calculate_priority_score(action: QualityImprovementAction) -> float:
             # 基础优先级分数
@@ -642,13 +658,20 @@ class ContinuousImprovementEngine:
                 "overall_status": quality_state["overall_status"]
             },
             "improvement_actions": [self._action_to_dict(action) for action in prioritized_actions],
+    
             "trend_analysis": [asdict(trend) for trend in trends],
             "weekly_plan": self._plan_to_dict(weekly_plan),
             "monthly_plan": self._plan_to_dict(monthly_plan),
-            "recommendations": self._generate_overall_recommendations(quality_state, prioritized_actions, trends)
+            "recommendations": self._generate_overall_recommendations(quality_state,
+    prioritized_actions,
+    trends)
         }
 
-    def _generate_overall_recommendations(self, quality_state: Dict[str, Any], actions: List[QualityImprovementAction], trends: List[QualityTrendAnalysis]) -> List[str]:
+    def _generate_overall_recommendations(self,
+    quality_state: Dict[str,
+    Any],
+    actions: List[QualityImprovementAction],
+    trends: List[QualityTrendAnalysis]) -> List[str]:
         """生成整体建议"""
         recommendations = []
 
@@ -723,16 +746,19 @@ class ContinuousImprovementEngine:
             target = quality_state["targets"][metric]
             gap = quality_state["gaps"][metric]
             status_icon = "✅" if gap["status"] == "ON_TRACK" else "⚠️"
-            print(f"  {status_icon} {metric}: {value:.1f} (目标: {target:.1f}, 差距: {gap['gap']:.1f})")
+            print(f"  {status_icon} {metric}: {value:.1f} (目标: {target:.1f},
+    差距: {gap['gap']:.1f})")
 
         # 改进行动
         actions = report["improvement_actions"]
         print(f"\n🎯 优先改进行动 ({len(actions)}个):")
         for i, action in enumerate(actions[:5], 1):  # 显示前5个
             priority_icon = {"HIGH": "🔴", "MEDIUM": "🟡", "LOW": "🟢"}
-            print(f"  {i}. {priority_icon.get(action['priority'], '⚪')} [{action['category']}] {action['title']}")
+            print(f"  {i}. {priority_icon.get(action['priority'],
+    '⚪')} [{action['category']}] {action['title']}")
             print(f"     📝 {action['description']}")
-            print(f"     ⏱️ 工作量: {action['effort_estimate']}, 影响: {action['impact_assessment']}")
+            print(f"     ⏱️ 工作量: {action['effort_estimate']},
+    影响: {action['impact_assessment']}")
             if action['due_date']:
                 due_date = datetime.fromisoformat(action['due_date']).strftime('%Y-%m-%d')
                 print(f"     📅 截止日期: {due_date}")
@@ -744,8 +770,10 @@ class ContinuousImprovementEngine:
         for trend in trends:
             trend_icon = {"IMPROVING": "📈", "DECLINING": "📉", "STABLE": "➡️"}
             risk_icon = {"HIGH": "🚨", "MEDIUM": "⚠️", "LOW": "✅"}
-            print(f"  {trend_icon.get(trend['trend_direction'], '•')} {trend['metric_name']}: {trend['current_value']:.1f} ({trend['trend_direction']})")
-            print(f"    风险等级: {risk_icon.get(trend['risk_level'], '•')} {trend['risk_level']}")
+            print(f"  {trend_icon.get(trend['trend_direction'],
+    '•')} {trend['metric_name']}: {trend['current_value']:.1f} ({trend['trend_direction']})")
+            print(f"    风险等级: {risk_icon.get(trend['risk_level'],
+    '•')} {trend['risk_level']}")
             if trend['recommendations']:
                 print(f"    💡 建议: {trend['recommendations'][0]}")
 
@@ -774,7 +802,10 @@ class ContinuousImprovementEngine:
         print("🚀 基于Issue #159成就构建的智能化改进决策系统")
         print("="*80)
 
-    def save_report_to_file(self, report: Dict[str, Any], filename: str = "quality_improvement_report.json"):
+    def save_report_to_file(self,
+    report: Dict[str,
+    Any],
+    filename: str = "quality_improvement_report.json"):
         """保存报告到文件"""
         try:
             with open(filename, 'w', encoding='utf-8') as f:
@@ -865,7 +896,9 @@ class ContinuousImprovementEngine:
             html += """
             <div class="status-card">
                 <div style="font-size: 1.5em; font-weight: bold;">{value:.1f}</div>
-                <div style="color: #666; margin-top: 5px;">{metric.replace('_', ' ').title()}</div>
+    <div style="color: #666;
+    margin-top: 5px;
+    ">{metric.replace('_', ' ').title()}</div>;
             </div>
             """
 
@@ -881,7 +914,7 @@ class ContinuousImprovementEngine:
         <div class="action-card priority-{action['priority'].lower()}">
             <h3>{action['title']}</h3>
             <p><strong>描述:</strong> {action['description']}</p>
-            <p><strong>类别:</strong> {action['category']} | <strong>工作量:</strong> {action['effort_estimate']}</p>
+    <p><strong>类别:</strong> {action['category']} | <strong>工作量:</strong> {action['effort_estimate']}</p>;
         </div>
             """
 

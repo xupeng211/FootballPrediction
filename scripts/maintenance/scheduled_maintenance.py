@@ -114,6 +114,88 @@ class ScheduledMaintenance:
 
         return datetime.now() >= next_run_time
 
+def __execute_maintenance_task_check_condition():
+                temp_count = self.maintenance.clean_temp_files()
+                results["fixes_applied"]["temp_files_cleaned"] = temp_count
+
+
+def __execute_maintenance_task_check_condition():
+                cache_count = self.maintenance.clean_cache_dirs()
+                results["fixes_applied"]["cache_dirs_cleaned"] = cache_count
+
+
+def __execute_maintenance_task_check_condition():
+                archive_count = self.maintenance.archive_old_reports()
+                results["fixes_applied"]["reports_archived"] = archive_count
+
+
+def __execute_maintenance_task_check_condition():
+                        results["fixes_applied"][key] += value
+                    else:
+                        results["fixes_applied"][key] = value
+
+
+def __execute_maintenance_task_check_condition():
+                # 深度清理
+                temp_count = self.maintenance.clean_temp_files()
+                cache_count = self.maintenance.clean_cache_dirs()
+                archive_count = self.maintenance.archive_old_reports(days_old=7)  # 更积极的归档
+                fixes = self.maintenance.auto_fix_issues(dry_run=False)
+
+                results["fixes_applied"]["temp_files_cleaned"] = results["fixes_applied"].get("temp_files_cleaned",
+    0) + temp_count
+                results["fixes_applied"]["cache_dirs_cleaned"] = results["fixes_applied"].get("cache_dirs_cleaned",
+    0) + cache_count
+                results["fixes_applied"]["reports_archived"] = results["fixes_applied"].get("reports_archived",
+    0) + archive_count
+
+def __execute_maintenance_task_check_condition():
+                        results["fixes_applied"][key] += value
+                    else:
+                        results["fixes_applied"][key] = value
+
+            # 生成最终健康报告
+            final_health_report = self.maintenance.generate_health_report()
+            final_health_score = final_health_report.get("health_score", 0)
+
+            # 记录健康快照
+            self.logger.log_health_snapshot(final_health_report)
+
+            results["final_health_score"] = final_health_score
+            results["health_score_change"] = final_health_score - initial_health_score
+            results["success"] = True
+
+            print(f"✅ {task_type} 维护任务完成!")
+            print(f"📊 健康评分变化: {initial_health_score} → {final_health_score} ({results['health_score_change']:+d})")
+
+        except Exception as e:
+            results["error"] = str(e)
+            print(f"❌ {task_type} 维护任务失败: {e}")
+
+        finally:
+            results["end_time"] = datetime.now().isoformat()
+            results["execution_time_seconds"] = round(time.time() - start_time, 2)
+
+            # 记录维护日志
+            record = MaintenanceRecord(
+                timestamp=results["start_time"],
+                action_type=f"scheduled_{task_type}",
+                description=self.schedules[task_type]["description"],
+                files_affected=sum(results["fixes_applied"].values()),
+                size_freed_mb=0,  # 可以从维护结果中计算
+                issues_found=0,   # 可以从维护结果中计算
+                issues_fixed=sum(results["fixes_applied"].values()),
+                health_score_before=initial_health_score,
+                health_score_after=final_health_score or initial_health_score,
+                execution_time_seconds=results["execution_time_seconds"],
+                success=results["success"],
+                error_message=results.get("error")
+            )
+
+            self.logger.log_maintenance(record)
+
+        return results
+
     def _execute_maintenance_task(self, task_type: str) -> Dict[str, Any]:
         """执行维护任务"""
         print(f"\n🚀 开始执行 {task_type} 维护任务...")
@@ -139,38 +221,41 @@ class ScheduledMaintenance:
 
         try:
             # 根据任务类型执行不同的维护操作
-            if "clean_temp" in actions:
+            __execute_maintenance_task_check_condition()
                 temp_count = self.maintenance.clean_temp_files()
                 results["fixes_applied"]["temp_files_cleaned"] = temp_count
 
-            if "clean_cache" in actions:
+            __execute_maintenance_task_check_condition()
                 cache_count = self.maintenance.clean_cache_dirs()
                 results["fixes_applied"]["cache_dirs_cleaned"] = cache_count
 
-            if "archive_reports" in actions:
+            __execute_maintenance_task_check_condition()
                 archive_count = self.maintenance.archive_old_reports()
                 results["fixes_applied"]["reports_archived"] = archive_count
 
             if "auto_fix" in actions:
                 fixes = self.maintenance.auto_fix_issues(dry_run=False)
                 for key, value in fixes.items():
-                    if key in results["fixes_applied"]:
+                    __execute_maintenance_task_check_condition()
                         results["fixes_applied"][key] += value
                     else:
                         results["fixes_applied"][key] = value
 
-            if "deep_clean" in actions:
+            __execute_maintenance_task_check_condition()
                 # 深度清理
                 temp_count = self.maintenance.clean_temp_files()
                 cache_count = self.maintenance.clean_cache_dirs()
                 archive_count = self.maintenance.archive_old_reports(days_old=7)  # 更积极的归档
                 fixes = self.maintenance.auto_fix_issues(dry_run=False)
 
-                results["fixes_applied"]["temp_files_cleaned"] = results["fixes_applied"].get("temp_files_cleaned", 0) + temp_count
-                results["fixes_applied"]["cache_dirs_cleaned"] = results["fixes_applied"].get("cache_dirs_cleaned", 0) + cache_count
-                results["fixes_applied"]["reports_archived"] = results["fixes_applied"].get("reports_archived", 0) + archive_count
+                results["fixes_applied"]["temp_files_cleaned"] = results["fixes_applied"].get("temp_files_cleaned",
+    0) + temp_count
+                results["fixes_applied"]["cache_dirs_cleaned"] = results["fixes_applied"].get("cache_dirs_cleaned",
+    0) + cache_count
+                results["fixes_applied"]["reports_archived"] = results["fixes_applied"].get("reports_archived",
+    0) + archive_count
                 for key, value in fixes.items():
-                    if key in results["fixes_applied"]:
+                    __execute_maintenance_task_check_condition()
                         results["fixes_applied"][key] += value
                     else:
                         results["fixes_applied"][key] = value
