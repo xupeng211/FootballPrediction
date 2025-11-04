@@ -106,8 +106,7 @@ class MetricsObserver(Observer):
         """清理过期的指标数据"""
         cutoff_time = time.time() - self._aggregation_window
 
-        for metric_name,
-    values in self._metrics.items():
+        for metric_name, values in self._metrics.items():
             while values and values[0][0] < cutoff_time:
                 values.popleft()
 
@@ -217,10 +216,8 @@ class LoggingObserver(Observer):
         # 记录日志
         log_method(message)
 
-        # 如果是错误或严重事件,
-    额外记录详细信息
-        if event.severity in ["error",
-    "critical"]:
+        # 如果是错误或严重事件, 额外记录详细信息
+        if event.severity in ["error", "critical"]:
             self._logger.debug(f"Event details: {event.data}")
 
     def _get_log_method(self, severity: str) -> Callable:
