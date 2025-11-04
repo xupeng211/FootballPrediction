@@ -115,3 +115,22 @@ def validate_required_fields(
             missing_fields.append(field)
     return missing_fields
 
+
+def validate_data_types(data: dict, schema: dict) -> list[str]:
+    """验证数据类型"""
+    errors = []
+    for field, expected_type in schema.items():
+        if field in data:
+            value = data[field]
+            if expected_type == "str" and not isinstance(value, str):
+                errors.append(f"Field '{field}' should be string")
+            elif expected_type == "int" and not isinstance(value, int):
+                errors.append(f"Field '{field}' should be integer")
+            elif expected_type == "float" and not isinstance(value, (int, float)):
+                errors.append(f"Field '{field}' should be number")
+            elif expected_type == "bool" and not isinstance(value, bool):
+                errors.append(f"Field '{field}' should be boolean")
+            elif expected_type == "list" and not isinstance(value, list):
+                errors.append(f"Field '{field}' should be list")
+    return errors
+
