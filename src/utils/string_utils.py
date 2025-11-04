@@ -36,6 +36,10 @@ class StringUtils:
             char for char in cleaned if unicodedata.category(char)[0] != "C"
         )
 
+        # 规范化Unicode字符为ASCII
+        cleaned = unicodedata.normalize('NFKD', cleaned)
+        cleaned = "".join([c for c in cleaned if ord(c) < 128])
+
         if remove_special_chars:
             # 移除特殊字符,保留字母数字和基本标点
             cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', "", cleaned)
@@ -118,7 +122,7 @@ class StringUtils:
             return ""
 
         components = name.split("_")
-        return components[0] + "".join(x.title() for x in components[1:])
+        return "".join(x.title() for x in components)
 
     @staticmethod
     def clean_text(text: str) -> str:
@@ -344,11 +348,13 @@ def normalize_string(text: str) -> str:
     return StringUtils.clean_string(text).lower().strip()
 
 
-def truncate_string(text: str, max_length: int, suffix: str = "...") -> str:
+def truncate_string(text: str, length: int, suffix: str = "...") -> str:
     """截断字符串"""
-    if not text or len(text) <= max_length:
+    if not text:
+        return ""
+    if len(text) <= length + len(suffix):
         return text
-    return text[: max_length - len(suffix)] + suffix
+    return text[: length - len(suffix)] + suffix
 
 
 def is_empty(text: str) -> bool:
@@ -363,9 +369,11 @@ def strip_html(text: str) -> str:
     return re.sub(clean, '', text)
 
 
-def format_currency(amount: float, currency: str = "CNY") -> str:
+def format_currency(amount: float, currency: str = "$") -> str:
     """格式化货币"""
-    return f"{currency} {amount:,.2f}"
+    if amount < 0:
+        return f"-{currency}{abs(amount):,.2f}"
+    return f"{currency}{amount:,.2f}"
 
 
 # 模块级别的包装函数，用于向后兼容

@@ -14,8 +14,14 @@ def is_valid_email(email: str) -> bool:
 
 def is_valid_phone(phone: str) -> bool:
     """Validate phone number"""
-    pattern = r"^\+?[\d\s\-\(\)]+$"
-    return bool(re.match(pattern, phone))
+    # 支持多种电话号码格式，但要求至少10位数字
+    pattern = r"^\+?[\d\s\-\(\).]+$"
+    if not re.match(pattern, phone):
+        return False
+
+    # 提取数字并检查长度
+    digits_only = re.sub(r"[^\d]", "", phone)
+    return len(digits_only) >= 10
 
 
 def is_valid_url(url: str) -> bool:
