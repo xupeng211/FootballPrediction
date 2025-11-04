@@ -279,10 +279,7 @@ class StatisticalStrategy(PredictionStrategy):
 
         away_weighted = 0
         total_weight = 0
-        for i,
-    (home_score,
-    away_score,
-    is_home) in enumerate(away_recent):
+        for i, (home_score, away_score, is_home) in enumerate(away_recent):
             weight = (i + 1) / len(away_recent)
             if not is_home:
                 away_weighted += away_score * weight
@@ -363,18 +360,14 @@ class StatisticalStrategy(PredictionStrategy):
             avg_home = total_home / total_weight
             avg_away = total_away / total_weight
         else:
-            avg_home,
-    avg_away = 1,
-    1
+            avg_home, avg_away = 1, 1
 
-        return (int(round(avg_home)),
-    int(round(avg_away)))
+        return (int(round(avg_home)), int(round(avg_away)))
 
     async def _calculate_confidence(
         self,
-    input_data: PredictionInput,
-    prediction: tuple[int,
-    int]
+        input_data: PredictionInput,
+        prediction: tuple[int, int]
     ) -> float:
         """计算预测置信度"""
         confidence_factors = []
@@ -410,9 +403,8 @@ class StatisticalStrategy(PredictionStrategy):
 
     async def _calculate_probability_distribution(
         self,
-    input_data: PredictionInput,
-    prediction: tuple[int,
-    int]
+        input_data: PredictionInput,
+        prediction: tuple[int, int]
     ) -> dict[str, float]:
         """计算结果概率分布"""
         # 基于泊松分布计算概率

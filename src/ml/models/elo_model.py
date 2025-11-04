@@ -108,8 +108,7 @@ class EloModel(BaseModel):
             training_data = training_data.sort_values("date")
 
         # 逐场比赛更新ELO评分
-        for _,
-    match in training_data.iterrows():
+        for _, match in training_data.iterrows():
             self._update_elo_after_match(match)
 
         # 评估模型
