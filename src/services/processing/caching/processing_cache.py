@@ -104,64 +104,19 @@ class ProcessingCache:
             self.logger.warning(f"删除缓存失败 {cache_key}: {e}")
             return False
 
-def _clear_handle_error():
-            cleared_count = 0
-
-            # 清空内存缓存
-
-def _clear_check_condition():
-                keys_to_delete = [
-                    key for key in self._memory_cache.keys() if pattern in key
-                ]
-
-def _clear_check_condition():
-                        del self._memory_cache_timestamps[key]
-                    cleared_count += 1
-            else:
-                cleared_count += len(self._memory_cache)
-                self._memory_cache.clear()
-                self._memory_cache_timestamps.clear()
-
-            # 清空Redis缓存
-
-def _clear_check_condition():
-                        # 使用SCAN查找匹配的键
-                        cursor = 0
-
-def _clear_loop_process():
-                            cursor, keys = await self.redis_client.scan(
-                                cursor, match=f"*{pattern}*", count=100
-                            )
-
-def _clear_check_condition():
-                                await self.redis_client.delete(*keys)
-                                cleared_count += len(keys)
-
-def _clear_check_condition():
-                    new_data = await compute_func(*args, **kwargs)
-                else:
-                    new_data = await compute_func()
-            else:
-                new_data = compute_func
-
-            # 存入缓存
-            await self.set(cache_key, new_data, ttl)
-
-            return new_data
-
     async def clear(self, pattern: str | None = None) -> int:
         """清空缓存"""
-        _clear_handle_error()
+        try:
             cleared_count = 0
 
             # 清空内存缓存
-            _clear_check_condition()
+            if pattern:
                 keys_to_delete = [
                     key for key in self._memory_cache.keys() if pattern in key
                 ]
                 for key in keys_to_delete:
                     del self._memory_cache[key]
-                    _clear_check_condition()
+                    if key in self._memory_cache_timestamps:
                         del self._memory_cache_timestamps[key]
                     cleared_count += 1
             else:
@@ -172,14 +127,14 @@ def _clear_check_condition():
             # 清空Redis缓存
             if self.redis_client:
                 try:
-                    _clear_check_condition()
+                    if pattern:
                         # 使用SCAN查找匹配的键
                         cursor = 0
-                        _clear_loop_process()
+                        while True:
                             cursor, keys = await self.redis_client.scan(
                                 cursor, match=f"*{pattern}*", count=100
                             )
-                            _clear_check_condition()
+                            if keys:
                                 await self.redis_client.delete(*keys)
                                 cleared_count += len(keys)
                             if cursor == 0:
@@ -209,7 +164,7 @@ def _clear_check_condition():
         # 计算新数据
         try:
             if callable(compute_func):
-                _clear_check_condition()
+                if args or kwargs:
                     new_data = await compute_func(*args, **kwargs)
                 else:
                     new_data = await compute_func()
@@ -368,3 +323,64 @@ def _clear_check_condition():
         except Exception as e:
             self.logger.error(f"清理过期缓存失败: {e}")
             return 0
+
+    def __repr__(self) -> str:
+        """字符串表示"""
+        return (
+            f"ProcessingCache(enabled={self.cache_enabled}, "
+            f"memory_size={len(self._memory_cache)}, "
+            f"has_redis={self.redis_client is not None})"
+        )
+
+    async def __aenter__(self):
+        """异步上下文管理器入口"""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """异步上下文管理器出口"""
+        # 清理资源
+        await self.cleanup_expired()
+
+
+# 便利函数
+async def create_processing_cache(redis_client=None) -> ProcessingCache:
+    """创建处理缓存实例"""
+    return ProcessingCache(redis_client=redis_client)
+
+
+# 缓存装饰器
+def cache_result(ttl: int = 3600, key_prefix: str = None):
+    """缓存结果装饰器"""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            # 获取缓存实例
+            cache = getattr(wrapper, '_cache_instance', None)
+            if not cache:
+                return await func(*args, **kwargs)
+
+            # 生成缓存键
+            prefix = key_prefix or f"{func.__module__}.{func.__name__}"
+            cache_key = cache.generate_cache_key(prefix, *args, **kwargs)
+
+            # 尝试获取缓存
+            result = await cache.get(cache_key)
+            if result is not None:
+                return result
+
+            # 计算结果
+            result = await func(*args, **kwargs)
+
+            # 存入缓存
+            await cache.set(cache_key, result, ttl)
+            return result
+
+        # 设置缓存实例的方法
+        def set_cache_instance(cache_instance: ProcessingCache):
+            wrapper._cache_instance = cache_instance
+
+        wrapper.set_cache_instance = set_cache_instance
+        wrapper.__name__ = func.__name__
+        wrapper.__doc__ = func.__doc__
+
+        return wrapper
+    return decorator
