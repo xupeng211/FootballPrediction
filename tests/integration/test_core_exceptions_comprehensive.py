@@ -315,7 +315,7 @@ def test_core_exceptions_comprehensive_suite():
     service_exc = ServiceError("消息", "服务名")
     assert service_exc.service_name == "服务名"
 
-    print("✅ Core异常系统综合测试套件通过")
+    logger.debug("✅ Core异常系统综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

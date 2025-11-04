@@ -381,7 +381,8 @@ class Stage4E2ETester:
                 missing_in_processed = original_ids - processed_ids
                 extra_in_processed = processed_ids - original_ids
                 logger.warning(
-                    f"  ⚠️ 数据ID不一致: 缺失{len(missing_in_processed)}, 多余{len(extra_in_processed)}"
+                    f"  ⚠️ 数据ID不一致: 缺失{len(missing_in_processed)},"
+    多余{len(extra_in_processed)}"
                 )
 
             # 验证摘要数据一致性

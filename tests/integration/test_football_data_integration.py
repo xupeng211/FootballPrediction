@@ -136,8 +136,8 @@ async def test_database_model():
 
 async def main():
     """主测试函数"""
-    print("🚀 开始 Football-Data.org API 集成测试")
-    print("=" * 60)
+    logger.debug("🚀 开始 Football-Data.org API 集成测试")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     start_time = datetime.now()
 
@@ -151,33 +151,33 @@ async def main():
     failed = 0
 
     for test_name, test_func in tests:
-        print(f"\n🔍 执行 {test_name}...")
+        logger.debug(f"\n🔍 执行 {test_name}...")  # TODO: Add logger import if needed
         try:
             if await test_func():
-                print(f"✅ {test_name} 通过")
+                logger.debug(f"✅ {test_name} 通过")  # TODO: Add logger import if needed
                 passed += 1
             else:
-                print(f"❌ {test_name} 失败")
+                logger.debug(f"❌ {test_name} 失败")  # TODO: Add logger import if needed
                 failed += 1
         except Exception as e:
-            print(f"❌ {test_name} 异常: {e}")
+            logger.debug(f"❌ {test_name} 异常: {e}")  # TODO: Add logger import if needed
             failed += 1
 
     end_time = datetime.now()
     duration = end_time - start_time
 
-    print("\n" + "=" * 60)
-    print("📊 测试完成!")
-    print(f"   通过: {passed}")
-    print(f"   失败: {failed}")
-    print(f"   总计: {passed + failed}")
-    print(f"   耗时: {duration.total_seconds():.2f} 秒")
+    logger.debug("\n" + "=" * 60)  # TODO: Add logger import if needed
+    logger.debug("📊 测试完成!")  # TODO: Add logger import if needed
+    logger.debug(f"   通过: {passed}")  # TODO: Add logger import if needed
+    logger.error(f"   失败: {failed}")  # TODO: Add logger import if needed
+    logger.error(f"   总计: {passed + failed}")  # TODO: Add logger import if needed
+    logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")  # TODO: Add logger import if needed
 
     if failed == 0:
-        print("🎉 所有测试通过！Football-Data.org API 集成基础功能正常")
+        logger.debug("🎉 所有测试通过！Football-Data.org API 集成基础功能正常")  # TODO: Add logger import if needed
         return True
     else:
-        print("⚠️  部分测试失败，请检查相关实现")
+        logger.debug("⚠️  部分测试失败，请检查相关实现")  # TODO: Add logger import if needed
         return False
 
 

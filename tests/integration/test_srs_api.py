@@ -267,7 +267,7 @@ class SRSApiTester:
         print(f"✅ 成功请求: {successful_requests}")
         print(f"🚦 被限制请求: {rate_limited_requests}")
         print(
-            f"📊 频率限制功能: {'✅ 正常' if rate_limited_requests > 0 or successful_requests <= 100 else '⚠️ 未触发'}"
+    f"📊 频率限制功能: {'✅ 正常' if rate_limited_requests > 0 or successful_requests <= 100 else '⚠️ 未触发'}";
         )
 
         return True

@@ -263,7 +263,8 @@ async def test_data_consistency(collector):
         team_ids_from_teams = set(str(team.get("id")) for team in teams)
 
         logger.info(
-            f"  球队数量对比: 球队列表={len(team_ids_from_teams)}, 积分榜={len(team_ids_from_standings)}"
+            f"  球队数量对比: 球队列表={len(team_ids_from_teams)},"
+    积分榜={len(team_ids_from_standings)}"
         )
 
         # 检查差异

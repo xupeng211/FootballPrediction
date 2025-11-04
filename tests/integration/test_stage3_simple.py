@@ -243,9 +243,166 @@ class Stage3SimpleTester:
             logger.error(f"  ❌ 数据结构测试失败: {e}")
             return False
 
+def _test_api_data_integration_handle_error():
+            logger.info("测试API数据集成...")
+
+            async with SimpleDataCollector() as collector:
+                # 测试联赛数据采集和缓存
+                competitions_data = await collector._make_request_with_retry(
+                    "competitions"
+                )
+
+def _test_api_data_integration_handle_error():
+            logger.info("测试缓存性能...")
+
+            # 准备测试数据
+            test_data = [
+                {"id": i, "name": f"Team {i}", "points": i * 3} for i in range(1000)
+            ]
+
+            # 测试批量写入性能
+            start_time = datetime.utcnow()
+
+def _test_api_data_integration_iterate_items():
+                self.cache_manager.set_cache(f"team:{i}", data, ttl_seconds=3600)
+
+            write_time = (datetime.utcnow() - start_time).total_seconds()
+            logger.info(f"  ✅ 批量写入1000条数据耗时: {write_time:.3f}秒")
+
+            # 测试批量读取性能
+            start_time = datetime.utcnow()
+            successful_reads = 0
+
+def _test_api_data_integration_check_condition():
+                    successful_reads += 1
+
+            read_time = (datetime.utcnow() - start_time).total_seconds()
+            logger.info(f"  ✅ 批量读取1000条数据耗时: {read_time:.3f}秒")
+            logger.info(
+                f"  ✅ 读取成功率: {successful_reads}/1000 ({successful_reads/10:.1f}%)"
+            )
+
+            # 测试内存使用情况
+            cache_size = len(self.cache_manager.cache)
+            logger.info(f"  ✅ 缓存中包含 {cache_size} 条数据")
+
+
+def _test_api_data_integration_check_condition():
+                logger.warning(f"  ⚠️ 写入性能较慢: {write_time:.3f}秒")
+
+
+def _test_api_data_integration_check_condition():
+                logger.warning(f"  ⚠️ 读取性能较慢: {read_time:.3f}秒")
+
+            return True
+
+def _test_api_data_integration_handle_error():
+            logger.info("测试错误处理...")
+
+            # 测试无效数据类型缓存
+            invalid_data = object()  # 不可序列化的对象
+            self.cache_manager.set_cache("invalid_test", invalid_data)
+            # 应该能够缓存，因为使用的是内存缓存
+
+            # 测试空键值处理
+            empty_success = self.cache_manager.set_cache("", "test_value")
+
+def _test_api_data_integration_check_condition():
+                logger.warning("  ⚠️ 空键值处理可能有问题")
+
+            # 测试None值缓存
+            none_success = self.cache_manager.set_cache("none_test", None)
+
+def _test_api_data_integration_check_condition():
+                logger.warning("  ⚠️ None值缓存可能有问题")
+
+            # 测试超长键值处理
+            long_key = "x" * 1000
+            long_success = self.cache_manager.set_cache(long_key, "test_value")
+
+def _test_api_data_integration_check_condition():
+                logger.warning("  ⚠️ 超长键值处理可能有问题")
+
+            # 测试并发访问
+            async def concurrent_access():
+
+def _test_api_data_integration_iterate_items():
+                    self.cache_manager.set_cache(f"concurrent_{i}", f"value_{i}")
+                    cached = self.cache_manager.get_cache(f"concurrent_{i}")
+
+def _test_api_data_integration_iterate_items():
+            print(f"\n🔍 执行 {test_name}测试...")
+            self.test_results["total_tests"] += 1
+
+
+def _test_api_data_integration_check_condition():
+                    print(f"✅ {test_name}测试通过")
+                    self.test_results["passed_tests"] += 1
+                else:
+                    print(f"❌ {test_name}测试失败")
+                    self.test_results["failed_tests"] += 1
+            except Exception as e:
+                print(f"❌ {test_name}测试异常: {e}")
+                self.test_results["failed_tests"] += 1
+                self.test_results["errors"].append(f"{test_name}: {e}")
+
+        end_time = datetime.now()
+        duration = end_time - start_time
+
+        # 清理测试数据
+
+def _test_api_data_integration_handle_error():
+            self.cache_manager.clear_all()
+            logger.info("✅ 测试数据清理完成")
+        except Exception as e:
+            logger.warning(f"⚠️ 测试数据清理失败: {e}")
+
+        print("\n" + "=" * 50)
+        print("📊 第三阶段简化测试完成!")
+        print(f"   总计: {self.test_results['total_tests']}")
+        print(f"   通过: {self.test_results['passed_tests']}")
+        print(f"   失败: {self.test_results['failed_tests']}")
+        print(f"   耗时: {duration.total_seconds():.2f} 秒")
+
+
+def _test_api_data_integration_iterate_items():
+                print(f"   - {error}")
+
+        success_rate = 0
+
+def _test_api_data_integration_check_condition():
+            success_rate = (
+                self.test_results["passed_tests"] / self.test_results["total_tests"]
+            ) * 100
+
+        print(f"\n🎯 成功率: {success_rate:.1f}%")
+
+
+def _test_api_data_integration_check_condition():
+            print("🎉 所有测试通过！")
+            print("✅ 基础缓存功能正常")
+            print("✅ 数据结构定义完整")
+            print("✅ API数据集成成功")
+            print("✅ 缓存性能符合预期")
+            print("✅ 错误处理机制有效")
+            print("🚀 第三阶段简化验证完成！")
+            return True
+
+def _test_api_data_integration_handle_error():
+        # 运行所有测试
+        success = await tester.run_all_tests()
+
+        print(f"\n退出码: {0 if success else 1}")
+        return success
+
+def _test_api_data_integration_check_condition():
+    success = asyncio.run(main())
+    sys.exit(0 if success else 1)
+
+
     async def test_api_data_integration(self) -> bool:
         """测试API数据集成"""
-        try:
+        _test_api_data_integration_handle_error()
             logger.info("测试API数据集成...")
 
             async with SimpleDataCollector() as collector:
@@ -327,7 +484,7 @@ class Stage3SimpleTester:
 
     async def test_cache_performance(self) -> bool:
         """测试缓存性能"""
-        try:
+        _test_api_data_integration_handle_error()
             logger.info("测试缓存性能...")
 
             # 准备测试数据
@@ -337,7 +494,7 @@ class Stage3SimpleTester:
 
             # 测试批量写入性能
             start_time = datetime.utcnow()
-            for i, data in enumerate(test_data):
+            _test_api_data_integration_iterate_items()
                 self.cache_manager.set_cache(f"team:{i}", data, ttl_seconds=3600)
 
             write_time = (datetime.utcnow() - start_time).total_seconds()
@@ -348,7 +505,7 @@ class Stage3SimpleTester:
             successful_reads = 0
             for i in range(1000):
                 cached_data = self.cache_manager.get_cache(f"team:{i}")
-                if cached_data:
+                _test_api_data_integration_check_condition()
                     successful_reads += 1
 
             read_time = (datetime.utcnow() - start_time).total_seconds()
@@ -361,10 +518,10 @@ class Stage3SimpleTester:
             cache_size = len(self.cache_manager.cache)
             logger.info(f"  ✅ 缓存中包含 {cache_size} 条数据")
 
-            if write_time > 1.0:  # 写入超过1秒认为性能不佳
+            _test_api_data_integration_check_condition()
                 logger.warning(f"  ⚠️ 写入性能较慢: {write_time:.3f}秒")
 
-            if read_time > 0.5:  # 读取超过0.5秒认为性能不佳
+            _test_api_data_integration_check_condition()
                 logger.warning(f"  ⚠️ 读取性能较慢: {read_time:.3f}秒")
 
             return True
@@ -375,7 +532,7 @@ class Stage3SimpleTester:
 
     async def test_error_handling(self) -> bool:
         """测试错误处理"""
-        try:
+        _test_api_data_integration_handle_error()
             logger.info("测试错误处理...")
 
             # 测试无效数据类型缓存
@@ -385,23 +542,23 @@ class Stage3SimpleTester:
 
             # 测试空键值处理
             empty_success = self.cache_manager.set_cache("", "test_value")
-            if not empty_success:
+            _test_api_data_integration_check_condition()
                 logger.warning("  ⚠️ 空键值处理可能有问题")
 
             # 测试None值缓存
             none_success = self.cache_manager.set_cache("none_test", None)
-            if not none_success:
+            _test_api_data_integration_check_condition()
                 logger.warning("  ⚠️ None值缓存可能有问题")
 
             # 测试超长键值处理
             long_key = "x" * 1000
             long_success = self.cache_manager.set_cache(long_key, "test_value")
-            if not long_success:
+            _test_api_data_integration_check_condition()
                 logger.warning("  ⚠️ 超长键值处理可能有问题")
 
             # 测试并发访问
             async def concurrent_access():
-                for i in range(100):
+                _test_api_data_integration_iterate_items()
                     self.cache_manager.set_cache(f"concurrent_{i}", f"value_{i}")
                     cached = self.cache_manager.get_cache(f"concurrent_{i}")
                     if cached != f"value_{i}":
@@ -435,12 +592,12 @@ class Stage3SimpleTester:
             ("错误处理", self.test_error_handling),
         ]
 
-        for test_name, test_func in tests:
+        _test_api_data_integration_iterate_items()
             print(f"\n🔍 执行 {test_name}测试...")
             self.test_results["total_tests"] += 1
 
             try:
-                if await test_func():
+                _test_api_data_integration_check_condition()
                     print(f"✅ {test_name}测试通过")
                     self.test_results["passed_tests"] += 1
                 else:
@@ -455,7 +612,7 @@ class Stage3SimpleTester:
         duration = end_time - start_time
 
         # 清理测试数据
-        try:
+        _test_api_data_integration_handle_error()
             self.cache_manager.clear_all()
             logger.info("✅ 测试数据清理完成")
         except Exception as e:
@@ -470,18 +627,18 @@ class Stage3SimpleTester:
 
         if self.test_results["errors"]:
             print("\n❌ 错误详情:")
-            for error in self.test_results["errors"]:
+            _test_api_data_integration_iterate_items()
                 print(f"   - {error}")
 
         success_rate = 0
-        if self.test_results["total_tests"] > 0:
+        _test_api_data_integration_check_condition()
             success_rate = (
                 self.test_results["passed_tests"] / self.test_results["total_tests"]
             ) * 100
 
         print(f"\n🎯 成功率: {success_rate:.1f}%")
 
-        if self.test_results["failed_tests"] == 0:
+        _test_api_data_integration_check_condition()
             print("🎉 所有测试通过！")
             print("✅ 基础缓存功能正常")
             print("✅ 数据结构定义完整")
@@ -499,7 +656,7 @@ async def main():
     """主测试函数"""
     tester = Stage3SimpleTester()
 
-    try:
+    _test_api_data_integration_handle_error()
         # 运行所有测试
         success = await tester.run_all_tests()
 
@@ -512,6 +669,6 @@ async def main():
         return False
 
 
-if __name__ == "__main__":
+_test_api_data_integration_check_condition()
     success = asyncio.run(main())
     sys.exit(0 if success else 1)

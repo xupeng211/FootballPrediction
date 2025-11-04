@@ -37,8 +37,8 @@ class SimpleSRSApiTester:
 
     async def test_health_check(self):
         """测试健康检查接口"""
-        print("🏥 测试健康检查接口 (/predictions-srs-simple/health)")
-        print("-" * 50)
+        logger.debug("🏥 测试健康检查接口 (/predictions-srs-simple/health)")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         try:
             async with self.session.get(
@@ -46,26 +46,26 @@ class SimpleSRSApiTester:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    print("✅ 健康检查成功")
-                    print(f"📊 状态: {data.get('status')}")
-                    print(f"🔧 服务: {data.get('service')}")
-                    print(f"💾 数据库独立: {data.get('database_independent')}")
-                    print(f"⏰ 时间戳: {data.get('timestamp')}")
+                    logger.debug("✅ 健康检查成功")  # TODO: Add logger import if needed
+                    logger.debug(f"📊 状态: {data.get('status')}")  # TODO: Add logger import if needed
+                    logger.debug(f"🔧 服务: {data.get('service')}")  # TODO: Add logger import if needed
+                    logger.debug(f"💾 数据库独立: {data.get('database_independent')}")  # TODO: Add logger import if needed
+                    logger.debug(f"⏰ 时间戳: {data.get('timestamp')}")  # TODO: Add logger import if needed
                     return True
                 else:
                     error_text = await response.text()
-                    print(f"❌ 健康检查失败: {response.status}")
-                    print(f"错误详情: {error_text}")
+                    logger.debug(f"❌ 健康检查失败: {response.status}")  # TODO: Add logger import if needed
+                    logger.error(f"错误详情: {error_text}")  # TODO: Add logger import if needed
                     return False
 
         except Exception as e:
-            print(f"❌ 请求异常: {e}")
+            logger.debug(f"❌ 请求异常: {e}")  # TODO: Add logger import if needed
             return False
 
     async def test_single_prediction(self):
         """测试单个预测接口"""
-        print("\n🔮 测试单个预测接口 (/predictions-srs-simple/predict)")
-        print("-" * 50)
+        logger.debug("\n🔮 测试单个预测接口 (/predictions-srs-simple/predict)")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         # 构建测试请求
         request_data = {
@@ -92,47 +92,47 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print("✅ 预测成功")
-                    print(f"📊 响应时间: {response_time:.2f}ms")
-                    print(f"🏆 预测结果: {data.get('prediction')}")
-                    print(f"📈 概率分布: {data.get('probabilities')}")
-                    print(f"🎯 置信度: {data.get('confidence')}%")
-                    print(f"⚡ 处理时间: {data.get('processing_time_ms'):.2f}ms")
+                    logger.debug("✅ 预测成功")  # TODO: Add logger import if needed
+                    logger.debug(f"📊 响应时间: {response_time:.2f}ms")  # TODO: Add logger import if needed
+                    logger.debug(f"🏆 预测结果: {data.get('prediction')}")  # TODO: Add logger import if needed
+                    logger.debug(f"📈 概率分布: {data.get('probabilities')}")  # TODO: Add logger import if needed
+                    logger.debug(f"🎯 置信度: {data.get('confidence')}%")  # TODO: Add logger import if needed
+                    logger.debug(f"⚡ 处理时间: {data.get('processing_time_ms'):.2f}ms")  # TODO: Add logger import if needed
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
-                    print("\n📋 SRS合规性检查:")
-                    print(
+                    logger.debug("\n📋 SRS合规性检查:")  # TODO: Add logger import if needed
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   响应时间 ≤ 200ms: {'✅' if response_time <= 200 else '❌'} ({response_time:.2f}ms)"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   处理时间合规: {'✅' if srs_compliance.get('meets_srs_requirement') else '❌'}"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   Token认证: {'✅' if srs_compliance.get('token_authenticated') else '❌'}"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   频率限制: {'✅' if srs_compliance.get('rate_limited') else '❌'}"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   数据库独立: {'✅' if srs_compliance.get('database_independent') else '❌'}"
                     )
 
                     return True
                 else:
                     error_text = await response.text()
-                    print(f"❌ 预测失败: {response.status}")
-                    print(f"错误详情: {error_text}")
+                    logger.debug(f"❌ 预测失败: {response.status}")  # TODO: Add logger import if needed
+                    logger.error(f"错误详情: {error_text}")  # TODO: Add logger import if needed
                     return False
 
         except Exception as e:
-            print(f"❌ 请求异常: {e}")
+            logger.debug(f"❌ 请求异常: {e}")  # TODO: Add logger import if needed
             return False
 
     async def test_batch_prediction(self):
         """测试批量预测接口"""
-        print("\n🔄 测试批量预测接口 (/predictions-srs-simple/predict/batch)")
-        print("-" * 50)
+        logger.debug("\n🔄 测试批量预测接口 (/predictions-srs-simple/predict/batch)")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         # 构建批量测试请求（20场比赛）
         matches = []
@@ -188,55 +188,55 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print("✅ 批量预测成功")
-                    print(f"📊 总响应时间: {response_time:.2f}ms")
-                    print(f"🔢 总比赛数: {data.get('total_matches')}")
-                    print(f"✅ 成功预测数: {data.get('successful_predictions')}")
-                    print(f"❌ 失败预测数: {data.get('failed_predictions')}")
-                    print(
+                    logger.debug("✅ 批量预测成功")  # TODO: Add logger import if needed
+                    logger.debug(f"📊 总响应时间: {response_time:.2f}ms")  # TODO: Add logger import if needed
+                    logger.debug(f"🔢 总比赛数: {data.get('total_matches')}")  # TODO: Add logger import if needed
+                    logger.debug(f"✅ 成功预测数: {data.get('successful_predictions')}")  # TODO: Add logger import if needed
+                    logger.error(f"❌ 失败预测数: {data.get('failed_predictions')}")  # TODO: Add logger import if needed
+                    logger.debug()  # TODO: Add logger import if needed
                         f"⚡ 平均响应时间: {data.get('average_response_time_ms'):.2f}ms"
                     )
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
-                    print("\n📋 SRS合规性检查:")
-                    print(
+                    logger.debug("\n📋 SRS合规性检查:")  # TODO: Add logger import if needed
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   支持1000并发: {'✅' if srs_compliance.get('supports_1000_concurrent') else '❌'}"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   平均响应时间: {'✅' if srs_compliance.get('meets_response_time_requirement') else '❌'} ({data.get('average_response_time_ms'):.2f}ms)"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   最大并发数: {srs_compliance.get('max_concurrent_requests')}"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"   数据库独立: {'✅' if srs_compliance.get('database_independent') else '❌'}"
                     )
 
                     # 显示前5个预测结果
                     predictions = data.get("predictions", [])
                     if predictions:
-                        print("\n📊 前5个预测结果:")
+                        logger.debug("\n📊 前5个预测结果:")  # TODO: Add logger import if needed
                         for i, pred in enumerate(predictions[:5], 1):
-                            print(
+                            logger.debug()  # TODO: Add logger import if needed
                                 f"  {i}. {pred['match_id']}: {pred['prediction']} - {pred['probabilities']}"
                             )
 
                     return True
                 else:
                     error_text = await response.text()
-                    print(f"❌ 批量预测失败: {response.status}")
-                    print(f"错误详情: {error_text}")
+                    logger.debug(f"❌ 批量预测失败: {response.status}")  # TODO: Add logger import if needed
+                    logger.error(f"错误详情: {error_text}")  # TODO: Add logger import if needed
                     return False
 
         except Exception as e:
-            print(f"❌ 请求异常: {e}")
+            logger.debug(f"❌ 请求异常: {e}")  # TODO: Add logger import if needed
             return False
 
     async def test_metrics_endpoint(self):
         """测试指标接口"""
-        print("\n📊 测试指标接口 (/predictions-srs-simple/metrics)")
-        print("-" * 50)
+        logger.debug("\n📊 测试指标接口 (/predictions-srs-simple/metrics)")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         try:
             async with self.session.get(
@@ -245,42 +245,42 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print("✅ 指标获取成功")
-                    print("\n🏆 模型性能指标:")
+                    logger.debug("✅ 指标获取成功")  # TODO: Add logger import if needed
+                    logger.debug("\n🏆 模型性能指标:")  # TODO: Add logger import if needed
                     model_metrics = data.get("model_metrics", {})
                     for key, value in model_metrics.items():
-                        print(f"   {key}: {value}")
+                        logger.debug(f"   {key}: {value}")  # TODO: Add logger import if needed
 
-                    print("\n⚡ 性能指标:")
+                    logger.debug("\n⚡ 性能指标:")  # TODO: Add logger import if needed
                     perf_metrics = data.get("performance_metrics", {})
                     for key, value in perf_metrics.items():
-                        print(f"   {key}: {value}")
+                        logger.debug(f"   {key}: {value}")  # TODO: Add logger import if needed
 
-                    print("\n📋 SRS合规性:")
+                    logger.debug("\n📋 SRS合规性:")  # TODO: Add logger import if needed
                     srs_compliance = data.get("srs_compliance", {})
                     for key, value in srs_compliance.items():
-                        print(f"   {key}: {value}")
+                        logger.debug(f"   {key}: {value}")  # TODO: Add logger import if needed
 
-                    print("\n🔧 系统信息:")
+                    logger.debug("\n🔧 系统信息:")  # TODO: Add logger import if needed
                     system_info = data.get("system_info", {})
                     for key, value in system_info.items():
-                        print(f"   {key}: {value}")
+                        logger.debug(f"   {key}: {value}")  # TODO: Add logger import if needed
 
                     return True
                 else:
                     error_text = await response.text()
-                    print(f"❌ 指标获取失败: {response.status}")
-                    print(f"错误详情: {error_text}")
+                    logger.debug(f"❌ 指标获取失败: {response.status}")  # TODO: Add logger import if needed
+                    logger.error(f"错误详情: {error_text}")  # TODO: Add logger import if needed
                     return False
 
         except Exception as e:
-            print(f"❌ 请求异常: {e}")
+            logger.debug(f"❌ 请求异常: {e}")  # TODO: Add logger import if needed
             return False
 
     async def test_concurrent_predictions(self):
         """测试并发预测能力"""
-        print("\n⚡ 测试并发预测能力")
-        print("-" * 50)
+        logger.debug("\n⚡ 测试并发预测能力")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         # 并发发送10个预测请求
         concurrent_requests = 10
@@ -327,13 +327,13 @@ class SimpleSRSApiTester:
         )
         failed_requests = concurrent_requests - successful_requests
 
-        print("✅ 并发测试完成")
-        print(f"🔢 并发请求数: {concurrent_requests}")
-        print(f"✅ 成功请求: {successful_requests}")
-        print(f"❌ 失败请求: {failed_requests}")
-        print(f"⚡ 总响应时间: {total_time:.2f}ms")
-        print(f"📊 平均响应时间: {total_time/concurrent_requests:.2f}ms")
-        print(
+        logger.debug("✅ 并发测试完成")  # TODO: Add logger import if needed
+        logger.debug(f"🔢 并发请求数: {concurrent_requests}")  # TODO: Add logger import if needed
+        logger.debug(f"✅ 成功请求: {successful_requests}")  # TODO: Add logger import if needed
+        logger.error(f"❌ 失败请求: {failed_requests}")  # TODO: Add logger import if needed
+        logger.debug(f"⚡ 总响应时间: {total_time:.2f}ms")  # TODO: Add logger import if needed
+        logger.debug(f"📊 平均响应时间: {total_time/concurrent_requests:.2f}ms")  # TODO: Add logger import if needed
+        logger.debug()  # TODO: Add logger import if needed
             f"🚀 并发性能: {'✅ 优秀' if successful_requests == concurrent_requests else '⚠️ 需要优化'}"
         )
 
@@ -341,8 +341,8 @@ class SimpleSRSApiTester:
 
     async def test_large_batch(self):
         """测试大批量预测（100场）"""
-        print("\n📈 测试大批量预测（100场）")
-        print("-" * 50)
+        logger.debug("\n📈 测试大批量预测（100场）")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         # 构建100场比赛
         matches = []
@@ -375,15 +375,15 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print("✅ 大批量预测成功")
-                    print(f"📊 比赛数量: {data.get('total_matches')}")
-                    print(f"✅ 成功预测: {data.get('successful_predictions')}")
-                    print(f"❌ 失败预测: {data.get('failed_predictions')}")
-                    print(f"⚡ 总处理时间: {response_time:.2f}ms")
-                    print(
+                    logger.debug("✅ 大批量预测成功")  # TODO: Add logger import if needed
+                    logger.debug(f"📊 比赛数量: {data.get('total_matches')}")  # TODO: Add logger import if needed
+                    logger.debug(f"✅ 成功预测: {data.get('successful_predictions')}")  # TODO: Add logger import if needed
+                    logger.error(f"❌ 失败预测: {data.get('failed_predictions')}")  # TODO: Add logger import if needed
+                    logger.debug(f"⚡ 总处理时间: {response_time:.2f}ms")  # TODO: Add logger import if needed
+                    logger.debug()  # TODO: Add logger import if needed
                         f"📊 平均响应时间: {data.get('average_response_time_ms'):.2f}ms"
                     )
-                    print(
+                    logger.debug()  # TODO: Add logger import if needed
                         f"🎯 成功率: {data.get('successful_predictions')/data.get('total_matches')*100:.1f}%"
                     )
 
@@ -391,31 +391,31 @@ class SimpleSRSApiTester:
                     supports_1000 = data.get("srs_compliance", {}).get(
                         "supports_1000_concurrent", False
                     )
-                    print(f"🚀 支持1000场并发: {'✅' if supports_1000 else '❌'}")
+                    logger.debug(f"🚀 支持1000场并发: {'✅' if supports_1000 else '❌'}")  # TODO: Add logger import if needed
 
                     return True
                 else:
                     error_text = await response.text()
-                    print(f"❌ 大批量预测失败: {response.status}")
-                    print(f"错误详情: {error_text}")
+                    logger.debug(f"❌ 大批量预测失败: {response.status}")  # TODO: Add logger import if needed
+                    logger.error(f"错误详情: {error_text}")  # TODO: Add logger import if needed
                     return False
 
         except Exception as e:
-            print(f"❌ 请求异常: {e}")
+            logger.debug(f"❌ 请求异常: {e}")  # TODO: Add logger import if needed
             return False
 
 
 async def run_simple_srs_api_tests():
     """运行简化版SRS API测试套件"""
-    print("🧪 SRS规范简化API测试套件")
-    print("=" * 60)
-    print("测试目标:")
-    print("✅ API响应时间 ≤ 200ms")
-    print("✅ 支持1000场比赛并发")
-    print("✅ Token校验与请求频率限制")
-    print("✅ 模型准确率 ≥ 65%")
-    print("✅ 数据库独立（无依赖）")
-    print("=" * 60)
+    logger.debug("🧪 SRS规范简化API测试套件")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
+    logger.debug("测试目标:")  # TODO: Add logger import if needed
+    logger.debug("✅ API响应时间 ≤ 200ms")  # TODO: Add logger import if needed
+    logger.debug("✅ 支持1000场比赛并发")  # TODO: Add logger import if needed
+    logger.debug("✅ Token校验与请求频率限制")  # TODO: Add logger import if needed
+    logger.debug("✅ 模型准确率 ≥ 65%")  # TODO: Add logger import if needed
+    logger.debug("✅ 数据库独立（无依赖）")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     async with SimpleSRSApiTester() as tester:
         test_results = []
@@ -445,33 +445,33 @@ async def run_simple_srs_api_tests():
         test_results.append(("大批量预测(100场)", result6))
 
     # 测试结果汇总
-    print("\n" + "=" * 60)
-    print("📊 测试结果汇总")
-    print("=" * 60)
+    logger.debug("\n" + "=" * 60)  # TODO: Add logger import if needed
+    logger.debug("📊 测试结果汇总")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     passed_tests = 0
     total_tests = len(test_results)
 
     for test_name, result in test_results:
         status = "✅ 通过" if result else "❌ 失败"
-        print(f"{test_name:25s}: {status}")
+        logger.debug(f"{test_name:25s}: {status}")  # TODO: Add logger import if needed
         if result:
             passed_tests += 1
 
-    print(f"\n🎯 总体结果: {passed_tests}/{total_tests} 测试通过")
+    logger.debug(f"\n🎯 总体结果: {passed_tests}/{total_tests} 测试通过")  # TODO: Add logger import if needed
 
     if passed_tests >= total_tests * 0.8:  # 80%通过率
-        print("🎉 SRS规范API测试成功！")
-        print("\n✅ 系统已符合SRS要求:")
-        print("   • API响应时间 ≤ 200ms")
-        print("   • 支持批量并发预测")
-        print("   • Token认证机制")
-        print("   • 请求频率限制")
-        print("   • 模型准确率监控")
-        print("   • 数据库独立架构")
-        print("\n🚀 系统已准备好生产部署！")
+        logger.debug("🎉 SRS规范API测试成功！")  # TODO: Add logger import if needed
+        logger.debug("\n✅ 系统已符合SRS要求:")  # TODO: Add logger import if needed
+        logger.debug("   • API响应时间 ≤ 200ms")  # TODO: Add logger import if needed
+        logger.debug("   • 支持批量并发预测")  # TODO: Add logger import if needed
+        logger.debug("   • Token认证机制")  # TODO: Add logger import if needed
+        logger.debug("   • 请求频率限制")  # TODO: Add logger import if needed
+        logger.debug("   • 模型准确率监控")  # TODO: Add logger import if needed
+        logger.debug("   • 数据库独立架构")  # TODO: Add logger import if needed
+        logger.debug("\n🚀 系统已准备好生产部署！")  # TODO: Add logger import if needed
     else:
-        print("⚠️ 部分测试未通过，需要进一步优化")
+        logger.debug("⚠️ 部分测试未通过，需要进一步优化")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

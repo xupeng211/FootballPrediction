@@ -9,7 +9,7 @@ from unittest.mock import Mock
 import pytest
 
 # 导入目标模块
-from core.auto_binding import *
+from core.auto_binding import *  # TODO: Convert to explicit imports
 
 
 class TestDIContainer:
