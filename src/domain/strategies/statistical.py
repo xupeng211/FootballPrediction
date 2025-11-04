@@ -394,8 +394,7 @@ class StatisticalStrategy(PredictionStrategy):
             confidence_factors.append(0.3)
 
         # 预测一致性
-        # 这里简化处理,
-    实际可以比较不同方法的结果一致性
+        # 这里简化处理，实际可以比较不同方法的结果一致性
         confidence_factors.append(0.7)
 
         # 返回平均置信度
@@ -544,12 +543,9 @@ class StatisticalStrategy(PredictionStrategy):
         correct_predictions = 0
         score_errors = []
 
-        for pred,
-    actual in actual_results:
-            actual_home = actual.get("actual_home_score",
-    0)
-            actual_away = actual.get("actual_away_score",
-    0)
+        for pred, actual in actual_results:
+            actual_home = actual.get("actual_home_score", 0)
+            actual_away = actual.get("actual_away_score", 0)
 
             # 精确匹配
             if (

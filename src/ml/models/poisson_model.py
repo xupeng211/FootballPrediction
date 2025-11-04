@@ -463,8 +463,7 @@ class PoissonModel(BaseModel):
         predictions = []
         actuals = []
 
-        for _,
-    match in test_data.iterrows():
+        for _, match in test_data.iterrows():
             match_data = {
                 "home_team": match["home_team"],
                 "away_team": match["away_team"],
