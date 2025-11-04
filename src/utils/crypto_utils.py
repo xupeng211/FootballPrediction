@@ -37,6 +37,9 @@ class CryptoUtils:
             password_bytes = (
                 password.encode("utf-8") if isinstance(password, str) else password
             )
+            # bcrypt 5.0.0+ 限制密码长度为72字节，自动截断超长密码
+            if len(password_bytes) > 72:
+                password_bytes = password_bytes[:72]
             return bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("utf-8")
         else:
             salt = CryptoUtils.generate_short_id()
@@ -65,12 +68,19 @@ class CryptoUtils:
             password_bytes = (
                 password.encode("utf-8") if isinstance(password, str) else password
             )
+            # 与hash_password保持一致，截断超长密码
+            if len(password_bytes) > 72:
+                password_bytes = password_bytes[:72]
             hashed_bytes = (
                 hashed_password.encode("utf-8")
                 if isinstance(hashed_password, str)
                 else hashed_password
             )
-            return bcrypt.checkpw(password_bytes, hashed_bytes)
+            try:
+                return bcrypt.checkpw(password_bytes, hashed_bytes)
+            except (ValueError, TypeError):
+                # bcrypt抛出异常时返回False而不是崩溃
+                return False
         elif hashed_password.startswith("$2b$") and hashed_password.count("$") > 3:
             try:
                 parts = hashed_password.split("$")
