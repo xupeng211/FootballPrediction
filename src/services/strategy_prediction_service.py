@@ -40,7 +40,7 @@ class StrategyPredictionService:
         self,
     strategy_factory: PredictionStrategyFactory,
     prediction_domain_service: PredictionDomainService,
-    
+
         match_repository: MatchRepository,
         prediction_repository: PredictionRepository,
         default_strategy: str = "ensemble_predictor",
@@ -79,7 +79,7 @@ class StrategyPredictionService:
     match_id: int,
     user_id: int,
     strategy_name: str | None = None,
-    
+
         confidence: float | None = None,
         notes: str | None = None,
     ) -> Prediction:
@@ -114,7 +114,7 @@ class StrategyPredictionService:
     home_team=home_team,
     away_team=away_team,
     user_id=user_id,
-    
+
         )
 
         # 准备预测输入
@@ -129,22 +129,22 @@ class StrategyPredictionService:
     match=match,
     predicted_home=prediction_output.predicted_home_score,
     predicted_away=prediction_output.predicted_away_score,
-    
+
             confidence=prediction_output.confidence,
             notes=notes,
         )
 
         # 保存预测
-        await self._prediction_repository.create(prediction)
+        await self._prediction_repository.create(_prediction)
 
         # 记录预测详情
-        await self._log_prediction_details(prediction, prediction_output, strategy_name)
+        await self._log_prediction_details(_prediction, prediction_output, strategy_name)
 
         logger.info(
             f"用户 {user_id} 对比赛 {match_id} 完成预测,使用策略: {strategy_name}"
         )
 
-        return prediction
+        return _prediction
 
     async def batch_predict(
         self,
@@ -167,7 +167,7 @@ class StrategyPredictionService:
         strategy = await self._get_or_create_strategy(strategy_name)
 
         # 批量获取比赛信息
-        await self._match_repository.get_by_ids(match_ids)
+        matches = await self._match_repository.get_by_ids(match_ids)
         if not matches:
             raise ValueError("没有找到有效的比赛")
 
@@ -195,19 +195,16 @@ class StrategyPredictionService:
 
         # 创建预测对象
         predictions = []
-        for context,
-    output in zip(contexts,
-    prediction_outputs,
-    strict=False):
+        for context, output in zip(contexts, prediction_outputs, strict=False):
             _prediction = self._prediction_domain_service.create_prediction(
                 user_id=user_id,
-    
+
                 match=context.match,
                 predicted_home=output.predicted_home_score,
                 predicted_away=output.predicted_away_score,
                 confidence=output.confidence,
             )
-            predictions.append(prediction)
+            predictions.append(_prediction)
 
         # 批量保存
         await self._prediction_repository.create_many(predictions)
@@ -316,7 +313,7 @@ class StrategyPredictionService:
     },
     "actual_performance": actual_performance,
     "recent_predictions_count": len(recent_predictions),
-    
+
         }
 
     async def update_strategy_weights(self,
@@ -329,10 +326,8 @@ class StrategyPredictionService:
         """
         ensemble_strategy = self._strategy_factory.get_strategy("ensemble_predictor")
         if ensemble_strategy:
-            for strategy_name,
-    weight in strategy_weights.items():
-                ensemble_strategy.update_strategy_weight(strategy_name,
-    weight)
+            for strategy_name, weight in strategy_weights.items():
+                ensemble_strategy.update_strategy_weight(strategy_name, weight)
             logger.info("更新集成策略权重")
 
     async def switch_default_strategy(self, strategy_name: str) -> None:
@@ -365,7 +360,7 @@ class StrategyPredictionService:
                 ),
     "health": health_report.get(name,
     {}),
-    
+
             }
 
         return strategies_info
@@ -399,7 +394,7 @@ class StrategyPredictionService:
             match=context.match,
     home_team=context.home_team,
     away_team=context.away_team,
-    
+
             historical_data=historical_data,
             additional_features={
                 "user_id": context.user_id,
@@ -443,7 +438,7 @@ class StrategyPredictionService:
     prediction: Prediction,
     prediction_output: PredictionOutput,
     strategy_name: str,
-    
+
     ) -> None:
         """记录预测详情"""
         details = {
