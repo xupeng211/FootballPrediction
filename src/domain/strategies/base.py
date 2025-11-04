@@ -189,12 +189,10 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionInput: 处理后的输入数据
         """
-        # 默认不做处理,
-    子类可以覆盖
+        # 默认不做处理, 子类可以覆盖
         return input_data
 
-    async def post_process(self,
-    output: PredictionOutput) -> PredictionOutput:
+    async def post_process(self, output: PredictionOutput) -> PredictionOutput:
         """后处理预测结果"
 
         Args:
@@ -203,13 +201,11 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionOutput: 处理后的预测结果
         """
-        # 默认不做处理,
-    子类可以覆盖
+        # 默认不做处理, 子类可以覆盖
         return output
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(name='{self.name}',
-    type='{self.strategy_type.value}')"
+        return f"{self.__class__.__name__}(name='{self.name}', type='{self.strategy_type.value}')"
 
     def __repr__(self) -> str:
         return self.__str__()
