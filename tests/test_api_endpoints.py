@@ -127,7 +127,7 @@ class TestAPIResponse:
 
         assert isinstance(error_response, dict)
         assert error_response["status"] == "error"
-        assert error_response["code"]                     == 400
+        assert error_response["code"]                      == 400
 
 
 class TestAPIValidation:
