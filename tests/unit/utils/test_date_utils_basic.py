@@ -94,12 +94,12 @@ class TestDateUtilsBasic:
         assert result.month == 2
 
     def test_add_days_invalid_input(self):
-        """测试无效输入天数添加"""
+        """测试无效输入天数添加（期望抛出ValueError）"""
         invalid_inputs = [None, "2024-01-15", 123, []]
 
         for invalid_input in invalid_inputs:
-            result = DateUtils.add_days(invalid_input, 5)
-            assert result is None
+            with pytest.raises(ValueError):
+                DateUtils.add_days(invalid_input, 5)
 
     def test_get_weekday_basic(self):
         """测试基本星期几获取"""
