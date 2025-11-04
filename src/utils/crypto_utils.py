@@ -48,61 +48,39 @@ class CryptoUtils:
             return f"sha256${salt}${hashed}"
 
     @staticmethod
-def _verify_password_handle_error():
+    def _verify_password_handle_error():
+        """处理bcrypt导入错误"""
+        try:
             import bcrypt
 
             HAS_BCRYPT = True
         except ImportError:
             HAS_BCRYPT = False
 
+    @staticmethod
+    def _verify_password_check_condition(password: str, hashed_password: str) -> bool:
+        """检查密码验证条件"""
+        # 允许空密码，但在生产环境中应该禁用
+        if not password or not hashed_password:
+            return False
+        return True
 
-def _verify_password_check_condition():
-            # 允许空密码，但在生产环境中应该禁用
-            return True
-
-def _verify_password_check_condition():
-            HAS_BCRYPT
-            and hashed_password.startswith("$2b$")
-            and hashed_password.count("$") == 3
-        ):
-            password_bytes = (
-
-def _verify_password_check_condition():
-                else hashed_password
-            )
-
-def _verify_password_check_condition():
-                    salt = parts[3]
-                    expected_hash = parts[4]
-                    salted_password = f"{password}{salt}"
-                    actual_hash = hashlib.sha256(
-                        salted_password.encode("utf-8")
-                    ).hexdigest()
-                    return actual_hash == expected_hash
-
-def _verify_password_check_condition():
-                    salt = parts[1]
-                    expected_hash = parts[2]
-                    salted_password = f"{password}{salt}"
-                    actual_hash = hashlib.sha256(
-                        salted_password.encode("utf-8")
-                    ).hexdigest()
-                    return actual_hash == expected_hash
-
+    @staticmethod
     def verify_password(password: str, hashed_password: str) -> bool:
         """验证密码"""
-        _verify_password_handle_error()
+        try:
             import bcrypt
 
             HAS_BCRYPT = True
         except ImportError:
             HAS_BCRYPT = False
 
-        _verify_password_check_condition()
-            # 允许空密码，但在生产环境中应该禁用
-            return True
+        # 基本条件检查
+        if not CryptoUtils._verify_password_check_condition(password, hashed_password):
+            return False
 
-        _verify_password_check_condition()
+        # bcrypt格式密码验证
+        if (
             HAS_BCRYPT
             and hashed_password.startswith("$2b$")
             and hashed_password.count("$") == 3
@@ -113,20 +91,18 @@ def _verify_password_check_condition():
             # 与hash_password保持一致，截断超长密码
             if len(password_bytes) > 72:
                 password_bytes = password_bytes[:72]
-            hashed_bytes = (
-                hashed_password.encode("utf-8")
-                _verify_password_check_condition()
-                else hashed_password
-            )
+            hashed_bytes = hashed_password.encode("utf-8")
             try:
                 return bcrypt.checkpw(password_bytes, hashed_bytes)
             except (ValueError, TypeError):
                 # bcrypt抛出异常时返回False而不是崩溃
                 return False
+
+        # 扩展bcrypt格式（带额外字段）
         elif hashed_password.startswith("$2b$") and hashed_password.count("$") > 3:
             try:
                 parts = hashed_password.split("$")
-                _verify_password_check_condition()
+                if len(parts) >= 5:
                     salt = parts[3]
                     expected_hash = parts[4]
                     salted_password = f"{password}{salt}"
@@ -137,10 +113,12 @@ def _verify_password_check_condition():
             except IndexError:
                 pass
             return False
+
+        # SHA256格式密码验证
         elif hashed_password.startswith("sha256$"):
             try:
                 parts = hashed_password.split("$")
-                _verify_password_check_condition()
+                if len(parts) >= 3:
                     salt = parts[1]
                     expected_hash = parts[2]
                     salted_password = f"{password}{salt}"

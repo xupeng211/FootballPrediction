@@ -272,7 +272,7 @@ class Settings(SettingsClass):
         ]
 
         # 从环境变量或kwargs更新配置
-        for key, value in **kwargs.items():
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
         # 从环境变量读取配置
