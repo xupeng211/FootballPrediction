@@ -53,9 +53,7 @@ class Adapter(Target):
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    pass
-
-
+    @abstractmethod
 class DataTransformer(ABC):
     """数据转换器基类"""
 
@@ -76,6 +74,12 @@ class CompositeAdapter(Adapter):
     # TODO: 方法 def get_adapter 过长(23行)，建议拆分
     # TODO: 方法 def get_adapter 过长(23行),建议拆分
     # TODO: 方法 def get_adapter 过长(23行),建议拆分
+    def adapt(self, *args, **kwargs) -> Any:
+        """适配方法"""
+        pass
+
+
+class DataTransformer(ABC):
     def get_source_schema(self) -> dict[str, Any]:
         """获取源数据结构"""
         return {}

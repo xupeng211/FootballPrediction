@@ -232,7 +232,7 @@ class AuthContext:
         self.auth_manager = auth_manager
 
 
-def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """
     角色权限装饰器工厂
 
@@ -255,17 +255,17 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
 
 
 # 常用角色权限检查函数
-def require_admin():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def require_admin():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """要求管理员权限"""
     return require_roles("admin")
 
 
-def require_user():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def require_user():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """要求用户权限"""
     return require_roles("admin", "user")
 
 
-def require_guest():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def require_guest():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """要求访客权限"""
     return require_roles("admin", "user", "guest")
 

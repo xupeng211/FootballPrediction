@@ -15,7 +15,7 @@ from src.domain.events.match_events import (
     MatchPostponedEvent,
     MatchStartedEvent,
 )
-from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
+from src.domain.models.match import Match, MatchResult, MatchStatus
 from src.domain.models.team import Team
 
 
