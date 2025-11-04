@@ -46,6 +46,17 @@ class DateUtils:
             return None
 
     @staticmethod
+    def parse_datetime(datetime_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime | None:
+        """解析日期时间字符串"""
+        if not isinstance(datetime_str, str):
+            return None
+
+        try:
+            return datetime.strptime(datetime_str, format_str)
+        except ValueError:
+            return None
+
+    @staticmethod
     def time_ago(dt: datetime) -> str:
         """计算相对时间"""
         if not isinstance(dt, datetime):
@@ -119,10 +130,10 @@ class DateUtils:
         return end_date.day
 
     @staticmethod
-    def add_days(dt: datetime, days: int) -> datetime:
+    def add_days(dt: datetime, days: int) -> datetime | None:
         """增加天数"""
         if not isinstance(dt, datetime):
-            raise ValueError("无效的日期时间对象")
+            return None
         return dt + timedelta(days=days)
 
     @staticmethod
