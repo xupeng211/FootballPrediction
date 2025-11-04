@@ -66,6 +66,7 @@ class DatabaseOptimizer:
                     tablename,
                     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
     
+    
                     pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
                 FROM pg_tables
                 WHERE schemaname = 'public'
@@ -111,11 +112,13 @@ class DatabaseOptimizer:
                 "name": "idx_users_last_login",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_last_login ON users(last_login DESC NULLS LAST);",
     
+    
                 "description": "最后登录时间索引"
             },
             {
                 "name": "idx_users_created_at",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_created_at ON users(created_at DESC);",
+    
     
                 "description": "创建时间索引"
             },
@@ -123,11 +126,13 @@ class DatabaseOptimizer:
                 "name": "idx_users_is_active",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_is_active ON users(is_active);",
     
+    
                 "description": "激活状态索引"
             },
             {
                 "name": "idx_users_role",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_role ON users(role);",
+    
     
                 "description": "用户角色索引"
             }

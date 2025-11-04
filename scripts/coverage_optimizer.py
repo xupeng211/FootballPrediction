@@ -253,6 +253,7 @@ class CoverageOptimizer:
                 'total_files': len(coverage_report.file_reports),
                 'tested_files': len([f for f in coverage_report.file_reports.values() if f['coverage'] > 0]),
     
+    
                 'total_statements': coverage_report.total_statements,
                 'covered_statements': coverage_report.covered_statements
             },

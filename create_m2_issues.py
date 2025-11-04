@@ -140,6 +140,7 @@ def main():
         "total_issues": total_issues,
         "success_rate": (len(created_issues) + len(skipped_issues)) / total_issues * 100,
     
+    
         "created_at": datetime.now().isoformat(),
         "created": [
             {

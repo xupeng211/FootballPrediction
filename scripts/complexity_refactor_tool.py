@@ -85,7 +85,8 @@ class ComplexityRefactor:
                         message = ':'.join(parts[3:]).strip()
 
                         # 提取函数名和复杂度分数
-                        function_match = re.search(r'`([^`]+)` is too complex \((\d+) > (\d+)\)', message)
+                        function_match = re.search(r'`([^`]+)` is too complex \((\d+) > (\d+)\)',
+    message)
                         if function_match:
                             function_name = function_match.group(1)
                             complexity_score = int(function_match.group(2))
@@ -194,7 +195,8 @@ def _extract_subfunctions_strategy_check_condition():
 def _extract_subfunctions_strategy_check_condition():
                     # 生成子函数名
                     sub_func_name = f"_{function_name}_{block['purpose']}"
-                    helper_functions.append(self.create_subfunction(sub_func_name, block["lines"]))
+                    helper_functions.append(self.create_subfunction(sub_func_name,
+    block["lines"]))
 
                     # 替换为函数调用
                     indent = len(line) - len(line.lstrip())
@@ -210,7 +212,10 @@ def _extract_subfunctions_strategy_iterate_items():
 
         return '\n'.join(new_lines)
 
-    def extract_subfunctions_strategy(self, content: str, function_name: str, issue: Dict) -> str:
+    def extract_subfunctions_strategy(self,
+    content: str,
+    function_name: str,
+    issue: Dict) -> str:
         """策略1: 提取子函数"""
         lines = content.split('\n')
         start_line = issue["line"] - 1
@@ -261,7 +266,8 @@ def _extract_subfunctions_strategy_iterate_items():
                 _extract_subfunctions_strategy_check_condition()
                     # 生成子函数名
                     sub_func_name = f"_{function_name}_{block['purpose']}"
-                    helper_functions.append(self.create_subfunction(sub_func_name, block["lines"]))
+                    helper_functions.append(self.create_subfunction(sub_func_name,
+    block["lines"]))
 
                     # 替换为函数调用
                     indent = len(line) - len(line.lstrip())
@@ -363,18 +369,27 @@ def _extract_subfunctions_strategy_iterate_items():
         result_lines.append('')  # 空行分隔
         return result_lines
 
-    def early_return_strategy(self, content: str, function_name: str, issue: Dict) -> str:
+    def early_return_strategy(self,
+    content: str,
+    function_name: str,
+    issue: Dict) -> str:
         """策略2: 使用早期返回减少嵌套"""
         # 这是一个简化版本，实际的早期返回重构更复杂
         # 这里主要处理简单的if-else嵌套
         return content
 
-    def strategy_pattern_strategy(self, content: str, function_name: str, issue: Dict) -> str:
+    def strategy_pattern_strategy(self,
+    content: str,
+    function_name: str,
+    issue: Dict) -> str:
         """策略3: 使用策略模式"""
         # 这里可以识别if-elif-else链，将其重构为策略模式
         return content
 
-    def helper_functions_strategy(self, content: str, function_name: str, issue: Dict) -> str:
+    def helper_functions_strategy(self,
+    content: str,
+    function_name: str,
+    issue: Dict) -> str:
         """策略4: 提取辅助函数"""
         # 这里可以识别重复代码，提取为辅助函数
         return content
@@ -396,7 +411,8 @@ def main():
     if results['details']:
         print(f"\n📋 重构详情:")
         for detail in results['details'][:10]:  # 只显示前10个
-            print(f"  - {detail['file']}: {detail['functions_refactored']} 个函数, {detail['issues']} 个问题")
+            print(f"  - {detail['file']}: {detail['functions_refactored']} 个函数,
+    {detail['issues']} 个问题")
 
     if results['failed_files']:
         print(f"\n⚠️  重构失败的文件:")

@@ -282,7 +282,9 @@ class CodeReviewAutomation:
             "total_prs": len(mock_data),
             "average_review_time": sum(m.review_duration_hours for m in mock_data) / len(mock_data) if mock_data else 0,
     
+    
             "average_test_coverage": sum(m.test_coverage for m in mock_data) / len(mock_data) if mock_data else 0,
+    
     
             "pr_count_trend": self._calculate_trend([m.created_at for m in mock_data]),
             "quality_score_trend": self._calculate_quality_trend(mock_data)

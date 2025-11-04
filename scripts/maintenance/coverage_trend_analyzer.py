@@ -491,12 +491,15 @@ def _collect_current_coverage_handle_error():
             "summary": {
                 "overall_trend": f"{trend_analysis.trend_direction} ({trend_analysis.trend_strength:.2f})",
     
+    
                 "current_coverage": current_data.total_coverage if current_data else 0.0,
                 "prediction_7d": trend_analysis.prediction_7d,
                 "prediction_30d": trend_analysis.prediction_30d,
                 "high_priority_modules": len([m for m in module_analyses if m.priority == "high"]),
     
+    
                 "improving_modules": len([m for m in module_analyses if m.trend_direction == "improving"]),
+    
     
                 "declining_modules": len([m for m in module_analyses if m.trend_direction == "declining"])
             }

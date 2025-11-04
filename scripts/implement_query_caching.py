@@ -273,6 +273,7 @@ class CachedUserRepository:
                     'role': user.role,
                     'created_at': user.created_at.isoformat() if user.created_at else None,
     
+    
                     'updated_at': user.updated_at.isoformat() if user.updated_at else None
                 })
             await self.cache.set(cache_key, users_data, ttl=1800)

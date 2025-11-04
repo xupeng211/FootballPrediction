@@ -229,6 +229,7 @@ class CITestIntegration:
                 "success": bandit_result.returncode == 0,
                 "issues": bandit_result.stdout.count('\n') if bandit_result.stdout else 0,
     
+    
                 "execution_time": bandit_result.execution_time
             }
         except Exception as e:

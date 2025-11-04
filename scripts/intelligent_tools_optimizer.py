@@ -982,6 +982,7 @@ class ProgressIndicator:
         bar = '█' * filled_length + '-' * (bar_length - filled_length)
 
         print(f'\\r{self.description}: |{bar}| {percent:.1f}% ({self.current}/{self.total})',
+    
     end='',
     flush=True)
 

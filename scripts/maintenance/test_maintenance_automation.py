@@ -204,6 +204,7 @@ class TestMaintenanceAutomation:
                 "alerts_count": len(alerts),
                 "critical_alerts": len([a for a in alerts if a.get("severity") == "critical"]),
     
+    
                 "timestamp": datetime.now().isoformat()
             }
 

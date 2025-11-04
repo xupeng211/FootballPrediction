@@ -765,7 +765,9 @@ class SystemPerformanceOptimizer:
                 "final_metrics": asdict(final_metrics),
                 "optimization_targets": [asdict(target) for target in optimization_targets],
     
+    
                 "optimization_results": [asdict(result) for result in optimization_results],
+    
     
                 "report": optimization_report
             }

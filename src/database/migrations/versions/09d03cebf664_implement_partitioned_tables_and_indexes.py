@@ -177,6 +177,7 @@ def _implement_postgresql_partitioning_and_indexes():
                 EXECUTE format(
                     'CREATE TABLE %I PARTITION OF predictions FOR VALUES FROM (%L) TO (%L)',
     
+    
                     partition_name, range_start, range_end
                 );
                 RAISE NOTICE '已创建预测分区: %', partition_name;

@@ -581,6 +581,7 @@ def test_environment_variables():
     # 检查Python路径
     python_path = os.environ.get('PYTHONPATH', '')
     assert 'src' in python_path or str(Path(__file__).parent.parent.parent) in python_path,
+    
     \
         "PYTHONPATH未正确配置"
 

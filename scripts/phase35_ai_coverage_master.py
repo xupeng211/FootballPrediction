@@ -61,12 +61,15 @@ class Phase35AICoverageMaster:
                 for line in output_lines:
                     if '综合覆盖率分数:' in line:
                         coverage_data['overall'] = float(line.split(':')[-1].strip().replace('%',
+    
     ''))
                     elif '函数覆盖率:' in line:
                         coverage_data['function'] = float(line.split(':')[-1].strip().replace('%',
+    
     ''))
                     elif '估算行覆盖率:' in line:
                         coverage_data['line'] = float(line.split(':')[-1].strip().replace('%',
+    
     ''))
 
                 # 深度模块分析

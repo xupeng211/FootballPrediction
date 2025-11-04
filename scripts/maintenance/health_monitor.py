@@ -240,6 +240,7 @@ class HealthMonitor:
                 title="项目大小过大",
                 message=f"项目大小 {size_mb:.1f} MB，超过阈值 {threshold_mb:.1f} MB ({threshold_gb} GB)",
     
+    
                 current_value=size_mb,
                 threshold_value=threshold_mb,
                 timestamp=datetime.now().isoformat()
