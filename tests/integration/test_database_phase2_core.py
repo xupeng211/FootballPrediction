@@ -4,19 +4,19 @@ Phase 2 - Database模块核心功能测试
 专注于提升database核心文件的测试覆盖率
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 # 导入database模块的核心组件
-from src.database.base import Base, TimestampMixin, BaseModel
+from src.database.base import Base, TimestampMixin
 from src.database.definitions import DatabaseManager, DatabaseRole
 from src.database.models.league import League
-from src.database.models.team import Team
 from src.database.models.match import Match
 from src.database.models.predictions import Predictions
+from src.database.models.team import Team
 
 
 class TestDatabaseCorePhase2:

@@ -3,19 +3,16 @@
 Configuration-driven Dependency Injection Tests
 """
 
-import pytest
-import tempfile
 import json
-import yaml
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from src.core.config_di import (
-    ServiceConfig,
-    DIConfiguration,
-    ConfigurationBinder,
-)
-from src.core.di import DIContainer, ServiceLifetime
+import pytest
+
+from src.core.config_di import (ConfigurationBinder, DIConfiguration,
+                                ServiceConfig)
+from src.core.di import DIContainer
 from src.core.exceptions import DependencyInjectionError
 
 

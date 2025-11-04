@@ -4,9 +4,10 @@
 Fixed prediction model tests for coverage optimization
 """
 
-import pytest
 import sys
 from datetime import datetime
+
+import pytest
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, ".")
@@ -116,6 +117,7 @@ class TestModelsPredictionFixed:
     def test_prediction_service_async_methods(self):
         """测试预测服务异步方法"""
         import asyncio
+
         from src.models.prediction import PredictionService
 
         service = PredictionService()
@@ -133,13 +135,9 @@ class TestModelsPredictionFixed:
 
     def test_monitoring_metrics_functionality(self):
         """测试监控指标功能"""
-        from src.models.prediction import (
-            predictions_total,
-            prediction_duration_seconds,
-            prediction_accuracy,
-            model_load_duration_seconds,
-            cache_hit_ratio,
-        )
+        from src.models.prediction import (prediction_accuracy,
+                                           prediction_duration_seconds,
+                                           predictions_total)
 
         # 测试Counter指标
         initial_value = predictions_total()
@@ -158,7 +156,7 @@ class TestModelsPredictionFixed:
 
     def test_prometheus_classes_instantiation(self):
         """测试Prometheus类实例化"""
-        from src.models.prediction import Counter, Histogram, Gauge
+        from src.models.prediction import Counter, Gauge, Histogram
 
         # 测试Counter
         counter = Counter("test_counter", "Test counter")

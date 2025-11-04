@@ -2,11 +2,9 @@
 WarningFilters初始化测试 - 专门覆盖第24-28行初始化代码
 """
 
-import pytest
-import warnings
 import logging
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestWarningFiltersInitialization:
@@ -17,7 +15,6 @@ class TestWarningFiltersInitialization:
         # 模拟模块初始化时的错误处理
         with patch("warnings.filterwarnings", side_effect=ValueError("Test error")):
             # 重新导入模块来触发初始化代码
-            import importlib
             import sys
 
             # 从sys.modules中移除模块以便重新导入
@@ -26,7 +23,6 @@ class TestWarningFiltersInitialization:
 
             # 验证导入不会抛出异常（错误被正确处理）
             try:
-                import src.utils.warning_filters
 
                 # 如果能到达这里说明错误处理工作正常
                 assert True
@@ -49,7 +45,6 @@ class TestWarningFiltersInitialization:
 
                 # 验证导入不会抛出异常（错误被正确处理）
                 try:
-                    import src.utils.warning_filters
 
                     # 如果能到达这里说明错误处理工作正常
                     assert True

@@ -18,11 +18,13 @@ Issue: #116 EV计算和投注策略
 
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import (APIRouter, BackgroundTasks, Depends, FastAPI,
+                     HTTPException, Query)
 from pydantic import BaseModel, Field
 
 from src.core.logging_system import get_logger
-from src.services.betting.betting_service import BettingService, create_betting_service
+from src.services.betting.betting_service import (BettingService,
+                                                  create_betting_service)
 
 logger = get_logger(__name__)
 

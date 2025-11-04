@@ -4,10 +4,6 @@
 为核心模块创建基础测试，快速提升测试覆盖率
 """
 
-import sys
-import os
-from pathlib import Path
-
 
 def test_utils_dict_utils_basic():
     """测试dict_utils基础功能"""
@@ -174,7 +170,7 @@ def run_coverage_tests():
             print(f"❌ {test_name} - 异常: {e}")
 
     success_rate = (passed / total) * 100
-    print(f"\n📊 覆盖率测试结果:")
+    print("\n📊 覆盖率测试结果:")
     print(f"   - 总测试数: {total}")
     print(f"   - 通过数: {passed}")
     print(f"   - 成功率: {success_rate:.1f}%")
@@ -184,7 +180,7 @@ def run_coverage_tests():
 
 def estimate_coverage():
     """估算测试覆盖率"""
-    print(f"\n📈 覆盖率估算...")
+    print("\n📈 覆盖率估算...")
 
     # 基于测试文件数量和成功率估算
     test_files = ["simple_test_runner.py", "test_basic_coverage.py"]
@@ -215,7 +211,7 @@ if __name__ == "__main__":
     # 估算覆盖率
     estimated_coverage = estimate_coverage()
 
-    print(f"\n🎯 总体评估:")
+    print("\n🎯 总体评估:")
     print(f"   - 测试成功率: {success_rate:.1f}%")
     print(f"   - 估算覆盖率: {estimated_coverage:.1f}%")
 

@@ -193,7 +193,7 @@ check: quality ## Quality: Alias for quality command
 syntax-check: ## Quality: Check syntax errors in all test files (Issue #84)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Checking syntax errors in all test files...$(RESET)" && \
-	$(PYTHON) scripts/maintenance/find_syntax_errors.py && \
+	$(PYTHON) scripts/maintenance/find_syntax_errors_simple.py && \
 	echo "$(GREEN)✅ Syntax check passed$(RESET)"
 
 syntax-fix: ## Quality: Automatically fix syntax errors (Issue #84 tools)

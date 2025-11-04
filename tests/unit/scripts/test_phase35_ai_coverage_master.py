@@ -4,11 +4,10 @@ Phase35AICoverageMaster单元测试
 验证AI覆盖率大师的核心功能
 """
 
-import pytest
-import tempfile
-import os
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent

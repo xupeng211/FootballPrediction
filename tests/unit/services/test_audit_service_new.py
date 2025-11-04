@@ -1,8 +1,10 @@
 """审计服务测试"""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime
+from unittest.mock import Mock
+
+import pytest
+
 from src.services.audit_service import AuditService
 
 

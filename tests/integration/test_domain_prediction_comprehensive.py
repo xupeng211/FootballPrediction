@@ -4,17 +4,13 @@ Phase 3.3 - Domain模块高价值深度优化
 预测领域模型comprehensive测试，业务逻辑全覆盖
 """
 
-import pytest
-from datetime import datetime, timedelta
 from decimal import Decimal
-from src.domain.models.prediction import (
-    Prediction,
-    PredictionStatus,
-    ConfidenceScore,
-    PredictionScore,
-    PredictionPoints,
-    DomainError,
-)
+
+import pytest
+
+from src.domain.models.prediction import (ConfidenceScore, DomainError,
+                                          Prediction, PredictionPoints,
+                                          PredictionScore, PredictionStatus)
 
 
 class TestConfidenceScoreComprehensive:
@@ -555,22 +551,7 @@ class TestPredictionDomainComprehensive:
         assert "evaluated" in str(prediction)
 
 
-def test_prediction_domain_comprehensive_suite(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_prediction_domain_comprehensive_suite(client, client):
     """预测领域模型综合测试套件"""
     # 快速验证核心功能
     prediction = Prediction(user_id=1, match_id=100)

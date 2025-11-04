@@ -8,13 +8,10 @@ Provides observer pattern implementation for monitoring and logging notification
 
 from .base import ObservableEvent, Observer, Subject
 from .manager import ObserverManager, get_observer_manager
-from .observers import (
-    AlertingObserver,
-    LoggingObserver,
-    MetricsObserver,
-    PerformanceObserver,
-)
-from .subjects import AlertSubject, PredictionMetricsSubject, SystemMetricsSubject
+from .observers import (AlertingObserver, LoggingObserver, MetricsObserver,
+                        PerformanceObserver)
+from .subjects import (AlertSubject, PredictionMetricsSubject,
+                       SystemMetricsSubject)
 
 
 # 系统级便捷函数

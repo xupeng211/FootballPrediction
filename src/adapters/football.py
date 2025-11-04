@@ -7,21 +7,14 @@ football 主模块
 """
 
 # 导入拆分的模块
-from .adapters.football_models import (
-    ApiFootballAdaptee,
-    ApiFootballAdapter,
-    CompositeFootballAdapter,
-    FootballApiAdaptee,
-    FootballApiAdapter,
-    FootballDataAdapter,
-    FootballDataTransformer,
-    FootballMatch,
-    FootballPlayer,
-    FootballTeam,
-    MatchStatus,
-    OptaDataAdaptee,
-    OptaDataAdapter,
-)
+from .adapters.football_models import (ApiFootballAdaptee, ApiFootballAdapter,
+                                       CompositeFootballAdapter,
+                                       FootballApiAdaptee, FootballApiAdapter,
+                                       FootballDataAdapter,
+                                       FootballDataTransformer, FootballMatch,
+                                       FootballPlayer, FootballTeam,
+                                       MatchStatus, OptaDataAdaptee,
+                                       OptaDataAdapter)
 
 # 导出所有公共接口
 __all__ = [

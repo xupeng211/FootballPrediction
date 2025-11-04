@@ -16,12 +16,11 @@ Issue: #116 EV计算和投注策略
 
 import asyncio
 import json
-import sys
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-from enum import Enum
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any
 
 
 # 基础数据结构定义
@@ -46,9 +45,9 @@ class BettingOdds:
     home_win: float
     draw: float
     away_win: float
-    over_2_5: Optional[float] = None
-    under_2_5: Optional[float] = None
-    btts_yes: Optional[float] = None
+    over_2_5: float | None = None
+    under_2_5: float | None = None
+    btts_yes: float | None = None
     source: str = "test"
     confidence: float = 1.0
 
@@ -58,7 +57,7 @@ class PredictionProbabilities:
     home_win: float
     draw: float
     away_win: float
-    over_2_5: Optional[float] = None
+    over_2_5: float | None = None
     confidence: float = 1.0
     model_name: str = "test_model"
 
@@ -135,7 +134,7 @@ class CoreEVCalculator:
 
     def check_srs_compliance(
         self, ev: float, probability: float, risk_level: RiskLevel, value_rating: float
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """检查SRS合规性"""
         compliance = {
             "min_ev_met": ev >= self.SRS_TARGETS["min_ev_threshold"],
@@ -186,7 +185,7 @@ class CoreStrategyOptimizer:
 
     def evaluate_betting_opportunity(
         self, probability: float, odds: float, strategy_name: str = "srs_compliant"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """评估投注机会"""
         ev_calculator = CoreEVCalculator()
         strategy = self.strategies.get(strategy_name, self.strategies["srs_compliant"])

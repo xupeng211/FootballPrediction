@@ -3,15 +3,16 @@
 模块: core.logging
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 
 def test_module_import():
     """测试模块可以正常导入"""
     try:
         # 尝试导入模块
-        exec(f"import core.logging")
+        exec("import core.logging")
         assert True  # 如果能运行到这里，说明导入成功
     except ImportError as e:
         pytest.skip(f"模块 {module_name} 导入失败: {e}")

@@ -6,28 +6,27 @@
 包含对预测结果的质量评估和模型性能的深度分析。
 """
 
+import warnings
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
-from unittest.mock import MagicMock, patch
-import warnings
-import json
 
 # 抑制warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # 模拟导入，避免循环依赖问题
-import sys
 import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.models.base_model import (BaseModel, PredictionResult,
+                                          TrainingResult)
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -38,7 +37,7 @@ except ImportError as e:
 
 def create_evaluation_dataset(
     train_matches: int = 1000, test_matches: int = 250
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """创建评估数据集（训练集和测试集）"""
     # 创建更大的训练数据集
     training_data = []
@@ -275,7 +274,7 @@ class TestMLModelPrediction:
         assert 0.2 < np.mean(draw_probs) < 0.4  # 合理的平局概率范围
         assert 0.2 < np.mean(away_win_probs) < 0.5  # 合理的客胜概率范围
 
-        print(f"✅ 概率分布特性验证通过:")
+        print("✅ 概率分布特性验证通过:")
         print(f"   主胜概率均值: {np.mean(home_win_probs):.3f}")
         print(f"   平局概率均值: {np.mean(draw_probs):.3f}")
         print(f"   客胜概率均值: {np.mean(away_win_probs):.3f}")
@@ -337,7 +336,7 @@ class TestMLModelPrediction:
             confidence_diff = abs(data["avg_confidence"] - data["accuracy"])
             assert confidence_diff < 0.3  # 允许一定的校准误差
 
-        print(f"✅ 置信度校准验证通过:")
+        print("✅ 置信度校准验证通过:")
         for data in calibration_data:
             print(
                 f"   置信度{data['confidence_range']}: "
@@ -514,7 +513,7 @@ class TestMLModelEvaluation:
         # 验证总预测数
         assert evaluation_metrics["total_predictions"] <= len(test_data)
 
-        print(f"✅ 全面评估指标测试通过:")
+        print("✅ 全面评估指标测试通过:")
         print(f"   准确率: {evaluation_metrics['accuracy']:.3f}")
         print(f"   精确率: {evaluation_metrics['precision']:.3f}")
         print(f"   召回率: {evaluation_metrics['recall']:.3f}")
@@ -576,7 +575,7 @@ class TestMLModelEvaluation:
         assert results["balanced"]["test_accuracy"] > 0.2  # 至少比随机好
 
         # 比较不同数据集的性能
-        print(f"✅ 不同数据分布评估测试通过:")
+        print("✅ 不同数据分布评估测试通过:")
         for name, result in results.items():
             print(f"   {name}数据集:")
             print(f"     训练准确率: {result['training_accuracy']:.3f}")
@@ -628,7 +627,7 @@ class TestMLModelEvaluation:
         # 验证合理的性能水平
         assert mean_accuracy > 0.2  # 应该比随机预测好
 
-        print(f"✅ 评估稳定性测试通过:")
+        print("✅ 评估稳定性测试通过:")
         print(f"   准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")
         print(f"   范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")
         print(f"   变异系数: {std_accuracy/mean_accuracy:.3f}")
@@ -657,7 +656,7 @@ class TestMLModelEvaluation:
         accuracy_diff = abs(training_result.accuracy - test_metrics["accuracy"])
         assert accuracy_diff < 0.3  # 允许一定的差异
 
-        print(f"✅ 交叉验证评估测试通过:")
+        print("✅ 交叉验证评估测试通过:")
         print(f"   交叉验证准确率: {training_result.accuracy:.3f}")
         print(f"   测试准确率: {test_metrics['accuracy']:.3f}")
         print(f"   差异: {accuracy_diff:.3f}")
@@ -690,7 +689,7 @@ class TestMLModelEvaluation:
             )
             assert len(sorted_features) == len(feature_importance)
 
-            print(f"✅ 特征重要性分析测试通过:")
+            print("✅ 特征重要性分析测试通过:")
             for feature, importance in sorted_features:
                 print(f"   {feature}: {importance:.3f}")
         else:
@@ -754,7 +753,7 @@ class TestMLModelEvaluation:
         performance_diff = best_model["test_accuracy"] - worst_model["test_accuracy"]
         assert performance_diff >= 0  # 应该有性能差异
 
-        print(f"✅ 模型比较评估测试通过:")
+        print("✅ 模型比较评估测试通过:")
         print(
             f"   最佳模型: {best_model['name']} (准确率: {best_model['test_accuracy']:.3f})"
         )
@@ -826,7 +825,7 @@ class TestMLModelPerformanceAnalysis:
             time_trend = np.polyfit(range(len(training_times)), training_times, 1)[0]
             assert time_trend > 0  # 训练时间应该增加
 
-        print(f"✅ 学习曲线分析测试通过:")
+        print("✅ 学习曲线分析测试通过:")
         for result in learning_curve_results:
             print(
                 f"   数据量={result['training_size']}: "
@@ -889,9 +888,9 @@ class TestMLModelPerformanceAnalysis:
                 }
             )
 
-        print(f"✅ 置信度分析测试通过:")
+        print("✅ 置信度分析测试通过:")
         print(f"   平均置信度: {mean_confidence:.3f} ± {std_confidence:.3f}")
-        print(f"   置信度分布:")
+        print("   置信度分布:")
         for dist in confidence_distribution:
             print(
                 f"     {dist['label']} ({dist['range']}): {dist['count']} ({dist['percentage']:.1f}%)"
@@ -967,7 +966,7 @@ class TestMLModelPerformanceAnalysis:
             confidence_gap = avg_confidence_correct - avg_confidence_incorrect
             assert confidence_gap > 0  # 正确预测应该有更高的平均置信度
 
-        print(f"✅ 错误分析测试通过:")
+        print("✅ 错误分析测试通过:")
         print(f"   总准确率: {accuracy:.3f}")
         print(f"   错误率: {error_rate:.3f}")
         print(f"   正确预测平均置信度: {avg_confidence_correct:.3f}")

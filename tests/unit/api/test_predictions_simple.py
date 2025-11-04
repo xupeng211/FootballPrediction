@@ -5,16 +5,14 @@
 测试范围: 预测API端点、数据验证、业务逻辑、响应格式
 """
 
-import pytest
-import asyncio
-import sys
 import os
+import sys
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from fastapi import HTTPException, status
+from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field, ValidationError
-from typing import Optional, List
+from pydantic import ValidationError
 
 # 添加src到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))

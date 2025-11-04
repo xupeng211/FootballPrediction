@@ -2,11 +2,9 @@
 FileUtils完整覆盖测试 - 覆盖剩余函数以冲刺7.5%目标
 """
 
-import pytest
 import tempfile
-import time
-import os
 from pathlib import Path
+
 from src.utils.file_utils import FileUtils
 
 

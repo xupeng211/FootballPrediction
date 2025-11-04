@@ -12,13 +12,9 @@
 基于 DATA_DESIGN.md 第6.1节特征仓库设计.
 """
 
-from .feature_definitions import (
-    match_entity,
-    match_features_view,
-    odds_features_view,
-    team_entity,
-    team_recent_stats_view,
-)
+from .feature_definitions import (match_entity, match_features_view,
+                                  odds_features_view, team_entity,
+                                  team_recent_stats_view)
 from .feature_store import FootballFeatureStore
 
 __all__ = [

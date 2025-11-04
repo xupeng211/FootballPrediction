@@ -4,13 +4,12 @@
 ML Prediction Models Test Script
 """
 
-import asyncio
-import sys
-import os
 import logging
+import sys
 from datetime import datetime, timedelta
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
@@ -111,7 +110,7 @@ def test_poisson_model(training_data):
         logger.info("🎯 开始训练泊松模型...")
         training_result = model.train(train_data)
 
-        logger.info(f"✅ 泊松模型训练完成:")
+        logger.info("✅ 泊松模型训练完成:")
         logger.info(f"   - 准确率: {training_result.accuracy:.3f}")
         logger.info(f"   - F1分数: {training_result.f1_score:.3f}")
         logger.info(f"   - 训练时间: {training_result.training_time:.2f}秒")
@@ -119,7 +118,7 @@ def test_poisson_model(training_data):
         # 评估模型
         logger.info("📊 评估模型性能...")
         metrics = model.evaluate(test_data)
-        logger.info(f"✅ 测试集评估结果:")
+        logger.info("✅ 测试集评估结果:")
         logger.info(f"   - 准确率: {metrics.get('accuracy', 0):.3f}")
         logger.info(f"   - 精确率: {metrics.get('precision', 0):.3f}")
         logger.info(f"   - 召回率: {metrics.get('recall', 0):.3f}")
@@ -135,7 +134,7 @@ def test_poisson_model(training_data):
         logger.info("🔮 测试单场比赛预测...")
         prediction = model.predict(test_match)
 
-        logger.info(f"✅ 预测结果:")
+        logger.info("✅ 预测结果:")
         logger.info(f"   - 比赛: {prediction.home_team} vs {prediction.away_team}")
         logger.info(f"   - 预测结果: {prediction.predicted_outcome}")
         logger.info(
@@ -170,7 +169,7 @@ def test_elo_model(training_data):
         logger.info("🎯 开始训练ELO模型...")
         training_result = model.train(train_data)
 
-        logger.info(f"✅ ELO模型训练完成:")
+        logger.info("✅ ELO模型训练完成:")
         logger.info(f"   - 准确率: {training_result.accuracy:.3f}")
         logger.info(f"   - F1分数: {training_result.f1_score:.3f}")
         logger.info(f"   - 训练时间: {training_result.training_time:.2f}秒")
@@ -178,7 +177,7 @@ def test_elo_model(training_data):
         # 评估模型
         logger.info("📊 评估模型性能...")
         metrics = model.evaluate(test_data)
-        logger.info(f"✅ 测试集评估结果:")
+        logger.info("✅ 测试集评估结果:")
         logger.info(f"   - 准确率: {metrics.get('accuracy', 0):.3f}")
         logger.info(f"   - 精确率: {metrics.get('precision', 0):.3f}")
         logger.info(f"   - 召回率: {metrics.get('recall', 0):.3f}")
@@ -200,7 +199,7 @@ def test_elo_model(training_data):
         logger.info("🔮 测试单场比赛预测...")
         prediction = model.predict(test_match)
 
-        logger.info(f"✅ 预测结果:")
+        logger.info("✅ 预测结果:")
         logger.info(f"   - 比赛: {prediction.home_team} vs {prediction.away_team}")
         logger.info(f"   - 预测结果: {prediction.predicted_outcome}")
         logger.info(
@@ -227,10 +226,8 @@ def test_prediction_service(training_data):
     logger.info("\n🤖 测试预测服务...")
 
     try:
-        from src.ml.prediction.prediction_service import (
-            PredictionService,
-            PredictionStrategy,
-        )
+        from src.ml.prediction.prediction_service import (PredictionService,
+                                                          PredictionStrategy)
 
         # 初始化预测服务
         service = PredictionService()
@@ -244,7 +241,7 @@ def test_prediction_service(training_data):
         logger.info("🎯 训练所有模型...")
         training_results = service.train_all_models(training_data)
 
-        logger.info(f"✅ 模型训练完成:")
+        logger.info("✅ 模型训练完成:")
         logger.info(f"   - 总耗时: {training_results['total_time']:.2f}秒")
         logger.info(
             f"   - 成功训练: {training_results['successful_trainings']}/{training_results['total_models']}"

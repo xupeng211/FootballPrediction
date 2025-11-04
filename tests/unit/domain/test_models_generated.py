@@ -2,14 +2,15 @@
 领域模型测试 - 自动生成
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 # 尝试导入领域模型
 try:
+    from src.domain.models.league import League
     from src.domain.models.match import Match
     from src.domain.models.team import Team
-    from src.domain.models.league import League
 
     MODELS_AVAILABLE = True
 except ImportError:

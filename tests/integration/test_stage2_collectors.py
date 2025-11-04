@@ -5,9 +5,9 @@ Test script for Stage 2 Data Collectors
 """
 
 import asyncio
-import sys
-import os
 import logging
+import os
+import sys
 from datetime import datetime
 
 # 添加项目根目录到Python路径
@@ -129,7 +129,7 @@ async def test_team_collector():
                 ):
                     logger.info(f"     ✅ 球队数据结构正确: {first_team['name']}")
                 else:
-                    logger.warning(f"     ⚠️ 球队数据结构不完整")
+                    logger.warning("     ⚠️ 球队数据结构不完整")
             else:
                 logger.error("     ❌ 英超球队采集失败")
                 return False
@@ -195,8 +195,8 @@ async def test_league_collector():
 async def test_data_integrity():
     """测试数据完整性和一致性"""
     try:
-        from src.collectors.team_collector import TeamCollector
         from src.collectors.league_collector import LeagueCollector
+        from src.collectors.team_collector import TeamCollector
 
         async with (
             TeamCollector() as team_collector,
@@ -287,7 +287,7 @@ async def main():
     duration = end_time - start_time
 
     print("\n" + "=" * 60)
-    print(f"📊 第二阶段测试完成!")
+    print("📊 第二阶段测试完成!")
     print(f"   通过: {passed}")
     print(f"   失败: {failed}")
     print(f"   总计: {passed + failed}")

@@ -6,28 +6,25 @@
 """
 
 import asyncio
-import pytest
-from datetime import datetime
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from sqlalchemy import exc as SQLAlchemyExc
-from sqlalchemy.ext.asyncio import AsyncSession
-
-
+import os
 # 模拟导入，避免循环依赖问题
 import sys
-import os
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from sqlalchemy import exc as SQLAlchemyExc
+from sqlalchemy.ext.asyncio import AsyncSession
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入数据库模块
 try:
-    from src.database.repositories.base import BaseRepository
     from src.database.connection import DatabaseManager
-    from src.database.models.user import User
-    from src.database.models.predictions import Prediction
     from src.database.models.match import Match
+    from src.database.models.predictions import Prediction
+    from src.database.models.user import User
+    from src.database.repositories.base import BaseRepository
 
     CAN_IMPORT = True
 except ImportError as e:

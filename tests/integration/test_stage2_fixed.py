@@ -5,10 +5,10 @@ Simplified Stage 2 Test Script - Fixed Version
 """
 
 import asyncio
-import aiohttp
-import json
 import logging
 from datetime import datetime
+
+import aiohttp
 
 # 配置日志
 logging.basicConfig(
@@ -327,7 +327,7 @@ async def main():
     duration = end_time - start_time
 
     print("\n" + "=" * 50)
-    print(f"📊 第二阶段测试完成!")
+    print("📊 第二阶段测试完成!")
     print(f"   通过: {passed}")
     print(f"   失败: {failed}")
     print(f"   总计: {passed + failed}")

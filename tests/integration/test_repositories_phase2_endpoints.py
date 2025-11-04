@@ -4,9 +4,10 @@ Phase 2 - Repository模块API端点测试
 应用成熟的端点发现和测试方法到Repository模块
 """
 
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
+
 from src.main import app
 
 client = TestClient(app)

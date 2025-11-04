@@ -3,9 +3,9 @@
 专注于DDD核心模型的测试
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock
+
+import pytest
 
 
 class TestTeamModel:
@@ -19,7 +19,6 @@ class TestTeamModel:
             from src.domain.models.team import Team
 
             # 测试创建团队对象
-
             # 这里只是测试模型是否能正常导入
             assert Team is not None
 

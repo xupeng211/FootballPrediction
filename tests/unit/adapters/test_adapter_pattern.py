@@ -5,43 +5,31 @@ Adapter Pattern Test Suite
 测试适配器模式的核心功能，包括基础适配器、组合适配器、注册表等。
 """
 
-import pytest
-import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Any, Dict, List
 from datetime import datetime
+from typing import Any
+from unittest.mock import Mock
+
+import pytest
 
 # 尝试从src导入，失败则使用本地导入
 try:
-    from src.adapters.base import (
-        AdapterStatus,
-        Adaptee,
-        Target,
-        Adapter,
-        BaseAdapter,
-        DataTransformer,
-        CompositeAdapter,
-    )
-    from src.adapters.registry import AdapterRegistry, AdapterError
-    from src.adapters.factory import AdapterConfig, AdapterGroupConfig, AdapterFactory
+    from src.adapters.base import (Adaptee, Adapter, AdapterStatus,
+                                   BaseAdapter, CompositeAdapter,
+                                   DataTransformer, Target)
+    from src.adapters.factory import (AdapterConfig, AdapterFactory,
+                                      AdapterGroupConfig)
+    from src.adapters.registry import AdapterError, AdapterRegistry
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
     # 直接导入避免__init__.py的语法错误
-    import sys
     import os
+    import sys
 
     sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
-    from base import (
-        AdapterStatus,
-        Adaptee,
-        Target,
-        Adapter,
-        BaseAdapter,
-        DataTransformer,
-        CompositeAdapter,
-    )
-    from registry import AdapterRegistry, AdapterError
+    from base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
+                      CompositeAdapter, DataTransformer, Target)
+    from registry import AdapterError, AdapterRegistry
 
     # 为factory模块提供Mock实现
     class AdapterConfig:

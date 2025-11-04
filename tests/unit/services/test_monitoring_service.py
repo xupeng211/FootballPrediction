@@ -1,11 +1,13 @@
 """监控服务测试"""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import time
 from datetime import datetime, timedelta
-from src.monitoring.system_monitor import SystemMonitor
+from unittest.mock import Mock, patch
+
+import pytest
+
 from src.monitoring.metrics_collector import MetricsCollector
+from src.monitoring.system_monitor import SystemMonitor
 
 
 class TestSystemMonitor:

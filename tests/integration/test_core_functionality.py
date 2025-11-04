@@ -6,28 +6,13 @@ Core Functionality Quick Tests
 针对最核心的业务逻辑进行快速测试验证
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 
-def test_domain_models(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_domain_models(client, client):
     """测试领域模型基本功能"""
     print("🧪 测试领域模型...")
 
@@ -63,28 +48,13 @@ def test_domain_models(
         return False
 
 
-def test_prediction_logic(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_prediction_logic(client, client):
     """测试预测逻辑"""
     print("🧪 测试预测逻辑...")
 
     try:
-        from src.domain.models.prediction import Prediction
         from src.domain.models.match import Match
+        from src.domain.models.prediction import Prediction
 
         # 创建一个比赛
         Match(home_team_id=1, away_team_id=2, league_id=100)
@@ -103,33 +73,12 @@ def test_prediction_logic(
         return False
 
 
-def test_api_models(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_api_models(client, client):
     """测试API数据模型"""
     print("🧪 测试API数据模型...")
 
     try:
         # 测试API基本导入
-        from src.api.data.models.match_models import (
-            MatchCreateRequest,
-            MatchUpdateRequest,
-        )
-        from src.api.data.models.team_models import TeamCreateRequest, TeamUpdateRequest
-        from src.api.data.models.league_models import LeagueCreateRequest
 
         print("✅ API模型导入成功")
         return True
@@ -139,22 +88,7 @@ def test_api_models(
         return False
 
 
-def test_utils_functionality(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_utils_functionality(client, client):
     """测试工具函数"""
     print("🧪 测试工具函数...")
 

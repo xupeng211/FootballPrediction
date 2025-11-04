@@ -3,10 +3,12 @@ TimeUtils增强测试 - 提升39%到65%+覆盖率
 针对未覆盖的时间工具函数进行全面测试
 """
 
+from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock, patch
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 class TestTimeUtilsEnhanced:
@@ -16,7 +18,7 @@ class TestTimeUtilsEnhanced:
         """测试获取UTC时间别名方法"""
         result = TimeUtils.get_utc_now()
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
         # 验证与now_utc结果一致
         result1 = TimeUtils.now_utc()
@@ -312,7 +314,7 @@ class TestTimeUtilsEnhanced:
         """测试向后兼容的utc_now函数"""
         result = utc_now()
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
         # 验证与类方法的一致性
         class_result = TimeUtils.now_utc()
@@ -424,7 +426,7 @@ class TestTimeUtilsEnhanced:
         base_dt = datetime(2024, 1, 15, 12, 0, 0)
 
         # 测试有时区信息的datetime
-        utc_dt = base_dt.replace(tzinfo=timezone.utc)
+        utc_dt = base_dt.replace(tzinfo=UTC)
         result = TimeUtils.convert_timezone(utc_dt, "Asia/Shanghai")
         assert isinstance(result, datetime)
 

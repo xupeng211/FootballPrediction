@@ -7,17 +7,14 @@
 
 import asyncio
 import json
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 # 导入简化的认证系统
-from src.api.simple_auth import (
-    router as auth_router,
-    SimpleAuthService,
-    SimpleUser,
-    SimpleUserRegister,
-    SimpleTokenResponse,
-)
+from src.api.simple_auth import (SimpleAuthService, SimpleTokenResponse,
+                                 SimpleUser, SimpleUserRegister)
+from src.api.simple_auth import router as auth_router
 
 
 class SimpleAuthTester:

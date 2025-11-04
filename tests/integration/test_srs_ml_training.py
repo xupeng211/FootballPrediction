@@ -22,8 +22,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 try:
-    from src.ml.enhanced_real_model_training import SRSCompliantModelTrainer
     from src.core.logging_system import get_logger
+    from src.ml.enhanced_real_model_training import SRSCompliantModelTrainer
 
     logger = get_logger(__name__)
 except ImportError as e:

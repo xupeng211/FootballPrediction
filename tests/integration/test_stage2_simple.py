@@ -5,10 +5,10 @@ Simplified Stage 2 Test Script
 """
 
 import asyncio
-import aiohttp
-import json
 import logging
 from datetime import datetime
+
+import aiohttp
 
 # 配置日志
 logging.basicConfig(
@@ -178,7 +178,7 @@ class SimpleDataCollector:
                     if cleaned_data["competitions"]:
                         first_comp = cleaned_data["competitions"][0]
                         if all(field in first_comp for field in ["id", "name", "code"]):
-                            logger.info(f"  ✅ 数据结构正确")
+                            logger.info("  ✅ 数据结构正确")
                         else:
                             missing = [
                                 f for f in ["id", "name", "code"] if f not in first_comp
@@ -374,7 +374,7 @@ async def main():
     duration = end_time - start_time
 
     print("\n" + "=" * 50)
-    print(f"📊 第二阶段测试完成!")
+    print("📊 第二阶段测试完成!")
     print(f"   通过: {passed}")
     print(f"   失败: {failed}")
     print(f"   总计: {passed + failed}")

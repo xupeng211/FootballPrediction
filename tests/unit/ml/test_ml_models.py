@@ -7,33 +7,27 @@
 """
 
 import asyncio
+import os
+import pickle
+# 模拟导入，避免循环依赖问题
+import sys
+import tempfile
+from datetime import datetime, timedelta
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import MagicMock, patch
-import tempfile
-import os
-import pickle
-
-# 模拟导入，避免循环依赖问题
-import sys
-import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
+                                       TrainingStatus)
+    from src.ml.models.base_model import (BaseModel, PredictionResult,
+                                          TrainingResult)
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import (
-        ModelTrainer,
-        TrainingConfig,
-        TrainingStatus,
-        ModelType,
-    )
 
     CAN_IMPORT = True
 except ImportError as e:
@@ -87,7 +81,7 @@ def create_mock_training_data(num_samples: int = 1000) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def create_mock_prediction_data() -> Dict[str, Any]:
+def create_mock_prediction_data() -> dict[str, Any]:
     """创建模拟预测数据"""
     return {"home_team": "Team_A", "away_team": "Team_B", "match_id": "test_match_001"}
 
@@ -107,7 +101,7 @@ class TestBaseModel:
                 super().__init__("MockModel", "1.0")
                 self.mock_prediction = None
 
-            def prepare_features(self, match_data: Dict[str, Any]) -> np.ndarray:
+            def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
                 return np.array([1.0, 2.0, 3.0, 4.0])
 
             def train(
@@ -132,7 +126,7 @@ class TestBaseModel:
                     created_at=datetime.now(),
                 )
 
-            def predict(self, match_data: Dict[str, Any]) -> PredictionResult:
+            def predict(self, match_data: dict[str, Any]) -> PredictionResult:
                 if not self.is_trained:
                     raise RuntimeError(
                         "Model must be trained before making predictions"
@@ -153,7 +147,7 @@ class TestBaseModel:
                 )
 
             def predict_proba(
-                self, match_data: Dict[str, Any]
+                self, match_data: dict[str, Any]
             ) -> tuple[float, float, float]:
                 if not self.is_trained:
                     raise RuntimeError(
@@ -161,7 +155,7 @@ class TestBaseModel:
                     )
                 return (0.6, 0.25, 0.15)
 
-            def evaluate(self, test_data: pd.DataFrame) -> Dict[str, float]:
+            def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
                 return {
                     "accuracy": 0.75,
                     "precision": 0.73,

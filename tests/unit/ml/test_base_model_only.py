@@ -5,11 +5,12 @@ BaseModel Only Tests
 只测试BaseModel抽象类和相关数据类，避免scipy依赖问题。
 """
 
-import pytest
-from datetime import datetime
-from typing import Dict, Any
-import sys
 import os
+import sys
+from datetime import datetime
+from typing import Any
+
+import pytest
 
 # 直接导入base_model，避免通过__init__.py
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"))
@@ -232,7 +233,7 @@ class TestBaseModel:
                 super().__init__(name, version)
                 self.is_trained = False
 
-            def prepare_features(self, match_data: Dict[str, Any]):
+            def prepare_features(self, match_data: dict[str, Any]):
                 return [1, 2, 3]  # 简单的特征向量
 
             def train(self, training_data, validation_data=None):

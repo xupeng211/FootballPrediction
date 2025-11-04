@@ -64,30 +64,17 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 """
 
 # 为了向后兼容性,从新的模块化结构中导入所有内容
-from .backup import (
-    DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务
-    backup_config_task,
-    backup_database_task,
-    backup_failures_total,
-    backup_last_success,
-    backup_logs_task,
-    backup_redis_task,
-    backup_size_bytes,
-    backup_task_duration,
-    backup_tasks_total,
-    check_backup_storage_task,
-    cleanup_old_backups_task,
-    daily_full_backup_task,
-    get_backup_metrics,
-    get_backup_status,
-    hourly_incremental_backup_task,
-    list_backup_files,
-    manual_backup_task,
-    restore_backup,
-    verify_backup_integrity_task,
-    verify_backup_task,
-    weekly_wal_archive_task,
-)
+from .backup import (DatabaseBackupTask,  # 基础类和指标; 数据库备份任务; 维护任务; 服务备份任务; 手动任务
+                     backup_config_task, backup_database_task,
+                     backup_failures_total, backup_last_success,
+                     backup_logs_task, backup_redis_task, backup_size_bytes,
+                     backup_task_duration, backup_tasks_total,
+                     check_backup_storage_task, cleanup_old_backups_task,
+                     daily_full_backup_task, get_backup_metrics,
+                     get_backup_status, hourly_incremental_backup_task,
+                     list_backup_files, manual_backup_task, restore_backup,
+                     verify_backup_integrity_task, verify_backup_task,
+                     weekly_wal_archive_task)
 
 # 重新导出以保持原始接口
 __all__ = [

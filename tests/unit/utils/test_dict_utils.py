@@ -2,15 +2,9 @@
 字典工具测试
 """
 
-import pytest
-from src.utils.dict_utils import (
-    deep_merge,
-    get_nested_value,
-    set_nested_value,
-    flatten_dict,
-    filter_dict,
-    rename_keys,
-)
+from src.utils.dict_utils import (deep_merge, filter_dict, flatten_dict,
+                                  get_nested_value, rename_keys,
+                                  set_nested_value)
 
 
 class TestDictUtils:

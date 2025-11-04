@@ -3,7 +3,6 @@
 """
 
 import pytest
-from src.database.base import BaseModel
 
 
 class TestDatabaseBase:

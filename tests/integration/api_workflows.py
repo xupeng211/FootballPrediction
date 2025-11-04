@@ -11,16 +11,13 @@
 """
 
 import asyncio
-import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any
 
 import httpx
 import pytest
-from fastapi import status
-from pydantic import BaseModel
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -33,9 +30,9 @@ class WorkflowTester:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.test_results = []
-        self.users: Dict[str, Dict[str, Any]] = {}
-        self.tokens: Dict[str, str] = {}
-        self.predictions: Dict[str, List[Dict[str, Any]]] = {}
+        self.users: dict[str, dict[str, Any]] = {}
+        self.tokens: dict[str, str] = {}
+        self.predictions: dict[str, list[dict[str, Any]]] = {}
 
     def log_test(
         self, test_name: str, success: bool, details: str = "", duration: float = 0
@@ -367,7 +364,7 @@ class WorkflowTester:
             self.log_test("过期token处理", False, f"异常: {str(e)}", duration)
             return False
 
-    async def run_all_workflow_tests(self) -> Dict[str, Any]:
+    async def run_all_workflow_tests(self) -> dict[str, Any]:
         """运行所有工作流测试"""
         print("🚀 开始API工作流集成测试")
         print("=" * 60)
@@ -409,7 +406,7 @@ class WorkflowTester:
         }
 
         print("=" * 60)
-        print(f"📊 工作流测试完成！")
+        print("📊 工作流测试完成！")
         print(f"总测试数: {total_tests}")
         print(f"通过测试: {passed_tests}")
         print(f"失败测试: {total_tests - passed_tests}")
@@ -467,7 +464,7 @@ async def main():
     tester = WorkflowTester()
     report = await tester.run_all_workflow_tests()
 
-    print(f"\n🎯 工作流集成测试结果:")
+    print("\n🎯 工作流集成测试结果:")
     print(f"成功率: {report['success_rate']:.1f}%")
     print(f"用户数: {report['users_created']}")
     print(f"预测数: {report['predictions_created']}")

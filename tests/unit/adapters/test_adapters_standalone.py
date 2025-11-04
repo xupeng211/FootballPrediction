@@ -5,14 +5,13 @@ Standalone Adapter Pattern Tests
 直接测试适配器模式的核心概念，不依赖有语法问题的模块文件。
 """
 
-import pytest
 import asyncio
 from abc import ABC, abstractmethod
+from datetime import datetime
 from enum import Enum
 from typing import Any
-from dataclasses import dataclass, field
-from datetime import datetime
-from unittest.mock import Mock, AsyncMock
+
+import pytest
 
 
 # 重新定义适配器模式的核心类，避免导入有问题的模块

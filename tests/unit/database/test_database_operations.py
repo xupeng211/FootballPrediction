@@ -7,10 +7,11 @@
 """
 
 import asyncio
+from datetime import datetime
+from typing import Any
+from unittest.mock import AsyncMock
+
 import pytest
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -94,7 +95,7 @@ class MockRepository:
         return self.db_manager.get_session()
 
     async def create(
-        self, obj_data: Dict[str, Any], session: AsyncSession = None
+        self, obj_data: dict[str, Any], session: AsyncSession = None
     ) -> MockModel:
         """创建记录"""
         obj = self.model_class(id=self._next_id, **obj_data)
@@ -104,13 +105,13 @@ class MockRepository:
 
     async def get_by_id(
         self, obj_id: int, session: AsyncSession = None
-    ) -> Optional[MockModel]:
+    ) -> MockModel | None:
         """根据ID获取记录"""
         return self._data.get(obj_id)
 
     async def get_all(
-        self, filters: Dict[str, Any] = None, session: AsyncSession = None
-    ) -> List[MockModel]:
+        self, filters: dict[str, Any] = None, session: AsyncSession = None
+    ) -> list[MockModel]:
         """获取所有记录"""
         if not filters:
             return list(self._data.values())
@@ -127,8 +128,8 @@ class MockRepository:
         return filtered_data
 
     async def update(
-        self, obj_id: int, update_data: Dict[str, Any], session: AsyncSession = None
-    ) -> Optional[MockModel]:
+        self, obj_id: int, update_data: dict[str, Any], session: AsyncSession = None
+    ) -> MockModel | None:
         """更新记录"""
         obj = self._data.get(obj_id)
         if obj:
@@ -139,13 +140,13 @@ class MockRepository:
 
     async def delete(
         self, obj_id: int, session: AsyncSession = None
-    ) -> Optional[MockModel]:
+    ) -> MockModel | None:
         """删除记录"""
         obj = self._data.pop(obj_id, None)
         return obj
 
     async def count(
-        self, filters: Dict[str, Any] = None, session: AsyncSession = None
+        self, filters: dict[str, Any] = None, session: AsyncSession = None
     ) -> int:
         """统计记录数"""
         objects = await self.get_all(filters)

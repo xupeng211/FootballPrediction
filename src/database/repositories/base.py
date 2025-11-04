@@ -10,8 +10,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any, Generic, TypeVar
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete
 from sqlalchemy import exc as SQLAlchemyExc
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import DatabaseManager

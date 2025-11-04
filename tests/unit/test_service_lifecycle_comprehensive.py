@@ -5,18 +5,14 @@ ServiceLifecycleManager 综合测试
 新增测试: 15个测试用例
 """
 
-import pytest
 import asyncio
-import threading
-from unittest.mock import Mock, AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
-from src.core.service_lifecycle import (
-    ServiceState,
-    ServiceInfo,
-    ServiceLifecycleError,
-    ServiceLifecycleManager,
-    get_lifecycle_manager,
-)
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from src.core.service_lifecycle import (ServiceInfo, ServiceLifecycleError,
+                                        ServiceLifecycleManager, ServiceState,
+                                        get_lifecycle_manager)
 
 
 class TestServiceState:

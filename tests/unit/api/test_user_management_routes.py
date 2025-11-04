@@ -5,23 +5,16 @@ User Management Routes Tests
 测试用户管理API端点的功能。
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, AsyncMock, patch
 
-from src.api.routes.user_management import router
-from src.services.user_management_service import (
-    UserCreateRequest,
-    UserUpdateRequest,
-    UserResponse,
-    UserAuthResponse,
-)
-from src.core.exceptions import (
-    UserNotFoundError,
-    UserAlreadyExistsError,
-    InvalidCredentialsError,
-)
 from src.api.dependencies import get_user_management_service
+from src.api.routes.user_management import router
+from src.core.exceptions import (InvalidCredentialsError,
+                                 UserAlreadyExistsError, UserNotFoundError)
+from src.services.user_management_service import UserAuthResponse, UserResponse
 
 
 @pytest.fixture
@@ -35,7 +28,9 @@ def client(mock_user_service):
     async def mock_get_user_management_service():
         return mock_user_service
 
-    app.dependency_overrides[get_user_management_service] = mock_get_user_management_service
+    app.dependency_overrides[get_user_management_service] = (
+        mock_get_user_management_service
+    )
     app.include_router(router, prefix="/api/v1/users")
 
     return TestClient(app)
@@ -66,12 +61,16 @@ class TestUserManagementRoutes:
 
     @pytest.mark.unit
     @pytest.mark.api
-    def test_register_user_success(self, client, mock_user_service, sample_user_response):
+    def test_register_user_success(
+        self, client, mock_user_service, sample_user_response
+    ):
         """测试成功注册用户"""
         # 准备模拟数据
         mock_user_service.create_user = AsyncMock(return_value=sample_user_response)
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -103,7 +102,9 @@ class TestUserManagementRoutes:
             side_effect=UserAlreadyExistsError("用户邮箱 test@example.com 已存在")
         )
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -131,7 +132,9 @@ class TestUserManagementRoutes:
             side_effect=ValueError("用户名至少需要3个字符")
         )
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -163,7 +166,9 @@ class TestUserManagementRoutes:
         )
         mock_user_service.authenticate_user = AsyncMock(return_value=auth_response)
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -193,7 +198,9 @@ class TestUserManagementRoutes:
             side_effect=InvalidCredentialsError("密码错误")
         )
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -219,7 +226,9 @@ class TestUserManagementRoutes:
             side_effect=UserNotFoundError("用户邮箱 test@example.com 不存在")
         )
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -238,12 +247,16 @@ class TestUserManagementRoutes:
 
     @pytest.mark.unit
     @pytest.mark.api
-    def test_get_user_by_id_success(self, client, mock_user_service, sample_user_response):
+    def test_get_user_by_id_success(
+        self, client, mock_user_service, sample_user_response
+    ):
         """测试成功根据ID获取用户"""
         # 准备模拟数据
         mock_user_service.get_user_by_id = AsyncMock(return_value=sample_user_response)
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -265,7 +278,9 @@ class TestUserManagementRoutes:
             side_effect=UserNotFoundError("用户ID 1 不存在")
         )
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class:
+        with patch(
+            "src.api.routes.user_management.UserManagementService"
+        ) as mock_service_class:
             mock_service_class.return_value = mock_user_service
 
             # 发送请求
@@ -288,8 +303,12 @@ class TestUserManagementRoutes:
         # 模拟认证用户
         mock_current_user = {"id": 1, "is_admin": False}
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class, \
-             patch("src.api.routes.user_management.get_current_user") as mock_auth:
+        with (
+            patch(
+                "src.api.routes.user_management.UserManagementService"
+            ) as mock_service_class,
+            patch("src.api.routes.user_management.get_current_user") as mock_auth,
+        ):
             mock_service_class.return_value = mock_user_service
             mock_auth.return_value = mock_current_user
 
@@ -341,8 +360,12 @@ class TestUserManagementRoutes:
         # 模拟认证用户
         mock_current_user = {"id": 1, "is_admin": False}
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class, \
-             patch("src.api.routes.user_management.get_current_user") as mock_auth:
+        with (
+            patch(
+                "src.api.routes.user_management.UserManagementService"
+            ) as mock_service_class,
+            patch("src.api.routes.user_management.get_current_user") as mock_auth,
+        ):
             mock_service_class.return_value = mock_user_service
             mock_auth.return_value = mock_current_user
 
@@ -373,8 +396,12 @@ class TestUserManagementRoutes:
         # 模拟认证用户
         mock_current_user = {"id": 1, "is_admin": False}
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class, \
-             patch("src.api.routes.user_management.get_current_user") as mock_auth:
+        with (
+            patch(
+                "src.api.routes.user_management.UserManagementService"
+            ) as mock_service_class,
+            patch("src.api.routes.user_management.get_current_user") as mock_auth,
+        ):
             mock_service_class.return_value = mock_user_service
             mock_auth.return_value = mock_current_user
 
@@ -423,8 +450,12 @@ class TestUserManagementRoutes:
         # 模拟管理员用户
         mock_current_user = {"id": 1, "is_admin": True}
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class, \
-             patch("src.api.routes.user_management.get_current_user") as mock_auth:
+        with (
+            patch(
+                "src.api.routes.user_management.UserManagementService"
+            ) as mock_service_class,
+            patch("src.api.routes.user_management.get_current_user") as mock_auth,
+        ):
             mock_service_class.return_value = mock_user_service
             mock_auth.return_value = mock_current_user
 
@@ -464,7 +495,9 @@ class TestUserManagementRoutes:
 
     @pytest.mark.unit
     @pytest.mark.api
-    def test_deactivate_user_admin_success(self, client, mock_user_service, sample_user_response):
+    def test_deactivate_user_admin_success(
+        self, client, mock_user_service, sample_user_response
+    ):
         """测试管理员成功停用用户"""
         # 准备模拟数据
         mock_user_service.deactivate_user = AsyncMock(return_value=sample_user_response)
@@ -472,8 +505,12 @@ class TestUserManagementRoutes:
         # 模拟管理员用户
         mock_current_user = {"id": 1, "is_admin": True}
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class, \
-             patch("src.api.routes.user_management.get_current_user") as mock_auth:
+        with (
+            patch(
+                "src.api.routes.user_management.UserManagementService"
+            ) as mock_service_class,
+            patch("src.api.routes.user_management.get_current_user") as mock_auth,
+        ):
             mock_service_class.return_value = mock_user_service
             mock_auth.return_value = mock_current_user
 
@@ -525,8 +562,12 @@ class TestUserManagementRoutes:
         # 模拟管理员用户
         mock_current_user = {"id": 1, "is_admin": True}
 
-        with patch("src.api.routes.user_management.UserManagementService") as mock_service_class, \
-             patch("src.api.routes.user_management.get_current_user") as mock_auth:
+        with (
+            patch(
+                "src.api.routes.user_management.UserManagementService"
+            ) as mock_service_class,
+            patch("src.api.routes.user_management.get_current_user") as mock_auth,
+        ):
             mock_service_class.return_value = mock_user_service
             mock_auth.return_value = mock_current_user
 

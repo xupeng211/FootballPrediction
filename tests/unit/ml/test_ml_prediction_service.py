@@ -11,28 +11,25 @@ ML Prediction Service Tests
 - 性能监控
 """
 
-import numpy as np
-import pandas as pd
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
-
+import os
 # 导入ML模块
 import sys
-import os
+from datetime import datetime
+from unittest.mock import Mock
+
+import pandas as pd
+import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
-    from ml.models.poisson_model import PoissonModel
+    from ml.models.base_model import (BaseModel, PredictionResult,
+                                      TrainingResult)
     from ml.models.elo_model import EloModel
-    from ml.prediction.prediction_service import (
-        PredictionService,
-        PredictionStrategy,
-        EnsemblePrediction,
-    )
+    from ml.models.poisson_model import PoissonModel
+    from ml.prediction.prediction_service import (EnsemblePrediction,
+                                                  PredictionService,
+                                                  PredictionStrategy)
 
     CAN_IMPORT = True
 except ImportError as e:

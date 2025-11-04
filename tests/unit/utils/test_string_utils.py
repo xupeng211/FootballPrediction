@@ -2,16 +2,9 @@
 字符串工具测试
 """
 
-import pytest
-from src.utils.string_utils import (
-    normalize_string,
-    truncate_string,
-    snake_to_camel,
-    camel_to_snake,
-    is_empty,
-    strip_html,
-    format_currency,
-)
+from src.utils.string_utils import (camel_to_snake, format_currency, is_empty,
+                                    normalize_string, snake_to_camel,
+                                    strip_html, truncate_string)
 
 
 class TestStringUtils:

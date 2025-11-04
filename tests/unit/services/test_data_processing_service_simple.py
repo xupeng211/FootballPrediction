@@ -1,8 +1,9 @@
 """数据处理服务测试 - 简化版本"""
 
-import pytest
-import asyncio
 from unittest.mock import Mock
+
+import pytest
+
 from src.services.data_processing import DataProcessingService
 
 

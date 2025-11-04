@@ -4,16 +4,10 @@
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # 导入目标模块
-from core.exceptions import (
-    FootballPredictionError,
-    ConfigError,
-    DataError,
-    ValidationError,
-    DependencyInjectionError,
-)
+from core.exceptions import (ConfigError, DataError, DependencyInjectionError,
+                             FootballPredictionError, ValidationError)
 
 
 class TestExceptionHierarchy:

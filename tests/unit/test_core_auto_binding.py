@@ -4,10 +4,9 @@
 当前覆盖率: 23%
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-import asyncio
-from datetime import datetime, timedelta
 
 # 导入目标模块
 from core.auto_binding import *

@@ -10,16 +10,13 @@
 """
 
 import asyncio
-import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from datetime import datetime
+from typing import Any
 
 import httpx
 import pytest
-from fastapi import status
-from pydantic import BaseModel
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -32,9 +29,9 @@ class AuthPredictionIntegrationTester:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.test_results = []
-        self.auth_token: Optional[str] = None
-        self.user_data: Optional[Dict[str, Any]] = None
-        self.prediction_data: Optional[Dict[str, Any]] = None
+        self.auth_token: str | None = None
+        self.user_data: dict[str, Any] | None = None
+        self.prediction_data: dict[str, Any] | None = None
 
     def log_test(
         self, test_name: str, success: bool, details: str = "", duration: float = 0
@@ -139,7 +136,7 @@ class AuthPredictionIntegrationTester:
             if success:
                 token_data = response.json()
                 self.auth_token = token_data.get("access_token")
-                details = f"登录成功，获得token"
+                details = "登录成功，获得token"
             else:
                 details = f"登录失败，状态码: {response.status_code}, 响应: {response.text[:100]}"
 
@@ -369,7 +366,7 @@ class AuthPredictionIntegrationTester:
             self.log_test("用户登出测试", False, f"异常: {str(e)}", duration)
             return False
 
-    async def run_all_tests(self) -> Dict[str, Any]:
+    async def run_all_tests(self) -> dict[str, Any]:
         """运行所有集成测试"""
         print("🚀 开始API集成测试：认证与预测服务集成")
         print("=" * 60)
@@ -411,7 +408,7 @@ class AuthPredictionIntegrationTester:
         }
 
         print("=" * 60)
-        print(f"📊 测试完成！")
+        print("📊 测试完成！")
         print(f"总测试数: {total_tests}")
         print(f"通过测试: {passed_tests}")
         print(f"失败测试: {total_tests - passed_tests}")
@@ -490,7 +487,7 @@ async def main():
     tester = AuthPredictionIntegrationTester()
     report = await tester.run_all_tests()
 
-    print(f"\n🎯 集成测试结果:")
+    print("\n🎯 集成测试结果:")
     print(f"成功率: {report['success_rate']:.1f}%")
 
     if report["success_rate"] >= 80:

@@ -3,11 +3,11 @@ WarningFilters完整测试 - 优化75%到90%+覆盖率
 针对警告过滤器设置模块进行全面测试
 """
 
-import pytest
-import warnings
 import logging
 import sys
-from unittest.mock import patch, MagicMock
+import warnings
+from unittest.mock import patch
+
 from src.utils.warning_filters import setup_warning_filters
 
 

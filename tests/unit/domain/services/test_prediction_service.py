@@ -13,30 +13,23 @@ Prediction Domain Service Tests
 目标覆盖率: 领域服务模块覆盖率≥45%
 """
 
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Any, List
+from typing import Any
+
+import pytest
 
 # 导入领域模型和服务
 try:
+    from src.domain.events.prediction_events import (
+        PredictionCancelledEvent, PredictionCreatedEvent,
+        PredictionEvaluatedEvent, PredictionExpiredEvent,
+        PredictionPointsAdjustedEvent, PredictionUpdatedEvent)
     from src.domain.models.match import Match, MatchStatus
-    from src.domain.models.prediction import (
-        Prediction,
-        PredictionStatus,
-        PredictionPoints,
-    )
+    from src.domain.models.prediction import (Prediction, PredictionPoints,
+                                              PredictionStatus)
     from src.domain.models.team import Team
     from src.domain.services.prediction_service import PredictionDomainService
-    from src.domain.events.prediction_events import (
-        PredictionCreatedEvent,
-        PredictionUpdatedEvent,
-        PredictionEvaluatedEvent,
-        PredictionCancelledEvent,
-        PredictionExpiredEvent,
-        PredictionPointsAdjustedEvent,
-    )
 
     CAN_IMPORT = True
 except ImportError as e:
@@ -142,7 +135,7 @@ except ImportError as e:
 
     class PredictionDomainService:
         def __init__(self):
-            self._events: List[Any] = []
+            self._events: list[Any] = []
 
         def create_prediction(
             self,
@@ -222,7 +215,7 @@ except ImportError as e:
             self._events.append(event)
             return prediction
 
-        def get_events(self) -> List[Any]:
+        def get_events(self) -> list[Any]:
             return self._events.copy()
 
         def clear_events(self) -> None:

@@ -28,14 +28,11 @@ import numpy as np
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    from src.services.betting.ev_calculator import (
-        BettingOdds,
-        BettingStrategy,
-        BetType,
-        EVCalculation,
-        PredictionProbabilities,
-        RiskLevel,
-    )
+    from src.services.betting.ev_calculator import (BettingOdds,
+                                                    BettingStrategy, BetType,
+                                                    EVCalculation,
+                                                    PredictionProbabilities,
+                                                    RiskLevel)
 except ImportError as e:
     print(f"基础EV计算器导入错误: {e}")
 

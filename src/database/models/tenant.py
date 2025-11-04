@@ -9,18 +9,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-    UniqueConstraint,
-)
+from sqlalchemy import (JSON, Boolean, Column, DateTime, ForeignKey, Index,
+                        Integer, String, Text, UniqueConstraint)
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, relationship
 

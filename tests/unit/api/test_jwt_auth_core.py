@@ -5,19 +5,17 @@ JWT认证核心功能测试
 测试范围: JWT令牌生成、验证、密码管理、安全功能
 """
 
-import pytest
-import asyncio
-import sys
 import os
+import sys
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from fastapi import HTTPException, status
-from typing import Optional
+from unittest.mock import patch
+
+import pytest
 
 # 添加src到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from src.security.jwt_auth import JWTAuthManager, UserAuth, TokenData
+from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
 
 
 class TestJWTAuthManagerInitialization:

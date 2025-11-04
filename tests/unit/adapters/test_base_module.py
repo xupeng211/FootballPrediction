@@ -5,27 +5,19 @@ Base Adapter Module Tests
 直接测试src/adapters/base.py模块的覆盖率，绕过其他模块的语法错误。
 """
 
-import pytest
-import asyncio
-import sys
 import os
-from unittest.mock import Mock, AsyncMock
-from typing import Any
+import sys
 from datetime import datetime
+from typing import Any
+
+import pytest
 
 # 直接添加adapters目录到路径，避免通过__init__.py
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
 # 直接导入base模块，绕过__init__.py
-from base import (
-    AdapterStatus,
-    Adaptee,
-    Target,
-    Adapter,
-    BaseAdapter,
-    DataTransformer,
-    CompositeAdapter,
-)
+from base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
+                  CompositeAdapter, DataTransformer, Target)
 
 
 class MockAdaptee(Adaptee):

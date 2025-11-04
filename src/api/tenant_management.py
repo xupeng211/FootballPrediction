@@ -5,6 +5,7 @@ Multi-Tenant Management API
 提供企业级多租户系统的REST API接口.
 """
 
+import re
 from datetime import datetime
 from typing import Any
 
@@ -13,15 +14,10 @@ from pydantic import BaseModel, Field, validator
 
 from src.database.base import get_db_session
 from src.database.models.tenant import TenantPlan, TenantStatus
-from src.middleware.tenant_middleware import (
-    check_resource_quota,
-    get_tenant_context,
-    require_permission,
-)
-from src.services.tenant_service import (
-    TenantCreationRequest,
-    TenantService,
-)
+from src.middleware.tenant_middleware import (check_resource_quota,
+                                              get_tenant_context,
+                                              require_permission)
+from src.services.tenant_service import TenantCreationRequest, TenantService
 
 router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])
 
@@ -71,9 +67,9 @@ class TenantCreationRequestModel(BaseModel):
     custom_settings: dict[str, Any] | None = Field(None, description="自定义设置")
 
     @validator("slug")
-    def validate_slug(
-        cls, v
-    ):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    def validate_slug(cls, v):
+        """TODO: 添加函数文档"""
+        """TODO: 添加函数文档"""  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """验证租户标识符"""
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")

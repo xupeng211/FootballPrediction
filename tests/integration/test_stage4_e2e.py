@@ -5,14 +5,12 @@ Stage 4 End-to-End Test Script - Complete System Integration
 """
 
 import asyncio
-import sys
-import os
 import logging
+import os
+import sys
 import time
-import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
@@ -390,7 +388,7 @@ class Stage4E2ETester:
             if summary_cached["total_teams"] != len(processed_cached):
                 raise Exception("摘要数据与实际数据不一致")
 
-            logger.info(f"  ✅ 数据一致性验证通过")
+            logger.info("  ✅ 数据一致性验证通过")
             logger.info(f"    - API缓存: {len(api_cached)}条")
             logger.info(f"    - 处理后缓存: {len(processed_cached)}条")
             logger.info(f"    - 摘要缓存: {summary_cached['total_teams']}条")
@@ -587,7 +585,7 @@ class Stage4E2ETester:
             logger.error(f"  ❌ 系统性能基准测试失败: {e}")
             return False
 
-    def _calculate_data_quality(self, data: List[Dict[str, Any]]) -> int:
+    def _calculate_data_quality(self, data: list[dict[str, Any]]) -> int:
         """计算数据质量评分"""
         if not data:
             return 0
@@ -624,7 +622,7 @@ class Stage4E2ETester:
 
         return int(quality_score)
 
-    async def run_all_tests(self) -> Dict[str, Any]:
+    async def run_all_tests(self) -> dict[str, Any]:
         """运行所有端到端测试"""
         print("🚀 开始第四阶段端到端测试")
         print("=" * 60)
@@ -659,7 +657,7 @@ class Stage4E2ETester:
         duration = end_time - start_time
 
         print("\n" + "=" * 60)
-        print(f"📊 第四阶段端到端测试完成!")
+        print("📊 第四阶段端到端测试完成!")
         print(f"   总计: {self.test_results['total_tests']}")
         print(f"   通过: {self.test_results['passed_tests']}")
         print(f"   失败: {self.test_results['failed_tests']}")
@@ -667,7 +665,7 @@ class Stage4E2ETester:
 
         # 性能指标摘要
         if self.test_results["performance_metrics"]:
-            print(f"\n⚡ 性能指标摘要:")
+            print("\n⚡ 性能指标摘要:")
             metrics = self.test_results["performance_metrics"]
             for key, value in metrics.items():
                 if isinstance(value, float):
@@ -677,7 +675,7 @@ class Stage4E2ETester:
 
         # 数据质量指标
         if self.test_results["data_quality_metrics"]:
-            print(f"\n📈 数据质量指标:")
+            print("\n📈 数据质量指标:")
             for key, value in self.test_results["data_quality_metrics"].items():
                 print(f"   {key}: {value}/100")
 

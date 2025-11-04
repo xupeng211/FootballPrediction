@@ -7,35 +7,29 @@
 """
 
 import asyncio
+import json
+import os
+# 模拟导入，避免循环依赖问题
+import sys
+import tempfile
+from datetime import datetime, timedelta
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch, AsyncMock
-import tempfile
-import os
-import json
-
-# 模拟导入，避免循环依赖问题
-import sys
-import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
-    from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import (
-        ModelTrainer,
-        TrainingConfig,
-        TrainingStatus,
-        ModelType,
-    )
     from src.domain.strategies.ml_model import MLModelStrategy
     from src.ml.enhanced_real_model_training import EnhancedRealModelTrainer
+    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
+                                       TrainingStatus)
+    from src.ml.models.base_model import (BaseModel, PredictionResult,
+                                          TrainingResult)
+    from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:
@@ -138,7 +132,7 @@ def create_comprehensive_training_data(num_matches: int = 1000) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def create_batch_prediction_data(num_predictions: int = 10) -> List[Dict[str, Any]]:
+def create_batch_prediction_data(num_predictions: int = 10) -> list[dict[str, Any]]:
     """创建批量预测数据"""
     teams = ["Manchester_City", "Liverpool", "Chelsea", "Arsenal", "Manchester_United"]
     predictions = []
@@ -496,7 +490,7 @@ class TestMLModelDeployment:
                     model.train(training_data)
                     self.models[name] = model
 
-            async def predict(self, model_name: str, request_data: Dict[str, Any]):
+            async def predict(self, model_name: str, request_data: dict[str, Any]):
                 """异步预测接口"""
                 if model_name not in self.models:
                     raise ValueError(f"Model {model_name} not found")

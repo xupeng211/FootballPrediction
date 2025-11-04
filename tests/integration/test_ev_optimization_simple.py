@@ -6,12 +6,12 @@ Issue #121: EV计算算法参数调优
 直接测试核心算法，避免复杂依赖
 """
 
-import math
 import json
 import logging
-from datetime import datetime
-from typing import Dict, List, Any, Tuple
+import math
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 # 配置日志
 logging.basicConfig(
@@ -27,7 +27,7 @@ class KellyOptimizationResult:
     optimal_fraction: float
     expected_growth: float
     risk_of_ruin: float
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
     recommendation: str
 
 
@@ -128,7 +128,7 @@ class EnhancedKellyCalculator:
 
     def _calculate_confidence_interval(
         self, kelly_fraction: float, confidence: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """计算置信区间"""
         if kelly_fraction <= 0:
             return (0.0, 0.0)
@@ -165,7 +165,7 @@ class EnhancedValueCalculator:
 
     def calculate_value_rating(
         self, probability: float, odds: float, confidence: float = 1.0
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """计算价值评级"""
 
         # EV计算

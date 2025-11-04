@@ -58,6 +58,7 @@ class CryptoUtils:
             HAS_BCRYPT = False
 
         if password == "" and hashed_password == "":
+            # 允许空密码，但在生产环境中应该禁用
             return True
 
         if (

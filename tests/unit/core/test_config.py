@@ -2,12 +2,12 @@
 核心配置测试
 """
 
-import pytest
+import json
 import os
 import tempfile
-import json
 from pathlib import Path
-from src.core.config import Config, load_config, Settings
+
+from src.core.config import Config, Settings, load_config
 
 
 class TestConfig:
@@ -52,7 +52,7 @@ class TestConfig:
             assert config_file.exists()
 
             # 验证文件内容
-            with open(config_file, "r", encoding="utf-8") as f:
+            with open(config_file, encoding="utf-8") as f:
                 data = json.load(f)
                 assert data["test_key"] == "test_value"
 

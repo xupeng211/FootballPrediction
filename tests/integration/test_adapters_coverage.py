@@ -4,9 +4,11 @@ adapters API端点测试
 专门用于提升adapters/router.py模块的测试覆盖率
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
+
 from src.main import app
 
 client = TestClient(app)

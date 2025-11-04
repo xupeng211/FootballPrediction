@@ -3,8 +3,9 @@
 专注于100%可运行的测试用例
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # 导入目标模块
 try:

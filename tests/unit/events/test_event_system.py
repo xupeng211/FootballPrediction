@@ -5,27 +5,18 @@ Event System Test Suite
 测试事件系统的核心功能，包括事件基类、事件总线、事件处理器等。
 """
 
-import pytest
 import asyncio
-import uuid
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any
+from unittest.mock import AsyncMock, Mock
 
-from src.events.base import Event, EventData, EventHandler, EventFilter
-from src.events.bus import EventBus, get_event_bus
+import pytest
+
+from src.events.base import EventData, EventHandler
+from src.events.bus import EventBus
 from src.events.handlers import MetricsEventHandler
-from src.events.types import (
-    MatchCreatedEvent,
-    MatchUpdatedEvent,
-    PredictionMadeEvent,
-    PredictionUpdatedEvent,
-    TeamStatsUpdatedEvent,
-    UserRegisteredEvent,
-    MatchCreatedEventData,
-    PredictionMadeEventData,
-    UserRegisteredEventData,
-)
+from src.events.types import (MatchCreatedEvent, MatchCreatedEventData,
+                              PredictionMadeEvent, UserRegisteredEvent)
 
 
 class TestEventData:
@@ -469,7 +460,6 @@ class TestEventIntegration:
     def test_concurrent_event_publishing(self):
         """测试并发事件发布"""
         import threading
-        import time
 
         event_bus = EventBus()
         metrics_handler = MetricsEventHandler()

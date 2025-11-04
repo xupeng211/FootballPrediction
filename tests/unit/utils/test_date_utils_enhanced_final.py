@@ -3,9 +3,12 @@ DateUtils增强最终测试 - 深化37.2%到60%+覆盖率
 针对未覆盖的日期时间函数进行全面测试
 """
 
+from datetime import date, datetime, timedelta
+
 import pytest
-from datetime import datetime, date, timedelta
-from src.utils.date_utils import DateUtils, cached_format_datetime, cached_time_ago
+
+from src.utils.date_utils import (DateUtils, cached_format_datetime,
+                                  cached_time_ago)
 
 
 class TestDateUtilsEnhancedFinal:

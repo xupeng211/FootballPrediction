@@ -151,16 +151,19 @@ class StreamingError(FootballPredictionError):
 # 用户管理相关异常
 class UserNotFoundError(FootballPredictionError):
     """用户未找到异常"""
+
     pass
 
 
 class UserAlreadyExistsError(FootballPredictionError):
     """用户已存在异常"""
+
     pass
 
 
 class InvalidCredentialsError(FootballPredictionError):
     """无效凭据异常"""
+
     pass
 
 

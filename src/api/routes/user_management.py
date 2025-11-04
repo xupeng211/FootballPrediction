@@ -5,24 +5,17 @@ User Management API Routes
 提供用户管理的REST API端点。
 """
 
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 
 from src.api.dependencies import get_current_user, get_user_management_service
-from src.core.exceptions import (
-    InvalidCredentialsError,
-    UserAlreadyExistsError,
-    UserNotFoundError,
-)
-from src.services.user_management_service import (
-    UserAuthResponse,
-    UserCreateRequest,
-    UserManagementService,
-    UserResponse,
-    UserUpdateRequest,
-)
+from src.core.exceptions import (InvalidCredentialsError,
+                                 UserAlreadyExistsError, UserNotFoundError)
+from src.services.user_management_service import (UserAuthResponse,
+                                                  UserCreateRequest,
+                                                  UserResponse,
+                                                  UserUpdateRequest)
 
 router = APIRouter(prefix="/api/v1/users", tags=["用户管理"])
 security = HTTPBearer()
@@ -45,7 +38,7 @@ class ChangePasswordRequest(BaseModel):
 @router.post("/register", response_model=UserResponse, status_code=201)
 async def register_user(
     request: UserCreateRequest,
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserResponse:
     """注册新用户"""
     try:
@@ -60,7 +53,7 @@ async def register_user(
 @router.post("/login", response_model=UserAuthResponse)
 async def login_user(
     request: LoginRequest,
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserAuthResponse:
     """用户登录"""
     try:
@@ -75,7 +68,7 @@ async def login_user(
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserResponse:
     """获取当前用户信息"""
     try:
@@ -88,7 +81,7 @@ async def get_current_user_info(
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: int,
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserResponse:
     """获取指定用户信息"""
     try:
@@ -103,7 +96,7 @@ async def update_user(
     user_id: int,
     request: UserUpdateRequest,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserResponse:
     """更新用户信息"""
     try:
@@ -125,7 +118,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ):
     """删除用户"""
     try:
@@ -146,7 +139,7 @@ async def get_users(
     limit: int = 100,
     active_only: bool = True,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> list[UserResponse]:
     """获取用户列表"""
     # 检查权限：只有管理员可以查看所有用户
@@ -171,7 +164,7 @@ async def search_users(
     query: str,
     limit: int = 20,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> list[UserResponse]:
     """搜索用户"""
     # 检查权限
@@ -193,7 +186,7 @@ async def search_users(
 async def change_password(
     request: ChangePasswordRequest,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ):
     """修改密码"""
     try:
@@ -213,7 +206,7 @@ async def change_password(
 async def deactivate_user(
     user_id: int,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserResponse:
     """停用用户"""
     try:
@@ -233,7 +226,7 @@ async def deactivate_user(
 async def activate_user(
     user_id: int,
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ) -> UserResponse:
     """激活用户"""
     try:
@@ -252,7 +245,7 @@ async def activate_user(
 @router.get("/stats", response_model=dict)
 async def get_user_stats(
     current_user: dict = Depends(get_current_user),
-    user_service = Depends(get_user_management_service),
+    user_service=Depends(get_user_management_service),
 ):
     """获取用户统计信息"""
     # 检查权限：只有管理员可以查看统计

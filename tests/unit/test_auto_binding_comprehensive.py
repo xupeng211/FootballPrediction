@@ -5,25 +5,17 @@ AutoBinding 综合测试
 新增测试: 20个测试用例
 """
 
-import pytest
-import importlib
-import inspect
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import TypeVar
+from unittest.mock import patch
 
-from src.core.auto_binding import (
-    BindingRule,
-    AutoBinder,
-    ConventionBinder,
-    auto_bind,
-    bind_to,
-    primary_implementation,
-)
+import pytest
+
+from src.core.auto_binding import (AutoBinder, BindingRule, ConventionBinder,
+                                   auto_bind, bind_to, primary_implementation)
 from src.core.di import DIContainer, ServiceLifetime
 from src.core.exceptions import DependencyInjectionError
-
 
 T = TypeVar("T")
 
@@ -33,7 +25,6 @@ class TestBindingRule:
 
     def test_binding_rule_creation(self):
         """测试绑定规则创建"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -55,7 +46,6 @@ class TestBindingRule:
 
     def test_binding_rule_defaults(self):
         """测试绑定规则默认值"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -89,7 +79,6 @@ class TestAutoBinder:
 
     def test_add_binding_rule(self):
         """测试添加绑定规则"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -164,7 +153,6 @@ class TestAutoBinder:
 
     def test_bind_interface_to_implementations_single(self):
         """测试绑定接口到单个实现"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -181,7 +169,6 @@ class TestAutoBinder:
 
     def test_bind_interface_to_implementations_multiple(self):
         """测试绑定接口到多个实现"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -211,7 +198,6 @@ class TestAutoBinder:
 
     def test_bind_interface_to_implementations_none(self):
         """测试绑定接口到无实现"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -225,7 +211,6 @@ class TestAutoBinder:
 
     def test_auto_bind_success(self):
         """测试自动绑定成功"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -246,7 +231,6 @@ class TestAutoBinder:
 
     def test_auto_bind_with_condition(self):
         """测试带条件的自动绑定"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -268,7 +252,6 @@ class TestAutoBinder:
 
     def test_auto_bind_scoped_lifetime(self):
         """测试作用域生命周期自动绑定"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -298,8 +281,6 @@ class TestAutoBinder:
         """测试扫描包含接口的模块"""
         import types
 
-        from abc import ABC, abstractmethod
-
         class TestInterface(ABC):
             @abstractmethod
             def test_method(self):
@@ -328,7 +309,6 @@ class TestAutoBinder:
 
     def test_find_implementations_from_cache(self):
         """测试从缓存查找实现"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -346,7 +326,6 @@ class TestAutoBinder:
 
     def test_is_implementation_success(self):
         """测试检查实现成功"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -359,7 +338,6 @@ class TestAutoBinder:
 
     def test_is_implementation_failure(self):
         """测试检查实现失败"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -372,7 +350,6 @@ class TestAutoBinder:
 
     def test_select_primary_implementation_by_name_suffix(self):
         """测试按名称后缀选择主要实现"""
-        from abc import ABC
 
         class ITestService(ABC):
             pass
@@ -392,7 +369,6 @@ class TestAutoBinder:
 
     def test_select_primary_implementation_by_default_name(self):
         """测试按默认名称选择主要实现"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -412,7 +388,6 @@ class TestAutoBinder:
 
     def test_select_primary_implementation_first_fallback(self):
         """测试选择主要实现的回退策略"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -432,7 +407,6 @@ class TestAutoBinder:
 
     def test_apply_default_convention(self):
         """测试应用默认约定"""
-        from abc import ABC
 
         class ITestService(ABC):
             pass
@@ -449,7 +423,6 @@ class TestAutoBinder:
 
     def test_apply_repository_convention(self):
         """测试应用仓储约定"""
-        from abc import ABC
 
         class IRepository(ABC):
             pass
@@ -466,7 +439,6 @@ class TestAutoBinder:
 
     def test_apply_service_convention(self):
         """测试应用服务约定"""
-        from abc import ABC
 
         class IService(ABC):
             pass
@@ -534,7 +506,6 @@ class TestAutoBindingDecorators:
 
     def test_bind_to_decorator(self):
         """测试绑定到接口装饰器"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -576,7 +547,6 @@ class TestAutoBinderEdgeCases:
 
     def test_find_implementations_module_error_handling(self):
         """测试查找实现时的模块错误处理"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -592,7 +562,6 @@ class TestAutoBinderEdgeCases:
 
     def test_check_class_implementations_with_abstract(self):
         """测试检查类实现时处理抽象类"""
-        from abc import ABC, abstractmethod
 
         class AbstractBase(ABC):
             @abstractmethod
@@ -621,7 +590,6 @@ class TestAutoBinderEdgeCases:
 
     def test_select_primary_implementation_empty_list(self):
         """测试选择主要实现时空列表处理"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass
@@ -631,7 +599,6 @@ class TestAutoBinderEdgeCases:
 
     def test_apply_default_convention_no_implementation(self):
         """测试应用默认约定时无实现处理"""
-        from abc import ABC
 
         class ITestService(ABC):
             pass
@@ -648,7 +615,6 @@ class TestAutoBinderEdgeCases:
 
     def test_bind_interface_to_implementations_with_exception(self):
         """测试绑定接口实现时处理异常"""
-        from abc import ABC
 
         class TestInterface(ABC):
             pass

@@ -238,20 +238,17 @@ class Settings(SettingsClass):
     else:
 
         def __init__(self, **kwargs):
-            """函数文档字符串"""
-            pass
+            """初始化配置"""
+            # 设置默认值
+            self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
+            self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
+            self.redis_url = "redis://redis:6379/0"
+            self.api_host = "localhost"
+            self.api_port = 8000
+            self.environment = "development"
+            self.log_level = "INFO"
+            self.mlflow_tracking_uri = "file:///tmp/mlflow"
 
-        # 设置默认值
-        self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
-        self.test_database_url = (
-            "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
-        )
-        self.redis_url = "redis://redis:6379/0"
-        self.api_host = "localhost"
-        self.api_port = 8000
-        self.environment = "development"
-        self.log_level = "INFO"
-        self.mlflow_tracking_uri = "file:///tmp/mlflow"
         self.api_football_key = None
         self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
         self.metrics_enabled = True

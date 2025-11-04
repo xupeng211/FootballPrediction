@@ -13,11 +13,8 @@
 """
 
 from .anomaly_detector import (  # AnomalyDetector,  # Simple version  # 未使用
-    AdvancedAnomalyDetector,
-    AnomalyDetectionResult,
-    MachineLearningAnomalyDetector,
-    StatisticalAnomalyDetector,
-)
+    AdvancedAnomalyDetector, AnomalyDetectionResult,
+    MachineLearningAnomalyDetector, StatisticalAnomalyDetector)
 
 # 如果 AdvancedAnomalyDetector 不存在,创建一个简单的实现
 try:

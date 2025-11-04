@@ -5,11 +5,11 @@ Prediction API Test Suite
 测试预测相关的API端点，确保预测功能的正确性。
 """
 
-import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from fastapi.testclient import TestClient
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 

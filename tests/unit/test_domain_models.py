@@ -3,9 +3,10 @@
 Basic Domain Layer Tests
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

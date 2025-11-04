@@ -12,12 +12,10 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.ml.real_model_training import (
-    train_football_prediction_model,
-    RealModelTrainingPipeline,
-)
-from src.ml.advanced_model_trainer import ModelType
 from src.core.logging_system import get_logger
+from src.ml.advanced_model_trainer import ModelType
+from src.ml.real_model_training import (RealModelTrainingPipeline,
+                                        train_football_prediction_model)
 
 logger = get_logger(__name__)
 
@@ -26,11 +24,10 @@ async def test_feature_calculator():
     """测试特征计算器"""
     logger.info("Testing Feature Calculator...")
 
-    from src.features.features.feature_calculator_calculators import (
-        FeatureCalculator,
-        MatchResult,
-    )
     from datetime import datetime
+
+    from src.features.features.feature_calculator_calculators import (
+        FeatureCalculator, MatchResult)
 
     # 创建示例数据
     matches = [
@@ -81,8 +78,8 @@ async def test_advanced_trainer():
     """测试高级模型训练器"""
     logger.info("Testing Advanced Model Trainer...")
 
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     # 创建示例数据
     np.random.seed(42)
@@ -127,8 +124,8 @@ async def test_ensemble_trainer():
     """测试集成训练器"""
     logger.info("Testing Ensemble Trainer...")
 
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     # 创建示例数据
     np.random.seed(42)

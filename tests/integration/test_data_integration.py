@@ -6,15 +6,15 @@
 
 import asyncio
 import sys
-import os
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
-from src.collectors.data_sources import data_source_manager, MatchData
-from src.collectors.enhanced_fixtures_collector import EnhancedFixturesCollector
-from src.database.connection import get_async_session
 from src.cache.redis_manager import get_redis_manager
+from src.collectors.data_sources import data_source_manager
+from src.collectors.enhanced_fixtures_collector import \
+    EnhancedFixturesCollector
+from src.database.connection import get_async_session
 
 
 async def test_data_sources():

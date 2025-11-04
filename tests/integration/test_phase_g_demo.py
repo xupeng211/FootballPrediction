@@ -4,10 +4,8 @@
 简单的测试脚本，验证Phase G核心功能是否正常工作
 """
 
-import sys
-import os
 import json
-from pathlib import Path
+import sys
 
 
 def test_intelligent_analyzer():

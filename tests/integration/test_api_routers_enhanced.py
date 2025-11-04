@@ -4,9 +4,9 @@
 Enhanced API router tests for coverage optimization
 """
 
-import pytest
 import sys
-from unittest.mock import Mock, MagicMock
+
+import pytest
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, ".")
@@ -52,8 +52,9 @@ class TestApiRoutersEnhanced:
     def test_api_router_dependency_injection(self):
         """测试API路由依赖注入"""
         try:
-            from src.api.data_router import router
             from fastapi import FastAPI
+
+            from src.api.data_router import router
 
             # 创建模拟应用
             app = FastAPI()
@@ -86,12 +87,9 @@ class TestApiRoutersEnhanced:
     def test_api_response_models(self):
         """测试API响应模型"""
         try:
-            from src.api.predictions.models import (
-                PredictionResponse,
-                PredictionRequest,
-                MatchInfo,
-                PredictionData,
-            )
+            from src.api.predictions.models import (MatchInfo, PredictionData,
+                                                    PredictionRequest,
+                                                    PredictionResponse)
 
             # 创建必需的依赖数据
             match_info = MatchInfo(

@@ -3,9 +3,10 @@
 """
 
 import pytest
-from src.utils.validators import is_valid_email, is_valid_phone, is_valid_url
-from src.utils.time_utils import format_duration, parse_iso_datetime
+
 from src.utils.data_validator import DataValidator
+from src.utils.time_utils import format_duration, parse_iso_datetime
+from src.utils.validators import is_valid_email, is_valid_phone, is_valid_url
 
 
 class TestSimpleUtils:
@@ -76,9 +77,9 @@ class TestSimpleUtils:
     def test_import_modules(self):
         """测试模块导入"""
         # 测试工具模块可以正常导入
-        import src.utils.validators
-        import src.utils.time_utils
         import src.utils.data_validator
+        import src.utils.time_utils
+        import src.utils.validators
 
         assert src.utils.validators is not None
         assert src.utils.time_utils is not None

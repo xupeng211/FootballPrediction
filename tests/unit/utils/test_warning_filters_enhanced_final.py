@@ -3,12 +3,12 @@ WarningFilters增强最终测试 - 深化75%到90%+覆盖率
 覆盖初始化代码和错误处理路径的全面测试
 """
 
-import pytest
-import warnings
+import importlib
 import logging
 import sys
-import importlib
-from unittest.mock import patch, MagicMock
+import warnings
+from unittest.mock import patch
+
 from src.utils.warning_filters import setup_warning_filters
 
 
