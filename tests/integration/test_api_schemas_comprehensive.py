@@ -493,7 +493,7 @@ class TestSchemasIntegrationComprehensive:
         assert response.timestamp is None  # 默认值
 
 
-def test_api_schemas_comprehensive_suite(client, client, client, client, client, client, client, client, client, client, client, client, client):
+def test_api_schemas_comprehensive_suite(client):
     """API Schema综合测试套件"""
     # 快速验证核心功能
     response = APIResponse(success=True, message="测试")

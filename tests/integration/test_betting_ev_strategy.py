@@ -68,6 +68,15 @@ except ImportError as e:
         HIGH = "high"
         VERY_HIGH = "very_high"
 
+    class BettingStrategy:
+        """简化的投注策略类"""
+        def __init__(self):
+            self.max_kelly_fraction = 0.25
+            self.min_ev_threshold = 0.05
+            self.risk_tolerance = 0.5
+            self.bankroll_percentage = 0.02
+            self.max_daily_bets = 5
+
 
 class BettingEVStrategyTester:
     """EV计算和投注策略测试器"""
