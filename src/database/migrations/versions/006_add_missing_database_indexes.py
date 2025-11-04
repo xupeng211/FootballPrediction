@@ -81,16 +81,12 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-def upgrade() -> None:
-    """添加缺失的数据库索引"""
-    if context.is_offline_mode():
+def _upgrade_check_condition():
         logger.info("⚠️  离线模式:跳过索引创建")
         op.execute("-- offline mode: skipped database indexes creation")
         return None
-    conn = op.get_bind()
-    logger.info("开始添加缺失的数据库索引...")
-    logger.info("1. 创建 idx_recent_matches 索引...")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -104,7 +100,8 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_recent_matches 索引创建失败: {e}")
     logger.info("2. 创建 idx_team_matches 索引...")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -117,7 +114,8 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_team_matches 索引创建失败: {e}")
     logger.info("3. 创建 idx_predictions_lookup 索引...")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -130,7 +128,8 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_predictions_lookup 索引创建失败: {e}")
     logger.info("4. 创建 idx_odds_match_collected 索引...")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -143,7 +142,8 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_odds_match_collected 索引创建失败: {e}")
     logger.info("5. 创建额外的性能优化索引...")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -156,7 +156,8 @@ def upgrade() -> None:
         logger.info("   ✅ idx_matches_status_time 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_matches_status_time 索引创建失败: {e}")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -168,7 +169,8 @@ def upgrade() -> None:
         logger.info("   ✅ idx_teams_league 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_teams_league 索引创建失败 (可能表不存在): {e}")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -180,7 +182,8 @@ def upgrade() -> None:
         logger.info("   ✅ idx_odds_bookmaker_time 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_odds_bookmaker_time 索引创建失败: {e}")
-    try:
+
+def _upgrade_handle_error():
         conn.execute(
             text(
                 """
@@ -193,7 +196,8 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_features_created_at 索引创建失败 (可能表不存在): {e}")
     logger.info("6. 验证索引创建结果...")
-    try:
+
+def _upgrade_handle_error():
         result = conn.execute(
             text(
                 """
@@ -218,7 +222,153 @@ def upgrade() -> None:
             )
         )
         logger.info("   创建的索引列表:")
-        for row in result:
+
+def _upgrade_iterate_items():
+            logger.info(f"   - {row[2]} on {row[1]}")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ 验证索引失败: {e}")
+    logger.info("✅ 数据库索引优化迁移完成！")
+
+
+
+def upgrade() -> None:
+    """添加缺失的数据库索引"""
+    _upgrade_check_condition()
+        logger.info("⚠️  离线模式:跳过索引创建")
+        op.execute("-- offline mode: skipped database indexes creation")
+        return None
+    conn = op.get_bind()
+    logger.info("开始添加缺失的数据库索引...")
+    logger.info("1. 创建 idx_recent_matches 索引...")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_recent_matches
+            ON matches (match_time DESC, league_id)
+            WHERE match_status IN ('finished', 'in_progress');
+        """
+            )
+        )
+        logger.info("   ✅ idx_recent_matches 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_recent_matches 索引创建失败: {e}")
+    logger.info("2. 创建 idx_team_matches 索引...")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_team_matches
+            ON matches (home_team_id, away_team_id, match_time DESC);
+        """
+            )
+        )
+        logger.info("   ✅ idx_team_matches 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_team_matches 索引创建失败: {e}")
+    logger.info("3. 创建 idx_predictions_lookup 索引...")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_predictions_lookup
+            ON predictions (match_id, model_name, created_at DESC);
+        """
+            )
+        )
+        logger.info("   ✅ idx_predictions_lookup 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_predictions_lookup 索引创建失败: {e}")
+    logger.info("4. 创建 idx_odds_match_collected 索引...")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_odds_match_collected
+            ON odds (match_id, collected_at DESC);
+        """
+            )
+        )
+        logger.info("   ✅ idx_odds_match_collected 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_odds_match_collected 索引创建失败: {e}")
+    logger.info("5. 创建额外的性能优化索引...")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_matches_status_time
+            ON matches (match_status, match_time DESC)
+            WHERE match_status IN ('scheduled', 'in_progress', 'finished');
+        """
+            )
+        )
+        logger.info("   ✅ idx_matches_status_time 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_matches_status_time 索引创建失败: {e}")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_teams_league
+            ON teams (league_id, team_name);
+        """
+            )
+        )
+        logger.info("   ✅ idx_teams_league 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_teams_league 索引创建失败 (可能表不存在): {e}")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_odds_bookmaker_time
+            ON odds (bookmaker, collected_at DESC);
+        """
+            )
+        )
+        logger.info("   ✅ idx_odds_bookmaker_time 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_odds_bookmaker_time 索引创建失败: {e}")
+    _upgrade_handle_error()
+        conn.execute(
+            text(
+                """
+            CREATE INDEX IF NOT EXISTS idx_features_created_at
+            ON features (created_at DESC);
+        """
+            )
+        )
+        logger.info("   ✅ idx_features_created_at 索引创建成功")
+    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+        logger.info(f"   ❌ idx_features_created_at 索引创建失败 (可能表不存在): {e}")
+    logger.info("6. 验证索引创建结果...")
+    _upgrade_handle_error()
+        result = conn.execute(
+            text(
+                """
+            SELECT
+                schemaname,
+                tablename,
+                indexname,
+                indexdef
+            FROM pg_indexes
+            WHERE indexname IN (
+                'idx_recent_matches',
+                'idx_team_matches',
+                'idx_predictions_lookup',
+                'idx_odds_match_collected',
+                'idx_matches_status_time',
+                'idx_teams_league',
+                'idx_odds_bookmaker_time',
+                'idx_features_created_at'
+            )
+            ORDER BY tablename, indexname;
+        """
+            )
+        )
+        logger.info("   创建的索引列表:")
+        _upgrade_iterate_items()
             logger.info(f"   - {row[2]} on {row[1]}")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ 验证索引失败: {e}")

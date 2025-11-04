@@ -99,8 +99,20 @@ class EmailClient:
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
         .header {
             {% if alert.severity.value == 'critical' %}
             background: linear-gradient(135deg, #ff4d4f, #ff7875);
@@ -113,11 +125,23 @@ class EmailClient:
             {% endif %}
             color: white; padding: 30px; text-align: center; }
         .content { padding: 30px; }
-        .alert-info { background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }
-        .severity-badge {
-            display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;
-            color: white; text-transform: uppercase; margin: 5px 0;
-            {% if alert.severity.value == 'critical' %}
+        .alert-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .severity-badge{
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    text-transform: uppercase;
+    margin: 5px 0;
+    {% if alert.severity.value == 'critical' %;
+}
             background-color: #ff4d4f;
             {% elif alert.severity.value == 'error' %}
             background-color: #ff7875;
@@ -127,11 +151,33 @@ class EmailClient:
             background-color: #1890ff;
             {% endif %}
         }
-        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }
-        .details { background: #fff1f0; border-left: 4px solid #ff4d4f; padding: 15px; margin: 15px 0; }
-        .metric { display: flex; justify-content: space-between; margin: 8px 0; }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        .details {
+            background: #fff1f0;
+            border-left: 4px solid #ff4d4f;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
         .action-buttons { margin: 20px 0; }
-        .btn { display: inline-block; padding: 10px 20px; margin: 5px; text-decoration: none; border-radius: 4px; font-weight: bold; }
+                .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
         .btn-primary { background: #1890ff; color: white; }
         .btn-secondary { background: #f5f5f5; color: #666; }
     </style>
@@ -151,7 +197,7 @@ class EmailClient:
                 <p><strong>告警消息:</strong> {{ alert.message }}</p>
                 <p><strong>告警类型:</strong> {{ alert.type.value }}</p>
                 <p><strong>告警源:</strong> {{ alert.source }}</p>
-                <p><strong>触发时间:</strong> {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p><strong>触发时间:</strong> {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>;
 
                 {% if alert.current_value is not none and alert.threshold is not none %}
                 <div class="metric">
@@ -636,12 +682,19 @@ class NotificationManager:
             self.logger.error(f"检查告警过滤条件失败: {e}")
             return True  # 出错时默认发送
 
+def __send_to_channel_check_condition():
+                # 日志记录
+                self.logger.warning(
+                    f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
+                )
+                return True
+
     async def _send_to_channel(
         self, alert: Alert, channel: NotificationChannel
     ) -> bool:
         """发送告警到指定渠道"""
         try:
-            if channel.type == "log":
+            __send_to_channel_check_condition()
                 # 日志记录
                 self.logger.warning(
                     f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"

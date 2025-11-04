@@ -115,19 +115,22 @@ class CreatePredictionHandler(CommandHandler):
                 )
                 if existing.scalar():
                     return CommandResult.failure_result(
-                        ["用户已经对该比赛进行了预测"], "预测已存在"
+                        ["用户已经对该比赛进行了预测"],
+    "预测已存在"
                     )
 
                 # 创建预测
                 prediction = Prediction(
                     match_id=command.match_id,
-                    user_id=command.user_id,
-                    predicted_home=command.predicted_home,
+    user_id=command.user_id,
+    predicted_home=command.predicted_home,
+    
                     predicted_away=command.predicted_away,
                     confidence=Decimal(str(command.confidence)),
-                    strategy_used=command.strategy_used,
-                    notes=command.notes,
-                    created_at=datetime.utcnow(),
+    strategy_used=command.strategy_used,
+    notes=command.notes,
+    created_at=datetime.utcnow(),
+    
                 )
 
                 session.add(prediction)
@@ -139,21 +142,24 @@ class CreatePredictionHandler(CommandHandler):
                 return CommandResult.success_result(
                     data=PredictionDTO(
                         id=prediction.id,
-                        match_id=prediction.match_id,
-                        user_id=prediction.user_id,
-                        predicted_home=prediction.predicted_home,
+    match_id=prediction.match_id,
+    user_id=prediction.user_id,
+    predicted_home=prediction.predicted_home,
+    
                         predicted_away=prediction.predicted_away,
                         confidence=float(prediction.confidence),
-                        strategy_used=prediction.strategy_used,
-                        notes=prediction.notes,
-                        created_at=prediction.created_at,
+    strategy_used=prediction.strategy_used,
+    notes=prediction.notes,
+    created_at=prediction.created_at,
+    
                     ),
                     message="预测创建成功",
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"创建预测失败: {e}")
-            return CommandResult.failure_result([str(e)], "创建预测失败")
+            return CommandResult.failure_result([str(e)],
+    "创建预测失败")
 
 
 class UpdatePredictionHandler(CommandHandler):
@@ -165,13 +171,16 @@ class UpdatePredictionHandler(CommandHandler):
         # 添加pass语句
         return UpdatePredictionCommand
 
-    async def handle(self, command: UpdatePredictionCommand) -> CommandResult:
+    async def handle(self,
+    command: UpdatePredictionCommand) -> CommandResult:
         """处理更新预测命令"""
         try:
             async with get_session() as session:
-                _prediction = await session.get(Prediction, command.prediction_id)
+                await session.get(Prediction,
+    command.prediction_id)
                 if not prediction:
-                    return CommandResult.failure_result(["预测不存在"], "预测未找到")
+                    return CommandResult.failure_result(["预测不存在"],
+    "预测未找到")
 
                 # 更新字段
                 if command.predicted_home is not None:
@@ -195,14 +204,16 @@ class UpdatePredictionHandler(CommandHandler):
                 return CommandResult.success_result(
                     data=PredictionDTO(
                         id=prediction.id,
-                        match_id=prediction.match_id,
-                        user_id=prediction.user_id,
-                        predicted_home=prediction.predicted_home,
+    match_id=prediction.match_id,
+    user_id=prediction.user_id,
+    predicted_home=prediction.predicted_home,
+    
                         predicted_away=prediction.predicted_away,
                         confidence=float(prediction.confidence),
-                        strategy_used=prediction.strategy_used,
-                        notes=prediction.notes,
-                        created_at=prediction.created_at,
+    strategy_used=prediction.strategy_used,
+    notes=prediction.notes,
+    created_at=prediction.created_at,
+    
                         updated_at=prediction.updated_at,
                     ),
                     message="预测更新成功",
@@ -210,7 +221,8 @@ class UpdatePredictionHandler(CommandHandler):
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"更新预测失败: {e}")
-            return CommandResult.failure_result([str(e)], "更新预测失败")
+            return CommandResult.failure_result([str(e)],
+    "更新预测失败")
 
 
 class DeletePredictionHandler(CommandHandler):
@@ -222,13 +234,16 @@ class DeletePredictionHandler(CommandHandler):
         # 添加pass语句
         return DeletePredictionCommand
 
-    async def handle(self, command: DeletePredictionCommand) -> CommandResult:
+    async def handle(self,
+    command: DeletePredictionCommand) -> CommandResult:
         """处理删除预测命令"""
         try:
             async with get_session() as session:
-                _prediction = await session.get(Prediction, command.prediction_id)
+                await session.get(Prediction,
+    command.prediction_id)
                 if not prediction:
-                    return CommandResult.failure_result(["预测不存在"], "预测未找到")
+                    return CommandResult.failure_result(["预测不存在"],
+    "预测未找到")
 
                 await session.delete(prediction)
                 await session.commit()
@@ -241,7 +256,8 @@ class DeletePredictionHandler(CommandHandler):
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"删除预测失败: {e}")
-            return CommandResult.failure_result([str(e)], "删除预测失败")
+            return CommandResult.failure_result([str(e)],
+    "删除预测失败")
 
 
 # 用户命令处理器
@@ -254,13 +270,15 @@ class CreateUserHandler(CommandHandler):
         # 添加pass语句
         return CreateUserCommand
 
-    async def handle(self, command: CreateUserCommand) -> CommandResult:
+    async def handle(self,
+    command: CreateUserCommand) -> CommandResult:
         """处理创建用户命令"""
         try:
             async with get_session() as session:
                 _user = User(
                     username=command.username,
-                    email=command.email,
+    email=command.email,
+    
                     password_hash=command.password_hash,
                     created_at=datetime.utcnow(),
                     last_login=datetime.utcnow(),
@@ -275,9 +293,10 @@ class CreateUserHandler(CommandHandler):
                 return CommandResult.success_result(
                     data=UserDTO(
                         id=user.id,
-                        username=user.username,
-                        email=user.email,
-                        is_active=user.is_active,
+    username=user.username,
+    email=user.email,
+    is_active=user.is_active,
+    
                         total_points=0,
                         prediction_count=0,
                         success_rate=0.0,
@@ -289,7 +308,8 @@ class CreateUserHandler(CommandHandler):
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"创建用户失败: {e}")
-            return CommandResult.failure_result([str(e)], "创建用户失败")
+            return CommandResult.failure_result([str(e)],
+    "创建用户失败")
 
 
 # 查询处理器
@@ -302,24 +322,28 @@ class GetPredictionByIdHandler(QueryHandler):
         # 添加pass语句
         return GetPredictionByIdQuery
 
-    async def handle(self, query: GetPredictionByIdQuery) -> PredictionDTO | None:
+    async def handle(self,
+    query: GetPredictionByIdQuery) -> PredictionDTO | None:
         """处理获取预测查询"""
         try:
             async with get_session() as session:
-                _prediction = await session.get(Prediction, query.prediction_id)
+                await session.get(Prediction,
+    query.prediction_id)
                 if not prediction:
                     return None
 
                 return PredictionDTO(
                     id=prediction.id,
+    
                     match_id=prediction.match_id,
                     user_id=prediction.user_id,
                     predicted_home=prediction.predicted_home,
                     predicted_away=prediction.predicted_away,
                     confidence=float(prediction.confidence),
-                    strategy_used=prediction.strategy_used,
-                    points_earned=prediction.points_earned,
-                    accuracy_score=prediction.accuracy_score,
+    strategy_used=prediction.strategy_used,
+    points_earned=prediction.points_earned,
+    accuracy_score=prediction.accuracy_score,
+    
                     notes=prediction.notes,
                     created_at=prediction.created_at,
                     updated_at=prediction.updated_at,
@@ -369,20 +393,23 @@ class GetPredictionsByUserHandler(QueryHandler):
                     sql += " OFFSET :offset"
                     params["offset"] = query.offset
 
-                result = await session.execute(sql, params)
+                result = await session.execute(sql,
+    params)
                 predictions = result.fetchall()
 
                 return [
                     PredictionDTO(
                         id=p.id,
-                        match_id=p.match_id,
-                        user_id=p.user_id,
+    match_id=p.match_id,
+    user_id=p.user_id,
+    
                         predicted_home=p.predicted_home,
                         predicted_away=p.predicted_away,
                         confidence=float(p.confidence),
-                        strategy_used=p.strategy_used,
-                        points_earned=p.points_earned,
-                        accuracy_score=p.accuracy_score,
+    strategy_used=p.strategy_used,
+    points_earned=p.points_earned,
+    accuracy_score=p.accuracy_score,
+    
                         notes=p.notes,
                         created_at=p.created_at,
                         updated_at=p.updated_at,
@@ -404,7 +431,8 @@ class GetUserStatsHandler(QueryHandler):
         # 添加pass语句
         return GetUserStatsQuery
 
-    async def handle(self, query: GetUserStatsQuery) -> PredictionStatsDTO | None:
+    async def handle(self,
+    query: GetUserStatsQuery) -> PredictionStatsDTO | None:
         """处理获取用户统计查询"""
         try:
             async with get_session() as session:
@@ -412,8 +440,10 @@ class GetUserStatsHandler(QueryHandler):
                 stats_sql = """
                 SELECT
                     COUNT(*) as total_predictions,
-                    COUNT(CASE WHEN p.points_earned > 0 THEN 1 END) as successful_predictions,
-                    COALESCE(SUM(p.points_earned), 0) as total_points,
+    COUNT(CASE WHEN p.points_earned > 0 THEN 1 END) as successful_predictions,
+    COALESCE(SUM(p.points_earned),
+    0) as total_points,
+    
                     COALESCE(AVG(p.confidence), 0) as average_confidence
                 FROM predictions p
                 WHERE p.user_id = :user_id
@@ -426,9 +456,10 @@ class GetUserStatsHandler(QueryHandler):
                 if not stats or stats.total_predictions == 0:
                     return PredictionStatsDTO(
                         user_id=query.user_id,
-                        total_predictions=0,
-                        successful_predictions=0,
-                        success_rate=0.0,
+    total_predictions=0,
+    successful_predictions=0,
+    success_rate=0.0,
+    
                         total_points=0,
                         average_confidence=0.0,
                         strategy_breakdown={},
@@ -458,14 +489,15 @@ class GetUserStatsHandler(QueryHandler):
                     strategy_breakdown[row.strategy_used] = {
                         "count": row.count,
                         "average_confidence": float(row.avg_confidence),
-                        "total_points": row.total_points,
-                    }
+    "total_points": row.total_points,
+    }
 
                 # 获取最近表现
                 recent_sql = """
                 SELECT
                     m.match_date,
-                    p.predicted_home,
+    p.predicted_home,
+    
                     p.predicted_away,
                     m.home_score,
                     m.away_score,
@@ -487,9 +519,10 @@ class GetUserStatsHandler(QueryHandler):
                     recent_performance.append(
                         {
                             "match_date": row.match_date.isoformat(),
-                            "predicted_home": row.predicted_home,
-                            "predicted_away": row.predicted_away,
-                            "actual_home": row.home_score,
+    "predicted_home": row.predicted_home,
+    "predicted_away": row.predicted_away,
+    "actual_home": row.home_score,
+    
                             "actual_away": row.away_score,
                             "points_earned": row.points_earned,
                             "accuracy_score": (
@@ -497,21 +530,26 @@ class GetUserStatsHandler(QueryHandler):
                                 if row.accuracy_score
                                 else None
                             ),
-                        }
+    }
                     )
 
                 return PredictionStatsDTO(
                     user_id=query.user_id,
-                    total_predictions=stats.total_predictions,
-                    successful_predictions=stats.successful_predictions,
+    total_predictions=stats.total_predictions,
+    successful_predictions=stats.successful_predictions,
+    
                     success_rate=success_rate,
                     total_points=stats.total_points,
                     average_confidence=float(stats.average_confidence),
-                    strategy_breakdown=strategy_breakdown,
-                    recent_performance=recent_performance,
-                )
+    strategy_breakdown=strategy_breakdown,
+    recent_performance=recent_performance,
+    )
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError,
+    TypeError,
+    AttributeError,
+    KeyError,
+    RuntimeError) as e:
             logger.error(f"获取用户统计失败: {e}")
             return None
 
@@ -551,14 +589,16 @@ class GetUpcomingMatchesHandler(QueryHandler):
                     sql += " OFFSET :offset"
                     params["offset"] = query.offset
 
-                result = await session.execute(sql, params)
-                _matches = result.fetchall()
+                result = await session.execute(sql,
+    params)
+                result.fetchall()
 
                 return [
                     MatchDTO(
                         id=m.id,
-                        home_team=m.home_team,
-                        away_team=m.away_team,
+    home_team=m.home_team,
+    away_team=m.away_team,
+    
                         home_score=m.home_score,
                         away_score=m.away_score,
                         match_date=m.match_date,

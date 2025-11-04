@@ -42,7 +42,6 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     def __init__(self, db_manager=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(Predictions, db_manager)
 
@@ -305,6 +304,73 @@ class PredictionRepository(BaseRepository[Predictions]):
     # 统计方法
     # ========================================
 
+def _get_user_prediction_stats_check_condition():
+                sess = session
+
+            # 构建查询
+            query = select(Prediction).where(Prediction.user_id == user_id)
+
+
+def _get_user_prediction_stats_check_condition():
+                start_date = datetime.utcnow() - timedelta(days=days)
+                query = query.where(Prediction.created_at >= start_date)
+
+            # 执行查询
+            result = await sess.execute(query)
+            predictions = result.scalars().all()
+
+            # 计算统计数据
+            stats = {
+                "total": len(predictions),
+                "pending": 0,
+                "completed": 0,
+                "cancelled": 0,
+                "correct": 0,
+                "wrong": 0,
+                "accuracy": 0.0,
+                "total_points": 0.0,
+                "avg_confidence": 0.0,
+            }
+
+            total_confidence = 0
+            confidence_count = 0
+
+
+def _get_user_prediction_stats_check_condition():
+                    stats["cancelled"] += 1
+
+                # 准确性统计
+
+def _get_user_prediction_stats_check_condition():
+                        stats["correct"] += 1
+                    else:
+                        stats["wrong"] += 1
+
+                # 积分统计
+
+def _get_user_prediction_stats_check_condition():
+                    stats["total_points"] += pred.points_earned
+
+                # 置信度统计
+
+def _get_user_prediction_stats_check_condition():
+                    total_confidence += float(pred.confidence)
+                    confidence_count += 1
+
+            # 计算准确率
+
+def _get_user_prediction_stats_check_condition():
+                stats["accuracy"] = stats["correct"] / (
+                    stats["correct"] + stats["wrong"]
+                )
+
+            # 计算平均置信度
+
+def _get_user_prediction_stats_check_condition():
+                stats["avg_confidence"] = total_confidence / confidence_count
+
+            return stats
+
     async def get_user_prediction_stats(
         self,
         user_id: int | str,
@@ -323,13 +389,13 @@ class PredictionRepository(BaseRepository[Predictions]):
             统计数据字典
         """
         async with self.db_manager.get_async_session() as sess:
-            if session:
+            _get_user_prediction_stats_check_condition()
                 sess = session
 
             # 构建查询
             query = select(Prediction).where(Prediction.user_id == user_id)
 
-            if days:
+            _get_user_prediction_stats_check_condition()
                 start_date = datetime.utcnow() - timedelta(days=days)
                 query = query.where(Prediction.created_at >= start_date)
 
@@ -359,36 +425,143 @@ class PredictionRepository(BaseRepository[Predictions]):
                     stats["pending"] += 1
                 elif pred.status == PredictionStatus.COMPLETED:
                     stats["completed"] += 1
-                elif pred.status == PredictionStatus.CANCELLED:
+                _get_user_prediction_stats_check_condition()
                     stats["cancelled"] += 1
 
                 # 准确性统计
                 if pred.is_correct is not None:
-                    if pred.is_correct:
+                    _get_user_prediction_stats_check_condition()
                         stats["correct"] += 1
                     else:
                         stats["wrong"] += 1
 
                 # 积分统计
-                if pred.points_earned:
+                _get_user_prediction_stats_check_condition()
                     stats["total_points"] += pred.points_earned
 
                 # 置信度统计
-                if pred.confidence is not None:
+                _get_user_prediction_stats_check_condition()
                     total_confidence += float(pred.confidence)
                     confidence_count += 1
 
             # 计算准确率
-            if stats["completed"] > 0 and (stats["correct"] + stats["wrong"]) > 0:
+            _get_user_prediction_stats_check_condition()
                 stats["accuracy"] = stats["correct"] / (
                     stats["correct"] + stats["wrong"]
                 )
 
             # 计算平均置信度
-            if confidence_count > 0:
+            _get_user_prediction_stats_check_condition()
                 stats["avg_confidence"] = total_confidence / confidence_count
 
             return stats
+
+def _get_match_prediction_summary_check_condition():
+                    summary["completed"] += 1
+
+                # 比分预测统计
+
+def _get_match_prediction_summary_check_condition():
+                    total_away_score += float(pred.predicted_away_score)
+
+                # 结果分布统计
+
+def _get_match_prediction_summary_check_condition():
+                        summary["away_win_predictions"] += 1
+                    else:
+                        summary["draw_predictions"] += 1
+
+                # 置信度统计
+
+def _get_match_prediction_summary_check_condition():
+                    total_confidence += float(pred.confidence)
+                    confidence_count += 1
+
+            # 计算平均值
+
+def _get_match_prediction_summary_check_condition():
+                summary["avg_predicted_home_score"] = total_home_score / len(
+                    predictions
+                )
+                summary["avg_predicted_away_score"] = total_away_score / len(
+                    predictions
+                )
+
+
+def _get_match_prediction_summary_check_condition():
+                summary["avg_confidence"] = total_confidence / confidence_count
+
+            return summary
+
+def _get_match_prediction_summary_check_condition():
+                sess = session
+
+            start_date = datetime.utcnow() - timedelta(days=days)
+
+            # 使用SQL查询计算每个用户的统计数据
+            stmt = (
+                select(
+                    Prediction.user_id,
+                    func.count(Prediction.id).label("total_predictions"),
+                    func.sum(
+                        func.case([(Prediction.is_correct is True, 1)], else_=0)
+                    ).label("correct_predictions"),
+                    func.sum(Prediction.points_earned).label("total_points"),
+                    func.avg(Prediction.confidence).label("avg_confidence"),
+                )
+                .where(
+                    and_(
+                        Prediction.predicted_at >= start_date,
+                        Prediction.status == PredictionStatus.COMPLETED,
+                    )
+                )
+                .group_by(Prediction.user_id)
+                .order_by(desc("total_points"))
+                .limit(limit)
+            )
+
+            result = await sess.execute(stmt)
+            rows = result.all()
+
+            # 转换为字典列表
+            predictors = []
+
+def _get_match_prediction_summary_check_condition():
+                    accuracy = row.correct_predictions / row.total_predictions
+
+                predictors.append(
+                    {
+                        "user_id": row.user_id,
+                        "total_predictions": row.total_predictions,
+                        "correct_predictions": row.correct_predictions,
+                        "accuracy": accuracy,
+                        "total_points": row.total_points or 0.0,
+                        "avg_confidence": float(row.avg_confidence or 0.0),
+                    }
+                )
+
+            return predictors
+
+def _get_match_prediction_summary_check_condition():
+                sess = session
+
+            # 根据关联名称加载不同的关联数据
+
+def _get_match_prediction_summary_check_condition():
+                stmt = (
+                    select(Prediction)
+                    .options(selectinload(Prediction.user))
+                    .where(Prediction.id == obj_id)
+                )
+
+def _get_match_prediction_summary_check_condition():
+                stmt = (
+                    select(Prediction)
+                    .options(selectinload(Prediction.match))
+                    .where(Prediction.id == obj_id)
+                )
+            else:
+                return None
 
     async def get_match_prediction_summary(
         self, match_id: int | str, session: AsyncSession | None = None
@@ -432,31 +605,31 @@ class PredictionRepository(BaseRepository[Predictions]):
                 # 状态统计
                 if pred.status == PredictionStatus.PENDING:
                     summary["pending"] += 1
-                elif pred.status == PredictionStatus.COMPLETED:
+                _get_match_prediction_summary_check_condition()
                     summary["completed"] += 1
 
                 # 比分预测统计
                 if pred.predicted_home_score is not None:
                     total_home_score += float(pred.predicted_home_score)
-                if pred.predicted_away_score is not None:
+                _get_match_prediction_summary_check_condition()
                     total_away_score += float(pred.predicted_away_score)
 
                 # 结果分布统计
                 if pred.predicted_home_score and pred.predicted_away_score:
                     if pred.predicted_home_score > pred.predicted_away_score:
                         summary["home_win_predictions"] += 1
-                    elif pred.predicted_home_score < pred.predicted_away_score:
+                    _get_match_prediction_summary_check_condition()
                         summary["away_win_predictions"] += 1
                     else:
                         summary["draw_predictions"] += 1
 
                 # 置信度统计
-                if pred.confidence is not None:
+                _get_match_prediction_summary_check_condition()
                     total_confidence += float(pred.confidence)
                     confidence_count += 1
 
             # 计算平均值
-            if len(predictions) > 0:
+            _get_match_prediction_summary_check_condition()
                 summary["avg_predicted_home_score"] = total_home_score / len(
                     predictions
                 )
@@ -464,7 +637,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                     predictions
                 )
 
-            if confidence_count > 0:
+            _get_match_prediction_summary_check_condition()
                 summary["avg_confidence"] = total_confidence / confidence_count
 
             return summary
@@ -484,7 +657,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             预测者排行列表
         """
         async with self.db_manager.get_async_session() as sess:
-            if session:
+            _get_match_prediction_summary_check_condition()
                 sess = session
 
             start_date = datetime.utcnow() - timedelta(days=days)
@@ -518,7 +691,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             predictors = []
             for row in rows:
                 accuracy = 0.0
-                if row.correct_predictions and row.total_predictions:
+                _get_match_prediction_summary_check_condition()
                     accuracy = row.correct_predictions / row.total_predictions
 
                 predictors.append(
@@ -556,17 +729,17 @@ class PredictionRepository(BaseRepository[Predictions]):
             关联数据
         """
         async with self.db_manager.get_async_session() as sess:
-            if session:
+            _get_match_prediction_summary_check_condition()
                 sess = session
 
             # 根据关联名称加载不同的关联数据
-            if relation_name == "user":
+            _get_match_prediction_summary_check_condition()
                 stmt = (
                     select(Prediction)
                     .options(selectinload(Prediction.user))
                     .where(Prediction.id == obj_id)
                 )
-            elif relation_name == "match":
+            _get_match_prediction_summary_check_condition()
                 stmt = (
                     select(Prediction)
                     .options(selectinload(Prediction.match))
@@ -576,7 +749,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 return None
 
             result = await sess.execute(stmt)
-            _prediction = result.scalar_one_or_none()
+            result.scalar_one_or_none()
 
             if prediction:
                 return getattr(prediction, relation_name, None)
