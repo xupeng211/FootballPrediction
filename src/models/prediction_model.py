@@ -51,7 +51,6 @@ class PredictionModel:
 
     def __init__(self, model_name: str, model_type: str = "classification"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """
         初始化预测模型
@@ -297,7 +296,6 @@ class FootballPredictionModel(PredictionModel):
 
     def __init__(self, model_name: str = "football_predictor"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(model_name, "classification")
         self.prediction_type = PredictionType.MATCH_RESULT

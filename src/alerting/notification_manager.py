@@ -49,7 +49,6 @@ class EmailClient:
 
     def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
         self.smtp_port = config.get("smtp_port", 587)
@@ -244,7 +243,6 @@ class SlackClient:
 
     def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.channel = config.get("channel", "#quality-alerts")
@@ -342,7 +340,6 @@ class WeChatClient:
 
     def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.mentioned_list = config.get("mentioned_list", [])
@@ -429,7 +426,6 @@ class DingTalkClient:
 
     def __init__(self, config: dict[str, Any]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.webhook_url = config.get("webhook_url")
         self.secret = config.get("secret")
@@ -518,7 +514,6 @@ class NotificationManager:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.channels: dict[str, NotificationChannel] = {}
         self.clients: dict[str, Any] = {}
@@ -530,7 +525,6 @@ class NotificationManager:
 
     def _load_notification_channels(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """加载通知渠道配置"""
         try:
@@ -566,7 +560,6 @@ class NotificationManager:
 
     def _initialize_client(self, channel: NotificationChannel):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化通知客户端"""
         try:
@@ -687,7 +680,6 @@ class NotificationManager:
 
     def add_channel(self, channel: NotificationChannel):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """添加新的通知渠道"""
         self.channels[channel.id] = channel
@@ -696,7 +688,6 @@ class NotificationManager:
 
     def remove_channel(self, channel_id: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """移除通知渠道"""
         if channel_id in self.channels:

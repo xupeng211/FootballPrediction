@@ -132,7 +132,6 @@ class SimplePredictionService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.request_count = 0
         self._rate_limit_cache = {}

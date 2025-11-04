@@ -29,7 +29,6 @@ class QualityMonitorServer:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.app = FastAPI(
             title="实时质量监控服务",
@@ -68,7 +67,6 @@ class QualityMonitorServer:
 
     def _setup_routes(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """设置路由"""
 
@@ -425,7 +423,6 @@ class QualityMonitorServer:
 
     def stop_server(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """停止服务器"""
         if self.background_task:

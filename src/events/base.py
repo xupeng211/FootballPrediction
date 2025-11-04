@@ -51,7 +51,6 @@ class Event(ABC):
 
     def __init__(self, data: EventData):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化事件"
 
@@ -98,7 +97,6 @@ class Event(ABC):
         Returns:
             str: 事件类型标识符
         """
-        pass
 
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
@@ -107,7 +105,6 @@ class Event(ABC):
         Returns:
             Dict[str, Any]: 事件的字典表示
         """
-        pass
 
     @classmethod
     @abstractmethod
@@ -120,7 +117,6 @@ class Event(ABC):
         Returns:
             T: 事件实例
         """
-        pass
 
     def __str__(self) -> str:
         return f"{self.get_event_type()}(id={self.event_id}, ts={self.timestamp})"
@@ -138,7 +134,6 @@ class EventHandler(ABC):
 
     def __init__(self, name: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化事件处理器"
 
@@ -155,7 +150,6 @@ class EventHandler(ABC):
         Args:
             event: 要处理的事件
         """
-        pass
 
     @abstractmethod
     def get_handled_events(self) -> list[str]:
@@ -164,11 +158,9 @@ class EventHandler(ABC):
         Returns:
             list[str]: 事件类型列表
         """
-        pass
 
     async def start(self) -> None:
         """启动处理器"""
-        pass
 
     async def stop(self) -> None:
         """停止处理器"""
@@ -244,7 +236,6 @@ class EventFilter(ABC):
         Returns:
             bool: 是否应该处理
         """
-        pass
 
 
 class EventTypeFilter(EventFilter):
@@ -252,7 +243,6 @@ class EventTypeFilter(EventFilter):
 
     def __init__(self, allowed_types: list[str]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化过滤器"
 
@@ -270,7 +260,6 @@ class EventSourceFilter(EventFilter):
 
     def __init__(self, allowed_sources: list[str]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化过滤器"
 
@@ -288,7 +277,6 @@ class CompositeEventFilter(EventFilter):
 
     def __init__(self, filters: list[EventFilter], operator: str = "AND"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化组合过滤器"
 

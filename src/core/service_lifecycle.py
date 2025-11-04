@@ -50,8 +50,6 @@ class ServiceInfo:
 class ServiceLifecycleError(Exception):
     """服务生命周期错误"""
 
-    pass
-
 
 class ServiceLifecycleManager:
     """类文档字符串"""
@@ -61,7 +59,6 @@ class ServiceLifecycleManager:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._services: dict[str, ServiceInfo] = {}
         self._lock = threading.RLock()

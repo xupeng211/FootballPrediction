@@ -23,7 +23,6 @@ class SmartDataValidator:
 
     def __init__(self, config: dict[str, Any] = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.config = config or {}
         self.status = "initialized"

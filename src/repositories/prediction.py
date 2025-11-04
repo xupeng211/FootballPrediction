@@ -20,8 +20,6 @@ from .base import QuerySpec, ReadOnlyRepository, Repository
 class PredictionRepositoryInterface(Repository[Prediction, int]):
     """预测仓储接口"""
 
-    pass
-
 
 class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
     """只读预测仓储"""

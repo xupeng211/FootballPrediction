@@ -16,7 +16,6 @@ class ValidationResult:
 
     def __init__(self, is_valid: bool = True, message: str = ""):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.is_valid = is_valid
         self.message = message
@@ -57,7 +56,6 @@ class Rule(ABC):
 
     def __init__(self, name: str, description: str = ""):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.description = description
@@ -66,7 +64,6 @@ class Rule(ABC):
     @abstractmethod
     def validate(self, obj: Any) -> ValidationResult:
         """验证对象"""
-        pass
 
 
 class BusinessRule(Rule):
@@ -108,7 +105,6 @@ class ValidationEngine:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._rules: dict[str, list[Rule]] = {}
         self._global_rules: list[Rule] = []

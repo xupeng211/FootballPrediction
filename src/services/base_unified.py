@@ -256,7 +256,6 @@ class BaseService(ABC):
 
         子类重写此方法来实现自定义清理逻辑
         """
-        pass
 
     def _on_start(self) -> bool:
         """
@@ -275,7 +274,6 @@ class BaseService(ABC):
 
         子类重写此方法来实现自定义停止逻辑
         """
-        pass
 
     # ========================================
     # 抽象方法（强制子类实现）

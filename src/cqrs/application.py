@@ -51,7 +51,6 @@ class PredictionCQRSService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
@@ -150,7 +149,6 @@ class MatchCQRSService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
@@ -230,7 +228,6 @@ class UserCQRSService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
@@ -274,7 +271,6 @@ class AnalyticsCQRSService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.query_bus = get_query_bus()
 

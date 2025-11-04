@@ -44,7 +44,6 @@ class ServiceDescriptor:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         if self.dependencies is None:
             self.dependencies = []
@@ -58,7 +57,6 @@ class DIContainer:
 
     def __init__(self, name: str = "default"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self._services: dict[type, ServiceDescriptor] = {}
@@ -323,7 +321,6 @@ class DIScope:
 
     def __init__(self, container: DIContainer, scope_name: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.container = container
         self.scope_name = scope_name
@@ -331,7 +328,6 @@ class DIScope:
 
     def __enter__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._old_scope = self.container._current_scope
         self.container._current_scope = self.scope_name
@@ -340,7 +336,6 @@ class DIScope:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.container._current_scope = self._old_scope
         self.container.clear_scope(self.scope_name)
@@ -355,7 +350,6 @@ class ServiceCollection:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._registrations: list[Callable[[DIContainer], None]] = []
 

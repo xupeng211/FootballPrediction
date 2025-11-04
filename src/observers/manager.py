@@ -61,15 +61,12 @@ class Subject:
 
     async def record_prediction(self, event: PredictionEvent) -> None:
         """记录预测事件"""
-        pass
 
     async def record_cache_hit(self, event: CacheEvent) -> None:
         """记录缓存事件"""
-        pass
 
     async def trigger_alert(self, event: AlertEvent) -> None:
         """触发告警事件"""
-        pass
 
 
 class Observer:
@@ -80,7 +77,6 @@ class Observer:
 
     async def update(self, subject: Subject, event_data: Any) -> None:
         """接收更新"""
-        pass
 
 
 class PredictionSubject(Subject):
@@ -135,7 +131,6 @@ class CacheSubject(Subject):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._cache_events: list[CacheEvent] = []
         self._observers: list[Observer] = []
@@ -176,7 +171,6 @@ class AlertSubject(Subject):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._alerts: list[AlertEvent] = []
         self._observers: list[Observer] = []
@@ -218,7 +212,6 @@ class MetricsObserver(Observer):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._metrics: dict[str, Any] = {
             "total_predictions": 0,
@@ -271,7 +264,6 @@ class ObserverManager:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._subjects: dict[str, Subject] = {}
         self._observers: dict[str, Observer] = {}

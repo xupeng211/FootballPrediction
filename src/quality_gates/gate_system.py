@@ -149,7 +149,6 @@ class CodeQualityGate(QualityGate):
 
     def __init__(self, threshold: float = 8.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(
             name="代码质量",
@@ -186,7 +185,6 @@ class TestCoverageGate(QualityGate):
 
     def __init__(self, threshold: float = 80.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(
             name="测试覆盖率",
@@ -207,7 +205,6 @@ class SecurityGate(QualityGate):
 
     def __init__(self, threshold: float = 9.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(
             name="安全检查",
@@ -228,7 +225,6 @@ class OverallQualityGate(QualityGate):
 
     def __init__(self, threshold: float = 8.5):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(
             name="综合质量",
@@ -255,7 +251,6 @@ class TechnicalDebtGate(QualityGate):
 
     def __init__(self, threshold: float = 60.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(
             name="技术债务",
@@ -278,7 +273,6 @@ class ComplexityGate(QualityGate):
 
     def __init__(self, threshold: float = 70.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(
             name="代码复杂度",
@@ -307,7 +301,6 @@ class QualityGateSystem:
 
     def __init__(self, config_path: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.config = self._load_config(config_path)
         self.gates = self._initialize_gates()

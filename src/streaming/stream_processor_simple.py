@@ -240,7 +240,6 @@ class MessageProcessor:
 
     def __init__(self, name: str, input_topic: str = None, output_topic: str = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.input_topic = input_topic
@@ -249,14 +248,12 @@ class MessageProcessor:
 
     def add_handler(self, event_type: str, handler: Callable):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """添加事件处理器"""
         self.handlers[event_type] = handler
 
     def remove_handler(self, event_type: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """移除事件处理器"""
         self.handlers.pop(event_type, None)
@@ -274,7 +271,6 @@ class BatchProcessor:
 
     def __init__(self, name: str, batch_size: int = 10, batch_timeout: float = 5.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.batch_size = batch_size
@@ -284,7 +280,6 @@ class BatchProcessor:
 
     def add_to_batch(self, message: dict[str, Any]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """添加消息到批次"""
         self.current_batch.append(message)
@@ -295,7 +290,6 @@ class BatchProcessor:
 
     def clear_batch(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """清空批次"""
         self.current_batch: list[Any] = []

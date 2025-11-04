@@ -61,7 +61,6 @@ class ConfigurationBinder:
 
     def __init__(self, container: DIContainer):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.container = container
         self.auto_binder = AutoBinder(container)
@@ -294,7 +293,6 @@ class ConfigurationBuilder:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.config = DIConfiguration()
 

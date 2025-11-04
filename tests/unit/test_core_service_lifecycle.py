@@ -10,7 +10,6 @@ from unittest.mock import Mock
 import pytest
 
 # 导入目标模块
-from core.service_lifecycle import *
 
 
 class TestModuleFunctionality:

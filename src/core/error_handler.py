@@ -27,13 +27,11 @@ class ErrorHandler:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.errors = []
 
     def handle_error(self, error: Exception):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """处理错误"""
         self.errors.append(str(error))
@@ -41,7 +39,6 @@ class ErrorHandler:
 
     def clear_errors(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """清除错误"""
         self.errors.clear()

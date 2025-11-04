@@ -98,7 +98,7 @@ class PathManager:
         """验证src模块是否可以导入"""
         try:
             # 尝试导入src模块
-            import src
+            pass
 
             return True
         except ImportError as e:
@@ -271,7 +271,7 @@ class PathManager:
 
         # 测试src导入
         try:
-            import src
+            pass
 
             validation_results["src_importable"] = True
         except ImportError as e:

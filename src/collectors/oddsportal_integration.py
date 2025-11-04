@@ -30,7 +30,6 @@ class OddsPortalIntegration:
 
     def __init__(self, config_path: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """
         初始化OddsPortal集成
@@ -94,7 +93,6 @@ class OddsPortalIntegration:
 
     def _validate_config(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """验证配置"""
         required_sections = ["basic", "request", "scraping"]

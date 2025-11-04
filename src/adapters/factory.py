@@ -12,8 +12,6 @@ from .base import Adapter
 class AdapterError(Exception):
     """适配器错误"""
 
-    pass
-
 
 try:
     from .football import ApiFootballAdapter, CompositeFootballAdapter, OptaDataAdapter

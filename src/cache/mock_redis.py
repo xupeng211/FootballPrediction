@@ -372,4 +372,3 @@ async def amset_cache(mapping: dict[str, str], ttl: int | None = None) -> bool:
 
 async def startup_warmup() -> None:
     """启动时预热"""
-    pass

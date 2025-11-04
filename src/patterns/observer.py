@@ -28,12 +28,10 @@ class Observer(ABC):
             subject: 发出通知的主题
             data: 更新的数据
         """
-        pass
 
     @abstractmethod
     def get_observer_id(self) -> str:
         """获取观察者ID"""
-        pass
 
 
 class Subject(ABC):

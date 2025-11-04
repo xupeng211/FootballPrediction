@@ -61,42 +61,31 @@ except ImportError:
     class MockMLflow:
         """Mock MLflow class for environments without MLflow"""
 
-        pass
-
         def start_run(self, **kwargs):
             """Start a mock MLflow run"""
-            pass
 
         def __enter__(self):
             """Context manager entry"""
-            pass
             return self
 
         def __exit__(self, *args):
             """Context manager exit"""
-            pass
 
         def log_metric(self, *args, **kwargs):
             """Log a mock metric"""
-            pass
 
         def log_param(self, *args, **kwargs):
             """Log a mock parameter"""
-            pass
 
         def log_artifacts(self, *args, **kwargs):
             """Log mock artifacts"""
-            pass
 
         class sklearn:
             """Mock sklearn module"""
 
-            pass
-
             @staticmethod
             def log_model(*args, **kwargs):
                 """Log a mock sklearn model"""
-                pass
 
     mlflow = MockMLflow()
     mlflow.sklearn = MockMLflow.sklearn()
@@ -105,11 +94,8 @@ except ImportError:
     class MockMlflowClient:
         """Mock MLflow client"""
 
-        pass
-
         def __init__(self, *args, **kwargs):
             """Initialize mock client"""
-            pass
 
         def get_latest_versions(self, *args, **kwargs):
             """Get latest versions (mock)"""

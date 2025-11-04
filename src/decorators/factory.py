@@ -52,7 +52,6 @@ class DecoratorFactory:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._config_cache: dict[str, DecoratorConfig] = {}
         self._chain_configs: dict[str, DecoratorChainConfig] = {}
@@ -284,7 +283,6 @@ class DecoratorBuilder:
 
     def __init__(self, decorator_type: str, component: Component):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.decorator_type = decorator_type
         self.component = component
