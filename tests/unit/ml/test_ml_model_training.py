@@ -27,10 +27,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
-                                       TrainingStatus)
-    from src.ml.models.base_model import (BaseModel, PredictionResult,
-                                          TrainingResult)
+    from src.ml.model_training import (
+        ModelTrainer,
+        ModelType,
+        TrainingConfig,
+        TrainingStatus,
+    )
+    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -100,7 +103,7 @@ class TestMLModelTraining:
         """测试Poisson模型完整训练流程"""
         # 创建训练数据
         training_data = create_training_data(300)
-        test_data = create_test_data(100)
+        create_test_data(100)
 
         # 初始化模型
         model = PoissonModel("test_poisson")
@@ -253,7 +256,7 @@ class TestMLModelTraining:
 
         # 训练模型
         original_model = PoissonModel("save_test_original")
-        training_result = original_model.train(training_data)
+        original_model.train(training_data)
 
         # 获取训练后的预测结果作为基准
         test_match = {
@@ -263,7 +266,7 @@ class TestMLModelTraining:
         }
 
         original_prediction = original_model.predict(test_match)
-        original_team_strengths = original_model.team_attack_strength.copy()
+        original_model.team_attack_strength.copy()
 
         # 保存模型到临时文件
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pkl") as tmp_file:
@@ -400,7 +403,7 @@ class TestMLModelTraining:
         assert model.last_training_time is None
 
         # 训练模型
-        training_result = model.train(training_data)
+        model.train(training_data)
 
         # 验证训练状态更新
         assert model.is_trained
@@ -801,7 +804,7 @@ class TestMLModelPerformanceMetrics:
 
         # 训练模型
         model = PoissonModel("evaluation_test")
-        training_result = model.train(training_data)
+        model.train(training_data)
 
         # 全面评估
         evaluation_metrics = model.evaluate(test_data)

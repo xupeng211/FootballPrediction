@@ -536,7 +536,7 @@ class Stage4E2ETester:
                 sample_data = [{"id": i, "value": i * 2} for i in range(100)]
 
                 start_time = time.time()
-                processed = [
+                [
                     {
                         "id": item["id"],
                         "doubled_value": item["value"] * 2,

@@ -12,11 +12,20 @@ import pytest
 from fastapi import HTTPException, status
 
 try:
-    from src.api.auth import (MOCK_USERS, PasswordChangeRequest,
-                              PasswordResetConfirm, PasswordResetRequest,
-                              RefreshTokenRequest, TokenResponse, UserLogin,
-                              UserRegister, UserResponse, authenticate_user,
-                              create_user, get_user_by_id)
+    from src.api.auth import (
+        MOCK_USERS,
+        PasswordChangeRequest,
+        PasswordResetConfirm,
+        PasswordResetRequest,
+        RefreshTokenRequest,
+        TokenResponse,
+        UserLogin,
+        UserRegister,
+        UserResponse,
+        authenticate_user,
+        create_user,
+        get_user_by_id,
+    )
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
     # Mock implementations
@@ -82,10 +91,14 @@ except ImportError:
 
 
 try:
-    from src.api.auth_dependencies import (AuthContext, get_client_ip,
-                                           get_current_active_user,
-                                           get_current_user, rate_limit_login,
-                                           require_roles)
+    from src.api.auth_dependencies import (
+        AuthContext,
+        get_client_ip,
+        get_current_active_user,
+        get_current_user,
+        rate_limit_login,
+        require_roles,
+    )
 except ImportError:
 
     def get_current_user(*args, **kwargs):

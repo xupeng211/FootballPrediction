@@ -188,15 +188,6 @@ profiles:
             "imports": ["included_config"],
         }
 
-        included_config = {
-            "services": {
-                "included_service": {
-                    "name": "IncludedService",
-                    "implementation": "IncludedServiceImpl",
-                }
-            }
-        }
-
         # 创建主配置文件
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".json", delete=False
@@ -738,14 +729,6 @@ class TestConfigurationIntegration:
                     "implementation": "BaseServiceImpl",
                     "lifetime": "singleton",
                     "parameters": {"timeout": 30, "retries": 3},
-                }
-            }
-        }
-
-        dev_overrides = {
-            "services": {
-                "base_service": {
-                    "parameters": {"timeout": 10, "debug": True}  # 开发环境更短超时
                 }
             }
         }

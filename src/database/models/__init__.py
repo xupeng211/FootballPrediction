@@ -7,8 +7,7 @@
 from src.database.base import Base
 
 from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
-from .data_collection_log import (CollectionStatus, CollectionType,
-                                  DataCollectionLog)
+from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLog
 from .features import Features, TeamType
 from .league import League
 from .match import Match, MatchStatus
@@ -16,9 +15,17 @@ from .odds import MarketType, Odds
 from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
 from .team import Team
-from .tenant import (PermissionScope, ResourceType, RolePermission, Tenant,
-                     TenantPermission, TenantPlan, TenantRole, TenantStatus,
-                     UserRoleAssignment)
+from .tenant import (
+    PermissionScope,
+    ResourceType,
+    RolePermission,
+    Tenant,
+    TenantPermission,
+    TenantPlan,
+    TenantRole,
+    TenantStatus,
+    UserRoleAssignment,
+)
 from .user import User
 
 # 为API兼容性创建别名

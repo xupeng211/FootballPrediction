@@ -8,8 +8,7 @@ Data Lake Storage Module
 import logging
 
 from .lake import LocalDataLakeStorage  # 导入拆分后的模块
-from .lake import (LakeStorageUtils, MetadataManager, PartitionManager,
-                   S3DataLakeStorage)
+from .lake import LakeStorageUtils, MetadataManager, PartitionManager, S3DataLakeStorage
 
 logger = logging.getLogger(__name__)
 

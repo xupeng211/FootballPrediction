@@ -6,12 +6,14 @@ Metrics Collector
 """
 
 # 为了向后兼容，从增强的模块化实现重新导出
-from .metrics_collector_enhanced import \
-    EnhancedMetricsCollector as MetricsCollector
-from .metrics_collector_enhanced import (MetricPoint, MetricsAggregator,
-                                         get_metrics_collector,
-                                         track_cache_performance,
-                                         track_prediction_performance)
+from .metrics_collector_enhanced import EnhancedMetricsCollector as MetricsCollector
+from .metrics_collector_enhanced import (
+    MetricPoint,
+    MetricsAggregator,
+    get_metrics_collector,
+    track_cache_performance,
+    track_prediction_performance,
+)
 
 # 为了向后兼容,也导出一些原有的类名
 try:

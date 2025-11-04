@@ -316,8 +316,12 @@ class BaselineModelTrainer:
             # 返回模拟评估结果
             return {"accuracy": 0.8, "precision": 0.8, "recall": 0.8, "f1": 0.8}
 
-        from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                                     recall_score)
+        from sklearn.metrics import (
+            accuracy_score,
+            f1_score,
+            precision_score,
+            recall_score,
+        )
 
         y_pred = self.model.predict(X_test)
 

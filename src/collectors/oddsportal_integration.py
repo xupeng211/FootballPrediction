@@ -15,10 +15,8 @@ from typing import Any
 
 import yaml
 
-from src.collectors.data_sources import (DataSourceAdapter, MatchData,
-                                         OddsData, TeamData)
-from src.collectors.oddsportal_scraper import (OddsPortalMatch,
-                                               OddsPortalScraper)
+from src.collectors.data_sources import DataSourceAdapter, MatchData, OddsData, TeamData
+from src.collectors.oddsportal_scraper import OddsPortalMatch, OddsPortalScraper
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)

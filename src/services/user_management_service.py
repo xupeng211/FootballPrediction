@@ -13,8 +13,11 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr
 
-from src.core.exceptions import (InvalidCredentialsError,
-                                 UserAlreadyExistsError, UserNotFoundError)
+from src.core.exceptions import (
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
 from src.database.repositories.user import UserRepository
 from src.utils.crypto_utils import hash_password, verify_password
 from src.utils.data_validator import validate_email, validate_password_strength

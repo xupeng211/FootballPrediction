@@ -26,7 +26,6 @@ def test_utils_dict_utils_basic():
         print("✅ get_value_safe 功能正常")
 
         # 测试嵌套字典
-        nested_dict = {"level1": {"level2": "deep_value"}}
         result = utils.get_nested_value(test_dict, "level1.level2")
         assert result == "deep_value", f"Expected 'deep_value', got {result}"
         print("✅ get_nested_value 功能正常")
@@ -183,7 +182,6 @@ def estimate_coverage():
     print("\n📈 覆盖率估算...")
 
     # 基于测试文件数量和成功率估算
-    test_files = ["simple_test_runner.py", "test_basic_coverage.py"]
 
     modules_tested = [
         "src.utils.dict_utils",

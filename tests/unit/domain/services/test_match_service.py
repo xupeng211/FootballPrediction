@@ -20,12 +20,13 @@ import pytest
 
 # 导入领域模型和服务
 try:
-    from src.domain.events.match_events import (MatchCancelledEvent,
-                                                MatchFinishedEvent,
-                                                MatchPostponedEvent,
-                                                MatchStartedEvent)
-    from src.domain.models.match import (Match, MatchResult, MatchScore,
-                                         MatchStatus)
+    from src.domain.events.match_events import (
+        MatchCancelledEvent,
+        MatchFinishedEvent,
+        MatchPostponedEvent,
+        MatchStartedEvent,
+    )
+    from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
     from src.domain.models.team import Team
     from src.domain.services.match_service import MatchDomainService
 
@@ -145,7 +146,6 @@ except ImportError as e:
                     f"不能取消已结束或已取消的比赛，当前状态: {match.status}"
                 )
 
-            previous_status = match.status
             match.status = MatchStatus.CANCELLED
 
             event = MatchCancelledEvent(match, reason)
@@ -161,7 +161,6 @@ except ImportError as e:
                     f"只能延期预定或进行中的比赛，当前状态: {match.status}"
                 )
 
-            previous_status = match.status
             match.status = MatchStatus.POSTPONED
             match.postponed_until = new_time
 

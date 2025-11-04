@@ -147,7 +147,7 @@ class TestDictUtilsEnhanced:
         ]
 
         for method in expected_methods:
-            has_method = hasattr(DictUtils, method)
+            hasattr(DictUtils, method)
             # 不强制要求所有方法都存在
 
     def test_error_handling(self):

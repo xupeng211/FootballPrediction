@@ -86,8 +86,7 @@ class TestContentAnalysisService:
 
     def test_service_module_import(self):
         """测试服务模块导入"""
-        from src.services.content_analysis_service import \
-            ContentAnalysisService
+        from src.services.content_analysis_service import ContentAnalysisService
 
         assert ContentAnalysisService is not None
 
@@ -101,7 +100,7 @@ class TestContentAnalysisService:
         ]
 
         for method in expected_methods:
-            has_method = hasattr(service, method)
+            hasattr(service, method)
             # 不强制要求所有方法都存在
 
     @pytest.mark.asyncio

@@ -16,8 +16,15 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
 # 直接导入base模块，绕过__init__.py
-from base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
-                  CompositeAdapter, DataTransformer, Target)
+from base import (
+    Adaptee,
+    Adapter,
+    AdapterStatus,
+    BaseAdapter,
+    CompositeAdapter,
+    DataTransformer,
+    Target,
+)
 
 
 class MockAdaptee(Adaptee):

@@ -6,8 +6,13 @@
 import pytest
 
 # 导入目标模块
-from core.exceptions import (ConfigError, DataError, DependencyInjectionError,
-                             FootballPredictionError, ValidationError)
+from core.exceptions import (
+    ConfigError,
+    DataError,
+    DependencyInjectionError,
+    FootballPredictionError,
+    ValidationError,
+)
 
 
 class TestExceptionHierarchy:

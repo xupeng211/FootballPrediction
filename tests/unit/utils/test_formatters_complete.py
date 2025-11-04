@@ -5,8 +5,12 @@ Formatters完整测试 - 从0%提升到100%覆盖率
 
 from datetime import datetime
 
-from src.utils.formatters import (format_currency, format_datetime,
-                                  format_json, format_percentage)
+from src.utils.formatters import (
+    format_currency,
+    format_datetime,
+    format_json,
+    format_percentage,
+)
 
 
 class TestFormattersComplete:

@@ -10,8 +10,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.core.config_di import (ConfigurationBinder, DIConfiguration,
-                                ServiceConfig)
+from src.core.config_di import ConfigurationBinder, DIConfiguration, ServiceConfig
 from src.core.di import DIContainer
 from src.core.exceptions import DependencyInjectionError
 

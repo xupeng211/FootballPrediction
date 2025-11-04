@@ -135,9 +135,11 @@ class TestModelsPredictionFixed:
 
     def test_monitoring_metrics_functionality(self):
         """测试监控指标功能"""
-        from src.models.prediction import (prediction_accuracy,
-                                           prediction_duration_seconds,
-                                           predictions_total)
+        from src.models.prediction import (
+            prediction_accuracy,
+            prediction_duration_seconds,
+            predictions_total,
+        )
 
         # 测试Counter指标
         initial_value = predictions_total()

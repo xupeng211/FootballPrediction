@@ -12,16 +12,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager, get_redis_manager
 from src.collectors.data_sources import data_source_manager
-from src.collectors.enhanced_fixtures_collector import \
-    EnhancedFixturesCollector
+from src.collectors.enhanced_fixtures_collector import EnhancedFixturesCollector
 from src.core.logging_system import get_logger
 from src.database.connection import get_async_session
 from src.database.models.match import Match
 from src.database.models.team import Team
 
-from .schemas.data import (DataCollectionRequest, DataCollectionResponse,
-                           DataSourceStatusResponse, MatchResponse,
-                           TeamResponse)
+from .schemas.data import (
+    DataCollectionRequest,
+    DataCollectionResponse,
+    DataSourceStatusResponse,
+    MatchResponse,
+    TeamResponse,
+)
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/data", tags=["data-integration"])

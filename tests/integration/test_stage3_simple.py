@@ -380,7 +380,7 @@ class Stage3SimpleTester:
 
             # 测试无效数据类型缓存
             invalid_data = object()  # 不可序列化的对象
-            success = self.cache_manager.set_cache("invalid_test", invalid_data)
+            self.cache_manager.set_cache("invalid_test", invalid_data)
             # 应该能够缓存，因为使用的是内存缓存
 
             # 测试空键值处理

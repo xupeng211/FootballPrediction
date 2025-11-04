@@ -10,9 +10,13 @@
 
 from .entities import MatchEntity, TeamEntity
 from .feature_calculator import FeatureCalculator
-from .feature_definitions import (AllMatchFeatures, AllTeamFeatures,
-                                  HistoricalMatchupFeatures, OddsFeatures,
-                                  RecentPerformanceFeatures)
+from .feature_definitions import (
+    AllMatchFeatures,
+    AllTeamFeatures,
+    HistoricalMatchupFeatures,
+    OddsFeatures,
+    RecentPerformanceFeatures,
+)
 from .feature_store import FootballFeatureStore
 
 __all__ = [

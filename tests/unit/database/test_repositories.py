@@ -7,6 +7,7 @@
 
 import asyncio
 import os
+
 # 模拟导入，避免循环依赖问题
 import sys
 from datetime import datetime
@@ -101,7 +102,7 @@ class TestBaseRepository:
         """测试成功创建记录"""
         # 准备测试数据
         obj_data = {"name": "测试对象", "value": 123}
-        created_obj = MockModel(**obj_data, id=1)
+        MockModel(**obj_data, id=1)
 
         # 模拟数据库操作
         mock_session.add = MagicMock()
@@ -109,7 +110,7 @@ class TestBaseRepository:
         mock_session.refresh = AsyncMock()
 
         with patch.object(repository, "get_session", return_value=mock_session):
-            result = await repository.create(obj_data)
+            await repository.create(obj_data)
 
         # 验证操作
         mock_session.add.assert_called_once()
@@ -125,7 +126,7 @@ class TestBaseRepository:
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock()
 
-        result = await repository.create(obj_data, session=mock_session)
+        await repository.create(obj_data, session=mock_session)
 
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()

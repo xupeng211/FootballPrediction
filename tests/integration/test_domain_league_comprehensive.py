@@ -9,8 +9,14 @@ from decimal import Decimal
 
 import pytest
 
-from src.domain.models.league import (DomainError, League, LeagueSeason,
-                                      LeagueSettings, LeagueStatus, LeagueType)
+from src.domain.models.league import (
+    DomainError,
+    League,
+    LeagueSeason,
+    LeagueSettings,
+    LeagueStatus,
+    LeagueType,
+)
 
 
 class TestLeagueSettingsComprehensive:

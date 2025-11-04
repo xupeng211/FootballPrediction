@@ -241,7 +241,7 @@ class TestPhase35AICoverageMasterExtended:
             base_data = self.master._collect_base_coverage_data()
             patterns = self.master._identify_coverage_patterns(base_data)
             predictions = self.master._predict_improvement_opportunities(patterns)
-            strategy = self.master._generate_intelligent_strategy(predictions)
+            self.master._generate_intelligent_strategy(predictions)
 
             # 如果所有方法都能成功调用，链式调用就是成功的
             assert True

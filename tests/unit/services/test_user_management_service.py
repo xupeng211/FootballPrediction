@@ -10,13 +10,18 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.core.exceptions import (InvalidCredentialsError,
-                                 UserAlreadyExistsError, UserNotFoundError)
-from src.services.user_management_service import (UserAuthResponse,
-                                                  UserCreateRequest,
-                                                  UserManagementService,
-                                                  UserResponse,
-                                                  UserUpdateRequest)
+from src.core.exceptions import (
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
+from src.services.user_management_service import (
+    UserAuthResponse,
+    UserCreateRequest,
+    UserManagementService,
+    UserResponse,
+    UserUpdateRequest,
+)
 
 
 @pytest.fixture

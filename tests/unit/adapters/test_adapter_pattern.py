@@ -13,11 +13,16 @@ import pytest
 
 # 尝试从src导入，失败则使用本地导入
 try:
-    from src.adapters.base import (Adaptee, Adapter, AdapterStatus,
-                                   BaseAdapter, CompositeAdapter,
-                                   DataTransformer, Target)
-    from src.adapters.factory import (AdapterConfig, AdapterFactory,
-                                      AdapterGroupConfig)
+    from src.adapters.base import (
+        Adaptee,
+        Adapter,
+        AdapterStatus,
+        BaseAdapter,
+        CompositeAdapter,
+        DataTransformer,
+        Target,
+    )
+    from src.adapters.factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
     from src.adapters.registry import AdapterError, AdapterRegistry
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
@@ -27,8 +32,15 @@ except ImportError as e:
 
     sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
-    from base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
-                      CompositeAdapter, DataTransformer, Target)
+    from base import (
+        Adaptee,
+        Adapter,
+        AdapterStatus,
+        BaseAdapter,
+        CompositeAdapter,
+        DataTransformer,
+        Target,
+    )
     from registry import AdapterError, AdapterRegistry
 
     # 为factory模块提供Mock实现

@@ -10,9 +10,13 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.core.service_lifecycle import (ServiceInfo, ServiceLifecycleError,
-                                        ServiceLifecycleManager, ServiceState,
-                                        get_lifecycle_manager)
+from src.core.service_lifecycle import (
+    ServiceInfo,
+    ServiceLifecycleError,
+    ServiceLifecycleManager,
+    ServiceState,
+    get_lifecycle_manager,
+)
 
 
 class TestServiceState:

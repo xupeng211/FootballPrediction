@@ -6,18 +6,36 @@ Phase 3.2 - Core模块异常系统全面测试
 
 import pytest
 
-from src.core.exceptions import (AdapterError, AuthenticationError,
-                                 AuthorizationError, BacktestError,
-                                 BusinessRuleError, CacheError, ConfigError,
-                                 ConsistencyError, DatabaseError, DataError,
-                                 DataProcessingError, DataQualityError,
-                                 DependencyInjectionError, DomainError,
-                                 FootballPredictionError, LineageError,
-                                 ModelError, PipelineError, PredictionError,
-                                 RateLimitError, ServiceError,
-                                 ServiceLifecycleError, StreamingError,
-                                 TaskExecutionError, TaskRetryError,
-                                 TimeoutError, TrackingError, ValidationError)
+from src.core.exceptions import (
+    AdapterError,
+    AuthenticationError,
+    AuthorizationError,
+    BacktestError,
+    BusinessRuleError,
+    CacheError,
+    ConfigError,
+    ConsistencyError,
+    DatabaseError,
+    DataError,
+    DataProcessingError,
+    DataQualityError,
+    DependencyInjectionError,
+    DomainError,
+    FootballPredictionError,
+    LineageError,
+    ModelError,
+    PipelineError,
+    PredictionError,
+    RateLimitError,
+    ServiceError,
+    ServiceLifecycleError,
+    StreamingError,
+    TaskExecutionError,
+    TaskRetryError,
+    TimeoutError,
+    TrackingError,
+    ValidationError,
+)
 
 
 class TestCoreExceptionsComprehensive:

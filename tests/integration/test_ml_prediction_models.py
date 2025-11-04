@@ -226,8 +226,10 @@ def test_prediction_service(training_data):
     logger.info("\n🤖 测试预测服务...")
 
     try:
-        from src.ml.prediction.prediction_service import (PredictionService,
-                                                          PredictionStrategy)
+        from src.ml.prediction.prediction_service import (
+            PredictionService,
+            PredictionStrategy,
+        )
 
         # 初始化预测服务
         service = PredictionService()

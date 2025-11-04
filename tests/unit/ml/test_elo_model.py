@@ -12,6 +12,7 @@ Elo Rating Model Tests
 """
 
 import os
+
 # 导入ML模块
 import sys
 from datetime import datetime, timedelta
@@ -23,8 +24,7 @@ import pytest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import (BaseModel, PredictionResult,
-                                      TrainingResult)
+    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.elo_model import EloModel
 
     CAN_IMPORT = True
@@ -418,7 +418,7 @@ class TestEloModel:
             assert 0.1 <= confidence <= 1.0
 
             # 评级差别越大，置信度应该越高
-            rating_diff = abs(home_rating - away_rating)
+            abs(home_rating - away_rating)
 
     def test_edge_cases(self, elo_model):
         """测试边界情况"""

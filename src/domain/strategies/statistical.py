@@ -16,9 +16,13 @@ from typing import Any
 import numpy as np
 
 from src.domain.models.prediction import Prediction
-from src.domain.strategies.base import (PredictionInput, PredictionOutput,
-                                        PredictionStrategy, StrategyMetrics,
-                                        StrategyType)
+from src.domain.strategies.base import (
+    PredictionInput,
+    PredictionOutput,
+    PredictionStrategy,
+    StrategyMetrics,
+    StrategyType,
+)
 
 
 class StatisticalStrategy(PredictionStrategy):

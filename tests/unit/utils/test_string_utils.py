@@ -2,9 +2,15 @@
 字符串工具测试
 """
 
-from src.utils.string_utils import (camel_to_snake, format_currency, is_empty,
-                                    normalize_string, snake_to_camel,
-                                    strip_html, truncate_string)
+from src.utils.string_utils import (
+    camel_to_snake,
+    format_currency,
+    is_empty,
+    normalize_string,
+    snake_to_camel,
+    strip_html,
+    truncate_string,
+)
 
 
 class TestStringUtils:

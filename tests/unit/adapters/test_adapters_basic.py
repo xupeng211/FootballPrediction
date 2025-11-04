@@ -17,8 +17,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapter
 
 # 只导入没有语法错误的模块
 try:
-    from base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
-                      CompositeAdapter, DataTransformer, Target)
+    from base import (
+        Adaptee,
+        Adapter,
+        AdapterStatus,
+        BaseAdapter,
+        CompositeAdapter,
+        DataTransformer,
+        Target,
+    )
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

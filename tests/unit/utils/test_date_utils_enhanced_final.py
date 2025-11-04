@@ -7,8 +7,7 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from src.utils.date_utils import (DateUtils, cached_format_datetime,
-                                  cached_time_ago)
+from src.utils.date_utils import DateUtils, cached_format_datetime, cached_time_ago
 
 
 class TestDateUtilsEnhancedFinal:

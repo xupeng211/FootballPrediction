@@ -28,8 +28,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import (BaseModel, PredictionResult,
-                                          TrainingResult)
+    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -754,7 +753,7 @@ class TestMLStrategySystem:
                 prediction = await strategy.predict(match_data)
                 if prediction:
                     # 随机决定是否正确，模拟真实性能变化
-                    is_correct = np.random.random() < 0.6  # 60%准确率
+                    np.random.random() < 0.6  # 60%准确率
                     strategy.update_performance(test_match["result"], prediction)
 
             # 选择最佳策略
@@ -808,7 +807,7 @@ class TestMLWorkflowIntegration:
 
         # 4. 并行训练
         training_tasks = [strategy.train(training_data) for strategy in strategies]
-        training_results = await asyncio.gather(*training_tasks)
+        await asyncio.gather(*training_tasks)
 
         # 5. 注册策略
         for strategy in strategies:

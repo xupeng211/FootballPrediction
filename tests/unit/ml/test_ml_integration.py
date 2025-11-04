@@ -9,6 +9,7 @@
 import asyncio
 import json
 import os
+
 # 模拟导入，避免循环依赖问题
 import sys
 import tempfile
@@ -25,10 +26,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 try:
     from src.domain.strategies.ml_model import MLModelStrategy
     from src.ml.enhanced_real_model_training import EnhancedRealModelTrainer
-    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
-                                       TrainingStatus)
-    from src.ml.models.base_model import (BaseModel, PredictionResult,
-                                          TrainingResult)
+    from src.ml.model_training import (
+        ModelTrainer,
+        ModelType,
+        TrainingConfig,
+        TrainingStatus,
+    )
+    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -386,7 +390,6 @@ class TestMLWorkflowIntegration:
         model.train(training_data)
 
         # 创建批量预测任务
-        prediction_tasks = []
         batch_data = create_batch_prediction_data(10)
 
         async def predict_single(data):

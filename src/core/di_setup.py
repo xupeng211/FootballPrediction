@@ -88,10 +88,10 @@ class DISetup:
         # 这里可以扫描并自动注册所有仓储类
         # 简化示例,手动注册主要仓储
         try:
-            from ..database.repositories.match_repository import \
-                MatchRepository
-            from ..database.repositories.prediction_repository import \
-                PredictionRepository
+            from ..database.repositories.match_repository import MatchRepository
+            from ..database.repositories.prediction_repository import (
+                PredictionRepository,
+            )
             from ..database.repositories.user_repository import UserRepository
 
             self.container.register_scoped(BaseRepository, MatchRepository)

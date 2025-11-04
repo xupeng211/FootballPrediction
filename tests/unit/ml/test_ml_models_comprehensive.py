@@ -12,6 +12,7 @@ Comprehensive ML Model Tests
 """
 
 import os
+
 # 导入ML模块
 import sys
 from datetime import datetime, timedelta
@@ -23,8 +24,7 @@ import pytest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import (BaseModel, PredictionResult,
-                                      TrainingResult)
+    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.elo_model import EloModel
     from ml.models.poisson_model import PoissonModel
 
@@ -746,7 +746,7 @@ class TestMLModelIntegration:
     def test_edge_cases_and_boundary_conditions(self, sample_data):
         """测试边界条件和特殊情况"""
         poisson_model = PoissonModel("1.0")
-        elo_model = EloModel("1.0")
+        EloModel("1.0")
 
         # 测试空数据
         empty_data = pd.DataFrame()

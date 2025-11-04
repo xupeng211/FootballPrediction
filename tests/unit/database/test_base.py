@@ -37,7 +37,7 @@ class TestDatabaseBase:
             # 检查常见属性
             common_attributes = ["id", "created_at", "updated_at"]
             for attr in common_attributes:
-                has_attr = hasattr(model, attr)
+                hasattr(model, attr)
                 # 不强制要求所有属性都存在
         except Exception:
             pytest.skip("Cannot test BaseModel attributes")

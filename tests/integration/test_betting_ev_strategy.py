@@ -33,10 +33,17 @@ try:
         os.path.join(os.path.dirname(__file__), "src", "services", "betting")
     )
 
-    from ev_calculator import (BettingOdds, BettingRecommendationEngine,
-                               BettingStrategy, BettingStrategyOptimizer,
-                               BetType, EVCalculator, PredictionProbabilities,
-                               RiskLevel, create_betting_recommendation_engine)
+    from ev_calculator import (
+        BettingOdds,
+        BettingRecommendationEngine,
+        BettingStrategy,
+        BettingStrategyOptimizer,
+        BetType,
+        EVCalculator,
+        PredictionProbabilities,
+        RiskLevel,
+        create_betting_recommendation_engine,
+    )
 
     logger = None  # 简化日志处理
 except ImportError as e:

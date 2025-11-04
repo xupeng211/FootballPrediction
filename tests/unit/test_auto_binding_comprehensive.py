@@ -12,8 +12,14 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.auto_binding import (AutoBinder, BindingRule, ConventionBinder,
-                                   auto_bind, bind_to, primary_implementation)
+from src.core.auto_binding import (
+    AutoBinder,
+    BindingRule,
+    ConventionBinder,
+    auto_bind,
+    bind_to,
+    primary_implementation,
+)
 from src.core.di import DIContainer, ServiceLifetime
 from src.core.exceptions import DependencyInjectionError
 
@@ -417,7 +423,7 @@ class TestAutoBinder:
         self.binder._implementation_cache[ITestService] = [TestService]
 
         with patch.object(self.container, "register_transient") as mock_register:
-            with patch("src.core.auto_binding.logger") as mock_logger:
+            with patch("src.core.auto_binding.logger"):
                 self.binder._apply_default_convention()
                 mock_register.assert_called_once_with(ITestService, TestService)
 
@@ -433,7 +439,7 @@ class TestAutoBinder:
         self.binder._implementation_cache[IRepository] = [Repository]
 
         with patch.object(self.container, "register_scoped") as mock_register:
-            with patch("src.core.auto_binding.logger") as mock_logger:
+            with patch("src.core.auto_binding.logger"):
                 self.binder._apply_repository_convention()
                 mock_register.assert_called_once_with(IRepository, Repository)
 
@@ -449,7 +455,7 @@ class TestAutoBinder:
         self.binder._implementation_cache[IService] = [Service]
 
         with patch.object(self.container, "register_scoped") as mock_register:
-            with patch("src.core.auto_binding.logger") as mock_logger:
+            with patch("src.core.auto_binding.logger"):
                 self.binder._apply_service_convention()
                 mock_register.assert_called_once_with(IService, Service)
 
@@ -538,7 +544,7 @@ class TestAutoBinderEdgeCases:
     def test_scan_module_import_error_handling(self):
         """测试扫描模块时处理导入错误"""
         with patch("importlib.import_module", side_effect=ImportError("模块不存在")):
-            with patch("src.core.auto_binding.logger") as mock_logger:
+            with patch("src.core.auto_binding.logger"):
                 # 这应该不会抛出异常，而是记录错误
                 try:
                     self.binder.bind_from_assembly("nonexistent.module")
@@ -556,7 +562,7 @@ class TestAutoBinderEdgeCases:
         with patch(
             "importlib.import_module", side_effect=RuntimeError("模块运行时错误")
         ):
-            with patch("src.core.auto_binding.logger") as mock_logger:
+            with patch("src.core.auto_binding.logger"):
                 implementations = self.binder._find_implementations(TestInterface)
                 assert implementations == []
 
@@ -630,7 +636,7 @@ class TestAutoBinderEdgeCases:
                 "_select_primary_implementation",
                 side_effect=Exception("选择失败"),
             ):
-                with patch("src.core.auto_binding.logger") as mock_logger:
+                with patch("src.core.auto_binding.logger"):
                     # 应该捕获异常并记录
                     try:
                         self.binder.bind_interface_to_implementations(TestInterface)

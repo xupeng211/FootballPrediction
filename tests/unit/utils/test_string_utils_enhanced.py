@@ -3,8 +3,12 @@ StringUtils增强测试 - 深化50.3%到65%+覆盖率
 针对未覆盖的字符串工具函数进行全面测试
 """
 
-from src.utils.string_utils import (StringUtils, batch_clean_strings,
-                                    cached_slug, validate_batch_emails)
+from src.utils.string_utils import (
+    StringUtils,
+    batch_clean_strings,
+    cached_slug,
+    validate_batch_emails,
+)
 
 
 class TestStringUtilsEnhanced:

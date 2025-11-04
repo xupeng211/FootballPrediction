@@ -4,8 +4,12 @@
 
 import pytest
 
-from src.utils.string_utils import (StringUtils, batch_clean_strings,
-                                    cached_slug, validate_batch_emails)
+from src.utils.string_utils import (
+    StringUtils,
+    batch_clean_strings,
+    cached_slug,
+    validate_batch_emails,
+)
 
 
 class TestStringUtilsComprehensive:
@@ -275,8 +279,11 @@ class TestStringUtilsComprehensive:
 
     def test_function_imports(self):
         """测试模块级函数导入"""
-        from src.utils.string_utils import (batch_clean_strings, cached_slug,
-                                            validate_batch_emails)
+        from src.utils.string_utils import (
+            batch_clean_strings,
+            cached_slug,
+            validate_batch_emails,
+        )
 
         assert cached_slug is not None
         assert batch_clean_strings is not None
