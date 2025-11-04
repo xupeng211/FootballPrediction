@@ -1,13 +1,4 @@
 import logging
-
-"""
-统计分析策略
-Statistical Strategy
-
-使用统计方法和数学模型进行预测的策略实现.
-Strategy implementation using statistical methods and mathematical models for prediction.
-"""
-
 import math
 import time
 from datetime import datetime
@@ -23,6 +14,14 @@ from src.domain.strategies.base import (
     StrategyMetrics,
     StrategyType,
 )
+
+"""
+统计分析策略
+Statistical Strategy
+
+使用统计方法和数学模型进行预测的策略实现.
+Strategy implementation using statistical methods and mathematical models for prediction.
+"""
 
 
 class StatisticalStrategy(PredictionStrategy):
@@ -68,7 +67,7 @@ class StatisticalStrategy(PredictionStrategy):
     0.7),
     "home_advantage_factor": config.get("home_advantage_factor",
     1.2),
-    
+
             "poisson_lambda": config.get("poisson_lambda", 1.35),
             "model_weights": config.get(
                 "model_weights",
@@ -123,7 +122,7 @@ class StatisticalStrategy(PredictionStrategy):
         output = PredictionOutput(
             predicted_home_score=final_pred[0],
     predicted_away_score=final_pred[1],
-    
+
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance={
@@ -179,7 +178,7 @@ class StatisticalStrategy(PredictionStrategy):
         away_avg_goals = await self._get_team_average_goals(
             input_data.away_team.id,
     False,
-    
+
         )
 
         # 应用主场优势
@@ -308,7 +307,7 @@ class StatisticalStrategy(PredictionStrategy):
 
         h2h_games = await self._get_head_to_head_games(
             input_data.home_team.id,
-    
+
             input_data.away_team.id,
             limit=10,
         )
@@ -479,24 +478,8 @@ class StatisticalStrategy(PredictionStrategy):
     int,
     bool]]:
         """获取最近比赛"""
-        # 模拟数据,返回(主场得分,
-    客场得分,
-    是否主场)
-        return [(2,
-    1,
-    True),
-    (1,
-    2,
-    False),
-    (3,
-    0,
-    True),
-    (0,
-    0,
-    False),
-    (2,
-    1,
-    True)]
+        # 模拟数据,返回(主场得分,客场得分,是否主场)
+        return [(2, 1, True), (1, 2, False), (3, 0, True), (0, 0, False), (2, 1, True)]
 
     async def _get_team_games(self, team_id: int) -> list[dict[str, Any]]:
         """获取球队所有比赛"""
@@ -573,7 +556,7 @@ class StatisticalStrategy(PredictionStrategy):
 
         self._metrics = StrategyMetrics(
             accuracy=accuracy,
-    
+
             precision=precision,
             recall=recall,
             f1_score=f1_score,
