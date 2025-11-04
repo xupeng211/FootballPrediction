@@ -11,7 +11,7 @@ import pytest
 try:
     from core.logger import get_logger, setup_logger
 except ImportError as e:
-    print(f"Warning: Import failed: {e}")
+    logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
     # Mock implementation will be used
     import logging
 

@@ -180,7 +180,8 @@ async def test_league_collector():
             if stats and stats.get("statistics"):
                 stats_info = stats["statistics"]
                 logger.info(
-                    f"     ✅ 联赛统计正常: {stats_info.get('total_teams')} 支球队, {stats_info.get('total_goals_for')} 个进球"
+                    f"     ✅ 联赛统计正常: {stats_info.get('total_teams')} 支球队,"
+    {stats_info.get('total_goals_for')} 个进球"
                 )
             else:
                 logger.warning("     ⚠️ 联赛统计数据为空")
@@ -222,7 +223,8 @@ async def test_data_integrity():
             team_ids_from_standings = set(str(team["team"]["id"]) for team in standings)
 
             logger.info(
-                f"     球队数量: 球队列表={len(team_ids_from_teams)}, 积分榜={len(team_ids_from_standings)}"
+                f"     球队数量: 球队列表={len(team_ids_from_teams)},"
+    积分榜={len(team_ids_from_standings)}"
             )
 
             # 检查差异

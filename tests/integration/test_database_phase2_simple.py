@@ -141,7 +141,7 @@ def test_all_database_simple_functionality(client):
     assert Match is not None
     assert Predictions is not None
 
-    print("✅ 所有database简化功能测试通过")
+    logger.debug("✅ 所有database简化功能测试通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

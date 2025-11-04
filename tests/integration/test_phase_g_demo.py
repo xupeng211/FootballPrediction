@@ -10,7 +10,7 @@ import sys
 
 def test_intelligent_analyzer():
     """测试智能测试缺口分析器"""
-    print("🧪 测试智能测试缺口分析器...")
+    logger.debug("🧪 测试智能测试缺口分析器...")  # TODO: Add logger import if needed
 
     try:
         # 导入分析器
@@ -21,10 +21,10 @@ def test_intelligent_analyzer():
         analyzer = IntelligentTestGapAnalyzer(source_dir="tests/unit/utils")
 
         # 执行分析（限制范围以避免语法错误）
-        print("   📂 扫描测试文件...")
+        logger.debug("   📂 扫描测试文件...")  # TODO: Add logger import if needed
         analyzer._scan_source_functions()
 
-        print(f"   ✅ 扫描完成，发现 {len(analyzer.functions)} 个函数")
+        logger.debug(f"   ✅ 扫描完成，发现 {len(analyzer.functions)} 个函数")  # TODO: Add logger import if needed
 
         # 生成简化报告
         simple_report = {
@@ -43,17 +43,17 @@ def test_intelligent_analyzer():
             ],
         }
 
-        print("   ✅ 智能分析器测试通过")
+        logger.debug("   ✅ 智能分析器测试通过")  # TODO: Add logger import if needed
         return simple_report
 
     except Exception as e:
-        print(f"   ❌ 智能分析器测试失败: {e}")
+        logger.debug(f"   ❌ 智能分析器测试失败: {e}")  # TODO: Add logger import if needed
         return None
 
 
 def test_auto_generator():
     """测试自动化测试生成器"""
-    print("🧪 测试自动化测试生成器...")
+    logger.debug("🧪 测试自动化测试生成器...")  # TODO: Add logger import if needed
 
     try:
         # 导入生成器
@@ -109,28 +109,28 @@ def test_auto_generator():
         # 生成测试
         results = generator.generate_tests_from_analysis(mock_analysis)
 
-        print(f"   ✅ 生成完成，生成文件: {len(results['generated_files'])}")
-        print(f"   ✅ 生成测试用例: {results['generated_test_cases']}")
+        logger.debug(f"   ✅ 生成完成，生成文件: {len(results['generated_files'])}")  # TODO: Add logger import if needed
+        logger.debug(f"   ✅ 生成测试用例: {results['generated_test_cases']}")  # TODO: Add logger import if needed
 
         return results
 
     except Exception as e:
-        print(f"   ❌ 自动生成器测试失败: {e}")
+        logger.debug(f"   ❌ 自动生成器测试失败: {e}")  # TODO: Add logger import if needed
         return None
 
 
 def main():
     """主函数 - 执行Phase G验证测试"""
-    print("🚀 Phase G工具验证测试开始...")
-    print("=" * 50)
+    logger.debug("🚀 Phase G工具验证测试开始...")  # TODO: Add logger import if needed
+    logger.debug("=" * 50)  # TODO: Add logger import if needed
 
     # 测试分析器
     analysis_result = test_intelligent_analyzer()
-    print()
+    logger.debug()  # TODO: Add logger import if needed
 
     # 测试生成器
     generation_result = test_auto_generator()
-    print()
+    logger.debug()  # TODO: Add logger import if needed
 
     # 生成验证报告
     verification_report = {
@@ -152,25 +152,25 @@ def main():
     with open("phase_g_verification_report.json", "w", encoding="utf-8") as f:
         json.dump(verification_report, f, indent=2, ensure_ascii=False)
 
-    print("📊 验证报告摘要:")
-    print(f"   分析器状态: {verification_report['analyzer_test']}")
-    print(f"   生成器状态: {verification_report['generator_test']}")
-    print("   验证报告: phase_g_verification_report.json")
+    logger.debug("📊 验证报告摘要:")  # TODO: Add logger import if needed
+    logger.debug(f"   分析器状态: {verification_report['analyzer_test']}")  # TODO: Add logger import if needed
+    logger.debug(f"   生成器状态: {verification_report['generator_test']}")  # TODO: Add logger import if needed
+    logger.debug("   验证报告: phase_g_verification_report.json")  # TODO: Add logger import if needed
 
-    print("\n🎯 Phase G核心功能验证:")
+    logger.debug("\n🎯 Phase G核心功能验证:")  # TODO: Add logger import if needed
     if analysis_result and generation_result:
-        print("   ✅ Phase G核心组件功能正常")
-        print("   ✅ 智能分析器可以扫描函数")
-        print("   ✅ 自动生成器可以创建测试")
-        print("   ✅ 工具链集成完整")
-        print("\n🚀 Phase G准备就绪，可以在源代码修复后投入使用！")
+        logger.debug("   ✅ Phase G核心组件功能正常")  # TODO: Add logger import if needed
+        logger.debug("   ✅ 智能分析器可以扫描函数")  # TODO: Add logger import if needed
+        logger.debug("   ✅ 自动生成器可以创建测试")  # TODO: Add logger import if needed
+        logger.debug("   ✅ 工具链集成完整")  # TODO: Add logger import if needed
+        logger.debug("\n🚀 Phase G准备就绪，可以在源代码修复后投入使用！")  # TODO: Add logger import if needed
     else:
-        print("   ⚠️ 部分功能需要进一步调试")
-        print("   🔧 建议先修复源代码语法错误")
-        print("   📋 基础架构已完成，核心逻辑正确")
+        logger.debug("   ⚠️ 部分功能需要进一步调试")  # TODO: Add logger import if needed
+        logger.debug("   🔧 建议先修复源代码语法错误")  # TODO: Add logger import if needed
+        logger.debug("   📋 基础架构已完成，核心逻辑正确")  # TODO: Add logger import if needed
 
-    print("\n" + "=" * 50)
-    print("✅ Phase G验证测试完成")
+    logger.debug("\n" + "=" * 50)  # TODO: Add logger import if needed
+    logger.debug("✅ Phase G验证测试完成")  # TODO: Add logger import if needed
 
     return verification_report
 

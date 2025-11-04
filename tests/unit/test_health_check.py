@@ -19,7 +19,7 @@ try:
     APP_AVAILABLE = True
 except ImportError:
     APP_AVAILABLE = False
-    print("⚠️ 主应用不可用，跳过健康检查测试")
+    logger.debug("⚠️ 主应用不可用，跳过健康检查测试")  # TODO: Add logger import if needed
 
 
 @pytest.mark.health

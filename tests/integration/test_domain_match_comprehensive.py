@@ -543,7 +543,7 @@ def test_match_domain_comprehensive_suite():
     match.finish_match()
     assert match.is_finished
 
-    print("✅ 比赛领域模型综合测试套件通过")
+    logger.debug("✅ 比赛领域模型综合测试套件通过")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

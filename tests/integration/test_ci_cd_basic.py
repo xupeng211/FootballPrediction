@@ -9,16 +9,7 @@ import subprocess
 from pathlib import Path
 
 
-def test_basic_ci_functionality(client):
-    """测试基础CI/CD功能"""
-    print("🧪 测试基础CI/CD功能...")
-
-    tests_passed = 0
-    tests_total = 0
-
-    # 测试1: Python环境检查
-    tests_total += 1
-    try:
+def _test_basic_ci_functionality_handle_error():
         import sys
 
         python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
@@ -29,7 +20,8 @@ def test_basic_ci_functionality(client):
 
     # 测试2: 基础模块导入
     tests_total += 1
-    try:
+
+def _test_basic_ci_functionality_handle_error():
         import sys
 
         print("✅ 基础模块导入成功")
@@ -39,15 +31,17 @@ def test_basic_ci_functionality(client):
 
     # 测试3: 项目结构检查
     tests_total += 1
-    try:
+
+def _test_basic_ci_functionality_handle_error():
         required_dirs = ["src", "tests", "scripts"]
         missing_dirs = []
 
-        for dir_name in required_dirs:
-            if not Path(dir_name).exists():
+
+def _test_basic_ci_functionality_check_condition():
                 missing_dirs.append(dir_name)
 
-        if not missing_dirs:
+
+def _test_basic_ci_functionality_check_condition():
             print("✅ 项目结构完整")
             tests_passed += 1
         else:
@@ -57,15 +51,153 @@ def test_basic_ci_functionality(client):
 
     # 测试4: 核心文件检查
     tests_total += 1
-    try:
+
+def _test_basic_ci_functionality_handle_error():
+        required_files = ["CLAUDE.md", "pyproject.toml", "Makefile"]
+        missing_files = []
+
+
+def _test_basic_ci_functionality_check_condition():
+                missing_files.append(file_name)
+
+
+def _test_basic_ci_functionality_check_condition():
+            print("✅ 核心文件完整")
+            tests_passed += 1
+        else:
+            print(f"❌ 缺失文件: {', '.join(missing_files)}")
+    except Exception as e:
+        print(f"❌ 核心文件检查失败: {e}")
+
+    # 测试5: 质量工具可用性
+    tests_total += 1
+
+def _test_basic_ci_functionality_check_condition():
+            print("✅ 质量守护工具可用")
+            tests_passed += 1
+        else:
+            print("⚠️  质量守护工具缺失")
+    except Exception as e:
+        print(f"❌ 质量工具检查失败: {e}")
+
+    # 测试6: 代码检查工具
+    tests_total += 1
+
+def _test_basic_ci_functionality_handle_error():
+            subprocess.run(["ruff", "--version"], capture_output=True, timeout=5)
+            print("✅ Ruff代码检查工具可用")
+            tests_passed += 1
+
+def _test_basic_ci_functionality_process_logic():
+            print("⚠️  Ruff工具不可用")
+    except Exception as e:
+        print(f"❌ 代码检查工具失败: {e}")
+
+    # 测试7: 简单测试执行
+    tests_total += 1
+
+def _test_basic_ci_functionality_handle_error():
+        # 执行简单测试
+        test_result = subprocess.run(
+            [sys.executable, "test_simple_working.py"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+
+def _test_basic_ci_functionality_check_condition():
+            print("✅ 简单测试执行成功")
+            tests_passed += 1
+        else:
+            print(f"❌ 简单测试失败: {test_result.stderr}")
+    except Exception as e:
+        print(f"❌ 简单测试执行失败: {e}")
+
+    # 测试8: 文件操作能力
+    tests_total += 1
+
+def _test_basic_ci_functionality_handle_error():
+        # 测试文件读写
+        test_file = Path("test_ci_cd_temp.txt")
+        test_file.write_text("CI/CD test content")
+        content = test_file.read_text()
+
+
+def _test_basic_ci_functionality_check_condition():
+            test_file.unlink()
+            print("✅ 文件操作能力正常")
+            tests_passed += 1
+        else:
+            print("❌ 文件操作内容不匹配")
+    except Exception as e:
+        print(f"❌ 文件操作失败: {e}")
+
+    success_rate = (tests_passed / tests_total) * 100 if tests_total > 0 else 0
+    print("\n📊 CI/CD功能测试结果:")
+    print(f"   - 总测试数: {tests_total}")
+    print(f"   - 通过数: {tests_passed}")
+    print(f"   - 成功率: {success_rate:.1f}%")
+
+    return tests_passed, tests_total, success_rate
+
+def test_basic_ci_functionality(client):
+    """测试基础CI/CD功能"""
+    print("🧪 测试基础CI/CD功能...")
+
+    tests_passed = 0
+    tests_total = 0
+
+    # 测试1: Python环境检查
+    tests_total += 1
+    _test_basic_ci_functionality_handle_error()
+        import sys
+
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+        print(f"✅ Python版本: {python_version}")
+        tests_passed += 1
+    except Exception as e:
+        print(f"❌ Python版本检查失败: {e}")
+
+    # 测试2: 基础模块导入
+    tests_total += 1
+    _test_basic_ci_functionality_handle_error()
+        import sys
+
+        print("✅ 基础模块导入成功")
+        tests_passed += 1
+    except Exception as e:
+        print(f"❌ 基础模块导入失败: {e}")
+
+    # 测试3: 项目结构检查
+    tests_total += 1
+    _test_basic_ci_functionality_handle_error()
+        required_dirs = ["src", "tests", "scripts"]
+        missing_dirs = []
+
+        for dir_name in required_dirs:
+            _test_basic_ci_functionality_check_condition()
+                missing_dirs.append(dir_name)
+
+        _test_basic_ci_functionality_check_condition()
+            print("✅ 项目结构完整")
+            tests_passed += 1
+        else:
+            print(f"❌ 缺失目录: {', '.join(missing_dirs)}")
+    except Exception as e:
+        print(f"❌ 项目结构检查失败: {e}")
+
+    # 测试4: 核心文件检查
+    tests_total += 1
+    _test_basic_ci_functionality_handle_error()
         required_files = ["CLAUDE.md", "pyproject.toml", "Makefile"]
         missing_files = []
 
         for file_name in required_files:
-            if not Path(file_name).exists():
+            _test_basic_ci_functionality_check_condition()
                 missing_files.append(file_name)
 
-        if not missing_files:
+        _test_basic_ci_functionality_check_condition()
             print("✅ 核心文件完整")
             tests_passed += 1
         else:
@@ -77,7 +209,7 @@ def test_basic_ci_functionality(client):
     tests_total += 1
     try:
         # 检查是否有质量守护工具
-        if Path("scripts/quality_guardian.py").exists():
+        _test_basic_ci_functionality_check_condition()
             print("✅ 质量守护工具可用")
             tests_passed += 1
         else:
@@ -89,18 +221,18 @@ def test_basic_ci_functionality(client):
     tests_total += 1
     try:
         # 检查是否有代码检查工具
-        try:
+        _test_basic_ci_functionality_handle_error()
             subprocess.run(["ruff", "--version"], capture_output=True, timeout=5)
             print("✅ Ruff代码检查工具可用")
             tests_passed += 1
-        except:
+        _test_basic_ci_functionality_process_logic()
             print("⚠️  Ruff工具不可用")
     except Exception as e:
         print(f"❌ 代码检查工具失败: {e}")
 
     # 测试7: 简单测试执行
     tests_total += 1
-    try:
+    _test_basic_ci_functionality_handle_error()
         # 执行简单测试
         test_result = subprocess.run(
             [sys.executable, "test_simple_working.py"],
@@ -109,7 +241,7 @@ def test_basic_ci_functionality(client):
             timeout=10,
         )
 
-        if test_result.returncode == 0:
+        _test_basic_ci_functionality_check_condition()
             print("✅ 简单测试执行成功")
             tests_passed += 1
         else:
@@ -119,13 +251,13 @@ def test_basic_ci_functionality(client):
 
     # 测试8: 文件操作能力
     tests_total += 1
-    try:
+    _test_basic_ci_functionality_handle_error()
         # 测试文件读写
         test_file = Path("test_ci_cd_temp.txt")
         test_file.write_text("CI/CD test content")
         content = test_file.read_text()
 
-        if content == "CI/CD test content":
+        _test_basic_ci_functionality_check_condition()
             test_file.unlink()
             print("✅ 文件操作能力正常")
             tests_passed += 1

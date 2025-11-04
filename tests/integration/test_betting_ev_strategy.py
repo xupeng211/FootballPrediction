@@ -176,7 +176,9 @@ class BettingEVStrategyTester:
             if abs(calculated_ev - expected_ev) <= tolerance:
                 passed_tests += 1
                 print(
-                    f"  ✅ 测试案例 {i+1}: 通过 (概率={probability}, 赔率={odds}, EV={calculated_ev:.3f})"
+                    f"  ✅ 测试案例 {i+1}: 通过 (概率={probability},"
+    赔率={odds},
+    EV={calculated_ev:.3f})"
                 )
             else:
                 print(
@@ -221,7 +223,8 @@ class BettingEVStrategyTester:
                 print(f"  ✅ 测试案例 {i+1}: 通过 (Kelly={kelly_fraction:.3f})")
             else:
                 print(
-                    f"  ❌ 测试案例 {i+1}: 失败 (期望范围={expected_range}, 实际={kelly_fraction:.3f})"
+                    f"  ❌ 测试案例 {i+1}: 失败 (期望范围={expected_range},"
+    实际={kelly_fraction:.3f})"
                 )
 
         accuracy_rate = passed_tests / total_tests
@@ -545,10 +548,13 @@ class BettingEVStrategyTester:
                     f"    - 个体投注数: {len(recommendations.get('individual_bets', []))}"
                 )
                 print(
-                    f"    - 总体建议: {recommendations.get('overall_recommendation', {}).get('action')}"
+                    f"    - 总体建议: {recommendations.get('overall_recommendation',
+    {}).get('action')}"
                 )
                 print(
-                    f"    - SRS合规: {recommendations.get('srs_compliance', {}).get('overall_compliance', False)}"
+                    f"    - SRS合规: {recommendations.get('srs_compliance',
+    {}).get('overall_compliance',
+    False)}"
                 )
 
                 passed_tests = 1
@@ -904,13 +910,16 @@ class BettingEVStrategyTester:
             critical_scores = results.get("critical_component_scores", {})
             print("\n🔧 关键组件评分:")
             print(
-                f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy', 0)*100:.1f}%"
+                f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy',
+    0)*100:.1f}%"
             )
             print(
-                f"  - Kelly Criterion: {critical_scores.get('kelly_criterion_accuracy', 0)*100:.1f}%"
+                f"  - Kelly Criterion: {critical_scores.get('kelly_criterion_accuracy',
+    0)*100:.1f}%"
             )
             print(
-                f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy', 0)*100:.1f}%"
+                f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy',
+    0)*100:.1f}%"
             )
 
         print("\n📋 各项测试结果:")

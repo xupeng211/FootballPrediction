@@ -15,7 +15,7 @@ def test_module_import():
         exec("import core.logging_system")
         assert True  # 如果能运行到这里，说明导入成功
     except ImportError as e:
-        pytest.skip(f"模块 {module_name} 导入失败: {e}")
+        pytest.skip(f"模块 {__name__} 导入失败: {e}")
 
 
 def test_basic_functionality():

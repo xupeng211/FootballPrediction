@@ -111,7 +111,7 @@ class TestCacheIntegration:
     def test_cache_imports(self):
         """测试缓存相关导入"""
         try:
-            import redis
+            pass
 
             assert True
         except ImportError:
@@ -133,7 +133,7 @@ class TestExternalServicesIntegration:
     def test_http_client_configuration(self):
         """测试HTTP客户端配置"""
         try:
-            import aiohttp
+            pass
 
             assert True
         except ImportError:

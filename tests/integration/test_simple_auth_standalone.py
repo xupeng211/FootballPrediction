@@ -36,13 +36,13 @@ class SimpleAuthTester:
         self.test_results.append(result)
 
         status = "✅" if success else "❌"
-        print(f"{status} {test_name}")
+        logger.debug(f"{status} {test_name}")  # TODO: Add logger import if needed
         if details:
-            print(f"   📝 {details}")
+            logger.debug(f"   📝 {details}")  # TODO: Add logger import if needed
 
     def test_model_creation(self):
         """测试模型创建"""
-        print("\n🔍 测试模型创建")
+        logger.debug("\n🔍 测试模型创建")  # TODO: Add logger import if needed
 
         try:
             # 测试SimpleUser模型
@@ -81,7 +81,7 @@ class SimpleAuthTester:
 
     def test_auth_service(self):
         """测试认证服务"""
-        print("\n🔍 测试认证服务")
+        logger.debug("\n🔍 测试认证服务")  # TODO: Add logger import if needed
 
         try:
             auth_service = SimpleAuthService()
@@ -133,7 +133,7 @@ class SimpleAuthTester:
 
     def test_api_endpoints(self):
         """测试API端点"""
-        print("\n🔍 测试API端点")
+        logger.debug("\n🔍 测试API端点")  # TODO: Add logger import if needed
 
         try:
             # 测试用户注册端点
@@ -151,7 +151,7 @@ class SimpleAuthTester:
 
             if response.status_code == 201:
                 data = response.json()
-                print(
+                logger.debug()  # TODO: Add logger import if needed
                     f"   📝 注册响应: {json.dumps(data, indent=2, ensure_ascii=False)}"
                 )
 
@@ -166,7 +166,7 @@ class SimpleAuthTester:
 
             if response.status_code == 200:
                 data = response.json()
-                print(
+                logger.debug()  # TODO: Add logger import if needed
                     f"   📝 登录响应: {json.dumps(data, indent=2, ensure_ascii=False)}"
                 )
 
@@ -182,8 +182,10 @@ class SimpleAuthTester:
 
                 if response.status_code == 200:
                     user_data = response.json()
-                    print(
-                        f"   📝 用户信息: {json.dumps(user_data, indent=2, ensure_ascii=False)}"
+                    logger.debug()  # TODO: Add logger import if needed
+                        f"   📝 用户信息: {json.dumps(user_data,
+    indent=2,
+    ensure_ascii=False)}"
                     )
 
             # 测试用户登出端点
@@ -199,8 +201,8 @@ class SimpleAuthTester:
 
     def run_all_tests(self):
         """运行所有测试"""
-        print("🧪 开始简化认证系统测试")
-        print("=" * 60)
+        logger.debug("🧪 开始简化认证系统测试")  # TODO: Add logger import if needed
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
 
         # 运行各项测试
         self.test_model_creation()
@@ -212,52 +214,52 @@ class SimpleAuthTester:
 
     def generate_report(self):
         """生成测试报告"""
-        print("\n" + "=" * 60)
-        print("📊 简化认证系统测试报告")
-        print("=" * 60)
+        logger.debug("\n" + "=" * 60)  # TODO: Add logger import if needed
+        logger.debug("📊 简化认证系统测试报告")  # TODO: Add logger import if needed
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
 
         total_tests = len(self.test_results)
         successful_tests = len([r for r in self.test_results if r["success"]])
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print("📈 测试统计:")
-        print(f"   总测试数: {total_tests}")
-        print(f"   成功测试: {successful_tests}")
-        print(f"   失败测试: {failed_tests}")
-        print(f"   成功率: {success_rate:.1f}%")
+        logger.debug("📈 测试统计:")  # TODO: Add logger import if needed
+        logger.debug(f"   总测试数: {total_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"   成功测试: {successful_tests}")  # TODO: Add logger import if needed
+        logger.error(f"   失败测试: {failed_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"   成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
 
-        print("\n✅ 成功的测试:")
+        logger.debug("\n✅ 成功的测试:")  # TODO: Add logger import if needed
         for result in self.test_results:
             if result["success"]:
-                print(f"   • {result['test_name']}")
+                logger.debug(f"   • {result['test_name']}")  # TODO: Add logger import if needed
 
         if failed_tests > 0:
-            print("\n❌ 失败的测试:")
+            logger.debug("\n❌ 失败的测试:")  # TODO: Add logger import if needed
             for result in self.test_results:
                 if not result["success"]:
-                    print(f"   • {result['test_name']}: {result['details']}")
+                    logger.debug(f"   • {result['test_name']}: {result['details']}")  # TODO: Add logger import if needed
 
         # 系统评估
-        print("\n🎯 系统评估:")
+        logger.debug("\n🎯 系统评估:")  # TODO: Add logger import if needed
         if success_rate >= 90:
-            print("   🟢 优秀: 简化认证系统功能完整，可以投入使用")
+            logger.debug("   🟢 优秀: 简化认证系统功能完整，可以投入使用")  # TODO: Add logger import if needed
         elif success_rate >= 70:
-            print("   🟡 良好: 基本功能可用，建议完善部分功能")
+            logger.debug("   🟡 良好: 基本功能可用，建议完善部分功能")  # TODO: Add logger import if needed
         else:
-            print("   🔴 需要改进: 存在较多问题，需要修复")
+            logger.debug("   🔴 需要改进: 存在较多问题，需要修复")  # TODO: Add logger import if needed
 
-        print("\n🚀 下一步建议:")
+        logger.debug("\n🚀 下一步建议:")  # TODO: Add logger import if needed
         if success_rate >= 90:
-            print("   1. 集成到主应用中替换复杂认证系统")
-            print("   2. 添加更安全的密码哈希")
-            print("   3. 实现JWT令牌验证")
+            logger.debug("   1. 集成到主应用中替换复杂认证系统")  # TODO: Add logger import if needed
+            logger.debug("   2. 添加更安全的密码哈希")  # TODO: Add logger import if needed
+            logger.debug("   3. 实现JWT令牌验证")  # TODO: Add logger import if needed
         else:
-            print("   1. 优先修复失败的测试")
-            print("   2. 完善错误处理")
-            print("   3. 重新进行测试验证")
+            logger.debug("   1. 优先修复失败的测试")  # TODO: Add logger import if needed
+            logger.debug("   2. 完善错误处理")  # TODO: Add logger import if needed
+            logger.debug("   3. 重新进行测试验证")  # TODO: Add logger import if needed
 
-        print("=" * 60)
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
 
 
 def main():

@@ -11,7 +11,7 @@ from pathlib import Path
 
 def run_coverage_test():
     """运行覆盖率测试并返回结果"""
-    print("🚀 开始运行覆盖率改进验证测试...")
+    logger.debug("🚀 开始运行覆盖率改进验证测试...")  # TODO: Add logger import if needed
 
     # 测试string_utils模块（已验证可以运行）
     cmd = [
@@ -31,45 +31,45 @@ def run_coverage_test():
         )
 
         if result.returncode == 0:
-            print("✅ 测试执行成功")
+            logger.debug("✅ 测试执行成功")  # TODO: Add logger import if needed
 
             # 提取覆盖率数据
             lines = result.stdout.split("\n")
             for line in lines:
                 if "TOTAL" in line and "%" in line:
-                    print(f"📊 覆盖率报告: {line.strip()}")
+                    logger.debug(f"📊 覆盖率报告: {line.strip()}")  # TODO: Add logger import if needed
                     break
             return True
         else:
-            print(f"❌ 测试执行失败: {result.stderr}")
+            logger.debug(f"❌ 测试执行失败: {result.stderr}")  # TODO: Add logger import if needed
             return False
 
     except Exception as e:
-        print(f"❌ 执行错误: {e}")
+        logger.debug(f"❌ 执行错误: {e}")  # TODO: Add logger import if needed
         return False
 
 
 def main():
     """主函数"""
-    print("=" * 60)
-    print("🎯 测试覆盖率改进验证")
-    print("=" * 60)
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
+    logger.debug("🎯 测试覆盖率改进验证")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
-    print("📈 改进目标:")
-    print("   基准覆盖率: 1.06%")
-    print("   目标覆盖率: 15%+")
-    print("   已验证模块: string_utils (41.89%覆盖率)")
-    print()
+    logger.debug("📈 改进目标:")  # TODO: Add logger import if needed
+    logger.debug("   基准覆盖率: 1.06%")  # TODO: Add logger import if needed
+    logger.debug("   目标覆盖率: 15%+")  # TODO: Add logger import if needed
+    logger.debug("   已验证模块: string_utils (41.89%覆盖率)")  # TODO: Add logger import if needed
+    logger.debug()  # TODO: Add logger import if needed
 
     success = run_coverage_test()
 
-    print("=" * 60)
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
     if success:
-        print("🎉 验证成功！测试覆盖率改进工作正在有效推进")
-        print("🚀 下一步: 继续扩展更多模块的测试覆盖")
+        logger.debug("🎉 验证成功！测试覆盖率改进工作正在有效推进")  # TODO: Add logger import if needed
+        logger.debug("🚀 下一步: 继续扩展更多模块的测试覆盖")  # TODO: Add logger import if needed
     else:
-        print("⚠️ 验证失败，需要进一步修复测试环境")
-    print("=" * 60)
+        logger.debug("⚠️ 验证失败，需要进一步修复测试环境")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     return success
 

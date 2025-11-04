@@ -9,7 +9,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 # 导入目标模块
-from core.logger import *
+from core.logger import *  # TODO: Convert to explicit imports
+from src.core.logger import get_logger
+from src.core.logger import setup_logger
 
 
 class TestLogger:

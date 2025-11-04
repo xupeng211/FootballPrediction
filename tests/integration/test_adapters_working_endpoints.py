@@ -29,7 +29,7 @@ def test_adapters_health_endpoint_detailed():
 
     # 检查响应内容
     data = response.json()
-    print(f"Health endpoint response: {data}")
+    logger.debug(f"Health endpoint response: {data}")  # TODO: Add logger import if needed
 
     # 常见的健康检查响应字段
     expected_fields = ["status", "timestamp", "version", "uptime", "checks"]
@@ -45,7 +45,7 @@ def test_adapters_registry_status():
 
     if response.status_code == 200:
         data = response.json()
-        print(f"Status endpoint response: {data}")
+        logger.debug(f"Status endpoint response: {data}")  # TODO: Add logger import if needed
 
 
 def test_adapters_list():
@@ -55,7 +55,7 @@ def test_adapters_list():
 
     if response.status_code == 200:
         data = response.json()
-        print(f"List endpoint response: {data}")
+        logger.debug(f"List endpoint response: {data}")  # TODO: Add logger import if needed
 
 
 def test_adapters_config():
@@ -65,7 +65,7 @@ def test_adapters_config():
 
     if response.status_code == 200:
         data = response.json()
-        print(f"Config endpoint response: {data}")
+        logger.debug(f"Config endpoint response: {data}")  # TODO: Add logger import if needed
 
 
 def test_adapters_demo_football_data():
@@ -75,7 +75,7 @@ def test_adapters_demo_football_data():
 
     if response.status_code == 200:
         data = response.json()
-        print(f"Football demo response: {data}")
+        logger.debug(f"Football demo response: {data}")  # TODO: Add logger import if needed
 
 
 def test_adapters_with_mock_registry():
