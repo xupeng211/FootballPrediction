@@ -29,10 +29,10 @@ class TestStringUtils:
         assert truncate_string(None, 10) == ""
 
     def test_snake_to_camel(self):
-        """测试蛇形转驼峰"""
-        assert snake_to_camel("hello_world") == "HelloWorld"
-        assert snake_to_camel("test_case") == "TestCase"
-        assert snake_to_camel("single") == "Single"
+        """测试蛇形转驼峰（camelCase格式）"""
+        assert snake_to_camel("hello_world") == "helloWorld"
+        assert snake_to_camel("test_case") == "testCase"
+        assert snake_to_camel("single") == "single"
         assert snake_to_camel("") == ""
 
     def test_camel_to_snake(self):

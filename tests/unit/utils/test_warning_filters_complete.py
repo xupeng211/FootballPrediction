@@ -84,7 +84,7 @@ class TestWarningFiltersComplete:
         calls = mock_filterwarnings.call_args_list
 
         # 检查是否有针对不同模块的过滤设置
-        filter_categories = [call[0][1] for call in calls if len(call[0]) > 1]
+        filter_categories = [call[1].get('category') for call in calls if 'category' in call[1]]
         assert any(category in [UserWarning, DeprecationWarning, FutureWarning, PendingDeprecationWarning]
                   for category in filter_categories)
 
