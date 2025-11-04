@@ -186,25 +186,19 @@ class StatisticalStrategy(PredictionStrategy):
         home_avg_goals *= self._model_params["home_advantage_factor"]
 
         # 泊松分布参数
-        lambda_home = max(0.1,
-    home_avg_goals)
-        lambda_away = max(0.1,
-    away_avg_goals)
+        lambda_home = max(0.1, home_avg_goals)
+        lambda_away = max(0.1, away_avg_goals)
 
-        # 转换为整数,
-    保持合理范围
+        # 转换为整数，保持合理范围
         lambda_home = float(lambda_home)
         lambda_away = float(lambda_away)
 
         # 计算最可能的比分
         max_prob = 0
-        best_score = (1,
-    1)
+        best_score = (1, 1)
 
-        for home_goals in range(0,
-    6):
-            for away_goals in range(0,
-    6):
+        for home_goals in range(0, 6):
+            for away_goals in range(0, 6):
                 # 泊松概率公式
                 prob_home = (
                     math.exp(-lambda_home) * lambda_home**home_goals
@@ -273,10 +267,7 @@ class StatisticalStrategy(PredictionStrategy):
         away_weighted = 0
         total_weight = 0
 
-        for i,
-    (home_score,
-    away_score,
-    is_home) in enumerate(home_recent):
+        for i, (home_score, away_score, is_home) in enumerate(home_recent):
             weight = (i + 1) / len(home_recent)  # 越近的比赛权重越高
             if is_home:
                 home_weighted += home_score * weight

@@ -31,10 +31,7 @@ class MatchData:
     match_date: datetime = None
     league: str = ""
     league_id: int | None = None
-    status: str = "upcoming"  # upcoming,
-    live,
-    finished,
-    postponed
+    status: str = "upcoming"  # upcoming, live, finished, postponed
     home_score: int | None = None
     away_score: int | None = None
     round: str | None = None
@@ -92,7 +89,7 @@ class DataSourceAdapter(ABC):
     league_id: int | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
-    
+
     ) -> list[MatchData]:
         """获取比赛列表"""
 
@@ -121,7 +118,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
     league_id: int | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
-    
+
     ) -> list[MatchData]:
         """获取比赛列表"""
 
@@ -195,7 +192,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
     home_team=match["homeTeam"]["name"],
     away_team=match["awayTeam"]["name"],
     home_team_id=match["homeTeam"]["id"],
-    
+
                 away_team_id=match["awayTeam"]["id"],
                 match_date=datetime.fromisoformat(
                     match["utcDate"].replace("Z", "+00:00")
@@ -205,7 +202,7 @@ class FootballDataOrgAdapter(DataSourceAdapter):
     status=status,
     home_score=home_score,
     away_score=away_score,
-    
+
                 round=match.get("matchday"),
                 venue=match.get("venue"),
             )
@@ -249,12 +246,12 @@ class FootballDataOrgAdapter(DataSourceAdapter):
                 id=team["id"],
     name=team["name"],
     short_name=team.get("shortName"),
-    
+
                 crest=team.get("crest"),
     founded=team.get("founded"),
     venue=team.get("venue"),
     website=team.get("website"),
-    
+
             )
         except Exception as e:
             logger.error(f"解析球队数据失败: {e}")
@@ -295,7 +292,7 @@ class MockDataAdapter(DataSourceAdapter):
     league_id: int | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
-    
+
     ) -> list[MatchData]:
         """获取模拟比赛数据"""
         matches = []
@@ -315,19 +312,17 @@ class MockDataAdapter(DataSourceAdapter):
                 # 随机选择两支球队
                 import random
 
-                team1,
-    team2 = random.sample(self.teams,
-    2)
+                team1, team2 = random.sample(self.teams, 2)
 
                 # 生成比赛ID
                 match_id = i * 100 + j + 1000
 
                 match = MatchData(
                     id=match_id,
-    home_team=team1["name"],
-    away_team=team2["name"],
-    home_team_id=team1["id"],
-    
+                    home_team=team1["name"],
+                    away_team=team2["name"],
+                    home_team_id=team1["id"],
+
                     away_team_id=team2["id"],
                     match_date=match_date.replace(
                         hour=15 + i % 6,
@@ -340,13 +335,13 @@ class MockDataAdapter(DataSourceAdapter):
     135,
     78,
     61]),
-    
+
                     status="upcoming",
                     venue=f"Stadium {match_id}",
                 )
                 matches.append(match)
 
-        return matches
+                return matches
 
     def _get_random_league(self) -> str:
         """获取随机联赛名称"""
@@ -368,7 +363,7 @@ class MockDataAdapter(DataSourceAdapter):
                 id=team["id"],
     name=team["name"],
     short_name=team["short_name"],
-    
+
                 venue=f"Stadium {team['id']}",
                 website=f"https://www.{team['short_name'].lower()}.com",
     )
@@ -403,7 +398,7 @@ class MockDataAdapter(DataSourceAdapter):
         return [
             OddsData(
                 match_id=match_id,
-    
+
                 home_win=home_win,
                 draw=draw,
                 away_win=away_win,
@@ -511,8 +506,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2**attempt)
                     logger.warning(
-                        f"请求失败,
-    {wait_time}秒后重试 (尝试 {attempt + 1}/{self.max_retries}): {e}"
+                        f"请求失败, {wait_time}秒后重试 (尝试 {attempt + 1}/{self.max_retries}): {e}"
                     )
                     await asyncio.sleep(wait_time)
                 else:
@@ -543,7 +537,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     league_id: int | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
-    
+
         status: str | None = None,
     ) -> list[MatchData]:
         """获取比赛列表,支持多种筛选条件"""
@@ -685,19 +679,17 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
             # 解析联赛信息
             competition = match.get("competition", {})
-            league_name = competition.get("name",
-    "")
+            league_name = competition.get("name", "")
             league_id = competition.get("id")
 
-            # 如果是支持的联赛,
-    使用中文名称
+            # 如果是支持的联赛，使用中文名称
             if league_id in self.supported_leagues:
                 league_name = self.supported_leagues[league_id]
 
             return MatchData(
                 id=match["id"],
     home_team=match["homeTeam"]["name"],
-    
+
                 away_team=match["awayTeam"]["name"],
                 home_team_id=match["homeTeam"]["id"],
                 away_team_id=match["awayTeam"]["id"],
@@ -707,7 +699,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 ),
     league=league_name,
     league_id=league_id,
-    
+
                 status=status,
                 home_score=home_score,
                 away_score=away_score,
@@ -732,7 +724,7 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
     name=team["name"],
     short_name=team.get("short_name"),
     crest=team.get("crest"),
-    
+
                 founded=team.get("founded"),
                 venue=team.get("venue"),
                 website=team.get("website"),
