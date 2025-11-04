@@ -38,6 +38,7 @@ def test_domain_models_import():
     try:
         # 尝试导入基础模型
         from src.domain.models.base import BaseModel
+
         assert True
     except ImportError:
         pytest.skip("基础模型不可用")
@@ -50,6 +51,7 @@ def test_domain_services_import():
     try:
         # 尝试导入服务基类
         from src.domain.services.base import BaseService
+
         assert True
     except ImportError:
         pytest.skip("领域服务基类不可用")
@@ -61,6 +63,7 @@ def test_prediction_domain_logic():
     """测试预测领域逻辑基础"""
     try:
         from src.domain.models.prediction import Prediction
+
         # 基础实例化测试
         assert True
     except ImportError:
@@ -73,6 +76,7 @@ def test_strategy_pattern_implementation():
     """测试策略模式实现"""
     try:
         from src.domain.strategies.factory import StrategyFactory
+
         assert True
     except ImportError:
         pytest.skip("策略工厂不可用")

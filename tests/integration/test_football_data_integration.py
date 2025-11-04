@@ -11,16 +11,17 @@ import logging
 from datetime import datetime
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 # 设置环境变量
-os.environ['FOOTBALL_DATA_API_KEY'] = 'ed809154dc1f422da46a18d8961a98a0'
-os.environ['DATABASE_URL'] = 'postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging'
+os.environ["FOOTBALL_DATA_API_KEY"] = "ed809154dc1f422da46a18d8961a98a0"
+os.environ["DATABASE_URL"] = (
+    "postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging"
+)
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ async def test_api_connection():
             logger.info(f"✅ 获取到 {len(competitions)} 个联赛")
 
             # 测试获取英超球队
-            teams = await collector.fetch_teams('2021')  # Premier League ID
+            teams = await collector.fetch_teams("2021")  # Premier League ID
             logger.info(f"✅ 获取到 {len(teams)} 支英超球队")
 
             # 测试获取即将开始的比赛
@@ -72,7 +73,9 @@ async def test_data_normalization():
                 # 标准化前几场比赛
                 for i, match in enumerate(upcoming_matches[:3]):
                     normalized = collector.normalize_match_data(match)
-                    logger.info(f"✅ 比赛 {i+1} 标准化成功: {normalized.get('match_title', 'Unknown')}")
+                    logger.info(
+                        f"✅ 比赛 {i+1} 标准化成功: {normalized.get('match_title', 'Unknown')}"
+                    )
 
             return True
 
@@ -90,33 +93,26 @@ async def test_database_model():
 
         # 创建测试数据
         test_data = {
-            'id': 'test_12345',
-            'utcDate': '2025-12-01T20:00:00Z',
-            'status': 'SCHEDULED',
-            'matchday': 15,
-            'stage': 'REGULAR_SEASON',
-            'homeTeam': {
-                'id': 57,
-                'name': 'Arsenal FC',
-                'shortName': 'Arsenal',
-                'crest': 'https://example.com/arsenal.png'
+            "id": "test_12345",
+            "utcDate": "2025-12-01T20:00:00Z",
+            "status": "SCHEDULED",
+            "matchday": 15,
+            "stage": "REGULAR_SEASON",
+            "homeTeam": {
+                "id": 57,
+                "name": "Arsenal FC",
+                "shortName": "Arsenal",
+                "crest": "https://example.com/arsenal.png",
             },
-            'awayTeam': {
-                'id': 58,
-                'name': 'Aston Villa FC',
-                'shortName': 'Aston Villa',
-                'crest': 'https://example.com/astonvilla.png'
+            "awayTeam": {
+                "id": 58,
+                "name": "Aston Villa FC",
+                "shortName": "Aston Villa",
+                "crest": "https://example.com/astonvilla.png",
             },
-            'score': {
-                'fullTime': {'home': None, 'away': None},
-                'winner': None
-            },
-            'competition': {
-                'id': 2021,
-                'name': 'Premier League',
-                'code': 'PL'
-            },
-            'lastUpdated': '2025-10-31T10:00:00Z'
+            "score": {"fullTime": {"home": None, "away": None}, "winner": None},
+            "competition": {"id": 2021, "name": "Premier League", "code": "PL"},
+            "lastUpdated": "2025-10-31T10:00:00Z",
         }
 
         # 从API数据创建模型
@@ -148,7 +144,7 @@ async def main():
     tests = [
         ("API连接测试", test_api_connection),
         ("数据标准化测试", test_data_normalization),
-        ("数据库模型测试", test_database_model)
+        ("数据库模型测试", test_database_model),
     ]
 
     passed = 0

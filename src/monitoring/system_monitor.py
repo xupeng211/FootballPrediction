@@ -15,7 +15,9 @@ class SystemMonitor:
         """初始化系统监控器"""
         self.metrics = {}
 
-    def record_request(self, method: str, endpoint: str, status_code: int, duration: float):
+    def record_request(
+        self, method: str, endpoint: str, status_code: int, duration: float
+    ):
         """记录HTTP请求"""
         key = f"{method} {endpoint}"
         if key not in self.metrics:
@@ -29,7 +31,9 @@ class SystemMonitor:
             self.metrics[key]["status_codes"][status_key] = 0
         self.metrics[key]["status_codes"][status_key] += 1
 
-    def record_database_query(self, operation: str, table: str, duration: float, is_slow: bool = False):
+    def record_database_query(
+        self, operation: str, table: str, duration: float, is_slow: bool = False
+    ):
         """记录数据库查询"""
         key = f"{operation} {table}"
         if key not in self.metrics:

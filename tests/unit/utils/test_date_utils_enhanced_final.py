@@ -114,11 +114,11 @@ class TestDateUtilsEnhancedFinal:
         assert DateUtils.is_weekend(saturday) is True
 
         # 周日
-        sunday = datetime(2024, 1, 14)    # 2024-01-14是周日
+        sunday = datetime(2024, 1, 14)  # 2024-01-14是周日
         assert DateUtils.is_weekend(sunday) is True
 
         # 周一到周五
-        monday = datetime(2024, 1, 15)   # 2024-01-15是周一
+        monday = datetime(2024, 1, 15)  # 2024-01-15是周一
         assert DateUtils.is_weekend(monday) is False
 
         # 无效输入
@@ -379,25 +379,25 @@ class TestDateUtilsEnhancedFinal:
         """测试计算工作日数量功能"""
         # 同一周内
         start = date(2024, 1, 15)  # 周一
-        end = date(2024, 1, 19)    # 周五
+        end = date(2024, 1, 19)  # 周五
         result = DateUtils.get_business_days_count(start, end)
         assert result == 5
 
         # 包含周末
         start = date(2024, 1, 15)  # 周一
-        end = date(2024, 1, 21)    # 周日
+        end = date(2024, 1, 21)  # 周日
         result = DateUtils.get_business_days_count(start, end)
         assert result == 5
 
         # 跨周
         start = date(2024, 1, 15)  # 周一
-        end = date(2024, 1, 28)    # 周日
+        end = date(2024, 1, 28)  # 周日
         result = DateUtils.get_business_days_count(start, end)
         assert result == 10
 
         # 反向顺序
         start = date(2024, 1, 21)  # 周日
-        end = date(2024, 1, 15)   # 周一
+        end = date(2024, 1, 15)  # 周一
         result = DateUtils.get_business_days_count(start, end)
         assert result == 5
 

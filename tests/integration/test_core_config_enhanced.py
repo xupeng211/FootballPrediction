@@ -104,7 +104,14 @@ class TestCoreConfigEnhanced:
         config = Config()
 
         # 测试关键配置项的默认值
-        default_configs = ["debug", "port", "host", "database_url", "log_level", "api_prefix"]
+        default_configs = [
+            "debug",
+            "port",
+            "host",
+            "database_url",
+            "log_level",
+            "api_prefix",
+        ]
 
         for config_name in default_configs:
             if hasattr(config, config_name):

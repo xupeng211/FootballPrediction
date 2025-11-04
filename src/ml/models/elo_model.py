@@ -118,9 +118,9 @@ class EloModel(BaseModel):
             f1_score=metrics.get("f1_score", 0.0),
             confusion_matrix=metrics.get("confusion_matrix", []),
             training_samples=len(training_data),
-            validation_samples=len(validation_data)
-            if validation_data is not None
-            else 0,
+            validation_samples=(
+                len(validation_data) if validation_data is not None else 0
+            ),
             training_time=training_time,
             features_used=["home_elo", "away_elo", "elo_difference", "home_advantage"],
             hyperparameters=self.hyperparameters.copy(),

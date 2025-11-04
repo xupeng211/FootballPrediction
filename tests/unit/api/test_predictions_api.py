@@ -32,12 +32,12 @@ class TestPredictionsAPI:
             "predicted_home_score": 2,
             "predicted_away_score": 1,
             "confidence": 0.75,
-            "prediction_date": datetime.utcnow().isoformat()
+            "prediction_date": datetime.utcnow().isoformat(),
         }
 
     def test_predictions_list_endpoint(self, client):
         """测试预测列表端点"""
-        with patch('src.api.predictions.get_all_predictions') as mock_get:
+        with patch("src.api.predictions.get_all_predictions") as mock_get:
             mock_predictions = [
                 {
                     "id": 1,
@@ -46,7 +46,7 @@ class TestPredictionsAPI:
                     "away_team": "Team B",
                     "predicted_home_score": 2,
                     "predicted_away_score": 1,
-                    "confidence": 0.75
+                    "confidence": 0.75,
                 }
             ]
             mock_get.return_value = mock_predictions
@@ -62,7 +62,7 @@ class TestPredictionsAPI:
 
     def test_single_prediction_endpoint(self, client, mock_prediction_data):
         """测试单个预测端点"""
-        with patch('src.api.predictions.get_prediction_by_id') as mock_get:
+        with patch("src.api.predictions.get_prediction_by_id") as mock_get:
             mock_get.return_value = mock_prediction_data
 
             response = client.get("/api/predictions/12345")
@@ -78,7 +78,7 @@ class TestPredictionsAPI:
 
     def test_create_prediction_endpoint(self, client, mock_prediction_data):
         """测试创建预测端点"""
-        with patch('src.api.predictions.create_prediction') as mock_create:
+        with patch("src.api.predictions.create_prediction") as mock_create:
             mock_create.return_value = {**mock_prediction_data, "id": 1}
 
             response = client.post("/api/predictions", json=mock_prediction_data)
@@ -92,7 +92,7 @@ class TestPredictionsAPI:
 
     def test_update_prediction_endpoint(self, client, mock_prediction_data):
         """测试更新预测端点"""
-        with patch('src.api.predictions.update_prediction') as mock_update:
+        with patch("src.api.predictions.update_prediction") as mock_update:
             updated_data = {**mock_prediction_data, "predicted_home_score": 3}
             mock_update.return_value = updated_data
 
@@ -107,7 +107,7 @@ class TestPredictionsAPI:
 
     def test_delete_prediction_endpoint(self, client):
         """测试删除预测端点"""
-        with patch('src.api.predictions.delete_prediction') as mock_delete:
+        with patch("src.api.predictions.delete_prediction") as mock_delete:
             mock_delete.return_value = True
 
             response = client.delete("/api/predictions/12345")
@@ -117,7 +117,7 @@ class TestPredictionsAPI:
 
     def test_predictions_by_match_endpoint(self, client):
         """测试按比赛获取预测端点"""
-        with patch('src.api.predictions.get_predictions_by_match') as mock_get:
+        with patch("src.api.predictions.get_predictions_by_match") as mock_get:
             mock_predictions = [
                 {
                     "id": 1,
@@ -125,7 +125,7 @@ class TestPredictionsAPI:
                     "home_team": "Team A",
                     "away_team": "Team B",
                     "predicted_home_score": 2,
-                    "predicted_away_score": 1
+                    "predicted_away_score": 1,
                 }
             ]
             mock_get.return_value = mock_predictions
@@ -158,7 +158,7 @@ class TestPredictionsValidation:
             "away_team": "",  # 空字符串
             "predicted_home_score": -1,  # 负数
             "predicted_away_score": "invalid",  # 应该是数字
-            "confidence": 1.5  # 超出范围
+            "confidence": 1.5,  # 超出范围
         }
 
         response = client.post("/api/predictions", json=invalid_data)
@@ -186,7 +186,7 @@ class TestPredictionsValidation:
             "away_team": "Team B",
             "predicted_home_score": 2,
             "predicted_away_score": 1,
-            "confidence": 1.5  # 超出0-1范围
+            "confidence": 1.5,  # 超出0-1范围
         }
 
         response = client.post("/api/predictions", json=invalid_confidence_data)
@@ -202,7 +202,7 @@ class TestPredictionsValidation:
             "away_team": "Team B",
             "predicted_home_score": -5,  # 负分数
             "predicted_away_score": 100,  # 过高分数
-            "confidence": 0.75
+            "confidence": 0.75,
         }
 
         response = client.post("/api/predictions", json=invalid_score_data)
@@ -230,10 +230,7 @@ class TestPredictionsAPIAuthentication:
     def test_valid_authentication(self, client):
         """测试有效认证"""
         # 使用模拟的认证头
-        headers = {
-            "Authorization": "Bearer mock_token",
-            "X-API-Key": "mock_api_key"
-        }
+        headers = {"Authorization": "Bearer mock_token", "X-API-Key": "mock_api_key"}
 
         response = client.get("/api/predictions", headers=headers)
 
@@ -242,9 +239,7 @@ class TestPredictionsAPIAuthentication:
 
     def test_invalid_token(self, client):
         """测试无效令牌"""
-        headers = {
-            "Authorization": "Bearer invalid_token"
-        }
+        headers = {"Authorization": "Bearer invalid_token"}
 
         response = client.post("/api/predictions", json={}, headers=headers)
 
@@ -284,7 +279,7 @@ class TestPredictionsAPIPerformance:
                 "away_team": f"Opponent {i}",
                 "predicted_home_score": 2,
                 "predicted_away_score": 1,
-                "confidence": 0.75
+                "confidence": 0.75,
             }
             for i in range(100)
         ]
@@ -320,7 +315,7 @@ class TestPredictionsAPIErrorHandling:
 
     def test_database_error_handling(self, client):
         """测试数据库错误处理"""
-        with patch('src.api.predictions.get_prediction_by_id') as mock_get:
+        with patch("src.api.predictions.get_prediction_by_id") as mock_get:
             mock_get.side_effect = Exception("Database connection error")
 
             response = client.get("/api/predictions/12345")
@@ -330,7 +325,7 @@ class TestPredictionsAPIErrorHandling:
 
     def test_external_service_error(self, client):
         """测试外部服务错误"""
-        with patch('src.api.predictions.create_prediction') as mock_create:
+        with patch("src.api.predictions.create_prediction") as mock_create:
             mock_create.side_effect = Exception("External API unavailable")
 
             prediction_data = {
@@ -339,7 +334,7 @@ class TestPredictionsAPIErrorHandling:
                 "away_team": "Team B",
                 "predicted_home_score": 2,
                 "predicted_away_score": 1,
-                "confidence": 0.75
+                "confidence": 0.75,
             }
 
             response = client.post("/api/predictions", json=prediction_data)
@@ -358,12 +353,9 @@ class TestPredictionsAPIPagination:
 
     def test_predictions_list_pagination(self, client):
         """测试预测列表分页"""
-        with patch('src.api.predictions.get_all_predictions') as mock_get:
+        with patch("src.api.predictions.get_all_predictions") as mock_get:
             # 模拟分页数据
-            mock_predictions = [
-                {"id": i, "match_id": 12345 + i}
-                for i in range(50)
-            ]
+            mock_predictions = [{"id": i, "match_id": 12345 + i} for i in range(50)]
             mock_get.return_value = mock_predictions
 
             # 测试分页参数
@@ -404,13 +396,13 @@ class TestPredictionsAPIFilters:
 
     def test_filter_by_team(self, client):
         """测试按队伍过滤"""
-        with patch('src.api.predictions.get_predictions_by_team') as mock_get:
+        with patch("src.api.predictions.get_predictions_by_team") as mock_get:
             mock_predictions = [
                 {
                     "id": 1,
                     "match_id": 12345,
                     "home_team": "Team A",
-                    "away_team": "Team B"
+                    "away_team": "Team B",
                 }
             ]
             mock_get.return_value = mock_predictions
@@ -429,24 +421,21 @@ class TestPredictionsAPIFilters:
         start_date = (datetime.utcnow() - timedelta(days=7)).isoformat()
         end_date = datetime.utcnow().isoformat()
 
-        with patch('src.api.predictions.get_predictions_by_date_range') as mock_get:
+        with patch("src.api.predictions.get_predictions_by_date_range") as mock_get:
             mock_predictions = []
             mock_get.return_value = mock_predictions
 
-            response = client.get(f"/api/predictions?start_date={start_date}&end_date={end_date}")
+            response = client.get(
+                f"/api/predictions?start_date={start_date}&end_date={end_date}"
+            )
 
             # 检查响应状态
             assert response.status_code in [200, 404, 422]
 
     def test_filter_by_confidence(self, client):
         """测试按置信度过滤"""
-        with patch('src.api.predictions.get_high_confidence_predictions') as mock_get:
-            mock_predictions = [
-                {
-                    "id": 1,
-                    "confidence": 0.85
-                }
-            ]
+        with patch("src.api.predictions.get_high_confidence_predictions") as mock_get:
+            mock_predictions = [{"id": 1, "confidence": 0.85}]
             mock_get.return_value = mock_predictions
 
             response = client.get("/api/predictions?min_confidence=0.8")
@@ -476,7 +465,7 @@ def create_mock_prediction_service():
         "away_team": "Team B",
         "predicted_home_score": 2,
         "predicted_away_score": 1,
-        "confidence": 0.75
+        "confidence": 0.75,
     }
     return service
 
@@ -489,7 +478,7 @@ def create_valid_prediction_data():
         "away_team": "Team B",
         "predicted_home_score": 2,
         "predicted_away_score": 1,
-        "confidence": 0.75
+        "confidence": 0.75,
     }
 
 
@@ -499,5 +488,5 @@ def create_invalid_prediction_data():
         "match_id": "invalid",
         "home_team": "",
         "predicted_home_score": -1,
-        "confidence": 1.5
+        "confidence": 1.5,
     }

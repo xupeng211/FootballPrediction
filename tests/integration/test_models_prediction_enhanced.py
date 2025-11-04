@@ -27,7 +27,9 @@ class TestModelsPredictionEnhanced:
         if hasattr(prediction, "id"):
             assert prediction.id is None or isinstance(prediction.id, int)
         if hasattr(prediction, "created_at"):
-            assert prediction.created_at is None or isinstance(prediction.created_at, datetime)
+            assert prediction.created_at is None or isinstance(
+                prediction.created_at, datetime
+            )
 
     def test_prediction_data_validation(self):
         """测试预测数据验证"""

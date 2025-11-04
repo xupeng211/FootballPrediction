@@ -24,6 +24,7 @@ try:
     from src.domain.services.prediction_service import PredictionDomainService
     from src.domain.services.scoring_service import ScoringService
     from src.domain.services.team_service import TeamDomainService
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
@@ -59,7 +60,7 @@ except ImportError as e:
                 "disposed": self._is_disposed,
                 "healthy": self.is_healthy(),
                 "created_at": self._created_at.isoformat(),
-                "config": self._config
+                "config": self._config,
             }
 
     class PredictionDomainService:
@@ -91,7 +92,7 @@ except ImportError as e:
                 "disposed": self._is_disposed,
                 "healthy": self.is_healthy(),
                 "created_at": self._created_at.isoformat(),
-                "config": self._config
+                "config": self._config,
             }
 
     class ScoringService:
@@ -123,7 +124,7 @@ except ImportError as e:
                 "disposed": self._is_disposed,
                 "healthy": self.is_healthy(),
                 "created_at": self._created_at.isoformat(),
-                "config": self._config
+                "config": self._config,
             }
 
     class TeamDomainService:
@@ -155,7 +156,7 @@ except ImportError as e:
                 "disposed": self._is_disposed,
                 "healthy": self.is_healthy(),
                 "created_at": self._created_at.isoformat(),
-                "config": self._config
+                "config": self._config,
             }
 
 
@@ -167,7 +168,9 @@ class ServiceContainer:
         self._services: Dict[str, Any] = {}
         self._config: Dict[str, Dict] = {}
 
-    def register_service(self, name: str, service_class: type, config: Dict = None) -> None:
+    def register_service(
+        self, name: str, service_class: type, config: Dict = None
+    ) -> None:
         """注册服务"""
         self._config[name] = config or {}
         # 不立即创建实例，延迟初始化
@@ -183,7 +186,7 @@ class ServiceContainer:
                 "match": MatchDomainService,
                 "prediction": PredictionDomainService,
                 "scoring": ScoringService,
-                "team": TeamDomainService
+                "team": TeamDomainService,
             }
 
             if name not in service_classes:
@@ -240,7 +243,7 @@ class TestServiceLifecycle:
             "timeout": 30,
             "retry_count": 3,
             "enable_logging": True,
-            "cache_enabled": False
+            "cache_enabled": False,
         }
 
     def test_service_initialization(self, sample_config):
@@ -373,7 +376,7 @@ class TestServiceLifecycle:
             MatchDomainService(),
             PredictionDomainService(),
             ScoringService(),
-            TeamDomainService()
+            TeamDomainService(),
         ]
 
         # 初始化所有服务
@@ -451,7 +454,7 @@ class TestServiceContainer:
             "match": {"timeout": 30},
             "prediction": {"retry_count": 3},
             "scoring": {"enable_logging": True},
-            "team": {"cache_enabled": False}
+            "team": {"cache_enabled": False},
         }
 
         # 注册所有服务
@@ -534,10 +537,7 @@ class TestServiceContainer:
     def test_container_lifecycle_integration(self, container):
         """测试容器生命周期集成"""
         # 注册服务
-        configs = {
-            "match": {"timeout": 30},
-            "prediction": {"retry_count": 3}
-        }
+        configs = {"match": {"timeout": 30}, "prediction": {"retry_count": 3}}
 
         for name, config in configs.items():
             if name == "match":
@@ -581,7 +581,9 @@ class TestServiceLifecycleIntegration:
 
         # 配置服务依赖
         container.register_service("match", MatchDomainService, {"timeout": 30})
-        container.register_service("prediction", PredictionDomainService, {"match_service": "match"})
+        container.register_service(
+            "prediction", PredictionDomainService, {"match_service": "match"}
+        )
 
         # 初始化服务
         container.initialize_all()
@@ -608,7 +610,9 @@ class TestServiceLifecycleIntegration:
         service = MatchDomainService()
 
         # 模拟初始化错误
-        with patch.object(service, 'initialize', side_effect=Exception("Initialization failed")):
+        with patch.object(
+            service, "initialize", side_effect=Exception("Initialization failed")
+        ):
             with pytest.raises(Exception, match="Initialization failed"):
                 service.initialize()
 

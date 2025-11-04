@@ -79,7 +79,7 @@ class TestPredictionInput:
             home_team=home_team,
             away_team=away_team,
             historical_data={"wins": 10, "losses": 5},
-            additional_features={"weather": "sunny"}
+            additional_features={"weather": "sunny"},
         )
 
         assert input_data.match == match
@@ -96,9 +96,7 @@ class TestPredictionInput:
         away_team = MockTeam(2, "Team B", 78.2)
 
         input_data = PredictionInput(
-            match=match,
-            home_team=home_team,
-            away_team=away_team
+            match=match, home_team=home_team, away_team=away_team
         )
 
         assert input_data.historical_data is None
@@ -132,23 +130,28 @@ class TestPredictionOutput:
             probability_distribution={"home_win": 0.6, "draw": 0.2, "away_win": 0.2},
             feature_importance={"rating_diff": 0.7, "home_advantage": 0.3},
             strategy_used="ml_model",
-            execution_time_ms=150.5
+            execution_time_ms=150.5,
         )
 
         assert output_data.predicted_home_score == 2
         assert output_data.predicted_away_score == 1
         assert output_data.confidence == 0.85
-        assert output_data.probability_distribution == {"home_win": 0.6, "draw": 0.2, "away_win": 0.2}
-        assert output_data.feature_importance == {"rating_diff": 0.7, "home_advantage": 0.3}
+        assert output_data.probability_distribution == {
+            "home_win": 0.6,
+            "draw": 0.2,
+            "away_win": 0.2,
+        }
+        assert output_data.feature_importance == {
+            "rating_diff": 0.7,
+            "home_advantage": 0.3,
+        }
         assert output_data.strategy_used == "ml_model"
         assert output_data.execution_time_ms == 150.5
 
     def test_prediction_output_defaults(self):
         """测试预测输出默认值"""
         output_data = PredictionOutput(
-            predicted_home_score=1,
-            predicted_away_score=1,
-            confidence=0.5
+            predicted_home_score=1, predicted_away_score=1, confidence=0.5
         )
 
         assert output_data.probability_distribution is None
@@ -161,18 +164,14 @@ class TestPredictionOutput:
         """测试预测输出置信度验证"""
         # 测试有效置信度
         valid_output = PredictionOutput(
-            predicted_home_score=2,
-            predicted_away_score=1,
-            confidence=0.75
+            predicted_home_score=2, predicted_away_score=1, confidence=0.75
         )
         assert 0.0 <= valid_output.confidence <= 1.0
 
         # 置信度超出范围（在实际应用中应该有验证）
         # 这里只测试数据存储，不进行业务规则验证
         high_confidence_output = PredictionOutput(
-            predicted_home_score=3,
-            predicted_away_score=0,
-            confidence=1.5
+            predicted_home_score=3, predicted_away_score=0, confidence=1.5
         )
         assert high_confidence_output.confidence == 1.5
 
@@ -187,7 +186,7 @@ class TestStrategyMetrics:
             precision=0.78,
             recall=0.92,
             f1_score=0.84,
-            total_predictions=100
+            total_predictions=100,
         )
 
         assert metrics.accuracy == 0.85
@@ -204,7 +203,7 @@ class TestStrategyMetrics:
             precision=0.88,
             recall=0.91,
             f1_score=0.89,
-            total_predictions=150
+            total_predictions=150,
         )
 
         assert 0.0 <= metrics.accuracy <= 1.0
@@ -246,7 +245,9 @@ class TestPredictionStrategy:
     def test_strategy_metrics_setting(self):
         """测试策略指标设置"""
         strategy = MockPredictionStrategy("test_strategy", StrategyType.STATISTICAL)
-        metrics = StrategyMetrics(accuracy=0.85, precision=0.78, recall=0.92, f1_score=0.84)
+        metrics = StrategyMetrics(
+            accuracy=0.85, precision=0.78, recall=0.92, f1_score=0.84
+        )
 
         strategy.set_metrics(metrics)
 
@@ -255,7 +256,9 @@ class TestPredictionStrategy:
     def test_strategy_metrics_getting(self):
         """测试策略指标获取"""
         strategy = MockPredictionStrategy("test_strategy", StrategyType.STATISTICAL)
-        metrics = StrategyMetrics(accuracy=0.90, precision=0.85, recall=0.88, f1_score=0.86)
+        metrics = StrategyMetrics(
+            accuracy=0.90, precision=0.85, recall=0.88, f1_score=0.86
+        )
 
         strategy.set_metrics(metrics)
         retrieved_metrics = strategy.get_metrics()
@@ -276,9 +279,9 @@ class TestPredictionStrategyFactory:
         """测试工厂初始化"""
         factory = PredictionStrategyFactory()
 
-        assert hasattr(factory, '_strategies')
-        assert hasattr(factory, '_default_config')
-        assert hasattr(factory, '_strategy_registry')
+        assert hasattr(factory, "_strategies")
+        assert hasattr(factory, "_default_config")
+        assert hasattr(factory, "_strategy_registry")
 
     def test_create_ml_strategy(self):
         """测试创建机器学习策略"""
@@ -297,7 +300,9 @@ class TestPredictionStrategyFactory:
         factory = PredictionStrategyFactory()
         config = {"method": "poisson", "window_size": 10}
 
-        strategy = factory.create_strategy("statistical", "Test Statistical Strategy", config)
+        strategy = factory.create_strategy(
+            "statistical", "Test Statistical Strategy", config
+        )
 
         assert strategy is not None
         assert isinstance(strategy, StatisticalStrategy)
@@ -355,7 +360,9 @@ class TestStrategyIntegration:
 
         # 创建统计策略
         config = {"method": "simple", "default_home_advantage": 0.1}
-        strategy = factory.create_strategy("statistical", "Integration Test Strategy", config)
+        strategy = factory.create_strategy(
+            "statistical", "Integration Test Strategy", config
+        )
 
         # 初始化策略
         await strategy.initialize(config)
@@ -369,7 +376,7 @@ class TestStrategyIntegration:
             match=match,
             home_team=home_team,
             away_team=away_team,
-            additional_features={"home_advantage": 0.1}
+            additional_features={"home_advantage": 0.1},
         )
 
         # 执行预测
@@ -424,7 +431,9 @@ class TestStrategyIntegration:
             home_team = MockTeam(1, "Team A", 85.5)
             away_team = MockTeam(2, "Team B", 78.2)
 
-            input_data = PredictionInput(match=match, home_team=home_team, away_team=away_team)
+            input_data = PredictionInput(
+                match=match, home_team=home_team, away_team=away_team
+            )
 
             # 预测应该抛出异常
             with pytest.raises(Exception, match="Prediction failed"):
@@ -446,7 +455,9 @@ class TestStrategyPerformance:
 
         # 创建统计策略
         config = {"method": "simple"}
-        strategy = factory.create_strategy("statistical", "Performance Test Strategy", config)
+        strategy = factory.create_strategy(
+            "statistical", "Performance Test Strategy", config
+        )
         await strategy.initialize(config)
 
         # 创建测试输入
@@ -454,7 +465,9 @@ class TestStrategyPerformance:
         home_team = MockTeam(1, "Team A", 85.5)
         away_team = MockTeam(2, "Team B", 78.2)
 
-        input_data = PredictionInput(match=match, home_team=home_team, away_team=away_team)
+        input_data = PredictionInput(
+            match=match, home_team=home_team, away_team=away_team
+        )
 
         # 测试多次预测的性能
         start_time = time.time()
@@ -511,7 +524,7 @@ class MockPredictionStrategy(PredictionStrategy):
             predicted_away_score=away_score,
             confidence=confidence,
             strategy_used=self.name,
-            execution_time_ms=10.0
+            execution_time_ms=10.0,
         )
 
     def set_metrics(self, metrics: StrategyMetrics) -> None:
@@ -545,7 +558,7 @@ def create_test_prediction_input() -> PredictionInput:
         home_team=home_team,
         away_team=away_team,
         historical_data={"home_wins": 5, "away_wins": 3},
-        additional_features={"weather": "sunny", "venue": "home"}
+        additional_features={"weather": "sunny", "venue": "home"},
     )
 
 

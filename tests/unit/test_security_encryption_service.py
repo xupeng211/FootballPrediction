@@ -6,6 +6,7 @@
 import pytest
 from unittest.mock import Mock
 
+
 def test_module_import():
     """测试模块可以正常导入"""
     try:
@@ -15,11 +16,13 @@ def test_module_import():
     except ImportError as e:
         pytest.skip(f"模块 {module_name} 导入失败: {e}")
 
+
 def test_basic_functionality():
     """基础功能测试模板"""
     # 这是一个基础测试模板
     # 实际测试应根据模块功能实现
     assert True
+
 
 class TestBasicStructure:
     """基础结构测试类"""

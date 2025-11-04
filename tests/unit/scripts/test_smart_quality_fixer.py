@@ -96,11 +96,12 @@ class TestSmartQualityFixer:
     def test_help_functionality(self):
         """测试帮助功能"""
         import subprocess
+
         result = subprocess.run(
             [sys.executable, "scripts/smart_quality_fixer.py", "--help"],
             capture_output=True,
             text=True,
-            cwd=project_root
+            cwd=project_root,
         )
         assert result.returncode == 0
         assert "智能质量修复工具" in result.stdout
@@ -109,11 +110,12 @@ class TestSmartQualityFixer:
     def test_dry_run_mode(self):
         """测试试运行模式"""
         import subprocess
+
         result = subprocess.run(
             [sys.executable, "scripts/smart_quality_fixer.py", "--dry-run"],
             capture_output=True,
             text=True,
-            cwd=project_root
+            cwd=project_root,
         )
         assert result.returncode == 0
         assert "试运行模式" in result.stdout
@@ -121,6 +123,7 @@ class TestSmartQualityFixer:
     def teardown_method(self):
         """测试后清理"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 

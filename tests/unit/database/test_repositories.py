@@ -18,7 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入数据库模块
 try:
@@ -27,6 +28,7 @@ try:
     from src.database.models.user import User
     from src.database.models.predictions import Prediction
     from src.database.models.match import Match
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入数据库模块: {e}")
@@ -39,14 +41,16 @@ class MockModel:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.id = kwargs.get('id', 1)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.id = kwargs.get("id", 1)
+        self.created_at = kwargs.get("created_at", datetime.utcnow())
+        self.updated_at = kwargs.get("updated_at", datetime.utcnow())
 
     def __eq__(self, other):
         if not isinstance(other, MockModel):
             return False
-        return all(getattr(self, key) == getattr(other, key) for key in self.__dict__.keys())
+        return all(
+            getattr(self, key) == getattr(other, key) for key in self.__dict__.keys()
+        )
 
 
 class MockDatabaseManager:
@@ -107,7 +111,7 @@ class TestBaseRepository:
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock()
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.create(obj_data)
 
         # 验证操作
@@ -136,7 +140,9 @@ class TestBaseRepository:
         obj_data = {"name": "测试对象", "value": 123}
 
         mock_session.add = MagicMock()
-        mock_session.commit = AsyncMock(side_effect=SQLAlchemyExc.IntegrityError("stmt", "params", "orig"))
+        mock_session.commit = AsyncMock(
+            side_effect=SQLAlchemyExc.IntegrityError("stmt", "params", "orig")
+        )
         mock_session.rollback = AsyncMock()
 
         with pytest.raises(SQLAlchemyExc.IntegrityError):
@@ -155,7 +161,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.get_by_id(obj_id)
 
         assert result == expected_obj
@@ -171,7 +177,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.get_by_id(obj_id)
 
         assert result is None
@@ -182,7 +188,7 @@ class TestBaseRepository:
         expected_objs = [
             MockModel(id=1, name="对象1"),
             MockModel(id=2, name="对象2"),
-            MockModel(id=3, name="对象3")
+            MockModel(id=3, name="对象3"),
         ]
 
         mock_result = MagicMock()
@@ -190,7 +196,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.get_all()
 
         assert result == expected_objs
@@ -206,7 +212,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.get_all(filters=filters)
 
         assert result == expected_objs
@@ -218,13 +224,15 @@ class TestBaseRepository:
         update_data = {"name": "更新后的名称", "value": 456}
 
         mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = MockModel(id=obj_id, **update_data)
+        mock_result.scalar_one_or_none.return_value = MockModel(
+            id=obj_id, **update_data
+        )
 
         mock_session.execute = AsyncMock(return_value=mock_result)
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock()
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.update(obj_id, update_data)
 
         assert result.id == obj_id
@@ -242,7 +250,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.update(obj_id, update_data)
 
         assert result is None
@@ -260,7 +268,7 @@ class TestBaseRepository:
         mock_session.commit = AsyncMock()
         mock_session.delete = MagicMock()
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.delete(obj_id)
 
         assert result == expected_obj
@@ -277,7 +285,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.delete(obj_id)
 
         assert result is None
@@ -292,7 +300,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.count()
 
         assert result == expected_count
@@ -308,7 +316,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.count(filters=filters)
 
         assert result == expected_count
@@ -323,7 +331,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.exists(obj_id)
 
         assert result is True
@@ -338,7 +346,7 @@ class TestBaseRepository:
 
         mock_session.execute = AsyncMock(return_value=mock_result)
 
-        with patch.object(repository, 'get_session', return_value=mock_session):
+        with patch.object(repository, "get_session", return_value=mock_session):
             result = await repository.exists(obj_id)
 
         assert result is False
@@ -353,14 +361,14 @@ class TestDatabaseManager:
     @pytest.mark.asyncio
     async def test_database_manager_initialization(self):
         """测试数据库管理器初始化"""
-        with patch('src.database.connection.DatabaseManager'):
+        with patch("src.database.connection.DatabaseManager"):
             db_manager = DatabaseManager()
             assert db_manager is not None
 
     @pytest.mark.asyncio
     async def test_get_session(self):
         """测试获取数据库会话"""
-        with patch('src.database.connection.DatabaseManager') as mock_class:
+        with patch("src.database.connection.DatabaseManager") as mock_class:
             mock_instance = AsyncMock()
             mock_class.return_value = mock_instance
 
@@ -372,7 +380,7 @@ class TestDatabaseManager:
     @pytest.mark.asyncio
     async def test_close_session(self):
         """测试关闭数据库会话"""
-        with patch('src.database.connection.DatabaseManager') as mock_class:
+        with patch("src.database.connection.DatabaseManager") as mock_class:
             mock_instance = AsyncMock()
             mock_class.return_value = mock_instance
 
@@ -451,7 +459,7 @@ class TestDatabaseConnection:
         if not CAN_IMPORT:
             pytest.skip("数据库模块导入失败")
 
-        with patch('src.database.connection.DatabaseManager') as mock_class:
+        with patch("src.database.connection.DatabaseManager") as mock_class:
             mock_instance = AsyncMock()
             mock_class.return_value = mock_instance
 
@@ -466,9 +474,11 @@ class TestDatabaseConnection:
         if not CAN_IMPORT:
             pytest.skip("数据库模块导入失败")
 
-        with patch('src.database.connection.DatabaseManager') as mock_class:
+        with patch("src.database.connection.DatabaseManager") as mock_class:
             mock_instance = AsyncMock()
-            mock_instance.get_session.side_effect = SQLAlchemyExc.DBAPIError("stmt", "params", "orig")
+            mock_instance.get_session.side_effect = SQLAlchemyExc.DBAPIError(
+                "stmt", "params", "orig"
+            )
             mock_class.return_value = mock_instance
 
             db_manager = DatabaseManager()
@@ -482,7 +492,7 @@ class TestDatabaseConnection:
         if not CAN_IMPORT:
             pytest.skip("数据库模块导入失败")
 
-        with patch('src.database.connection.DatabaseManager') as mock_class:
+        with patch("src.database.connection.DatabaseManager") as mock_class:
             mock_instance = AsyncMock()
             mock_class.return_value = mock_instance
 

@@ -211,8 +211,5 @@ class ReadOnlyUserRepository(BaseRepository):
 
     async def search_users(self, query: str, limit: int = 10) -> list["User"]:
         """搜索用户"""
-        filters = {
-            "username__icontains": query,
-            "email__icontains": query
-        }
+        filters = {"username__icontains": query, "email__icontains": query}
         return await self.find_by_filters(filters, limit)

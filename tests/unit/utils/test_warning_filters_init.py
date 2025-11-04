@@ -15,18 +15,19 @@ class TestWarningFiltersInitialization:
     def test_initialization_code_coverage_simple(self):
         """简单测试覆盖初始化代码"""
         # 模拟模块初始化时的错误处理
-        with patch('warnings.filterwarnings', side_effect=ValueError("Test error")):
+        with patch("warnings.filterwarnings", side_effect=ValueError("Test error")):
             # 重新导入模块来触发初始化代码
             import importlib
             import sys
 
             # 从sys.modules中移除模块以便重新导入
-            if 'src.utils.warning_filters' in sys.modules:
-                del sys.modules['src.utils.warning_filters']
+            if "src.utils.warning_filters" in sys.modules:
+                del sys.modules["src.utils.warning_filters"]
 
             # 验证导入不会抛出异常（错误被正确处理）
             try:
                 import src.utils.warning_filters
+
                 # 如果能到达这里说明错误处理工作正常
                 assert True
             except Exception:
@@ -37,18 +38,19 @@ class TestWarningFiltersInitialization:
         errors_to_test = [
             ValueError("ValueError test"),
             KeyError("KeyError test"),
-            TypeError("TypeError test")
+            TypeError("TypeError test"),
         ]
 
         for error in errors_to_test:
-            with patch('warnings.filterwarnings', side_effect=error):
+            with patch("warnings.filterwarnings", side_effect=error):
                 # 从sys.modules中移除模块以便重新导入
-                if 'src.utils.warning_filters' in sys.modules:
-                    del sys.modules['src.utils.warning_filters']
+                if "src.utils.warning_filters" in sys.modules:
+                    del sys.modules["src.utils.warning_filters"]
 
                 # 验证导入不会抛出异常（错误被正确处理）
                 try:
                     import src.utils.warning_filters
+
                     # 如果能到达这里说明错误处理工作正常
                     assert True
                 except Exception:
@@ -56,7 +58,7 @@ class TestWarningFiltersInitialization:
 
     def test_warning_filters_setup_calls(self):
         """测试警告过滤器设置的调用次数"""
-        with patch('warnings.filterwarnings') as mock_filterwarnings:
+        with patch("warnings.filterwarnings") as mock_filterwarnings:
             from src.utils.warning_filters import setup_warning_filters
 
             setup_warning_filters()
@@ -67,13 +69,13 @@ class TestWarningFiltersInitialization:
     def test_pytest_environment_check(self):
         """测试pytest环境检查"""
         # 确保pytest在sys.modules中
-        assert 'pytest' in sys.modules
+        assert "pytest" in sys.modules
 
     def test_logger_exists(self):
         """测试logger存在"""
         from src.utils import warning_filters
 
-        assert hasattr(warning_filters, 'logger')
+        assert hasattr(warning_filters, "logger")
         assert isinstance(warning_filters.logger, logging.Logger)
 
     def test_setup_function_return_value(self):
@@ -85,7 +87,7 @@ class TestWarningFiltersInitialization:
 
     def test_filterwarnings_parameters(self):
         """测试filterwarnings调用参数"""
-        with patch('warnings.filterwarnings') as mock_filterwarnings:
+        with patch("warnings.filterwarnings") as mock_filterwarnings:
             from src.utils.warning_filters import setup_warning_filters
 
             setup_warning_filters()
@@ -97,16 +99,16 @@ class TestWarningFiltersInitialization:
             assert len(calls) == 4
 
             # 检查第一次调用 (UserWarning, tensorflow.*)
-            assert calls[0][1]['category'] == UserWarning
-            assert "tensorflow" in str(calls[0][1]['module'])
+            assert calls[0][1]["category"] == UserWarning
+            assert "tensorflow" in str(calls[0][1]["module"])
 
             # 检查第二次调用 (DeprecationWarning, sklearn.*)
-            assert calls[1][1]['category'] == DeprecationWarning
-            assert "sklearn" in str(calls[1][1]['module'])
+            assert calls[1][1]["category"] == DeprecationWarning
+            assert "sklearn" in str(calls[1][1]["module"])
 
             # 检查第三次调用 (FutureWarning, pandas.*)
-            assert calls[2][1]['category'] == FutureWarning
-            assert "pandas" in str(calls[2][1]['module'])
+            assert calls[2][1]["category"] == FutureWarning
+            assert "pandas" in str(calls[2][1]["module"])
 
             # 检查第四次调用 (PendingDeprecationWarning)
-            assert calls[3][1]['category'] == PendingDeprecationWarning
+            assert calls[3][1]["category"] == PendingDeprecationWarning

@@ -38,7 +38,7 @@ class TestCryptoUtilsComprehensive:
         result = CryptoUtils.generate_uuid()
         assert isinstance(result, str)
         assert len(result) == 36  # 标准UUID格式
-        assert result.count('-') == 4  # UUID格式验证
+        assert result.count("-") == 4  # UUID格式验证
 
         # 多次生成应该不同
         result2 = CryptoUtils.generate_uuid()

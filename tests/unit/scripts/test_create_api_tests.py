@@ -33,12 +33,14 @@ class TestCreateAPITests:
         assert result is None
 
         # 检查测试文件是否被创建
-        test_file = project_root / "tests" / "unit" / "api" / "test_api_health_extended.py"
+        test_file = (
+            project_root / "tests" / "unit" / "api" / "test_api_health_extended.py"
+        )
         assert test_file.exists()
 
         # 检查文件内容
         if test_file.exists():
-            content = test_file.read_text(encoding='utf-8')
+            content = test_file.read_text(encoding="utf-8")
             assert "class TestAPIHealthExtended" in content
             assert "def test_" in content
             assert "import pytest" in content
@@ -47,9 +49,11 @@ class TestCreateAPITests:
         """测试生成的API测试文件结构"""
         create_api_health_test()
 
-        test_file = project_root / "tests" / "unit" / "api" / "test_api_health_extended.py"
+        test_file = (
+            project_root / "tests" / "unit" / "api" / "test_api_health_extended.py"
+        )
         if test_file.exists():
-            content = test_file.read_text(encoding='utf-8')
+            content = test_file.read_text(encoding="utf-8")
 
             # 检查基本结构
             assert '"""API健康检查扩展测试"""' in content
@@ -65,9 +69,11 @@ class TestCreateAPITests:
         """测试API测试内容质量"""
         create_api_health_test()
 
-        test_file = project_root / "tests" / "unit" / "api" / "test_api_health_extended.py"
+        test_file = (
+            project_root / "tests" / "unit" / "api" / "test_api_health_extended.py"
+        )
         if test_file.exists():
-            content = test_file.read_text(encoding='utf-8')
+            content = test_file.read_text(encoding="utf-8")
 
             # 检查API特有功能
             assert "TestClient" in content
@@ -82,6 +88,7 @@ class TestCreateAPITests:
     def teardown_method(self):
         """测试后清理"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 

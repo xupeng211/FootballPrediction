@@ -22,7 +22,10 @@ class SimpleSRSApiTester:
 
     def __init__(self):
         self.session = None
-        self.headers = {"Authorization": f"Bearer {TEST_TOKEN}", "Content-Type": "application/json"}
+        self.headers = {
+            "Authorization": f"Bearer {TEST_TOKEN}",
+            "Content-Type": "application/json",
+        }
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession(headers=self.headers)
@@ -38,7 +41,9 @@ class SimpleSRSApiTester:
         print("-" * 50)
 
         try:
-            async with self.session.get(f"{BASE_URL}/predictions-srs-simple/health") as response:
+            async with self.session.get(
+                f"{BASE_URL}/predictions-srs-simple/health"
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
                     print("✅ 健康检查成功")
@@ -106,7 +111,9 @@ class SimpleSRSApiTester:
                     print(
                         f"   Token认证: {'✅' if srs_compliance.get('token_authenticated') else '❌'}"
                     )
-                    print(f"   频率限制: {'✅' if srs_compliance.get('rate_limited') else '❌'}")
+                    print(
+                        f"   频率限制: {'✅' if srs_compliance.get('rate_limited') else '❌'}"
+                    )
                     print(
                         f"   数据库独立: {'✅' if srs_compliance.get('database_independent') else '❌'}"
                     )
@@ -164,7 +171,11 @@ class SimpleSRSApiTester:
                 }
             )
 
-        request_data = {"matches": matches, "include_confidence": True, "max_concurrent": 10}
+        request_data = {
+            "matches": matches,
+            "include_confidence": True,
+            "max_concurrent": 10,
+        }
 
         start_time = time.time()
 
@@ -182,7 +193,9 @@ class SimpleSRSApiTester:
                     print(f"🔢 总比赛数: {data.get('total_matches')}")
                     print(f"✅ 成功预测数: {data.get('successful_predictions')}")
                     print(f"❌ 失败预测数: {data.get('failed_predictions')}")
-                    print(f"⚡ 平均响应时间: {data.get('average_response_time_ms'):.2f}ms")
+                    print(
+                        f"⚡ 平均响应时间: {data.get('average_response_time_ms'):.2f}ms"
+                    )
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
@@ -193,7 +206,9 @@ class SimpleSRSApiTester:
                     print(
                         f"   平均响应时间: {'✅' if srs_compliance.get('meets_response_time_requirement') else '❌'} ({data.get('average_response_time_ms'):.2f}ms)"
                     )
-                    print(f"   最大并发数: {srs_compliance.get('max_concurrent_requests')}")
+                    print(
+                        f"   最大并发数: {srs_compliance.get('max_concurrent_requests')}"
+                    )
                     print(
                         f"   数据库独立: {'✅' if srs_compliance.get('database_independent') else '❌'}"
                     )
@@ -224,7 +239,9 @@ class SimpleSRSApiTester:
         print("-" * 50)
 
         try:
-            async with self.session.get(f"{BASE_URL}/predictions-srs-simple/metrics") as response:
+            async with self.session.get(
+                f"{BASE_URL}/predictions-srs-simple/metrics"
+            ) as response:
                 if response.status == 200:
                     data = await response.json()
 
@@ -305,7 +322,9 @@ class SimpleSRSApiTester:
         total_time = (time.time() - start_time) * 1000
 
         # 统计结果
-        successful_requests = sum(1 for r in results if isinstance(r, dict) and r.get("success"))
+        successful_requests = sum(
+            1 for r in results if isinstance(r, dict) and r.get("success")
+        )
         failed_requests = concurrent_requests - successful_requests
 
         print("✅ 并发测试完成")
@@ -339,7 +358,11 @@ class SimpleSRSApiTester:
                 }
             )
 
-        request_data = {"matches": matches, "include_confidence": True, "max_concurrent": 50}
+        request_data = {
+            "matches": matches,
+            "include_confidence": True,
+            "max_concurrent": 50,
+        }
 
         start_time = time.time()
 
@@ -357,7 +380,9 @@ class SimpleSRSApiTester:
                     print(f"✅ 成功预测: {data.get('successful_predictions')}")
                     print(f"❌ 失败预测: {data.get('failed_predictions')}")
                     print(f"⚡ 总处理时间: {response_time:.2f}ms")
-                    print(f"📊 平均响应时间: {data.get('average_response_time_ms'):.2f}ms")
+                    print(
+                        f"📊 平均响应时间: {data.get('average_response_time_ms'):.2f}ms"
+                    )
                     print(
                         f"🎯 成功率: {data.get('successful_predictions')/data.get('total_matches')*100:.1f}%"
                     )

@@ -77,7 +77,9 @@ async def test_user_registration():
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{API_BASE_URL}/auth/register", json=TEST_USER)
+            response = await client.post(
+                f"{API_BASE_URL}/auth/register", json=TEST_USER
+            )
 
             if response.status_code == 201:
                 user_data = response.json()
@@ -102,7 +104,10 @@ async def test_user_login():
 
     try:
         async with httpx.AsyncClient() as client:
-            login_data = {"username": TEST_USER["username"], "password": TEST_USER["password"]}
+            login_data = {
+                "username": TEST_USER["username"],
+                "password": TEST_USER["password"],
+            }
 
             response = await client.post(f"{API_BASE_URL}/auth/login", data=login_data)
 
@@ -172,7 +177,9 @@ async def test_existing_users():
                     print_info(f"角色: {token_data.get('user', {}).get('role')}")
                 else:
                     error_data = response.json()
-                    print_error(f"用户 {user['username']} 登录失败: {error_data.get('detail')}")
+                    print_error(
+                        f"用户 {user['username']} 登录失败: {error_data.get('detail')}"
+                    )
         except Exception as e:
             print_error(f"用户 {user['username']} 登录请求失败: {e}")
 

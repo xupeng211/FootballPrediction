@@ -17,11 +17,15 @@ from pydantic import BaseModel, Field, ValidationError
 from typing import Optional, List
 
 # 添加src到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入predictions路由器
 import importlib.util
-spec = importlib.util.spec_from_file_location("predictions_module", "/home/user/projects/FootballPrediction/src/api/predictions/router.py")
+
+spec = importlib.util.spec_from_file_location(
+    "predictions_module",
+    "/home/user/projects/FootballPrediction/src/api/predictions/router.py",
+)
 predictions_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(predictions_module)
 
@@ -48,10 +52,7 @@ class TestPredictionModels:
 
     def test_prediction_request_custom_values(self):
         """测试预测请求模型自定义值"""
-        request = PredictionRequest(
-            model_version="v2.0",
-            include_details=True
-        )
+        request = PredictionRequest(model_version="v2.0", include_details=True)
 
         assert request.model_version == "v2.0"
         assert request.include_details is True
@@ -67,7 +68,7 @@ class TestPredictionModels:
             predicted_outcome="home",
             confidence=0.75,
             model_version="default",
-            predicted_at=now
+            predicted_at=now,
         )
 
         assert result.match_id == 12345
@@ -96,7 +97,7 @@ class TestPredictionModels:
                 away_win_prob=away,
                 predicted_outcome="home",
                 confidence=0.5,
-                model_version="test"
+                model_version="test",
             )
             assert result.home_win_prob == home
             assert result.draw_prob == draw
@@ -120,7 +121,7 @@ class TestPredictionModels:
                     away_win_prob=away,
                     predicted_outcome="home",
                     confidence=0.5,
-                    model_version="test"
+                    model_version="test",
                 )
 
     def test_prediction_result_invalid_outcome(self):
@@ -133,14 +134,13 @@ class TestPredictionModels:
                 away_win_prob=0.25,
                 predicted_outcome="invalid",  # 无效结果
                 confidence=0.75,
-                model_version="default"
+                model_version="default",
             )
 
     def test_batch_prediction_request_valid(self):
         """测试批量预测请求有效数据"""
         request = BatchPredictionRequest(
-            match_ids=[1, 2, 3, 4, 5],
-            model_version="v2.0"
+            match_ids=[1, 2, 3, 4, 5], model_version="v2.0"
         )
 
         assert request.match_ids == [1, 2, 3, 4, 5]
@@ -167,7 +167,7 @@ class TestPredictionModels:
             predicted_outcome="home",
             confidence=0.75,
             model_version="default",
-            predicted_at=now
+            predicted_at=now,
         )
 
         recent = RecentPrediction(
@@ -176,7 +176,7 @@ class TestPredictionModels:
             home_team="Team A",
             away_team="Team B",
             prediction=prediction,
-            match_date=now + timedelta(days=1)
+            match_date=now + timedelta(days=1),
         )
 
         assert recent.id == 1
@@ -197,7 +197,7 @@ class TestPredictionModels:
             predicted_outcome="home",
             confidence=0.75,
             model_version="default",
-            predicted_at=now
+            predicted_at=now,
         )
 
         verification = PredictionVerification(
@@ -205,7 +205,7 @@ class TestPredictionModels:
             prediction=prediction,
             actual_result="home",
             is_correct=True,
-            accuracy_score=0.75
+            accuracy_score=0.75,
         )
 
         assert verification.match_id == 123
@@ -222,6 +222,7 @@ class TestPredictionAPIEndpoints:
     def client(self):
         """FastAPI测试客户端"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")
         return TestClient(app)
@@ -249,7 +250,7 @@ class TestPredictionAPIEndpoints:
 
     def test_get_recent_predictions_default_params(self, client):
         """测试获取最近预测默认参数"""
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.get("/api/v1/predictions/recent")
 
         assert response.status_code == 200
@@ -262,7 +263,7 @@ class TestPredictionAPIEndpoints:
 
     def test_get_recent_predictions_custom_params(self, client):
         """测试获取最近预测自定义参数"""
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.get("/api/v1/predictions/recent?limit=5&hours=12")
 
         assert response.status_code == 200
@@ -273,7 +274,7 @@ class TestPredictionAPIEndpoints:
         # 验证日志记录包含参数
         call_args = mock_logger.info.call_args[0][0]
         assert "12" in call_args  # hours参数
-        assert "5" in call_args   # limit参数
+        assert "5" in call_args  # limit参数
 
     def test_get_recent_predictions_invalid_limit(self, client):
         """测试获取最近预测无效限制参数"""
@@ -285,7 +286,7 @@ class TestPredictionAPIEndpoints:
     def test_get_prediction_valid_match_id(self, client):
         """测试获取有效比赛ID的预测"""
         match_id = 12345
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.get(f"/api/v1/predictions/{match_id}")
 
         assert response.status_code == 200
@@ -306,7 +307,9 @@ class TestPredictionAPIEndpoints:
     def test_get_prediction_with_custom_params(self, client):
         """测试获取带自定义参数的预测"""
         match_id = 12345
-        response = client.get(f"/api/v1/predictions/{match_id}?model_version=v2.0&include_details=true")
+        response = client.get(
+            f"/api/v1/predictions/{match_id}?model_version=v2.0&include_details=true"
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -316,13 +319,12 @@ class TestPredictionAPIEndpoints:
     def test_create_prediction_success(self, client):
         """测试创建预测成功"""
         match_id = 12345
-        request_data = {
-            "model_version": "v2.0",
-            "include_details": True
-        }
+        request_data = {"model_version": "v2.0", "include_details": True}
 
-        with patch('predictions_module.logger') as mock_logger:
-            response = client.post(f"/api/v1/predictions/{match_id}/predict", json=request_data)
+        with patch("predictions_module.logger") as mock_logger:
+            response = client.post(
+                f"/api/v1/predictions/{match_id}/predict", json=request_data
+            )
 
         assert response.status_code == 201
         data = response.json()
@@ -337,7 +339,7 @@ class TestPredictionAPIEndpoints:
         """测试创建预测默认参数"""
         match_id = 12345
 
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.post(f"/api/v1/predictions/{match_id}/predict")
 
         assert response.status_code == 201
@@ -347,12 +349,9 @@ class TestPredictionAPIEndpoints:
 
     def test_batch_predict_success(self, client):
         """测试批量预测成功"""
-        request_data = {
-            "match_ids": [1, 2, 3, 4, 5],
-            "model_version": "v2.0"
-        }
+        request_data = {"match_ids": [1, 2, 3, 4, 5], "model_version": "v2.0"}
 
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.post("/api/v1/predictions/batch", json=request_data)
 
         assert response.status_code == 200
@@ -376,7 +375,7 @@ class TestPredictionAPIEndpoints:
         """测试批量预测比赛数量过多"""
         request_data = {
             "match_ids": list(range(101)),  # 101场比赛，超过限制
-            "model_version": "default"
+            "model_version": "default",
         }
 
         response = client.post("/api/v1/predictions/batch", json=request_data)
@@ -388,7 +387,7 @@ class TestPredictionAPIEndpoints:
         """测试获取有效比赛的预测历史"""
         match_id = 12345
 
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.get(f"/api/v1/predictions/history/{match_id}")
 
         assert response.status_code == 200
@@ -411,7 +410,7 @@ class TestPredictionAPIEndpoints:
         """测试验证正确预测"""
         match_id = 12345
 
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.post(
                 f"/api/v1/predictions/{match_id}/verify?actual_result=home"
             )
@@ -434,7 +433,7 @@ class TestPredictionAPIEndpoints:
         """测试验证错误预测"""
         match_id = 12345
 
-        with patch('predictions_module.logger') as mock_logger:
+        with patch("predictions_module.logger") as mock_logger:
             response = client.post(
                 f"/api/v1/predictions/{match_id}/verify?actual_result=away"
             )
@@ -478,19 +477,21 @@ class TestPredictionBusinessLogic:
                 away_win_prob=away,
                 predicted_outcome="home",
                 confidence=0.75,
-                model_version="test"
+                model_version="test",
             )
 
             total_prob = home + draw + away
-            assert abs(total_prob - 1.0) < 0.01, f"概率总和应该为1.0，实际为{total_prob}"
+            assert (
+                abs(total_prob - 1.0) < 0.01
+            ), f"概率总和应该为1.0，实际为{total_prob}"
 
     def test_prediction_outcome_consistency(self):
         """测试预测结果一致性"""
         # 预测结果应该对应最高概率
         test_cases = [
-            (0.50, 0.30, 0.20, "home"),    # 主队概率最高
-            (0.20, 0.50, 0.30, "draw"),    # 平局概率最高
-            (0.25, 0.25, 0.50, "away"),   # 客队概率最高
+            (0.50, 0.30, 0.20, "home"),  # 主队概率最高
+            (0.20, 0.50, 0.30, "draw"),  # 平局概率最高
+            (0.25, 0.25, 0.50, "away"),  # 客队概率最高
         ]
 
         for home, draw, away, expected_outcome in test_cases:
@@ -501,7 +502,7 @@ class TestPredictionBusinessLogic:
                 away_win_prob=away,
                 predicted_outcome=expected_outcome,
                 confidence=0.75,
-                model_version="test"
+                model_version="test",
             )
 
             # 验证预测结果与最高概率一致
@@ -521,7 +522,7 @@ class TestPredictionBusinessLogic:
                 away_win_prob=0.25,
                 predicted_outcome="home",
                 confidence=confidence,
-                model_version="test"
+                model_version="test",
             )
             assert result.confidence == confidence
 
@@ -537,7 +538,7 @@ class TestPredictionBusinessLogic:
                 away_win_prob=0.25,
                 predicted_outcome="home",
                 confidence=0.75,
-                model_version=version
+                model_version=version,
             )
             assert result.model_version == version
 
@@ -552,7 +553,7 @@ class TestPredictionBusinessLogic:
                 predicted_outcome="home",
                 confidence=0.75,
                 model_version="test",
-                predicted_at=datetime.utcnow()
+                predicted_at=datetime.utcnow(),
             )
             for i in range(1, 6)
         ]
@@ -562,7 +563,7 @@ class TestPredictionBusinessLogic:
             total=5,
             success_count=5,
             failed_count=0,
-            failed_match_ids=[]
+            failed_match_ids=[],
         )
 
         assert response.total == len(predictions)
@@ -586,7 +587,7 @@ class TestPredictionBusinessLogic:
             predicted_outcome="home",
             confidence=0.75,
             model_version="test",
-            predicted_at=datetime.utcnow()
+            predicted_at=datetime.utcnow(),
         )
 
         # 正确预测
@@ -595,7 +596,7 @@ class TestPredictionBusinessLogic:
             prediction=prediction,
             actual_result="home",
             is_correct=True,
-            accuracy_score=prediction.confidence
+            accuracy_score=prediction.confidence,
         )
         assert verification_correct.accuracy_score == 0.75
         assert verification_correct.is_correct is True
@@ -606,7 +607,7 @@ class TestPredictionBusinessLogic:
             prediction=prediction,
             actual_result="away",
             is_correct=False,
-            accuracy_score=1.0 - prediction.confidence
+            accuracy_score=1.0 - prediction.confidence,
         )
         assert verification_incorrect.accuracy_score == 0.25
         assert verification_incorrect.is_correct is False
@@ -625,7 +626,7 @@ class TestErrorHandling:
             "away_win_prob": 0.2,
             "predicted_outcome": "home",
             "confidence": 0.75,
-            "model_version": "test"
+            "model_version": "test",
         }
 
         with pytest.raises(ValidationError):
@@ -634,10 +635,7 @@ class TestErrorHandling:
     def test_batch_request_validation_errors(self):
         """测试批量请求验证错误"""
         # 测试空的match_ids列表
-        invalid_data = {
-            "match_ids": [],
-            "model_version": "test"
-        }
+        invalid_data = {"match_ids": [], "model_version": "test"}
 
         with pytest.raises(ValidationError):
             BatchPredictionRequest(**invalid_data)
@@ -652,7 +650,7 @@ class TestErrorHandling:
             away_win_prob=0.25,
             predicted_outcome="home",
             confidence=0.75,
-            model_version="test"
+            model_version="test",
         )
 
         # 测试有效结果
@@ -675,7 +673,7 @@ class TestDataValidation:
                 away_win_prob=0.25,
                 predicted_outcome="home",
                 confidence=0.75,
-                model_version="test"
+                model_version="test",
             )
             assert result.match_id == match_id
 
@@ -691,7 +689,7 @@ class TestDataValidation:
                 away_win_prob=0.25,
                 predicted_outcome="home",
                 confidence=confidence,
-                model_version="test"
+                model_version="test",
             )
             assert result.confidence == confidence
 
@@ -702,7 +700,7 @@ class TestDataValidation:
             "v1.0",
             "v2.1.0",
             "experimental",
-            "prod-2024-01-01"
+            "prod-2024-01-01",
         ]
 
         for version in version_formats:
@@ -713,7 +711,7 @@ class TestDataValidation:
                 away_win_prob=0.25,
                 predicted_outcome="home",
                 confidence=0.75,
-                model_version=version
+                model_version=version,
             )
             assert result.model_version == version
 
@@ -724,7 +722,7 @@ class TestDataValidation:
             now,
             now - timedelta(hours=1),
             now + timedelta(days=1),
-            now - timedelta(days=30)
+            now - timedelta(days=30),
         ]
 
         for timestamp in time_variations:
@@ -736,7 +734,7 @@ class TestDataValidation:
                 predicted_outcome="home",
                 confidence=0.75,
                 model_version="test",
-                predicted_at=timestamp
+                predicted_at=timestamp,
             )
             assert result.predicted_at == timestamp
 
@@ -751,10 +749,7 @@ class TestPerformanceConsiderations:
 
         for size in batch_sizes:
             match_ids = list(range(1, size + 1))
-            request = BatchPredictionRequest(
-                match_ids=match_ids,
-                model_version="test"
-            )
+            request = BatchPredictionRequest(match_ids=match_ids, model_version="test")
 
             assert len(request.match_ids) == size
             assert request.match_ids == match_ids
@@ -771,15 +766,13 @@ class TestPerformanceConsiderations:
                 predicted_outcome="home",
                 confidence=0.75,
                 model_version="test",
-                predicted_at=datetime.utcnow() - timedelta(hours=i)
+                predicted_at=datetime.utcnow() - timedelta(hours=i),
             )
             for i in range(100)  # 100条历史记录
         ]
 
         history = PredictionHistory(
-            match_id=1,
-            predictions=large_history,
-            total_predictions=len(large_history)
+            match_id=1, predictions=large_history, total_predictions=len(large_history)
         )
 
         assert history.total_predictions == 100
@@ -789,10 +782,7 @@ class TestPerformanceConsiderations:
         """测试并发预测请求"""
         # 模拟并发请求的数据结构
         requests = [
-            PredictionRequest(
-                model_version=f"version_{i}",
-                include_details=i % 2 == 0
-            )
+            PredictionRequest(model_version=f"version_{i}", include_details=i % 2 == 0)
             for i in range(10)
         ]
 

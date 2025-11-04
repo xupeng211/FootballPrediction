@@ -71,7 +71,7 @@ class TestWarningFiltersComplete:
             # 恢复原始警告状态
             warnings.filters[:] = original_filters
 
-    @patch('warnings.filterwarnings')
+    @patch("warnings.filterwarnings")
     def test_setup_warning_filters_with_mock(self, mock_filterwarnings):
         """测试使用mock验证警告过滤器调用"""
         # 调用函数
@@ -84,9 +84,19 @@ class TestWarningFiltersComplete:
         calls = mock_filterwarnings.call_args_list
 
         # 检查是否有针对不同模块的过滤设置
-        filter_categories = [call[1].get('category') for call in calls if 'category' in call[1]]
-        assert any(category in [UserWarning, DeprecationWarning, FutureWarning, PendingDeprecationWarning]
-                  for category in filter_categories)
+        filter_categories = [
+            call[1].get("category") for call in calls if "category" in call[1]
+        ]
+        assert any(
+            category
+            in [
+                UserWarning,
+                DeprecationWarning,
+                FutureWarning,
+                PendingDeprecationWarning,
+            ]
+            for category in filter_categories
+        )
 
     def test_warning_filters_integration(self):
         """测试警告过滤器集成的完整性"""
@@ -117,14 +127,14 @@ class TestWarningFiltersComplete:
             # 恢复原始警告状态
             warnings.filters[:] = original_filters
 
-    @patch('sys.modules', {'pytest': True})
+    @patch("sys.modules", {"pytest": True})
     def test_warning_filters_disabled_in_pytest(self):
         """测试在pytest环境下警告过滤器被禁用"""
         # 模拟pytest环境
-        with patch.dict('sys.modules', {'pytest': True}):
+        with patch.dict("sys.modules", {"pytest": True}):
             # 重新导入模块以触发条件检查
             # 注意：这里我们验证的是逻辑，因为导入已经发生过了
-            assert 'pytest' in sys.modules
+            assert "pytest" in sys.modules
 
     def test_warning_filters_error_handling(self):
         """测试警告过滤器错误处理"""
@@ -149,15 +159,16 @@ class TestWarningFiltersComplete:
         """测试警告过滤器相关的日志功能"""
         # 验证logger存在
         from src.utils import warning_filters
-        assert hasattr(warning_filters, 'logger')
+
+        assert hasattr(warning_filters, "logger")
         assert isinstance(warning_filters.logger, logging.Logger)
 
         # 测试日志级别
         logger = warning_filters.logger
         assert logger.level <= logging.INFO
 
-    @patch('src.utils.warning_filters.logger')
-    @patch('warnings.filterwarnings')
+    @patch("src.utils.warning_filters.logger")
+    @patch("warnings.filterwarnings")
     def test_warning_filters_with_logging_error(self, mock_filterwarnings, mock_logger):
         """测试警告过滤器设置时的日志记录"""
         # 模拟warnings.filterwarnings抛出异常
@@ -165,7 +176,7 @@ class TestWarningFiltersComplete:
 
         # 在模块初始化时，错误应该被记录到日志
         # 这里我们验证logger.info方法可用
-        assert hasattr(mock_logger, 'info')
+        assert hasattr(mock_logger, "info")
         assert callable(mock_logger.info)
 
     def test_warning_filters_module_constants(self):
@@ -173,12 +184,12 @@ class TestWarningFiltersComplete:
         from src.utils import warning_filters
 
         # 验证必要的导入存在
-        assert hasattr(warning_filters, 'warnings')
-        assert hasattr(warning_filters, 'logging')
-        assert hasattr(warning_filters, 'sys')
+        assert hasattr(warning_filters, "warnings")
+        assert hasattr(warning_filters, "logging")
+        assert hasattr(warning_filters, "sys")
 
         # 验证函数存在
-        assert hasattr(warning_filters, 'setup_warning_filters')
+        assert hasattr(warning_filters, "setup_warning_filters")
         assert callable(warning_filters.setup_warning_filters)
 
     def test_warning_filters_edge_cases(self):
@@ -247,7 +258,7 @@ class TestWarningFiltersComplete:
                 DeprecationWarning,
                 FutureWarning,
                 RuntimeWarning,
-                SyntaxWarning
+                SyntaxWarning,
             ]
 
             for warning_type in warning_types:

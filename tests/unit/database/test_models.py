@@ -15,7 +15,8 @@ from sqlalchemy.orm import relationship
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入数据库模块
 try:
@@ -30,7 +31,7 @@ except ImportError as e:
     Base = declarative_base()
 
     class User(Base):
-        __tablename__ = 'users'
+        __tablename__ = "users"
 
         id = Column(Integer, primary_key=True)
         username = Column(String(50), unique=True, nullable=False)
@@ -40,36 +41,44 @@ except ImportError as e:
         predictions = relationship("Prediction", back_populates="user")
 
     class Team(Base):
-        __tablename__ = 'teams'
+        __tablename__ = "teams"
 
         id = Column(Integer, primary_key=True)
         name = Column(String(100), nullable=False)
         code = Column(String(10), unique=True)
 
-        home_matches = relationship("Match", foreign_keys="Match.home_team_id", back_populates="home_team")
-        away_matches = relationship("Match", foreign_keys="Match.away_team_id", back_populates="away_team")
+        home_matches = relationship(
+            "Match", foreign_keys="Match.home_team_id", back_populates="home_team"
+        )
+        away_matches = relationship(
+            "Match", foreign_keys="Match.away_team_id", back_populates="away_team"
+        )
 
     class Match(Base):
-        __tablename__ = 'matches'
+        __tablename__ = "matches"
 
         id = Column(Integer, primary_key=True)
-        home_team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
-        away_team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
+        home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+        away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
         match_date = Column(DateTime, nullable=False)
         home_score = Column(Integer)
         away_score = Column(Integer)
-        status = Column(String(20), default='scheduled')
+        status = Column(String(20), default="scheduled")
 
-        home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
-        away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
+        home_team = relationship(
+            "Team", foreign_keys=[home_team_id], back_populates="home_matches"
+        )
+        away_team = relationship(
+            "Team", foreign_keys=[away_team_id], back_populates="away_matches"
+        )
         predictions = relationship("Prediction", back_populates="match")
 
     class Prediction(Base):
-        __tablename__ = 'predictions'
+        __tablename__ = "predictions"
 
         id = Column(Integer, primary_key=True)
-        user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-        match_id = Column(Integer, ForeignKey('matches.id'), nullable=False)
+        user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+        match_id = Column(Integer, ForeignKey("matches.id"), nullable=False)
         predicted_home_score = Column(Integer, nullable=False)
         predicted_away_score = Column(Integer, nullable=False)
         confidence = Column(Integer, default=50)
@@ -122,16 +131,12 @@ class TestMatchModel:
     def test_match_creation(self):
         """测试比赛创建"""
         match_date = datetime(2024, 1, 1, 15, 0)
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            match_date=match_date
-        )
+        match = Match(home_team_id=1, away_team_id=2, match_date=match_date)
 
         assert match.home_team_id == 1
         assert match.away_team_id == 2
         assert match.match_date == match_date
-        assert match.status == 'scheduled'
+        assert match.status == "scheduled"
         assert match.home_score is None
         assert match.away_score is None
 
@@ -144,12 +149,12 @@ class TestMatchModel:
             match_date=match_date,
             home_score=2,
             away_score=1,
-            status='completed'
+            status="completed",
         )
 
         assert match.home_score == 2
         assert match.away_score == 1
-        assert match.status == 'completed'
+        assert match.status == "completed"
 
 
 class TestPredictionModel:
@@ -162,7 +167,7 @@ class TestPredictionModel:
             match_id=1,
             predicted_home_score=2,
             predicted_away_score=1,
-            confidence=75
+            confidence=75,
         )
 
         assert prediction.user_id == 1
@@ -175,10 +180,7 @@ class TestPredictionModel:
     def test_prediction_default_confidence(self):
         """测试预测默认置信度"""
         prediction = Prediction(
-            user_id=1,
-            match_id=1,
-            predicted_home_score=1,
-            predicted_away_score=1
+            user_id=1, match_id=1, predicted_home_score=1, predicted_away_score=1
         )
 
         assert prediction.confidence == 50
@@ -191,29 +193,22 @@ class TestModelRelationships:
         """测试预测-用户关系"""
         user = User(username="testuser", email="test@example.com")
         prediction = Prediction(
-            user_id=1,
-            match_id=1,
-            predicted_home_score=2,
-            predicted_away_score=1
+            user_id=1, match_id=1, predicted_home_score=2, predicted_away_score=1
         )
 
         # In mock implementation, relationships might not be fully functional
         # This test mainly checks the structure exists
-        assert hasattr(user, 'predictions')
-        assert hasattr(prediction, 'user')
+        assert hasattr(user, "predictions")
+        assert hasattr(prediction, "user")
 
     def test_match_team_relationships(self):
         """测试比赛-球队关系"""
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            match_date=datetime.now()
-        )
+        match = Match(home_team_id=1, away_team_id=2, match_date=datetime.now())
 
         # Check relationship attributes exist
-        assert hasattr(match, 'home_team')
-        assert hasattr(match, 'away_team')
-        assert hasattr(match, 'predictions')
+        assert hasattr(match, "home_team")
+        assert hasattr(match, "away_team")
+        assert hasattr(match, "predictions")
 
 
 @pytest.mark.database
@@ -224,36 +219,33 @@ class TestDatabaseModels:
         """测试所有模型都有必需的字段"""
         # Test User model
         user = User(username="test", email="test@test.com")
-        assert hasattr(user, 'id')
-        assert hasattr(user, 'username')
-        assert hasattr(user, 'email')
-        assert hasattr(user, 'created_at')
+        assert hasattr(user, "id")
+        assert hasattr(user, "username")
+        assert hasattr(user, "email")
+        assert hasattr(user, "created_at")
 
         # Test Team model
         team = Team(name="Test Team")
-        assert hasattr(team, 'id')
-        assert hasattr(team, 'name')
-        assert hasattr(team, 'code')
+        assert hasattr(team, "id")
+        assert hasattr(team, "name")
+        assert hasattr(team, "code")
 
         # Test Match model
         match = Match(home_team_id=1, away_team_id=2, match_date=datetime.now())
-        assert hasattr(match, 'id')
-        assert hasattr(match, 'home_team_id')
-        assert hasattr(match, 'away_team_id')
-        assert hasattr(match, 'match_date')
-        assert hasattr(match, 'status')
+        assert hasattr(match, "id")
+        assert hasattr(match, "home_team_id")
+        assert hasattr(match, "away_team_id")
+        assert hasattr(match, "match_date")
+        assert hasattr(match, "status")
 
         # Test Prediction model
         prediction = Prediction(
-            user_id=1,
-            match_id=1,
-            predicted_home_score=1,
-            predicted_away_score=1
+            user_id=1, match_id=1, predicted_home_score=1, predicted_away_score=1
         )
-        assert hasattr(prediction, 'id')
-        assert hasattr(prediction, 'user_id')
-        assert hasattr(prediction, 'match_id')
-        assert hasattr(prediction, 'predicted_home_score')
-        assert hasattr(prediction, 'predicted_away_score')
-        assert hasattr(prediction, 'confidence')
-        assert hasattr(prediction, 'created_at')
+        assert hasattr(prediction, "id")
+        assert hasattr(prediction, "user_id")
+        assert hasattr(prediction, "match_id")
+        assert hasattr(prediction, "predicted_home_score")
+        assert hasattr(prediction, "predicted_away_score")
+        assert hasattr(prediction, "confidence")
+        assert hasattr(prediction, "created_at")

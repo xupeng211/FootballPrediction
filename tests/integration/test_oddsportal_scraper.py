@@ -276,7 +276,9 @@ async def run_all_tests():
     if passed == total:
         logger.info("\n🎉 All tests passed! OddsPortal scraper is working correctly.")
     else:
-        logger.warning(f"\n⚠️ {total - passed} test(s) failed. Please check the implementation.")
+        logger.warning(
+            f"\n⚠️ {total - passed} test(s) failed. Please check the implementation."
+        )
 
     return results
 

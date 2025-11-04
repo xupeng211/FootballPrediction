@@ -33,12 +33,14 @@ class TestCreateServiceTests:
         assert result is None
 
         # 检查测试文件是否被创建
-        test_file = project_root / "tests" / "unit" / "services" / "test_prediction_service.py"
+        test_file = (
+            project_root / "tests" / "unit" / "services" / "test_prediction_service.py"
+        )
         assert test_file.exists()
 
         # 检查文件内容
         if test_file.exists():
-            content = test_file.read_text(encoding='utf-8')
+            content = test_file.read_text(encoding="utf-8")
             assert "class TestPredictionService" in content
             assert "def test_" in content
             assert "import pytest" in content
@@ -47,9 +49,11 @@ class TestCreateServiceTests:
         """测试生成的测试文件结构"""
         create_prediction_service_test()
 
-        test_file = project_root / "tests" / "unit" / "services" / "test_prediction_service.py"
+        test_file = (
+            project_root / "tests" / "unit" / "services" / "test_prediction_service.py"
+        )
         if test_file.exists():
-            content = test_file.read_text(encoding='utf-8')
+            content = test_file.read_text(encoding="utf-8")
 
             # 检查基本结构
             assert '"""预测服务测试"""' in content
@@ -64,6 +68,7 @@ class TestCreateServiceTests:
     def teardown_method(self):
         """测试后清理"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 

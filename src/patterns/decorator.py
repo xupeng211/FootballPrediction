@@ -470,9 +470,9 @@ class MetricsDecorator(BaseDecorator):
         return {
             "call_count": self.call_count,
             "total_time": self.total_time,
-            "avg_time": self.total_time / self.call_count
-            if self.call_count > 0
-            else 0.0,
+            "avg_time": (
+                self.total_time / self.call_count if self.call_count > 0 else 0.0
+            ),
         }
 
 

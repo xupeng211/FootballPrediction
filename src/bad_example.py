@@ -3,6 +3,7 @@
 
 class Bad_Example:
     """示例类"""
+
     EXAMPLE = "value"
 
     def __init__(self):

@@ -72,6 +72,7 @@ class MatchDomainService:
         # 确保初始化比分为0-0
         if match.score is None:
             from src.domain.models.match import MatchScore
+
             match.score = MatchScore(home_score=0, away_score=0)
 
         # 记录领域事件
@@ -123,7 +124,9 @@ class MatchDomainService:
 
         return match
 
-    def finish_match(self, match: Match, home_score: int = None, away_score: int = None) -> Match:
+    def finish_match(
+        self, match: Match, home_score: int = None, away_score: int = None
+    ) -> Match:
         """结束比赛"""
         if match.status != MatchStatus.LIVE:
             raise ValueError("只能结束进行中的比赛")
@@ -131,6 +134,7 @@ class MatchDomainService:
         # 如果提供了比分参数，更新比分
         if home_score is not None and away_score is not None:
             from src.domain.models.match import MatchScore
+
             match.score = MatchScore(home_score=home_score, away_score=away_score)
 
         match.finish_match()
@@ -183,10 +187,14 @@ class MatchDomainService:
 
     def is_match_valid_to_start(self, match: Match) -> bool:
         """检查比赛是否可以开始"""
-        return (match.status == MatchStatus.SCHEDULED and
-               match.match_date <= datetime.now() and
-               match.home_team_id is not None and match.home_team_id > 0 and
-               match.away_team_id is not None and match.away_team_id > 0)
+        return (
+            match.status == MatchStatus.SCHEDULED
+            and match.match_date <= datetime.now()
+            and match.home_team_id is not None
+            and match.home_team_id > 0
+            and match.away_team_id is not None
+            and match.away_team_id > 0
+        )
 
     def calculate_match_duration(self, match: Match) -> timedelta:
         """计算比赛持续时间"""

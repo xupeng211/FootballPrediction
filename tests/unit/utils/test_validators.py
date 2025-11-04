@@ -3,7 +3,12 @@
 """
 
 import pytest
-from src.utils.validators import is_valid_email, is_valid_phone, is_valid_url, validate_required_fields
+from src.utils.validators import (
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_required_fields,
+)
 
 
 class TestValidators:
@@ -15,7 +20,7 @@ class TestValidators:
             "test@example.com",
             "user.name@domain.co.uk",
             "user+tag@example.org",
-            "123@example.com"
+            "123@example.com",
         ]
 
         for email in valid_emails:
@@ -29,7 +34,7 @@ class TestValidators:
             "@example.com",
             "test@",
             "test.example.com",
-            "test@.com"
+            "test@.com",
         ]
 
         for email in invalid_emails:
@@ -37,23 +42,14 @@ class TestValidators:
 
     def test_is_valid_phone_valid(self):
         """测试有效电话验证"""
-        valid_phones = [
-            "1234567890",
-            "+1234567890",
-            "(123) 456-7890",
-            "123.456.7890"
-        ]
+        valid_phones = ["1234567890", "+1234567890", "(123) 456-7890", "123.456.7890"]
 
         for phone in valid_phones:
             assert is_valid_phone(phone) is True
 
     def test_is_valid_phone_invalid(self):
         """测试无效电话验证"""
-        invalid_phones = [
-            "",
-            "abc",
-            "123"
-        ]
+        invalid_phones = ["", "abc", "123"]
 
         for phone in invalid_phones:
             assert is_valid_phone(phone) is False
@@ -63,7 +59,7 @@ class TestValidators:
         valid_urls = [
             "http://example.com",
             "https://www.example.com",
-            "https://example.com/path"
+            "https://example.com/path",
         ]
 
         for url in valid_urls:
@@ -71,11 +67,7 @@ class TestValidators:
 
     def test_is_valid_url_invalid(self):
         """测试无效URL验证"""
-        invalid_urls = [
-            "",
-            "not-a-url",
-            "www.example.com"
-        ]
+        invalid_urls = ["", "not-a-url", "www.example.com"]
 
         for url in invalid_urls:
             assert is_valid_url(url) is False

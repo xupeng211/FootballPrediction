@@ -25,7 +25,7 @@ class TestAPIResponseComprehensive:
         response = APIResponse(success=True, message="操作成功")
 
         assert response.success is True
-        assert response.message                      == "操作成功"
+        assert response.message == "操作成功"
         assert response.data is None
         assert response.errors is None
         assert response.timestamp is None
@@ -44,7 +44,7 @@ class TestAPIResponseComprehensive:
         assert response.message == "获取数据成功"
         assert response.data == {"id": 1, "name": "测试"}
         assert response.errors is None
-        assert response.timestamp                      == "2024-01-01T10:00:00"
+        assert response.timestamp == "2024-01-01T10:00:00"
 
     def test_api_response_with_errors(self):
         """测试带错误的API响应"""
@@ -60,12 +60,15 @@ class TestAPIResponseComprehensive:
         assert response.message == "验证失败"
         assert response.data is None
         assert response.errors == ["用户名不能为空", "密码长度不足"]
-        assert response.timestamp                      == "2024-01-01T10:00:00"
+        assert response.timestamp == "2024-01-01T10:00:00"
 
     def test_api_response_serialization(self):
         """测试API响应序列化"""
         response = APIResponse(
-            success=True, message="测试", data={"count": 5}, timestamp="2024-01-01T10:00:00"
+            success=True,
+            message="测试",
+            data={"count": 5},
+            timestamp="2024-01-01T10:00:00",
         )
 
         data = response.model_dump()
@@ -77,7 +80,7 @@ class TestAPIResponseComprehensive:
             "errors": None,
             "timestamp": "2024-01-01T10:00:00",
         }
-        assert data                      == expected
+        assert data == expected
 
     def test_api_response_deserialization(self):
         """测试API响应反序列化"""
@@ -93,7 +96,7 @@ class TestAPIResponseComprehensive:
 
         assert response.success is True
         assert response.message == "测试"
-        assert response.data                      == {"count": 5}
+        assert response.data == {"count": 5}
 
     def test_api_response_json_schema(self):
         """测试API响应JSON schema"""
@@ -115,7 +118,7 @@ class TestServiceCheckComprehensive:
         check = ServiceCheck(status="healthy", response_time_ms=150.5)
 
         assert check.status == "healthy"
-        assert check.response_time_ms                      == 150.5
+        assert check.response_time_ms == 150.5
         assert check.details is None
 
     def test_service_check_full(self):
@@ -126,7 +129,7 @@ class TestServiceCheckComprehensive:
 
         assert check.status == "healthy"
         assert check.response_time_ms == 95.2
-        assert check.details                      == details
+        assert check.details == details
 
     def test_service_check_different_statuses(self):
         """测试不同服务状态"""
@@ -134,30 +137,36 @@ class TestServiceCheckComprehensive:
 
         for status in statuses:
             check = ServiceCheck(status=status, response_time_ms=100.0)
-            assert check.status                      == status
+            assert check.status == status
 
     def test_service_check_response_time_validation(self):
         """测试响应时间验证"""
         # 正常响应时间
         check = ServiceCheck(status="healthy", response_time_ms=100.0)
-        assert check.response_time_ms                      == 100.0
+        assert check.response_time_ms == 100.0
 
         # 零响应时间
         check = ServiceCheck(status="healthy", response_time_ms=0.0)
-        assert check.response_time_ms                      == 0.0
+        assert check.response_time_ms == 0.0
 
         # 负响应时间（虽然不合理，但类型上允许）
         check = ServiceCheck(status="healthy", response_time_ms=-10.0)
-        assert check.response_time_ms                      == -10.0
+        assert check.response_time_ms == -10.0
 
     def test_service_check_serialization(self):
         """测试服务检查序列化"""
-        check = ServiceCheck(status="healthy", response_time_ms=120.5, details={"test": "value"})
+        check = ServiceCheck(
+            status="healthy", response_time_ms=120.5, details={"test": "value"}
+        )
 
         data = check.model_dump()
 
-        expected = {"status": "healthy", "response_time_ms": 120.5, "details": {"test": "value"}}
-        assert data                      == expected
+        expected = {
+            "status": "healthy",
+            "response_time_ms": 120.5,
+            "details": {"test": "value"},
+        }
+        assert data == expected
 
 
 class TestHealthCheckResponseComprehensive:
@@ -185,7 +194,7 @@ class TestHealthCheckResponseComprehensive:
         assert response.service == "football-prediction"
         assert response.version == "1.0.0"
         assert response.uptime == 3600.0
-        assert response.response_time_ms                      == 100.0
+        assert response.response_time_ms == 100.0
         assert len(response.checks) == 2
 
     def test_health_check_response_degraded_status(self):
@@ -207,7 +216,7 @@ class TestHealthCheckResponseComprehensive:
 
         assert response.status == "degraded"
         assert response.checks["database"].status == "healthy"
-        assert response.checks["cache"].status                      == "unhealthy"
+        assert response.checks["cache"].status == "unhealthy"
 
     def test_health_check_response_empty_checks(self):
         """测试空检查项的健康检查"""
@@ -221,7 +230,7 @@ class TestHealthCheckResponseComprehensive:
             checks={},
         )
 
-        assert response.status                      == "unknown"
+        assert response.status == "unknown"
         assert len(response.checks) == 0
 
     def test_health_check_response_complex_checks(self):
@@ -239,7 +248,11 @@ class TestHealthCheckResponseComprehensive:
             "cache": ServiceCheck(
                 status="degraded",
                 response_time_ms=150.8,
-                details={"hit_rate": "85%", "memory_usage": "60%", "evictions": "12/min"},
+                details={
+                    "hit_rate": "85%",
+                    "memory_usage": "60%",
+                    "evictions": "12/min",
+                },
             ),
             "external_api": ServiceCheck(
                 status="healthy",
@@ -262,12 +275,13 @@ class TestHealthCheckResponseComprehensive:
             checks=checks,
         )
 
-        assert response.status                      == "degraded"
+        assert response.status == "degraded"
         assert len(response.checks) == 3
         assert response.checks["database"].details["connection_pool"] == "8/10 active"
-        assert response.checks["cache"].details["hit_rate"]                      == "85%"
+        assert response.checks["cache"].details["hit_rate"] == "85%"
         assert (
-            response.checks["external_api"].details["endpoint"] == "https://api.football-data.org"
+            response.checks["external_api"].details["endpoint"]
+            == "https://api.football-data.org"
         )
 
     def test_health_check_response_serialization(self):
@@ -289,7 +303,7 @@ class TestHealthCheckResponseComprehensive:
         assert data["status"] == "healthy"
         assert data["service"] == "test-service"
         assert "test" in data["checks"]
-        assert data["checks"]["test"]["status"]                      == "healthy"
+        assert data["checks"]["test"]["status"] == "healthy"
 
 
 class TestStatusResponseComprehensive:
@@ -305,12 +319,17 @@ class TestStatusResponseComprehensive:
 
         assert response.status == "operational"
         assert response.timestamp == "2024-01-01T10:00:00"
-        assert response.services                      == services
+        assert response.services == services
         assert len(response.services) == 3
 
     def test_status_response_mixed_status(self):
         """测试混合状态响应"""
-        services = {"api": "running", "database": "error", "cache": "warning", "worker": "stopped"}
+        services = {
+            "api": "running",
+            "database": "error",
+            "cache": "warning",
+            "worker": "stopped",
+        }
 
         response = StatusResponse(
             status="degraded", timestamp="2024-01-01T10:00:00", services=services
@@ -318,13 +337,15 @@ class TestStatusResponseComprehensive:
 
         assert response.status == "degraded"
         assert response.services["database"] == "error"
-        assert response.services["worker"]                      == "stopped"
+        assert response.services["worker"] == "stopped"
 
     def test_status_response_empty_services(self):
         """测试空服务状态响应"""
-        response = StatusResponse(status="unknown", timestamp="2024-01-01T10:00:00", services={})
+        response = StatusResponse(
+            status="unknown", timestamp="2024-01-01T10:00:00", services={}
+        )
 
-        assert response.status                      == "unknown"
+        assert response.status == "unknown"
         assert len(response.services) == 0
 
     def test_status_response_complex_services(self):
@@ -346,10 +367,10 @@ class TestStatusResponseComprehensive:
             status="operational", timestamp="2024-01-01T10:00:00", services=services
         )
 
-        assert response.status                      == "operational"
+        assert response.status == "operational"
         assert len(response.services) == 10
         assert response.services["database_replica"] == "syncing"
-        assert response.services["cache_memory"]                      == "warning"
+        assert response.services["cache_memory"] == "warning"
 
 
 class TestMetricsResponseComprehensive:
@@ -393,9 +414,9 @@ class TestSchemasIntegrationComprehensive:
             timestamp="2024-01-01T10:00:00",
         )
 
-        assert response.data["user"]["name"]                      == "张三"
+        assert response.data["user"]["name"] == "张三"
         assert len(response.data["user"]["predictions"]) == 2
-        assert response.data["metadata"]["total_count"]                      == 2
+        assert response.data["metadata"]["total_count"] == 2
 
     def test_health_check_with_service_check_details(self):
         """测试带详细服务检查的健康检查"""
@@ -424,7 +445,7 @@ class TestSchemasIntegrationComprehensive:
         db_check = response.checks["database"]
         assert db_check.details["connection_pool"]["active"] == 5
         assert db_check.details["performance"]["avg_query_time"] == "12ms"
-        assert db_check.details["replication"]["status"]                      == "synced"
+        assert db_check.details["replication"]["status"] == "synced"
 
     def test_real_world_api_response_scenarios(self):
         """测试真实世界API响应场景"""
@@ -445,7 +466,7 @@ class TestSchemasIntegrationComprehensive:
 
         assert success_response.success is True
         assert len(success_response.data["predictions"]) == 2
-        assert success_response.data["pagination"]["total"]                      == 25
+        assert success_response.data["pagination"]["total"] == 25
 
         # 错误场景：验证失败
         error_response = APIResponse(
@@ -464,7 +485,7 @@ class TestSchemasIntegrationComprehensive:
 
         # 测试空字符串
         response = APIResponse(success=True, message="")
-        assert response.message                      == ""
+        assert response.message == ""
 
         # 测试长字符串
         long_message = "A" * 1000
@@ -500,7 +521,7 @@ def test_api_schemas_comprehensive_suite(client, client):
     assert response.success is True
 
     check = ServiceCheck(status="healthy", response_time_ms=100.0)
-    assert check.status                      == "healthy"
+    assert check.status == "healthy"
 
     checks = {"test": check}
     health = HealthCheckResponse(
@@ -512,7 +533,7 @@ def test_api_schemas_comprehensive_suite(client, client):
         response_time_ms=100.0,
         checks=checks,
     )
-    assert health.service                      == "test"
+    assert health.service == "test"
 
     print("✅ API Schema综合测试套件通过")
 

@@ -122,7 +122,11 @@ def test_adapters_factory_with_mock():
         # 测试注册新适配器
         response = client.post(
             "/api/v1/adapters/register",
-            json={"name": "test_adapter", "type": "data_collector", "config": {"enabled": True}},
+            json={
+                "name": "test_adapter",
+                "type": "data_collector",
+                "config": {"enabled": True},
+            },
         )
         assert response.status_code in [200, 404, 405, 500]
 

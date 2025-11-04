@@ -15,11 +15,12 @@ import sys
 import os
 
 # 直接导入，避免通过__init__.py
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src/ml/models'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"))
 
 try:
     from base_model import BaseModel, PredictionResult, TrainingResult
     from elo_model import EloModel
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入Elo模型: {e}")
@@ -38,29 +39,87 @@ class TestEloModelSimple:
     @pytest.fixture
     def sample_data(self):
         """创建简单测试数据"""
-        return pd.DataFrame([
-            {"home_team": "Team_A", "away_team": "Team_B", "home_score": 2, "away_score": 1, "result": "home_win", "date": datetime.now()},
-            {"home_team": "Team_B", "away_team": "Team_C", "home_score": 1, "away_score": 1, "result": "draw", "date": datetime.now()},
-            {"home_team": "Team_C", "away_team": "Team_A", "home_score": 0, "away_score": 2, "result": "away_win", "date": datetime.now()},
-            {"home_team": "Team_A", "away_team": "Team_C", "home_score": 3, "away_score": 1, "result": "home_win", "date": datetime.now()},
-            {"home_team": "Team_B", "away_team": "Team_A", "home_score": 1, "away_score": 2, "result": "away_win", "date": datetime.now()},
-            {"home_team": "Team_C", "away_team": "Team_B", "home_score": 2, "away_score": 0, "result": "home_win", "date": datetime.now()},
-            {"home_team": "Team_A", "away_team": "Team_B", "home_score": 1, "away_score": 1, "result": "draw", "date": datetime.now()},
-            {"home_team": "Team_B", "away_team": "Team_C", "home_score": 2, "away_score": 1, "result": "home_win", "date": datetime.now()},
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "home_team": "Team_A",
+                    "away_team": "Team_B",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_B",
+                    "away_team": "Team_C",
+                    "home_score": 1,
+                    "away_score": 1,
+                    "result": "draw",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_C",
+                    "away_team": "Team_A",
+                    "home_score": 0,
+                    "away_score": 2,
+                    "result": "away_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_A",
+                    "away_team": "Team_C",
+                    "home_score": 3,
+                    "away_score": 1,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_B",
+                    "away_team": "Team_A",
+                    "home_score": 1,
+                    "away_score": 2,
+                    "result": "away_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_C",
+                    "away_team": "Team_B",
+                    "home_score": 2,
+                    "away_score": 0,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_A",
+                    "away_team": "Team_B",
+                    "home_score": 1,
+                    "away_score": 1,
+                    "result": "draw",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "Team_B",
+                    "away_team": "Team_C",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+            ]
+        )
 
     def test_model_initialization(self, model):
         """测试模型初始化"""
         assert model.model_name == "EloModel"
         assert model.model_version == "1.0"
         assert not model.is_trained
-        assert hasattr(model, 'initial_elo')
-        assert hasattr(model, 'k_factor')
-        assert hasattr(model, 'home_advantage')
-        assert hasattr(model, 'team_elos')
-        assert hasattr(model, 'team_matches')
-        assert hasattr(model, 'elo_history')
-        assert hasattr(model, 'hyperparameters')
+        assert hasattr(model, "initial_elo")
+        assert hasattr(model, "k_factor")
+        assert hasattr(model, "home_advantage")
+        assert hasattr(model, "team_elos")
+        assert hasattr(model, "team_matches")
+        assert hasattr(model, "elo_history")
+        assert hasattr(model, "hyperparameters")
 
         # 检查默认值
         assert model.initial_elo == 1500.0
@@ -96,25 +155,35 @@ class TestEloModelSimple:
         opponent_rating = 1500
 
         # 胜利情况
-        new_rating_win = model._update_rating(old_rating, opponent_rating, actual_result=1.0)
+        new_rating_win = model._update_rating(
+            old_rating, opponent_rating, actual_result=1.0
+        )
         assert new_rating_win > old_rating
 
         # 失败情况
-        new_rating_loss = model._update_rating(old_rating, opponent_rating, actual_result=0.0)
+        new_rating_loss = model._update_rating(
+            old_rating, opponent_rating, actual_result=0.0
+        )
         assert new_rating_loss < old_rating
 
         # 平局情况
-        new_rating_draw = model._update_rating(old_rating, opponent_rating, actual_result=0.5)
+        new_rating_draw = model._update_rating(
+            old_rating, opponent_rating, actual_result=0.5
+        )
         assert abs(new_rating_draw - old_rating) < 5  # 平局时变化应该很小
 
         # 验证K因子的影响
         original_k = model.k_factor
         model.k_factor = 64  # 双倍K因子
 
-        new_rating_big_k = model._update_rating(old_rating, opponent_rating, actual_result=1.0)
+        new_rating_big_k = model._update_rating(
+            old_rating, opponent_rating, actual_result=1.0
+        )
         model.k_factor = original_k
 
-        new_rating_small_k = model._update_rating(old_rating, opponent_rating, actual_result=1.0)
+        new_rating_small_k = model._update_rating(
+            old_rating, opponent_rating, actual_result=1.0
+        )
         assert new_rating_big_k > new_rating_small_k  # K因子越大，变化越大
 
     def test_outcome_conversion(self, model):
@@ -149,7 +218,9 @@ class TestEloModelSimple:
         model.train(sample_data)
 
         # 验证所有球队都有ELO评分
-        unique_teams = set(sample_data['home_team'].tolist() + sample_data['away_team'].tolist())
+        unique_teams = set(
+            sample_data["home_team"].tolist() + sample_data["away_team"].tolist()
+        )
         assert len(model.team_elos) == len(unique_teams)
 
         # 验证ELO评分在合理范围内
@@ -158,7 +229,9 @@ class TestEloModelSimple:
             assert 1000 <= elo <= 2000  # 典型ELO范围
 
         # 验证至少有一些球队偏离了初始评分
-        non_default_elos = [elo for elo in model.team_elos.values() if elo != model.initial_elo]
+        non_default_elos = [
+            elo for elo in model.team_elos.values() if elo != model.initial_elo
+        ]
         assert len(non_default_elos) > 0  # 应该有队伍的ELO发生变化
 
     def test_feature_preparation(self, model, sample_data):
@@ -184,7 +257,7 @@ class TestEloModelSimple:
             match_data = {
                 "home_team": teams[0],
                 "away_team": teams[1],
-                "match_id": "test_match_001"
+                "match_id": "test_match_001",
             }
 
             prediction = model.predict(match_data)
@@ -200,11 +273,22 @@ class TestEloModelSimple:
             assert 0 <= prediction.confidence <= 1
 
             # 验证概率总和
-            total_prob = prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+            total_prob = (
+                prediction.home_win_prob
+                + prediction.draw_prob
+                + prediction.away_win_prob
+            )
             assert abs(total_prob - 1.0) < 1e-6
 
             # 验证概率值都在有效范围内
-            assert all(0 <= prob <= 1 for prob in [prediction.home_win_prob, prediction.draw_prob, prediction.away_win_prob])
+            assert all(
+                0 <= prob <= 1
+                for prob in [
+                    prediction.home_win_prob,
+                    prediction.draw_prob,
+                    prediction.away_win_prob,
+                ]
+            )
 
     def test_predict_proba(self, model, sample_data):
         """测试概率预测方法"""
@@ -331,11 +415,34 @@ class TestEloModelSimple:
     def test_sequential_rating_updates(self, model):
         """测试顺序评分更新"""
         # 创建一个简单的比赛序列
-        matches = pd.DataFrame([
-            {"home_team": "A", "away_team": "B", "home_score": 2, "away_score": 1, "result": "home_win", "date": datetime.now()},
-            {"home_team": "B", "away_team": "C", "home_score": 1, "away_score": 0, "result": "home_win", "date": datetime.now()},
-            {"home_team": "A", "away_team": "C", "home_score": 0, "away_score": 1, "result": "away_win", "date": datetime.now()},
-        ])
+        matches = pd.DataFrame(
+            [
+                {
+                    "home_team": "A",
+                    "away_team": "B",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "B",
+                    "away_team": "C",
+                    "home_score": 1,
+                    "away_score": 0,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "A",
+                    "away_team": "C",
+                    "home_score": 0,
+                    "away_score": 1,
+                    "result": "away_win",
+                    "date": datetime.now(),
+                },
+            ]
+        )
 
         model.train(matches)
 
@@ -363,7 +470,7 @@ class TestEloModelSimple:
             match_data = {
                 "home_team": teams[0],
                 "away_team": teams[1],
-                "match_id": "consistency_test"
+                "match_id": "consistency_test",
             }
 
             # 多次预测应该得到相同结果
@@ -371,9 +478,21 @@ class TestEloModelSimple:
             prediction2 = model.predict(match_data)
             prediction3 = model.predict(match_data)
 
-            assert prediction1.home_win_prob == prediction2.home_win_prob == prediction3.home_win_prob
-            assert prediction1.predicted_outcome == prediction2.predicted_outcome == prediction3.predicted_outcome
-            assert prediction1.confidence == prediction2.confidence == prediction3.confidence
+            assert (
+                prediction1.home_win_prob
+                == prediction2.home_win_prob
+                == prediction3.home_win_prob
+            )
+            assert (
+                prediction1.predicted_outcome
+                == prediction2.predicted_outcome
+                == prediction3.predicted_outcome
+            )
+            assert (
+                prediction1.confidence
+                == prediction2.confidence
+                == prediction3.confidence
+            )
 
     def test_edge_cases(self, model, sample_data):
         """测试边界条件"""
@@ -394,10 +513,7 @@ class TestEloModelSimple:
     def test_large_rating_difference(self, model):
         """测试大评分差异的情况"""
         # 手动设置极端ELO差异
-        model.team_elos = {
-            "StrongTeam": 2000,
-            "WeakTeam": 1000
-        }
+        model.team_elos = {"StrongTeam": 2000, "WeakTeam": 1000}
         model.is_trained = True
 
         # 计算强队对弱队的概率

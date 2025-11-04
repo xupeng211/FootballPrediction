@@ -210,7 +210,7 @@ class TestFileUtilsComprehensive:
             test_data = {
                 "chinese": "你好世界",
                 "emoji": "🌍🚀",
-                "special": "café résumé naïve"
+                "special": "café résumé naïve",
             }
 
             json_file = Path(temp_dir) / "unicode.json"
@@ -227,7 +227,10 @@ class TestFileUtilsComprehensive:
         with tempfile.TemporaryDirectory() as temp_dir:
             # 创建大型JSON数据
             large_data = {
-                "items": [{"id": i, "name": f"item_{i}", "data": "x" * 100} for i in range(1000)]
+                "items": [
+                    {"id": i, "name": f"item_{i}", "data": "x" * 100}
+                    for i in range(1000)
+                ]
             }
 
             json_file = Path(temp_dir) / "large.json"
@@ -321,17 +324,18 @@ class TestFileUtilsComprehensive:
     def test_file_utils_import(self):
         """测试FileUtils导入"""
         from src.utils.file_utils import FileUtils
+
         assert FileUtils is not None
 
         # 检查关键方法是否存在
         expected_methods = [
-            'ensure_dir',
-            'read_json',
-            'write_json',
-            'get_file_hash',
-            'get_file_size',
-            'ensure_directory',
-            'read_json_file'
+            "ensure_dir",
+            "read_json",
+            "write_json",
+            "get_file_hash",
+            "get_file_size",
+            "ensure_directory",
+            "read_json_file",
         ]
 
         for method in expected_methods:
@@ -367,7 +371,7 @@ class TestFileUtilsComprehensive:
                 "null": None,
                 "list": [1, 2, 3],
                 "nested": {"key": "value"},
-                "unicode": "你好世界 🌍"
+                "unicode": "你好世界 🌍",
             }
 
             json_file = Path(temp_dir) / "types_test.json"

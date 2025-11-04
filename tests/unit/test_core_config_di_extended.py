@@ -23,11 +23,7 @@ from pathlib import Path
 from datetime import datetime
 
 # 导入目标模块
-from core.config_di import (
-    ServiceConfig,
-    DIConfiguration,
-    ConfigurationBinder
-)
+from core.config_di import ServiceConfig, DIConfiguration, ConfigurationBinder
 from core.di import DIContainer, ServiceLifetime
 from core.exceptions import DependencyInjectionError
 
@@ -63,7 +59,7 @@ profiles:
   - "production"
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             f.write(yaml_content)
             f.flush()
 
@@ -78,7 +74,9 @@ profiles:
             assert "test_service" in binder.config.services
             assert binder.config.services["test_service"].name == "TestService"
             assert binder.config.services["test_service"].lifetime == "singleton"
-            assert "DatabaseService" in binder.config.services["test_service"].dependencies
+            assert (
+                "DatabaseService" in binder.config.services["test_service"].dependencies
+            )
             assert binder.config.services["test_service"]["parameters"]["timeout"] == 30
             assert len(binder.config.auto_scan) == 2
             assert len(binder.config.conventions) == 2
@@ -95,16 +93,14 @@ profiles:
                     "implementation": "JsonServiceImpl",
                     "lifetime": "scoped",
                     "enabled": True,
-                    "parameters": {
-                        "max_connections": 100
-                    }
+                    "parameters": {"max_connections": 100},
                 }
             },
             "auto_scan": ["jsonapp.services"],
-            "imports": ["jsonapp.config"]
+            "imports": ["jsonapp.config"],
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(json_content, f)
             f.flush()
 
@@ -117,7 +113,10 @@ profiles:
             # 验证配置解析
             assert binder.config is not None
             assert "json_service" in binder.config.services
-            assert binder.config.services["json_service"].implementation == "JsonServiceImpl"
+            assert (
+                binder.config.services["json_service"].implementation
+                == "JsonServiceImpl"
+            )
             assert binder.config.services["json_service"].lifetime == "scoped"
             assert binder.config.services["json_service"].enabled is True
             assert len(binder.config.auto_scan) == 1
@@ -133,7 +132,7 @@ profiles:
                 "yaml_service": {
                     "name": "YamlService",
                     "implementation": "YamlServiceImpl",
-                    "lifetime": "singleton"
+                    "lifetime": "singleton",
                 }
             }
         }
@@ -144,13 +143,15 @@ profiles:
                 "json_service": {
                     "name": "JsonService",
                     "implementation": "JsonServiceImpl",
-                    "lifetime": "scoped"
+                    "lifetime": "scoped",
                 }
             }
         }
 
         # 测试YAML文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as yaml_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as yaml_file:
             yaml.dump(yaml_config, yaml_file)
             yaml_file.flush()
 
@@ -163,7 +164,9 @@ profiles:
         os.unlink(yaml_file.name)
 
         # 测试JSON文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as json_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as json_file:
             json.dump(json_config, json_file)
             json_file.flush()
 
@@ -180,28 +183,32 @@ profiles:
             "services": {
                 "main_service": {
                     "name": "MainService",
-                    "implementation": "MainServiceImpl"
+                    "implementation": "MainServiceImpl",
                 }
             },
-            "imports": ["included_config"]
+            "imports": ["included_config"],
         }
 
         included_config = {
             "services": {
                 "included_service": {
                     "name": "IncludedService",
-                    "implementation": "IncludedServiceImpl"
+                    "implementation": "IncludedServiceImpl",
                 }
             }
         }
 
         # 创建主配置文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as main_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as main_file:
             json.dump(main_config, main_file)
             main_file.flush()
 
             # Mock导入配置的过程
-            with patch.object(ConfigurationBinder, '_import_configuration') as mock_import:
+            with patch.object(
+                ConfigurationBinder, "_import_configuration"
+            ) as mock_import:
                 container = DIContainer()
                 binder = ConfigurationBinder(container)
                 binder.load_from_file(main_file.name)
@@ -213,7 +220,7 @@ profiles:
 
     def test_load_empty_configuration_file(self):
         """测试空配置文件处理"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("")
             f.flush()
 
@@ -229,7 +236,7 @@ profiles:
 
     def test_unsupported_file_format_error(self):
         """测试不支持的文件格式错误处理"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("some text content")
             f.flush()
 
@@ -260,7 +267,7 @@ profiles:
         # 创建格式错误的JSON文件
         malformed_json = '{"services": {"test": {"name": "Test"'  # 缺少闭合括号
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write(malformed_json)
             f.flush()
 
@@ -279,7 +286,7 @@ profiles:
 class TestDIConfigurationEnvironmentVariables:
     """DIConfiguration环境变量测试"""
 
-    @patch.dict(os.environ, {'APP_PROFILE': 'test', 'APP_TIMEOUT': '60'})
+    @patch.dict(os.environ, {"APP_PROFILE": "test", "APP_TIMEOUT": "60"})
     def test_environment_variable_substitution(self):
         """测试环境变量替换"""
         config_data = {
@@ -290,8 +297,8 @@ class TestDIConfigurationEnvironmentVariables:
                     "parameters": {
                         "profile": "${APP_PROFILE}",
                         "timeout": "${APP_TIMEOUT}",
-                        "static_value": "unchanged"
-                    }
+                        "static_value": "unchanged",
+                    },
                 }
             }
         }
@@ -310,7 +317,7 @@ class TestDIConfigurationEnvironmentVariables:
         # 注意：实际的环境变量替换实现可能在其他地方
         assert service_config.parameters["static_value"] == "unchanged"
 
-    @patch.dict(os.environ, {'DEBUG': 'true', 'LOG_LEVEL': 'info'})
+    @patch.dict(os.environ, {"DEBUG": "true", "LOG_LEVEL": "info"})
     def test_boolean_and_numeric_environment_variables(self):
         """测试布尔值和数字环境变量"""
         config_data = {
@@ -320,8 +327,8 @@ class TestDIConfigurationEnvironmentVariables:
                     "parameters": {
                         "debug": "${DEBUG}",
                         "log_level": "${LOG_LEVEL}",
-                        "default_value": "fallback"
-                    }
+                        "default_value": "fallback",
+                    },
                 }
             }
         }
@@ -342,8 +349,8 @@ class TestDIConfigurationEnvironmentVariables:
                     "name": "MissingEnvService",
                     "parameters": {
                         "missing_var": "${NONEXISTENT_VAR}",
-                        "fallback": "default_value"
-                    }
+                        "fallback": "default_value",
+                    },
                 }
             }
         }
@@ -363,10 +370,10 @@ class TestDIConfigurationEnvironmentVariables:
                 "profile_service": {
                     "name": "ProfileService",
                     "implementation": "ProfileDevImpl",
-                    "condition": "profile == 'development'"
+                    "condition": "profile == 'development'",
                 }
             },
-            "profiles": ["development", "production"]
+            "profiles": ["development", "production"],
         }
 
         container = DIContainer()
@@ -390,18 +397,18 @@ class TestDIConfigurationEnvironmentVariables:
                     "name": "ConditionalService",
                     "implementation": "ConditionalServiceImpl",
                     "enabled": True,
-                    "condition": "environment == 'test'"
+                    "condition": "environment == 'test'",
                 },
                 "always_enabled_service": {
                     "name": "AlwaysEnabledService",
                     "implementation": "AlwaysEnabledServiceImpl",
-                    "enabled": True
+                    "enabled": True,
                 },
                 "disabled_service": {
                     "name": "DisabledService",
                     "implementation": "DisabledServiceImpl",
-                    "enabled": False
-                }
+                    "enabled": False,
+                },
             }
         }
 
@@ -426,7 +433,7 @@ class TestConfigurationValidationBoundaryConditions:
             implementation="ValidServiceImpl",
             lifetime="singleton",
             dependencies=["DepService"],
-            parameters={"timeout": 30}
+            parameters={"timeout": 30},
         )
 
         assert valid_config.name == "ValidService"
@@ -453,7 +460,7 @@ class TestConfigurationValidationBoundaryConditions:
             name="FactoryService",
             factory="create_factory_service",
             lifetime="singleton",
-            parameters={"factory_param": "value"}
+            parameters={"factory_param": "value"},
         )
 
         assert factory_config.name == "FactoryService"
@@ -464,9 +471,7 @@ class TestConfigurationValidationBoundaryConditions:
     def test_service_config_with_instance(self):
         """测试包含实例的服务配置"""
         instance_config = ServiceConfig(
-            name="InstanceService",
-            instance="predefined_instance",
-            lifetime="singleton"
+            name="InstanceService", instance="predefined_instance", lifetime="singleton"
         )
 
         assert instance_config.name == "InstanceService"
@@ -505,13 +510,13 @@ class TestConfigurationValidationBoundaryConditions:
                 "service_a": {
                     "name": "ServiceA",
                     "implementation": "ServiceAImpl",
-                    "dependencies": ["service_b"]
+                    "dependencies": ["service_b"],
                 },
                 "service_b": {
                     "name": "ServiceB",
                     "implementation": "ServiceBImpl",
-                    "dependencies": ["service_a"]  # 循环依赖
-                }
+                    "dependencies": ["service_a"],  # 循环依赖
+                },
             }
         }
 
@@ -533,7 +538,7 @@ class TestConfigurationValidationBoundaryConditions:
                 "service_with_missing_dep": {
                     "name": "ServiceWithMissingDep",
                     "implementation": "ServiceWithMissingDepImpl",
-                    "dependencies": ["nonexistent_service"]
+                    "dependencies": ["nonexistent_service"],
                 }
             }
         }
@@ -555,7 +560,7 @@ class TestConfigurationValidationBoundaryConditions:
                 "invalid_lifetime_service": {
                     "name": "InvalidLifetimeService",
                     "implementation": "InvalidLifetimeServiceImpl",
-                    "lifetime": "invalid_lifetime"  # 无效生命周期
+                    "lifetime": "invalid_lifetime",  # 无效生命周期
                 }
             }
         }
@@ -597,7 +602,7 @@ services:
     missing_value
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             f.write(invalid_yaml)
             f.flush()
 
@@ -615,7 +620,7 @@ services:
         """测试无效JSON语法错误"""
         invalid_json = '{"services": {"test": {"name": "Test"'  # 缺少闭合括号
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write(invalid_json)
             f.flush()
 
@@ -643,7 +648,7 @@ services:
     def test_configuration_permission_error(self):
         """测试配置文件权限错误"""
         # 创建一个没有读取权限的文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"test": "value"}, f)
             f.flush()
 
@@ -667,7 +672,7 @@ services:
     def test_configuration_encoding_error(self):
         """测试配置文件编码错误"""
         # 创建包含非UTF-8字符的文件
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".json", delete=False) as f:
             # 写入一些非UTF-8的字节
             f.write(b'{"test": "\xff\xfe invalid utf-8"}')
             f.flush()
@@ -695,20 +700,17 @@ class TestConfigurationIntegration:
                     "implementation": "IntegrationServiceImpl",
                     "lifetime": "singleton",
                     "dependencies": ["logger_service"],
-                    "parameters": {
-                        "max_retries": 3,
-                        "timeout": 30
-                    }
+                    "parameters": {"max_retries": 3, "timeout": 30},
                 },
                 "logger_service": {
                     "name": "LoggerService",
                     "implementation": "LoggerServiceImpl",
-                    "lifetime": "singleton"
-                }
+                    "lifetime": "singleton",
+                },
             },
             "auto_scan": ["integration.services"],
             "conventions": ["DefaultConvention"],
-            "profiles": ["development", "production"]
+            "profiles": ["development", "production"],
         }
 
         container = DIContainer()
@@ -736,10 +738,7 @@ class TestConfigurationIntegration:
                     "name": "BaseService",
                     "implementation": "BaseServiceImpl",
                     "lifetime": "singleton",
-                    "parameters": {
-                        "timeout": 30,
-                        "retries": 3
-                    }
+                    "parameters": {"timeout": 30, "retries": 3},
                 }
             }
         }
@@ -747,10 +746,7 @@ class TestConfigurationIntegration:
         dev_overrides = {
             "services": {
                 "base_service": {
-                    "parameters": {
-                        "timeout": 10,  # 开发环境更短超时
-                        "debug": True
-                    }
+                    "parameters": {"timeout": 10, "debug": True}  # 开发环境更短超时
                 }
             }
         }

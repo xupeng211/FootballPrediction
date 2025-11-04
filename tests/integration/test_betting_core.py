@@ -101,7 +101,9 @@ class CoreEVCalculator:
 
         return kelly
 
-    def assess_risk_level(self, probability: float, odds: float, ev: float) -> RiskLevel:
+    def assess_risk_level(
+        self, probability: float, odds: float, ev: float
+    ) -> RiskLevel:
         """评估风险等级"""
         if ev < 0:
             return RiskLevel.VERY_HIGH
@@ -115,7 +117,9 @@ class CoreEVCalculator:
         else:
             return RiskLevel.VERY_HIGH
 
-    def calculate_value_rating(self, ev: float, probability: float, odds: float) -> float:
+    def calculate_value_rating(
+        self, ev: float, probability: float, odds: float
+    ) -> float:
         """计算价值评级 (0-10分)"""
         if ev < 0:
             return 0.0
@@ -136,7 +140,8 @@ class CoreEVCalculator:
         compliance = {
             "min_ev_met": ev >= self.SRS_TARGETS["min_ev_threshold"],
             "min_confidence_met": probability >= self.SRS_TARGETS["min_confidence"],
-            "max_risk_met": risk_level.value <= self.SRS_TARGETS["max_risk_level"].value,
+            "max_risk_met": risk_level.value
+            <= self.SRS_TARGETS["max_risk_level"].value,
             "min_value_met": value_rating >= self.SRS_TARGETS["min_value_rating"],
             "overall_compliance": False,
         }
@@ -358,7 +363,9 @@ class BettingCoreTester:
                 passed += 1
                 print(f"  ✅ 概率={prob}, 风险={assessed_risk.value}")
             else:
-                print(f"  ❌ 概率={prob}, 期望={expected_risk.value}, 实际={assessed_risk.value}")
+                print(
+                    f"  ❌ 概率={prob}, 期望={expected_risk.value}, 实际={assessed_risk.value}"
+                )
 
         accuracy = passed / len(test_cases)
         self.test_results["individual_tests"]["risk_assessment"] = {
@@ -425,7 +432,11 @@ class BettingCoreTester:
                 status = "✅ 合规" if should_comply else "✅ 不合规"
                 print(f"  {status}: 概率={prob}, EV={ev:.3f}")
             else:
-                status = "❌ 应该合规但实际不合规" if should_comply else "❌ 应该不合规但实际合规"
+                status = (
+                    "❌ 应该合规但实际不合规"
+                    if should_comply
+                    else "❌ 应该不合规但实际合规"
+                )
                 print(f"  {status}: 概率={prob}, EV={ev:.3f}")
 
         accuracy = passed / len(test_cases)
@@ -449,7 +460,9 @@ class BettingCoreTester:
         for strategy_name in strategies:
             try:
                 # 测试一个好的投注机会
-                result = optimizer.evaluate_betting_opportunity(0.65, 2.1, strategy_name)
+                result = optimizer.evaluate_betting_opportunity(
+                    0.65, 2.1, strategy_name
+                )
 
                 # 验证结果结构
                 required_keys = [
@@ -489,10 +502,30 @@ class BettingCoreTester:
 
         # 模拟真实比赛场景
         scenarios = [
-            {"name": "热门主队", "probability": 0.7, "odds": 1.85, "expected_outcome": "bet"},
-            {"name": "势均力敌", "probability": 0.5, "odds": 2.1, "expected_outcome": "bet"},
-            {"name": "冷门高赔", "probability": 0.25, "odds": 4.5, "expected_outcome": "avoid"},
-            {"name": "价值投注", "probability": 0.6, "odds": 2.2, "expected_outcome": "bet"},
+            {
+                "name": "热门主队",
+                "probability": 0.7,
+                "odds": 1.85,
+                "expected_outcome": "bet",
+            },
+            {
+                "name": "势均力敌",
+                "probability": 0.5,
+                "odds": 2.1,
+                "expected_outcome": "bet",
+            },
+            {
+                "name": "冷门高赔",
+                "probability": 0.25,
+                "odds": 4.5,
+                "expected_outcome": "avoid",
+            },
+            {
+                "name": "价值投注",
+                "probability": 0.6,
+                "odds": 2.2,
+                "expected_outcome": "bet",
+            },
         ]
 
         passed = 0
@@ -507,7 +540,8 @@ class BettingCoreTester:
 
                 # 检查推荐合理性
                 recommendation_ok = (
-                    result["recommendation"] in ["bet", "small_bet"] and result["ev"] > 0
+                    result["recommendation"] in ["bet", "small_bet"]
+                    and result["ev"] > 0
                 ) or (result["recommendation"] == "avoid" and result["ev"] <= 0)
 
                 if srs_ok and recommendation_ok:
@@ -547,14 +581,24 @@ class BettingCoreTester:
 
         # 关键功能评分
         critical_scores = {
-            "ev_calculation": individual_tests.get("ev_calculation", {}).get("accuracy", 0),
-            "kelly_criterion": individual_tests.get("kelly_criterion", {}).get("accuracy", 0),
-            "srs_compliance": individual_tests.get("srs_compliance", {}).get("accuracy", 0),
-            "risk_assessment": individual_tests.get("risk_assessment", {}).get("accuracy", 0),
+            "ev_calculation": individual_tests.get("ev_calculation", {}).get(
+                "accuracy", 0
+            ),
+            "kelly_criterion": individual_tests.get("kelly_criterion", {}).get(
+                "accuracy", 0
+            ),
+            "srs_compliance": individual_tests.get("srs_compliance", {}).get(
+                "accuracy", 0
+            ),
+            "risk_assessment": individual_tests.get("risk_assessment", {}).get(
+                "accuracy", 0
+            ),
         }
 
         # 判断总体状态
-        if overall_accuracy >= 0.9 and all(score >= 0.8 for score in critical_scores.values()):
+        if overall_accuracy >= 0.9 and all(
+            score >= 0.8 for score in critical_scores.values()
+        ):
             status = "passed"
         elif overall_accuracy >= 0.7 and critical_scores["srs_compliance"] >= 0.8:
             status = "partially_passed"
@@ -644,7 +688,9 @@ async def main():
     print("\n" + "=" * 80)
     if test_result["test_status"] in ["passed", "partially_passed"]:
         print("🎉 核心功能测试完成！")
-        print(f"状态: {'完全通过' if test_result['test_status'] == 'passed' else '部分通过'}")
+        print(
+            f"状态: {'完全通过' if test_result['test_status'] == 'passed' else '部分通过'}"
+        )
     else:
         print("❌ 核心功能测试失败")
     print("=" * 80)

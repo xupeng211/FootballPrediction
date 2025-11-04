@@ -54,14 +54,22 @@ class SimpleAuthTester:
             print(f"   状态: {'激活' if user.is_active else '未激活'}")
 
             self.test_results.append(
-                {"test": "user_creation", "status": "PASS", "message": "用户创建功能正常"}
+                {
+                    "test": "user_creation",
+                    "status": "PASS",
+                    "message": "用户创建功能正常",
+                }
             )
             return True
 
         except Exception as e:
             print(f"❌ 用户创建失败: {str(e)}")
             self.test_results.append(
-                {"test": "user_creation", "status": "FAIL", "message": f"用户创建失败: {str(e)}"}
+                {
+                    "test": "user_creation",
+                    "status": "FAIL",
+                    "message": f"用户创建失败: {str(e)}",
+                }
             )
             return False
 
@@ -93,20 +101,32 @@ class SimpleAuthTester:
                 print(f"   存储邮箱: {stored_user.email}")
 
                 self.test_results.append(
-                    {"test": "user_storage", "status": "PASS", "message": "用户存储功能正常"}
+                    {
+                        "test": "user_storage",
+                        "status": "PASS",
+                        "message": "用户存储功能正常",
+                    }
                 )
                 return True
             else:
                 print("❌ 用户存储失败：无法检索存储的用户")
                 self.test_results.append(
-                    {"test": "user_storage", "status": "FAIL", "message": "无法检索存储的用户"}
+                    {
+                        "test": "user_storage",
+                        "status": "FAIL",
+                        "message": "无法检索存储的用户",
+                    }
                 )
                 return False
 
         except Exception as e:
             print(f"❌ 用户存储异常: {str(e)}")
             self.test_results.append(
-                {"test": "user_storage", "status": "FAIL", "message": f"用户存储异常: {str(e)}"}
+                {
+                    "test": "user_storage",
+                    "status": "FAIL",
+                    "message": f"用户存储异常: {str(e)}",
+                }
             )
             return False
 
@@ -126,13 +146,21 @@ class SimpleAuthTester:
             if correct_result and not incorrect_result:
                 print("✅ 密码验证功能正常")
                 self.test_results.append(
-                    {"test": "password_validation", "status": "PASS", "message": "密码验证功能正常"}
+                    {
+                        "test": "password_validation",
+                        "status": "PASS",
+                        "message": "密码验证功能正常",
+                    }
                 )
                 return True
             else:
                 print("❌ 密码验证功能异常")
                 self.test_results.append(
-                    {"test": "password_validation", "status": "FAIL", "message": "密码验证逻辑错误"}
+                    {
+                        "test": "password_validation",
+                        "status": "FAIL",
+                        "message": "密码验证逻辑错误",
+                    }
                 )
                 return False
 
@@ -170,20 +198,32 @@ class SimpleAuthTester:
                 print("   令牌类型: Bearer")
 
                 self.test_results.append(
-                    {"test": "token_generation", "status": "PASS", "message": "令牌生成功能正常"}
+                    {
+                        "test": "token_generation",
+                        "status": "PASS",
+                        "message": "令牌生成功能正常",
+                    }
                 )
                 return True
             else:
                 print("❌ 令牌生成失败：令牌为空或格式错误")
                 self.test_results.append(
-                    {"test": "token_generation", "status": "FAIL", "message": "令牌为空或格式错误"}
+                    {
+                        "test": "token_generation",
+                        "status": "FAIL",
+                        "message": "令牌为空或格式错误",
+                    }
                 )
                 return False
 
         except Exception as e:
             print(f"❌ 令牌生成异常: {str(e)}")
             self.test_results.append(
-                {"test": "token_generation", "status": "FAIL", "message": f"令牌生成异常: {str(e)}"}
+                {
+                    "test": "token_generation",
+                    "status": "FAIL",
+                    "message": f"令牌生成异常: {str(e)}",
+                }
             )
             return False
 
@@ -218,23 +258,37 @@ class SimpleAuthTester:
                 print(f"   验证用户名: {valid_user.username}")
 
                 self.test_results.append(
-                    {"test": "token_validation", "status": "PASS", "message": "令牌验证功能正常"}
+                    {
+                        "test": "token_validation",
+                        "status": "PASS",
+                        "message": "令牌验证功能正常",
+                    }
                 )
                 return True
             else:
                 print("❌ 令牌验证功能异常")
                 print(f"   有效令牌验证: {'通过' if valid_user else '失败'}")
-                print(f"   无效令牌验证: {'拒绝' if invalid_user is None else '通过（错误）'}")
+                print(
+                    f"   无效令牌验证: {'拒绝' if invalid_user is None else '通过（错误）'}"
+                )
 
                 self.test_results.append(
-                    {"test": "token_validation", "status": "FAIL", "message": "令牌验证逻辑错误"}
+                    {
+                        "test": "token_validation",
+                        "status": "FAIL",
+                        "message": "令牌验证逻辑错误",
+                    }
                 )
                 return False
 
         except Exception as e:
             print(f"❌ 令牌验证异常: {str(e)}")
             self.test_results.append(
-                {"test": "token_validation", "status": "FAIL", "message": f"令牌验证异常: {str(e)}"}
+                {
+                    "test": "token_validation",
+                    "status": "FAIL",
+                    "message": f"令牌验证异常: {str(e)}",
+                }
             )
             return False
 
@@ -278,13 +332,21 @@ class SimpleAuthTester:
                 print("   用户信息一致性: 通过")
 
                 self.test_results.append(
-                    {"test": "complete_auth_flow", "status": "PASS", "message": "完整认证流程正常"}
+                    {
+                        "test": "complete_auth_flow",
+                        "status": "PASS",
+                        "message": "完整认证流程正常",
+                    }
                 )
                 return True
             else:
                 print("❌ 完整认证流程失败：用户信息不一致")
                 self.test_results.append(
-                    {"test": "complete_auth_flow", "status": "FAIL", "message": "用户信息不一致"}
+                    {
+                        "test": "complete_auth_flow",
+                        "status": "FAIL",
+                        "message": "用户信息不一致",
+                    }
                 )
                 return False
 
@@ -306,7 +368,9 @@ class SimpleAuthTester:
         print("=" * 62)
 
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results if result["status"] == "PASS")
+        passed_tests = sum(
+            1 for result in self.test_results if result["status"] == "PASS"
+        )
         success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
 
         print(f"🎯 总测试数: {total_tests}")

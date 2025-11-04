@@ -37,7 +37,9 @@ class DataConsistencyTester:
         self.test_data: Dict[str, Any] = {}
         self.consistency_errors: List[str] = []
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(
+        self, test_name: str, success: bool, details: str = "", duration: float = 0
+    ):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -69,14 +71,12 @@ class DataConsistencyTester:
                 "username": f"consistency_test_{int(time.time())}",
                 "email": f"consistency_{int(time.time())}@example.com",
                 "password": "testpassword123",
-                "full_name": "一致性测试用户"
+                "full_name": "一致性测试用户",
             }
 
             async with httpx.AsyncClient() as client:
                 register_response = await client.post(
-                    f"{self.base_url}/auth/register",
-                    json=user_data,
-                    timeout=10.0
+                    f"{self.base_url}/auth/register", json=user_data, timeout=10.0
                 )
 
                 if register_response.status_code not in [200, 201]:
@@ -87,9 +87,9 @@ class DataConsistencyTester:
                     f"{self.base_url}/auth/login",
                     json={
                         "username": user_data["username"],
-                        "password": user_data["password"]
+                        "password": user_data["password"],
                     },
-                    timeout=10.0
+                    timeout=10.0,
                 )
 
                 if login_response.status_code != 200:
@@ -118,17 +118,14 @@ class DataConsistencyTester:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
 
             # 创建预测请求
-            prediction_request = {
-                "model_version": "default",
-                "include_details": True
-            }
+            prediction_request = {"model_version": "default", "include_details": True}
 
             async with httpx.AsyncClient() as client:
                 # 发送创建请求
                 create_response = await client.post(
                     f"{self.base_url}/predictions/",
                     headers=headers,
-                    json=prediction_request
+                    json=prediction_request,
                 )
 
                 if create_response.status_code not in [200, 201]:
@@ -142,8 +139,7 @@ class DataConsistencyTester:
 
                 # 立即查询验证数据一致性
                 get_response = await client.get(
-                    f"{self.base_url}/predictions/{match_id}",
-                    headers=headers
+                    f"{self.base_url}/predictions/{match_id}", headers=headers
                 )
 
                 if get_response.status_code != 200:
@@ -153,18 +149,44 @@ class DataConsistencyTester:
 
                 # 验证数据一致性
                 consistency_checks = [
-                    ("match_id一致性", created_prediction.get("match_id") == retrieved_prediction.get("match_id")),
-                    ("model_version一致性", created_prediction.get("model_version") == retrieved_prediction.get("model_version")),
-                    ("概率和接近1.0", abs(
-                        (created_prediction.get("home_win_prob", 0) +
-                         created_prediction.get("draw_prob", 0) +
-                         created_prediction.get("away_win_prob", 0)) - 1.0
-                    ) < 0.01),
-                    ("置信度在有效范围内", 0 <= created_prediction.get("confidence", 0) <= 1),
-                    ("预测结果有效", created_prediction.get("predicted_outcome") in ["home", "draw", "away"])
+                    (
+                        "match_id一致性",
+                        created_prediction.get("match_id")
+                        == retrieved_prediction.get("match_id"),
+                    ),
+                    (
+                        "model_version一致性",
+                        created_prediction.get("model_version")
+                        == retrieved_prediction.get("model_version"),
+                    ),
+                    (
+                        "概率和接近1.0",
+                        abs(
+                            (
+                                created_prediction.get("home_win_prob", 0)
+                                + created_prediction.get("draw_prob", 0)
+                                + created_prediction.get("away_win_prob", 0)
+                            )
+                            - 1.0
+                        )
+                        < 0.01,
+                    ),
+                    (
+                        "置信度在有效范围内",
+                        0 <= created_prediction.get("confidence", 0) <= 1,
+                    ),
+                    (
+                        "预测结果有效",
+                        created_prediction.get("predicted_outcome")
+                        in ["home", "draw", "away"],
+                    ),
                 ]
 
-                failed_checks = [check_name for check_name, passed in consistency_checks if not passed]
+                failed_checks = [
+                    check_name
+                    for check_name, passed in consistency_checks
+                    if not passed
+                ]
 
                 if failed_checks:
                     error_msg = f"数据一致性检查失败: {', '.join(failed_checks)}"
@@ -197,7 +219,7 @@ class DataConsistencyTester:
             # 创建批量预测请求
             batch_request = {
                 "match_ids": [11111, 22222, 33333],
-                "model_version": "default"
+                "model_version": "default",
             }
 
             async with httpx.AsyncClient() as client:
@@ -205,7 +227,7 @@ class DataConsistencyTester:
                 batch_response = await client.post(
                     f"{self.base_url}/predictions/batch",
                     headers=headers,
-                    json=batch_request
+                    json=batch_request,
                 )
 
                 if batch_response.status_code != 200:
@@ -217,17 +239,47 @@ class DataConsistencyTester:
 
                 # 验证批量数据一致性
                 consistency_checks = [
-                    ("返回数量匹配", len(predictions) == len(batch_request["match_ids"])),
+                    (
+                        "返回数量匹配",
+                        len(predictions) == len(batch_request["match_ids"]),
+                    ),
                     ("总数匹配", total_count == len(predictions)),
-                    ("所有预测都有match_id", all(p.get("match_id") in batch_request["match_ids"] for p in predictions)),
-                    ("模型版本一致", all(p.get("model_version") == batch_request["model_version"] for p in predictions)),
-                    ("概率和都接近1.0", all(
-                        abs((p.get("home_win_prob", 0) + p.get("draw_prob", 0) + p.get("away_win_prob", 0)) - 1.0) < 0.01
-                        for p in predictions
-                    ))
+                    (
+                        "所有预测都有match_id",
+                        all(
+                            p.get("match_id") in batch_request["match_ids"]
+                            for p in predictions
+                        ),
+                    ),
+                    (
+                        "模型版本一致",
+                        all(
+                            p.get("model_version") == batch_request["model_version"]
+                            for p in predictions
+                        ),
+                    ),
+                    (
+                        "概率和都接近1.0",
+                        all(
+                            abs(
+                                (
+                                    p.get("home_win_prob", 0)
+                                    + p.get("draw_prob", 0)
+                                    + p.get("away_win_prob", 0)
+                                )
+                                - 1.0
+                            )
+                            < 0.01
+                            for p in predictions
+                        ),
+                    ),
                 ]
 
-                failed_checks = [check_name for check_name, passed in consistency_checks if not passed]
+                failed_checks = [
+                    check_name
+                    for check_name, passed in consistency_checks
+                    if not passed
+                ]
 
                 if failed_checks:
                     error_msg = f"批量预测一致性检查失败: {', '.join(failed_checks)}"
@@ -259,8 +311,7 @@ class DataConsistencyTester:
             async with httpx.AsyncClient() as client:
                 # 获取预测历史
                 history_response = await client.get(
-                    f"{self.base_url}/predictions/history",
-                    headers=headers
+                    f"{self.base_url}/predictions/history", headers=headers
                 )
 
                 if history_response.status_code != 200:
@@ -272,21 +323,38 @@ class DataConsistencyTester:
                 # 验证历史数据一致性
                 consistency_checks = [
                     ("历史数据是列表", isinstance(predictions, list)),
-                    ("每个预测都有必要字段", all(
-                        all(key in p for key in ["match_id", "predicted_outcome", "confidence"])
-                        for p in predictions
-                    )),
-                    ("预测结果有效", all(
-                        p.get("predicted_outcome") in ["home", "draw", "away"]
-                        for p in predictions
-                    )),
-                    ("置信度范围有效", all(
-                        0 <= p.get("confidence", 0) <= 1
-                        for p in predictions
-                    ))
+                    (
+                        "每个预测都有必要字段",
+                        all(
+                            all(
+                                key in p
+                                for key in [
+                                    "match_id",
+                                    "predicted_outcome",
+                                    "confidence",
+                                ]
+                            )
+                            for p in predictions
+                        ),
+                    ),
+                    (
+                        "预测结果有效",
+                        all(
+                            p.get("predicted_outcome") in ["home", "draw", "away"]
+                            for p in predictions
+                        ),
+                    ),
+                    (
+                        "置信度范围有效",
+                        all(0 <= p.get("confidence", 0) <= 1 for p in predictions),
+                    ),
                 ]
 
-                failed_checks = [check_name for check_name, passed in consistency_checks if not passed]
+                failed_checks = [
+                    check_name
+                    for check_name, passed in consistency_checks
+                    if not passed
+                ]
 
                 if failed_checks:
                     error_msg = f"历史数据一致性检查失败: {', '.join(failed_checks)}"
@@ -316,12 +384,14 @@ class DataConsistencyTester:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
 
             # 并发创建多个预测
-            async def create_prediction_async(match_id: int) -> Optional[Dict[str, Any]]:
+            async def create_prediction_async(
+                match_id: int,
+            ) -> Optional[Dict[str, Any]]:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
                         f"{self.base_url}/predictions/",
                         headers=headers,
-                        json={"model_version": "default", "include_details": True}
+                        json={"model_version": "default", "include_details": True},
                     )
                     if response.status_code in [200, 201]:
                         return response.json()
@@ -339,14 +409,26 @@ class DataConsistencyTester:
             # 验证并发操作一致性
             consistency_checks = [
                 ("大部分操作成功", len(successful_predictions) >= len(match_ids) * 0.8),
-                ("没有重复的match_id", len(set(p.get("match_id") for p in successful_predictions)) == len(successful_predictions)),
-                ("所有预测都有有效数据", all(
-                    all(key in p for key in ["match_id", "predicted_outcome", "confidence"])
-                    for p in successful_predictions
-                ))
+                (
+                    "没有重复的match_id",
+                    len(set(p.get("match_id") for p in successful_predictions))
+                    == len(successful_predictions),
+                ),
+                (
+                    "所有预测都有有效数据",
+                    all(
+                        all(
+                            key in p
+                            for key in ["match_id", "predicted_outcome", "confidence"]
+                        )
+                        for p in successful_predictions
+                    ),
+                ),
             ]
 
-            failed_checks = [check_name for check_name, passed in consistency_checks if not passed]
+            failed_checks = [
+                check_name for check_name, passed in consistency_checks if not passed
+            ]
 
             if failed_checks:
                 error_msg = f"并发操作一致性检查失败: {', '.join(failed_checks)}"
@@ -372,7 +454,7 @@ class DataConsistencyTester:
             endpoints_to_test = [
                 "/predictions/",
                 "/predictions/history",
-                "/predictions/recent"
+                "/predictions/recent",
             ]
 
             headers = {"Authorization": f"Bearer {self.auth_token}"}
@@ -382,9 +464,7 @@ class DataConsistencyTester:
                 for endpoint in endpoints_to_test:
                     try:
                         response = await client.get(
-                            f"{self.base_url}{endpoint}",
-                            headers=headers,
-                            timeout=5.0
+                            f"{self.base_url}{endpoint}", headers=headers, timeout=5.0
                         )
 
                         if response.status_code == 200:
@@ -394,13 +474,25 @@ class DataConsistencyTester:
                             if endpoint == "/predictions/":
                                 # 根端点应该有基本信息
                                 if not isinstance(data, dict):
-                                    format_errors.append(f"{endpoint}: 响应不是字典格式")
-                            elif endpoint in ["/predictions/history", "/predictions/recent"]:
+                                    format_errors.append(
+                                        f"{endpoint}: 响应不是字典格式"
+                                    )
+                            elif endpoint in [
+                                "/predictions/history",
+                                "/predictions/recent",
+                            ]:
                                 # 列表端点应该有predictions数组
-                                if not isinstance(data, dict) or "predictions" not in data:
-                                    format_errors.append(f"{endpoint}: 缺少predictions字段")
+                                if (
+                                    not isinstance(data, dict)
+                                    or "predictions" not in data
+                                ):
+                                    format_errors.append(
+                                        f"{endpoint}: 缺少predictions字段"
+                                    )
                                 elif not isinstance(data.get("predictions"), list):
-                                    format_errors.append(f"{endpoint}: predictions不是数组格式")
+                                    format_errors.append(
+                                        f"{endpoint}: predictions不是数组格式"
+                                    )
 
                     except Exception as e:
                         logger.warning(f"测试端点 {endpoint} 时异常: {e}")
@@ -433,7 +525,7 @@ class DataConsistencyTester:
                 "failed_tests": 0,
                 "success_rate": 0,
                 "consistency_errors": ["测试用户设置失败"],
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         test_methods = [
@@ -441,7 +533,7 @@ class DataConsistencyTester:
             ("批量预测一致性", self.test_batch_prediction_consistency),
             ("历史数据一致性", self.test_history_data_consistency),
             ("并发操作一致性", self.test_concurrent_operations_consistency),
-            ("数据格式一致性", self.test_data_format_consistency)
+            ("数据格式一致性", self.test_data_format_consistency),
         ]
 
         passed_tests = 0
@@ -468,9 +560,9 @@ class DataConsistencyTester:
                 "has_user": "user" in self.test_data,
                 "has_prediction": "prediction" in self.test_data,
                 "has_batch_predictions": "batch_predictions" in self.test_data,
-                "has_history": "history" in self.test_data
+                "has_history": "history" in self.test_data,
             },
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         print("=" * 60)
@@ -527,8 +619,12 @@ class TestDataConsistency:
     async def test_all_consistency_checks(self, consistency_tester):
         """测试所有一致性检查"""
         report = await consistency_tester.run_all_consistency_tests()
-        assert report["success_rate"] >= 80, f"一致性测试成功率不足80%: {report['success_rate']:.1f}%"
-        assert len(report["consistency_errors"]) == 0, f"发现一致性错误: {report['consistency_errors']}"
+        assert (
+            report["success_rate"] >= 80
+        ), f"一致性测试成功率不足80%: {report['success_rate']:.1f}%"
+        assert (
+            len(report["consistency_errors"]) == 0
+        ), f"发现一致性错误: {report['consistency_errors']}"
 
 
 # 独立运行测试的主函数
@@ -541,7 +637,7 @@ async def main():
     print(f"成功率: {report['success_rate']:.1f}%")
     print(f"一致性错误: {len(report['consistency_errors'])}")
 
-    if report['success_rate'] >= 80 and len(report['consistency_errors']) == 0:
+    if report["success_rate"] >= 80 and len(report["consistency_errors"]) == 0:
         print("🎉 数据一致性集成测试通过！")
         return 0
     else:

@@ -75,14 +75,18 @@ async def test_collector():
             # 测试收集比赛数据
             print("📊 收集比赛数据...")
             fixtures = await collector.collect_all_fixtures(
-                days_ahead=7, force_refresh=True, preferred_source="mock"  # 只收集7天的数据用于测试
+                days_ahead=7,
+                force_refresh=True,
+                preferred_source="mock",  # 只收集7天的数据用于测试
             )
 
             print(f"✅ 成功收集 {len(fixtures)} 场比赛")
 
             # 测试收集球队数据
             print("⚽ 收集球队数据...")
-            teams = await collector.collect_teams(force_refresh=True, preferred_source="mock")
+            teams = await collector.collect_teams(
+                force_refresh=True, preferred_source="mock"
+            )
 
             print(f"✅ 成功收集 {len(teams)} 支球队")
 
@@ -123,7 +127,10 @@ async def test_specific_team():
             print(f"🔍 收集 {team_name} 的比赛数据...")
 
             fixtures = await collector.collect_team_fixtures(
-                team_name=team_name, days_ahead=30, force_refresh=True, preferred_source="mock"
+                team_name=team_name,
+                days_ahead=30,
+                force_refresh=True,
+                preferred_source="mock",
             )
 
             print(f"✅ 成功收集 {team_name} 的 {len(fixtures)} 场比赛")
@@ -165,7 +172,10 @@ async def test_league_data():
             print(f"🏆 收集 {league_name} 的比赛数据...")
 
             fixtures = await collector.collect_league_fixtures(
-                league_name=league_name, days_ahead=15, force_refresh=True, preferred_source="mock"
+                league_name=league_name,
+                days_ahead=15,
+                force_refresh=True,
+                preferred_source="mock",
             )
 
             print(f"✅ 成功收集 {league_name} 的 {len(fixtures)} 场比赛")
@@ -176,8 +186,12 @@ async def test_league_data():
                 away_teams = {}
 
                 for fixture in fixtures:
-                    home_teams[fixture["home_team"]] = home_teams.get(fixture["home_team"], 0) + 1
-                    away_teams[fixture["away_team"]] = away_teams.get(fixture["away_team"], 0) + 1
+                    home_teams[fixture["home_team"]] = (
+                        home_teams.get(fixture["home_team"], 0) + 1
+                    )
+                    away_teams[fixture["away_team"]] = (
+                        away_teams.get(fixture["away_team"], 0) + 1
+                    )
 
                 print(f"📊 {league_name} 参赛球队统计:")
                 all_teams = set(list(home_teams.keys()) + list(away_teams.keys()))

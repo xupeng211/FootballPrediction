@@ -67,7 +67,10 @@ def test_pytest_availability():
         import subprocess
 
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", "--version"], capture_output=True, text=True, timeout=5
+            [sys.executable, "-m", "pytest", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0:
             print(f"✅ pytest可用: {result.stdout.strip()}")

@@ -13,8 +13,10 @@ except ImportError as e:
     print(f"Warning: Import failed: {e}")
     # Mock implementation will be used
     import logging
+
     def get_logger(name):
         return logging.getLogger(name)
+
     def setup_logger(name):
         return logging.getLogger(name)
 
@@ -22,7 +24,7 @@ except ImportError as e:
 class TestLoggerFunctionality:
     """日志器功能测试"""
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_get_logger_with_mock(self, mock_get_logger):
         """测试获取日志器（使用mock）"""
         mock_logger = Mock()
@@ -33,7 +35,7 @@ class TestLoggerFunctionality:
         mock_get_logger.assert_called_once_with("test_logger")
         assert logger == mock_logger
 
-    @patch('logging.basicConfig')
+    @patch("logging.basicConfig")
     def test_setup_logger_with_mock(self, mock_basicConfig):
         """测试设置日志器（使用mock）"""
         setup_logger("test_setup")
@@ -41,7 +43,7 @@ class TestLoggerFunctionality:
         # 验证logging.basicConfig被调用
         mock_basicConfig.assert_called_once()
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_multiple_logger_calls(self, mock_get_logger):
         """测试多次调用获取日志器"""
         mock_logger = Mock()
@@ -54,7 +56,7 @@ class TestLoggerFunctionality:
         assert mock_get_logger.call_args_list[0][0][0] == "test1"
         assert mock_get_logger.call_args_list[1][0][0] == "test2"
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_logger_with_different_names(self, mock_get_logger):
         """测试不同名称的日志器"""
         mock_logger = Mock()
@@ -67,13 +69,14 @@ class TestLoggerFunctionality:
 
         assert mock_get_logger.call_count == len(names)
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_logger_error_handling(self, mock_get_logger):
         """测试日志器错误处理"""
         mock_get_logger.side_effect = Exception("Logging error")
 
         with pytest.raises(Exception):
             get_logger("error_logger")
+
 
 class TestLoggerIntegration:
     """日志器集成测试"""
@@ -84,11 +87,11 @@ class TestLoggerIntegration:
             logger = get_logger("real_test")
             assert logger is not None
             # 基础logger属性检查
-            assert hasattr(logger, 'debug')
-            assert hasattr(logger, 'info')
-            assert hasattr(logger, 'warning')
-            assert hasattr(logger, 'error')
-            assert hasattr(logger, 'critical')
+            assert hasattr(logger, "debug")
+            assert hasattr(logger, "info")
+            assert hasattr(logger, "warning")
+            assert hasattr(logger, "error")
+            assert hasattr(logger, "critical")
         except Exception:
             pytest.skip("真实日志器创建失败")
 

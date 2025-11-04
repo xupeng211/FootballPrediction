@@ -27,8 +27,9 @@ try:
         MatchStartedEvent,
         MatchFinishedEvent,
         MatchCancelledEvent,
-        MatchPostponedEvent
+        MatchPostponedEvent,
     )
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
@@ -69,7 +70,9 @@ except ImportError as e:
             self.name = name
 
     class Match:
-        def __init__(self, id: int, home_team: Team, away_team: Team, start_time: datetime = None):
+        def __init__(
+            self, id: int, home_team: Team, away_team: Team, start_time: datetime = None
+        ):
             self.id = id
             self.home_team = home_team
             self.away_team = away_team
@@ -128,7 +131,9 @@ except ImportError as e:
             match.status = MatchStatus.FINISHED
             result = MatchResult(home_score=home_score, away_score=away_score)
             match.final_result = result
-            match.current_score = MatchScore(home_score=home_score, away_score=away_score)
+            match.current_score = MatchScore(
+                home_score=home_score, away_score=away_score
+            )
 
             event = MatchFinishedEvent(match, result)
             self._events.append(event)
@@ -137,7 +142,9 @@ except ImportError as e:
         def cancel_match(self, match: Match, reason: str) -> Match:
             """取消比赛"""
             if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
-                raise ValueError(f"不能取消已结束或已取消的比赛，当前状态: {match.status}")
+                raise ValueError(
+                    f"不能取消已结束或已取消的比赛，当前状态: {match.status}"
+                )
 
             previous_status = match.status
             match.status = MatchStatus.CANCELLED
@@ -146,10 +153,14 @@ except ImportError as e:
             self._events.append(event)
             return match
 
-        def postpone_match(self, match: Match, new_time: datetime, reason: str = None) -> Match:
+        def postpone_match(
+            self, match: Match, new_time: datetime, reason: str = None
+        ) -> Match:
             """延期比赛"""
             if match.status not in [MatchStatus.SCHEDULED, MatchStatus.LIVE]:
-                raise ValueError(f"只能延期预定或进行中的比赛，当前状态: {match.status}")
+                raise ValueError(
+                    f"只能延期预定或进行中的比赛，当前状态: {match.status}"
+                )
 
             previous_status = match.status
             match.status = MatchStatus.POSTPONED
@@ -159,12 +170,16 @@ except ImportError as e:
             self._events.append(event)
             return match
 
-        def update_score(self, match: Match, home_score: int, away_score: int, minute: int = None) -> Match:
+        def update_score(
+            self, match: Match, home_score: int, away_score: int, minute: int = None
+        ) -> Match:
             """更新比分"""
             if match.status != MatchStatus.LIVE:
                 raise ValueError(f"只能更新进行中比赛的比分，当前状态: {match.status}")
 
-            match.current_score = MatchScore(home_score=home_score, away_score=away_score, minute=minute)
+            match.current_score = MatchScore(
+                home_score=home_score, away_score=away_score, minute=minute
+            )
             return match
 
         def get_events(self) -> List[Any]:
@@ -175,10 +190,12 @@ except ImportError as e:
 
         def is_match_valid_to_start(self, match: Match) -> bool:
             """检查比赛是否可以开始"""
-            return (match.status == MatchStatus.SCHEDULED and
-                   match.start_time <= datetime.now() and
-                   match.home_team is not None and
-                   match.away_team is not None)
+            return (
+                match.status == MatchStatus.SCHEDULED
+                and match.start_time <= datetime.now()
+                and match.home_team is not None
+                and match.away_team is not None
+            )
 
         def calculate_match_duration(self, match: Match) -> timedelta:
             """计算比赛持续时间"""
@@ -213,7 +230,7 @@ class TestMatchDomainService:
             id=1,
             home_team_id=mock_home_team.id,
             away_team_id=mock_away_team.id,
-            match_date=future_time
+            match_date=future_time,
         )
 
     @pytest.fixture
@@ -224,7 +241,7 @@ class TestMatchDomainService:
     def test_service_initialization(self, match_service):
         """测试服务初始化"""
         assert match_service is not None
-        assert hasattr(match_service, '_events')
+        assert hasattr(match_service, "_events")
         assert len(match_service.get_events()) == 0
 
     def test_start_match_success(self, match_service, mock_match):
@@ -318,7 +335,7 @@ class TestMatchDomainService:
         assert len(events) == 1
         assert isinstance(events[0], MatchPostponedEvent)
         # 简化事件验证，检查基本属性
-        assert hasattr(events[0], 'match_id')
+        assert hasattr(events[0], "match_id")
         # assert events[0].new_time == new_time  # 暂时跳过
         # assert events[0].reason == reason  # 暂时跳过
 
@@ -340,7 +357,9 @@ class TestMatchDomainService:
         away_score = 0
         minute = 25
 
-        updated_match = match_service.update_score(mock_match, home_score, away_score, minute)
+        updated_match = match_service.update_score(
+            mock_match, home_score, away_score, minute
+        )
 
         # 验证比分更新
         assert updated_match.score.home_score == home_score
@@ -409,21 +428,29 @@ class TestMatchDomainService:
         assert finished_match.status == MatchStatus.FINISHED
         assert finished_match.score.home_score == 2
         assert finished_match.score.away_score == 1
-        assert finished_match.score.result.value == "home_win" if hasattr(finished_match.score.result, 'value') else "home_win"
+        assert (
+            finished_match.score.result.value == "home_win"
+            if hasattr(finished_match.score.result, "value")
+            else "home_win"
+        )
 
         # 验证事件数量
         all_events = match_service.get_events()
         assert len(all_events) == 1  # 只有结束比赛的事件（之前的被清空了）
 
-    @pytest.mark.parametrize("home_score,away_score,expected_winner", [
-        (2, 1, "home"),
-        (1, 3, "away"),
-        (2, 2, "draw"),
-        (0, 1, "away"),
-        (1, 0, "home"),
-    ])
-    def test_match_result_determination(self, match_service, mock_match,
-                                      home_score, away_score, expected_winner):
+    @pytest.mark.parametrize(
+        "home_score,away_score,expected_winner",
+        [
+            (2, 1, "home"),
+            (1, 3, "away"),
+            (2, 2, "draw"),
+            (0, 1, "away"),
+            (1, 0, "home"),
+        ],
+    )
+    def test_match_result_determination(
+        self, match_service, mock_match, home_score, away_score, expected_winner
+    ):
         """测试比赛结果判定"""
         # 开始并结束比赛
         match_service.start_match(mock_match)
@@ -564,7 +591,7 @@ class TestMatchServiceIntegration:
             id=2,  # 新的ID
             home_team_id=home_team.id,
             away_team_id=away_team.id,
-            match_date=new_time
+            match_date=new_time,
         )
 
         # 开始重新安排的比赛

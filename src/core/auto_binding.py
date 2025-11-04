@@ -31,7 +31,7 @@ class BindingRule:
     interface: type
     implementation: type
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT
-    condition: 'callable | None' = None
+    condition: "callable | None" = None
 
 
 class AutoBinder:

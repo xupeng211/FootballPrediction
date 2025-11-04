@@ -66,7 +66,7 @@ class TestHealthAPI:
 
     def test_health_check_with_mocks(self, health_client):
         """测试带Mock的健康检查"""
-        with patch('src.api.health.routes.datetime') as mock_datetime:
+        with patch("src.api.health.routes.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 

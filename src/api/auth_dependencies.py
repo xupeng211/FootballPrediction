@@ -121,7 +121,9 @@ async def get_current_active_user(
 class RateLimiter:
     """简单的速率限制器"""
 
-    def __init__(self, max_requests: int = 100, window_seconds: int = 3600):  # TODO: 将魔法数字 100 提取为常量
+    def __init__(
+        self, max_requests: int = 100, window_seconds: int = 3600
+    ):  # TODO: 将魔法数字 100 提取为常量
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests = []
@@ -129,11 +131,13 @@ class RateLimiter:
     async def is_allowed(self, identifier: str) -> bool:
         """检查是否允许请求"""
         import time
+
         current_time = time.time()
 
         # 清理过期的请求记录
         self.requests = [
-            req_time for req_time in self.requests
+            req_time
+            for req_time in self.requests
             if current_time - req_time < self.window_seconds
         ]
 
@@ -144,6 +148,7 @@ class RateLimiter:
         # 添加当前请求
         self.requests.append(current_time)
         return True
+
 
 # 全局速率限制器实例
 login_rate_limiter = RateLimiter(
@@ -232,7 +237,9 @@ class AuthContext:
         self.auth_manager = auth_manager
 
 
-def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def require_roles(
+    *allowed_roles: str,
+):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """
     角色权限装饰器工厂
 
@@ -242,6 +249,7 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
     Returns:
         权限检查依赖函数
     """
+
     async def role_checker(
         current_user: TokenData = Depends(get_current_active_user),
     ) -> TokenData:
@@ -277,8 +285,7 @@ async def get_current_admin(
     """获取当前管理员用户"""
     if current_user.role != "admin":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="需要管理员权限"
+            status_code=status.HTTP_403_FORBIDDEN, detail="需要管理员权限"
         )
     return current_user
 
@@ -335,13 +342,13 @@ class AuthContext:
     @staticmethod
     def get_client_ip(request: Request) -> str:
         """
-        获取客户端IP地址
+            获取客户端IP地址
 
-        Args:
-        request: FastAPI请求对象
+            Args:
+            request: FastAPI请求对象
 
-    Returns:
-        客户端IP地址
+        Returns:
+            客户端IP地址
         """
         # 检查代理头
         forwarded_for = request.headers.get("x-forwarded-for")
@@ -364,7 +371,7 @@ def get_client_ip(request: Request) -> str:
 
 async def get_auth_context(
     request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Security(security)
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
 ) -> dict:
     """
     获取认证上下文信息
@@ -382,19 +389,21 @@ async def get_auth_context(
         "is_authenticated": False,
         "user_id": None,
         "username": None,
-        "permissions": []
+        "permissions": [],
     }
 
     if credentials:
         try:
             jwt_manager = get_jwt_auth_manager()
             token_data = jwt_manager.verify_token(credentials.credentials)
-            context.update({
-                "is_authenticated": True,
-                "user_id": token_data.user_id,
-                "username": token_data.username,
-                "permissions": token_data.permissions or []
-            })
+            context.update(
+                {
+                    "is_authenticated": True,
+                    "user_id": token_data.user_id,
+                    "username": token_data.username,
+                    "permissions": token_data.permissions or [],
+                }
+            )
         except Exception:
             pass  # 保持未认证状态
 

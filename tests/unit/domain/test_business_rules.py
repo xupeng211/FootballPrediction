@@ -62,6 +62,7 @@ class RuleResult:
 # 预测相关枚举
 class PredictionStatus(Enum):
     """预测状态"""
+
     PENDING = "pending"
     EVALUATED = "evaluated"
     CANCELLED = "cancelled"
@@ -70,6 +71,7 @@ class PredictionStatus(Enum):
 
 class PredictedOutcome(Enum):
     """预测结果"""
+
     HOME = "home"
     DRAW = "draw"
     AWAY = "away"
@@ -77,6 +79,7 @@ class PredictedOutcome(Enum):
 
 class MatchStatus(Enum):
     """比赛状态"""
+
     SCHEDULED = "scheduled"
     LIVE = "live"
     FINISHED = "finished"
@@ -253,17 +256,9 @@ class ProbabilitySumRule(Rule):
         total = sum(probabilities.values())
 
         if abs(total - 1.0) > 0.01:
-            return RuleResult(
-                self.name,
-                False,
-                f"概率总和为 {total:.3f}，应该等于 1.0"
-            )
+            return RuleResult(self.name, False, f"概率总和为 {total:.3f}，应该等于 1.0")
 
-        return RuleResult(
-            self.name,
-            True,
-            "概率总和验证通过"
-        )
+        return RuleResult(self.name, True, "概率总和验证通过")
 
 
 class ConfidenceRangeRule(Rule):
@@ -278,17 +273,9 @@ class ConfidenceRangeRule(Rule):
 
         try:
             confidence = ConfidenceScore(context["confidence"])
-            return RuleResult(
-                self.name,
-                True,
-                f"置信度 {confidence} 验证通过"
-            )
+            return RuleResult(self.name, True, f"置信度 {confidence} 验证通过")
         except ValueError as e:
-            return RuleResult(
-                self.name,
-                False,
-                f"置信度验证失败: {str(e)}"
-            )
+            return RuleResult(self.name, False, f"置信度验证失败: {str(e)}")
 
 
 class PredictionTimeRule(Rule):
@@ -305,26 +292,14 @@ class PredictionTimeRule(Rule):
         current_time = context.get("current_time", datetime.utcnow())
 
         if match_date <= current_time:
-            return RuleResult(
-                self.name,
-                False,
-                "不能对已经开始或过去的比赛进行预测"
-            )
+            return RuleResult(self.name, False, "不能对已经开始或过去的比赛进行预测")
 
         # 检查是否在预测截止时间前（比如比赛开始前1小时）
         cutoff_time = match_date - timedelta(hours=1)
         if current_time > cutoff_time:
-            return RuleResult(
-                self.name,
-                False,
-                "预测已超过截止时间（比赛开始前1小时）"
-            )
+            return RuleResult(self.name, False, "预测已超过截止时间（比赛开始前1小时）")
 
-        return RuleResult(
-            self.name,
-            True,
-            "预测时间验证通过"
-        )
+        return RuleResult(self.name, True, "预测时间验证通过")
 
 
 class UserPermissionRule(Rule):
@@ -340,17 +315,9 @@ class UserPermissionRule(Rule):
         user = context["user"]
 
         if not user.can_make_prediction():
-            return RuleResult(
-                self.name,
-                False,
-                f"用户 {user.username} 已达到预测限制"
-            )
+            return RuleResult(self.name, False, f"用户 {user.username} 已达到预测限制")
 
-        return RuleResult(
-            self.name,
-            True,
-            f"用户 {user.username} 权限验证通过"
-        )
+        return RuleResult(self.name, True, f"用户 {user.username} 权限验证通过")
 
 
 class MatchStatusRule(Rule):
@@ -367,16 +334,10 @@ class MatchStatusRule(Rule):
 
         if match.status in [MatchStatus.CANCELLED, MatchStatus.POSTPONED]:
             return RuleResult(
-                self.name,
-                False,
-                f"比赛状态为 {match.status.value}，无法预测"
+                self.name, False, f"比赛状态为 {match.status.value}，无法预测"
             )
 
-        return RuleResult(
-            self.name,
-            True,
-            f"比赛状态 {match.status.value} 验证通过"
-        )
+        return RuleResult(self.name, True, f"比赛状态 {match.status.value} 验证通过")
 
 
 @pytest.mark.unit
@@ -387,13 +348,7 @@ class TestProbabilitySumRule:
     def test_valid_probabilities(self):
         """测试有效概率"""
         rule = ProbabilitySumRule()
-        context = {
-            "probabilities": {
-                "home": 0.6,
-                "draw": 0.25,
-                "away": 0.15
-            }
-        }
+        context = {"probabilities": {"home": 0.6, "draw": 0.25, "away": 0.15}}
 
         result = rule.evaluate(context)
 
@@ -403,11 +358,7 @@ class TestProbabilitySumRule:
         """测试概率总和过高"""
         rule = ProbabilitySumRule()
         context = {
-            "probabilities": {
-                "home": 0.7,
-                "draw": 0.3,
-                "away": 0.2  # 总和 = 1.2
-            }
+            "probabilities": {"home": 0.7, "draw": 0.3, "away": 0.2}  # 总和 = 1.2
         }
 
         result = rule.evaluate(context)
@@ -419,11 +370,7 @@ class TestProbabilitySumRule:
         """测试概率总和过低"""
         rule = ProbabilitySumRule()
         context = {
-            "probabilities": {
-                "home": 0.4,
-                "draw": 0.2,
-                "away": 0.3  # 总和 = 0.9
-            }
+            "probabilities": {"home": 0.4, "draw": 0.2, "away": 0.3}  # 总和 = 0.9
         }
 
         result = rule.evaluate(context)
@@ -444,13 +391,7 @@ class TestProbabilitySumRule:
     def test_edge_case_exact_sum(self):
         """测试边界情况：精确总和"""
         rule = ProbabilitySumRule()
-        context = {
-            "probabilities": {
-                "home": 1.0,
-                "draw": 0.0,
-                "away": 0.0
-            }
-        }
+        context = {"probabilities": {"home": 1.0, "draw": 0.0, "away": 0.0}}
 
         result = rule.evaluate(context)
 
@@ -463,7 +404,7 @@ class TestProbabilitySumRule:
             "probabilities": {
                 "home": 0.33333333,
                 "draw": 0.33333334,
-                "away": 0.33333333  # 总和 ≈ 1.0
+                "away": 0.33333333,  # 总和 ≈ 1.0
             }
         }
 
@@ -546,10 +487,7 @@ class TestPredictionTimeRule:
         """测试有效预测时间"""
         rule = PredictionTimeRule()
         future_time = datetime.utcnow() + timedelta(days=2)
-        context = {
-            "match_date": future_time,
-            "current_time": datetime.utcnow()
-        }
+        context = {"match_date": future_time, "current_time": datetime.utcnow()}
 
         result = rule.evaluate(context)
 
@@ -559,10 +497,7 @@ class TestPredictionTimeRule:
         """测试过去比赛时间"""
         rule = PredictionTimeRule()
         past_time = datetime.utcnow() - timedelta(days=1)
-        context = {
-            "match_date": past_time,
-            "current_time": datetime.utcnow()
-        }
+        context = {"match_date": past_time, "current_time": datetime.utcnow()}
 
         result = rule.evaluate(context)
 
@@ -573,10 +508,7 @@ class TestPredictionTimeRule:
         """测试预测截止时间"""
         rule = PredictionTimeRule()
         near_future = datetime.utcnow() + timedelta(minutes=30)  # 30分钟后
-        context = {
-            "match_date": near_future,
-            "current_time": datetime.utcnow()
-        }
+        context = {"match_date": near_future, "current_time": datetime.utcnow()}
 
         result = rule.evaluate(context)
 
@@ -587,10 +519,7 @@ class TestPredictionTimeRule:
         """测试恰好在截止时间前"""
         rule = PredictionTimeRule()
         future_time = datetime.utcnow() + timedelta(hours=2)  # 2小时后
-        context = {
-            "match_date": future_time,
-            "current_time": datetime.utcnow()
-        }
+        context = {"match_date": future_time, "current_time": datetime.utcnow()}
 
         result = rule.evaluate(context)
 
@@ -609,10 +538,7 @@ class TestPredictionTimeRule:
         """测试边界情况：恰好截止时间"""
         rule = PredictionTimeRule()
         cutoff_time = datetime.utcnow() + timedelta(hours=1)
-        context = {
-            "match_date": cutoff_time,
-            "current_time": datetime.utcnow()
-        }
+        context = {"match_date": cutoff_time, "current_time": datetime.utcnow()}
 
         result = rule.evaluate(context)
 
@@ -755,14 +681,16 @@ class TestBusinessRuleEngine:
         context = {
             "probabilities": {"home": 0.6, "draw": 0.25, "away": 0.15},
             "confidence": 0.8,
-            "user": user
+            "user": user,
         }
 
         results = engine.evaluate(context)
 
         assert len(results) == 3
         for result in results:
-            assert result.passed, f"所有规则应该通过: {result.rule_name} - {result.message}"
+            assert (
+                result.passed
+            ), f"所有规则应该通过: {result.rule_name} - {result.message}"
 
     def test_some_rules_fail(self):
         """测试部分规则失败"""
@@ -772,7 +700,7 @@ class TestBusinessRuleEngine:
 
         context = {
             "probabilities": {"home": 0.7, "draw": 0.3, "away": 0.2},  # 总和 > 1.0
-            "confidence": 1.1  # 超出范围
+            "confidence": 1.1,  # 超出范围
         }
 
         results = engine.evaluate(context)
@@ -793,7 +721,7 @@ class TestBusinessRuleEngine:
 
         context = {
             "probabilities": {"home": 0.6, "draw": 0.25, "away": 0.15},
-            "confidence": 0.8
+            "confidence": 0.8,
         }
 
         results = engine.evaluate(context)
@@ -840,8 +768,9 @@ class TestDomainModels:
 
     def test_prediction_evaluation(self):
         """测试预测评估"""
-        prediction = Prediction(1, 1, PredictedOutcome.HOME,
-                            {"home": 0.6, "draw": 0.25, "away": 0.15}, 0.8)
+        prediction = Prediction(
+            1, 1, PredictedOutcome.HOME, {"home": 0.6, "draw": 0.25, "away": 0.15}, 0.8
+        )
 
         # 正确预测
         prediction.evaluate(PredictedOutcome.HOME)
@@ -849,8 +778,9 @@ class TestDomainModels:
         assert prediction.actual_outcome == PredictedOutcome.HOME
 
         # 错误预测
-        prediction = Prediction(2, 2, PredictedOutcome.DRAW,
-                            {"home": 0.3, "draw": 0.5, "away": 0.2}, 0.7)
+        prediction = Prediction(
+            2, 2, PredictedOutcome.DRAW, {"home": 0.3, "draw": 0.5, "away": 0.2}, 0.7
+        )
         prediction.evaluate(PredictedOutcome.HOME)
         assert prediction.is_correct is False
         assert prediction.actual_outcome == PredictedOutcome.HOME
@@ -858,15 +788,17 @@ class TestDomainModels:
     def test_prediction_points_calculation(self):
         """测试积分计算"""
         # 高置信度正确预测
-        prediction = Prediction(1, 1, PredictedOutcome.HOME,
-                            {"home": 0.6, "draw": 0.25, "away": 0.15}, 0.9)
+        prediction = Prediction(
+            1, 1, PredictedOutcome.HOME, {"home": 0.6, "draw": 0.25, "away": 0.15}, 0.9
+        )
         prediction.evaluate(PredictedOutcome.HOME)
         points = prediction.calculate_points(10)
         assert points == int(10 * 0.9)  # 9分
 
         # 错误预测
-        prediction = Prediction(2, 2, PredictedOutcome.AWAY,
-                            {"home": 0.2, "draw": 0.3, "away": 0.5}, 0.8)
+        prediction = Prediction(
+            2, 2, PredictedOutcome.AWAY, {"home": 0.2, "draw": 0.3, "away": 0.5}, 0.8
+        )
         prediction.evaluate(PredictedOutcome.HOME)
         points = prediction.calculate_points(10)
         assert points == 0
@@ -953,14 +885,14 @@ class TestDomainModels:
         assert user.get_accuracy() == 0.0
 
         # 添加一些预测结果
-        user.add_prediction_result(8, True)   # 正确预测
+        user.add_prediction_result(8, True)  # 正确预测
         user.add_prediction_result(0, False)  # 错误预测
-        user.add_prediction_result(7, True)   # 正确预测
+        user.add_prediction_result(7, True)  # 正确预测
 
         assert user.points == 15
         assert user.predictions_count == 3
         assert user.correct_predictions == 2
-        assert user.get_accuracy() == (2/3) * 100
+        assert user.get_accuracy() == (2 / 3) * 100
 
 
 # 测试运行器

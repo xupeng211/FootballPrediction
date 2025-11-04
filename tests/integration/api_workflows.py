@@ -37,7 +37,9 @@ class WorkflowTester:
         self.tokens: Dict[str, str] = {}
         self.predictions: Dict[str, List[Dict[str, Any]]] = {}
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(
+        self, test_name: str, success: bool, details: str = "", duration: float = 0
+    ):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -63,14 +65,12 @@ class WorkflowTester:
                 "username": f"{role}_{user_id}_{int(time.time())}",
                 "email": f"{role}_{user_id}_{int(time.time())}@example.com",
                 "password": f"password_{user_id}",
-                "full_name": f"{role.title()} User {user_id}"
+                "full_name": f"{role.title()} User {user_id}",
             }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/auth/register",
-                    json=user_data,
-                    timeout=10.0
+                    f"{self.base_url}/auth/register", json=user_data, timeout=10.0
                 )
 
             success = response.status_code in [200, 201]
@@ -100,14 +100,12 @@ class WorkflowTester:
             user_data = self.users[user_id]
             login_data = {
                 "username": user_data["username"],
-                "password": user_data["password"]
+                "password": user_data["password"],
             }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/auth/login",
-                    json=login_data,
-                    timeout=10.0
+                    f"{self.base_url}/auth/login", json=login_data, timeout=10.0
                 )
 
             success = response.status_code == 200
@@ -136,16 +134,13 @@ class WorkflowTester:
                 raise Exception(f"用户 {user_id} token不存在")
 
             headers = {"Authorization": f"Bearer {self.tokens[user_id]}"}
-            prediction_request = {
-                "model_version": "default",
-                "include_details": True
-            }
+            prediction_request = {"model_version": "default", "include_details": True}
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/predictions/",
                     headers=headers,
-                    json=prediction_request
+                    json=prediction_request,
                 )
 
             success = response.status_code in [200, 201]
@@ -178,8 +173,7 @@ class WorkflowTester:
 
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.base_url}/predictions/history",
-                    headers=headers
+                    f"{self.base_url}/predictions/history", headers=headers
                 )
 
             success = response.status_code == 200
@@ -217,16 +211,13 @@ class WorkflowTester:
             # 验证最新的预测
             latest_prediction = user_predictions[-1]
             match_id = latest_prediction.get("match_id", 12345)
-            verification_data = {
-                "actual_outcome": "home",
-                "confidence": 0.85
-            }
+            verification_data = {"actual_outcome": "home", "confidence": 0.85}
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/predictions/{match_id}/verify",
                     headers=headers,
-                    json=verification_data
+                    json=verification_data,
                 )
 
             success = response.status_code == 200
@@ -254,9 +245,15 @@ class WorkflowTester:
         workflow_steps = [
             (f"创建用户{user_id}", lambda: self.create_test_user(user_id)),
             (f"用户{user_id}登录", lambda: self.login_user(user_id)),
-            (f"用户{user_id}创建预测", lambda: self.create_prediction_workflow(user_id)),
+            (
+                f"用户{user_id}创建预测",
+                lambda: self.create_prediction_workflow(user_id),
+            ),
             (f"用户{user_id}查询历史", lambda: self.query_prediction_history(user_id)),
-            (f"用户{user_id}验证预测", lambda: self.verify_prediction_workflow(user_id))
+            (
+                f"用户{user_id}验证预测",
+                lambda: self.verify_prediction_workflow(user_id),
+            ),
         ]
 
         passed_steps = 0
@@ -271,7 +268,9 @@ class WorkflowTester:
         success_rate = (passed_steps / len(workflow_steps)) * 100
         success = success_rate >= 80
 
-        details = f"通过步骤: {passed_steps}/{len(workflow_steps)} ({success_rate:.1f}%)"
+        details = (
+            f"通过步骤: {passed_steps}/{len(workflow_steps)} ({success_rate:.1f}%)"
+        )
         self.log_test(f"用户{user_id}完整工作流", success, details)
         return success
 
@@ -284,7 +283,9 @@ class WorkflowTester:
             # 并发创建用户
             create_tasks = [self.create_test_user(uid) for uid in user_ids]
             create_results = await asyncio.gather(*create_tasks)
-            created_users = [uid for uid, result in zip(user_ids, create_results) if result]
+            created_users = [
+                uid for uid, result in zip(user_ids, create_results) if result
+            ]
 
             if len(created_users) < 2:
                 self.log_test("并发用户测试", False, "创建的用户数量不足")
@@ -293,10 +294,14 @@ class WorkflowTester:
             # 并发登录
             login_tasks = [self.login_user(uid) for uid in created_users]
             login_results = await asyncio.gather(*login_tasks)
-            logged_users = [uid for uid, result in zip(created_users, login_results) if result]
+            logged_users = [
+                uid for uid, result in zip(created_users, login_results) if result
+            ]
 
             # 并发创建预测
-            prediction_tasks = [self.create_prediction_workflow(uid) for uid in logged_users]
+            prediction_tasks = [
+                self.create_prediction_workflow(uid) for uid in logged_users
+            ]
             prediction_results = await asyncio.gather(*prediction_tasks)
 
             success_count = sum(prediction_results)
@@ -322,8 +327,7 @@ class WorkflowTester:
 
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.base_url}/predictions/",
-                    headers=headers
+                    f"{self.base_url}/predictions/", headers=headers
                 )
 
             success = response.status_code == 401
@@ -348,8 +352,7 @@ class WorkflowTester:
 
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.base_url}/predictions/",
-                    headers=headers
+                    f"{self.base_url}/predictions/", headers=headers
                 )
 
             success = response.status_code in [401, 403]
@@ -370,10 +373,13 @@ class WorkflowTester:
         print("=" * 60)
 
         test_methods = [
-            ("完整用户工作流测试", lambda: self.test_complete_user_workflow("workflow_user")),
+            (
+                "完整用户工作流测试",
+                lambda: self.test_complete_user_workflow("workflow_user"),
+            ),
             ("并发用户测试", self.test_concurrent_users),
             ("无效token处理", self.test_invalid_token_handling),
-            ("过期token处理", self.test_expired_token_handling)
+            ("过期token处理", self.test_expired_token_handling),
         ]
 
         passed_tests = 0
@@ -396,8 +402,10 @@ class WorkflowTester:
             "success_rate": success_rate,
             "test_results": self.test_results,
             "users_created": len(self.users),
-            "predictions_created": sum(len(preds) for preds in self.predictions.values()),
-            "timestamp": datetime.now().isoformat()
+            "predictions_created": sum(
+                len(preds) for preds in self.predictions.values()
+            ),
+            "timestamp": datetime.now().isoformat(),
         }
 
         print("=" * 60)
@@ -446,7 +454,9 @@ class TestAPIWorkflows:
     async def test_all_workflows(self, workflow_tester):
         """测试所有工作流"""
         report = await workflow_tester.run_all_workflow_tests()
-        assert report["success_rate"] >= 75, f"整体成功率不足75%: {report['success_rate']:.1f}%"
+        assert (
+            report["success_rate"] >= 75
+        ), f"整体成功率不足75%: {report['success_rate']:.1f}%"
         assert report["users_created"] >= 1, "至少需要创建1个用户"
         assert report["predictions_created"] >= 1, "至少需要创建1个预测"
 
@@ -462,7 +472,7 @@ async def main():
     print(f"用户数: {report['users_created']}")
     print(f"预测数: {report['predictions_created']}")
 
-    if report['success_rate'] >= 75:
+    if report["success_rate"] >= 75:
         print("🎉 工作流集成测试通过！")
         return 0
     else:

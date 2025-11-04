@@ -21,15 +21,22 @@ import json
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
     from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import ModelTrainer, TrainingConfig, TrainingStatus, ModelType
+    from src.ml.model_training import (
+        ModelTrainer,
+        TrainingConfig,
+        TrainingStatus,
+        ModelType,
+    )
     from src.domain.strategies.ml_model import MLModelStrategy
     from src.ml.enhanced_real_model_training import EnhancedRealModelTrainer
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模块: {e}")
@@ -40,10 +47,26 @@ except ImportError as e:
 def create_comprehensive_training_data(num_matches: int = 1000) -> pd.DataFrame:
     """创建全面的训练数据，包含更多特征"""
     teams = [
-        "Manchester_City", "Liverpool", "Chelsea", "Arsenal", "Manchester_United",
-        "Tottenham", "West_Ham", "Leicester", "Everton", "Wolves",
-        "Newcastle", "Aston_Villa", "Leeds", "Southampton", "Crystal_Palace",
-        "Brighton", "Burnley", "Fulham", "West_Brom", "Sheffield_United"
+        "Manchester_City",
+        "Liverpool",
+        "Chelsea",
+        "Arsenal",
+        "Manchester_United",
+        "Tottenham",
+        "West_Ham",
+        "Leicester",
+        "Everton",
+        "Wolves",
+        "Newcastle",
+        "Aston_Villa",
+        "Leeds",
+        "Southampton",
+        "Crystal_Palace",
+        "Brighton",
+        "Burnley",
+        "Fulham",
+        "West_Brom",
+        "Sheffield_United",
     ]
 
     data = []
@@ -53,8 +76,14 @@ def create_comprehensive_training_data(num_matches: int = 1000) -> pd.DataFrame:
 
         # 基于球队实力的进球模拟（简化版）
         team_strength = {
-            "Manchester_City": 2.1, "Liverpool": 2.0, "Chelsea": 1.8, "Arsenal": 1.7,
-            "Manchester_United": 1.6, "Tottenham": 1.5, "West_Ham": 1.3, "Leicester": 1.2
+            "Manchester_City": 2.1,
+            "Liverpool": 2.0,
+            "Chelsea": 1.8,
+            "Arsenal": 1.7,
+            "Manchester_United": 1.6,
+            "Tottenham": 1.5,
+            "West_Ham": 1.3,
+            "Leicester": 1.2,
         }
 
         home_strength = team_strength.get(home_team, 1.0)
@@ -80,28 +109,31 @@ def create_comprehensive_training_data(num_matches: int = 1000) -> pd.DataFrame:
             result = "draw"
 
         # 添加更多特征
-        data.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_score": home_goals,
-            "away_score": away_goals,
-            "result": result,
-            "match_date": datetime.now() - timedelta(days=np.random.randint(0, 365)),
-            "season": "2023-24",
-            "league": "Premier_League",
-            "home_team_form": np.random.uniform(-1, 1),  # 最近5场净胜球
-            "away_team_form": np.random.uniform(-1, 1),
-            "home_team_goals_scored": np.random.randint(0, 50),
-            "away_team_goals_scored": np.random.randint(0, 50),
-            "home_team_goals_conceded": np.random.randint(0, 50),
-            "away_team_goals_conceded": np.random.randint(0, 50),
-            "home_team_shots": np.random.randint(5, 25),
-            "away_team_shots": np.random.randint(5, 25),
-            "home_team_shots_on_target": np.random.randint(2, 15),
-            "away_team_shots_on_target": np.random.randint(2, 15),
-            "home_team_possession": np.random.uniform(30, 80),
-            "away_team_possession": np.random.uniform(30, 80),
-        })
+        data.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "result": result,
+                "match_date": datetime.now()
+                - timedelta(days=np.random.randint(0, 365)),
+                "season": "2023-24",
+                "league": "Premier_League",
+                "home_team_form": np.random.uniform(-1, 1),  # 最近5场净胜球
+                "away_team_form": np.random.uniform(-1, 1),
+                "home_team_goals_scored": np.random.randint(0, 50),
+                "away_team_goals_scored": np.random.randint(0, 50),
+                "home_team_goals_conceded": np.random.randint(0, 50),
+                "away_team_goals_conceded": np.random.randint(0, 50),
+                "home_team_shots": np.random.randint(5, 25),
+                "away_team_shots": np.random.randint(5, 25),
+                "home_team_shots_on_target": np.random.randint(2, 15),
+                "away_team_shots_on_target": np.random.randint(2, 15),
+                "home_team_possession": np.random.uniform(30, 80),
+                "away_team_possession": np.random.uniform(30, 80),
+            }
+        )
 
     return pd.DataFrame(data)
 
@@ -115,13 +147,15 @@ def create_batch_prediction_data(num_predictions: int = 10) -> List[Dict[str, An
         home_team = np.random.choice(teams)
         away_team = np.random.choice([t for t in teams if t != home_team])
 
-        predictions.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "match_id": f"batch_match_{i+1:03d}",
-            "match_date": datetime.now() + timedelta(days=i+1),
-            "venue": f"Stadium_{i+1}"
-        })
+        predictions.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "match_id": f"batch_match_{i+1:03d}",
+                "match_date": datetime.now() + timedelta(days=i + 1),
+                "venue": f"Stadium_{i+1}",
+            }
+        )
 
     return predictions
 
@@ -167,7 +201,15 @@ class TestMLWorkflowIntegration:
         assert len(predictions) > 0
         for prediction in predictions:
             assert isinstance(prediction, PredictionResult)
-            assert abs(prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob - 1.0) < 0.01
+            assert (
+                abs(
+                    prediction.home_win_prob
+                    + prediction.draw_prob
+                    + prediction.away_win_prob
+                    - 1.0
+                )
+                < 0.01
+            )
             assert prediction.confidence > 0
             assert prediction.model_name == "PoissonModel"
 
@@ -213,18 +255,25 @@ class TestMLWorkflowIntegration:
                 home_win_prob=avg_home_prob,
                 draw_prob=avg_draw_prob,
                 away_win_prob=avg_away_prob,
-                predicted_outcome="home_win" if avg_home_prob > max(avg_draw_prob, avg_away_prob) else "draw" if avg_draw_prob > avg_away_prob else "away_win",
+                predicted_outcome=(
+                    "home_win"
+                    if avg_home_prob > max(avg_draw_prob, avg_away_prob)
+                    else "draw" if avg_draw_prob > avg_away_prob else "away_win"
+                ),
                 confidence=max(avg_home_prob, avg_draw_prob, avg_away_prob),
                 model_name="EnsembleModel",
                 model_version="1.0",
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
             ensemble_predictions.append(ensemble_pred)
 
         # 验证集成结果
         assert len(ensemble_predictions) == len(test_data)
         for pred in ensemble_predictions:
-            assert abs(pred.home_win_prob + pred.draw_prob + pred.away_win_prob - 1.0) < 0.01
+            assert (
+                abs(pred.home_win_prob + pred.draw_prob + pred.away_win_prob - 1.0)
+                < 0.01
+            )
 
     @pytest.mark.asyncio
     async def test_model_performance_comparison(self):
@@ -250,7 +299,7 @@ class TestMLWorkflowIntegration:
             results[name] = {
                 "model": model,
                 "metrics": metrics,
-                "hyperparameters": params
+                "hyperparameters": params,
             }
 
         # 比较性能
@@ -258,7 +307,9 @@ class TestMLWorkflowIntegration:
         assert len(accuracies) == 3
 
         # 找出最佳模型
-        best_model_name = max(results.keys(), key=lambda k: results[k]["metrics"]["accuracy"])
+        best_model_name = max(
+            results.keys(), key=lambda k: results[k]["metrics"]["accuracy"]
+        )
         best_model = results[best_model_name]["model"]
 
         # 使用最佳模型进行预测
@@ -293,7 +344,9 @@ class TestMLWorkflowIntegration:
 
         # 至少应该有一些性能差异
         accuracies = list(version_metrics.values())
-        assert len(set(round(acc, 3) for acc in accuracies)) >= 1  # 可能相同，但至少要测试
+        assert (
+            len(set(round(acc, 3) for acc in accuracies)) >= 1
+        )  # 可能相同，但至少要测试
 
     def test_error_recovery_and_robustness(self):
         """测试错误恢复和鲁棒性"""
@@ -309,7 +362,11 @@ class TestMLWorkflowIntegration:
             # 缺少必要字段的预测
             lambda: model.predict({"home_team": "A"}) if model.is_trained else None,
             # 相同队伍预测
-            lambda: model.predict({"home_team": "A", "away_team": "A"}) if model.is_trained else None,
+            lambda: (
+                model.predict({"home_team": "A", "away_team": "A"})
+                if model.is_trained
+                else None
+            ),
         ]
 
         # 训练模型用于后续测试
@@ -354,7 +411,10 @@ class TestMLWorkflowIntegration:
 
         for pred in successful_predictions:
             assert isinstance(pred, PredictionResult)
-            assert abs(pred.home_win_prob + pred.draw_prob + pred.away_win_prob - 1.0) < 0.01
+            assert (
+                abs(pred.home_win_prob + pred.draw_prob + pred.away_win_prob - 1.0)
+                < 0.01
+            )
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -385,7 +445,9 @@ class TestMLModelDeployment:
                 "model_version": model.model_version,
                 "training_date": datetime.now().isoformat(),
                 "training_samples": len(training_data),
-                "performance_metrics": model.evaluate(create_comprehensive_training_data(50))
+                "performance_metrics": model.evaluate(
+                    create_comprehensive_training_data(50)
+                ),
             }
 
             metadata_path = os.path.join(temp_dir, "model_metadata.json")
@@ -405,11 +467,15 @@ class TestMLModelDeployment:
             loaded_prediction = loaded_model.predict(test_prediction_data)
 
             # 预测结果应该基本一致
-            assert abs(original_prediction.home_win_prob - loaded_prediction.home_win_prob) < 0.01
+            assert (
+                abs(original_prediction.home_win_prob - loaded_prediction.home_win_prob)
+                < 0.01
+            )
 
     @pytest.mark.asyncio
     async def test_model_serving_simulation(self):
         """测试模型服务模拟"""
+
         # 创建一个简单的模型服务类
         class ModelService:
             def __init__(self):
@@ -485,8 +551,8 @@ class TestMLModelDeployment:
 
         # 验证监控指标
         assert avg_prediction_time < 1.0  # 预测时间应该很快
-        assert max_prediction_time < 5.0   # 最大预测时间
-        assert 0 < avg_confidence <= 1.0   # 置信度在合理范围
+        assert max_prediction_time < 5.0  # 最大预测时间
+        assert 0 < avg_confidence <= 1.0  # 置信度在合理范围
 
         # 创建监控报告
         monitoring_report = {
@@ -499,7 +565,7 @@ class TestMLModelDeployment:
             "min_confidence": min(confidence_scores),
             "max_confidence": max(confidence_scores),
             "uptime": "100%",  # 模拟指标
-            "error_rate": "0%"   # 模拟指标
+            "error_rate": "0%",  # 模拟指标
         }
 
         assert isinstance(monitoring_report, dict)
@@ -524,24 +590,32 @@ class TestMLDataPipeline:
             engineered_df = df.copy()
 
             # 1. 计算进球差异
-            engineered_df["goal_difference"] = engineered_df["home_score"] - engineered_df["away_score"]
-
-            # 2. 计算总进球数
-            engineered_df["total_goals"] = engineered_df["home_score"] + engineered_df["away_score"]
-
-            # 3. 创建胜负标签（数值化）
-            engineered_df["result_numeric"] = engineered_df["result"].map({
-                "home_win": 1, "draw": 0, "away_win": -1
-            })
-
-            # 4. 计算主客队实力比（简化版）
-            engineered_df["strength_ratio"] = engineered_df["home_team_goals_scored"] / (
-                engineered_df["away_team_goals_conceded"] + 1
+            engineered_df["goal_difference"] = (
+                engineered_df["home_score"] - engineered_df["away_score"]
             )
 
+            # 2. 计算总进球数
+            engineered_df["total_goals"] = (
+                engineered_df["home_score"] + engineered_df["away_score"]
+            )
+
+            # 3. 创建胜负标签（数值化）
+            engineered_df["result_numeric"] = engineered_df["result"].map(
+                {"home_win": 1, "draw": 0, "away_win": -1}
+            )
+
+            # 4. 计算主客队实力比（简化版）
+            engineered_df["strength_ratio"] = engineered_df[
+                "home_team_goals_scored"
+            ] / (engineered_df["away_team_goals_conceded"] + 1)
+
             # 5. 时间特征
-            engineered_df["month"] = pd.to_datetime(engineered_df["match_date"]).dt.month
-            engineered_df["day_of_week"] = pd.to_datetime(engineered_df["match_date"]).dt.dayofweek
+            engineered_df["month"] = pd.to_datetime(
+                engineered_df["match_date"]
+            ).dt.month
+            engineered_df["day_of_week"] = pd.to_datetime(
+                engineered_df["match_date"]
+            ).dt.dayofweek
 
             return engineered_df
 
@@ -563,27 +637,31 @@ class TestMLDataPipeline:
     def test_data_validation_pipeline(self):
         """测试数据验证流水线"""
         # 创建包含各种问题的数据
-        problematic_data = pd.DataFrame({
-            "home_team": ["Team_A", "Team_B", None, "Team_D", "Team_E"],
-            "away_team": ["Team_B", "Team_A", "Team_C", "Team_E", "Team_D"],
-            "home_score": [2, -1, 1, 3, 100],  # 包含负数和异常值
-            "away_score": [1, 2, None, 0, 99],   # 包含空值和异常值
-            "result": ["home_win", "invalid", "draw", "home_win", "away_win"]
-        })
+        problematic_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B", None, "Team_D", "Team_E"],
+                "away_team": ["Team_B", "Team_A", "Team_C", "Team_E", "Team_D"],
+                "home_score": [2, -1, 1, 3, 100],  # 包含负数和异常值
+                "away_score": [1, 2, None, 0, 99],  # 包含空值和异常值
+                "result": ["home_win", "invalid", "draw", "home_win", "away_win"],
+            }
+        )
 
         def validate_data(df):
             """数据验证函数"""
             validation_results = {
                 "total_rows": len(df),
                 "issues": [],
-                "clean_data": df.copy()
+                "clean_data": df.copy(),
             }
 
             # 1. 检查空值
             null_counts = df.isnull().sum()
             for col, count in null_counts.items():
                 if count > 0:
-                    validation_results["issues"].append(f"Column {col} has {count} null values")
+                    validation_results["issues"].append(
+                        f"Column {col} has {count} null values"
+                    )
 
             # 2. 检查数值范围
             numeric_columns = ["home_score", "away_score"]
@@ -591,19 +669,25 @@ class TestMLDataPipeline:
                 if col in df.columns:
                     invalid_values = df[(df[col] < 0) | (df[col] > 20)]
                     if len(invalid_values) > 0:
-                        validation_results["issues"].append(f"Column {col} has {len(invalid_values)} invalid values")
+                        validation_results["issues"].append(
+                            f"Column {col} has {len(invalid_values)} invalid values"
+                        )
 
             # 3. 检查结果值
             if "result" in df.columns:
                 valid_results = {"home_win", "draw", "away_win"}
                 invalid_results = df[~df["result"].isin(valid_results)]
                 if len(invalid_results) > 0:
-                    validation_results["issues"].append(f"Result column has {len(invalid_results)} invalid values")
+                    validation_results["issues"].append(
+                        f"Result column has {len(invalid_results)} invalid values"
+                    )
 
             # 4. 检查主客队相同
             same_teams = df[df["home_team"] == df["away_team"]]
             if len(same_teams) > 0:
-                validation_results["issues"].append(f"Found {len(same_teams)} matches with same home and away team")
+                validation_results["issues"].append(
+                    f"Found {len(same_teams)} matches with same home and away team"
+                )
 
             return validation_results
 
@@ -621,6 +705,7 @@ class TestMLDataPipeline:
 
     def test_model_training_pipeline(self):
         """测试模型训练流水线"""
+
         # 创建训练流水线
         class TrainingPipeline:
             def __init__(self):
@@ -633,8 +718,10 @@ class TestMLDataPipeline:
                 clean_data = data.dropna()
                 # 过滤异常值
                 clean_data = clean_data[
-                    (clean_data["home_score"] >= 0) & (clean_data["home_score"] <= 10) &
-                    (clean_data["away_score"] >= 0) & (clean_data["away_score"] <= 10)
+                    (clean_data["home_score"] >= 0)
+                    & (clean_data["home_score"] <= 10)
+                    & (clean_data["away_score"] >= 0)
+                    & (clean_data["away_score"] <= 10)
                 ]
                 return clean_data
 
@@ -662,25 +749,33 @@ class TestMLDataPipeline:
                 """运行完整流水线"""
                 # 1. 数据预处理
                 processed_data = self.preprocess_data(raw_data)
-                self.training_history.append(f"Preprocessed {len(processed_data)} samples")
+                self.training_history.append(
+                    f"Preprocessed {len(processed_data)} samples"
+                )
 
                 # 2. 数据分割
                 train_data, val_data = self.split_data(processed_data)
-                self.training_history.append(f"Split data: {len(train_data)} train, {len(val_data)} val")
+                self.training_history.append(
+                    f"Split data: {len(train_data)} train, {len(val_data)} val"
+                )
 
                 # 3. 模型训练
                 training_result = self.train_model(train_data, val_data)
-                self.training_history.append(f"Model trained with accuracy: {training_result.accuracy:.3f}")
+                self.training_history.append(
+                    f"Model trained with accuracy: {training_result.accuracy:.3f}"
+                )
 
                 # 4. 模型评估
                 eval_metrics = self.evaluate_model(val_data)
-                self.training_history.append(f"Model evaluated: {eval_metrics['accuracy']:.3f} accuracy")
+                self.training_history.append(
+                    f"Model evaluated: {eval_metrics['accuracy']:.3f} accuracy"
+                )
 
                 return {
                     "model": self.model,
                     "training_result": training_result,
                     "evaluation_metrics": eval_metrics,
-                    "training_history": self.training_history
+                    "training_history": self.training_history,
                 }
 
         # 运行训练流水线

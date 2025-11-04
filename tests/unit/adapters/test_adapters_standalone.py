@@ -18,6 +18,7 @@ from unittest.mock import Mock, AsyncMock
 # 重新定义适配器模式的核心类，避免导入有问题的模块
 class AdapterStatus(Enum):
     """适配器状态枚举"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     ERROR = "error"
@@ -49,11 +50,13 @@ class Target(ABC):
 
 class Adapter(Target):
     """适配器基类,将Adaptee接口转换为Target接口"""
+
     pass
 
 
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
+
     pass
 
 
@@ -112,7 +115,7 @@ class CompositeAdapter(Adapter):
     def add_adapter(self, adapter: Adapter) -> None:
         """添加子适配器"""
         self.adapters.append(adapter)
-        if hasattr(adapter, 'name'):
+        if hasattr(adapter, "name"):
             self.adapter_registry[adapter.name] = adapter
 
     def remove_adapter(self, adapter_name: str) -> bool:
@@ -175,7 +178,12 @@ class MockTarget(Target):
     async def request(self, *args, **kwargs) -> Any:
         """标准请求方法"""
         self.request_count += 1
-        return {"target": self.name, "request_id": self.request_count, "args": args, "kwargs": kwargs}
+        return {
+            "target": self.name,
+            "request_id": self.request_count,
+            "args": args,
+            "kwargs": kwargs,
+        }
 
 
 class MockAdapter(Adapter):

@@ -29,7 +29,9 @@ try:
     import sys
     import os
 
-    sys.path.append(os.path.join(os.path.dirname(__file__), "src", "services", "betting"))
+    sys.path.append(
+        os.path.join(os.path.dirname(__file__), "src", "services", "betting")
+    )
 
     from ev_calculator import (
         EVCalculator,
@@ -70,6 +72,7 @@ except ImportError as e:
 
     class BettingStrategy:
         """简化的投注策略类"""
+
         def __init__(self):
             self.max_kelly_fraction = 0.25
             self.min_ev_threshold = 0.05
@@ -209,7 +212,9 @@ class BettingEVStrategyTester:
         total_tests = len(test_cases)
 
         for i, (ev, odds, probability, expected_range) in enumerate(test_cases):
-            kelly_fraction = ev_calculator.calculate_kelly_fraction(ev, odds, probability)
+            kelly_fraction = ev_calculator.calculate_kelly_fraction(
+                ev, odds, probability
+            )
             min_expected, max_expected = expected_range
 
             if min_expected <= kelly_fraction <= max_expected:
@@ -383,11 +388,15 @@ class BettingEVStrategyTester:
 
         for probability, odds, expected_ev, expected_risk in risk_test_cases:
             calculated_ev = ev_calculator.calculate_ev(probability, odds)
-            assessed_risk = ev_calculator.assess_risk_level(probability, odds, calculated_ev)
+            assessed_risk = ev_calculator.assess_risk_level(
+                probability, odds, calculated_ev
+            )
 
             if assessed_risk == expected_risk:
                 passed_tests += 1
-                print(f"  ✅ 风险评估: 概率={probability}, 风险={assessed_risk.name} (正确)")
+                print(
+                    f"  ✅ 风险评估: 概率={probability}, 风险={assessed_risk.name} (正确)"
+                )
             else:
                 print(
                     f"  ❌ 风险评估: 概率={probability}, 期望={expected_risk.name}, 实际={assessed_risk.name}"
@@ -458,7 +467,9 @@ class BettingEVStrategyTester:
                 if self._validate_portfolio_optimization(portfolio, strategy):
                     passed_tests += 1
                     print(f"  ✅ {strategy_name}策略优化: 成功")
-                    print(f"    - 推荐投注数: {len(portfolio.get('recommended_bets', []))}")
+                    print(
+                        f"    - 推荐投注数: {len(portfolio.get('recommended_bets', []))}"
+                    )
                     print(f"    - 总投注比例: {portfolio.get('total_stake', 0):.3f}")
                     print(f"    - 期望收益: {portfolio.get('expected_return', 0):.3f}")
                 else:
@@ -484,7 +495,9 @@ class BettingEVStrategyTester:
             "passed": passed_tests,
             "total": total_tests,
             "accuracy_rate": accuracy_rate,
-            "status": "passed" if accuracy_rate >= 0.8 else "failed",  # 组合优化容差稍宽
+            "status": (
+                "passed" if accuracy_rate >= 0.8 else "failed"
+            ),  # 组合优化容差稍宽
         }
 
         print(f"  📈 组合优化: {accuracy_rate*100:.1f}%")
@@ -529,7 +542,9 @@ class BettingEVStrategyTester:
             if self._validate_recommendations(recommendations):
                 print("  ✅ 投注建议生成: 成功")
                 print(f"    - 策略: {recommendations.get('strategy_used')}")
-                print(f"    - 个体投注数: {len(recommendations.get('individual_bets', []))}")
+                print(
+                    f"    - 个体投注数: {len(recommendations.get('individual_bets', []))}"
+                )
                 print(
                     f"    - 总体建议: {recommendations.get('overall_recommendation', {}).get('action')}"
                 )
@@ -587,7 +602,9 @@ class BettingEVStrategyTester:
                 print(f"    {status_icon} {component}: {'正常' if status else '异常'}")
 
             # 测试SRS配置
-            srs_config_valid = self._validate_srs_configuration(betting_service.srs_config)
+            srs_config_valid = self._validate_srs_configuration(
+                betting_service.srs_config
+            )
             if srs_config_valid:
                 print("  ✅ SRS配置: 有效")
                 passed_components += 1
@@ -741,12 +758,19 @@ class BettingEVStrategyTester:
             ),
         ]
 
-    def _validate_portfolio_optimization(self, portfolio: dict, strategy: BettingStrategy) -> bool:
+    def _validate_portfolio_optimization(
+        self, portfolio: dict, strategy: BettingStrategy
+    ) -> bool:
         """验证组合优化结果"""
         if not portfolio:
             return False
 
-        required_keys = ["recommended_bets", "total_stake", "expected_return", "portfolio_risk"]
+        required_keys = [
+            "recommended_bets",
+            "total_stake",
+            "expected_return",
+            "portfolio_risk",
+        ]
         if not all(key in portfolio for key in required_keys):
             return False
 
@@ -807,11 +831,15 @@ class BettingEVStrategyTester:
         overall_accuracy = total_passed / total_tests if total_tests > 0 else 0
 
         # 计算关键指标
-        ev_calculation_acc = individual_tests.get("EV计算准确性", {}).get("accuracy_rate", 0)
+        ev_calculation_acc = individual_tests.get("EV计算准确性", {}).get(
+            "accuracy_rate", 0
+        )
         kelly_criterion_acc = individual_tests.get("Kelly Criterion实现", {}).get(
             "accuracy_rate", 0
         )
-        srs_compliance_acc = individual_tests.get("SRS合规性检查", {}).get("accuracy_rate", 0)
+        srs_compliance_acc = individual_tests.get("SRS合规性检查", {}).get(
+            "accuracy_rate", 0
+        )
 
         # 判断测试状态
         if overall_accuracy >= 0.9 and srs_compliance_acc >= 0.9:
@@ -876,11 +904,15 @@ class BettingEVStrategyTester:
 
             critical_scores = results.get("critical_component_scores", {})
             print("\n🔧 关键组件评分:")
-            print(f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy', 0)*100:.1f}%")
+            print(
+                f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy', 0)*100:.1f}%"
+            )
             print(
                 f"  - Kelly Criterion: {critical_scores.get('kelly_criterion_accuracy', 0)*100:.1f}%"
             )
-            print(f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy', 0)*100:.1f}%")
+            print(
+                f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy', 0)*100:.1f}%"
+            )
 
         print("\n📋 各项测试结果:")
         for test_name, result in self.test_results["individual_tests"].items():
@@ -934,7 +966,9 @@ async def main():
     print("\n" + "=" * 80)
     if test_result["test_status"] in ["passed", "partially_passed"]:
         print("🎉 测试完成！")
-        print(f"测试状态: {'通过' if test_result['test_status'] == 'passed' else '部分通过'}")
+        print(
+            f"测试状态: {'通过' if test_result['test_status'] == 'passed' else '部分通过'}"
+        )
         if test_result["test_status"] == "passed":
             print("✅ Issue #116 EV计算和投注策略功能完全实现")
     else:

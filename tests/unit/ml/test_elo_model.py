@@ -21,11 +21,13 @@ from typing import Dict, Any, List
 # 导入ML模块
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
     from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.elo_model import EloModel
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入Elo模型: {e}")
@@ -66,14 +68,16 @@ class TestEloModel:
             else:
                 result = "draw"
 
-            data.append({
-                "home_team": home_team,
-                "away_team": away_team,
-                "home_score": home_goals,
-                "away_score": away_goals,
-                "result": result,
-                "date": datetime.now() - timedelta(days=np.random.randint(0, 365))
-            })
+            data.append(
+                {
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_goals,
+                    "away_score": away_goals,
+                    "result": result,
+                    "date": datetime.now() - timedelta(days=np.random.randint(0, 365)),
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -82,9 +86,9 @@ class TestEloModel:
         assert elo_model.model_name == "EloModel"
         assert elo_model.model_version == "1.0"
         assert not elo_model.is_trained
-        assert hasattr(elo_model, 'team_elos')  # 正确的属性名
-        assert hasattr(elo_model, 'k_factor')
-        assert hasattr(elo_model, 'home_advantage')
+        assert hasattr(elo_model, "team_elos")  # 正确的属性名
+        assert hasattr(elo_model, "k_factor")
+        assert hasattr(elo_model, "home_advantage")
 
         # 检查默认值
         assert isinstance(elo_model.k_factor, (int, float))
@@ -93,7 +97,7 @@ class TestEloModel:
 
     def test_initial_rating_setup(self, elo_model):
         """测试初始评级设置"""
-        assert hasattr(elo_model, 'initial_rating')
+        assert hasattr(elo_model, "initial_rating")
         assert isinstance(elo_model.initial_rating, (int, float))
         assert elo_model.initial_rating > 0
 
@@ -108,7 +112,7 @@ class TestEloModel:
         expectation_lower = elo_model._calculate_expectation(1400, 1600)
 
         assert expectation_higher > 0.5  # 高评级队伍应该有更高期望
-        assert expectation_lower < 0.5   # 低评级队伍应该有更低期望
+        assert expectation_lower < 0.5  # 低评级队伍应该有更低期望
         assert abs(expectation_higher + expectation_lower - 1.0) < 1e-6  # 和应该为1
 
     def test_rating_update_calculation(self, elo_model):
@@ -144,8 +148,10 @@ class TestEloModel:
         elo_model.train(sample_training_data)
 
         # 检查所有队伍都有评级
-        unique_teams = set(sample_training_data['home_team'].tolist() +
-                          sample_training_data['away_team'].tolist())
+        unique_teams = set(
+            sample_training_data["home_team"].tolist()
+            + sample_training_data["away_team"].tolist()
+        )
 
         assert len(elo_model.team_elos) == len(unique_teams)
 
@@ -160,10 +166,7 @@ class TestEloModel:
         elo_model.train(sample_training_data)
 
         # 测试特征准备
-        match_data = {
-            "home_team": "Team_1",
-            "away_team": "Team_2"
-        }
+        match_data = {"home_team": "Team_1", "away_team": "Team_2"}
 
         features = elo_model.prepare_features(match_data)
 
@@ -223,14 +226,16 @@ class TestEloModel:
     def test_sequential_rating_updates(self, elo_model):
         """测试顺序评级更新"""
         # 创建简单的比赛序列
-        matches = pd.DataFrame({
-            'home_team': ['Team_A', 'Team_A', 'Team_B'],
-            'away_team': ['Team_B', 'Team_C', 'Team_A'],
-            'home_score': [2, 1, 0],
-            'away_score': [1, 0, 1],
-            'result': ['home_win', 'home_win', 'away_win'],
-            'date': [datetime.now() - timedelta(days=i) for i in range(3, 0, -1)]
-        })
+        matches = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_A", "Team_B"],
+                "away_team": ["Team_B", "Team_C", "Team_A"],
+                "home_score": [2, 1, 0],
+                "away_score": [1, 0, 1],
+                "result": ["home_win", "home_win", "away_win"],
+                "date": [datetime.now() - timedelta(days=i) for i in range(3, 0, -1)],
+            }
+        )
 
         # 训练模型
         elo_model.train(matches)
@@ -242,7 +247,7 @@ class TestEloModel:
         # Team_B应该有中间评级（一胜一负）
         # Team_C应该有最低评级（一负）
         ratings = elo_model.team_ratings
-        assert ratings['Team_A'] > ratings['Team_B'] > ratings['Team_C']
+        assert ratings["Team_A"] > ratings["Team_B"] > ratings["Team_C"]
 
     def test_k_factor_optimization(self, elo_model):
         """测试K因子优化"""
@@ -253,14 +258,16 @@ class TestEloModel:
             elo_model.k_factor = k_factor
 
             # 创建简单数据
-            matches = pd.DataFrame({
-                'home_team': ['Team_A', 'Team_B'],
-                'away_team': ['Team_B', 'Team_A'],
-                'home_score': [1, 0],
-                'away_score': [0, 1],
-                'result': ['home_win', 'away_win'],
-                'date': [datetime.now(), datetime.now()]
-            })
+            matches = pd.DataFrame(
+                {
+                    "home_team": ["Team_A", "Team_B"],
+                    "away_team": ["Team_B", "Team_A"],
+                    "home_score": [1, 0],
+                    "away_score": [0, 1],
+                    "result": ["home_win", "away_win"],
+                    "date": [datetime.now(), datetime.now()],
+                }
+            )
 
             # 训练模型
             elo_model.train(matches)
@@ -281,21 +288,23 @@ class TestEloModel:
             elo_model.home_advantage = advantage
 
             # 创建评级相同的队伍比赛
-            matches = pd.DataFrame({
-                'home_team': ['Team_A'],
-                'away_team': ['Team_B'],
-                'home_score': [1],
-                'away_score': [0],
-                'result': ['home_win'],
-                'date': [datetime.now()]
-            })
+            matches = pd.DataFrame(
+                {
+                    "home_team": ["Team_A"],
+                    "away_team": ["Team_B"],
+                    "home_score": [1],
+                    "away_score": [0],
+                    "result": ["home_win"],
+                    "date": [datetime.now()],
+                }
+            )
 
             # 训练模型
             elo_model.train(matches)
 
             # 验证主场优势影响
             home_prob, draw_prob, away_prob = elo_model._calculate_match_probabilities(
-                'Team_A', 'Team_B'
+                "Team_A", "Team_B"
             )
 
             # 主场优势越大，主队胜率应该越高
@@ -354,7 +363,7 @@ class TestEloModel:
     def test_rating_decay(self, elo_model):
         """测试评级衰减（如果实现）"""
         # 检查是否有评级衰减功能
-        if hasattr(elo_model, 'rating_decay'):
+        if hasattr(elo_model, "rating_decay"):
             original_decay = elo_model.rating_decay
 
             # 设置评级衰减
@@ -364,14 +373,16 @@ class TestEloModel:
             old_date = datetime.now() - timedelta(days=365)
             recent_date = datetime.now()
 
-            matches = pd.DataFrame({
-                'home_team': ['Team_A', 'Team_A'],
-                'away_team': ['Team_B', 'Team_C'],
-                'home_score': [1, 1],
-                'away_score': [0, 0],
-                'result': ['home_win', 'home_win'],
-                'date': [old_date, recent_date]
-            })
+            matches = pd.DataFrame(
+                {
+                    "home_team": ["Team_A", "Team_A"],
+                    "away_team": ["Team_B", "Team_C"],
+                    "home_score": [1, 1],
+                    "away_score": [0, 0],
+                    "result": ["home_win", "home_win"],
+                    "date": [old_date, recent_date],
+                }
+            )
 
             # 训练模型
             elo_model.train(matches)
@@ -393,15 +404,17 @@ class TestEloModel:
 
         for home_rating, away_rating in test_cases:
             # 设置模拟评级
-            elo_model.team_ratings = {'Team_A': home_rating, 'Team_B': away_rating}
+            elo_model.team_ratings = {"Team_A": home_rating, "Team_B": away_rating}
 
             # 计算概率
             home_prob, draw_prob, away_prob = elo_model._calculate_match_probabilities(
-                'Team_A', 'Team_B'
+                "Team_A", "Team_B"
             )
 
             # 计算置信度
-            confidence = elo_model.calculate_confidence((home_prob, draw_prob, away_prob))
+            confidence = elo_model.calculate_confidence(
+                (home_prob, draw_prob, away_prob)
+            )
 
             assert 0.1 <= confidence <= 1.0
 
@@ -412,14 +425,14 @@ class TestEloModel:
         """测试边界情况"""
         # 测试极端评级
         extreme_ratings = {
-            'Team_A': 1000,  # 最低评级
-            'Team_B': 3000,  # 最高评级
+            "Team_A": 1000,  # 最低评级
+            "Team_B": 3000,  # 最高评级
         }
         elo_model.team_ratings = extreme_ratings
 
         # 计算概率
         home_prob, draw_prob, away_prob = elo_model._calculate_match_probabilities(
-            'Team_A', 'Team_B'
+            "Team_A", "Team_B"
         )
 
         # 验证概率合理性
@@ -432,13 +445,9 @@ class TestEloModel:
     def test_seasonal_rating_reset(self, elo_model):
         """测试赛季评级重置（如果实现）"""
         # 检查是否有赛季重置功能
-        if hasattr(elo_model, 'reset_seasonal_ratings'):
+        if hasattr(elo_model, "reset_seasonal_ratings"):
             # 创建一些队伍评级
-            elo_model.team_ratings = {
-                'Team_A': 1600,
-                'Team_B': 1400,
-                'Team_C': 1500
-            }
+            elo_model.team_ratings = {"Team_A": 1600, "Team_B": 1400, "Team_C": 1500}
 
             # 重置赛季评级
             elo_model.reset_seasonal_ratings()
@@ -450,15 +459,12 @@ class TestEloModel:
     def test_prediction_with_unseen_teams(self, elo_model):
         """测试对未见过的队伍的预测"""
         # 设置一些队伍评级
-        elo_model.team_ratings = {
-            'Team_A': 1500,
-            'Team_B': 1500
-        }
+        elo_model.team_ratings = {"Team_A": 1500, "Team_B": 1500}
 
         # 测试对未见过的队伍的预测
         match_data = {
-            "home_team": "Team_A",      # 已知队伍
-            "away_team": "New_Team"    # 未知队伍
+            "home_team": "Team_A",  # 已知队伍
+            "away_team": "New_Team",  # 未知队伍
         }
 
         # 应该能处理未知队伍（可能使用默认评级）
@@ -503,23 +509,27 @@ class TestEloModel:
             away_team = np.random.choice([t for t in teams if t != home_team])
 
             # 基于随机结果生成比分
-            result = np.random.choice(['home_win', 'draw', 'away_win'], p=[0.45, 0.25, 0.30])
+            result = np.random.choice(
+                ["home_win", "draw", "away_win"], p=[0.45, 0.25, 0.30]
+            )
 
-            if result == 'home_win':
+            if result == "home_win":
                 home_goals, away_goals = np.random.poisson(1.8), np.random.poisson(0.9)
-            elif result == 'away_win':
+            elif result == "away_win":
                 home_goals, away_goals = np.random.poisson(0.9), np.random.poisson(1.5)
             else:
                 home_goals, away_goals = np.random.poisson(1.2), np.random.poisson(1.2)
 
-            data.append({
-                "home_team": home_team,
-                "away_team": away_team,
-                "home_score": home_goals,
-                "away_score": away_goals,
-                "result": result,
-                "date": datetime.now() - timedelta(days=np.random.randint(0, 730))
-            })
+            data.append(
+                {
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_goals,
+                    "away_score": away_goals,
+                    "result": result,
+                    "date": datetime.now() - timedelta(days=np.random.randint(0, 730)),
+                }
+            )
 
         large_data = pd.DataFrame(data)
 
@@ -565,7 +575,7 @@ class TestEloModel:
             elo_model.train(empty_data)
 
         # 测试无效列
-        invalid_data = pd.DataFrame({'wrong_column': [1, 2, 3]})
+        invalid_data = pd.DataFrame({"wrong_column": [1, 2, 3]})
         with pytest.raises(ValueError):
             elo_model.train(invalid_data)
 

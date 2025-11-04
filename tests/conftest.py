@@ -27,15 +27,18 @@ def client():
     try:
         # 尝试导入主应用
         from src.main import app
+
         return TestClient(app)
     except ImportError:
         try:
             # 备选：导入简化应用
             from src.api.app import app
+
             return TestClient(app)
         except ImportError:
             # 最后备选：创建最小测试应用
             from fastapi import FastAPI
+
             app = FastAPI(title="Football Prediction Test App")
 
             @app.get("/health")
@@ -50,13 +53,16 @@ def app():
     """FastAPI应用fixture"""
     try:
         from src.main import app
+
         return app
     except ImportError:
         try:
             from src.api.app import app
+
             return app
         except ImportError:
             from fastapi import FastAPI
+
             app = FastAPI(title="Football Prediction Test App")
 
             @app.get("/health")

@@ -76,8 +76,14 @@ class TestLeagueSettingsComprehensive:
             LeagueSettings(points_for_draw=0, points_for_loss=1)
 
         # 正确层次：胜>平>负
-        settings = LeagueSettings(points_for_win=3, points_for_draw=1, points_for_loss=0)
-        assert settings.points_for_win > settings.points_for_draw >= settings.points_for_loss
+        settings = LeagueSettings(
+            points_for_win=3, points_for_draw=1, points_for_loss=0
+        )
+        assert (
+            settings.points_for_win
+            > settings.points_for_draw
+            >= settings.points_for_loss
+        )
 
     def test_league_settings_places_validation(self):
         """测试升降级名额验证"""
@@ -126,7 +132,9 @@ class TestLeagueSettingsComprehensive:
         assert points == 0
 
         # 自定义积分规则
-        custom_settings = LeagueSettings(points_for_win=2, points_for_draw=1, points_for_loss=0)
+        custom_settings = LeagueSettings(
+            points_for_win=2, points_for_draw=1, points_for_loss=0
+        )
         points = custom_settings.calculate_points(wins=5, draws=3, losses=2)
         assert points == 13  # 5*2 + 3*1 + 2*0
 
@@ -135,7 +143,9 @@ class TestLeagueSettingsComprehensive:
         settings = LeagueSettings()
         assert "胜3 平1 负0" in str(settings)
 
-        custom_settings = LeagueSettings(points_for_win=2, points_for_draw=0, points_for_loss=0)
+        custom_settings = LeagueSettings(
+            points_for_win=2, points_for_draw=0, points_for_loss=0
+        )
         assert "胜2 平0 负0" in str(custom_settings)
 
 
@@ -147,7 +157,9 @@ class TestLeagueSeasonComprehensive:
         start_date = datetime.utcnow()
         end_date = start_date + timedelta(days=365)
 
-        season = LeagueSeason(season="2023-2024", start_date=start_date, end_date=end_date)
+        season = LeagueSeason(
+            season="2023-2024", start_date=start_date, end_date=end_date
+        )
 
         assert season.season == "2023-2024"
         assert season.start_date == start_date
@@ -207,12 +219,18 @@ class TestLeagueSeasonComprehensive:
 
         with pytest.raises(DomainError, match="总轮次必须大于0"):
             LeagueSeason(
-                season="2023-2024", start_date=start_date, end_date=end_date, total_rounds=0
+                season="2023-2024",
+                start_date=start_date,
+                end_date=end_date,
+                total_rounds=0,
             )
 
         with pytest.raises(DomainError, match="总轮次必须大于0"):
             LeagueSeason(
-                season="2023-2024", start_date=start_date, end_date=end_date, total_rounds=-10
+                season="2023-2024",
+                start_date=start_date,
+                end_date=end_date,
+                total_rounds=-10,
             )
 
     def test_league_season_current_round_validation(self):
@@ -306,7 +324,10 @@ class TestLeagueSeasonComprehensive:
 
         # 已经进行中
         season = LeagueSeason(
-            season="2023-2024", start_date=start_date, end_date=end_date, status=LeagueStatus.ACTIVE
+            season="2023-2024",
+            start_date=start_date,
+            end_date=end_date,
+            status=LeagueStatus.ACTIVE,
         )
 
         with pytest.raises(DomainError, match="赛季状态为 active，无法开始"):
@@ -433,7 +454,10 @@ class TestLeagueDomainComprehensive:
     def test_league_creation_invalid_short_name(self):
         """测试无效简称"""
         with pytest.raises(DomainError, match="简称不能超过20个字符"):
-            League(name="测试联赛", short_name="这是一个非常非常长的联赛简称超过了20个字符的限制")
+            League(
+                name="测试联赛",
+                short_name="这是一个非常非常长的联赛简称超过了20个字符的限制",
+            )
 
     def test_league_creation_invalid_code(self):
         """测试无效代码"""
@@ -487,7 +511,10 @@ class TestLeagueDomainComprehensive:
         end_date = start_date + timedelta(days=300)
 
         season = league.start_new_season(
-            season="2023-2024", start_date=start_date, end_date=end_date, total_rounds=38
+            season="2023-2024",
+            start_date=start_date,
+            end_date=end_date,
+            total_rounds=38,
         )
 
         assert season.season == "2023-2024"
@@ -538,7 +565,10 @@ class TestLeagueDomainComprehensive:
         original_updated = league.updated_at
 
         league.update_settings(
-            points_for_win=2, points_for_draw=1, points_for_loss=0, max_foreign_players=6
+            points_for_win=2,
+            points_for_draw=1,
+            points_for_loss=0,
+            max_foreign_players=6,
         )
 
         assert league.settings.points_for_win == 2

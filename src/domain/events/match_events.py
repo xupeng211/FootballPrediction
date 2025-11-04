@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -7,6 +6,7 @@ from typing import Any
 @dataclass
 class MatchEvent:
     """比赛事件基类"""
+
     match_id: str
     timestamp: datetime
     event_type: str
@@ -20,6 +20,7 @@ class MatchEvent:
 @dataclass
 class MatchStartedEvent(MatchEvent):
     """比赛开始事件"""
+
     event_type: str = "match_started"
     home_team: str = ""
     away_team: str = ""
@@ -28,9 +29,11 @@ class MatchStartedEvent(MatchEvent):
 @dataclass
 class MatchEndedEvent(MatchEvent):
     """比赛结束事件"""
+
     event_type: str = "match_ended"
     final_score: str = ""
     winner: str | None = None
+
 
 """
 比赛领域事件

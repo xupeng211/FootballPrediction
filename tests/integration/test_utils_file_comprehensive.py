@@ -206,7 +206,10 @@ class TestFileUtilsComprehensive:
         """测试大型JSON文件处理"""
         # 创建包含大量数据的测试数据
         large_data = {
-            "users": [{"id": i, "name": f"用户{i}", "data": list(range(100))} for i in range(1000)],
+            "users": [
+                {"id": i, "name": f"用户{i}", "data": list(range(100))}
+                for i in range(1000)
+            ],
             "metadata": {"total": 1000, "version": "1.0"},
         }
 

@@ -12,15 +12,14 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 # 设置环境变量
-os.environ['FOOTBALL_DATA_API_KEY'] = 'ed809154dc1f422da46a18d8961a98a0'
+os.environ["FOOTBALL_DATA_API_KEY"] = "ed809154dc1f422da46a18d8961a98a0"
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -49,10 +48,10 @@ class Stage3IntegrationTester:
         self.cache_manager = None
         self.sync_service = None
         self.test_results = {
-            'total_tests': 0,
-            'passed_tests': 0,
-            'failed_tests': 0,
-            'errors': []
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "errors": [],
         }
 
     async def initialize(self):
@@ -67,7 +66,7 @@ class Stage3IntegrationTester:
 
         except Exception as e:
             logger.error(f"❌ 初始化失败: {e}")
-            self.test_results['errors'].append(f"初始化失败: {e}")
+            self.test_results["errors"].append(f"初始化失败: {e}")
 
     async def test_cache_functionality(self) -> bool:
         """测试缓存功能"""
@@ -76,11 +75,11 @@ class Stage3IntegrationTester:
 
             # 测试联赛数据缓存
             test_league_data = {
-                'external_id': '2021',
-                'name': 'Premier League',
-                'code': 'PL',
-                'type': 'LEAGUE',
-                'current_matchday': 12
+                "external_id": "2021",
+                "name": "Premier League",
+                "code": "PL",
+                "type": "LEAGUE",
+                "current_matchday": 12,
             }
 
             # 缓存联赛数据
@@ -89,27 +88,27 @@ class Stage3IntegrationTester:
                 raise Exception("缓存联赛数据失败")
 
             # 获取缓存的联赛数据
-            cached_league = await self.cache_manager.get_cached_league('2021')
-            if not cached_league or cached_league.get('name') != 'Premier League':
+            cached_league = await self.cache_manager.get_cached_league("2021")
+            if not cached_league or cached_league.get("name") != "Premier League":
                 raise Exception("获取缓存联赛数据失败")
 
             logger.info("  ✅ 联赛数据缓存测试通过")
 
             # 测试球队数据缓存
             test_team_data = {
-                'external_id': '57',
-                'name': 'Arsenal FC',
-                'short_name': 'Arsenal',
-                'tla': 'ARS',
-                'competition_id': '2021'
+                "external_id": "57",
+                "name": "Arsenal FC",
+                "short_name": "Arsenal",
+                "tla": "ARS",
+                "competition_id": "2021",
             }
 
             success = await self.cache_manager.cache_team(test_team_data)
             if not success:
                 raise Exception("缓存球队数据失败")
 
-            cached_team = await self.cache_manager.get_cached_team('57')
-            if not cached_team or cached_team.get('name') != 'Arsenal FC':
+            cached_team = await self.cache_manager.get_cached_team("57")
+            if not cached_team or cached_team.get("name") != "Arsenal FC":
                 raise Exception("获取缓存球队数据失败")
 
             logger.info("  ✅ 球队数据缓存测试通过")
@@ -117,24 +116,26 @@ class Stage3IntegrationTester:
             # 测试积分榜数据缓存
             test_standings_data = [
                 {
-                    'position': 1,
-                    'team_name': 'Arsenal FC',
-                    'points': 22,
-                    'played_games': 8
+                    "position": 1,
+                    "team_name": "Arsenal FC",
+                    "points": 22,
+                    "played_games": 8,
                 },
                 {
-                    'position': 2,
-                    'team_name': 'Manchester City FC',
-                    'points': 18,
-                    'played_games': 8
-                }
+                    "position": 2,
+                    "team_name": "Manchester City FC",
+                    "points": 18,
+                    "played_games": 8,
+                },
             ]
 
-            success = await self.cache_manager.cache_standings('2021', test_standings_data)
+            success = await self.cache_manager.cache_standings(
+                "2021", test_standings_data
+            )
             if not success:
                 raise Exception("缓存积分榜数据失败")
 
-            cached_standings = await self.cache_manager.get_cached_standings('2021')
+            cached_standings = await self.cache_manager.get_cached_standings("2021")
             if not cached_standings or len(cached_standings) != 2:
                 raise Exception("获取缓存积分榜数据失败")
 
@@ -142,22 +143,22 @@ class Stage3IntegrationTester:
 
             # 测试API响应缓存
             test_api_response = {
-                'competitions': [
-                    {'id': 2021, 'name': 'Premier League'},
-                    {'id': 2014, 'name': 'La Liga'}
+                "competitions": [
+                    {"id": 2021, "name": "Premier League"},
+                    {"id": 2014, "name": "La Liga"},
                 ]
             }
 
             success = await self.cache_manager.cache_api_response(
-                'competitions',
-                {},
-                test_api_response
+                "competitions", {}, test_api_response
             )
             if not success:
                 raise Exception("缓存API响应失败")
 
-            cached_response = await self.cache_manager.get_cached_api_response('competitions')
-            if not cached_response or len(cached_response.get('competitions', [])) != 2:
+            cached_response = await self.cache_manager.get_cached_api_response(
+                "competitions"
+            )
+            if not cached_response or len(cached_response.get("competitions", [])) != 2:
                 raise Exception("获取缓存API响应失败")
 
             logger.info("  ✅ API响应缓存测试通过")
@@ -175,28 +176,24 @@ class Stage3IntegrationTester:
 
             # 测试联赛模型
             league_data = {
-                'id': 2021,
-                'name': 'Premier League',
-                'code': 'PL',
-                'type': 'LEAGUE',
-                'emblem': 'https://crests.football-data.org/pl.png',
-                'area': {
-                    'id': 2072,
-                    'name': 'England',
-                    'code': 'ENG'
+                "id": 2021,
+                "name": "Premier League",
+                "code": "PL",
+                "type": "LEAGUE",
+                "emblem": "https://crests.football-data.org/pl.png",
+                "area": {"id": 2072, "name": "England", "code": "ENG"},
+                "season": {
+                    "id": 1086,
+                    "currentMatchday": 12,
+                    "startDate": "2024-08-16",
+                    "endDate": "2025-05-25",
                 },
-                'season': {
-                    'id': 1086,
-                    'currentMatchday': 12,
-                    'startDate': '2024-08-16',
-                    'endDate': '2025-05-25'
-                },
-                'lastUpdated': '2024-10-31T20:00:00Z'
+                "lastUpdated": "2024-10-31T20:00:00Z",
             }
 
             league = ExternalLeague.from_api_data(league_data, is_supported=True)
 
-            if league.external_id != '2021' or league.name != 'Premier League':
+            if league.external_id != "2021" or league.name != "Premier League":
                 raise Exception("联赛模型创建失败")
 
             if not league.is_supported or league.data_quality_score <= 0:
@@ -206,28 +203,24 @@ class Stage3IntegrationTester:
 
             # 测试球队模型
             team_data = {
-                'id': 57,
-                'name': 'Arsenal FC',
-                'shortName': 'Arsenal',
-                'tla': 'ARS',
-                'crest': 'https://crests.football-data.org/57.png',
-                'address': '75 Drayton Park London',
-                'website': 'https://www.arsenal.com',
-                'founded': 1886,
-                'clubColors': 'Red / White',
-                'venue': 'Emirates Stadium',
-                'area': {
-                    'id': 2072,
-                    'name': 'England',
-                    'code': 'ENG'
-                },
-                'lastUpdated': '2024-10-31T20:00:00Z'
+                "id": 57,
+                "name": "Arsenal FC",
+                "shortName": "Arsenal",
+                "tla": "ARS",
+                "crest": "https://crests.football-data.org/57.png",
+                "address": "75 Drayton Park London",
+                "website": "https://www.arsenal.com",
+                "founded": 1886,
+                "clubColors": "Red / White",
+                "venue": "Emirates Stadium",
+                "area": {"id": 2072, "name": "England", "code": "ENG"},
+                "lastUpdated": "2024-10-31T20:00:00Z",
             }
 
-            competition_info = {'id': 2021, 'name': 'Premier League', 'code': 'PL'}
+            competition_info = {"id": 2021, "name": "Premier League", "code": "PL"}
             team = ExternalTeam.from_api_data(team_data, competition_info)
 
-            if team.external_id != '57' or team.name != 'Arsenal FC':
+            if team.external_id != "57" or team.name != "Arsenal FC":
                 raise Exception("球队模型创建失败")
 
             if team.competition_id != 2021 or team.founded != 1886:
@@ -237,30 +230,28 @@ class Stage3IntegrationTester:
 
             # 测试积分榜模型
             standings_data = {
-                'position': 1,
-                'playedGames': 8,
-                'won': 7,
-                'draw': 1,
-                'lost': 0,
-                'goalsFor': 18,
-                'goalsAgainst': 5,
-                'goalDifference': 13,
-                'points': 22,
-                'team': {
-                    'id': 57,
-                    'name': 'Arsenal FC',
-                    'shortName': 'Arsenal',
-                    'crest': 'https://crests.football-data.org/57.png'
-                }
+                "position": 1,
+                "playedGames": 8,
+                "won": 7,
+                "draw": 1,
+                "lost": 0,
+                "goalsFor": 18,
+                "goalsAgainst": 5,
+                "goalDifference": 13,
+                "points": 22,
+                "team": {
+                    "id": 57,
+                    "name": "Arsenal FC",
+                    "shortName": "Arsenal",
+                    "crest": "https://crests.football-data.org/57.png",
+                },
             }
 
             standings = ExternalLeagueStandings.from_api_data(
-                standings_data,
-                league_id=1,
-                external_league_id='2021'
+                standings_data, league_id=1, external_league_id="2021"
             )
 
-            if standings.position != 1 or standings.team_name != 'Arsenal FC':
+            if standings.position != 1 or standings.team_name != "Arsenal FC":
                 raise Exception("积分榜模型创建失败")
 
             if standings.points != 22 or standings.goal_difference != 13:
@@ -270,43 +261,29 @@ class Stage3IntegrationTester:
 
             # 测试比赛模型
             match_data = {
-                'id': 435678,
-                'utcDate': '2024-11-02T17:30:00Z',
-                'status': 'scheduled',
-                'matchday': 11,
-                'stage': 'REGULAR_SEASON',
-                'venue': 'Emirates Stadium',
-                'competition': {
-                    'id': 2021,
-                    'name': 'Premier League',
-                    'code': 'PL'
+                "id": 435678,
+                "utcDate": "2024-11-02T17:30:00Z",
+                "status": "scheduled",
+                "matchday": 11,
+                "stage": "REGULAR_SEASON",
+                "venue": "Emirates Stadium",
+                "competition": {"id": 2021, "name": "Premier League", "code": "PL"},
+                "homeTeam": {"id": 57, "name": "Arsenal FC", "shortName": "Arsenal"},
+                "awayTeam": {
+                    "id": 61,
+                    "name": "Liverpool FC",
+                    "shortName": "Liverpool",
                 },
-                'homeTeam': {
-                    'id': 57,
-                    'name': 'Arsenal FC',
-                    'shortName': 'Arsenal'
-                },
-                'awayTeam': {
-                    'id': 61,
-                    'name': 'Liverpool FC',
-                    'shortName': 'Liverpool'
-                },
-                'score': {
-                    'fullTime': {
-                        'home': None,
-                        'away': None
-                    },
-                    'winner': None
-                },
-                'lastUpdated': '2024-10-31T20:00:00Z'
+                "score": {"fullTime": {"home": None, "away": None}, "winner": None},
+                "lastUpdated": "2024-10-31T20:00:00Z",
             }
 
             match = ExternalMatch.from_api_data(match_data)
 
-            if match.external_id != '435678' or match.home_team_name != 'Arsenal FC':
+            if match.external_id != "435678" or match.home_team_name != "Arsenal FC":
                 raise Exception("比赛模型创建失败")
 
-            if not match.is_scheduled or match.status != 'scheduled':
+            if not match.is_scheduled or match.status != "scheduled":
                 raise Exception("比赛模型状态设置失败")
 
             logger.info("  ✅ 比赛模型测试通过")
@@ -325,14 +302,15 @@ class Stage3IntegrationTester:
             # 使用简化的数据采集器
             async with SimpleDataCollector() as collector:
                 # 测试联赛数据采集
-                competitions_data = await collector._make_request_with_retry('competitions')
-                if not competitions_data or 'competitions' not in competitions_data:
+                competitions_data = await collector._make_request_with_retry(
+                    "competitions"
+                )
+                if not competitions_data or "competitions" not in competitions_data:
                     raise Exception("联赛数据采集失败")
 
-                competitions = competitions_data['competitions']
+                competitions = competitions_data["competitions"]
                 premier_league = next(
-                    (comp for comp in competitions if comp.get('code') == 'PL'),
-                    None
+                    (comp for comp in competitions if comp.get("code") == "PL"), None
                 )
 
                 if not premier_league:
@@ -341,14 +319,15 @@ class Stage3IntegrationTester:
                 logger.info(f"  ✅ 联赛数据采集成功: {premier_league['name']}")
 
                 # 测试球队数据采集
-                teams_data = await collector._make_request_with_retry('competitions/2021/teams')
-                if not teams_data or 'teams' not in teams_data:
+                teams_data = await collector._make_request_with_retry(
+                    "competitions/2021/teams"
+                )
+                if not teams_data or "teams" not in teams_data:
                     raise Exception("球队数据采集失败")
 
-                teams = teams_data['teams']
+                teams = teams_data["teams"]
                 arsenal = next(
-                    (team for team in teams if 'Arsenal' in team.get('name', '')),
-                    None
+                    (team for team in teams if "Arsenal" in team.get("name", "")), None
                 )
 
                 if not arsenal:
@@ -357,15 +336,19 @@ class Stage3IntegrationTester:
                 logger.info(f"  ✅ 球队数据采集成功: {arsenal['name']}")
 
                 # 测试积分榜数据采集
-                standings_data = await collector._make_request_with_retry('competitions/2021/standings')
-                if not standings_data or 'standings' not in standings_data:
+                standings_data = await collector._make_request_with_retry(
+                    "competitions/2021/standings"
+                )
+                if not standings_data or "standings" not in standings_data:
                     raise Exception("积分榜数据采集失败")
 
-                standings = standings_data['standings']
+                standings = standings_data["standings"]
                 if not standings or len(standings) == 0:
                     raise Exception("积分榜数据为空")
 
-                logger.info(f"  ✅ 积分榜数据采集成功: {len(standings[0].get('table', []))} 支球队")
+                logger.info(
+                    f"  ✅ 积分榜数据采集成功: {len(standings[0].get('table', []))} 支球队"
+                )
 
                 return True
 
@@ -380,25 +363,25 @@ class Stage3IntegrationTester:
 
             # 先缓存一些数据
             test_league_data = {
-                'external_id': '2021',
-                'name': 'Premier League',
-                'code': 'PL'
+                "external_id": "2021",
+                "name": "Premier League",
+                "code": "PL",
             }
 
             await self.cache_manager.cache_league(test_league_data)
 
             # 验证数据已缓存
-            cached = await self.cache_manager.get_cached_league('2021')
+            cached = await self.cache_manager.get_cached_league("2021")
             if not cached:
                 raise Exception("数据缓存失败")
 
             # 测试单个缓存失效
-            deleted_count = await self.cache_manager.invalidate_league_cache('2021')
+            deleted_count = await self.cache_manager.invalidate_league_cache("2021")
             if deleted_count == 0:
                 raise Exception("缓存失效失败")
 
             # 验证数据已失效
-            cached = await self.cache_manager.get_cached_league('2021')
+            cached = await self.cache_manager.get_cached_league("2021")
             if cached:
                 raise Exception("缓存失效后仍能获取数据")
 
@@ -406,13 +389,14 @@ class Stage3IntegrationTester:
 
             # 缓存多个数据
             await self.cache_manager.cache_league(test_league_data)
-            await self.cache_manager.cache_team({
-                'external_id': '57',
-                'name': 'Arsenal FC'
-            })
+            await self.cache_manager.cache_team(
+                {"external_id": "57", "name": "Arsenal FC"}
+            )
 
             # 测试联赛相关缓存失效
-            deleted_count = await self.cache_manager.invalidate_competition_cache('2021')
+            deleted_count = await self.cache_manager.invalidate_competition_cache(
+                "2021"
+            )
             if deleted_count == 0:
                 logger.warning("  ⚠️ 联赛相关缓存失效可能没有删除任何键")
 
@@ -431,24 +415,24 @@ class Stage3IntegrationTester:
 
             # 设置同步状态
             status_data = {
-                'success': True,
-                'total_processed': 100,
-                'total_created': 50,
-                'total_updated': 30,
-                'total_failed': 20,
-                'duration_seconds': 120.5
+                "success": True,
+                "total_processed": 100,
+                "total_created": 50,
+                "total_updated": 30,
+                "total_failed": 20,
+                "duration_seconds": 120.5,
             }
 
-            success = await self.cache_manager.set_sync_status('test_sync', status_data)
+            success = await self.cache_manager.set_sync_status("test_sync", status_data)
             if not success:
                 raise Exception("设置同步状态失败")
 
             # 获取同步状态
-            retrieved_status = await self.cache_manager.get_sync_status('test_sync')
+            retrieved_status = await self.cache_manager.get_sync_status("test_sync")
             if not retrieved_status:
                 raise Exception("获取同步状态失败")
 
-            if retrieved_status.get('status', {}).get('total_processed') != 100:
+            if retrieved_status.get("status", {}).get("total_processed") != 100:
                 raise Exception("同步状态数据不匹配")
 
             logger.info("  ✅ 同步状态跟踪测试通过")
@@ -471,24 +455,24 @@ class Stage3IntegrationTester:
             ("数据模型", self.test_data_models),
             ("数据采集器集成", self.test_collector_integration),
             ("缓存失效机制", self.test_cache_invalidations),
-            ("同步状态跟踪", self.test_sync_status_tracking)
+            ("同步状态跟踪", self.test_sync_status_tracking),
         ]
 
         for test_name, test_func in tests:
             print(f"\n🔍 执行 {test_name}测试...")
-            self.test_results['total_tests'] += 1
+            self.test_results["total_tests"] += 1
 
             try:
                 if await test_func():
                     print(f"✅ {test_name}测试通过")
-                    self.test_results['passed_tests'] += 1
+                    self.test_results["passed_tests"] += 1
                 else:
                     print(f"❌ {test_name}测试失败")
-                    self.test_results['failed_tests'] += 1
+                    self.test_results["failed_tests"] += 1
             except Exception as e:
                 print(f"❌ {test_name}测试异常: {e}")
-                self.test_results['failed_tests'] += 1
-                self.test_results['errors'].append(f"{test_name}: {e}")
+                self.test_results["failed_tests"] += 1
+                self.test_results["errors"].append(f"{test_name}: {e}")
 
         end_time = datetime.now()
         duration = end_time - start_time
@@ -507,18 +491,20 @@ class Stage3IntegrationTester:
         print(f"   失败: {self.test_results['failed_tests']}")
         print(f"   耗时: {duration.total_seconds():.2f} 秒")
 
-        if self.test_results['errors']:
+        if self.test_results["errors"]:
             print("\n❌ 错误详情:")
-            for error in self.test_results['errors']:
+            for error in self.test_results["errors"]:
                 print(f"   - {error}")
 
         success_rate = 0
-        if self.test_results['total_tests'] > 0:
-            success_rate = (self.test_results['passed_tests'] / self.test_results['total_tests']) * 100
+        if self.test_results["total_tests"] > 0:
+            success_rate = (
+                self.test_results["passed_tests"] / self.test_results["total_tests"]
+            ) * 100
 
         print(f"\n🎯 成功率: {success_rate:.1f}%")
 
-        if self.test_results['failed_tests'] == 0:
+        if self.test_results["failed_tests"] == 0:
             print("🎉 所有测试通过！")
             print("✅ 缓存功能正常工作")
             print("✅ 数据模型创建和转换正确")

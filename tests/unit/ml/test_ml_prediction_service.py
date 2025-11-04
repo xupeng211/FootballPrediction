@@ -21,13 +21,19 @@ from typing import Dict, Any, List
 # 导入ML模块
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
     from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.poisson_model import PoissonModel
     from ml.models.elo_model import EloModel
-    from ml.prediction.prediction_service import PredictionService, PredictionStrategy, EnsemblePrediction
+    from ml.prediction.prediction_service import (
+        PredictionService,
+        PredictionStrategy,
+        EnsemblePrediction,
+    )
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模块: {e}")
@@ -47,13 +53,15 @@ class TestPredictionService:
     def trained_models(self):
         """创建已训练的模型"""
         # 创建训练数据
-        training_data = pd.DataFrame({
-            'home_team': ['Team_A', 'Team_B', 'Team_A', 'Team_C'] * 25,
-            'away_team': ['Team_B', 'Team_A', 'Team_C', 'Team_A'] * 25,
-            'home_score': [2, 1, 3, 1] * 25,
-            'away_score': [1, 2, 1, 0] * 25,
-            'result': ['home_win', 'away_win', 'home_win', 'home_win'] * 25
-        })
+        training_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B", "Team_A", "Team_C"] * 25,
+                "away_team": ["Team_B", "Team_A", "Team_C", "Team_A"] * 25,
+                "home_score": [2, 1, 3, 1] * 25,
+                "away_score": [1, 2, 1, 0] * 25,
+                "result": ["home_win", "away_win", "home_win", "home_win"] * 25,
+            }
+        )
 
         # 训练泊松模型
         poisson_model = PoissonModel("test_poisson", "1.0")
@@ -63,10 +71,7 @@ class TestPredictionService:
         elo_model = EloModel("test_elo", "1.0")
         elo_model.train(training_data)
 
-        return {
-            "poisson": poisson_model,
-            "elo": elo_model
-        }
+        return {"poisson": poisson_model, "elo": elo_model}
 
     def test_prediction_service_initialization(self, prediction_service):
         """测试预测服务初始化"""
@@ -134,7 +139,7 @@ class TestPredictionService:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "test_match_001"
+            "match_id": "test_match_001",
         }
 
         # 使用泊松模型预测
@@ -159,7 +164,7 @@ class TestPredictionService:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "ensemble_test_001"
+            "match_id": "ensemble_test_001",
         }
 
         # 预测
@@ -171,10 +176,31 @@ class TestPredictionService:
         assert result.away_team == "Team_B"
         assert result.strategy == "weighted_ensemble"
         assert len(result.predictions) > 0
-        assert all(0 <= p <= 1 for p in [result.ensemble_home_win_prob, result.ensemble_draw_prob, result.ensemble_away_win_prob])
-        assert abs(sum([result.ensemble_home_win_prob, result.ensemble_draw_prob, result.ensemble_away_win_prob]) - 1.0) < 1e-6
+        assert all(
+            0 <= p <= 1
+            for p in [
+                result.ensemble_home_win_prob,
+                result.ensemble_draw_prob,
+                result.ensemble_away_win_prob,
+            ]
+        )
+        assert (
+            abs(
+                sum(
+                    [
+                        result.ensemble_home_win_prob,
+                        result.ensemble_draw_prob,
+                        result.ensemble_away_win_prob,
+                    ]
+                )
+                - 1.0
+            )
+            < 1e-6
+        )
 
-    def test_ensemble_prediction_majority_vote(self, prediction_service, trained_models):
+    def test_ensemble_prediction_majority_vote(
+        self, prediction_service, trained_models
+    ):
         """测试多数投票集成预测"""
         # 注册已训练的模型
         for name, model in trained_models.items():
@@ -187,7 +213,7 @@ class TestPredictionService:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "vote_test_001"
+            "match_id": "vote_test_001",
         }
 
         # 预测
@@ -197,7 +223,9 @@ class TestPredictionService:
         assert isinstance(result, EnsemblePrediction)
         assert result.strategy == "majority_vote"
 
-    def test_ensemble_prediction_best_performing(self, prediction_service, trained_models):
+    def test_ensemble_prediction_best_performing(
+        self, prediction_service, trained_models
+    ):
         """测试最佳表现模型预测"""
         # 注册已训练的模型
         for name, model in trained_models.items():
@@ -214,7 +242,7 @@ class TestPredictionService:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "best_test_001"
+            "match_id": "best_test_001",
         }
 
         # 预测
@@ -243,7 +271,10 @@ class TestPredictionService:
         # 验证结果
         assert isinstance(results, list)
         assert len(results) == 3
-        assert all(isinstance(result, (PredictionResult, EnsemblePrediction)) for result in results)
+        assert all(
+            isinstance(result, (PredictionResult, EnsemblePrediction))
+            for result in results
+        )
 
     def test_update_model_weights(self, prediction_service):
         """测试更新模型权重"""
@@ -267,7 +298,7 @@ class TestPredictionService:
             "accuracy": 0.75,
             "precision": 0.70,
             "recall": 0.80,
-            "f1_score": 0.74
+            "f1_score": 0.74,
         }
         prediction_service.set_model_performance("test_model", performance_metrics)
 
@@ -298,13 +329,15 @@ class TestPredictionService:
     def test_train_all_models(self, prediction_service):
         """测试训练所有模型"""
         # 创建训练数据
-        training_data = pd.DataFrame({
-            'home_team': ['Team_A', 'Team_B', 'Team_A', 'Team_C'] * 50,
-            'away_team': ['Team_B', 'Team_A', 'Team_C', 'Team_A'] * 50,
-            'home_score': [2, 1, 3, 1] * 50,
-            'away_score': [1, 2, 1, 0] * 50,
-            'result': ['home_win', 'away_win', 'home_win', 'home_win'] * 50
-        })
+        training_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B", "Team_A", "Team_C"] * 50,
+                "away_team": ["Team_B", "Team_A", "Team_C", "Team_A"] * 50,
+                "home_score": [2, 1, 3, 1] * 50,
+                "away_score": [1, 2, 1, 0] * 50,
+                "result": ["home_win", "away_win", "home_win", "home_win"] * 50,
+            }
+        )
 
         validation_data = training_data.head(20)
 
@@ -337,14 +370,20 @@ class TestPredictionService:
         with pytest.raises(RuntimeError, match="No trained models available"):
             prediction_service.predict_match(match_data)
 
-    def test_ensemble_prediction_result_conversion(self, prediction_service, trained_models):
+    def test_ensemble_prediction_result_conversion(
+        self, prediction_service, trained_models
+    ):
         """测试集成预测结果转换"""
         # 注册已训练的模型
         for name, model in trained_models.items():
             prediction_service.register_model(name, model)
 
         # 预测
-        match_data = {"home_team": "Team_A", "away_team": "Team_B", "match_id": "convert_test"}
+        match_data = {
+            "home_team": "Team_A",
+            "away_team": "Team_B",
+            "match_id": "convert_test",
+        }
         result = prediction_service.predict_match(match_data)
 
         # 测试转换为字典
@@ -372,7 +411,9 @@ class TestPredictionService:
         ]
 
         for home_prob, draw_prob, away_prob in test_cases:
-            confidence = prediction_service._calculate_confidence((home_prob, draw_prob, away_prob))
+            confidence = prediction_service._calculate_confidence(
+                (home_prob, draw_prob, away_prob)
+            )
             assert 0.1 <= confidence <= 1.0
 
     def test_outcome_extraction(self, prediction_service):
@@ -420,16 +461,36 @@ class TestPredictionService:
         assert "confidence" in result
 
         # 验证概率和为1
-        total_prob = result["home_win_prob"] + result["draw_prob"] + result["away_win_prob"]
+        total_prob = (
+            result["home_win_prob"] + result["draw_prob"] + result["away_win_prob"]
+        )
         assert abs(total_prob - 1.0) < 1e-6
 
     def test_majority_vote_calculation(self, prediction_service):
         """测试多数投票计算"""
         # 创建模拟预测结果
         predictions = [
-            Mock(spec=PredictionResult, predicted_outcome="home_win", home_win_prob=0.6, draw_prob=0.2, away_win_prob=0.2),
-            Mock(spec=PredictionResult, predicted_outcome="home_win", home_win_prob=0.5, draw_prob=0.3, away_win_prob=0.2),
-            Mock(spec=PredictionResult, predicted_outcome="draw", home_win_prob=0.3, draw_prob=0.5, away_win_prob=0.2),
+            Mock(
+                spec=PredictionResult,
+                predicted_outcome="home_win",
+                home_win_prob=0.6,
+                draw_prob=0.2,
+                away_win_prob=0.2,
+            ),
+            Mock(
+                spec=PredictionResult,
+                predicted_outcome="home_win",
+                home_win_prob=0.5,
+                draw_prob=0.3,
+                away_win_prob=0.2,
+            ),
+            Mock(
+                spec=PredictionResult,
+                predicted_outcome="draw",
+                home_win_prob=0.3,
+                draw_prob=0.5,
+                away_win_prob=0.2,
+            ),
         ]
 
         # 计算多数投票
@@ -438,20 +499,36 @@ class TestPredictionService:
         # 验证结果
         assert isinstance(result, dict)
         assert result["predicted_outcome"] == "home_win"  # home_win有2票
-        assert result["confidence"] == 2/3  # 2/3的模型同意
+        assert result["confidence"] == 2 / 3  # 2/3的模型同意
 
     def test_best_performing_selection(self, prediction_service):
         """测试最佳表现模型选择"""
         # 设置性能数据
         prediction_service.model_performance = {
             "poisson": {"accuracy": 0.70},
-            "elo": {"accuracy": 0.65}
+            "elo": {"accuracy": 0.65},
         }
 
         # 创建模拟预测结果
         predictions = [
-            Mock(spec=PredictionResult, model_name="elo", home_win_prob=0.5, draw_prob=0.3, away_win_prob=0.2, predicted_outcome="home_win", confidence=0.6),
-            Mock(spec=PredictionResult, model_name="poisson", home_win_prob=0.6, draw_prob=0.2, away_win_prob=0.2, predicted_outcome="home_win", confidence=0.7),
+            Mock(
+                spec=PredictionResult,
+                model_name="elo",
+                home_win_prob=0.5,
+                draw_prob=0.3,
+                away_win_prob=0.2,
+                predicted_outcome="home_win",
+                confidence=0.6,
+            ),
+            Mock(
+                spec=PredictionResult,
+                model_name="poisson",
+                home_win_prob=0.6,
+                draw_prob=0.2,
+                away_win_prob=0.2,
+                predicted_outcome="home_win",
+                confidence=0.7,
+            ),
         ]
 
         # 选择最佳表现模型
@@ -477,7 +554,9 @@ class TestPredictionService:
         except Exception as e:
             pytest.fail(f"预测失败: {e}")
 
-    def test_performance_monitoring_integration(self, prediction_service, trained_models):
+    def test_performance_monitoring_integration(
+        self, prediction_service, trained_models
+    ):
         """测试性能监控集成"""
         # 注册已训练的模型
         for name, model in trained_models.items():
@@ -491,7 +570,7 @@ class TestPredictionService:
                 "recall": 0.75,
                 "f1_score": 0.71,
                 "total_predictions": 1000,
-                "recent_performance": [0.70, 0.72, 0.71, 0.73, 0.72]
+                "recent_performance": [0.70, 0.72, 0.71, 0.73, 0.72],
             },
             "elo": {
                 "accuracy": 0.68,
@@ -499,8 +578,8 @@ class TestPredictionService:
                 "recall": 0.70,
                 "f1_score": 0.67,
                 "total_predictions": 950,
-                "recent_performance": [0.66, 0.68, 0.69, 0.67, 0.68]
-            }
+                "recent_performance": [0.66, 0.68, 0.69, 0.67, 0.68],
+            },
         }
 
         # 设置性能数据
@@ -511,7 +590,10 @@ class TestPredictionService:
         model_info = prediction_service.get_model_info()
         for model_name in performance_data.keys():
             if model_name in model_info["models"]:
-                assert model_info["models"][model_name]["performance"] == performance_data[model_name]
+                assert (
+                    model_info["models"][model_name]["performance"]
+                    == performance_data[model_name]
+                )
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -535,7 +617,7 @@ class TestEnsemblePrediction:
             "confidence": 0.7,
             "model_name": "test_model",
             "model_version": "1.0",
-            "created_at": now.isoformat()
+            "created_at": now.isoformat(),
         }
 
         # 创建集成预测结果
@@ -550,7 +632,7 @@ class TestEnsemblePrediction:
             ensemble_predicted_outcome="home_win",
             ensemble_confidence=0.7,
             strategy="weighted_ensemble",
-            created_at=now
+            created_at=now,
         )
 
         # 验证属性

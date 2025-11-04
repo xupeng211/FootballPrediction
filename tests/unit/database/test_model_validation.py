@@ -17,6 +17,7 @@ from enum import Enum
 # 模拟枚举类型
 class UserRole(str, Enum):
     """用户角色枚举"""
+
     USER = "user"
     PREMIUM = "premium"
     ADMIN = "admin"
@@ -25,6 +26,7 @@ class UserRole(str, Enum):
 
 class PredictedResult(str, Enum):
     """预测结果枚举"""
+
     HOME = "home"
     DRAW = "draw"
     AWAY = "away"
@@ -32,6 +34,7 @@ class PredictedResult(str, Enum):
 
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
+
     SCHEDULED = "scheduled"
     LIVE = "live"
     FINISHED = "finished"
@@ -46,7 +49,7 @@ class ModelValidator:
     @staticmethod
     def validate_email(email: str) -> bool:
         """验证邮箱格式"""
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return re.match(pattern, email) is not None
 
     @staticmethod
@@ -57,7 +60,7 @@ class ModelValidator:
         if len(username) < 3 or len(username) > 50:
             return False
         # 只允许字母、数字、下划线
-        return re.match(r'^[a-zA-Z0-9_]+$', username) is not None
+        return re.match(r"^[a-zA-Z0-9_]+$", username) is not None
 
     @staticmethod
     def validate_password_hash(hash_str: str) -> bool:
@@ -66,7 +69,9 @@ class ModelValidator:
         return len(hash_str) >= 60  # bcrypt哈希通常60字符
 
     @staticmethod
-    def validate_probabilities(home_prob: float, draw_prob: float, away_prob: float) -> bool:
+    def validate_probabilities(
+        home_prob: float, draw_prob: float, away_prob: float
+    ) -> bool:
         """验证概率值"""
         # 检查范围
         if not (0 <= home_prob <= 1 and 0 <= draw_prob <= 1 and 0 <= away_prob <= 1):
@@ -103,14 +108,14 @@ class User:
     """用户模型"""
 
     def __init__(self, **kwargs):
-        self.username = kwargs.get('username')
-        self.email = kwargs.get('email')
-        self.password_hash = kwargs.get('password_hash')
-        self.full_name = kwargs.get('full_name')
-        self.role = kwargs.get('role', UserRole.USER)
-        self.is_active = kwargs.get('is_active', True)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.username = kwargs.get("username")
+        self.email = kwargs.get("email")
+        self.password_hash = kwargs.get("password_hash")
+        self.full_name = kwargs.get("full_name")
+        self.role = kwargs.get("role", UserRole.USER)
+        self.is_active = kwargs.get("is_active", True)
+        self.created_at = kwargs.get("created_at", datetime.utcnow())
+        self.updated_at = kwargs.get("updated_at", datetime.utcnow())
 
     def validate(self) -> List[str]:
         """验证用户数据"""
@@ -139,12 +144,12 @@ class Team:
     """球队模型"""
 
     def __init__(self, **kwargs):
-        self.name = kwargs.get('name')
-        self.short_name = kwargs.get('short_name')
-        self.country = kwargs.get('country')
-        self.founded_year = kwargs.get('founded_year')
-        self.stadium_name = kwargs.get('stadium_name')
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.name = kwargs.get("name")
+        self.short_name = kwargs.get("short_name")
+        self.country = kwargs.get("country")
+        self.founded_year = kwargs.get("founded_year")
+        self.stadium_name = kwargs.get("stadium_name")
+        self.created_at = kwargs.get("created_at", datetime.utcnow())
 
     def validate(self) -> List[str]:
         """验证球队数据"""
@@ -159,7 +164,9 @@ class Team:
             errors.append("球队简称无效：不超过50字符")
 
         # 验证成立年份
-        if self.founded_year and not ModelValidator.validate_founded_year(self.founded_year):
+        if self.founded_year and not ModelValidator.validate_founded_year(
+            self.founded_year
+        ):
             errors.append(f"成立年份无效：应在1800-{datetime.utcnow().year}之间")
 
         return errors
@@ -169,14 +176,14 @@ class Match:
     """比赛模型"""
 
     def __init__(self, **kwargs):
-        self.home_team_id = kwargs.get('home_team_id')
-        self.away_team_id = kwargs.get('away_team_id')
-        self.match_date = kwargs.get('match_date')
-        self.venue = kwargs.get('venue')
-        self.status = kwargs.get('status', MatchStatus.SCHEDULED)
-        self.home_score = kwargs.get('home_score', 0)
-        self.away_score = kwargs.get('away_score', 0)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.home_team_id = kwargs.get("home_team_id")
+        self.away_team_id = kwargs.get("away_team_id")
+        self.match_date = kwargs.get("match_date")
+        self.venue = kwargs.get("venue")
+        self.status = kwargs.get("status", MatchStatus.SCHEDULED)
+        self.home_score = kwargs.get("home_score", 0)
+        self.away_score = kwargs.get("away_score", 0)
+        self.created_at = kwargs.get("created_at", datetime.utcnow())
 
     def validate(self) -> List[str]:
         """验证比赛数据"""
@@ -205,10 +212,14 @@ class Match:
             errors.append("客队比分必须是非负整数")
 
         # 验证状态和比分的一致性
-        if self.status == MatchStatus.SCHEDULED and (self.home_score > 0 or self.away_score > 0):
+        if self.status == MatchStatus.SCHEDULED and (
+            self.home_score > 0 or self.away_score > 0
+        ):
             errors.append("计划中的比赛不应该有比分")
 
-        if self.status == MatchStatus.FINISHED and (self.home_score == 0 and self.away_score == 0):
+        if self.status == MatchStatus.FINISHED and (
+            self.home_score == 0 and self.away_score == 0
+        ):
             errors.append("已完成的比赛应该有比分")
 
         return errors
@@ -218,17 +229,17 @@ class Prediction:
     """预测模型"""
 
     def __init__(self, **kwargs):
-        self.user_id = kwargs.get('user_id')
-        self.match_id = kwargs.get('match_id')
-        self.predicted_outcome = kwargs.get('predicted_outcome')
-        self.home_win_prob = kwargs.get('home_win_prob')
-        self.draw_prob = kwargs.get('draw_prob')
-        self.away_win_prob = kwargs.get('away_win_prob')
-        self.confidence = kwargs.get('confidence')
-        self.model_version = kwargs.get('model_version', 'v1.0')
-        self.actual_outcome = kwargs.get('actual_outcome')
-        self.is_correct = kwargs.get('is_correct')
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
+        self.user_id = kwargs.get("user_id")
+        self.match_id = kwargs.get("match_id")
+        self.predicted_outcome = kwargs.get("predicted_outcome")
+        self.home_win_prob = kwargs.get("home_win_prob")
+        self.draw_prob = kwargs.get("draw_prob")
+        self.away_win_prob = kwargs.get("away_win_prob")
+        self.confidence = kwargs.get("confidence")
+        self.model_version = kwargs.get("model_version", "v1.0")
+        self.actual_outcome = kwargs.get("actual_outcome")
+        self.is_correct = kwargs.get("is_correct")
+        self.created_at = kwargs.get("created_at", datetime.utcnow())
 
     def validate(self) -> List[str]:
         """验证预测数据"""
@@ -260,17 +271,28 @@ class Prediction:
             errors.append("模型版本不能为空")
 
         # 验证实际结果（如果存在）
-        if self.actual_outcome and self.actual_outcome not in PredictedResult.__members__.values():
+        if (
+            self.actual_outcome
+            and self.actual_outcome not in PredictedResult.__members__.values()
+        ):
             errors.append(f"无效的实际结果: {self.actual_outcome}")
 
         # 验证预测结果和概率的一致性
-        if self.predicted_outcome == PredictedResult.HOME and self.home_win_prob <= max(self.draw_prob, self.away_win_prob):
+        if (
+            self.predicted_outcome == PredictedResult.HOME
+            and self.home_win_prob <= max(self.draw_prob, self.away_win_prob)
+        ):
             errors.append("预测为主队获胜，但主队胜率不是最高")
 
-        if self.predicted_outcome == PredictedResult.DRAW and self.draw_prob <= max(self.home_win_prob, self.away_win_prob):
+        if self.predicted_outcome == PredictedResult.DRAW and self.draw_prob <= max(
+            self.home_win_prob, self.away_win_prob
+        ):
             errors.append("预测为平局，但平局概率不是最高")
 
-        if self.predicted_outcome == PredictedResult.AWAY and self.away_win_prob <= max(self.home_win_prob, self.draw_prob):
+        if (
+            self.predicted_outcome == PredictedResult.AWAY
+            and self.away_win_prob <= max(self.home_win_prob, self.draw_prob)
+        ):
             errors.append("预测为客队获胜，但客队胜率不是最高")
 
         return errors
@@ -289,7 +311,7 @@ class TestUserModelValidation:
             "email": "test@example.com",
             "password_hash": "$2b$12$abcdefghijklmnopqrstuvwx yzABCDEFGH IJKLMNOPQRSTUVWXYZ012345",  # 60字符哈希
             "full_name": "Test User",
-            "role": UserRole.USER
+            "role": UserRole.USER,
         }
 
         user = User(**user_data)
@@ -312,7 +334,7 @@ class TestUserModelValidation:
             user = User(
                 username=username,
                 email="test@example.com",
-                password_hash="$2b$12$hash_string_here_60_characters_long_minimum"
+                password_hash="$2b$12$hash_string_here_60_characters_long_minimum",
             )
             errors = user.validate()
             assert len(errors) > 0, f"用户名 '{username}' 应该有验证错误"
@@ -333,7 +355,7 @@ class TestUserModelValidation:
             user = User(
                 username="testuser",
                 email=email,
-                password_hash="$2b$12$hash_string_here_60_characters_long_minimum"
+                password_hash="$2b$12$hash_string_here_60_characters_long_minimum",
             )
             errors = user.validate()
             assert len(errors) > 0, f"邮箱 '{email}' 应该有验证错误"
@@ -348,9 +370,7 @@ class TestUserModelValidation:
 
         for hash_str in invalid_hashes:
             user = User(
-                username="testuser",
-                email="test@example.com",
-                password_hash=hash_str
+                username="testuser", email="test@example.com", password_hash=hash_str
             )
             errors = user.validate()
             assert len(errors) > 0, f"密码哈希 '{hash_str}' 应该有验证错误"
@@ -361,7 +381,7 @@ class TestUserModelValidation:
             username="testuser",
             email="test@example.com",
             password_hash="$2b$12$hash_string_here_60_characters_long_minimum",
-            role="invalid_role"
+            role="invalid_role",
         )
         errors = user.validate()
         assert len(errors) > 0, "无效角色应该有验证错误"
@@ -373,7 +393,7 @@ class TestUserModelValidation:
                 username="testuser",
                 email="test@example.com",
                 password_hash="$2b$12$hash_string_here_60_characters_long_minimum",
-                role=role.value
+                role=role.value,
             )
             errors = user.validate()
             assert len(errors) == 0, f"角色 {role.value} 应该是有效的"
@@ -384,7 +404,7 @@ class TestUserModelValidation:
         user = User(
             username="abc",
             email="test@example.com",
-            password_hash="$2b$12$hash_string_here_60_characters_long_minimum"
+            password_hash="$2b$12$hash_string_here_60_characters_long_minimum",
         )
         errors = user.validate()
         assert len(errors) == 0, "3字符用户名应该有效"
@@ -393,7 +413,7 @@ class TestUserModelValidation:
         user = User(
             username="a" * 50,
             email="test@example.com",
-            password_hash="$2b$12$hash_string_here_60_characters_long_minimum"
+            password_hash="$2b$12$hash_string_here_60_characters_long_minimum",
         )
         errors = user.validate()
         assert len(errors) == 0, "50字符用户名应该有效"
@@ -412,7 +432,7 @@ class TestTeamModelValidation:
             "short_name": "TFC",
             "country": "China",
             "founded_year": 2020,
-            "stadium_name": "Test Stadium"
+            "stadium_name": "Test Stadium",
         }
 
         team = Team(**team_data)
@@ -434,10 +454,7 @@ class TestTeamModelValidation:
 
     def test_invalid_short_name(self):
         """测试无效简称"""
-        team = Team(
-            name="Test Club",
-            short_name="a" * 51  # 超过50字符
-        )
+        team = Team(name="Test Club", short_name="a" * 51)  # 超过50字符
         errors = team.validate()
         assert len(errors) > 0, "超过50字符的简称应该有验证错误"
 
@@ -446,10 +463,7 @@ class TestTeamModelValidation:
         invalid_years = [1799, 1800, datetime.utcnow().year + 1]
 
         for year in invalid_years:
-            team = Team(
-                name="Test Club",
-                founded_year=year
-            )
+            team = Team(name="Test Club", founded_year=year)
             errors = team.validate()
             assert len(errors) > 0, f"成立年份 {year} 应该有验证错误"
 
@@ -458,10 +472,7 @@ class TestTeamModelValidation:
         valid_years = [1801, 1900, 2000, datetime.utcnow().year]
 
         for year in valid_years:
-            team = Team(
-                name="Test Club",
-                founded_year=year
-            )
+            team = Team(name="Test Club", founded_year=year)
             errors = team.validate()
             assert len(errors) == 0, f"成立年份 {year} 应该是有效的"
 
@@ -486,7 +497,7 @@ class TestMatchModelValidation:
             "away_team_id": 2,
             "match_date": future_date,
             "venue": "Test Stadium",
-            "status": MatchStatus.SCHEDULED
+            "status": MatchStatus.SCHEDULED,
         }
 
         match = Match(**match_data)
@@ -499,7 +510,7 @@ class TestMatchModelValidation:
         match = Match(
             home_team_id=1,
             away_team_id=1,  # 相同球队
-            match_date=datetime.utcnow() + timedelta(days=1)
+            match_date=datetime.utcnow() + timedelta(days=1),
         )
         errors = match.validate()
         assert len(errors) > 0, "主队和客队相同应该有验证错误"
@@ -507,29 +518,19 @@ class TestMatchModelValidation:
     def test_missing_team_ids(self):
         """测试缺少球队ID"""
         # 缺少主队ID
-        match = Match(
-            away_team_id=2,
-            match_date=datetime.utcnow() + timedelta(days=1)
-        )
+        match = Match(away_team_id=2, match_date=datetime.utcnow() + timedelta(days=1))
         errors = match.validate()
         assert len(errors) > 0, "缺少主队ID应该有验证错误"
 
         # 缺少客队ID
-        match = Match(
-            home_team_id=1,
-            match_date=datetime.utcnow() + timedelta(days=1)
-        )
+        match = Match(home_team_id=1, match_date=datetime.utcnow() + timedelta(days=1))
         errors = match.validate()
         assert len(errors) > 0, "缺少客队ID应该有验证错误"
 
     def test_past_match_date(self):
         """测试过去比赛日期"""
         past_date = datetime.utcnow() - timedelta(days=1)
-        match = Match(
-            home_team_id=1,
-            away_team_id=2,
-            match_date=past_date
-        )
+        match = Match(home_team_id=1, away_team_id=2, match_date=past_date)
         errors = match.validate()
         assert len(errors) > 0, "过去比赛日期应该有验证错误"
 
@@ -539,7 +540,7 @@ class TestMatchModelValidation:
             home_team_id=1,
             away_team_id=2,
             match_date=datetime.utcnow() + timedelta(days=1),
-            status="invalid_status"
+            status="invalid_status",
         )
         errors = match.validate()
         assert len(errors) > 0, "无效状态应该有验证错误"
@@ -551,7 +552,7 @@ class TestMatchModelValidation:
             away_team_id=2,
             match_date=datetime.utcnow() + timedelta(days=1),
             home_score=-1,  # 负比分
-            status=MatchStatus.FINISHED
+            status=MatchStatus.FINISHED,
         )
         errors = match.validate()
         assert len(errors) > 0, "负比分应该有验证错误"
@@ -565,7 +566,7 @@ class TestMatchModelValidation:
             match_date=datetime.utcnow() + timedelta(days=1),
             home_score=2,
             away_score=1,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
         errors = match.validate()
         assert len(errors) > 0, "计划中的比赛有比分应该有验证错误"
@@ -577,7 +578,7 @@ class TestMatchModelValidation:
             match_date=datetime.utcnow() + timedelta(days=1),
             home_score=0,
             away_score=0,
-            status=MatchStatus.FINISHED
+            status=MatchStatus.FINISHED,
         )
         errors = match.validate()
         assert len(errors) > 0, "完成的比赛没有比分应该有验证错误"
@@ -589,15 +590,12 @@ class TestMatchModelValidation:
             MatchStatus.SCHEDULED,
             MatchStatus.LIVE,
             MatchStatus.CANCELLED,
-            MatchStatus.POSTPONED
+            MatchStatus.POSTPONED,
         ]
 
         for status in valid_statuses:
             match = Match(
-                home_team_id=1,
-                away_team_id=2,
-                match_date=future_date,
-                status=status
+                home_team_id=1, away_team_id=2, match_date=future_date, status=status
             )
             errors = match.validate()
             assert len(errors) == 0, f"状态 {status} 应该是有效的"
@@ -619,7 +617,7 @@ class TestPredictionModelValidation:
             "draw_prob": 0.25,
             "away_win_prob": 0.15,
             "confidence": 0.8,
-            "model_version": "v2.0"
+            "model_version": "v2.0",
         }
 
         prediction = Prediction(**prediction_data)
@@ -636,7 +634,7 @@ class TestPredictionModelValidation:
             home_win_prob=0.6,
             draw_prob=0.25,
             away_win_prob=0.15,
-            confidence=0.8
+            confidence=0.8,
         )
         errors = prediction.validate()
         assert len(errors) > 0, "缺少用户ID应该有验证错误"
@@ -648,7 +646,7 @@ class TestPredictionModelValidation:
             home_win_prob=0.6,
             draw_prob=0.25,
             away_win_prob=0.15,
-            confidence=0.8
+            confidence=0.8,
         )
         errors = prediction.validate()
         assert len(errors) > 0, "缺少比赛ID应该有验证错误"
@@ -671,10 +669,12 @@ class TestPredictionModelValidation:
                 home_win_prob=home_prob,
                 draw_prob=draw_prob,
                 away_win_prob=away_prob,
-                confidence=0.8
+                confidence=0.8,
             )
             errors = prediction.validate()
-            assert len(errors) > 0, f"概率 {home_prob}, {draw_prob}, {away_prob} 应该有验证错误"
+            assert (
+                len(errors) > 0
+            ), f"概率 {home_prob}, {draw_prob}, {away_prob} 应该有验证错误"
 
     def test_invalid_confidence(self):
         """测试无效置信度"""
@@ -688,7 +688,7 @@ class TestPredictionModelValidation:
                 home_win_prob=0.6,
                 draw_prob=0.25,
                 away_win_prob=0.15,
-                confidence=confidence
+                confidence=confidence,
             )
             errors = prediction.validate()
             assert len(errors) > 0, f"置信度 {confidence} 应该有验证错误"
@@ -702,7 +702,7 @@ class TestPredictionModelValidation:
             home_win_prob=0.6,
             draw_prob=0.25,
             away_win_prob=0.15,
-            confidence=0.8
+            confidence=0.8,
         )
         errors = prediction.validate()
         assert len(errors) > 0, "无效预测结果应该有验证错误"
@@ -715,9 +715,9 @@ class TestPredictionModelValidation:
             match_id=1,
             predicted_outcome=PredictedResult.HOME,
             home_win_prob=0.2,  # 不是最高
-            draw_prob=0.6,     # 最高
+            draw_prob=0.6,  # 最高
             away_win_prob=0.2,
-            confidence=0.8
+            confidence=0.8,
         )
         errors = prediction.validate()
         assert len(errors) > 0, "预测结果和概率不一致应该有验证错误"
@@ -728,9 +728,9 @@ class TestPredictionModelValidation:
             match_id=1,
             predicted_outcome=PredictedResult.DRAW,
             home_win_prob=0.7,  # 最高
-            draw_prob=0.2,     # 不是最高
+            draw_prob=0.2,  # 不是最高
             away_win_prob=0.1,
-            confidence=0.8
+            confidence=0.8,
         )
         errors = prediction.validate()
         assert len(errors) > 0, "预测结果和概率不一致应该有验证错误"
@@ -754,10 +754,12 @@ class TestPredictionModelValidation:
                 home_win_prob=home_prob,
                 draw_prob=draw_prob,
                 away_win_prob=away_prob,
-                confidence=0.8
+                confidence=0.8,
             )
             errors = prediction.validate()
-            assert len(errors) == 0, f"有效的概率预测组合应该无错误: {outcome}, {home_prob}, {draw_prob}, {away_prob}"
+            assert (
+                len(errors) == 0
+            ), f"有效的概率预测组合应该无错误: {outcome}, {home_prob}, {draw_prob}, {away_prob}"
 
     def test_edge_case_probabilities(self):
         """测试边界情况概率"""
@@ -769,7 +771,7 @@ class TestPredictionModelValidation:
             home_win_prob=1.0,
             draw_prob=0.0,
             away_win_prob=0.0,
-            confidence=1.0
+            confidence=1.0,
         )
         errors = prediction.validate()
         assert len(errors) == 0, "极端概率情况1应该有效"
@@ -782,7 +784,7 @@ class TestPredictionModelValidation:
             home_win_prob=0.333,
             draw_prob=0.334,
             away_win_prob=0.333,
-            confidence=0.5
+            confidence=0.5,
         )
         errors = prediction.validate()
         assert len(errors) == 0, "均匀分布应该有效"

@@ -20,7 +20,7 @@ class PredictionEvent(DomainEvent):
         prediction_id: str,
         event_type: str,
         data: dict[str, Any] = None,
-        timestamp: datetime = None
+        timestamp: datetime = None,
     ):
         if timestamp is None:
             timestamp = datetime.now()
@@ -32,7 +32,7 @@ class PredictionEvent(DomainEvent):
             aggregate_id=prediction_id,
             event_type=event_type,
             data=data,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
 

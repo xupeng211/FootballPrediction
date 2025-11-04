@@ -8,12 +8,14 @@ import sys
 import os
 from pathlib import Path
 
+
 def test_utils_dict_utils_basic():
     """测试dict_utils基础功能"""
     print("🧪 测试 utils.dict_utils 基础功能...")
 
     try:
         from src.utils.dict_utils import DictUtils
+
         utils = DictUtils()
 
         # 测试基础字典操作
@@ -39,6 +41,7 @@ def test_utils_dict_utils_basic():
         print(f"❌ utils.dict_utils 测试失败: {e}")
         return False
 
+
 def test_utils_response_basic():
     """测试response基础功能"""
     print("🧪 测试 utils.response 基础功能...")
@@ -48,12 +51,16 @@ def test_utils_response_basic():
 
         # 测试响应创建
         response = ResponseUtils.create_success_response({"data": "test"})
-        assert response.get("data") == "test", f"Expected 'test', got {response.get('data')}"
+        assert (
+            response.get("data") == "test"
+        ), f"Expected 'test', got {response.get('data')}"
         print("✅ create_success_response 功能正常")
 
         # 测试错误响应
         error_response = ResponseUtils.create_error_response("test error", 400)
-        assert error_response.get("error") == "test error", f"Expected 'test error', got {error_response.get('error')}"
+        assert (
+            error_response.get("error") == "test error"
+        ), f"Expected 'test error', got {error_response.get('error')}"
         print("✅ create_error_response 功能正常")
 
         return True
@@ -61,6 +68,7 @@ def test_utils_response_basic():
     except Exception as e:
         print(f"❌ utils.response 测试失败: {e}")
         return False
+
 
 def test_utils_string_utils_basic():
     """测试string_utils基础功能"""
@@ -86,6 +94,7 @@ def test_utils_string_utils_basic():
         print(f"❌ utils.string_utils 测试失败: {e}")
         return False
 
+
 def test_crypto_utils_import():
     """测试crypto_utils导入（跳过需要特殊依赖的功能）"""
     print("🧪 测试 crypto_utils 导入...")
@@ -93,6 +102,7 @@ def test_crypto_utils_import():
     try:
         # 尝试导入，但可能失败因为缺少依赖
         from src.utils.crypto_utils import CryptoUtils
+
         print("✅ crypto_utils 导入成功")
         return True
 
@@ -107,6 +117,7 @@ def test_crypto_utils_import():
     except Exception as e:
         print(f"❌ crypto_utils 导入失败: {e}")
         return False
+
 
 def test_basic_python_functionality():
     """测试基础Python功能"""
@@ -133,6 +144,7 @@ def test_basic_python_functionality():
     print("✅ 字符串操作测试正常")
 
     return True
+
 
 def run_coverage_tests():
     """运行所有覆盖率测试"""
@@ -169,21 +181,19 @@ def run_coverage_tests():
 
     return passed, total, success_rate
 
+
 def estimate_coverage():
     """估算测试覆盖率"""
     print(f"\n📈 覆盖率估算...")
 
     # 基于测试文件数量和成功率估算
-    test_files = [
-        "simple_test_runner.py",
-        "test_basic_coverage.py"
-    ]
+    test_files = ["simple_test_runner.py", "test_basic_coverage.py"]
 
     modules_tested = [
         "src.utils.dict_utils",
         "src.utils.response",
         "src.utils.string_utils",
-        "src.utils.crypto_utils"  # 导入测试
+        "src.utils.crypto_utils",  # 导入测试
     ]
 
     # 粗略估算
@@ -196,6 +206,7 @@ def estimate_coverage():
     print(f"   - 估算覆盖率: {coverage_rate:.1f}%")
 
     return coverage_rate
+
 
 if __name__ == "__main__":
     # 运行覆盖率测试

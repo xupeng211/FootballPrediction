@@ -22,7 +22,10 @@ class SRSApiTester:
 
     def __init__(self):
         self.session = None
-        self.headers = {"Authorization": f"Bearer {TEST_TOKEN}", "Content-Type": "application/json"}
+        self.headers = {
+            "Authorization": f"Bearer {TEST_TOKEN}",
+            "Content-Type": "application/json",
+        }
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession(headers=self.headers)
@@ -81,7 +84,9 @@ class SRSApiTester:
                     print(
                         f"   Token认证: {'✅' if srs_compliance.get('token_authenticated') else '❌'}"
                     )
-                    print(f"   频率限制: {'✅' if srs_compliance.get('rate_limited') else '❌'}")
+                    print(
+                        f"   频率限制: {'✅' if srs_compliance.get('rate_limited') else '❌'}"
+                    )
 
                     return True
                 else:
@@ -126,7 +131,11 @@ class SRSApiTester:
                 }
             )
 
-        request_data = {"matches": matches, "include_confidence": True, "max_concurrent": 5}
+        request_data = {
+            "matches": matches,
+            "include_confidence": True,
+            "max_concurrent": 5,
+        }
 
         start_time = time.time()
 
@@ -144,7 +153,9 @@ class SRSApiTester:
                     print(f"🔢 总比赛数: {data.get('total_matches')}")
                     print(f"✅ 成功预测数: {data.get('successful_predictions')}")
                     print(f"❌ 失败预测数: {data.get('failed_predictions')}")
-                    print(f"⚡ 平均响应时间: {data.get('average_response_time_ms'):.2f}ms")
+                    print(
+                        f"⚡ 平均响应时间: {data.get('average_response_time_ms'):.2f}ms"
+                    )
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
@@ -155,7 +166,9 @@ class SRSApiTester:
                     print(
                         f"   平均响应时间: {'✅' if srs_compliance.get('meets_response_time_requirement') else '❌'} ({data.get('average_response_time_ms'):.2f}ms)"
                     )
-                    print(f"   最大并发数: {srs_compliance.get('max_concurrent_requests')}")
+                    print(
+                        f"   最大并发数: {srs_compliance.get('max_concurrent_requests')}"
+                    )
 
                     # 显示前3个预测结果
                     predictions = data.get("predictions", [])

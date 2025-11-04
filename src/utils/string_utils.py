@@ -37,7 +37,7 @@ class StringUtils:
         )
 
         # 规范化Unicode字符为ASCII
-        cleaned = unicodedata.normalize('NFKD', cleaned)
+        cleaned = unicodedata.normalize("NFKD", cleaned)
         cleaned = "".join([c for c in cleaned if ord(c) < 128])
 
         if remove_special_chars:
@@ -181,7 +181,7 @@ class StringUtils:
         if len(digits_only) == 11 and digits_only.startswith("1"):
             # 进一步验证号段有效性
             second_digit = digits_only[1]
-            valid_second_digits = ['3', '5', '6', '7', '8', '9']  # 中国有效手机号第二位
+            valid_second_digits = ["3", "5", "6", "7", "8", "9"]  # 中国有效手机号第二位
             if second_digit in valid_second_digits:
                 return digits_only
 
@@ -405,8 +405,9 @@ def is_empty(text: str) -> bool:
 def strip_html(text: str) -> str:
     """移除HTML标签"""
     import re
-    clean = re.compile('<.*?>')
-    return re.sub(clean, '', text)
+
+    clean = re.compile("<.*?>")
+    return re.sub(clean, "", text)
 
 
 def format_currency(amount: float, currency: str = "$") -> str:

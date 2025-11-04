@@ -103,7 +103,7 @@ class TestHealthEndpoints:
 
     def test_health_check_with_mocks(self, health_client):
         """测试带Mock的健康检查"""
-        with patch('src.api.health.routes.datetime') as mock_datetime:
+        with patch("src.api.health.routes.datetime") as mock_datetime:
             mock_now = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = mock_now
 
@@ -136,7 +136,10 @@ class TestAPIResponseHeaders:
         headers = response.headers
 
         # 验证没有敏感信息泄露
-        assert "server" not in headers.lower() or "nginx" not in headers.get("server", "").lower()
+        assert (
+            "server" not in headers.lower()
+            or "nginx" not in headers.get("server", "").lower()
+        )
 
     def test_response_time_headers(self, client):
         """测试响应时间头部"""
@@ -183,7 +186,7 @@ class TestAPIErrorHandling:
         response = client.post(
             "/api/test",  # 假设的测试端点
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         # 应该返回422或其他错误状态码
         assert response.status_code in [422, 404, 405]
@@ -247,7 +250,7 @@ class TestAPIMiddleware:
 
     def test_request_logging_middleware(self, client):
         """测试请求日志中间件"""
-        with patch('src.api.app.logger') as mock_logger:
+        with patch("src.api.app.logger") as mock_logger:
             response = client.get("/health/")
             # 验证请求被记录（如果实现了日志中间件）
             # 这里只是验证请求成功，具体日志实现可能不同
@@ -256,17 +259,20 @@ class TestAPIMiddleware:
     def test_cors_middleware(self, client):
         """测试CORS中间件"""
         # 测试预检请求
-        response = client.options("/health/", headers={
-            "Origin": "http://localhost:3000",
-            "Access-Control-Request-Method": "GET"
-        })
+        response = client.options(
+            "/health/",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
 
         # 验证CORS头部
         if response.status_code == 200:
             cors_headers = [
                 "access-control-allow-origin",
                 "access-control-allow-methods",
-                "access-control-allow-headers"
+                "access-control-allow-headers",
             ]
             # 至少应该有一些CORS相关头部
             has_cors = any(header in response.headers for header in cors_headers)
@@ -274,9 +280,7 @@ class TestAPIMiddleware:
     def test_gzip_middleware(self, client):
         """测试GZIP中间件"""
         # 发送带有Accept-Encoding头的请求
-        response = client.get("/health/", headers={
-            "Accept-Encoding": "gzip"
-        })
+        response = client.get("/health/", headers={"Accept-Encoding": "gzip"})
 
         # 如果支持GZIP，响应应该被压缩
         # 这里主要验证请求处理正常
@@ -385,7 +389,9 @@ class TestAPIPerformance:
         # 验证性能
         assert len(response_times) == 10
         assert total_time < 5.0, f"Concurrent requests too slow: {total_time}s"
-        assert max(response_times) < 2.0, f"Single request too slow: {max(response_times)}s"
+        assert (
+            max(response_times) < 2.0
+        ), f"Single request too slow: {max(response_times)}s"
 
 
 class TestAPIValidation:
@@ -426,13 +432,16 @@ class TestAPIValidation:
             # 验证响应结构一致
             first_keys = set(responses[0].keys())
             for response in responses[1:]:
-                assert set(response.keys()) == first_keys, "Response format inconsistent"
+                assert (
+                    set(response.keys()) == first_keys
+                ), "Response format inconsistent"
 
 
 # 测试工具函数
 def create_mock_app():
     """创建模拟应用用于测试"""
     from fastapi import FastAPI
+
     test_app = FastAPI()
 
     @test_app.get("/test")

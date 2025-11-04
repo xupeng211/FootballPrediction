@@ -36,7 +36,9 @@ class AuthPredictionIntegrationTester:
         self.user_data: Optional[Dict[str, Any]] = None
         self.prediction_data: Optional[Dict[str, Any]] = None
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(
+        self, test_name: str, success: bool, details: str = "", duration: float = 0
+    ):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -64,7 +66,9 @@ class AuthPredictionIntegrationTester:
                 auth_healthy = auth_response.status_code == 200
 
                 # 测试预测健康检查
-                predictions_response = await client.get(f"{self.base_url}/predictions/health")
+                predictions_response = await client.get(
+                    f"{self.base_url}/predictions/health"
+                )
                 predictions_healthy = predictions_response.status_code == 200
 
                 success = auth_healthy and predictions_healthy
@@ -87,14 +91,12 @@ class AuthPredictionIntegrationTester:
                 "username": f"testuser_{int(time.time())}",
                 "email": f"test_{int(time.time())}@example.com",
                 "password": "testpassword123",
-                "full_name": "测试用户"
+                "full_name": "测试用户",
             }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/auth/register",
-                    json=user_data,
-                    timeout=10.0
+                    f"{self.base_url}/auth/register", json=user_data, timeout=10.0
                 )
 
             success = response.status_code in [200, 201]
@@ -123,14 +125,12 @@ class AuthPredictionIntegrationTester:
 
             login_data = {
                 "username": self.user_data["username"],
-                "password": self.user_data["password"]
+                "password": self.user_data["password"],
             }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/auth/login",
-                    json=login_data,
-                    timeout=10.0
+                    f"{self.base_url}/auth/login", json=login_data, timeout=10.0
                 )
 
             success = response.status_code == 200
@@ -183,8 +183,7 @@ class AuthPredictionIntegrationTester:
             async with httpx.AsyncClient() as client:
                 # 带token访问预测API
                 response = await client.get(
-                    f"{self.base_url}/predictions/",
-                    headers=headers
+                    f"{self.base_url}/predictions/", headers=headers
                 )
 
             success = response.status_code == 200
@@ -211,16 +210,13 @@ class AuthPredictionIntegrationTester:
                 raise Exception("认证token不存在，请先登录")
 
             headers = {"Authorization": f"Bearer {self.auth_token}"}
-            prediction_request = {
-                "model_version": "default",
-                "include_details": True
-            }
+            prediction_request = {"model_version": "default", "include_details": True}
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/predictions/",
                     headers=headers,
-                    json=prediction_request
+                    json=prediction_request,
                 )
 
             success = response.status_code in [200, 201]
@@ -249,14 +245,14 @@ class AuthPredictionIntegrationTester:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
             batch_request = {
                 "match_ids": [12345, 67890, 54321],
-                "model_version": "default"
+                "model_version": "default",
             }
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/predictions/batch",
                     headers=headers,
-                    json=batch_request
+                    json=batch_request,
                 )
 
             success = response.status_code == 200
@@ -285,16 +281,13 @@ class AuthPredictionIntegrationTester:
 
             headers = {"Authorization": f"Bearer {self.auth_token}"}
             match_id = self.prediction_data.get("match_id", 12345)
-            verification_data = {
-                "actual_outcome": "home",
-                "confidence": 0.8
-            }
+            verification_data = {"actual_outcome": "home", "confidence": 0.8}
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/predictions/{match_id}/verify",
                     headers=headers,
-                    json=verification_data
+                    json=verification_data,
                 )
 
             success = response.status_code == 200
@@ -324,8 +317,7 @@ class AuthPredictionIntegrationTester:
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/auth/refresh",
-                    headers=headers
+                    f"{self.base_url}/auth/refresh", headers=headers
                 )
 
             success = response.status_code == 200
@@ -358,8 +350,7 @@ class AuthPredictionIntegrationTester:
 
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/auth/logout",
-                    headers=headers
+                    f"{self.base_url}/auth/logout", headers=headers
                 )
 
             success = response.status_code == 200
@@ -393,7 +384,7 @@ class AuthPredictionIntegrationTester:
             self.test_batch_prediction,
             self.test_prediction_verification,
             self.test_token_refresh,
-            self.test_logout
+            self.test_logout,
         ]
 
         passed_tests = 0
@@ -416,7 +407,7 @@ class AuthPredictionIntegrationTester:
             "failed_tests": total_tests - passed_tests,
             "success_rate": success_rate,
             "test_results": self.test_results,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         print("=" * 60)
@@ -488,7 +479,9 @@ class TestAuthPredictionIntegration:
     async def test_complete_workflow(self, tester):
         """测试完整工作流"""
         report = await tester.run_all_tests()
-        assert report["success_rate"] >= 80, f"整体成功率不足80%: {report['success_rate']:.1f}%"
+        assert (
+            report["success_rate"] >= 80
+        ), f"整体成功率不足80%: {report['success_rate']:.1f}%"
 
 
 # 独立运行测试的主函数
@@ -500,7 +493,7 @@ async def main():
     print(f"\n🎯 集成测试结果:")
     print(f"成功率: {report['success_rate']:.1f}%")
 
-    if report['success_rate'] >= 80:
+    if report["success_rate"] >= 80:
         print("🎉 集成测试通过！")
         return 0
     else:

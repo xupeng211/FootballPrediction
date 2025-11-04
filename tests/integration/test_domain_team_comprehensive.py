@@ -158,7 +158,9 @@ class TestTeamFormComprehensive:
 
     def test_team_form_valid_creation(self):
         """测试有效状态创建"""
-        form = TeamForm(last_matches=["W", "D", "L", "W", "W"], current_streak=2, streak_type="win")
+        form = TeamForm(
+            last_matches=["W", "D", "L", "W", "W"], current_streak=2, streak_type="win"
+        )
         assert len(form.last_matches) == 5
         assert form.current_streak == 2
         assert form.streak_type == "win"
@@ -336,7 +338,9 @@ class TestTeamFormComprehensive:
         assert "W" in str(form)
         assert "1W" in str(form)
 
-        form = TeamForm(last_matches=["W", "W", "D"], current_streak=2, streak_type="win")
+        form = TeamForm(
+            last_matches=["W", "W", "D"], current_streak=2, streak_type="win"
+        )
         result_str = str(form)
         assert "WW" in result_str
         assert "2W" in result_str
@@ -381,7 +385,9 @@ class TestTeamDomainComprehensive:
     def test_team_creation_invalid_short_name(self):
         """测试无效简称"""
         with pytest.raises(DomainError, match="简称不能超过10个字符"):
-            Team(name="测试球队", short_name="这是一个超过十个字符限制的非常非常长的简称")
+            Team(
+                name="测试球队", short_name="这是一个超过十个字符限制的非常非常长的简称"
+            )
 
     def test_team_creation_invalid_code(self):
         """测试无效代码"""
@@ -417,7 +423,9 @@ class TestTeamDomainComprehensive:
         """测试更新球队信息"""
         team = Team(name="测试球队")
 
-        team.update_info(name="新名称", short_name="新简称", stadium="新球场", capacity=50000)
+        team.update_info(
+            name="新名称", short_name="新简称", stadium="新球场", capacity=50000
+        )
 
         assert team.name == "新名称"
         assert team.short_name == "新简称"
@@ -735,7 +743,13 @@ class TestTeamDomainComprehensive:
         assert team.calculate_strength() == 50.0
 
         # 比赛历程
-        results = [("win", 2, 0), ("draw", 1, 1), ("win", 3, 1), ("loss", 0, 2), ("win", 2, 1)]
+        results = [
+            ("win", 2, 0),
+            ("draw", 1, 1),
+            ("win", 3, 1),
+            ("loss", 0, 2),
+            ("win", 2, 1),
+        ]
 
         for result, goals_for, goals_against in results:
             team.add_match_result(result, goals_for, goals_against)

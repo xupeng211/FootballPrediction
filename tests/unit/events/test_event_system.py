@@ -38,7 +38,7 @@ class TestEventData:
             version="1.0",
             metadata={"key": "value"},
             event_id="test-event-123",
-            timestamp=datetime(2024, 1, 1, 12, 0, 0)
+            timestamp=datetime(2024, 1, 1, 12, 0, 0),
         )
 
         assert event_data.source == "test_service"
@@ -72,13 +72,10 @@ class TestEventData:
 
     def test_event_data_to_dict(self):
         """测试事件数据转换为字典"""
-        event_data = EventData(
-            source="test_service",
-            metadata={"key": "value"}
-        )
+        event_data = EventData(source="test_service", metadata={"key": "value"})
 
         # 检查是否实现to_dict方法
-        if hasattr(event_data, 'to_dict'):
+        if hasattr(event_data, "to_dict"):
             data_dict = event_data.to_dict()
             assert data_dict["source"] == "test_service"
             assert data_dict["metadata"] == {"key": "value"}
@@ -94,7 +91,7 @@ class TestEventTypes:
             home_team_id=1,
             away_team_id=2,
             league_id=10,
-            match_time=datetime(2024, 12, 1, 20, 0, 0)
+            match_time=datetime(2024, 12, 1, 20, 0, 0),
         )
         event = MatchCreatedEvent(event_data)
 
@@ -109,7 +106,7 @@ class TestEventTypes:
         # 创建简单的预测事件数据
         event_data = EventData(
             source="prediction_service",
-            metadata={"prediction_id": 67890, "match_id": 12345, "user_id": 999}
+            metadata={"prediction_id": 67890, "match_id": 12345, "user_id": 999},
         )
 
         # 验证事件数据创建成功
@@ -123,7 +120,11 @@ class TestEventTypes:
         # 创建用户注册事件数据
         event_data = EventData(
             source="user_service",
-            metadata={"user_id": 1111, "username": "testuser", "email": "test@example.com"}
+            metadata={
+                "user_id": 1111,
+                "username": "testuser",
+                "email": "test@example.com",
+            },
         )
 
         # 验证事件数据
@@ -144,9 +145,9 @@ class TestEventTypes:
                     "wins": 10,
                     "losses": 5,
                     "goals_scored": 25,
-                    "goals_conceded": 15
-                }
-            }
+                    "goals_conceded": 15,
+                },
+            },
         )
 
         # 验证事件数据
@@ -168,9 +169,9 @@ class TestEventTypes:
         for event in events:
             # 验证所有事件都继承自EventData
             assert isinstance(event, EventData)
-            assert hasattr(event, 'source')
-            assert hasattr(event, 'event_id')
-            assert hasattr(event, 'timestamp')
+            assert hasattr(event, "source")
+            assert hasattr(event, "event_id")
+            assert hasattr(event, "timestamp")
 
 
 class TestEventBus:
@@ -185,7 +186,7 @@ class TestEventBus:
         """测试事件总线初始化"""
         assert event_bus._subscribers is not None
         assert event_bus._filters is not None
-        assert hasattr(event_bus, '_executor')
+        assert hasattr(event_bus, "_executor")
 
     def test_subscribe_to_event(self, event_bus):
         """测试订阅事件"""
@@ -241,6 +242,7 @@ class TestEventBus:
 
     def test_publish_event_async(self, event_bus):
         """测试异步发布事件"""
+
         async def async_publish():
             handler = AsyncMock(spec=EventHandler)
             handler.handle = AsyncMock()
@@ -284,7 +286,7 @@ class TestEventBus:
 
         # 创建过滤器
         def test_filter(event):
-            return hasattr(event, 'source') and event.source == "allowed_source"
+            return hasattr(event, "source") and event.source == "allowed_source"
 
         # 订阅事件并添加过滤器
         event_bus.subscribe("test_event", handler)
@@ -350,8 +352,14 @@ class TestMetricsEventHandler:
         events = [
             EventData(source="test", event_id="test-1"),
             MatchCreatedEvent(match_id=1, home_team="A", away_team="B"),
-            PredictionMadeEvent(prediction_id=1, match_id=1, user_id=1,
-                              predicted_home_score=2, predicted_away_score=1, confidence=0.8)
+            PredictionMadeEvent(
+                prediction_id=1,
+                match_id=1,
+                user_id=1,
+                predicted_home_score=2,
+                predicted_away_score=1,
+                confidence=0.8,
+            ),
         ]
 
         for event in events:
@@ -386,7 +394,7 @@ class TestMetricsEventHandler:
         assert handler.metrics["events_processed"] == 1
 
         # 重置指标
-        if hasattr(handler, 'reset'):
+        if hasattr(handler, "reset"):
             handler.reset()
             assert handler.metrics["events_processed"] == 0
             assert handler.metrics["event_counts"] == {}
@@ -416,7 +424,7 @@ class TestEventIntegration:
             match_id=12345,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-12-01T20:00:00"
+            match_date="2024-12-01T20:00:00",
         )
 
         # 发布事件
@@ -563,7 +571,7 @@ def create_test_event(event_type: str, **kwargs) -> Any:
             match_id=kwargs.get("match_id", 12345),
             home_team=kwargs.get("home_team", "Team A"),
             away_team=kwargs.get("away_team", "Team B"),
-            match_date=kwargs.get("match_date", "2024-12-01T20:00:00")
+            match_date=kwargs.get("match_date", "2024-12-01T20:00:00"),
         )
     elif event_type == "prediction_made":
         return PredictionMadeEvent(
@@ -572,13 +580,13 @@ def create_test_event(event_type: str, **kwargs) -> Any:
             user_id=kwargs.get("user_id", 999),
             predicted_home_score=kwargs.get("predicted_home_score", 2),
             predicted_away_score=kwargs.get("predicted_away_score", 1),
-            confidence=kwargs.get("confidence", 0.85)
+            confidence=kwargs.get("confidence", 0.85),
         )
     elif event_type == "user_registered":
         return UserRegisteredEvent(
             user_id=kwargs.get("user_id", 1111),
             username=kwargs.get("username", "testuser"),
-            email=kwargs.get("email", "test@example.com")
+            email=kwargs.get("email", "test@example.com"),
         )
     else:
         return EventData(source="test", **kwargs)

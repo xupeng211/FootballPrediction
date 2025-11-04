@@ -21,7 +21,9 @@ class MatchRepositoryInterface:
     async def get_match_by_id(self, match_id: int) -> Optional["Match"]:
         raise NotImplementedError
 
-    async def get_matches_by_date_range(self, start_date: datetime, end_date: datetime) -> list["Match"]:
+    async def get_matches_by_date_range(
+        self, start_date: datetime, end_date: datetime
+    ) -> list["Match"]:
         raise NotImplementedError
 
 

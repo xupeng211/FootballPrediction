@@ -23,7 +23,9 @@ def test_direct_error_path_coverage():
         warnings.filterwarnings = failing_filterwarnings
 
         # 清除模块缓存
-        modules_to_remove = [key for key in sys.modules.keys() if 'warning_filters' in key]
+        modules_to_remove = [
+            key for key in sys.modules.keys() if "warning_filters" in key
+        ]
         for module in modules_to_remove:
             del sys.modules[module]
 
@@ -35,9 +37,10 @@ def test_direct_error_path_coverage():
             pass
 
         # 如果导入成功，验证logger被调用
-        if 'src.utils.warning_filters' in sys.modules:
+        if "src.utils.warning_filters" in sys.modules:
             import logging
-            logger = logging.getLogger('src.utils.warning_filters')
+
+            logger = logging.getLogger("src.utils.warning_filters")
             # 验证logger存在
             assert isinstance(logger, logging.Logger)
 
@@ -66,7 +69,9 @@ def test_exception_types_coverage():
             warnings.filterwarnings = failing_filterwarnings
 
             # 清除模块缓存
-            modules_to_remove = [key for key in sys.modules.keys() if 'warning_filters' in key]
+            modules_to_remove = [
+                key for key in sys.modules.keys() if "warning_filters" in key
+            ]
             for module in modules_to_remove:
                 del sys.modules[module]
 
@@ -99,9 +104,9 @@ def test_warning_filters_module_reload():
         warnings.filterwarnings = failing_filterwarnings
 
         # 如果模块已存在，重新加载
-        if 'src.utils.warning_filters' in sys.modules:
+        if "src.utils.warning_filters" in sys.modules:
             try:
-                importlib.reload(sys.modules['src.utils.warning_filters'])
+                importlib.reload(sys.modules["src.utils.warning_filters"])
             except Exception:
                 pass
 
@@ -126,7 +131,9 @@ def test_logger_error_message_format():
         warnings.filterwarnings = failing_filterwarnings
 
         # 清除模块缓存
-        modules_to_remove = [key for key in sys.modules.keys() if 'warning_filters' in key]
+        modules_to_remove = [
+            key for key in sys.modules.keys() if "warning_filters" in key
+        ]
         for module in modules_to_remove:
             del sys.modules[module]
 
@@ -137,9 +144,9 @@ def test_logger_error_message_format():
             pass
 
         # 验证logger配置
-        if 'src.utils.warning_filters' in sys.modules:
-            logger = logging.getLogger('src.utils.warning_filters')
-            assert logger.name == 'src.utils.warning_filters'
+        if "src.utils.warning_filters" in sys.modules:
+            logger = logging.getLogger("src.utils.warning_filters")
+            assert logger.name == "src.utils.warning_filters"
 
     finally:
         # 恢复原始状态

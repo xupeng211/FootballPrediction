@@ -30,7 +30,9 @@ class TestDatabaseModelsEnhanced:
             if hasattr(league, "name"):
                 assert league.name is None or isinstance(league.name, str)
             if hasattr(league, "created_at"):
-                assert league.created_at is None or isinstance(league.created_at, datetime)
+                assert league.created_at is None or isinstance(
+                    league.created_at, datetime
+                )
 
             # 测试方法
             if hasattr(league, "__repr__"):

@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 # 导入目标模块
 from core.service_lifecycle import *
 
+
 class TestModuleFunctionality:
     """模块功能测试"""
 
@@ -47,6 +48,7 @@ class TestModuleFunctionality:
 
     def test_async_functionality(self):
         """异步功能测试"""
+
         async def async_test():
             await asyncio.sleep(0.001)
             return "async_result"

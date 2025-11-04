@@ -110,9 +110,9 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         return await self.find_by(
             filters={
-                "status": status
-                if isinstance(status, PredictionStatus)
-                else str(status)
+                "status": (
+                    status if isinstance(status, PredictionStatus) else str(status)
+                )
             },
             limit=limit,
         )

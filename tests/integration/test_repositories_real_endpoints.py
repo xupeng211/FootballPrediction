@@ -105,7 +105,11 @@ def test_repositories_create_user():
     """测试创建用户端点"""
     response = client.post(
         "/api/v1/repositories/users",
-        json={"username": "test_user", "email": "test@example.com", "full_name": "Test User"},
+        json={
+            "username": "test_user",
+            "email": "test@example.com",
+            "full_name": "Test User",
+        },
     )
     assert response.status_code in [200, 201, 422, 500]
     print(f"Create user response: {response.json()}")
@@ -172,7 +176,8 @@ def test_repositories_start_match():
 def test_repositories_finish_match():
     """测试结束比赛端点"""
     response = client.post(
-        "/api/v1/repositories/matches/789/finish", json={"actual_home": 2, "actual_away": 1}
+        "/api/v1/repositories/matches/789/finish",
+        json={"actual_home": 2, "actual_away": 1},
     )
     assert response.status_code in [200, 404, 422, 500]
     print(f"Finish match response: {response.json()}")
@@ -198,8 +203,16 @@ def test_all_repositories_endpoints():
         # Predictions endpoints
         ("GET", "/api/v1/repositories/predictions", [200, 500]),
         ("GET", "/api/v1/repositories/predictions/123", [200, 404, 500]),
-        ("GET", "/api/v1/repositories/predictions/user/456/statistics", [200, 404, 500]),
-        ("GET", "/api/v1/repositories/predictions/match/789/statistics", [200, 404, 500]),
+        (
+            "GET",
+            "/api/v1/repositories/predictions/user/456/statistics",
+            [200, 404, 500],
+        ),
+        (
+            "GET",
+            "/api/v1/repositories/predictions/match/789/statistics",
+            [200, 404, 500],
+        ),
         ("POST", "/api/v1/repositories/predictions", [200, 201, 422, 500]),
         ("PUT", "/api/v1/repositories/predictions/123", [200, 404, 422, 500]),
         # Users endpoints
