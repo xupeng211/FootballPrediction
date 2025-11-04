@@ -8,6 +8,21 @@
 class FootballPredictionError(Exception):
     """足球预测系统基础异常类"""
 
+    def __init__(self, message: str, **kwargs):
+        """
+        初始化异常
+
+        Args:
+            message: 异常消息
+            **kwargs: 额外的异常属性（如code, details等）
+        """
+        super().__init__(message)
+        self.message = message
+
+        # 将关键字参数设置为属性
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
 
 # 别名，保持向后兼容
 FootballPredictionException = FootballPredictionError

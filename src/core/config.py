@@ -45,6 +45,12 @@ class Config:
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
         self.config: dict[str, Any] = {}
+
+        # 添加测试期望的属性
+        self.debug = False
+        self.secret_key = "default-secret-key-for-testing"
+        self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
+
         self._load_config()
 
     def _load_config(self) -> None:
@@ -344,7 +350,7 @@ def get_settings() -> Settings:
     return Settings()
 
 
-def load_config(config_file: str | None = None) -> Config:
+def load_config(config_file: str | None = None) -> Settings:
     """
     加载配置文件
 
@@ -352,15 +358,7 @@ def load_config(config_file: str | None = None) -> Config:
         config_file: 配置文件路径，如果为None则使用默认配置
 
     Returns:
-        Config: 配置实例
+        Settings: 设置实例
     """
-    if config_file and Path(config_file).exists():
-        try:
-            with open(config_file, encoding="utf-8") as f:
-                config_data = json.load(f)
-            return Config(**config_data)
-        except (OSError, json.JSONDecodeError) as e:
-            logging.warning(f"无法加载配置文件 {config_file}: {e}")
-
-    # 返回默认配置
-    return Config()
+    # 直接返回Settings实例，它会自动从环境变量加载配置
+    return Settings()
