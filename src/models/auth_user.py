@@ -107,18 +107,15 @@ class User(Base):
     comment="邮件通知")
 
     # 关系
-    # predictions = relationship("Prediction",
-    back_populates="user")
-    # user_sessions = relationship("UserSession",
-    back_populates="user")
-    # audit_logs = relationship("AuditLog",
-    back_populates="user")
+    # predictions = relationship("Prediction", back_populates="user")
+    # user_sessions = relationship("UserSession", back_populates="user")
+    # audit_logs = relationship("AuditLog", back_populates="user")
 
     # 索引
     __table_args__ = (
         Index("idx_users_username",
     "username"),
-    
+
         Index("idx_users_email", "email"),
         Index("idx_users_active", "is_active"),
         Index("idx_users_role", "role"),
@@ -166,7 +163,7 @@ class User(Base):
                 self.last_login_at.isoformat() if self.last_login_at else None
             ),
     "timezone": self.timezone,
-    
+
             "language": self.language,
             "email_notifications": self.email_notifications,
         }
@@ -232,12 +229,12 @@ class UserSession(Base):
     "user_id"),
     Index("idx_user_sessions_token",
     "session_token"),
-    
+
         Index("idx_user_sessions_refresh_token",
     "refresh_token"),
     Index("idx_user_sessions_active",
     "is_active"),
-    
+
         Index("idx_user_sessions_expires", "expires_at"),
     )
 
@@ -297,18 +294,18 @@ class AuditLog(Base):
     __table_args__ = (
         Index("idx_audit_logs_user_id",
     "user_id"),
-    
+
         Index("idx_audit_logs_action",
     "action"),
     Index("idx_audit_logs_resource",
     "resource_type",
     "resource_id"),
-    
+
         Index("idx_audit_logs_created",
     "created_at"),
     Index("idx_audit_logs_ip",
     "ip_address"),
-    
+
     )
 
     def __repr__(self):
