@@ -34,7 +34,7 @@ class UserRegister(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     email: EmailStr = Field(..., description="邮箱地址")
     password: str = Field(..., min_length=8, max_length=128, description="密码")
-    full_name: Optional[str] = Field(None, max_length=100, description="全名")
+    full_name: str | None = Field(None, max_length=100, description="全名")
 
 
 class UserLogin(BaseModel):
@@ -87,7 +87,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
-    full_name: Optional[str]
+    full_name: str | None
     role: str
     is_active: bool
     created_at: str

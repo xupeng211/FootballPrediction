@@ -14,6 +14,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .base import BaseRepository, QuerySpec
 
 
+class UserRepositoryInterface:
+    """用户仓储接口"""
+
+    async def get_user_by_id(self, user_id: int) -> Optional["User"]:
+        raise NotImplementedError
+
+    async def get_user_by_email(self, email: str) -> Optional["User"]:
+        raise NotImplementedError
+
+    async def create_user(self, user_data: dict) -> "User":
+        raise NotImplementedError
+
+
 class UserRepository(BaseRepository):
     """用户仓储实现 - 简化版本"""
 
@@ -175,3 +188,31 @@ class UserRepository(BaseRepository):
         """根据角色获取用户"""
         filters = {"role": role}
         return await self.find_by_filters(filters)
+
+
+class ReadOnlyUserRepository(BaseRepository):
+    """只读用户仓储"""
+
+    async def get_user_by_id(self, user_id: int) -> Optional["User"]:
+        """根据ID获取用户"""
+        return await self.get_by_id(user_id)
+
+    async def get_user_by_email(self, email: str) -> Optional["User"]:
+        """根据邮箱获取用户"""
+        filters = {"email": email}
+        users = await self.find_by_filters(filters, limit=1)
+        return users[0] if users else None
+
+    async def get_user_by_username(self, username: str) -> Optional["User"]:
+        """根据用户名获取用户"""
+        filters = {"username": username}
+        users = await self.find_by_filters(filters, limit=1)
+        return users[0] if users else None
+
+    async def search_users(self, query: str, limit: int = 10) -> list["User"]:
+        """搜索用户"""
+        filters = {
+            "username__icontains": query,
+            "email__icontains": query
+        }
+        return await self.find_by_filters(filters, limit)

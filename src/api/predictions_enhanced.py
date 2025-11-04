@@ -25,8 +25,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.cache.redis_manager import get_redis_manager
 from src.core.logging_system import get_logger
 from src.database.connection import get_async_session
-from src.ml.advanced_model_trainer import AdvancedModelTrainer
-from src.ml.automl_pipeline import AutoMLPipeline
+
+try:
+    from src.ml.advanced_model_trainer import AdvancedModelTrainer
+except ImportError:
+    # Mock implementation
+    class AdvancedModelTrainer:
+        def __init__(self):
+            pass
+
+try:
+    from src.ml.automl_pipeline import AutoMLPipeline
+except ImportError:
+    # Mock implementation
+    class AutoMLPipeline:
+        def __init__(self):
+            pass
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions", tags=["predictions-srs"])

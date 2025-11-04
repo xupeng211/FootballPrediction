@@ -14,7 +14,7 @@ from .football import (
     FootballDataAdapter,
     OptaDataAdapter,
 )
-from .registry import AdapterRegistry
+from .registry import AdapterError, AdapterRegistry
 
 __all__ = [
     # Base classes
@@ -32,5 +32,5 @@ __all__ = [
     "get_adapter",
     # Registry
     "AdapterRegistry",
-    "register_adapter",
+    "AdapterError",
 ]

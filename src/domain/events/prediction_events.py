@@ -36,7 +36,7 @@ class PredictionEvent(DomainEvent):
         )
 
 
-class PredictionCreatedEvent(PredictionEvent):
+class PredictionCreatedEvent(DomainEvent):
     """预测创建事件"""
 
     def __init__(

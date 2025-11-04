@@ -15,6 +15,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .base import BaseRepository, QuerySpec
 
 
+class MatchRepositoryInterface:
+    """比赛仓储接口"""
+
+    async def get_match_by_id(self, match_id: int) -> Optional["Match"]:
+        raise NotImplementedError
+
+    async def get_matches_by_date_range(self, start_date: datetime, end_date: datetime) -> list["Match"]:
+        raise NotImplementedError
+
+
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
 
@@ -263,4 +273,26 @@ class MatchRepository(BaseRepository):
         for match in matches:
             await self.session.refresh(match)
 
-        return matches
+
+class ReadOnlyMatchRepository(BaseRepository):
+    """只读比赛仓储"""
+
+    async def get_match_by_id(self, match_id: int) -> Optional["Match"]:
+        """根据ID获取比赛"""
+        return await self.get_by_id(match_id)
+
+    async def get_matches_by_date_range(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        status: MatchStatus | None = None,
+    ) -> list["Match"]:
+        """获取日期范围内的比赛"""
+        conditions = {
+            "match_date__gte": start_date,
+            "match_date__lte": end_date,
+        }
+        if status:
+            conditions["status"] = status
+
+        return await self.get_by_conditions(conditions)

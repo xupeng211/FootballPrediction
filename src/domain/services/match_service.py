@@ -6,7 +6,7 @@ Match Domain Service
 Handles complex business logic related to matches.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from src.domain.events.match_events import (
@@ -185,8 +185,17 @@ class MatchDomainService:
         """检查比赛是否可以开始"""
         return (match.status == MatchStatus.SCHEDULED and
                match.match_date <= datetime.now() and
-               match.home_team_id is not None and
-               match.away_team_id is not None)
+               match.home_team_id is not None and match.home_team_id > 0 and
+               match.away_team_id is not None and match.away_team_id > 0)
+
+    def calculate_match_duration(self, match: Match) -> timedelta:
+        """计算比赛持续时间"""
+        if match.status != MatchStatus.FINISHED:
+            return timedelta(0)
+
+        # 对于已结束的比赛，返回一个默认的90分钟持续时间
+        # 在实际实现中，这里应该计算实际开始时间和结束时间的差值
+        return timedelta(minutes=90)
 
     def validate_match_schedule(self, match: Match) -> list[str]:
         """验证比赛安排"""

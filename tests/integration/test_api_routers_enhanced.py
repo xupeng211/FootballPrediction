@@ -119,12 +119,12 @@ class TestApiRoutersEnhanced:
             )
             assert response is not None
             assert response.match_id == 1
-            assert response.source                == "cached"  # 默认值
+            assert response.source                     == "cached"  # 默认值
 
             # 测试请求模型
             request = PredictionRequest(match_id=1)
             assert request is not None
-            assert request.match_id                == 1
+            assert request.match_id                     == 1
             assert request.include_confidence  # 默认值
 
         except ImportError:

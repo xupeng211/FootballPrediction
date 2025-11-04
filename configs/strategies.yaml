@@ -1,0 +1,49 @@
+created_at: '2025-11-03T17:45:43.007282'
+defaults:
+  default_strategies:
+  - config:
+      mlflow_tracking_uri: http://localhost:5002
+      model_name: football_prediction_model
+      model_stage: Production
+    enabled: true
+    name: ml_predictor
+    type: ml_model
+  - config:
+      home_advantage_factor: 1.2
+      min_sample_size: 5
+      weight_recent_games: 0.7
+    enabled: true
+    name: statistical_analyzer
+    type: statistical
+  - config:
+      max_historical_years: 5
+      min_historical_matches: 3
+      similarity_threshold: 0.7
+    enabled: true
+    name: historical_analyzer
+    type: historical
+  - config:
+      consensus_threshold: 0.7
+      ensemble_method: weighted_average
+      strategy_weights:
+        historical_ensemble: 0.25
+        ml_ensemble: 0.4
+        statistical_ensemble: 0.35
+      sub_strategies:
+      - config: {}
+        enabled: true
+        name: ml_ensemble
+        type: ml_model
+      - config: {}
+        enabled: true
+        name: statistical_ensemble
+        type: statistical
+      - config: {}
+        enabled: true
+        name: historical_ensemble
+        type: historical
+    enabled: true
+    name: ensemble_predictor
+    type: ensemble
+strategies: {}
+version: 1.0.0

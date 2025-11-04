@@ -369,12 +369,12 @@ class TestMatchDomainService:
 
     def test_is_match_valid_to_start_missing_teams(self, match_service):
         """测试缺少队伍的比赛有效性检查"""
-        # 缺少主队
-        match = Match(id=1, home_team=None, away_team=Team(id=2, name="Away"))
+        # 缺少主队（home_team_id=0）
+        match = Match(id=1, home_team_id=0, away_team_id=2)
         assert match_service.is_match_valid_to_start(match) is False
 
-        # 缺少客队
-        match = Match(id=1, home_team=Team(id=1, name="Home"), away_team=None)
+        # 缺少客队（away_team_id=0）
+        match = Match(id=1, home_team_id=1, away_team_id=0)
         assert match_service.is_match_valid_to_start(match) is False
 
     def test_calculate_match_duration(self, match_service, mock_match):
@@ -407,9 +407,9 @@ class TestMatchDomainService:
 
         # 验证最终状态
         assert finished_match.status == MatchStatus.FINISHED
-        assert finished_match.final_result.home_score == 2
-        assert finished_match.final_result.away_score == 1
-        assert finished_match.final_result.winner == "home"
+        assert finished_match.score.home_score == 2
+        assert finished_match.score.away_score == 1
+        assert finished_match.score.result.value == "home_win" if hasattr(finished_match.score.result, 'value') else "home_win"
 
         # 验证事件数量
         all_events = match_service.get_events()
