@@ -104,19 +104,64 @@ class ProcessingCache:
             self.logger.warning(f"删除缓存失败 {cache_key}: {e}")
             return False
 
-    async def clear(self, pattern: str | None = None) -> int:
-        """清空缓存"""
-        try:
+def _clear_handle_error():
             cleared_count = 0
 
             # 清空内存缓存
-            if pattern:
+
+def _clear_check_condition():
+                keys_to_delete = [
+                    key for key in self._memory_cache.keys() if pattern in key
+                ]
+
+def _clear_check_condition():
+                        del self._memory_cache_timestamps[key]
+                    cleared_count += 1
+            else:
+                cleared_count += len(self._memory_cache)
+                self._memory_cache.clear()
+                self._memory_cache_timestamps.clear()
+
+            # 清空Redis缓存
+
+def _clear_check_condition():
+                        # 使用SCAN查找匹配的键
+                        cursor = 0
+
+def _clear_loop_process():
+                            cursor, keys = await self.redis_client.scan(
+                                cursor, match=f"*{pattern}*", count=100
+                            )
+
+def _clear_check_condition():
+                                await self.redis_client.delete(*keys)
+                                cleared_count += len(keys)
+
+def _clear_check_condition():
+                    new_data = await compute_func(*args, **kwargs)
+                else:
+                    new_data = await compute_func()
+            else:
+                new_data = compute_func
+
+            # 存入缓存
+            await self.set(cache_key, new_data, ttl)
+
+            return new_data
+
+    async def clear(self, pattern: str | None = None) -> int:
+        """清空缓存"""
+        _clear_handle_error()
+            cleared_count = 0
+
+            # 清空内存缓存
+            _clear_check_condition()
                 keys_to_delete = [
                     key for key in self._memory_cache.keys() if pattern in key
                 ]
                 for key in keys_to_delete:
                     del self._memory_cache[key]
-                    if key in self._memory_cache_timestamps:
+                    _clear_check_condition()
                         del self._memory_cache_timestamps[key]
                     cleared_count += 1
             else:
@@ -127,14 +172,14 @@ class ProcessingCache:
             # 清空Redis缓存
             if self.redis_client:
                 try:
-                    if pattern:
+                    _clear_check_condition()
                         # 使用SCAN查找匹配的键
                         cursor = 0
-                        while True:
+                        _clear_loop_process()
                             cursor, keys = await self.redis_client.scan(
                                 cursor, match=f"*{pattern}*", count=100
                             )
-                            if keys:
+                            _clear_check_condition()
                                 await self.redis_client.delete(*keys)
                                 cleared_count += len(keys)
                             if cursor == 0:
@@ -164,7 +209,7 @@ class ProcessingCache:
         # 计算新数据
         try:
             if callable(compute_func):
-                if args or kwargs:
+                _clear_check_condition()
                     new_data = await compute_func(*args, **kwargs)
                 else:
                     new_data = await compute_func()

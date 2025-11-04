@@ -397,8 +397,8 @@ class TestPasswordStrengthValidation:
 
         # 7个字符应该无效，8个字符应该有效（假设最小长度是8）
         # 这取决于实际的验证规则实现
-        print(f"7 chars valid: {is_valid_7}, errors: {errors_7}")
-        print(f"8 chars valid: {is_valid_8}, errors: {errors_8}")
+        logger.error(f"7 chars valid: {is_valid_7}, errors: {errors_7}")  # TODO: Add logger import if needed
+        logger.error(f"8 chars valid: {is_valid_8}, errors: {errors_8}")  # TODO: Add logger import if needed
 
     def test_password_complexity_requirements(self, auth_manager):
         """测试密码复杂度要求"""
@@ -518,8 +518,8 @@ class TestTokenBlacklisting:
     def auth_manager(self):
         """JWT认证管理器fixture"""
         return JWTAuthManager(
-            secret_key="test-secret-key", redis_url=None  # 不使用Redis
-        )
+            secret_key="test-secret-key", redis_url=None
+        )  # 不使用Redis
 
     @pytest.mark.asyncio
     async def test_blacklist_token_without_redis(self, auth_manager):

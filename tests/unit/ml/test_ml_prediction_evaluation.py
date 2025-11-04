@@ -25,12 +25,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.models.base_model import PredictionResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")
+    logger.warning(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -170,13 +170,13 @@ class TestMLModelPrediction:
         assert 0 <= prediction.confidence <= 1
         assert prediction.confidence > 0
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 单场比赛预测测试通过: {prediction.home_team} vs {prediction.away_team}"
         )
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"   预测结果: {prediction.predicted_outcome} (置信度: {prediction.confidence:.3f})"
         )
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"   概率分布: 主胜{prediction.home_win_prob:.3f} 平局{prediction.draw_prob:.3f} 客胜{prediction.away_win_prob:.3f}"
         )
 
@@ -228,7 +228,7 @@ class TestMLModelPrediction:
         assert prediction1.away_win_prob == prediction2.away_win_prob
         assert prediction1.predicted_outcome == prediction2.predicted_outcome
 
-        print(f"✅ 批量预测一致性测试通过: {len(batch_predictions)}个预测")
+        logger.debug(f"✅ 批量预测一致性测试通过: {len(batch_predictions)}个预测")  # TODO: Add logger import if needed
 
     def test_prediction_probability_distribution(self):
         """测试预测概率分布特性"""
@@ -273,10 +273,10 @@ class TestMLModelPrediction:
         assert 0.2 < np.mean(draw_probs) < 0.4  # 合理的平局概率范围
         assert 0.2 < np.mean(away_win_probs) < 0.5  # 合理的客胜概率范围
 
-        print("✅ 概率分布特性验证通过:")
-        print(f"   主胜概率均值: {np.mean(home_win_probs):.3f}")
-        print(f"   平局概率均值: {np.mean(draw_probs):.3f}")
-        print(f"   客胜概率均值: {np.mean(away_win_probs):.3f}")
+        logger.debug("✅ 概率分布特性验证通过:")  # TODO: Add logger import if needed
+        logger.debug(f"   主胜概率均值: {np.mean(home_win_probs):.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   平局概率均值: {np.mean(draw_probs):.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   客胜概率均值: {np.mean(away_win_probs):.3f}")  # TODO: Add logger import if needed
 
     def test_prediction_confidence_calibration(self):
         """测试预测置信度校准"""
@@ -335,9 +335,9 @@ class TestMLModelPrediction:
             confidence_diff = abs(data["avg_confidence"] - data["accuracy"])
             assert confidence_diff < 0.3  # 允许一定的校准误差
 
-        print("✅ 置信度校准验证通过:")
+        logger.debug("✅ 置信度校准验证通过:")  # TODO: Add logger import if needed
         for data in calibration_data:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"   置信度{data['confidence_range']}: "
                 f"样本数={data['count']}, "
                 f"准确率={data['accuracy']:.3f}, "
@@ -404,7 +404,7 @@ class TestMLModelPrediction:
             assert abs(sum(probs) - 1.0) < 0.01
             assert prediction.confidence > 0
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 边界情况测试通过: {len(successful_cases)}/{len(edge_cases)} 个边界情况处理成功"
         )
 
@@ -458,10 +458,10 @@ class TestMLModelPrediction:
                     assert False, f"Case '{case['name']}' should have failed"
                 else:
                     assert isinstance(prediction, PredictionResult)
-                    print(f"✅ {case['name']}: 预测成功")
+                    logger.debug(f"✅ {case['name']}: 预测成功")  # TODO: Add logger import if needed
             except Exception as e:
                 if case["should_fail"]:
-                    print(f"✅ {case['name']}: 正确捕获错误 - {str(e)[:50]}...")
+                    logger.debug(f"✅ {case['name']}: 正确捕获错误 - {str(e)[:50]}...")  # TODO: Add logger import if needed
                 else:
                     assert (
                         False
@@ -512,12 +512,12 @@ class TestMLModelEvaluation:
         # 验证总预测数
         assert evaluation_metrics["total_predictions"] <= len(test_data)
 
-        print("✅ 全面评估指标测试通过:")
-        print(f"   准确率: {evaluation_metrics['accuracy']:.3f}")
-        print(f"   精确率: {evaluation_metrics['precision']:.3f}")
-        print(f"   召回率: {evaluation_metrics['recall']:.3f}")
-        print(f"   F1分数: {evaluation_metrics['f1_score']:.3f}")
-        print(f"   总预测数: {evaluation_metrics['total_predictions']}")
+        logger.debug("✅ 全面评估指标测试通过:")  # TODO: Add logger import if needed
+        logger.debug(f"   准确率: {evaluation_metrics['accuracy']:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   精确率: {evaluation_metrics['precision']:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   召回率: {evaluation_metrics['recall']:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   F1分数: {evaluation_metrics['f1_score']:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   总预测数: {evaluation_metrics['total_predictions']}")  # TODO: Add logger import if needed
 
     def test_evaluation_on_different_data_distributions(self):
         """测试不同数据分布上的评估"""
@@ -574,12 +574,12 @@ class TestMLModelEvaluation:
         assert results["balanced"]["test_accuracy"] > 0.2  # 至少比随机好
 
         # 比较不同数据集的性能
-        print("✅ 不同数据分布评估测试通过:")
+        logger.debug("✅ 不同数据分布评估测试通过:")  # TODO: Add logger import if needed
         for name, result in results.items():
-            print(f"   {name}数据集:")
-            print(f"     训练准确率: {result['training_accuracy']:.3f}")
-            print(f"     测试准确率: {result['test_accuracy']:.3f}")
-            print(f"     F1分数: {result['f1_score']:.3f}")
+            logger.debug(f"   {name}数据集:")  # TODO: Add logger import if needed
+            logger.debug(f"     训练准确率: {result['training_accuracy']:.3f}")  # TODO: Add logger import if needed
+            logger.debug(f"     测试准确率: {result['test_accuracy']:.3f}")  # TODO: Add logger import if needed
+            logger.debug(f"     F1分数: {result['f1_score']:.3f}")  # TODO: Add logger import if needed
 
     def test_evaluation_reliability_and_stability(self):
         """测试评估可靠性和稳定性"""
@@ -626,10 +626,10 @@ class TestMLModelEvaluation:
         # 验证合理的性能水平
         assert mean_accuracy > 0.2  # 应该比随机预测好
 
-        print("✅ 评估稳定性测试通过:")
-        print(f"   准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")
-        print(f"   范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")
-        print(f"   变异系数: {std_accuracy/mean_accuracy:.3f}")
+        logger.debug("✅ 评估稳定性测试通过:")  # TODO: Add logger import if needed
+        logger.debug(f"   准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")  # TODO: Add logger import if needed
+        logger.debug(f"   变异系数: {std_accuracy/mean_accuracy:.3f}")  # TODO: Add logger import if needed
 
     def test_cross_validation_evaluation(self):
         """测试交叉验证评估"""
@@ -655,10 +655,10 @@ class TestMLModelEvaluation:
         accuracy_diff = abs(training_result.accuracy - test_metrics["accuracy"])
         assert accuracy_diff < 0.3  # 允许一定的差异
 
-        print("✅ 交叉验证评估测试通过:")
-        print(f"   交叉验证准确率: {training_result.accuracy:.3f}")
-        print(f"   测试准确率: {test_metrics['accuracy']:.3f}")
-        print(f"   差异: {accuracy_diff:.3f}")
+        logger.debug("✅ 交叉验证评估测试通过:")  # TODO: Add logger import if needed
+        logger.debug(f"   交叉验证准确率: {training_result.accuracy:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   测试准确率: {test_metrics['accuracy']:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   差异: {accuracy_diff:.3f}")  # TODO: Add logger import if needed
 
     def test_feature_importance_analysis(self):
         """测试特征重要性分析"""
@@ -688,11 +688,11 @@ class TestMLModelEvaluation:
             )
             assert len(sorted_features) == len(feature_importance)
 
-            print("✅ 特征重要性分析测试通过:")
+            logger.debug("✅ 特征重要性分析测试通过:")  # TODO: Add logger import if needed
             for feature, importance in sorted_features:
-                print(f"   {feature}: {importance:.3f}")
+                logger.debug(f"   {feature}: {importance:.3f}")  # TODO: Add logger import if needed
         else:
-            print("✅ 特征重要性分析测试通过: 模型不支持特征重要性计算")
+            logger.debug("✅ 特征重要性分析测试通过: 模型不支持特征重要性计算")  # TODO: Add logger import if needed
 
     def test_model_comparison_evaluation(self):
         """测试模型比较评估"""
@@ -752,18 +752,18 @@ class TestMLModelEvaluation:
         performance_diff = best_model["test_accuracy"] - worst_model["test_accuracy"]
         assert performance_diff >= 0  # 应该有性能差异
 
-        print("✅ 模型比较评估测试通过:")
-        print(
+        logger.debug("✅ 模型比较评估测试通过:")  # TODO: Add logger import if needed
+        logger.debug()  # TODO: Add logger import if needed
             f"   最佳模型: {best_model['name']} (准确率: {best_model['test_accuracy']:.3f})"
         )
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"   最差模型: {worst_model['name']} (准确率: {worst_model['test_accuracy']:.3f})"
         )
-        print(f"   性能差异: {performance_diff:.3f}")
+        logger.debug(f"   性能差异: {performance_diff:.3f}")  # TODO: Add logger import if needed
 
-        print("\n详细比较:")
+        logger.debug("\n详细比较:")  # TODO: Add logger import if needed
         for model in model_comparison:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"   {model['name']}: 训练={model['training_accuracy']:.3f}, "
                 f"测试={model['test_accuracy']:.3f}, F1={model['f1_score']:.3f}"
             )
@@ -824,9 +824,9 @@ class TestMLModelPerformanceAnalysis:
             time_trend = np.polyfit(range(len(training_times)), training_times, 1)[0]
             assert time_trend > 0  # 训练时间应该增加
 
-        print("✅ 学习曲线分析测试通过:")
+        logger.debug("✅ 学习曲线分析测试通过:")  # TODO: Add logger import if needed
         for result in learning_curve_results:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"   数据量={result['training_size']}: "
                 f"训练准确率={result['training_accuracy']:.3f}, "
                 f"测试准确率={result['test_accuracy']:.3f}, "
@@ -887,11 +887,11 @@ class TestMLModelPerformanceAnalysis:
                 }
             )
 
-        print("✅ 置信度分析测试通过:")
-        print(f"   平均置信度: {mean_confidence:.3f} ± {std_confidence:.3f}")
-        print("   置信度分布:")
+        logger.debug("✅ 置信度分析测试通过:")  # TODO: Add logger import if needed
+        logger.debug(f"   平均置信度: {mean_confidence:.3f} ± {std_confidence:.3f}")  # TODO: Add logger import if needed
+        logger.debug("   置信度分布:")  # TODO: Add logger import if needed
         for dist in confidence_distribution:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"     {dist['label']} ({dist['range']}): {dist['count']} ({dist['percentage']:.1f}%)"
             )
 
@@ -965,12 +965,12 @@ class TestMLModelPerformanceAnalysis:
             confidence_gap = avg_confidence_correct - avg_confidence_incorrect
             assert confidence_gap > 0  # 正确预测应该有更高的平均置信度
 
-        print("✅ 错误分析测试通过:")
-        print(f"   总准确率: {accuracy:.3f}")
-        print(f"   错误率: {error_rate:.3f}")
-        print(f"   正确预测平均置信度: {avg_confidence_correct:.3f}")
-        print(f"   错误预测平均置信度: {avg_confidence_incorrect:.3f}")
-        print(f"   错误类型分布: {error_types}")
+        logger.debug("✅ 错误分析测试通过:")  # TODO: Add logger import if needed
+        logger.debug(f"   总准确率: {accuracy:.3f}")  # TODO: Add logger import if needed
+        logger.error(f"   错误率: {error_rate:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   正确预测平均置信度: {avg_confidence_correct:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"   错误预测平均置信度: {avg_confidence_incorrect:.3f}")  # TODO: Add logger import if needed
+        logger.error(f"   错误类型分布: {error_types}")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

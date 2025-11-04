@@ -14,7 +14,6 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 try:
-    from database.base import DatabaseManager
     from database.connection import get_async_session
 except ImportError:
     pytest.skip("数据库模块不可用", allow_module_level=True)

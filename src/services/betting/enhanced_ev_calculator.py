@@ -161,7 +161,6 @@ class EnhancedKellyCalculator:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.logger = logger
         # 优化后的Kelly参数
@@ -449,7 +448,6 @@ class EnhancedValueRatingCalculator:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.logger = logger
         # 评级权重配置
@@ -714,7 +712,6 @@ class EnhancedEVCalculator:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.kelly_calculator = EnhancedKellyCalculator()
         self.value_calculator = EnhancedValueRatingCalculator()

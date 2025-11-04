@@ -30,7 +30,7 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入ML模型: {e}")
+    logger.warning(f"Warning: 无法导入ML模型: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 

@@ -24,20 +24,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.domain.strategies.ml_model import MLModelStrategy
-    from src.ml.enhanced_real_model_training import EnhancedRealModelTrainer
-    from src.ml.model_training import (
-        ModelTrainer,
-        ModelType,
-        TrainingConfig,
-        TrainingStatus,
-    )
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.models.base_model import PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")
+    logger.warning(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -193,7 +185,7 @@ class TestMLWorkflowIntegration:
                 predictions.append(prediction)
             except Exception as e:
                 # 记录预测失败的情况
-                print(f"Prediction failed for {request['match_id']}: {e}")
+                logger.error(f"Prediction failed for {request['match_id']}: {e}")  # TODO: Add logger import if needed
 
         # 6. 验证预测结果
         assert len(predictions) > 0
@@ -792,11 +784,11 @@ class TestMLDataPipeline:
 # 测试运行器
 async def run_ml_integration_tests():
     """运行ML集成测试套件"""
-    print("🤖 开始ML集成测试")
-    print("=" * 60)
+    logger.debug("🤖 开始ML集成测试")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     # 这里可以添加更复杂的ML集成测试逻辑
-    print("✅ ML集成测试完成")
+    logger.debug("✅ ML集成测试完成")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

@@ -31,14 +31,13 @@ try:
         ModelTrainer,
         ModelType,
         TrainingConfig,
-        TrainingStatus,
     )
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.models.base_model import PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")
+    logger.warning(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -149,7 +148,7 @@ class TestMLModelTraining:
         assert prediction.confidence > 0.0
         assert prediction.model_name == "PoissonModel"
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ Poisson模型训练完成: 准确率={training_result.accuracy:.3f}, 训练时间={training_result.training_time:.2f}s"
         )
 
@@ -176,7 +175,7 @@ class TestMLModelTraining:
         assert "recall" in validation_metrics
         assert "f1_score" in validation_metrics
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 验证训练完成: 训练准确率={training_result.accuracy:.3f}, 验证准确率={validation_metrics['accuracy']:.3f}"
         )
 
@@ -210,7 +209,7 @@ class TestMLModelTraining:
         assert all(0 <= p <= 1 for p in probabilities)
         assert abs(sum(probabilities) - 1.0) < 0.01
 
-        print(f"✅ 交叉验证完成: 准确率={training_result.accuracy:.3f}")
+        logger.debug(f"✅ 交叉验证完成: 准确率={training_result.accuracy:.3f}")  # TODO: Add logger import if needed
 
     def test_model_hyperparameter_optimization(self):
         """测试模型超参数优化"""
@@ -245,7 +244,7 @@ class TestMLModelTraining:
 
         # 找到最佳配置
         best_result = max(results, key=lambda x: x["accuracy"])
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 超参数优化完成: 最佳配置={best_result['config']}, 准确率={best_result['accuracy']:.3f}"
         )
 
@@ -312,7 +311,7 @@ class TestMLModelTraining:
                 < 0.001
             )
 
-            print("✅ 模型保存加载测试通过: 预测结果一致")
+            logger.debug("✅ 模型保存加载测试通过: 预测结果一致")  # TODO: Add logger import if needed
 
         finally:
             # 清理临时文件
@@ -350,9 +349,9 @@ class TestMLModelTraining:
             assert training_result.accuracy > 0.0
 
         # 分析训练时间随数据大小的变化
-        print("✅ 不同数据大小训练测试完成:")
+        logger.debug("✅ 不同数据大小训练测试完成:")  # TODO: Add logger import if needed
         for result in training_results:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"  数据量={result['data_size']}, 训练时间={result['training_time']:.2f}s, "
                 f"实际时间={result['actual_time']:.2f}s, 准确率={result['accuracy']:.3f}"
             )
@@ -391,7 +390,7 @@ class TestMLModelTraining:
         training_result = model.train(small_data)
         assert training_result.training_samples == 1
 
-        print("✅ 错误处理测试通过")
+        logger.debug("✅ 错误处理测试通过")  # TODO: Add logger import if needed
 
     def test_model_training_progress_tracking(self):
         """测试模型训练进度跟踪"""
@@ -419,7 +418,7 @@ class TestMLModelTraining:
         )  # home_attack, home_defense, away_attack, away_defense
         assert "hyperparameters" in model_info
 
-        print("✅ 训练进度跟踪测试通过")
+        logger.debug("✅ 训练进度跟踪测试通过")  # TODO: Add logger import if needed
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -475,7 +474,7 @@ class TestAsyncModelTraining:
         assert summary["training_epochs"] > 0
         assert summary["model_name"] is not None
 
-        print(f"✅ 异步训练器测试完成: 准确率={evaluation_metrics['accuracy']:.3f}")
+        logger.debug(f"✅ 异步训练器测试完成: 准确率={evaluation_metrics['accuracy']:.3f}")  # TODO: Add logger import if needed
 
     async def test_async_model_save_load(self):
         """测试异步模型保存和加载"""
@@ -508,7 +507,7 @@ class TestAsyncModelTraining:
             assert load_success
             assert new_trainer.model is not None
 
-            print("✅ 异步模型保存加载测试通过")
+            logger.debug("✅ 异步模型保存加载测试通过")  # TODO: Add logger import if needed
 
         finally:
             if os.path.exists(model_path):
@@ -544,7 +543,7 @@ class TestAsyncModelTraining:
             assert result["status"] == "completed"
             assert "model_name" in result
 
-        print(f"✅ 并发模型训练测试通过: 训练了{len(results)}个模型")
+        logger.debug(f"✅ 并发模型训练测试通过: 训练了{len(results)}个模型")  # TODO: Add logger import if needed
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -602,7 +601,7 @@ class TestMLModelIntegration:
         assert evaluation_metrics["accuracy"] > 0.0
         assert evaluation_metrics["f1_score"] > 0.0
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 端到端流水线测试完成: 训练准确率={training_result.accuracy:.3f}, "
             f"测试准确率={evaluation_metrics['accuracy']:.3f}"
         )
@@ -655,7 +654,7 @@ class TestMLModelIntegration:
         max_prob = max(ensemble_probs)
         ensemble_confidence = max_prob
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 集成预测测试完成: 集成置信度={ensemble_confidence:.3f}, "
             f"模型数量={len(models)}"
         )
@@ -707,13 +706,13 @@ class TestMLModelIntegration:
         # 找到最佳模型
         best_model = max(results, key=lambda x: x["test_accuracy"])
 
-        print("✅ 模型比较测试完成:")
+        logger.debug("✅ 模型比较测试完成:")  # TODO: Add logger import if needed
         for result in results:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"  {result['config']}: 测试准确率={result['test_accuracy']:.3f}, "
                 f"F1分数={result['f1_score']:.3f}"
             )
-        print(f"最佳模型: {best_model['config']}")
+        logger.debug(f"最佳模型: {best_model['config']}")  # TODO: Add logger import if needed
 
     def test_model_robustness_testing(self):
         """测试模型鲁棒性"""
@@ -768,7 +767,7 @@ class TestMLModelIntegration:
         same_team_result = next(r for r in results if r["case"] == "same_team")
         assert not same_team_result["success"]
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 鲁棒性测试完成: 成功预测={len(successful_predictions)}, "
             f"失败预测={len(failed_predictions)}"
         )
@@ -832,7 +831,7 @@ class TestMLModelPerformanceMetrics:
         assert isinstance(cm, list)
         assert len(cm) > 0
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"✅ 全面模型评估完成: 准确率={evaluation_metrics['accuracy']:.3f}, "
             f"F1分数={evaluation_metrics['f1_score']:.3f}"
         )
@@ -882,10 +881,10 @@ class TestMLModelPerformanceMetrics:
         # 验证稳定性（标准差不应太大）
         assert std_accuracy < 0.2  # 标准差应该小于0.2
 
-        print("✅ 训练稳定性分析完成:")
-        print(f"  平均准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")
-        print(f"  准确率范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")
-        print(f"  变异系数: {std_accuracy/mean_accuracy:.3f}")
+        logger.debug("✅ 训练稳定性分析完成:")  # TODO: Add logger import if needed
+        logger.debug(f"  平均准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")  # TODO: Add logger import if needed
+        logger.debug(f"  准确率范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")  # TODO: Add logger import if needed
+        logger.debug(f"  变异系数: {std_accuracy/mean_accuracy:.3f}")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

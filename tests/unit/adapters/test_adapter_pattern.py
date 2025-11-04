@@ -25,7 +25,7 @@ try:
     from src.adapters.factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
     from src.adapters.registry import AdapterError, AdapterRegistry
 except ImportError as e:
-    print(f"Warning: Import failed: {e}")
+    logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
     # 直接导入避免__init__.py的语法错误
     import os
     import sys

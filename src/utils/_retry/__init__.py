@@ -6,11 +6,10 @@
 
 import asyncio
 import functools
-import random
 import secrets
 import time
 from collections.abc import Callable
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -41,7 +40,6 @@ class RetryConfig:
 class RetryError(Exception):
     """重试失败异常"""
 
-    pass
 
 
 def retry_with_exponential_backoff(

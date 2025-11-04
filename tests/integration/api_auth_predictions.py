@@ -47,11 +47,11 @@ class AuthPredictionIntegrationTester:
         self.test_results.append(result)
 
         status_symbol = "✅" if success else "❌"
-        print(f"{status_symbol} {test_name}")
+        logger.debug(f"{status_symbol} {test_name}")  # TODO: Add logger import if needed
         if details:
-            print(f"   📝 {details}")
+            logger.debug(f"   📝 {details}")  # TODO: Add logger import if needed
         if duration > 0:
-            print(f"   ⏱️  耗时: {duration:.2f}秒")
+            logger.debug(f"   ⏱️  耗时: {duration:.2f}秒")  # TODO: Add logger import if needed
 
     async def test_health_endpoints(self) -> bool:
         """测试健康检查端点"""
@@ -368,8 +368,8 @@ class AuthPredictionIntegrationTester:
 
     async def run_all_tests(self) -> dict[str, Any]:
         """运行所有集成测试"""
-        print("🚀 开始API集成测试：认证与预测服务集成")
-        print("=" * 60)
+        logger.debug("🚀 开始API集成测试：认证与预测服务集成")  # TODO: Add logger import if needed
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
 
         test_methods = [
             self.test_health_endpoints,
@@ -391,10 +391,10 @@ class AuthPredictionIntegrationTester:
             try:
                 if await test_method():
                     passed_tests += 1
-                print()  # 空行分隔
+                logger.debug()  # 空行分)  # TODO: Add logger import if needed
             except Exception as e:
                 logger.error(f"测试方法 {test_method.__name__} 执行异常: {e}")
-                print()
+                logger.debug()  # TODO: Add logger import if needed
 
         # 生成测试报告
         success_rate = (passed_tests / total_tests) * 100
@@ -407,12 +407,12 @@ class AuthPredictionIntegrationTester:
             "timestamp": datetime.now().isoformat(),
         }
 
-        print("=" * 60)
-        print("📊 测试完成！")
-        print(f"总测试数: {total_tests}")
-        print(f"通过测试: {passed_tests}")
-        print(f"失败测试: {total_tests - passed_tests}")
-        print(f"成功率: {success_rate:.1f}%")
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
+        logger.debug("📊 测试完成！")  # TODO: Add logger import if needed
+        logger.debug(f"总测试数: {total_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"通过测试: {passed_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"失败测试: {total_tests - passed_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
 
         return report
 
@@ -487,14 +487,14 @@ async def main():
     tester = AuthPredictionIntegrationTester()
     report = await tester.run_all_tests()
 
-    print("\n🎯 集成测试结果:")
-    print(f"成功率: {report['success_rate']:.1f}%")
+    logger.debug("\n🎯 集成测试结果:")  # TODO: Add logger import if needed
+    logger.debug(f"成功率: {report['success_rate']:.1f}%")  # TODO: Add logger import if needed
 
     if report["success_rate"] >= 80:
-        print("🎉 集成测试通过！")
+        logger.debug("🎉 集成测试通过！")  # TODO: Add logger import if needed
         return 0
     else:
-        print("❌ 集成测试失败，成功率不足80%")
+        logger.debug("❌ 集成测试失败，成功率不足80%")  # TODO: Add logger import if needed
         return 1
 
 

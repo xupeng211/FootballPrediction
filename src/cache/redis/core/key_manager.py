@@ -14,7 +14,6 @@ class RedisKeyManager:
 
     def __init__(self, prefix: str = "fp"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.prefix = prefix
 

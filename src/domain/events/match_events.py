@@ -54,7 +54,6 @@ class MatchStartedEvent(DomainEvent):
 
     def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
@@ -106,7 +105,6 @@ class MatchCancelledEvent(DomainEvent):
 
     def __init__(self, match_id: int, reason: str, **kwargs):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
@@ -121,7 +119,6 @@ class MatchPostponedEvent(DomainEvent):
 
     def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id

@@ -13,7 +13,6 @@ class BaseCache(ABC):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化缓存"""
         self.logger = logging.getLogger(f"cache.{self.__class__.__name__}")
@@ -22,22 +21,18 @@ class BaseCache(ABC):
     @abstractmethod
     async def get(self, key: str) -> Any | None:
         """获取缓存值"""
-        pass
 
     @abstractmethod
     async def set(self, key: str, value: Any, ttl: int = 3600) -> bool:
         """设置缓存值"""
-        pass
 
     @abstractmethod
     async def delete(self, key: str) -> bool:
         """删除缓存"""
-        pass
 
     @abstractmethod
     async def clear(self) -> bool:
         """清空缓存"""
-        pass
 
 
 class CacheKeyManager:
@@ -48,7 +43,6 @@ class CacheKeyManager:
 
     def __init__(self, prefix: str = "fp"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化键管理器"
 

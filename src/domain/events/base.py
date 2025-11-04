@@ -22,7 +22,6 @@ class DomainEvent(ABC):
 
     def __init__(self, aggregate_id: int | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """
         初始化领域事件

@@ -24,12 +24,12 @@ import pytest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from ml.models.base_model import TrainingResult
     from ml.models.elo_model import EloModel
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入Elo模型: {e}")
+    logger.warning(f"Warning: 无法导入Elo模型: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 

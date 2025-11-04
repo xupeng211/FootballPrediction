@@ -55,7 +55,7 @@ app = create_mock_app()
 API_AVAILABLE = True
 TEST_SKIP_REASON = "API模块不可用"
 
-print("智能Mock兼容修复模式：Mock API应用已创建")
+logger.debug("智能Mock兼容修复模式：Mock API应用已创建")  # TODO: Add logger import if needed
 
 
 #!/usr/bin/env python3

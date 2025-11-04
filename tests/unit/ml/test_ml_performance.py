@@ -24,18 +24,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.model_training import (
-        ModelTrainer,
-        ModelType,
-        TrainingConfig,
-        TrainingStatus,
-    )
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.models.base_model import PredictionResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")
+    logger.warning(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -158,7 +152,7 @@ class TestMLModelPerformance:
         assert result.accuracy > 0.3  # 基本性能要求
         assert model.is_trained is True
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"小数据集训练性能: {execution_time:.3f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB"
         )
 
@@ -182,7 +176,7 @@ class TestMLModelPerformance:
         assert result.accuracy > 0.3
         assert len(model.team_attack_strength) > 0
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"中等数据集训练性能: {execution_time:.3f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB"
         )
 
@@ -216,7 +210,7 @@ class TestMLModelPerformance:
             < 0.01
         )
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"单个预测性能: {execution_time:.6f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB"
         )
 
@@ -257,7 +251,7 @@ class TestMLModelPerformance:
         assert avg_time_per_prediction < 0.05  # 平均每个预测在50ms内
         assert len(predictions) == batch_size
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"批量预测性能: {execution_time:.3f}s, 平均每个: {avg_time_per_prediction:.6f}s"
         )
 
@@ -294,7 +288,7 @@ class TestMLModelPerformance:
             after_prediction_memory - after_training_memory < 10
         )  # 预测内存增长应小于10MB
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"内存使用: 初始={initial_memory:.2f}MB, 训练后={after_training_memory:.2f}MB, "
             f"预测后={after_prediction_memory:.2f}MB, 增长={memory_increase:.2f}MB"
         )
@@ -347,7 +341,7 @@ class TestMLModelPerformance:
         assert total_execution_time < 10.0  # 总执行时间应在10秒内
         assert avg_task_time < 0.5  # 平均任务时间应在500ms内
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"并发预测性能: 任务数={num_tasks}, 并发数={max_workers}, "
             f"总时间={total_execution_time:.3f}s, 平均任务时间={avg_task_time:.6f}s, "
             f"最大任务时间={max_task_time:.6f}s"
@@ -390,14 +384,14 @@ class TestMLModelPerformance:
         assert time_ratio < size_ratio * 1.5  # 时间增长不应超过数据增长的1.5倍
         assert all(t < 30 for t in training_times)  # 所有训练时间都应在30秒内
 
-        print("扩展性测试结果:")
+        logger.debug("扩展性测试结果:")  # TODO: Add logger import if needed
         for result in performance_results:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"  数据量={result['data_size']}, 训练时间={result['training_time']:.3f}s, "
                 f"内存增长={result['memory_usage']:.2f}MB, 准确率={result['accuracy']:.3f}"
             )
 
-        print(f"数据增长{size_ratio:.1f}倍，时间增长{time_ratio:.1f}倍")
+        logger.debug(f"数据增长{size_ratio:.1f}倍，时间增长{time_ratio:.1f}倍")  # TODO: Add logger import if needed
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -450,17 +444,17 @@ class TestMLModelOptimization:
         best_config = max(results, key=lambda x: x["evaluation_accuracy"])
         fastest_training = min(results, key=lambda x: x["training_time"])
 
-        print("超参数优化结果:")
+        logger.debug("超参数优化结果:")  # TODO: Add logger import if needed
         for result in results:
-            print(
+            logger.debug()  # TODO: Add logger import if needed
                 f"  配置={result['config']}, 训练时间={result['training_time']:.3f}s, "
                 f"评估准确率={result['evaluation_accuracy']:.3f}"
             )
 
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"最佳配置: {best_config['config']}, 准确率: {best_config['evaluation_accuracy']:.3f}"
         )
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"最快训练: {fastest_training['config']}, 时间: {fastest_training['training_time']:.3f}s"
         )
 
@@ -531,13 +525,13 @@ class TestMLModelOptimization:
 
         preprocessing_time = monitor.get_execution_time()
 
-        print("数据预处理优化:")
-        print(f"  预处理时间: {preprocessing_time:.3f}s")
-        print(f"  数据质量提升: {quality_ratio:.3f}")
-        print(
+        logger.debug("数据预处理优化:")  # TODO: Add logger import if needed
+        logger.debug(f"  预处理时间: {preprocessing_time:.3f}s")  # TODO: Add logger import if needed
+        logger.debug(f"  数据质量提升: {quality_ratio:.3f}")  # TODO: Add logger import if needed
+        logger.debug()  # TODO: Add logger import if needed
             f"  噪声数据训练时间: {noisy_training_time:.3f}s, 准确率: {noisy_metrics['accuracy']:.3f}"
         )
-        print(
+        logger.debug()  # TODO: Add logger import if needed
             f"  清洁数据训练时间: {clean_training_time:.3f}s, 准确率: {clean_metrics['accuracy']:.3f}"
         )
 
@@ -588,10 +582,10 @@ class TestMLModelOptimization:
         avg_subsequent_time = np.mean(subsequent_times)
         max_subsequent_time = np.max(subsequent_times)
 
-        print("模型缓存测试:")
-        print(f"  首次预测时间: {first_prediction_time:.6f}s")
-        print(f"  平均后续时间: {avg_subsequent_time:.6f}s")
-        print(f"  最大后续时间: {max_subsequent_time:.6f}s")
+        logger.debug("模型缓存测试:")  # TODO: Add logger import if needed
+        logger.debug(f"  首次预测时间: {first_prediction_time:.6f}s")  # TODO: Add logger import if needed
+        logger.debug(f"  平均后续时间: {avg_subsequent_time:.6f}s")  # TODO: Add logger import if needed
+        logger.debug(f"  最大后续时间: {max_subsequent_time:.6f}s")  # TODO: Add logger import if needed
 
         # 缓存性能断言
         assert (
@@ -649,10 +643,10 @@ class TestMLModelOptimization:
             assert ind.draw_prob == batch.draw_prob
             assert ind.away_win_prob == batch.away_win_prob
 
-        print("批处理优化测试:")
-        print(f"  逐个处理时间: {individual_time:.3f}s")
-        print(f"  批处理时间: {batch_time:.3f}s")
-        print(
+        logger.debug("批处理优化测试:")  # TODO: Add logger import if needed
+        logger.debug(f"  逐个处理时间: {individual_time:.3f}s")  # TODO: Add logger import if needed
+        logger.debug(f"  批处理时间: {batch_time:.3f}s")  # TODO: Add logger import if needed
+        logger.debug()  # TODO: Add logger import if needed
             f"  性能提升: {individual_time/batch_time:.2f}x"
             if batch_time > 0
             else "无法计算"
@@ -665,11 +659,11 @@ class TestMLModelOptimization:
 # 测试运行器
 async def run_ml_performance_tests():
     """运行ML性能测试套件"""
-    print("🚀 开始ML性能测试")
-    print("=" * 60)
+    logger.debug("🚀 开始ML性能测试")  # TODO: Add logger import if needed
+    logger.debug("=" * 60)  # TODO: Add logger import if needed
 
     # 这里可以添加更复杂的ML性能测试逻辑
-    print("✅ ML性能测试完成")
+    logger.debug("✅ ML性能测试完成")  # TODO: Add logger import if needed
 
 
 if __name__ == "__main__":

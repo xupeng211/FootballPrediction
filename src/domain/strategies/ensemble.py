@@ -17,7 +17,6 @@ class EnsembleMethod:
     pass  # 添加pass语句
     """集成方法 - 占位符实现"""
 
-    pass
 
 
 class EnsembleResult:
@@ -26,7 +25,6 @@ class EnsembleResult:
     pass  # 添加pass语句
     """集成结果 - 占位符实现"""
 
-    pass
 
 
 class EnsembleStrategy:
@@ -35,7 +33,6 @@ class EnsembleStrategy:
     pass  # 添加pass语句
     """集成策略 - 占位符实现"""
 
-    pass
 
 
 class StrategyWeight:
@@ -44,7 +41,6 @@ class StrategyWeight:
     pass  # 添加pass语句
     """策略权重 - 占位符实现"""
 
-    pass
 
 
 # 导出所有公共接口
