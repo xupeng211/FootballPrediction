@@ -248,35 +248,35 @@ class Settings(SettingsClass):
             self.log_level = "INFO"
             self.mlflow_tracking_uri = "file:///tmp/mlflow"
 
-        self.api_football_key = None
-        self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
-        self.metrics_enabled = True
-        self.metrics_tables = [
-            "matches",
-            "teams",
-            "leagues",
-            "odds",
-            "features",
-            "raw_match_data",
-            "raw_odds_data",
-            "raw_scores_data",
-            "data_collection_logs",
-        ]
-        self.metrics_collection_interval = 30
-        self.missing_data_defaults_path = None
-        self.missing_data_defaults_json = None
-        self.enabled_services = [
-            "ContentAnalysisService",
-            "UserProfileService",
-            "DataProcessingService",
-        ]
+            self.api_football_key = None
+            self.api_football_url = "https://api-football-v1.p.rapidapi.com/v3"
+            self.metrics_enabled = True
+            self.metrics_tables = [
+                "matches",
+                "teams",
+                "leagues",
+                "odds",
+                "features",
+                "raw_match_data",
+                "raw_odds_data",
+                "raw_scores_data",
+                "data_collection_logs",
+            ]
+            self.metrics_collection_interval = 30
+            self.missing_data_defaults_path = None
+            self.missing_data_defaults_json = None
+            self.enabled_services = [
+                "ContentAnalysisService",
+                "UserProfileService",
+                "DataProcessingService",
+            ]
 
-        # 从环境变量或kwargs更新配置
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+            # 从环境变量或kwargs更新配置
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
-        # 从环境变量读取配置
-        self._load_from_env()
+            # 从环境变量读取配置
+            self._load_from_env()
 
     def _load_from_env(self):
         """从环境变量加载配置"""
