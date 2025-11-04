@@ -16,7 +16,9 @@ def run_command(cmd, description):
     print(f"\n🔧 {description}")
     print(f"执行: {cmd}")
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+        # 在虚拟环境中执行命令
+        full_cmd = f".venv/bin/python3 -c \"import subprocess; result = subprocess.run('{cmd}', shell=True, capture_output=True, text=True); print(result.stdout); print(result.stderr if result.stderr else '')\""
+        result = subprocess.run(full_cmd, shell=True, capture_output=True, text=True, timeout=60)
         if result.stdout:
             print(f"✅ 输出: {result.stdout[:500]}")
         if result.stderr:
@@ -60,29 +62,22 @@ def assess_current_status():
 
     # 验证核心功能
     print("\n3️⃣ 验证核心功能:")
-    core_test = '''
-import sys
-sys.path.insert(0, 'src')
+    try:
+        import sys
+        sys.path.insert(0, 'src')
 
-try:
-    import utils.date_utils as du
-    import utils.validators as val
-    import cache.decorators as cd
+        import utils.date_utils as du
+        import utils.validators as val
+        import cache.decorators as cd
 
-    print("✅ 核心功能验证:")
-    print(f"  - DateUtils完整: {hasattr(du, 'DateUtils')}")
-    print(f"  - 缓存函数: {hasattr(du, 'cached_format_datetime')}")
-    print(f"  - 数据验证器: {hasattr(val, 'validate_data_types')}")
-    print(f"  - 缓存装饰器: {hasattr(cd, 'CacheDecorator')}")
-    print("✅ 验证完成!")
-except Exception as e:
-    print(f"❌ 验证失败: {e}")
-'''
-
-    run_command(
-        f"source .venv/bin/activate && python3 -c '{core_test}'",
-        "核心功能验证"
-    )
+        print("✅ 核心功能验证:")
+        print(f"  - DateUtils完整: {hasattr(du, 'DateUtils')}")
+        print(f"  - 缓存函数: {hasattr(du, 'cached_format_datetime')}")
+        print(f"  - 数据验证器: {hasattr(val, 'validate_data_types')}")
+        print(f"  - 缓存装饰器: {hasattr(cd, 'CacheDecorator')}")
+        print("✅ 验证完成!")
+    except Exception as e:
+        print(f"❌ 验证失败: {e}")
 
 def suggest_next_steps():
     """建议下一步行动"""
