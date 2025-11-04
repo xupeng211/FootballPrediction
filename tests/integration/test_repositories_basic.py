@@ -3,9 +3,10 @@
 简单的repositories测试，用于验证基本功能
 """
 
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, MagicMock
+
 from src.main import app
 
 client = TestClient(app)

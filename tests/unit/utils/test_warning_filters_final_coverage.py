@@ -2,9 +2,6 @@
 WarningFilters最终覆盖率测试 - 针对第24-28行初始化代码
 """
 
-import pytest
-import warnings
-import logging
 import sys
 from unittest.mock import patch
 

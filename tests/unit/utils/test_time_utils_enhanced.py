@@ -2,9 +2,11 @@
 时间工具增强测试 - 基于实际TimeUtils类
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 class TestTimeUtilsEnhanced:
@@ -15,12 +17,12 @@ class TestTimeUtilsEnhanced:
         # 测试now_utc方法
         utc_time = TimeUtils.now_utc()
         assert isinstance(utc_time, datetime)
-        assert utc_time.tzinfo == timezone.utc
+        assert utc_time.tzinfo == UTC
 
         # 测试get_utc_now方法（别名）
         utc_time_alias = TimeUtils.get_utc_now()
         assert isinstance(utc_time_alias, datetime)
-        assert utc_time_alias.tzinfo == timezone.utc
+        assert utc_time_alias.tzinfo == UTC
 
         # 测试get_local_now方法
         local_time = TimeUtils.get_local_now()
@@ -29,14 +31,14 @@ class TestTimeUtilsEnhanced:
     def test_timestamp_conversion(self):
         """测试时间戳转换"""
         # 测试datetime到时间戳
-        dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
         timestamp = TimeUtils.datetime_to_timestamp(dt)
         assert isinstance(timestamp, float)
 
         # 测试时间戳到datetime
         converted_dt = TimeUtils.timestamp_to_datetime(timestamp)
         assert isinstance(converted_dt, datetime)
-        assert converted_dt.tzinfo == timezone.utc
+        assert converted_dt.tzinfo == UTC
 
         # 测试往返转换的一致性
         now = TimeUtils.now_utc()
@@ -77,7 +79,7 @@ class TestTimeUtilsEnhanced:
         try:
             utc_time = utc_now()
             assert isinstance(utc_time, datetime)
-            assert utc_time.tzinfo == timezone.utc
+            assert utc_time.tzinfo == UTC
         except Exception:
             pytest.skip("utc_now function not available")
 
@@ -100,7 +102,7 @@ class TestTimeUtilsEnhanced:
         """测试时区处理"""
         # 测试UTC时间
         utc_time = TimeUtils.now_utc()
-        assert utc_time.tzinfo == timezone.utc
+        assert utc_time.tzinfo == UTC
 
         # 测试本地时间
         local_time = TimeUtils.get_local_now()

@@ -4,12 +4,11 @@ CoverageImprovementExecutor扩展测试
 增加更多测试用例以提升覆盖率
 """
 
-import pytest
-import tempfile
-import os
-from pathlib import Path
 import sys
-import subprocess
+import tempfile
+from pathlib import Path
+
+import pytest
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent

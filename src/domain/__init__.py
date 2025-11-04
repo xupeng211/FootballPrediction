@@ -13,54 +13,28 @@ Implements core concepts of Domain-Driven Design (DDD), including:
 - Domain events
 """
 
-from src.domain.events import (
-    MatchCancelledEvent,
-    MatchFinishedEvent,
-    MatchPostponedEvent,
-    MatchStartedEvent,
-    PredictionCancelledEvent,
-    PredictionCreatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionExpiredEvent,
-    PredictionPointsAdjustedEvent,
-    PredictionUpdatedEvent,
-)
-from src.domain.models import (
-    ConfidenceScore,
-    League,
-    LeagueSeason,
-    LeagueSettings,
-    Match,
-    MatchResult,
-    MatchScore,
-    MatchStatus,
-    Prediction,
-    PredictionPoints,
-    PredictionScore,
-    PredictionStatus,
-    Team,
-    TeamForm,
-    TeamStats,
-)
-from src.domain.services import (
-    MatchDomainService,
-    PredictionDomainService,
-    ScoringService,
-)
-from src.domain.strategies import (
-    EnsembleStrategy,
-    HistoricalStrategy,
-    MLModelStrategy,
-    PredictionContext,
-    PredictionInput,
-    PredictionOutput,
-    PredictionStrategy,
-    PredictionStrategyFactory,
-    StatisticalStrategy,
-    StrategyConfig,
-    StrategyMetrics,
-    StrategyType,
-)
+from src.domain.events import (MatchCancelledEvent, MatchFinishedEvent,
+                               MatchPostponedEvent, MatchStartedEvent,
+                               PredictionCancelledEvent,
+                               PredictionCreatedEvent,
+                               PredictionEvaluatedEvent,
+                               PredictionExpiredEvent,
+                               PredictionPointsAdjustedEvent,
+                               PredictionUpdatedEvent)
+from src.domain.models import (ConfidenceScore, League, LeagueSeason,
+                               LeagueSettings, Match, MatchResult, MatchScore,
+                               MatchStatus, Prediction, PredictionPoints,
+                               PredictionScore, PredictionStatus, Team,
+                               TeamForm, TeamStats)
+from src.domain.services import (MatchDomainService, PredictionDomainService,
+                                 ScoringService)
+from src.domain.strategies import (EnsembleStrategy, HistoricalStrategy,
+                                   MLModelStrategy, PredictionContext,
+                                   PredictionInput, PredictionOutput,
+                                   PredictionStrategy,
+                                   PredictionStrategyFactory,
+                                   StatisticalStrategy, StrategyConfig,
+                                   StrategyMetrics, StrategyType)
 
 __all__ = [
     # 领域模型

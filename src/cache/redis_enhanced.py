@@ -13,8 +13,9 @@ from dataclasses import dataclass
 from typing import Any
 
 try:
-    import redis
     import redis.asyncio as aioredis
+
+    import redis
 
     REDIS_AVAILABLE = True
 except ImportError:

@@ -6,12 +6,11 @@
 """
 
 import asyncio
-import pytest
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
 import re
+from datetime import datetime, timedelta
 from enum import Enum
+
+import pytest
 
 
 # 模拟枚举类型
@@ -117,7 +116,7 @@ class User:
         self.created_at = kwargs.get("created_at", datetime.utcnow())
         self.updated_at = kwargs.get("updated_at", datetime.utcnow())
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证用户数据"""
         errors = []
 
@@ -151,7 +150,7 @@ class Team:
         self.stadium_name = kwargs.get("stadium_name")
         self.created_at = kwargs.get("created_at", datetime.utcnow())
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证球队数据"""
         errors = []
 
@@ -185,7 +184,7 @@ class Match:
         self.away_score = kwargs.get("away_score", 0)
         self.created_at = kwargs.get("created_at", datetime.utcnow())
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证比赛数据"""
         errors = []
 
@@ -241,7 +240,7 @@ class Prediction:
         self.is_correct = kwargs.get("is_correct")
         self.created_at = kwargs.get("created_at", datetime.utcnow())
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """验证预测数据"""
         errors = []
 

@@ -8,26 +8,10 @@ import pytest
 
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 
-def test_basic_ci_functionality(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_basic_ci_functionality(client, client):
     """测试基础CI/CD功能"""
     print("🧪 测试基础CI/CD功能...")
 
@@ -48,10 +32,7 @@ def test_basic_ci_functionality(
     # 测试2: 基础模块导入
     tests_total += 1
     try:
-        import os
         import sys
-        import json
-        import pathlib
 
         print("✅ 基础模块导入成功")
         tests_passed += 1
@@ -156,7 +137,7 @@ def test_basic_ci_functionality(
         print(f"❌ 文件操作失败: {e}")
 
     success_rate = (tests_passed / tests_total) * 100 if tests_total > 0 else 0
-    print(f"\n📊 CI/CD功能测试结果:")
+    print("\n📊 CI/CD功能测试结果:")
     print(f"   - 总测试数: {tests_total}")
     print(f"   - 通过数: {tests_passed}")
     print(f"   - 成功率: {success_rate:.1f}%")
@@ -164,22 +145,7 @@ def test_basic_ci_functionality(
     return tests_passed, tests_total, success_rate
 
 
-def test_deployment_readiness(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_deployment_readiness(client, client):
     """测试部署就绪状态"""
     print("\n🚀 测试部署就绪状态...")
 
@@ -211,7 +177,7 @@ def test_deployment_readiness(
     else:
         readiness_checks.append(("脚本文件", False))
 
-    print(f"\n📋 部署就绪检查:")
+    print("\n📋 部署就绪检查:")
     for check_name, status in readiness_checks:
         status_icon = "✅" if status else "❌"
         print(f"   {status_icon} {check_name}: {'就绪' if status else '未就绪'}")
@@ -237,14 +203,14 @@ def main():
 
     # 综合评估
     overall_score = (success_rate + readiness_score) / 2
-    print(f"\n🎯 综合CI/CD评估:")
+    print("\n🎯 综合CI/CD评估:")
     print(f"   - 功能成功率: {success_rate:.1f}%")
     print(f"   - 部署就绪度: {readiness_score:.1f}")
     print(f"   - 综合分数: {overall_score:.1f}%")
 
     # 检查目标
     target_achieved = overall_score >= 50.0
-    print(f"\n🎯 目标检查 (50%+):")
+    print("\n🎯 目标检查 (50%+):")
     if target_achieved:
         print(f"   ✅ 目标达成: {overall_score:.1f}% ≥ 50%")
     else:

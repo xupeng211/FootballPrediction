@@ -54,6 +54,11 @@ class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
     @abstractmethod
+    async def process(self, data: Any) -> Any:
+        """处理数据"""
+        pass
+
+
 class DataTransformer(ABC):
     """数据转换器基类"""
 
@@ -65,32 +70,6 @@ class DataTransformer(ABC):
 
 class CompositeAdapter(Adapter):
     """组合适配器,可以管理多个子适配器"""
-
-    # TODO: 方法 def get_adapter 过长(25行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(23行),建议拆分
-    # TODO: 方法 def get_adapter 过长(23行),建议拆分
-    def adapt(self, *args, **kwargs) -> Any:
-        """适配方法"""
-        pass
-
-
-class DataTransformer(ABC):
-    def get_source_schema(self) -> dict[str, Any]:
-        """获取源数据结构"""
-        return {}
-
-    def get_target_schema(self) -> dict[str, Any]:
-        """获取目标数据结构"""
-        return {
-            "type": "composite",
-            "description": f"Composite adapter {self.name} target schema",
-            "adapters": [adapter.name for adapter in self.adapters]
-        }
 
     def __init__(self, name: str = "CompositeAdapter"):
         """初始化组合适配器"""
@@ -137,9 +116,7 @@ class DataTransformer(ABC):
             return True
         return False
 
-    # TODO: 方法 def get_adapter 过长(25行)，建议拆分
-    # TODO: 方法 def get_adapter 过长(25行),建议拆分
-    # TODO: 方法 def get_adapter 过长(23行),建议拆分
+    # TODO: 方法 def get_adapter 过长(23行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Adapter | None:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)

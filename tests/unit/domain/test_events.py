@@ -3,13 +3,12 @@
 """
 
 import pytest
+
 from src.domain.events.base import DomainEvent
-from src.domain.events.match_events import (
-    MatchEvent,
-    MatchStartedEvent,
-    MatchEndedEvent,
-)
-from src.domain.events.prediction_events import PredictionEvent, PredictionCreatedEvent
+from src.domain.events.match_events import (MatchEndedEvent, MatchEvent,
+                                            MatchStartedEvent)
+from src.domain.events.prediction_events import (PredictionCreatedEvent,
+                                                 PredictionEvent)
 
 
 class TestDomainEvents:
@@ -119,15 +118,11 @@ class TestDomainEvents:
         """测试领域事件模块导入"""
         try:
             from src.domain.events.base import DomainEvent
-            from src.domain.events.match_events import (
-                MatchEvent,
-                MatchStartedEvent,
-                MatchEndedEvent,
-            )
+            from src.domain.events.match_events import (MatchEndedEvent,
+                                                        MatchEvent,
+                                                        MatchStartedEvent)
             from src.domain.events.prediction_events import (
-                PredictionEvent,
-                PredictionCreatedEvent,
-            )
+                PredictionCreatedEvent, PredictionEvent)
 
             assert DomainEvent is not None
             assert MatchEvent is not None

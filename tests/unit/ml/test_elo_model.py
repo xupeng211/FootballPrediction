@@ -11,21 +11,20 @@ Elo Rating Model Tests
 - 模型训练和评估
 """
 
+import os
+# 导入ML模块
+import sys
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
-
-# 导入ML模块
-import sys
-import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from ml.models.base_model import (BaseModel, PredictionResult,
+                                      TrainingResult)
     from ml.models.elo_model import EloModel
 
     CAN_IMPORT = True

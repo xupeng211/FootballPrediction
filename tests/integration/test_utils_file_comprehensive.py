@@ -5,10 +5,12 @@ Phase 3.1 - Utils模块文件工具类全面测试
 """
 
 import json
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
+
 from src.utils.file_utils import FileUtils
 
 
@@ -88,7 +90,7 @@ class TestFileUtilsComprehensive:
             assert temp_file.exists()
 
             # 验证写入的内容
-            with open(temp_file, "r", encoding="utf-8") as f:
+            with open(temp_file, encoding="utf-8") as f:
                 loaded_data = json.load(f)
 
             assert loaded_data == test_data

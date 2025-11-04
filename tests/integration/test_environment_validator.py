@@ -4,9 +4,9 @@
 验证Python环境和基础功能是否正常
 """
 
-import sys
 import importlib
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -50,7 +50,7 @@ def test_core_dependencies():
                     if pkg_version.parse(版本) < pkg_version.parse(最低版本):
                         print(f"   ⚠️  版本过低，需要 >={最低版本}")
                 except ImportError:
-                    print(f"   ⚠️  无法验证版本要求")
+                    print("   ⚠️  无法验证版本要求")
 
         except ImportError as e:
             print(f"   ❌ {依赖名}: {e}")
@@ -100,7 +100,7 @@ def test_basic_functionality():
             f.write("test content")
             temp_path = f.name
 
-        with open(temp_path, "r") as f:
+        with open(temp_path) as f:
             content = f.read()
 
         import os
@@ -119,7 +119,6 @@ def test_import_issues():
 
     # 测试pytest相关问题
     try:
-        import pytest
 
         print("   ✅ pytest导入成功")
     except Exception as e:

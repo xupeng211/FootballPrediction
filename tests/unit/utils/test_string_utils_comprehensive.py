@@ -3,13 +3,9 @@
 """
 
 import pytest
-import unicodedata
-from src.utils.string_utils import (
-    StringUtils,
-    cached_slug,
-    batch_clean_strings,
-    validate_batch_emails,
-)
+
+from src.utils.string_utils import (StringUtils, batch_clean_strings,
+                                    cached_slug, validate_batch_emails)
 
 
 class TestStringUtilsComprehensive:
@@ -215,7 +211,7 @@ class TestStringUtilsComprehensive:
         import time
 
         # 测试大量字符串处理性能
-        strings = ["Hello World {}".format(i) for i in range(100)]
+        strings = [f"Hello World {i}" for i in range(100)]
 
         start_time = time.time()
         for s in strings:
@@ -279,11 +275,8 @@ class TestStringUtilsComprehensive:
 
     def test_function_imports(self):
         """测试模块级函数导入"""
-        from src.utils.string_utils import (
-            cached_slug,
-            batch_clean_strings,
-            validate_batch_emails,
-        )
+        from src.utils.string_utils import (batch_clean_strings, cached_slug,
+                                            validate_batch_emails)
 
         assert cached_slug is not None
         assert batch_clean_strings is not None

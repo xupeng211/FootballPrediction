@@ -7,16 +7,14 @@
 """
 
 import asyncio
+import os
+import tempfile
+import warnings
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
-import tempfile
-import os
-import pickle
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
-import warnings
 
 # 抑制warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -24,20 +22,16 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # 模拟导入，避免循环依赖问题
 import sys
-import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
+                                       TrainingStatus)
+    from src.ml.models.base_model import (BaseModel, PredictionResult,
+                                          TrainingResult)
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import (
-        ModelTrainer,
-        TrainingConfig,
-        TrainingStatus,
-        ModelType,
-    )
 
     CAN_IMPORT = True
 except ImportError as e:
@@ -315,7 +309,7 @@ class TestMLModelTraining:
                 < 0.001
             )
 
-            print(f"✅ 模型保存加载测试通过: 预测结果一致")
+            print("✅ 模型保存加载测试通过: 预测结果一致")
 
         finally:
             # 清理临时文件
@@ -353,7 +347,7 @@ class TestMLModelTraining:
             assert training_result.accuracy > 0.0
 
         # 分析训练时间随数据大小的变化
-        print(f"✅ 不同数据大小训练测试完成:")
+        print("✅ 不同数据大小训练测试完成:")
         for result in training_results:
             print(
                 f"  数据量={result['data_size']}, 训练时间={result['training_time']:.2f}s, "
@@ -394,7 +388,7 @@ class TestMLModelTraining:
         training_result = model.train(small_data)
         assert training_result.training_samples == 1
 
-        print(f"✅ 错误处理测试通过")
+        print("✅ 错误处理测试通过")
 
     def test_model_training_progress_tracking(self):
         """测试模型训练进度跟踪"""
@@ -422,7 +416,7 @@ class TestMLModelTraining:
         )  # home_attack, home_defense, away_attack, away_defense
         assert "hyperparameters" in model_info
 
-        print(f"✅ 训练进度跟踪测试通过")
+        print("✅ 训练进度跟踪测试通过")
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -511,7 +505,7 @@ class TestAsyncModelTraining:
             assert load_success
             assert new_trainer.model is not None
 
-            print(f"✅ 异步模型保存加载测试通过")
+            print("✅ 异步模型保存加载测试通过")
 
         finally:
             if os.path.exists(model_path):
@@ -710,7 +704,7 @@ class TestMLModelIntegration:
         # 找到最佳模型
         best_model = max(results, key=lambda x: x["test_accuracy"])
 
-        print(f"✅ 模型比较测试完成:")
+        print("✅ 模型比较测试完成:")
         for result in results:
             print(
                 f"  {result['config']}: 测试准确率={result['test_accuracy']:.3f}, "
@@ -885,7 +879,7 @@ class TestMLModelPerformanceMetrics:
         # 验证稳定性（标准差不应太大）
         assert std_accuracy < 0.2  # 标准差应该小于0.2
 
-        print(f"✅ 训练稳定性分析完成:")
+        print("✅ 训练稳定性分析完成:")
         print(f"  平均准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")
         print(f"  准确率范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")
         print(f"  变异系数: {std_accuracy/mean_accuracy:.3f}")

@@ -5,11 +5,12 @@ Health Check API Tests
 测试健康检查相关的API端点。
 """
 
+from datetime import datetime
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from datetime import datetime
 
 # 直接导入健康检查路由，避免有问题的依赖
 from src.api.health.routes import router as health_router
@@ -79,7 +80,6 @@ class TestHealthAPI:
     def test_concurrent_health_checks(self, health_client):
         """测试并发健康检查"""
         import threading
-        import time
 
         results = []
 
@@ -201,6 +201,7 @@ class TestHealthAPIDocumentation:
 def create_health_test_app():
     """创建健康检查测试应用"""
     from fastapi import FastAPI
+
     from src.api.health.routes import router as health_router
 
     app = FastAPI()

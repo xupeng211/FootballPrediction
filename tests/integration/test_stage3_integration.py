@@ -5,11 +5,11 @@ Stage 3 Integration Test Script - Database Integration and Caching
 """
 
 import asyncio
-import sys
-import os
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+import os
+import sys
+from datetime import datetime
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
@@ -26,13 +26,15 @@ logger = logging.getLogger(__name__)
 
 # 导入模块
 try:
-    from src.cache.football_data_cache import get_football_cache_manager, CacheConfig
-    from src.services.data_sync_service import DataSyncService
-    from src.models.external.team import ExternalTeam
-    from src.models.external.league import ExternalLeague, ExternalLeagueStandings
-    from src.models.external.match import ExternalMatch
-    from src.collectors.team_collector import TeamCollector
+    from src.cache.football_data_cache import (CacheConfig,
+                                               get_football_cache_manager)
     from src.collectors.league_collector import LeagueCollector
+    from src.collectors.team_collector import TeamCollector
+    from src.models.external.league import (ExternalLeague,
+                                            ExternalLeagueStandings)
+    from src.models.external.match import ExternalMatch
+    from src.models.external.team import ExternalTeam
+    from src.services.data_sync_service import DataSyncService
 except ImportError as e:
     logger.error(f"导入模块失败: {e}")
     logger.info("尝试简化导入...")
@@ -443,7 +445,7 @@ class Stage3IntegrationTester:
             logger.error(f"  ❌ 同步状态跟踪测试失败: {e}")
             return False
 
-    async def run_all_tests(self) -> Dict[str, Any]:
+    async def run_all_tests(self) -> dict[str, Any]:
         """运行所有测试"""
         print("🚀 开始第三阶段集成测试")
         print("=" * 60)
@@ -485,7 +487,7 @@ class Stage3IntegrationTester:
             logger.warning(f"⚠️ 测试数据清理失败: {e}")
 
         print("\n" + "=" * 60)
-        print(f"📊 第三阶段集成测试完成!")
+        print("📊 第三阶段集成测试完成!")
         print(f"   总计: {self.test_results['total_tests']}")
         print(f"   通过: {self.test_results['passed_tests']}")
         print(f"   失败: {self.test_results['failed_tests']}")

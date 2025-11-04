@@ -2,15 +2,13 @@
 时间工具测试
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta
-from src.utils.time_utils import (
-    format_datetime,
-    parse_datetime,
-    calculate_duration,
-    get_current_timestamp,
-    is_valid_datetime_format,
-)
+
+from src.utils.time_utils import (calculate_duration, format_datetime,
+                                  get_current_timestamp,
+                                  is_valid_datetime_format, parse_datetime)
 
 
 class TestTimeUtils:
@@ -91,9 +89,8 @@ class TestTimeUtils:
     def test_time_zone_handling(self):
         """测试时区处理"""
         try:
-            from datetime import timezone
 
-            dt = datetime.now(timezone.utc)
+            dt = datetime.now(UTC)
 
             # 测试UTC时间处理
             result = format_datetime(dt)

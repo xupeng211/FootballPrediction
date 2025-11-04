@@ -4,15 +4,12 @@ Phase 4.2 - Domain模块高价值深度优化
 比赛领域模型comprehensive测试，业务逻辑全覆盖
 """
 
-import pytest
 from datetime import datetime, timedelta
-from src.domain.models.match import (
-    Match,
-    MatchStatus,
-    MatchResult,
-    MatchScore,
-    DomainError,
-)
+
+import pytest
+
+from src.domain.models.match import (DomainError, Match, MatchResult,
+                                     MatchScore, MatchStatus)
 
 
 class TestMatchScoreComprehensive:

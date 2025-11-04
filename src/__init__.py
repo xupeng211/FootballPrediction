@@ -9,6 +9,7 @@ __version__ = "0.1.0"
 __author__ = "FootballPrediction Team"
 __email__ = "football@prediction.com"
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -31,7 +32,7 @@ except ImportError as e:
     src_path = Path(__file__).parent
     if str(src_path) not in sys.path:
         sys.path.insert(0, str(src_path))
-    print(f"警告: 路径管理器不可用 ({e}), 使用基本路径配置")
+    logging.warning(f"路径管理器不可用 ({e}), 使用基本路径配置")
 
 # 🔧 设置警告过滤器 - 确保测试日志清洁,不再充满第三方库警告
 try:
@@ -57,25 +58,25 @@ else:
             importlib.import_module(".services", __name__)
             modules_to_import.append("services")
         except ImportError as e:
-            print(f"警告: services模块导入失败: {e}")
+            logging.warning(f"services模块导入失败: {e}")
 
         try:
             importlib.import_module(".core", __name__)
             modules_to_import.append("core")
         except ImportError as e:
-            print(f"警告: core模块导入失败: {e}")
+            logging.warning(f"core模块导入失败: {e}")
 
         try:
             importlib.import_module(".models", __name__)
             modules_to_import.append("models")
         except ImportError as e:
-            print(f"警告: models模块导入失败: {e}")
+            logging.warning(f"models模块导入失败: {e}")
 
         try:
             importlib.import_module(".utils", __name__)
             modules_to_import.append("utils")
         except ImportError as e:
-            print(f"警告: utils模块导入失败: {e}")
+            logging.warning(f"utils模块导入失败: {e}")
 
         __all__ = modules_to_import
 
@@ -86,5 +87,5 @@ else:
             )
 
     except Exception as e:
-        print(f"警告: 模块导入过程中出现错误: {e}")
+        logging.warning(f"模块导入过程中出现错误: {e}")
         __all__ = []

@@ -4,17 +4,18 @@ Phase 2 - Database模块简化测试
 专注于实际可测试的database核心功能
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 import os
+from unittest.mock import patch
+
+import pytest
 
 # 导入database模块的核心组件
-from src.database.base import Base, TimestampMixin, BaseModel
+from src.database.base import Base, BaseModel, TimestampMixin
 from src.database.definitions import DatabaseManager, DatabaseRole
 from src.database.models.league import League
-from src.database.models.team import Team
 from src.database.models.match import Match
 from src.database.models.predictions import Predictions
+from src.database.models.team import Team
 
 
 class TestDatabaseSimplePhase2:
@@ -124,22 +125,7 @@ class TestDatabaseSimplePhase2:
         assert models is not None
 
 
-def test_all_database_simple_functionality(
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-    client,
-):
+def test_all_database_simple_functionality(client, client):
     """测试所有database简化功能的综合测试"""
 
     # 测试核心组件

@@ -1,9 +1,11 @@
 """数据处理服务测试"""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-import pandas as pd
 from datetime import datetime
+from unittest.mock import Mock
+
+import pandas as pd
+import pytest
+
 from src.services.data_processing import DataProcessingService
 
 

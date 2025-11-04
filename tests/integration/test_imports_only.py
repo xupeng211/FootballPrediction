@@ -5,7 +5,6 @@
 """
 
 import sys
-import os
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, ".")
@@ -96,7 +95,6 @@ def test_basic_functionality():
         print("✅ AnomalyDetector 实例化成功")
 
         # 测试一个简单的方法调用
-        from src.cache.decorators import cache_result
 
         print("✅ cache_result 装饰器可用")
 

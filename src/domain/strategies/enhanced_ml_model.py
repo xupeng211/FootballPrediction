@@ -15,13 +15,9 @@ from typing import Any
 
 import numpy as np
 
-from src.domain.strategies.base import (
-    PredictionInput,
-    PredictionOutput,
-    PredictionStrategy,
-    StrategyMetrics,
-    StrategyType,
-)
+from src.domain.strategies.base import (PredictionInput, PredictionOutput,
+                                        PredictionStrategy, StrategyMetrics,
+                                        StrategyType)
 
 logger = logging.getLogger(__name__)
 

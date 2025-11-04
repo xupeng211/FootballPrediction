@@ -12,10 +12,8 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.collectors.oddsportal_integration import (
-    OddsPortalIntegration,
-    OddsPortalAdapter,
-)
+from src.collectors.oddsportal_integration import (OddsPortalAdapter,
+                                                   OddsPortalIntegration)
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
@@ -155,6 +153,7 @@ async def test_data_conversion():
 
     try:
         from datetime import datetime
+
         from src.collectors.oddsportal_scraper import OddsPortalMatch
 
         integration = OddsPortalIntegration()

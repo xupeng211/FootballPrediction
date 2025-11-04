@@ -9,22 +9,10 @@
 """
 
 from .config_di import ConfigurationBinder
-from .di import (
-    DIContainer,
-    ServiceCollection,
-    ServiceLifetime,
-    configure_services,
-    inject,
-    resolve,
-)
-from .exceptions import (
-    ConfigError,
-    DataError,
-    DependencyInjectionError,
-    FootballPredictionError,
-    ModelError,
-    PredictionError,
-)
+from .di import (DIContainer, ServiceCollection, ServiceLifetime,
+                 configure_services, inject, resolve)
+from .exceptions import (ConfigError, DataError, DependencyInjectionError,
+                         FootballPredictionError, ModelError, PredictionError)
 from .logger import Logger, logger
 from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
 

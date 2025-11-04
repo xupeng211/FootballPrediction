@@ -13,22 +13,21 @@ Match Domain Service Tests
 目标覆盖率: 领域服务模块覆盖率≥45%
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Any, List
+from typing import Any
+
+import pytest
 
 # 导入领域模型和服务
 try:
-    from src.domain.models.match import Match, MatchStatus, MatchResult, MatchScore
+    from src.domain.events.match_events import (MatchCancelledEvent,
+                                                MatchFinishedEvent,
+                                                MatchPostponedEvent,
+                                                MatchStartedEvent)
+    from src.domain.models.match import (Match, MatchResult, MatchScore,
+                                         MatchStatus)
     from src.domain.models.team import Team
     from src.domain.services.match_service import MatchDomainService
-    from src.domain.events.match_events import (
-        MatchStartedEvent,
-        MatchFinishedEvent,
-        MatchCancelledEvent,
-        MatchPostponedEvent,
-    )
 
     CAN_IMPORT = True
 except ImportError as e:
@@ -109,7 +108,7 @@ except ImportError as e:
 
     class MatchDomainService:
         def __init__(self):
-            self._events: List[Any] = []
+            self._events: list[Any] = []
 
         def start_match(self, match: Match) -> Match:
             """开始比赛"""
@@ -182,7 +181,7 @@ except ImportError as e:
             )
             return match
 
-        def get_events(self) -> List[Any]:
+        def get_events(self) -> list[Any]:
             return self._events.copy()
 
         def clear_events(self) -> None:

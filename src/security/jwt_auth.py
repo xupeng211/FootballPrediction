@@ -13,9 +13,8 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import jwt
-from passlib.context import CryptContext
-
 import redis.asyncio as redis
+from passlib.context import CryptContext
 
 logger = logging.getLogger(__name__)
 

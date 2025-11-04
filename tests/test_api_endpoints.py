@@ -4,8 +4,6 @@ API端点测试
 """
 
 import pytest
-from unittest.mock import Mock, patch
-import json
 
 
 class TestFastAPIApplication:

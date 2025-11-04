@@ -2,11 +2,13 @@
 文件工具全面测试 - 冲刺45%覆盖率
 """
 
-import pytest
 import json
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
+
 from src.utils.file_utils import FileUtils
 
 
@@ -90,7 +92,7 @@ class TestFileUtilsComprehensive:
             # 验证文件存在并包含正确内容
             assert json_file.exists()
 
-            with open(json_file, "r", encoding="utf-8") as f:
+            with open(json_file, encoding="utf-8") as f:
                 loaded_data = json.load(f)
             assert loaded_data == test_data
 

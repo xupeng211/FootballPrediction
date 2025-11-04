@@ -2,10 +2,9 @@
 WarningFilters错误路径测试 - 强制覆盖第26-28行异常处理
 """
 
-import pytest
-import warnings
 import logging
 import sys
+import warnings
 
 
 def test_direct_error_path_coverage():
@@ -31,7 +30,7 @@ def test_direct_error_path_coverage():
 
         # 现在重新导入模块，这应该会触发异常处理
         try:
-            from src.utils import warning_filters
+            pass
         except Exception:
             # 如果导入失败也没关系，我们已经触发了错误路径
             pass
@@ -77,7 +76,7 @@ def test_exception_types_coverage():
 
             # 尝试重新导入
             try:
-                from src.utils import warning_filters
+                pass
             except Exception:
                 pass
 
@@ -139,7 +138,7 @@ def test_logger_error_message_format():
 
         # 尝试导入
         try:
-            from src.utils import warning_filters
+            pass
         except Exception:
             pass
 

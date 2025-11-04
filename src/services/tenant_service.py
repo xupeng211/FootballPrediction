@@ -15,13 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.core.exceptions import ResourceNotFoundError, ValidationError
-from src.database.models.tenant import (
-    Tenant,
-    TenantPlan,
-    TenantRole,
-    TenantStatus,
-    UserRoleAssignment,
-)
+from src.database.models.tenant import (Tenant, TenantPlan, TenantRole,
+                                        TenantStatus, UserRoleAssignment)
 
 
 class TenantManagementError(Exception):

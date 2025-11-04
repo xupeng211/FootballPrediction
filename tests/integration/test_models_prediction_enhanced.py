@@ -4,9 +4,10 @@
 Enhanced prediction model tests for coverage optimization
 """
 
-import pytest
 import sys
 from datetime import datetime
+
+import pytest
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, ".")

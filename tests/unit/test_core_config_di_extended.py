@@ -13,18 +13,17 @@ Issue: #215
 4. 配置错误处理异常测试 (2个测试用例)
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, mock_open
 import json
-import yaml
-import tempfile
 import os
-from pathlib import Path
-from datetime import datetime
+import tempfile
+from unittest.mock import patch
+
+import pytest
+import yaml
 
 # 导入目标模块
-from core.config_di import ServiceConfig, DIConfiguration, ConfigurationBinder
-from core.di import DIContainer, ServiceLifetime
+from core.config_di import ConfigurationBinder, DIConfiguration, ServiceConfig
+from core.di import DIContainer
 from core.exceptions import DependencyInjectionError
 
 

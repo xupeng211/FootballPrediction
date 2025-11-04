@@ -322,11 +322,11 @@ class StringUtils:
         chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
     ) -> str:
         """生成随机字符串"""
-        import random
+        import secrets
 
         if length <= 0:
             return ""
-        return "".join(random.choice(chars) for _ in range(length))
+        return "".join(secrets.choice(chars) for _ in range(length))
 
     @staticmethod
     def remove_duplicates(text: str) -> str:

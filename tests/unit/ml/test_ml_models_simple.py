@@ -6,24 +6,21 @@ Simple ML Model Tests
 测试BaseModel、PoissonModel、EloModel的核心功能。
 """
 
+import os
+# 直接导入，避免通过__init__.py
+import sys
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
-import tempfile
-import os
-
-# 直接导入，避免通过__init__.py
-import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"))
 
 try:
     from base_model import BaseModel, PredictionResult, TrainingResult
-    from poisson_model import PoissonModel
     from elo_model import EloModel
+    from poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:

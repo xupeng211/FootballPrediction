@@ -6,12 +6,10 @@
 """
 
 import asyncio
-import json
 from datetime import datetime
 
 import httpx
 from passlib.context import CryptContext
-
 
 # 测试配置
 API_BASE_URL = "http://localhost:8000/api/v1"

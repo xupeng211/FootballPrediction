@@ -18,11 +18,9 @@ from typing import Any
 from sqlalchemy import text
 
 from src.database.connection import DatabaseManager
-from src.database.sql_compatibility import (
-    CompatibleQueryBuilder,
-    SQLCompatibilityHelper,
-    get_db_type_from_engine,
-)
+from src.database.sql_compatibility import (CompatibleQueryBuilder,
+                                            SQLCompatibilityHelper,
+                                            get_db_type_from_engine)
 
 from .models.data_collection_log import CollectionStatus, DataCollectionLog
 

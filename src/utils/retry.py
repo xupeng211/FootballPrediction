@@ -7,19 +7,11 @@ Retry Mechanism (Backward Compatible)
 Provides backward compatible exports for the modular retry system.
 """
 
-from ._retry import (
-    BackoffStrategy,
-    CircuitBreaker,  # 重新导出主要类和函数
-    CircuitState,
-    ExponentialBackoffStrategy,
-    FixedBackoffStrategy,
-    LinearBackoffStrategy,
-    PolynomialBackoffStrategy,
-    RetryConfig,
-    retry,
-    retry_async,
-    retry_sync,
-)
+from ._retry import CircuitBreaker  # 重新导出主要类和函数
+from ._retry import (BackoffStrategy, CircuitState, ExponentialBackoffStrategy,
+                     FixedBackoffStrategy, LinearBackoffStrategy,
+                     PolynomialBackoffStrategy, RetryConfig, retry,
+                     retry_async, retry_sync)
 
 # 导出所有符号
 __all__ = [

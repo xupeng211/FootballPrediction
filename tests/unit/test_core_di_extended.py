@@ -13,22 +13,17 @@ Issue: #213
 4. 循环依赖检测测试 (3个测试用例)
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-import asyncio
+import json
+import pickle
 import threading
 import time
-from datetime import datetime, timedelta
-import pickle
-import json
+from datetime import datetime
+
+import pytest
 
 # 导入目标模块
-from core.di import (
-    DIContainer,
-    ServiceDescriptor,
-    ServiceLifetime,
-    DependencyInjectionError,
-)
+from core.di import (DependencyInjectionError, DIContainer, ServiceDescriptor,
+                     ServiceLifetime)
 
 
 class TestDIContainerSingleton:
@@ -163,7 +158,6 @@ class TestServiceDescriptorSerialization:
 
     def test_service_descriptor_pickle_serialization(self):
         """测试ServiceDescriptor的pickle序列化"""
-        from collections.abc import Callable
 
         # 创建服务描述符
         descriptor = ServiceDescriptor(

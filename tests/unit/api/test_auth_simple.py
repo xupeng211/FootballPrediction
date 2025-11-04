@@ -5,15 +5,13 @@ API认证系统简化测试
 测试范围: 用户认证、JWT令牌管理、安全功能
 """
 
-import pytest
-import asyncio
-import sys
 import os
+import sys
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from fastapi import HTTPException, status, Request
-from pydantic import EmailStr
-from typing import Optional
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi import HTTPException, status
 
 # 添加src到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -28,7 +26,7 @@ auth_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(auth_module)
 
 # 直接导入jwt_auth模块
-from src.security.jwt_auth import JWTAuthManager, UserAuth, TokenData
+from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
 
 
 class TestAuthModels:

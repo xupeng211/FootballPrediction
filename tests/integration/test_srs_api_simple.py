@@ -5,10 +5,10 @@ SRS规范简化API测试脚本
 """
 
 import asyncio
-import aiohttp
-import json
 import time
 from datetime import datetime, timedelta
+
+import aiohttp
 
 # API基础URL
 BASE_URL = "http://localhost:8001/api/v1"

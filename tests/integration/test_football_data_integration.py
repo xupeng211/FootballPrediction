@@ -5,9 +5,9 @@ Test script for Football-Data.org API integration
 """
 
 import asyncio
-import sys
-import os
 import logging
+import os
+import sys
 from datetime import datetime
 
 # 添加项目根目录到Python路径
@@ -167,7 +167,7 @@ async def main():
     duration = end_time - start_time
 
     print("\n" + "=" * 60)
-    print(f"📊 测试完成!")
+    print("📊 测试完成!")
     print(f"   通过: {passed}")
     print(f"   失败: {failed}")
     print(f"   总计: {passed + failed}")

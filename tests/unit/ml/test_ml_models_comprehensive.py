@@ -11,24 +11,22 @@ Comprehensive ML Model Tests
 - 错误处理和边界条件
 """
 
+import os
+# 导入ML模块
+import sys
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
-import tempfile
-import os
-
-# 导入ML模块
-import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
-    from ml.models.poisson_model import PoissonModel
+    from ml.models.base_model import (BaseModel, PredictionResult,
+                                      TrainingResult)
     from ml.models.elo_model import EloModel
+    from ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
 except ImportError as e:

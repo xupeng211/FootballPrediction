@@ -4,10 +4,10 @@
 演示阶段2工具链的集成效果
 """
 
-import pytest
-import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent
@@ -55,9 +55,9 @@ class TestCoverageImprovementIntegration:
 
     def test_tool_chain_collaboration(self):
         """测试工具链协作"""
-        from smart_quality_fixer import SmartQualityFixer
         from coverage_improvement_executor import CoverageImprovementExecutor
         from phase35_ai_coverage_master import Phase35AICoverageMaster
+        from smart_quality_fixer import SmartQualityFixer
 
         # 创建所有工具实例
         fixer = SmartQualityFixer()
@@ -105,9 +105,10 @@ class TestCoverageImprovementIntegration:
         tools_working = True
 
         try:
-            from smart_quality_fixer import SmartQualityFixer
-            from coverage_improvement_executor import CoverageImprovementExecutor
+            from coverage_improvement_executor import \
+                CoverageImprovementExecutor
             from phase35_ai_coverage_master import Phase35AICoverageMaster
+            from smart_quality_fixer import SmartQualityFixer
 
             # 创建实例
             SmartQualityFixer()

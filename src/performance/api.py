@@ -19,11 +19,9 @@ from pydantic import BaseModel, Field
 
 from src.core.logging import get_logger
 from src.performance.analyzer import PerformanceAnalyzer
-from src.performance.middleware import (
-    BackgroundTaskPerformanceMonitor,
-    CachePerformanceMiddleware,
-    DatabasePerformanceMiddleware,
-)
+from src.performance.middleware import (BackgroundTaskPerformanceMonitor,
+                                        CachePerformanceMiddleware,
+                                        DatabasePerformanceMiddleware)
 from src.performance.profiler import get_profiler
 
 logger = get_logger(__name__)

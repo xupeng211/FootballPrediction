@@ -3,7 +3,6 @@ DataValidator完整测试 - 深化47.7%到70%+覆盖率
 针对未覆盖的数据验证函数进行全面测试
 """
 
-import pytest
 from src.utils.data_validator import DataValidator
 
 

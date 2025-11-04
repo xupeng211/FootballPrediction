@@ -5,12 +5,12 @@ Comprehensive API Test Suite
 测试所有API端点的基础功能，确保API层的稳定性和正确性。
 """
 
-import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
 from datetime import datetime
+from unittest.mock import patch
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 from src.api.health.routes import router as health_router
@@ -213,7 +213,6 @@ class TestAPIConcurrency:
     def test_concurrent_health_checks(self, client):
         """测试并发健康检查"""
         import threading
-        import time
 
         results = []
 

@@ -13,10 +13,11 @@ Domain Service Lifecycle Tests
 目标覆盖率: 领域服务模块覆盖率≥45%
 """
 
+from datetime import datetime
+from typing import Any
+from unittest.mock import patch
+
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Any, Dict, List, Optional
 
 # 导入领域服务
 try:
@@ -32,7 +33,7 @@ except ImportError as e:
 
     # Mock implementations for testing
     class MatchDomainService:
-        def __init__(self, config: Dict = None):
+        def __init__(self, config: dict = None):
             self._config = config or {}
             self._events = []
             self._is_initialized = False
@@ -53,7 +54,7 @@ except ImportError as e:
         def is_healthy(self) -> bool:
             return self._health_status == "healthy" and not self._is_disposed
 
-        def get_service_info(self) -> Dict:
+        def get_service_info(self) -> dict:
             return {
                 "name": "MatchDomainService",
                 "initialized": self._is_initialized,
@@ -64,7 +65,7 @@ except ImportError as e:
             }
 
     class PredictionDomainService:
-        def __init__(self, config: Dict = None):
+        def __init__(self, config: dict = None):
             self._config = config or {}
             self._events = []
             self._is_initialized = False
@@ -85,7 +86,7 @@ except ImportError as e:
         def is_healthy(self) -> bool:
             return self._health_status == "healthy" and not self._is_disposed
 
-        def get_service_info(self) -> Dict:
+        def get_service_info(self) -> dict:
             return {
                 "name": "PredictionDomainService",
                 "initialized": self._is_initialized,
@@ -96,7 +97,7 @@ except ImportError as e:
             }
 
     class ScoringService:
-        def __init__(self, config: Dict = None):
+        def __init__(self, config: dict = None):
             self._config = config or {}
             self._events = []
             self._is_initialized = False
@@ -117,7 +118,7 @@ except ImportError as e:
         def is_healthy(self) -> bool:
             return self._health_status == "healthy" and not self._is_disposed
 
-        def get_service_info(self) -> Dict:
+        def get_service_info(self) -> dict:
             return {
                 "name": "ScoringService",
                 "initialized": self._is_initialized,
@@ -128,7 +129,7 @@ except ImportError as e:
             }
 
     class TeamDomainService:
-        def __init__(self, config: Dict = None):
+        def __init__(self, config: dict = None):
             self._config = config or {}
             self._events = []
             self._is_initialized = False
@@ -149,7 +150,7 @@ except ImportError as e:
         def is_healthy(self) -> bool:
             return self._health_status == "healthy" and not self._is_disposed
 
-        def get_service_info(self) -> Dict:
+        def get_service_info(self) -> dict:
             return {
                 "name": "TeamDomainService",
                 "initialized": self._is_initialized,
@@ -165,11 +166,11 @@ class ServiceContainer:
     """服务容器，管理所有领域服务的生命周期"""
 
     def __init__(self):
-        self._services: Dict[str, Any] = {}
-        self._config: Dict[str, Dict] = {}
+        self._services: dict[str, Any] = {}
+        self._config: dict[str, dict] = {}
 
     def register_service(
-        self, name: str, service_class: type, config: Dict = None
+        self, name: str, service_class: type, config: dict = None
     ) -> None:
         """注册服务"""
         self._config[name] = config or {}
@@ -209,14 +210,14 @@ class ServiceContainer:
             service.dispose()
         self._services.clear()
 
-    def get_health_status(self) -> Dict[str, bool]:
+    def get_health_status(self) -> dict[str, bool]:
         """获取所有服务的健康状态"""
         status = {}
         for name, service in self._services.items():
             status[name] = service.is_healthy()
         return status
 
-    def get_service_infos(self) -> Dict[str, Dict]:
+    def get_service_infos(self) -> dict[str, dict]:
         """获取所有服务的信息"""
         infos = {}
         for name, service in self._services.items():
@@ -622,7 +623,6 @@ class TestServiceLifecycleIntegration:
     def test_concurrent_service_initialization(self):
         """测试并发服务初始化"""
         import threading
-        import time
 
         container = ServiceContainer()
         container.register_service("match", MatchDomainService)

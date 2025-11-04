@@ -11,16 +11,13 @@
 """
 
 import asyncio
-import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any
 
 import httpx
 import pytest
-from fastapi import status
-from pydantic import BaseModel
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -33,9 +30,9 @@ class DataConsistencyTester:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.test_results = []
-        self.auth_token: Optional[str] = None
-        self.test_data: Dict[str, Any] = {}
-        self.consistency_errors: List[str] = []
+        self.auth_token: str | None = None
+        self.test_data: dict[str, Any] = {}
+        self.consistency_errors: list[str] = []
 
     def log_test(
         self, test_name: str, success: bool, details: str = "", duration: float = 0
@@ -386,7 +383,7 @@ class DataConsistencyTester:
             # 并发创建多个预测
             async def create_prediction_async(
                 match_id: int,
-            ) -> Optional[Dict[str, Any]]:
+            ) -> dict[str, Any] | None:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
                         f"{self.base_url}/predictions/",
@@ -512,7 +509,7 @@ class DataConsistencyTester:
             self.log_test("数据格式一致性", False, f"异常: {str(e)}", duration)
             return False
 
-    async def run_all_consistency_tests(self) -> Dict[str, Any]:
+    async def run_all_consistency_tests(self) -> dict[str, Any]:
         """运行所有数据一致性测试"""
         print("🔍 开始API数据一致性集成测试")
         print("=" * 60)
@@ -566,7 +563,7 @@ class DataConsistencyTester:
         }
 
         print("=" * 60)
-        print(f"📊 数据一致性测试完成！")
+        print("📊 数据一致性测试完成！")
         print(f"总测试数: {total_tests}")
         print(f"通过测试: {passed_tests}")
         print(f"失败测试: {total_tests - passed_tests}")
@@ -633,7 +630,7 @@ async def main():
     tester = DataConsistencyTester()
     report = await tester.run_all_consistency_tests()
 
-    print(f"\n🎯 数据一致性集成测试结果:")
+    print("\n🎯 数据一致性集成测试结果:")
     print(f"成功率: {report['success_rate']:.1f}%")
     print(f"一致性错误: {len(report['consistency_errors'])}")
 

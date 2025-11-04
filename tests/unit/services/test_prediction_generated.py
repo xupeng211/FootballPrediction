@@ -2,8 +2,9 @@
 服务层测试 - 自动生成
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch
 
 # 尝试导入服务
 try:

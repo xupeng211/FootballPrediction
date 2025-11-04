@@ -10,18 +10,13 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.core.exceptions import (
-    InvalidCredentialsError,
-    UserAlreadyExistsError,
-    UserNotFoundError,
-)
-from src.services.user_management_service import (
-    UserAuthResponse,
-    UserCreateRequest,
-    UserManagementService,
-    UserResponse,
-    UserUpdateRequest,
-)
+from src.core.exceptions import (InvalidCredentialsError,
+                                 UserAlreadyExistsError, UserNotFoundError)
+from src.services.user_management_service import (UserAuthResponse,
+                                                  UserCreateRequest,
+                                                  UserManagementService,
+                                                  UserResponse,
+                                                  UserUpdateRequest)
 
 
 @pytest.fixture
@@ -485,3 +480,129 @@ class TestUserManagementService:
         call_args = mock_user_repository.update.call_args[0][1]
         assert call_args["is_active"] is True
         assert "updated_at" in call_args
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_authenticate_user_empty_credentials(
+        self, user_service, mock_user_repository
+    ):
+        """测试认证时邮箱和密码为空"""
+        # 执行测试并验证异常
+        with pytest.raises(InvalidCredentialsError, match="邮箱和密码不能为空"):
+            await user_service.authenticate_user("", "password")
+
+        with pytest.raises(InvalidCredentialsError, match="邮箱和密码不能为空"):
+            await user_service.authenticate_user("email@example.com", "")
+
+        with pytest.raises(InvalidCredentialsError, match="邮箱和密码不能为空"):
+            await user_service.authenticate_user("", "")
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_get_user_by_email_success(
+        self, user_service, mock_user_repository, sample_user
+    ):
+        """测试成功根据邮箱获取用户"""
+        # 准备测试数据
+        mock_user_repository.get_by_email.return_value = sample_user
+
+        # 执行测试
+        result = await user_service.get_user_by_email("test@example.com")
+
+        # 验证结果
+        assert isinstance(result, UserResponse)
+        assert result.email == "test@example.com"
+
+        # 验证调用
+        mock_user_repository.get_by_email.assert_called_once_with("test@example.com")
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_get_user_by_email_not_found(
+        self, user_service, mock_user_repository
+    ):
+        """测试根据邮箱获取用户时用户不存在"""
+        # 准备测试数据
+        mock_user_repository.get_by_email.return_value = None
+
+        # 执行测试并验证异常
+        with pytest.raises(UserNotFoundError, match="用户邮箱 test@example.com 不存在"):
+            await user_service.get_user_by_email("test@example.com")
+
+        # 验证调用
+        mock_user_repository.get_by_email.assert_called_once_with("test@example.com")
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_search_users_success(
+        self, user_service, mock_user_repository, sample_user
+    ):
+        """测试成功搜索用户"""
+        # 准备测试数据
+        mock_user_repository.search.return_value = [sample_user]
+
+        # 执行测试
+        result = await user_service.search_users("test", limit=10)
+
+        # 验证结果
+        assert len(result) == 1
+        assert isinstance(result[0], UserResponse)
+        assert result[0].username == "testuser"
+
+        # 验证调用
+        mock_user_repository.search.assert_called_once_with("test", 10)
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_search_users_empty_result(self, user_service, mock_user_repository):
+        """测试搜索用户时无结果"""
+        # 准备测试数据
+        mock_user_repository.search.return_value = []
+
+        # 执行测试
+        result = await user_service.search_users("nonexistent", limit=10)
+
+        # 验证结果
+        assert len(result) == 0
+        assert isinstance(result, list)
+
+        # 验证调用
+        mock_user_repository.search.assert_called_once_with("nonexistent", 10)
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_change_password_user_not_found(
+        self, user_service, mock_user_repository
+    ):
+        """测试修改密码时用户不存在"""
+        # 准备测试数据
+        mock_user_repository.get_by_id.return_value = None
+
+        # 执行测试并验证异常
+        with pytest.raises(UserNotFoundError, match="用户ID 1 不存在"):
+            await user_service.change_password(1, "oldpass", "newpass")
+
+        # 验证调用
+        mock_user_repository.get_by_id.assert_called_once_with(1)
+
+    @pytest.mark.unit
+    @pytest.mark.services
+    async def test_change_password_weak_new_password(
+        self, user_service, mock_user_repository, sample_user
+    ):
+        """测试修改密码时新密码强度不足"""
+        # 准备测试数据
+        mock_user_repository.get_by_id.return_value = sample_user
+
+        with patch(
+            "src.services.user_management_service.verify_password"
+        ) as mock_verify:
+            mock_verify.return_value = True
+            with patch(
+                "src.services.user_management_service.validate_password_strength"
+            ) as mock_validate:
+                mock_validate.side_effect = ValueError("密码强度不足")
+
+                # 执行测试并验证异常
+                with pytest.raises(ValueError, match="密码强度不足"):
+                    await user_service.change_password(1, "oldpass", "weak")

@@ -5,28 +5,20 @@ Basic Adapter Tests
 测试适配器模式的基础功能，避免有语法错误的模块。
 """
 
-import pytest
-import asyncio
-import sys
 import os
-from unittest.mock import Mock, AsyncMock
-from typing import Any
+import sys
 from datetime import datetime
+from typing import Any
+
+import pytest
 
 # 添加adapters路径并直接导入
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
 # 只导入没有语法错误的模块
 try:
-    from base import (
-        AdapterStatus,
-        Adaptee,
-        Target,
-        Adapter,
-        BaseAdapter,
-        DataTransformer,
-        CompositeAdapter,
-    )
+    from base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
+                      CompositeAdapter, DataTransformer, Target)
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -34,14 +26,14 @@ except ImportError as e:
     IMPORTS_AVAILABLE = False
 
 try:
-    from registry import AdapterRegistry, AdapterError
+    from registry import AdapterError, AdapterRegistry
 
     REGISTRY_AVAILABLE = True
 except ImportError:
     REGISTRY_AVAILABLE = False
 
 try:
-    from factory import AdapterConfig, AdapterGroupConfig, AdapterFactory
+    from factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
 
     FACTORY_AVAILABLE = True
 except ImportError:

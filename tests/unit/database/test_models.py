@@ -3,27 +3,24 @@
 Database Models Test
 """
 
-import pytest
-from datetime import datetime
-from typing import Optional
-
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-
-
+import os
 # 模拟导入，避免循环依赖问题
 import sys
-import os
+from datetime import datetime
+
+import pytest
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入数据库模块
 try:
-    from src.database.models.user import User
-    from src.database.models.predictions import Prediction
     from src.database.models.match import Match
+    from src.database.models.predictions import Prediction
     from src.database.models.team import Team
+    from src.database.models.user import User
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
     # Mock implementation will be used

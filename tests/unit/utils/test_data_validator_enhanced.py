@@ -3,6 +3,7 @@
 """
 
 import pytest
+
 from src.utils.data_validator import DataValidator
 
 
@@ -206,9 +207,9 @@ class TestDataValidatorEnhanced:
         import time
 
         # 测试大量验证操作性能
-        emails = ["test{}@example.com".format(i) for i in range(100)]
-        phones = ["1380013{:04d}".format(i) for i in range(100)]
-        urls = ["https://example{}.com".format(i) for i in range(100)]
+        emails = [f"test{i}@example.com" for i in range(100)]
+        phones = [f"1380013{i:04d}" for i in range(100)]
+        urls = [f"https://example{i}.com" for i in range(100)]
 
         start_time = time.time()
 

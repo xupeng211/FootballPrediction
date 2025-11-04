@@ -432,13 +432,8 @@ class PoissonModel(BaseModel):
             return {}
 
         # 计算评估指标
-        from sklearn.metrics import (
-            accuracy_score,
-            confusion_matrix,
-            f1_score,
-            precision_score,
-            recall_score,
-        )
+        from sklearn.metrics import (accuracy_score, confusion_matrix,
+                                     f1_score, precision_score, recall_score)
 
         accuracy = accuracy_score(actuals, predictions)
         precision = precision_score(

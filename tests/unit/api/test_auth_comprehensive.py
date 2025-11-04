@@ -5,30 +5,18 @@ API认证系统综合测试
 测试范围: 用户认证、JWT令牌管理、授权中间件、安全功能
 """
 
-import pytest
-import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-from fastapi import HTTPException, status, Request
-from fastapi.testclient import TestClient
-from pydantic import EmailStr
-from typing import Optional
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi import HTTPException, status
 
 try:
-    from src.api.auth import (
-        UserRegister,
-        UserLogin,
-        TokenResponse,
-        RefreshTokenRequest,
-        PasswordChangeRequest,
-        PasswordResetRequest,
-        PasswordResetConfirm,
-        UserResponse,
-        authenticate_user,
-        get_user_by_id,
-        create_user,
-        MOCK_USERS,
-    )
+    from src.api.auth import (MOCK_USERS, PasswordChangeRequest,
+                              PasswordResetConfirm, PasswordResetRequest,
+                              RefreshTokenRequest, TokenResponse, UserLogin,
+                              UserRegister, UserResponse, authenticate_user,
+                              create_user, get_user_by_id)
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
     # Mock implementations
@@ -77,7 +65,7 @@ except ImportError as e:
 
 
 try:
-    from src.security.jwt_auth import JWTAuthManager, UserAuth, TokenData
+    from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
 except ImportError:
 
     class JWTAuthManager:
@@ -94,14 +82,10 @@ except ImportError:
 
 
 try:
-    from src.api.auth_dependencies import (
-        get_current_user,
-        get_current_active_user,
-        require_roles,
-        rate_limit_login,
-        AuthContext,
-        get_client_ip,
-    )
+    from src.api.auth_dependencies import (AuthContext, get_client_ip,
+                                           get_current_active_user,
+                                           get_current_user, rate_limit_login,
+                                           require_roles)
 except ImportError:
 
     def get_current_user(*args, **kwargs):

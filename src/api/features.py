@@ -7,12 +7,14 @@
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
+from src.database.base import get_db_session
 from src.database.models import Match
 from src.features.feature_store import FootballFeatureStore
 
@@ -172,7 +174,9 @@ def build_response_data(
 
 
 @router.get("/{match_id}")
-async def get_match_features_improved(match_id: int) -> dict[str, Any]:
+async def get_match_features_improved(
+    match_id: int, session: Session = Depends(get_db_session), include_raw: bool = False
+) -> dict[str, Any]:
     """
     改进版本:获取比赛特征
 

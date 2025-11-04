@@ -2,8 +2,10 @@
 内容分析服务测试
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
+
 from src.services.content_analysis_service import ContentAnalysisService
 
 
@@ -84,7 +86,8 @@ class TestContentAnalysisService:
 
     def test_service_module_import(self):
         """测试服务模块导入"""
-        from src.services.content_analysis_service import ContentAnalysisService
+        from src.services.content_analysis_service import \
+            ContentAnalysisService
 
         assert ContentAnalysisService is not None
 

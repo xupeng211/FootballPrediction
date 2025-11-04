@@ -3,14 +3,10 @@ Formatters完整测试 - 从0%提升到100%覆盖率
 覆盖所有格式化函数
 """
 
-import pytest
 from datetime import datetime
-from src.utils.formatters import (
-    format_datetime,
-    format_json,
-    format_currency,
-    format_percentage,
-)
+
+from src.utils.formatters import (format_currency, format_datetime,
+                                  format_json, format_percentage)
 
 
 class TestFormattersComplete:

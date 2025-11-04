@@ -2,10 +2,11 @@
 路径管理器增强测试 - 深化覆盖未测试的代码路径
 """
 
-import pytest
 import tempfile
-import os
 from pathlib import Path
+
+import pytest
+
 from src.core.path_manager import PathManager
 
 
@@ -228,7 +229,6 @@ class TestPathManagerEnhanced:
     def test_concurrent_access(self, path_manager):
         """测试并发访问"""
         import threading
-        import time
 
         results = []
 

@@ -3,14 +3,8 @@ StringUtils增强测试 - 深化50.3%到65%+覆盖率
 针对未覆盖的字符串工具函数进行全面测试
 """
 
-import pytest
-import re
-from src.utils.string_utils import (
-    StringUtils,
-    cached_slug,
-    batch_clean_strings,
-    validate_batch_emails,
-)
+from src.utils.string_utils import (StringUtils, batch_clean_strings,
+                                    cached_slug, validate_batch_emails)
 
 
 class TestStringUtilsEnhanced:
@@ -487,9 +481,7 @@ class TestStringUtilsEnhanced:
         import time
 
         # 测试大量操作性能
-        strings = [
-            "Hello World {} {}".format(i, j) for i in range(50) for j in range(2)
-        ]
+        strings = [f"Hello World {i} {j}" for i in range(50) for j in range(2)]
 
         start_time = time.time()
 

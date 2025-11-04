@@ -77,19 +77,12 @@ from src.database.connection import get_session
 from src.database.models import Prediction, User
 
 from .base import CommandHandler, QueryHandler
-from .commands import (
-    CreatePredictionCommand,
-    CreateUserCommand,
-    DeletePredictionCommand,
-    UpdatePredictionCommand,
-)
-from .dto import CommandResult, MatchDTO, PredictionDTO, PredictionStatsDTO, UserDTO
-from .queries import (
-    GetPredictionByIdQuery,
-    GetPredictionsByUserQuery,
-    GetUpcomingMatchesQuery,
-    GetUserStatsQuery,
-)
+from .commands import (CreatePredictionCommand, CreateUserCommand,
+                       DeletePredictionCommand, UpdatePredictionCommand)
+from .dto import (CommandResult, MatchDTO, PredictionDTO, PredictionStatsDTO,
+                  UserDTO)
+from .queries import (GetPredictionByIdQuery, GetPredictionsByUserQuery,
+                      GetUpcomingMatchesQuery, GetUserStatsQuery)
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +113,7 @@ class CreatePredictionHandler(CommandHandler):
                     )
 
                 # 创建预测
-                _prediction = Prediction(
+                prediction = Prediction(
                     match_id=command.match_id,
                     user_id=command.user_id,
                     predicted_home=command.predicted_home,

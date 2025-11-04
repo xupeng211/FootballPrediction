@@ -12,7 +12,8 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.collectors.oddsportal_scraper import OddsPortalScraper, OddsPortalMatch
+from src.collectors.oddsportal_scraper import (OddsPortalMatch,
+                                               OddsPortalScraper)
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
@@ -146,8 +147,8 @@ async def test_data_structure():
     logger.info("Testing OddsPortalMatch data structure...")
 
     try:
-        from datetime import datetime
         from dataclasses import asdict
+        from datetime import datetime
 
         # 创建测试数据
         match = OddsPortalMatch(
@@ -207,7 +208,6 @@ async def test_adapter_interface():
     logger.info("Testing DataSourceAdapter interface...")
 
     try:
-        from src.collectors.data_sources import DataSourceAdapter
 
         scraper = OddsPortalScraper()
 

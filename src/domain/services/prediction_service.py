@@ -10,16 +10,15 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from src.domain.events.prediction_events import (
-    PredictionCancelledEvent,
-    PredictionCreatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionExpiredEvent,
-    PredictionPointsAdjustedEvent,
-    PredictionUpdatedEvent,
-)
+from src.domain.events.prediction_events import (PredictionCancelledEvent,
+                                                 PredictionCreatedEvent,
+                                                 PredictionEvaluatedEvent,
+                                                 PredictionExpiredEvent,
+                                                 PredictionPointsAdjustedEvent,
+                                                 PredictionUpdatedEvent)
 from src.domain.models.match import Match, MatchStatus
-from src.domain.models.prediction import Prediction, PredictionPoints, PredictionStatus
+from src.domain.models.prediction import (Prediction, PredictionPoints,
+                                          PredictionStatus)
 
 
 class PredictionDomainService:

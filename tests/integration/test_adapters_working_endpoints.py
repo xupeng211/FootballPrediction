@@ -4,9 +4,11 @@ adapters API工作端点测试
 专门测试实际存在的adapters端点以提升覆盖率
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
+
 from src.main import app
 
 client = TestClient(app)

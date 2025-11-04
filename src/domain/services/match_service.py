@@ -9,12 +9,10 @@ Handles complex business logic related to matches.
 from datetime import datetime, timedelta
 from typing import Any
 
-from src.domain.events.match_events import (
-    MatchCancelledEvent,
-    MatchFinishedEvent,
-    MatchPostponedEvent,
-    MatchStartedEvent,
-)
+from src.domain.events.match_events import (MatchCancelledEvent,
+                                            MatchFinishedEvent,
+                                            MatchPostponedEvent,
+                                            MatchStartedEvent)
 from src.domain.models.match import Match, MatchResult, MatchStatus
 from src.domain.models.team import Team
 

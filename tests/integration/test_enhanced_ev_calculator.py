@@ -14,9 +14,8 @@ import asyncio
 import json
 import logging
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.append(str(Path(__file__).parent))
@@ -34,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def create_test_data() -> List[Dict[str, Any]]:
+def create_test_data() -> list[dict[str, Any]]:
     """创建测试数据"""
 
     # 模拟历史投注数据
@@ -154,7 +153,8 @@ def test_kelly_optimization():
     logger.info("🔧 测试Kelly准则优化...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import EnhancedKellyCalculator
+        from src.services.betting.enhanced_ev_calculator import \
+            EnhancedKellyCalculator
 
         kelly_calc = EnhancedKellyCalculator()
 
@@ -213,9 +213,8 @@ def test_value_rating_enhancement():
     logger.info("📊 测试价值评级增强...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import (
-            EnhancedValueRatingCalculator,
-        )
+        from src.services.betting.enhanced_ev_calculator import \
+            EnhancedValueRatingCalculator
 
         value_calc = EnhancedValueRatingCalculator()
 
@@ -274,9 +273,7 @@ async def test_enhanced_ev_calculation():
 
     try:
         from src.services.betting.enhanced_ev_calculator import (
-            EnhancedEVCalculator,
-            BetType,
-        )
+            BetType, EnhancedEVCalculator)
 
         ev_calc = EnhancedEVCalculator()
 
@@ -350,7 +347,8 @@ async def test_strategy_backtesting():
     logger.info("📈 测试策略回测...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import EnhancedEVCalculator
+        from src.services.betting.enhanced_ev_calculator import \
+            EnhancedEVCalculator
 
         ev_calc = EnhancedEVCalculator()
         test_bets = create_test_data()
@@ -394,13 +392,10 @@ def compare_with_original():
     logger.info("🔄 与原始EV计算器对比...")
 
     try:
-        from src.services.betting.ev_calculator import (
-            EVCalculator as OriginalEVCalculator,
-        )
         from src.services.betting.enhanced_ev_calculator import (
-            EnhancedEVCalculator,
-            BetType,
-        )
+            BetType, EnhancedEVCalculator)
+        from src.services.betting.ev_calculator import \
+            EVCalculator as OriginalEVCalculator
 
         original_calc = OriginalEVCalculator()
         enhanced_calc = EnhancedEVCalculator()

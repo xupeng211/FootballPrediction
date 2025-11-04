@@ -11,30 +11,17 @@ from datetime import date, datetime
 from typing import Any
 
 from .bus import get_command_bus, get_query_bus
-from .commands import (
-    CreateMatchCommand,
-    CreatePredictionCommand,
-    CreateUserCommand,
-    DeletePredictionCommand,
-    UpdateMatchCommand,
-    UpdatePredictionCommand,
-    UpdateUserCommand,
-)
+from .commands import (CreateMatchCommand, CreatePredictionCommand,
+                       CreateUserCommand, DeletePredictionCommand,
+                       UpdateMatchCommand, UpdatePredictionCommand,
+                       UpdateUserCommand)
 from .dto import CommandResult, MatchDTO, PredictionDTO, PredictionStatsDTO
-from .handlers import (
-    PredictionCommandHandlers,
-    PredictionQueryHandlers,
-    UserCommandHandlers,
-)
-from .queries import (
-    GetLeaderboardQuery,
-    GetMatchByIdQuery,
-    GetPredictionAnalyticsQuery,
-    GetPredictionByIdQuery,
-    GetPredictionsByUserQuery,
-    GetUpcomingMatchesQuery,
-    GetUserStatsQuery,
-)
+from .handlers import (PredictionCommandHandlers, PredictionQueryHandlers,
+                       UserCommandHandlers)
+from .queries import (GetLeaderboardQuery, GetMatchByIdQuery,
+                      GetPredictionAnalyticsQuery, GetPredictionByIdQuery,
+                      GetPredictionsByUserQuery, GetUpcomingMatchesQuery,
+                      GetUserStatsQuery)
 
 logger = logging.getLogger(__name__)
 

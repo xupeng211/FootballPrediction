@@ -5,14 +5,14 @@ Simple Elo Model Tests
 专门测试EloModel功能，避免复杂的依赖问题。
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, Any
-import tempfile
-import sys
 import os
+import sys
+import tempfile
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # 直接导入，避免通过__init__.py
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"))

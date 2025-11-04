@@ -3,8 +3,8 @@ CryptoUtils综合测试 - 从25%提升到80%+覆盖率
 覆盖加密、哈希、编码等所有工具方法
 """
 
-import pytest
 import hashlib
+
 from src.utils.crypto_utils import CryptoUtils
 
 

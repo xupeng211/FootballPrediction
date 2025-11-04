@@ -7,34 +7,27 @@
 """
 
 import asyncio
-import numpy as np
-import pandas as pd
-import pytest
-import time
-import psutil
 import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 # 模拟导入，避免循环依赖问题
 import sys
-import os
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import psutil
+import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
+                                       TrainingStatus)
+    from src.ml.models.base_model import (BaseModel, PredictionResult,
+                                          TrainingResult)
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import (
-        ModelTrainer,
-        TrainingConfig,
-        TrainingStatus,
-        ModelType,
-    )
 
     CAN_IMPORT = True
 except ImportError as e:
@@ -70,7 +63,7 @@ class PerformanceMonitor:
             return self.end_time - self.start_time
         return 0
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """获取内存使用情况"""
         return {
             "start_mb": self.memory_start or 0,
@@ -393,7 +386,7 @@ class TestMLModelPerformance:
         assert time_ratio < size_ratio * 1.5  # 时间增长不应超过数据增长的1.5倍
         assert all(t < 30 for t in training_times)  # 所有训练时间都应在30秒内
 
-        print(f"扩展性测试结果:")
+        print("扩展性测试结果:")
         for result in performance_results:
             print(
                 f"  数据量={result['data_size']}, 训练时间={result['training_time']:.3f}s, "
@@ -453,7 +446,7 @@ class TestMLModelOptimization:
         best_config = max(results, key=lambda x: x["evaluation_accuracy"])
         fastest_training = min(results, key=lambda x: x["training_time"])
 
-        print(f"超参数优化结果:")
+        print("超参数优化结果:")
         for result in results:
             print(
                 f"  配置={result['config']}, 训练时间={result['training_time']:.3f}s, "
@@ -534,7 +527,7 @@ class TestMLModelOptimization:
 
         preprocessing_time = monitor.get_execution_time()
 
-        print(f"数据预处理优化:")
+        print("数据预处理优化:")
         print(f"  预处理时间: {preprocessing_time:.3f}s")
         print(f"  数据质量提升: {quality_ratio:.3f}")
         print(
@@ -591,7 +584,7 @@ class TestMLModelOptimization:
         avg_subsequent_time = np.mean(subsequent_times)
         max_subsequent_time = np.max(subsequent_times)
 
-        print(f"模型缓存测试:")
+        print("模型缓存测试:")
         print(f"  首次预测时间: {first_prediction_time:.6f}s")
         print(f"  平均后续时间: {avg_subsequent_time:.6f}s")
         print(f"  最大后续时间: {max_subsequent_time:.6f}s")
@@ -652,7 +645,7 @@ class TestMLModelOptimization:
             assert ind.draw_prob == batch.draw_prob
             assert ind.away_win_prob == batch.away_win_prob
 
-        print(f"批处理优化测试:")
+        print("批处理优化测试:")
         print(f"  逐个处理时间: {individual_time:.3f}s")
         print(f"  批处理时间: {batch_time:.3f}s")
         print(

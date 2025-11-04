@@ -3,11 +3,11 @@ FileUtils补充测试 - 冲刺7.5%覆盖率目标
 专门针对未覆盖的函数进行精准测试
 """
 
-import pytest
+import os
 import tempfile
 import time
-import os
 from pathlib import Path
+
 from src.utils.file_utils import FileUtils
 
 

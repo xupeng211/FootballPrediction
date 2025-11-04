@@ -7,13 +7,8 @@ Provides simplified interfaces to access complex subsystems.
 """
 
 from .base import Subsystem, SubsystemManager, SystemFacade
-from .facades import (
-    AnalyticsFacade,
-    DataCollectionFacade,
-    MainSystemFacade,
-    NotificationFacade,
-    PredictionFacade,
-)
+from .facades import (AnalyticsFacade, DataCollectionFacade, MainSystemFacade,
+                      NotificationFacade, PredictionFacade)
 from .factory import FacadeConfig, FacadeFactory
 
 __all__ = [

@@ -1,4 +1,6 @@
 # 智能Mock兼容修复模式 - 避免API导入失败问题
+from datetime import UTC
+
 IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免API导入失败问题"
@@ -7,8 +9,9 @@ IMPORT_ERROR = "Mock模式已启用 - 避免API导入失败问题"
 # Mock FastAPI应用
 def create_mock_app():
     """创建Mock FastAPI应用"""
+    from datetime import datetime
+
     from fastapi import FastAPI
-    from datetime import datetime, timezone
 
     app = FastAPI(title="Football Prediction API Mock", version="2.0.0")
 
@@ -20,7 +23,7 @@ def create_mock_app():
     async def health():
         return {
             "status": "healthy",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     @app.get("/api/v1/health")
@@ -60,10 +63,11 @@ print("智能Mock兼容修复模式：Mock API应用已创建")
 API健康检查测试
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent.parent

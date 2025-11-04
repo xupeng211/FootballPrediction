@@ -5,11 +5,11 @@ Stage 3 Simple Test Script - Database Integration and Caching
 """
 
 import asyncio
-import sys
-import os
 import logging
+import os
+import sys
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
@@ -462,7 +462,7 @@ class Stage3SimpleTester:
             logger.warning(f"⚠️ 测试数据清理失败: {e}")
 
         print("\n" + "=" * 50)
-        print(f"📊 第三阶段简化测试完成!")
+        print("📊 第三阶段简化测试完成!")
         print(f"   总计: {self.test_results['total_tests']}")
         print(f"   通过: {self.test_results['passed_tests']}")
         print(f"   失败: {self.test_results['failed_tests']}")

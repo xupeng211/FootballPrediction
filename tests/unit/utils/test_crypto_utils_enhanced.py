@@ -3,11 +3,10 @@ CryptoUtils增强测试 - 冲刺7.5%覆盖率目标
 专门针对未覆盖的加密工具函数进行精准测试
 """
 
-import pytest
-import hashlib
 import base64
+import hashlib
 import urllib.parse
-from unittest.mock import patch
+
 from src.utils.crypto_utils import CryptoUtils
 
 
@@ -310,7 +309,7 @@ class TestCryptoUtilsEnhanced:
         """测试空字符串校验和创建"""
         checksum = CryptoUtils.create_checksum("")
 
-        expected = hashlib.sha256("".encode("utf-8")).hexdigest()
+        expected = hashlib.sha256(b"").hexdigest()
         assert checksum == expected
         assert len(checksum) == 64
 

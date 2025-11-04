@@ -1,10 +1,11 @@
 import os
 import time
+from asyncio import isawaitable
 from datetime import datetime
 from typing import Any
 
 import psutil
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import PlainTextResponse
 from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import text
@@ -84,8 +85,8 @@ async def _get_database_metrics(db: Session) -> dict[str, Any]:
             except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 return 0
 
-        stats["statistics"]["teams_count"] = _val(teams)
-        stats["statistics"]["matches_count"] = _val(matches)
+        stats["statistics"]["teams_count"] = _val(_teams)
+        stats["statistics"]["matches_count"] = _val(_matches)
         stats["statistics"]["predictions_count"] = _val(predictions)
         stats["statistics"]["active_connections"] = _val(active)
         stats["healthy"] = True

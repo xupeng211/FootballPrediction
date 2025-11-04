@@ -3,14 +3,9 @@ Validators综合测试 - 从0%提升到90%+覆盖率
 覆盖所有验证函数
 """
 
-import pytest
-from src.utils.validators import (
-    is_valid_email,
-    is_valid_phone,
-    is_valid_url,
-    validate_required_fields,
-    validate_data_types,
-)
+from src.utils.validators import (is_valid_email, is_valid_phone, is_valid_url,
+                                  validate_data_types,
+                                  validate_required_fields)
 
 
 class TestValidatorsComprehensive:
