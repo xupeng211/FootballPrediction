@@ -21,7 +21,8 @@ def create_issue(title, body, labels):
     with open('/tmp/issue_body.md', 'w', encoding='utf-8') as f:
         f.write(body)
 
-    cmd = f'gh issue create --title "{title}" --body-file /tmp/issue_body.md --label "{",".join(labels)}"'
+    cmd = f'gh issue create --title "{title}" --body-file /tmp/issue_body.md --label "{",
+    ".join(labels)}"'
     stdout, stderr, returncode = run_command(cmd)
 
     if returncode == 0:
@@ -431,7 +432,11 @@ pytest --cov=src tests/ --cov-report=term-missing
 """
 
     print(f"\\n🔨 正在创建总结Issue...")
-    summary_url = create_issue(summary_title, summary_body, ["quality", "plan", "overview"])
+    summary_url = create_issue(summary_title,
+    summary_body,
+    ["quality",
+    "plan",
+    "overview"])
     if summary_url:
         created_issues.append((summary_title, summary_url))
 

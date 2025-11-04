@@ -175,7 +175,9 @@ def fix_critical_test_errors():
         # 检查导入错误
         if "from src.domain.models" in content:
             # 确保domain模块导入正确
-            if "cannot import" in str(os.system(f"python -c 'from src.domain.models import Match, Team, League' 2>&1")):
+            if "cannot import" in str(os.system(f"python -c 'from src.domain.models import Match,
+    Team,
+    League' 2>&1")):
                 # 需要修复domain models导入
                 pass
 
@@ -294,7 +296,8 @@ except ImportError:
         PredictionService = None
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="PredictionService not available")
+@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE,
+    reason="PredictionService not available")
 class TestPredictionServiceGenerated:
     """预测服务测试"""
 

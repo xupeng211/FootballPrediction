@@ -51,7 +51,6 @@ STREAM_PROCESSING_CONFIG = {
 # 流处理使用示例
 import asyncio
 from kafka import KafkaConsumer, KafkaProducer
-import json
 class StreamProcessor:
     def __init__(self):
         self.consumer_config = STREAM_CONSUMER_CONFIG

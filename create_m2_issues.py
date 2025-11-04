@@ -139,12 +139,14 @@ def main():
         "failed_issues": len(failed_issues),
         "total_issues": total_issues,
         "success_rate": (len(created_issues) + len(skipped_issues)) / total_issues * 100,
+    
         "created_at": datetime.now().isoformat(),
         "created": [
             {
                 "number": issue["number"],
                 "title": issue["title"],
-                "url": issue.get("html_url", f"https://github.com/{REPO_OWNER}/{REPO_NAME}/issues/{issue['number']}")
+                "url": issue.get("html_url",
+    f"https://github.com/{REPO_OWNER}/{REPO_NAME}/issues/{issue['number']}")
             }
             for issue in created_issues
         ],

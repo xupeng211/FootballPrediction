@@ -127,7 +127,9 @@ class ContentAnalysisService:
         """初始化内容分析服务"""
         self.analyzers = {}
 
-    def analyze_text(self, text: str, analysis_type: str = "sentiment") -> ContentAnalysisResult:
+    def analyze_text(self,
+    text: str,
+    analysis_type: str = "sentiment") -> ContentAnalysisResult:
         """
         分析文本内容
 
@@ -151,7 +153,9 @@ class ContentAnalysisService:
 
         return result
 
-    def analyze_content(self, content: Any, content_type: str = "text") -> ContentAnalysisResult:
+    def analyze_content(self,
+    content: Any,
+    content_type: str = "text") -> ContentAnalysisResult:
         """
         分析内容
 
@@ -210,7 +214,10 @@ class EVCalculator:
         """初始化EV计算器"""
         self.commission_rate = 0.02  # 2%佣金率
 
-    def calculate_ev(self, odds: float, probability: float, stake: float = 100.0) -> EVCalculationResult:
+    def calculate_ev(self,
+    odds: float,
+    probability: float,
+    stake: float = 100.0) -> EVCalculationResult:
         """
         计算期望值
 
@@ -297,7 +304,9 @@ def fix_circular_imports():
         # 移除循环导入
         if "from .system_monitor import" in content:
             content = re.sub(r'from \.system_monitor import.*\n', '', content)
-            content = re.sub(r'from src\.monitoring\.system_monitor import.*\n', '', content)
+            content = re.sub(r'from src\.monitoring\.system_monitor import.*\n',
+    '',
+    content)
 
             system_monitor_file.write_text(content, encoding='utf-8')
             fixes.append("✅ 修复system_monitor.py循环导入")

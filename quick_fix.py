@@ -11,7 +11,10 @@ def fix_imports_in_file(file_path):
     for line in lines:
         if line.strip().startswith('from ') and 'import' in line:
             indent = len(line) - len(line.lstrip())
-            if any(keyword in line for keyword in ['services.', 'api.', 'database.', 'core.']):
+            if any(keyword in line for keyword in ['services.',
+    'api.',
+    'database.',
+    'core.']):
                 new_lines.append(line)
                 new_lines.append(' ' * (indent + 4) + 'except ImportError as e:')
                 new_lines.append(' ' * (indent + 8) + 'print(f"Warning: Import failed: {e}")')

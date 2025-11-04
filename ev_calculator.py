@@ -26,7 +26,10 @@ class EVCalculator:
         """初始化EV计算器"""
         self.commission_rate = 0.02  # 2%佣金率
 
-    def calculate_ev(self, odds: float, probability: float, stake: float = 100.0) -> EVCalculationResult:
+    def calculate_ev(self,
+    odds: float,
+    probability: float,
+    stake: float = 100.0) -> EVCalculationResult:
         """
         计算期望值
 
