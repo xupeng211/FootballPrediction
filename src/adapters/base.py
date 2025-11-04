@@ -80,10 +80,13 @@ class CompositeAdapter(Adapter):
         """获取源数据结构"""
         return {}
 
-    @abstractmethod
     def get_target_schema(self) -> dict[str, Any]:
         """获取目标数据结构"""
-        pass
+        return {
+            "type": "composite",
+            "description": f"Composite adapter {self.name} target schema",
+            "adapters": [adapter.name for adapter in self.adapters]
+        }
 
     def __init__(self, name: str = "CompositeAdapter"):
         """初始化组合适配器"""
