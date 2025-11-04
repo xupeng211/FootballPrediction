@@ -342,6 +342,7 @@ class ConnectionPoolOptimizer:
                     'total_configs_tested': len(comparison_results),
                     'successful_configs': len([r for r in comparison_results.values() if 'error' not in r]),
     
+    
                     'best_config': max(
                         [(name,
     results) for name,

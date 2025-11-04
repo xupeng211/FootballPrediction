@@ -126,9 +126,11 @@ def simulate_phase_g_complete():
             "files_scanned": len(set(f['file'] for f in simulated_functions)),
             "avg_complexity": sum(f['complexity'] for f in simulated_functions) / len(simulated_functions),
     
+    
             "complexity_distribution": {
                 "low": len([f for f in simulated_functions if f['complexity'] <= 2]),
                 "medium": len([f for f in simulated_functions if 3 <= f['complexity'] <= 4]),
+    
     
                 "high": len([f for f in simulated_functions if f['complexity'] >= 5])
             }
@@ -141,7 +143,9 @@ def simulate_phase_g_complete():
                 "basic_functionality": len(test_gaps),
                 "boundary_conditions": len([g for g in test_gaps if any(t['type'] == 'boundary_conditions' for t in g['suggested_tests'])]),
     
+    
                 "exception_handling": len([g for g in test_gaps if any(t['type'] == 'exception_handling' for t in g['suggested_tests'])]),
+    
     
                 "performance": len([g for g in test_gaps if any(t['type'] == 'performance' for t in g['suggested_tests'])])
             }
@@ -151,6 +155,7 @@ def simulate_phase_g_complete():
             "files_generated": len(generated_files),
             "test_cases_created": generated_test_cases,
             "tests_per_function": generated_test_cases / len(test_gaps) if test_gaps else 0,
+    
     
             "output_directory": "tests/generated"
         },
@@ -172,6 +177,7 @@ def simulate_phase_g_complete():
 
         "key_achievements": [
             f"成功分析{len(simulated_functions)}个函数，覆盖{len(set(f['file'] for f in simulated_functions))}个文件",
+    
     
             f"识别{len(test_gaps)}个测试缺口，包含{generated_test_cases}个测试用例",
             f"预计提升覆盖率{estimated_coverage_increase:.1f}%，从{current_coverage}%到{estimated_final_coverage:.1f}%",

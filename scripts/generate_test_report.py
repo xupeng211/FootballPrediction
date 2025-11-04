@@ -460,6 +460,7 @@ class TestReportGenerator:
             f"",
             f"![Progress](https://progress-bar.dev/{int(report.success_rate)}?scale=100&title=Success%20Rate)",
     
+    
             f""
         ]
 

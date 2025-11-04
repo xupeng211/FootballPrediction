@@ -71,6 +71,7 @@ class CoverageDashboard:
                 src_files_count=len(src_files),
                 covered_files_count=len([f for f in src_files.values() if f['summary']['percent_covered'] > 0]),
     
+    
                 top_files=top_files
             )
 

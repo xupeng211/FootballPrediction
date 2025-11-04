@@ -325,6 +325,7 @@ class TaskMonitor:
     COUNT(*) as total_executions,
     
                             COUNT(CASE WHEN error_message IS NULL THEN 1 END) as successful_executions,
+    
     COUNT(CASE WHEN error_message IS NOT NULL THEN 1 END) as failed_executions,
     AVG(CASE WHEN error_message IS NULL THEN 1.0 ELSE 0.0 END) as success_rate,
     SUM(retry_count) as total_retries
@@ -349,6 +350,7 @@ class TaskMonitor:
     
     
                             AVG(CASE WHEN error_message IS NULL THEN 1.0 ELSE 0.0 END) as success_rate,
+    
     
                             SUM(retry_count) as total_retries
                         FROM error_logs

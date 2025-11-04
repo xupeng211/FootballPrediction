@@ -373,6 +373,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"quality_critical_{datetime.now().strftime('%Y%m%d%H%M')}",
+    
     "type": "quality",
     "severity": "critical",
     "title": "质量分数严重偏低",
@@ -385,6 +386,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"quality_warning_{datetime.now().strftime('%Y%m%d%H%M')}",
+    
     "type": "quality",
     "severity": "warning",
     "title": "质量分数偏低",
@@ -400,6 +402,7 @@ class QualityMonitorServer:
                 alerts.append(
                     {
                         "id": f"connections_high_{datetime.now().strftime('%Y%m%d%H%M')}",
+    
     "type": "system",
     "severity": "warning",
     "title": "连接数过高",

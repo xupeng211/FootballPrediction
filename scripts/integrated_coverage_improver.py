@@ -255,6 +255,7 @@ def _check_current_state_handle_error():
                 'total_actions': len(self.results_log),
                 'successful_actions': len([r for r in self.results_log if r.get('success') is True]),
     
+    
                 'failed_actions': len([r for r in self.results_log if r.get('success') is False])
             }
         }

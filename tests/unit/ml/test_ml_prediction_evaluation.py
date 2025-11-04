@@ -628,7 +628,8 @@ class TestMLModelEvaluation:
 
         logger.debug("✅ 评估稳定性测试通过:")  # TODO: Add logger import if needed
         logger.debug(f"   准确率: {mean_accuracy:.3f} ± {std_accuracy:.3f}")  # TODO: Add logger import if needed
-        logger.debug(f"   范围: [{min_accuracy:.3f}, {max_accuracy:.3f}]")  # TODO: Add logger import if needed
+        logger.debug(f"   范围: [{min_accuracy:.3f},
+    {max_accuracy:.3f}]")  # TODO: Add logger import if needed
         logger.debug(f"   变异系数: {std_accuracy/mean_accuracy:.3f}")  # TODO: Add logger import if needed
 
     def test_cross_validation_evaluation(self):

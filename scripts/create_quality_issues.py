@@ -743,11 +743,15 @@ Bandit安全扫描检测到多个安全问题需要修复，主要涉及测试�
                 "by_category": {
                     "syntax_errors": len([i for i in self.issues if "syntax" in i["labels"]]),
     
+    
                     "import_errors": len([i for i in self.issues if "import-error" in i["labels"]]),
+    
     
                     "test_issues": len([i for i in self.issues if "test" in i["labels"]]),
     
+    
                     "security_issues": len([i for i in self.issues if "security" in i["labels"]]),
+    
     
                     "configuration": len([i for i in self.issues if "configuration" in i["labels"]])
                 },

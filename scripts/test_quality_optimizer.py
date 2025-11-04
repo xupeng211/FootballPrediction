@@ -225,7 +225,10 @@ class TestQualityOptimizer:
 
         return line
 
-    def fix_unterminated_string(self, line: str, all_lines: List[str], line_num: int) -> str:
+    def fix_unterminated_string(self,
+    line: str,
+    all_lines: List[str],
+    line_num: int) -> str:
         """修复未终止的字符串"""
         # 查找未终止的字符串
         if 'f"' in line and line.count('"') % 2 == 1:
@@ -254,7 +257,10 @@ class TestQualityOptimizer:
 
         return content
 
-    def fix_general_syntax_error(self, line: str, all_lines: List[str], line_num: int) -> str:
+    def fix_general_syntax_error(self,
+    line: str,
+    all_lines: List[str],
+    line_num: int) -> str:
         """修复一般语法错误"""
         # 处理常见的语法错误
         if 'Expected `except` or `finally`' in line:
@@ -279,11 +285,15 @@ class TestQualityOptimizer:
             content = stripped[6:-1]  # 去掉 'print(' 和 ')'
 
             # 根据内容判断日志级别
-            if any(keyword in content.lower() for keyword in ['error', 'fail', 'exception']):
+            if any(keyword in content.lower() for keyword in ['error',
+    'fail',
+    'exception']):
                 log_level = 'error'
             elif any(keyword in content.lower() for keyword in ['warning', 'warn']):
                 log_level = 'warning'
-            elif any(keyword in content.lower() for keyword in ['info', 'start', 'complete']):
+            elif any(keyword in content.lower() for keyword in ['info',
+    'start',
+    'complete']):
                 log_level = 'info'
             else:
                 log_level = 'debug'
@@ -323,7 +333,8 @@ def main():
     if results['details']:
         print(f"\n📋 优化详情:")
         for detail in results['details'][:10]:  # 只显示前10个
-            print(f"  - {detail['file']}: {detail['issues_fixed']} 个问题, {detail['total_issues']} 个总问题")
+            print(f"  - {detail['file']}: {detail['issues_fixed']} 个问题,
+    {detail['total_issues']} 个总问题")
 
     if results['failed_files']:
         print(f"\n⚠️  优化失败的文件:")

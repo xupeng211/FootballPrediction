@@ -301,6 +301,7 @@ class IntelligentToolAnalyzer:
                     "priority": "high",
                     "description": f"整体脚本质量分数较低({avg_quality:.1f}/100)，建议添加文档字符串、错误处理和主函数",
     
+    
                     "affected_scripts": "multiple"
                 })
 
@@ -441,6 +442,7 @@ class IntelligentToolAnalyzer:
                 "average_quality_score": avg_quality,
                 "high_quality_scripts": len([s for s in quality_scores if s >= 80]),
                 "medium_quality_scripts": len([s for s in quality_scores if 60 <= s < 80]),
+    
     
                 "low_quality_scripts": len([s for s in quality_scores if s < 60])
             }

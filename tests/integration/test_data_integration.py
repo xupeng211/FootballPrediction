@@ -142,7 +142,8 @@ async def test_specific_team():
                     logger.debug(f"     联赛: {fixture['league']}")  # TODO: Add logger import if needed
                     logger.debug(f"     时间: {fixture['match_date']}")  # TODO: Add logger import if needed
                     logger.debug(f"     状态: {fixture['status']}")  # TODO: Add logger import if needed
-                    logger.debug(f"     场地: {fixture.get('venue', 'N/A')}")  # TODO: Add logger import if needed
+                    logger.debug(f"     场地: {fixture.get('venue',
+    'N/A')}")  # TODO: Add logger import if needed
                     logger.debug()  # TODO: Add logger import if needed
 
     except Exception as e:

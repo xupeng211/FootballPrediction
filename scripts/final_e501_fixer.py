@@ -13,7 +13,8 @@ def fix_specific_e501_errors(project_root: str = ".") -> int:
     total_fixed = 0
 
     # 修复notification_manager.py中的HTML/CSS格式问题
-    notification_file = os.path.join(project_root, "src/alerting/notification_manager.py")
+    notification_file = os.path.join(project_root,
+    "src/alerting/notification_manager.py")
     if os.path.exists(notification_file):
         fixed = fix_notification_manager_file(notification_file)
         total_fixed += fixed
@@ -186,7 +187,15 @@ def fix_notification_manager_file(file_path: str) -> int:
     for line in lines:
         if len(line) > 88:
             # 检查是否是CSS行
-            if line.strip().startswith(('.', 'body {', 'container {', 'header {', 'content {', 'alert-info {', 'footer {', 'details {', 'metric {')):
+            if line.strip().startswith(('.',
+    'body {',
+    'container {',
+    'header {',
+    'content {',
+    'alert-info {',
+    'footer {',
+    'details {',
+    'metric {')):
                 # 分解CSS属性
                 _fix_notification_manager_file_check_condition()
                     fixed_line = break_long_css_line(line)

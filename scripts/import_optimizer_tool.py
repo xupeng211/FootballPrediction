@@ -101,25 +101,29 @@ class ImportOptimizer:
                             # 针对不同错误类型提取额外信息
                             if error_code == 'F401':
                                 # F401: `module` imported but unused
-                                import_match = re.search(r'`([^`]+)` imported but unused', message)
+                                import_match = re.search(r'`([^`]+)` imported but unused',
+    message)
                                 if import_match:
                                     issue_info["unused_import"] = import_match.group(1)
 
                             elif error_code == 'F403':
                                 # F403: `from module import *` used
-                                import_match = re.search(r'`from ([^`]+) import \*` used', message)
+                                import_match = re.search(r'`from ([^`]+) import \*` used',
+    message)
                                 if import_match:
                                     issue_info["star_import"] = import_match.group(1)
 
                             elif error_code == 'F405':
                                 # F405: `name` may be undefined, or defined from star imports
-                                name_match = re.search(r'`([^`]+)` may be undefined', message)
+                                name_match = re.search(r'`([^`]+)` may be undefined',
+    message)
                                 if name_match:
                                     issue_info["undefined_name"] = name_match.group(1)
 
                             elif error_code == 'F821':
                                 # F821: Undefined name `name`
-                                name_match = re.search(r'Undefined name `([^`]+)`', message)
+                                name_match = re.search(r'Undefined name `([^`]+)`',
+    message)
                                 if name_match:
                                     issue_info["undefined_name"] = name_match.group(1)
 
@@ -170,7 +174,8 @@ class ImportOptimizer:
 
         # 处理F405: 修复可能未定义的名称
         if issues_by_type['F405']:
-            content = self.fix_potential_undefined_names(content, issues_by_type['F405'])
+            content = self.fix_potential_undefined_names(content,
+    issues_by_type['F405'])
             fixed_count += len(issues_by_type['F405'])
 
         # 只有在有修复时才写回文件
@@ -195,7 +200,9 @@ class ImportOptimizer:
         for issue in issues:
             if 'unused_import' in issue:
                 # 查找导入语句的行号
-                import_line = self.find_import_line(lines, issue['unused_import'], issue['line'])
+                import_line = self.find_import_line(lines,
+    issue['unused_import'],
+    issue['line'])
                 if import_line is not None:
                     lines_to_remove.add(import_line)
 
@@ -281,7 +288,10 @@ class ImportOptimizer:
 
         return '\n'.join(lines)
 
-    def find_import_line(self, lines: List[str], import_name: str, near_line: int) -> int:
+    def find_import_line(self,
+    lines: List[str],
+    import_name: str,
+    near_line: int) -> int:
         """查找导入语句的行号"""
         # 在指定行附近查找导入语句
         search_range = max(0, near_line - 10), min(len(lines), near_line + 10)
@@ -299,7 +309,8 @@ class ImportOptimizer:
             return True
         if line_num < len(lines) - 1 and ')' in lines[line_num + 1]:
             return True
-        return line_num < len(lines) - 1 and lines[line_num + 1].strip().startswith(('from ', 'import '))
+        return line_num < len(lines) - 1 and lines[line_num + 1].strip().startswith(('from ',
+    'import '))
 
     def fix_specific_undefined_name(self, line: str, undefined_name: str) -> str:
         """修复特定的未定义名称"""
@@ -360,7 +371,8 @@ def main():
     if results['details']:
         print(f"\n📋 优化详情:")
         for detail in results['details'][:10]:  # 只显示前10个
-            print(f"  - {detail['file']}: {detail['imports_fixed']} 个导入, {detail['issues']} 个问题")
+            print(f"  - {detail['file']}: {detail['imports_fixed']} 个导入,
+    {detail['issues']} 个问题")
 
     if results['failed_files']:
         print(f"\n⚠️  优化失败的文件:")
@@ -375,7 +387,10 @@ def main():
             capture_output=True,
             text=True
         )
-        remaining_issues = len([line for line in result.stdout.split('\n') if any(code in line for code in ['F401', 'F403', 'F405', 'F821'])])
+        remaining_issues = len([line for line in result.stdout.split('\n') if any(code in line for code in ['F401',
+    'F403',
+    'F405',
+    'F821'])])
         print(f"剩余导入问题: {remaining_issues}")
 
         if remaining_issues == 0:

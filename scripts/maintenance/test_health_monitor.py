@@ -385,6 +385,7 @@ class TestHealthMonitor:
                 title="测试系统健康状态良好",
                 message=f"健康评分 {metrics.health_score}，覆盖率 {metrics.coverage_percentage:.1f}%，通过率 {(metrics.passed_tests/(metrics.passed_tests+metrics.failed_tests)*100 if metrics.passed_tests+metrics.failed_tests>0 else 0):.1f}%",
     
+    
                 current_value=metrics.health_score,
                 threshold_value=100,
                 timestamp=datetime.now().isoformat()

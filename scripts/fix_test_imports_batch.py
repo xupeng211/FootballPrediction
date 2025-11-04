@@ -141,6 +141,7 @@ except ImportError:
         content = re.sub(
             r'from src\.database\.models\.(user|predictions|match|team|league) import.*?\n',
     
+    
             '''try:
     from src.database.models.\\1 import \\2
 except ImportError:
