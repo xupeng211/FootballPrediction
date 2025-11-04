@@ -276,6 +276,37 @@ def _async_cached_wrapper(func: AsyncF, func_name: str, config: CacheConfig) -> 
     return wrapper  # type: ignore
 
 
+def _cache_invalidate_process_logic():
+        is_async = inspect.iscoroutinefunction(func)
+
+
+def _cache_invalidate_check_condition():
+
+            @functools.wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                result = await func(*args, **kwargs)
+
+
+def _cache_invalidate_check_condition():
+                        await manager.invalidate_pattern(pattern, reason)
+                    logger.debug(f"缓存失效: keys={keys}, pattern={pattern}")
+                except Exception as e:
+                    logger.error(f"缓存失效错误: {e}")
+
+                return result
+
+def _cache_invalidate_process_logic():
+                result = func(*args, **kwargs)
+
+
+def _cache_invalidate_check_condition():
+                        asyncio.run(manager.invalidate_pattern(pattern, reason))
+                    logger.debug(f"缓存失效: keys={keys}, pattern={pattern}")
+                except Exception as e:
+                    logger.error(f"缓存失效错误: {e}")
+
+                return result
+
 def cache_invalidate(
     pattern: str = None, keys: list[str] = None, reason: str = "decorator_invalidation"
 ) -> Callable:
@@ -291,10 +322,10 @@ def cache_invalidate(
         装饰器函数
     """
 
-    def decorator(func: F) -> F:
+    _cache_invalidate_process_logic()
         is_async = inspect.iscoroutinefunction(func)
 
-        if is_async:
+        _cache_invalidate_check_condition()
 
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -304,7 +335,7 @@ def cache_invalidate(
                     manager = get_consistency_manager()
                     if keys:
                         await manager.invalidate_cache(keys, reason)
-                    if pattern:
+                    _cache_invalidate_check_condition()
                         await manager.invalidate_pattern(pattern, reason)
                     logger.debug(f"缓存失效: keys={keys}, pattern={pattern}")
                 except Exception as e:
@@ -316,14 +347,14 @@ def cache_invalidate(
         else:
 
             @functools.wraps(func)
-            def sync_wrapper(*args, **kwargs):
+            _cache_invalidate_process_logic()
                 result = func(*args, **kwargs)
 
                 try:
                     manager = get_consistency_manager()
                     if keys:
                         asyncio.run(manager.invalidate_cache(keys, reason))
-                    if pattern:
+                    _cache_invalidate_check_condition()
                         asyncio.run(manager.invalidate_pattern(pattern, reason))
                     logger.debug(f"缓存失效: keys={keys}, pattern={pattern}")
                 except Exception as e:
@@ -348,17 +379,13 @@ def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callabl
         装饰器函数
     """
 
-    def decorator(func: F) -> F:
-        is_async = inspect.iscoroutinefunction(func)
-        func_name = f"{func.__module__}.{func.__qualname__}"
-
-        if is_async:
+def _decorator_check_condition():
 
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
                 # 按级别尝试获取缓存
-                for i, level_config in enumerate(levels):
-                    try:
+
+def _decorator_handle_error():
                         config = CacheConfig(**level_config)
                         cache_key = CacheKeyBuilder.build_key(
                             func_name, args, kwargs, config.key_prefix, config.version
@@ -368,7 +395,81 @@ def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callabl
                         entry = await manager.get_cache_entry(
                             cache_key, config.cache_store
                         )
-                        if entry and entry.value is not None:
+
+def _decorator_check_condition():
+                            logger.debug(f"L{i + 1}缓存命中: {cache_key}")
+                            return entry.value
+
+def _decorator_handle_error():
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        await manager.set_cache_entry(
+                            cache_key, result, config.ttl, config.cache_store
+                        )
+                        logger.debug(f"L{i + 1}缓存存储: {cache_key}")
+                    except Exception as e:
+                        logger.warning(f"L{i + 1}缓存存储失败: {e}")
+
+                return result
+
+def _decorator_handle_error():
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        entry = asyncio.run(
+                            manager.get_cache_entry(cache_key, config.cache_store)
+                        )
+
+def _decorator_check_condition():
+                            logger.debug(f"L{i + 1}缓存命中: {cache_key}")
+                            return entry.value
+
+def _decorator_handle_error():
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        asyncio.run(
+                            manager.set_cache_entry(
+                                cache_key, result, config.ttl, config.cache_store
+                            )
+                        )
+                        logger.debug(f"L{i + 1}缓存存储: {cache_key}")
+                    except Exception as e:
+                        logger.warning(f"L{i + 1}缓存存储失败: {e}")
+
+                return result
+
+    def decorator(func: F) -> F:
+        is_async = inspect.iscoroutinefunction(func)
+        func_name = f"{func.__module__}.{func.__qualname__}"
+
+        _decorator_check_condition()
+
+            @functools.wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                # 按级别尝试获取缓存
+                for i, level_config in enumerate(levels):
+                    _decorator_handle_error()
+                        config = CacheConfig(**level_config)
+                        cache_key = CacheKeyBuilder.build_key(
+                            func_name, args, kwargs, config.key_prefix, config.version
+                        )
+
+                        manager = get_consistency_manager()
+                        entry = await manager.get_cache_entry(
+                            cache_key, config.cache_store
+                        )
+                        _decorator_check_condition()
                             logger.debug(f"L{i + 1}缓存命中: {cache_key}")
                             return entry.value
                     except Exception as e:
@@ -382,7 +483,7 @@ def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callabl
 
                 # 存储到所有缓存级别
                 for i, level_config in enumerate(levels):
-                    try:
+                    _decorator_handle_error()
                         config = CacheConfig(**level_config)
                         cache_key = CacheKeyBuilder.build_key(
                             func_name, args, kwargs, config.key_prefix, config.version
@@ -405,7 +506,7 @@ def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callabl
             def sync_wrapper(*args, **kwargs):
                 # 按级别尝试获取缓存
                 for i, level_config in enumerate(levels):
-                    try:
+                    _decorator_handle_error()
                         config = CacheConfig(**level_config)
                         cache_key = CacheKeyBuilder.build_key(
                             func_name, args, kwargs, config.key_prefix, config.version
@@ -415,7 +516,7 @@ def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callabl
                         entry = asyncio.run(
                             manager.get_cache_entry(cache_key, config.cache_store)
                         )
-                        if entry and entry.value is not None:
+                        _decorator_check_condition()
                             logger.debug(f"L{i + 1}缓存命中: {cache_key}")
                             return entry.value
                     except Exception as e:
@@ -429,7 +530,7 @@ def multi_cached(levels: list[dict[str, Any]], fallback: bool = True) -> Callabl
 
                 # 存储到所有缓存级别
                 for i, level_config in enumerate(levels):
-                    try:
+                    _decorator_handle_error()
                         config = CacheConfig(**level_config)
                         cache_key = CacheKeyBuilder.build_key(
                             func_name, args, kwargs, config.key_prefix, config.version

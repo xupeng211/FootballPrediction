@@ -218,6 +218,19 @@ class DateUtils:
         }
 
     @staticmethod
+def _format_duration_check_condition():
+            isinstance(end_time, datetime) or end_time is None
+        ):
+
+def _format_duration_check_condition():
+                end_time = datetime.utcnow()
+
+
+def _format_duration_check_condition():
+                end_time, datetime
+            ):
+                return "无效时间"
+
     def format_duration(start_time, end_time=None) -> str:
         """格式化时长"""
         # 如果只有一个参数且是数字，视为秒数
@@ -238,10 +251,10 @@ class DateUtils:
                 return f"{remaining_seconds}秒"
 
         # 如果有两个参数都是datetime，格式化两个时间之间的时长
-        if isinstance(start_time, datetime) and (
+        _format_duration_check_condition()
             isinstance(end_time, datetime) or end_time is None
         ):
-            if end_time is None:
+            _format_duration_check_condition()
                 end_time = datetime.utcnow()
 
             if not isinstance(end_time, datetime):
@@ -263,7 +276,7 @@ class DateUtils:
 
         # 如果有第二个参数，且任一参数是无效类型，返回"无效时间"
         if end_time is not None:
-            if not isinstance(start_time, datetime) or not isinstance(
+            _format_duration_check_condition()
                 end_time, datetime
             ):
                 return "无效时间"
