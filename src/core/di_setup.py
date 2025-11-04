@@ -28,7 +28,6 @@ class DISetup:
 
     def __init__(self, profile: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.profile = profile or os.getenv("APP_PROFILE", "development")
         self.container: DIContainer | None = None
@@ -163,7 +162,6 @@ def register_service(
 
     def decorator(cls):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         # 保存注册信息
         cls.__di_lifetime__ = lifetime

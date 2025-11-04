@@ -37,7 +37,6 @@ class CompatibleQueryBuilder:
 
     def __init__(self, dialect: str = "sqlite"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.dialect = dialect
 
@@ -63,7 +62,6 @@ class SQLCompatibilityHelper:
 
     def __init__(self, engine: Engine):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.engine = engine
         self.db_type = get_db_type_from_engine(engine)

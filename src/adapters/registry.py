@@ -9,8 +9,6 @@ from .base import Adapter
 class AdapterError(Exception):
     """适配器错误"""
 
-    pass
-
 
 class AdapterRegistry:
     """适配器注册表"""

@@ -55,7 +55,6 @@ class SimpleAuthService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         # 简化的用户存储（实际应用中应该使用数据库）
         self.users = {

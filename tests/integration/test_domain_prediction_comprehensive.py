@@ -556,7 +556,7 @@ class TestPredictionDomainComprehensive:
         assert "evaluated" in str(prediction)
 
 
-def test_prediction_domain_comprehensive_suite(client, client):
+def test_prediction_domain_comprehensive_suite(client):
     """预测领域模型综合测试套件"""
     # 快速验证核心功能
     prediction = Prediction(user_id=1, match_id=100)

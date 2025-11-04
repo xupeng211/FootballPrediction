@@ -36,7 +36,6 @@ class EventDrivenPredictionService(StrategyPredictionService):
 
     def __init__(self, *args, **kwargs):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
@@ -272,7 +271,6 @@ class EventDrivenMatchService:
 
     def __init__(self, match_repository):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化比赛服务"
 
@@ -382,7 +380,6 @@ class EventDrivenUserService:
 
     def __init__(self, user_repository):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化用户服务"
 

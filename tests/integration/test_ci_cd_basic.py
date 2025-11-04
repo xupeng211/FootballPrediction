@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 
-def test_basic_ci_functionality(client, client):
+def test_basic_ci_functionality(client):
     """测试基础CI/CD功能"""
     print("🧪 测试基础CI/CD功能...")
 
@@ -143,7 +143,7 @@ def test_basic_ci_functionality(client, client):
     return tests_passed, tests_total, success_rate
 
 
-def test_deployment_readiness(client, client):
+def test_deployment_readiness(client):
     """测试部署就绪状态"""
     print("\n🚀 测试部署就绪状态...")
 

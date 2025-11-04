@@ -28,7 +28,6 @@ class EventDrivenApplication:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化应用程序"""
         self._event_bus = get_event_bus()

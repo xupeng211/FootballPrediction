@@ -101,7 +101,6 @@ class CreatePredictionHandler(CommandHandler):
     @property
     def command_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return CreatePredictionCommand
 
@@ -163,7 +162,6 @@ class UpdatePredictionHandler(CommandHandler):
     @property
     def command_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return UpdatePredictionCommand
 
@@ -221,7 +219,6 @@ class DeletePredictionHandler(CommandHandler):
     @property
     def command_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return DeletePredictionCommand
 
@@ -254,7 +251,6 @@ class CreateUserHandler(CommandHandler):
     @property
     def command_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return CreateUserCommand
 
@@ -303,7 +299,6 @@ class GetPredictionByIdHandler(QueryHandler):
     @property
     def query_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return GetPredictionByIdQuery
 
@@ -341,7 +336,6 @@ class GetPredictionsByUserHandler(QueryHandler):
     @property
     def query_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return GetPredictionsByUserQuery
 
@@ -407,7 +401,6 @@ class GetUserStatsHandler(QueryHandler):
     @property
     def query_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return GetUserStatsQuery
 
@@ -529,7 +522,6 @@ class GetUpcomingMatchesHandler(QueryHandler):
     @property
     def query_type(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return GetUpcomingMatchesQuery
 
@@ -593,7 +585,6 @@ class PredictionCommandHandlers:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
@@ -608,7 +599,6 @@ class PredictionQueryHandlers:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.get_by_id = GetPredictionByIdHandler()
         self.get_by_user = GetPredictionsByUserHandler()
@@ -624,7 +614,6 @@ class UserCommandHandlers:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.create = CreateUserHandler()
         # TODO: 实现UpdateUserHandler - 临时注释以解决启动问题
@@ -639,7 +628,6 @@ class UserQueryHandlers:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
@@ -653,7 +641,6 @@ class MatchCommandHandlers:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
@@ -667,7 +654,6 @@ class MatchQueryHandlers:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.get_by_id = GetMatchByIdHandler()
         self.get_upcoming = GetUpcomingMatchesHandler()

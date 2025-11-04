@@ -20,16 +20,12 @@ class CacheDecorator:
     pass  # 添加pass语句
     """缓存装饰器 - 占位符实现"""
 
-    pass
-
 
 class LoggingDecorator:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """日志装饰器 - 占位符实现"""
-
-    pass
 
 
 class ValidationDecorator:
@@ -38,16 +34,12 @@ class ValidationDecorator:
     pass  # 添加pass语句
     """验证装饰器 - 占位符实现"""
 
-    pass
-
 
 class MetricsDecorator:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """监控装饰器 - 占位符实现"""
-
-    pass
 
 
 class RetryDecorator:
@@ -56,16 +48,12 @@ class RetryDecorator:
     pass  # 添加pass语句
     """重试装饰器 - 占位符实现"""
 
-    pass
-
 
 class AuthDecorator:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """认证装饰器 - 占位符实现"""
-
-    pass
 
 
 class RateLimitDecorator:
@@ -74,16 +62,12 @@ class RateLimitDecorator:
     pass  # 添加pass语句
     """限流装饰器 - 占位符实现"""
 
-    pass
-
 
 class TimeoutDecorator:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """超时装饰器 - 占位符实现"""
-
-    pass
 
 
 # 导出所有公共接口

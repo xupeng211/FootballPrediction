@@ -26,13 +26,10 @@ logger = logging.getLogger(__name__)
 
 # 导入模块
 try:
-    from src.cache.football_data_cache import CacheConfig, get_football_cache_manager
-    from src.collectors.league_collector import LeagueCollector
-    from src.collectors.team_collector import TeamCollector
+    from src.cache.football_data_cache import get_football_cache_manager
     from src.models.external.league import ExternalLeague, ExternalLeagueStandings
     from src.models.external.match import ExternalMatch
     from src.models.external.team import ExternalTeam
-    from src.services.data_sync_service import DataSyncService
 except ImportError as e:
     logger.error(f"导入模块失败: {e}")
     logger.info("尝试简化导入...")

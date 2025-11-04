@@ -42,7 +42,6 @@ class AutoBinder:
 
     def __init__(self, container: DIContainer):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.container = container
         self._binding_rules: list[BindingRule] = []
@@ -337,7 +336,6 @@ class ConventionBinder:
     ) -> None:
         """按名称模式绑定"""
         # 这里可以实现更复杂的名称模式匹配
-        pass
 
     @staticmethod
     def bind_by_namespace(
@@ -348,7 +346,6 @@ class ConventionBinder:
     ) -> None:
         """按命名空间绑定"""
         # 这里可以实现命名空间绑定
-        pass
 
 
 # 装饰器用于标记自动绑定

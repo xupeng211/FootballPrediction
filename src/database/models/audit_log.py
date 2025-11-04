@@ -1,8 +1,7 @@
 from enum import Enum
 from typing import Any
 
-from sqlalchemy import Column, DateTime, Index, Integer, String, Text, func
-from sqlalchemy.sql import func
+from sqlalchemy import Column, DateTime, Index, Integer, String, Text
 
 from src.database.base import BaseModel
 from src.database.types import SQLiteCompatibleJSONB

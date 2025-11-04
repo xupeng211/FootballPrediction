@@ -76,7 +76,6 @@ class DataSourceAdapter(ABC):
 
     def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.api_key = api_key
         self.base_url = ""
@@ -91,17 +90,14 @@ class DataSourceAdapter(ABC):
         date_to: datetime | None = None,
     ) -> list[MatchData]:
         """获取比赛列表"""
-        pass
 
     @abstractmethod
     async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取球队列表"""
-        pass
 
     @abstractmethod
     async def get_odds(self, match_id: int) -> list[OddsData]:
         """获取赔率数据"""
-        pass
 
 
 class FootballDataOrgAdapter(DataSourceAdapter):
@@ -109,7 +105,6 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
     def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(api_key)
         self.base_url = "https://api.football-data.org/v4"
@@ -263,7 +258,6 @@ class MockDataAdapter(DataSourceAdapter):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__()
 
@@ -387,7 +381,6 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
     def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(api_key)
         self.base_url = "https://api.football-data.org/v4"
@@ -421,7 +414,6 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
     def _check_rate_limit(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """检查速率限制"""
         now = datetime.now()
@@ -697,14 +689,12 @@ class DataSourceManager:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.adapters = {}
         self._initialize_adapters()
 
     def _initialize_adapters(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化数据源适配器"""
 

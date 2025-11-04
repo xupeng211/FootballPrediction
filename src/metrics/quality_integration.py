@@ -24,7 +24,6 @@ class QualityMetricsIntegrator:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.analyzer = AdvancedMetricsAnalyzer()
         self.logger = get_logger(self.__class__.__name__)
@@ -216,7 +215,6 @@ def enhance_quality_guardian():
     """为质量守护系统添加高级度量功能"""
     # 这里可以修改 scripts/quality_guardian.py 来集成高级度量
     # 为了避免修改现有文件,我们创建一个包装器
-    pass
 
 
 def main():

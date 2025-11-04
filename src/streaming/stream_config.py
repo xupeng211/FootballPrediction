@@ -73,7 +73,6 @@ class StreamConfig:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()

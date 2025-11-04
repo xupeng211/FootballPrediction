@@ -24,7 +24,6 @@ class UserPreferences:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.favorite_teams: list[int] = []
         self.favorite_leagues: list[int] = []
@@ -63,7 +62,6 @@ class UserStatistics:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
@@ -303,7 +301,6 @@ class UserProfile:
 
     def __init__(self, user: User):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._user = user
         self.prediction_history: list[dict[str, Any]] = []

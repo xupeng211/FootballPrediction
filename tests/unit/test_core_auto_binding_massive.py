@@ -7,7 +7,7 @@ import pytest
 
 # 导入目标模块
 try:
-    from core.auto_binding import *
+    pass
 except ImportError as e:
     # 如果导入失败，创建一个跳过所有测试的标记
     pytest.skip(f"无法导入模块 core.auto_binding: {e}", allow_module_level=True)

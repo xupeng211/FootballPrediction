@@ -45,27 +45,22 @@ class BaseRepository(Generic[T, ID], ABC):
     @abstractmethod
     async def get_by_id(self, id: ID) -> T | None:
         """根据ID获取实体"""
-        pass
 
     @abstractmethod
     async def get_all(self, query_spec: QuerySpec | None = None) -> list[T]:
         """获取所有实体"""
-        pass
 
     @abstractmethod
     async def create(self, entity: T) -> T:
         """创建实体"""
-        pass
 
     @abstractmethod
     async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
         """更新实体"""
-        pass
 
     @abstractmethod
     async def delete(self, id: ID) -> bool:
         """删除实体"""
-        pass
 
     async def exists(self, id: ID) -> bool:
         """检查实体是否存在"""

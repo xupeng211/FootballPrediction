@@ -20,7 +20,6 @@ class DataProcessor(ABC):
     @abstractmethod
     async def process(self, data: dict[str, Any]) -> dict[str, Any]:
         """处理数据"""
-        pass
 
 
 class MatchDataProcessor(DataProcessor):
@@ -71,7 +70,6 @@ class DataQualityValidator:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.errors = []
 
@@ -100,7 +98,6 @@ class AnomalyDetector:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.threshold = 3.0  # 标准差阈值
 
@@ -142,7 +139,6 @@ class BronzeToSilverProcessor:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.validators = [DataQualityValidator()]
         self.detectors = [AnomalyDetector()]
@@ -176,7 +172,6 @@ class DataProcessingService:
 
     def __init__(self, session=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化服务"""
         self.session = session

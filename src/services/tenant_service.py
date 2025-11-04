@@ -27,8 +27,6 @@ from src.database.models.tenant import (
 class TenantManagementError(Exception):
     """租户管理异常"""
 
-    pass
-
 
 @dataclass
 class TenantCreationRequest:
@@ -87,7 +85,6 @@ class TenantService:
 
     def __init__(self, db: AsyncSession):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.db = db
 

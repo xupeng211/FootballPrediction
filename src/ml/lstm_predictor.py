@@ -85,7 +85,6 @@ class LSTMPredictor:
 
     def __init__(self, config: TrainingConfig | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.config = config or TrainingConfig()
         self.logger = get_logger(self.__class__.__name__)

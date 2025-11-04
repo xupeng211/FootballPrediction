@@ -44,7 +44,6 @@ class Observer(ABC):
     @abstractmethod
     def update(self, subject: "Subject", data: Any | None = None) -> None:
         """接收通知的方法"""
-        pass
 
     def __str__(self) -> str:
         return f"Observer({self.name})"

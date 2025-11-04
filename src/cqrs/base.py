@@ -30,7 +30,6 @@ class BaseMessage:
 
     def __init__(self, metadata: dict[str, Any] | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
@@ -46,7 +45,6 @@ class Command(BaseMessage, ABC):
 
     def __init__(self, metadata: dict[str, Any] | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(metadata)
         self.correlation_id: str | None = None
@@ -62,7 +60,6 @@ class Query(BaseMessage, ABC):
 
     def __init__(self, metadata: dict[str, Any] | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(metadata)
 
@@ -77,13 +74,11 @@ class CommandHandler(ABC, Generic[CommandResultType]):
     @abstractmethod
     async def handle(self, command: Command) -> CommandResultType:
         """处理命令"""
-        pass
 
     @property
     @abstractmethod
     def command_type(self) -> type:
         """支持的命令类型"""
-        pass
 
 
 class QueryHandler(ABC, Generic[QueryResultType]):
@@ -96,13 +91,11 @@ class QueryHandler(ABC, Generic[QueryResultType]):
     @abstractmethod
     async def handle(self, query: Query) -> QueryResultType:
         """处理查询"""
-        pass
 
     @property
     @abstractmethod
     def query_type(self) -> type:
         """支持的查询类型"""
-        pass
 
 
 class ValidationResult:
@@ -113,7 +106,6 @@ class ValidationResult:
 
     def __init__(self, is_valid: bool, errors: list | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.is_valid = is_valid
         self.errors = errors or []
@@ -135,7 +127,6 @@ class ValidatableCommand(Command, ABC):
     @abstractmethod
     async def validate(self) -> ValidationResult:
         """验证命令"""
-        pass
 
 
 class ValidatableQuery(Query, ABC):
@@ -144,4 +135,3 @@ class ValidatableQuery(Query, ABC):
     @abstractmethod
     async def validate(self) -> ValidationResult:
         """验证查询"""
-        pass

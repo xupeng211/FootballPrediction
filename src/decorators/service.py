@@ -26,7 +26,6 @@ class DecoratorService:
 
     def __init__(self, factory: DecoratorFactory | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.factory = factory or DecoratorFactory()
         self._decorated_functions: dict[str, DecoratorComponent] = {}

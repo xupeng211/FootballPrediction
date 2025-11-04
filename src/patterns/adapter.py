@@ -41,24 +41,20 @@ class ExternalAPI(ABC):
     @abstractmethod
     async def connect(self) -> bool:
         """连接到外部API"""
-        pass
 
     @abstractmethod
     async def disconnect(self):
         """断开连接"""
-        pass
 
     @abstractmethod
     async def fetch_data(
         self, endpoint: str, params: dict | None = None
     ) -> ExternalData:
         """获取数据"""
-        pass
 
     @abstractmethod
     async def health_check(self) -> bool:
         """健康检查"""
-        pass
 
 
 class APIAdapter(ExternalAPI):

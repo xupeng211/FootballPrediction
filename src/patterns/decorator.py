@@ -22,7 +22,6 @@ class Component(ABC):
     @abstractmethod
     def operation(self) -> str:
         """执行操作"""
-        pass
 
 
 class ConcreteComponent(Component):

@@ -307,7 +307,7 @@ class TestDictUtilsComprehensive:
             assert hasattr(DictUtils, method), f"方法 {method} 不存在"
 
 
-def test_dict_utils_comprehensive_suite(client, client):
+def test_dict_utils_comprehensive_suite(client):
     """DictUtils综合测试套件"""
     # 快速验证核心功能
     assert DictUtils.deep_merge({"a": 1}, {"b": 2}) == {"a": 1, "b": 2}

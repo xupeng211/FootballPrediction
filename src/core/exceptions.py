@@ -53,7 +53,6 @@ class ServiceError(FootballPredictionError):
 
     def __init__(self, message: str, service_name: str = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.message = message
         self.service_name = service_name
@@ -83,13 +82,9 @@ class PipelineError(FootballPredictionError):
 class DomainError(FootballPredictionError):
     """领域层异常"""
 
-    pass
-
 
 class BusinessRuleError(DomainError):
     """业务规则异常"""
-
-    pass
 
 
 class ServiceLifecycleError(FootballPredictionError):
@@ -152,19 +147,13 @@ class StreamingError(FootballPredictionError):
 class UserNotFoundError(FootballPredictionError):
     """用户未找到异常"""
 
-    pass
-
 
 class UserAlreadyExistsError(FootballPredictionError):
     """用户已存在异常"""
 
-    pass
-
 
 class InvalidCredentialsError(FootballPredictionError):
     """无效凭据异常"""
-
-    pass
 
 
 # 添加别名以兼容测试文件

@@ -42,7 +42,6 @@ class User:
 
     def __init__(self, id: str, username: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.id = id
         self.username = username

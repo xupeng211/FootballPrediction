@@ -26,7 +26,6 @@ class CommandBus:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._handlers: dict[type[Command], CommandHandler] = {}
         self._middleware: list = []
@@ -92,7 +91,6 @@ class QueryBus:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._handlers: dict[type[Query], QueryHandler] = {}
         self._middleware: list = []
@@ -203,7 +201,6 @@ class MetricsMiddleware:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._metrics = {
             "commands_processed": 0,

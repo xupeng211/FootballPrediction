@@ -20,7 +20,6 @@ class AdvancedAuthenticationSystem:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.logger = logging.getLogger(__name__)
         self.logger.info("初始化security特性: Advanced Authentication System")

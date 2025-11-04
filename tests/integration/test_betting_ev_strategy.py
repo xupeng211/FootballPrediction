@@ -35,7 +35,6 @@ try:
 
     from ev_calculator import (
         BettingOdds,
-        BettingRecommendationEngine,
         BettingStrategy,
         BettingStrategyOptimizer,
         BetType,

@@ -25,7 +25,6 @@ class SQLiteCompatibleJSONB(TypeDecorator):
 
     def load_dialect_impl(self, dialect):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
@@ -87,7 +86,6 @@ class CompatibleJSON(TypeDecorator):
 
     def load_dialect_impl(self, dialect):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":

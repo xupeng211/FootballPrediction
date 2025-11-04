@@ -43,7 +43,6 @@ class ServiceMetrics:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.metrics = {
             "calls": 0,
@@ -55,7 +54,6 @@ class ServiceMetrics:
 
     def record_call(self, duration: float, success: bool = True):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """记录调用"""
         self.metrics["calls"] += 1
@@ -79,7 +77,6 @@ class EnhancedBaseService(ABC):
 
     def __init__(self, config: ServiceConfig | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化服务"
 
@@ -114,12 +111,10 @@ class EnhancedBaseService(ABC):
     @abstractmethod
     async def initialize(self) -> None:
         """初始化服务 - 子类必须实现"""
-        pass
 
     @abstractmethod
     async def shutdown(self) -> None:
         """关闭服务 - 子类必须实现"""
-        pass
 
     async def start(self) -> bool:
         """启动服务"""
@@ -222,7 +217,6 @@ class EnhancedBaseService(ABC):
 
     def add_dependency(self, name: str, service: "EnhancedBaseService"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """添加依赖服务"""
         self._dependencies[name] = service
@@ -267,7 +261,6 @@ class BaseService(EnhancedBaseService):
 
     def __init__(self, name: str = "BaseService"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)
@@ -287,7 +280,6 @@ class AbstractBaseService(EnhancedBaseService):
 
     def __init__(self, name: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         config = ServiceConfig(name=name)
         super().__init__(config)

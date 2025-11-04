@@ -30,7 +30,6 @@ class MetricsEventHandler(EventHandler):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("MetricsCollector")
         self.metrics: dict[str, Any] = {
@@ -70,7 +69,6 @@ class LoggingEventHandler(EventHandler):
 
     def __init__(self, log_level: int = logging.INFO):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("EventLogger")
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
@@ -115,7 +113,6 @@ class CacheInvalidationHandler(EventHandler):
 
     def __init__(self, cache_manager=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("CacheInvalidator")
         self.cache_manager = cache_manager
@@ -171,7 +168,6 @@ class NotificationEventHandler(EventHandler):
 
     def __init__(self, notification_service=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("NotificationHandler")
         self.notification_service = notification_service
@@ -243,7 +239,6 @@ class AnalyticsEventHandler(EventHandler):
 
     def __init__(self, analytics_service=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
@@ -341,7 +336,6 @@ class AlertEventHandler(EventHandler):
 
     def __init__(self, alert_service=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("AlertHandler")
         self.alert_service = alert_service
@@ -366,7 +360,6 @@ class AlertEventHandler(EventHandler):
     async def _check_prediction_volume(self) -> None:
         """检查预测量告警"""
         # 这里应该实现实际的预测量检查逻辑
-        pass
 
     def get_handled_events(self) -> list[str]:
         return [

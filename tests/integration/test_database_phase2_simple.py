@@ -125,7 +125,7 @@ class TestDatabaseSimplePhase2:
         assert models is not None
 
 
-def test_all_database_simple_functionality(client, client):
+def test_all_database_simple_functionality(client):
     """测试所有database简化功能的综合测试"""
 
     # 测试核心组件

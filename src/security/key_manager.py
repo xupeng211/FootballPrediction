@@ -23,7 +23,6 @@ class KeyManager:
 
     def __init__(self, key_file: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """
         初始化密钥管理器

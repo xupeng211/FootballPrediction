@@ -32,14 +32,12 @@ class StreamingTask(Task):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.error_logger = TaskErrorLogger()
         self.logger = logging.getLogger(f"streaming_task.{self.__class__.__name__}")
 
     def run_async(self, coro):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """运行异步协程"""
         try:

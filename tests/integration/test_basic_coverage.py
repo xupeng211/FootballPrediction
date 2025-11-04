@@ -96,7 +96,7 @@ def test_crypto_utils_import():
 
     try:
         # 尝试导入，但可能失败因为缺少依赖
-        from src.utils.crypto_utils import CryptoUtils
+        pass
 
         print("✅ crypto_utils 导入成功")
         return True

@@ -26,7 +26,6 @@ class PerformanceMonitoringIntegration:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化性能监控集成"""
         self.settings = get_settings()

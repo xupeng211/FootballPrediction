@@ -84,7 +84,6 @@ class AuditLogSummary:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.total_logs = 0
         self.by_severity = {}
@@ -148,7 +147,6 @@ class AuditService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.events: list[AuditEvent] = []
         self.sanitizer = DataSanitizer()
@@ -156,7 +154,6 @@ class AuditService:
 
     def log_event(self, action: str, user: str, details: dict[str, Any]):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """记录审计事件"""
         # 清理数据

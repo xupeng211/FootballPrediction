@@ -46,17 +46,14 @@ class Subsystem(ABC):
     @abstractmethod
     async def start(self) -> bool:
         """启动子系统"""
-        pass
 
     @abstractmethod
     async def stop(self) -> bool:
         """停止子系统"""
-        pass
 
     @abstractmethod
     async def health_check(self) -> bool:
         """健康检查"""
-        pass
 
     def get_status_info(self) -> dict[str, Any]:
         """获取状态信息"""

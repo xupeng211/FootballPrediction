@@ -27,12 +27,10 @@ class Adaptee(ABC):
     @abstractmethod
     async def get_data(self, *args, **kwargs) -> Any:
         """获取原始数据"""
-        pass
 
     @abstractmethod
     async def send_data(self, data: Any) -> Any:
         """发送数据"""
-        pass
 
 
 class Target(ABC):
@@ -41,13 +39,10 @@ class Target(ABC):
     @abstractmethod
     async def request(self, *args, **kwargs) -> Any:
         """标准请求方法"""
-        pass
 
 
 class Adapter(Target):
     """适配器基类,将Adaptee接口转换为Target接口"""
-
-    pass
 
 
 class BaseAdapter(ABC):
@@ -56,7 +51,6 @@ class BaseAdapter(ABC):
     @abstractmethod
     async def process(self, data: Any) -> Any:
         """处理数据"""
-        pass
 
 
 class DataTransformer(ABC):
@@ -65,7 +59,6 @@ class DataTransformer(ABC):
     @abstractmethod
     async def transform(self, data: Any, **kwargs) -> Any:
         """转换数据格式"""
-        pass
 
 
 class CompositeAdapter(Adapter):

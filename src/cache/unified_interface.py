@@ -46,32 +46,26 @@ class CacheInterface(ABC):
     @abstractmethod
     def get(self, key: str, default: Any = None) -> Any:
         """获取缓存值"""
-        pass
 
     @abstractmethod
     def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """设置缓存值"""
-        pass
 
     @abstractmethod
     def delete(self, key: str) -> bool:
         """删除缓存项"""
-        pass
 
     @abstractmethod
     def exists(self, key: str) -> bool:
         """检查键是否存在"""
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """清空缓存"""
-        pass
 
     @abstractmethod
     def size(self) -> int:
         """获取缓存大小"""
-        pass
 
 
 class MemoryCacheAdapter(CacheInterface):

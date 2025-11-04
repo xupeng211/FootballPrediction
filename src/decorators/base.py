@@ -21,12 +21,10 @@ class Component(ABC):
     @abstractmethod
     async def execute(self, *args, **kwargs) -> Any:
         """执行组件操作"""
-        pass
 
     @abstractmethod
     def get_name(self) -> str:
         """获取组件名称"""
-        pass
 
 
 class ConcreteComponent(Component):
@@ -34,7 +32,6 @@ class ConcreteComponent(Component):
 
     def __init__(self, name: str, func: Callable):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.func = func
@@ -64,7 +61,6 @@ class Decorator(Component):
 
     def __init__(self, component: Component, name: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.component = component
         self.name = name or f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
@@ -95,7 +91,6 @@ class Decorator(Component):
     @abstractmethod
     async def _execute(self, *args, **kwargs) -> Any:
         """装饰器的具体实现,由子类重写"""
-        pass
 
     def get_name(self) -> str:
         return self.name
@@ -167,7 +162,6 @@ class DecoratorChain:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.decorators: list[Decorator] = []
 
@@ -211,7 +205,6 @@ class DecoratorContext:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.data: dict[str, Any] = {}
         self.start_time = time.time()
@@ -257,7 +250,6 @@ class DecoratorRegistry:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._decorators: dict[str, type[Decorator]] = {}
         self._instances: dict[str, Decorator] = {}

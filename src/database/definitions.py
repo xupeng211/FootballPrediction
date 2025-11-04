@@ -18,8 +18,6 @@ class DatabaseRole(Enum):
 class DatabaseManager:
     """数据库管理器 - 简化版本"""
 
-    pass
-
     _instance = None
     _engine = None
     _async_engine = None
@@ -93,7 +91,6 @@ class MultiUserDatabaseManager(DatabaseManager):
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         super().__init__()
         self.readers = []
         self.writers = []
@@ -127,7 +124,6 @@ def initialize_multi_user_database(database_url: str | None = None):
 def initialize_test_database():
     """初始化测试数据库"""
     # 测试数据库的特殊初始化
-    pass
 
 
 # 会话获取函数

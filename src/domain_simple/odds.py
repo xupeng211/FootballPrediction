@@ -35,7 +35,6 @@ class OddsMovement:
 
     def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.old_odds = old_odds
         self.new_odds = new_odds
@@ -56,7 +55,6 @@ class ValueBet:
 
     def __init__(self, odds: float, probability: float, threshold: float = 1.0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.odds = odds
         self.probability = probability

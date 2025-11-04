@@ -71,12 +71,10 @@ class BaseCollector(ABC):
     @abstractmethod
     async def _get_headers(self) -> dict[str, str]:
         """获取请求头"""
-        pass
 
     @abstractmethod
     def _build_url(self, endpoint: str, **params) -> str:
         """构建请求URL"""
-        pass
 
     async def _rate_limit_wait(self):
         """速率限制等待"""
@@ -188,22 +186,18 @@ class BaseCollector(ABC):
         date_to: datetime | None = None,
     ) -> CollectionResult:
         """采集比赛数据"""
-        pass
 
     @abstractmethod
     async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
         """采集球队数据"""
-        pass
 
     @abstractmethod
     async def collect_players(self, team_id: int | None = None) -> CollectionResult:
         """采集球员数据"""
-        pass
 
     @abstractmethod
     async def collect_leagues(self) -> CollectionResult:
         """采集联赛数据"""
-        pass
 
     def get_request_stats(self) -> dict[str, Any]:
         """获取请求统计信息"""
@@ -227,22 +221,14 @@ class BaseCollector(ABC):
 class CollectorError(Exception):
     """采集器异常"""
 
-    pass
-
 
 class RateLimitError(CollectorError):
     """速率限制异常"""
-
-    pass
 
 
 class AuthenticationError(CollectorError):
     """认证异常"""
 
-    pass
-
 
 class DataValidationError(CollectorError):
     """数据验证异常"""
-
-    pass

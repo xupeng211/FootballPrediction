@@ -32,7 +32,6 @@ class PredictionResult:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化后处理"""
         if self.features is None:
@@ -47,7 +46,6 @@ class PredictionCache:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._cache = {}
 
@@ -69,7 +67,6 @@ class PredictionService(SimpleService):
 
     def __init__(self, mlflow_tracking_uri: str = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__("PredictionService")
         self.mlflow_tracking_uri = mlflow_tracking_uri or "http://localhost:5002"
@@ -113,7 +110,6 @@ class Counter:
 
     def __init__(self, name: str, description: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.description = description
@@ -121,13 +117,11 @@ class Counter:
 
     def inc(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.value += 1
 
     def __call__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return self.value
 
@@ -139,7 +133,6 @@ class Histogram:
 
     def __init__(self, name: str, description: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.description = description
@@ -147,13 +140,11 @@ class Histogram:
 
     def observe(self, value: float):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.values.append(value)
 
     def __call__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return sum(self.values) / len(self.values) if self.values else 0.0
 
@@ -165,7 +156,6 @@ class Gauge:
 
     def __init__(self, name: str, description: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.description = description
@@ -173,13 +163,11 @@ class Gauge:
 
     def set(self, value: float):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.value = value
 
     def __call__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         return self.value
 

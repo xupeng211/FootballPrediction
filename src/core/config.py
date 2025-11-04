@@ -39,7 +39,6 @@ class Config:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         # 配置文件存储在用户主目录下,避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
