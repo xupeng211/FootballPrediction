@@ -62,7 +62,11 @@ class SeedUserTester:
         self.created_users = []
         self.active_tokens = {}
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(self,
+    test_name: str,
+    success: bool,
+    details: str = "",
+    duration: float = 0):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -94,12 +98,19 @@ class SeedUserTester:
                     self.log_test(
                         "系统健康检查",
                         True,
-                        f"状态: {health_data.get('status')}, 数据库延迟: {health_data.get('checks', {}).get('database', {}).get('latency_ms')}ms",
+                        f"状态: {health_data.get('status')},
+    数据库延迟: {health_data.get('checks',
+    {}).get('database',
+    {}).get('latency_ms')}ms",
+    
                         duration,
                     )
                     return True
                 else:
-                    self.log_test("系统健康检查", False, f"HTTP {response.status_code}", duration)
+                    self.log_test("系统健康检查",
+    False,
+    f"HTTP {response.status_code}",
+    duration)
                     return False
 
         except Exception as e:
@@ -113,7 +124,8 @@ class SeedUserTester:
 
         try:
             async with httpx.AsyncClient(timeout=15) as client:
-                response = await client.post(f"{API_BASE_URL}/auth/register", json=user_config)
+                response = await client.post(f"{API_BASE_URL}/auth/register",
+    json=user_config)
                 duration = time.time() - start_time
 
                 if response.status_code == 201:
@@ -153,7 +165,8 @@ class SeedUserTester:
                     "password": user_config["password"],
                 }
 
-                response = await client.post(f"{API_BASE_URL}/auth/login", data=login_data)
+                response = await client.post(f"{API_BASE_URL}/auth/login",
+    data=login_data)
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
@@ -161,7 +174,10 @@ class SeedUserTester:
                     self.log_test(
                         f"用户登录: {user_config['username']}",
                         True,
-                        f"角色: {token_data.get('user', {}).get('role')}, 令牌有效期: {token_data.get('expires_in')}秒",
+                        f"角色: {token_data.get('user',
+    {}).get('role')},
+    令牌有效期: {token_data.get('expires_in')}秒",
+    
                         duration,
                     )
                     return token_data.get("access_token")
@@ -197,7 +213,10 @@ class SeedUserTester:
                     self.log_test(
                         f"获取用户资料: {username}",
                         True,
-                        f"用户ID: {user_data.get('id')}, 是否激活: {user_data.get('is_active')}, 是否验证: {user_data.get('is_verified')}",
+                        f"用户ID: {user_data.get('id')},
+    是否激活: {user_data.get('is_active')},
+    是否验证: {user_data.get('is_verified')}",
+    
                         duration,
                     )
                     return True
@@ -233,7 +252,8 @@ class SeedUserTester:
             start_time = time.time()
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.get(f"{API_BASE_URL}{endpoint}", headers=headers)
+                    response = await client.get(f"{API_BASE_URL}{endpoint}",
+    headers=headers)
                     duration = time.time() - start_time
 
                     success = response.status_code in [200, 404]  # 404也算成功，说明路由存在
@@ -255,7 +275,11 @@ class SeedUserTester:
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(
-                    f"API测试 - {description}", False, f"用户: {username}, 错误: {str(e)}", duration
+                    f"API测试 - {description}",
+    False,
+    f"用户: {username},
+    错误: {str(e)}",
+    duration
                 )
                 results[endpoint] = False
 

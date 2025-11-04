@@ -48,8 +48,10 @@ class QuickTestRunner:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
             # 解析结果
-            passed = self._extract_count(result.stdout + result.stderr, r"(\\d+) passed")
-            failed = self._extract_count(result.stdout + result.stderr, r"(\\d+) failed")
+            passed = self._extract_count(result.stdout + result.stderr,
+    r"(\\d+) passed")
+            failed = self._extract_count(result.stdout + result.stderr,
+    r"(\\d+) failed")
 
             return {
                 "success": result.returncode == 0,

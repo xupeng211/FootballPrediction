@@ -181,7 +181,9 @@ class IntelligentToolAnalyzer:
             analysis["has_shebang"] = True
 
         # 提取函数名
-        function_matches = re.findall(r'^\s*function\s+(\w+)|^(\w+)\s*\(\s*\)', content, re.MULTILINE)
+        function_matches = re.findall(r'^\s*function\s+(\w+)|^(\w+)\s*\(\s*\)',
+    content,
+    re.MULTILINE)
         for match in function_matches:
             func_name = match[0] or match[1]
             if func_name:
@@ -275,7 +277,8 @@ class IntelligentToolAnalyzer:
 
         return min(100, score)
 
-    def generate_optimization_suggestions(self, script_analyses: List[Dict]) -> List[Dict]:
+    def generate_optimization_suggestions(self,
+    script_analyses: List[Dict]) -> List[Dict]:
         """生成优化建议"""
         suggestions = []
 
@@ -297,6 +300,7 @@ class IntelligentToolAnalyzer:
                     "type": "quality_improvement",
                     "priority": "high",
                     "description": f"整体脚本质量分数较低({avg_quality:.1f}/100)，建议添加文档字符串、错误处理和主函数",
+    
                     "affected_scripts": "multiple"
                 })
 
@@ -331,7 +335,8 @@ class IntelligentToolAnalyzer:
 
         return suggestions
 
-    def generate_integration_opportunities(self, script_analyses: List[Dict]) -> List[Dict]:
+    def generate_integration_opportunities(self,
+    script_analyses: List[Dict]) -> List[Dict]:
         """生成集成机会"""
         opportunities = []
 
@@ -422,7 +427,8 @@ class IntelligentToolAnalyzer:
                 categories[category] = categories.get(category, 0) + 1
 
         # 计算质量指标
-        quality_scores = [a.get("quality_score", 0) for a in all_analyses if "error" not in a]
+        quality_scores = [a.get("quality_score",
+    0) for a in all_analyses if "error" not in a]
         avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
 
         # 更新分析结果
@@ -435,6 +441,7 @@ class IntelligentToolAnalyzer:
                 "average_quality_score": avg_quality,
                 "high_quality_scripts": len([s for s in quality_scores if s >= 80]),
                 "medium_quality_scripts": len([s for s in quality_scores if 60 <= s < 80]),
+    
                 "low_quality_scripts": len([s for s in quality_scores if s < 60])
             }
         })
@@ -474,14 +481,18 @@ class IntelligentToolAnalyzer:
 
 """
 
-        for i, suggestion in enumerate(self.analysis_results["optimization_suggestions"][:10], 1):
+        for i,
+    suggestion in enumerate(self.analysis_results["optimization_suggestions"][:10],
+    1):
             report += f"### {i}. {suggestion['description']}\n"
             report += f"- **优先级**: {suggestion['priority']}\n"
             report += f"- **类型**: {suggestion['type']}\n\n"
 
         report += "## 🔗 集成机会\n\n"
 
-        for i, opportunity in enumerate(self.analysis_results["integration_opportunities"][:5], 1):
+        for i,
+    opportunity in enumerate(self.analysis_results["integration_opportunities"][:5],
+    1):
             report += f"### {i}. {opportunity['description']}\n"
             report += f"- **类别**: {opportunity['category']}\n"
             report += f"- **类型**: {opportunity['type']}\n\n"

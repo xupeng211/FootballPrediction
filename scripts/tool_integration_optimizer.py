@@ -249,7 +249,10 @@ class ToolIntegrationOptimizer:
 
         return unique_chains[:10]  # 返回前10条链
 
-    def generate_optimization_suggestions(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def generate_optimization_suggestions(self,
+    analysis: Dict[str,
+    Any]) -> List[Dict[str,
+    Any]]:
         """生成优化建议"""
         suggestions = []
 
@@ -370,7 +373,8 @@ class ToolIntegrationOptimizer:
 
         for i, suggestion in enumerate(suggestions, 1):
             emoji = {"high": "🔥", "medium": "⚡", "low": "💡"}
-            report_lines.append(f"{i}. {emoji.get(suggestion['priority'], '•')} **{suggestion['category']}** ({suggestion['priority']})")
+            report_lines.append(f"{i}. {emoji.get(suggestion['priority'],
+    '•')} **{suggestion['category']}** ({suggestion['priority']})")
             report_lines.append(f"   - {suggestion['description']}")
             if suggestion['items']:
                 report_lines.append(f"   - 涉及工具: {', '.join(suggestion['items'])}")

@@ -131,7 +131,12 @@ class MaintenanceLogger:
             stats = health_report.get("statistics", {})
             cursor.execute('''
                 INSERT INTO health_trends
-                (timestamp, health_score, root_files, python_files, markdown_files, total_size_mb)
+                (timestamp,
+    health_score,
+    root_files,
+    python_files,
+    markdown_files,
+    total_size_mb)
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (
                 health_report.get("timestamp"),
@@ -224,7 +229,9 @@ class MaintenanceLogger:
             "maintenance_summary": {
                 "total_maintenance_activities": total_maintenance,
                 "successful_activities": successful_maintenance,
-                "success_rate": round(successful_maintenance / total_maintenance * 100, 2) if total_maintenance > 0 else 0,
+                "success_rate": round(successful_maintenance / total_maintenance * 100,
+    2) if total_maintenance > 0 else 0,
+    
                 "total_files_affected": total_files_affected,
                 "total_size_freed_mb": round(total_size_freed, 2),
                 "total_issues_fixed": total_issues_fixed
@@ -267,8 +274,12 @@ class MaintenanceLogger:
             cursor = conn.cursor()
 
             cutoff_str = cutoff_date.isoformat()
-            cursor.execute('DELETE FROM maintenance_records WHERE timestamp < ?', (cutoff_str,))
-            cursor.execute('DELETE FROM health_trends WHERE timestamp < ?', (cutoff_str,))
+            cursor.execute('DELETE FROM maintenance_records WHERE timestamp < ?',
+    (cutoff_str,
+    ))
+            cursor.execute('DELETE FROM health_trends WHERE timestamp < ?',
+    (cutoff_str,
+    ))
 
             conn.commit()
             conn.close()

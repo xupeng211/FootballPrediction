@@ -98,6 +98,38 @@ class DirectoryMaintenance:
         print(f"✅ 清理了 {cleaned_count} 个缓存目录")
         return cleaned_count
 
+def _check_misplaced_files_check_condition():
+                misplaced_files.append(file_path)
+
+        # 检查根目录下的配置文件
+        config_patterns = ["*.ini", "*.toml", "*.yml", "*.yaml"]
+
+def _check_misplaced_files_check_condition():
+                    misplaced_files.append(file_path)
+
+        # 检查根目录下的大量JSON报告文件
+        json_reports = list(self.project_root.glob("quality_report_*.json")) + \
+                      list(self.project_root.glob("coverage_*.json"))
+        misplaced_files.extend(json_reports)
+
+        # 检查根目录下的临时目录
+        temp_dirs = [".pytest_cache", "__pycache__", ".ruff_cache", ".mypy_cache"]
+
+def _check_misplaced_files_check_condition():
+                misplaced_files.append(dir_path)
+
+
+def _check_misplaced_files_iterate_items():
+                item_type = "目录" if item.is_dir() else "文件"
+                print(f"   - {item_type}: {item}")
+
+def _check_misplaced_files_check_condition():
+                print(f"   - ... 还有 {len(misplaced_files) - 10} 个")
+        else:
+            print("✅ 未发现明显错误放置的文件")
+
+        return misplaced_files
+
     def check_misplaced_files(self) -> List[Path]:
         """检查错误放置的文件"""
         misplaced_files = []
@@ -106,7 +138,7 @@ class DirectoryMaintenance:
 
         # 检查根目录下的Python文件
         for file_path in self.project_root.glob("*.py"):
-            if file_path.name != "manage.py":  # 排除管理脚本
+            _check_misplaced_files_check_condition()
                 misplaced_files.append(file_path)
 
         # 检查根目录下的配置文件
@@ -114,7 +146,7 @@ class DirectoryMaintenance:
         for pattern in config_patterns:
             for file_path in self.project_root.glob(pattern):
                 # 保留一些特殊文件
-                if file_path.name not in ["alembic.ini"]:  # 保留符号链接
+                _check_misplaced_files_check_condition()
                     misplaced_files.append(file_path)
 
         # 检查根目录下的大量JSON报告文件
@@ -126,15 +158,15 @@ class DirectoryMaintenance:
         temp_dirs = [".pytest_cache", "__pycache__", ".ruff_cache", ".mypy_cache"]
         for temp_dir in temp_dirs:
             dir_path = self.project_root / temp_dir
-            if dir_path.exists():
+            _check_misplaced_files_check_condition()
                 misplaced_files.append(dir_path)
 
         if misplaced_files:
             print(f"⚠️  发现 {len(misplaced_files)} 个可能错误放置的文件/目录:")
-            for item in misplaced_files[:10]:  # 只显示前10个
+            _check_misplaced_files_iterate_items()
                 item_type = "目录" if item.is_dir() else "文件"
                 print(f"   - {item_type}: {item}")
-            if len(misplaced_files) > 10:
+            _check_misplaced_files_check_condition()
                 print(f"   - ... 还有 {len(misplaced_files) - 10} 个")
         else:
             print("✅ 未发现明显错误放置的文件")
@@ -150,7 +182,9 @@ class DirectoryMaintenance:
         for dir_path in self.project_root.rglob("*"):
             if dir_path.is_dir() and not any(dir_path.iterdir()):
                 # 排除一些特殊目录
-                if not any(parent.name in ['.git', '.venv', 'node_modules'] for parent in dir_path.parents):
+                if not any(parent.name in ['.git',
+    '.venv',
+    'node_modules'] for parent in dir_path.parents):
                     empty_dirs.append(dir_path)
 
         if empty_dirs:
@@ -163,6 +197,24 @@ class DirectoryMaintenance:
             print("✅ 未发现空目录")
 
         return empty_dirs
+
+def _check_naming_conventions_check_condition():
+                    violations["kebab_case_dirs"].append(dir_name)
+
+        # 检查Python文件命名 (应该是snake_case)
+
+def _check_naming_conventions_check_condition():
+                violations["snake_case_files"].append(str(file_path))
+
+        # 统计违规数量
+        total_violations = sum(len(items) for items in violations.values())
+
+def _check_naming_conventions_check_condition():
+                        print(f"     * ... 还有 {len(items) - 3} 个")
+        else:
+            print("✅ 命名规范检查通过")
+
+        return violations
 
     def check_naming_conventions(self) -> Dict[str, List[str]]:
         """检查命名规范"""
@@ -178,13 +230,13 @@ class DirectoryMaintenance:
         for dir_path in self.project_root.rglob("*"):
             if dir_path.is_dir() and dir_path.parent == self.project_root:
                 dir_name = dir_path.name
-                if '_' in dir_name and not dir_name.startswith('.'):
+                _check_naming_conventions_check_condition()
                     violations["kebab_case_dirs"].append(dir_name)
 
         # 检查Python文件命名 (应该是snake_case)
         for file_path in self.project_root.rglob("*.py"):
             file_name = file_path.stem
-            if '-' in file_name or ' ' in file_name:
+            _check_naming_conventions_check_condition()
                 violations["snake_case_files"].append(str(file_path))
 
         # 统计违规数量
@@ -196,7 +248,7 @@ class DirectoryMaintenance:
                     print(f"   - {violation_type}: {len(items)} 个")
                     for item in items[:3]:  # 只显示前3个
                         print(f"     * {item}")
-                    if len(items) > 3:
+                    _check_naming_conventions_check_condition()
                         print(f"     * ... 还有 {len(items) - 3} 个")
         else:
             print("✅ 命名规范检查通过")
@@ -223,7 +275,8 @@ class DirectoryMaintenance:
                         # 从文件名解析日期
                         file_date_str = self._extract_date_from_filename(report_path.name)
                         if file_date_str:
-                            file_date = datetime.strptime(file_date_str, "%Y%m%d_%H%M%S")
+                            file_date = datetime.strptime(file_date_str,
+    "%Y%m%d_%H%M%S")
                             if file_date < cutoff_date:
                                 archive_path = archive_dir / report_path.name
                                 if not archive_path.exists():
@@ -331,6 +384,48 @@ class DirectoryMaintenance:
         print(f"💾 健康报告已保存: {report_file}")
         return report_file
 
+def _auto_fix_issues_check_condition():
+            fixes["cleaned_temp_files"] = self.clean_temp_files()
+            fixes["cleaned_cache_dirs"] = self.clean_cache_dirs()
+
+        # 2. 归档旧报告
+
+def _auto_fix_issues_check_condition():
+            fixes["archived_old_reports"] = self.archive_old_reports()
+
+        # 3. 删除空目录
+        empty_dirs = self.find_empty_dirs()
+
+def _auto_fix_issues_handle_error():
+                    dir_path.rmdir()
+                    fixes["removed_empty_dirs"] += 1
+                except OSError:
+                    pass
+
+def _auto_fix_issues_check_condition():
+            # 创建合适的目录
+            (self.scripts_dir / "temp").mkdir(exist_ok=True)
+            (self.docs_dir / "reports" / "temp").mkdir(exist_ok=True)
+
+
+def _auto_fix_issues_check_condition():
+                        dest = self.docs_dir / "reports" / "temp" / file_path.name
+                    else:
+                        continue
+
+def _auto_fix_issues_check_condition():
+                        shutil.move(str(file_path), str(dest))
+                        fixes["moved_misplaced_files"] += 1
+        else:
+            fixes["moved_misplaced_files"] = len(misplaced_files)
+
+        print(f"✅ {'模拟' if dry_run else '实际'}修复完成:")
+
+def _auto_fix_issues_check_condition():
+                print(f"   - {fix_type}: {count}")
+
+        return fixes
+
     def auto_fix_issues(self, dry_run: bool = True) -> Dict[str, int]:
         """自动修复常见问题"""
         fixes = {
@@ -344,19 +439,19 @@ class DirectoryMaintenance:
         print(f"🔧 开始{'模拟' if dry_run else '实际'}修复...")
 
         # 1. 清理临时文件
-        if not dry_run:
+        _auto_fix_issues_check_condition()
             fixes["cleaned_temp_files"] = self.clean_temp_files()
             fixes["cleaned_cache_dirs"] = self.clean_cache_dirs()
 
         # 2. 归档旧报告
-        if not dry_run:
+        _auto_fix_issues_check_condition()
             fixes["archived_old_reports"] = self.archive_old_reports()
 
         # 3. 删除空目录
         empty_dirs = self.find_empty_dirs()
         if not dry_run:
             for dir_path in empty_dirs:
-                try:
+                _auto_fix_issues_handle_error()
                     dir_path.rmdir()
                     fixes["removed_empty_dirs"] += 1
                 except OSError:
@@ -366,7 +461,7 @@ class DirectoryMaintenance:
 
         # 4. 移动错误放置的文件
         misplaced_files = self.check_misplaced_files()
-        if not dry_run:
+        _auto_fix_issues_check_condition()
             # 创建合适的目录
             (self.scripts_dir / "temp").mkdir(exist_ok=True)
             (self.docs_dir / "reports" / "temp").mkdir(exist_ok=True)
@@ -375,12 +470,12 @@ class DirectoryMaintenance:
                 if file_path.is_file():
                     if file_path.suffix == '.py':
                         dest = self.scripts_dir / "temp" / file_path.name
-                    elif file_path.suffix in ['.json', '.md']:
+                    _auto_fix_issues_check_condition()
                         dest = self.docs_dir / "reports" / "temp" / file_path.name
                     else:
                         continue
 
-                    if not dest.exists():
+                    _auto_fix_issues_check_condition()
                         shutil.move(str(file_path), str(dest))
                         fixes["moved_misplaced_files"] += 1
         else:
@@ -388,10 +483,90 @@ class DirectoryMaintenance:
 
         print(f"✅ {'模拟' if dry_run else '实际'}修复完成:")
         for fix_type, count in fixes.items():
-            if count > 0:
+            _auto_fix_issues_check_condition()
                 print(f"   - {fix_type}: {count}")
 
         return fixes
+
+def _run_maintenance_check_condition():
+                    print("🧹 [模拟] 清理临时文件...")
+                    results["actions"].append("temp_files_cleaned_simulated")
+                else:
+                    temp_count = self.clean_temp_files()
+                    results["fixes_applied"]["temp_files_cleaned"] = temp_count
+                    results["actions"].append("temp_files_cleaned")
+
+            # 2. 清理缓存目录
+
+def _run_maintenance_check_condition():
+                    print("🗂️  [模拟] 清理缓存目录...")
+                    results["actions"].append("cache_dirs_cleaned_simulated")
+                else:
+                    cache_count = self.clean_cache_dirs()
+                    results["fixes_applied"]["cache_dirs_cleaned"] = cache_count
+                    results["actions"].append("cache_dirs_cleaned")
+
+            # 3. 检查问题
+            misplaced_files = self.check_misplaced_files()
+            empty_dirs = self.find_empty_dirs()
+            naming_violations = self.check_naming_conventions()
+
+            results["issues_found"] = {
+                "misplaced_files": len(misplaced_files),
+                "empty_dirs": len(empty_dirs),
+                "naming_violations": sum(len(items) for items in naming_violations.values())
+            }
+
+            # 4. 归档旧报告
+
+def _run_maintenance_check_condition():
+                    print("📦 [模拟] 归档旧报告...")
+                    results["actions"].append("reports_archived_simulated")
+                else:
+                    archive_count = self.archive_old_reports()
+                    results["fixes_applied"]["reports_archived"] = archive_count
+                    results["actions"].append("reports_archived")
+
+            # 5. 自动修复
+
+def _run_maintenance_check_condition():
+                    results["issues_found"]["potential_fixes"] = fixes
+                else:
+                    results["fixes_applied"].update(fixes)
+                results["actions"].append("auto_fix_applied")
+
+            # 6. 生成健康报告
+
+def _run_maintenance_check_condition():
+                health_report = self.generate_health_report()
+                results["health_report"] = health_report
+
+
+def _run_maintenance_check_condition():
+                    report_file = self.save_health_report(health_report)
+                    results["health_report_file"] = str(report_file)
+                else:
+                    results["actions"].append("health_report_generated_simulated")
+
+            results["end_time"] = datetime.now().isoformat()
+            results["success"] = True
+
+        except Exception as e:
+            results["success"] = False
+            results["error"] = str(e)
+            print(f"❌ 维护过程中出现错误: {e}")
+
+        # 打印总结
+        print("-" * 50)
+
+def _run_maintenance_check_condition():
+            print("✅ 目录维护流程完成!")
+            print(f"📊 健康评分: {results['health_report']['health_score'] if results.get('health_report') else 'N/A'}")
+            print(f"📁 根目录文件数: {results['health_report']['statistics']['root_files'] if results.get('health_report') else 'N/A'}")
+        else:
+            print("❌ 目录维护流程失败!")
+
+        return results
 
     def run_maintenance(self,
                        clean_temp: bool = True,
@@ -417,7 +592,7 @@ class DirectoryMaintenance:
         try:
             # 1. 清理临时文件
             if clean_temp:
-                if dry_run:
+                _run_maintenance_check_condition()
                     print("🧹 [模拟] 清理临时文件...")
                     results["actions"].append("temp_files_cleaned_simulated")
                 else:
@@ -427,7 +602,7 @@ class DirectoryMaintenance:
 
             # 2. 清理缓存目录
             if clean_cache:
-                if dry_run:
+                _run_maintenance_check_condition()
                     print("🗂️  [模拟] 清理缓存目录...")
                     results["actions"].append("cache_dirs_cleaned_simulated")
                 else:
@@ -448,7 +623,7 @@ class DirectoryMaintenance:
 
             # 4. 归档旧报告
             if archive_reports:
-                if dry_run:
+                _run_maintenance_check_condition()
                     print("📦 [模拟] 归档旧报告...")
                     results["actions"].append("reports_archived_simulated")
                 else:
@@ -459,18 +634,18 @@ class DirectoryMaintenance:
             # 5. 自动修复
             if auto_fix:
                 fixes = self.auto_fix_issues(dry_run=dry_run)
-                if dry_run:
+                _run_maintenance_check_condition()
                     results["issues_found"]["potential_fixes"] = fixes
                 else:
                     results["fixes_applied"].update(fixes)
                 results["actions"].append("auto_fix_applied")
 
             # 6. 生成健康报告
-            if generate_report:
+            _run_maintenance_check_condition()
                 health_report = self.generate_health_report()
                 results["health_report"] = health_report
 
-                if not dry_run:
+                _run_maintenance_check_condition()
                     report_file = self.save_health_report(health_report)
                     results["health_report_file"] = str(report_file)
                 else:
@@ -486,7 +661,7 @@ class DirectoryMaintenance:
 
         # 打印总结
         print("-" * 50)
-        if results["success"]:
+        _run_maintenance_check_condition()
             print("✅ 目录维护流程完成!")
             print(f"📊 健康评分: {results['health_report']['health_score'] if results.get('health_report') else 'N/A'}")
             print(f"📁 根目录文件数: {results['health_report']['statistics']['root_files'] if results.get('health_report') else 'N/A'}")

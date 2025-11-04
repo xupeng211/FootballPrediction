@@ -68,7 +68,9 @@ class EnhancedCoverageAnalyzer:
         self.report_file = self.project_root / "coverage_report.json"
         self.trend_file = self.project_root / "coverage_trend.json"
 
-    def run_tests_with_coverage(self, test_pattern: str = "tests/") -> Tuple[subprocess.CompletedProcess, float]:
+    def run_tests_with_coverage(self,
+    test_pattern: str = "tests/") -> Tuple[subprocess.CompletedProcess,
+    float]:
         """运行测试并收集覆盖率数据"""
         print("🚀 开始运行测试并收集覆盖率数据...")
 
@@ -219,7 +221,8 @@ class EnhancedCoverageAnalyzer:
         # 模块覆盖率建议
         low_coverage_modules = [m for m in modules if m["coverage"] < 20]
         if low_coverage_modules:
-            recommendations.append(f"⚠️ 以下模块覆盖率过低，优先处理: {', '.join([m['module'] for m in low_coverage_modules[:3]])}")
+            recommendations.append(f"⚠️ 以下模块覆盖率过低，优先处理: {',
+    '.join([m['module'] for m in low_coverage_modules[:3]])}")
 
         # 未覆盖语句最多的模块
         modules_by_missing = sorted(modules, key=lambda x: x["missing"], reverse=True)
@@ -229,7 +232,9 @@ class EnhancedCoverageAnalyzer:
 
         return recommendations
 
-    def generate_report(self, test_result: subprocess.CompletedProcess, execution_time: float) -> CoverageReport:
+    def generate_report(self,
+    test_result: subprocess.CompletedProcess,
+    execution_time: float) -> CoverageReport:
         """生成覆盖率报告"""
         # 解析覆盖率数据
         coverage_data = self.parse_coverage_xml()
@@ -238,8 +243,12 @@ class EnhancedCoverageAnalyzer:
         test_data = self.parse_test_results()
 
         # 计算总体统计
-        total_statements = sum(m.get("statements", 0) for m in coverage_data.get("modules", []))
-        total_covered = sum(m.get("covered", 0) for m in coverage_data.get("modules", []))
+        total_statements = sum(m.get("statements",
+    0) for m in coverage_data.get("modules",
+    []))
+        total_covered = sum(m.get("covered",
+    0) for m in coverage_data.get("modules",
+    []))
         total_missing = total_statements - total_covered
         total_coverage = (total_covered / total_statements * 100) if total_statements > 0 else 0
 
@@ -350,10 +359,12 @@ class EnhancedCoverageAnalyzer:
 
         if report.module_coverage:
             print(f"\n📋 模块覆盖率 (Top 10):")
-            sorted_modules = sorted(report.module_coverage, key=lambda x: x.coverage_percentage, reverse=True)
+            sorted_modules = sorted(report.module_coverage,
+    key=lambda x: x.coverage_percentage,
+    reverse=True)
             for module in sorted_modules[:10]:
                 status = "✅" if module.coverage_percentage >= 50 else "⚠️" if module.coverage_percentage >= 20 else "❌"
-                print(f"  {status} {module.module_name:<30} {module.coverage_percentage:>5.1f}% ({module.covered}/{module.statements})")
+    print(f"  {status} {module.module_name:<30} {module.coverage_percentage:>5.1f}% ({module.covered}/{module.statements})");
 
         if report.recommendations:
             print(f"\n💡 改进建议:")
@@ -386,7 +397,9 @@ class EnhancedCoverageAnalyzer:
         ]
 
         if report.module_coverage:
-            sorted_modules = sorted(report.module_coverage, key=lambda x: x.coverage_percentage, reverse=True)
+            sorted_modules = sorted(report.module_coverage,
+    key=lambda x: x.coverage_percentage,
+    reverse=True)
             for module in sorted_modules:
                 markdown_lines.append(
                     f"- **{module.module_name}**: {module.coverage_percentage:.1f}% "
@@ -408,7 +421,9 @@ class EnhancedCoverageAnalyzer:
 
         print("📝 Markdown报告已生成: coverage_report.md")
 
-    def analyze(self, test_pattern: str = "tests/", github_actions: bool = False) -> bool:
+    def analyze(self,
+    test_pattern: str = "tests/",
+    github_actions: bool = False) -> bool:
         """执行完整的覆盖率分析"""
         print("🚀 开始增强的覆盖率分析...")
 
@@ -448,7 +463,8 @@ class EnhancedCoverageAnalyzer:
             return True
         else:
             remaining = target_coverage - current_coverage
-            print(f"📈 距离M2目标还差 {remaining:.1f}% (当前: {current_coverage:.1f}%, 目标: {target_coverage}%)")
+            print(f"📈 距离M2目标还差 {remaining:.1f}% (当前: {current_coverage:.1f}%,
+    目标: {target_coverage}%)")
             return False
 
 
@@ -456,7 +472,9 @@ def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="增强的覆盖率分析工具")
     parser.add_argument("--test-pattern", default="tests/", help="测试模式 (默认: tests/)")
-    parser.add_argument("--github-actions", action="store_true", help="GitHub Actions模式")
+    parser.add_argument("--github-actions",
+    action="store_true",
+    help="GitHub Actions模式")
     parser.add_argument("--test", action="store_true", help="测试模式")
 
     args = parser.parse_args()

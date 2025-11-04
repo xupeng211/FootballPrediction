@@ -16,7 +16,9 @@ from datetime import datetime
 class GitFlowSetup:
     """Git Flow工作流配置器"""
 
-    def __init__(self, repo_owner: str = "xupeng211", repo_name: str = "FootballPrediction"):
+    def __init__(self,
+    repo_owner: str = "xupeng211",
+    repo_name: str = "FootballPrediction"):
         self.repo_owner = repo_owner
         self.repo_name = repo_name
         self.github_token = os.getenv("GITHUB_TOKEN")

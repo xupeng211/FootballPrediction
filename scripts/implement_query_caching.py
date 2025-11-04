@@ -184,7 +184,9 @@ class CachedUserRepository:
         self.user_repository = user_repository
         self.cache = cache
 
-    async def get_by_email(self, email: str, session: AsyncSession = None) -> Optional[Any]:
+    async def get_by_email(self,
+    email: str,
+    session: AsyncSession = None) -> Optional[Any]:
         """带缓存的根据邮箱获取用户"""
         cache_key = f"user:email:{email}"
 
@@ -212,7 +214,9 @@ class CachedUserRepository:
 
         return user
 
-    async def get_by_username(self, username: str, session: AsyncSession = None) -> Optional[Any]:
+    async def get_by_username(self,
+    username: str,
+    session: AsyncSession = None) -> Optional[Any]:
         """带缓存的根据用户名获取用户"""
         cache_key = f"user:username:{username}"
 
@@ -240,7 +244,9 @@ class CachedUserRepository:
 
         return user
 
-    async def get_active_users(self, limit: int = 10, session: AsyncSession = None) -> list[Any]:
+    async def get_active_users(self,
+    limit: int = 10,
+    session: AsyncSession = None) -> list[Any]:
         """带缓存的获取活跃用户"""
         cache_key = f"users:active:{limit}"
 
@@ -251,7 +257,10 @@ class CachedUserRepository:
             return cached_users
 
         # 从数据库获取
-        users = await self.user_repository.get_list(skip=0, limit=limit, active_only=True, session=session)
+        users = await self.user_repository.get_list(skip=0,
+    limit=limit,
+    active_only=True,
+    session=session)
         if users:
             # 缓存结果 (30分钟)
             users_data = []
@@ -263,6 +272,7 @@ class CachedUserRepository:
                     'is_active': user.is_active,
                     'role': user.role,
                     'created_at': user.created_at.isoformat() if user.created_at else None,
+    
                     'updated_at': user.updated_at.isoformat() if user.updated_at else None
                 })
             await self.cache.set(cache_key, users_data, ttl=1800)
@@ -270,7 +280,10 @@ class CachedUserRepository:
 
         return users
 
-    async def invalidate_user_cache(self, user_id: int = None, email: str = None, username: str = None):
+    async def invalidate_user_cache(self,
+    user_id: int = None,
+    email: str = None,
+    username: str = None):
         """使用户缓存失效"""
         invalidated_keys = []
 

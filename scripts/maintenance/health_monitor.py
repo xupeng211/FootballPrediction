@@ -119,7 +119,9 @@ class HealthMonitor:
         except Exception as e:
             print(f"⚠️  保存警报记录失败: {e}")
 
-    def _check_root_files_count(self, health_report: Dict[str, Any]) -> Optional[HealthAlert]:
+    def _check_root_files_count(self,
+    health_report: Dict[str,
+    Any]) -> Optional[HealthAlert]:
         """检查根目录文件数量"""
         root_files = health_report["statistics"]["root_files"]
         threshold = self.thresholds["max_root_files"]
@@ -138,7 +140,9 @@ class HealthMonitor:
 
         return None
 
-    def _check_health_score(self, health_report: Dict[str, Any]) -> Optional[HealthAlert]:
+    def _check_health_score(self,
+    health_report: Dict[str,
+    Any]) -> Optional[HealthAlert]:
         """检查健康评分"""
         health_score = health_report["health_score"]
         threshold = self.thresholds["min_health_score"]
@@ -157,7 +161,9 @@ class HealthMonitor:
 
         return None
 
-    def _check_empty_directories(self, health_report: Dict[str, Any]) -> Optional[HealthAlert]:
+    def _check_empty_directories(self,
+    health_report: Dict[str,
+    Any]) -> Optional[HealthAlert]:
         """检查空目录数量"""
         empty_dirs = health_report.get("empty_dirs", 0)
         threshold = self.thresholds["max_empty_dirs"]
@@ -176,7 +182,9 @@ class HealthMonitor:
 
         return None
 
-    def _check_naming_violations(self, health_report: Dict[str, Any]) -> Optional[HealthAlert]:
+    def _check_naming_violations(self,
+    health_report: Dict[str,
+    Any]) -> Optional[HealthAlert]:
         """检查命名规范违规"""
         violations = health_report.get("naming_violations", 0)
         threshold = self.thresholds["max_naming_violations"]
@@ -195,7 +203,9 @@ class HealthMonitor:
 
         return None
 
-    def _check_misplaced_files(self, health_report: Dict[str, Any]) -> Optional[HealthAlert]:
+    def _check_misplaced_files(self,
+    health_report: Dict[str,
+    Any]) -> Optional[HealthAlert]:
         """检查错误放置的文件"""
         misplaced = health_report.get("misplaced_files", 0)
         threshold = self.thresholds["max_misplaced_files"]
@@ -214,7 +224,9 @@ class HealthMonitor:
 
         return None
 
-    def _check_project_size(self, health_report: Dict[str, Any]) -> Optional[HealthAlert]:
+    def _check_project_size(self,
+    health_report: Dict[str,
+    Any]) -> Optional[HealthAlert]:
         """检查项目大小"""
         size_mb = health_report["statistics"]["total_size_mb"]
         threshold_gb = self.thresholds["max_project_size_gb"]
@@ -227,6 +239,7 @@ class HealthMonitor:
                 severity=severity,
                 title="项目大小过大",
                 message=f"项目大小 {size_mb:.1f} MB，超过阈值 {threshold_mb:.1f} MB ({threshold_gb} GB)",
+    
                 current_value=size_mb,
                 threshold_value=threshold_mb,
                 timestamp=datetime.now().isoformat()
@@ -279,7 +292,10 @@ class HealthMonitor:
 
         return health_report, alerts
 
-    def save_monitoring_report(self, health_report: Dict[str, Any], alerts: List[HealthAlert]) -> Path:
+    def save_monitoring_report(self,
+    health_report: Dict[str,
+    Any],
+    alerts: List[HealthAlert]) -> Path:
         """保存监控报告"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.monitoring_dir / f"health_monitoring_{timestamp}.json"
@@ -321,21 +337,27 @@ class HealthMonitor:
             "data_points": len(trends),
             "health_score": {
                 "current": health_scores[-1] if health_scores else 0,
-                "average": round(sum(health_scores) / len(health_scores), 1) if health_scores else 0,
+                "average": round(sum(health_scores) / len(health_scores),
+    1) if health_scores else 0,
+    
                 "min": min(health_scores) if health_scores else 0,
                 "max": max(health_scores) if health_scores else 0,
                 "trend": "improving" if len(health_scores) > 1 and health_scores[-1] > health_scores[0] else "stable"
             },
             "root_files": {
                 "current": root_files[-1] if root_files else 0,
-                "average": round(sum(root_files) / len(root_files), 1) if root_files else 0,
+                "average": round(sum(root_files) / len(root_files),
+    1) if root_files else 0,
+    
                 "min": min(root_files) if root_files else 0,
                 "max": max(root_files) if root_files else 0,
                 "trend": "increasing" if len(root_files) > 1 and root_files[-1] > root_files[0] else "stable"
             },
             "project_size": {
                 "current_mb": project_sizes[-1] if project_sizes else 0,
-                "average_mb": round(sum(project_sizes) / len(project_sizes), 1) if project_sizes else 0,
+                "average_mb": round(sum(project_sizes) / len(project_sizes),
+    1) if project_sizes else 0,
+    
                 "min_mb": min(project_sizes) if project_sizes else 0,
                 "max_mb": max(project_sizes) if project_sizes else 0,
                 "trend": "growing" if len(project_sizes) > 1 and project_sizes[-1] > project_sizes[0] else "stable"
@@ -377,7 +399,10 @@ class HealthMonitor:
 
         return dashboard
 
-    def _generate_recommendations(self, alerts: List[HealthAlert], health_report: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self,
+    alerts: List[HealthAlert],
+    health_report: Dict[str,
+    Any]) -> List[str]:
         """生成改进建议"""
         recommendations = []
 

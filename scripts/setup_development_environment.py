@@ -41,7 +41,10 @@ class DevelopmentEnvironmentSetup:
         print(f"❌ {message}")
         self.errors.append(message)
 
-    def run_command(self, command: List[str], check: bool = True, capture: bool = False) -> Optional[str]:
+    def run_command(self,
+    command: List[str],
+    check: bool = True,
+    capture: bool = False) -> Optional[str]:
         """运行命令"""
         try:
             if capture:
@@ -89,14 +92,20 @@ class DevelopmentEnvironmentSetup:
             success = False
 
         # 检查Docker
-        docker_version = self.run_command(['docker', '--version'], check=False, capture=True)
+        docker_version = self.run_command(['docker',
+    '--version'],
+    check=False,
+    capture=True)
         if docker_version:
             self.log_success(f"Docker: {docker_version}")
         else:
             self.log_warning("Docker未安装，将跳过Docker相关配置")
 
         # 检查Docker Compose
-        compose_version = self.run_command(['docker-compose', '--version'], check=False, capture=True)
+        compose_version = self.run_command(['docker-compose',
+    '--version'],
+    check=False,
+    capture=True)
         if compose_version:
             self.log_success(f"Docker Compose: {compose_version}")
         else:
@@ -501,7 +510,9 @@ AUTO_RESTART=true
 
 help:		## 显示帮助信息
 	@echo "Available commands:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-20s\\033[0m %s\\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-20s\\033[0m %s\\n",
+    $$1,
+    $$2}'
 
 install:		## 安装依赖
 	pip install -e .
@@ -569,7 +580,10 @@ env-check:	## 检查环境配置
 
         # 测试Docker（如果可用）
         if self.run_command(['docker', '--version'], check=False):
-            docker_ps = self.run_command(['docker-compose', 'ps'], check=False, capture=True)
+            docker_ps = self.run_command(['docker-compose',
+    'ps'],
+    check=False,
+    capture=True)
             if docker_ps:
                 self.log_success("Docker环境验证通过")
             else:

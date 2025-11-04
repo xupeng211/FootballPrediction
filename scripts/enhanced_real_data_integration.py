@@ -235,22 +235,7 @@ class RealDataIntegrationSystem:
         # 进攻强防守弱相关
         X[:, home_defense_idx] -= X[:, home_goals_idx] * 0.2
 
-    def optimize_model_parameters(
-        self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
-    ) -> Dict[str, Any]:
-        """基于SRS成功经验优化模型参数"""
-        logger.info("🔧 基于SRS成功经验优化模型参数...")
-
-        results = {}
-
-        # 数据预处理
-        X_train_scaled = self.scaler.fit_transform(X_train)
-        X_test_scaled = self.scaler.transform(X_test)
-        y_train_encoded = self.label_encoder.fit_transform(y_train)
-        y_test_encoded = self.label_encoder.transform(y_test)
-
-        # XGBoost参数优化（基于SRS成功配置）
-        if XGB_AVAILABLE:
+def _optimize_model_parameters_check_condition():
             logger.info("🚀 优化XGBoost参数...")
 
             # 基于SRS成功的基础参数
@@ -262,9 +247,8 @@ class RealDataIntegrationSystem:
             best_xgb_params = base_params
 
             # 简化的参数搜索
-            for n_estimators in [100, 150, 200]:
-                for max_depth in [5, 7, 9]:
-                    for learning_rate in [0.1, 0.15]:
+
+def _optimize_model_parameters_iterate_items():
                         test_params = base_params.copy()
                         test_params.update(
                             {
@@ -282,7 +266,8 @@ class RealDataIntegrationSystem:
                         y_pred = model.predict(X_test_scaled)
                         score = accuracy_score(y_test_encoded, y_pred)
 
-                        if score > best_xgb_score:
+
+def _optimize_model_parameters_check_condition():
                             best_xgb_score = score
                             best_xgb_params = test_params.copy()
 
@@ -298,7 +283,8 @@ class RealDataIntegrationSystem:
             }
 
         # LightGBM参数优化
-        if LGB_AVAILABLE:
+
+def _optimize_model_parameters_check_condition():
             logger.info("🚀 优化LightGBM参数...")
 
             # 基于SRS成功的基础参数
@@ -311,9 +297,8 @@ class RealDataIntegrationSystem:
             best_lgb_params = base_params
 
             # 简化的参数搜索
-            for n_estimators in [100, 150, 200]:
-                for max_depth in [5, 7, 9]:
-                    for learning_rate in [0.1, 0.15]:
+
+def _optimize_model_parameters_iterate_items():
                         test_params = base_params.copy()
                         test_params.update(
                             {
@@ -328,7 +313,118 @@ class RealDataIntegrationSystem:
                         y_pred = model.predict(X_test_scaled)
                         score = accuracy_score(y_test_encoded, y_pred)
 
-                        if score > best_lgb_score:
+
+def _optimize_model_parameters_check_condition():
+                            best_lgb_score = score
+                            best_lgb_params = test_params.copy()
+
+            logger.info(f"  LightGBM最佳参数: {best_lgb_params}")
+            logger.info(f"  LightGBM最佳准确率: {best_lgb_score:.4f}")
+
+            results["lightgbm"] = {
+                "accuracy": best_lgb_score,
+                "params": best_lgb_params,
+                "improvement_over_srs": (best_lgb_score - SRS_SUCCESS_BASELINE["accuracy"])
+                / SRS_SUCCESS_BASELINE["accuracy"]
+                * 100,
+            }
+
+        return results
+
+    def optimize_model_parameters(
+        self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
+    ) -> Dict[str, Any]:
+        """基于SRS成功经验优化模型参数"""
+        logger.info("🔧 基于SRS成功经验优化模型参数...")
+
+        results = {}
+
+        # 数据预处理
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
+        y_train_encoded = self.label_encoder.fit_transform(y_train)
+        y_test_encoded = self.label_encoder.transform(y_test)
+
+        # XGBoost参数优化（基于SRS成功配置）
+        _optimize_model_parameters_check_condition()
+            logger.info("🚀 优化XGBoost参数...")
+
+            # 基于SRS成功的基础参数
+            base_params = SRS_SUCCESS_BASELINE["model_config"].copy()
+
+            # 参数搜索空间
+
+            best_xgb_score = 0
+            best_xgb_params = base_params
+
+            # 简化的参数搜索
+            for n_estimators in [100, 150, 200]:
+                for max_depth in [5, 7, 9]:
+                    _optimize_model_parameters_iterate_items()
+                        test_params = base_params.copy()
+                        test_params.update(
+                            {
+                                "n_estimators": n_estimators,
+                                "max_depth": max_depth,
+                                "learning_rate": learning_rate,
+                            }
+                        )
+
+                        model = xgb.XGBClassifier(
+                            **test_params, eval_metric="mlogloss", use_label_encoder=False
+                        )
+
+                        model.fit(X_train_scaled, y_train_encoded)
+                        y_pred = model.predict(X_test_scaled)
+                        score = accuracy_score(y_test_encoded, y_pred)
+
+                        _optimize_model_parameters_check_condition()
+                            best_xgb_score = score
+                            best_xgb_params = test_params.copy()
+
+            logger.info(f"  XGBoost最佳参数: {best_xgb_params}")
+            logger.info(f"  XGBoost最佳准确率: {best_xgb_score:.4f}")
+
+            results["xgboost"] = {
+                "accuracy": best_xgb_score,
+                "params": best_xgb_params,
+                "improvement_over_srs": (best_xgb_score - SRS_SUCCESS_BASELINE["accuracy"])
+                / SRS_SUCCESS_BASELINE["accuracy"]
+                * 100,
+            }
+
+        # LightGBM参数优化
+        _optimize_model_parameters_check_condition()
+            logger.info("🚀 优化LightGBM参数...")
+
+            # 基于SRS成功的基础参数
+            base_params = SRS_SUCCESS_BASELINE["model_config"].copy()
+
+            # LightGBM特定参数
+            base_params.update({"num_leaves": 31, "verbose": -1})
+
+            best_lgb_score = 0
+            best_lgb_params = base_params
+
+            # 简化的参数搜索
+            for n_estimators in [100, 150, 200]:
+                for max_depth in [5, 7, 9]:
+                    _optimize_model_parameters_iterate_items()
+                        test_params = base_params.copy()
+                        test_params.update(
+                            {
+                                "n_estimators": n_estimators,
+                                "max_depth": max_depth,
+                                "learning_rate": learning_rate,
+                            }
+                        )
+
+                        model = lgb.LGBMClassifier(**test_params)
+                        model.fit(X_train_scaled, y_train_encoded)
+                        y_pred = model.predict(X_test_scaled)
+                        score = accuracy_score(y_test_encoded, y_pred)
+
+                        _optimize_model_parameters_check_condition()
                             best_lgb_score = score
                             best_lgb_params = test_params.copy()
 
@@ -380,7 +476,9 @@ class RealDataIntegrationSystem:
         if predictions_list:
             # 加权平均预测
             weighted_weights = np.array(weights) / np.sum(weights)
-            ensemble_pred = np.average(predictions_list, axis=0, weights=weighted_weights)
+            ensemble_pred = np.average(predictions_list,
+    axis=0,
+    weights=weighted_weights)
             ensemble_accuracy = accuracy_score(y_test_encoded, ensemble_pred)
 
             ensemble_results = {
@@ -424,7 +522,10 @@ class RealDataIntegrationSystem:
 
             # 3. 参数优化
             logger.info("🔧 步骤2: 基于SRS经验优化模型参数...")
-            optimization_results = self.optimize_model_parameters(X_train, X_test, y_train, y_test)
+            optimization_results = self.optimize_model_parameters(X_train,
+    X_test,
+    y_train,
+    y_test)
             self.model_performance = optimization_results
 
             # 4. 集成评估
@@ -485,8 +586,14 @@ class RealDataIntegrationSystem:
 
             # 保存结果
             try:
-                with open("real_data_optimization_results.json", "w", encoding="utf-8") as f:
-                    json.dump(optimization_report, f, indent=2, ensure_ascii=False, default=str)
+                with open("real_data_optimization_results.json",
+    "w",
+    encoding="utf-8") as f:
+                    json.dump(optimization_report,
+    f,
+    indent=2,
+    ensure_ascii=False,
+    default=str)
                 logger.info("📄 优化结果已保存到 real_data_optimization_results.json")
             except Exception as e:
                 logger.error(f"保存优化结果失败: {e}")

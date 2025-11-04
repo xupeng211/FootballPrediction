@@ -122,7 +122,11 @@ def generate_test_data(n_samples: int = 1000) -> tuple[pd.DataFrame, pd.Series]:
 
     # 基于SRS分布生成结果
     probabilities = [0.53, 0.32, 0.15]  # draw, home_win, away_win
-    results = np.random.choice(["draw", "home_win", "away_win"], size=n_samples, p=probabilities)
+    results = np.random.choice(["draw",
+    "home_win",
+    "away_win"],
+    size=n_samples,
+    p=probabilities)
     y = pd.Series(results)
 
     logger.info(f"数据分布: {y.value_counts().to_dict()}")
@@ -168,7 +172,9 @@ def test_xgboost(
 
     # 特征重要性
     feature_importance = dict(zip(X_train.columns, model.feature_importances_))
-    top_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:10]
+    top_features = sorted(feature_importance.items(),
+    key=lambda x: x[1],
+    reverse=True)[:10]
 
     result = {
         "model": "XGBoost",
@@ -220,7 +226,9 @@ def test_lightgbm(
 
     # 特征重要性
     feature_importance = dict(zip(X_train.columns, model.feature_importances_))
-    top_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:10]
+    top_features = sorted(feature_importance.items(),
+    key=lambda x: x[1],
+    reverse=True)[:10]
 
     result = {
         "model": "LightGBM",

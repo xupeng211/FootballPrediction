@@ -58,7 +58,10 @@ class GitHubCLIManager:
             }
         ]
 
-    def run_gh_command(self, command: List[str], cwd: Optional[str] = None) -> Dict[str, Any]:
+    def run_gh_command(self,
+    command: List[str],
+    cwd: Optional[str] = None) -> Dict[str,
+    Any]:
         """运行GitHub CLI命令"""
         try:
             if cwd is None:
@@ -124,7 +127,10 @@ class GitHubCLIManager:
             "message": "Comment added successfully" if result["success"] else result["stderr"]
         }
 
-    def close_issue(self, issue_number: int, reason: str = "completed") -> Dict[str, Any]:
+    def close_issue(self,
+    issue_number: int,
+    reason: str = "completed") -> Dict[str,
+    Any]:
         """关闭Issue"""
         result = self.run_gh_command([
             "issue", "close", str(issue_number), "--reason", reason
@@ -172,7 +178,8 @@ class GitHubCLIManager:
 
         if not status_result["success"]:
             print(f"   ❌ 无法获取Issue状态: {status_result.get('error', 'Unknown error')}")
-            return {"success": False, "error": f"Cannot get issue status: {status_result.get('error')}"}
+            return {"success": False,
+    "error": f"Cannot get issue status: {status_result.get('error')}"}
 
         current_state = status_result["state"]
         current_labels = status_result["labels"]
@@ -277,7 +284,8 @@ class GitHubCLIManager:
                     print(f"   🎉 Issue #{issue_info['number']} 处理成功")
             else:
                 results["failed"] += 1
-                print(f"   ❌ Issue #{issue_info['number']} 处理失败: {result.get('error', 'Unknown error')}")
+                print(f"   ❌ Issue #{issue_info['number']} 处理失败: {result.get('error',
+    'Unknown error')}")
 
             # 在Issues之间添加短暂延迟
             if i < len(self.completed_issues):

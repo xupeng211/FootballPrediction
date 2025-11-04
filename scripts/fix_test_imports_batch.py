@@ -140,6 +140,7 @@ except ImportError:
         # 模式6: 修复数据库模型导入
         content = re.sub(
             r'from src\.database\.models\.(user|predictions|match|team|league) import.*?\n',
+    
             '''try:
     from src.database.models.\\1 import \\2
 except ImportError:

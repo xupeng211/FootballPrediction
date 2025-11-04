@@ -224,7 +224,8 @@ class CICDMonitor:
 
         return metrics
 
-    def identify_optimization_opportunities(self, metrics: List[CIPerformanceMetric]) -> List[OptimizationResult]:
+    def identify_optimization_opportunities(self,
+    metrics: List[CIPerformanceMetric]) -> List[OptimizationResult]:
         """识别优化机会"""
         optimizations = []
 
@@ -249,7 +250,8 @@ class CICDMonitor:
 
         return optimizations
 
-    def _calculate_cache_improvement(self, metric: CIPerformanceMetric) -> Optional[OptimizationResult]:
+    def _calculate_cache_improvement(self,
+    metric: CIPerformanceMetric) -> Optional[OptimizationResult]:
         """计算缓存优化收益"""
         estimated_time_saved = metric.duration * 0.3  # 缓存可节省30%时间
         improvement_percent = (estimated_time_saved / metric.duration) * 100
@@ -262,7 +264,8 @@ class CICDMonitor:
             recommendation=f"为{metric.name}启用依赖缓存，预计节省{improvement_percent:.1f}%时间"
         )
 
-    def _calculate_parallel_improvement(self, metric: CIPerformanceMetric) -> Optional[OptimizationResult]:
+    def _calculate_parallel_improvement(self,
+    metric: CIPerformanceMetric) -> Optional[OptimizationResult]:
         """计算并行优化收益"""
         current_jobs = metric.parallel_jobs
         target_jobs = min(current_jobs * 2, self.monitoring_config["max_parallel_jobs"])
@@ -282,7 +285,8 @@ class CICDMonitor:
 
         return None
 
-    def _calculate_performance_improvement(self, metric: CIPerformanceMetric) -> Optional[OptimizationResult]:
+    def _calculate_performance_improvement(self,
+    metric: CIPerformanceMetric) -> Optional[OptimizationResult]:
         """计算性能优化收益"""
         target_duration = self.monitoring_config["max_ci_duration"]
         if metric.duration > target_duration:
@@ -414,7 +418,8 @@ class CICDMonitor:
 
         # 3. 生成建议
         print("💡 生成优化建议...")
-        recommendations = self._generate_monitoring_recommendations(performance_metrics, optimizations)
+        recommendations = self._generate_monitoring_recommendations(performance_metrics,
+    optimizations)
 
         # 4. 确定后续行动
         next_actions = self._generate_next_actions(optimizations)
@@ -471,12 +476,15 @@ class CICDMonitor:
 
         return recommendations
 
-    def _generate_next_actions(self, optimizations: List[OptimizationResult]) -> List[str]:
+    def _generate_next_actions(self,
+    optimizations: List[OptimizationResult]) -> List[str]:
         """生成后续行动"""
         actions = []
 
         # 按优化收益排序
-        sorted_optimizations = sorted(optimizations, key=lambda x: x.time_saved, reverse=True)
+        sorted_optimizations = sorted(optimizations,
+    key=lambda x: x.time_saved,
+    reverse=True)
 
         if sorted_optimizations:
             best_opt = sorted_optimizations[0]
@@ -491,7 +499,8 @@ class CICDMonitor:
 
         return actions
 
-    def _evaluate_overall_status(self, metrics: List[CIPerformanceMetric]) -> MonitoringStatus:
+    def _evaluate_overall_status(self,
+    metrics: List[CIPerformanceMetric]) -> MonitoringStatus:
         """评估整体状态"""
         if not metrics:
             return MonitoringStatus.UNKNOWN
@@ -506,7 +515,9 @@ class CICDMonitor:
         else:
             return MonitoringStatus.HEALTHY
 
-    def export_monitoring_report(self, report: MonitoringReport, output_file: Optional[Path] = None) -> Path:
+    def export_monitoring_report(self,
+    report: MonitoringReport,
+    output_file: Optional[Path] = None) -> Path:
         """导出监控报告"""
         if output_file is None:
             output_file = self.project_root / "reports" / "ci_cd_monitoring" / f"ci_monitoring_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -710,7 +721,7 @@ jobs:
         path: |
           ~/.cache/pip
           .venv
-        key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+    key: ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }};
         restore-keys: |
           ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
 
@@ -766,7 +777,7 @@ jobs:
       run: |
         echo "📊 CI Performance Summary:"
         echo "Total duration: ${{ job.status }}"
-        echo "Jobs completed: ${{ needs.quality-checks.result }}, ${{ needs.smart-tests.result }}"
+    echo "Jobs completed: ${{ needs.quality-checks.result }}, ${{ needs.smart-tests.result }}";
 
         # 性能数据收集
         cat << EOF > performance-metrics.json
@@ -826,7 +837,8 @@ jobs:
           const fs = require('fs');
 
           try {
-            const recommendations = fs.readFileSync('optimization-recommendations.md', 'utf8');
+            const recommendations = fs.readFileSync('optimization-recommendations.md',
+    'utf8');
 
             await github.rest.issues.create({
               owner: context.repo.owner,
@@ -955,6 +967,91 @@ jobs:
         # 更新README中的质量徽章
 '''
 
+def _main_check_condition():
+            # 运行全面监控分析
+            report = monitor.run_comprehensive_monitoring()
+
+
+def _main_check_condition():
+                # 导出报告
+                report_file = monitor.export_monitoring_report(report)
+                print(f"\n📄 监控报告已生成: {report_file}")
+
+            # 显示结果摘要
+            print(f"\n📊 CI/CD监控结果: {report.overall_status.value.upper()}")
+            print(f"   总检查项: {report.total_checks}")
+            print(f"   通过: {report.passed_checks}")
+            print(f"   失败: {report.failed_checks}")
+            print(f"   警告: {report.warning_checks}")
+
+
+def _main_check_condition():
+                total_time_saved = sum(opt.time_saved for opt in report.optimizations)
+                print(f"   潜在时间节省: {total_time_saved:.1f}秒")
+
+            # 显示建议
+
+def _main_iterate_items():
+                    print(f"   {rec}")
+
+            # 显示后续行动
+
+def _main_iterate_items():
+                    print(f"   {action}")
+
+
+def _main_check_condition():
+            # 创建优化的workflow文件
+            optimized_files = monitor.create_optimized_workflow_files()
+            print(f"\n🔧 已创建优化的workflow文件:")
+
+def _main_iterate_items():
+                print(f"   {name}: {file_path}")
+
+            # 生成优化配置
+            optimization_config = monitor.generate_optimized_ci_config()
+            config_file = project_root / "reports" / "ci_optimization_config.json"
+            config_file.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _main_manage_resource():
+                json.dump(optimization_config, f, indent=2, ensure_ascii=False)
+
+            print(f"   配置文件: {config_file}")
+
+            # 设置监控告警
+            alerts_config = monitor.setup_monitoring_alerts()
+            alerts_file = project_root / "reports" / "ci_monitoring_alerts.json"
+
+
+def _main_manage_resource():
+                json.dump(alerts_config, f, indent=2, ensure_ascii=False)
+
+            print(f"   告警配置: {alerts_file}")
+
+
+def _main_check_condition():
+    args.generate_report,
+    args.optimize_workflows,
+    args.output_reports]):
+            # 默认运行完整分析
+            report = monitor.run_comprehensive_monitoring()
+            report_file = monitor.export_monitoring_report(report)
+
+            print(f"📊 CI/CD监控分析完成")
+            print(f"📄 详细报告: {report_file}")
+            print(f"📈 整体状态: {report.overall_status.value.upper()}")
+
+    except KeyboardInterrupt:
+        print("\n👋 用户中断，退出程序")
+        sys.exit(130)
+    except Exception as e:
+        print(f"❌ 程序执行出错: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def main():
     """主函数"""
     import argparse
@@ -993,11 +1090,11 @@ def main():
     monitor = CICDMonitor(project_root)
 
     try:
-        if args.analyze_performance or args.generate_report:
+        _main_check_condition()
             # 运行全面监控分析
             report = monitor.run_comprehensive_monitoring()
 
-            if args.output_reports:
+            _main_check_condition()
                 # 导出报告
                 report_file = monitor.export_monitoring_report(report)
                 print(f"\n📄 监控报告已生成: {report_file}")
@@ -1009,27 +1106,27 @@ def main():
             print(f"   失败: {report.failed_checks}")
             print(f"   警告: {report.warning_checks}")
 
-            if report.optimizations:
+            _main_check_condition()
                 total_time_saved = sum(opt.time_saved for opt in report.optimizations)
                 print(f"   潜在时间节省: {total_time_saved:.1f}秒")
 
             # 显示建议
             if report.recommendations:
                 print(f"\n💡 优化建议:")
-                for rec in report.recommendations[:3]:  # 显示前3个最重要的建议
+                _main_iterate_items()
                     print(f"   {rec}")
 
             # 显示后续行动
             if report.next_actions:
                 print(f"\n🚀 后续行动:")
-                for action in report.next_actions[:3]:  # 显示前3个行动
+                _main_iterate_items()
                     print(f"   {action}")
 
-        if args.optimize_workflows:
+        _main_check_condition()
             # 创建优化的workflow文件
             optimized_files = monitor.create_optimized_workflow_files()
             print(f"\n🔧 已创建优化的workflow文件:")
-            for name, file_path in optimized_files.items():
+            _main_iterate_items()
                 print(f"   {name}: {file_path}")
 
             # 生成优化配置
@@ -1037,7 +1134,7 @@ def main():
             config_file = project_root / "reports" / "ci_optimization_config.json"
             config_file.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            _main_manage_resource()
                 json.dump(optimization_config, f, indent=2, ensure_ascii=False)
 
             print(f"   配置文件: {config_file}")
@@ -1046,12 +1143,15 @@ def main():
             alerts_config = monitor.setup_monitoring_alerts()
             alerts_file = project_root / "reports" / "ci_monitoring_alerts.json"
 
-            with open(alerts_file, 'w', encoding='utf-8') as f:
+            _main_manage_resource()
                 json.dump(alerts_config, f, indent=2, ensure_ascii=False)
 
             print(f"   告警配置: {alerts_file}")
 
-        if not any([args.analyze_performance, args.generate_report, args.optimize_workflows, args.output_reports]):
+        _main_check_condition()
+    args.generate_report,
+    args.optimize_workflows,
+    args.output_reports]):
             # 默认运行完整分析
             report = monitor.run_comprehensive_monitoring()
             report_file = monitor.export_monitoring_report(report)

@@ -445,6 +445,139 @@ class MilestoneM2Planner:
 
         return self.planning_results
 
+def _generate_plan_document_iterate_items():
+            plan_content += f"- **{module['module']}**: {module['coverage']}%\n"
+
+        plan_content += f"""
+    ### 低覆盖率模块（需要重点关注）
+    """
+
+
+def _generate_plan_document_iterate_items():
+            plan_content += f"- **{module['module']}**: ~{module['estimated_coverage']}%\n"
+
+        plan_content += f"""
+    ### 测试基础设施
+    - **工作测试**: {self.planning_results['current_state']['test_infrastructure']['working_tests']}个
+    - **测试工具**: {self.planning_results['current_state']['test_infrastructure']['test_tools']}个
+    - **测试库**: {self.planning_results['current_state']['test_infrastructure']['test_libraries']}个
+    - **工具链**: {self.planning_results['current_state']['test_infrastructure']['test_chains']}个
+
+    ## 🎯 实施阶段
+
+    """
+
+
+def _generate_plan_document_iterate_items():
+            plan_content += f"""
+    ### 阶段{i}: {phase['name']}
+    - **持续时间**: {phase['duration']}
+    - **目标覆盖率**: {phase['target_coverage']}%
+    - **重点关注**: {', '.join(phase['focus_areas'])}
+
+    #### 主要任务
+    """
+
+def _generate_plan_document_iterate_items():
+                plan_content += f"- **{task['task']}** (优先级: {task['priority']})\n"
+
+            plan_content += f"""
+    #### 成功标准
+    """
+
+def _generate_plan_document_iterate_items():
+                plan_content += f"- {criterion}\n"
+
+        plan_content += f"""
+    ## 🛠️ 所需资源
+
+    ### 人力资源
+    """
+
+def _generate_plan_document_iterate_items():
+                    plan_content += f"- **{req['role']}**: {req['time_commitment']} ({req['duration']})\n"
+
+        plan_content += f"""
+    ### 技术资源
+    """
+
+def _generate_plan_document_iterate_items():
+                    plan_content += f"- **{req['resource']}**: {req['specifications']}\n"
+
+        plan_content += f"""
+    ## ⚠️ 风险评估
+
+    """
+
+def _generate_plan_document_iterate_items():
+            plan_content += f"### {risk['risk']}\n"
+            plan_content += f"- **概率**: {risk['probability']}\n"
+            plan_content += f"- **影响**: {risk['impact']}\n"
+            plan_content += f"- **缓解措施**:\n"
+
+def _generate_plan_document_iterate_items():
+                plan_content += f"  - {mitigation}\n"
+
+        plan_content += f"""
+    ## 📈 成功指标
+
+    ### 覆盖率指标
+    """
+
+def _generate_plan_document_iterate_items():
+                    plan_content += f"- **{m['name']}**: {m['target']}{m['unit']}\n"
+
+        plan_content += f"""
+    ### 质量指标
+    """
+
+def _generate_plan_document_iterate_items():
+                    plan_content += f"- **{m['name']}**: {m['target']}{m['unit']}\n"
+
+        plan_content += f"""
+    ## 📅 实施时间线
+
+    | 阶段 | 名称 | 开始日期 | 结束日期 | 目标覆盖率 |
+    |------|------|----------|----------|------------|
+    """
+
+def _generate_plan_document_iterate_items():
+            plan_content += f"| {item['phase']} | {item['name']} | {item['start_date']} | {item['end_date']} | {item['target_coverage']}% |\n"
+
+        plan_content += f"""
+    ## 🎯 关键成功因素
+
+    1. **渐进式方法**: 分阶段提升覆盖率，确保每个阶段质量
+    2. **工具支持**: 充分利用现有的测试工具链和共享库
+    3. **质量优先**: 重视测试质量而非单纯的数量
+    4. **持续监控**: 建立覆盖率监控和报告机制
+    5. **团队协作**: 确保开发和测试团队紧密配合
+
+    ## 📋 检查清单
+
+    ### 每个阶段结束时的检查项
+    - [ ] 覆盖率目标达成
+    - [ ] 所有测试通过
+    - [ ] 代码质量检查通过
+    - [ ] 文档更新完成
+    - [ ] 下阶段准备就绪
+
+    ### M2完成时的检查项
+    - [ ] 整体覆盖率达到50%
+    - [ ] 所有关键模块覆盖率达标
+    - [ ] 测试基础设施完善
+    - [ ] CI/CD集成完成
+    - [ ] 团队培训完成
+
+    ---
+
+    **规划版本**: v1.0
+    **规划时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    **预计完成**: {(datetime.now() + timedelta(weeks=4)).strftime('%Y-%m-%d')}
+    """
+
+        return plan_content
+
     def generate_plan_document(self):
         """生成计划文档"""
         plan_content = f"""# 里程碑M2规划：50%覆盖率目标
@@ -465,14 +598,14 @@ class MilestoneM2Planner:
 ### 高覆盖率模块
 """
 
-        for module in self.planning_results['current_state']['high_coverage_modules']:
+        _generate_plan_document_iterate_items()
             plan_content += f"- **{module['module']}**: {module['coverage']}%\n"
 
         plan_content += f"""
 ### 低覆盖率模块（需要重点关注）
 """
 
-        for module in self.planning_results['current_state']['low_coverage_modules']:
+        _generate_plan_document_iterate_items()
             plan_content += f"- **{module['module']}**: ~{module['estimated_coverage']}%\n"
 
         plan_content += f"""
@@ -486,7 +619,7 @@ class MilestoneM2Planner:
 
 """
 
-        for i, phase in enumerate(self.planning_results['phases'], 1):
+        _generate_plan_document_iterate_items()
             plan_content += f"""
 ### 阶段{i}: {phase['name']}
 - **持续时间**: {phase['duration']}
@@ -495,13 +628,13 @@ class MilestoneM2Planner:
 
 #### 主要任务
 """
-            for task in phase['tasks']:
+            _generate_plan_document_iterate_items()
                 plan_content += f"- **{task['task']}** (优先级: {task['priority']})\n"
 
             plan_content += f"""
 #### 成功标准
 """
-            for criterion in phase['success_criteria']:
+            _generate_plan_document_iterate_items()
                 plan_content += f"- {criterion}\n"
 
         plan_content += f"""
@@ -511,7 +644,7 @@ class MilestoneM2Planner:
 """
         for resource in self.planning_results['resources_needed']:
             if resource['category'] == '人力资源':
-                for req in resource['requirements']:
+                _generate_plan_document_iterate_items()
                     plan_content += f"- **{req['role']}**: {req['time_commitment']} ({req['duration']})\n"
 
         plan_content += f"""
@@ -519,19 +652,19 @@ class MilestoneM2Planner:
 """
         for resource in self.planning_results['resources_needed']:
             if resource['category'] == '技术资源':
-                for req in resource['requirements']:
+                _generate_plan_document_iterate_items()
                     plan_content += f"- **{req['resource']}**: {req['specifications']}\n"
 
         plan_content += f"""
 ## ⚠️ 风险评估
 
 """
-        for risk in self.planning_results['risk_assessment']:
+        _generate_plan_document_iterate_items()
             plan_content += f"### {risk['risk']}\n"
             plan_content += f"- **概率**: {risk['probability']}\n"
             plan_content += f"- **影响**: {risk['impact']}\n"
             plan_content += f"- **缓解措施**:\n"
-            for mitigation in risk['mitigation']:
+            _generate_plan_document_iterate_items()
                 plan_content += f"  - {mitigation}\n"
 
         plan_content += f"""
@@ -541,7 +674,7 @@ class MilestoneM2Planner:
 """
         for metric in self.planning_results['success_metrics']:
             if metric['category'] == '覆盖率指标':
-                for m in metric['metrics']:
+                _generate_plan_document_iterate_items()
                     plan_content += f"- **{m['name']}**: {m['target']}{m['unit']}\n"
 
         plan_content += f"""
@@ -549,7 +682,7 @@ class MilestoneM2Planner:
 """
         for metric in self.planning_results['success_metrics']:
             if metric['category'] == '质量指标':
-                for m in metric['metrics']:
+                _generate_plan_document_iterate_items()
                     plan_content += f"- **{m['name']}**: {m['target']}{m['unit']}\n"
 
         plan_content += f"""
@@ -558,7 +691,7 @@ class MilestoneM2Planner:
 | 阶段 | 名称 | 开始日期 | 结束日期 | 目标覆盖率 |
 |------|------|----------|----------|------------|
 """
-        for item in self.planning_results['implementation_timeline']:
+        _generate_plan_document_iterate_items()
             plan_content += f"| {item['phase']} | {item['name']} | {item['start_date']} | {item['end_date']} | {item['target_coverage']}% |\n"
 
         plan_content += f"""

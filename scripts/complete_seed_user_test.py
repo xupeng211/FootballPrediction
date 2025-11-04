@@ -23,7 +23,11 @@ class SeedUserTester:
         self.user_data = {}
         self.test_scenarios = []
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(self,
+    test_name: str,
+    success: bool,
+    details: str = "",
+    duration: float = 0):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -62,10 +66,15 @@ class SeedUserTester:
                 duration = time.time() - start_time
 
                 if response.status_code in [200, 201]:
-                    self.log_test("用户注册", True, f"HTTP {response.status_code}", duration)
+                    self.log_test("用户注册",
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                     register_result = response.json()
                     print(
-                        f"   📝 注册结果: {json.dumps(register_result, indent=2, ensure_ascii=False)}"
+                        f"   📝 注册结果: {json.dumps(register_result,
+    indent=2,
+    ensure_ascii=False)}"
                     )
                     return True
                 else:
@@ -98,11 +107,16 @@ class SeedUserTester:
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
-                    self.log_test("用户登录", True, f"HTTP {response.status_code}", duration)
+                    self.log_test("用户登录",
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                     login_result = response.json()
                     self.auth_token = login_result.get("access_token", "")
                     print(
-                        f"   📝 登录结果: {json.dumps(login_result, indent=2, ensure_ascii=False)}"
+                        f"   📝 登录结果: {json.dumps(login_result,
+    indent=2,
+    ensure_ascii=False)}"
                     )
                     return True
                 else:
@@ -136,11 +150,15 @@ class SeedUserTester:
             start_time = time.time()
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.get(f"{self.api_base_url}{endpoint}", headers=headers)
+                    response = await client.get(f"{self.api_base_url}{endpoint}",
+    headers=headers)
                     duration = time.time() - start_time
 
                     if response.status_code == 200:
-                        self.log_test(name, True, f"HTTP {response.status_code}", duration)
+                        self.log_test(name,
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                         success_count += 1
 
                         # 分析数据质量
@@ -150,7 +168,9 @@ class SeedUserTester:
                             if data and len(data) > 0:
                                 first_item = data[0]
                                 print(
-                                    f"   📋 示例数据: {json.dumps(first_item, indent=2, ensure_ascii=False)}"
+                                    f"   📋 示例数据: {json.dumps(first_item,
+    indent=2,
+    ensure_ascii=False)}"
                                 )
                         elif isinstance(data, dict):
                             print(f"   📊 {name}: 获取到数据对象")
@@ -185,15 +205,21 @@ class SeedUserTester:
             start_time = time.time()
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.get(f"{self.api_base_url}{endpoint}", headers=headers)
+                    response = await client.get(f"{self.api_base_url}{endpoint}",
+    headers=headers)
                     duration = time.time() - start_time
 
                     if response.status_code == 200:
-                        self.log_test(name, True, f"HTTP {response.status_code}", duration)
+                        self.log_test(name,
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                         success_count += 1
 
                         data = response.json()
-                        print(f"   📊 {name}: {json.dumps(data, indent=2, ensure_ascii=False)}")
+                        print(f"   📊 {name}: {json.dumps(data,
+    indent=2,
+    ensure_ascii=False)}")
                     else:
                         self.log_test(
                             name,
@@ -223,10 +249,15 @@ class SeedUserTester:
                 duration = time.time() - start_time
 
                 if response.status_code in [200, 201]:
-                    self.log_test("创建预测", True, f"HTTP {response.status_code}", duration)
+                    self.log_test("创建预测",
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                     success_count += 1
                     print(
-                        f"   📊 预测创建结果: {json.dumps(response.json(), indent=2, ensure_ascii=False)}"
+                        f"   📊 预测创建结果: {json.dumps(response.json(),
+    indent=2,
+    ensure_ascii=False)}"
                     )
                 else:
                     self.log_test(
@@ -259,11 +290,15 @@ class SeedUserTester:
             start_time = time.time()
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.get(f"{self.api_base_url}{endpoint}", headers=headers)
+                    response = await client.get(f"{self.api_base_url}{endpoint}",
+    headers=headers)
                     duration = time.time() - start_time
 
                     if response.status_code == 200:
-                        self.log_test(name, True, f"HTTP {response.status_code}", duration)
+                        self.log_test(name,
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                         success_count += 1
 
                         if "prometheus" in name:
@@ -272,7 +307,9 @@ class SeedUserTester:
                             print(f"   📊 {name}: Prometheus指标格式正常")
                         else:
                             data = response.json()
-                            print(f"   📊 {name}: {json.dumps(data, indent=2, ensure_ascii=False)}")
+                            print(f"   📊 {name}: {json.dumps(data,
+    indent=2,
+    ensure_ascii=False)}")
                     else:
                         self.log_test(
                             name,
@@ -305,17 +342,23 @@ class SeedUserTester:
             start_time = time.time()
             try:
                 async with httpx.AsyncClient(timeout=10) as client:
-                    response = await client.get(f"{self.api_base_url}{endpoint}", headers=headers)
+                    response = await client.get(f"{self.api_base_url}{endpoint}",
+    headers=headers)
                     duration = time.time() - start_time
 
                     if response.status_code == 200:
-                        self.log_test(name, True, f"HTTP {response.status_code}", duration)
+                        self.log_test(name,
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                         success_count += 1
 
                         if "me" in endpoint:
                             user_info = response.json()
                             print(
-                                f"   👤 用户信息: {json.dumps(user_info, indent=2, ensure_ascii=False)}"
+                                f"   👤 用户信息: {json.dumps(user_info,
+    indent=2,
+    ensure_ascii=False)}"
                             )
                     else:
                         self.log_test(
@@ -347,7 +390,10 @@ class SeedUserTester:
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
-                    self.log_test("用户登出", True, f"HTTP {response.status_code}", duration)
+                    self.log_test("用户登出",
+    True,
+    f"HTTP {response.status_code}",
+    duration)
                     return True
                 else:
                     self.log_test(
@@ -384,6 +430,104 @@ class SeedUserTester:
         # 生成种子用户测试报告
         self.generate_seed_user_report(test_results)
 
+def _generate_seed_user_report_iterate_items():
+            status = "✅" if success else "❌"
+            print(f"   {status} {step_name}")
+
+def _generate_seed_user_report_check_condition():
+                completed_steps += 1
+
+        journey_completion = (completed_steps / len(journey_steps)) * 100
+        print(
+            f"\n   用户旅程完成率: {completed_steps}/{len(journey_steps)} ({journey_completion:.1f}%)"
+        )
+
+        # 失败的测试
+
+def _generate_seed_user_report_check_condition():
+                    print(f"   • {result['test_name']}: {result['details']}")
+
+        # 性能统计
+        durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
+
+def _generate_seed_user_report_check_condition():
+            avg_duration = sum(durations) / len(durations)
+            print("\n⏱️  性能统计:")
+            print(f"   平均响应时间: {avg_duration:.2f}秒")
+            print(f"   最慢响应: {max(durations):.2f}秒")
+            print(f"   最快响应: {min(durations):.2f}秒")
+
+        # 系统评估
+        print("\n🎯 种子用户测试评估:")
+
+def _generate_seed_user_report_check_condition():
+            print("   🟢 优秀: 系统完全支持种子用户测试，用户体验良好")
+            system_status = "优秀"
+            deployment_ready = True
+
+def _generate_seed_user_report_check_condition():
+            print("   🟡 良好: 系统基本支持种子用户测试，存在少量问题")
+            system_status = "良好"
+            deployment_ready = True
+
+def _generate_seed_user_report_check_condition():
+            print("   🟡 一般: 系统可以支持基础种子用户测试，需要改进")
+            system_status = "一般"
+            deployment_ready = False
+        else:
+            print("   🔴 需要改进: 系统存在较多问题，不建议进行种子用户测试")
+            system_status = "需要改进"
+            deployment_ready = False
+
+        # 用户体验评分
+        ux_score = success_rate * 0.4 + journey_completion * 0.6
+        print(f"\n🎨 用户体验评分: {ux_score:.1f}/100")
+
+        # 最终建议
+        print("\n🚀 最终建议:")
+
+def _generate_seed_user_report_check_condition():
+            print("   ✨ 系统已准备好进行种子用户测试")
+            print("   📋 建议的种子用户测试计划:")
+            print("      1. 邀请5-10名种子用户")
+            print("      2. 重点关注用户注册和数据探索功能")
+            print("      3. 收集用户反馈和改进建议")
+            print("      4. 监控系统性能和稳定性")
+        else:
+            print("   🔧 建议优先修复以下问题:")
+            failed_critical = [
+                r
+
+def _generate_seed_user_report_check_condition():
+                and any(keyword in r["test_name"] for keyword in ["注册", "登录", "数据"])
+            ]
+
+def _generate_seed_user_report_iterate_items():
+                    print(f"      • {result['test_name']}: {result['details']}")
+
+            print("   📋 修复建议:")
+            print("      1. 优先修复核心功能问题")
+            print("      2. 提升API稳定性")
+            print("      3. 改善错误处理")
+            print("      4. 重新进行种子用户测试")
+
+        print("\n🎊 种子用户测试完成!")
+        print(f"   系统状态: {system_status}")
+        print(f"   测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 60)
+
+
+    async def main():
+    """主函数"""
+    tester = SeedUserTester()
+    await tester.run_complete_seed_user_test()
+
+
+
+def _generate_seed_user_report_check_condition():
+    asyncio.run(main())
+
+
     def generate_seed_user_report(self, test_results):
         """生成种子用户测试报告"""
         print("\n" + "=" * 60)
@@ -414,10 +558,10 @@ class SeedUserTester:
         ]
 
         completed_steps = 0
-        for step_name, success in journey_steps:
+        _generate_seed_user_report_iterate_items()
             status = "✅" if success else "❌"
             print(f"   {status} {step_name}")
-            if success:
+            _generate_seed_user_report_check_condition()
                 completed_steps += 1
 
         journey_completion = (completed_steps / len(journey_steps)) * 100
@@ -429,12 +573,12 @@ class SeedUserTester:
         if failed_tests > 0:
             print("\n❌ 失败的测试:")
             for result in self.test_results:
-                if not result["success"]:
+                _generate_seed_user_report_check_condition()
                     print(f"   • {result['test_name']}: {result['details']}")
 
         # 性能统计
         durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
-        if durations:
+        _generate_seed_user_report_check_condition()
             avg_duration = sum(durations) / len(durations)
             print("\n⏱️  性能统计:")
             print(f"   平均响应时间: {avg_duration:.2f}秒")
@@ -443,15 +587,15 @@ class SeedUserTester:
 
         # 系统评估
         print("\n🎯 种子用户测试评估:")
-        if success_rate >= 85 and journey_completion >= 80:
+        _generate_seed_user_report_check_condition()
             print("   🟢 优秀: 系统完全支持种子用户测试，用户体验良好")
             system_status = "优秀"
             deployment_ready = True
-        elif success_rate >= 70 and journey_completion >= 70:
+        _generate_seed_user_report_check_condition()
             print("   🟡 良好: 系统基本支持种子用户测试，存在少量问题")
             system_status = "良好"
             deployment_ready = True
-        elif success_rate >= 60 and journey_completion >= 60:
+        _generate_seed_user_report_check_condition()
             print("   🟡 一般: 系统可以支持基础种子用户测试，需要改进")
             system_status = "一般"
             deployment_ready = False
@@ -466,7 +610,7 @@ class SeedUserTester:
 
         # 最终建议
         print("\n🚀 最终建议:")
-        if deployment_ready:
+        _generate_seed_user_report_check_condition()
             print("   ✨ 系统已准备好进行种子用户测试")
             print("   📋 建议的种子用户测试计划:")
             print("      1. 邀请5-10名种子用户")
@@ -478,12 +622,12 @@ class SeedUserTester:
             failed_critical = [
                 r
                 for r in self.test_results
-                if not r["success"]
+                _generate_seed_user_report_check_condition()
                 and any(keyword in r["test_name"] for keyword in ["注册", "登录", "数据"])
             ]
             if failed_critical:
                 print("      关键功能问题:")
-                for result in failed_critical:
+                _generate_seed_user_report_iterate_items()
                     print(f"      • {result['test_name']}: {result['details']}")
 
             print("   📋 修复建议:")
@@ -504,5 +648,5 @@ async def main():
     await tester.run_complete_seed_user_test()
 
 
-if __name__ == "__main__":
+_generate_seed_user_report_check_condition()
     asyncio.run(main())

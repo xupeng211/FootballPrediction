@@ -169,7 +169,8 @@ class TestResultAnalyzer:
         total_errors = sum(r.get("errors", 0) for r in test_results)
 
         success_rate = (total_passed / total_tests * 100) if total_tests > 0 else 0
-        avg_coverage = sum(r.get("coverage_percent", 0) or 0 for r in test_results) / len(test_results)
+        avg_coverage = sum(r.get("coverage_percent",
+    0) or 0 for r in test_results) / len(test_results)
 
         return {
             "total_tests": total_tests,
@@ -650,7 +651,9 @@ class CoverageAnalyzer:
     def __init__(self, project_root: str = "."):
         self.project_root = Path(project_root)
 
-    def run_coverage_test(self, test_path: str = None, source_path: str = "src") -> Dict:
+    def run_coverage_test(self,
+    test_path: str = None,
+    source_path: str = "src") -> Dict:
         """运行覆盖率测试"""
         cmd = ["python3", "-m", "pytest"]
 
@@ -931,7 +934,10 @@ class SubCommandManager:
         self.subparsers = subparsers
         self.commands = commands_dict
 
-    def add_command(self, name: str, help_text: str, handler: Callable = None) -> 'SubCommandBuilder':
+    def add_command(self,
+    name: str,
+    help_text: str,
+    handler: Callable = None) -> 'SubCommandBuilder':
         """添加命令"""
         subparser = self.subparsers.add_parser(name, help=help_text)
         self.commands[name] = {
@@ -975,7 +981,9 @@ class ProgressIndicator:
         filled_length = int(bar_length * self.current // self.total)
         bar = '█' * filled_length + '-' * (bar_length - filled_length)
 
-        print(f'\\r{self.description}: |{bar}| {percent:.1f}% ({self.current}/{self.total})', end='', flush=True)
+        print(f'\\r{self.description}: |{bar}| {percent:.1f}% ({self.current}/{self.total})',
+    end='',
+    flush=True)
 
         if self.current >= self.total:
             print()  # 换行
@@ -1248,7 +1256,11 @@ Auto-optimized Script
                 improved_lines.extend([
                     "    # 解析命令行参数",
                     "    parser = argparse.ArgumentParser(description='脚本描述')",
-                    "    parser.add_argument('--verbose', '-v', action='store_true', help='详细输出')",
+                    "    parser.add_argument('--verbose',
+    '-v',
+    action='store_true',
+    help='详细输出')",
+    
                     "    args = parser.parse_args()",
                     ""
                 ])
@@ -1309,7 +1321,9 @@ def run_complete_testing_workflow(test_path: str = None, coverage_threshold: int
     # 1. 运行测试
     print_info("1. 运行测试套件...")
     test_runner = UnifiedTestRunner()
-    test_result = test_runner.run_tests(test_path=test_path, coverage=True, verbose=True)
+    test_result = test_runner.run_tests(test_path=test_path,
+    coverage=True,
+    verbose=True)
 
     if not test_result["success"]:
         print_error(f"测试失败: {test_result.get('error', '未知错误')}")
@@ -1685,8 +1699,14 @@ def main():
         f.write(report)
 
     # 保存优化结果
-    with open("intelligent_tools_optimization_results.json", "w", encoding="utf-8") as f:
-        json.dump(optimizer.optimization_results, f, indent=2, ensure_ascii=False, default=str)
+    with open("intelligent_tools_optimization_results.json",
+    "w",
+    encoding="utf-8") as f:
+        json.dump(optimizer.optimization_results,
+    f,
+    indent=2,
+    ensure_ascii=False,
+    default=str)
 
     print(f"\\n🎉 智能工具优化完成!")
     print(f"   共享库: {len(libraries)}个")

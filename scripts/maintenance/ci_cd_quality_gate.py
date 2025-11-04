@@ -106,11 +106,7 @@ class QualityGate:
             }
         }
 
-    def run_test_checks(self) -> List[QualityMetric]:
-        """运行测试相关检查"""
-        metrics = []
-
-        try:
+def _run_test_checks_handle_error():
             # 运行pytest并收集覆盖率
             result = subprocess.run(
                 ["pytest", "--cov=src", "--cov-report=json", "--tb=short"],
@@ -122,10 +118,12 @@ class QualityGate:
 
             # 读取覆盖率报告
             coverage_file = self.project_root / "coverage.json"
-            if coverage_file.exists():
-                with open(coverage_file, 'r') as f:
+
+def _run_test_checks_manage_resource():
                     coverage_data = json.load(f)
-                    total_coverage = coverage_data.get("totals", {}).get("percent_covered", 0.0)
+                    total_coverage = coverage_data.get("totals",
+    {}).get("percent_covered",
+    0.0)
 
                 # 覆盖率检查
                 coverage_metric = self._evaluate_metric(
@@ -139,11 +137,62 @@ class QualityGate:
 
             # 解析pytest输出获取测试结果
             test_output = result.stdout
-            if "passed" in test_output and "failed" in test_output:
+
+def _run_test_checks_check_condition():
+                # 提取测试统计信息
+                lines = test_output.split('\n')
+
+def _run_test_checks_check_condition():
+                        # 解析测试结果行
+                        parts = line.split()
+                        passed = failed = errors = 0
+
+def _run_test_checks_check_condition():
+                                errors = int(part.replace('error', ''))
+
+                        total_tests = passed + failed + errors
+                        pass_rate = (passed / total_tests * 100) if total_tests > 0 else 0.0
+
+    def run_test_checks(self) -> List[QualityMetric]:
+        """运行测试相关检查"""
+        metrics = []
+
+        _run_test_checks_handle_error()
+            # 运行pytest并收集覆盖率
+            result = subprocess.run(
+                ["pytest", "--cov=src", "--cov-report=json", "--tb=short"],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=600
+            )
+
+            # 读取覆盖率报告
+            coverage_file = self.project_root / "coverage.json"
+            if coverage_file.exists():
+                _run_test_checks_manage_resource()
+                    coverage_data = json.load(f)
+                    total_coverage = coverage_data.get("totals",
+    {}).get("percent_covered",
+    0.0)
+
+                # 覆盖率检查
+                coverage_metric = self._evaluate_metric(
+                    "test_coverage",
+                    total_coverage,
+                    self.quality_thresholds["min_coverage"]["low"],
+                    "%",
+                    QualityLevel.MEDIUM
+                )
+                metrics.append(coverage_metric)
+
+            # 解析pytest输出获取测试结果
+            test_output = result.stdout
+            _run_test_checks_check_condition()
                 # 提取测试统计信息
                 lines = test_output.split('\n')
                 for line in lines:
-                    if 'passed' in line and ('failed' in line or 'error' in line):
+                    _run_test_checks_check_condition()
                         # 解析测试结果行
                         parts = line.split()
                         passed = failed = errors = 0
@@ -153,7 +202,7 @@ class QualityGate:
                                 passed = int(part.replace('passed', ''))
                             elif part.endswith('failed'):
                                 failed = int(part.replace('failed', ''))
-                            elif part.endswith('error'):
+                            _run_test_checks_check_condition()
                                 errors = int(part.replace('error', ''))
 
                         total_tests = passed + failed + errors
@@ -485,11 +534,14 @@ class QualityGate:
             passed_percentage = (len([m for m in metrics if m.status == GateResult.PASS]) / total_metrics) * 100
             warning_penalty = (len([m for m in metrics if m.status == GateResult.WARN]) / total_metrics) * 10
             failure_penalty = (len([m for m in metrics if m.status == GateResult.FAIL]) / total_metrics) * 30
-            summary["health_score"] = max(0, passed_percentage - warning_penalty - failure_penalty)
+            summary["health_score"] = max(0,
+    passed_percentage - warning_penalty - failure_penalty)
 
         return summary
 
-    def export_report(self, report: GateReport, output_file: Optional[Path] = None) -> Path:
+    def export_report(self,
+    report: GateReport,
+    output_file: Optional[Path] = None) -> Path:
         """导出质量门禁报告"""
         if output_file is None:
             output_file = self.project_root / "reports" / "quality_gate" / f"quality_gate_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

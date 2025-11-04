@@ -20,8 +20,12 @@ def fix_adapter_imports(file_path):
 
     # 修复路径设置
     content = re.sub(
-        r'sys\.path\.append\(os\.path\.join\(os\.path\.dirname\(__file__\), [\'"]\.\.\/\.\.\/\.\.\/src[\'"]\)\)',
-        'sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/adapters"))',
+        r'sys\.path\.append\(os\.path\.join\(os\.path\.dirname\(__file__\),
+    [\'"]\.\.\/\.\.\/\.\.\/src[\'"]\)\)',
+    
+        'sys.path.append(os.path.join(os.path.dirname(__file__),
+    "../../../src/adapters"))',
+    
         content
     )
 

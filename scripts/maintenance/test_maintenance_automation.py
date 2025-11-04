@@ -203,6 +203,7 @@ class TestMaintenanceAutomation:
                 "health_score": health_score,
                 "alerts_count": len(alerts),
                 "critical_alerts": len([a for a in alerts if a.get("severity") == "critical"]),
+    
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -358,7 +359,9 @@ class TestMaintenanceAutomation:
             reports = generator.generate_all_reports()
 
             data = {
-                "generated_reports": {format_type: str(file_path) for format_type, file_path in reports.items()},
+                "generated_reports": {format_type: str(file_path) for format_type,
+    file_path in reports.items()},
+    
                 "report_count": len(reports),
                 "timestamp": datetime.now().isoformat()
             }
@@ -564,7 +567,8 @@ class TestMaintenanceAutomation:
         """运行任务调度器"""
         print("🤖 测试维护自动化系统启动")
         print(f"📋 项目路径: {self.project_root}")
-        print(f"⚙️  配置: 健康检查间隔={self.config.health_check_interval}s, 覆盖率分析间隔={self.config.coverage_analysis_interval}s")
+        print(f"⚙️  配置: 健康检查间隔={self.config.health_check_interval}s,
+    覆盖率分析间隔={self.config.coverage_analysis_interval}s")
 
         while not self.shutdown_requested:
             try:
@@ -743,8 +747,10 @@ async def main():
             summary = automation.get_status_summary()
             print("📊 测试维护自动化系统状态:")
             print(f"   当前状态: {summary['current_status']}")
-            print(f"   运行中任务: {', '.join(summary['running_tasks']) if summary['running_tasks'] else '无'}")
-            print(f"   24小时任务统计: {summary['recent_tasks_24h']['total']}个任务, 成功率{summary['recent_tasks_24h']['success_rate']:.1f}%")
+            print(f"   运行中任务: {',
+    '.join(summary['running_tasks']) if summary['running_tasks'] else '无'}")
+            print(f"   24小时任务统计: {summary['recent_tasks_24h']['total']}个任务,
+    成功率{summary['recent_tasks_24h']['success_rate']:.1f}%")
             print(f"   系统状态: {summary['uptime']}")
 
             print("\n⏰ 下次运行时间:")

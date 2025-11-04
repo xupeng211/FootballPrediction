@@ -37,17 +37,81 @@ class IntegratedCoverageImprover:
         icon = "✅" if success is True else "❌" if success is False else "🔄"
         print(f"{icon} {message}")
 
+def _check_current_state_handle_error():
+            result = subprocess.run([
+                sys.executable, '-m', 'compileall', '-q', 'src/'
+            ], capture_output=True, text=True, cwd=self.project_root)
+
+
+def _check_current_state_check_condition():
+                self.log("src目录语法检查通过", True)
+            else:
+                error_count = len([line for line in result.stderr.split('\n') if line.strip()])
+                self.log(f"src目录存在{error_count}个语法错误", False)
+
+        except Exception as e:
+            self.log(f"语法检查失败: {e}", False)
+
+        # 2. 检查测试文件
+        test_files = [
+            'tests/realistic_first_tests.py',
+            'tests/expand_successful_tests.py',
+            'tests/apply_successful_strategy.py'
+        ]
+
+        total_tests = 0
+        passed_tests = 0
+
+def _check_current_state_handle_error():
+                    result = subprocess.run([
+                        sys.executable, str(self.project_root / test_file)
+                    ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
+
+
+def _check_current_state_check_condition():
+                                total = int(line.split(':')[-1].strip())
+                                total_tests += total
+
+                        self.log(f"{test_file} 运行成功", True)
+                    else:
+                        self.log(f"{test_file} 运行失败", False)
+
+                except Exception as e:
+                    self.log(f"{test_file} 执行异常: {e}", False)
+
+
+def _check_current_state_check_condition():
+            success_rate = (passed_tests / total_tests) * 100
+            self.log(f"测试成功率: {success_rate:.1f}% ({passed_tests}/{total_tests})", True)
+            estimated_coverage = success_rate * 0.3  # 保守估计
+            self.log(f"估算覆盖率贡献: {estimated_coverage:.1f}%", True)
+        else:
+            self.log("没有成功运行的测试", False)
+
+        # 3. 运行真实覆盖率测量
+
+def _check_current_state_handle_error():
+            result = subprocess.run([
+                sys.executable, 'tests/real_coverage_measurement.py'
+            ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
+
+
+def _check_current_state_handle_error():
+                            coverage = float(coverage_str)
+                            self.log(f"真实覆盖率: {coverage:.1f}%", True)
+                            return coverage
+
     def check_current_state(self):
         """检查当前状态"""
         self.log("🔍 检查当前项目状态...", None)
 
         # 1. 检查语法错误
-        try:
+        _check_current_state_handle_error()
             result = subprocess.run([
                 sys.executable, '-m', 'compileall', '-q', 'src/'
             ], capture_output=True, text=True, cwd=self.project_root)
 
-            if result.returncode == 0:
+            _check_current_state_check_condition()
                 self.log("src目录语法检查通过", True)
             else:
                 error_count = len([line for line in result.stderr.split('\n') if line.strip()])
@@ -68,7 +132,7 @@ class IntegratedCoverageImprover:
 
         for test_file in test_files:
             if (self.project_root / test_file).exists():
-                try:
+                _check_current_state_handle_error()
                     result = subprocess.run([
                         sys.executable, str(self.project_root / test_file)
                     ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
@@ -79,7 +143,7 @@ class IntegratedCoverageImprover:
                             if '通过测试:' in line and ':' in line:
                                 passed = int(line.split(':')[-1].strip())
                                 passed_tests += passed
-                            if '总测试数:' in line and ':' in line:
+                            _check_current_state_check_condition()
                                 total = int(line.split(':')[-1].strip())
                                 total_tests += total
 
@@ -90,7 +154,7 @@ class IntegratedCoverageImprover:
                 except Exception as e:
                     self.log(f"{test_file} 执行异常: {e}", False)
 
-        if total_tests > 0:
+        _check_current_state_check_condition()
             success_rate = (passed_tests / total_tests) * 100
             self.log(f"测试成功率: {success_rate:.1f}% ({passed_tests}/{total_tests})", True)
             estimated_coverage = success_rate * 0.3  # 保守估计
@@ -99,7 +163,7 @@ class IntegratedCoverageImprover:
             self.log("没有成功运行的测试", False)
 
         # 3. 运行真实覆盖率测量
-        try:
+        _check_current_state_handle_error()
             result = subprocess.run([
                 sys.executable, 'tests/real_coverage_measurement.py'
             ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
@@ -109,7 +173,7 @@ class IntegratedCoverageImprover:
                 for line in lines:
                     if '综合覆盖率:' in line:
                         coverage_str = line.split(':')[-1].strip().rstrip('%')
-                        try:
+                        _check_current_state_handle_error()
                             coverage = float(coverage_str)
                             self.log(f"真实覆盖率: {coverage:.1f}%", True)
                             return coverage
@@ -190,6 +254,7 @@ class IntegratedCoverageImprover:
             'summary': {
                 'total_actions': len(self.results_log),
                 'successful_actions': len([r for r in self.results_log if r.get('success') is True]),
+    
                 'failed_actions': len([r for r in self.results_log if r.get('success') is False])
             }
         }

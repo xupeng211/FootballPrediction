@@ -114,7 +114,8 @@ class QualityMetricsDatabase:
             # 创建索引
             conn.execute("CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON quality_metrics(timestamp)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_alerts_timestamp ON quality_alerts(timestamp)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_trends_metric_time ON quality_trends(metric_name, timestamp)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_trends_metric_time ON quality_trends(metric_name,
+    timestamp)")
 
     def store_metric_snapshot(self, snapshot: QualityMetricSnapshot):
         """存储质量指标快照"""
@@ -413,7 +414,8 @@ class QualityMetricsDashboard:
             self.db.store_alert(alert)
             print(f"  🚨 生成预警: {alert.message}")
 
-        print(f"  ✅ 质量指标已更新: 覆盖率 {snapshot.coverage_percentage:.1f}%, 综合分数 {snapshot.code_quality_score:.1f}")
+        print(f"  ✅ 质量指标已更新: 覆盖率 {snapshot.coverage_percentage:.1f}%,
+    综合分数 {snapshot.code_quality_score:.1f}")
 
         return snapshot, alerts
 
@@ -546,10 +548,15 @@ class QualityMetricsDashboard:
                 }
                 for trend in trends
             ],
-            "recommendations": self._generate_recommendations(current_metrics, active_alerts, trends)
+            "recommendations": self._generate_recommendations(current_metrics,
+    active_alerts,
+    trends)
         }
 
-    def _generate_recommendations(self, metrics: QualityMetricSnapshot, alerts: List[QualityAlert], trends: List[QualityTrend]) -> List[str]:
+    def _generate_recommendations(self,
+    metrics: QualityMetricSnapshot,
+    alerts: List[QualityAlert],
+    trends: List[QualityTrend]) -> List[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -629,7 +636,8 @@ class QualityMetricsDashboard:
             print(f"\n🚨 活跃预警 ({len(alerts)}个):")
             for i, alert in enumerate(alerts[:5], 1):  # 显示前5个
                 severity_emoji = {"CRITICAL": "🚨", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "💡"}
-                print(f"  {i}. {severity_emoji.get(alert['severity'], '•')} {alert['message']}")
+                print(f"  {i}. {severity_emoji.get(alert['severity'],
+    '•')} {alert['message']}")
                 print(f"     当前值: {alert['current_value']}, 阈值: {alert['threshold']}")
             if len(alerts) > 5:
                 print(f"  ... 还有 {len(alerts) - 5} 个预警")
@@ -641,7 +649,9 @@ class QualityMetricsDashboard:
             for trend in trends:
                 direction_emoji = {"IMPROVING": "📈", "DECLINING": "📉", "STABLE": "➡️"}
                 change_text = f"+{trend['change_percentage']:.1f}%" if trend['change_percentage'] > 0 else f"{trend['change_percentage']:.1f}%"
-                print(f"  {direction_emoji.get(trend['direction'], '•')} {trend['metric']}: {trend['current']:.1f} ({change_text}, {trend['period']})")
+                print(f"  {direction_emoji.get(trend['direction'],
+    '•')} {trend['metric']}: {trend['current']:.1f} ({change_text},
+    {trend['period']})")
 
         # 改进建议
         recommendations = report["recommendations"]
@@ -655,7 +665,10 @@ class QualityMetricsDashboard:
         print("🚀 基于Issue #159技术成就构建的智能质量监控体系")
         print("="*80)
 
-    def save_dashboard_html(self, report: Dict[str, Any], output_path: str = "quality_dashboard.html"):
+    def save_dashboard_html(self,
+    report: Dict[str,
+    Any],
+    output_path: str = "quality_dashboard.html"):
         """保存仪表板为HTML文件"""
         html_content = self._generate_html_dashboard(report)
 
@@ -776,7 +789,7 @@ class QualityMetricsDashboard:
     <div class="container">
         <div class="header">
             <h1>📊 质量指标仪表板</h1>
-            <p>{report['dashboard_info']['project_name']} - {report['dashboard_info']['generated_at'][:19].replace('T', ' ')}</p>
+    <p>{report['dashboard_info']['project_name']} - {report['dashboard_info']['generated_at'][:19].replace('T', ' ')}</p>;
             <p><em>基于Issue #159 70.1%覆盖率成就构建</em></p>
         </div>
 
@@ -865,7 +878,9 @@ class QualityMetricsDashboard:
             <div class="trend">
                 <span><strong>{trend['metric']}</strong></span>
                 <span class="{direction_class}">
-                    {direction_emoji.get(trend['direction'], '•')} {trend['current']:.1f} ({change_text}, {trend['period']})
+                    {direction_emoji.get(trend['direction'],
+    '•')} {trend['current']:.1f} ({change_text},
+    {trend['period']})
                 </span>
             </div>
             """

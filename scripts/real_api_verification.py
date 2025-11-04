@@ -24,7 +24,11 @@ class RealAPIVerifier:
         self.working_apis = []
         self.problem_apis = []
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(self,
+    test_name: str,
+    success: bool,
+    details: str = "",
+    duration: float = 0):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -42,7 +46,10 @@ class RealAPIVerifier:
         if duration > 0:
             print(f"   ⏱️  耗时: {duration:.2f}秒")
 
-    async def test_api_endpoint(self, name: str, url: str, expected_status: int = 200) -> bool:
+    async def test_api_endpoint(self,
+    name: str,
+    url: str,
+    expected_status: int = 200) -> bool:
         """测试单个API端点"""
         start_time = time.time()
 

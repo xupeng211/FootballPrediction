@@ -65,6 +65,7 @@ class DatabaseOptimizer:
                     schemaname,
                     tablename,
                     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
+    
                     pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
                 FROM pg_tables
                 WHERE schemaname = 'public'
@@ -87,37 +88,47 @@ class DatabaseOptimizer:
         indexes_to_create = [
             {
                 "name": "idx_users_email_active",
-                "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_active ON users(email, is_active);",
+                "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_active ON users(email,
+    is_active);",
+    
                 "description": "邮箱和激活状态复合索引"
             },
             {
                 "name": "idx_users_username_active",
-                "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_username_active ON users(username, is_active);",
+                "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_username_active ON users(username,
+    is_active);",
+    
                 "description": "用户名和激活状态复合索引"
             },
             {
                 "name": "idx_users_role_active",
-                "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_role_active ON users(role, is_active);",
+                "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_role_active ON users(role,
+    is_active);",
+    
                 "description": "角色和激活状态复合索引"
             },
             {
                 "name": "idx_users_last_login",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_last_login ON users(last_login DESC NULLS LAST);",
+    
                 "description": "最后登录时间索引"
             },
             {
                 "name": "idx_users_created_at",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_created_at ON users(created_at DESC);",
+    
                 "description": "创建时间索引"
             },
             {
                 "name": "idx_users_is_active",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_is_active ON users(is_active);",
+    
                 "description": "激活状态索引"
             },
             {
                 "name": "idx_users_role",
                 "sql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_role ON users(role);",
+    
                 "description": "用户角色索引"
             }
         ]
@@ -146,19 +157,23 @@ class DatabaseOptimizer:
         test_queries = [
             {
                 "name": "根据邮箱查询用户",
-                "sql": "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE email = 'test@example.com';"
+                "sql": "EXPLAIN (ANALYZE,
+    BUFFERS) SELECT * FROM users WHERE email = 'test@example.com';"
             },
             {
                 "name": "根据用户名查询用户",
-                "sql": "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE username = 'testuser';"
+                "sql": "EXPLAIN (ANALYZE,
+    BUFFERS) SELECT * FROM users WHERE username = 'testuser';"
             },
             {
                 "name": "查询活跃用户",
-                "sql": "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE is_active = true ORDER BY created_at DESC LIMIT 10;"
+                "sql": "EXPLAIN (ANALYZE,
+    BUFFERS) SELECT * FROM users WHERE is_active = true ORDER BY created_at DESC LIMIT 10;"
             },
             {
                 "name": "按角色查询用户",
-                "sql": "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE role = 'user' AND is_active = true;"
+                "sql": "EXPLAIN (ANALYZE,
+    BUFFERS) SELECT * FROM users WHERE role = 'user' AND is_active = true;"
             }
         ]
 

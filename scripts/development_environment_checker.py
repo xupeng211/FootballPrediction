@@ -48,10 +48,16 @@ class DevelopmentEnvironmentChecker:
             "architecture": platform.machine(),
             "python_version": platform.python_version(),
             "python_executable": sys.executable,
-            "is_virtual_env": hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
+            "is_virtual_env": hasattr(sys,
+    'real_prefix') or (hasattr(sys,
+    'base_prefix') and sys.base_prefix != sys.prefix)
         }
 
-    def run_command(self, command: str, cwd: Optional[Path] = None) -> Tuple[bool, str, str]:
+    def run_command(self,
+    command: str,
+    cwd: Optional[Path] = None) -> Tuple[bool,
+    str,
+    str]:
         """运行系统命令"""
         try:
             result = subprocess.run(
@@ -78,7 +84,8 @@ class DevelopmentEnvironmentChecker:
         # 检查操作系统
         supported_platforms = ["Windows", "Darwin", "Linux"]
         if self.system_info["platform"] in supported_platforms:
-            color_print(f"✅ 操作系统: {self.system_info['platform']} {self.system_info['architecture']}", Colors.GREEN)
+            color_print(f"✅ 操作系统: {self.system_info['platform']} {self.system_info['architecture']}",
+    Colors.GREEN)
             self.passed += 1
         else:
             color_print(f"❌ 不支持的操作系统: {self.system_info['platform']}", Colors.RED)
@@ -486,7 +493,9 @@ python3 scripts/development_environment_checker.py
 
 ### 系统要求
 - 操作系统支持: ✅
-- Python版本: {'✅' if tuple(map(int, self.system_info['python_version'].split('.'))) >= (3, 8) else '❌'}
+- Python版本: {'✅' if tuple(map(int,
+    self.system_info['python_version'].split('.'))) >= (3,
+    8) else '❌'}
 - 虚拟环境: {'✅' if self.system_info['is_virtual_env'] else '⚠️'}
 
 ### 工具状态

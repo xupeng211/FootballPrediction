@@ -13,16 +13,81 @@ from pathlib import Path
 import re
 
 
+def _fix_python_syntax_manage_resource():
+            original_content = f.read()
+
+        # 尝试解析语法
+
+def _fix_python_syntax_handle_error():
+            ast.parse(original_content)
+            print(f"✅ {file_path}: 语法正确")
+            return False
+
+def _fix_python_syntax_loop_process():
+            line = lines[i]
+            stripped = line.strip()
+
+            # 检查是否是语法错误的except语句
+
+def _fix_python_syntax_check_condition():
+                # 检查前面是否有对应的try
+                has_try = False
+                try_indent = 0
+                current_indent = len(line) - len(line.lstrip())
+
+                # 向上查找try语句
+
+def _fix_python_syntax_iterate_items():
+                    prev_line = lines[j]
+                    prev_stripped = prev_line.strip()
+
+                    # 如果遇到空行或注释，继续查找
+
+def _fix_python_syntax_check_condition():
+                            has_try = True
+                            try_indent = prev_indent
+                        break
+
+def _fix_python_syntax_check_condition():
+                            has_try = True
+                            try_indent = prev_indent
+                        break
+
+def _fix_python_syntax_iterate_items():
+                        prev_line = lines[j]
+                        prev_stripped = prev_line.strip()
+
+def _fix_python_syntax_check_condition():
+                            # 在这行前面插入try
+                            prev_indent = len(prev_line) - len(prev_line.lstrip())
+                            try_line = ' ' * prev_indent + 'try:'
+                            fixed_lines.append(try_line)
+                            # 调整当前except的缩进
+                            fixed_except = ' ' * (prev_indent + 4) + stripped
+                            fixed_lines.append(fixed_except)
+                            i += 1
+                            break
+
+def _fix_python_syntax_handle_error():
+            ast.parse(fixed_content)
+            print(f"✅ {file_path}: 语法修复成功")
+
+            # 写入修复后的内容
+
+def _fix_python_syntax_manage_resource():
+                f.write(fixed_content)
+            return True
+
 def fix_python_syntax(file_path):
     """
     修复Python文件的语法错误
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        _fix_python_syntax_manage_resource()
             original_content = f.read()
 
         # 尝试解析语法
-        try:
+        _fix_python_syntax_handle_error()
             ast.parse(original_content)
             print(f"✅ {file_path}: 语法正确")
             return False
@@ -33,19 +98,19 @@ def fix_python_syntax(file_path):
         fixed_lines = []
         i = 0
 
-        while i < len(lines):
+        _fix_python_syntax_loop_process()
             line = lines[i]
             stripped = line.strip()
 
             # 检查是否是语法错误的except语句
-            if stripped.startswith('except Exception:') or stripped.startswith('except'):
+            _fix_python_syntax_check_condition()
                 # 检查前面是否有对应的try
                 has_try = False
                 try_indent = 0
                 current_indent = len(line) - len(line.lstrip())
 
                 # 向上查找try语句
-                for j in range(i-1, -1, -1):
+                _fix_python_syntax_iterate_items()
                     prev_line = lines[j]
                     prev_stripped = prev_line.strip()
 
@@ -57,22 +122,22 @@ def fix_python_syntax(file_path):
                     prev_indent = len(prev_line) - len(prev_line.lstrip())
 
                     if prev_indent < current_indent:
-                        if prev_stripped.startswith('try:'):
+                        _fix_python_syntax_check_condition()
                             has_try = True
                             try_indent = prev_indent
                         break
                     elif prev_indent == current_indent:
-                        if prev_stripped.startswith('try:'):
+                        _fix_python_syntax_check_condition()
                             has_try = True
                             try_indent = prev_indent
                         break
 
                 if not has_try:
                     # 找到最近的代码块，在前面添加try
-                    for j in range(i-1, -1, -1):
+                    _fix_python_syntax_iterate_items()
                         prev_line = lines[j]
                         prev_stripped = prev_line.strip()
-                        if prev_stripped and not prev_stripped.startswith('#'):
+                        _fix_python_syntax_check_condition()
                             # 在这行前面插入try
                             prev_indent = len(prev_line) - len(prev_line.lstrip())
                             try_line = ' ' * prev_indent + 'try:'
@@ -93,12 +158,12 @@ def fix_python_syntax(file_path):
         fixed_content = '\n'.join(fixed_lines)
 
         # 验证修复后的语法
-        try:
+        _fix_python_syntax_handle_error()
             ast.parse(fixed_content)
             print(f"✅ {file_path}: 语法修复成功")
 
             # 写入修复后的内容
-            with open(file_path, 'w', encoding='utf-8') as f:
+            _fix_python_syntax_manage_resource()
                 f.write(fixed_content)
             return True
 

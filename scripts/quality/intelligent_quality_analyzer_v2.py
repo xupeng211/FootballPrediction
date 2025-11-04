@@ -113,11 +113,17 @@ class QualityRule:
         self.patterns = []
         self.exceptions = []
 
-    def analyze(self, file_path: Path, tree: ast.AST, content: str) -> List[QualityIssue]:
+    def analyze(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str) -> List[QualityIssue]:
         """分析文件并生成质量问题"""
         raise NotImplementedError
 
-    def generate_issue_id(self, file_path: str, rule_name: str, line: int = None) -> str:
+    def generate_issue_id(self,
+    file_path: str,
+    rule_name: str,
+    line: int = None) -> str:
         """生成唯一问题ID"""
         content = f"{file_path}:{rule_name}:{line or 0}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
@@ -132,7 +138,10 @@ class SyntaxErrorRule(QualityRule):
             severity=QualitySeverity.CRITICAL
         )
 
-    def analyze(self, file_path: Path, tree: ast.AST, content: str) -> List[QualityIssue]:
+    def analyze(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str) -> List[QualityIssue]:
         """检测语法错误"""
         issues = []
 
@@ -143,7 +152,10 @@ class SyntaxErrorRule(QualityRule):
                 ast.parse(content)
             except SyntaxError as e:
                 issue = QualityIssue(
-                    issue_id=self.generate_issue_id(str(file_path), self.name, e.lineno),
+                    issue_id=self.generate_issue_id(str(file_path),
+    self.name,
+    e.lineno),
+    
                     severity=self.severity,
                     category=IssueCategory.SYNTAX,
                     title="Python语法错误",
@@ -180,7 +192,10 @@ class ImportAnalysisRule(QualityRule):
             severity=QualitySeverity.MEDIUM
         )
 
-    def analyze(self, file_path: Path, tree: ast.AST, content: str) -> List[QualityIssue]:
+    def analyze(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str) -> List[QualityIssue]:
         """分析导入问题"""
         issues = []
 
@@ -216,7 +231,11 @@ class ImportAnalysisRule(QualityRule):
 
         return issues
 
-    def _check_unused_imports(self, file_path: Path, imports: List[Dict], content: str, issues: List[QualityIssue]):
+    def _check_unused_imports(self,
+    file_path: Path,
+    imports: List[Dict],
+    content: str,
+    issues: List[QualityIssue]):
         """检测未使用的导入"""
         content_without_imports = content
         for imp in imports:
@@ -232,7 +251,10 @@ class ImportAnalysisRule(QualityRule):
             # 排除导入语句本身
             if len(matches) <= 1:
                 issue = QualityIssue(
-                    issue_id=self.generate_issue_id(str(file_path), "unused_import", imp['line']),
+                    issue_id=self.generate_issue_id(str(file_path),
+    "unused_import",
+    imp['line']),
+    
                     severity=QualitySeverity.LOW,
                     category=IssueCategory.IMPORT,
                     title="未使用的导入",
@@ -247,7 +269,11 @@ class ImportAnalysisRule(QualityRule):
                 )
                 issues.append(issue)
 
-    def _check_circular_imports(self, file_path: Path, imports: List[Dict], content: str, issues: List[QualityIssue]):
+    def _check_circular_imports(self,
+    file_path: Path,
+    imports: List[Dict],
+    content: str,
+    issues: List[QualityIssue]):
         """检测循环导入（简化版本）"""
         _file_path_str = str(file_path)
 
@@ -258,7 +284,10 @@ class ImportAnalysisRule(QualityRule):
                     # 相对导入可能有循环依赖问题
                     if module.count('.') >= 3:  # 深层相对导入
                         issue = QualityIssue(
-                            issue_id=self.generate_issue_id(str(file_path), "deep_relative_import", imp['line']),
+                            issue_id=self.generate_issue_id(str(file_path),
+    "deep_relative_import",
+    imp['line']),
+    
                             severity=QualitySeverity.MEDIUM,
                             category=IssueCategory.IMPORT,
                             title="深层相对导入",
@@ -273,7 +302,11 @@ class ImportAnalysisRule(QualityRule):
                         )
                         issues.append(issue)
 
-    def _check_import_ordering(self, file_path: Path, imports: List[Dict], content: str, issues: List[QualityIssue]):
+    def _check_import_ordering(self,
+    file_path: Path,
+    imports: List[Dict],
+    content: str,
+    issues: List[QualityIssue]):
         """检测导入顺序"""
         if len(imports) < 2:
             return
@@ -297,7 +330,10 @@ class ImportAnalysisRule(QualityRule):
 
             if prev_type and self._compare_import_types(prev_type, current_type) > 0:
                 issue = QualityIssue(
-                    issue_id=self.generate_issue_id(str(file_path), "import_order", imp['line']),
+                    issue_id=self.generate_issue_id(str(file_path),
+    "import_order",
+    imp['line']),
+    
                     severity=QualitySeverity.LOW,
                     category=IssueCategory.STYLE,
                     title="导入顺序不规范",
@@ -320,7 +356,11 @@ class ImportAnalysisRule(QualityRule):
         order = {'standard': 0, 'third_party': 1, 'local': 2}
         return order[type1] - order[type2]
 
-    def _check_builtin_shadowing(self, file_path: Path, imports: List[Dict], content: str, issues: List[QualityIssue]):
+    def _check_builtin_shadowing(self,
+    file_path: Path,
+    imports: List[Dict],
+    content: str,
+    issues: List[QualityIssue]):
         """检测内置函数遮蔽"""
         builtins = {'open', 'len', 'str', 'int', 'list', 'dict', 'set', 'tuple', 'range', 'enumerate', 'zip', 'map', 'filter'}
 
@@ -332,7 +372,10 @@ class ImportAnalysisRule(QualityRule):
 
             if name in builtins:
                 issue = QualityIssue(
-                    issue_id=self.generate_issue_id(str(file_path), "builtin_shadowing", imp['line']),
+                    issue_id=self.generate_issue_id(str(file_path),
+    "builtin_shadowing",
+    imp['line']),
+    
                     severity=QualitySeverity.MEDIUM,
                     category=IssueCategory.IMPORT,
                     title="遮蔽内置函数",
@@ -360,7 +403,10 @@ class ComplexityAnalysisRule(QualityRule):
         self.max_function_lines = 50
         self.max_class_lines = 200
 
-    def analyze(self, file_path: Path, tree: ast.AST, content: str) -> List[QualityIssue]:
+    def analyze(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str) -> List[QualityIssue]:
         """分析复杂度问题"""
         issues = []
 
@@ -375,14 +421,21 @@ class ComplexityAnalysisRule(QualityRule):
 
         return issues
 
-    def _analyze_function_complexity(self, file_path: Path, node: ast.FunctionDef, content: str, issues: List[QualityIssue]):
+    def _analyze_function_complexity(self,
+    file_path: Path,
+    node: ast.FunctionDef,
+    content: str,
+    issues: List[QualityIssue]):
         """分析函数复杂度"""
         # 计算圈复杂度
         complexity = self._calculate_cyclomatic_complexity(node)
 
         if complexity > self.max_complexity:
             issue = QualityIssue(
-                issue_id=self.generate_issue_id(str(file_path), "high_complexity", node.lineno),
+                issue_id=self.generate_issue_id(str(file_path),
+    "high_complexity",
+    node.lineno),
+    
                 severity=QualitySeverity.MEDIUM,
                 category=IssueCategory.COMPLEXITY,
                 title="函数复杂度过高",
@@ -403,7 +456,10 @@ class ComplexityAnalysisRule(QualityRule):
             lines = node.end_lineno - node.lineno + 1
             if lines > self.max_function_lines:
                 issue = QualityIssue(
-                    issue_id=self.generate_issue_id(str(file_path), "long_function", node.lineno),
+                    issue_id=self.generate_issue_id(str(file_path),
+    "long_function",
+    node.lineno),
+    
                     severity=QualitySeverity.LOW,
                     category=IssueCategory.COMPLEXITY,
                     title="函数过长",
@@ -418,13 +474,20 @@ class ComplexityAnalysisRule(QualityRule):
                 )
                 issues.append(issue)
 
-    def _analyze_class_complexity(self, file_path: Path, node: ast.ClassDef, content: str, issues: List[QualityIssue]):
+    def _analyze_class_complexity(self,
+    file_path: Path,
+    node: ast.ClassDef,
+    content: str,
+    issues: List[QualityIssue]):
         """分析类复杂度"""
         if hasattr(node, 'end_lineno') and node.end_lineno:
             lines = node.end_lineno - node.lineno + 1
             if lines > self.max_class_lines:
                 issue = QualityIssue(
-                    issue_id=self.generate_issue_id(str(file_path), "large_class", node.lineno),
+                    issue_id=self.generate_issue_id(str(file_path),
+    "large_class",
+    node.lineno),
+    
                     severity=QualitySeverity.MEDIUM,
                     category=IssueCategory.COMPLEXITY,
                     title="类过大",
@@ -479,7 +542,10 @@ class SecurityAnalysisRule(QualityRule):
             (r'api_key\s*=\s*["\'][^"\']+["\']', '硬编码API密钥'),
         ]
 
-    def analyze(self, file_path: Path, tree: ast.AST, content: str) -> List[QualityIssue]:
+    def analyze(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str) -> List[QualityIssue]:
         """检测安全问题"""
         issues = []
 
@@ -494,7 +560,11 @@ class SecurityAnalysisRule(QualityRule):
 
         return issues
 
-    def _check_dangerous_functions(self, file_path: Path, tree: ast.AST, content: str, issues: List[QualityIssue]):
+    def _check_dangerous_functions(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str,
+    issues: List[QualityIssue]):
         """检测危险函数调用"""
         if tree is None:
             return
@@ -506,7 +576,10 @@ class SecurityAnalysisRule(QualityRule):
                     if func_name in self.dangerous_functions:
                         risk_desc = self.dangerous_functions[func_name]
                         issue = QualityIssue(
-                            issue_id=self.generate_issue_id(str(file_path), "dangerous_function", node.lineno),
+                            issue_id=self.generate_issue_id(str(file_path),
+    "dangerous_function",
+    node.lineno),
+    
                             severity=QualitySeverity.HIGH,
                             category=IssueCategory.SECURITY,
                             title="使用危险函数",
@@ -522,7 +595,10 @@ class SecurityAnalysisRule(QualityRule):
                         )
                         issues.append(issue)
 
-    def _check_hardcoded_secrets(self, file_path: Path, content: str, issues: List[QualityIssue]):
+    def _check_hardcoded_secrets(self,
+    file_path: Path,
+    content: str,
+    issues: List[QualityIssue]):
         """检测硬编码敏感信息"""
         lines = content.split('\n')
         for line_num, line in enumerate(lines, 1):
@@ -534,7 +610,10 @@ class SecurityAnalysisRule(QualityRule):
                         continue
 
                     issue = QualityIssue(
-                        issue_id=self.generate_issue_id(str(file_path), "hardcoded_secret", line_num),
+                        issue_id=self.generate_issue_id(str(file_path),
+    "hardcoded_secret",
+    line_num),
+    
                         severity=QualitySeverity.CRITICAL,
                         category=IssueCategory.SECURITY,
                         title="硬编码敏感信息",
@@ -550,7 +629,11 @@ class SecurityAnalysisRule(QualityRule):
                     )
                     issues.append(issue)
 
-    def _check_sql_injection(self, file_path: Path, tree: ast.AST, content: str, issues: List[QualityIssue]):
+    def _check_sql_injection(self,
+    file_path: Path,
+    tree: ast.AST,
+    content: str,
+    issues: List[QualityIssue]):
         """检测SQL注入风险（简化版本）"""
         if tree is None:
             return
@@ -561,9 +644,14 @@ class SecurityAnalysisRule(QualityRule):
                 if isinstance(node.func, ast.Attribute):
                     if node.func.attr in ['execute', 'query', 'run']:
                         for arg in node.args:
-                            if isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Add):
+                            if isinstance(arg,
+    ast.BinOp) and isinstance(arg.op,
+    ast.Add):
                                 issue = QualityIssue(
-                                    issue_id=self.generate_issue_id(str(file_path), "sql_injection", node.lineno),
+                                    issue_id=self.generate_issue_id(str(file_path),
+    "sql_injection",
+    node.lineno),
+    
                                     severity=QualitySeverity.HIGH,
                                     category=IssueCategory.SECURITY,
                                     title="潜在SQL注入风险",
@@ -681,7 +769,9 @@ class IntelligentQualityAnalyzerV2:
             print(f"⚠️ 解析文件失败 {file_path}: {e}")
             return None, ""
 
-    def analyze_single_file(self, file_path: Path) -> Tuple[List[QualityIssue], FileQualityMetrics]:
+    def analyze_single_file(self,
+    file_path: Path) -> Tuple[List[QualityIssue],
+    FileQualityMetrics]:
         """分析单个文件"""
         start_time = time.time()
 
@@ -705,7 +795,10 @@ class IntelligentQualityAnalyzerV2:
 
         return all_issues, metrics
 
-    def _calculate_file_metrics(self, file_path: Path, issues: List[QualityIssue], lines_of_code: int) -> FileQualityMetrics:
+    def _calculate_file_metrics(self,
+    file_path: Path,
+    issues: List[QualityIssue],
+    lines_of_code: int) -> FileQualityMetrics:
         """计算文件质量指标"""
         # 统计不同严重程度的问题数量
         critical_count = len([i for i in issues if i.severity == QualitySeverity.CRITICAL])
@@ -717,7 +810,8 @@ class IntelligentQualityAnalyzerV2:
         complexity_score = 5.0 + (high_count * 2) + (medium_count * 1) + (low_count * 0.5)
 
         # 计算可维护性指数（简化版本）
-        maintainability_index = max(0, 100 - (complexity_score * 5) - (critical_count * 20) - (high_count * 10))
+        maintainability_index = max(0,
+    100 - (complexity_score * 5) - (critical_count * 20) - (high_count * 10))
 
         # 测试覆盖率（基于文件名估算）
         test_coverage = 0.0
@@ -800,7 +894,9 @@ class IntelligentQualityAnalyzerV2:
         except Exception:
             return 50.0
 
-    def _generate_suggestions(self, issues: List[QualityIssue], file_path: Path) -> List[str]:
+    def _generate_suggestions(self,
+    issues: List[QualityIssue],
+    file_path: Path) -> List[str]:
         """生成改进建议"""
         suggestions = []
 
@@ -833,7 +929,8 @@ class IntelligentQualityAnalyzerV2:
 
         return suggestions
 
-    def analyze_project_parallel(self, paths: List[Path] = None) -> ProjectQualityReport:
+    def analyze_project_parallel(self,
+    paths: List[Path] = None) -> ProjectQualityReport:
         """并行分析整个项目"""
         print("🚀 启动项目质量分析...")
         start_time = time.time()
@@ -886,7 +983,10 @@ class IntelligentQualityAnalyzerV2:
 
         return report
 
-    def _generate_project_report(self, issues: List[QualityIssue], file_metrics: List[FileQualityMetrics], analysis_time: float) -> ProjectQualityReport:
+    def _generate_project_report(self,
+    issues: List[QualityIssue],
+    file_metrics: List[FileQualityMetrics],
+    analysis_time: float) -> ProjectQualityReport:
         """生成项目质量报告"""
         # 基本统计
         total_files = len(file_metrics)
@@ -968,7 +1068,10 @@ class IntelligentQualityAnalyzerV2:
         else:
             return "F"
 
-    def _generate_improvement_roadmap(self, issues: List[QualityIssue], file_metrics: List[FileQualityMetrics]) -> List[Dict[str, Any]]:
+    def _generate_improvement_roadmap(self,
+    issues: List[QualityIssue],
+    file_metrics: List[FileQualityMetrics]) -> List[Dict[str,
+    Any]]:
         """生成改进路线图"""
         roadmap = []
 
@@ -1024,7 +1127,9 @@ class IntelligentQualityAnalyzerV2:
 
         return roadmap
 
-    def _generate_recommendations(self, issues: List[QualityIssue], file_metrics: List[FileQualityMetrics]) -> List[str]:
+    def _generate_recommendations(self,
+    issues: List[QualityIssue],
+    file_metrics: List[FileQualityMetrics]) -> List[str]:
         """生成推荐建议"""
         recommendations = []
 
@@ -1101,13 +1206,19 @@ class IntelligentQualityAnalyzerV2:
         # 问题分布
         if report.issue_distribution:
             print("\n📈 问题分布:")
-            for category, count in sorted(report.issue_distribution.items(), key=lambda x: x[1], reverse=True):
+            for category,
+    count in sorted(report.issue_distribution.items(),
+    key=lambda x: x[1],
+    reverse=True):
                 print(f"  {category.value}: {count}个")
 
         # 严重程度分布
         if report.severity_distribution:
             print("\n🚨 严重程度分布:")
-            for severity, count in sorted(report.severity_distribution.items(), key=lambda x: self._severity_weight(x[0]), reverse=True):
+            for severity,
+    count in sorted(report.severity_distribution.items(),
+    key=lambda x: self._severity_weight(x[0]),
+    reverse=True):
                 emoji = {"CRITICAL": "🚨", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "💡", "INFO": "ℹ️"}
                 print(f"  {emoji.get(severity.value, '*')} {severity.value}: {count}个")
 
@@ -1116,7 +1227,8 @@ class IntelligentQualityAnalyzerV2:
             print(f"\n🔍 重点问题 (前{len(report.top_issues)}个):")
             for i, issue in enumerate(report.top_issues[:10], 1):
                 severity_emoji = {"CRITICAL": "🚨", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "💡", "INFO": "ℹ️"}
-                print(f"  {i}. {severity_emoji.get(issue.severity.value, '*')} [{issue.category.value}] {issue.title}")
+                print(f"  {i}. {severity_emoji.get(issue.severity.value,
+    '*')} [{issue.category.value}] {issue.title}")
                 print(f"     📍 {issue.file_path}:{issue.line_number}")
                 print(f"     💡 {issue.suggestion}")
                 if i < len(report.top_issues):

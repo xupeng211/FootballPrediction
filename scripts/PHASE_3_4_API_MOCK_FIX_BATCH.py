@@ -31,7 +31,8 @@ def create_mock_app():
 
     @app.get("/health")
     async def health():
-        return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+        return {"status": "healthy",
+    "timestamp": datetime.now(timezone.utc).isoformat()}
 
     @app.get("/api/v1/health")
     async def health_v1():
@@ -86,7 +87,9 @@ def fix_api_file(file_path: str) -> Tuple[bool, str]:
         # 3. 修复测试类装饰器
         content = re.sub(
             r"@pytest\.mark\.unit\s*\n@pytest\.mark\.api",
-            "@pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)\n@pytest.mark.unit\n@pytest.mark.api",
+            "@pytest.mark.skipif(not API_AVAILABLE,
+    reason=TEST_SKIP_REASON)\n@pytest.mark.unit\n@pytest.mark.api",
+    
             content,
         )
 

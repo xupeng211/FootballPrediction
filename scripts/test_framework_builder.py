@@ -184,7 +184,9 @@ class TestFrameworkBuilder:
 
             return {"collected": collected, "errors": errors, "skipped": skipped}
 
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+        except (subprocess.TimeoutExpired,
+    subprocess.CalledProcessError,
+    FileNotFoundError):
             return {"collected": 0, "errors": 0, "skipped": 0}
 
     def _identify_test_issues(self, test_files: List[Path]) -> List[TestIssue]:
@@ -227,7 +229,9 @@ class TestFrameworkBuilder:
                 for pattern in patterns:
                     if pattern in line:
                         severity = "high" if issue_type in ["import_error", "circular_import"] else "medium"
-                        suggested_fix = self._get_suggested_fix(issue_type, line, file_path)
+                        suggested_fix = self._get_suggested_fix(issue_type,
+    line,
+    file_path)
 
                         issues.append(TestIssue(
                             file_path=file_path,
@@ -239,7 +243,10 @@ class TestFrameworkBuilder:
 
         return issues
 
-    def _get_suggested_fix(self, issue_type: str, problematic_line: str, file_path: str) -> str:
+    def _get_suggested_fix(self,
+    issue_type: str,
+    problematic_line: str,
+    file_path: str) -> str:
         """获取建议的修复方案"""
         fixes = {
             "import_error": "检查导入的模块是否存在，或创建缺失的模块文件",
@@ -261,7 +268,9 @@ class TestFrameworkBuilder:
 
         return base_fix
 
-    def _generate_framework_recommendations(self, issues: List[TestIssue], total_tests: int) -> List[str]:
+    def _generate_framework_recommendations(self,
+    issues: List[TestIssue],
+    total_tests: int) -> List[str]:
         """生成框架改进建议"""
         recommendations = []
 
@@ -323,6 +332,46 @@ class TestFrameworkBuilder:
 
         return report
 
+def __apply_test_fixes_handle_error():
+                        shutil.rmtree(cache_path)
+                        fixes.append(f"清理缓存目录: {cache_path.relative_to(self.project_root)}")
+                    except Exception as e:
+                        print(f"⚠️ 无法清理缓存目录 {cache_path}: {e}")
+
+        # 修复文件冲突
+        duplicate_files = []
+
+def __apply_test_fixes_check_condition():
+                # 检查是否存在冲突
+                other_config = test_file.parent / "core" / "test_config.py"
+
+def __apply_test_fixes_check_condition():
+                    duplicate_files.append(test_file)
+
+
+def __apply_test_fixes_handle_error():
+                backup_path = dup_file.with_suffix(f".backup{datetime.now().strftime('%Y%m%d_%H%M%S')}.py")
+                dup_file.rename(backup_path)
+                fixes.append(f"修复文件冲突: {dup_file.name} -> {backup_path.name}")
+            except Exception as e:
+                print(f"⚠️ 无法修复文件冲突 {dup_file}: {e}")
+
+        # 创建缺失的基础模块
+        missing_modules = [
+            "src/domain/events/__init__.py",
+            "src/services/__init__.py",
+            "src/database/models/__init__.py"
+        ]
+
+
+def __apply_test_fixes_manage_resource():
+                        f.write(f'"""{module_path}"""\n')
+                    fixes.append(f"创建缺失模块: {module_path}")
+                except Exception as e:
+                    print(f"⚠️ 无法创建模块 {module_path}: {e}")
+
+        return fixes
+
     def _apply_test_fixes(self, issues: List[TestIssue]) -> List[str]:
         """应用测试修复"""
         fixes = []
@@ -332,7 +381,7 @@ class TestFrameworkBuilder:
         for cache_dir in cache_dirs:
             for cache_path in self.project_root.rglob(cache_dir):
                 if cache_path.is_dir():
-                    try:
+                    __apply_test_fixes_handle_error()
                         shutil.rmtree(cache_path)
                         fixes.append(f"清理缓存目录: {cache_path.relative_to(self.project_root)}")
                     except Exception as e:
@@ -341,14 +390,14 @@ class TestFrameworkBuilder:
         # 修复文件冲突
         duplicate_files = []
         for test_file in self._scan_test_files():
-            if test_file.name == "test_config.py":
+            __apply_test_fixes_check_condition()
                 # 检查是否存在冲突
                 other_config = test_file.parent / "core" / "test_config.py"
-                if other_config.exists():
+                __apply_test_fixes_check_condition()
                     duplicate_files.append(test_file)
 
         for dup_file in duplicate_files:
-            try:
+            __apply_test_fixes_handle_error()
                 backup_path = dup_file.with_suffix(f".backup{datetime.now().strftime('%Y%m%d_%H%M%S')}.py")
                 dup_file.rename(backup_path)
                 fixes.append(f"修复文件冲突: {dup_file.name} -> {backup_path.name}")
@@ -367,7 +416,7 @@ class TestFrameworkBuilder:
             if not full_path.exists():
                 try:
                     full_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(full_path, 'w') as f:
+                    __apply_test_fixes_manage_resource()
                         f.write(f'"""{module_path}"""\n')
                     fixes.append(f"创建缺失模块: {module_path}")
                 except Exception as e:
@@ -531,7 +580,8 @@ def test_environment_variables():
 
     # 检查Python路径
     python_path = os.environ.get('PYTHONPATH', '')
-    assert 'src' in python_path or str(Path(__file__).parent.parent.parent) in python_path, \
+    assert 'src' in python_path or str(Path(__file__).parent.parent.parent) in python_path,
+    \
         "PYTHONPATH未正确配置"
 
 
@@ -876,7 +926,9 @@ echo "✅ 测试健康检查通过！"
             script_file.chmod(0o755)
             print(f"✅ 创建测试脚本: {filename}")
 
-    def export_framework_report(self, report: TestFrameworkReport, output_file: Optional[Path] = None) -> Path:
+    def export_framework_report(self,
+    report: TestFrameworkReport,
+    output_file: Optional[Path] = None) -> Path:
         """导出框架报告"""
         if output_file is None:
             output_file = self.project_root / "reports" / f"test_framework_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -893,6 +945,99 @@ echo "✅ 测试健康检查通过！"
             json.dump(report_dict, f, indent=2, ensure_ascii=False)
 
         return output_file
+
+def _main_check_condition():
+        builder.config["coverage_threshold"] = args.coverage_threshold
+
+
+def _main_check_condition():
+            # 仅分析当前状态
+            print("🔍 分析测试框架现状...")
+            report = builder.analyze_test_framework()
+
+            print(f"\n📊 测试框架分析结果:")
+            print(f"   总测试文件: {report.total_tests_found}")
+            print(f"   可运行测试: {report.runnable_tests}")
+            print(f"   错误测试: {report.error_tests}")
+            print(f"   问题发现: {len(report.issues_found)}个")
+            print(f"   状态: {report.status.value.upper()}")
+
+
+def _main_iterate_items():
+                    print(f"   - {issue.file_path}: {issue.description}")
+
+
+def _main_check_condition():
+                report_file = builder.export_framework_report(report)
+                print(f"\n📄 详细报告: {report_file}")
+
+
+def _main_check_condition():
+            # 构建完整测试框架
+            print("🏗️ 构建基础测试框架...")
+            report = builder.build_basic_test_framework()
+
+            print(f"\n📊 测试框架构建结果:")
+            print(f"   状态: {report.status.value.upper()}")
+            print(f"   应用的修复: {len(report.fixes_applied)}个")
+            print(f"   覆盖率目标: {report.coverage_threshold}%")
+            print(f"   质量门禁: {report.quality_gate_status.value.upper()}")
+
+
+def _main_iterate_items():
+                    print(f"   ✅ {fix}")
+
+
+def _main_check_condition():
+                report_file = builder.export_framework_report(report)
+                print(f"\n📄 详细报告: {report_file}")
+
+            print(f"\n🎯 下一步操作:")
+            print(f"   1. 运行测试: ./scripts/run_tests.sh")
+            print(f"   2. 快速检查: ./scripts/test_health.sh")
+            print(f"   3. 查看覆盖率: open htmlcov/index.html")
+
+        else:
+            # 默认执行分析和构建
+            print("🚀 开始测试框架构建流程...")
+
+            # 分析现状
+            report = builder.analyze_test_framework()
+
+
+def _main_check_condition():
+                print(f"⚠️ 发现{report.error_tests}个测试问题，开始修复...")
+
+                # 构建框架
+                report = builder.build_basic_test_framework()
+
+                print(f"✅ 测试框架构建完成！")
+                print(f"📊 修复了{len(report.fixes_applied)}个问题")
+
+            else:
+                print(f"✅ 测试框架状态良好，无需修复")
+
+            # 运行验证测试
+            print(f"\n🧪 运行验证测试...")
+
+def _main_handle_error():
+                subprocess.run([
+                    "python", "-m", "pytest",
+                    "tests/unit/test_health_check.py",
+                    "-v", "--tb=short"
+                ], check=False, cwd=project_root)
+            except Exception as e:
+                print(f"⚠️ 验证测试运行失败: {e}")
+
+    except KeyboardInterrupt:
+        print("\n👋 用户中断，退出程序")
+        sys.exit(130)
+    except Exception as e:
+        print(f"❌ 程序执行出错: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
 
 def main():
     """主函数"""
@@ -932,11 +1077,11 @@ def main():
     project_root = args.project_root or Path(__file__).parent.parent
     builder = TestFrameworkBuilder(project_root)
 
-    if args.coverage_threshold:
+    _main_check_condition()
         builder.config["coverage_threshold"] = args.coverage_threshold
 
     try:
-        if args.analyze_only:
+        _main_check_condition()
             # 仅分析当前状态
             print("🔍 分析测试框架现状...")
             report = builder.analyze_test_framework()
@@ -950,14 +1095,14 @@ def main():
 
             if report.issues_found:
                 print(f"\n🚨 发现的主要问题:")
-                for issue in report.issues_found[:5]:  # 显示前5个问题
+                _main_iterate_items()
                     print(f"   - {issue.file_path}: {issue.description}")
 
-            if args.output_report:
+            _main_check_condition()
                 report_file = builder.export_framework_report(report)
                 print(f"\n📄 详细报告: {report_file}")
 
-        elif args.build_framework:
+        _main_check_condition()
             # 构建完整测试框架
             print("🏗️ 构建基础测试框架...")
             report = builder.build_basic_test_framework()
@@ -970,10 +1115,10 @@ def main():
 
             if report.fixes_applied:
                 print(f"\n🔧 应用的修复:")
-                for fix in report.fixes_applied:
+                _main_iterate_items()
                     print(f"   ✅ {fix}")
 
-            if args.output_report:
+            _main_check_condition()
                 report_file = builder.export_framework_report(report)
                 print(f"\n📄 详细报告: {report_file}")
 
@@ -989,7 +1134,7 @@ def main():
             # 分析现状
             report = builder.analyze_test_framework()
 
-            if report.error_tests > 0:
+            _main_check_condition()
                 print(f"⚠️ 发现{report.error_tests}个测试问题，开始修复...")
 
                 # 构建框架
@@ -1003,7 +1148,7 @@ def main():
 
             # 运行验证测试
             print(f"\n🧪 运行验证测试...")
-            try:
+            _main_handle_error()
                 subprocess.run([
                     "python", "-m", "pytest",
                     "tests/unit/test_health_check.py",

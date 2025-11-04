@@ -30,7 +30,9 @@ class PerformanceBenchmark:
         self.baseline_metrics = {}
         self.optimized_metrics = {}
 
-    async def simulate_database_queries(self, use_cache: bool = False) -> Dict[str, Any]:
+    async def simulate_database_queries(self,
+    use_cache: bool = False) -> Dict[str,
+    Any]:
         """模拟数据库查询性能测试"""
         logger.info(f"🧪 开始{'缓存' if use_cache else '无缓存'}查询性能测试...")
 
@@ -141,7 +143,10 @@ class PerformanceBenchmark:
 
         return metrics
 
-    async def run_concurrent_test(self, use_cache: bool = False, concurrent_connections: int = 20) -> Dict[str, Any]:
+    async def run_concurrent_test(self,
+    use_cache: bool = False,
+    concurrent_connections: int = 20) -> Dict[str,
+    Any]:
         """运行并发查询测试"""
         logger.info(f"🚀 开始{'缓存' if use_cache else '无缓存'}并发查询测试 ({concurrent_connections}并发)...")
 
@@ -204,12 +209,14 @@ class PerformanceBenchmark:
         # 1. 无缓存基线测试
         logger.info("📊 第1步：无缓存基线测试...")
         baseline_metrics = await self.simulate_database_queries(use_cache=False)
-        baseline_concurrent = await self.run_concurrent_test(use_cache=False, concurrent_connections=20)
+        baseline_concurrent = await self.run_concurrent_test(use_cache=False,
+    concurrent_connections=20)
 
         # 2. 缓存优化测试
         logger.info("📊 第2步：缓存优化测试...")
         optimized_metrics = await self.simulate_database_queries(use_cache=True)
-        optimized_concurrent = await self.run_concurrent_test(use_cache=True, concurrent_connections=20)
+        optimized_concurrent = await self.run_concurrent_test(use_cache=True,
+    concurrent_connections=20)
 
         # 3. 计算性能提升
         logger.info("📊 第3步：计算性能提升...")
@@ -249,8 +256,14 @@ class PerformanceBenchmark:
             },
             'summary': {
                 'target_improvement': 50.0,
-                'achieved_improvement': max(avg_time_improvement, qps_improvement, concurrent_qps_improvement),
-                'target_met': max(avg_time_improvement, qps_improvement, concurrent_qps_improvement) >= 50.0,
+                'achieved_improvement': max(avg_time_improvement,
+    qps_improvement,
+    concurrent_qps_improvement),
+    
+                'target_met': max(avg_time_improvement,
+    qps_improvement,
+    concurrent_qps_improvement) >= 50.0,
+    
                 'overall_cache_hit_rate': (optimized_metrics['cache_hit_rate'] + optimized_concurrent['cache_hit_rate']) / 2
             }
         }
@@ -318,7 +331,9 @@ class PerformanceBenchmark:
             report = await self.run_comprehensive_benchmark()
 
             # 保存详细报告
-            with open('database_performance_benchmark.json', 'w', encoding='utf-8') as f:
+            with open('database_performance_benchmark.json',
+    'w',
+    encoding='utf-8') as f:
                 json.dump(report, f, ensure_ascii=False, indent=2, default=str)
 
             # 生成并输出报告

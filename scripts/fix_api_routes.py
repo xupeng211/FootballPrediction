@@ -21,7 +21,11 @@ class APIRouteFixer:
         self.fixed_routes = []
         self.problem_routes = []
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(self,
+    test_name: str,
+    success: bool,
+    details: str = "",
+    duration: float = 0):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -51,7 +55,8 @@ class APIRouteFixer:
                 elif method.upper() == "POST":
                     response = await client.post(f"{self.api_base_url}{path}")
                 else:
-                    response = await client.request(method, f"{self.api_base_url}{path}")
+                    response = await client.request(method,
+    f"{self.api_base_url}{path}")
 
                 duration = time.time() - start_time
 
@@ -204,7 +209,9 @@ class APIRouteFixer:
             critical_missing = [
                 r
                 for r in not_found
-                if any(keyword in r["name"].lower() for keyword in ["监控统计", "预测", "cqrs"])
+                if any(keyword in r["name"].lower() for keyword in ["监控统计",
+    "预测",
+    "cqrs"])
             ]
             if critical_missing:
                 print("\n   🎯 关键缺失路由:")
