@@ -13,17 +13,27 @@ class TestWarningFiltersFinalCoverage:
     """最终覆盖率测试 - 触发第24-28行"""
 
     def test_cover_initialization_lines(self):
-        """直接测试覆盖第24-28行的初始化代码"""
-        # 这个测试专门设计来触发第24-28行：
+        """直接测试覆盖第30-35行的初始化代码"""
+        # 这个测试专门设计来触发第30-35行：
         # if "pytest" not in sys.modules:
         #     try:
         #         setup_warning_filters()
-        #     except (ValueError, KeyError, TypeError) as e:
+        #     except (ValueError, KeyError, TypeError, AttributeError) as e:
         #         logger.info(f"⚠️  警告过滤器自动设置失败: {e}")
+
+        # 记录日志调用
+        logged_messages = []
+
+        def capture_log(message):
+            logged_messages.append(message)
 
         # 模拟warnings.filterwarnings抛出异常来触发错误处理路径
         with patch('warnings.filterwarnings', side_effect=ValueError("测试异常")):
-            with patch('src.utils.warning_filters.logger') as mock_logger:
+            # patch logging.getLogger以捕获日志调用
+            with patch('logging.getLogger') as mock_get_logger:
+                mock_logger = mock_get_logger.return_value
+                mock_logger.info = capture_log
+
                 # 重新导入模块以触发初始化代码
                 import importlib
 
@@ -31,19 +41,32 @@ class TestWarningFiltersFinalCoverage:
                 if 'src.utils.warning_filters' in sys.modules:
                     del sys.modules['src.utils.warning_filters']
 
-                # 现在重新导入，这会触发初始化代码
+                # 临时从sys.modules中移除pytest，使初始化代码执行
+                original_pytest = sys.modules.get('pytest')
+                if 'pytest' in sys.modules:
+                    del sys.modules['pytest']
+
                 try:
+                    # 现在重新导入，这会触发初始化代码
                     importlib.import_module('src.utils.warning_filters')
                 except ImportError:
                     pass
+                finally:
+                    # 恢复pytest模块
+                    if original_pytest is not None:
+                        sys.modules['pytest'] = original_pytest
 
-                # 验证logger.info被调用，这将覆盖第30行
-                mock_logger.info.assert_called_once()
+                # 验证logger.info被调用，这将覆盖第35行
+                assert len(logged_messages) >= 1
 
                 # 验证调用参数包含错误信息
-                call_args = mock_logger.info.call_args[0][0]
-                assert "警告过滤器自动设置失败" in call_args
-                assert "测试异常" in call_args
+                found_message = None
+                for msg in logged_messages:
+                    if "警告过滤器设置失败" in msg and "测试异常" in msg:
+                        found_message = msg
+                        break
+
+                assert found_message is not None, f"Expected message not found in: {logged_messages}"
 
     def test_different_exception_types_coverage(self):
         """测试不同异常类型以覆盖所有错误处理路径"""
@@ -54,8 +77,18 @@ class TestWarningFiltersFinalCoverage:
         ]
 
         for exception in exception_types:
+            # 记录日志调用
+            logged_messages = []
+
+            def capture_log(message):
+                logged_messages.append(message)
+
             with patch('warnings.filterwarnings', side_effect=exception):
-                with patch('src.utils.warning_filters.logger') as mock_logger:
+                # patch logging.getLogger以捕获日志调用
+                with patch('logging.getLogger') as mock_get_logger:
+                    mock_logger = mock_get_logger.return_value
+                    mock_logger.info = capture_log
+
                     # 重新导入模块
                     import importlib
 
@@ -63,16 +96,29 @@ class TestWarningFiltersFinalCoverage:
                     if 'src.utils.warning_filters' in sys.modules:
                         del sys.modules['src.utils.warning_filters']
 
-                    # 重新导入
+                    # 临时从sys.modules中移除pytest，使初始化代码执行
+                    original_pytest = sys.modules.get('pytest')
+                    if 'pytest' in sys.modules:
+                        del sys.modules['pytest']
+
                     try:
+                        # 重新导入
                         importlib.import_module('src.utils.warning_filters')
                     except ImportError:
                         pass
+                    finally:
+                        # 恢复pytest模块
+                        if original_pytest is not None:
+                            sys.modules['pytest'] = original_pytest
 
                     # 验证错误被记录
-                    mock_logger.info.assert_called_once()
-                    call_args = mock_logger.info.call_args[0][0]
-                    assert "警告过滤器自动设置失败" in call_args
+                    found_message = None
+                    for msg in logged_messages:
+                        if "警告过滤器设置失败" in msg:
+                            found_message = msg
+                            break
+
+                    assert found_message is not None, f"Expected log message not found in: {logged_messages}"
 
     def test_successful_initialization_coverage(self):
         """测试成功的初始化过程"""

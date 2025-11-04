@@ -8,12 +8,40 @@ from typing import Any
 
 def is_valid_email(email: str) -> bool:
     """Validate email address"""
+    if not isinstance(email, str) or not email:
+        return False
+
+    # 基本长度检查
+    if len(email) > 254:  # RFC 5321限制
+        return False
+
+    # 改进的邮箱验证正则表达式
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    return bool(re.match(pattern, email))
+    if not re.match(pattern, email):
+        return False
+
+    # 额外检查：不允许连续的点号
+    if ".." in email:
+        return False
+
+    # 额外检查：域名不能以点号开始或结束
+    domain = email.split("@")[1]
+    if domain.startswith(".") or domain.endswith("."):
+        return False
+
+    # 额外检查：域名不能以连字符开始或结束
+    if domain.startswith("-") or domain.endswith("-"):
+        return False
+
+    return True
 
 
 def is_valid_phone(phone: str) -> bool:
     """Validate phone number"""
+    # 检查输入类型
+    if not isinstance(phone, str) or not phone:
+        return False
+
     # 支持多种电话号码格式，但要求至少10位数字
     pattern = r"^\+?[\d\s\-\(\).]+$"
     if not re.match(pattern, phone):
@@ -26,8 +54,41 @@ def is_valid_phone(phone: str) -> bool:
 
 def is_valid_url(url: str) -> bool:
     """Validate URL"""
-    pattern = r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
-    return bool(re.match(pattern, url))
+    # 检查输入类型
+    if not isinstance(url, str) or not url:
+        return False
+
+    # 基本URL格式验证
+    pattern = r"^https?://(?:[-\w.][-\w.]*)+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
+    if not re.match(pattern, url):
+        return False
+
+    # 额外检查：确保域名不是以点号开始或只包含点号
+    # 提取域名部分进行检查
+    try:
+        # 移除协议部分
+        domain_part = url.replace("http://", "").replace("https://", "")
+        # 移除路径部分
+        domain_part = domain_part.split("/", 1)[0]
+        # 移除端口部分
+        domain_part = domain_part.split(":", 1)[0]
+
+        # 域名不能以点号开始或结束
+        if domain_part.startswith(".") or domain_part.endswith("."):
+            return False
+
+        # 域名不能连续出现点号
+        if ".." in domain_part:
+            return False
+
+        # 域名必须包含至少一个字母或数字
+        if not re.search(r"[a-zA-Z0-9]", domain_part):
+            return False
+
+    except Exception:
+        return False
+
+    return True
 
 
 def validate_required_fields(

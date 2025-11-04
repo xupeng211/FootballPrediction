@@ -67,18 +67,24 @@ class DictUtils:
         return {k: v for k, v in d.items() if k not in keys}
 
     @staticmethod
-    def get_nested_value(d: dict[str, Any], key_path: str, default: Any = None) -> Any:
+    def get_nested_value(d: dict[str, Any], key_path: str | list[str], default: Any = None) -> Any:
         """获取嵌套字典中的值
 
         Args:
             d: 源字典
-            key_path: 键路径,如 "user.profile.name"
+            key_path: 键路径,如 "user.profile.name" 或 ["user", "profile", "name"]
             default: 默认值
 
         Returns:
             找到的值或默认值
         """
-        keys = key_path.split(".")
+        if isinstance(key_path, str):
+            keys = key_path.split(".")
+        elif isinstance(key_path, list):
+            keys = key_path
+        else:
+            return default
+
         current = d
 
         try:
@@ -89,15 +95,21 @@ class DictUtils:
             return default
 
     @staticmethod
-    def set_nested_value(d: dict[str, Any], key_path: str, value: Any) -> None:
+    def set_nested_value(d: dict[str, Any], key_path: str | list[str], value: Any) -> None:
         """设置嵌套字典中的值
 
         Args:
             d: 源字典
-            key_path: 键路径,如 "user.profile.name"
+            key_path: 键路径,如 "user.profile.name" 或 ["user", "profile", "name"]
             value: 要设置的值
         """
-        keys = key_path.split(".")
+        if isinstance(key_path, str):
+            keys = key_path.split(".")
+        elif isinstance(key_path, list):
+            keys = key_path
+        else:
+            return
+
         current = d
 
         # 创建嵌套结构
@@ -186,15 +198,23 @@ class DictUtils:
 
     @staticmethod
     def convert_keys_case(d: dict[str, Any], case: str = "lower") -> dict[str, Any]:
-        """转换键的大小写"""
-        if case == "lower":
-            return {k.lower(): v for k, v in d.items()}
-        elif case == "upper":
-            return {k.upper(): v for k, v in d.items()}
-        elif case == "title":
-            return {k.title(): v for k, v in d.items()}
-        else:
-            return d
+        """转换键的大小写（递归处理嵌套字典）"""
+        def _convert(obj, case):
+            if isinstance(obj, dict):
+                if case == "lower":
+                    return {k.lower(): _convert(v, case) for k, v in obj.items()}
+                elif case == "upper":
+                    return {k.upper(): _convert(v, case) for k, v in obj.items()}
+                elif case == "title":
+                    return {k.title(): _convert(v, case) for k, v in obj.items()}
+                else:
+                    return obj
+            elif isinstance(obj, list):
+                return [_convert(item, case) for item in obj]
+            else:
+                return obj
+
+        return _convert(d, case)
 
     @staticmethod
     def deep_clone(d: dict[str, Any]) -> dict[str, Any]:
@@ -252,9 +272,15 @@ def has_key(d: dict[str, Any], key: str) -> bool:
     return DictUtils.has_key(d, key)
 
 
-def get_nested_value(d: dict[str, Any], key_path: str, default: Any = None) -> Any:
+def get_nested_value(d: dict[str, Any], key_path: str | list[str], default: Any = None) -> Any:
     """获取嵌套字典中的值"""
-    keys = key_path.split(".")
+    if isinstance(key_path, str):
+        keys = key_path.split(".")
+    elif isinstance(key_path, list):
+        keys = key_path
+    else:
+        return default
+
     current = d
     try:
         for key in keys:
@@ -264,9 +290,15 @@ def get_nested_value(d: dict[str, Any], key_path: str, default: Any = None) -> A
         return default
 
 
-def set_nested_value(d: dict[str, Any], key_path: str, value: Any) -> dict[str, Any]:
+def set_nested_value(d: dict[str, Any], key_path: str | list[str], value: Any) -> dict[str, Any]:
     """设置嵌套字典中的值"""
-    keys = key_path.split(".")
+    if isinstance(key_path, str):
+        keys = key_path.split(".")
+    elif isinstance(key_path, list):
+        keys = key_path
+    else:
+        return d
+
     current = d
     for key in keys[:-1]:
         if key not in current:
@@ -289,12 +321,19 @@ def flatten_dict(d: dict[str, Any], separator: str = ".") -> dict[str, Any]:
                 items.append((new_key, v))
         return dict(items)
 
-    return _flatten(d, separator=separator)
+    return _flatten(d, sep=separator)
 
 
-def filter_dict(d: dict[str, Any], keys: list[str]) -> dict[str, Any]:
-    """过滤字典，只保留指定的键"""
-    return {key: d[key] for key in keys if key in d}
+def filter_dict(d: dict[str, Any], keys: list[str] = None, predicate=None) -> dict[str, Any]:
+    """过滤字典，只保留指定的键或满足条件的键值对"""
+    if predicate is not None:
+        # 使用谓词函数过滤
+        return {k: v for k, v in d.items() if predicate(k, v)}
+    elif keys is not None:
+        # 按键过滤
+        return {key: d[key] for key in keys if key in d}
+    else:
+        return {}
 
 
 def rename_keys(d: dict[str, Any], key_map: dict[str, str]) -> dict[str, Any]:

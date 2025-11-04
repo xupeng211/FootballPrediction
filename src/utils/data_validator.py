@@ -21,8 +21,25 @@ class DataValidator:
         if not isinstance(email, str):
             return False
 
+        # 基本格式验证
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-        return bool(re.match(pattern, email))
+        if not re.match(pattern, email):
+            return False
+
+        # 额外验证：不允许连续的点号
+        if ".." in email:
+            return False
+
+        # 额外验证：域名不能以点号开始或结束
+        domain = email.split("@")[1]
+        if domain.startswith(".") or domain.endswith("."):
+            return False
+
+        # 额外验证：不能以点号或连字符开始或结束
+        if domain.startswith("-") or domain.endswith("-"):
+            return False
+
+        return True
 
     @staticmethod
     def validate_phone(phone: str) -> bool:
@@ -63,7 +80,34 @@ class DataValidator:
         # 15位身份证
         pattern15 = r"^[1-9]\d{5}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}$"
 
-        return bool(re.match(pattern18, id_card) or re.match(pattern15, id_card))
+        # 基本格式验证
+        if not (re.match(pattern18, id_card) or re.match(pattern15, id_card)):
+            return False
+
+        # 18位身份证需要验证校验码
+        if len(id_card) == 18:
+            return DataValidator._validate_id_card_checksum(id_card)
+
+        # 15位身份证直接返回True（格式已验证）
+        return True
+
+    @staticmethod
+    def _validate_id_card_checksum(id_card: str) -> bool:
+        """验证18位身份证校验码"""
+        # 权重因子
+        weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
+        # 校验码对应表
+        check_codes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2']
+
+        total = 0
+        for i in range(17):
+            total += int(id_card[i]) * weights[i]
+
+        # 计算校验码
+        check_code = check_codes[total % 11]
+
+        # 比较校验码（不区分大小写）
+        return id_card[17].upper() == check_code
 
     @staticmethod
     def sanitize_input(input_data: Any) -> str:
@@ -75,9 +119,22 @@ class DataValidator:
         text = str(input_data)
 
         # 移除危险字符
-        dangerous_chars = ["<", ">", "&", """, """]
+        dangerous_chars = ["<", ">", "&", "\"", "'", """, """]
         for char in dangerous_chars:
             text = text.replace(char, "")
+
+        # 移除明确的HTML标签和JavaScript模式
+        # 使用更精确的模式避免误伤普通文本
+        import re
+
+        # 移除HTML标签
+        text = re.sub(r'<[^>]+>', '', text)
+
+        # 移除JavaScript协议
+        text = re.sub(r'javascript:', '', text, flags=re.IGNORECASE)
+
+        # 移除HTML事件处理器属性
+        text = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', text, flags=re.IGNORECASE)
 
         # 限制长度
         if len(text) > 1000:

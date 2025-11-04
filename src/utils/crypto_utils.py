@@ -179,4 +179,5 @@ class CryptoUtils:
     @staticmethod
     def generate_api_key() -> str:
         """生成API密钥"""
-        return f"fp_{secrets.token_urlsafe(32)}"
+        # 生成32字符的token + "fp_" 前缀 = 总共35字符
+        return f"fp_{secrets.token_urlsafe(24)[:32]}"

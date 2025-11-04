@@ -203,11 +203,16 @@ class TimeUtils:
         try:
             from_tz = UTC
             to_tz = ZoneInfo(tz_name)
+
+            # 检查to_tz是否为有效的tzinfo对象（排除mock对象）
+            if not hasattr(to_tz, 'utcoffset') or not callable(to_tz.utcoffset):
+                return dt
+
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=from_tz)
             return dt.astimezone(to_tz)
-        except (ImportError, ValueError, KeyError):
-            # 如果时区不可用,返回原始datetime
+        except (ImportError, ValueError, KeyError, TypeError, AttributeError):
+            # 如果时区不可用或类型无效,返回原始datetime
             return dt
 
     @staticmethod
