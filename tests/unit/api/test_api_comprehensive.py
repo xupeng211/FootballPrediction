@@ -202,7 +202,10 @@ class TestAPIConcurrency:
     @pytest.fixture
     def client(self):
         """创建测试客户端"""
-        return TestClient(app)
+        # 使用健康检查专用应用而不是主应用
+        app_health = FastAPI()
+        app_health.include_router(health_router)
+        return TestClient(app_health)
 
     def test_concurrent_health_checks(self, client):
         """测试并发健康检查"""

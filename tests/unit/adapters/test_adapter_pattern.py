@@ -236,7 +236,7 @@ class TestAdapter:
         """测试模拟适配器默认动作请求"""
         adapter = MockAdapter()
         result = await adapter.request()
-        assert result["adapter"] == "TestAdapter"
+        assert result["adapter"] == "MockAdapter"
         assert result["request_id"] == 1
 
 
