@@ -164,7 +164,7 @@ class MatchDomainService:
     def postpone_match(self, match: Match, new_date: datetime, reason: str) -> Match:
         """延期比赛"""
         if match.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
-            raise ValueError(f"比赛状态为 {match.status.value},无法延期")
+            raise ValueError("只能延期预定或进行中的比赛")
 
         match.status = MatchStatus.POSTPONED
         match.match_date = new_date
@@ -180,6 +180,13 @@ class MatchDomainService:
         self._events.append(event)
 
         return match
+
+    def is_match_valid_to_start(self, match: Match) -> bool:
+        """检查比赛是否可以开始"""
+        return (match.status == MatchStatus.SCHEDULED and
+               match.match_date <= datetime.now() and
+               match.home_team_id is not None and
+               match.away_team_id is not None)
 
     def validate_match_schedule(self, match: Match) -> list[str]:
         """验证比赛安排"""

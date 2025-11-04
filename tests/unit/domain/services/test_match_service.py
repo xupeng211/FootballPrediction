@@ -327,7 +327,7 @@ class TestMatchDomainService:
         mock_match.status = MatchStatus.CANCELLED
 
         with pytest.raises(ValueError, match="只能延期预定或进行中的比赛"):
-            match_service.postpone_match(mock_match, datetime.now())
+            match_service.postpone_match(mock_match, datetime.now(), "Test reason")
 
     def test_update_score_success(self, match_service, mock_match):
         """测试成功更新比分"""
@@ -356,11 +356,11 @@ class TestMatchDomainService:
     def test_is_match_valid_to_start(self, match_service, mock_match):
         """测试比赛开始有效性检查"""
         # 预定的比赛且时间已到
-        mock_match.start_time = datetime.now() - timedelta(minutes=1)
+        mock_match.match_date = datetime.now() - timedelta(minutes=1)
         assert match_service.is_match_valid_to_start(mock_match) is True
 
         # 预定的比赛但时间未到
-        mock_match.start_time = datetime.now() + timedelta(hours=1)
+        mock_match.match_date = datetime.now() + timedelta(hours=1)
         assert match_service.is_match_valid_to_start(mock_match) is False
 
         # 非预定状态
