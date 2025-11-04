@@ -682,26 +682,21 @@ class NotificationManager:
             self.logger.error(f"检查告警过滤条件失败: {e}")
             return True  # 出错时默认发送
 
-def __send_to_channel_check_condition():
-                # 日志记录
-                self.logger.warning(
-                    f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
-                )
-                return True
-
     async def _send_to_channel(
         self, alert: Alert, channel: NotificationChannel
     ) -> bool:
         """发送告警到指定渠道"""
         try:
-            __send_to_channel_check_condition()
-                # 日志记录
-                self.logger.warning(
-                    f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
-                )
-                return True
+            # 检查发送条件
+            if not self._should_send_alert(alert, channel):
+                return False
 
-            elif channel.type == "email":
+            # 日志记录
+            self.logger.warning(
+                f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
+            )
+
+            if channel.type == "email":
                 client = self.clients.get(channel.id)
                 if client and channel.config.get("recipients"):
                     return await client.send_alert_email(
@@ -731,35 +726,31 @@ def __send_to_channel_check_condition():
             self.logger.error(f"发送告警到渠道 {channel.id} 失败: {e}")
             return False
 
-    def add_channel(self, channel: NotificationChannel):
-        """函数文档字符串"""
-        # 添加pass语句
-        """添加新的通知渠道"""
-        self.channels[channel.id] = channel
-        self._initialize_client(channel)
-        self.logger.info(f"已添加通知渠道: {channel.id}")
+        def add_channel(self, channel: NotificationChannel):
+                """添加新的通知渠道"""
+                self.channels[channel.id] = channel
+                self._initialize_client(channel)
+                self.logger.info(f"已添加通知渠道: {channel.id}")
 
-    def remove_channel(self, channel_id: str):
-        """函数文档字符串"""
-        # 添加pass语句
-        """移除通知渠道"""
-        if channel_id in self.channels:
-            del self.channels[channel_id]
-            if channel_id in self.clients:
-                del self.clients[channel_id]
-            self.logger.info(f"已移除通知渠道: {channel_id}")
+        def remove_channel(self, channel_id: str):
+                """移除通知渠道"""
+                if channel_id in self.channels:
+                    del self.channels[channel_id]
+                    if channel_id in self.clients:
+                        del self.clients[channel_id]
+                    self.logger.info(f"已移除通知渠道: {channel_id}")
 
-    def get_channel_status(self) -> dict[str, dict[str, Any]]:
-        """获取所有渠道的状态"""
-        status = {}
-        for channel_id, channel in self.channels.items():
-            status[channel_id] = {
-                "name": channel.name,
-                "type": channel.type,
-                "enabled": channel.enabled,
-                "has_client": channel_id in self.clients,
-            }
-        return status
+        def get_channel_status(self) -> dict[str, dict[str, Any]]:
+                """获取所有渠道的状态"""
+                status = {}
+                for channel_id, channel in self.channels.items():
+                    status[channel_id] = {
+                        "name": channel.name,
+                        "type": channel.type,
+                        "enabled": channel.enabled,
+                        "has_client": channel_id in self.clients,
+                    }
+                return status
 
 
 # 全局通知管理器实例

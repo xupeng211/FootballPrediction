@@ -47,7 +47,7 @@ class TTLCache:
 
     def __init__(
         self,
-    
+
         max_size: int = 1000,
         default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
@@ -218,14 +218,10 @@ class TTLCache:
             mapping: 键值对字典
             ttl: 生存时间（秒）
         """
-        for key,
-    value in mapping.items():
-            self.set(key,
-    value,
-    ttl)
+        for key, value in mapping.items():
+            self.set(key, value, ttl)
 
-    def delete_many(self,
-    keys: list[str]) -> int:
+    def delete_many(self, keys: list[str]) -> int:
         """
         批量删除
 
@@ -398,9 +394,7 @@ class TTLCache:
 
     def __repr__(self) -> str:
         stats = self.get_stats()
-        return f"TTLCache(size={stats['size']},
-    max_size={self.max_size},
-    hit_rate={stats['hit_rate']:.2f})"
+        return f"TTLCache(size={stats['size']}, max_size={self.max_size}, hit_rate={stats['hit_rate']:.2f})"
 
 
 # 向后兼容别名
