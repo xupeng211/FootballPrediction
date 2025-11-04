@@ -447,13 +447,10 @@ class StatisticalStrategy(PredictionStrategy):
     team_id: int,
     is_home: bool) -> float:
         """获取球队平均进球数"""
-        # 模拟数据,
-    实际应从数据库获取
+        # 模拟数据，实际应从数据库获取
         return 1.5 if is_home else 1.2
 
-    async def _get_team_home_scores(self,
-    team_id: int) -> list[tuple[int,
-    int]]:
+    async def _get_team_home_scores(self, team_id: int) -> list[tuple[int, int]]:
         """获取球队主场比分历史"""
         # 模拟数据
         return [(2, 1), (1, 1), (3, 0), (1, 2), (2, 0)]
