@@ -1023,3 +1023,40 @@ test-stability:
 
 cleanup-issue88:
 	python3 scripts/intelligent_file_cleanup.py
+
+# ============================================================================
+# 🚀 渐进式改进命令 (Claude Code专用)
+# ============================================================================
+
+improve-start: ## 🚀 启动渐进式改进
+	@echo "$(YELLOW)🎯 启动渐进式改进流程...$(RESET)"
+	@python3 scripts/start_progressive_improvement.py
+
+improve-status: ## 📊 检查当前项目状态
+	@echo "$(BLUE)📊 项目状态检查:$(RESET)"
+	@echo "语法错误数量:"
+	@$(ACTIVATE) && ruff check src/ --output-format=concise | grep "invalid-syntax" | wc -l
+	@echo "测试通过数量:"
+	@$(ACTIVATE) && pytest tests/unit/utils/ tests/unit/core/ --maxfail=5 -x --tb=no | grep -E "(PASSED|FAILED)" | wc -l
+	@echo "核心功能验证:"
+	@$(ACTIVATE) && python3 -c "import src.utils.date_utils as du; import src.cache.decorators as cd; print(f'✅ 核心功能: {hasattr(du.DateUtils, \"get_month_start\")} && {hasattr(cd, \"CacheDecorator\")}')"
+
+improve-syntax: ## 🔧 修复语法错误
+	@echo "$(YELLOW)🔧 修复语法错误...$(RESET)"
+	@$(ACTIVATE) && ruff check src/ --output-format=concise | head -10
+
+improve-test: ## 🧪 运行核心测试
+	@echo "$(YELLOW)🧪 运行核心测试...$(RESET)"
+	@$(ACTIVATE) && pytest tests/unit/utils/ tests/unit/core/ --maxfail=10 -x
+
+improve-report: ## 📝 创建改进报告
+	@echo "$(YELLOW)📝 提示: 手动创建改进报告$(RESET)"
+	@echo "使用模板: PROGRESSIVE_IMPROVEMENT_PHASE{N}_REPORT.md"
+
+improve-all: ## 🚀 完整改进流程
+	@echo "$(GREEN)🚀 执行完整渐进式改进流程...$(RESET)"
+	@make improve-start
+	@make improve-status
+	@echo "$(BLUE)💡 现在按照建议执行改进工作$(RESET)"
+
+.PHONY: improve-start improve-status improve-syntax improve-test improve-report improve-all
