@@ -153,9 +153,7 @@ class LeagueCollector(FootballDataCollector):
     "name": competition.get("name"),
     "code": competition.get("code"),
     "type": competition.get("type"),
-    # LEAGUE,
-    CUP,
-    etc.
+    # LEAGUE, CUP, etc.
                 "emblem": competition.get("emblem"),
                 "area": {
                     "id": competition.get("area", {}).get("id"),
@@ -416,8 +414,7 @@ class LeagueCollector(FootballDataCollector):
 
             if not matchday:
                 raise ValueError(
-                                        f"No matchday specified and
-                        no current matchday found for {competition_code}"
+                                        f"No matchday specified and no current matchday found for {competition_code}"
                 )
 
             # 获取比赛数据
