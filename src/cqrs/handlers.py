@@ -176,11 +176,11 @@ class UpdatePredictionHandler(CommandHandler):
         """处理更新预测命令"""
         try:
             async with get_session() as session:
-                await session.get(Prediction,
-    command.prediction_id)
+                prediction = await session.get(Prediction,
+                    command.prediction_id)
                 if not prediction:
                     return CommandResult.failure_result(["预测不存在"],
-    "预测未找到")
+                        "预测未找到")
 
                 # 更新字段
                 if command.predicted_home is not None:
@@ -239,11 +239,11 @@ class DeletePredictionHandler(CommandHandler):
         """处理删除预测命令"""
         try:
             async with get_session() as session:
-                await session.get(Prediction,
-    command.prediction_id)
+                prediction = await session.get(Prediction,
+                    command.prediction_id)
                 if not prediction:
                     return CommandResult.failure_result(["预测不存在"],
-    "预测未找到")
+                        "预测未找到")
 
                 await session.delete(prediction)
                 await session.commit()
@@ -275,10 +275,9 @@ class CreateUserHandler(CommandHandler):
         """处理创建用户命令"""
         try:
             async with get_session() as session:
-                _user = User(
+                user = User(
                     username=command.username,
-    email=command.email,
-    
+                    email=command.email,
                     password_hash=command.password_hash,
                     created_at=datetime.utcnow(),
                     last_login=datetime.utcnow(),
@@ -293,9 +292,9 @@ class CreateUserHandler(CommandHandler):
                 return CommandResult.success_result(
                     data=UserDTO(
                         id=user.id,
-    username=user.username,
-    email=user.email,
-    is_active=user.is_active,
+                        username=user.username,
+                        email=user.email,
+                        is_active=user.is_active,
     
                         total_points=0,
                         prediction_count=0,

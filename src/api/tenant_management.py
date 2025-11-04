@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field, validator
 
 from src.database.base import get_db_session
-from src.database.models.tenant import TenantPlan, TenantStatus
+from src.database.models.tenant import Tenant, TenantPlan, TenantStatus
 from src.middleware.tenant_middleware import (
     check_resource_quota,
     get_tenant_context,
