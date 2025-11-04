@@ -260,7 +260,7 @@ class TestPredictionsAPIPerformance:
         import time
 
         start_time = time.time()
-        response = client.get("/api/predictions")
+        client.get("/api/predictions")
         end_time = time.time()
 
         response_time = end_time - start_time
@@ -288,7 +288,7 @@ class TestPredictionsAPIPerformance:
 
         # 模拟批量创建（如果API支持）
         for data in predictions_data[:10]:  # 测试10个预测
-            response = client.post("/api/predictions", json=data)
+            client.post("/api/predictions", json=data)
             # 不要求全部成功，只测试性能
 
         end_time = time.time()

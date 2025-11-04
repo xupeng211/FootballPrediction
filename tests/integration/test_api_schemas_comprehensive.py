@@ -8,8 +8,13 @@ API响应模型comprehensive测试，标准化数据结构全覆盖
 import pytest
 from pydantic import ValidationError
 
-from src.api.schemas import (APIResponse, HealthCheckResponse, MetricsResponse,
-                             ServiceCheck, StatusResponse)
+from src.api.schemas import (
+    APIResponse,
+    HealthCheckResponse,
+    MetricsResponse,
+    ServiceCheck,
+    StatusResponse,
+)
 
 
 class TestAPIResponseComprehensive:

@@ -8,6 +8,7 @@
 
 import asyncio
 import os
+
 # 模拟导入，避免循环依赖问题
 import sys
 import time
@@ -23,10 +24,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
-                                       TrainingStatus)
-    from src.ml.models.base_model import (BaseModel, PredictionResult,
-                                          TrainingResult)
+    from src.ml.model_training import (
+        ModelTrainer,
+        ModelType,
+        TrainingConfig,
+        TrainingStatus,
+    )
+    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -246,7 +250,7 @@ class TestMLModelPerformance:
 
         # 性能断言
         execution_time = monitor.get_execution_time()
-        memory_usage = monitor.get_memory_usage()
+        monitor.get_memory_usage()
         avg_time_per_prediction = execution_time / batch_size
 
         assert execution_time < 5.0  # 批量预测应在5秒内完成
@@ -376,7 +380,7 @@ class TestMLModelPerformance:
 
         # 分析扩展性
         training_times = [r["training_time"] for r in performance_results]
-        memory_usages = [r["memory_usage"] for r in performance_results]
+        [r["memory_usage"] for r in performance_results]
 
         # 计算时间复杂度（应该是近似线性的）
         size_ratio = data_sizes[-1] / data_sizes[0]

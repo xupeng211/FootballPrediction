@@ -50,8 +50,8 @@ class TestLoggerFunctionality:
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
 
-        logger1 = get_logger("test1")
-        logger2 = get_logger("test2")
+        get_logger("test1")
+        get_logger("test2")
 
         assert mock_get_logger.call_count == 2
         assert mock_get_logger.call_args_list[0][0][0] == "test1"

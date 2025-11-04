@@ -5,7 +5,6 @@ Authentication Dependencies Module
 
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.requests import Request
 
 
 # 简单的token数据类

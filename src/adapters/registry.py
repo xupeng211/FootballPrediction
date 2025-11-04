@@ -3,8 +3,6 @@
 Adapter Registry Module
 """
 
-from typing import Any
-
 from .base import Adapter
 
 

@@ -2,13 +2,23 @@
 预测API模块
 """
 
-from .models import (BatchPredictionRequest, BatchPredictionResponse,
-                     HistoryPrediction, MatchInfo, ModelStatsResponse,
-                     PredictionData, PredictionHistoryResponse,
-                     PredictionOverviewResponse, PredictionRequest,
-                     PredictionResponse, RecentPrediction,
-                     RecentPredictionsResponse, UpcomingMatchesRequest,
-                     UpcomingMatchesResponse, VerificationResponse)
+from .models import (
+    BatchPredictionRequest,
+    BatchPredictionResponse,
+    HistoryPrediction,
+    MatchInfo,
+    ModelStatsResponse,
+    PredictionData,
+    PredictionHistoryResponse,
+    PredictionOverviewResponse,
+    PredictionRequest,
+    PredictionResponse,
+    RecentPrediction,
+    RecentPredictionsResponse,
+    UpcomingMatchesRequest,
+    UpcomingMatchesResponse,
+    VerificationResponse,
+)
 from .router import router
 
 __all__ = [

@@ -68,14 +68,24 @@ Integrates retry mechanisms to improve connection reliability.
 
 # 从definitions模块导入所有内容（替代connection_mod）
 from .definitions import DatabaseManager  # 角色定义; 核心管理器; 工厂函数; 会话获取
-from .definitions import (DatabaseRole, MultiUserDatabaseManager,
-                          get_admin_session, get_async_admin_session,
-                          get_async_reader_session, get_async_session,
-                          get_async_writer_session, get_database_manager,
-                          get_db_session, get_multi_user_database_manager,
-                          get_reader_session, get_session, get_writer_session,
-                          initialize_database, initialize_multi_user_database,
-                          initialize_test_database)
+from .definitions import (
+    DatabaseRole,
+    MultiUserDatabaseManager,
+    get_admin_session,
+    get_async_admin_session,
+    get_async_reader_session,
+    get_async_session,
+    get_async_writer_session,
+    get_database_manager,
+    get_db_session,
+    get_multi_user_database_manager,
+    get_reader_session,
+    get_session,
+    get_writer_session,
+    initialize_database,
+    initialize_multi_user_database,
+    initialize_test_database,
+)
 
 # 重新导出以保持原始接口
 __all__ = [

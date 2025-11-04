@@ -2,8 +2,12 @@
 工具类验证器测试
 """
 
-from src.utils.validators import (is_valid_email, is_valid_phone, is_valid_url,
-                                  validate_required_fields)
+from src.utils.validators import (
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_required_fields,
+)
 
 
 class TestValidators:

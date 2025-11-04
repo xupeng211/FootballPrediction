@@ -6,9 +6,13 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from src.utils.time_utils import (calculate_duration, format_datetime,
-                                  get_current_timestamp,
-                                  is_valid_datetime_format, parse_datetime)
+from src.utils.time_utils import (
+    calculate_duration,
+    format_datetime,
+    get_current_timestamp,
+    is_valid_datetime_format,
+    parse_datetime,
+)
 
 
 class TestTimeUtils:
@@ -142,7 +146,7 @@ class TestTimeUtils:
         ]
 
         for func in expected_functions:
-            has_function = hasattr(src.utils.time_utils, func)
+            hasattr(src.utils.time_utils, func)
             # 不强制要求所有函数都存在
 
     def test_performance_considerations(self):

@@ -153,8 +153,7 @@ def test_kelly_optimization():
     logger.info("🔧 测试Kelly准则优化...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import \
-            EnhancedKellyCalculator
+        from src.services.betting.enhanced_ev_calculator import EnhancedKellyCalculator
 
         kelly_calc = EnhancedKellyCalculator()
 
@@ -213,8 +212,9 @@ def test_value_rating_enhancement():
     logger.info("📊 测试价值评级增强...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import \
-            EnhancedValueRatingCalculator
+        from src.services.betting.enhanced_ev_calculator import (
+            EnhancedValueRatingCalculator,
+        )
 
         value_calc = EnhancedValueRatingCalculator()
 
@@ -273,7 +273,9 @@ async def test_enhanced_ev_calculation():
 
     try:
         from src.services.betting.enhanced_ev_calculator import (
-            BetType, EnhancedEVCalculator)
+            BetType,
+            EnhancedEVCalculator,
+        )
 
         ev_calc = EnhancedEVCalculator()
 
@@ -347,8 +349,7 @@ async def test_strategy_backtesting():
     logger.info("📈 测试策略回测...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import \
-            EnhancedEVCalculator
+        from src.services.betting.enhanced_ev_calculator import EnhancedEVCalculator
 
         ev_calc = EnhancedEVCalculator()
         test_bets = create_test_data()
@@ -393,9 +394,12 @@ def compare_with_original():
 
     try:
         from src.services.betting.enhanced_ev_calculator import (
-            BetType, EnhancedEVCalculator)
-        from src.services.betting.ev_calculator import \
-            EVCalculator as OriginalEVCalculator
+            BetType,
+            EnhancedEVCalculator,
+        )
+        from src.services.betting.ev_calculator import (
+            EVCalculator as OriginalEVCalculator,
+        )
 
         original_calc = OriginalEVCalculator()
         enhanced_calc = EnhancedEVCalculator()

@@ -26,8 +26,7 @@ from src.api.health import router as health_router
 from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
-from src.core.event_application import (initialize_event_system,
-                                        shutdown_event_system)
+from src.core.event_application import initialize_event_system, shutdown_event_system
 from src.cqrs.application import initialize_cqrs
 from src.database.definitions import initialize_database
 from src.middleware.i18n import I18nMiddleware

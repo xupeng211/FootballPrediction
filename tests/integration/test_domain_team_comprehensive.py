@@ -8,8 +8,7 @@ from datetime import datetime
 
 import pytest
 
-from src.domain.models.team import (DomainError, Team, TeamForm, TeamStats,
-                                    TeamType)
+from src.domain.models.team import DomainError, Team, TeamForm, TeamStats, TeamType
 
 
 class TestTeamStatsComprehensive:

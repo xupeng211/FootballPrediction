@@ -599,11 +599,11 @@ class TestServiceLifecycleIntegration:
 
     def test_service_configuration_validation(self):
         """测试服务配置验证"""
-        container = ServiceContainer()
+        ServiceContainer()
 
         # 测试无效配置
         with pytest.raises(Exception):
-            invalid_service = MatchDomainService({"invalid_key": "value"})
+            MatchDomainService({"invalid_key": "value"})
             # 这里可能需要实现实际的配置验证逻辑
 
     def test_service_error_handling_during_lifecycle(self):

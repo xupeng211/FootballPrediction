@@ -10,12 +10,17 @@ from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 
 from src.api.dependencies import get_current_user, get_user_management_service
-from src.core.exceptions import (InvalidCredentialsError,
-                                 UserAlreadyExistsError, UserNotFoundError)
-from src.services.user_management_service import (UserAuthResponse,
-                                                  UserCreateRequest,
-                                                  UserResponse,
-                                                  UserUpdateRequest)
+from src.core.exceptions import (
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
+from src.services.user_management_service import (
+    UserAuthResponse,
+    UserCreateRequest,
+    UserResponse,
+    UserUpdateRequest,
+)
 
 router = APIRouter(prefix="/api/v1/users", tags=["用户管理"])
 security = HTTPBearer()

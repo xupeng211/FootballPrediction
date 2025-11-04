@@ -4,9 +4,12 @@
 
 import pytest
 
-from src.core.exceptions import (ConfigurationError, DataValidationError,
-                                 FootballPredictionException,
-                                 ServiceUnavailableError)
+from src.core.exceptions import (
+    ConfigurationError,
+    DataValidationError,
+    FootballPredictionException,
+    ServiceUnavailableError,
+)
 
 
 class TestCoreExceptions:

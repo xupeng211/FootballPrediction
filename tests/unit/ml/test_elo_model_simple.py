@@ -454,7 +454,7 @@ class TestEloModelSimple:
         # A队：2胜1负，B队：1胜1负，C队：1胜2负
         # 所以A的评分应该最高，C的评分最低
         elo_a = model.team_elos["A"]
-        elo_b = model.team_elos["B"]
+        model.team_elos["B"]
         elo_c = model.team_elos["C"]
 
         # 允许一定的误差，但总体趋势应该正确

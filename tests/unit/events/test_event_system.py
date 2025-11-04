@@ -15,8 +15,12 @@ import pytest
 from src.events.base import EventData, EventHandler
 from src.events.bus import EventBus
 from src.events.handlers import MetricsEventHandler
-from src.events.types import (MatchCreatedEvent, MatchCreatedEventData,
-                              PredictionMadeEvent, UserRegisteredEvent)
+from src.events.types import (
+    MatchCreatedEvent,
+    MatchCreatedEventData,
+    PredictionMadeEvent,
+    UserRegisteredEvent,
+)
 
 
 class TestEventData:

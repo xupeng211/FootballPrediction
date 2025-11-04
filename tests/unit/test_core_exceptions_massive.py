@@ -297,7 +297,7 @@ class TestExceptionsIntegration:
 
         start = time.time()
         for _ in range(1000):
-            error = FootballPredictionError("Performance test")
+            FootballPredictionError("Performance test")
         end = time.time()
         assert end - start < 1.0  # 应该在1秒内完成
 

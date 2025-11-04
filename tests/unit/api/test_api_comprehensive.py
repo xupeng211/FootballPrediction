@@ -249,7 +249,7 @@ class TestAPIMiddleware:
 
     def test_request_logging_middleware(self, client):
         """测试请求日志中间件"""
-        with patch("src.api.app.logger") as mock_logger:
+        with patch("src.api.app.logger"):
             response = client.get("/health/")
             # 验证请求被记录（如果实现了日志中间件）
             # 这里只是验证请求成功，具体日志实现可能不同
@@ -274,7 +274,7 @@ class TestAPIMiddleware:
                 "access-control-allow-headers",
             ]
             # 至少应该有一些CORS相关头部
-            has_cors = any(header in response.headers for header in cors_headers)
+            any(header in response.headers for header in cors_headers)
 
     def test_gzip_middleware(self, client):
         """测试GZIP中间件"""
@@ -366,7 +366,7 @@ class TestAPIPerformance:
 
         def make_request():
             start = time.time()
-            response = client.get("/health/")
+            client.get("/health/")
             end = time.time()
             response_times.append(end - start)
 

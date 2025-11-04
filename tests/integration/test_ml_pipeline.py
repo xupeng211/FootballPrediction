@@ -14,8 +14,10 @@ sys.path.insert(0, str(project_root))
 
 from src.core.logging_system import get_logger
 from src.ml.advanced_model_trainer import ModelType
-from src.ml.real_model_training import (RealModelTrainingPipeline,
-                                        train_football_prediction_model)
+from src.ml.real_model_training import (
+    RealModelTrainingPipeline,
+    train_football_prediction_model,
+)
 
 logger = get_logger(__name__)
 
@@ -27,7 +29,9 @@ async def test_feature_calculator():
     from datetime import datetime
 
     from src.features.features.feature_calculator_calculators import (
-        FeatureCalculator, MatchResult)
+        FeatureCalculator,
+        MatchResult,
+    )
 
     # 创建示例数据
     matches = [

@@ -284,7 +284,7 @@ class TestPredictionAPIEndpoints:
     def test_get_prediction_valid_match_id(self, client):
         """测试获取有效比赛ID的预测"""
         match_id = 12345
-        with patch("predictions_module.logger") as mock_logger:
+        with patch("predictions_module.logger"):
             response = client.get(f"/api/v1/predictions/{match_id}")
 
         assert response.status_code == 200
@@ -337,7 +337,7 @@ class TestPredictionAPIEndpoints:
         """测试创建预测默认参数"""
         match_id = 12345
 
-        with patch("predictions_module.logger") as mock_logger:
+        with patch("predictions_module.logger"):
             response = client.post(f"/api/v1/predictions/{match_id}/predict")
 
         assert response.status_code == 201
@@ -349,7 +349,7 @@ class TestPredictionAPIEndpoints:
         """测试批量预测成功"""
         request_data = {"match_ids": [1, 2, 3, 4, 5], "model_version": "v2.0"}
 
-        with patch("predictions_module.logger") as mock_logger:
+        with patch("predictions_module.logger"):
             response = client.post("/api/v1/predictions/batch", json=request_data)
 
         assert response.status_code == 200
@@ -385,7 +385,7 @@ class TestPredictionAPIEndpoints:
         """测试获取有效比赛的预测历史"""
         match_id = 12345
 
-        with patch("predictions_module.logger") as mock_logger:
+        with patch("predictions_module.logger"):
             response = client.get(f"/api/v1/predictions/history/{match_id}")
 
         assert response.status_code == 200
@@ -408,7 +408,7 @@ class TestPredictionAPIEndpoints:
         """测试验证正确预测"""
         match_id = 12345
 
-        with patch("predictions_module.logger") as mock_logger:
+        with patch("predictions_module.logger"):
             response = client.post(
                 f"/api/v1/predictions/{match_id}/verify?actual_result=home"
             )
@@ -431,7 +431,7 @@ class TestPredictionAPIEndpoints:
         """测试验证错误预测"""
         match_id = 12345
 
-        with patch("predictions_module.logger") as mock_logger:
+        with patch("predictions_module.logger"):
             response = client.post(
                 f"/api/v1/predictions/{match_id}/verify?actual_result=away"
             )
@@ -468,7 +468,7 @@ class TestPredictionBusinessLogic:
         ]
 
         for home, draw, away in test_cases:
-            result = PredictionResult(
+            PredictionResult(
                 match_id=1,
                 home_win_prob=home,
                 draw_prob=draw,

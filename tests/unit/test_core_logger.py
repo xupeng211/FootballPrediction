@@ -34,5 +34,5 @@ class TestLogger:
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
 
-        logger = get_logger("test_mock")
+        get_logger("test_mock")
         mock_get_logger.assert_called_with("test_mock")

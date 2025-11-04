@@ -12,8 +12,7 @@ sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 from src.cache.redis_manager import get_redis_manager
 from src.collectors.data_sources import data_source_manager
-from src.collectors.enhanced_fixtures_collector import \
-    EnhancedFixturesCollector
+from src.collectors.enhanced_fixtures_collector import EnhancedFixturesCollector
 from src.database.connection import get_async_session
 
 

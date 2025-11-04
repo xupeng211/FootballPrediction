@@ -10,11 +10,17 @@ from typing import Any
 
 import pytest
 
-from src.domain.strategies.base import (PredictionInput, PredictionOutput,
-                                        PredictionStrategy, StrategyMetrics,
-                                        StrategyType)
-from src.domain.strategies.factory import (PredictionStrategyFactory,
-                                           StrategyCreationError)
+from src.domain.strategies.base import (
+    PredictionInput,
+    PredictionOutput,
+    PredictionStrategy,
+    StrategyMetrics,
+    StrategyType,
+)
+from src.domain.strategies.factory import (
+    PredictionStrategyFactory,
+    StrategyCreationError,
+)
 from src.domain.strategies.ml_model import MLModelStrategy
 from src.domain.strategies.statistical import StatisticalStrategy
 
@@ -407,7 +413,7 @@ class TestStrategyIntegration:
 
     async def test_strategy_error_handling(self):
         """测试策略错误处理"""
-        factory = PredictionStrategyFactory()
+        PredictionStrategyFactory()
 
         # 创建一个会抛出异常的模拟策略
         class FailingStrategy(MockPredictionStrategy):

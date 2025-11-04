@@ -87,9 +87,12 @@ class TestApiRoutersEnhanced:
     def test_api_response_models(self):
         """测试API响应模型"""
         try:
-            from src.api.predictions.models import (MatchInfo, PredictionData,
-                                                    PredictionRequest,
-                                                    PredictionResponse)
+            from src.api.predictions.models import (
+                MatchInfo,
+                PredictionData,
+                PredictionRequest,
+                PredictionResponse,
+            )
 
             # 创建必需的依赖数据
             match_info = MatchInfo(

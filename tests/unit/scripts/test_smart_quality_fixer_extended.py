@@ -27,9 +27,7 @@ class TestSmartQualityFixerExtended:
 
     def test_fix_ruff_issues_detailed(self):
         """测试Ruff问题修复的详细功能"""
-        initial_fix_count = self.fixer.fix_results["fixes_applied"].get(
-            "ruff_issues", 0
-        )
+        self.fixer.fix_results["fixes_applied"].get("ruff_issues", 0)
 
         # 执行Ruff修复
         fix_count = self.fixer.fix_ruff_issues()
@@ -43,9 +41,7 @@ class TestSmartQualityFixerExtended:
 
     def test_fix_test_issues(self):
         """测试测试问题修复功能"""
-        initial_fix_count = self.fixer.fix_results["fixes_applied"].get(
-            "test_issues", 0
-        )
+        self.fixer.fix_results["fixes_applied"].get("test_issues", 0)
 
         # 执行测试问题修复
         fix_count = self.fixer.fix_test_issues()
@@ -59,9 +55,7 @@ class TestSmartQualityFixerExtended:
 
     def test_apply_refactor_suggestions(self):
         """测试应用重构建议功能"""
-        initial_fix_count = self.fixer.fix_results["fixes_applied"].get(
-            "refactor_suggestions", 0
-        )
+        self.fixer.fix_results["fixes_applied"].get("refactor_suggestions", 0)
 
         # 执行重构建议应用
         fix_count = self.fixer.apply_refactor_suggestions()
@@ -75,9 +69,7 @@ class TestSmartQualityFixerExtended:
 
     def test_fix_mypy_errors_functional(self):
         """测试MyPy错误修复功能"""
-        initial_fix_count = self.fixer.fix_results["fixes_applied"].get(
-            "mypy_errors", 0
-        )
+        self.fixer.fix_results["fixes_applied"].get("mypy_errors", 0)
 
         # 执行MyPy错误修复
         fix_count = self.fixer.fix_mypy_errors()
@@ -91,9 +83,7 @@ class TestSmartQualityFixerExtended:
 
     def test_fix_import_errors_functional(self):
         """测试导入错误修复功能"""
-        initial_fix_count = self.fixer.fix_results["fixes_applied"].get(
-            "import_errors", 0
-        )
+        self.fixer.fix_results["fixes_applied"].get("import_errors", 0)
 
         # 执行导入错误修复
         fix_count = self.fixer.fix_import_errors()
@@ -107,9 +97,7 @@ class TestSmartQualityFixerExtended:
 
     def test_fix_syntax_errors_functional(self):
         """测试语法错误修复功能"""
-        initial_fix_count = self.fixer.fix_results["fixes_applied"].get(
-            "syntax_errors", 0
-        )
+        self.fixer.fix_results["fixes_applied"].get("syntax_errors", 0)
 
         # 执行语法错误修复
         fix_count = self.fixer.fix_syntax_errors()
@@ -240,11 +228,6 @@ class TestSmartQualityFixerExtended:
 
         # 应该有基本的质量标准键（如果文件存在）
         if standards:
-            expected_keys = [
-                "max_line_length",
-                "max_function_length",
-                "max_class_length",
-            ]
             # 至少应该有一些键
             assert len(standards) > 0
 

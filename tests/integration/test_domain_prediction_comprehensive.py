@@ -8,9 +8,14 @@ from decimal import Decimal
 
 import pytest
 
-from src.domain.models.prediction import (ConfidenceScore, DomainError,
-                                          Prediction, PredictionPoints,
-                                          PredictionScore, PredictionStatus)
+from src.domain.models.prediction import (
+    ConfidenceScore,
+    DomainError,
+    Prediction,
+    PredictionPoints,
+    PredictionScore,
+    PredictionStatus,
+)
 
 
 class TestConfidenceScoreComprehensive:

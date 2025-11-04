@@ -16,8 +16,7 @@ class AdapterError(Exception):
 
 
 try:
-    from .football import (ApiFootballAdapter, CompositeFootballAdapter,
-                           OptaDataAdapter)
+    from .football import ApiFootballAdapter, CompositeFootballAdapter, OptaDataAdapter
 except ImportError:
     # Mock implementations for testing
     class ApiFootballAdapter(Adapter):

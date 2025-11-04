@@ -16,10 +16,23 @@ logger = logging.getLogger(__name__)
 RedisManager = EnhancedRedisManager
 
 # 从mock_redis导入便捷函数以确保向后兼容
-from .mock_redis import (adelete_cache, aexists_cache, aget_cache, amget_cache,
-                         amset_cache, aset_cache, attl_cache, delete_cache,
-                         exists_cache, get_cache, mget_cache, mset_cache,
-                         set_cache, startup_warmup, ttl_cache)
+from .mock_redis import (
+    adelete_cache,
+    aexists_cache,
+    aget_cache,
+    amget_cache,
+    amset_cache,
+    aset_cache,
+    attl_cache,
+    delete_cache,
+    exists_cache,
+    get_cache,
+    mget_cache,
+    mset_cache,
+    set_cache,
+    startup_warmup,
+    ttl_cache,
+)
 
 # 导出所有公共接口
 __all__ = [

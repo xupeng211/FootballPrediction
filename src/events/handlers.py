@@ -13,9 +13,14 @@ from typing import Any
 
 from .base import Event, EventHandler
 from .bus import get_event_bus
-from .types import (MatchCreatedEvent, MatchUpdatedEvent, PredictionMadeEvent,
-                    PredictionUpdatedEvent, TeamStatsUpdatedEvent,
-                    UserRegisteredEvent)
+from .types import (
+    MatchCreatedEvent,
+    MatchUpdatedEvent,
+    PredictionMadeEvent,
+    PredictionUpdatedEvent,
+    TeamStatsUpdatedEvent,
+    UserRegisteredEvent,
+)
 
 logger = logging.getLogger(__name__)
 

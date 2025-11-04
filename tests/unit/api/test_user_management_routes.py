@@ -12,8 +12,11 @@ from fastapi.testclient import TestClient
 
 from src.api.dependencies import get_user_management_service
 from src.api.routes.user_management import router
-from src.core.exceptions import (InvalidCredentialsError,
-                                 UserAlreadyExistsError, UserNotFoundError)
+from src.core.exceptions import (
+    InvalidCredentialsError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
 from src.services.user_management_service import UserAuthResponse, UserResponse
 
 

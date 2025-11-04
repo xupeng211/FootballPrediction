@@ -22,8 +22,12 @@ from datetime import datetime
 import pytest
 
 # 导入目标模块
-from core.di import (DependencyInjectionError, DIContainer, ServiceDescriptor,
-                     ServiceLifetime)
+from core.di import (
+    DependencyInjectionError,
+    DIContainer,
+    ServiceDescriptor,
+    ServiceLifetime,
+)
 
 
 class TestDIContainerSingleton:
@@ -454,7 +458,7 @@ class TestEdgeCasesAndAdvancedFeatures:
         assert len(container.get_registered_services()) == 2
 
         # 清理容器（如果支持）
-        services_before = container.get_registered_services()
+        container.get_registered_services()
 
         # 重新创建容器来测试清理
         new_container = DIContainer()

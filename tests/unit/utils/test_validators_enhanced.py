@@ -2,9 +2,13 @@
 验证器增强测试 - 深化覆盖未测试的代码路径
 """
 
-from src.utils.validators import (is_valid_email, is_valid_phone, is_valid_url,
-                                  validate_data_types,
-                                  validate_required_fields)
+from src.utils.validators import (
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_data_types,
+    validate_required_fields,
+)
 
 
 class TestValidatorsEnhanced:

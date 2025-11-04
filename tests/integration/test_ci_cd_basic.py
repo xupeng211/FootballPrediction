@@ -1,5 +1,3 @@
-import pytest
-
 #!/usr/bin/env python3
 """
 基础CI/CD功能测试

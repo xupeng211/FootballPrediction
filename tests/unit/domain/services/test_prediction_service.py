@@ -22,12 +22,19 @@ import pytest
 # 导入领域模型和服务
 try:
     from src.domain.events.prediction_events import (
-        PredictionCancelledEvent, PredictionCreatedEvent,
-        PredictionEvaluatedEvent, PredictionExpiredEvent,
-        PredictionPointsAdjustedEvent, PredictionUpdatedEvent)
+        PredictionCancelledEvent,
+        PredictionCreatedEvent,
+        PredictionEvaluatedEvent,
+        PredictionExpiredEvent,
+        PredictionPointsAdjustedEvent,
+        PredictionUpdatedEvent,
+    )
     from src.domain.models.match import Match, MatchStatus
-    from src.domain.models.prediction import (Prediction, PredictionPoints,
-                                              PredictionStatus)
+    from src.domain.models.prediction import (
+        Prediction,
+        PredictionPoints,
+        PredictionStatus,
+    )
     from src.domain.models.team import Team
     from src.domain.services.prediction_service import PredictionDomainService
 
@@ -334,7 +341,6 @@ class TestPredictionDomainService:
         # 更新预测
         new_predicted_home = 2
         new_confidence = 0.9
-        new_notes = "Updated prediction"
 
         prediction_service.update_prediction(
             prediction=prediction,
@@ -453,11 +459,11 @@ class TestPredictionDomainService:
     def test_events_management(self, prediction_service, mock_match):
         """测试事件管理功能"""
         # 创建多个事件
-        prediction1 = prediction_service.create_prediction(
+        prediction_service.create_prediction(
             user_id=123, match=mock_match, predicted_home=1, predicted_away=1
         )
 
-        prediction2 = prediction_service.create_prediction(
+        prediction_service.create_prediction(
             user_id=124, match=mock_match, predicted_home=2, predicted_away=1
         )
 
@@ -472,7 +478,7 @@ class TestPredictionDomainService:
 
     def test_get_events_returns_copy(self, prediction_service, mock_match):
         """测试get_events返回的是副本而不是原始列表"""
-        prediction = prediction_service.create_prediction(
+        prediction_service.create_prediction(
             user_id=123, match=mock_match, predicted_home=1, predicted_away=1
         )
 

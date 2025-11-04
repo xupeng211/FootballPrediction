@@ -26,7 +26,7 @@ class TestCoverageImprovementIntegration:
         assert fixer.project_root.exists()
 
         # 测试报告生成
-        report = fixer.generate_fix_report()
+        fixer.generate_fix_report()
         # 报告可能是None，但这不应该抛出异常
         assert True
 
@@ -105,8 +105,7 @@ class TestCoverageImprovementIntegration:
         tools_working = True
 
         try:
-            from coverage_improvement_executor import \
-                CoverageImprovementExecutor
+            from coverage_improvement_executor import CoverageImprovementExecutor
             from phase35_ai_coverage_master import Phase35AICoverageMaster
             from smart_quality_fixer import SmartQualityFixer
 

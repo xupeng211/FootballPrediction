@@ -94,7 +94,7 @@ class TestCoverageImprovementExecutorExtended:
         initial_log_count = len(self.executor.results_log)
 
         # 执行综合流程 - 使用run_phase1方法
-        result = self.executor.run_phase1()
+        self.executor.run_phase1()
 
         # 应该有日志记录
         assert len(self.executor.results_log) > initial_log_count
@@ -140,7 +140,7 @@ class TestCoverageImprovementExecutorExtended:
     def test_coverage_improvement_executor_initialization_with_custom_root(self):
         """测试使用自定义根目录初始化"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
+            Path(temp_dir)
             custom_executor = CoverageImprovementExecutor()
 
             # 默认应该使用项目根目录

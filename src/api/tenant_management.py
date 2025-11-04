@@ -14,9 +14,11 @@ from pydantic import BaseModel, Field, validator
 
 from src.database.base import get_db_session
 from src.database.models.tenant import TenantPlan, TenantStatus
-from src.middleware.tenant_middleware import (check_resource_quota,
-                                              get_tenant_context,
-                                              require_permission)
+from src.middleware.tenant_middleware import (
+    check_resource_quota,
+    get_tenant_context,
+    require_permission,
+)
 from src.services.tenant_service import TenantCreationRequest, TenantService
 
 router = APIRouter(prefix="/api/v1/tenants", tags=["多租户管理"])

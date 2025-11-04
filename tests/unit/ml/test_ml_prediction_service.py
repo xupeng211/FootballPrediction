@@ -12,6 +12,7 @@ ML Prediction Service Tests
 """
 
 import os
+
 # 导入ML模块
 import sys
 from datetime import datetime
@@ -23,13 +24,14 @@ import pytest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import (BaseModel, PredictionResult,
-                                      TrainingResult)
+    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.elo_model import EloModel
     from ml.models.poisson_model import PoissonModel
-    from ml.prediction.prediction_service import (EnsemblePrediction,
-                                                  PredictionService,
-                                                  PredictionStrategy)
+    from ml.prediction.prediction_service import (
+        EnsemblePrediction,
+        PredictionService,
+        PredictionStrategy,
+    )
 
     CAN_IMPORT = True
 except ImportError as e:

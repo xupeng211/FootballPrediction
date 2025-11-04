@@ -5,10 +5,12 @@
 from datetime import datetime, timedelta
 
 from src.utils.dict_utils import filter_dict, rename_keys
-from src.utils.string_utils import (camel_to_snake, is_empty, snake_to_camel,
-                                    strip_html)
-from src.utils.time_utils import (calculate_duration, get_current_timestamp,
-                                  is_valid_datetime_format)
+from src.utils.string_utils import camel_to_snake, is_empty, snake_to_camel, strip_html
+from src.utils.time_utils import (
+    calculate_duration,
+    get_current_timestamp,
+    is_valid_datetime_format,
+)
 
 
 class TestUtilsExtended:

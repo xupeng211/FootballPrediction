@@ -24,6 +24,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.api.adapters.router import router as adapters_router
+
 # 全局预测引擎实例
 # 不抛出异常,允许应用继续启动
 # 如果预测引擎有清理方法,在这里调用
@@ -44,11 +45,12 @@ from src.api.data_integration import router as data_integration_router
 from src.api.data_router import router as data_router
 from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
+
 # 导入并注册SRS规范增强预测路由
 from src.api.predictions_enhanced import router as predictions_enhanced_router
+
 # 导入并注册SRS规范简化预测路由（不依赖数据库）
-from src.api.predictions_srs_simple import \
-    router as predictions_srs_simple_router
+from src.api.predictions_srs_simple import router as predictions_srs_simple_router
 from src.config.openapi_config import setup_openapi
 from src.core.logging import get_logger
 from src.core.prediction import PredictionEngine

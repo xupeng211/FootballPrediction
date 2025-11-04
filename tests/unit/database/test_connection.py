@@ -114,7 +114,7 @@ class TestDatabaseConnectionErrorHandling:
         """测试无效数据库URL"""
         with pytest.raises(Exception):
             # 测试无效URL格式
-            invalid_url = "invalid://connection/string"
+            pass
             # 这里应该触发URL验证错误
 
     @pytest.mark.database

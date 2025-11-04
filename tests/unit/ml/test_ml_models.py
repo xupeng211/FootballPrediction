@@ -9,6 +9,7 @@
 import asyncio
 import os
 import pickle
+
 # 模拟导入，避免循环依赖问题
 import sys
 import tempfile
@@ -23,10 +24,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.model_training import (ModelTrainer, ModelType, TrainingConfig,
-                                       TrainingStatus)
-    from src.ml.models.base_model import (BaseModel, PredictionResult,
-                                          TrainingResult)
+    from src.ml.model_training import (
+        ModelTrainer,
+        ModelType,
+        TrainingConfig,
+        TrainingStatus,
+    )
+    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True

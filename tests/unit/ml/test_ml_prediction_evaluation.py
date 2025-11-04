@@ -25,8 +25,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import (BaseModel, PredictionResult,
-                                          TrainingResult)
+    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -133,7 +132,7 @@ class TestMLModelPrediction:
 
         # 训练模型
         model = PoissonModel("single_prediction_test")
-        training_result = model.train(training_data)
+        model.train(training_data)
 
         # 选择一场测试比赛
         test_match = test_data.iloc[0]
@@ -481,7 +480,7 @@ class TestMLModelEvaluation:
 
         # 训练模型
         model = PoissonModel("comprehensive_evaluation_test")
-        training_result = model.train(training_data)
+        model.train(training_data)
 
         # 全面评估
         evaluation_metrics = model.evaluate(test_data)
