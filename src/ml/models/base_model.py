@@ -344,16 +344,12 @@ class BaseModel(abc.ABC):
         min_samples = 100
         if len(training_data) < min_samples:
             logger.warning(
-                f"Training data has only {len(training_data)} samples,
-    which may be insufficient"
+                f"Training data has only {len(training_data)} samples, which may be insufficient"
             )
 
         return True
 
-    def log_training_step(self,
-    step: int,
-    metrics: dict[str,
-    float]):
+    def log_training_step(self, step: int, metrics: dict[str, float]):
         """
         记录训练步骤
 

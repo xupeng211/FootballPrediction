@@ -217,6 +217,24 @@ class DateUtils:
             "is_weekend": DateUtils.is_weekend(dt),
         }
 
+    @staticmethod
+    def get_month_start(dt: datetime) -> datetime:
+        """获取月份开始日期"""
+        return datetime(dt.year, dt.month, 1)
+
+    @staticmethod
+    def get_month_end(dt: datetime) -> datetime:
+        """获取月份结束日期"""
+        if dt.month == 12:
+            return datetime(dt.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            return datetime(dt.year, dt.month + 1, 1) - timedelta(days=1)
+
+    @staticmethod
+    def days_between(dt1: datetime, dt2: datetime) -> int:
+        """计算两个日期之间的天数"""
+        return abs((dt2 - dt1).days)
+
 
 # 缓存版本的函数
 @lru_cache(maxsize=128)
