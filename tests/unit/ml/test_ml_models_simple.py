@@ -25,7 +25,7 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法直接导入ML模型: {e}")
+    logger.warning(f"Warning: 无法直接导入ML模型: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 
@@ -493,7 +493,6 @@ class TestMLIntegrationSimple:
                 },
                 {
                     "home_team": "B",
-                    "away_team": "A",
                     "home_score": 1,
                     "away_team": "1",
                     "result": "draw",

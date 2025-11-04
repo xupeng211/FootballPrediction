@@ -32,7 +32,6 @@ class MLModelStrategy(PredictionStrategy):
 
     def __init__(self, model_name: str = "default_ml_model"):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(model_name, StrategyType.ML_MODEL)
         self._model = None
@@ -179,6 +178,60 @@ class MLModelStrategy(PredictionStrategy):
 
         return output
 
+def _batch_predict_check_condition():
+                valid_inputs.append(input_data)
+
+
+def _batch_predict_iterate_items():
+            processed_inputs.append(await self.pre_process(input_data))
+
+        # 批量提取特征
+        features_list = []
+
+def _batch_predict_iterate_items():
+            features = await self._extract_features(input_data)
+            features_list.append(features)
+
+        # 批量预测
+
+def _batch_predict_check_condition():
+                prediction_results = [
+                    self._mock_predict(feat.reshape(-1)) for feat in features_list
+                ]
+            else:
+                features_array = np.vstack(features_list)
+                prediction_results = self._model.predict(features_array)
+
+
+def _batch_predict_check_condition():
+                prediction_probas = [
+                    self._mock_probabilities(feat.reshape(-1)) for feat in features_list
+                ]
+            else:
+
+def _batch_predict_handle_error():
+                    prediction_probas = self._model.predict_proba(features_array)
+                except (AttributeError, ValueError):
+                    prediction_probas = None
+        else:
+            prediction_results = []
+            prediction_probas = []
+
+        # 格式化输出
+        outputs = []
+
+def _batch_predict_iterate_items():
+            zip(processed_inputs, prediction_results, strict=False)
+        ):
+            pred_proba = prediction_probas[i] if prediction_probas is not None else None
+            output = await self._format_output(pred_result, pred_proba, input_data)
+            output.execution_time_ms = (time.time() - start_time) * 1000 / len(inputs)
+            output.strategy_used = self.name
+            output = await self.post_process(output)
+            outputs.append(output)
+
+        return outputs
+
     async def batch_predict(
         self, inputs: list[PredictionInput]
     ) -> list[PredictionOutput]:
@@ -191,7 +244,7 @@ class MLModelStrategy(PredictionStrategy):
         # 批量验证输入
         valid_inputs = []
         for input_data in inputs:
-            if await self.validate_input(input_data):
+            _batch_predict_check_condition()
                 valid_inputs.append(input_data)
 
         if not valid_inputs:
@@ -199,18 +252,18 @@ class MLModelStrategy(PredictionStrategy):
 
         # 批量预处理
         processed_inputs = []
-        for input_data in valid_inputs:
+        _batch_predict_iterate_items()
             processed_inputs.append(await self.pre_process(input_data))
 
         # 批量提取特征
         features_list = []
-        for input_data in processed_inputs:
+        _batch_predict_iterate_items()
             features = await self._extract_features(input_data)
             features_list.append(features)
 
         # 批量预测
         if features_list:
-            if self._model is None:
+            _batch_predict_check_condition()
                 prediction_results = [
                     self._mock_predict(feat.reshape(-1)) for feat in features_list
                 ]
@@ -218,12 +271,12 @@ class MLModelStrategy(PredictionStrategy):
                 features_array = np.vstack(features_list)
                 prediction_results = self._model.predict(features_array)
 
-            if self._model is None:
+            _batch_predict_check_condition()
                 prediction_probas = [
                     self._mock_probabilities(feat.reshape(-1)) for feat in features_list
                 ]
             else:
-                try:
+                _batch_predict_handle_error()
                     prediction_probas = self._model.predict_proba(features_array)
                 except (AttributeError, ValueError):
                     prediction_probas = None
@@ -233,7 +286,7 @@ class MLModelStrategy(PredictionStrategy):
 
         # 格式化输出
         outputs = []
-        for i, (input_data, pred_result) in enumerate(
+        _batch_predict_iterate_items()
             zip(processed_inputs, prediction_results, strict=False)
         ):
             pred_proba = prediction_probas[i] if prediction_probas is not None else None

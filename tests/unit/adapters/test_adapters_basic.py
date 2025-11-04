@@ -29,7 +29,7 @@ try:
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
-    print(f"Import error: {e}")
+    logger.error(f"Import error: {e}")  # TODO: Add logger import if needed
     IMPORTS_AVAILABLE = False
 
 try:

@@ -27,7 +27,7 @@ try:
         get_user_by_id,
     )
 except ImportError as e:
-    print(f"Warning: Import failed: {e}")
+    logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
     # Mock implementations
     MOCK_USERS = {}
 

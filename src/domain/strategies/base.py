@@ -36,8 +36,10 @@ class PredictionInput:
     match: Match
     home_team: Team
     away_team: Team
-    historical_data: dict[str, Any] | None = None
-    additional_features: dict[str, Any] | None = field(default_factory=dict)
+    historical_data: dict[str,
+    Any] | None = None
+    additional_features: dict[str,
+    Any] | None = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -51,8 +53,10 @@ class PredictionOutput:
     predicted_home_score: int
     predicted_away_score: int
     confidence: float
-    probability_distribution: dict[str, float] | None = None
-    feature_importance: dict[str, float] | None = None
+    probability_distribution: dict[str,
+    float] | None = None
+    feature_importance: dict[str,
+    float] | None = None
     metadata: dict[str, Any] | None = field(default_factory=dict)
     strategy_used: str | None = None
     execution_time_ms: float | None = None
@@ -78,7 +82,6 @@ class PredictionStrategy(ABC):
 
     def __init__(self, name: str, strategy_type: StrategyType):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = name
         self.strategy_type = strategy_type
@@ -87,16 +90,18 @@ class PredictionStrategy(ABC):
         self.config: dict[str, Any] = {}
 
     @abstractmethod
-    async def initialize(self, config: dict[str, Any]) -> None:
+    async def initialize(self,
+    config: dict[str,
+    Any]) -> None:
         """初始化策略"
 
         Args:
             config: 策略配置参数
         """
-        pass
 
     @abstractmethod
-    async def predict(self, input_data: PredictionInput) -> PredictionOutput:
+    async def predict(self,
+    input_data: PredictionInput) -> PredictionOutput:
         """执行预测"
 
         Args:
@@ -105,11 +110,11 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionOutput: 预测结果
         """
-        pass
 
     @abstractmethod
     async def batch_predict(
-        self, inputs: list[PredictionInput]
+        self,
+    inputs: list[PredictionInput]
     ) -> list[PredictionOutput]:
         """批量预测"
 
@@ -119,18 +124,20 @@ class PredictionStrategy(ABC):
         Returns:
             List[PredictionOutput]: 预测结果列表
         """
-        pass
 
     @abstractmethod
     async def update_metrics(
-        self, actual_results: list[tuple[Prediction, dict[str, Any]]]
+        self,
+    actual_results: list[tuple[Prediction,
+    dict[str,
+    Any]]]
     ) -> None:
         """更新策略性能指标"
 
         Args:
-            actual_results: 实际结果列表,包含预测和实际比赛结果
+            actual_results: 实际结果列表,
+    包含预测和实际比赛结果
         """
-        pass
 
     def get_metrics(self) -> StrategyMetrics | None:
         """获取策略性能指标"""
@@ -140,15 +147,19 @@ class PredictionStrategy(ABC):
         """检查策略是否健康可用"""
         return self._is_initialized and self._metrics is not None
 
-    def get_config(self) -> dict[str, Any]:
+    def get_config(self) -> dict[str,
+    Any]:
         """获取策略配置"""
         return self.config.copy()
 
-    def update_config(self, new_config: dict[str, Any]) -> None:
+    def update_config(self,
+    new_config: dict[str,
+    Any]) -> None:
         """更新策略配置"""
         self.config.update(new_config)
 
-    async def validate_input(self, input_data: PredictionInput) -> bool:
+    async def validate_input(self,
+    input_data: PredictionInput) -> bool:
         """验证输入数据有效性"
 
         Args:
@@ -168,7 +179,8 @@ class PredictionStrategy(ABC):
         # 子类可以覆盖此方法进行特定验证
         return True
 
-    async def pre_process(self, input_data: PredictionInput) -> PredictionInput:
+    async def pre_process(self,
+    input_data: PredictionInput) -> PredictionInput:
         """预处理输入数据"
 
         Args:
@@ -177,10 +189,12 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionInput: 处理后的输入数据
         """
-        # 默认不做处理,子类可以覆盖
+        # 默认不做处理,
+    子类可以覆盖
         return input_data
 
-    async def post_process(self, output: PredictionOutput) -> PredictionOutput:
+    async def post_process(self,
+    output: PredictionOutput) -> PredictionOutput:
         """后处理预测结果"
 
         Args:
@@ -189,11 +203,13 @@ class PredictionStrategy(ABC):
         Returns:
             PredictionOutput: 处理后的预测结果
         """
-        # 默认不做处理,子类可以覆盖
+        # 默认不做处理,
+    子类可以覆盖
         return output
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(name='{self.name}', type='{self.strategy_type.value}')"
+        return f"{self.__class__.__name__}(name='{self.name}',
+    type='{self.strategy_type.value}')"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -215,12 +231,16 @@ class PredictionContext:
     away_team: Team
 
     # 配置参数
-    strategy_config: dict[str, Any] = field(default_factory=dict)
-    global_config: dict[str, Any] = field(default_factory=dict)
+    strategy_config: dict[str,
+    Any] = field(default_factory=dict)
+    global_config: dict[str,
+    Any] = field(default_factory=dict)
 
     # 中间数据
-    historical_data: dict[str, Any] | None = None
-    team_form: dict[str, Any] | None = None
+    historical_data: dict[str,
+    Any] | None = None
+    team_form: dict[str,
+    Any] | None = None
     head_to_head: list[dict[str, Any]] | None = None
 
     # 元数据
@@ -232,9 +252,10 @@ class PredictionContext:
         """转换为预测输入对象"""
         return PredictionInput(
             match=self.match,
-            home_team=self.home_team,
-            away_team=self.away_team,
-            historical_data=self.historical_data,
+    home_team=self.home_team,
+    away_team=self.away_team,
+    historical_data=self.historical_data,
+    
             additional_features={
                 "team_form": self.team_form,
                 "head_to_head": self.head_to_head,

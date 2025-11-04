@@ -21,7 +21,6 @@ class DatabaseService:
 
     def __init__(self, session: AsyncSession):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.session = session
         self.match_repo = MatchRepository(session)

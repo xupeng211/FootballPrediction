@@ -121,12 +121,9 @@ class TestDomainEvents:
         try:
             from src.domain.events.base import DomainEvent
             from src.domain.events.match_events import (
-                MatchEndedEvent,
                 MatchEvent,
-                MatchStartedEvent,
             )
             from src.domain.events.prediction_events import (
-                PredictionCreatedEvent,
                 PredictionEvent,
             )
 

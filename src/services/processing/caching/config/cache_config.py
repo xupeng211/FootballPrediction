@@ -30,7 +30,6 @@ class CacheConfig:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化后处理"""
         if self.ttl_config is None:

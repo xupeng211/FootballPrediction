@@ -28,7 +28,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
-    from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from src.ml.models.base_model import PredictionResult
     from src.ml.models.poisson_model import PoissonModel
 
     CAN_IMPORT = True
@@ -882,15 +882,7 @@ class TestMLWorkflowIntegration:
         print(f"  单策略预测准确率: {single_accuracy:.3f}")
         print(f"  策略选择历史: {len(selector.selection_history)}次")
 
-    async def test_concurrent_workflow_processing(self):
-        """测试并发工作流处理"""
-        training_data, test_data = create_test_dataset(200, 60)
-
-        # 创建多个工作流实例
-        workflow_count = 3
-        workflows = []
-
-        for i in range(workflow_count):
+def _test_concurrent_workflow_processing_iterate_items():
             selector = MockStrategySelector()
             ensemble_predictor = MockEnsemblePredictor(
                 ensemble_method="weighted_average"
@@ -916,16 +908,16 @@ class TestMLWorkflowIntegration:
 
         # 并发训练所有工作流
         training_tasks = []
-        for workflow in workflows:
-            for strategy in workflow["strategies"]:
+
+def _test_concurrent_workflow_processing_iterate_items():
                 training_tasks.append(strategy.train(training_data))
 
         training_results = await asyncio.gather(*training_tasks)
         assert len(training_results) == workflow_count * 2
 
         # 设置工作流
-        for workflow in workflows:
-            for strategy in workflow["strategies"]:
+
+def _test_concurrent_workflow_processing_iterate_items():
                 workflow["selector"].register_strategy(strategy)
                 workflow["ensemble_predictor"].add_strategy(strategy)
 
@@ -936,7 +928,8 @@ class TestMLWorkflowIntegration:
             """处理单个工作流"""
             results = []
 
-            for _, test_match in test_subset.iterrows():
+
+def _test_concurrent_workflow_processing_iterate_items():
                 match_data = {
                     "home_team": test_match["home_team"],
                     "away_team": test_match["away_team"],
@@ -946,7 +939,8 @@ class TestMLWorkflowIntegration:
                 prediction = await workflow_data["ensemble_predictor"].predict(
                     match_data
                 )
-                if prediction:
+
+def _test_concurrent_workflow_processing_check_condition():
                     results.append(
                         {
                             "workflow_id": workflow_id,
@@ -958,13 +952,7 @@ class TestMLWorkflowIntegration:
 
             return results
 
-        # 分割测试数据给不同工作流
-        test_subsets = np.array_split(test_data, workflow_count)
-
-        # 并发执行工作流
-        workflow_tasks = [
-            process_workflow(i, workflow, test_subset)
-            for i, (workflow, test_subset) in enumerate(zip(workflows, test_subsets))
+def _test_concurrent_workflow_processing_iterate_items():
         ]
 
         workflow_results = await asyncio.gather(*workflow_tasks)
@@ -975,12 +963,12 @@ class TestMLWorkflowIntegration:
 
         # 计算每个工作流的准确率
         workflow_accuracies = []
-        for i, results in enumerate(workflow_results):
-            if results:
+
+def _test_concurrent_workflow_processing_check_condition():
                 correct = sum(
                     1
-                    for r in results
-                    if r["prediction"].predicted_outcome == r["actual"]
+
+def _test_concurrent_workflow_processing_check_condition():
                 )
                 accuracy = correct / len(results)
                 workflow_accuracies.append(accuracy)
@@ -1022,14 +1010,16 @@ class TestMLWorkflowIntegration:
         # 测试错误处理
         error_handling_results = []
 
-        for _, test_match in test_data.iterrows():
+
+def _test_concurrent_workflow_processing_iterate_items():
             match_data = {
                 "home_team": test_match["home_team"],
                 "away_team": test_match["away_team"],
                 "match_id": f"error_test_{len(error_handling_results)}",
             }
 
-            try:
+
+def _test_concurrent_workflow_processing_handle_error():
                 # 1. 策略选择（应该能处理未训练策略）
                 best_strategy = selector.select_best_strategy(match_data, "accuracy")
 
@@ -1038,7 +1028,8 @@ class TestMLWorkflowIntegration:
 
                 # 3. 单策略预测（可能失败）
                 single_prediction = None
-                if best_strategy and best_strategy.is_trained:
+
+def _test_concurrent_workflow_processing_check_condition():
                     single_prediction = await best_strategy.predict(match_data)
 
                 error_handling_results.append(
@@ -1083,13 +1074,209 @@ class TestMLWorkflowIntegration:
         print(f"  集成预测成功率: {ensemble_success_rate:.3f}")
         print(f"  失败案例: {len(failed_cases)}")
 
-    async def test_workflow_performance_monitoring(self):
-        """测试工作流性能监控"""
-        training_data, test_data = create_test_dataset(200, 100)
 
-        # 性能监控器
-        class PerformanceMonitor:
-            def __init__(self):
+    async def test_concurrent_workflow_processing(self):
+        """测试并发工作流处理"""
+        training_data, test_data = create_test_dataset(200, 60)
+
+        # 创建多个工作流实例
+        workflow_count = 3
+        workflows = []
+
+        _test_concurrent_workflow_processing_iterate_items()
+            selector = MockStrategySelector()
+            ensemble_predictor = MockEnsemblePredictor(
+                ensemble_method="weighted_average"
+            )
+
+            # 每个工作流使用不同的策略
+            strategies = [
+                MockMLStrategy(
+                    MLStrategyType.POISSON, f"concurrent_poisson_{i}", weight=1.0
+                ),
+                MockMLStrategy(
+                    MLStrategyType.WEIGHTED, f"concurrent_weighted_{i}", weight=1.0
+                ),
+            ]
+
+            workflows.append(
+                {
+                    "selector": selector,
+                    "ensemble_predictor": ensemble_predictor,
+                    "strategies": strategies,
+                }
+            )
+
+        # 并发训练所有工作流
+        training_tasks = []
+        for workflow in workflows:
+            _test_concurrent_workflow_processing_iterate_items()
+                training_tasks.append(strategy.train(training_data))
+
+        training_results = await asyncio.gather(*training_tasks)
+        assert len(training_results) == workflow_count * 2
+
+        # 设置工作流
+        for workflow in workflows:
+            _test_concurrent_workflow_processing_iterate_items()
+                workflow["selector"].register_strategy(strategy)
+                workflow["ensemble_predictor"].add_strategy(strategy)
+
+        # 并发预测处理
+        async def process_workflow(
+            workflow_id: int, workflow_data: dict, test_subset: pd.DataFrame
+        ):
+            """处理单个工作流"""
+            results = []
+
+            _test_concurrent_workflow_processing_iterate_items()
+                match_data = {
+                    "home_team": test_match["home_team"],
+                    "away_team": test_match["away_team"],
+                    "match_id": f"concurrent_{workflow_id}_{len(results)}",
+                }
+
+                prediction = await workflow_data["ensemble_predictor"].predict(
+                    match_data
+                )
+                _test_concurrent_workflow_processing_check_condition()
+                    results.append(
+                        {
+                            "workflow_id": workflow_id,
+                            "match_id": match_data["match_id"],
+                            "prediction": prediction,
+                            "actual": test_match["result"],
+                        }
+                    )
+
+            return results
+
+        # 分割测试数据给不同工作流
+        test_subsets = np.array_split(test_data, workflow_count)
+
+        # 并发执行工作流
+        workflow_tasks = [
+            process_workflow(i, workflow, test_subset)
+            _test_concurrent_workflow_processing_iterate_items()
+        ]
+
+        workflow_results = await asyncio.gather(*workflow_tasks)
+
+        # 验证并发结果
+        total_predictions = sum(len(results) for results in workflow_results)
+        assert total_predictions == len(test_data)
+
+        # 计算每个工作流的准确率
+        workflow_accuracies = []
+        for i, results in enumerate(workflow_results):
+            _test_concurrent_workflow_processing_check_condition()
+                correct = sum(
+                    1
+                    for r in results
+                    _test_concurrent_workflow_processing_check_condition()
+                )
+                accuracy = correct / len(results)
+                workflow_accuracies.append(accuracy)
+                print(f"  工作流{i}: {len(results)}个预测, 准确率={accuracy:.3f}")
+
+        assert len(workflow_accuracies) == workflow_count
+
+        print("✅ 并发工作流处理测试通过:")
+        print(f"  工作流数量: {workflow_count}")
+        print(f"  总预测数: {total_predictions}")
+        print(f"  平均准确率: {np.mean(workflow_accuracies):.3f}")
+
+    async def test_workflow_error_handling_and_recovery(self):
+        """测试工作流错误处理和恢复"""
+        training_data, test_data = create_test_dataset(150, 50)
+
+        # 创建工作流
+        selector = MockStrategySelector()
+        ensemble_predictor = MockEnsemblePredictor()
+
+        # 创建正常策略和有问题的策略
+        normal_strategy = MockMLStrategy(
+            MLStrategyType.POISSON, "normal_strategy", weight=1.0
+        )
+        await normal_strategy.train(training_data)
+
+        # 创建未训练的策略（会失败）
+        untrained_strategy = MockMLStrategy(
+            MLStrategyType.ENSEMBLE, "untrained_strategy", weight=1.0
+        )
+        # 不训练，模拟错误情况
+
+        # 注册策略
+        selector.register_strategy(normal_strategy)
+        selector.register_strategy(untrained_strategy)
+        ensemble_predictor.add_strategy(normal_strategy)
+        ensemble_predictor.add_strategy(untrained_strategy)
+
+        # 测试错误处理
+        error_handling_results = []
+
+        _test_concurrent_workflow_processing_iterate_items()
+            match_data = {
+                "home_team": test_match["home_team"],
+                "away_team": test_match["away_team"],
+                "match_id": f"error_test_{len(error_handling_results)}",
+            }
+
+            _test_concurrent_workflow_processing_handle_error()
+                # 1. 策略选择（应该能处理未训练策略）
+                best_strategy = selector.select_best_strategy(match_data, "accuracy")
+
+                # 2. 集成预测（应该能处理部分失败）
+                ensemble_prediction = await ensemble_predictor.predict(match_data)
+
+                # 3. 单策略预测（可能失败）
+                single_prediction = None
+                _test_concurrent_workflow_processing_check_condition()
+                    single_prediction = await best_strategy.predict(match_data)
+
+                error_handling_results.append(
+                    {
+                        "match_id": match_data["match_id"],
+                        "success": True,
+                        "ensemble_success": ensemble_prediction is not None,
+                        "single_success": single_prediction is not None,
+                        "selected_strategy": (
+                            best_strategy.name if best_strategy else None
+                        ),
+                    }
+                )
+
+            except Exception as e:
+                error_handling_results.append(
+                    {
+                        "match_id": match_data["match_id"],
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
+
+        # 验证错误处理结果
+        successful_cases = [r for r in error_handling_results if r["success"]]
+        failed_cases = [r for r in error_handling_results if not r["success"]]
+
+        # 大部分情况应该成功
+        success_rate = len(successful_cases) / len(error_handling_results)
+        assert success_rate > 0.8  # 至少80%成功率
+
+        # 集成预测应该有更高的成功率（因为容错性）
+        ensemble_success_rate = sum(
+            1 for r in successful_cases if r["ensemble_success"]
+        ) / len(successful_cases)
+        assert ensemble_success_rate > 0.5
+
+        print("✅ 工作流错误处理测试通过:")
+        print(
+            f"  成功率: {success_rate:.3f} ({len(successful_cases)}/{len(error_handling_results)})"
+        )
+        print(f"  集成预测成功率: {ensemble_success_rate:.3f}")
+        print(f"  失败案例: {len(failed_cases)}")
+
+def _test_workflow_performance_monitoring_process_logic():
                 self.metrics = {
                     "training_times": [],
                     "prediction_times": [],
@@ -1099,31 +1286,164 @@ class TestMLWorkflowIntegration:
                     "errors": 0,
                 }
 
-            def record_training_time(self, strategy_name: str, time: float):
+
+def _test_workflow_performance_monitoring_process_logic():
                 self.metrics["training_times"].append(
                     {"strategy": strategy_name, "time": time}
                 )
 
-            def record_prediction_time(self, prediction_type: str, time: float):
+
+def _test_workflow_performance_monitoring_process_logic():
                 self.metrics["prediction_times"].append(
                     {"type": prediction_type, "time": time}
                 )
 
-            def record_strategy_selection(self, strategy_name: str):
+
+def _test_workflow_performance_monitoring_process_logic():
+                self.metrics["strategy_selections"][strategy_name] = (
+                    self.metrics["strategy_selections"].get(strategy_name, 0) + 1
+                )
+
+
+def _test_workflow_performance_monitoring_check_condition():
+                    self.metrics["ensemble_predictions"] += 1
+                else:
+                    self.metrics["single_predictions"] += 1
+
+
+def _test_workflow_performance_monitoring_process_logic():
+                self.metrics["errors"] += 1
+
+
+def _test_workflow_performance_monitoring_process_logic():
+                training_times = [t["time"] for t in self.metrics["training_times"]]
+                prediction_times = [t["time"] for t in self.metrics["prediction_times"]]
+
+                return {
+
+def _test_workflow_performance_monitoring_iterate_items():
+            start_time = datetime.now()
+            await strategy.train(training_data)
+            training_time = (datetime.now() - start_time).total_seconds()
+            monitor.record_training_time(strategy.name, training_time)
+
+            selector.register_strategy(strategy)
+            ensemble_predictor.add_strategy(strategy)
+
+        # 预测并监控性能
+
+def _test_workflow_performance_monitoring_iterate_items():
+            match_data = {
+                "home_team": test_match["home_team"],
+                "away_team": test_match["away_team"],
+                "match_id": f"monitor_{len(monitor.metrics['prediction_times'])}",
+            }
+
+
+def _test_workflow_performance_monitoring_handle_error():
+                # 策略选择
+                start_time = datetime.now()
+                best_strategy = selector.select_best_strategy(match_data, "accuracy")
+                selection_time = (datetime.now() - start_time).total_seconds()
+                monitor.record_prediction_time("selection", selection_time)
+
+
+def _test_workflow_performance_monitoring_check_condition():
+                    monitor.record_strategy_selection(best_strategy.name)
+
+                # 集成预测
+                start_time = datetime.now()
+                ensemble_prediction = await ensemble_predictor.predict(match_data)
+                ensemble_time = (datetime.now() - start_time).total_seconds()
+                monitor.record_prediction_time("ensemble", ensemble_time)
+
+
+def _test_workflow_performance_monitoring_check_condition():
+                    monitor.record_prediction_type(True)
+
+                # 单策略预测
+
+def _test_workflow_performance_monitoring_check_condition():
+                    start_time = datetime.now()
+                    single_prediction = await best_strategy.predict(match_data)
+                    single_time = (datetime.now() - start_time).total_seconds()
+                    monitor.record_prediction_time("single", single_time)
+
+
+def _test_workflow_performance_monitoring_check_condition():
+                        monitor.record_prediction_type(False)
+
+            except Exception:
+                monitor.record_error()
+
+        # 获取性能摘要
+        performance_summary = monitor.get_summary()
+
+        # 验证性能监控结果
+        assert performance_summary["total_strategies"] == 2
+        assert performance_summary["avg_training_time"] > 0
+        assert performance_summary["avg_prediction_time"] > 0
+        assert len(performance_summary["strategy_selections"]) > 0
+        assert 0 <= performance_summary["ensemble_ratio"] <= 1
+        assert performance_summary["total_predictions"] > 0
+
+        print("✅ 工作流性能监控测试通过:")
+        print(f"  策略数量: {performance_summary['total_strategies']}")
+        print(f"  平均训练时间: {performance_summary['avg_training_time']:.3f}s")
+        print(f"  平均预测时间: {performance_summary['avg_prediction_time']:.3f}s")
+        print(f"  集成预测比例: {performance_summary['ensemble_ratio']:.3f}")
+        print(f"  总预测数: {performance_summary['total_predictions']}")
+        print(f"  错误率: {performance_summary['error_rate']:.3f}")
+        print(f"  策略选择分布: {performance_summary['strategy_selections']}")
+
+
+
+def _test_workflow_performance_monitoring_check_condition():
+    # 运行测试
+    pytest.main([__file__, "-v", "--tb=short"])
+
+
+    async def test_workflow_performance_monitoring(self):
+        """测试工作流性能监控"""
+        training_data, test_data = create_test_dataset(200, 100)
+
+        # 性能监控器
+        class PerformanceMonitor:
+            _test_workflow_performance_monitoring_process_logic()
+                self.metrics = {
+                    "training_times": [],
+                    "prediction_times": [],
+                    "strategy_selections": {},
+                    "ensemble_predictions": 0,
+                    "single_predictions": 0,
+                    "errors": 0,
+                }
+
+            _test_workflow_performance_monitoring_process_logic()
+                self.metrics["training_times"].append(
+                    {"strategy": strategy_name, "time": time}
+                )
+
+            _test_workflow_performance_monitoring_process_logic()
+                self.metrics["prediction_times"].append(
+                    {"type": prediction_type, "time": time}
+                )
+
+            _test_workflow_performance_monitoring_process_logic()
                 self.metrics["strategy_selections"][strategy_name] = (
                     self.metrics["strategy_selections"].get(strategy_name, 0) + 1
                 )
 
             def record_prediction_type(self, is_ensemble: bool):
-                if is_ensemble:
+                _test_workflow_performance_monitoring_check_condition()
                     self.metrics["ensemble_predictions"] += 1
                 else:
                     self.metrics["single_predictions"] += 1
 
-            def record_error(self):
+            _test_workflow_performance_monitoring_process_logic()
                 self.metrics["errors"] += 1
 
-            def get_summary(self) -> dict[str, Any]:
+            _test_workflow_performance_monitoring_process_logic()
                 training_times = [t["time"] for t in self.metrics["training_times"]]
                 prediction_times = [t["time"] for t in self.metrics["prediction_times"]]
 
@@ -1161,7 +1481,7 @@ class TestMLWorkflowIntegration:
             MockMLStrategy(MLStrategyType.ENSEMBLE, "monitor_ensemble", weight=0.8),
         ]
 
-        for strategy in strategies:
+        _test_workflow_performance_monitoring_iterate_items()
             start_time = datetime.now()
             await strategy.train(training_data)
             training_time = (datetime.now() - start_time).total_seconds()
@@ -1171,21 +1491,21 @@ class TestMLWorkflowIntegration:
             ensemble_predictor.add_strategy(strategy)
 
         # 预测并监控性能
-        for _, test_match in test_data.iterrows():
+        _test_workflow_performance_monitoring_iterate_items()
             match_data = {
                 "home_team": test_match["home_team"],
                 "away_team": test_match["away_team"],
                 "match_id": f"monitor_{len(monitor.metrics['prediction_times'])}",
             }
 
-            try:
+            _test_workflow_performance_monitoring_handle_error()
                 # 策略选择
                 start_time = datetime.now()
                 best_strategy = selector.select_best_strategy(match_data, "accuracy")
                 selection_time = (datetime.now() - start_time).total_seconds()
                 monitor.record_prediction_time("selection", selection_time)
 
-                if best_strategy:
+                _test_workflow_performance_monitoring_check_condition()
                     monitor.record_strategy_selection(best_strategy.name)
 
                 # 集成预测
@@ -1194,17 +1514,17 @@ class TestMLWorkflowIntegration:
                 ensemble_time = (datetime.now() - start_time).total_seconds()
                 monitor.record_prediction_time("ensemble", ensemble_time)
 
-                if ensemble_prediction:
+                _test_workflow_performance_monitoring_check_condition()
                     monitor.record_prediction_type(True)
 
                 # 单策略预测
-                if best_strategy and best_strategy.is_trained:
+                _test_workflow_performance_monitoring_check_condition()
                     start_time = datetime.now()
                     single_prediction = await best_strategy.predict(match_data)
                     single_time = (datetime.now() - start_time).total_seconds()
                     monitor.record_prediction_time("single", single_time)
 
-                    if single_prediction:
+                    _test_workflow_performance_monitoring_check_condition()
                         monitor.record_prediction_type(False)
 
             except Exception:
@@ -1231,6 +1551,6 @@ class TestMLWorkflowIntegration:
         print(f"  策略选择分布: {performance_summary['strategy_selections']}")
 
 
-if __name__ == "__main__":
+_test_workflow_performance_monitoring_check_condition()
     # 运行测试
     pytest.main([__file__, "-v", "--tb=short"])

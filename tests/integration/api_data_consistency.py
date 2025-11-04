@@ -434,7 +434,8 @@ class DataConsistencyTester:
                 logger.warning(error_msg)
 
             duration = time.time() - start_time
-            details = f"成功: {len(successful_predictions)}/{len(match_ids)}, 失败: {len(failed_operations)}"
+            details = f"成功: {len(successful_predictions)}/{len(match_ids)},"
+    失败: {len(failed_operations)}"
             self.log_test("并发操作一致性", len(failed_checks) == 0, details, duration)
             return len(failed_checks) == 0
 

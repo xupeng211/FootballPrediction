@@ -57,7 +57,7 @@ class TestDatabaseBase:
     def test_timestamp_mixins(self):
         """测试时间戳混入"""
         try:
-            from src.database.base import BaseModel, TimestampMixin
+            from src.database.base import BaseModel
 
             # 检查时间戳相关功能
             model = BaseModel()

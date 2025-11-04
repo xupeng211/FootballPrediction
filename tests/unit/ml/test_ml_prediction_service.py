@@ -24,7 +24,7 @@ import pytest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
+    from ml.models.base_model import BaseModel, PredictionResult
     from ml.models.elo_model import EloModel
     from ml.models.poisson_model import PoissonModel
     from ml.prediction.prediction_service import (
@@ -35,7 +35,7 @@ try:
 
     CAN_IMPORT = True
 except ImportError as e:
-    print(f"Warning: 无法导入ML模块: {e}")
+    logger.warning(f"Warning: 无法导入ML模块: {e}")  # TODO: Add logger import if needed
     CAN_IMPORT = False
 
 

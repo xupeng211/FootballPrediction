@@ -97,18 +97,42 @@ class TestBaseModel:
     """基础模型测试"""
 
     @pytest.fixture
+def _mock_base_model_process_logic():
+                super().__init__("MockModel", "1.0")
+                self.mock_prediction = None
+
+
+def _mock_base_model_process_logic():
+                self, training_data: pd.DataFrame, validation_data: pd.DataFrame = None
+            ) -> TrainingResult:
+                self.is_trained = True
+                return TrainingResult(
+
+def _mock_base_model_process_logic():
+                self, match_data: dict[str, Any]
+            ) -> tuple[float, float, float]:
+
+def _mock_base_model_manage_resource():
+                        pickle.dump({"is_trained": self.is_trained}, f)
+                    return True
+
+def _mock_base_model_manage_resource():
+                        data = pickle.load(f)
+                    self.is_trained = data.get("is_trained", False)
+                    return True
+
     def mock_base_model(self):
         """创建基础模型的模拟实现"""
 
         class MockBaseModel(BaseModel):
-            def __init__(self):
+            _mock_base_model_process_logic()
                 super().__init__("MockModel", "1.0")
                 self.mock_prediction = None
 
             def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
                 return np.array([1.0, 2.0, 3.0, 4.0])
 
-            def train(
+            _mock_base_model_process_logic()
                 self, training_data: pd.DataFrame, validation_data: pd.DataFrame = None
             ) -> TrainingResult:
                 self.is_trained = True
@@ -150,7 +174,7 @@ class TestBaseModel:
                     created_at=datetime.now(),
                 )
 
-            def predict_proba(
+            _mock_base_model_process_logic()
                 self, match_data: dict[str, Any]
             ) -> tuple[float, float, float]:
                 if not self.is_trained:
@@ -169,7 +193,7 @@ class TestBaseModel:
 
             def save_model(self, file_path: str) -> bool:
                 try:
-                    with open(file_path, "wb") as f:
+                    _mock_base_model_manage_resource()
                         pickle.dump({"is_trained": self.is_trained}, f)
                     return True
                 except Exception:
@@ -177,7 +201,7 @@ class TestBaseModel:
 
             def load_model(self, file_path: str) -> bool:
                 try:
-                    with open(file_path, "rb") as f:
+                    _mock_base_model_manage_resource()
                         data = pickle.load(f)
                     self.is_trained = data.get("is_trained", False)
                     return True

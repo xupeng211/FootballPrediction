@@ -11,7 +11,6 @@ audit 模块
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class AuditAction(Enum):
@@ -72,7 +71,6 @@ class AuditLogSummary:
 
     def __init__(self, total_logs: int = 0):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.total_logs = total_logs
 
@@ -85,7 +83,6 @@ class AuditService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.name = "AuditService"
 
@@ -96,7 +93,6 @@ class AuditService:
         severity: AuditSeverity = AuditSeverity.LOW,
     ):
         """记录审计日志"""
-        pass
 
 
 __all__ = [

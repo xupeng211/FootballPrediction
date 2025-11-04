@@ -22,7 +22,6 @@ class RedisAsyncOperations:
 
     def __init__(self, redis_url: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """Initialize async operations"""
         self.redis_url = redis_url or "redis://localhost:6379"

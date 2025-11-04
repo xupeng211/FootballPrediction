@@ -68,7 +68,6 @@ class TestPhase35AICoverageMaster:
 
     def teardown_method(self):
         """测试后清理"""
-        pass
 
 
 if __name__ == "__main__":

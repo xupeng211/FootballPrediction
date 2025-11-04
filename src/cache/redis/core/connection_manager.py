@@ -16,7 +16,6 @@ class RedisConnectionManager:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._pool: aioredis.ConnectionPool | None = None
         self._redis: aioredis.Redis | None = None

@@ -27,7 +27,6 @@ class MatchDomainService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self._events: list[Any] = []
 

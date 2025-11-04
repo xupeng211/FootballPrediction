@@ -48,11 +48,11 @@ class WorkflowTester:
         self.test_results.append(result)
 
         status_symbol = "✅" if success else "❌"
-        print(f"{status_symbol} {test_name}")
+        logger.debug(f"{status_symbol} {test_name}")  # TODO: Add logger import if needed
         if details:
-            print(f"   📝 {details}")
+            logger.debug(f"   📝 {details}")  # TODO: Add logger import if needed
         if duration > 0:
-            print(f"   ⏱️  耗时: {duration:.2f}秒")
+            logger.debug(f"   ⏱️  耗时: {duration:.2f}秒")  # TODO: Add logger import if needed
 
     async def create_test_user(self, user_id: str, role: str = "user") -> bool:
         """创建测试用户"""
@@ -236,8 +236,8 @@ class WorkflowTester:
 
     async def test_complete_user_workflow(self, user_id: str) -> bool:
         """测试完整用户工作流"""
-        print(f"\n🔄 开始用户 {user_id} 的完整工作流测试")
-        print("-" * 50)
+        logger.debug(f"\n🔄 开始用户 {user_id} 的完整工作流测试")  # TODO: Add logger import if needed
+        logger.debug("-" * 50)  # TODO: Add logger import if needed
 
         workflow_steps = [
             (f"创建用户{user_id}", lambda: self.create_test_user(user_id)),
@@ -366,8 +366,8 @@ class WorkflowTester:
 
     async def run_all_workflow_tests(self) -> dict[str, Any]:
         """运行所有工作流测试"""
-        print("🚀 开始API工作流集成测试")
-        print("=" * 60)
+        logger.debug("🚀 开始API工作流集成测试")  # TODO: Add logger import if needed
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
 
         test_methods = [
             (
@@ -383,7 +383,7 @@ class WorkflowTester:
         total_tests = len(test_methods)
 
         for test_name, test_method in test_methods:
-            print(f"\n🧪 执行测试: {test_name}")
+            logger.debug(f"\n🧪 执行测试: {test_name}")  # TODO: Add logger import if needed
             try:
                 if await test_method():
                     passed_tests += 1
@@ -405,14 +405,14 @@ class WorkflowTester:
             "timestamp": datetime.now().isoformat(),
         }
 
-        print("=" * 60)
-        print("📊 工作流测试完成！")
-        print(f"总测试数: {total_tests}")
-        print(f"通过测试: {passed_tests}")
-        print(f"失败测试: {total_tests - passed_tests}")
-        print(f"成功率: {success_rate:.1f}%")
-        print(f"创建用户数: {report['users_created']}")
-        print(f"创建预测数: {report['predictions_created']}")
+        logger.debug("=" * 60)  # TODO: Add logger import if needed
+        logger.debug("📊 工作流测试完成！")  # TODO: Add logger import if needed
+        logger.debug(f"总测试数: {total_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"通过测试: {passed_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"失败测试: {total_tests - passed_tests}")  # TODO: Add logger import if needed
+        logger.debug(f"成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+        logger.debug(f"创建用户数: {report['users_created']}")  # TODO: Add logger import if needed
+        logger.debug(f"创建预测数: {report['predictions_created']}")  # TODO: Add logger import if needed
 
         return report
 
@@ -464,16 +464,16 @@ async def main():
     tester = WorkflowTester()
     report = await tester.run_all_workflow_tests()
 
-    print("\n🎯 工作流集成测试结果:")
-    print(f"成功率: {report['success_rate']:.1f}%")
-    print(f"用户数: {report['users_created']}")
-    print(f"预测数: {report['predictions_created']}")
+    logger.debug("\n🎯 工作流集成测试结果:")  # TODO: Add logger import if needed
+    logger.debug(f"成功率: {report['success_rate']:.1f}%")  # TODO: Add logger import if needed
+    logger.debug(f"用户数: {report['users_created']}")  # TODO: Add logger import if needed
+    logger.debug(f"预测数: {report['predictions_created']}")  # TODO: Add logger import if needed
 
     if report["success_rate"] >= 75:
-        print("🎉 工作流集成测试通过！")
+        logger.debug("🎉 工作流集成测试通过！")  # TODO: Add logger import if needed
         return 0
     else:
-        print("❌ 工作流集成测试失败，成功率不足75%")
+        logger.debug("❌ 工作流集成测试失败，成功率不足75%")  # TODO: Add logger import if needed
         return 1
 
 

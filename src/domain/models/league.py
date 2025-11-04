@@ -49,7 +49,6 @@ class LeagueSeason:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """验证赛季信息"""
         if not self.season:
@@ -124,7 +123,6 @@ class LeagueSettings:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """验证设置"""
         if any(
@@ -197,7 +195,6 @@ class League:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:

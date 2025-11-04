@@ -5,7 +5,7 @@ Redis cache module - 提供完整的Redis缓存管理功能
 # import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
@@ -29,7 +29,6 @@ class RedisManager:
 
     def __init__(self, redis_url: str | None = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化Redis管理器"""
         self.redis_url = redis_url or "redis://localhost:6379"

@@ -240,55 +240,119 @@ class Prediction:
         self.is_correct = kwargs.get("is_correct")
         self.created_at = kwargs.get("created_at", datetime.utcnow())
 
-    def validate(self) -> list[str]:
-        """验证预测数据"""
-        errors = []
-
-        # 验证用户ID和比赛ID
-        if not self.user_id:
+def _validate_check_condition():
             errors.append("用户ID不能为空")
 
-        if not self.match_id:
+
+def _validate_check_condition():
             errors.append("比赛ID不能为空")
 
         # 验证预测结果
-        if self.predicted_outcome not in PredictedResult.__members__.values():
+
+def _validate_check_condition():
             errors.append(f"无效的预测结果: {self.predicted_outcome}")
 
         # 验证概率
-        if not ModelValidator.validate_probabilities(
+
+def _validate_check_condition():
             self.home_win_prob, self.draw_prob, self.away_win_prob
         ):
             errors.append("概率值无效：每个概率应在0-1之间，总和应为1.0")
 
         # 验证置信度
-        if not ModelValidator.validate_confidence(self.confidence):
+
+def _validate_check_condition():
             errors.append("置信度应在0-1之间")
 
         # 验证模型版本
-        if not self.model_version:
+
+def _validate_check_condition():
             errors.append("模型版本不能为空")
 
         # 验证实际结果（如果存在）
-        if (
+
+def _validate_check_condition():
             self.actual_outcome
             and self.actual_outcome not in PredictedResult.__members__.values()
         ):
             errors.append(f"无效的实际结果: {self.actual_outcome}")
 
         # 验证预测结果和概率的一致性
-        if (
+
+def _validate_check_condition():
             self.predicted_outcome == PredictedResult.HOME
             and self.home_win_prob <= max(self.draw_prob, self.away_win_prob)
         ):
             errors.append("预测为主队获胜，但主队胜率不是最高")
 
-        if self.predicted_outcome == PredictedResult.DRAW and self.draw_prob <= max(
+
+def _validate_check_condition():
             self.home_win_prob, self.away_win_prob
         ):
             errors.append("预测为平局，但平局概率不是最高")
 
-        if (
+
+def _validate_check_condition():
+            self.predicted_outcome == PredictedResult.AWAY
+            and self.away_win_prob <= max(self.home_win_prob, self.draw_prob)
+        ):
+            errors.append("预测为客队获胜，但客队胜率不是最高")
+
+        return errors
+
+def _validate_process_logic():
+    """用户模型验证测试"""
+
+
+    def validate(self) -> list[str]:
+        """验证预测数据"""
+        errors = []
+
+        # 验证用户ID和比赛ID
+        _validate_check_condition()
+            errors.append("用户ID不能为空")
+
+        _validate_check_condition()
+            errors.append("比赛ID不能为空")
+
+        # 验证预测结果
+        _validate_check_condition()
+            errors.append(f"无效的预测结果: {self.predicted_outcome}")
+
+        # 验证概率
+        _validate_check_condition()
+            self.home_win_prob, self.draw_prob, self.away_win_prob
+        ):
+            errors.append("概率值无效：每个概率应在0-1之间，总和应为1.0")
+
+        # 验证置信度
+        _validate_check_condition()
+            errors.append("置信度应在0-1之间")
+
+        # 验证模型版本
+        _validate_check_condition()
+            errors.append("模型版本不能为空")
+
+        # 验证实际结果（如果存在）
+        _validate_check_condition()
+            self.actual_outcome
+            and self.actual_outcome not in PredictedResult.__members__.values()
+        ):
+            errors.append(f"无效的实际结果: {self.actual_outcome}")
+
+        # 验证预测结果和概率的一致性
+        _validate_check_condition()
+            self.predicted_outcome == PredictedResult.HOME
+            and self.home_win_prob <= max(self.draw_prob, self.away_win_prob)
+        ):
+            errors.append("预测为主队获胜，但主队胜率不是最高")
+
+        _validate_check_condition()
+            self.home_win_prob, self.away_win_prob
+        ):
+            errors.append("预测为平局，但平局概率不是最高")
+
+        _validate_check_condition()
             self.predicted_outcome == PredictedResult.AWAY
             and self.away_win_prob <= max(self.home_win_prob, self.draw_prob)
         ):
@@ -300,7 +364,7 @@ class Prediction:
 @pytest.mark.unit
 @pytest.mark.database
 @pytest.mark.validation
-class TestUserModelValidation:
+_validate_process_logic()
     """用户模型验证测试"""
 
     def test_valid_user_creation(self):

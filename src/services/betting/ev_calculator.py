@@ -107,7 +107,6 @@ class PredictionProbabilities:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         if self.prediction_time is None:
             self.prediction_time = datetime.now()
@@ -173,7 +172,6 @@ class EVCalculator:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.config = get_config()
         self.redis_manager = get_redis_manager()
@@ -352,7 +350,6 @@ class BettingStrategyOptimizer:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.logger = logger
         self.strategies = self._initialize_strategies()
@@ -527,7 +524,6 @@ class BettingRecommendationEngine:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.ev_calculator = EVCalculator()
         self.optimizer = BettingStrategyOptimizer()

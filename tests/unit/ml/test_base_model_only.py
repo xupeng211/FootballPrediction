@@ -223,20 +223,47 @@ class TestBaseModel:
             BaseModel.load_model, "__isabstractmethod__", False
         )  # 可能有默认实现
 
+def _test_base_model_concrete_subclass_process_logic():
+            """具体的模型实现，用于测试"""
+
+
+def _test_base_model_concrete_subclass_process_logic():
+                super().__init__(name, version)
+                self.is_trained = False
+
+
+def _test_base_model_concrete_subclass_process_logic():
+                self.is_trained = True
+                return TrainingResult(
+
+def _test_base_model_concrete_subclass_check_condition():
+                        else 0
+                    ),
+                    training_time=5.0,
+                    features_used=["test_feature"],
+                    hyperparameters={},
+                    created_at=datetime.now(),
+                )
+
+
+def _test_base_model_concrete_subclass_process_logic():
+                self.is_trained = True
+                return True  # 简化实现
+
     def test_base_model_concrete_subclass(self):
         """测试BaseModel的具体子类"""
 
-        class ConcreteModel(BaseModel):
+        _test_base_model_concrete_subclass_process_logic()
             """具体的模型实现，用于测试"""
 
-            def __init__(self, name: str, version: str = "1.0"):
+            _test_base_model_concrete_subclass_process_logic()
                 super().__init__(name, version)
                 self.is_trained = False
 
             def prepare_features(self, match_data: dict[str, Any]):
                 return [1, 2, 3]  # 简单的特征向量
 
-            def train(self, training_data, validation_data=None):
+            _test_base_model_concrete_subclass_process_logic()
                 self.is_trained = True
                 return TrainingResult(
                     model_name=self.model_name,
@@ -251,7 +278,7 @@ class TestBaseModel:
                     ),
                     validation_samples=(
                         len(validation_data)
-                        if validation_data and hasattr(validation_data, "__len__")
+                        _test_base_model_concrete_subclass_check_condition()
                         else 0
                     ),
                     training_time=5.0,
@@ -296,7 +323,7 @@ class TestBaseModel:
             def save_model(self, file_path):
                 return True  # 简化实现
 
-            def load_model(self, file_path):
+            _test_base_model_concrete_subclass_process_logic()
                 self.is_trained = True
                 return True  # 简化实现
 

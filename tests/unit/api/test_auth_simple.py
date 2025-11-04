@@ -678,8 +678,8 @@ class TestEdgeCases:
     def test_jwt_auth_manager_custom_algorithm(self):
         """测试JWT认证管理器自定义算法"""
         manager = JWTAuthManager(
-            secret_key="test-secret-key", algorithm="HS256"  # 显式指定算法
-        )
+            secret_key="test-secret-key", algorithm="HS256"
+        )  # 显式指定算法
         assert manager.algorithm == "HS256"
 
     @pytest.mark.asyncio

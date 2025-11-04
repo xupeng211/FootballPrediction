@@ -102,7 +102,6 @@ class Match:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化后的验证"""
         if self.home_team_id == self.away_team_id:

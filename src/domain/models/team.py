@@ -108,7 +108,6 @@ class TeamForm:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """验证状态数据"""
         if len(self.last_matches) > 10:
@@ -218,7 +217,6 @@ class Team:
 
     def __post_init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
