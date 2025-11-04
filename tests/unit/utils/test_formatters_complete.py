@@ -43,7 +43,7 @@ class TestFormattersComplete:
         # 数组
         data = [1, 2, 3]
         result = format_json(data)
-        assert "[1, 2, 3]" in result.replace(" ", "")
+        assert "[1, 2, 3]" in result
 
         # 嵌套对象
         data = {"user": {"name": "John", "age": 30}, "active": True}

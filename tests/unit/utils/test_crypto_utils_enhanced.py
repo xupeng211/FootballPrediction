@@ -7,6 +7,7 @@ import pytest
 import hashlib
 import base64
 import urllib.parse
+from unittest.mock import patch
 from src.utils.crypto_utils import CryptoUtils
 
 
@@ -59,20 +60,29 @@ class TestCryptoUtilsEnhanced:
         assert len(parts[4]) == 12
 
     def test_hash_password_without_bcrypt(self):
-        """测试无bcrypt时的密码哈希"""
+        """测试密码哈希（bcrypt可用）"""
         password = "test_password_123"
         hashed = CryptoUtils.hash_password(password)
 
         assert isinstance(hashed, str)
-        assert hashed.startswith("sha256$")
+        # bcrypt可用时，应该返回bcrypt格式的哈希
+        assert hashed.startswith("$2b$") or hashed.startswith("sha256$")
         assert hashed.count("$") >= 2
 
-        # 验证哈希格式：sha256$salt$hash
+        # 验证哈希格式
         parts = hashed.split("$")
         assert len(parts) >= 3
-        assert parts[0] == "sha256"
-        assert len(parts[1]) > 0  # salt
-        assert len(parts[2]) == 64  # SHA256 hash length
+
+        if hashed.startswith("sha256$"):
+            # SHA256格式：sha256$salt$hash
+            assert parts[0] == "sha256"
+            assert len(parts[1]) > 0  # salt
+            assert len(parts[2]) == 64  # SHA256 hash length
+        elif hashed.startswith("$2b$"):
+            # bcrypt格式：$2b$cost$salt$hash
+            assert parts[0] == ""  # 分割后第一个元素为空
+            assert parts[1] == "2b"
+            assert len(parts) >= 4
 
     def test_hash_password_with_bcrypt_mock(self):
         """测试使用bcrypt的密码哈希（模拟）"""

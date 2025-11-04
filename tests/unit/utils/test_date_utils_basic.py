@@ -190,10 +190,10 @@ class TestDateUtilsBasic:
 
     def test_get_month_end_february(self):
         """测试二月份结束日期"""
-        # 非闰年
+        # 闰年 (2024年是闰年，2月有29天)
         dt = datetime(2024, 2, 15)
         month_end = DateUtils.get_month_end(dt)
-        assert month_end.day == 28
+        assert month_end.day == 29
 
     def test_get_month_end_invalid_input(self):
         """测试无效输入获取月份结束日期"""
