@@ -148,6 +148,22 @@ class StreamingError(FootballPredictionError):
     """流式处理相关异常"""
 
 
+# 用户管理相关异常
+class UserNotFoundError(FootballPredictionError):
+    """用户未找到异常"""
+    pass
+
+
+class UserAlreadyExistsError(FootballPredictionError):
+    """用户已存在异常"""
+    pass
+
+
+class InvalidCredentialsError(FootballPredictionError):
+    """无效凭据异常"""
+    pass
+
+
 # 添加别名以兼容测试文件
 DataValidationError = ValidationError
 ConfigurationError = ConfigError

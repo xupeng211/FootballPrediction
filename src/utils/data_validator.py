@@ -211,3 +211,16 @@ class DataValidator:
                 missing.append(field)
 
         return {"valid": len(missing) == 0, "missing": missing}
+
+
+# 便捷函数，用于直接导入使用
+def validate_email(email: str) -> bool:
+    """邮箱验证便捷函数"""
+    return DataValidator.validate_email(email)
+
+
+def validate_password_strength(password: str) -> dict:
+    """密码强度验证便捷函数"""
+    result = DataValidator.validate_password_strength(password)
+    if not result["valid"]:
+        raise ValueError("；".join(result["issues"]))

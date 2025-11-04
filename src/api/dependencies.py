@@ -39,6 +39,12 @@ except ImportError:
 from src.core.logger import get_logger
 from src.core.prediction_engine import PredictionEngine
 
+# 前向声明，用于类型注解
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.services.user_management_service import UserManagementService
+
 # 加载环境变量
 load_dotenv()
 
@@ -172,3 +178,18 @@ async def rate_limit_check(current_user: dict = Depends(get_current_user)):
     # 这里可以实现速率限制逻辑
     # 例如:检查用户在时间窗口内的请求次数
     return True
+
+
+async def get_user_management_service():
+    """
+    获取用户管理服务实例
+
+    Returns:
+        UserManagementService: 用户管理服务实例
+    """
+    from src.services.user_management_service import UserManagementService
+    from src.database.repositories.user import UserRepository
+
+    # 创建用户仓储实例（这里可以根据需要注入数据库管理器）
+    user_repository = UserRepository()
+    return UserManagementService(user_repository)

@@ -181,3 +181,14 @@ class CryptoUtils:
         """生成API密钥"""
         # 生成32字符的token + "fp_" 前缀 = 总共35字符
         return f"fp_{secrets.token_urlsafe(24)[:32]}"
+
+
+# 便捷函数，用于直接导入使用
+def hash_password(password: str) -> str:
+    """密码哈希便捷函数"""
+    return CryptoUtils.hash_password(password)
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    """验证密码便捷函数"""
+    return CryptoUtils.verify_password(password, hashed_password)
