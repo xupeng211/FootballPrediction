@@ -6,6 +6,67 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 🎯 Claude Code 使用指南 (重要)
+
+### 📋 首次打开此项目时
+
+**必须首先执行**：
+```bash
+# 1. 阅读改进策略文档
+cat CLAUDE_IMPROVEMENT_STRATEGY.md
+
+# 2. 运行改进启动器
+python3 scripts/start_progressive_improvement.py
+
+# 3. 评估当前状态
+source .venv/bin/activate && ruff check src/ --output-format=concise | head -10
+```
+
+### 🚀 渐进式改进策略 (必读)
+
+本项目采用**经过五轮验证的渐进式改进策略**，成功将项目从"完全无法运行"恢复到"接近完整可用"状态。
+
+**策略核心**：
+- ✅ **渐进式改进** - 避免大规模变更风险
+- ✅ **四阶段流程** - 语法修复 → 功能重建 → 测试验证 → 成果提交
+- ✅ **测试驱动** - 以测试通过作为成功标准
+- ✅ **数据驱动** - 基于质量报告制定策略
+
+**验证结果**：25个 → 7个 → 14个 → 108个 → 稳定测试通过
+
+### 📊 快速状态检查
+
+```bash
+# 检查语法错误数量
+source .venv/bin/activate && ruff check src/ --output-format=concise | grep "invalid-syntax" | wc -l
+
+# 检查测试通过数量
+pytest tests/unit/utils/ tests/unit/core/ --maxfail=5 -x --tb=no | grep -E "(PASSED|FAILED)" | wc -l
+
+# 验证核心功能
+source .venv/bin/activate && python3 -c "
+import src.utils.date_utils as du
+import src.cache.decorators as cd
+print(f'✅ 核心功能: {hasattr(du.DateUtils, \"get_month_start\")} && {hasattr(cd, \"CacheDecorator\")}')
+"
+```
+
+### 🎯 改进工作流程
+
+1. **启动阶段** - 运行 `python3 scripts/start_progressive_improvement.py`
+2. **修复阶段** - 按照四阶段流程执行改进
+3. **验证阶段** - 确保测试通过和功能正常
+4. **记录阶段** - 创建改进报告并提交成果
+
+### ⚠️ 重要提醒
+
+- **必须**先阅读 `CLAUDE_IMPROVEMENT_STRATEGY.md`
+- **必须**使用渐进式方法，避免一次性大改
+- **必须**以测试通过作为成功标准
+- **必须**创建改进报告记录成果
+
+---
+
 ## 📊 项目概述
 
 基于现代Python技术栈的**企业级足球预测系统**，采用FastAPI + PostgreSQL + Redis架构，严格遵循DDD（领域驱动设计）和CQRS（命令查询职责分离）设计模式。
