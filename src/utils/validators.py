@@ -115,18 +115,3 @@ def validate_required_fields(
             missing_fields.append(field)
     return missing_fields
 
-
-def validate_data_types(data: dict[str,
-    Any],
-    schema: dict[str,
-    type]) -> list[str]:
-    """Validate data types against schema"""
-    errors = []
-    for field,
-    expected_type in schema.items():
-        if field in data and not isinstance(data[field], expected_type):
-            errors.append(
-                f"Field '{field}' should be {expected_type.__name__},
-    got {type(data[field]).__name__}"
-            )
-    return errors
