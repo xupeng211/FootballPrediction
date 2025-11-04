@@ -163,19 +163,19 @@ class TestTimeUtilsEnhanced:
         """测试工作日计算功能"""
         # 同一周内
         start = datetime(2024, 1, 15)  # 星期一
-        end = datetime(2024, 1, 19)    # 星期五
+        end = datetime(2024, 1, 19)  # 星期五
         business_days = TimeUtils.get_business_days(start, end)
         assert business_days == 5
 
         # 包含周末
         start = datetime(2024, 1, 15)  # 星期一
-        end = datetime(2024, 1, 21)    # 星期日
+        end = datetime(2024, 1, 21)  # 星期日
         business_days = TimeUtils.get_business_days(start, end)
         assert business_days == 5  # 只有5个工作日
 
         # 反向顺序
         start = datetime(2024, 1, 21)  # 星期日
-        end = datetime(2024, 1, 15)    # 星期一
+        end = datetime(2024, 1, 15)  # 星期一
         business_days = TimeUtils.get_business_days(start, end)
         assert business_days == 5
 
@@ -187,7 +187,7 @@ class TestTimeUtilsEnhanced:
             "2024/01/15",
             "15-01-2024",
             "15/01/2024",
-            "2024-01-15 14:30:45"
+            "2024-01-15 14:30:45",
         ]
 
         for date_str in valid_dates:
@@ -199,7 +199,7 @@ class TestTimeUtilsEnhanced:
             "2024-13-45",
             "not-a-date",
             "",
-            "2024-01-15 25:70:90"
+            "2024-01-15 25:70:90",
         ]
 
         for date_str in invalid_dates:
@@ -208,23 +208,13 @@ class TestTimeUtilsEnhanced:
     def test_is_valid_time_function(self):
         """测试时间验证功能"""
         # 有效时间
-        valid_times = [
-            "14:30:45",
-            "14:30",
-            "02:30:45 PM",
-            "02:30 PM"
-        ]
+        valid_times = ["14:30:45", "14:30", "02:30:45 PM", "02:30 PM"]
 
         for time_str in valid_times:
             assert TimeUtils.is_valid_time(time_str) is True
 
         # 无效时间
-        invalid_times = [
-            "invalid-time",
-            "25:70:90",
-            "not-a-time",
-            ""
-        ]
+        invalid_times = ["invalid-time", "25:70:90", "not-a-time", ""]
 
         for time_str in invalid_times:
             assert TimeUtils.is_valid_time(time_str) is False
@@ -288,7 +278,7 @@ class TestTimeUtilsEnhanced:
         result = TimeUtils.convert_timezone(base_dt, "Invalid/Timezone")
         assert isinstance(result, datetime)
 
-    @patch('src.utils.time_utils.ZoneInfo')
+    @patch("src.utils.time_utils.ZoneInfo")
     def test_convert_timezone_with_mock(self, mock_zone_info):
         """测试使用mock的时区转换功能"""
         mock_tz = MagicMock()
@@ -345,7 +335,7 @@ class TestTimeUtilsEnhanced:
             "2024-01-15T14:30:45.123456Z",
             "2024-01-15T14:30:45Z",
             "2024-01-15T14:30:45",
-            "2024-01-15"
+            "2024-01-15",
         ]
 
         for fmt in formats:
@@ -417,6 +407,7 @@ class TestTimeUtilsEnhanced:
 
         # 测试大量时间操作性能
         import time
+
         start_time = time.time()
 
         for i in range(100):

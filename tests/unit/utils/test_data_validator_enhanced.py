@@ -16,7 +16,7 @@ class TestDataValidatorEnhanced:
             "test@example.com",
             "user.name@domain.co.uk",
             "user+tag@example.org",
-            "123@example.com"
+            "123@example.com",
         ]
 
         for email in valid_emails:
@@ -24,13 +24,7 @@ class TestDataValidatorEnhanced:
             assert isinstance(result, bool)
 
         # 测试无效邮箱
-        invalid_emails = [
-            "",
-            "invalid",
-            "@example.com",
-            "test@",
-            "test.example.com"
-        ]
+        invalid_emails = ["", "invalid", "@example.com", "test@", "test.example.com"]
 
         for email in invalid_emails:
             result = DataValidator.validate_email(email)
@@ -50,7 +44,7 @@ class TestDataValidatorEnhanced:
         special_emails = [
             "test+123@example.com",
             "user.name@example.co.uk",
-            "user_123@example-domain.com"
+            "user_123@example-domain.com",
         ]
 
         for email in special_emails:
@@ -60,22 +54,14 @@ class TestDataValidatorEnhanced:
     def test_validate_phone_basic(self):
         """测试基本手机号验证"""
         # 测试中国手机号
-        chinese_phones = [
-            "13800138000",
-            "15912345678",
-            "18888888888"
-        ]
+        chinese_phones = ["13800138000", "15912345678", "18888888888"]
 
         for phone in chinese_phones:
             result = DataValidator.validate_phone(phone)
             assert isinstance(result, bool)
 
         # 测试国际号码
-        international_phones = [
-            "+1234567890",
-            "+861380013800",
-            "+442012345678"
-        ]
+        international_phones = ["+1234567890", "+861380013800", "+442012345678"]
 
         for phone in international_phones:
             result = DataValidator.validate_phone(phone)
@@ -94,8 +80,8 @@ class TestDataValidatorEnhanced:
         # 测试包含特殊字符的手机号
         phones_with_chars = [
             "138-0013-8000",  # 带连字符
-            "(138)00138000",   # 带括号
-            "138 0013 8000"    # 带空格
+            "(138)00138000",  # 带括号
+            "138 0013 8000",  # 带空格
         ]
 
         for phone in phones_with_chars:
@@ -104,11 +90,11 @@ class TestDataValidatorEnhanced:
 
         # 测试无效手机号
         invalid_phones = [
-            "1234567890",    # 不是1开头
-            "12800138000",   # 不是有效开头
-            "1380013800",    # 位数不够
+            "1234567890",  # 不是1开头
+            "12800138000",  # 不是有效开头
+            "1380013800",  # 位数不够
             "138001380000",  # 位数太多
-            "13800138a00"   # 包含字母
+            "13800138a00",  # 包含字母
         ]
 
         for phone in invalid_phones:
@@ -123,7 +109,7 @@ class TestDataValidatorEnhanced:
             "https://www.example.com",
             "https://example.com/path/to/resource",
             "http://example.com:8080",
-            "https://example.com/path?query=value"
+            "https://example.com/path?query=value",
         ]
 
         for url in valid_urls:
@@ -136,8 +122,8 @@ class TestDataValidatorEnhanced:
             "not-a-url",
             "ftp://example.com",  # 非http协议
             "http//example.com",  # 缺少冒号
-            "example.com",       # 缺少协议
-            "http://",          # 缺少域名
+            "example.com",  # 缺少协议
+            "http://",  # 缺少域名
         ]
 
         for url in invalid_urls:
@@ -158,7 +144,7 @@ class TestDataValidatorEnhanced:
         special_urls = [
             "https://example.com/path-with-dash",
             "https://example.com/path_with_underscore",
-            "https://example.com/path.with.dots"
+            "https://example.com/path.with.dots",
         ]
 
         for url in special_urls:
@@ -172,7 +158,7 @@ class TestDataValidatorEnhanced:
             valid_18_cards = [
                 "11010519491231002X",
                 "440308199001011234",
-                "310115198508154321"
+                "310115198508154321",
             ]
 
             for card in valid_18_cards:
@@ -180,10 +166,7 @@ class TestDataValidatorEnhanced:
                 assert isinstance(result, bool)
 
             # 测试15位身份证
-            valid_15_cards = [
-                "110105491231002",
-                "440308900101123"
-            ]
+            valid_15_cards = ["110105491231002", "440308900101123"]
 
             for card in valid_15_cards:
                 result = DataValidator.validate_id_card(card)
@@ -206,9 +189,9 @@ class TestDataValidatorEnhanced:
             # 测试无效身份证
             invalid_cards = [
                 "123456789012345678",  # 18位但无效
-                "123456789012345",    # 15位但无效
+                "123456789012345",  # 15位但无效
                 "11010519491231002A",  # 包含字母
-                "110105194912310021"  # 校验码错误
+                "110105194912310021",  # 校验码错误
             ]
 
             for card in invalid_cards:
@@ -246,14 +229,12 @@ class TestDataValidatorEnhanced:
         # 测试邮箱正则表达式
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         import re
+
         email_regex = re.compile(email_pattern)
         assert email_regex.pattern is not None
 
         # 测试手机号正则表达式
-        phone_patterns = [
-            r"^1[3-9]\d{9}$",  # 中国手机号
-            r"^\+\d{10,15}$"   # 国际号码
-        ]
+        phone_patterns = [r"^1[3-9]\d{9}$", r"^\+\d{10,15}$"]  # 中国手机号  # 国际号码
 
         for pattern in phone_patterns:
             phone_regex = re.compile(pattern)
@@ -275,14 +256,15 @@ class TestDataValidatorEnhanced:
     def test_data_validator_import(self):
         """测试DataValidator导入"""
         from src.utils.data_validator import DataValidator
+
         assert DataValidator is not None
 
         # 检查关键方法是否存在
         expected_methods = [
-            'validate_email',
-            'validate_phone',
-            'validate_url',
-            'validate_id_card'
+            "validate_email",
+            "validate_phone",
+            "validate_url",
+            "validate_id_card",
         ]
 
         for method in expected_methods:
@@ -346,14 +328,14 @@ class TestDataValidatorEnhanced:
         user_data = {
             "email": "user@example.com",
             "phone": "13800138000",
-            "url": "https://user.example.com"
+            "url": "https://user.example.com",
         }
 
         # 验证所有字段
         results = {
             "email": DataValidator.validate_email(user_data["email"]),
             "phone": DataValidator.validate_phone(user_data["phone"]),
-            "url": DataValidator.validate_url(user_data["url"])
+            "url": DataValidator.validate_url(user_data["url"]),
         }
 
         # 所有结果都应该是布尔值

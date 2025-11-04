@@ -51,7 +51,11 @@ def create_test_data() -> List[Dict[str, Any]]:
                 "consistency": 0.75,
                 "max_drawdown": 0.08,
             },
-            "market_data": {"market_odds": 1.87, "liquidity_score": 0.8, "spread_percentage": 0.02},
+            "market_data": {
+                "market_odds": 1.87,
+                "liquidity_score": 0.8,
+                "spread_percentage": 0.02,
+            },
         },
         {
             "bet_type": "draw",
@@ -126,9 +130,13 @@ def create_test_data() -> List[Dict[str, Any]]:
         for bet in historical_bets:
             new_bet = bet.copy()
             # 添加一些随机变化
-            new_bet["probability"] = max(0.1, min(0.9, bet["probability"] + (i % 3 - 1) * 0.05))
+            new_bet["probability"] = max(
+                0.1, min(0.9, bet["probability"] + (i % 3 - 1) * 0.05)
+            )
             new_bet["odds"] = max(1.1, bet["odds"] + (i % 3 - 1) * 0.1)
-            new_bet["confidence"] = max(0.3, min(1.0, bet["confidence"] + (i % 2 - 0.5) * 0.1))
+            new_bet["confidence"] = max(
+                0.3, min(1.0, bet["confidence"] + (i % 2 - 0.5) * 0.1)
+            )
             # 随机化结果但保持一定胜率
             if bet["outcome"] and i < 7:  # 前几轮保持原结果
                 new_bet["outcome"] = True
@@ -152,8 +160,18 @@ def test_kelly_optimization():
 
         # 测试案例
         test_cases = [
-            {"prob": 0.6, "odds": 1.9, "confidence": 0.8, "description": "高概率低赔率"},
-            {"prob": 0.35, "odds": 3.2, "confidence": 0.6, "description": "低概率高赔率"},
+            {
+                "prob": 0.6,
+                "odds": 1.9,
+                "confidence": 0.8,
+                "description": "高概率低赔率",
+            },
+            {
+                "prob": 0.35,
+                "odds": 3.2,
+                "confidence": 0.6,
+                "description": "低概率高赔率",
+            },
             {"prob": 0.5, "odds": 2.1, "confidence": 0.7, "description": "平衡投注"},
             {"prob": 0.8, "odds": 1.3, "confidence": 0.9, "description": "极高概率"},
         ]
@@ -195,16 +213,28 @@ def test_value_rating_enhancement():
     logger.info("📊 测试价值评级增强...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import EnhancedValueRatingCalculator
+        from src.services.betting.enhanced_ev_calculator import (
+            EnhancedValueRatingCalculator,
+        )
 
         value_calc = EnhancedValueRatingCalculator()
 
         # 测试案例
         test_cases = [
             {"prob": 0.65, "odds": 1.85, "confidence": 0.8, "description": "优质投注"},
-            {"prob": 0.25, "odds": 4.50, "confidence": 0.5, "description": "高风险投注"},
+            {
+                "prob": 0.25,
+                "odds": 4.50,
+                "confidence": 0.5,
+                "description": "高风险投注",
+            },
             {"prob": 0.5, "odds": 2.05, "confidence": 0.7, "description": "公平投注"},
-            {"prob": 0.8, "odds": 1.25, "confidence": 0.9, "description": "高确定性投注"},
+            {
+                "prob": 0.8,
+                "odds": 1.25,
+                "confidence": 0.9,
+                "description": "高确定性投注",
+            },
         ]
 
         results = []
@@ -243,7 +273,10 @@ async def test_enhanced_ev_calculation():
     logger.info("💰 测试增强EV计算...")
 
     try:
-        from src.services.betting.enhanced_ev_calculator import EnhancedEVCalculator, BetType
+        from src.services.betting.enhanced_ev_calculator import (
+            EnhancedEVCalculator,
+            BetType,
+        )
 
         ev_calc = EnhancedEVCalculator()
 
@@ -361,8 +394,13 @@ def compare_with_original():
     logger.info("🔄 与原始EV计算器对比...")
 
     try:
-        from src.services.betting.ev_calculator import EVCalculator as OriginalEVCalculator
-        from src.services.betting.enhanced_ev_calculator import EnhancedEVCalculator, BetType
+        from src.services.betting.ev_calculator import (
+            EVCalculator as OriginalEVCalculator,
+        )
+        from src.services.betting.enhanced_ev_calculator import (
+            EnhancedEVCalculator,
+            BetType,
+        )
 
         original_calc = OriginalEVCalculator()
         enhanced_calc = EnhancedEVCalculator()
@@ -474,7 +512,9 @@ async def main():
     if test_results.get("backtesting", {}).get("status") == "success":
         backtest_data = test_results["backtesting"]["results"]
         best_strategy = max(backtest_data.items(), key=lambda x: x[1]["roi"])
-        logger.info(f"🏆 最佳策略: {best_strategy[0]} (ROI: {best_strategy[1]['roi']:.2f}%)")
+        logger.info(
+            f"🏆 最佳策略: {best_strategy[0]} (ROI: {best_strategy[1]['roi']:.2f}%)"
+        )
 
         for strategy, data in backtest_data.items():
             if data["roi"] > 5 and data["max_drawdown"] < 0.15:

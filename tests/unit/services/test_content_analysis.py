@@ -23,7 +23,7 @@ class TestContentAnalysisService:
     def test_service_initialization(self, service):
         """测试服务初始化"""
         assert service is not None
-        assert hasattr(service, 'session')
+        assert hasattr(service, "session")
 
     def test_analyze_text_content(self, service):
         """测试文本内容分析"""
@@ -41,11 +41,7 @@ class TestContentAnalysisService:
     def test_analyze_match_content(self, service):
         """测试比赛内容分析"""
         try:
-            match_data = {
-                "home_team": "Team A",
-                "away_team": "Team B",
-                "score": "2-1"
-            }
+            match_data = {"home_team": "Team A", "away_team": "Team B", "score": "2-1"}
 
             result = service.analyze_match(match_data)
             assert isinstance(result, dict)
@@ -89,15 +85,16 @@ class TestContentAnalysisService:
     def test_service_module_import(self):
         """测试服务模块导入"""
         from src.services.content_analysis_service import ContentAnalysisService
+
         assert ContentAnalysisService is not None
 
     def test_service_methods_exist(self, service):
         """测试服务方法存在"""
         expected_methods = [
-            'analyze_text',
-            'analyze_match',
-            'extract_keywords',
-            'classify_content'
+            "analyze_text",
+            "analyze_match",
+            "extract_keywords",
+            "classify_content",
         ]
 
         for method in expected_methods:
@@ -108,7 +105,7 @@ class TestContentAnalysisService:
     async def test_async_analysis_methods(self, service):
         """测试异步分析方法"""
         try:
-            if hasattr(service, 'analyze_text_async'):
+            if hasattr(service, "analyze_text_async"):
                 content = "测试内容"
                 result = await service.analyze_text_async(content)
                 assert isinstance(result, dict)

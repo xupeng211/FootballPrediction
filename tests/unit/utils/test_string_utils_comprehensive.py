@@ -4,7 +4,12 @@
 
 import pytest
 import unicodedata
-from src.utils.string_utils import StringUtils, cached_slug, batch_clean_strings, validate_batch_emails
+from src.utils.string_utils import (
+    StringUtils,
+    cached_slug,
+    batch_clean_strings,
+    validate_batch_emails,
+)
 
 
 class TestStringUtilsComprehensive:
@@ -48,7 +53,7 @@ class TestStringUtilsComprehensive:
         assert "\u0001" not in cleaned
 
         # 测试Unicode空白字符规范化
-        text_with_spaces = "Hello\u00A0World\u2003Test"  # 不间断空格等
+        text_with_spaces = "Hello\u00a0World\u2003Test"  # 不间断空格等
         cleaned = StringUtils.clean_string(text_with_spaces)
         assert "Hello World Test" == cleaned
 
@@ -101,7 +106,7 @@ class TestStringUtilsComprehensive:
             "test@example.com",
             "user.name@domain.co.uk",
             "user+tag@example.org",
-            "123@example.com"
+            "123@example.com",
         ]
 
         for email in valid_emails:
@@ -109,13 +114,7 @@ class TestStringUtilsComprehensive:
             assert isinstance(result, bool)
 
         # 测试无效邮箱
-        invalid_emails = [
-            "",
-            "invalid",
-            "@example.com",
-            "test@",
-            "test.example.com"
-        ]
+        invalid_emails = ["", "invalid", "@example.com", "test@", "test.example.com"]
 
         for email in invalid_emails:
             result = StringUtils.is_valid_email(email)
@@ -124,11 +123,7 @@ class TestStringUtilsComprehensive:
     def test_phone_validation(self):
         """测试电话验证"""
         # 测试有效电话号码（中国手机号格式）
-        valid_phones = [
-            "13800138000",
-            "15912345678",
-            "18888888888"
-        ]
+        valid_phones = ["13800138000", "15912345678", "18888888888"]
 
         for phone in valid_phones:
             result = StringUtils.is_valid_phone(phone)
@@ -139,8 +134,8 @@ class TestStringUtilsComprehensive:
             "",
             "123",
             "12800138000",  # 不是有效手机号开头
-            "1380013800",   # 位数不够
-            "138001380000"  # 位数太多
+            "1380013800",  # 位数不够
+            "138001380000",  # 位数太多
         ]
 
         for phone in invalid_phones:
@@ -170,12 +165,7 @@ class TestStringUtilsComprehensive:
     def test_batch_clean_strings(self):
         """测试批量字符串清理"""
         try:
-            strings = [
-                "  Hello World  ",
-                "   Test String   ",
-                "\tTabbed String\n",
-                ""
-            ]
+            strings = ["  Hello World  ", "   Test String   ", "\tTabbed String\n", ""]
 
             cleaned = batch_clean_strings(strings)
             assert isinstance(cleaned, list)
@@ -192,12 +182,7 @@ class TestStringUtilsComprehensive:
     def test_validate_batch_emails(self):
         """测试批量邮箱验证"""
         try:
-            emails = [
-                "test@example.com",
-                "invalid-email",
-                "user@domain.org",
-                ""
-            ]
+            emails = ["test@example.com", "invalid-email", "user@domain.org", ""]
 
             result = validate_batch_emails(emails)
             assert isinstance(result, dict)
@@ -251,8 +236,8 @@ class TestStringUtilsComprehensive:
     def test_regex_patterns(self):
         """测试正则表达式模式"""
         # 验证编译的正则表达式存在
-        assert hasattr(StringUtils, '_EMAIL_REGEX')
-        assert hasattr(StringUtils, '_PHONE_REGEX')
+        assert hasattr(StringUtils, "_EMAIL_REGEX")
+        assert hasattr(StringUtils, "_PHONE_REGEX")
 
         # 测试正则表达式有效性
         email_regex = StringUtils._EMAIL_REGEX
@@ -277,14 +262,15 @@ class TestStringUtilsComprehensive:
     def test_string_utils_import(self):
         """测试StringUtils导入"""
         from src.utils.string_utils import StringUtils
+
         assert StringUtils is not None
 
         # 检查关键方法是否存在
         expected_methods = [
-            'clean_string',
-            'truncate',
-            'is_valid_email',
-            'is_valid_phone'
+            "clean_string",
+            "truncate",
+            "is_valid_email",
+            "is_valid_phone",
         ]
 
         for method in expected_methods:
@@ -293,7 +279,11 @@ class TestStringUtilsComprehensive:
 
     def test_function_imports(self):
         """测试模块级函数导入"""
-        from src.utils.string_utils import cached_slug, batch_clean_strings, validate_batch_emails
+        from src.utils.string_utils import (
+            cached_slug,
+            batch_clean_strings,
+            validate_batch_emails,
+        )
 
         assert cached_slug is not None
         assert batch_clean_strings is not None
@@ -315,7 +305,7 @@ class TestStringUtilsComprehensive:
     def test_whitespace_handling(self):
         """测试空白字符处理"""
         # 测试各种空白字符
-        whitespace_text = "Hello\u0020World\u00A0Test\u2003End"
+        whitespace_text = "Hello\u0020World\u00a0Test\u2003End"
         cleaned = StringUtils.clean_string(whitespace_text)
 
         # 所有空白字符应该被规范化为单个空格

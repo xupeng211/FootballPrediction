@@ -27,7 +27,7 @@ from core.di import (
     DIContainer,
     ServiceDescriptor,
     ServiceLifetime,
-    DependencyInjectionError
+    DependencyInjectionError,
 )
 
 
@@ -63,7 +63,9 @@ class TestDIContainerSingleton:
 
         # 验证所有线程获得的是同一个实例
         assert len(errors) == 0, f"Errors occurred: {errors}"
-        assert len(set(results)) == 1, f"Multiple instances created: {len(set(results))} unique IDs"
+        assert (
+            len(set(results)) == 1
+        ), f"Multiple instances created: {len(set(results))} unique IDs"
 
     def test_singleton_instance_caching(self):
         """测试单例实例缓存"""
@@ -170,7 +172,7 @@ class TestServiceDescriptorSerialization:
             lifetime=ServiceLifetime.SINGLETON,
             factory=None,
             instance=None,
-            dependencies=[int, float]
+            dependencies=[int, float],
         )
 
         # 序列化和反序列化
@@ -189,7 +191,7 @@ class TestServiceDescriptorSerialization:
             interface=str,
             implementation="test_impl",
             lifetime=ServiceLifetime.SINGLETON,
-            dependencies=[int, float]
+            dependencies=[int, float],
         )
 
         # 转换为可JSON序列化的字典
@@ -197,7 +199,7 @@ class TestServiceDescriptorSerialization:
             "interface": descriptor.interface.__name__,
             "implementation": str(descriptor.implementation),
             "lifetime": descriptor.lifetime.value,
-            "dependencies": [dep.__name__ for dep in descriptor.dependencies or []]
+            "dependencies": [dep.__name__ for dep in descriptor.dependencies or []],
         }
 
         # JSON序列化和反序列化
@@ -223,7 +225,7 @@ class TestServiceDescriptorSerialization:
             interface=dict,
             implementation=None,
             lifetime=ServiceLifetime.SINGLETON,
-            factory=test_factory
+            factory=test_factory,
         )
 
         # 验证工厂方法存在
@@ -234,7 +236,7 @@ class TestServiceDescriptorSerialization:
         descriptor_info = {
             "interface": descriptor.interface.__name__,
             "has_factory": descriptor.factory is not None,
-            "lifetime": descriptor.lifetime.value
+            "lifetime": descriptor.lifetime.value,
         }
 
         assert descriptor_info["has_factory"] is True
@@ -248,7 +250,7 @@ class TestServiceDescriptorSerialization:
             interface=list,
             implementation="list_impl",
             lifetime=ServiceLifetime.SCOPED,
-            dependencies=[str, int]
+            dependencies=[str, int],
         )
 
         # 浅复制
@@ -342,7 +344,9 @@ class TestDependencyInjectionBoundaryConditions:
             def __init__(self, missing_service: type(None)):
                 self.missing_service = missing_service
 
-        container.register_singleton(ServiceWithMissingDependency, ServiceWithMissingDependency)
+        container.register_singleton(
+            ServiceWithMissingDependency, ServiceWithMissingDependency
+        )
 
         with pytest.raises(DependencyInjectionError):
             container.resolve(ServiceWithMissingDependency)
@@ -356,7 +360,7 @@ class TestCircularDependencyDetection:
         container = DIContainer()
 
         class ServiceA:
-            def __init__(self, b: 'ServiceB'):
+            def __init__(self, b: "ServiceB"):
                 self.b = b
 
         class ServiceB:
@@ -371,14 +375,17 @@ class TestCircularDependencyDetection:
         with pytest.raises(DependencyInjectionError) as exc_info:
             container.resolve(ServiceA)
 
-        assert "循环依赖" in str(exc_info.value) or "circular" in str(exc_info.value).lower()
+        assert (
+            "循环依赖" in str(exc_info.value)
+            or "circular" in str(exc_info.value).lower()
+        )
 
     def test_self_dependency(self):
         """测试自依赖"""
         container = DIContainer()
 
         class SelfDependentService:
-            def __init__(self, self_ref: 'SelfDependentService'):
+            def __init__(self, self_ref: "SelfDependentService"):
                 self.self_ref = self_ref
 
         container.register_singleton(SelfDependentService, SelfDependentService)
@@ -391,15 +398,15 @@ class TestCircularDependencyDetection:
         container = DIContainer()
 
         class ServiceA:
-            def __init__(self, b: 'ServiceB'):
+            def __init__(self, b: "ServiceB"):
                 self.b = b
 
         class ServiceB:
-            def __init__(self, c: 'ServiceC'):
+            def __init__(self, c: "ServiceC"):
                 self.c = c
 
         class ServiceC:
-            def __init__(self, d: 'ServiceD'):
+            def __init__(self, d: "ServiceD"):
                 self.d = d
 
         class ServiceD:
@@ -414,7 +421,9 @@ class TestCircularDependencyDetection:
             container.resolve(ServiceA)
 
         error_message = str(exc_info.value).lower()
-        assert any(keyword in error_message for keyword in ["circular", "cycle", "循环"])
+        assert any(
+            keyword in error_message for keyword in ["circular", "cycle", "循环"]
+        )
 
     def test_no_circular_dependency_with_scoped(self):
         """测试作用域服务不会产生循环依赖"""
@@ -461,7 +470,7 @@ class TestEdgeCasesAndAdvancedFeatures:
         """测试泛型类型解析"""
         from typing import Generic, TypeVar
 
-        T = TypeVar('T')
+        T = TypeVar("T")
 
         class GenericService(Generic[T]):
             def __init__(self, value: T):

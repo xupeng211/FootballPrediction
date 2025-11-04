@@ -57,7 +57,7 @@ class TestWarningFiltersEnhancedFinal:
             # 恢复原始警告状态
             warnings.filters[:] = original_filters
 
-    @patch('warnings.filterwarnings')
+    @patch("warnings.filterwarnings")
     def test_setup_warning_filters_with_mock(self, mock_filterwarnings):
         """测试使用mock验证警告过滤器调用"""
         # 调用函数
@@ -73,21 +73,30 @@ class TestWarningFiltersEnhancedFinal:
         filter_categories = []
         for call in calls:
             # 从kwargs中获取category，如果没有kwargs则从args中获取
-            if 'category' in call.kwargs:
-                filter_categories.append(call.kwargs['category'])
+            if "category" in call.kwargs:
+                filter_categories.append(call.kwargs["category"])
             elif len(call.args) > 1:
                 filter_categories.append(call.args[1])
 
-        assert any(category in [UserWarning, DeprecationWarning, FutureWarning, PendingDeprecationWarning]
-                  for category in filter_categories)
+        assert any(
+            category
+            in [
+                UserWarning,
+                DeprecationWarning,
+                FutureWarning,
+                PendingDeprecationWarning,
+            ]
+            for category in filter_categories
+        )
 
     def test_module_initialization_success(self):
         """测试模块初始化成功路径"""
         # 直接验证当前模块已正确导入
-        assert 'src.utils.warning_filters' in sys.modules
+        assert "src.utils.warning_filters" in sys.modules
 
         # 验证模块具有预期的函数
         from src.utils.warning_filters import setup_warning_filters
+
         assert callable(setup_warning_filters)
 
         # 验证函数能正常执行
@@ -98,7 +107,7 @@ class TestWarningFiltersEnhancedFinal:
         finally:
             warnings.filters[:] = original_filters
 
-    @patch('src.utils.warning_filters.logger')
+    @patch("src.utils.warning_filters.logger")
     def test_module_initialization_with_error(self, mock_logger):
         """测试模块初始化时的错误处理"""
         # 保存当前状态
@@ -106,9 +115,10 @@ class TestWarningFiltersEnhancedFinal:
 
         try:
             # 直接测试setup_warning_filters函数在异常情况下的行为
-            with patch('warnings.filterwarnings', side_effect=ValueError("Test error")):
+            with patch("warnings.filterwarnings", side_effect=ValueError("Test error")):
                 # 调用函数
                 from src.utils.warning_filters import setup_warning_filters
+
                 setup_warning_filters()
 
             # 验证错误被记录到日志（这里测试函数本身的异常处理）
@@ -118,7 +128,7 @@ class TestWarningFiltersEnhancedFinal:
             # 恢复状态
             warnings.filters[:] = original_filters
 
-    @patch.dict('sys.modules', {'pytest': True})
+    @patch.dict("sys.modules", {"pytest": True})
     def test_module_initialization_in_pytest(self):
         """测试在pytest环境下模块初始化"""
         # 保存当前状态
@@ -127,14 +137,14 @@ class TestWarningFiltersEnhancedFinal:
 
         try:
             # 清除模块
-            if 'src.utils.warning_filters' in sys.modules:
-                del sys.modules['src.utils.warning_filters']
+            if "src.utils.warning_filters" in sys.modules:
+                del sys.modules["src.utils.warning_filters"]
 
             # 重新导入模块（在pytest环境下）
-            importlib.import_module('src.utils.warning_filters')
+            importlib.import_module("src.utils.warning_filters")
 
             # 验证模块可以正常导入，但不会自动设置警告过滤器
-            assert 'src.utils.warning_filters' in sys.modules
+            assert "src.utils.warning_filters" in sys.modules
 
         finally:
             # 恢复状态
@@ -192,19 +202,19 @@ class TestWarningFiltersEnhancedFinal:
         from src.utils import warning_filters
 
         # 验证logger存在且配置正确
-        assert hasattr(warning_filters, 'logger')
+        assert hasattr(warning_filters, "logger")
         assert isinstance(warning_filters.logger, logging.Logger)
-        assert warning_filters.logger.name == 'src.utils.warning_filters'
+        assert warning_filters.logger.name == "src.utils.warning_filters"
 
     def test_module_imports(self):
         """测试模块导入"""
         from src.utils import warning_filters
 
         # 验证必要的导入存在
-        assert hasattr(warning_filters, 'warnings')
-        assert hasattr(warning_filters, 'logging')
-        assert hasattr(warning_filters, 'sys')
-        assert hasattr(warning_filters, 'setup_warning_filters')
+        assert hasattr(warning_filters, "warnings")
+        assert hasattr(warning_filters, "logging")
+        assert hasattr(warning_filters, "sys")
+        assert hasattr(warning_filters, "setup_warning_filters")
 
     def test_setup_warning_filters_idempotency(self):
         """测试警告过滤器设置的幂等性"""
@@ -271,8 +281,8 @@ class TestWarningFiltersEnhancedFinal:
                 assert isinstance(w, list)
 
             # 4. 测试模块重新导入
-            del sys.modules['src.utils.warning_filters']
-            importlib.import_module('src.utils.warning_filters')
+            del sys.modules["src.utils.warning_filters"]
+            importlib.import_module("src.utils.warning_filters")
 
             # 5. 验证重新导入后功能正常
             setup_warning_filters()
@@ -284,7 +294,7 @@ class TestWarningFiltersEnhancedFinal:
                 (FutureWarning, "Future warning"),
                 (PendingDeprecationWarning, "Pending deprecation warning"),
                 (RuntimeWarning, "Runtime warning"),
-                (SyntaxWarning, "Syntax warning")
+                (SyntaxWarning, "Syntax warning"),
             ]
 
             for warning_type, message in warning_types:

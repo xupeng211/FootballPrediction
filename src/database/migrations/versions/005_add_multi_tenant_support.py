@@ -372,7 +372,8 @@ def upgrade() -> None:
     op.create_index("idx_matches_tenant_id", "matches", ["tenant_id"], unique=False)
 
     # 创建默认租户
-    op.execute("""
+    op.execute(
+        """
         INSERT INTO tenants (name, slug, contact_email, status, plan, max_users, max_predictions_per_day, max_api_calls_per_hour, storage_quota_mb, is_active, created_at, updated_at)
         VALUES (
             '默认租户',
@@ -388,22 +389,29 @@ def upgrade() -> None:
             NOW(),
             NOW()
         )
-    """)
+    """
+    )
 
     # 为现有用户分配到默认租户
-    op.execute("""
+    op.execute(
+        """
         UPDATE users SET tenant_id = (SELECT id FROM tenants WHERE slug = 'default') WHERE tenant_id IS NULL
-    """)
+    """
+    )
 
     # 为现有预测数据分配到默认租户
-    op.execute("""
+    op.execute(
+        """
         UPDATE predictions SET tenant_id = (SELECT id FROM tenants WHERE slug = 'default') WHERE tenant_id IS NULL
-    """)
+    """
+    )
 
     # 为现有比赛数据分配到默认租户
-    op.execute("""
+    op.execute(
+        """
         UPDATE matches SET tenant_id = (SELECT id FROM tenants WHERE slug = 'default') WHERE tenant_id IS NULL
-    """)
+    """
+    )
 
 
 def downgrade() -> None:

@@ -12,10 +12,11 @@ import sys
 import os
 
 # 直接导入base_model，避免通过__init__.py
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src/ml/models'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"))
 
 try:
     from base_model import BaseModel, PredictionResult, TrainingResult
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入BaseModel: {e}")
@@ -41,7 +42,7 @@ class TestBaseModel:
             confidence=0.75,
             model_name="TestModel",
             model_version="1.0",
-            created_at=now
+            created_at=now,
         )
 
         # 验证基本属性
@@ -64,7 +65,10 @@ class TestBaseModel:
         # 验证预测结果值的有效性
         assert result.predicted_outcome in ["home_win", "draw", "away_win"]
         assert 0 <= result.confidence <= 1.0
-        assert all(0 <= prob <= 1 for prob in [result.home_win_prob, result.draw_prob, result.away_win_prob])
+        assert all(
+            0 <= prob <= 1
+            for prob in [result.home_win_prob, result.draw_prob, result.away_win_prob]
+        )
 
     def test_prediction_result_to_dict(self):
         """测试PredictionResult.to_dict方法"""
@@ -81,7 +85,7 @@ class TestBaseModel:
             confidence=0.6,
             model_name="TestModel",
             model_version="2.0",
-            created_at=now
+            created_at=now,
         )
 
         result_dict = result.to_dict()
@@ -120,7 +124,7 @@ class TestBaseModel:
             training_time=45.5,
             features_used=["feature1", "feature2", "feature3"],
             hyperparameters={"param1": 1.0, "param2": 0.5, "param3": True},
-            created_at=now
+            created_at=now,
         )
 
         # 验证基本属性
@@ -164,7 +168,7 @@ class TestBaseModel:
             training_time=30.0,
             features_used=["attacking", "defending"],
             hyperparameters={"learning_rate": 0.01},
-            created_at=now
+            created_at=now,
         )
 
         result_dict = result.to_dict()
@@ -193,20 +197,30 @@ class TestBaseModel:
     def test_base_model_abstract_methods(self):
         """测试BaseModel定义的抽象方法"""
         # 验证抽象方法存在
-        assert hasattr(BaseModel, 'prepare_features')
-        assert hasattr(BaseModel, 'train')
-        assert hasattr(BaseModel, 'predict')
-        assert hasattr(BaseModel, 'evaluate')
-        assert hasattr(BaseModel, 'save_model')
-        assert hasattr(BaseModel, 'load_model')
+        assert hasattr(BaseModel, "prepare_features")
+        assert hasattr(BaseModel, "train")
+        assert hasattr(BaseModel, "predict")
+        assert hasattr(BaseModel, "evaluate")
+        assert hasattr(BaseModel, "save_model")
+        assert hasattr(BaseModel, "load_model")
 
         # 验证这些方法确实是抽象的
-        assert getattr(BaseModel.prepare_features, '__isabstractmethod__', False)  # 可能有默认实现
-        assert getattr(BaseModel.train, '__isabstractmethod__', False)  # 可能有默认实现
-        assert getattr(BaseModel.predict, '__isabstractmethod__', False)  # 可能有默认实现
-        assert getattr(BaseModel.evaluate, '__isabstractmethod__', False)  # 可能有默认实现
-        assert getattr(BaseModel.save_model, '__isabstractmethod__', False)  # 可能有默认实现
-        assert getattr(BaseModel.load_model, '__isabstractmethod__', False)  # 可能有默认实现
+        assert getattr(
+            BaseModel.prepare_features, "__isabstractmethod__", False
+        )  # 可能有默认实现
+        assert getattr(BaseModel.train, "__isabstractmethod__", False)  # 可能有默认实现
+        assert getattr(
+            BaseModel.predict, "__isabstractmethod__", False
+        )  # 可能有默认实现
+        assert getattr(
+            BaseModel.evaluate, "__isabstractmethod__", False
+        )  # 可能有默认实现
+        assert getattr(
+            BaseModel.save_model, "__isabstractmethod__", False
+        )  # 可能有默认实现
+        assert getattr(
+            BaseModel.load_model, "__isabstractmethod__", False
+        )  # 可能有默认实现
 
     def test_base_model_concrete_subclass(self):
         """测试BaseModel的具体子类"""
@@ -231,12 +245,18 @@ class TestBaseModel:
                     recall=0.85,
                     f1_score=0.8,
                     confusion_matrix=[[5, 1], [2, 7]],
-                    training_samples=len(training_data) if hasattr(training_data, '__len__') else 10,
-                    validation_samples=len(validation_data) if validation_data and hasattr(validation_data, '__len__') else 0,
+                    training_samples=(
+                        len(training_data) if hasattr(training_data, "__len__") else 10
+                    ),
+                    validation_samples=(
+                        len(validation_data)
+                        if validation_data and hasattr(validation_data, "__len__")
+                        else 0
+                    ),
                     training_time=5.0,
                     features_used=["test_feature"],
                     hyperparameters={},
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
                 )
 
             def predict(self, match_data):
@@ -254,7 +274,7 @@ class TestBaseModel:
                     confidence=0.6,
                     model_name=self.model_name,
                     model_version=self.model_version,
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
                 )
 
             def predict_proba(self, match_data):
@@ -269,7 +289,7 @@ class TestBaseModel:
                     "precision": 0.75,
                     "recall": 0.85,
                     "f1_score": 0.8,
-                    "total_predictions": 10
+                    "total_predictions": 10,
                 }
 
             def save_model(self, file_path):
@@ -285,9 +305,9 @@ class TestBaseModel:
         assert model.model_name == "TestConcreteModel"
         assert model.model_version == "1.0"
         assert not model.is_trained
-        assert hasattr(model, 'hyperparameters')
-        assert hasattr(model, 'training_history')
-        assert hasattr(model, 'last_training_time')
+        assert hasattr(model, "hyperparameters")
+        assert hasattr(model, "training_history")
+        assert hasattr(model, "last_training_time")
 
         # 测试训练
         training_data = [{"test": "data"}]
@@ -301,7 +321,7 @@ class TestBaseModel:
         match_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "test_001"
+            "match_id": "test_001",
         }
 
         prediction = model.predict(match_data)
@@ -325,7 +345,7 @@ class TestBaseModel:
             confidence=1.0,
             model_name="Test",
             model_version="1.0",
-            created_at=now
+            created_at=now,
         )
 
         assert result_extreme.home_win_prob == 1.0
@@ -343,10 +363,18 @@ class TestBaseModel:
             confidence=0.1,
             model_name="Test",
             model_version="1.0",
-            created_at=now
+            created_at=now,
         )
 
-        assert abs(result_equal.home_win_prob + result_equal.draw_prob + result_equal.away_win_prob - 1.0) < 1e-6
+        assert (
+            abs(
+                result_equal.home_win_prob
+                + result_equal.draw_prob
+                + result_equal.away_win_prob
+                - 1.0
+            )
+            < 1e-6
+        )
         assert result_equal.predicted_outcome == "draw"  # 最高概率
 
     def test_training_result_edge_cases(self):
@@ -367,7 +395,7 @@ class TestBaseModel:
             training_time=0.0,
             features_used=[],
             hyperparameters={},
-            created_at=now
+            created_at=now,
         )
 
         assert result_zero.accuracy == 0.0
@@ -389,7 +417,7 @@ class TestBaseModel:
             training_time=1.0,
             features_used=["perfect_feature"],
             hyperparameters={"perfect": True},
-            created_at=now
+            created_at=now,
         )
 
         assert result_perfect.accuracy == 1.0

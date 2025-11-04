@@ -14,6 +14,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "scripts"))
 
+
 class TestCoverageImprovementIntegration:
     """覆盖率改进集成测试"""
 
@@ -65,7 +66,11 @@ class TestCoverageImprovementIntegration:
 
         # 验证它们都能识别同一个项目根目录
         assert fixer.project_root == executor.project_root
-        assert executor.project_root == master.project_root if hasattr(master, 'project_root') else True
+        assert (
+            executor.project_root == master.project_root
+            if hasattr(master, "project_root")
+            else True
+        )
 
     def test_coverage_improvement_workflow(self):
         """测试覆盖率改进工作流"""
@@ -73,16 +78,19 @@ class TestCoverageImprovementIntegration:
 
         # 1. 使用AI大师分析现状
         from phase35_ai_coverage_master import Phase35AICoverageMaster
+
         master = Phase35AICoverageMaster()
         analysis = master.intelligent_coverage_analysis()
 
         # 2. 使用执行器记录改进过程
         from coverage_improvement_executor import CoverageImprovementExecutor
+
         executor = CoverageImprovementExecutor()
         executor.log_result("AI分析", "完成覆盖率分析", True)
 
         # 3. 使用质量修复器准备改进
         from smart_quality_fixer import SmartQualityFixer
+
         fixer = SmartQualityFixer()
         fixer.log_result = lambda c, m, s: None  # 简化日志
 

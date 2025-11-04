@@ -37,7 +37,7 @@ class TestPhase35AICoverageMaster:
         analysis = self.master.intelligent_coverage_analysis()
 
         assert isinstance(analysis, dict)
-        required_keys = ['base_coverage', 'patterns', 'predictions', 'strategy']
+        required_keys = ["base_coverage", "patterns", "predictions", "strategy"]
         for key in required_keys:
             assert key in analysis, f"分析结果缺少键: {key}"
 

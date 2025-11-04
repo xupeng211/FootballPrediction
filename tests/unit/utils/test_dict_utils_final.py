@@ -33,7 +33,7 @@ class TestDictUtilsFinal:
             "age": 30,
             "hobbies": [],
             "address": {},
-            "phone": None
+            "phone": None,
         }
         result = DictUtils.filter_empty_values(data)
         expected = {"name": "John", "age": 30}
@@ -46,7 +46,12 @@ class TestDictUtilsFinal:
 
     def test_filter_by_keys_function(self):
         """测试按键过滤功能"""
-        data = {"name": "John", "age": 30, "email": "john@example.com", "phone": "123456"}
+        data = {
+            "name": "John",
+            "age": 30,
+            "email": "john@example.com",
+            "phone": "123456",
+        }
         keys = ["name", "email"]
         result = DictUtils.filter_by_keys(data, keys)
         expected = {"name": "John", "email": "john@example.com"}
@@ -64,7 +69,12 @@ class TestDictUtilsFinal:
 
     def test_exclude_keys_function(self):
         """测试排除键功能"""
-        data = {"name": "John", "age": 30, "email": "john@example.com", "phone": "123456"}
+        data = {
+            "name": "John",
+            "age": 30,
+            "email": "john@example.com",
+            "phone": "123456",
+        }
         exclude = ["age", "phone"]
         result = DictUtils.exclude_keys(data, exclude)
         expected = {"name": "John", "email": "john@example.com"}
@@ -80,13 +90,8 @@ class TestDictUtilsFinal:
         """测试获取嵌套值功能"""
         data = {
             "user": {
-                "profile": {
-                    "name": "John",
-                    "age": 30
-                },
-                "settings": {
-                    "theme": "dark"
-                }
+                "profile": {"name": "John", "age": 30},
+                "settings": {"theme": "dark"},
             }
         }
 
@@ -164,7 +169,12 @@ class TestDictUtilsFinal:
 
     def test_pick_values_function(self):
         """测试提取值功能"""
-        data = {"name": "John", "age": 30, "email": "john@example.com", "phone": "123456"}
+        data = {
+            "name": "John",
+            "age": 30,
+            "email": "john@example.com",
+            "phone": "123456",
+        }
         keys = ["name", "age", "nonexistent"]
         result = DictUtils.pick_values(data, keys)
         expected = ["John", 30, None]
@@ -194,10 +204,15 @@ class TestDictUtilsFinal:
         dicts = [
             {"name": "John", "age": 30},
             {"email": "john@example.com"},
-            {"phone": "123456", "age": 31}
+            {"phone": "123456", "age": 31},
         ]
         result = DictUtils.merge_list(dicts)
-        expected = {"name": "John", "age": 31, "email": "john@example.com", "phone": "123456"}
+        expected = {
+            "name": "John",
+            "age": 31,
+            "email": "john@example.com",
+            "phone": "123456",
+        }
         assert result == expected
 
         # 包含非字典项
@@ -309,10 +324,7 @@ class TestDictUtilsFinal:
         """测试深度克隆功能"""
         original = {
             "name": "John",
-            "profile": {
-                "age": 30,
-                "hobbies": ["reading", "coding"]
-            }
+            "profile": {"age": 30, "hobbies": ["reading", "coding"]},
         }
 
         cloned = DictUtils.deep_clone(original)
@@ -363,7 +375,12 @@ class TestDictUtilsFinal:
 
     def test_filter_keys_function(self):
         """测试根据函数过滤键功能"""
-        data = {"name": "John", "age": 30, "email": "john@example.com", "phone": "123456"}
+        data = {
+            "name": "John",
+            "age": 30,
+            "email": "john@example.com",
+            "phone": "123456",
+        }
 
         # 过滤长度大于3的键
         result = DictUtils.filter_keys(data, lambda k: len(k) > 3)
@@ -371,7 +388,7 @@ class TestDictUtilsFinal:
         assert result == expected
 
         # 过滤以'a'开头的键
-        result = DictUtils.filter_keys(data, lambda k: k.startswith('a'))
+        result = DictUtils.filter_keys(data, lambda k: k.startswith("a"))
         expected = {"age": 30}
         assert result == expected
 
@@ -391,17 +408,16 @@ class TestDictUtilsFinal:
             DictUtils.filter_none_values("not_a_dict")
 
         # 复杂嵌套结构
-        complex_data = {
-            "level1": {
-                "level2": {
-                    "level3": {"value": "deep"}
-                }
-            }
-        }
+        complex_data = {"level1": {"level2": {"level3": {"value": "deep"}}}}
 
         # 深度嵌套操作
-        assert DictUtils.get_nested_value(complex_data, "level1.level2.level3.value") == "deep"
-        DictUtils.set_nested_value(complex_data, "level1.level2.level3.new_value", "new")
+        assert (
+            DictUtils.get_nested_value(complex_data, "level1.level2.level3.value")
+            == "deep"
+        )
+        DictUtils.set_nested_value(
+            complex_data, "level1.level2.level3.new_value", "new"
+        )
         assert complex_data["level1"]["level2"]["level3"]["new_value"] == "new"
 
     def test_comprehensive_workflow(self):
@@ -413,10 +429,10 @@ class TestDictUtilsFinal:
             "Email": "john@example.com",
             "Profile": {
                 "Bio": "Software Developer",
-                "Skills": ["Python", "JavaScript", "SQL"]
+                "Skills": ["Python", "JavaScript", "SQL"],
             },
             "Settings": None,
-            "Hobbies": []
+            "Hobbies": [],
         }
 
         # 2. 清理数据

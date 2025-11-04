@@ -33,7 +33,7 @@ class TestPhase35AICoverageMasterExtended:
         assert isinstance(result, dict)
 
         # 应该包含基本的覆盖率信息
-        expected_keys = ['total_lines', 'covered_lines', 'coverage_percentage']
+        expected_keys = ["total_lines", "covered_lines", "coverage_percentage"]
         for key in expected_keys:
             # 如果数据可用，应该包含这些键
             # 在没有实际覆盖率数据的情况下，可能返回空字典
@@ -102,7 +102,7 @@ class TestPhase35AICoverageMasterExtended:
         assert isinstance(result, dict)
 
         # 应该包含所有必要的分析组件
-        required_keys = ['base_coverage', 'patterns', 'predictions', 'strategy']
+        required_keys = ["base_coverage", "patterns", "predictions", "strategy"]
         for key in required_keys:
             assert key in result, f"缺少分析组件: {key}"
 
@@ -119,10 +119,10 @@ class TestPhase35AICoverageMasterExtended:
         result = self.master.intelligent_coverage_analysis()
 
         # 基础覆盖率数据应该是所有分析的基础
-        base_coverage = result['base_coverage']
-        patterns = result['patterns']
-        predictions = result['predictions']
-        strategy = result['strategy']
+        base_coverage = result["base_coverage"]
+        patterns = result["patterns"]
+        predictions = result["predictions"]
+        strategy = result["strategy"]
 
         # 即使是空数据，也应该有一致的结构
         assert isinstance(base_coverage, dict)
@@ -202,9 +202,9 @@ class TestPhase35AICoverageMasterExtended:
         """测试基于预测的策略生成"""
         # 创建模拟预测数据
         mock_predictions = {
-            'high_impact_modules': ['utils', 'core'],
-            'low_hanging_fruit': ['simple_functions'],
-            'complex_modules': ['api_handlers']
+            "high_impact_modules": ["utils", "core"],
+            "low_hanging_fruit": ["simple_functions"],
+            "complex_modules": ["api_handlers"],
         }
 
         strategy = self.master._generate_intelligent_strategy(mock_predictions)
@@ -216,9 +216,9 @@ class TestPhase35AICoverageMasterExtended:
         """测试模式识别功能"""
         # 创建模拟覆盖率数据
         mock_coverage = {
-            'modules': {
-                'module1': {'coverage': 80, 'complexity': 'low'},
-                'module2': {'coverage': 20, 'complexity': 'high'}
+            "modules": {
+                "module1": {"coverage": 80, "complexity": "low"},
+                "module2": {"coverage": 20, "complexity": "high"},
             }
         }
 
@@ -254,8 +254,8 @@ class TestPhase35AICoverageMasterExtended:
         # 测试各种输入数据的验证
         test_cases = [
             {},  # 空字典
-            {'invalid': 'data'},  # 无效数据
-            {'modules': {}},  # 空模块字典
+            {"invalid": "data"},  # 无效数据
+            {"modules": {}},  # 空模块字典
         ]
 
         for test_case in test_cases:

@@ -3,7 +3,12 @@
 """
 
 import pytest
-from src.utils.validators import is_valid_email, is_valid_phone, is_valid_url, validate_required_fields
+from src.utils.validators import (
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_required_fields,
+)
 
 
 class TestWorkingValidators:
@@ -55,10 +60,10 @@ class TestWorkingValidators:
         assert src.utils.validators is not None
 
         # 验证函数存在
-        assert hasattr(src.utils.validators, 'is_valid_email')
-        assert hasattr(src.utils.validators, 'is_valid_phone')
-        assert hasattr(src.utils.validators, 'is_valid_url')
-        assert hasattr(src.utils.validators, 'validate_required_fields')
+        assert hasattr(src.utils.validators, "is_valid_email")
+        assert hasattr(src.utils.validators, "is_valid_phone")
+        assert hasattr(src.utils.validators, "is_valid_url")
+        assert hasattr(src.utils.validators, "validate_required_fields")
 
     def test_email_patterns(self):
         """测试各种邮箱格式"""
@@ -68,7 +73,7 @@ class TestWorkingValidators:
             "disposable.style.email.with+symbol@example.com",
             "user.name+tag+sorting@example.com",
             "x@example.com",
-            "example-indeed@strange-example.com"
+            "example-indeed@strange-example.com",
         ]
 
         for email in valid_emails:
@@ -84,7 +89,7 @@ class TestWorkingValidators:
             "(123) 456-7890",
             "123.456.7890",
             "123-456-7890",
-            "+1 (123) 456-7890"
+            "+1 (123) 456-7890",
         ]
 
         for phone in phone_patterns:
@@ -100,7 +105,7 @@ class TestWorkingValidators:
             "https://example.com/path/to/resource",
             "http://subdomain.example.com",
             "https://example.com:8080",
-            "http://example.com/path?query=value"
+            "http://example.com/path?query=value",
         ]
 
         for url in url_patterns:

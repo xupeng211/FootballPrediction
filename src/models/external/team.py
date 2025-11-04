@@ -108,9 +108,9 @@ class ExternalTeam(Base):
             "competition_id": self.competition_id,
             "competition_name": self.competition_name,
             "competition_code": self.competition_code,
-            "last_updated": self.last_updated.isoformat()
-            if self.last_updated
-            else None,
+            "last_updated": (
+                self.last_updated.isoformat() if self.last_updated else None
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "is_processed": self.is_processed,

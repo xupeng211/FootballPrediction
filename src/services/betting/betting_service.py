@@ -247,15 +247,19 @@ class BettingRecommendationEngine:
                     match_id=match_id,
                     bet_type="over_2_5",
                     odds=odds.over_under_2_5[0] if odds.over_under_2_5 else 0.0,
-                    probability=probabilities.over_under_2_5[0]
-                    if probabilities.over_under_2_5
-                    else 0.0,
+                    probability=(
+                        probabilities.over_under_2_5[0]
+                        if probabilities.over_under_2_5
+                        else 0.0
+                    ),
                     ev=ev_calc.ev_over_2_5,
-                    kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
-                        ev_calc.ev_over_2_5, odds.over_under_2_5[0]
-                    )
-                    if odds.over_under_2_5
-                    else None,
+                    kelly_fraction=(
+                        self.ev_calculator.calculate_kelly_fraction(
+                            ev_calc.ev_over_2_5, odds.over_under_2_5[0]
+                        )
+                        if odds.over_under_2_5
+                        else None
+                    ),
                     confidence=ev_calc.confidence,
                     reasoning=f"EV: {ev_calc.ev_over_2_5:.2f}%, 大小球推荐",
                     created_at=datetime.utcnow(),
@@ -332,17 +336,21 @@ class BettingService:
                 draw=float(odds_data.get("draw", 0)),
                 away_win=float(odds_data.get("away_win", 0)),
                 over_under_2_5=(
-                    float(odds_data.get("over_2_5", 0)),
-                    float(odds_data.get("under_2_5", 0)),
-                )
-                if odds_data.get("over_2_5") and odds_data.get("under_2_5")
-                else None,
+                    (
+                        float(odds_data.get("over_2_5", 0)),
+                        float(odds_data.get("under_2_5", 0)),
+                    )
+                    if odds_data.get("over_2_5") and odds_data.get("under_2_5")
+                    else None
+                ),
                 both_teams_score=(
-                    float(odds_data.get("bts_yes", 0)),
-                    float(odds_data.get("bts_no", 0)),
-                )
-                if odds_data.get("bts_yes") and odds_data.get("bts_no")
-                else None,
+                    (
+                        float(odds_data.get("bts_yes", 0)),
+                        float(odds_data.get("bts_no", 0)),
+                    )
+                    if odds_data.get("bts_yes") and odds_data.get("bts_no")
+                    else None
+                ),
             )
         except (ValueError, TypeError) as e:
             self.logger.warning(f"赔率数据解析失败: {e}")
@@ -358,19 +366,23 @@ class BettingService:
                 draw=float(prediction_data.get("draw_prob", 0)),
                 away_win=float(prediction_data.get("away_win_prob", 0)),
                 over_under_2_5=(
-                    float(prediction_data.get("over_2_5_prob", 0)),
-                    float(prediction_data.get("under_2_5_prob", 0)),
-                )
-                if prediction_data.get("over_2_5_prob")
-                and prediction_data.get("under_2_5_prob")
-                else None,
+                    (
+                        float(prediction_data.get("over_2_5_prob", 0)),
+                        float(prediction_data.get("under_2_5_prob", 0)),
+                    )
+                    if prediction_data.get("over_2_5_prob")
+                    and prediction_data.get("under_2_5_prob")
+                    else None
+                ),
                 both_teams_score=(
-                    float(prediction_data.get("bts_yes_prob", 0)),
-                    float(prediction_data.get("bts_no_prob", 0)),
-                )
-                if prediction_data.get("bts_yes_prob")
-                and prediction_data.get("bts_no_prob")
-                else None,
+                    (
+                        float(prediction_data.get("bts_yes_prob", 0)),
+                        float(prediction_data.get("bts_no_prob", 0)),
+                    )
+                    if prediction_data.get("bts_yes_prob")
+                    and prediction_data.get("bts_no_prob")
+                    else None
+                ),
             )
         except (ValueError, TypeError) as e:
             self.logger.warning(f"预测数据解析失败: {e}")
@@ -386,9 +398,9 @@ class BettingService:
             "best_bet": {
                 "type": recommendations[0].bet_type if recommendations else None,
                 "ev": recommendations[0].ev if recommendations else 0.0,
-                "kelly_fraction": recommendations[0].kelly_fraction
-                if recommendations
-                else None,
+                "kelly_fraction": (
+                    recommendations[0].kelly_fraction if recommendations else None
+                ),
             },
             "recommendation_count": len(recommendations),
             "max_ev": max([r.ev for r in recommendations]) if recommendations else 0.0,
@@ -443,11 +455,11 @@ class BettingService:
             "total_ev": round(total_ev, 2),
             "high_confidence_count": high_confidence_count,
             "high_confidence_ev": round(high_confidence_ev, 2),
-            "high_confidence_ratio": round(
-                high_confidence_count / total_recommendations, 3
-            )
-            if total_recommendations > 0
-            else 0,
+            "high_confidence_ratio": (
+                round(high_confidence_count / total_recommendations, 3)
+                if total_recommendations > 0
+                else 0
+            ),
             "period": {
                 "start": start_date.isoformat() if start_date else None,
                 "end": end_date.isoformat() if end_date else None,

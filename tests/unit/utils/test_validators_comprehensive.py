@@ -5,8 +5,11 @@ Validators综合测试 - 从0%提升到90%+覆盖率
 
 import pytest
 from src.utils.validators import (
-    is_valid_email, is_valid_phone, is_valid_url,
-    validate_required_fields, validate_data_types
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_required_fields,
+    validate_data_types,
 )
 
 
@@ -21,7 +24,7 @@ class TestValidatorsComprehensive:
             "user.name@domain.co.uk",
             "user+tag@example.org",
             "123@test-domain.com",
-            "user_name@test-domain.com"
+            "user_name@test-domain.com",
         ]
 
         for email in valid_emails:
@@ -36,7 +39,7 @@ class TestValidatorsComprehensive:
             "test@.com",
             "test@com.",
             "test space@domain.com",
-            "test@domain..com"
+            "test@domain..com",
         ]
 
         for email in invalid_emails:
@@ -51,20 +54,14 @@ class TestValidatorsComprehensive:
             "+86 138 0013 8000",
             "(123) 456-7890",
             "123-456-7890",
-            "+1 (555) 123-4567"
+            "+1 (555) 123-4567",
         ]
 
         for phone in valid_phones:
             assert is_valid_phone(phone) is True
 
         # 无效手机号
-        invalid_phones = [
-            "abc123def",
-            "1234567890abc",
-            "phone number",
-            "",
-            "123@456"
-        ]
+        invalid_phones = ["abc123def", "1234567890abc", "phone number", "", "123@456"]
 
         for phone in invalid_phones:
             assert is_valid_phone(phone) is False
@@ -79,7 +76,7 @@ class TestValidatorsComprehensive:
             "http://example.com:8080",
             "https://example.com/path?query=value&param2=data",
             "https://example.com/path#section",
-            "http://subdomain.example.com"
+            "http://subdomain.example.com",
         ]
 
         for url in valid_urls:
@@ -94,7 +91,7 @@ class TestValidatorsComprehensive:
             "http://",
             "https://",
             "",
-            "http://example .com"
+            "http://example .com",
         ]
 
         for url in invalid_urls:
@@ -164,7 +161,7 @@ class TestValidatorsComprehensive:
             "email": "john.doe@example.com",
             "phone": "+1 555-123-4567",
             "website": "https://johndoe.com",
-            "age": 30
+            "age": 30,
         }
 
         # 验证格式
@@ -178,12 +175,7 @@ class TestValidatorsComprehensive:
         assert missing == []
 
         # 验证数据类型
-        schema = {
-            "name": str,
-            "email": str,
-            "age": int,
-            "phone": str
-        }
+        schema = {"name": str, "email": str, "age": int, "phone": str}
         type_errors = validate_data_types(user_data, schema)
         assert type_errors == []
 

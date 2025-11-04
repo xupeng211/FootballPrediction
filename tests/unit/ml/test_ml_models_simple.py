@@ -17,12 +17,14 @@ import os
 
 # 直接导入，避免通过__init__.py
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src/ml/models'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"))
 
 try:
     from base_model import BaseModel, PredictionResult, TrainingResult
     from poisson_model import PoissonModel
     from elo_model import EloModel
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法直接导入ML模型: {e}")
@@ -47,11 +49,14 @@ class TestBaseModelSimple:
             confidence=0.7,
             model_name="Test",
             model_version="1.0",
-            created_at=now
+            created_at=now,
         )
 
         assert result.match_id == "test_1"
-        assert abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0) < 1e-6
+        assert (
+            abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
+            < 1e-6
+        )
 
         # 测试to_dict
         d = result.to_dict()
@@ -74,7 +79,7 @@ class TestBaseModelSimple:
             training_time=30.5,
             features_used=["f1", "f2"],
             hyperparameters={"p1": 1.0},
-            created_at=now
+            created_at=now,
         )
 
         assert result.model_name == "Test"
@@ -102,22 +107,54 @@ class TestPoissonModelSimple:
     @pytest.fixture
     def simple_data(self):
         """简单测试数据"""
-        return pd.DataFrame([
-            {"home_team": "A", "away_team": "B", "home_score": 2, "away_score": 1, "result": "home_win"},
-            {"home_team": "B", "away_team": "C", "home_score": 1, "away_score": 1, "result": "draw"},
-            {"home_team": "C", "away_team": "A", "home_score": 0, "away_score": 2, "result": "away_win"},
-            {"home_team": "A", "away_team": "C", "home_score": 3, "away_score": 1, "result": "home_win"},
-            {"home_team": "B", "away_team": "A", "home_score": 1, "away_score": 2, "result": "away_win"},
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "home_team": "A",
+                    "away_team": "B",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "result": "home_win",
+                },
+                {
+                    "home_team": "B",
+                    "away_team": "C",
+                    "home_score": 1,
+                    "away_score": 1,
+                    "result": "draw",
+                },
+                {
+                    "home_team": "C",
+                    "away_team": "A",
+                    "home_score": 0,
+                    "away_score": 2,
+                    "result": "away_win",
+                },
+                {
+                    "home_team": "A",
+                    "away_team": "C",
+                    "home_score": 3,
+                    "away_score": 1,
+                    "result": "home_win",
+                },
+                {
+                    "home_team": "B",
+                    "away_team": "A",
+                    "home_score": 1,
+                    "away_score": 2,
+                    "result": "away_win",
+                },
+            ]
+        )
 
     def test_model_initialization(self, model):
         """测试模型初始化"""
         assert model.model_name == "PoissonModel"
         assert model.model_version == "1.0"
         assert not model.is_trained
-        assert hasattr(model, 'home_advantage')
-        assert hasattr(model, 'team_attack_strength')
-        assert hasattr(model, 'team_defense_strength')
+        assert hasattr(model, "home_advantage")
+        assert hasattr(model, "team_attack_strength")
+        assert hasattr(model, "team_defense_strength")
 
     def test_prepare_features(self, model):
         """测试特征准备"""
@@ -144,8 +181,12 @@ class TestPoissonModelSimple:
         # 使用训练后的球队
         teams = list(model.team_attack_strength.keys())
         if len(teams) >= 2:
-            home_expected = model._calculate_expected_goals(teams[0], teams[1], is_home=True)
-            away_expected = model._calculate_expected_goals(teams[1], teams[0], is_home=False)
+            home_expected = model._calculate_expected_goals(
+                teams[0], teams[1], is_home=True
+            )
+            away_expected = model._calculate_expected_goals(
+                teams[1], teams[0], is_home=False
+            )
 
             assert home_expected > 0
             assert away_expected > 0
@@ -175,7 +216,7 @@ class TestPoissonModelSimple:
             match_data = {
                 "home_team": teams[0],
                 "away_team": teams[1],
-                "match_id": "test_match"
+                "match_id": "test_match",
             }
 
             prediction = model.predict(match_data)
@@ -188,7 +229,11 @@ class TestPoissonModelSimple:
             assert 0 <= prediction.confidence <= 1
 
             # 验证概率总和
-            total = prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+            total = (
+                prediction.home_win_prob
+                + prediction.draw_prob
+                + prediction.away_win_prob
+            )
             assert abs(total - 1.0) < 1e-6
 
     def test_predict_proba(self, model, simple_data):
@@ -253,23 +298,60 @@ class TestEloModelSimple:
     @pytest.fixture
     def simple_data(self):
         """简单测试数据"""
-        return pd.DataFrame([
-            {"home_team": "A", "away_team": "B", "home_score": 2, "away_score": 1, "result": "home_win", "date": datetime.now()},
-            {"home_team": "B", "away_team": "C", "home_score": 1, "away_score": 1, "result": "draw", "date": datetime.now()},
-            {"home_team": "C", "away_team": "A", "home_score": 0, "away_score": 2, "result": "away_win", "date": datetime.now()},
-            {"home_team": "A", "away_team": "C", "home_score": 3, "away_score": 1, "result": "home_win", "date": datetime.now()},
-            {"home_team": "B", "away_team": "A", "home_score": 1, "away_score": 2, "result": "away_win", "date": datetime.now()},
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "home_team": "A",
+                    "away_team": "B",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "B",
+                    "away_team": "C",
+                    "home_score": 1,
+                    "away_score": 1,
+                    "result": "draw",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "C",
+                    "away_team": "A",
+                    "home_score": 0,
+                    "away_score": 2,
+                    "result": "away_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "A",
+                    "away_team": "C",
+                    "home_score": 3,
+                    "away_score": 1,
+                    "result": "home_win",
+                    "date": datetime.now(),
+                },
+                {
+                    "home_team": "B",
+                    "away_team": "A",
+                    "home_score": 1,
+                    "away_score": 2,
+                    "result": "away_win",
+                    "date": datetime.now(),
+                },
+            ]
+        )
 
     def test_model_initialization(self, model):
         """测试模型初始化"""
         assert model.model_name == "EloModel"
         assert model.model_version == "1.0"
         assert not model.is_trained
-        assert hasattr(model, 'team_elos')
-        assert hasattr(model, 'k_factor')
-        assert hasattr(model, 'home_advantage')
-        assert hasattr(model, 'initial_elo')
+        assert hasattr(model, "team_elos")
+        assert hasattr(model, "k_factor")
+        assert hasattr(model, "home_advantage")
+        assert hasattr(model, "initial_elo")
 
     def test_expectation_calculation(self, model):
         """测试期望得分计算"""
@@ -352,7 +434,7 @@ class TestEloModelSimple:
             match_data = {
                 "home_team": teams[0],
                 "away_team": teams[1],
-                "match_id": "test_match"
+                "match_id": "test_match",
             }
 
             prediction = model.predict(match_data)
@@ -395,12 +477,38 @@ class TestMLIntegrationSimple:
     @pytest.fixture
     def test_data(self):
         """测试数据"""
-        return pd.DataFrame([
-            {"home_team": "A", "away_team": "B", "home_score": 2, "away_score": 1, "result": "home_win"},
-            {"home_team": "C", "away_team": "D", "home_score": 1, "away_score": 2, "result": "away_win"},
-            {"home_team": "B", "away_team": "A", "home_score": 1, "away_team": "1", "result": "draw"},
-            {"home_team": "D", "away_team": "C", "home_score": 3, "away_score": 0, "result": "home_win"},
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "home_team": "A",
+                    "away_team": "B",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "result": "home_win",
+                },
+                {
+                    "home_team": "C",
+                    "away_team": "D",
+                    "home_score": 1,
+                    "away_score": 2,
+                    "result": "away_win",
+                },
+                {
+                    "home_team": "B",
+                    "away_team": "A",
+                    "home_score": 1,
+                    "away_team": "1",
+                    "result": "draw",
+                },
+                {
+                    "home_team": "D",
+                    "away_team": "C",
+                    "home_score": 3,
+                    "away_score": 0,
+                    "result": "home_win",
+                },
+            ]
+        )
 
     def test_both_models_training(self, test_data):
         """测试两个模型都能训练"""
@@ -448,7 +556,7 @@ class TestMLIntegrationSimple:
             match_data = {
                 "home_team": teams[0],
                 "away_team": teams[1],
-                "match_id": "test"
+                "match_id": "test",
             }
 
             # 多次预测应该一致

@@ -8,30 +8,35 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_coverage_test():
     """运行覆盖率测试并返回结果"""
     print("🚀 开始运行覆盖率改进验证测试...")
 
     # 测试string_utils模块（已验证可以运行）
     cmd = [
-        sys.executable, "-m", "pytest",
+        sys.executable,
+        "-m",
+        "pytest",
         "tests/unit/utils/test_string_utils.py",
         "--cov=src/utils",
         "--cov-report=term-missing",
         "--tb=short",
-        "-q"
+        "-q",
     ]
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=Path(__file__).parent
+        )
 
         if result.returncode == 0:
             print("✅ 测试执行成功")
 
             # 提取覆盖率数据
-            lines = result.stdout.split('\n')
+            lines = result.stdout.split("\n")
             for line in lines:
-                if 'TOTAL' in line and '%' in line:
+                if "TOTAL" in line and "%" in line:
                     print(f"📊 覆盖率报告: {line.strip()}")
                     break
             return True
@@ -42,6 +47,7 @@ def run_coverage_test():
     except Exception as e:
         print(f"❌ 执行错误: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -66,6 +72,7 @@ def main():
     print("=" * 60)
 
     return success
+
 
 if __name__ == "__main__":
     main()

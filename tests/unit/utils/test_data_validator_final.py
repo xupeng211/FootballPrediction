@@ -20,7 +20,7 @@ class TestDataValidatorFinal:
             "user+tag@example.org",
             "123@example.com",
             "test123@test-domain.com",
-            "user_name@example-domain.com"
+            "user_name@example-domain.com",
         ]
 
         for email in valid_emails:
@@ -35,7 +35,7 @@ class TestDataValidatorFinal:
             "test@.com",
             "test@com.",
             "test space@domain.com",
-            "test@domain..com"
+            "test@domain..com",
         ]
 
         for email in invalid_emails:
@@ -44,22 +44,13 @@ class TestDataValidatorFinal:
     def test_validate_phone_comprehensive(self):
         """测试手机号验证的全面功能"""
         # 中国手机号
-        chinese_phones = [
-            "13800138000",
-            "15912345678",
-            "18888888888",
-            "19123456789"
-        ]
+        chinese_phones = ["13800138000", "15912345678", "18888888888", "19123456789"]
 
         for phone in chinese_phones:
             assert DataValidator.validate_phone(phone) is True
 
         # 带分隔符的手机号
-        formatted_phones = [
-            "138-0013-8000",
-            "138 0013 8000",
-            "(138)00138000"
-        ]
+        formatted_phones = ["138-0013-8000", "138 0013 8000", "(138)00138000"]
 
         for phone in formatted_phones:
             assert DataValidator.validate_phone(phone) is True
@@ -69,7 +60,7 @@ class TestDataValidatorFinal:
             "+1234567890",
             "+861380013800",
             "+442012345678",
-            "+12025551234"
+            "+12025551234",
         ]
 
         for phone in international_phones:
@@ -77,12 +68,12 @@ class TestDataValidatorFinal:
 
         # 无效手机号
         invalid_phones = [
-            "1234567890",    # 不是1开头
-            "12800138000",   # 不是有效开头
-            "1380013800",    # 位数不够
+            "1234567890",  # 不是1开头
+            "12800138000",  # 不是有效开头
+            "1380013800",  # 位数不够
             "138001380000",  # 位数太多
-            "13800138a00",   # 包含字母
-            "abc123def"
+            "13800138a00",  # 包含字母
+            "abc123def",
         ]
 
         for phone in invalid_phones:
@@ -98,7 +89,7 @@ class TestDataValidatorFinal:
             "http://example.com:8080",
             "https://example.com/path?query=value",
             "https://subdomain.example.com",
-            "http://example.com/path#section"
+            "http://example.com/path#section",
         ]
 
         for url in valid_urls:
@@ -109,11 +100,11 @@ class TestDataValidatorFinal:
             "not-a-url",
             "ftp://example.com",  # 非http协议
             "http//example.com",  # 缺少冒号
-            "example.com",       # 缺少协议
-            "http://",          # 缺少域名
-            "https://",         # 缺少域名
+            "example.com",  # 缺少协议
+            "http://",  # 缺少域名
+            "https://",  # 缺少域名
             "",
-            None
+            None,
         ]
 
         for url in invalid_urls:
@@ -126,18 +117,14 @@ class TestDataValidatorFinal:
             "11010519491231002X",
             "440308199001011239",  # 修正校验码: 4->9
             "310115198508154326",  # 修正校验码: 1->6
-            "511702200012311235"   # 修正校验码: 4->5
+            "511702200012311235",  # 修正校验码: 4->5
         ]
 
         for card in valid_18_cards:
             assert DataValidator.validate_id_card(card) is True
 
         # 15位身份证
-        valid_15_cards = [
-            "110105491231002",
-            "440308900101123",
-            "310115800101123"
-        ]
+        valid_15_cards = ["110105491231002", "440308900101123", "310115800101123"]
 
         for card in valid_15_cards:
             assert DataValidator.validate_id_card(card) is True
@@ -145,12 +132,12 @@ class TestDataValidatorFinal:
         # 无效身份证
         invalid_cards = [
             "123456789012345678",  # 18位但无效
-            "123456789012345",    # 15位但无效
+            "123456789012345",  # 15位但无效
             "11010519491231002A",  # 包含字母(除X)
             "110105194912310021",  # 校验码错误
             "000000000000000000",  # 全0
-            "",                    # 空字符串
-            None                   # None
+            "",  # 空字符串
+            None,  # None
         ]
 
         for card in invalid_cards:
@@ -168,7 +155,7 @@ class TestDataValidatorFinal:
         # 只检查script标签被移除，不检查alert关键词（避免过度过滤）
 
         # 各种危险字符
-        dangerous_chars = ["<", ">", "&", "\"", "'"]
+        dangerous_chars = ["<", ">", "&", '"', "'"]
         for char in dangerous_chars:
             test_input = f"Hello{char}World"
             result = DataValidator.sanitize_input(test_input)
@@ -201,7 +188,7 @@ class TestDataValidatorFinal:
             "test_user",
             "User1234567890123456",  # 20字符
             "a1b2c3",
-            "User_Name_123"
+            "User_Name_123",
         ]
 
         for username in valid_usernames:
@@ -209,15 +196,15 @@ class TestDataValidatorFinal:
 
         # 无效用户名
         invalid_usernames = [
-            "ab",           # 太短
+            "ab",  # 太短
             "user@domain",  # 包含@符号
-            "user-name",    # 包含连字符
-            "user name",    # 包含空格
-            "用户名123",     # 包含中文
-            "a" * 21,       # 太长
-            "",             # 空字符串
-            None,           # None
-            123             # 非字符串
+            "user-name",  # 包含连字符
+            "user name",  # 包含空格
+            "用户名123",  # 包含中文
+            "a" * 21,  # 太长
+            "",  # 空字符串
+            None,  # None
+            123,  # 非字符串
         ]
 
         for username in invalid_usernames:
@@ -230,7 +217,7 @@ class TestDataValidatorFinal:
             "Password123!",
             "MySecure@Pass456",
             "Complex#Pass789",
-            "Strong$Pass123"
+            "Strong$Pass123",
         ]
 
         for password in strong_passwords:
@@ -241,13 +228,13 @@ class TestDataValidatorFinal:
 
         # 弱密码测试
         weak_passwords = [
-            "password",     # 无大写、数字、特殊字符
-            "PASSWORD",     # 无小写、数字、特殊字符
-            "12345678",     # 无字母、特殊字符
-            "Password",     # 无数字、特殊字符
+            "password",  # 无大写、数字、特殊字符
+            "PASSWORD",  # 无小写、数字、特殊字符
+            "12345678",  # 无字母、特殊字符
+            "Password",  # 无数字、特殊字符
             "Password123",  # 无特殊字符
-            "Pass!",        # 太短
-            ""              # 空密码
+            "Pass!",  # 太短
+            "",  # 空密码
         ]
 
         for password in weak_passwords:
@@ -277,34 +264,13 @@ class TestDataValidatorFinal:
     def test_validate_positive_number_function(self):
         """测试正数验证功能"""
         # 有效正数
-        valid_numbers = [
-            1,
-            1.5,
-            100,
-            0.1,
-            "1",
-            "1.5",
-            "100",
-            "0.1"
-        ]
+        valid_numbers = [1, 1.5, 100, 0.1, "1", "1.5", "100", "0.1"]
 
         for number in valid_numbers:
             assert DataValidator.validate_positive_number(number) is True
 
         # 无效数字
-        invalid_numbers = [
-            0,
-            -1,
-            -0.1,
-            "0",
-            "-1",
-            "-0.1",
-            "abc",
-            "",
-            None,
-            [],
-            {}
-        ]
+        invalid_numbers = [0, -1, -0.1, "0", "-1", "-0.1", "abc", "", None, [], {}]
 
         for number in invalid_numbers:
             assert DataValidator.validate_positive_number(number) is False
@@ -382,12 +348,14 @@ class TestDataValidatorFinal:
             "phone": "13800138000",
             "password": "Password123!",
             "id_card": "11010519491231002X",
-            "age": 25
+            "age": 25,
         }
 
         # 1. 验证必填字段
         required_fields = ["username", "email", "password"]
-        fields_result = DataValidator.validate_required_fields(user_data, required_fields)
+        fields_result = DataValidator.validate_required_fields(
+            user_data, required_fields
+        )
         assert fields_result["valid"] is True
 
         # 2. 验证各字段格式
@@ -397,7 +365,9 @@ class TestDataValidatorFinal:
         assert DataValidator.validate_id_card(user_data["id_card"]) is True
 
         # 3. 验证密码强度
-        password_result = DataValidator.validate_password_strength(user_data["password"])
+        password_result = DataValidator.validate_password_strength(
+            user_data["password"]
+        )
         assert password_result["valid"] is True
         assert password_result["strength"] == 5
 
@@ -433,16 +403,16 @@ class TestDataValidatorFinal:
         # 验证所有正则表达式模式能正常编译
         patterns = [
             r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",  # email
-            r"^1[3-9]\d{9}$",                                      # chinese phone
-            r"^\+\d{10,15}$",                                      # international phone
-            r"^https?://[^\s/$.?#].[^\s]*$",                       # url
+            r"^1[3-9]\d{9}$",  # chinese phone
+            r"^\+\d{10,15}$",  # international phone
+            r"^https?://[^\s/$.?#].[^\s]*$",  # url
             r"^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$",  # 18位身份证
             r"^[1-9]\d{5}\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}$",  # 15位身份证
-            r"^[a-zA-Z0-9_]{4,20}$",                              # username
-            r"[a-z]",                                               # 小写字母
-            r"[A-Z]",                                               # 大写字母
-            r"\d",                                                  # 数字
-            r'[!@#$%^&*(),.?":{}|<>]'                              # 特殊字符
+            r"^[a-zA-Z0-9_]{4,20}$",  # username
+            r"[a-z]",  # 小写字母
+            r"[A-Z]",  # 大写字母
+            r"\d",  # 数字
+            r'[!@#$%^&*(),.?":{}|<>]',  # 特殊字符
         ]
 
         for pattern in patterns:

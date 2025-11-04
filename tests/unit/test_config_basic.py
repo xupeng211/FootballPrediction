@@ -48,7 +48,8 @@ def test_python_path_config():
     # 测试当前文件能否导入项目模块
     try:
         import src
-        assert hasattr(src, '__path__'), "src包路径配置错误"
+
+        assert hasattr(src, "__path__"), "src包路径配置错误"
     except ImportError as e:
         pytest.skip(f"无法导入src模块: {e}")
 
@@ -59,14 +60,16 @@ def test_environment_variables():
     import os
 
     # 检查Python路径
-    python_path = os.environ.get('PYTHONPATH', '')
-    assert 'src' in python_path or str(Path(__file__).parent.parent.parent) in python_path,         "PYTHONPATH未正确配置"
+    python_path = os.environ.get("PYTHONPATH", "")
+    assert (
+        "src" in python_path or str(Path(__file__).parent.parent.parent) in python_path
+    ), "PYTHONPATH未正确配置"
 
 
 @pytest.mark.unit
 def test_dependencies_available():
     """测试基础依赖可用性"""
-    required_packages = ['pytest', 'fastapi']
+    required_packages = ["pytest", "fastapi"]
 
     for package in required_packages:
         try:

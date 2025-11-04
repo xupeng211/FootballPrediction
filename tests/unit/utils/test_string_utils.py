@@ -4,8 +4,13 @@
 
 import pytest
 from src.utils.string_utils import (
-    normalize_string, truncate_string, snake_to_camel, camel_to_snake,
-    is_empty, strip_html, format_currency
+    normalize_string,
+    truncate_string,
+    snake_to_camel,
+    camel_to_snake,
+    is_empty,
+    strip_html,
+    format_currency,
 )
 
 

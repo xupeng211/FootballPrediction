@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
     from src.main import app
+
     client = TestClient(app)
     APP_AVAILABLE = True
 except ImportError:
@@ -64,6 +65,7 @@ def test_api_imports():
     """测试API相关导入"""
     try:
         from src.api.routes import health
+
         assert True
     except ImportError:
         pytest.skip("API路由模块不可用")
@@ -75,6 +77,7 @@ def test_fastapi_app_creation():
     """测试FastAPI应用创建"""
     try:
         from fastapi import FastAPI
+
         test_app = FastAPI()
         assert test_app is not None
     except ImportError:

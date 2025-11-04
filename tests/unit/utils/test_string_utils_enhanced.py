@@ -5,7 +5,12 @@ StringUtils增强测试 - 深化50.3%到65%+覆盖率
 
 import pytest
 import re
-from src.utils.string_utils import StringUtils, cached_slug, batch_clean_strings, validate_batch_emails
+from src.utils.string_utils import (
+    StringUtils,
+    cached_slug,
+    batch_clean_strings,
+    validate_batch_emails,
+)
 
 
 class TestStringUtilsEnhanced:
@@ -71,7 +76,10 @@ class TestStringUtilsEnhanced:
 
         # 制表符和混合空白
         assert StringUtils.clean_text("Tab\t\tSeparated") == "Tab Separated"
-        assert StringUtils.clean_text("Mixed \t whitespace \n here") == "Mixed whitespace here"
+        assert (
+            StringUtils.clean_text("Mixed \t whitespace \n here")
+            == "Mixed whitespace here"
+        )
 
         # 无效输入
         assert StringUtils.clean_text(None) == ""
@@ -137,7 +145,10 @@ class TestStringUtilsEnhanced:
         assert StringUtils.mask_sensitive_data("hello@world.com") == "hell************"
 
         # 自定义参数
-        assert StringUtils.mask_sensitive_data("1234567890", visible_chars=2) == "12********"
+        assert (
+            StringUtils.mask_sensitive_data("1234567890", visible_chars=2)
+            == "12********"
+        )
         assert StringUtils.mask_sensitive_data("password", mask_char="#") == "pass####"
 
         # 短字符串不遮蔽
@@ -189,7 +200,10 @@ class TestStringUtilsEnhanced:
     def test_escape_html_function(self):
         """测试HTML转义功能"""
         # 基本转义
-        assert StringUtils.escape_html("<div>Hello & 'world'</div>") == "&lt;div&gt;Hello &amp; &#39;world&#39;&lt;/div&gt;"
+        assert (
+            StringUtils.escape_html("<div>Hello & 'world'</div>")
+            == "&lt;div&gt;Hello &amp; &#39;world&#39;&lt;/div&gt;"
+        )
         assert StringUtils.escape_html('Quote: "test"') == "Quote: &quot;test&quot;"
         assert StringUtils.escape_html("Ampersand: &") == "Ampersand: &amp;"
 
@@ -201,12 +215,20 @@ class TestStringUtilsEnhanced:
     def test_unescape_html_function(self):
         """测试HTML反转义功能"""
         # 基本反转义
-        assert StringUtils.unescape_html("&lt;div&gt;Hello&lt;/div&gt;") == "<div>Hello</div>"
+        assert (
+            StringUtils.unescape_html("&lt;div&gt;Hello&lt;/div&gt;")
+            == "<div>Hello</div>"
+        )
         assert StringUtils.unescape_html("&quot;test&quot;") == '"test"'
         assert StringUtils.unescape_html("&amp;") == "&"
 
         # 组合转义
-        assert StringUtils.unescape_html("&lt;div&gt;Hello &amp; &#39;world&#39;&lt;/div&gt;") == "<div>Hello & 'world'</div>"
+        assert (
+            StringUtils.unescape_html(
+                "&lt;div&gt;Hello &amp; &#39;world&#39;&lt;/div&gt;"
+            )
+            == "<div>Hello & 'world'</div>"
+        )
 
         # 无输入
         assert StringUtils.unescape_html("") == ""
@@ -221,7 +243,7 @@ class TestStringUtilsEnhanced:
             "https://www.example.com",
             "https://example.com/path/to/resource",
             "http://example.com:8080",
-            "https://sub.domain.example.com"
+            "https://sub.domain.example.com",
         ]
 
         for url in valid_urls:
@@ -234,7 +256,7 @@ class TestStringUtilsEnhanced:
             "http//example.com",
             "example.com",
             "http://",
-            ""
+            "",
         ]
 
         for url in invalid_urls:
@@ -280,10 +302,14 @@ class TestStringUtilsEnhanced:
         """测试单词首字母大写功能"""
         # 基本大写
         assert StringUtils.capitalize_words("hello world") == "Hello World"
-        assert StringUtils.capitalize_words("python programming") == "Python Programming"
+        assert (
+            StringUtils.capitalize_words("python programming") == "Python Programming"
+        )
 
         # 多重空格处理
-        assert StringUtils.capitalize_words("  multiple   spaces  ") == "Multiple Spaces"
+        assert (
+            StringUtils.capitalize_words("  multiple   spaces  ") == "Multiple Spaces"
+        )
 
         # 无效输入
         assert StringUtils.capitalize_words(None) == ""
@@ -342,11 +368,11 @@ class TestStringUtilsEnhanced:
         """测试字符频率计算功能"""
         # 基本频率
         freq = StringUtils.char_frequency("hello")
-        assert freq == {'h': 1, 'e': 1, 'l': 2, 'o': 1}
+        assert freq == {"h": 1, "e": 1, "l": 2, "o": 1}
 
         # 大小写敏感
         freq = StringUtils.char_frequency("Hello")
-        assert freq == {'H': 1, 'e': 1, 'l': 2, 'o': 1}
+        assert freq == {"H": 1, "e": 1, "l": 2, "o": 1}
 
         # 无输入
         assert StringUtils.char_frequency("") == {}
@@ -461,7 +487,9 @@ class TestStringUtilsEnhanced:
         import time
 
         # 测试大量操作性能
-        strings = ["Hello World {} {}".format(i, j) for i in range(50) for j in range(2)]
+        strings = [
+            "Hello World {} {}".format(i, j) for i in range(50) for j in range(2)
+        ]
 
         start_time = time.time()
 

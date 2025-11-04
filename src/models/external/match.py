@@ -134,9 +134,9 @@ class ExternalMatch(Base):
             "score_detail": self.score_detail,
             "referees": self.referees,
             "odds": self.odds,
-            "last_updated": self.last_updated.isoformat()
-            if self.last_updated
-            else None,
+            "last_updated": (
+                self.last_updated.isoformat() if self.last_updated else None
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "is_processed": self.is_processed,

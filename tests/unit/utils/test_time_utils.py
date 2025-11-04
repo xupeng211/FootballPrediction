@@ -9,7 +9,7 @@ from src.utils.time_utils import (
     parse_datetime,
     calculate_duration,
     get_current_timestamp,
-    is_valid_datetime_format
+    is_valid_datetime_format,
 )
 
 
@@ -72,7 +72,7 @@ class TestTimeUtils:
             valid_formats = [
                 "2024-01-01T12:00:00",
                 "2024-01-01 12:00:00",
-                "2024/01/01 12:00:00"
+                "2024/01/01 12:00:00",
             ]
 
             for fmt in valid_formats:
@@ -80,11 +80,7 @@ class TestTimeUtils:
                 assert isinstance(result, bool)
 
             # 测试无效格式
-            invalid_formats = [
-                "not-a-date",
-                "2024-13-01",  # 无效月份
-                ""
-            ]
+            invalid_formats = ["not-a-date", "2024-13-01", ""]  # 无效月份
 
             for fmt in invalid_formats:
                 result = is_valid_datetime_format(fmt)
@@ -96,6 +92,7 @@ class TestTimeUtils:
         """测试时区处理"""
         try:
             from datetime import timezone
+
             dt = datetime.now(timezone.utc)
 
             # 测试UTC时间处理
@@ -136,14 +133,15 @@ class TestTimeUtils:
     def test_time_utils_module_import(self):
         """测试时间工具模块导入"""
         import src.utils.time_utils
+
         assert src.utils.time_utils is not None
 
         # 检查关键函数是否存在
         expected_functions = [
-            'format_datetime',
-            'parse_datetime',
-            'calculate_duration',
-            'get_current_timestamp'
+            "format_datetime",
+            "parse_datetime",
+            "calculate_duration",
+            "get_current_timestamp",
         ]
 
         for func in expected_functions:

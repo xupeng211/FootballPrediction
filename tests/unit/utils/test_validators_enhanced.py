@@ -4,8 +4,11 @@
 
 import pytest
 from src.utils.validators import (
-    is_valid_email, is_valid_phone, is_valid_url,
-    validate_required_fields, validate_data_types
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_required_fields,
+    validate_data_types,
 )
 
 
@@ -34,7 +37,9 @@ class TestValidatorsEnhanced:
         # 测试多个字段缺失
         data_multiple_missing = {"name": "John"}
         required_multiple = ["name", "email", "age", "phone"]
-        missing_multiple = validate_required_fields(data_multiple_missing, required_multiple)
+        missing_multiple = validate_required_fields(
+            data_multiple_missing, required_multiple
+        )
         assert len(missing_multiple) == 3
         assert "email" in missing_multiple
         assert "age" in missing_multiple
@@ -46,7 +51,7 @@ class TestValidatorsEnhanced:
             "name": "John",
             "email": "john@example.com",
             "age": 30,
-            "phone": "1234567890"
+            "phone": "1234567890",
         }
         required_fields = ["name", "email", "age", "phone"]
         missing = validate_required_fields(data, required_fields)
@@ -59,14 +64,14 @@ class TestValidatorsEnhanced:
             "age": 30,
             "height": 175.5,
             "active": True,
-            "tags": ["tag1", "tag2"]
+            "tags": ["tag1", "tag2"],
         }
         schema = {
             "name": str,
             "age": int,
             "height": float,
             "active": bool,
-            "tags": list
+            "tags": list,
         }
         errors = validate_data_types(data, schema)
         assert len(errors) == 0
@@ -78,14 +83,14 @@ class TestValidatorsEnhanced:
             "age": "30",  # 应该是int
             "height": "175.5",  # 应该是float
             "active": "true",  # 应该是bool
-            "tags": "tag1"  # 应该是list
+            "tags": "tag1",  # 应该是list
         }
         schema = {
             "name": str,
             "age": int,
             "height": float,
             "active": bool,
-            "tags": list
+            "tags": list,
         }
         errors = validate_data_types(data, schema)
         assert len(errors) == 4
@@ -99,46 +104,27 @@ class TestValidatorsEnhanced:
 
     def test_validate_data_types_partial_schema(self):
         """测试数据类型验证 - 部分schema"""
-        data = {
-            "name": "John",
-            "age": 30,
-            "extra_field": "not in schema"
-        }
-        schema = {
-            "name": str,
-            "age": int
-        }
+        data = {"name": "John", "age": 30, "extra_field": "not in schema"}
+        schema = {"name": str, "age": int}
         errors = validate_data_types(data, schema)
         assert len(errors) == 0  # 只验证schema中的字段
 
     def test_validate_data_types_empty_data(self):
         """测试数据类型验证 - 空数据"""
         data = {}
-        schema = {
-            "name": str,
-            "age": int
-        }
+        schema = {"name": str, "age": int}
         errors = validate_data_types(data, schema)
         assert len(errors) == 0  # 空数据没有类型错误
 
     def test_validate_data_types_complex_types(self):
         """测试数据类型验证 - 复杂类型"""
-        data = {
-            "metadata": {"key": "value"},
-            "scores": [85, 90, 78]
-        }
-        schema = {
-            "metadata": dict,
-            "scores": list
-        }
+        data = {"metadata": {"key": "value"}, "scores": [85, 90, 78]}
+        schema = {"metadata": dict, "scores": list}
         errors = validate_data_types(data, schema)
         assert len(errors) == 0
 
         # 测试复杂类型错误
-        data_invalid = {
-            "metadata": "not a dict",
-            "scores": "not a list"
-        }
+        data_invalid = {"metadata": "not a dict", "scores": "not a list"}
         errors_invalid = validate_data_types(data_invalid, schema)
         assert len(errors_invalid) == 2
 
@@ -174,7 +160,7 @@ class TestValidatorsEnhanced:
             "+1 (555) 123-4567",
             "+44 20 7946 0958",
             "+86 138 0013 8000",
-            "+49 30 12345678"
+            "+49 30 12345678",
         ]
 
         for phone in international_phones:
@@ -186,7 +172,7 @@ class TestValidatorsEnhanced:
             "123",  # 太短
             "phone",  # 非数字字符
             "+",  # 只有加号
-            "1-800-INVALID"  # 包含字母
+            "1-800-INVALID",  # 包含字母
         ]
 
         for phone in invalid_phones:
@@ -202,7 +188,7 @@ class TestValidatorsEnhanced:
             "https://example.com/path/to/resource",
             "https://example.com/path?query=value&param2=test",
             "https://example.com/path#section",
-            "http://sub.domain.example.co.uk"
+            "http://sub.domain.example.co.uk",
         ]
 
         for url in valid_urls:
@@ -215,7 +201,7 @@ class TestValidatorsEnhanced:
             "http//example.com",  # 缺少冒号
             "example.com",  # 缺少协议
             "http://",  # 缺少域名
-            "https://.com"  # 无效域名
+            "https://.com",  # 无效域名
         ]
 
         for url in invalid_urls:
@@ -248,11 +234,7 @@ class TestValidatorsEnhanced:
     def test_unicode_handling(self):
         """测试Unicode字符处理"""
         # 测试Unicode邮箱
-        unicode_emails = [
-            "测试@example.com",
-            "user@münchen.de",
-            "josé@ejemplo.es"
-        ]
+        unicode_emails = ["测试@example.com", "user@münchen.de", "josé@ejemplo.es"]
 
         for email in unicode_emails:
             result = is_valid_email(email)
@@ -260,10 +242,7 @@ class TestValidatorsEnhanced:
             assert isinstance(result, bool)
 
         # 测试Unicode电话号码
-        unicode_phones = [
-            "+86 138 0013 8000",  # 中文
-            "+49 30 12345678"   # 德文
-        ]
+        unicode_phones = ["+86 138 0013 8000", "+49 30 12345678"]  # 中文  # 德文
 
         for phone in unicode_phones:
             result = is_valid_phone(phone)

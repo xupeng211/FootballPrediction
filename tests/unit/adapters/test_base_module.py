@@ -14,10 +14,18 @@ from typing import Any
 from datetime import datetime
 
 # 直接添加adapters目录到路径，避免通过__init__.py
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src/adapters'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
 # 直接导入base模块，绕过__init__.py
-from base import AdapterStatus, Adaptee, Target, Adapter, BaseAdapter, DataTransformer, CompositeAdapter
+from base import (
+    AdapterStatus,
+    Adaptee,
+    Target,
+    Adapter,
+    BaseAdapter,
+    DataTransformer,
+    CompositeAdapter,
+)
 
 
 class MockAdaptee(Adaptee):
@@ -49,7 +57,12 @@ class MockTarget(Target):
     async def request(self, *args, **kwargs) -> Any:
         """标准请求方法"""
         self.request_count += 1
-        return {"target": self.name, "request_id": self.request_count, "args": args, "kwargs": kwargs}
+        return {
+            "target": self.name,
+            "request_id": self.request_count,
+            "args": args,
+            "kwargs": kwargs,
+        }
 
 
 class MockAdapter(Adapter):
@@ -166,12 +179,12 @@ class TestAdapteeFromBaseModule:
     def test_adaptee_abstract_methods(self):
         """测试被适配者抽象方法"""
         # 验证抽象方法存在
-        assert hasattr(Adaptee, 'get_data')
-        assert hasattr(Adaptee, 'send_data')
+        assert hasattr(Adaptee, "get_data")
+        assert hasattr(Adaptee, "send_data")
 
         # 验证是抽象方法
-        assert getattr(Adaptee.get_data, '__isabstractmethod__', False)  # 已实现的Mock
-        assert getattr(Adaptee.send_data, '__isabstractmethod__', False)  # 已实现的Mock
+        assert getattr(Adaptee.get_data, "__isabstractmethod__", False)  # 已实现的Mock
+        assert getattr(Adaptee.send_data, "__isabstractmethod__", False)  # 已实现的Mock
 
 
 class TestTargetFromBaseModule:
@@ -202,10 +215,10 @@ class TestTargetFromBaseModule:
     def test_target_abstract_methods(self):
         """测试目标接口抽象方法"""
         # 验证抽象方法存在
-        assert hasattr(Target, 'request')
+        assert hasattr(Target, "request")
 
         # Mock类已实现，所以不是抽象的
-        assert not getattr(Target.request, '__isabstractmethod__', False)
+        assert not getattr(Target.request, "__isabstractmethod__", False)
 
 
 class TestAdapterFromBaseModule:
@@ -258,8 +271,8 @@ class TestBaseAdapterFromBaseModule:
         """测试基础适配器类定义"""
         # 验证类存在
         assert BaseAdapter is not None
-        assert hasattr(BaseAdapter, '__module__')
-        assert 'base' in BaseAdapter.__module__
+        assert hasattr(BaseAdapter, "__module__")
+        assert "base" in BaseAdapter.__module__
 
 
 class TestDataTransformerFromBaseModule:
@@ -297,10 +310,10 @@ class TestDataTransformerFromBaseModule:
     def test_data_transformer_abstract_methods(self):
         """测试数据转换器抽象方法"""
         # 验证抽象方法存在
-        assert hasattr(DataTransformer, 'transform')
+        assert hasattr(DataTransformer, "transform")
 
         # Mock实现，所以不是抽象的
-        assert not getattr(DataTransformer.transform, '__isabstractmethod__', False)
+        assert not getattr(DataTransformer.transform, "__isabstractmethod__", False)
 
 
 class TestCompositeAdapterFromBaseModule:
@@ -389,7 +402,9 @@ class TestCompositeAdapterFromBaseModule:
         assert len(result["results"]) == 1
         assert result["results"][0] == "mock_data_test"
 
-    async def test_composite_adapter_request_with_multiple_adapters_from_base_module(self):
+    async def test_composite_adapter_request_with_multiple_adapters_from_base_module(
+        self,
+    ):
         """测试组合适配器多个子适配器的请求"""
         composite = CompositeAdapter()
         adapter1 = MockAdapter("Adapter1")
@@ -401,7 +416,9 @@ class TestCompositeAdapterFromBaseModule:
         assert result["adapter_name"] == "CompositeAdapter"
         assert len(result["results"]) == 2
 
-    async def test_composite_adapter_request_with_exception_handling_from_base_module(self):
+    async def test_composite_adapter_request_with_exception_handling_from_base_module(
+        self,
+    ):
         """测试组合适配器请求时的异常处理"""
         composite = CompositeAdapter()
 

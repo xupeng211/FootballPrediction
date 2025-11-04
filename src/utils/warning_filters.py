@@ -15,7 +15,9 @@ def setup_warning_filters():
     try:
         # 忽略一些常见的警告
         warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, module="sklearn.*")
+        warnings.filterwarnings(
+            "ignore", category=DeprecationWarning, module="sklearn.*"
+        )
         warnings.filterwarnings("ignore", category=FutureWarning, module="pandas.*")
         warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
     except (ValueError, KeyError, TypeError, AttributeError) as e:

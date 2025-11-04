@@ -12,15 +12,14 @@ from datetime import datetime
 from typing import Dict, Any
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 # 设置环境变量
-os.environ['FOOTBALL_DATA_API_KEY'] = 'ed809154dc1f422da46a18d8961a98a0'
+os.environ["FOOTBALL_DATA_API_KEY"] = "ed809154dc1f422da46a18d8961a98a0"
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -45,8 +44,8 @@ class SimpleCacheManager:
         try:
             self.cache[key] = value
             self.cache_timestamps[key] = {
-                'created_at': datetime.utcnow(),
-                'ttl_seconds': ttl_seconds
+                "created_at": datetime.utcnow(),
+                "ttl_seconds": ttl_seconds,
             }
             return True
         except Exception as e:
@@ -62,8 +61,8 @@ class SimpleCacheManager:
             # 检查是否过期
             timestamp_info = self.cache_timestamps.get(key)
             if timestamp_info:
-                age = (datetime.utcnow() - timestamp_info['created_at']).total_seconds()
-                if age > timestamp_info['ttl_seconds']:
+                age = (datetime.utcnow() - timestamp_info["created_at"]).total_seconds()
+                if age > timestamp_info["ttl_seconds"]:
                     del self.cache[key]
                     del self.cache_timestamps[key]
                     return None
@@ -102,10 +101,10 @@ class Stage3SimpleTester:
     def __init__(self):
         self.cache_manager = SimpleCacheManager()
         self.test_results = {
-            'total_tests': 0,
-            'passed_tests': 0,
-            'failed_tests': 0,
-            'errors': []
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "errors": [],
         }
 
     async def test_basic_caching(self) -> bool:
@@ -115,40 +114,42 @@ class Stage3SimpleTester:
 
             # 测试设置和获取缓存
             test_data = {
-                'external_id': '2021',
-                'name': 'Premier League',
-                'code': 'PL',
-                'type': 'LEAGUE'
+                "external_id": "2021",
+                "name": "Premier League",
+                "code": "PL",
+                "type": "LEAGUE",
             }
 
             # 缓存数据
-            success = self.cache_manager.set_cache('league:2021', test_data, ttl_seconds=60)
+            success = self.cache_manager.set_cache(
+                "league:2021", test_data, ttl_seconds=60
+            )
             if not success:
                 raise Exception("缓存数据失败")
 
             # 获取缓存数据
-            cached_data = self.cache_manager.get_cache('league:2021')
-            if not cached_data or cached_data.get('name') != 'Premier League':
+            cached_data = self.cache_manager.get_cache("league:2021")
+            if not cached_data or cached_data.get("name") != "Premier League":
                 raise Exception("获取缓存数据失败")
 
             logger.info("  ✅ 基础缓存设置和获取正常")
 
             # 测试缓存过期
-            self.cache_manager.set_cache('temp_data', 'test_value', ttl_seconds=1)
+            self.cache_manager.set_cache("temp_data", "test_value", ttl_seconds=1)
             await asyncio.sleep(2)  # 等待过期
-            expired_data = self.cache_manager.get_cache('temp_data')
+            expired_data = self.cache_manager.get_cache("temp_data")
             if expired_data is not None:
                 raise Exception("缓存过期机制失效")
 
             logger.info("  ✅ 缓存过期机制正常")
 
             # 测试缓存删除
-            self.cache_manager.set_cache('delete_test', 'value')
-            delete_success = self.cache_manager.delete_cache('delete_test')
+            self.cache_manager.set_cache("delete_test", "value")
+            delete_success = self.cache_manager.delete_cache("delete_test")
             if not delete_success:
                 raise Exception("删除缓存失败")
 
-            deleted_data = self.cache_manager.get_cache('delete_test')
+            deleted_data = self.cache_manager.get_cache("delete_test")
             if deleted_data is not None:
                 raise Exception("删除缓存后仍能获取数据")
 
@@ -167,44 +168,48 @@ class Stage3SimpleTester:
 
             # 测试联赛数据结构
             league_structure = {
-                'external_id': str,
-                'name': str,
-                'code': str,
-                'type': str,
-                'area': dict,
-                'season': dict,
-                'last_updated': str
+                "external_id": str,
+                "name": str,
+                "code": str,
+                "type": str,
+                "area": dict,
+                "season": dict,
+                "last_updated": str,
             }
 
             # 测试球队数据结构
             team_structure = {
-                'external_id': str,
-                'name': str,
-                'short_name': str,
-                'tla': str,
-                'crest': str,
-                'address': str,
-                'website': str,
-                'founded': int,
-                'area': dict
+                "external_id": str,
+                "name": str,
+                "short_name": str,
+                "tla": str,
+                "crest": str,
+                "address": str,
+                "website": str,
+                "founded": int,
+                "area": dict,
             }
 
             # 测试积分榜数据结构
             standings_structure = {
-                'position': int,
-                'team': dict,
-                'played_games': int,
-                'won': int,
-                'draw': int,
-                'lost': int,
-                'points': int,
-                'goals_for': int,
-                'goals_against': int,
-                'goal_difference': int
+                "position": int,
+                "team": dict,
+                "played_games": int,
+                "won": int,
+                "draw": int,
+                "lost": int,
+                "points": int,
+                "goals_for": int,
+                "goals_against": int,
+                "goal_difference": int,
             }
 
             # 验证数据结构完整性
-            required_structures = ['league_structure', 'team_structure', 'standings_structure']
+            required_structures = [
+                "league_structure",
+                "team_structure",
+                "standings_structure",
+            ]
             for structure_name in required_structures:
                 structure = locals().get(structure_name)
                 if not structure:
@@ -214,20 +219,20 @@ class Stage3SimpleTester:
 
             # 测试数据转换
             sample_league = {
-                'external_id': '2021',
-                'name': 'Premier League',
-                'code': 'PL',
-                'type': 'LEAGUE',
-                'area': {'name': 'England', 'code': 'ENG'},
-                'season': {'current_matchday': 12},
-                'last_updated': datetime.utcnow().isoformat()
+                "external_id": "2021",
+                "name": "Premier League",
+                "code": "PL",
+                "type": "LEAGUE",
+                "area": {"name": "England", "code": "ENG"},
+                "season": {"current_matchday": 12},
+                "last_updated": datetime.utcnow().isoformat(),
             }
 
             # 缓存并验证数据转换
-            self.cache_manager.set_cache('test_league', sample_league)
-            cached_league = self.cache_manager.get_cache('test_league')
+            self.cache_manager.set_cache("test_league", sample_league)
+            cached_league = self.cache_manager.get_cache("test_league")
 
-            if not cached_league or cached_league.get('name') != 'Premier League':
+            if not cached_league or cached_league.get("name") != "Premier League":
                 raise Exception("数据转换失败")
 
             logger.info("  ✅ 数据转换和缓存正常")
@@ -245,17 +250,21 @@ class Stage3SimpleTester:
 
             async with SimpleDataCollector() as collector:
                 # 测试联赛数据采集和缓存
-                competitions_data = await collector._make_request_with_retry('competitions')
-                if not competitions_data or 'competitions' not in competitions_data:
+                competitions_data = await collector._make_request_with_retry(
+                    "competitions"
+                )
+                if not competitions_data or "competitions" not in competitions_data:
                     raise Exception("API数据采集失败")
 
-                competitions = competitions_data['competitions']
+                competitions = competitions_data["competitions"]
                 if len(competitions) == 0:
                     raise Exception("API返回空数据")
 
                 # 缓存联赛数据
-                cache_key = 'api:competitions'
-                cache_success = self.cache_manager.set_cache(cache_key, competitions, ttl_seconds=300)
+                cache_key = "api:competitions"
+                cache_success = self.cache_manager.set_cache(
+                    cache_key, competitions, ttl_seconds=300
+                )
                 if not cache_success:
                     raise Exception("缓存API数据失败")
 
@@ -267,38 +276,48 @@ class Stage3SimpleTester:
                 logger.info(f"  ✅ API数据采集和缓存成功: {len(competitions)} 个联赛")
 
                 # 测试球队数据采集和缓存
-                teams_data = await collector._make_request_with_retry('competitions/2021/teams')
-                if not teams_data or 'teams' not in teams_data:
+                teams_data = await collector._make_request_with_retry(
+                    "competitions/2021/teams"
+                )
+                if not teams_data or "teams" not in teams_data:
                     raise Exception("球队数据采集失败")
 
-                teams = teams_data['teams']
+                teams = teams_data["teams"]
                 if len(teams) == 0:
                     raise Exception("球队数据为空")
 
                 # 缓存球队数据
-                teams_cache_key = 'api:teams:2021'
-                cache_success = self.cache_manager.set_cache(teams_cache_key, teams, ttl_seconds=600)
+                teams_cache_key = "api:teams:2021"
+                cache_success = self.cache_manager.set_cache(
+                    teams_cache_key, teams, ttl_seconds=600
+                )
                 if not cache_success:
                     raise Exception("缓存球队数据失败")
 
                 logger.info(f"  ✅ 球队数据采集和缓存成功: {len(teams)} 支球队")
 
                 # 测试积分榜数据采集和缓存
-                standings_data = await collector._make_request_with_retry('competitions/2021/standings')
-                if not standings_data or 'standings' not in standings_data:
+                standings_data = await collector._make_request_with_retry(
+                    "competitions/2021/standings"
+                )
+                if not standings_data or "standings" not in standings_data:
                     raise Exception("积分榜数据采集失败")
 
-                standings = standings_data['standings']
+                standings = standings_data["standings"]
                 if len(standings) == 0:
                     raise Exception("积分榜数据为空")
 
                 # 缓存积分榜数据
-                standings_cache_key = 'api:standings:2021'
-                cache_success = self.cache_manager.set_cache(standings_cache_key, standings, ttl_seconds=1800)
+                standings_cache_key = "api:standings:2021"
+                cache_success = self.cache_manager.set_cache(
+                    standings_cache_key, standings, ttl_seconds=1800
+                )
                 if not cache_success:
                     raise Exception("缓存积分榜数据失败")
 
-                logger.info(f"  ✅ 积分榜数据采集和缓存成功: {len(standings[0].get('table', []))} 支球队")
+                logger.info(
+                    f"  ✅ 积分榜数据采集和缓存成功: {len(standings[0].get('table', []))} 支球队"
+                )
 
                 return True
 
@@ -313,17 +332,13 @@ class Stage3SimpleTester:
 
             # 准备测试数据
             test_data = [
-                {
-                    'id': i,
-                    'name': f'Team {i}',
-                    'points': i * 3
-                } for i in range(1000)
+                {"id": i, "name": f"Team {i}", "points": i * 3} for i in range(1000)
             ]
 
             # 测试批量写入性能
             start_time = datetime.utcnow()
             for i, data in enumerate(test_data):
-                self.cache_manager.set_cache(f'team:{i}', data, ttl_seconds=3600)
+                self.cache_manager.set_cache(f"team:{i}", data, ttl_seconds=3600)
 
             write_time = (datetime.utcnow() - start_time).total_seconds()
             logger.info(f"  ✅ 批量写入1000条数据耗时: {write_time:.3f}秒")
@@ -332,13 +347,15 @@ class Stage3SimpleTester:
             start_time = datetime.utcnow()
             successful_reads = 0
             for i in range(1000):
-                cached_data = self.cache_manager.get_cache(f'team:{i}')
+                cached_data = self.cache_manager.get_cache(f"team:{i}")
                 if cached_data:
                     successful_reads += 1
 
             read_time = (datetime.utcnow() - start_time).total_seconds()
             logger.info(f"  ✅ 批量读取1000条数据耗时: {read_time:.3f}秒")
-            logger.info(f"  ✅ 读取成功率: {successful_reads}/1000 ({successful_reads/10:.1f}%)")
+            logger.info(
+                f"  ✅ 读取成功率: {successful_reads}/1000 ({successful_reads/10:.1f}%)"
+            )
 
             # 测试内存使用情况
             cache_size = len(self.cache_manager.cache)
@@ -363,31 +380,31 @@ class Stage3SimpleTester:
 
             # 测试无效数据类型缓存
             invalid_data = object()  # 不可序列化的对象
-            success = self.cache_manager.set_cache('invalid_test', invalid_data)
+            success = self.cache_manager.set_cache("invalid_test", invalid_data)
             # 应该能够缓存，因为使用的是内存缓存
 
             # 测试空键值处理
-            empty_success = self.cache_manager.set_cache('', 'test_value')
+            empty_success = self.cache_manager.set_cache("", "test_value")
             if not empty_success:
                 logger.warning("  ⚠️ 空键值处理可能有问题")
 
             # 测试None值缓存
-            none_success = self.cache_manager.set_cache('none_test', None)
+            none_success = self.cache_manager.set_cache("none_test", None)
             if not none_success:
                 logger.warning("  ⚠️ None值缓存可能有问题")
 
             # 测试超长键值处理
-            long_key = 'x' * 1000
-            long_success = self.cache_manager.set_cache(long_key, 'test_value')
+            long_key = "x" * 1000
+            long_success = self.cache_manager.set_cache(long_key, "test_value")
             if not long_success:
                 logger.warning("  ⚠️ 超长键值处理可能有问题")
 
             # 测试并发访问
             async def concurrent_access():
                 for i in range(100):
-                    self.cache_manager.set_cache(f'concurrent_{i}', f'value_{i}')
-                    cached = self.cache_manager.get_cache(f'concurrent_{i}')
-                    if cached != f'value_{i}':
+                    self.cache_manager.set_cache(f"concurrent_{i}", f"value_{i}")
+                    cached = self.cache_manager.get_cache(f"concurrent_{i}")
+                    if cached != f"value_{i}":
                         return False
                 return True
 
@@ -415,24 +432,24 @@ class Stage3SimpleTester:
             ("数据结构", self.test_data_structures),
             ("API数据集成", self.test_api_data_integration),
             ("缓存性能", self.test_cache_performance),
-            ("错误处理", self.test_error_handling)
+            ("错误处理", self.test_error_handling),
         ]
 
         for test_name, test_func in tests:
             print(f"\n🔍 执行 {test_name}测试...")
-            self.test_results['total_tests'] += 1
+            self.test_results["total_tests"] += 1
 
             try:
                 if await test_func():
                     print(f"✅ {test_name}测试通过")
-                    self.test_results['passed_tests'] += 1
+                    self.test_results["passed_tests"] += 1
                 else:
                     print(f"❌ {test_name}测试失败")
-                    self.test_results['failed_tests'] += 1
+                    self.test_results["failed_tests"] += 1
             except Exception as e:
                 print(f"❌ {test_name}测试异常: {e}")
-                self.test_results['failed_tests'] += 1
-                self.test_results['errors'].append(f"{test_name}: {e}")
+                self.test_results["failed_tests"] += 1
+                self.test_results["errors"].append(f"{test_name}: {e}")
 
         end_time = datetime.now()
         duration = end_time - start_time
@@ -451,18 +468,20 @@ class Stage3SimpleTester:
         print(f"   失败: {self.test_results['failed_tests']}")
         print(f"   耗时: {duration.total_seconds():.2f} 秒")
 
-        if self.test_results['errors']:
+        if self.test_results["errors"]:
             print("\n❌ 错误详情:")
-            for error in self.test_results['errors']:
+            for error in self.test_results["errors"]:
                 print(f"   - {error}")
 
         success_rate = 0
-        if self.test_results['total_tests'] > 0:
-            success_rate = (self.test_results['passed_tests'] / self.test_results['total_tests']) * 100
+        if self.test_results["total_tests"] > 0:
+            success_rate = (
+                self.test_results["passed_tests"] / self.test_results["total_tests"]
+            ) * 100
 
         print(f"\n🎯 成功率: {success_rate:.1f}%")
 
-        if self.test_results['failed_tests'] == 0:
+        if self.test_results["failed_tests"] == 0:
             print("🎉 所有测试通过！")
             print("✅ 基础缓存功能正常")
             print("✅ 数据结构定义完整")

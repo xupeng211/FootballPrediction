@@ -25,13 +25,20 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
     from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import ModelTrainer, TrainingConfig, TrainingStatus, ModelType
+    from src.ml.model_training import (
+        ModelTrainer,
+        TrainingConfig,
+        TrainingStatus,
+        ModelType,
+    )
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模块: {e}")
@@ -67,16 +74,19 @@ def create_training_data(num_matches: int = 500) -> pd.DataFrame:
         else:
             result = "draw"
 
-        data.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_score": home_goals,
-            "away_score": away_goals,
-            "result": result,
-            "match_date": datetime.now() - timedelta(days=np.random.randint(0, 365)),
-            "home_team_strength": home_strength,
-            "away_team_strength": away_strength,
-        })
+        data.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "result": result,
+                "match_date": datetime.now()
+                - timedelta(days=np.random.randint(0, 365)),
+                "home_team_strength": home_strength,
+                "away_team_strength": away_strength,
+            }
+        )
 
     return pd.DataFrame(data)
 
@@ -123,18 +133,28 @@ class TestMLModelTraining:
         test_match = {
             "home_team": training_data["home_team"].iloc[0],
             "away_team": training_data["away_team"].iloc[1],
-            "match_id": "test_match_001"
+            "match_id": "test_match_001",
         }
 
         prediction = model.predict(test_match)
         assert isinstance(prediction, PredictionResult)
         assert prediction.home_team == test_match["home_team"]
         assert prediction.away_team == test_match["away_team"]
-        assert abs(prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob - 1.0) < 0.01
+        assert (
+            abs(
+                prediction.home_win_prob
+                + prediction.draw_prob
+                + prediction.away_win_prob
+                - 1.0
+            )
+            < 0.01
+        )
         assert prediction.confidence > 0.0
         assert prediction.model_name == "PoissonModel"
 
-        print(f"✅ Poisson模型训练完成: 准确率={training_result.accuracy:.3f}, 训练时间={training_result.training_time:.2f}s")
+        print(
+            f"✅ Poisson模型训练完成: 准确率={training_result.accuracy:.3f}, 训练时间={training_result.training_time:.2f}s"
+        )
 
     def test_model_training_with_validation_data(self):
         """测试带验证数据的模型训练"""
@@ -159,7 +179,9 @@ class TestMLModelTraining:
         assert "recall" in validation_metrics
         assert "f1_score" in validation_metrics
 
-        print(f"✅ 验证训练完成: 训练准确率={training_result.accuracy:.3f}, 验证准确率={validation_metrics['accuracy']:.3f}")
+        print(
+            f"✅ 验证训练完成: 训练准确率={training_result.accuracy:.3f}, 验证准确率={validation_metrics['accuracy']:.3f}"
+        )
 
     def test_model_cross_validation(self):
         """测试模型交叉验证"""
@@ -183,7 +205,7 @@ class TestMLModelTraining:
         # 验证模型可以正常预测
         test_match = {
             "home_team": training_data["home_team"].iloc[0],
-            "away_team": training_data["away_team"].iloc[1]
+            "away_team": training_data["away_team"].iloc[1],
         }
 
         probabilities = model.predict_proba(test_match)
@@ -212,11 +234,13 @@ class TestMLModelTraining:
             model.update_hyperparameters(**config)
 
             training_result = model.train(training_data)
-            results.append({
-                "config": config,
-                "accuracy": training_result.accuracy,
-                "training_time": training_result.training_time
-            })
+            results.append(
+                {
+                    "config": config,
+                    "accuracy": training_result.accuracy,
+                    "training_time": training_result.training_time,
+                }
+            )
 
         # 验证不同配置产生不同结果
         accuracies = [r["accuracy"] for r in results]
@@ -224,7 +248,9 @@ class TestMLModelTraining:
 
         # 找到最佳配置
         best_result = max(results, key=lambda x: x["accuracy"])
-        print(f"✅ 超参数优化完成: 最佳配置={best_result['config']}, 准确率={best_result['accuracy']:.3f}")
+        print(
+            f"✅ 超参数优化完成: 最佳配置={best_result['config']}, 准确率={best_result['accuracy']:.3f}"
+        )
 
     def test_model_save_and_load_workflow(self):
         """测试模型保存和加载工作流"""
@@ -239,14 +265,14 @@ class TestMLModelTraining:
         test_match = {
             "home_team": training_data["home_team"].iloc[0],
             "away_team": training_data["away_team"].iloc[1],
-            "match_id": "save_load_test"
+            "match_id": "save_load_test",
         }
 
         original_prediction = original_model.predict(test_match)
         original_team_strengths = original_model.team_attack_strength.copy()
 
         # 保存模型到临时文件
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pkl') as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pkl") as tmp_file:
             model_path = tmp_file.name
 
         try:
@@ -264,17 +290,30 @@ class TestMLModelTraining:
             assert loaded_model.is_trained == original_model.is_trained
             assert loaded_model.model_name == original_model.model_name
             assert loaded_model.model_version == original_model.model_version
-            assert loaded_model.team_attack_strength == original_model.team_attack_strength
-            assert loaded_model.team_defense_strength == original_model.team_defense_strength
+            assert (
+                loaded_model.team_attack_strength == original_model.team_attack_strength
+            )
+            assert (
+                loaded_model.team_defense_strength
+                == original_model.team_defense_strength
+            )
 
             # 验证加载模型的预测结果一致性
             loaded_prediction = loaded_model.predict(test_match)
 
             assert loaded_prediction.home_team == original_prediction.home_team
             assert loaded_prediction.away_team == original_prediction.away_team
-            assert abs(loaded_prediction.home_win_prob - original_prediction.home_win_prob) < 0.001
-            assert abs(loaded_prediction.draw_prob - original_prediction.draw_prob) < 0.001
-            assert abs(loaded_prediction.away_win_prob - original_prediction.away_win_prob) < 0.001
+            assert (
+                abs(loaded_prediction.home_win_prob - original_prediction.home_win_prob)
+                < 0.001
+            )
+            assert (
+                abs(loaded_prediction.draw_prob - original_prediction.draw_prob) < 0.001
+            )
+            assert (
+                abs(loaded_prediction.away_win_prob - original_prediction.away_win_prob)
+                < 0.001
+            )
 
             print(f"✅ 模型保存加载测试通过: 预测结果一致")
 
@@ -298,13 +337,15 @@ class TestMLModelTraining:
 
             actual_training_time = (end_time - start_time).total_seconds()
 
-            training_results.append({
-                "data_size": size,
-                "training_time": training_result.training_time,
-                "actual_time": actual_training_time,
-                "accuracy": training_result.accuracy,
-                "team_count": len(model.team_attack_strength)
-            })
+            training_results.append(
+                {
+                    "data_size": size,
+                    "training_time": training_result.training_time,
+                    "actual_time": actual_training_time,
+                    "accuracy": training_result.accuracy,
+                    "team_count": len(model.team_attack_strength),
+                }
+            )
 
             # 验证基本训练结果
             assert model.is_trained
@@ -314,8 +355,10 @@ class TestMLModelTraining:
         # 分析训练时间随数据大小的变化
         print(f"✅ 不同数据大小训练测试完成:")
         for result in training_results:
-            print(f"  数据量={result['data_size']}, 训练时间={result['training_time']:.2f}s, "
-                  f"实际时间={result['actual_time']:.2f}s, 准确率={result['accuracy']:.3f}")
+            print(
+                f"  数据量={result['data_size']}, 训练时间={result['training_time']:.2f}s, "
+                f"实际时间={result['actual_time']:.2f}s, 准确率={result['accuracy']:.3f}"
+            )
 
     def test_model_training_error_handling(self):
         """测试模型训练错误处理"""
@@ -327,22 +370,26 @@ class TestMLModelTraining:
             model.train(empty_data)
 
         # 测试缺少必要列的数据
-        invalid_data = pd.DataFrame({
-            "home_team": ["Team_A", "Team_B"],
-            "away_team": ["Team_C", "Team_D"]
-            # 缺少 score 和 result 列
-        })
+        invalid_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B"],
+                "away_team": ["Team_C", "Team_D"],
+                # 缺少 score 和 result 列
+            }
+        )
         with pytest.raises(ValueError, match="Invalid training data"):
             model.train(invalid_data)
 
         # 测试数据量不足
-        small_data = pd.DataFrame({
-            "home_team": ["Team_A"],
-            "away_team": ["Team_B"],
-            "home_score": [1],
-            "away_score": [0],
-            "result": ["home_win"]
-        })
+        small_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A"],
+                "away_team": ["Team_B"],
+                "home_score": [1],
+                "away_score": [0],
+                "result": ["home_win"],
+            }
+        )
         # 应该能训练但会有警告
         training_result = model.train(small_data)
         assert training_result.training_samples == 1
@@ -370,7 +417,9 @@ class TestMLModelTraining:
         model_info = model.get_model_info()
         assert model_info["model_name"] == "PoissonModel"
         assert model_info["is_trained"] is True
-        assert model_info["feature_count"] == 4  # home_attack, home_defense, away_attack, away_defense
+        assert (
+            model_info["feature_count"] == 4
+        )  # home_attack, home_defense, away_attack, away_defense
         assert "hyperparameters" in model_info
 
         print(f"✅ 训练进度跟踪测试通过")
@@ -448,7 +497,7 @@ class TestAsyncModelTraining:
         await trainer.train(X_train, y_train)
 
         # 保存模型
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pkl') as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pkl") as tmp_file:
             model_path = tmp_file.name
 
         try:
@@ -515,13 +564,13 @@ class TestMLModelIntegration:
             {
                 "home_team": training_data["home_team"].iloc[0],
                 "away_team": training_data["away_team"].iloc[1],
-                "match_id": "pipeline_test_001"
+                "match_id": "pipeline_test_001",
             },
             {
                 "home_team": training_data["home_team"].iloc[2],
                 "away_team": training_data["away_team"].iloc[3],
-                "match_id": "pipeline_test_002"
-            }
+                "match_id": "pipeline_test_002",
+            },
         ]
 
         # 2. 训练模型
@@ -538,7 +587,15 @@ class TestMLModelIntegration:
         assert len(predictions) == len(test_matches)
         for i, prediction in enumerate(predictions):
             assert prediction.match_id == test_matches[i]["match_id"]
-            assert abs(prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob - 1.0) < 0.01
+            assert (
+                abs(
+                    prediction.home_win_prob
+                    + prediction.draw_prob
+                    + prediction.away_win_prob
+                    - 1.0
+                )
+                < 0.01
+            )
             assert prediction.confidence > 0.0
 
         # 5. 评估模型在测试数据上的表现
@@ -548,8 +605,10 @@ class TestMLModelIntegration:
         assert evaluation_metrics["accuracy"] > 0.0
         assert evaluation_metrics["f1_score"] > 0.0
 
-        print(f"✅ 端到端流水线测试完成: 训练准确率={training_result.accuracy:.3f}, "
-              f"测试准确率={evaluation_metrics['accuracy']:.3f}")
+        print(
+            f"✅ 端到端流水线测试完成: 训练准确率={training_result.accuracy:.3f}, "
+            f"测试准确率={evaluation_metrics['accuracy']:.3f}"
+        )
 
     def test_model_ensemble_prediction(self):
         """测试模型集成预测"""
@@ -561,7 +620,7 @@ class TestMLModelIntegration:
         hyperparams = [
             {"home_advantage": 0.1},
             {"home_advantage": 0.3},
-            {"home_advantage": 0.5}
+            {"home_advantage": 0.5},
         ]
 
         for i, params in enumerate(hyperparams):
@@ -574,7 +633,7 @@ class TestMLModelIntegration:
         test_match = {
             "home_team": training_data["home_team"].iloc[0],
             "away_team": training_data["away_team"].iloc[1],
-            "match_id": "ensemble_test"
+            "match_id": "ensemble_test",
         }
 
         # 集成预测（简单平均）
@@ -599,8 +658,10 @@ class TestMLModelIntegration:
         max_prob = max(ensemble_probs)
         ensemble_confidence = max_prob
 
-        print(f"✅ 集成预测测试完成: 集成置信度={ensemble_confidence:.3f}, "
-              f"模型数量={len(models)}")
+        print(
+            f"✅ 集成预测测试完成: 集成置信度={ensemble_confidence:.3f}, "
+            f"模型数量={len(models)}"
+        )
 
     def test_model_performance_comparison(self):
         """测试模型性能比较"""
@@ -612,7 +673,7 @@ class TestMLModelIntegration:
         model_configs = [
             {"name": "conservative", "home_advantage": 0.1, "min_matches_per_team": 15},
             {"name": "balanced", "home_advantage": 0.3, "min_matches_per_team": 10},
-            {"name": "aggressive", "home_advantage": 0.5, "min_matches_per_team": 5}
+            {"name": "aggressive", "home_advantage": 0.5, "min_matches_per_team": 5},
         ]
 
         results = []
@@ -621,7 +682,7 @@ class TestMLModelIntegration:
             model = PoissonModel(f"comparison_{config['name']}")
             model.update_hyperparameters(
                 home_advantage=config["home_advantage"],
-                min_matches_per_team=config["min_matches_per_team"]
+                min_matches_per_team=config["min_matches_per_team"],
             )
 
             # 训练
@@ -630,15 +691,17 @@ class TestMLModelIntegration:
             # 评估
             evaluation_metrics = model.evaluate(test_data)
 
-            results.append({
-                "config": config["name"],
-                "training_accuracy": training_result.accuracy,
-                "test_accuracy": evaluation_metrics["accuracy"],
-                "precision": evaluation_metrics["precision"],
-                "recall": evaluation_metrics["recall"],
-                "f1_score": evaluation_metrics["f1_score"],
-                "training_time": training_result.training_time
-            })
+            results.append(
+                {
+                    "config": config["name"],
+                    "training_accuracy": training_result.accuracy,
+                    "test_accuracy": evaluation_metrics["accuracy"],
+                    "precision": evaluation_metrics["precision"],
+                    "recall": evaluation_metrics["recall"],
+                    "f1_score": evaluation_metrics["f1_score"],
+                    "training_time": training_result.training_time,
+                }
+            )
 
         # 验证结果差异
         test_accuracies = [r["test_accuracy"] for r in results]
@@ -649,8 +712,10 @@ class TestMLModelIntegration:
 
         print(f"✅ 模型比较测试完成:")
         for result in results:
-            print(f"  {result['config']}: 测试准确率={result['test_accuracy']:.3f}, "
-                  f"F1分数={result['f1_score']:.3f}")
+            print(
+                f"  {result['config']}: 测试准确率={result['test_accuracy']:.3f}, "
+                f"F1分数={result['f1_score']:.3f}"
+            )
         print(f"最佳模型: {best_model['config']}")
 
     def test_model_robustness_testing(self):
@@ -666,20 +731,16 @@ class TestMLModelIntegration:
             {
                 "home_team": training_data["home_team"].iloc[0],
                 "away_team": training_data["away_team"].iloc[-1],
-                "match_id": "strong_vs_weak"
+                "match_id": "strong_vs_weak",
             },
             # 相同队伍（应该失败）
-            {
-                "home_team": "Team_A",
-                "away_team": "Team_A",
-                "match_id": "same_team"
-            },
+            {"home_team": "Team_A", "away_team": "Team_A", "match_id": "same_team"},
             # 未知队伍
             {
                 "home_team": "Unknown_Team_X",
                 "away_team": "Unknown_Team_Y",
-                "match_id": "unknown_teams"
-            }
+                "match_id": "unknown_teams",
+            },
         ]
 
         results = []
@@ -687,17 +748,17 @@ class TestMLModelIntegration:
         for case in edge_cases:
             try:
                 prediction = model.predict(case)
-                results.append({
-                    "case": case["match_id"],
-                    "success": True,
-                    "prediction": prediction
-                })
+                results.append(
+                    {
+                        "case": case["match_id"],
+                        "success": True,
+                        "prediction": prediction,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "case": case["match_id"],
-                    "success": False,
-                    "error": str(e)
-                })
+                results.append(
+                    {"case": case["match_id"], "success": False, "error": str(e)}
+                )
 
         # 验证结果
         successful_predictions = [r for r in results if r["success"]]
@@ -710,12 +771,16 @@ class TestMLModelIntegration:
         same_team_result = next(r for r in results if r["case"] == "same_team")
         assert not same_team_result["success"]
 
-        print(f"✅ 鲁棒性测试完成: 成功预测={len(successful_predictions)}, "
-              f"失败预测={len(failed_predictions)}")
+        print(
+            f"✅ 鲁棒性测试完成: 成功预测={len(successful_predictions)}, "
+            f"失败预测={len(failed_predictions)}"
+        )
 
 
 # 测试工具函数
-def create_mock_training_data_with_noise(num_matches: int = 200, noise_level: float = 0.1) -> pd.DataFrame:
+def create_mock_training_data_with_noise(
+    num_matches: int = 200, noise_level: float = 0.1
+) -> pd.DataFrame:
     """创建带噪声的模拟训练数据"""
     data = create_training_data(num_matches)
 
@@ -748,7 +813,13 @@ class TestMLModelPerformanceMetrics:
         evaluation_metrics = model.evaluate(test_data)
 
         # 验证所有必要指标
-        required_metrics = ["accuracy", "precision", "recall", "f1_score", "confusion_matrix"]
+        required_metrics = [
+            "accuracy",
+            "precision",
+            "recall",
+            "f1_score",
+            "confusion_matrix",
+        ]
         for metric in required_metrics:
             assert metric in evaluation_metrics
             assert evaluation_metrics[metric] is not None
@@ -764,8 +835,10 @@ class TestMLModelPerformanceMetrics:
         assert isinstance(cm, list)
         assert len(cm) > 0
 
-        print(f"✅ 全面模型评估完成: 准确率={evaluation_metrics['accuracy']:.3f}, "
-              f"F1分数={evaluation_metrics['f1_score']:.3f}")
+        print(
+            f"✅ 全面模型评估完成: 准确率={evaluation_metrics['accuracy']:.3f}, "
+            f"F1分数={evaluation_metrics['f1_score']:.3f}"
+        )
 
     def test_training_stability_analysis(self):
         """测试训练稳定性分析"""
@@ -777,12 +850,16 @@ class TestMLModelPerformanceMetrics:
             # 轻微扰动数据
             perturbed_data = base_data.copy()
             perturbed_data["home_score"] = np.clip(
-                perturbed_data["home_score"] + np.random.choice([-1, 0, 1], len(perturbed_data)),
-                0, None
+                perturbed_data["home_score"]
+                + np.random.choice([-1, 0, 1], len(perturbed_data)),
+                0,
+                None,
             )
             perturbed_data["away_score"] = np.clip(
-                perturbed_data["away_score"] + np.random.choice([-1, 0, 1], len(perturbed_data)),
-                0, None
+                perturbed_data["away_score"]
+                + np.random.choice([-1, 0, 1], len(perturbed_data)),
+                0,
+                None,
             )
 
             # 重新计算结果

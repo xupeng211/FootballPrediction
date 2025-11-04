@@ -36,16 +36,16 @@ class MockModel:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.id = kwargs.get('id', None)
-        self.created_at = kwargs.get('created_at', datetime.utcnow())
-        self.updated_at = kwargs.get('updated_at', datetime.utcnow())
+        self.id = kwargs.get("id", None)
+        self.created_at = kwargs.get("created_at", datetime.utcnow())
+        self.updated_at = kwargs.get("updated_at", datetime.utcnow())
 
     def to_dict(self):
         """转换为字典"""
         return {
             key: getattr(self, key)
             for key in self.__dict__.keys()
-            if not key.startswith('_')
+            if not key.startswith("_")
         }
 
 
@@ -54,13 +54,13 @@ class MockUser(MockModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.username = kwargs.get('username', 'testuser')
-        self.email = kwargs.get('email', 'test@example.com')
-        self.password_hash = kwargs.get('password_hash', 'hashed_password')
-        self.full_name = kwargs.get('full_name', 'Test User')
-        self.is_active = kwargs.get('is_active', True)
-        self.is_admin = kwargs.get('is_admin', False)
-        self.last_login = kwargs.get('last_login', None)
+        self.username = kwargs.get("username", "testuser")
+        self.email = kwargs.get("email", "test@example.com")
+        self.password_hash = kwargs.get("password_hash", "hashed_password")
+        self.full_name = kwargs.get("full_name", "Test User")
+        self.is_active = kwargs.get("is_active", True)
+        self.is_admin = kwargs.get("is_admin", False)
+        self.last_login = kwargs.get("last_login", None)
 
 
 class MockPrediction(MockModel):
@@ -68,16 +68,16 @@ class MockPrediction(MockModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.user_id = kwargs.get('user_id', 1)
-        self.match_id = kwargs.get('match_id', 1)
-        self.predicted_outcome = kwargs.get('predicted_outcome', 'home')
-        self.home_win_prob = kwargs.get('home_win_prob', 0.5)
-        self.draw_prob = kwargs.get('draw_prob', 0.3)
-        self.away_win_prob = kwargs.get('away_win_prob', 0.2)
-        self.confidence = kwargs.get('confidence', 0.7)
-        self.model_version = kwargs.get('model_version', 'v1.0')
-        self.actual_outcome = kwargs.get('actual_outcome', None)
-        self.is_correct = kwargs.get('is_correct', None)
+        self.user_id = kwargs.get("user_id", 1)
+        self.match_id = kwargs.get("match_id", 1)
+        self.predicted_outcome = kwargs.get("predicted_outcome", "home")
+        self.home_win_prob = kwargs.get("home_win_prob", 0.5)
+        self.draw_prob = kwargs.get("draw_prob", 0.3)
+        self.away_win_prob = kwargs.get("away_win_prob", 0.2)
+        self.confidence = kwargs.get("confidence", 0.7)
+        self.model_version = kwargs.get("model_version", "v1.0")
+        self.actual_outcome = kwargs.get("actual_outcome", None)
+        self.is_correct = kwargs.get("is_correct", None)
 
 
 class MockRepository:
@@ -93,18 +93,24 @@ class MockRepository:
         """获取会话"""
         return self.db_manager.get_session()
 
-    async def create(self, obj_data: Dict[str, Any], session: AsyncSession = None) -> MockModel:
+    async def create(
+        self, obj_data: Dict[str, Any], session: AsyncSession = None
+    ) -> MockModel:
         """创建记录"""
         obj = self.model_class(id=self._next_id, **obj_data)
         self._data[self._next_id] = obj
         self._next_id += 1
         return obj
 
-    async def get_by_id(self, obj_id: int, session: AsyncSession = None) -> Optional[MockModel]:
+    async def get_by_id(
+        self, obj_id: int, session: AsyncSession = None
+    ) -> Optional[MockModel]:
         """根据ID获取记录"""
         return self._data.get(obj_id)
 
-    async def get_all(self, filters: Dict[str, Any] = None, session: AsyncSession = None) -> List[MockModel]:
+    async def get_all(
+        self, filters: Dict[str, Any] = None, session: AsyncSession = None
+    ) -> List[MockModel]:
         """获取所有记录"""
         if not filters:
             return list(self._data.values())
@@ -120,7 +126,9 @@ class MockRepository:
                 filtered_data.append(obj)
         return filtered_data
 
-    async def update(self, obj_id: int, update_data: Dict[str, Any], session: AsyncSession = None) -> Optional[MockModel]:
+    async def update(
+        self, obj_id: int, update_data: Dict[str, Any], session: AsyncSession = None
+    ) -> Optional[MockModel]:
         """更新记录"""
         obj = self._data.get(obj_id)
         if obj:
@@ -129,12 +137,16 @@ class MockRepository:
             obj.updated_at = datetime.utcnow()
         return obj
 
-    async def delete(self, obj_id: int, session: AsyncSession = None) -> Optional[MockModel]:
+    async def delete(
+        self, obj_id: int, session: AsyncSession = None
+    ) -> Optional[MockModel]:
         """删除记录"""
         obj = self._data.pop(obj_id, None)
         return obj
 
-    async def count(self, filters: Dict[str, Any] = None, session: AsyncSession = None) -> int:
+    async def count(
+        self, filters: Dict[str, Any] = None, session: AsyncSession = None
+    ) -> int:
         """统计记录数"""
         objects = await self.get_all(filters)
         return len(objects)
@@ -166,7 +178,7 @@ class TestMockRepository:
             "username": "testuser",
             "email": "test@example.com",
             "password_hash": "hashed_password",
-            "full_name": "Test User"
+            "full_name": "Test User",
         }
 
         user = await user_repository.create(user_data)
@@ -182,7 +194,11 @@ class TestMockRepository:
     async def test_get_user_by_id(self, user_repository):
         """测试根据ID获取用户"""
         # 先创建用户
-        user_data = {"username": "testuser", "email": "test@example.com", "password_hash": "hash"}
+        user_data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password_hash": "hash",
+        }
         created_user = await user_repository.create(user_data)
 
         # 获取用户
@@ -203,9 +219,21 @@ class TestMockRepository:
         """测试获取所有用户"""
         # 创建多个用户
         users_data = [
-            {"username": "user1", "email": "user1@example.com", "password_hash": "hash1"},
-            {"username": "user2", "email": "user2@example.com", "password_hash": "hash2"},
-            {"username": "user3", "email": "user3@example.com", "password_hash": "hash3"}
+            {
+                "username": "user1",
+                "email": "user1@example.com",
+                "password_hash": "hash1",
+            },
+            {
+                "username": "user2",
+                "email": "user2@example.com",
+                "password_hash": "hash2",
+            },
+            {
+                "username": "user3",
+                "email": "user3@example.com",
+                "password_hash": "hash3",
+            },
         ]
 
         for user_data in users_data:
@@ -223,8 +251,22 @@ class TestMockRepository:
     async def test_get_users_with_filters(self, user_repository):
         """测试使用过滤条件获取用户"""
         # 创建不同状态的用户
-        await user_repository.create({"username": "active_user", "email": "active@example.com", "password_hash": "hash", "is_active": True})
-        await user_repository.create({"username": "inactive_user", "email": "inactive@example.com", "password_hash": "hash", "is_active": False})
+        await user_repository.create(
+            {
+                "username": "active_user",
+                "email": "active@example.com",
+                "password_hash": "hash",
+                "is_active": True,
+            }
+        )
+        await user_repository.create(
+            {
+                "username": "inactive_user",
+                "email": "inactive@example.com",
+                "password_hash": "hash",
+                "is_active": False,
+            }
+        )
 
         # 获取活跃用户
         active_users = await user_repository.get_all({"is_active": True})
@@ -236,7 +278,13 @@ class TestMockRepository:
     async def test_update_user(self, user_repository):
         """测试更新用户"""
         # 创建用户
-        user = await user_repository.create({"username": "testuser", "email": "test@example.com", "password_hash": "hash"})
+        user = await user_repository.create(
+            {
+                "username": "testuser",
+                "email": "test@example.com",
+                "password_hash": "hash",
+            }
+        )
 
         # 更新用户
         update_data = {"full_name": "Updated Name", "is_admin": True}
@@ -258,7 +306,13 @@ class TestMockRepository:
     async def test_delete_user(self, user_repository):
         """测试删除用户"""
         # 创建用户
-        user = await user_repository.create({"username": "testuser", "email": "test@example.com", "password_hash": "hash"})
+        user = await user_repository.create(
+            {
+                "username": "testuser",
+                "email": "test@example.com",
+                "password_hash": "hash",
+            }
+        )
 
         # 删除用户
         deleted_user = await user_repository.delete(user.id)
@@ -280,15 +334,26 @@ class TestMockRepository:
     async def test_count_users(self, user_repository):
         """测试统计用户数量"""
         # 创建用户
-        await user_repository.create({"username": "user1", "email": "user1@example.com", "password_hash": "hash"})
-        await user_repository.create({"username": "user2", "email": "user2@example.com", "password_hash": "hash"})
+        await user_repository.create(
+            {"username": "user1", "email": "user1@example.com", "password_hash": "hash"}
+        )
+        await user_repository.create(
+            {"username": "user2", "email": "user2@example.com", "password_hash": "hash"}
+        )
 
         # 统计所有用户
         total_count = await user_repository.count()
         assert total_count == 2
 
         # 统计活跃用户
-        await user_repository.create({"username": "user3", "email": "user3@example.com", "password_hash": "hash", "is_active": True})
+        await user_repository.create(
+            {
+                "username": "user3",
+                "email": "user3@example.com",
+                "password_hash": "hash",
+                "is_active": True,
+            }
+        )
         active_count = await user_repository.count({"is_active": True})
         assert active_count == 2
 
@@ -296,7 +361,13 @@ class TestMockRepository:
     async def test_user_exists(self, user_repository):
         """测试检查用户是否存在"""
         # 创建用户
-        user = await user_repository.create({"username": "testuser", "email": "test@example.com", "password_hash": "hash"})
+        user = await user_repository.create(
+            {
+                "username": "testuser",
+                "email": "test@example.com",
+                "password_hash": "hash",
+            }
+        )
 
         # 检查存在的用户
         exists = await user_repository.exists(user.id)
@@ -328,7 +399,7 @@ class TestPredictionOperations:
             "draw_prob": 0.25,
             "away_win_prob": 0.15,
             "confidence": 0.8,
-            "model_version": "v2.0"
+            "model_version": "v2.0",
         }
 
         prediction = await prediction_repository.create(prediction_data)
@@ -344,7 +415,9 @@ class TestPredictionOperations:
         assert prediction.model_version == "v2.0"
 
         # 验证概率和接近1.0
-        prob_sum = prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        prob_sum = (
+            prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        )
         assert abs(prob_sum - 1.0) < 0.01
 
     @pytest.mark.asyncio
@@ -357,33 +430,39 @@ class TestPredictionOperations:
             "home_win_prob": 0.8,
             "draw_prob": 0.5,  # 概率和超过1.0
             "away_win_prob": 0.1,
-            "confidence": 0.7
+            "confidence": 0.7,
         }
 
         # 在实际应用中，这里应该抛出验证异常
         prediction = await prediction_repository.create(invalid_prediction_data)
 
         # 验证预测被创建，但概率无效
-        prob_sum = prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        prob_sum = (
+            prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        )
         assert prob_sum > 1.0
 
     @pytest.mark.asyncio
     async def test_verify_prediction_correct(self, prediction_repository):
         """测试验证正确的预测"""
         # 创建预测
-        prediction = await prediction_repository.create({
-            "user_id": 1,
-            "match_id": 1,
-            "predicted_outcome": "home",
-            "home_win_prob": 0.6,
-            "draw_prob": 0.25,
-            "away_win_prob": 0.15,
-            "confidence": 0.8
-        })
+        prediction = await prediction_repository.create(
+            {
+                "user_id": 1,
+                "match_id": 1,
+                "predicted_outcome": "home",
+                "home_win_prob": 0.6,
+                "draw_prob": 0.25,
+                "away_win_prob": 0.15,
+                "confidence": 0.8,
+            }
+        )
 
         # 验证预测正确
         update_data = {"actual_outcome": "home", "is_correct": True}
-        verified_prediction = await prediction_repository.update(prediction.id, update_data)
+        verified_prediction = await prediction_repository.update(
+            prediction.id, update_data
+        )
 
         assert verified_prediction.actual_outcome == "home"
         assert verified_prediction.is_correct is True
@@ -392,19 +471,23 @@ class TestPredictionOperations:
     async def test_verify_prediction_incorrect(self, prediction_repository):
         """测试验证错误的预测"""
         # 创建预测
-        prediction = await prediction_repository.create({
-            "user_id": 1,
-            "match_id": 1,
-            "predicted_outcome": "home",
-            "home_win_prob": 0.6,
-            "draw_prob": 0.25,
-            "away_win_prob": 0.15,
-            "confidence": 0.8
-        })
+        prediction = await prediction_repository.create(
+            {
+                "user_id": 1,
+                "match_id": 1,
+                "predicted_outcome": "home",
+                "home_win_prob": 0.6,
+                "draw_prob": 0.25,
+                "away_win_prob": 0.15,
+                "confidence": 0.8,
+            }
+        )
 
         # 验证预测错误
         update_data = {"actual_outcome": "away", "is_correct": False}
-        verified_prediction = await prediction_repository.update(prediction.id, update_data)
+        verified_prediction = await prediction_repository.update(
+            prediction.id, update_data
+        )
 
         assert verified_prediction.actual_outcome == "away"
         assert verified_prediction.is_correct is False
@@ -416,9 +499,33 @@ class TestPredictionOperations:
 
         # 为同一用户创建多个预测
         predictions_data = [
-            {"user_id": user_id, "match_id": 1, "predicted_outcome": "home", "home_win_prob": 0.6, "draw_prob": 0.25, "away_win_prob": 0.15, "confidence": 0.8},
-            {"user_id": user_id, "match_id": 2, "predicted_outcome": "draw", "home_win_prob": 0.3, "draw_prob": 0.5, "away_win_prob": 0.2, "confidence": 0.7},
-            {"user_id": user_id, "match_id": 3, "predicted_outcome": "away", "home_win_prob": 0.2, "draw_prob": 0.3, "away_win_prob": 0.5, "confidence": 0.9}
+            {
+                "user_id": user_id,
+                "match_id": 1,
+                "predicted_outcome": "home",
+                "home_win_prob": 0.6,
+                "draw_prob": 0.25,
+                "away_win_prob": 0.15,
+                "confidence": 0.8,
+            },
+            {
+                "user_id": user_id,
+                "match_id": 2,
+                "predicted_outcome": "draw",
+                "home_win_prob": 0.3,
+                "draw_prob": 0.5,
+                "away_win_prob": 0.2,
+                "confidence": 0.7,
+            },
+            {
+                "user_id": user_id,
+                "match_id": 3,
+                "predicted_outcome": "away",
+                "home_win_prob": 0.2,
+                "draw_prob": 0.3,
+                "away_win_prob": 0.5,
+                "confidence": 0.9,
+            },
         ]
 
         created_predictions = []
@@ -442,9 +549,33 @@ class TestPredictionOperations:
 
         # 为同一比赛创建多个预测
         predictions_data = [
-            {"user_id": 1, "match_id": match_id, "predicted_outcome": "home", "home_win_prob": 0.6, "draw_prob": 0.25, "away_win_prob": 0.15, "confidence": 0.8},
-            {"user_id": 2, "match_id": match_id, "predicted_outcome": "draw", "home_win_prob": 0.3, "draw_prob": 0.5, "away_win_prob": 0.2, "confidence": 0.7},
-            {"user_id": 3, "match_id": match_id, "predicted_outcome": "away", "home_win_prob": 0.2, "draw_prob": 0.3, "away_win_prob": 0.5, "confidence": 0.9}
+            {
+                "user_id": 1,
+                "match_id": match_id,
+                "predicted_outcome": "home",
+                "home_win_prob": 0.6,
+                "draw_prob": 0.25,
+                "away_win_prob": 0.15,
+                "confidence": 0.8,
+            },
+            {
+                "user_id": 2,
+                "match_id": match_id,
+                "predicted_outcome": "draw",
+                "home_win_prob": 0.3,
+                "draw_prob": 0.5,
+                "away_win_prob": 0.2,
+                "confidence": 0.7,
+            },
+            {
+                "user_id": 3,
+                "match_id": match_id,
+                "predicted_outcome": "away",
+                "home_win_prob": 0.2,
+                "draw_prob": 0.3,
+                "away_win_prob": 0.5,
+                "confidence": 0.9,
+            },
         ]
 
         for pred_data in predictions_data:
@@ -476,11 +607,13 @@ class TestDatabaseTransactions:
         # 模拟事务操作
         try:
             # 开始事务
-            user = await user_repository.create({
-                "username": "transaction_user",
-                "email": "transaction@example.com",
-                "password_hash": "hash"
-            })
+            user = await user_repository.create(
+                {
+                    "username": "transaction_user",
+                    "email": "transaction@example.com",
+                    "password_hash": "hash",
+                }
+            )
 
             # 事务内的其他操作
             await user_repository.update(user.id, {"full_name": "Transaction User"})
@@ -503,11 +636,13 @@ class TestDatabaseTransactions:
         # 模拟事务失败
         try:
             # 开始事务
-            await user_repository.create({
-                "username": "rollback_user",
-                "email": "rollback@example.com",
-                "password_hash": "hash"
-            })
+            await user_repository.create(
+                {
+                    "username": "rollback_user",
+                    "email": "rollback@example.com",
+                    "password_hash": "hash",
+                }
+            )
 
             # 模拟操作失败
             raise ValueError("模拟操作失败")
@@ -525,19 +660,23 @@ class TestDatabaseTransactions:
         # 模拟嵌套事务
         try:
             # 外层事务
-            user1 = await user_repository.create({
-                "username": "outer_user",
-                "email": "outer@example.com",
-                "password_hash": "hash"
-            })
+            user1 = await user_repository.create(
+                {
+                    "username": "outer_user",
+                    "email": "outer@example.com",
+                    "password_hash": "hash",
+                }
+            )
 
             try:
                 # 内层事务
-                user2 = await user_repository.create({
-                    "username": "inner_user",
-                    "email": "inner@example.com",
-                    "password_hash": "hash"
-                })
+                user2 = await user_repository.create(
+                    {
+                        "username": "inner_user",
+                        "email": "inner@example.com",
+                        "password_hash": "hash",
+                    }
+                )
 
                 # 内层事务成功
                 inner_user = await user_repository.get_by_id(user2.id)

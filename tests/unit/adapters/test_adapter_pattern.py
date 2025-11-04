@@ -29,7 +29,8 @@ except ImportError as e:
     # 直接导入避免__init__.py的语法错误
     import sys
     import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src/adapters'))
+
+    sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
     from base import (
         AdapterStatus,
@@ -83,7 +84,12 @@ class MockTarget(Target):
     async def request(self, *args, **kwargs) -> Any:
         """标准请求方法"""
         self.request_count += 1
-        return {"target": self.name, "request_id": self.request_count, "args": args, "kwargs": kwargs}
+        return {
+            "target": self.name,
+            "request_id": self.request_count,
+            "args": args,
+            "kwargs": kwargs,
+        }
 
 
 class MockAdapter(Adapter):
@@ -588,7 +594,7 @@ class TestAdapterConfig:
             parameters=parameters,
             rate_limits=rate_limits,
             cache_config=cache_config,
-            retry_config=retry_config
+            retry_config=retry_config,
         )
 
         assert config.name == "FullAdapter"
@@ -619,7 +625,7 @@ class TestAdapterGroupConfig:
             name="FullGroup",
             adapters=["Adapter1", "Adapter2", "Adapter3"],
             primary_adapter="Adapter1",
-            fallback_strategy="parallel"
+            fallback_strategy="parallel",
         )
 
         assert config.name == "FullGroup"
@@ -639,6 +645,7 @@ class TestAdapterFactory:
     def test_global_adapter_factory_exists(self):
         """测试全局适配器工厂存在"""
         from src.adapters.factory import adapter_factory
+
         assert adapter_factory is not None
         assert isinstance(adapter_factory, AdapterFactory)
 
@@ -694,7 +701,9 @@ class TestAdapterIntegration:
 
         # 6. 测试完整流程
         retrieved_composite = registry.get_adapter("IntegrationComposite")
-        result = await retrieved_composite.request(action="send", data={"test": "integration"})
+        result = await retrieved_composite.request(
+            action="send", data={"test": "integration"}
+        )
 
         assert result["adapter_name"] == "IntegrationComposite"
         assert len(result["results"]) == 1
@@ -711,7 +720,9 @@ def create_test_adapter(name: str) -> MockAdapter:
     return MockAdapter(name)
 
 
-def create_test_composite_adapter(name: str, adapter_count: int = 2) -> CompositeAdapter:
+def create_test_composite_adapter(
+    name: str, adapter_count: int = 2
+) -> CompositeAdapter:
     """创建测试组合适配器"""
     composite = CompositeAdapter(name)
     for i in range(adapter_count):

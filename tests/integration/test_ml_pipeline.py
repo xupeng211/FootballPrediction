@@ -12,7 +12,10 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.ml.real_model_training import train_football_prediction_model, RealModelTrainingPipeline
+from src.ml.real_model_training import (
+    train_football_prediction_model,
+    RealModelTrainingPipeline,
+)
 from src.ml.advanced_model_trainer import ModelType
 from src.core.logging_system import get_logger
 
@@ -23,7 +26,10 @@ async def test_feature_calculator():
     """测试特征计算器"""
     logger.info("Testing Feature Calculator...")
 
-    from src.features.features.feature_calculator_calculators import FeatureCalculator, MatchResult
+    from src.features.features.feature_calculator_calculators import (
+        FeatureCalculator,
+        MatchResult,
+    )
     from datetime import datetime
 
     # 创建示例数据
@@ -84,7 +90,8 @@ async def test_advanced_trainer():
     n_features = 10
 
     X = pd.DataFrame(
-        np.random.randn(n_samples, n_features), columns=[f"feature_{i}" for i in range(n_features)]
+        np.random.randn(n_samples, n_features),
+        columns=[f"feature_{i}" for i in range(n_features)],
     )
     y = pd.Series(np.random.choice([0, 1, 2], n_samples))
 
@@ -103,7 +110,8 @@ async def test_advanced_trainer():
     if result["success"]:
         # 测试预测
         test_X = pd.DataFrame(
-            np.random.randn(5, n_features), columns=[f"feature_{i}" for i in range(n_features)]
+            np.random.randn(5, n_features),
+            columns=[f"feature_{i}" for i in range(n_features)],
         )
         pred_result = await trainer.predict(test_X)
 
@@ -128,7 +136,8 @@ async def test_ensemble_trainer():
     n_features = 8
 
     X = pd.DataFrame(
-        np.random.randn(n_samples, n_features), columns=[f"feature_{i}" for i in range(n_features)]
+        np.random.randn(n_samples, n_features),
+        columns=[f"feature_{i}" for i in range(n_features)],
     )
     y = pd.Series(np.random.choice([0, 1, 2], n_samples))
 
@@ -147,7 +156,8 @@ async def test_ensemble_trainer():
     if result["success"]:
         # 测试集成预测
         test_X = pd.DataFrame(
-            np.random.randn(5, n_features), columns=[f"feature_{i}" for i in range(n_features)]
+            np.random.randn(5, n_features),
+            columns=[f"feature_{i}" for i in range(n_features)],
         )
         pred_result = await trainer.predict_ensemble(test_X)
 
@@ -260,7 +270,9 @@ async def run_all_tests():
     if passed == total:
         logger.info("\n🎉 All tests passed! ML Pipeline is working correctly.")
     else:
-        logger.warning(f"\n⚠️ {total - passed} test(s) failed. Please check the implementation.")
+        logger.warning(
+            f"\n⚠️ {total - passed} test(s) failed. Please check the implementation."
+        )
 
     return results
 

@@ -13,12 +13,11 @@ import pandas as pd
 import numpy as np
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -29,10 +28,26 @@ def create_mock_training_data():
 
     # 模拟球队列表
     teams = [
-        'Manchester City', 'Liverpool', 'Chelsea', 'Arsenal', 'Tottenham',
-        'Manchester United', 'Newcastle', 'Leicester', 'West Ham', 'Aston Villa',
-        'Everton', 'Wolves', 'Crystal Palace', 'Brentford', 'Fulham',
-        'Leeds', 'Southampton', 'Nottingham Forest', 'Bournemouth', 'Burnley'
+        "Manchester City",
+        "Liverpool",
+        "Chelsea",
+        "Arsenal",
+        "Tottenham",
+        "Manchester United",
+        "Newcastle",
+        "Leicester",
+        "West Ham",
+        "Aston Villa",
+        "Everton",
+        "Wolves",
+        "Crystal Palace",
+        "Brentford",
+        "Fulham",
+        "Leeds",
+        "Southampton",
+        "Nottingham Forest",
+        "Bournemouth",
+        "Burnley",
     ]
 
     # 生成模拟比赛数据
@@ -49,24 +64,26 @@ def create_mock_training_data():
 
         # 确定结果
         if home_goals > away_goals:
-            result = 'home_win'
+            result = "home_win"
         elif home_goals < away_goals:
-            result = 'away_win'
+            result = "away_win"
         else:
-            result = 'draw'
+            result = "draw"
 
         # 随机生成过去365天内的时间
         days_ago = np.random.randint(1, 365)
         match_date = datetime.now() - timedelta(days=days_ago)
 
-        matches.append({
-            'home_team': home_team,
-            'away_team': away_team,
-            'home_score': int(home_goals),
-            'away_score': int(away_goals),
-            'result': result,
-            'date': match_date
-        })
+        matches.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": int(home_goals),
+                "away_score": int(away_goals),
+                "result": result,
+                "date": match_date,
+            }
+        )
 
     df = pd.DataFrame(matches)
     logger.info(f"生成了 {len(df)} 场模拟比赛数据")
@@ -110,9 +127,9 @@ def test_poisson_model(training_data):
 
         # 测试预测
         test_match = {
-            'home_team': 'Manchester City',
-            'away_team': 'Liverpool',
-            'match_id': 'test_match_001'
+            "home_team": "Manchester City",
+            "away_team": "Liverpool",
+            "match_id": "test_match_001",
         }
 
         logger.info("🔮 测试单场比赛预测...")
@@ -121,7 +138,9 @@ def test_poisson_model(training_data):
         logger.info(f"✅ 预测结果:")
         logger.info(f"   - 比赛: {prediction.home_team} vs {prediction.away_team}")
         logger.info(f"   - 预测结果: {prediction.predicted_outcome}")
-        logger.info(f"   - 概率分布: 主胜 {prediction.home_win_prob:.3f}, 平局 {prediction.draw_prob:.3f}, 客胜 {prediction.away_win_prob:.3f}")
+        logger.info(
+            f"   - 概率分布: 主胜 {prediction.home_win_prob:.3f}, 平局 {prediction.draw_prob:.3f}, 客胜 {prediction.away_win_prob:.3f}"
+        )
         logger.info(f"   - 置信度: {prediction.confidence:.3f}")
 
         return True
@@ -173,9 +192,9 @@ def test_elo_model(training_data):
 
         # 测试预测
         test_match = {
-            'home_team': 'Manchester City',
-            'away_team': 'Liverpool',
-            'match_id': 'test_match_002'
+            "home_team": "Manchester City",
+            "away_team": "Liverpool",
+            "match_id": "test_match_002",
         }
 
         logger.info("🔮 测试单场比赛预测...")
@@ -184,13 +203,17 @@ def test_elo_model(training_data):
         logger.info(f"✅ 预测结果:")
         logger.info(f"   - 比赛: {prediction.home_team} vs {prediction.away_team}")
         logger.info(f"   - 预测结果: {prediction.predicted_outcome}")
-        logger.info(f"   - 概率分布: 主胜 {prediction.home_win_prob:.3f}, 平局 {prediction.draw_prob:.3f}, 客胜 {prediction.away_win_prob:.3f}")
+        logger.info(
+            f"   - 概率分布: 主胜 {prediction.home_win_prob:.3f}, 平局 {prediction.draw_prob:.3f}, 客胜 {prediction.away_win_prob:.3f}"
+        )
         logger.info(f"   - 置信度: {prediction.confidence:.3f}")
 
         # 显示ELO评分
-        home_elo = model.get_team_elo(test_match['home_team'])
-        away_elo = model.get_team_elo(test_match['away_team'])
-        logger.info(f"   - ELO评分: {test_match['home_team']} {home_elo:.0f} vs {test_match['away_team']} {away_elo:.0f}")
+        home_elo = model.get_team_elo(test_match["home_team"])
+        away_elo = model.get_team_elo(test_match["away_team"])
+        logger.info(
+            f"   - ELO评分: {test_match['home_team']} {home_elo:.0f} vs {test_match['away_team']} {away_elo:.0f}"
+        )
 
         return True
 
@@ -204,7 +227,10 @@ def test_prediction_service(training_data):
     logger.info("\n🤖 测试预测服务...")
 
     try:
-        from src.ml.prediction.prediction_service import PredictionService, PredictionStrategy
+        from src.ml.prediction.prediction_service import (
+            PredictionService,
+            PredictionStrategy,
+        )
 
         # 初始化预测服务
         service = PredictionService()
@@ -220,26 +246,28 @@ def test_prediction_service(training_data):
 
         logger.info(f"✅ 模型训练完成:")
         logger.info(f"   - 总耗时: {training_results['total_time']:.2f}秒")
-        logger.info(f"   - 成功训练: {training_results['successful_trainings']}/{training_results['total_models']}")
+        logger.info(
+            f"   - 成功训练: {training_results['successful_trainings']}/{training_results['total_models']}"
+        )
 
-        for model_name, result in training_results['training_results'].items():
-            if result.get('success'):
-                metrics = result['metrics']
+        for model_name, result in training_results["training_results"].items():
+            if result.get("success"):
+                metrics = result["metrics"]
                 logger.info(f"   - {model_name}: 准确率 {metrics['accuracy']:.3f}")
             else:
                 logger.info(f"   - {model_name}: 训练失败")
 
         # 测试不同预测策略
         test_match = {
-            'home_team': 'Manchester City',
-            'away_team': 'Liverpool',
-            'match_id': 'test_match_003'
+            "home_team": "Manchester City",
+            "away_team": "Liverpool",
+            "match_id": "test_match_003",
         }
 
         strategies = [
             PredictionStrategy.SINGLE_MODEL,
             PredictionStrategy.WEIGHTED_ENSEMBLE,
-            PredictionStrategy.MAJORITY_VOTE
+            PredictionStrategy.MAJORITY_VOTE,
         ]
 
         for strategy in strategies:
@@ -253,8 +281,12 @@ def test_prediction_service(training_data):
                     result = service.predict_match(test_match, strategy=strategy)
 
                 logger.info(f"✅ {strategy.value} 预测结果:")
-                logger.info(f"   - 预测结果: {result.predicted_outcome if hasattr(result, 'predicted_outcome') else result.ensemble_predicted_outcome}")
-                logger.info(f"   - 置信度: {result.confidence if hasattr(result, 'confidence') else result.ensemble_confidence:.3f}")
+                logger.info(
+                    f"   - 预测结果: {result.predicted_outcome if hasattr(result, 'predicted_outcome') else result.ensemble_predicted_outcome}"
+                )
+                logger.info(
+                    f"   - 置信度: {result.confidence if hasattr(result, 'confidence') else result.ensemble_confidence:.3f}"
+                )
 
             except Exception as e:
                 logger.error(f"❌ {strategy.value} 策略测试失败: {e}")
@@ -291,7 +323,7 @@ def main():
     tests = [
         ("泊松分布模型", lambda: test_poisson_model(training_data)),
         ("ELO评分模型", lambda: test_elo_model(training_data)),
-        ("预测服务集成", lambda: test_prediction_service(training_data))
+        ("预测服务集成", lambda: test_prediction_service(training_data)),
     ]
 
     passed = 0
@@ -300,7 +332,7 @@ def main():
     for test_name, test_func in tests:
         print(f"\n{'='*60}")
         print(f"🧪 {test_name}")
-        print('='*60)
+        print("=" * 60)
 
         try:
             if test_func():
@@ -319,7 +351,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("📊 测试总结")
-    print('=' * 60)
+    print("=" * 60)
     print(f"   通过: {passed}")
     print(f"   失败: {failed}")
     print(f"   总计: {passed + failed}")

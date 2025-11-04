@@ -67,8 +67,12 @@ async def test_srs_ml_training():
                 and results["data_summary"]["feature_count"] >= 20
             )
             print(f"  📈 数据质量: {'✅ 通过' if data_quality_ok else '❌ 不通过'}")
-            print(f"    - 总比赛数: {results['data_summary']['total_matches']} (要求: ≥1000)")
-            print(f"    - 特征数量: {results['data_summary']['feature_count']} (要求: ≥20)")
+            print(
+                f"    - 总比赛数: {results['data_summary']['total_matches']} (要求: ≥1000)"
+            )
+            print(
+                f"    - 特征数量: {results['data_summary']['feature_count']} (要求: ≥20)"
+            )
 
             # 检查模型性能
             best_model = results["best_model"]
@@ -215,7 +219,9 @@ async def main():
     print("\n" + "=" * 80)
     if test_result["test_status"] in ["passed", "partially_passed"]:
         print("🎉 测试完成！")
-        print(f"测试状态: {'通过' if test_result['test_status'] == 'passed' else '部分通过'}")
+        print(
+            f"测试状态: {'通过' if test_result['test_status'] == 'passed' else '部分通过'}"
+        )
         if test_result.get("overall_compliance", False):
             print("✅ SRS要求完全达成")
         else:

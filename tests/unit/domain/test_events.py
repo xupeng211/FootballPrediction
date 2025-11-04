@@ -4,7 +4,11 @@
 
 import pytest
 from src.domain.events.base import DomainEvent
-from src.domain.events.match_events import MatchEvent, MatchStartedEvent, MatchEndedEvent
+from src.domain.events.match_events import (
+    MatchEvent,
+    MatchStartedEvent,
+    MatchEndedEvent,
+)
 from src.domain.events.prediction_events import PredictionEvent, PredictionCreatedEvent
 
 
@@ -18,9 +22,9 @@ class TestDomainEvents:
             assert event is not None
 
             # 测试基本属性
-            if hasattr(event, 'event_id'):
+            if hasattr(event, "event_id"):
                 assert event.event_id == "test-123"
-            if hasattr(event, 'timestamp'):
+            if hasattr(event, "timestamp"):
                 assert event.timestamp == "2024-01-01T12:00:00"
         except Exception:
             pytest.skip("DomainEvent initialization failed")
@@ -37,16 +41,13 @@ class TestDomainEvents:
                 match_id=123,
                 home_team="Team A",
                 away_team="Team B",
-                start_time="2024-01-01T12:00:00"
+                start_time="2024-01-01T12:00:00",
             )
             assert started_event is not None
 
             # 测试MatchEndedEvent
             ended_event = MatchEndedEvent(
-                match_id=123,
-                home_score=2,
-                away_score=1,
-                end_time="2024-01-01T14:00:00"
+                match_id=123, home_score=2, away_score=1, end_time="2024-01-01T14:00:00"
             )
             assert ended_event is not None
         except Exception:
@@ -65,7 +66,7 @@ class TestDomainEvents:
                 match_id=123,
                 predicted_home_score=2,
                 predicted_away_score=1,
-                confidence=0.85
+                confidence=0.85,
             )
             assert created_event is not None
         except Exception:
@@ -87,14 +88,14 @@ class TestDomainEvents:
                 match_id=123,
                 home_team="Team A",
                 away_team="Team B",
-                start_time="2024-01-01T12:00:00"
+                start_time="2024-01-01T12:00:00",
             )
 
             # 测试转换为字典（如果支持）
-            if hasattr(event, 'to_dict'):
+            if hasattr(event, "to_dict"):
                 event_dict = event.to_dict()
                 assert isinstance(event_dict, dict)
-                assert 'match_id' in event_dict or 'matchId' in event_dict
+                assert "match_id" in event_dict or "matchId" in event_dict
         except Exception:
             pytest.skip("Event serialization not available")
 
@@ -103,14 +104,12 @@ class TestDomainEvents:
         try:
             # 测试有效事件创建
             valid_event = MatchStartedEvent(
-                match_id=123,
-                home_team="Team A",
-                away_team="Team B"
+                match_id=123, home_team="Team A", away_team="Team B"
             )
             assert valid_event is not None
 
             # 测试无效数据处理（如果有验证逻辑）
-            if hasattr(valid_event, 'is_valid'):
+            if hasattr(valid_event, "is_valid"):
                 is_valid = valid_event.is_valid()
                 assert isinstance(is_valid, bool)
         except Exception:
@@ -120,8 +119,15 @@ class TestDomainEvents:
         """测试领域事件模块导入"""
         try:
             from src.domain.events.base import DomainEvent
-            from src.domain.events.match_events import MatchEvent, MatchStartedEvent, MatchEndedEvent
-            from src.domain.events.prediction_events import PredictionEvent, PredictionCreatedEvent
+            from src.domain.events.match_events import (
+                MatchEvent,
+                MatchStartedEvent,
+                MatchEndedEvent,
+            )
+            from src.domain.events.prediction_events import (
+                PredictionEvent,
+                PredictionCreatedEvent,
+            )
 
             assert DomainEvent is not None
             assert MatchEvent is not None
@@ -133,13 +139,14 @@ class TestDomainEvents:
         """测试事件包结构"""
         try:
             import src.domain.events
+
             assert src.domain.events is not None
 
             # 检查子模块
             package_attrs = dir(src.domain.events)
-            assert any('base' in attr for attr in package_attrs)
-            assert any('match_events' in attr for attr in package_attrs)
-            assert any('prediction_events' in attr for attr in package_attrs)
+            assert any("base" in attr for attr in package_attrs)
+            assert any("match_events" in attr for attr in package_attrs)
+            assert any("prediction_events" in attr for attr in package_attrs)
         except ImportError:
             pytest.skip("Domain events package not available")
 
@@ -151,12 +158,12 @@ class TestDomainEvents:
                 MatchEvent(match_id=1, event_type="started"),
                 MatchStartedEvent(match_id=1, home_team="A", away_team="B"),
                 PredictionEvent(prediction_id=1, event_type="created"),
-                PredictionCreatedEvent(prediction_id=1, match_id=1)
+                PredictionCreatedEvent(prediction_id=1, match_id=1),
             ]
 
             for event in events:
                 assert event is not None
-                assert hasattr(event, 'event_id') or hasattr(event, 'eventId')
+                assert hasattr(event, "event_id") or hasattr(event, "eventId")
         except Exception:
             pytest.skip("Event creation patterns not available")
 
@@ -167,11 +174,13 @@ class TestDomainEvents:
             events = [
                 MatchStartedEvent(match_id=1, home_team="A", away_team="B"),
                 MatchEndedEvent(match_id=1, home_score=2, away_score=1),
-                PredictionCreatedEvent(prediction_id=1, match_id=1)
+                PredictionCreatedEvent(prediction_id=1, match_id=1),
             ]
 
             # 按比赛ID聚合事件（如果有相关方法）
-            match_events = [e for e in events if hasattr(e, 'match_id') and e.match_id == 1]
+            match_events = [
+                e for e in events if hasattr(e, "match_id") and e.match_id == 1
+            ]
             assert len(match_events) >= 2
         except Exception:
             pytest.skip("Event aggregation not available")

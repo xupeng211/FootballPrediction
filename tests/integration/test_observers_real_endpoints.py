@@ -90,7 +90,11 @@ def test_observers_predictions_record():
     """测试记录预测事件端点"""
     response = client.post(
         "/api/v1/observers/predictions/record",
-        json={"prediction_id": "test_pred_123", "predicted_result": "home_win", "confidence": 0.85},
+        json={
+            "prediction_id": "test_pred_123",
+            "predicted_result": "home_win",
+            "confidence": 0.85,
+        },
     )
     assert response.status_code in [200, 201, 422, 500]
     print(f"Record prediction response: {response.json()}")
@@ -106,7 +110,8 @@ def test_observers_cache():
 def test_observers_cache_hit():
     """测试记录缓存命中端点"""
     response = client.post(
-        "/api/v1/observers/cache/hit", json={"cache_key": "test_key", "cache_type": "predictions"}
+        "/api/v1/observers/cache/hit",
+        json={"cache_key": "test_key", "cache_type": "predictions"},
     )
     assert response.status_code in [200, 201, 422, 500]
     print(f"Cache hit response: {response.json()}")
@@ -193,7 +198,11 @@ def test_all_observers_endpoints():
         ("GET", "/api/v1/observers/event-types", [200, 500]),
         ("POST", "/api/v1/observers/observer/test_observer/enable", [200, 404, 500]),
         ("POST", "/api/v1/observers/observer/test_observer/disable", [200, 404, 500]),
-        ("POST", "/api/v1/observers/subject/test_subject/clear-history", [200, 404, 500]),
+        (
+            "POST",
+            "/api/v1/observers/subject/test_subject/clear-history",
+            [200, 404, 500],
+        ),
     ]
 
     success_count = 0

@@ -16,14 +16,16 @@ from pydantic import EmailStr
 from typing import Optional
 
 # 添加src到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 # 直接导入auth模块，避免复杂的包导入
 from src.api.auth.models import (
     UserRegisterRequest as UserRegister,
     UserResponse,
 )
+
 # 其他类暂时使用简化定义，避免复杂依赖
+
 
 # 简化的类定义，用于测试
 class UserLogin:
@@ -31,38 +33,47 @@ class UserLogin:
         self.username = username
         self.password = password
 
+
 class TokenResponse:
     def __init__(self, access_token: str, refresh_token: str = None):
         self.access_token = access_token
         self.refresh_token = refresh_token
 
+
 class RefreshTokenRequest:
     def __init__(self, refresh_token: str):
         self.refresh_token = refresh_token
+
 
 class PasswordChangeRequest:
     def __init__(self, old_password: str, new_password: str):
         self.old_password = old_password
         self.new_password = new_password
 
+
 class PasswordResetRequest:
     def __init__(self, email: str):
         self.email = email
+
 
 class PasswordResetConfirm:
     def __init__(self, token: str, new_password: str):
         self.token = token
         self.new_password = new_password
 
+
 # 简化的函数定义
 def authenticate_user(username: str, password: str):
     return None
 
+
 def get_user_by_id(user_id: int):
     return None
 
+
 def create_user(user_data: dict):
     return None
+
 
 MOCK_USERS = {}
 
@@ -70,6 +81,7 @@ MOCK_USERS = {}
 try:
     from src.security.jwt_auth import JWTAuthManager, UserAuth, TokenData
 except ImportError:
+
     class JWTAuthManager:
         def __init__(self, secret_key: str = "test"):
             self.secret_key = secret_key
@@ -94,7 +106,7 @@ class TestAuthModels:
             "username": "testuser",
             "email": "test@example.com",
             "password": "TestPassword123!",
-            "full_name": "Test User"
+            "full_name": "Test User",
         }
 
         user = UserRegister(**user_data)
@@ -108,18 +120,14 @@ class TestAuthModels:
         """测试用户注册模型邮箱验证失败"""
         with pytest.raises(ValueError):
             UserRegister(
-                username="testuser",
-                email="invalid-email",
-                password="TestPassword123!"
+                username="testuser", email="invalid-email", password="TestPassword123!"
             )
 
     def test_user_register_model_short_password(self):
         """测试用户注册模型密码过短"""
         with pytest.raises(ValueError):
             UserRegister(
-                username="testuser",
-                email="test@example.com",
-                password="short"
+                username="testuser", email="test@example.com", password="short"
             )
 
     def test_user_login_model_valid(self):
@@ -127,7 +135,7 @@ class TestAuthModels:
         login_data = {
             "username": "testuser",
             "password": "TestPassword123!",
-            "remember_me": True
+            "remember_me": True,
         }
 
         login = UserLogin(**login_data)
@@ -147,8 +155,8 @@ class TestAuthModels:
                 "id": 1,
                 "username": "testuser",
                 "email": "test@example.com",
-                "role": "user"
-            }
+                "role": "user",
+            },
         }
 
         response = TokenResponse(**token_data)
@@ -163,7 +171,7 @@ class TestAuthModels:
         """测试密码修改请求模型验证"""
         password_data = {
             "current_password": "OldPassword123!",
-            "new_password": "NewPassword123!"
+            "new_password": "NewPassword123!",
         }
 
         request = PasswordChangeRequest(**password_data)
@@ -173,9 +181,7 @@ class TestAuthModels:
 
     def test_password_reset_request_model_valid(self):
         """测试密码重置请求模型验证"""
-        reset_data = {
-            "email": "test@example.com"
-        }
+        reset_data = {"email": "test@example.com"}
 
         request = PasswordResetRequest(**reset_data)
 
@@ -191,7 +197,7 @@ class TestUserAuthentication:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     @pytest.mark.asyncio
@@ -208,7 +214,9 @@ class TestUserAuthentication:
     @pytest.mark.asyncio
     async def test_authenticate_user_success_by_email(self, auth_manager):
         """测试邮箱认证成功"""
-        user = await authenticate_user("user@football-prediction.com", "user123", auth_manager)
+        user = await authenticate_user(
+            "user@football-prediction.com", "user123", auth_manager
+        )
 
         assert user is not None
         assert user.username == "user"
@@ -230,7 +238,9 @@ class TestUserAuthentication:
     @pytest.mark.asyncio
     async def test_authenticate_user_nonexistent_email(self, auth_manager):
         """测试不存在的邮箱认证失败"""
-        user = await authenticate_user("nonexistent@example.com", "password123", auth_manager)
+        user = await authenticate_user(
+            "nonexistent@example.com", "password123", auth_manager
+        )
         assert user is None
 
     @pytest.mark.asyncio
@@ -258,7 +268,7 @@ class TestUserCreation:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     @pytest.mark.asyncio
@@ -268,7 +278,7 @@ class TestUserCreation:
             username="newuser",
             email="newuser@example.com",
             password="NewPassword123!",
-            full_name="New User"
+            full_name="New User",
         )
 
         # 保存原始MOCK_USERS以便恢复
@@ -294,7 +304,7 @@ class TestUserCreation:
             username="newuser",
             email="newuser@example.com",
             password="weak",
-            full_name="New User"
+            full_name="New User",
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -309,7 +319,7 @@ class TestUserCreation:
         user_data = UserRegister(
             username="admin",  # 已存在的用户名
             email="newadmin@example.com",
-            password="NewPassword123!"
+            password="NewPassword123!",
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -324,7 +334,7 @@ class TestUserCreation:
         user_data = UserRegister(
             username="newadmin",
             email="admin@football-prediction.com",  # 已存在的邮箱
-            password="NewPassword123!"
+            password="NewPassword123!",
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -343,7 +353,7 @@ class TestJWTTokenManagement:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     def test_create_access_token_default_expiry(self, auth_manager):
@@ -374,7 +384,12 @@ class TestJWTTokenManagement:
     @pytest.mark.asyncio
     async def test_verify_access_token_success(self, auth_manager):
         """测试验证访问令牌成功"""
-        data = {"sub": "1", "username": "testuser", "email": "test@example.com", "role": "user"}
+        data = {
+            "sub": "1",
+            "username": "testuser",
+            "email": "test@example.com",
+            "role": "user",
+        }
         token = auth_manager.create_access_token(data)
 
         token_data = await auth_manager.verify_token(token)
@@ -474,7 +489,7 @@ class TestSecurityFeatures:
             email="test@example.com",
             hashed_password="$2b$12$testhashedpassword",
             role="user",
-            is_active=True
+            is_active=True,
         )
 
         assert user.id == 1
@@ -496,7 +511,7 @@ class TestSecurityFeatures:
             token_type="access",
             exp=exp,
             iat=now,
-            jti="test-jti"
+            jti="test-jti",
         )
 
         assert token_data.user_id == 1
@@ -518,7 +533,7 @@ class TestPasswordResetFlow:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     def test_generate_password_reset_token(self, auth_manager):
@@ -551,7 +566,7 @@ class TestPasswordResetFlow:
         """测试验证过期密码重置令牌"""
         email = "test@example.com"
         # 创建短期过期的令牌
-        with patch('src.security.jwt_auth.timedelta') as mock_timedelta:
+        with patch("src.security.jwt_auth.timedelta") as mock_timedelta:
             mock_timedelta.return_value = timedelta(seconds=-1)  # 已过期
 
             token = auth_manager.generate_password_reset_token(email)
@@ -569,7 +584,7 @@ class TestTokenBlacklisting:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     @pytest.mark.asyncio
@@ -581,7 +596,7 @@ class TestTokenBlacklisting:
         # 由于我们没有Redis连接，这个测试主要验证方法调用
         if auth_manager.redis_client is None:
             # Redis不可用时的处理
-            with patch('src.security.jwt_auth.logger') as mock_logger:
+            with patch("src.security.jwt_auth.logger") as mock_logger:
                 await auth_manager.blacklist_token(jti, exp)
                 # 验证日志记录
                 mock_logger.warning.assert_called()

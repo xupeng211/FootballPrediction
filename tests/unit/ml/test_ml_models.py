@@ -21,13 +21,20 @@ import pickle
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
     from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import ModelTrainer, TrainingConfig, TrainingStatus, ModelType
+    from src.ml.model_training import (
+        ModelTrainer,
+        TrainingConfig,
+        TrainingStatus,
+        ModelType,
+    )
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模块: {e}")
@@ -37,7 +44,16 @@ except ImportError as e:
 # 创建模拟数据
 def create_mock_training_data(num_samples: int = 1000) -> pd.DataFrame:
     """创建模拟训练数据"""
-    teams = ["Team_A", "Team_B", "Team_C", "Team_D", "Team_E", "Team_F", "Team_G", "Team_H"]
+    teams = [
+        "Team_A",
+        "Team_B",
+        "Team_C",
+        "Team_D",
+        "Team_E",
+        "Team_F",
+        "Team_G",
+        "Team_H",
+    ]
     data = []
 
     for i in range(num_samples):
@@ -56,25 +72,24 @@ def create_mock_training_data(num_samples: int = 1000) -> pd.DataFrame:
         else:
             result = "draw"
 
-        data.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_score": home_goals,
-            "away_score": away_goals,
-            "result": result,
-            "match_date": datetime.now() - timedelta(days=np.random.randint(0, 365))
-        })
+        data.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "result": result,
+                "match_date": datetime.now()
+                - timedelta(days=np.random.randint(0, 365)),
+            }
+        )
 
     return pd.DataFrame(data)
 
 
 def create_mock_prediction_data() -> Dict[str, Any]:
     """创建模拟预测数据"""
-    return {
-        "home_team": "Team_A",
-        "away_team": "Team_B",
-        "match_id": "test_match_001"
-    }
+    return {"home_team": "Team_A", "away_team": "Team_B", "match_id": "test_match_001"}
 
 
 @pytest.mark.skipif(not CAN_IMPORT, reason="ML模块导入失败")
@@ -86,6 +101,7 @@ class TestBaseModel:
     @pytest.fixture
     def mock_base_model(self):
         """创建基础模型的模拟实现"""
+
         class MockBaseModel(BaseModel):
             def __init__(self):
                 super().__init__("MockModel", "1.0")
@@ -94,7 +110,9 @@ class TestBaseModel:
             def prepare_features(self, match_data: Dict[str, Any]) -> np.ndarray:
                 return np.array([1.0, 2.0, 3.0, 4.0])
 
-            def train(self, training_data: pd.DataFrame, validation_data: pd.DataFrame = None) -> TrainingResult:
+            def train(
+                self, training_data: pd.DataFrame, validation_data: pd.DataFrame = None
+            ) -> TrainingResult:
                 self.is_trained = True
                 return TrainingResult(
                     model_name=self.model_name,
@@ -105,16 +123,20 @@ class TestBaseModel:
                     f1_score=0.72,
                     confusion_matrix=[[50, 10, 5], [8, 45, 12], [6, 11, 53]],
                     training_samples=len(training_data),
-                    validation_samples=len(validation_data) if validation_data is not None else 0,
+                    validation_samples=(
+                        len(validation_data) if validation_data is not None else 0
+                    ),
                     training_time=120.5,
                     features_used=["feature1", "feature2", "feature3"],
                     hyperparameters={"param1": "value1"},
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
                 )
 
             def predict(self, match_data: Dict[str, Any]) -> PredictionResult:
                 if not self.is_trained:
-                    raise RuntimeError("Model must be trained before making predictions")
+                    raise RuntimeError(
+                        "Model must be trained before making predictions"
+                    )
 
                 return PredictionResult(
                     match_id=match_data.get("match_id", "unknown"),
@@ -127,12 +149,16 @@ class TestBaseModel:
                     confidence=0.75,
                     model_name=self.model_name,
                     model_version=self.model_version,
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
                 )
 
-            def predict_proba(self, match_data: Dict[str, Any]) -> tuple[float, float, float]:
+            def predict_proba(
+                self, match_data: Dict[str, Any]
+            ) -> tuple[float, float, float]:
                 if not self.is_trained:
-                    raise RuntimeError("Model must be trained before making predictions")
+                    raise RuntimeError(
+                        "Model must be trained before making predictions"
+                    )
                 return (0.6, 0.25, 0.15)
 
             def evaluate(self, test_data: pd.DataFrame) -> Dict[str, float]:
@@ -140,12 +166,12 @@ class TestBaseModel:
                     "accuracy": 0.75,
                     "precision": 0.73,
                     "recall": 0.71,
-                    "f1_score": 0.72
+                    "f1_score": 0.72,
                 }
 
             def save_model(self, file_path: str) -> bool:
                 try:
-                    with open(file_path, 'wb') as f:
+                    with open(file_path, "wb") as f:
                         pickle.dump({"is_trained": self.is_trained}, f)
                     return True
                 except Exception:
@@ -153,7 +179,7 @@ class TestBaseModel:
 
             def load_model(self, file_path: str) -> bool:
                 try:
-                    with open(file_path, 'rb') as f:
+                    with open(file_path, "rb") as f:
                         data = pickle.load(f)
                     self.is_trained = data.get("is_trained", False)
                     return True
@@ -172,10 +198,7 @@ class TestBaseModel:
 
     def test_validate_prediction_input_valid(self, mock_base_model):
         """测试有效预测输入验证"""
-        valid_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_B"
-        }
+        valid_data = {"home_team": "Team_A", "away_team": "Team_B"}
         assert mock_base_model.validate_prediction_input(valid_data) is True
 
     def test_validate_prediction_input_missing_field(self, mock_base_model):
@@ -188,10 +211,7 @@ class TestBaseModel:
 
     def test_validate_prediction_input_same_teams(self, mock_base_model):
         """测试主客队相同的预测输入验证"""
-        invalid_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_A"
-        }
+        invalid_data = {"home_team": "Team_A", "away_team": "Team_A"}
         assert mock_base_model.validate_prediction_input(invalid_data) is False
 
     def test_calculate_confidence(self, mock_base_model):
@@ -225,11 +245,13 @@ class TestBaseModel:
 
     def test_validate_training_data_valid(self, mock_base_model):
         """测试有效训练数据验证"""
-        valid_data = pd.DataFrame({
-            "home_team": ["Team_A", "Team_B"],
-            "away_team": ["Team_B", "Team_C"],
-            "result": ["home_win", "draw"]
-        })
+        valid_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B"],
+                "away_team": ["Team_B", "Team_C"],
+                "result": ["home_win", "draw"],
+            }
+        )
         assert mock_base_model.validate_training_data(valid_data) is True
 
     def test_validate_training_data_empty(self, mock_base_model):
@@ -239,11 +261,13 @@ class TestBaseModel:
 
     def test_validate_training_data_missing_columns(self, mock_base_model):
         """测试缺少必要列的训练数据验证"""
-        invalid_data = pd.DataFrame({
-            "home_team": ["Team_A", "Team_B"],
-            "away_team": ["Team_B", "Team_C"]
-            # 缺少 result 列
-        })
+        invalid_data = pd.DataFrame(
+            {
+                "home_team": ["Team_A", "Team_B"],
+                "away_team": ["Team_B", "Team_C"],
+                # 缺少 result 列
+            }
+        )
         assert mock_base_model.validate_training_data(invalid_data) is False
 
     def test_training_workflow(self, mock_base_model):
@@ -277,7 +301,10 @@ class TestBaseModel:
         assert isinstance(result, PredictionResult)
         assert result.home_team == "Team_A"
         assert result.away_team == "Team_B"
-        assert result.home_win_prob + result.draw_prob + result.away_win_prob == pytest.approx(1.0)
+        assert (
+            result.home_win_prob + result.draw_prob + result.away_win_prob
+            == pytest.approx(1.0)
+        )
         assert result.predicted_outcome in ["home_win", "draw", "away_win"]
         assert 0 <= result.confidence <= 1.0
 
@@ -335,7 +362,9 @@ class TestBaseModel:
         """测试获取训练曲线"""
         # 添加一些训练历史
         for i in range(3):
-            mock_base_model.log_training_step(i, {"accuracy": 0.6 + i * 0.1, "loss": 1.0 - i * 0.2})
+            mock_base_model.log_training_step(
+                i, {"accuracy": 0.6 + i * 0.1, "loss": 1.0 - i * 0.2}
+            )
 
         curves = mock_base_model.get_training_curve()
         assert "accuracy" in curves
@@ -346,7 +375,9 @@ class TestBaseModel:
     def test_update_hyperparameters(self, mock_base_model):
         """测试更新超参数"""
         original_params = mock_base_model.hyperparameters.copy()
-        mock_base_model.update_hyperparameters(new_param="new_value", learning_rate=0.001)
+        mock_base_model.update_hyperparameters(
+            new_param="new_value", learning_rate=0.001
+        )
 
         assert mock_base_model.hyperparameters != original_params
         assert "new_param" in mock_base_model.hyperparameters
@@ -436,7 +467,10 @@ class TestPoissonModel:
         assert isinstance(result, PredictionResult)
         assert result.home_team == "Team_A"
         assert result.away_team == "Team_B"
-        assert abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0) < 0.01
+        assert (
+            abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
+            < 0.01
+        )
         assert result.predicted_outcome in ["home_win", "draw", "away_win"]
         assert 0 <= result.confidence <= 1.0
 
@@ -458,8 +492,12 @@ class TestPoissonModel:
         poisson_model.train(training_data)
 
         # 计算期望进球
-        home_expected = poisson_model._calculate_expected_goals("Team_A", "Team_B", is_home=True)
-        away_expected = poisson_model._calculate_expected_goals("Team_B", "Team_A", is_home=False)
+        home_expected = poisson_model._calculate_expected_goals(
+            "Team_A", "Team_B", is_home=True
+        )
+        away_expected = poisson_model._calculate_expected_goals(
+            "Team_B", "Team_A", is_home=False
+        )
 
         assert home_expected > 0
         assert away_expected > 0
@@ -471,7 +509,9 @@ class TestPoissonModel:
         home_expected = 1.5
         away_expected = 1.1
 
-        home_win, draw, away_win = poisson_model._calculate_match_probabilities(home_expected, away_expected)
+        home_win, draw, away_win = poisson_model._calculate_match_probabilities(
+            home_expected, away_expected
+        )
 
         assert all(0 <= p <= 1 for p in [home_win, draw, away_win])
         assert abs(home_win + draw + away_win - 1.0) < 0.01
@@ -547,7 +587,7 @@ class TestPoissonModel:
         new_params = {
             "home_advantage": 0.4,
             "min_matches_per_team": 15,
-            "max_goals": 12
+            "max_goals": 12,
         }
 
         poisson_model.update_hyperparameters(**new_params)
@@ -581,12 +621,14 @@ class TestModelTrainer:
         np.random.seed(42)
         n_samples = 200
 
-        data = pd.DataFrame({
-            "feature1": np.random.randn(n_samples),
-            "feature2": np.random.randn(n_samples),
-            "feature3": np.random.randn(n_samples),
-            "target": np.random.choice(["home_win", "draw", "away_win"], n_samples)
-        })
+        data = pd.DataFrame(
+            {
+                "feature1": np.random.randn(n_samples),
+                "feature2": np.random.randn(n_samples),
+                "feature3": np.random.randn(n_samples),
+                "target": np.random.choice(["home_win", "draw", "away_win"], n_samples),
+            }
+        )
 
         return data
 
@@ -723,9 +765,15 @@ class TestMLIntegration:
         assert isinstance(prediction_result, PredictionResult)
         assert isinstance(evaluation_metrics, dict)
         assert training_result.accuracy > 0
-        assert abs(prediction_result.home_win_prob +
-                  prediction_result.draw_prob +
-                  prediction_result.away_win_prob - 1.0) < 0.01
+        assert (
+            abs(
+                prediction_result.home_win_prob
+                + prediction_result.draw_prob
+                + prediction_result.away_win_prob
+                - 1.0
+            )
+            < 0.01
+        )
         assert evaluation_metrics.get("accuracy", 0) > 0
 
     @pytest.mark.asyncio
@@ -745,17 +793,21 @@ class TestMLIntegration:
             training_result = model.train(training_data)
             evaluation_metrics = model.evaluate(test_data)
 
-            results.append({
-                "model": model,
-                "training": training_result,
-                "evaluation": evaluation_metrics
-            })
+            results.append(
+                {
+                    "model": model,
+                    "training": training_result,
+                    "evaluation": evaluation_metrics,
+                }
+            )
 
         # 比较模型性能
         accuracies = [r["evaluation"]["accuracy"] for r in results]
         assert len(accuracies) == 3
         # 至少有一个模型应该有不同的性能
-        assert len(set(round(acc, 3) for acc in accuracies)) > 1 or max(accuracies) > 0.6
+        assert (
+            len(set(round(acc, 3) for acc in accuracies)) > 1 or max(accuracies) > 0.6
+        )
 
     def test_model_factory_pattern(self):
         """测试模型工厂模式"""
@@ -811,19 +863,23 @@ class TestMLIntegration:
         assert model.validate_training_data(empty_data) is False
 
         # 测试缺少列的数据
-        incomplete_data = pd.DataFrame({
-            "home_team": ["A", "B"],
-            "away_team": ["C", "D"]
-            # 缺少其他必要列
-        })
+        incomplete_data = pd.DataFrame(
+            {
+                "home_team": ["A", "B"],
+                "away_team": ["C", "D"],
+                # 缺少其他必要列
+            }
+        )
         assert model.validate_training_data(incomplete_data) is False
 
         # 测试包含空值的数据
-        null_data = pd.DataFrame({
-            "home_team": ["A", None, "C"],
-            "away_team": ["B", "D", "E"],
-            "result": ["home_win", "draw", "away_win"]
-        })
+        null_data = pd.DataFrame(
+            {
+                "home_team": ["A", None, "C"],
+                "away_team": ["B", "D", "E"],
+                "result": ["home_win", "draw", "away_win"],
+            }
+        )
         # 应该返回True但发出警告
         assert model.validate_training_data(null_data) is True
 

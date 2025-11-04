@@ -22,7 +22,11 @@ from typing import Any, List
 # 导入领域模型和服务
 try:
     from src.domain.models.match import Match, MatchStatus
-    from src.domain.models.prediction import Prediction, PredictionStatus, PredictionPoints
+    from src.domain.models.prediction import (
+        Prediction,
+        PredictionStatus,
+        PredictionPoints,
+    )
     from src.domain.models.team import Team
     from src.domain.services.prediction_service import PredictionDomainService
     from src.domain.events.prediction_events import (
@@ -31,8 +35,9 @@ try:
         PredictionEvaluatedEvent,
         PredictionCancelledEvent,
         PredictionExpiredEvent,
-        PredictionPointsAdjustedEvent
+        PredictionPointsAdjustedEvent,
     )
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: Import failed: {e}")
@@ -52,7 +57,13 @@ except ImportError as e:
         EXPIRED = "expired"
 
     class Match:
-        def __init__(self, id: int, home_team: Any, away_team: Any, status: str = MatchStatus.SCHEDULED):
+        def __init__(
+            self,
+            id: int,
+            home_team: Any,
+            away_team: Any,
+            status: str = MatchStatus.SCHEDULED,
+        ):
             self.id = id
             self.home_team = home_team
             self.away_team = away_team
@@ -66,7 +77,14 @@ except ImportError as e:
             self.name = name
 
     class Prediction:
-        def __init__(self, id: int, user_id: int, match: Match, predicted_home: int, predicted_away: int):
+        def __init__(
+            self,
+            id: int,
+            user_id: int,
+            match: Match,
+            predicted_home: int,
+            predicted_away: int,
+        ):
             self.id = id
             self.user_id = user_id
             self.match = match
@@ -79,7 +97,12 @@ except ImportError as e:
             self.created_at = datetime.now()
 
     class PredictionPoints:
-        def __init__(self, base_points: float, accuracy_bonus: float = 0, confidence_bonus: float = 0):
+        def __init__(
+            self,
+            base_points: float,
+            accuracy_bonus: float = 0,
+            confidence_bonus: float = 0,
+        ):
             self.base_points = base_points
             self.accuracy_bonus = accuracy_bonus
             self.confidence_bonus = confidence_bonus
@@ -121,18 +144,36 @@ except ImportError as e:
         def __init__(self):
             self._events: List[Any] = []
 
-        def create_prediction(self, user_id: int, match: Match, predicted_home: int, predicted_away: int,
-                            confidence: float = None, notes: str = None) -> Prediction:
-            prediction = Prediction(id=1, user_id=user_id, match=match,
-                                 predicted_home=predicted_home, predicted_away=predicted_away)
+        def create_prediction(
+            self,
+            user_id: int,
+            match: Match,
+            predicted_home: int,
+            predicted_away: int,
+            confidence: float = None,
+            notes: str = None,
+        ) -> Prediction:
+            prediction = Prediction(
+                id=1,
+                user_id=user_id,
+                match=match,
+                predicted_home=predicted_home,
+                predicted_away=predicted_away,
+            )
             prediction.confidence = confidence
             prediction.notes = notes
             event = PredictionCreatedEvent(prediction)
             self._events.append(event)
             return prediction
 
-        def update_prediction(self, prediction: Prediction, predicted_home: int = None,
-                            predicted_away: int = None, confidence: float = None, notes: str = None) -> Prediction:
+        def update_prediction(
+            self,
+            prediction: Prediction,
+            predicted_home: int = None,
+            predicted_away: int = None,
+            confidence: float = None,
+            notes: str = None,
+        ) -> Prediction:
             if predicted_home is not None:
                 prediction.predicted_home = predicted_home
             if predicted_away is not None:
@@ -143,7 +184,9 @@ except ImportError as e:
             self._events.append(event)
             return prediction
 
-        def evaluate_prediction(self, prediction: Prediction, actual_home: int, actual_away: int) -> Prediction:
+        def evaluate_prediction(
+            self, prediction: Prediction, actual_home: int, actual_away: int
+        ) -> Prediction:
             prediction.status = PredictionStatus.EVALUATED
             points = self._calculate_points(prediction, actual_home, actual_away)
             prediction.points = points
@@ -151,20 +194,29 @@ except ImportError as e:
             self._events.append(event)
             return prediction
 
-        def _calculate_points(self, prediction: Prediction, actual_home: int, actual_away: int) -> PredictionPoints:
+        def _calculate_points(
+            self, prediction: Prediction, actual_home: int, actual_away: int
+        ) -> PredictionPoints:
             base_points = 10.0
             accuracy_bonus = 0.0
             confidence_bonus = 0.0
 
             # 准确性奖励
-            if prediction.predicted_home == actual_home and prediction.predicted_away == actual_away:
+            if (
+                prediction.predicted_home == actual_home
+                and prediction.predicted_away == actual_away
+            ):
                 accuracy_bonus = 20.0
-            elif (prediction.predicted_home - prediction.predicted_away) == (actual_home - actual_away):
+            elif (prediction.predicted_home - prediction.predicted_away) == (
+                actual_home - actual_away
+            ):
                 accuracy_bonus = 10.0
 
             return PredictionPoints(base_points, accuracy_bonus, confidence_bonus)
 
-        def cancel_prediction(self, prediction: Prediction, reason: str = None) -> Prediction:
+        def cancel_prediction(
+            self, prediction: Prediction, reason: str = None
+        ) -> Prediction:
             prediction.status = PredictionStatus.CANCELLED
             event = PredictionCancelledEvent(prediction)
             self._events.append(event)
@@ -205,7 +257,7 @@ class TestPredictionDomainService:
             league_id=1,
             season="2024",
             status=MatchStatus.SCHEDULED,
-            match_date=future_time
+            match_date=future_time,
         )
 
     @pytest.fixture
@@ -216,7 +268,7 @@ class TestPredictionDomainService:
     def test_service_initialization(self, prediction_service):
         """测试服务初始化"""
         assert prediction_service is not None
-        assert hasattr(prediction_service, '_events')
+        assert hasattr(prediction_service, "_events")
         assert len(prediction_service.get_domain_events()) == 0
 
     def test_create_prediction_success(self, prediction_service, mock_match):
@@ -233,7 +285,7 @@ class TestPredictionDomainService:
             predicted_home=predicted_home,
             predicted_away=predicted_away,
             confidence=confidence,
-            notes=notes
+            notes=notes,
         )
 
         # 验证预测对象
@@ -242,7 +294,11 @@ class TestPredictionDomainService:
         assert prediction.match_id == mock_match.id
         assert prediction.score.predicted_home == predicted_home
         assert prediction.score.predicted_away == predicted_away
-        assert prediction.confidence.value == Decimal(str(confidence)) if confidence else prediction.confidence is None
+        assert (
+            prediction.confidence.value == Decimal(str(confidence))
+            if confidence
+            else prediction.confidence is None
+        )
         assert prediction.status == PredictionStatus.PENDING
 
         # 验证事件发布
@@ -251,7 +307,9 @@ class TestPredictionDomainService:
         assert isinstance(events[0], PredictionCreatedEvent)
         assert events[0].prediction_id == prediction.id
 
-    def test_create_prediction_without_optional_params(self, prediction_service, mock_match):
+    def test_create_prediction_without_optional_params(
+        self, prediction_service, mock_match
+    ):
         """测试不包含可选参数的预测创建"""
         user_id = 123
         predicted_home = 1
@@ -261,7 +319,7 @@ class TestPredictionDomainService:
             user_id=user_id,
             match=mock_match,
             predicted_home=predicted_home,
-            predicted_away=predicted_away
+            predicted_away=predicted_away,
         )
 
         assert prediction is not None
@@ -274,10 +332,7 @@ class TestPredictionDomainService:
         """测试成功更新预测"""
         # 先创建预测
         prediction = prediction_service.create_prediction(
-            user_id=123,
-            match=mock_match,
-            predicted_home=1,
-            predicted_away=1
+            user_id=123, match=mock_match, predicted_home=1, predicted_away=1
         )
 
         # 清空事件
@@ -292,13 +347,17 @@ class TestPredictionDomainService:
             prediction=prediction,
             new_predicted_home=new_predicted_home,
             new_predicted_away=1,  # 保持原有值
-            new_confidence=new_confidence
+            new_confidence=new_confidence,
         )
 
         # 验证更新结果
         assert prediction.score.predicted_home == new_predicted_home
         assert prediction.score.predicted_away == 1  # 未更新
-        assert prediction.confidence.value == Decimal(str(new_confidence)) if new_confidence else prediction.confidence is None
+        assert (
+            prediction.confidence.value == Decimal(str(new_confidence))
+            if new_confidence
+            else prediction.confidence is None
+        )
 
         # 验证事件发布
         events = prediction_service.get_domain_events()
@@ -308,10 +367,7 @@ class TestPredictionDomainService:
     def test_evaluate_prediction_exact_match(self, prediction_service, mock_match):
         """测试完全准确的预测评估"""
         prediction = prediction_service.create_prediction(
-            user_id=123,
-            match=mock_match,
-            predicted_home=2,
-            predicted_away=1
+            user_id=123, match=mock_match, predicted_home=2, predicted_away=1
         )
 
         # 清空事件
@@ -319,9 +375,7 @@ class TestPredictionDomainService:
 
         # 评估预测（完全准确）
         evaluated_prediction = prediction_service.evaluate_prediction(
-            prediction=prediction,
-            actual_home=2,
-            actual_away=1
+            prediction=prediction, actual_home=2, actual_away=1
         )
 
         # 验证评估结果
@@ -337,22 +391,22 @@ class TestPredictionDomainService:
         assert isinstance(events[0], PredictionEvaluatedEvent)
         assert events[0].points_earned == 30.0
 
-    def test_evaluate_prediction_score_difference_match(self, prediction_service, mock_match):
+    def test_evaluate_prediction_score_difference_match(
+        self, prediction_service, mock_match
+    ):
         """测试比分差异匹配的预测评估"""
         prediction = prediction_service.create_prediction(
             user_id=123,
             match=mock_match,
             predicted_home=3,
-            predicted_away=1  # 预测净胜2球
+            predicted_away=1,  # 预测净胜2球
         )
 
         prediction_service.clear_domain_events()
 
         # 评估预测（比分差异正确但具体比分不同）
         evaluated_prediction = prediction_service.evaluate_prediction(
-            prediction=prediction,
-            actual_home=2,
-            actual_away=0  # 实际净胜2球
+            prediction=prediction, actual_home=2, actual_away=0  # 实际净胜2球
         )
 
         # 验证评估结果
@@ -365,19 +419,14 @@ class TestPredictionDomainService:
     def test_evaluate_prediction_no_match(self, prediction_service, mock_match):
         """测试完全不匹配的预测评估"""
         prediction = prediction_service.create_prediction(
-            user_id=123,
-            match=mock_match,
-            predicted_home=1,
-            predicted_away=1
+            user_id=123, match=mock_match, predicted_home=1, predicted_away=1
         )
 
         prediction_service.clear_domain_events()
 
         # 评估预测（完全不匹配）
         evaluated_prediction = prediction_service.evaluate_prediction(
-            prediction=prediction,
-            actual_home=0,
-            actual_away=2
+            prediction=prediction, actual_home=0, actual_away=2
         )
 
         # 验证评估结果
@@ -390,18 +439,14 @@ class TestPredictionDomainService:
     def test_cancel_prediction_success(self, prediction_service, mock_match):
         """测试成功取消预测"""
         prediction = prediction_service.create_prediction(
-            user_id=123,
-            match=mock_match,
-            predicted_home=1,
-            predicted_away=1
+            user_id=123, match=mock_match, predicted_home=1, predicted_away=1
         )
 
         prediction_service.clear_domain_events()
 
         # 取消预测
         cancelled_prediction = prediction_service.cancel_prediction(
-            prediction=prediction,
-            reason="User request"
+            prediction=prediction, reason="User request"
         )
 
         # 验证取消结果
@@ -450,18 +495,32 @@ class TestPredictionDomainService:
         assert len(events2) == 1
         assert len(prediction_service.get_domain_events()) == 1
 
-    @pytest.mark.parametrize("predicted_home,predicted_away,actual_home,actual_y,expected_bonus", [
-        (2, 1, 2, 1, 20.0),  # 完全匹配
-        (3, 1, 2, 0, 10.0),  # 差异匹配
-        (1, 1, 0, 2, 0.0),   # 无匹配
-        (2, 0, 3, 1, 10.0),  # 差异匹配
-        (0, 0, 0, 0, 20.0),  # 完全匹配（0:0）
-    ])
-    def test_points_calculation_scenarios(self, prediction_service, mock_match,
-                                        predicted_home, predicted_away, actual_home, actual_y, expected_bonus):
+    @pytest.mark.parametrize(
+        "predicted_home,predicted_away,actual_home,actual_y,expected_bonus",
+        [
+            (2, 1, 2, 1, 20.0),  # 完全匹配
+            (3, 1, 2, 0, 10.0),  # 差异匹配
+            (1, 1, 0, 2, 0.0),  # 无匹配
+            (2, 0, 3, 1, 10.0),  # 差异匹配
+            (0, 0, 0, 0, 20.0),  # 完全匹配（0:0）
+        ],
+    )
+    def test_points_calculation_scenarios(
+        self,
+        prediction_service,
+        mock_match,
+        predicted_home,
+        predicted_away,
+        actual_home,
+        actual_y,
+        expected_bonus,
+    ):
         """测试不同场景下的积分计算"""
         prediction = prediction_service.create_prediction(
-            user_id=123, match=mock_match, predicted_home=predicted_home, predicted_away=predicted_away
+            user_id=123,
+            match=mock_match,
+            predicted_home=predicted_home,
+            predicted_away=predicted_away,
         )
 
         evaluated_prediction = prediction_service.evaluate_prediction(
@@ -554,7 +613,9 @@ class TestPredictionServiceIntegration:
 
         # 取消预测
         service.clear_events()
-        cancelled_prediction = service.cancel_prediction(prediction, "User requested cancellation")
+        cancelled_prediction = service.cancel_prediction(
+            prediction, "User requested cancellation"
+        )
 
         # 验证取消状态和事件
         assert cancelled_prediction.status == PredictionStatus.CANCELLED

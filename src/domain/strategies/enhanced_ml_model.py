@@ -574,9 +574,9 @@ class EnhancedMLModelStrategy(PredictionStrategy):
             "home_score": 1,
             "away_score": 1,
             "method": "dummy",
-            "features_used": len(feature_vector)
-            if hasattr(feature_vector, "shape")
-            else 0,
+            "features_used": (
+                len(feature_vector) if hasattr(feature_vector, "shape") else 0
+            ),
         }
 
     def _calculate_confidence(self, prediction_result: dict[str, Any]) -> float:

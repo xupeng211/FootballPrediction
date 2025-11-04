@@ -12,6 +12,7 @@ class TestPathManager:
     def test_path_manager_import(self):
         """测试路径管理器导入"""
         from src.core.path_manager import PathManager
+
         assert PathManager is not None
 
     def test_path_manager_instance(self):
@@ -26,7 +27,7 @@ class TestPathManager:
         """测试项目根目录检测"""
         try:
             manager = PathManager()
-            if hasattr(manager, 'project_root'):
+            if hasattr(manager, "project_root"):
                 assert manager.project_root is not None
         except Exception:
             pytest.skip("Cannot test project root detection")
@@ -35,7 +36,7 @@ class TestPathManager:
         """测试src路径配置"""
         try:
             manager = PathManager()
-            if hasattr(manager, 'src_path'):
+            if hasattr(manager, "src_path"):
                 assert manager.src_path is not None
         except Exception:
             pytest.skip("Cannot test src path configuration")
@@ -45,7 +46,7 @@ class TestPathManager:
         from src.core.path_manager import PathManager
 
         # 检查关键方法是否存在
-        key_methods = ['get_project_root', 'get_src_path', 'ensure_path_exists']
+        key_methods = ["get_project_root", "get_src_path", "ensure_path_exists"]
 
         manager = PathManager()
         for method in key_methods:
@@ -58,7 +59,7 @@ class TestPathManager:
             manager = PathManager()
 
             # 测试路径验证方法（如果存在）
-            if hasattr(manager, 'is_valid_path'):
+            if hasattr(manager, "is_valid_path"):
                 result = manager.is_valid_path("/some/path")
                 assert isinstance(result, bool)
         except Exception:
@@ -70,7 +71,7 @@ class TestPathManager:
             manager = PathManager()
 
             # 测试路径创建方法（如果存在）
-            if hasattr(manager, 'create_path'):
+            if hasattr(manager, "create_path"):
                 # 不实际创建路径，只测试方法存在
                 assert callable(manager.create_path)
         except Exception:
@@ -79,13 +80,14 @@ class TestPathManager:
     def test_core_module_import(self):
         """测试核心模块导入"""
         import src.core
+
         assert src.core is not None
 
         # 检查关键子模块
-        key_modules = ['path_manager', 'config', 'di']
+        key_modules = ["path_manager", "config", "di"]
         for module in key_modules:
             try:
-                __import__(f'src.core.{module}')
+                __import__(f"src.core.{module}")
             except ImportError:
                 # 允许某些模块不存在
                 pass

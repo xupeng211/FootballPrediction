@@ -53,7 +53,11 @@ class TestBasicFunctionality:
         """测试配置类"""
         from src.domain.strategies.config import StrategyConfig
         from src.domain.strategies.historical import HistoricalMatch, HistoricalStrategy
-        from src.domain.strategies.ensemble import EnsembleMethod, EnsembleResult, EnsembleStrategy
+        from src.domain.strategies.ensemble import (
+            EnsembleMethod,
+            EnsembleResult,
+            EnsembleStrategy,
+        )
 
         # 这些是占位符实现，但应该能正常创建
         config1 = StrategyConfig()

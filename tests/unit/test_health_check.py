@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
     from src.main import app
+
     client = TestClient(app)
     APP_AVAILABLE = True
 except ImportError:
@@ -47,6 +48,7 @@ def test_basic_imports():
     """测试基础模块导入"""
     try:
         import src.core.config
+
         assert True
     except ImportError:
         pytest.skip("配置模块不可用")

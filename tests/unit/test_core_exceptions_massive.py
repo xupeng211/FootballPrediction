@@ -100,6 +100,7 @@ class TestExceptionsBasic:
         assert isinstance(error, FootballPredictionError)
         assert isinstance(error, Exception)
 
+
 class TestExceptionsAdvanced:
     """高级异常测试 - 创建16个测试"""
 
@@ -193,11 +194,13 @@ class TestExceptionsAdvanced:
         assert isinstance(hash1, int)
         assert isinstance(hash2, int)
 
+
 class TestExceptionsIntegration:
     """集成异常测试 - 创建16个测试"""
 
     def test_exception_in_function(self):
         """测试在函数中使用异常"""
+
         def function_that_raises():
             raise CacheError("Function error")
 
@@ -207,6 +210,7 @@ class TestExceptionsIntegration:
 
     def test_exception_in_method(self):
         """测试在方法中使用异常"""
+
         class TestClass:
             def method_that_raises(self):
                 raise DatabaseError("Method error")
@@ -217,6 +221,7 @@ class TestExceptionsIntegration:
 
     def test_exception_in_async_function(self):
         """测试在异步函数中使用异常"""
+
         async def async_function():
             raise PredictionError("Async error")
 
@@ -226,6 +231,7 @@ class TestExceptionsIntegration:
     def test_exception_pickling_1(self):
         """测试异常序列化 - 基础"""
         import pickle
+
         error = FootballPredictionError("Pickle test")
         pickled = pickle.dumps(error)
         unpickled = pickle.loads(pickled)
@@ -235,6 +241,7 @@ class TestExceptionsIntegration:
     def test_exception_pickling_2(self):
         """测试异常序列化 - 复杂消息"""
         import pickle
+
         error = ConfigError("Complex message with numbers: 123")
         pickled = pickle.dumps(error)
         unpickled = pickle.loads(pickled)
@@ -268,9 +275,16 @@ class TestExceptionsIntegration:
     def test_exception_multiple_types_2(self):
         """测试多种异常类型 - 不同类型"""
         error_types = [
-            FootballPredictionError, ConfigError, DataError, ModelError,
-            PredictionError, CacheError, ServiceError, DatabaseError,
-            ValidationError, DependencyInjectionError
+            FootballPredictionError,
+            ConfigError,
+            DataError,
+            ModelError,
+            PredictionError,
+            CacheError,
+            ServiceError,
+            DatabaseError,
+            ValidationError,
+            DependencyInjectionError,
         ]
 
         for error_type in error_types:
@@ -281,6 +295,7 @@ class TestExceptionsIntegration:
     def test_exception_performance_1(self):
         """测试异常性能 - 创建速度"""
         import time
+
         start = time.time()
         for _ in range(1000):
             error = FootballPredictionError("Performance test")
@@ -291,6 +306,7 @@ class TestExceptionsIntegration:
         """测试异常性能 - 字符串转换速度"""
         errors = [FootballPredictionError(f"Error {i}") for i in range(100)]
         import time
+
         start = time.time()
         for error in errors:
             str(error)

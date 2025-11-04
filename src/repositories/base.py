@@ -204,15 +204,21 @@ class ReadOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
 
     async def create(self, entity: T) -> T:
         """只读仓储不支持创建操作"""
-        raise NotImplementedError("ReadOnlyRepository does not support create operations")
+        raise NotImplementedError(
+            "ReadOnlyRepository does not support create operations"
+        )
 
     async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
         """只读仓储不支持更新操作"""
-        raise NotImplementedError("ReadOnlyRepository does not support update operations")
+        raise NotImplementedError(
+            "ReadOnlyRepository does not support update operations"
+        )
 
     async def delete(self, id: ID) -> bool:
         """只读仓储不支持删除操作"""
-        raise NotImplementedError("ReadOnlyRepository does not support delete operations")
+        raise NotImplementedError(
+            "ReadOnlyRepository does not support delete operations"
+        )
 
 
 class WriteOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
@@ -235,11 +241,15 @@ class WriteOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
 
     async def get_by_id(self, id: ID) -> T | None:
         """只写仓储不支持查询操作"""
-        raise NotImplementedError("WriteOnlyRepository does not support read operations")
+        raise NotImplementedError(
+            "WriteOnlyRepository does not support read operations"
+        )
 
     async def get_all(self, query_spec: QuerySpec | None = None) -> list[T]:
         """只写仓储不支持查询操作"""
-        raise NotImplementedError("WriteOnlyRepository does not support read operations")
+        raise NotImplementedError(
+            "WriteOnlyRepository does not support read operations"
+        )
 
 
 class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID]):

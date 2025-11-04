@@ -81,7 +81,8 @@ async def create_tables():
         return
 
     async with db_pool.acquire() as conn:
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS predictions (
                 id SERIAL PRIMARY KEY,
                 match_id INTEGER NOT NULL,
@@ -89,9 +90,11 @@ async def create_tables():
                 confidence FLOAT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS matches (
                 id SERIAL PRIMARY KEY,
                 home_team VARCHAR(100) NOT NULL,  # TODO: 将魔法数字 100 提取为常量
@@ -100,7 +103,8 @@ async def create_tables():
                 league VARCHAR(100),  # TODO: 将魔法数字 100 提取为常量
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
 
 async def get_db_connection():

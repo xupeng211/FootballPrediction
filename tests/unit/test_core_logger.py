@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 # 导入目标模块
 from core.logger import *
 
+
 class TestLogger:
     """日志器测试"""
 
@@ -28,7 +29,7 @@ class TestLogger:
         except Exception:
             pytest.skip("Logger setup failed")
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_logger_mock(self, mock_get_logger):
         """测试日志器mock"""
         mock_logger = Mock()

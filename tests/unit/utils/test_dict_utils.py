@@ -4,8 +4,12 @@
 
 import pytest
 from src.utils.dict_utils import (
-    deep_merge, get_nested_value, set_nested_value,
-    flatten_dict, filter_dict, rename_keys
+    deep_merge,
+    get_nested_value,
+    set_nested_value,
+    flatten_dict,
+    filter_dict,
+    rename_keys,
 )
 
 

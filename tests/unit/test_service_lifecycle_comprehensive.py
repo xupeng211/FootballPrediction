@@ -106,8 +106,8 @@ class TestServiceLifecycleManager:
 
         assert isinstance(manager._services, dict)
         assert len(manager._services) == 0
-        assert hasattr(manager, '_lock')
-        assert hasattr(manager, '_shutdown_event')
+        assert hasattr(manager, "_lock")
+        assert hasattr(manager, "_shutdown_event")
         assert manager._monitoring_task is None
         assert manager._loop is None
 
@@ -143,7 +143,7 @@ class TestServiceLifecycleManager:
         self.manager.register_service("test_service", mock_service)
 
         # 第二次注册应该产生警告但不抛出异常
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.register_service("test_service", Mock())
             mock_logger.warning.assert_called_with("服务已存在: test_service")
 
@@ -156,7 +156,9 @@ class TestServiceLifecycleManager:
         self.manager.register_service("dependency", mock_service1)
 
         # 注册依赖服务
-        self.manager.register_service("main_service", mock_service2, dependencies=["dependency"])
+        self.manager.register_service(
+            "main_service", mock_service2, dependencies=["dependency"]
+        )
 
         # 检查依赖关系
         main_service_info = self.manager.get_service_status("main_service")
@@ -195,7 +197,7 @@ class TestServiceLifecycleManager:
         service_info.state = ServiceState.RUNNING
 
         # 注销服务应该停止它
-        with patch.object(self.manager, '_stop_service_sync') as mock_stop:
+        with patch.object(self.manager, "_stop_service_sync") as mock_stop:
             self.manager.unregister_service("test_service")
             mock_stop.assert_called_once_with("test_service")
 
@@ -227,7 +229,9 @@ class TestServiceLifecycleManager:
         dep_info.state = ServiceState.READY
 
         # 注册主服务
-        self.manager.register_service("main_service", mock_main, dependencies=["dependency"])
+        self.manager.register_service(
+            "main_service", mock_main, dependencies=["dependency"]
+        )
         main_info = self.manager.get_service_status("main_service")
         main_info.state = ServiceState.READY
 
@@ -258,7 +262,7 @@ class TestServiceLifecycleManager:
         service_info.state = ServiceState.RUNNING
 
         # 启动已运行的服务应该直接返回
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.start_service("test_service")
             mock_logger.debug.assert_called_with("服务已在运行: test_service")
 
@@ -314,7 +318,7 @@ class TestServiceLifecycleManager:
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.READY
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.stop_service("test_service")
             mock_logger.debug.assert_called_with("服务未运行: test_service")
 
@@ -338,12 +342,14 @@ class TestServiceLifecycleManager:
         main_info.state = ServiceState.RUNNING
 
         # 注册依赖服务
-        self.manager.register_service("dependent_service", mock_dependent, dependencies=["main_service"])
+        self.manager.register_service(
+            "dependent_service", mock_dependent, dependencies=["main_service"]
+        )
         dependent_info = self.manager.get_service_status("dependent_service")
         dependent_info.state = ServiceState.RUNNING
 
         # 停止主服务应该先停止依赖服务
-        with patch.object(self.manager, '_stop_service_sync') as mock_stop:
+        with patch.object(self.manager, "_stop_service_sync") as mock_stop:
             self.manager.stop_service("main_service")
             # 验证依赖服务被停止
             assert mock_stop.call_count >= 1  # 至少调用了一次
@@ -398,9 +404,7 @@ class TestServiceLifecycleManagerAsync:
         health_check = Mock(return_value=True)
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
@@ -416,9 +420,7 @@ class TestServiceLifecycleManagerAsync:
         health_check = AsyncMock(return_value=True)
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
@@ -434,9 +436,7 @@ class TestServiceLifecycleManagerAsync:
         health_check = Mock(return_value=False)
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
@@ -475,14 +475,12 @@ class TestServiceLifecycleManagerAsync:
         health_check = Mock(side_effect=Exception("检查失败"))
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             results = await self.manager.health_check()
             assert results["test_service"] is False
             mock_logger.warning.assert_called()
@@ -494,9 +492,7 @@ class TestServiceLifecycleManagerAsync:
         health_check = Mock(return_value=True)
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
@@ -520,7 +516,7 @@ class TestServiceLifecycleManagerAsync:
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.READY
 
-        with patch.object(self.manager, '_start_service_async') as mock_async_start:
+        with patch.object(self.manager, "_start_service_async") as mock_async_start:
             self.manager.start_service("test_service")
             mock_async_start.assert_called_once_with("test_service")
 
@@ -534,7 +530,7 @@ class TestServiceLifecycleManagerAsync:
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
 
-        with patch.object(self.manager, '_stop_service_async') as mock_async_stop:
+        with patch.object(self.manager, "_stop_service_async") as mock_async_stop:
             self.manager.stop_service("test_service")
             mock_async_stop.assert_called_once_with("test_service")
 
@@ -559,9 +555,11 @@ class TestServiceLifecycleManagerAsync:
         mock_service = Mock()
         mock_service.stop = AsyncMock(side_effect=asyncio.sleep(1))
 
-        self.manager.register_service("test_service", mock_service, shutdown_timeout=0.1)
+        self.manager.register_service(
+            "test_service", mock_service, shutdown_timeout=0.1
+        )
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             await self.manager._stop_service_async("test_service")
             mock_logger.warning.assert_called_with("服务停止超时: test_service")
 
@@ -584,7 +582,7 @@ class TestServiceLifecycleManagerMonitoring:
         mock_service = Mock()
         self.manager.register_service("test_service", mock_service)
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.start_monitoring(interval=0.1)
             mock_logger.info.assert_called_with("启动服务监控")
 
@@ -600,7 +598,7 @@ class TestServiceLifecycleManagerMonitoring:
         self.manager.start_monitoring(interval=0.1)
 
         # 第二次启动应该产生警告
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.start_monitoring(interval=0.1)
             mock_logger.warning.assert_called_with("监控已在运行")
 
@@ -613,7 +611,7 @@ class TestServiceLifecycleManagerMonitoring:
         self.manager.start_monitoring(interval=0.1)
 
         # 停止监控
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.stop_monitoring()
             mock_logger.info.assert_called_with("停止服务监控")
 
@@ -633,9 +631,7 @@ class TestServiceLifecycleManagerMonitoring:
         health_check = Mock(return_value=True)
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
@@ -653,14 +649,12 @@ class TestServiceLifecycleManagerMonitoring:
         health_check = Mock(return_value=False)
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             # 设置关闭事件让循环退出
             self.manager._shutdown_event.set()
             await self.manager._monitoring_loop(0.1)
@@ -673,14 +667,12 @@ class TestServiceLifecycleManagerMonitoring:
         health_check = Mock(side_effect=Exception("监控错误"))
 
         self.manager.register_service(
-            "test_service",
-            mock_service,
-            health_check=health_check
+            "test_service", mock_service, health_check=health_check
         )
         service_info = self.manager.get_service_status("test_service")
         service_info.state = ServiceState.RUNNING
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             # 设置关闭事件让循环退出
             self.manager._shutdown_event.set()
             await self.manager._monitoring_loop(0.1)
@@ -712,7 +704,7 @@ class TestServiceLifecycleManagerShutdown:
         # 启动监控
         self.manager.start_monitoring(interval=0.1)
 
-        with patch('src.core.service_lifecycle.logger') as mock_logger:
+        with patch("src.core.service_lifecycle.logger") as mock_logger:
             self.manager.shutdown_all()
             mock_logger.info.assert_called_with("所有服务已关闭")
 

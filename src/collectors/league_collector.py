@@ -291,12 +291,12 @@ class LeagueCollector(FootballDataCollector):
                     "average_points_per_game": round(
                         total_points / max(total_games_played, 1), 2
                     ),
-                    "highest_points": max(team["points"] for team in standings)
-                    if standings
-                    else 0,
-                    "lowest_points": min(team["points"] for team in standings)
-                    if standings
-                    else 0,
+                    "highest_points": (
+                        max(team["points"] for team in standings) if standings else 0
+                    ),
+                    "lowest_points": (
+                        min(team["points"] for team in standings) if standings else 0
+                    ),
                 },
                 "top_scorers": standings[:5],  # 积分榜前5名
                 "timestamp": datetime.utcnow().isoformat(),

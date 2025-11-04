@@ -15,7 +15,6 @@ except ImportError as e:
     # 如果导入失败，创建一个跳过所有测试的标记
     pytest.skip(f"无法导入模块 core.auto_binding: {e}", allow_module_level=True)
 
-
     def test_generic_test_1(self):
         """通用测试 1 - core.auto_binding"""
         try:

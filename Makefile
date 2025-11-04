@@ -83,6 +83,41 @@ install: venv ## Environment: Install dependencies from requirements.txt
 		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
 	fi
 
+fix-code: ## Quality: Fix code formatting and syntax issues (one-click fix)
+	@echo "$(YELLOW)🔧 Fixing code quality issues...$(RESET)"
+	@$(ACTIVATE) && \
+	echo "$(BLUE)✓ Running Black formatter...$(RESET)" && \
+	black src/ tests/ --line-length 88 && \
+	echo "$(BLUE)✓ Running Ruff linter and fixer...$(RESET)" && \
+	ruff check src/ tests/ --fix && \
+	echo "$(BLUE)✓ Running MyPy type checker...$(RESET)" && \
+	mypy src/ --ignore-missing-imports --no-error-summary || true && \
+	echo "$(GREEN)✅ Code quality fixes completed$(RESET)"
+
+fix-syntax: ## Quality: Fix syntax and formatting issues
+	@echo "$(YELLOW)🔧 Fixing syntax and formatting...$(RESET)"
+	@$(ACTIVATE) && \
+	black src/ tests/ && \
+	ruff check src/ tests/ --fix --select E,W,F && \
+	echo "$(GREEN)✅ Syntax and formatting fixed$(RESET)"
+
+fix-imports: ## Quality: Fix import statements and ordering
+	@echo "$(YELLOW)🔧 Fixing import statements...$(RESET)"
+	@$(ACTIVATE) && \
+	ruff check src/ tests/ --fix --select I && \
+	echo "$(GREEN)✅ Import statements fixed$(RESET)"
+
+check-quality: ## Quality: Check code quality without fixing
+	@echo "$(YELLOW)🔍 Checking code quality...$(RESET)"
+	@$(ACTIVATE) && \
+	echo "$(BLUE)📊 Black format check...$(RESET)" && \
+	black --check src/ tests/ && \
+	echo "$(BLUE)🔍 Ruff linting check...$(RESET)" && \
+	ruff check src/ tests/ && \
+	echo "$(BLUE)🔬 MyPy type check...$(RESET)" && \
+	mypy src/ --ignore-missing-imports && \
+	echo "$(GREEN)✅ All quality checks passed$(RESET)"
+
 check-deps: ## Environment: Verify required Python dependencies are installed
 	@$(ACTIVATE) && python scripts/check_dependencies.py
 

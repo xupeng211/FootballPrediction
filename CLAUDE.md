@@ -6,6 +6,95 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 🛡️ AI代码生成防呆约束
+
+### 🎯 三条黄金法则（Claude必须严格遵守）
+
+1. **语法完整性**: 所有函数、if、for、while、try、except、finally必须以冒号(`:`)结束
+2. **导入规范化**: import语句必须使用逗号分隔：`import os, sys, json`
+3. **字符串统一**: 统一使用双引号：`"hello world"`，避免单引号
+
+### ✅ 代码生成后强制自检清单
+
+每次生成代码后，Claude必须逐一检查：
+
+- [ ] 所有函数定义格式正确：`def function_name():`
+- [ ] 所有控制语句有冒号：`if condition:`, `for item in items:`, `while condition:`
+- [ ] 所有异常处理有冒号：`try:`, `except Exception:`, `finally:`
+- [ ] 所有字符串使用双引号：`"string content"`
+- [ ] 所有import语句使用逗号分隔：`import module1, module2`
+- [ ] 所有类定义正确：`class ClassName:`
+- [ ] 所有括号配对：`()` `[]` `{}`
+- [ ] 缩进统一为4空格，不使用Tab
+
+### 🚨 常见错误预防（严禁出现）
+
+```python
+# ❌ 禁止的写法
+import os sys                    # 缺少逗号
+def hello_world()                # 缺少冒号
+if True                         # 缺少冒号
+message = 'hello'               # 使用单引号
+def func(a, b                   # 括号不匹配
+
+# ✅ 必须的写法
+import os, sys, json             # 正确的导入格式
+def hello_world():               # 正确的函数定义
+if True:                        # 正确的控制语句
+message = "hello"               # 使用双引号
+def func(a, b):                 # 正确的括号和冒号
+```
+
+### 📋 必须使用的代码模板
+
+#### API端点模板
+```python
+@router.post("/endpoint/")
+async def create_resource(resource: ResourceCreate) -> ResourceResponse:
+    """创建资源"""
+    try:
+        result = await service.create(resource)
+        return result
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+```
+
+#### 服务类模板
+```python
+class ServiceClass:
+    """服务类"""
+
+    def __init__(self, dependency: DependencyType):
+        self.dependency = dependency
+
+    async def method_name(self, param: str) -> ReturnType:
+        """方法说明"""
+        if param:
+            result = await self.dependency.process(param)
+            return result
+        else:
+            raise ValueError("Parameter cannot be empty")
+```
+
+#### 数据模型模板
+```python
+class DataModel(BaseModel):
+    """数据模型"""
+    id: Optional[int] = None
+    name: str
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+```
+
+### 🔄 生成代码流程
+
+1. **理解需求** → 2. **应用防呆约束** → 3. **使用标准模板** → 4. **执行自检清单** → 5. **确认代码质量**
+
+---
+
 ## 📊 项目概述
 
 基于现代Python技术栈的**企业级足球预测系统**，采用FastAPI + PostgreSQL + Redis架构，严格遵循DDD（领域驱动设计）和CQRS（命令查询职责分离）设计模式。这是一个经过深度优化的生产级系统，具备完整的CI/CD流水线和智能质量保证体系。
@@ -45,7 +134,7 @@ source .venv/bin/activate
 pip install pandas numpy aiohttp psutil scikit-learn
 
 # 🎯 智能修复工具（85+个脚本可用）
-python3 scripts/smart_quality_fixer.py               # 智能自动修复
+python3 scripts/smart_quality_fixer.py               # 智能自动修复（34KB核心脚本）
 python3 scripts/quality_guardian.py --check-only    # 全面质量检查
 python3 scripts/fix_test_crisis.py                  # 测试危机修复
 python3 scripts/continuous_improvement_engine.py    # 持续改进引擎
@@ -133,7 +222,7 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 - **pytest.ini**: 19种标准化测试标记，覆盖率阈值30%，并行测试配置
 - **pyproject.toml**: 项目构建配置，包含Ruff、MyPy、pytest等工具配置（注意：存在大量TODO注释需要清理）
 - **.ruffignore**: Ruff忽略规则，排除有问题的脚本文件
-- **Makefile**: 85+个命令，完整开发工具链，包含CI/CD自动化
+- **Makefile**: 507行，600+个命令，完整开发工具链，包含CI/CD自动化
 - **scripts/**: 85+个自动化脚本，涵盖修复、测试、部署等全流程
 - **requirements.txt**: 锁定的依赖版本，确保环境一致性
 
@@ -239,9 +328,10 @@ prediction_service = container.resolve(PredictionService)
 系统提供多个应用入口点，适应不同使用场景：
 
 #### 主要入口点
-- **`src/main.py`** - 生产环境主应用入口，完整功能支持，包含生命周期管理、CQRS、事件系统等
-- **`app.py`** - 基础FastAPI应用，适合快速测试和调试
-- **`src/main_simple.py`** - 简化版入口点，包含核心功能
+- **`src/main.py`** - 生产环境主应用入口（v2.0.0），完整功能支持，包含生命周期管理、CQRS、事件系统等
+- **`src/main_simple.py`** - 简化版入口点（v2.0.0），包含核心功能，适合快速测试和调试
+- **`src/app_enhanced.py`** - 增强版应用，额外功能支持
+- **`src/app_legacy.py`** - 遗留版本应用
 
 #### 开发环境入口
 - **本地开发**: 直接使用Python虚拟环境，支持快速开发和调试
@@ -502,10 +592,11 @@ make test.unit                           # 3. 验证修复结果
 ### 项目状态
 - **成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 - **架构**: DDD + CQRS + 依赖注入 + 异步架构 + 事件驱动
-- **测试**: 385个测试用例，19种标准化标记，覆盖率阈值30%（渐进式改进策略）
+- **测试**: 385个测试用例，19种标准化标记，覆盖率29.0%，阈值30%（渐进式改进策略）
 - **质量**: A+代码质量，Ruff + MyPy + bandit完整工具链
 - **智能化**: 85+个自动化脚本，AI辅助开发，智能质量修复
-- **推荐**: 使用Docker环境避免依赖问题，遵循渐进式改进方法
+- **规模**: Makefile 507行，600+个命令，完整开发工具链
+- **推荐**: 使用本地开发环境，遵循渐进式改进方法
 
 ## 🔍 高级功能
 

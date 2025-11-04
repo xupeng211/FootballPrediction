@@ -5,7 +5,12 @@ Formatters完整测试 - 从0%提升到100%覆盖率
 
 import pytest
 from datetime import datetime
-from src.utils.formatters import format_datetime, format_json, format_currency, format_percentage
+from src.utils.formatters import (
+    format_datetime,
+    format_json,
+    format_currency,
+    format_percentage,
+)
 
 
 class TestFormattersComplete:
@@ -116,7 +121,7 @@ class TestFormattersComplete:
             "timestamp": formatted_dt,
             "amount": 1234.56,
             "percentage": 85.67,
-            "currency": "USD"
+            "currency": "USD",
         }
         json_str = format_json(data)
         assert isinstance(json_str, str)

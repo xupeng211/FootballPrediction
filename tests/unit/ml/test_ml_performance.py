@@ -22,13 +22,20 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
     from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
-    from src.ml.model_training import ModelTrainer, TrainingConfig, TrainingStatus, ModelType
+    from src.ml.model_training import (
+        ModelTrainer,
+        TrainingConfig,
+        TrainingStatus,
+        ModelType,
+    )
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模块: {e}")
@@ -68,7 +75,7 @@ class PerformanceMonitor:
         return {
             "start_mb": self.memory_start or 0,
             "end_mb": self.memory_end or 0,
-            "delta_mb": (self.memory_end or 0) - (self.memory_start or 0)
+            "delta_mb": (self.memory_end or 0) - (self.memory_start or 0),
         }
 
 
@@ -91,8 +98,12 @@ def create_performance_test_data(num_samples: int = 1000) -> pd.DataFrame:
         weather_factor = np.random.uniform(0.8, 1.2)
         fatigue_factor = np.random.uniform(0.9, 1.1)
 
-        home_expected = (home_strength * home_advantage * weather_factor) / away_strength * 1.5
-        away_expected = away_strength / (home_strength * home_advantage) * 1.1 * fatigue_factor
+        home_expected = (
+            (home_strength * home_advantage * weather_factor) / away_strength * 1.5
+        )
+        away_expected = (
+            away_strength / (home_strength * home_advantage) * 1.1 * fatigue_factor
+        )
 
         home_goals = np.random.poisson(max(home_expected, 0.1))
         away_goals = np.random.poisson(max(away_expected, 0.1))
@@ -104,18 +115,21 @@ def create_performance_test_data(num_samples: int = 1000) -> pd.DataFrame:
         else:
             result = "draw"
 
-        data.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_score": home_goals,
-            "away_score": away_goals,
-            "result": result,
-            "match_date": datetime.now() - timedelta(days=np.random.randint(0, 365)),
-            "home_team_strength": home_strength,
-            "away_team_strength": away_strength,
-            "weather_factor": weather_factor,
-            "fatigue_factor": fatigue_factor,
-        })
+        data.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "result": result,
+                "match_date": datetime.now()
+                - timedelta(days=np.random.randint(0, 365)),
+                "home_team_strength": home_strength,
+                "away_team_strength": away_strength,
+                "weather_factor": weather_factor,
+                "fatigue_factor": fatigue_factor,
+            }
+        )
 
     return pd.DataFrame(data)
 
@@ -147,7 +161,9 @@ class TestMLModelPerformance:
         assert result.accuracy > 0.3  # 基本性能要求
         assert model.is_trained is True
 
-        print(f"小数据集训练性能: {execution_time:.3f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB")
+        print(
+            f"小数据集训练性能: {execution_time:.3f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB"
+        )
 
     def test_training_performance_medium_dataset(self):
         """测试中等数据集训练性能"""
@@ -169,7 +185,9 @@ class TestMLModelPerformance:
         assert result.accuracy > 0.3
         assert len(model.team_attack_strength) > 0
 
-        print(f"中等数据集训练性能: {execution_time:.3f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB")
+        print(
+            f"中等数据集训练性能: {execution_time:.3f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB"
+        )
 
     def test_prediction_performance_single(self):
         """测试单个预测性能"""
@@ -180,7 +198,7 @@ class TestMLModelPerformance:
         test_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "perf_test_001"
+            "match_id": "perf_test_001",
         }
 
         monitor = PerformanceMonitor()
@@ -196,9 +214,14 @@ class TestMLModelPerformance:
 
         assert execution_time < 0.1  # 单个预测应在100ms内完成
         assert isinstance(result, PredictionResult)
-        assert abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0) < 0.01
+        assert (
+            abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
+            < 0.01
+        )
 
-        print(f"单个预测性能: {execution_time:.6f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB")
+        print(
+            f"单个预测性能: {execution_time:.6f}s, 内存变化: {memory_usage['delta_mb']:.2f}MB"
+        )
 
     def test_prediction_performance_batch(self):
         """测试批量预测性能"""
@@ -210,11 +233,13 @@ class TestMLModelPerformance:
         batch_size = 100
         batch_data = []
         for i in range(batch_size):
-            batch_data.append({
-                "home_team": f"Team_{chr(65 + i % 20)}",
-                "away_team": f"Team_{chr(65 + (i + 1) % 20)}",
-                "match_id": f"batch_test_{i:03d}"
-            })
+            batch_data.append(
+                {
+                    "home_team": f"Team_{chr(65 + i % 20)}",
+                    "away_team": f"Team_{chr(65 + (i + 1) % 20)}",
+                    "match_id": f"batch_test_{i:03d}",
+                }
+            )
 
         monitor = PerformanceMonitor()
         monitor.start()
@@ -235,7 +260,9 @@ class TestMLModelPerformance:
         assert avg_time_per_prediction < 0.05  # 平均每个预测在50ms内
         assert len(predictions) == batch_size
 
-        print(f"批量预测性能: {execution_time:.3f}s, 平均每个: {avg_time_per_prediction:.6f}s")
+        print(
+            f"批量预测性能: {execution_time:.3f}s, 平均每个: {avg_time_per_prediction:.6f}s"
+        )
 
     def test_model_memory_usage(self):
         """测试模型内存使用"""
@@ -266,10 +293,14 @@ class TestMLModelPerformance:
 
         # 内存使用断言
         assert memory_increase < 100  # 5个模型内存增长应小于100MB
-        assert after_prediction_memory - after_training_memory < 10  # 预测内存增长应小于10MB
+        assert (
+            after_prediction_memory - after_training_memory < 10
+        )  # 预测内存增长应小于10MB
 
-        print(f"内存使用: 初始={initial_memory:.2f}MB, 训练后={after_training_memory:.2f}MB, "
-              f"预测后={after_prediction_memory:.2f}MB, 增长={memory_increase:.2f}MB")
+        print(
+            f"内存使用: 初始={initial_memory:.2f}MB, 训练后={after_training_memory:.2f}MB, "
+            f"预测后={after_prediction_memory:.2f}MB, 增长={memory_increase:.2f}MB"
+        )
 
     def test_concurrent_prediction_performance(self):
         """测试并发预测性能"""
@@ -282,7 +313,7 @@ class TestMLModelPerformance:
             test_data = {
                 "home_team": f"Team_{chr(65 + task_id % 20)}",
                 "away_team": f"Team_{chr(65 + (task_id + 1) % 20)}",
-                "match_id": f"concurrent_test_{task_id:03d}"
+                "match_id": f"concurrent_test_{task_id:03d}",
             }
             start_time = time.time()
             result = model.predict(test_data)
@@ -290,7 +321,7 @@ class TestMLModelPerformance:
             return {
                 "task_id": task_id,
                 "execution_time": end_time - start_time,
-                "result": result
+                "result": result,
             }
 
         # 并发测试
@@ -319,9 +350,11 @@ class TestMLModelPerformance:
         assert total_execution_time < 10.0  # 总执行时间应在10秒内
         assert avg_task_time < 0.5  # 平均任务时间应在500ms内
 
-        print(f"并发预测性能: 任务数={num_tasks}, 并发数={max_workers}, "
-              f"总时间={total_execution_time:.3f}s, 平均任务时间={avg_task_time:.6f}s, "
-              f"最大任务时间={max_task_time:.6f}s")
+        print(
+            f"并发预测性能: 任务数={num_tasks}, 并发数={max_workers}, "
+            f"总时间={total_execution_time:.3f}s, 平均任务时间={avg_task_time:.6f}s, "
+            f"最大任务时间={max_task_time:.6f}s"
+        )
 
     def test_model_scaling_performance(self):
         """测试模型扩展性能"""
@@ -339,12 +372,14 @@ class TestMLModelPerformance:
 
             monitor.stop()
 
-            performance_results.append({
-                "data_size": size,
-                "training_time": monitor.get_execution_time(),
-                "memory_usage": monitor.get_memory_usage()["delta_mb"],
-                "accuracy": result.accuracy
-            })
+            performance_results.append(
+                {
+                    "data_size": size,
+                    "training_time": monitor.get_execution_time(),
+                    "memory_usage": monitor.get_memory_usage()["delta_mb"],
+                    "accuracy": result.accuracy,
+                }
+            )
 
         # 分析扩展性
         training_times = [r["training_time"] for r in performance_results]
@@ -360,8 +395,10 @@ class TestMLModelPerformance:
 
         print(f"扩展性测试结果:")
         for result in performance_results:
-            print(f"  数据量={result['data_size']}, 训练时间={result['training_time']:.3f}s, "
-                  f"内存增长={result['memory_usage']:.2f}MB, 准确率={result['accuracy']:.3f}")
+            print(
+                f"  数据量={result['data_size']}, 训练时间={result['training_time']:.3f}s, "
+                f"内存增长={result['memory_usage']:.2f}MB, 准确率={result['accuracy']:.3f}"
+            )
 
         print(f"数据增长{size_ratio:.1f}倍，时间增长{time_ratio:.1f}倍")
 
@@ -402,13 +439,15 @@ class TestMLModelOptimization:
             test_data = create_performance_test_data(100)
             evaluation_metrics = model.evaluate(test_data)
 
-            results.append({
-                "config": config,
-                "training_time": monitor.get_execution_time(),
-                "training_accuracy": training_result.accuracy,
-                "evaluation_accuracy": evaluation_metrics["accuracy"],
-                "memory_usage": monitor.get_memory_usage()["delta_mb"]
-            })
+            results.append(
+                {
+                    "config": config,
+                    "training_time": monitor.get_execution_time(),
+                    "training_accuracy": training_result.accuracy,
+                    "evaluation_accuracy": evaluation_metrics["accuracy"],
+                    "memory_usage": monitor.get_memory_usage()["delta_mb"],
+                }
+            )
 
         # 分析结果
         best_config = max(results, key=lambda x: x["evaluation_accuracy"])
@@ -416,11 +455,17 @@ class TestMLModelOptimization:
 
         print(f"超参数优化结果:")
         for result in results:
-            print(f"  配置={result['config']}, 训练时间={result['training_time']:.3f}s, "
-                  f"评估准确率={result['evaluation_accuracy']:.3f}")
+            print(
+                f"  配置={result['config']}, 训练时间={result['training_time']:.3f}s, "
+                f"评估准确率={result['evaluation_accuracy']:.3f}"
+            )
 
-        print(f"最佳配置: {best_config['config']}, 准确率: {best_config['evaluation_accuracy']:.3f}")
-        print(f"最快训练: {fastest_training['config']}, 时间: {fastest_training['training_time']:.3f}s")
+        print(
+            f"最佳配置: {best_config['config']}, 准确率: {best_config['evaluation_accuracy']:.3f}"
+        )
+        print(
+            f"最快训练: {fastest_training['config']}, 时间: {fastest_training['training_time']:.3f}s"
+        )
 
         # 优化断言
         assert best_config["evaluation_accuracy"] > 0.3
@@ -442,8 +487,10 @@ class TestMLModelOptimization:
             """优化的数据预处理"""
             # 1. 过滤无效数据
             filtered_data = data[
-                (data["home_score"] >= 0) & (data["home_score"] <= 15) &
-                (data["away_score"] >= 0) & (data["away_score"] <= 15)
+                (data["home_score"] >= 0)
+                & (data["home_score"] <= 15)
+                & (data["away_score"] >= 0)
+                & (data["away_score"] <= 15)
             ]
 
             # 2. 移除重复数据
@@ -490,13 +537,19 @@ class TestMLModelOptimization:
         print(f"数据预处理优化:")
         print(f"  预处理时间: {preprocessing_time:.3f}s")
         print(f"  数据质量提升: {quality_ratio:.3f}")
-        print(f"  噪声数据训练时间: {noisy_training_time:.3f}s, 准确率: {noisy_metrics['accuracy']:.3f}")
-        print(f"  清洁数据训练时间: {clean_training_time:.3f}s, 准确率: {clean_metrics['accuracy']:.3f}")
+        print(
+            f"  噪声数据训练时间: {noisy_training_time:.3f}s, 准确率: {noisy_metrics['accuracy']:.3f}"
+        )
+        print(
+            f"  清洁数据训练时间: {clean_training_time:.3f}s, 准确率: {clean_metrics['accuracy']:.3f}"
+        )
 
         # 优化断言
         assert preprocessing_time < 2.0  # 预处理应该很快
         assert quality_ratio > 0.7  # 应该保留大部分数据
-        assert clean_metrics["accuracy"] >= noisy_metrics["accuracy"]  # 清洁数据应该提高或保持准确率
+        assert (
+            clean_metrics["accuracy"] >= noisy_metrics["accuracy"]
+        )  # 清洁数据应该提高或保持准确率
 
     def test_model_caching_optimization(self):
         """测试模型缓存优化"""
@@ -508,7 +561,7 @@ class TestMLModelOptimization:
         same_prediction_data = {
             "home_team": "Team_A",
             "away_team": "Team_B",
-            "match_id": "cache_test"
+            "match_id": "cache_test",
         }
 
         # 第一次预测（无缓存）
@@ -544,7 +597,9 @@ class TestMLModelOptimization:
         print(f"  最大后续时间: {max_subsequent_time:.6f}s")
 
         # 缓存性能断言
-        assert max_subsequent_time < first_prediction_time * 2  # 后续预测不应该显著慢于首次
+        assert (
+            max_subsequent_time < first_prediction_time * 2
+        )  # 后续预测不应该显著慢于首次
         assert all(t < 0.1 for t in subsequent_times)  # 所有后续预测都应该很快
 
     def test_batch_processing_optimization(self):
@@ -556,11 +611,13 @@ class TestMLModelOptimization:
         # 创建批量数据
         batch_data = []
         for i in range(100):
-            batch_data.append({
-                "home_team": f"Team_{chr(65 + i % 20)}",
-                "away_team": f"Team_{chr(65 + (i + 1) % 20)}",
-                "match_id": f"batch_opt_{i:03d}"
-            })
+            batch_data.append(
+                {
+                    "home_team": f"Team_{chr(65 + i % 20)}",
+                    "away_team": f"Team_{chr(65 + (i + 1) % 20)}",
+                    "match_id": f"batch_opt_{i:03d}",
+                }
+            )
 
         # 逐个处理
         monitor = PerformanceMonitor()
@@ -598,7 +655,11 @@ class TestMLModelOptimization:
         print(f"批处理优化测试:")
         print(f"  逐个处理时间: {individual_time:.3f}s")
         print(f"  批处理时间: {batch_time:.3f}s")
-        print(f"  性能提升: {individual_time/batch_time:.2f}x" if batch_time > 0 else "无法计算")
+        print(
+            f"  性能提升: {individual_time/batch_time:.2f}x"
+            if batch_time > 0
+            else "无法计算"
+        )
 
         # 性能断言
         assert batch_time <= individual_time * 1.2  # 批处理不应该显著慢于逐个处理

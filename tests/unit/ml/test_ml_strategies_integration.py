@@ -24,12 +24,14 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # 模拟导入，避免循环依赖问题
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 # 尝试导入ML模块
 try:
     from src.ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模块: {e}")
@@ -39,6 +41,7 @@ except ImportError as e:
 # 模拟ML策略系统
 class MLStrategyType(Enum):
     """ML策略类型"""
+
     POISSON = "poisson"
     ENSEMBLE = "ensemble"
     WEIGHTED = "weighted"
@@ -66,7 +69,7 @@ class MockMLStrategy:
                 "strategy": self.name,
                 "accuracy": training_result.accuracy,
                 "training_time": training_result.training_time,
-                "model_info": self.model.get_model_info()
+                "model_info": self.model.get_model_info(),
             }
         else:
             # 模拟其他策略的训练
@@ -77,7 +80,7 @@ class MockMLStrategy:
                 "strategy": self.name,
                 "accuracy": accuracy,
                 "training_time": np.random.uniform(0.1, 2.0),
-                "model_info": {"model_type": self.strategy_type.value}
+                "model_info": {"model_type": self.strategy_type.value},
             }
 
     async def predict(self, match_data: Dict[str, Any]) -> Optional[PredictionResult]:
@@ -104,19 +107,21 @@ class MockMLStrategy:
                 confidence=float(max(probabilities)),
                 model_name=self.name,
                 model_version="1.0",
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
     def update_performance(self, actual_result: str, prediction: PredictionResult):
         """更新性能历史"""
         is_correct = prediction.predicted_outcome == actual_result
-        self.performance_history.append({
-            "timestamp": datetime.now(),
-            "is_correct": is_correct,
-            "confidence": prediction.confidence,
-            "predicted_outcome": prediction.predicted_outcome,
-            "actual_outcome": actual_result
-        })
+        self.performance_history.append(
+            {
+                "timestamp": datetime.now(),
+                "is_correct": is_correct,
+                "confidence": prediction.confidence,
+                "predicted_outcome": prediction.predicted_outcome,
+                "actual_outcome": actual_result,
+            }
+        )
 
     def get_recent_accuracy(self, window_size: int = 50) -> float:
         """获取最近准确率"""
@@ -139,8 +144,9 @@ class MockStrategySelector:
         """注册策略"""
         self.strategies[strategy.name] = strategy
 
-    def select_best_strategy(self, match_data: Dict[str, Any],
-                           selection_method: str = "accuracy") -> Optional[MockMLStrategy]:
+    def select_best_strategy(
+        self, match_data: Dict[str, Any], selection_method: str = "accuracy"
+    ) -> Optional[MockMLStrategy]:
         """选择最佳策略"""
         if not self.strategies:
             return None
@@ -148,25 +154,23 @@ class MockStrategySelector:
         if selection_method == "accuracy":
             # 基于最近准确率选择
             best_strategy = max(
-                self.strategies.values(),
-                key=lambda s: s.get_recent_accuracy()
+                self.strategies.values(), key=lambda s: s.get_recent_accuracy()
             )
         elif selection_method == "weighted":
             # 基于权重选择
-            best_strategy = max(
-                self.strategies.values(),
-                key=lambda s: s.weight
-            )
+            best_strategy = max(self.strategies.values(), key=lambda s: s.weight)
         else:
             # 随机选择
             best_strategy = np.random.choice(list(self.strategies.values()))
 
-        self.selection_history.append({
-            "timestamp": datetime.now(),
-            "selected_strategy": best_strategy.name,
-            "method": selection_method,
-            "match_data": match_data
-        })
+        self.selection_history.append(
+            {
+                "timestamp": datetime.now(),
+                "selected_strategy": best_strategy.name,
+                "method": selection_method,
+                "match_data": match_data,
+            }
+        )
 
         return best_strategy
 
@@ -178,7 +182,7 @@ class MockStrategySelector:
                 "recent_accuracy": strategy.get_recent_accuracy(),
                 "weight": strategy.weight,
                 "total_predictions": len(strategy.performance_history),
-                "is_trained": strategy.is_trained
+                "is_trained": strategy.is_trained,
             }
         return summary
 
@@ -221,13 +225,24 @@ class MockEnsemblePredictor:
         else:
             return self._simple_average_ensemble(individual_predictions)
 
-    def _weighted_average_ensemble(self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]) -> PredictionResult:
+    def _weighted_average_ensemble(
+        self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]
+    ) -> PredictionResult:
         """加权平均集成"""
         total_weight = sum(strategy.weight for _, strategy in predictions)
 
-        home_win_prob = sum(pred.home_win_prob * strategy.weight for pred, strategy in predictions) / total_weight
-        draw_prob = sum(pred.draw_prob * strategy.weight for pred, strategy in predictions) / total_weight
-        away_win_prob = sum(pred.away_win_prob * strategy.weight for pred, strategy in predictions) / total_weight
+        home_win_prob = (
+            sum(pred.home_win_prob * strategy.weight for pred, strategy in predictions)
+            / total_weight
+        )
+        draw_prob = (
+            sum(pred.draw_prob * strategy.weight for pred, strategy in predictions)
+            / total_weight
+        )
+        away_win_prob = (
+            sum(pred.away_win_prob * strategy.weight for pred, strategy in predictions)
+            / total_weight
+        )
 
         # 归一化概率
         total_prob = home_win_prob + draw_prob + away_win_prob
@@ -253,10 +268,12 @@ class MockEnsemblePredictor:
             confidence=confidence,
             model_name=f"ensemble_{self.ensemble_method}",
             model_version="1.0",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-    def _majority_vote_ensemble(self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]) -> PredictionResult:
+    def _majority_vote_ensemble(
+        self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]
+    ) -> PredictionResult:
         """多数投票集成"""
         outcomes = [pred.predicted_outcome for pred, _ in predictions]
         outcome_counts = {outcome: outcomes.count(outcome) for outcome in set(outcomes)}
@@ -289,19 +306,30 @@ class MockEnsemblePredictor:
             confidence=confidence,
             model_name=f"ensemble_{self.ensemble_method}",
             model_version="1.0",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-    def _confidence_weighted_ensemble(self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]) -> PredictionResult:
+    def _confidence_weighted_ensemble(
+        self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]
+    ) -> PredictionResult:
         """置信度加权集成"""
         total_confidence = sum(pred.confidence for pred, _ in predictions)
 
         if total_confidence == 0:
             return self._simple_average_ensemble(predictions)
 
-        home_win_prob = sum(pred.home_win_prob * pred.confidence for pred, _ in predictions) / total_confidence
-        draw_prob = sum(pred.draw_prob * pred.confidence for pred, _ in predictions) / total_confidence
-        away_win_prob = sum(pred.away_win_prob * pred.confidence for pred, _ in predictions) / total_confidence
+        home_win_prob = (
+            sum(pred.home_win_prob * pred.confidence for pred, _ in predictions)
+            / total_confidence
+        )
+        draw_prob = (
+            sum(pred.draw_prob * pred.confidence for pred, _ in predictions)
+            / total_confidence
+        )
+        away_win_prob = (
+            sum(pred.away_win_prob * pred.confidence for pred, _ in predictions)
+            / total_confidence
+        )
 
         # 归一化
         total_prob = home_win_prob + draw_prob + away_win_prob
@@ -326,10 +354,12 @@ class MockEnsemblePredictor:
             confidence=confidence,
             model_name=f"ensemble_{self.ensemble_method}",
             model_version="1.0",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
-    def _simple_average_ensemble(self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]) -> PredictionResult:
+    def _simple_average_ensemble(
+        self, predictions: List[Tuple[PredictionResult, MockMLStrategy]]
+    ) -> PredictionResult:
         """简单平均集成"""
         home_win_prob = np.mean([pred.home_win_prob for pred, _ in predictions])
         draw_prob = np.mean([pred.draw_prob for pred, _ in predictions])
@@ -358,7 +388,7 @@ class MockEnsemblePredictor:
             confidence=confidence,
             model_name=f"ensemble_{self.ensemble_method}",
             model_version="1.0",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
 
@@ -383,14 +413,17 @@ def create_test_dataset(num_matches: int = 200) -> Tuple[pd.DataFrame, pd.DataFr
         else:
             result = "draw"
 
-        training_data.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_score": home_goals,
-            "away_score": away_goals,
-            "result": result,
-            "match_date": datetime.now() - timedelta(days=np.random.randint(1, 365))
-        })
+        training_data.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "result": result,
+                "match_date": datetime.now()
+                - timedelta(days=np.random.randint(1, 365)),
+            }
+        )
 
     # 测试数据
     for i in range(num_matches // 4):
@@ -407,14 +440,16 @@ def create_test_dataset(num_matches: int = 200) -> Tuple[pd.DataFrame, pd.DataFr
         else:
             result = "draw"
 
-        test_data.append({
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_score": home_goals,
-            "away_score": away_goals,
-            "result": result,
-            "match_date": datetime.now() - timedelta(days=np.random.randint(0, 30))
-        })
+        test_data.append(
+            {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "result": result,
+                "match_date": datetime.now() - timedelta(days=np.random.randint(0, 30)),
+            }
+        )
 
     return pd.DataFrame(training_data), pd.DataFrame(test_data)
 
@@ -446,7 +481,7 @@ class TestMLStrategySystem:
         match_data = {
             "home_team": test_match["home_team"],
             "away_team": test_match["away_team"],
-            "match_id": "single_strategy_test"
+            "match_id": "single_strategy_test",
         }
 
         prediction = await strategy.predict(match_data)
@@ -455,9 +490,19 @@ class TestMLStrategySystem:
         assert prediction.home_team == match_data["home_team"]
         assert prediction.away_team == match_data["away_team"]
         assert prediction.match_id == match_data["match_id"]
-        assert abs(prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob - 1.0) < 0.01
+        assert (
+            abs(
+                prediction.home_win_prob
+                + prediction.draw_prob
+                + prediction.away_win_prob
+                - 1.0
+            )
+            < 0.01
+        )
 
-        print(f"✅ 单一策略测试通过: {strategy.name}, 准确率={training_result['accuracy']:.3f}")
+        print(
+            f"✅ 单一策略测试通过: {strategy.name}, 准确率={training_result['accuracy']:.3f}"
+        )
 
     async def test_multiple_strategy_training(self):
         """测试多策略训练"""
@@ -468,7 +513,7 @@ class TestMLStrategySystem:
             MockMLStrategy(MLStrategyType.POISSON, "poisson_strategy", weight=1.0),
             MockMLStrategy(MLStrategyType.ENSEMBLE, "ensemble_strategy", weight=0.8),
             MockMLStrategy(MLStrategyType.WEIGHTED, "weighted_strategy", weight=1.2),
-            MockMLStrategy(MLStrategyType.ADAPTIVE, "adaptive_strategy", weight=0.9)
+            MockMLStrategy(MLStrategyType.ADAPTIVE, "adaptive_strategy", weight=0.9),
         ]
 
         # 并行训练所有策略
@@ -483,7 +528,9 @@ class TestMLStrategySystem:
             assert result["strategy"] == strategy.name
             assert "accuracy" in result
             assert "training_time" in result
-            print(f"  策略 {strategy.name}: 准确率={result['accuracy']:.3f}, 训练时间={result['training_time']:.2f}s")
+            print(
+                f"  策略 {strategy.name}: 准确率={result['accuracy']:.3f}, 训练时间={result['training_time']:.2f}s"
+            )
 
         print(f"✅ 多策略训练测试通过: {len(strategies)}个策略训练完成")
 
@@ -498,7 +545,7 @@ class TestMLStrategySystem:
         strategies = [
             MockMLStrategy(MLStrategyType.POISSON, "high_accuracy", weight=1.0),
             MockMLStrategy(MLStrategyType.ENSEMBLE, "medium_accuracy", weight=1.5),
-            MockMLStrategy(MLStrategyType.WEIGHTED, "low_accuracy", weight=2.0)
+            MockMLStrategy(MLStrategyType.WEIGHTED, "low_accuracy", weight=2.0),
         ]
 
         for strategy in strategies:
@@ -526,7 +573,7 @@ class TestMLStrategySystem:
         test_match = test_data.iloc[0]
         match_data = {
             "home_team": test_match["home_team"],
-            "away_team": test_match["away_team"]
+            "away_team": test_match["away_team"],
         }
 
         selection_methods = ["accuracy", "weighted", "random"]
@@ -559,7 +606,7 @@ class TestMLStrategySystem:
         strategies = [
             MockMLStrategy(MLStrategyType.POISSON, "poisson_ensemble", weight=1.0),
             MockMLStrategy(MLStrategyType.ENSEMBLE, "ensemble_ensemble", weight=0.8),
-            MockMLStrategy(MLStrategyType.WEIGHTED, "weighted_ensemble", weight=1.2)
+            MockMLStrategy(MLStrategyType.WEIGHTED, "weighted_ensemble", weight=1.2),
         ]
 
         # 训练策略
@@ -567,14 +614,19 @@ class TestMLStrategySystem:
             await strategy.train(training_data)
 
         # 测试不同的集成方法
-        ensemble_methods = ["weighted_average", "majority_vote", "confidence_weighted", "simple_average"]
+        ensemble_methods = [
+            "weighted_average",
+            "majority_vote",
+            "confidence_weighted",
+            "simple_average",
+        ]
         ensemble_results = []
 
         test_match = test_data.iloc[0]
         match_data = {
             "home_team": test_match["home_team"],
             "away_team": test_match["away_team"],
-            "match_id": "ensemble_test"
+            "match_id": "ensemble_test",
         }
 
         for method in ensemble_methods:
@@ -591,8 +643,18 @@ class TestMLStrategySystem:
         for method, prediction in ensemble_results:
             assert prediction is not None
             assert prediction.model_name.startswith("ensemble_")
-            assert abs(prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob - 1.0) < 0.01
-            print(f"  {method}: {prediction.predicted_outcome} (置信度: {prediction.confidence:.3f})")
+            assert (
+                abs(
+                    prediction.home_win_prob
+                    + prediction.draw_prob
+                    + prediction.away_win_prob
+                    - 1.0
+                )
+                < 0.01
+            )
+            print(
+                f"  {method}: {prediction.predicted_outcome} (置信度: {prediction.confidence:.3f})"
+            )
 
         print(f"✅ 集成预测方法测试通过: {len(ensemble_methods)}种方法")
 
@@ -601,7 +663,9 @@ class TestMLStrategySystem:
         training_data, test_data = create_test_dataset(150, 50)
 
         # 创建策略
-        strategy = MockMLStrategy(MLStrategyType.POISSON, "performance_test", weight=1.0)
+        strategy = MockMLStrategy(
+            MLStrategyType.POISSON, "performance_test", weight=1.0
+        )
         await strategy.train(training_data)
 
         # 模拟预测和性能跟踪
@@ -611,7 +675,7 @@ class TestMLStrategySystem:
             match_data = {
                 "home_team": test_match["home_team"],
                 "away_team": test_match["away_team"],
-                "match_id": f"perf_test_{len(performance_results)}"
+                "match_id": f"perf_test_{len(performance_results)}",
             }
 
             prediction = await strategy.predict(match_data)
@@ -620,12 +684,14 @@ class TestMLStrategySystem:
                 strategy.update_performance(test_match["result"], prediction)
 
                 # 记录结果
-                performance_results.append({
-                    "predicted": prediction.predicted_outcome,
-                    "actual": test_match["result"],
-                    "confidence": prediction.confidence,
-                    "correct": prediction.predicted_outcome == test_match["result"]
-                })
+                performance_results.append(
+                    {
+                        "predicted": prediction.predicted_outcome,
+                        "actual": test_match["result"],
+                        "confidence": prediction.confidence,
+                        "correct": prediction.predicted_outcome == test_match["result"],
+                    }
+                )
 
         # 验证性能跟踪
         assert len(strategy.performance_history) == len(performance_results)
@@ -645,7 +711,9 @@ class TestMLStrategySystem:
 
         # 验证最近准确率的计算
         recent_history = strategy.performance_history[-20:]
-        expected_recent_accuracy = sum(1 for h in recent_history if h["is_correct"]) / len(recent_history)
+        expected_recent_accuracy = sum(
+            1 for h in recent_history if h["is_correct"]
+        ) / len(recent_history)
         assert abs(recent_accuracy - expected_recent_accuracy) < 0.001
 
         print(f"✅ 策略性能跟踪测试通过:")
@@ -664,7 +732,7 @@ class TestMLStrategySystem:
         strategies = [
             MockMLStrategy(MLStrategyType.POISSON, "adaptive_poisson", weight=1.0),
             MockMLStrategy(MLStrategyType.ENSEMBLE, "adaptive_ensemble", weight=1.0),
-            MockMLStrategy(MLStrategyType.WEIGHTED, "adaptive_weighted", weight=1.0)
+            MockMLStrategy(MLStrategyType.WEIGHTED, "adaptive_weighted", weight=1.0),
         ]
 
         # 训练并注册策略
@@ -678,7 +746,7 @@ class TestMLStrategySystem:
         for _, test_match in test_data.iterrows():
             match_data = {
                 "home_team": test_match["home_team"],
-                "away_team": test_match["away_team"]
+                "away_team": test_match["away_team"],
             }
 
             # 模拟性能更新
@@ -699,7 +767,9 @@ class TestMLStrategySystem:
         assert total_selections > 0
 
         # 应该有不同的策略被选择
-        selected_strategies = [name for name, count in selection_counts.items() if count > 0]
+        selected_strategies = [
+            name for name, count in selection_counts.items() if count > 0
+        ]
         assert len(selected_strategies) >= 1
 
         # 验证选择历史
@@ -725,13 +795,15 @@ class TestMLWorkflowIntegration:
 
         # 2. 策略系统初始化
         selector = MockStrategySelector()
-        ensemble_predictor = MockEnsemblePredictor(ensemble_method="confidence_weighted")
+        ensemble_predictor = MockEnsemblePredictor(
+            ensemble_method="confidence_weighted"
+        )
 
         # 3. 创建和训练策略
         strategies = [
             MockMLStrategy(MLStrategyType.POISSON, "workflow_poisson", weight=1.2),
             MockMLStrategy(MLStrategyType.ENSEMBLE, "workflow_ensemble", weight=0.9),
-            MockMLStrategy(MLStrategyType.ADAPTIVE, "workflow_adaptive", weight=1.0)
+            MockMLStrategy(MLStrategyType.ADAPTIVE, "workflow_adaptive", weight=1.0),
         ]
 
         # 4. 并行训练
@@ -750,7 +822,7 @@ class TestMLWorkflowIntegration:
             match_data = {
                 "home_team": test_match["home_team"],
                 "away_team": test_match["away_team"],
-                "match_id": f"workflow_{len(workflow_results)}"
+                "match_id": f"workflow_{len(workflow_results)}",
             }
 
             # 6.1 策略选择
@@ -765,25 +837,37 @@ class TestMLWorkflowIntegration:
                 single_prediction = await best_strategy.predict(match_data)
 
             # 6.4 结果记录
-            workflow_results.append({
-                "match_id": match_data["match_id"],
-                "actual_result": test_match["result"],
-                "ensemble_prediction": ensemble_prediction,
-                "single_prediction": single_prediction,
-                "selected_strategy": best_strategy.name if best_strategy else None
-            })
+            workflow_results.append(
+                {
+                    "match_id": match_data["match_id"],
+                    "actual_result": test_match["result"],
+                    "ensemble_prediction": ensemble_prediction,
+                    "single_prediction": single_prediction,
+                    "selected_strategy": best_strategy.name if best_strategy else None,
+                }
+            )
 
         # 7. 工作流结果分析
-        successful_predictions = [r for r in workflow_results if r["ensemble_prediction"] and r["single_prediction"]]
+        successful_predictions = [
+            r
+            for r in workflow_results
+            if r["ensemble_prediction"] and r["single_prediction"]
+        ]
 
         # 集成预测准确率
-        ensemble_correct = sum(1 for r in successful_predictions
-                             if r["ensemble_prediction"].predicted_outcome == r["actual_result"])
+        ensemble_correct = sum(
+            1
+            for r in successful_predictions
+            if r["ensemble_prediction"].predicted_outcome == r["actual_result"]
+        )
         ensemble_accuracy = ensemble_correct / len(successful_predictions)
 
         # 单策略预测准确率
-        single_correct = sum(1 for r in successful_predictions
-                           if r["single_prediction"].predicted_outcome == r["actual_result"])
+        single_correct = sum(
+            1
+            for r in successful_predictions
+            if r["single_prediction"].predicted_outcome == r["actual_result"]
+        )
         single_accuracy = single_correct / len(successful_predictions)
 
         # 验证工作流结果
@@ -809,19 +893,27 @@ class TestMLWorkflowIntegration:
 
         for i in range(workflow_count):
             selector = MockStrategySelector()
-            ensemble_predictor = MockEnsemblePredictor(ensemble_method="weighted_average")
+            ensemble_predictor = MockEnsemblePredictor(
+                ensemble_method="weighted_average"
+            )
 
             # 每个工作流使用不同的策略
             strategies = [
-                MockMLStrategy(MLStrategyType.POISSON, f"concurrent_poisson_{i}", weight=1.0),
-                MockMLStrategy(MLStrategyType.WEIGHTED, f"concurrent_weighted_{i}", weight=1.0)
+                MockMLStrategy(
+                    MLStrategyType.POISSON, f"concurrent_poisson_{i}", weight=1.0
+                ),
+                MockMLStrategy(
+                    MLStrategyType.WEIGHTED, f"concurrent_weighted_{i}", weight=1.0
+                ),
             ]
 
-            workflows.append({
-                "selector": selector,
-                "ensemble_predictor": ensemble_predictor,
-                "strategies": strategies
-            })
+            workflows.append(
+                {
+                    "selector": selector,
+                    "ensemble_predictor": ensemble_predictor,
+                    "strategies": strategies,
+                }
+            )
 
         # 并发训练所有工作流
         training_tasks = []
@@ -839,7 +931,9 @@ class TestMLWorkflowIntegration:
                 workflow["ensemble_predictor"].add_strategy(strategy)
 
         # 并发预测处理
-        async def process_workflow(workflow_id: int, workflow_data: Dict, test_subset: pd.DataFrame):
+        async def process_workflow(
+            workflow_id: int, workflow_data: Dict, test_subset: pd.DataFrame
+        ):
             """处理单个工作流"""
             results = []
 
@@ -847,17 +941,21 @@ class TestMLWorkflowIntegration:
                 match_data = {
                     "home_team": test_match["home_team"],
                     "away_team": test_match["away_team"],
-                    "match_id": f"concurrent_{workflow_id}_{len(results)}"
+                    "match_id": f"concurrent_{workflow_id}_{len(results)}",
                 }
 
-                prediction = await workflow_data["ensemble_predictor"].predict(match_data)
+                prediction = await workflow_data["ensemble_predictor"].predict(
+                    match_data
+                )
                 if prediction:
-                    results.append({
-                        "workflow_id": workflow_id,
-                        "match_id": match_data["match_id"],
-                        "prediction": prediction,
-                        "actual": test_match["result"]
-                    })
+                    results.append(
+                        {
+                            "workflow_id": workflow_id,
+                            "match_id": match_data["match_id"],
+                            "prediction": prediction,
+                            "actual": test_match["result"],
+                        }
+                    )
 
             return results
 
@@ -880,7 +978,11 @@ class TestMLWorkflowIntegration:
         workflow_accuracies = []
         for i, results in enumerate(workflow_results):
             if results:
-                correct = sum(1 for r in results if r["prediction"].predicted_outcome == r["actual"])
+                correct = sum(
+                    1
+                    for r in results
+                    if r["prediction"].predicted_outcome == r["actual"]
+                )
                 accuracy = correct / len(results)
                 workflow_accuracies.append(accuracy)
                 print(f"  工作流{i}: {len(results)}个预测, 准确率={accuracy:.3f}")
@@ -901,11 +1003,15 @@ class TestMLWorkflowIntegration:
         ensemble_predictor = MockEnsemblePredictor()
 
         # 创建正常策略和有问题的策略
-        normal_strategy = MockMLStrategy(MLStrategyType.POISSON, "normal_strategy", weight=1.0)
+        normal_strategy = MockMLStrategy(
+            MLStrategyType.POISSON, "normal_strategy", weight=1.0
+        )
         await normal_strategy.train(training_data)
 
         # 创建未训练的策略（会失败）
-        untrained_strategy = MockMLStrategy(MLStrategyType.ENSEMBLE, "untrained_strategy", weight=1.0)
+        untrained_strategy = MockMLStrategy(
+            MLStrategyType.ENSEMBLE, "untrained_strategy", weight=1.0
+        )
         # 不训练，模拟错误情况
 
         # 注册策略
@@ -921,7 +1027,7 @@ class TestMLWorkflowIntegration:
             match_data = {
                 "home_team": test_match["home_team"],
                 "away_team": test_match["away_team"],
-                "match_id": f"error_test_{len(error_handling_results)}"
+                "match_id": f"error_test_{len(error_handling_results)}",
             }
 
             try:
@@ -936,20 +1042,26 @@ class TestMLWorkflowIntegration:
                 if best_strategy and best_strategy.is_trained:
                     single_prediction = await best_strategy.predict(match_data)
 
-                error_handling_results.append({
-                    "match_id": match_data["match_id"],
-                    "success": True,
-                    "ensemble_success": ensemble_prediction is not None,
-                    "single_success": single_prediction is not None,
-                    "selected_strategy": best_strategy.name if best_strategy else None
-                })
+                error_handling_results.append(
+                    {
+                        "match_id": match_data["match_id"],
+                        "success": True,
+                        "ensemble_success": ensemble_prediction is not None,
+                        "single_success": single_prediction is not None,
+                        "selected_strategy": (
+                            best_strategy.name if best_strategy else None
+                        ),
+                    }
+                )
 
             except Exception as e:
-                error_handling_results.append({
-                    "match_id": match_data["match_id"],
-                    "success": False,
-                    "error": str(e)
-                })
+                error_handling_results.append(
+                    {
+                        "match_id": match_data["match_id"],
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
         # 验证错误处理结果
         successful_cases = [r for r in error_handling_results if r["success"]]
@@ -960,11 +1072,15 @@ class TestMLWorkflowIntegration:
         assert success_rate > 0.8  # 至少80%成功率
 
         # 集成预测应该有更高的成功率（因为容错性）
-        ensemble_success_rate = sum(1 for r in successful_cases if r["ensemble_success"]) / len(successful_cases)
+        ensemble_success_rate = sum(
+            1 for r in successful_cases if r["ensemble_success"]
+        ) / len(successful_cases)
         assert ensemble_success_rate > 0.5
 
         print(f"✅ 工作流错误处理测试通过:")
-        print(f"  成功率: {success_rate:.3f} ({len(successful_cases)}/{len(error_handling_results)})")
+        print(
+            f"  成功率: {success_rate:.3f} ({len(successful_cases)}/{len(error_handling_results)})"
+        )
         print(f"  集成预测成功率: {ensemble_success_rate:.3f}")
         print(f"  失败案例: {len(failed_cases)}")
 
@@ -981,17 +1097,23 @@ class TestMLWorkflowIntegration:
                     "strategy_selections": {},
                     "ensemble_predictions": 0,
                     "single_predictions": 0,
-                    "errors": 0
+                    "errors": 0,
                 }
 
             def record_training_time(self, strategy_name: str, time: float):
-                self.metrics["training_times"].append({"strategy": strategy_name, "time": time})
+                self.metrics["training_times"].append(
+                    {"strategy": strategy_name, "time": time}
+                )
 
             def record_prediction_time(self, prediction_type: str, time: float):
-                self.metrics["prediction_times"].append({"type": prediction_type, "time": time})
+                self.metrics["prediction_times"].append(
+                    {"type": prediction_type, "time": time}
+                )
 
             def record_strategy_selection(self, strategy_name: str):
-                self.metrics["strategy_selections"][strategy_name] = self.metrics["strategy_selections"].get(strategy_name, 0) + 1
+                self.metrics["strategy_selections"][strategy_name] = (
+                    self.metrics["strategy_selections"].get(strategy_name, 0) + 1
+                )
 
             def record_prediction_type(self, is_ensemble: bool):
                 if is_ensemble:
@@ -1007,13 +1129,25 @@ class TestMLWorkflowIntegration:
                 prediction_times = [t["time"] for t in self.metrics["prediction_times"]]
 
                 return {
-                    "total_strategies": len(set(t["strategy"] for t in self.metrics["training_times"])),
-                    "avg_training_time": np.mean(training_times) if training_times else 0,
-                    "avg_prediction_time": np.mean(prediction_times) if prediction_times else 0,
+                    "total_strategies": len(
+                        set(t["strategy"] for t in self.metrics["training_times"])
+                    ),
+                    "avg_training_time": (
+                        np.mean(training_times) if training_times else 0
+                    ),
+                    "avg_prediction_time": (
+                        np.mean(prediction_times) if prediction_times else 0
+                    ),
                     "strategy_selections": self.metrics["strategy_selections"],
-                    "ensemble_ratio": self.metrics["ensemble_predictions"] / max(1, self.metrics["ensemble_predictions"] + self.metrics["single_predictions"]),
-                    "error_rate": self.metrics["errors"] / max(1, len(self.metrics["prediction_times"])),
-                    "total_predictions": len(self.metrics["prediction_times"])
+                    "ensemble_ratio": self.metrics["ensemble_predictions"]
+                    / max(
+                        1,
+                        self.metrics["ensemble_predictions"]
+                        + self.metrics["single_predictions"],
+                    ),
+                    "error_rate": self.metrics["errors"]
+                    / max(1, len(self.metrics["prediction_times"])),
+                    "total_predictions": len(self.metrics["prediction_times"]),
                 }
 
         monitor = PerformanceMonitor()
@@ -1025,7 +1159,7 @@ class TestMLWorkflowIntegration:
         # 训练策略并监控性能
         strategies = [
             MockMLStrategy(MLStrategyType.POISSON, "monitor_poisson", weight=1.0),
-            MockMLStrategy(MLStrategyType.ENSEMBLE, "monitor_ensemble", weight=0.8)
+            MockMLStrategy(MLStrategyType.ENSEMBLE, "monitor_ensemble", weight=0.8),
         ]
 
         for strategy in strategies:
@@ -1042,7 +1176,7 @@ class TestMLWorkflowIntegration:
             match_data = {
                 "home_team": test_match["home_team"],
                 "away_team": test_match["away_team"],
-                "match_id": f"monitor_{len(monitor.metrics['prediction_times'])}"
+                "match_id": f"monitor_{len(monitor.metrics['prediction_times'])}",
             }
 
             try:

@@ -7,7 +7,7 @@ from src.core.exceptions import (
     FootballPredictionException,
     DataValidationError,
     ConfigurationError,
-    ServiceUnavailableError
+    ServiceUnavailableError,
 )
 
 
@@ -32,9 +32,7 @@ class TestCoreExceptions:
 
         # 测试带字段信息的异常
         exception_with_fields = DataValidationError(
-            "Invalid data",
-            field="email",
-            value="invalid-email"
+            "Invalid data", field="email", value="invalid-email"
         )
         assert str(exception_with_fields) == "Invalid data"
 
@@ -45,8 +43,7 @@ class TestCoreExceptions:
 
         # 测试带配置键的异常
         exception_with_key = ConfigurationError(
-            "Missing required config",
-            config_key="DATABASE_URL"
+            "Missing required config", config_key="DATABASE_URL"
         )
         assert str(exception_with_key) == "Missing required config"
 
@@ -57,8 +54,7 @@ class TestCoreExceptions:
 
         # 测试带服务名称的异常
         exception_with_service = ServiceUnavailableError(
-            "Service unavailable",
-            service_name="database"
+            "Service unavailable", service_name="database"
         )
         assert str(exception_with_service) == "Service unavailable"
 
@@ -74,9 +70,9 @@ class TestCoreExceptions:
         # 测试FootballPredictionException属性
         exc = FootballPredictionException("Test", code=400, details="More info")
 
-        if hasattr(exc, 'code'):
+        if hasattr(exc, "code"):
             assert exc.code == 400
-        if hasattr(exc, 'details'):
+        if hasattr(exc, "details"):
             assert exc.details == "More info"
 
     def test_exception_raising(self):
@@ -99,10 +95,11 @@ class TestCoreExceptions:
     def test_exceptions_module_import(self):
         """测试异常模块导入"""
         import src.core.exceptions
+
         assert src.core.exceptions is not None
 
         # 检查关键异常类是否存在
-        assert hasattr(src.core.exceptions, 'FootballPredictionException')
-        assert hasattr(src.core.exceptions, 'DataValidationError')
-        assert hasattr(src.core.exceptions, 'ConfigurationError')
-        assert hasattr(src.core.exceptions, 'ServiceUnavailableError')
+        assert hasattr(src.core.exceptions, "FootballPredictionException")
+        assert hasattr(src.core.exceptions, "DataValidationError")
+        assert hasattr(src.core.exceptions, "ConfigurationError")
+        assert hasattr(src.core.exceptions, "ServiceUnavailableError")

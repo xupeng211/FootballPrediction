@@ -41,7 +41,9 @@ async def test_basic_api():
                     for i, match in enumerate(matches[:3], 1):
                         home_team = match.get("homeTeam", {}).get("name", "Unknown")
                         away_team = match.get("awayTeam", {}).get("name", "Unknown")
-                        competition = match.get("competition", {}).get("name", "Unknown")
+                        competition = match.get("competition", {}).get(
+                            "name", "Unknown"
+                        )
                         utc_date = match.get("utcDate", "Unknown")
 
                         print(f"  {i}. {home_team} vs {away_team}")

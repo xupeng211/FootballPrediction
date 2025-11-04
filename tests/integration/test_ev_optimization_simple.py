@@ -14,7 +14,9 @@ from typing import Dict, List, Any, Tuple
 from dataclasses import dataclass
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -75,7 +77,9 @@ class EnhancedKellyCalculator:
         risk_of_ruin = self._calculate_risk_of_ruin(kelly_optimized, p, b)
 
         # 置信区间
-        confidence_interval = self._calculate_confidence_interval(kelly_optimized, confidence)
+        confidence_interval = self._calculate_confidence_interval(
+            kelly_optimized, confidence
+        )
 
         # 推荐
         recommendation = self._generate_recommendation(kelly_optimized, risk_of_ruin)
@@ -134,7 +138,9 @@ class EnhancedKellyCalculator:
         upper = min(kelly_fraction + interval_width, 0.25)
         return (lower, upper)
 
-    def _generate_recommendation(self, kelly_fraction: float, risk_of_ruin: float) -> str:
+    def _generate_recommendation(
+        self, kelly_fraction: float, risk_of_ruin: float
+    ) -> str:
         """生成推荐"""
         if kelly_fraction <= 0:
             return "avoid"
@@ -200,7 +206,9 @@ class EnhancedValueCalculator:
 
         return min(score, 10.0)
 
-    def _calculate_probability_score(self, probability: float, confidence: float) -> float:
+    def _calculate_probability_score(
+        self, probability: float, confidence: float
+    ) -> float:
         """计算概率分数"""
         base_score = probability * 8
         confidence_bonus = confidence * 2
@@ -223,7 +231,9 @@ class EnhancedValueCalculator:
         else:
             return max(0.0, 4.0 - odds_deviation * 10)
 
-    def _calculate_risk_adjusted_score(self, ev: float, probability: float, odds: float) -> float:
+    def _calculate_risk_adjusted_score(
+        self, ev: float, probability: float, odds: float
+    ) -> float:
         """计算风险调整分数"""
         if ev <= 0:
             return 0.0
@@ -310,7 +320,9 @@ def test_value_rating():
 
     results = []
     for case in test_cases:
-        result = value_calc.calculate_value_rating(case["prob"], case["odds"], case["confidence"])
+        result = value_calc.calculate_value_rating(
+            case["prob"], case["odds"], case["confidence"]
+        )
 
         results.append(
             {
@@ -432,7 +444,8 @@ def simulate_backtest():
             continue
 
         stake = min(
-            kelly_result.optimal_fraction * current_bankroll * 0.01, current_bankroll * 0.02
+            kelly_result.optimal_fraction * current_bankroll * 0.01,
+            current_bankroll * 0.02,
         )
 
         if stake <= 0:
@@ -454,10 +467,14 @@ def simulate_backtest():
 
     results["final_bankroll"] = current_bankroll
     results["roi"] = (
-        (current_bankroll - results["initial_bankroll"]) / results["initial_bankroll"] * 100
+        (current_bankroll - results["initial_bankroll"])
+        / results["initial_bankroll"]
+        * 100
     )
     results["win_rate"] = (
-        results["winning_bets"] / results["total_bets"] if results["total_bets"] > 0 else 0
+        results["winning_bets"] / results["total_bets"]
+        if results["total_bets"] > 0
+        else 0
     )
 
     logger.info(

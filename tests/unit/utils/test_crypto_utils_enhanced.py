@@ -50,8 +50,8 @@ class TestCryptoUtilsEnhanced:
         assert uuid1 != uuid2  # 应该是唯一的
 
         # 验证UUID格式
-        assert uuid1.count('-') == 4
-        parts = uuid1.split('-')
+        assert uuid1.count("-") == 4
+        parts = uuid1.split("-")
         assert len(parts) == 5
         assert len(parts[0]) == 8
         assert len(parts[1]) == 4
@@ -136,8 +136,8 @@ class TestCryptoUtilsEnhanced:
         invalid_hashes = [
             "invalid_format",
             "sha256$",  # 缺少salt和hash
-            "$2b$",    # 不完整的bcrypt格式
-            "other_format$some$hash"
+            "$2b$",  # 不完整的bcrypt格式
+            "other_format$some$hash",
         ]
 
         for invalid_hash in invalid_hashes:
@@ -329,7 +329,7 @@ class TestCryptoUtilsEnhanced:
         assert isinstance(random_str, str)
         assert len(random_str) == 32
         # 应该是URL安全的字符
-        assert random_str.isalnum() or '-' in random_str or '_' in random_str
+        assert random_str.isalnum() or "-" in random_str or "_" in random_str
 
     def test_generate_random_string_custom_length(self):
         """测试生成自定义长度随机字符串"""

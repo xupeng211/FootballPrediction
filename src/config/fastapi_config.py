@@ -139,8 +139,8 @@ def create_chinese_app() -> FastAPI:
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+    # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+    # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     def custom_openapi():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """TODO: 添加函数文档"""
         if app.openapi_schema:

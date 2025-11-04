@@ -209,7 +209,9 @@ class FileUtils:
                 return None
 
             if backup_dir is None:
-                backup_path = src_path.parent / f"{src_path.name}.backup{int(time.time())}"
+                backup_path = (
+                    src_path.parent / f"{src_path.name}.backup{int(time.time())}"
+                )
             else:
                 backup_dir_path = Path(backup_dir)
                 backup_dir_path.mkdir(parents=True, exist_ok=True)

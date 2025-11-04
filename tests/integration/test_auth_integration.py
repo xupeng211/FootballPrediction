@@ -20,7 +20,9 @@ class AuthIntegrationTester:
         self.test_results = []
         self.auth_token = None
 
-    def log_test(self, test_name: str, success: bool, details: str = "", duration: float = 0):
+    def log_test(
+        self, test_name: str, success: bool, details: str = "", duration: float = 0
+    ):
         """记录测试结果"""
         result = {
             "test_name": test_name,
@@ -47,10 +49,14 @@ class AuthIntegrationTester:
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
-                    self.log_test("健康检查", True, f"HTTP {response.status_code}", duration)
+                    self.log_test(
+                        "健康检查", True, f"HTTP {response.status_code}", duration
+                    )
                     return True
                 else:
-                    self.log_test("健康检查", False, f"HTTP {response.status_code}", duration)
+                    self.log_test(
+                        "健康检查", False, f"HTTP {response.status_code}", duration
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -76,7 +82,9 @@ class AuthIntegrationTester:
                 duration = time.time() - start_time
 
                 if response.status_code in [200, 201]:
-                    self.log_test("用户注册", True, f"HTTP {response.status_code}", duration)
+                    self.log_test(
+                        "用户注册", True, f"HTTP {response.status_code}", duration
+                    )
 
                     # 解析注册响应
                     register_result = response.json()
@@ -85,7 +93,9 @@ class AuthIntegrationTester:
                     )
 
                     # 测试用户登录
-                    await self.test_user_login(register_data["username"], register_data["password"])
+                    await self.test_user_login(
+                        register_data["username"], register_data["password"]
+                    )
 
                     return True
                 else:
@@ -113,7 +123,9 @@ class AuthIntegrationTester:
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
-                    self.log_test("用户登录", True, f"HTTP {response.status_code}", duration)
+                    self.log_test(
+                        "用户登录", True, f"HTTP {response.status_code}", duration
+                    )
 
                     # 解析登录响应，保存token
                     login_result = response.json()
@@ -146,15 +158,21 @@ class AuthIntegrationTester:
         try:
             headers = {"Authorization": self.auth_token}
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.get(f"{self.api_base_url}/api/v1/auth/me", headers=headers)
+                response = await client.get(
+                    f"{self.api_base_url}/api/v1/auth/me", headers=headers
+                )
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
-                    self.log_test("获取用户信息", True, f"HTTP {response.status_code}", duration)
+                    self.log_test(
+                        "获取用户信息", True, f"HTTP {response.status_code}", duration
+                    )
 
                     # 解析用户信息
                     user_info = response.json()
-                    print(f"   📝 用户信息: {json.dumps(user_info, indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📝 用户信息: {json.dumps(user_info, indent=2, ensure_ascii=False)}"
+                    )
 
                     # 测试用户登出
                     await self.test_user_logout()
@@ -182,7 +200,9 @@ class AuthIntegrationTester:
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
-                    self.log_test("用户登出", True, f"HTTP {response.status_code}", duration)
+                    self.log_test(
+                        "用户登出", True, f"HTTP {response.status_code}", duration
+                    )
                     return True
                 else:
                     self.log_test(
@@ -216,9 +236,13 @@ class AuthIntegrationTester:
                     duration = time.time() - start_time
 
                     if response.status_code == 200:
-                        self.log_test(name, True, f"HTTP {response.status_code}", duration)
+                        self.log_test(
+                            name, True, f"HTTP {response.status_code}", duration
+                        )
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}", duration)
+                        self.log_test(
+                            name, False, f"HTTP {response.status_code}", duration
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)

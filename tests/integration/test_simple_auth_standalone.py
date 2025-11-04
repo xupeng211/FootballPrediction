@@ -59,14 +59,20 @@ class SimpleAuthTester:
             register_data = SimpleUserRegister(
                 username="newuser", email="new@example.com", password="password123"
             )
-            self.log_test("SimpleUserRegister模型创建", True, f"注册用户: {register_data.username}")
+            self.log_test(
+                "SimpleUserRegister模型创建",
+                True,
+                f"注册用户: {register_data.username}",
+            )
 
             # 测试SimpleTokenResponse模型
             token_response = SimpleTokenResponse(
                 access_token="Bearer testuser", token_type="bearer", expires_in=3600
             )
             self.log_test(
-                "SimpleTokenResponse模型创建", True, f"令牌类型: {token_response.token_type}"
+                "SimpleTokenResponse模型创建",
+                True,
+                f"令牌类型: {token_response.token_type}",
             )
 
         except Exception as e:
@@ -80,24 +86,36 @@ class SimpleAuthTester:
             auth_service = SimpleAuthService()
 
             # 测试用户创建（使用唯一的用户名避免冲突）
-            unique_username = f"servicetest_{hash(str(asyncio.get_event_loop())) % 10000}"
-            user = auth_service.create_user(unique_username, "test@example.com", "password123")
-            self.log_test("用户创建", True, f"创建用户ID: {user.id}, 用户名: {user.username}")
+            unique_username = (
+                f"servicetest_{hash(str(asyncio.get_event_loop())) % 10000}"
+            )
+            user = auth_service.create_user(
+                unique_username, "test@example.com", "password123"
+            )
+            self.log_test(
+                "用户创建", True, f"创建用户ID: {user.id}, 用户名: {user.username}"
+            )
 
             # 测试用户认证
             auth_user = auth_service.authenticate_user(unique_username, "password123")
             self.log_test(
-                "用户认证", True, f"认证用户: {auth_user.username if auth_user else 'None'}"
+                "用户认证",
+                True,
+                f"认证用户: {auth_user.username if auth_user else 'None'}",
             )
 
             # 测试错误密码认证
-            auth_user_fail = auth_service.authenticate_user(unique_username, "wrongpassword")
+            auth_user_fail = auth_service.authenticate_user(
+                unique_username, "wrongpassword"
+            )
             self.log_test("错误密码认证", auth_user_fail is None, "应该返回None")
 
             # 测试获取用户
             get_user = auth_service.get_user_by_username(unique_username)
             self.log_test(
-                "获取用户", True, f"获取用户: {get_user.username if get_user else 'None'}"
+                "获取用户",
+                True,
+                f"获取用户: {get_user.username if get_user else 'None'}",
             )
 
             # 测试重复用户创建
@@ -125,23 +143,31 @@ class SimpleAuthTester:
             }
             response = self.client.post("/api/v1/auth/register", json=register_data)
             self.log_test(
-                "用户注册API", response.status_code == 201, f"状态码: {response.status_code}"
+                "用户注册API",
+                response.status_code == 201,
+                f"状态码: {response.status_code}",
             )
 
             if response.status_code == 201:
                 data = response.json()
-                print(f"   📝 注册响应: {json.dumps(data, indent=2, ensure_ascii=False)}")
+                print(
+                    f"   📝 注册响应: {json.dumps(data, indent=2, ensure_ascii=False)}"
+                )
 
             # 测试用户登录端点
             login_data = {"username": "apitest", "password": "testpass123"}
             response = self.client.post("/api/v1/auth/login", data=login_data)
             self.log_test(
-                "用户登录API", response.status_code == 200, f"状态码: {response.status_code}"
+                "用户登录API",
+                response.status_code == 200,
+                f"状态码: {response.status_code}",
             )
 
             if response.status_code == 200:
                 data = response.json()
-                print(f"   📝 登录响应: {json.dumps(data, indent=2, ensure_ascii=False)}")
+                print(
+                    f"   📝 登录响应: {json.dumps(data, indent=2, ensure_ascii=False)}"
+                )
 
                 # 测试获取当前用户信息端点
                 token = data.get("access_token", "")
@@ -155,12 +181,16 @@ class SimpleAuthTester:
 
                 if response.status_code == 200:
                     user_data = response.json()
-                    print(f"   📝 用户信息: {json.dumps(user_data, indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📝 用户信息: {json.dumps(user_data, indent=2, ensure_ascii=False)}"
+                    )
 
             # 测试用户登出端点
             response = self.client.post("/api/v1/auth/logout")
             self.log_test(
-                "用户登出API", response.status_code == 200, f"状态码: {response.status_code}"
+                "用户登出API",
+                response.status_code == 200,
+                f"状态码: {response.status_code}",
             )
 
         except Exception as e:

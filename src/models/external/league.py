@@ -115,17 +115,19 @@ class ExternalLeague(Base):
             "area_code": self.area_code,
             "area_flag": self.area_flag,
             "current_season_id": self.current_season_id,
-            "current_season_start": self.current_season_start.isoformat()
-            if self.current_season_start
-            else None,
-            "current_season_end": self.current_season_end.isoformat()
-            if self.current_season_end
-            else None,
+            "current_season_start": (
+                self.current_season_start.isoformat()
+                if self.current_season_start
+                else None
+            ),
+            "current_season_end": (
+                self.current_season_end.isoformat() if self.current_season_end else None
+            ),
             "current_matchday": self.current_matchday,
             "season_winner": self.season_winner,
-            "last_updated": self.last_updated.isoformat()
-            if self.last_updated
-            else None,
+            "last_updated": (
+                self.last_updated.isoformat() if self.last_updated else None
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "is_processed": self.is_processed,
@@ -134,9 +136,9 @@ class ExternalLeague(Base):
             "data_quality_score": self.data_quality_score,
             "total_teams": self.total_teams,
             "total_matches": self.total_matches,
-            "last_sync_at": self.last_sync_at.isoformat()
-            if self.last_sync_at
-            else None,
+            "last_sync_at": (
+                self.last_sync_at.isoformat() if self.last_sync_at else None
+            ),
             "display_name": self.display_name,
             "is_current_season_active": self.is_current_season_active,
             "season_progress": self.season_progress,
@@ -441,9 +443,9 @@ class ExternalLeagueStandings(Base):
             "table_type": self.table_type,
             "form": self.form,
             "status": self.status,
-            "last_updated": self.last_updated.isoformat()
-            if self.last_updated
-            else None,
+            "last_updated": (
+                self.last_updated.isoformat() if self.last_updated else None
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "display_record": self.display_record,

@@ -65,7 +65,7 @@ class TestTimeUtilsEnhanced:
         formats = [
             ("%Y-%m-%d", "2024-01-01"),
             ("%H:%M:%S", "12:30:45"),
-            ("%Y年%m月%d日", "2024年01月01日")
+            ("%Y年%m月%d日", "2024年01月01日"),
         ]
 
         for fmt, expected in formats:
@@ -193,7 +193,7 @@ class TestTimeUtilsEnhanced:
             class_utc = TimeUtils.now_utc()
 
             # 如果有模块级函数，比较结果
-            if 'utc_now' in globals():
+            if "utc_now" in globals():
                 module_utc = utc_now()
                 time_diff = abs((class_utc - module_utc).total_seconds())
                 assert time_diff < 1.0  # 应该在1秒内
@@ -203,23 +203,33 @@ class TestTimeUtilsEnhanced:
     def test_static_method_behavior(self):
         """测试静态方法行为"""
         # 静态方法不需要实例化
-        assert not hasattr(TimeUtils.now_utc, '__self__') or TimeUtils.now_utc.__self__ is None
-        assert not hasattr(TimeUtils.get_utc_now, '__self__') or TimeUtils.get_utc_now.__self__ is None
-        assert not hasattr(TimeUtils.get_local_now, '__self__') or TimeUtils.get_local_now.__self__ is None
+        assert (
+            not hasattr(TimeUtils.now_utc, "__self__")
+            or TimeUtils.now_utc.__self__ is None
+        )
+        assert (
+            not hasattr(TimeUtils.get_utc_now, "__self__")
+            or TimeUtils.get_utc_now.__self__ is None
+        )
+        assert (
+            not hasattr(TimeUtils.get_local_now, "__self__")
+            or TimeUtils.get_local_now.__self__ is None
+        )
 
     def test_time_utils_import(self):
         """测试TimeUtils导入"""
         from src.utils.time_utils import TimeUtils
+
         assert TimeUtils is not None
 
         # 检查关键方法是否存在
         expected_methods = [
-            'now_utc',
-            'get_utc_now',
-            'get_local_now',
-            'timestamp_to_datetime',
-            'datetime_to_timestamp',
-            'format_datetime'
+            "now_utc",
+            "get_utc_now",
+            "get_local_now",
+            "timestamp_to_datetime",
+            "datetime_to_timestamp",
+            "format_datetime",
         ]
 
         for method in expected_methods:

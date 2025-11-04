@@ -205,7 +205,7 @@ class TimeUtils:
             to_tz = ZoneInfo(tz_name)
 
             # 检查to_tz是否为有效的tzinfo对象（排除mock对象）
-            if not hasattr(to_tz, 'utcoffset') or not callable(to_tz.utcoffset):
+            if not hasattr(to_tz, "utcoffset") or not callable(to_tz.utcoffset):
                 return dt
 
             if dt.tzinfo is None:
@@ -298,10 +298,13 @@ def calculate_duration(start_time: datetime, end_time: datetime) -> timedelta:
 def get_current_timestamp() -> float:
     """获取当前时间戳"""
     import time
+
     return time.time()
 
 
-def is_valid_datetime_format(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> bool:
+def is_valid_datetime_format(
+    date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
+) -> bool:
     """验证日期时间格式是否有效"""
     try:
         datetime.strptime(date_str, format_str)

@@ -34,6 +34,7 @@ except ImportError:
         def __init__(self):
             pass
 
+
 try:
     from src.ml.automl_pipeline import AutoMLPipeline
 except ImportError:
@@ -41,6 +42,7 @@ except ImportError:
     class AutoMLPipeline:
         def __init__(self):
             pass
+
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions", tags=["predictions-srs"])

@@ -97,7 +97,7 @@ class DataValidator:
         # 权重因子
         weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
         # 校验码对应表
-        check_codes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2']
+        check_codes = ["1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2"]
 
         total = 0
         for i in range(17):
@@ -119,7 +119,7 @@ class DataValidator:
         text = str(input_data)
 
         # 移除危险字符
-        dangerous_chars = ["<", ">", "&", "\"", "'", """, """]
+        dangerous_chars = ["<", ">", "&", '"', "'", """, """]
         for char in dangerous_chars:
             text = text.replace(char, "")
 
@@ -128,13 +128,15 @@ class DataValidator:
         import re
 
         # 移除HTML标签
-        text = re.sub(r'<[^>]+>', '', text)
+        text = re.sub(r"<[^>]+>", "", text)
 
         # 移除JavaScript协议
-        text = re.sub(r'javascript:', '', text, flags=re.IGNORECASE)
+        text = re.sub(r"javascript:", "", text, flags=re.IGNORECASE)
 
         # 移除HTML事件处理器属性
-        text = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', text, flags=re.IGNORECASE)
+        text = re.sub(
+            r'\s+on\w+\s*=\s*["\'][^"\']*["\']', "", text, flags=re.IGNORECASE
+        )
 
         # 限制长度
         if len(text) > 1000:

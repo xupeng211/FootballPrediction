@@ -46,7 +46,9 @@ class DateUtils:
             return None
 
     @staticmethod
-    def parse_datetime(datetime_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime | None:
+    def parse_datetime(
+        datetime_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
+    ) -> datetime | None:
         """解析日期时间字符串"""
         if not isinstance(datetime_str, str):
             return None
@@ -99,7 +101,9 @@ class DateUtils:
         return not DateUtils.is_weekend(dt)
 
     @staticmethod
-    def get_age(birth_date: datetime | date, current_date: datetime | date | None = None) -> int | None:
+    def get_age(
+        birth_date: datetime | date, current_date: datetime | date | None = None
+    ) -> int | None:
         """计算年龄"""
         # 验证输入参数
         if birth_date is None or not isinstance(birth_date, (datetime, date)):
@@ -143,7 +147,6 @@ class DateUtils:
             return True
         else:
             return year % 400 == 0
-
 
     @staticmethod
     def get_month_range(year: int, month: int) -> tuple:
@@ -235,7 +238,9 @@ class DateUtils:
                 return f"{remaining_seconds}秒"
 
         # 如果有两个参数都是datetime，格式化两个时间之间的时长
-        if isinstance(start_time, datetime) and (isinstance(end_time, datetime) or end_time is None):
+        if isinstance(start_time, datetime) and (
+            isinstance(end_time, datetime) or end_time is None
+        ):
             if end_time is None:
                 end_time = datetime.utcnow()
 
@@ -258,7 +263,9 @@ class DateUtils:
 
         # 如果有第二个参数，且任一参数是无效类型，返回"无效时间"
         if end_time is not None:
-            if not isinstance(start_time, datetime) or not isinstance(end_time, datetime):
+            if not isinstance(start_time, datetime) or not isinstance(
+                end_time, datetime
+            ):
                 return "无效时间"
 
         # 无效输入，返回默认值（与基础测试兼容）

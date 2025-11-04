@@ -14,11 +14,20 @@ from typing import Any
 from datetime import datetime
 
 # 添加adapters路径并直接导入
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src/adapters'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/adapters"))
 
 # 只导入没有语法错误的模块
 try:
-    from base import AdapterStatus, Adaptee, Target, Adapter, BaseAdapter, DataTransformer, CompositeAdapter
+    from base import (
+        AdapterStatus,
+        Adaptee,
+        Target,
+        Adapter,
+        BaseAdapter,
+        DataTransformer,
+        CompositeAdapter,
+    )
+
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
@@ -26,12 +35,14 @@ except ImportError as e:
 
 try:
     from registry import AdapterRegistry, AdapterError
+
     REGISTRY_AVAILABLE = True
 except ImportError:
     REGISTRY_AVAILABLE = False
 
 try:
     from factory import AdapterConfig, AdapterGroupConfig, AdapterFactory
+
     FACTORY_AVAILABLE = True
 except ImportError:
     FACTORY_AVAILABLE = False
@@ -70,7 +81,12 @@ class MockTarget(Target):
     async def request(self, *args, **kwargs) -> Any:
         """标准请求方法"""
         self.request_count += 1
-        return {"target": self.name, "request_id": self.request_count, "args": args, "kwargs": kwargs}
+        return {
+            "target": self.name,
+            "request_id": self.request_count,
+            "args": args,
+            "kwargs": kwargs,
+        }
 
 
 class MockAdapter(Adapter):
@@ -513,7 +529,7 @@ class TestAdapterConfig:
             parameters=parameters,
             rate_limits=rate_limits,
             cache_config=cache_config,
-            retry_config=retry_config
+            retry_config=retry_config,
         )
 
         assert config.name == "FullAdapter"
@@ -545,7 +561,7 @@ class TestAdapterGroupConfig:
             name="FullGroup",
             adapters=["Adapter1", "Adapter2", "Adapter3"],
             primary_adapter="Adapter1",
-            fallback_strategy="parallel"
+            fallback_strategy="parallel",
         )
 
         assert config.name == "FullGroup"

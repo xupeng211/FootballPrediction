@@ -22,12 +22,14 @@ import os
 
 # 导入ML模块
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../src'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
     from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.poisson_model import PoissonModel
     from ml.models.elo_model import EloModel
+
     CAN_IMPORT = True
 except ImportError as e:
     print(f"Warning: 无法导入ML模型: {e}")
@@ -51,7 +53,7 @@ class TestBaseModel:
             confidence=0.75,
             model_name="TestModel",
             model_version="1.0",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         # 验证数据类属性
@@ -91,7 +93,7 @@ class TestBaseModel:
             training_time=45.5,
             features_used=["feature1", "feature2"],
             hyperparameters={"param1": 1.0, "param2": 2.0},
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         # 验证数据类属性
@@ -157,13 +159,15 @@ class TestPoissonModel:
             else:
                 result = "draw"
 
-            data.append({
-                "home_team": home_team,
-                "away_team": away_team,
-                "home_score": home_goals,
-                "away_score": away_goals,
-                "result": result
-            })
+            data.append(
+                {
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_goals,
+                    "away_score": away_goals,
+                    "result": result,
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -172,22 +176,21 @@ class TestPoissonModel:
         assert poisson_model.model_name == "PoissonModel"
         assert poisson_model.model_version == "1.0"
         assert not poisson_model.is_trained
-        assert hasattr(poisson_model, 'team_attack_strength')
-        assert hasattr(poisson_model, 'team_defense_strength')
-        assert hasattr(poisson_model, 'home_advantage')
+        assert hasattr(poisson_model, "team_attack_strength")
+        assert hasattr(poisson_model, "team_defense_strength")
+        assert hasattr(poisson_model, "home_advantage")
         assert isinstance(poisson_model.home_advantage, (int, float))
 
     def test_prepare_features(self, poisson_model):
         """测试特征准备"""
-        match_data = {
-            "home_team": "Team_A",
-            "away_team": "Team_B"
-        }
+        match_data = {"home_team": "Team_A", "away_team": "Team_B"}
 
         features = poisson_model.prepare_features(match_data)
 
         assert isinstance(features, np.ndarray)
-        assert len(features) == 4  # [home_attack, home_defense, away_attack, away_defense]
+        assert (
+            len(features) == 4
+        )  # [home_attack, home_defense, away_attack, away_defense]
         assert all(isinstance(f, (int, float)) for f in features)
 
     def test_team_strength_calculation(self, poisson_model, sample_training_data):
@@ -196,8 +199,10 @@ class TestPoissonModel:
         poisson_model.train(sample_training_data)
 
         # 验证所有球队都有强度数据
-        unique_teams = set(sample_training_data['home_team'].tolist() +
-                          sample_training_data['away_team'].tolist())
+        unique_teams = set(
+            sample_training_data["home_team"].tolist()
+            + sample_training_data["away_team"].tolist()
+        )
 
         assert len(poisson_model.team_attack_strength) == len(unique_teams)
         assert len(poisson_model.team_defense_strength) == len(unique_teams)
@@ -219,8 +224,12 @@ class TestPoissonModel:
         away_team = list(poisson_model.team_attack_strength.keys())[1]
 
         # 计算期望进球
-        home_expected = poisson_model._calculate_expected_goals(home_team, away_team, is_home=True)
-        away_expected = poisson_model._calculate_expected_goals(away_team, home_team, is_home=False)
+        home_expected = poisson_model._calculate_expected_goals(
+            home_team, away_team, is_home=True
+        )
+        away_expected = poisson_model._calculate_expected_goals(
+            away_team, home_team, is_home=False
+        )
 
         # 验证期望进球
         assert home_expected > 0
@@ -238,12 +247,16 @@ class TestPoissonModel:
         home_team, away_team = teams[0], teams[1]
 
         # 计算期望进球
-        home_expected = poisson_model._calculate_expected_goals(home_team, away_team, is_home=True)
-        away_expected = poisson_model._calculate_expected_goals(away_team, home_team, is_home=False)
+        home_expected = poisson_model._calculate_expected_goals(
+            home_team, away_team, is_home=True
+        )
+        away_expected = poisson_model._calculate_expected_goals(
+            away_team, home_team, is_home=False
+        )
 
         # 计算比赛概率
-        home_win_prob, draw_prob, away_win_prob = poisson_model._calculate_match_probabilities(
-            home_expected, away_expected
+        home_win_prob, draw_prob, away_win_prob = (
+            poisson_model._calculate_match_probabilities(home_expected, away_expected)
         )
 
         # 验证概率
@@ -285,7 +298,7 @@ class TestPoissonModel:
         match_data = {
             "home_team": home_team,
             "away_team": away_team,
-            "match_id": f"{home_team}_vs_{away_team}"
+            "match_id": f"{home_team}_vs_{away_team}",
         }
 
         prediction = poisson_model.predict(match_data)
@@ -299,7 +312,9 @@ class TestPoissonModel:
         assert 0 <= prediction.confidence <= 1
 
         # 验证概率总和
-        total_prob = prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        total_prob = (
+            prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        )
         assert abs(total_prob - 1.0) < 1e-6
 
     def test_predict_proba(self, poisson_model, sample_training_data):
@@ -312,10 +327,7 @@ class TestPoissonModel:
         home_team, away_team = teams[0], teams[1]
 
         # 进行概率预测
-        match_data = {
-            "home_team": home_team,
-            "away_team": away_team
-        }
+        match_data = {"home_team": home_team, "away_team": away_team}
 
         probabilities = poisson_model.predict_proba(match_data)
 
@@ -423,14 +435,16 @@ class TestEloModel:
             else:
                 result = "draw"
 
-            data.append({
-                "home_team": home_team,
-                "away_team": away_team,
-                "home_score": home_goals,
-                "away_score": away_goals,
-                "result": result,
-                "date": datetime.now() - timedelta(days=np.random.randint(0, 365))
-            })
+            data.append(
+                {
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_goals,
+                    "away_score": away_goals,
+                    "result": result,
+                    "date": datetime.now() - timedelta(days=np.random.randint(0, 365)),
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -439,15 +453,15 @@ class TestEloModel:
         assert elo_model.model_name == "EloModel"
         assert elo_model.model_version == "1.0"
         assert not elo_model.is_trained
-        assert hasattr(elo_model, 'team_elos')
-        assert hasattr(elo_model, 'k_factor')
-        assert hasattr(elo_model, 'home_advantage')
+        assert hasattr(elo_model, "team_elos")
+        assert hasattr(elo_model, "k_factor")
+        assert hasattr(elo_model, "home_advantage")
 
         # 检查默认值
         assert isinstance(elo_model.k_factor, (int, float))
         assert elo_model.k_factor > 0
         assert isinstance(elo_model.home_advantage, (int, float))
-        assert hasattr(elo_model, 'initial_elo')
+        assert hasattr(elo_model, "initial_elo")
 
     def test_elo_rating_calculation(self, elo_model):
         """测试ELO评分计算"""
@@ -469,15 +483,21 @@ class TestEloModel:
         opponent_rating = 1500
 
         # 测试胜利情况
-        new_rating_win = elo_model._update_rating(old_rating, opponent_rating, actual_result=1.0)
+        new_rating_win = elo_model._update_rating(
+            old_rating, opponent_rating, actual_result=1.0
+        )
         assert new_rating_win > old_rating
 
         # 测试失败情况
-        new_rating_loss = elo_model._update_rating(old_rating, opponent_rating, actual_result=0.0)
+        new_rating_loss = elo_model._update_rating(
+            old_rating, opponent_rating, actual_result=0.0
+        )
         assert new_rating_loss < old_rating
 
         # 测试平局情况
-        new_rating_draw = elo_model._update_rating(old_rating, opponent_rating, actual_result=0.5)
+        new_rating_draw = elo_model._update_rating(
+            old_rating, opponent_rating, actual_result=0.5
+        )
         assert abs(new_rating_draw - old_rating) < 5  # 平局时评级变化应该很小
 
     def test_outcome_conversion(self, elo_model):
@@ -496,8 +516,10 @@ class TestEloModel:
         elo_model.train(sample_training_data)
 
         # 检查所有队伍都有ELO
-        unique_teams = set(sample_training_data['home_team'].tolist() +
-                          sample_training_data['away_team'].tolist())
+        unique_teams = set(
+            sample_training_data["home_team"].tolist()
+            + sample_training_data["away_team"].tolist()
+        )
 
         assert len(elo_model.team_elos) == len(unique_teams)
 
@@ -512,10 +534,7 @@ class TestEloModel:
         elo_model.train(sample_training_data)
 
         # 测试特征准备
-        match_data = {
-            "home_team": "Team_1",
-            "away_team": "Team_2"
-        }
+        match_data = {"home_team": "Team_1", "away_team": "Team_2"}
 
         features = elo_model.prepare_features(match_data)
 
@@ -560,7 +579,7 @@ class TestEloModel:
         match_data = {
             "home_team": home_team,
             "away_team": away_team,
-            "match_id": f"{home_team}_vs_{away_team}"
+            "match_id": f"{home_team}_vs_{away_team}",
         }
 
         prediction = elo_model.predict(match_data)
@@ -574,7 +593,9 @@ class TestEloModel:
         assert 0 <= prediction.confidence <= 1
 
         # 验证概率总和
-        total_prob = prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        total_prob = (
+            prediction.home_win_prob + prediction.draw_prob + prediction.away_win_prob
+        )
         assert abs(total_prob - 1.0) < 1e-6
 
     def test_model_save_and_load(self, elo_model, sample_training_data, tmp_path):
@@ -630,14 +651,16 @@ class TestMLModelIntegration:
             else:
                 result = "draw"
 
-            data.append({
-                "home_team": home_team,
-                "away_team": away_team,
-                "home_score": home_goals,
-                "away_score": away_goals,
-                "result": result,
-                "date": datetime.now() - timedelta(days=np.random.randint(0, 180))
-            })
+            data.append(
+                {
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "home_score": home_goals,
+                    "away_score": away_goals,
+                    "result": result,
+                    "date": datetime.now() - timedelta(days=np.random.randint(0, 180)),
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -682,7 +705,7 @@ class TestMLModelIntegration:
         match_data = {
             "home_team": home_team,
             "away_team": away_team,
-            "match_id": "test_match"
+            "match_id": "test_match",
         }
 
         # 多次预测应该得到相同结果
@@ -743,7 +766,7 @@ class TestMLModelIntegration:
 
         unknown_match = {
             "home_team": "Unknown_Team_A",
-            "away_team": list(trained_model.team_attack_strength.keys())[0]
+            "away_team": list(trained_model.team_attack_strength.keys())[0],
         }
 
         # 应该能处理未知球队（使用默认值）
@@ -778,7 +801,7 @@ class TestMLModelIntegration:
             match_data = {
                 "home_team": teams[0],
                 "away_team": teams[1],
-                "match_id": "perf_test"
+                "match_id": "perf_test",
             }
 
             # 批量预测性能测试

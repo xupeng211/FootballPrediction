@@ -15,7 +15,7 @@ from fastapi import HTTPException, status
 from typing import Optional
 
 # 添加src到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.security.jwt_auth import JWTAuthManager, UserAuth, TokenData
 
@@ -30,7 +30,7 @@ class TestJWTAuthManagerInitialization:
             algorithm="HS256",
             access_token_expire_minutes=60,
             refresh_token_expire_days=14,
-            redis_url="redis://localhost:6379/0"
+            redis_url="redis://localhost:6379/0",
         )
 
         assert manager.secret_key == "custom-secret-key"
@@ -63,7 +63,7 @@ class TestJWTAuthManagerInitialization:
 
         assert isinstance(secret_key, str)
         assert len(secret_key) == 86  # token_urlsafe(64)生成的长度
-        assert secret_key.isalnum() or '-' in secret_key or '_' in secret_key
+        assert secret_key.isalnum() or "-" in secret_key or "_" in secret_key
 
 
 class TestTokenCreation:
@@ -75,7 +75,7 @@ class TestTokenCreation:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     def test_create_access_token_basic(self, auth_manager):
@@ -87,7 +87,7 @@ class TestTokenCreation:
         assert len(token) > 100
 
         # 验证令牌格式（应该是三部分用点分隔）
-        parts = token.split('.')
+        parts = token.split(".")
         assert len(parts) == 3
         for part in parts:
             assert len(part) > 0
@@ -103,8 +103,11 @@ class TestTokenCreation:
 
         # 验证令牌中的过期时间
         import jwt
-        payload = jwt.decode(token, auth_manager.secret_key, algorithms=[auth_manager.algorithm])
-        exp_timestamp = payload['exp']
+
+        payload = jwt.decode(
+            token, auth_manager.secret_key, algorithms=[auth_manager.algorithm]
+        )
+        exp_timestamp = payload["exp"]
         exp_datetime = datetime.fromtimestamp(exp_timestamp)
 
         # 过期时间应该大约是2小时后
@@ -121,7 +124,7 @@ class TestTokenCreation:
         assert len(token) > 100
 
         # 验证令牌格式
-        parts = token.split('.')
+        parts = token.split(".")
         assert len(parts) == 3
 
     def test_create_refresh_token_with_custom_expiry(self, auth_manager):
@@ -139,22 +142,25 @@ class TestTokenCreation:
             "sub": "123",
             "username": "testuser",
             "email": "test@example.com",
-            "role": "user"
+            "role": "user",
         }
         token = auth_manager.create_access_token(data)
 
         # 解码令牌验证内容
         import jwt
-        payload = jwt.decode(token, auth_manager.secret_key, algorithms=[auth_manager.algorithm])
 
-        assert payload['sub'] == "123"
-        assert payload['username'] == "testuser"
-        assert payload['email'] == "test@example.com"
-        assert payload['role'] == "user"
-        assert 'exp' in payload
-        assert 'iat' in payload
-        assert 'jti' in payload
-        assert payload['token_type'] == "access"
+        payload = jwt.decode(
+            token, auth_manager.secret_key, algorithms=[auth_manager.algorithm]
+        )
+
+        assert payload["sub"] == "123"
+        assert payload["username"] == "testuser"
+        assert payload["email"] == "test@example.com"
+        assert payload["role"] == "user"
+        assert "exp" in payload
+        assert "iat" in payload
+        assert "jti" in payload
+        assert payload["token_type"] == "access"
 
 
 class TestTokenVerification:
@@ -166,7 +172,7 @@ class TestTokenVerification:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     @pytest.mark.asyncio
@@ -176,7 +182,7 @@ class TestTokenVerification:
             "sub": "123",
             "username": "testuser",
             "email": "test@example.com",
-            "role": "user"
+            "role": "user",
         }
         token = auth_manager.create_access_token(data)
 
@@ -204,8 +210,8 @@ class TestTokenVerification:
         assert token_data.user_id == 456
         assert token_data.token_type == "refresh"
         assert token_data.username == ""  # 刷新令牌中不包含用户名
-        assert token_data.email == ""   # 刷新令牌中不包含邮箱
-        assert token_data.role == ""    # 刷新令牌中不包含角色
+        assert token_data.email == ""  # 刷新令牌中不包含邮箱
+        assert token_data.role == ""  # 刷新令牌中不包含角色
 
     @pytest.mark.asyncio
     async def test_verify_invalid_signature_token(self, auth_manager):
@@ -215,7 +221,10 @@ class TestTokenVerification:
         with pytest.raises(ValueError) as exc_info:
             await auth_manager.verify_token(invalid_token)
 
-        assert "Invalid token" in str(exc_info.value) or "signature" in str(exc_info.value).lower()
+        assert (
+            "Invalid token" in str(exc_info.value)
+            or "signature" in str(exc_info.value).lower()
+        )
 
     @pytest.mark.asyncio
     async def test_verify_malformed_token(self, auth_manager):
@@ -225,7 +234,7 @@ class TestTokenVerification:
             "eyJ.eyJzdWIiOiIxIn0.invalid",
             "",
             "Bearer token",
-            "too.many.parts.here"
+            "too.many.parts.here",
         ]
 
         for token in malformed_tokens:
@@ -265,8 +274,7 @@ class TestTokenVerification:
 
         # 使用不同的算法创建验证器
         wrong_algorithm_manager = JWTAuthManager(
-            secret_key="test-secret-key",
-            algorithm="HS384"  # 不同的算法
+            secret_key="test-secret-key", algorithm="HS384"  # 不同的算法
         )
 
         with pytest.raises(ValueError):
@@ -354,7 +362,7 @@ class TestPasswordStrengthValidation:
             "StrongPassword123!",
             "MySecure@Pass456",
             "Complex#Password789",
-            "Very$Strong0Pass"
+            "Very$Strong0Pass",
         ]
 
         for password in strong_passwords:
@@ -365,14 +373,14 @@ class TestPasswordStrengthValidation:
     def test_weak_password_validation(self, auth_manager):
         """测试弱密码验证"""
         weak_passwords = [
-            "weak",           # 太短
-            "12345678",       # 只有数字
-            "password",       # 只有字母
-            "Password1",      # 没有特殊字符
-            "SHORT1!",        # 太短
+            "weak",  # 太短
+            "12345678",  # 只有数字
+            "password",  # 只有字母
+            "Password1",  # 没有特殊字符
+            "SHORT1!",  # 太短
             "alllowercase123!",  # 没有大写字母
             "ALLUPPERCASE123!",  # 没有小写字母
-            "NoNumbers!",     # 没有数字
+            "NoNumbers!",  # 没有数字
         ]
 
         for password in weak_passwords:
@@ -411,7 +419,19 @@ class TestPasswordStrengthValidation:
                 assert len(errors) > 0
                 # 检查是否包含相关的错误信息
                 error_text = " ".join(errors).lower()
-                assert any(keyword in error_text for keyword in ["大写", "小写", "数字", "特殊", "upper", "lower", "number", "special"])
+                assert any(
+                    keyword in error_text
+                    for keyword in [
+                        "大写",
+                        "小写",
+                        "数字",
+                        "特殊",
+                        "upper",
+                        "lower",
+                        "number",
+                        "special",
+                    ]
+                )
 
 
 class TestPasswordResetTokens:
@@ -423,7 +443,7 @@ class TestPasswordResetTokens:
         return JWTAuthManager(
             secret_key="test-secret-key",
             access_token_expire_minutes=30,
-            refresh_token_expire_days=7
+            refresh_token_expire_days=7,
         )
 
     def test_generate_password_reset_token(self, auth_manager):
@@ -435,7 +455,7 @@ class TestPasswordResetTokens:
         assert len(token) > 50  # 应该是一个长令牌
 
         # 验证令牌格式
-        parts = token.split('.')
+        parts = token.split(".")
         assert len(parts) == 3
 
     @pytest.mark.asyncio
@@ -454,7 +474,7 @@ class TestPasswordResetTokens:
             "invalid_reset_token",
             "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.invalid",
             "",
-            "not-a-jwt-token"
+            "not-a-jwt-token",
         ]
 
         for token in invalid_tokens:
@@ -467,7 +487,7 @@ class TestPasswordResetTokens:
         email = "test@example.com"
 
         # 模拟过期的令牌
-        with patch('src.security.jwt_auth.timedelta') as mock_timedelta:
+        with patch("src.security.jwt_auth.timedelta") as mock_timedelta:
             # 模拟令牌已过期
             mock_timedelta.return_value = timedelta(hours=-25)  # 超过24小时
 
@@ -476,7 +496,9 @@ class TestPasswordResetTokens:
             with pytest.raises(ValueError) as exc_info:
                 await auth_manager.verify_password_reset_token(token)
 
-            assert "expired" in str(exc_info.value).lower() or "过期" in str(exc_info.value)
+            assert "expired" in str(exc_info.value).lower() or "过期" in str(
+                exc_info.value
+            )
 
     @pytest.mark.asyncio
     async def test_verify_password_reset_token_wrong_secret(self, auth_manager):
@@ -498,8 +520,7 @@ class TestTokenBlacklisting:
     def auth_manager(self):
         """JWT认证管理器fixture"""
         return JWTAuthManager(
-            secret_key="test-secret-key",
-            redis_url=None  # 不使用Redis
+            secret_key="test-secret-key", redis_url=None  # 不使用Redis
         )
 
     @pytest.mark.asyncio
@@ -509,7 +530,7 @@ class TestTokenBlacklisting:
         exp = datetime.now() + timedelta(hours=1)
 
         # 无Redis连接时应该记录警告日志
-        with patch('src.security.jwt_auth.logger') as mock_logger:
+        with patch("src.security.jwt_auth.logger") as mock_logger:
             await auth_manager.blacklist_token(jti, exp)
             # 验证记录了警告日志
             mock_logger.warning.assert_called()
@@ -535,7 +556,7 @@ class TestUserAuthModel:
             email="test@example.com",
             hashed_password="$2b$12$testhashedpassword",
             role="user",
-            is_active=True
+            is_active=True,
         )
 
         assert user.id == 1
@@ -551,7 +572,7 @@ class TestUserAuthModel:
             id=1,
             username="testuser",
             email="test@example.com",
-            hashed_password="$2b$12$testhashedpassword"
+            hashed_password="$2b$12$testhashedpassword",
         )
 
         assert user.role == "user"  # 默认角色
@@ -565,7 +586,7 @@ class TestUserAuthModel:
             email="admin@example.com",
             hashed_password="$2b$12$testhashedpassword",
             role="admin",
-            is_active=True
+            is_active=True,
         )
 
         assert user.role == "admin"
@@ -578,7 +599,7 @@ class TestUserAuthModel:
             email="inactive@example.com",
             hashed_password="$2b$12$testhashedpassword",
             role="user",
-            is_active=False
+            is_active=False,
         )
 
         assert user.is_active is False
@@ -600,7 +621,7 @@ class TestTokenDataModel:
             token_type="access",
             exp=exp,
             iat=now,
-            jti="test-jti-12345"
+            jti="test-jti-12345",
         )
 
         assert token_data.user_id == 123
@@ -620,12 +641,12 @@ class TestTokenDataModel:
         token_data = TokenData(
             user_id=456,
             username="",  # 刷新令牌通常不包含用户名
-            email="",    # 刷新令牌通常不包含邮箱
-            role="",     # 刷新令牌通常不包含角色
+            email="",  # 刷新令牌通常不包含邮箱
+            role="",  # 刷新令牌通常不包含角色
             token_type="refresh",
             exp=exp,
             iat=now,
-            jti="refresh-jti-67890"
+            jti="refresh-jti-67890",
         )
 
         assert token_data.user_id == 456

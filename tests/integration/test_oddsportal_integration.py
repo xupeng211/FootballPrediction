@@ -12,7 +12,10 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.collectors.oddsportal_integration import OddsPortalIntegration, OddsPortalAdapter
+from src.collectors.oddsportal_integration import (
+    OddsPortalIntegration,
+    OddsPortalAdapter,
+)
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
@@ -254,9 +257,13 @@ async def run_all_tests():
         logger.info(f"  {test_name}: {status}")
 
     if passed == total:
-        logger.info("\n🎉 All tests passed! OddsPortal integration is working correctly.")
+        logger.info(
+            "\n🎉 All tests passed! OddsPortal integration is working correctly."
+        )
     else:
-        logger.warning(f"\n⚠️ {total - passed} test(s) failed. Please check the implementation.")
+        logger.warning(
+            f"\n⚠️ {total - passed} test(s) failed. Please check the implementation."
+        )
 
     return results
 

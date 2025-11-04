@@ -6,7 +6,13 @@ Phase 4.2 - Domain模块高价值深度优化
 
 import pytest
 from datetime import datetime, timedelta
-from src.domain.models.match import Match, MatchStatus, MatchResult, MatchScore, DomainError
+from src.domain.models.match import (
+    Match,
+    MatchStatus,
+    MatchResult,
+    MatchScore,
+    DomainError,
+)
 
 
 class TestMatchScoreComprehensive:
@@ -138,11 +144,15 @@ class TestMatchDomainComprehensive:
         assert match1.season == "2023"
 
         # 跨年格式
-        match2 = Match(home_team_id=1, away_team_id=2, league_id=100, season="2023-2024")
+        match2 = Match(
+            home_team_id=1, away_team_id=2, league_id=100, season="2023-2024"
+        )
         assert match2.season == "2023-2024"
 
         # 边界年份
-        match3 = Match(home_team_id=1, away_team_id=2, league_id=100, season="1999-2000")
+        match3 = Match(
+            home_team_id=1, away_team_id=2, league_id=100, season="1999-2000"
+        )
         assert match3.season == "1999-2000"
 
     def test_start_match_success(self):
@@ -322,12 +332,16 @@ class TestMatchDomainComprehensive:
         past_date = datetime.utcnow() - timedelta(days=5)
 
         # 未来比赛
-        future_match = Match(home_team_id=1, away_team_id=2, league_id=100, match_date=future_date)
+        future_match = Match(
+            home_team_id=1, away_team_id=2, league_id=100, match_date=future_date
+        )
         assert future_match.is_upcoming
         assert future_match.days_until_match >= 4  # 可能是4或5天，取决于精确时间
 
         # 过去比赛
-        past_match = Match(home_team_id=1, away_team_id=2, league_id=100, match_date=past_date)
+        past_match = Match(
+            home_team_id=1, away_team_id=2, league_id=100, match_date=past_date
+        )
         assert not past_match.is_upcoming
         assert past_match.days_until_match == 0
 

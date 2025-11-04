@@ -50,17 +50,20 @@ class TestCoverageImprovementExecutor:
         self.executor.run_syntax_check()
 
         # 检查是否记录了结果
-        syntax_results = [r for r in self.executor.results_log if r["category"] == "语法检查"]
+        syntax_results = [
+            r for r in self.executor.results_log if r["category"] == "语法检查"
+        ]
         assert len(syntax_results) > 0
 
     def test_help_functionality(self):
         """测试帮助功能"""
         import subprocess
+
         result = subprocess.run(
             [sys.executable, "scripts/coverage_improvement_executor.py", "--help"],
             capture_output=True,
             text=True,
-            cwd=project_root
+            cwd=project_root,
         )
         assert result.returncode == 0
         assert "测试覆盖率改进执行器" in result.stdout
@@ -69,11 +72,12 @@ class TestCoverageImprovementExecutor:
     def test_diagnosis_mode(self):
         """测试诊断模式"""
         import subprocess
+
         result = subprocess.run(
             [sys.executable, "scripts/coverage_improvement_executor.py", "--diagnosis"],
             capture_output=True,
             text=True,
-            cwd=project_root
+            cwd=project_root,
         )
         assert result.returncode == 0
         assert "快速诊断" in result.stdout
@@ -81,6 +85,7 @@ class TestCoverageImprovementExecutor:
     def teardown_method(self):
         """测试后清理"""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 

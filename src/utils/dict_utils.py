@@ -67,7 +67,9 @@ class DictUtils:
         return {k: v for k, v in d.items() if k not in keys}
 
     @staticmethod
-    def get_nested_value(d: dict[str, Any], key_path: str | list[str], default: Any = None) -> Any:
+    def get_nested_value(
+        d: dict[str, Any], key_path: str | list[str], default: Any = None
+    ) -> Any:
         """获取嵌套字典中的值
 
         Args:
@@ -95,7 +97,9 @@ class DictUtils:
             return default
 
     @staticmethod
-    def set_nested_value(d: dict[str, Any], key_path: str | list[str], value: Any) -> None:
+    def set_nested_value(
+        d: dict[str, Any], key_path: str | list[str], value: Any
+    ) -> None:
         """设置嵌套字典中的值
 
         Args:
@@ -199,6 +203,7 @@ class DictUtils:
     @staticmethod
     def convert_keys_case(d: dict[str, Any], case: str = "lower") -> dict[str, Any]:
         """转换键的大小写（递归处理嵌套字典）"""
+
         def _convert(obj, case):
             if isinstance(obj, dict):
                 if case == "lower":
@@ -272,7 +277,9 @@ def has_key(d: dict[str, Any], key: str) -> bool:
     return DictUtils.has_key(d, key)
 
 
-def get_nested_value(d: dict[str, Any], key_path: str | list[str], default: Any = None) -> Any:
+def get_nested_value(
+    d: dict[str, Any], key_path: str | list[str], default: Any = None
+) -> Any:
     """获取嵌套字典中的值"""
     if isinstance(key_path, str):
         keys = key_path.split(".")
@@ -290,7 +297,9 @@ def get_nested_value(d: dict[str, Any], key_path: str | list[str], default: Any 
         return default
 
 
-def set_nested_value(d: dict[str, Any], key_path: str | list[str], value: Any) -> dict[str, Any]:
+def set_nested_value(
+    d: dict[str, Any], key_path: str | list[str], value: Any
+) -> dict[str, Any]:
     """设置嵌套字典中的值"""
     if isinstance(key_path, str):
         keys = key_path.split(".")
@@ -324,7 +333,9 @@ def flatten_dict(d: dict[str, Any], separator: str = ".") -> dict[str, Any]:
     return _flatten(d, sep=separator)
 
 
-def filter_dict(d: dict[str, Any], keys: list[str] = None, predicate=None) -> dict[str, Any]:
+def filter_dict(
+    d: dict[str, Any], keys: list[str] = None, predicate=None
+) -> dict[str, Any]:
     """过滤字典，只保留指定的键或满足条件的键值对"""
     if predicate is not None:
         # 使用谓词函数过滤

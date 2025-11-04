@@ -38,8 +38,11 @@ class TestCoverageImprovementExecutorExtended:
         assert len(self.executor.results_log) > initial_log_count
 
         # 检查是否有文件不存在的错误记录
-        not_found_logs = [log for log in self.executor.results_log
-                        if log['category'] == '现有测试' and '不存在' in log['message']]
+        not_found_logs = [
+            log
+            for log in self.executor.results_log
+            if log["category"] == "现有测试" and "不存在" in log["message"]
+        ]
         assert len(not_found_logs) > 0
 
     def test_phase1_basic_modules_success(self):
@@ -52,8 +55,9 @@ class TestCoverageImprovementExecutorExtended:
         assert len(self.executor.results_log) > initial_log_count
 
         # 检查是否有Phase 1相关的日志 - 检查category字段
-        phase1_logs = [log for log in self.executor.results_log
-                       if log['category'] == 'Phase 1']
+        phase1_logs = [
+            log for log in self.executor.results_log if log["category"] == "Phase 1"
+        ]
         assert len(phase1_logs) > 0
 
     def test_generate_progress_report(self):
@@ -82,7 +86,7 @@ class TestCoverageImprovementExecutorExtended:
         # 检查日志结构
         log = self.executor.results_log[-1]
 
-        required_keys = ['timestamp', 'category', 'message', 'success']
+        required_keys = ["timestamp", "category", "message", "success"]
         for key in required_keys:
             assert key in log
 
@@ -116,6 +120,7 @@ class TestCoverageImprovementExecutorExtended:
 
         # 开始时间应该是最近的（1分钟内）
         import time
+
         time_diff = time.time() - self.executor.start_time.timestamp()
         assert time_diff < 60  # 应该在1分钟内
 
@@ -129,9 +134,9 @@ class TestCoverageImprovementExecutorExtended:
         assert len(self.executor.results_log) > initial_log_count
 
         log = self.executor.results_log[-1]
-        assert log['success'] is None
-        assert log['category'] == "测试类别"
-        assert log['message'] == "进行中的操作"
+        assert log["success"] is None
+        assert log["category"] == "测试类别"
+        assert log["message"] == "进行中的操作"
 
     def test_coverage_improvement_executor_initialization_with_custom_root(self):
         """测试使用自定义根目录初始化"""
@@ -155,10 +160,10 @@ class TestCoverageImprovementExecutorExtended:
 
         # 检查所有日志都有正确的结构
         for log in self.executor.results_log[-3:]:
-            assert 'timestamp' in log
-            assert 'category' in log
-            assert 'message' in log
-            assert 'success' in log
+            assert "timestamp" in log
+            assert "category" in log
+            assert "message" in log
+            assert "success" in log
 
 
 if __name__ == "__main__":

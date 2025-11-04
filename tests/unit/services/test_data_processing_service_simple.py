@@ -1,8 +1,10 @@
 """数据处理服务测试 - 简化版本"""
+
 import pytest
 import asyncio
 from unittest.mock import Mock
 from src.services.data_processing import DataProcessingService
+
 
 class TestDataProcessingServiceSimple:
     """数据处理服务测试 - 简化版本"""
@@ -36,7 +38,7 @@ class TestDataProcessingServiceSimple:
             "home_team": "Team A",
             "away_team": "Team B",
             "home_score": 2,
-            "away_score": 1
+            "away_score": 1,
         }
 
         # 处理数据
@@ -52,12 +54,7 @@ class TestDataProcessingServiceSimple:
     async def test_process_odds_data(self, service):
         """测试处理赔率数据"""
         # 准备测试数据
-        raw_data = {
-            "match_id": 1,
-            "home_win": 2.5,
-            "draw": 3.2,
-            "away_win": 2.8
-        }
+        raw_data = {"match_id": 1, "home_win": 2.5, "draw": 3.2, "away_win": 2.8}
 
         # 处理数据
         processed = await service.processors["odds"].process(raw_data)
@@ -72,12 +69,7 @@ class TestDataProcessingServiceSimple:
     async def test_process_scores_data(self, service):
         """测试处理比分数据"""
         # 准备测试数据
-        raw_data = {
-            "match_id": 1,
-            "minute": 45,
-            "scorer": "Player A",
-            "team": "Team A"
-        }
+        raw_data = {"match_id": 1, "minute": 45, "scorer": "Player A", "team": "Team A"}
 
         # 处理数据
         processed = await service.processors["scores"].process(raw_data)
