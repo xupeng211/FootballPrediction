@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 class DataSyncService:
     """数据同步服务"""
 
-    def __init__(self, database_url: str | None = None):
+    def __init__(self,
+    database_url: str | None = None):
         self.database_url = database_url or os.getenv(
             "DATABASE_URL",
-            "postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
-        )
+    "postgresql+asyncpg://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
+    )
         self.redis_manager = RedisManager()
         self.engine = None
         self.async_session = None
@@ -37,7 +38,10 @@ class DataSyncService:
         try:
             # 创建异步数据库引擎
             self.engine = create_async_engine(
-                self.database_url, echo=False, pool_size=10, max_overflow=20
+                self.database_url,
+    echo=False,
+    pool_size=10,
+    max_overflow=20
             )
 
             # 创建会话工厂
@@ -63,9 +67,14 @@ class DataSyncService:
         await self.collector.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self,
+    exc_type,
+    exc_val,
+    exc_tb):
         """异步上下文管理器出口"""
-        await self.collector.__aexit__(exc_type, exc_val, exc_tb)
+        await self.collector.__aexit__(exc_type,
+    exc_val,
+    exc_tb)
         await self.close()
 
     async def sync_all_data(self) -> dict[str, Any]:

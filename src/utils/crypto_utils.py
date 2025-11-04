@@ -48,20 +48,61 @@ class CryptoUtils:
             return f"sha256${salt}${hashed}"
 
     @staticmethod
-    def verify_password(password: str, hashed_password: str) -> bool:
-        """验证密码"""
-        try:
+def _verify_password_handle_error():
             import bcrypt
 
             HAS_BCRYPT = True
         except ImportError:
             HAS_BCRYPT = False
 
-        if password == "" and hashed_password == "":
+
+def _verify_password_check_condition():
             # 允许空密码，但在生产环境中应该禁用
             return True
 
-        if (
+def _verify_password_check_condition():
+            HAS_BCRYPT
+            and hashed_password.startswith("$2b$")
+            and hashed_password.count("$") == 3
+        ):
+            password_bytes = (
+
+def _verify_password_check_condition():
+                else hashed_password
+            )
+
+def _verify_password_check_condition():
+                    salt = parts[3]
+                    expected_hash = parts[4]
+                    salted_password = f"{password}{salt}"
+                    actual_hash = hashlib.sha256(
+                        salted_password.encode("utf-8")
+                    ).hexdigest()
+                    return actual_hash == expected_hash
+
+def _verify_password_check_condition():
+                    salt = parts[1]
+                    expected_hash = parts[2]
+                    salted_password = f"{password}{salt}"
+                    actual_hash = hashlib.sha256(
+                        salted_password.encode("utf-8")
+                    ).hexdigest()
+                    return actual_hash == expected_hash
+
+    def verify_password(password: str, hashed_password: str) -> bool:
+        """验证密码"""
+        _verify_password_handle_error()
+            import bcrypt
+
+            HAS_BCRYPT = True
+        except ImportError:
+            HAS_BCRYPT = False
+
+        _verify_password_check_condition()
+            # 允许空密码，但在生产环境中应该禁用
+            return True
+
+        _verify_password_check_condition()
             HAS_BCRYPT
             and hashed_password.startswith("$2b$")
             and hashed_password.count("$") == 3
@@ -74,7 +115,7 @@ class CryptoUtils:
                 password_bytes = password_bytes[:72]
             hashed_bytes = (
                 hashed_password.encode("utf-8")
-                if isinstance(hashed_password, str)
+                _verify_password_check_condition()
                 else hashed_password
             )
             try:
@@ -85,7 +126,7 @@ class CryptoUtils:
         elif hashed_password.startswith("$2b$") and hashed_password.count("$") > 3:
             try:
                 parts = hashed_password.split("$")
-                if len(parts) >= 5:
+                _verify_password_check_condition()
                     salt = parts[3]
                     expected_hash = parts[4]
                     salted_password = f"{password}{salt}"
@@ -99,7 +140,7 @@ class CryptoUtils:
         elif hashed_password.startswith("sha256$"):
             try:
                 parts = hashed_password.split("$")
-                if len(parts) >= 3:
+                _verify_password_check_condition()
                     salt = parts[1]
                     expected_hash = parts[2]
                     salted_password = f"{password}{salt}"
