@@ -17,22 +17,54 @@ except ImportError:
 class AdapterFactory:
     """适配器工厂类"""
 
+# 全局工厂实例
+_global_factory = AdapterFactory()
+
+
+) -> Adapter:
+    """
+    获取适配器实例（便捷函数）
+
+    Args:
+        name: 适配器名称
+        config: 配置参数
+        singleton: 是否单例
+
+    Returns:
+        适配器实例
+    """
+    return _global_factory.create_adapter(name, config, singleton)
+
+
+# 预定义的适配器名称
+class AdapterNames:
+    """预定义的适配器名称常量"""
+
+    HTTP = "http"
+    DATABASE = "database"
+    CACHE = "cache"
+    MESSAGE_QUEUE = "message_queue"
+    FILE_STORAGE = "file_storage"
+
     def __init__(self):
         """初始化适配器工厂"""
         self.adapters = {}
         self.singletons = {}
 
-    def register_adapter(self, name: str, adapter_class: type[Adapter]) -> None:
-        """
-        注册适配器
+def register_adapter(name: str, adapter_class: type[Adapter]) -> None:
+    """
+    注册适配器（便捷函数）
 
-        Args:
-            name: 适配器名称
-            adapter_class: 适配器类
-        """
-        self.adapters[name] = adapter_class
+    Args:
+        name: 适配器名称
+        adapter_class: 适配器类
+    """
+    _global_factory.register_adapter(name, adapter_class)
 
+
+# TODO: 方法 def create_adapter 过长(35行)，建议拆分
     def create_adapter(
+        """TODO: 添加函数文档"""
         self,
         name: str,
         config: dict[str, Any] | None = None,
@@ -66,39 +98,12 @@ class AdapterFactory:
 
 
 # 全局工厂实例
-_global_factory = AdapterFactory()
-
-
 def get_adapter(
+    """TODO: 添加函数文档"""
     name: str,
     config: Any = None,
     singleton: bool = True
 ) -> Adapter:
-    """
-    获取适配器实例（便捷函数）
-
-    Args:
-        name: 适配器名称
-        config: 配置参数
-        singleton: 是否单例
-
-    Returns:
-        适配器实例
-    """
-    return _global_factory.create_adapter(name, config, singleton)
-
-
-def register_adapter(name: str, adapter_class: type[Adapter]) -> None:
-    """
-    注册适配器（便捷函数）
-
-    Args:
-        name: 适配器名称
-        adapter_class: 适配器类
-    """
-    _global_factory.register_adapter(name, adapter_class)
-
-
 def get_global_factory() -> AdapterFactory:
     """
     获取全局工厂实例
@@ -110,11 +115,3 @@ def get_global_factory() -> AdapterFactory:
 
 
 # 预定义的适配器名称
-class AdapterNames:
-    """预定义的适配器名称常量"""
-
-    HTTP = "http"
-    DATABASE = "database"
-    CACHE = "cache"
-    MESSAGE_QUEUE = "message_queue"
-    FILE_STORAGE = "file_storage"
