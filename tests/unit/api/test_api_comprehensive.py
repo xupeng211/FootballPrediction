@@ -9,6 +9,7 @@ import pytest
 import json
 from unittest.mock import Mock, patch, MagicMock
 from fastapi.testclient import TestClient
+from fastapi import FastAPI
 from datetime import datetime
 
 from src.api.app import app
