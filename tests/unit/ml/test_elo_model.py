@@ -39,7 +39,7 @@ class TestEloModel:
     @pytest.fixture
     def elo_model(self):
         """创建Elo模型实例"""
-        return EloModel("test_elo", "1.0")
+        return EloModel("1.0")
 
     @pytest.fixture
     def sample_training_data(self):
@@ -79,10 +79,10 @@ class TestEloModel:
 
     def test_elo_model_initialization(self, elo_model):
         """测试Elo模型初始化"""
-        assert elo_model.model_name == "test_elo"
+        assert elo_model.model_name == "EloModel"
         assert elo_model.model_version == "1.0"
         assert not elo_model.is_trained
-        assert hasattr(elo_model, 'team_ratings')
+        assert hasattr(elo_model, 'team_elos')  # 正确的属性名
         assert hasattr(elo_model, 'k_factor')
         assert hasattr(elo_model, 'home_advantage')
 
@@ -147,10 +147,10 @@ class TestEloModel:
         unique_teams = set(sample_training_data['home_team'].tolist() +
                           sample_training_data['away_team'].tolist())
 
-        assert len(elo_model.team_ratings) == len(unique_teams)
+        assert len(elo_model.team_elos) == len(unique_teams)
 
         # 检查评级在合理范围内
-        for rating in elo_model.team_ratings.values():
+        for rating in elo_model.team_elos.values():
             assert isinstance(rating, (int, float))
             assert 1000 <= rating <= 2000  # 典型的Elo评级范围
 
@@ -341,7 +341,7 @@ class TestEloModel:
         assert model_path.exists()
 
         # 加载模型
-        new_model = EloModel("loaded_elo", "1.0")
+        new_model = EloModel("1.0")
         success = new_model.load_model(str(model_path))
         assert success
 

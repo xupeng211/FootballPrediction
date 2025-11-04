@@ -65,6 +65,7 @@ class PredictionDomainService:
             raise ValueError("比赛ID不能为空")
 
         _prediction = Prediction(
+            id=1,  # 在实际应用中，ID应该由数据库生成
             user_id=user_id,
             match_id=match.id,
         )

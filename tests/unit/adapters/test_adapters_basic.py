@@ -13,25 +13,25 @@ from unittest.mock import Mock, AsyncMock
 from typing import Any
 from datetime import datetime
 
-# 添加src路径并直接导入
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src'))
+# 添加adapters路径并直接导入
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src/adapters'))
 
 # 只导入没有语法错误的模块
 try:
-    from adapters.base import AdapterStatus, Adaptee, Target, Adapter, BaseAdapter, DataTransformer, CompositeAdapter
+    from base import AdapterStatus, Adaptee, Target, Adapter, BaseAdapter, DataTransformer, CompositeAdapter
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"Import error: {e}")
     IMPORTS_AVAILABLE = False
 
 try:
-    from adapters.registry import AdapterRegistry, AdapterError
+    from registry import AdapterRegistry, AdapterError
     REGISTRY_AVAILABLE = True
 except ImportError:
     REGISTRY_AVAILABLE = False
 
 try:
-    from adapters.factory import AdapterConfig, AdapterGroupConfig, AdapterFactory
+    from factory import AdapterConfig, AdapterGroupConfig, AdapterFactory
     FACTORY_AVAILABLE = True
 except ImportError:
     FACTORY_AVAILABLE = False

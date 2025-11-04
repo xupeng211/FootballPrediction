@@ -115,14 +115,35 @@ async def get_current_active_user(
     return current_user
 
 
-# 常用角色权限检查
-get_current_admin = require_roles("admin")
-get_current_manager = require_roles("admin", "manager")
-get_current_user_or_admin = require_roles("admin", "manager", "user")
+# 常用角色权限检查函数将在后面定义
 
 
 class RateLimiter:
     """简单的速率限制器"""
+
+    def __init__(self, max_requests: int = 100, window_seconds: int = 3600):  # TODO: 将魔法数字 100 提取为常量
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests = []
+
+    async def is_allowed(self, identifier: str) -> bool:
+        """检查是否允许请求"""
+        import time
+        current_time = time.time()
+
+        # 清理过期的请求记录
+        self.requests = [
+            req_time for req_time in self.requests
+            if current_time - req_time < self.window_seconds
+        ]
+
+        # 检查是否超过限制
+        if len(self.requests) >= self.max_requests:
+            return False
+
+        # 添加当前请求
+        self.requests.append(current_time)
+        return True
 
 # 全局速率限制器实例
 login_rate_limiter = RateLimiter(
@@ -179,12 +200,12 @@ class SecurityHeaders:
     """安全头部配置"""
 
     @staticmethod
-    async def add_security_headers() -> Dict[str, str]:
+    async def add_security_headers() -> dict[str, str]:
         """添加安全头部的中间件依赖"""
         return SecurityHeaders.get_security_headers()
 
     @staticmethod
-    def get_security_headers() -> Dict[str, str]:
+    def get_security_headers() -> dict[str, str]:
         """获取安全头部配置"""
         return {
             "X-Content-Type-Options": "nosniff",
@@ -211,7 +232,7 @@ class AuthContext:
         self.auth_manager = auth_manager
 
 
-def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """
     角色权限装饰器工厂
 
@@ -233,8 +254,39 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
     return role_checker
 
 
-# 常用角色权限检查
-# TODO: 方法 def __init__ 过长(25行)，建议拆分
+# 常用角色权限检查函数
+def require_admin():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    """要求管理员权限"""
+    return require_roles("admin")
+
+
+def require_user():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    """要求用户权限"""
+    return require_roles("admin", "user")
+
+
+def require_guest():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+    """要求访客权限"""
+    return require_roles("admin", "user", "guest")
+
+
+# 便捷的权限检查依赖
+async def get_current_admin(
+    current_user: TokenData = Depends(get_current_active_user),
+) -> TokenData:
+    """获取当前管理员用户"""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="需要管理员权限"
+        )
+    return current_user
+
+
+# 会话管理工具类
+class SessionManager:
+    """用户会话管理器"""
+
     def __init__(self, auth_manager: JWTAuthManager):
         self.auth_manager = auth_manager
 
@@ -260,30 +312,21 @@ def require_roles(*allowed_roles: str):  # TODO: 添加返回类型注解  # TOD
         logger.info(f"用户 {user_id} 的所有会话已清除")
 
 
-# TODO: 方法 def get_security_headers 过长(26行)，建议拆分
-    def get_security_headers() -> dict[str, str]:
-        """获取安全头部配置"""
-        return {
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "DENY",
-            "X-XSS-Protection": "1; mode=block",
-            "Referrer-Policy": "strict-origin-when-cross-origin",
-            "Content-Security-Policy": (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-                "style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data: https:; "
-                "font-src 'self' https:; "
-                "connect-src 'self' https:; "
-                "frame-ancestors 'none';"
-            ),
-            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",  # TODO: 将魔法数字 31536000 提取为常量
-        }
+# 全局会话管理器实例
+_session_manager: SessionManager | None = None
 
-    @staticmethod
-    async def add_security_headers() -> dict[str, str]:
-        """添加安全头部的中间件依赖"""
-        return SecurityHeaders.get_security_headers()
+
+def get_session_manager() -> SessionManager:
+    """获取全局会话管理器"""
+    global _session_manager
+    if _session_manager is None:
+        auth_manager = get_jwt_auth_manager()
+        _session_manager = SessionManager(auth_manager)
+    return _session_manager
+
+
+# 安全相关常量
+MAX_AGE_ONE_YEAR = 31536000  # 一年的秒数
 
 
 class AuthContext:
@@ -311,3 +354,48 @@ class AuthContext:
 
         # 回退到直接连接IP
         return request.client.host if request.client else "unknown"
+
+
+# 全局get_client_ip函数，重定向到类的静态方法
+def get_client_ip(request: Request) -> str:
+    """获取客户端IP地址的便捷函数"""
+    return AuthContext.get_client_ip(request)
+
+
+async def get_auth_context(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Security(security)
+) -> dict:
+    """
+    获取认证上下文信息
+
+    Args:
+        request: FastAPI请求对象
+        credentials: HTTP认证凭据
+
+    Returns:
+        包含认证上下文信息的字典
+    """
+    context = {
+        "ip_address": get_client_ip(request),
+        "user_agent": request.headers.get("user-agent", "unknown"),
+        "is_authenticated": False,
+        "user_id": None,
+        "username": None,
+        "permissions": []
+    }
+
+    if credentials:
+        try:
+            jwt_manager = get_jwt_auth_manager()
+            token_data = jwt_manager.verify_token(credentials.credentials)
+            context.update({
+                "is_authenticated": True,
+                "user_id": token_data.user_id,
+                "username": token_data.username,
+                "permissions": token_data.permissions or []
+            })
+        except Exception:
+            pass  # 保持未认证状态
+
+    return context

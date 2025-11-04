@@ -2,7 +2,6 @@
 适配器注册表
 """
 
-
 try:
     from src.adapters.base import Adapter
     from src.core.exceptions import AdapterError
@@ -18,21 +17,6 @@ except ImportError:
 class AdapterRegistry:
     """适配器注册表"""
 
-    # 全局注册表实例
-    # 全局注册表实例
-    # 全局注册表实例
-    # 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
     def __init__(self, factory=None):
         """初始化适配器注册表"""
         self.factory = factory or self._create_default_factory()
@@ -43,15 +27,13 @@ class AdapterRegistry:
         """创建默认工厂"""
         try:
             from src.adapters.factory_simple import get_global_factory
-
             return get_global_factory()
         except ImportError:
             return None
 
     def register(
-        """TODO: 添加函数文档"""
         self, name: str, adapter: Adapter, group: str | None = None
-    ) -> None:  # TODO: 添加函数文档
+    ) -> None:
         """注册适配器"""
         self.adapters[name] = adapter
         if group:
@@ -73,22 +55,25 @@ class AdapterRegistry:
         """列出所有适配器名称"""
         return list(self.adapters.keys())
 
-    def unregister(self, name: str) -> None:  # TODO: 添加函数文档
-        """注销适配器"""
-        if name in self.adapters:
-            del self.adapters[name]
-
-        # 从组中移除
-        for group_name, adapters in self.groups.items():
-            self.groups[group_name] = [a for a in adapters if name not in str(type(a))]
-
-    def clear(self) -> None:  # TODO: 添加函数文档
-        """清空注册表"""
-        self.adapters.clear()
-        self.groups.clear()
+    def list_groups(self) -> list[str]:
+        """列出所有组名称"""
+        return list(self.groups.keys())
 
 
 # 全局注册表实例
+_global_registry = AdapterRegistry()
+
+
 def get_global_registry() -> AdapterRegistry:
-    """获取全局注册表"""
+    """获取全局注册表实例"""
     return _global_registry
+
+
+def register_adapter(name: str, adapter: Adapter, group: str | None = None) -> None:
+    """注册适配器（便捷函数）"""
+    _global_registry.register(name, adapter, group)
+
+
+def get_adapter(name: str) -> Adapter:
+    """获取适配器（便捷函数）"""
+    return _global_registry.get_adapter(name)
