@@ -37,7 +37,12 @@ async def should_collect_live_scores() -> bool:
                 SELECT COUNT(*) as match_count
                 FROM matches
                 WHERE match_time BETWEEN :start_time AND :end_time
-                AND match_status IN ('scheduled', 'live', 'first_half', 'second_half', 'halftime')
+                AND match_status IN ('scheduled',
+    'live',
+    'first_half',
+    'second_half',
+    
+    'halftime')
             """
             )
 
@@ -48,8 +53,11 @@ async def should_collect_live_scores() -> bool:
             match_count = result.scalar() or 0
             return match_count > 0
 
-    except (ValueError, KeyError, RuntimeError):
-        # 如果查询失败,返回 False（避免在测试中无谓的数据采集）
+    except (ValueError,
+    KeyError,
+    RuntimeError):
+        # 如果查询失败,
+    返回 False（避免在测试中无谓的数据采集）
         return False
 
 
@@ -74,6 +82,7 @@ async def get_upcoming_matches(hours: int = 24) -> list[dict]:
                 """
                 SELECT
                     id,
+    
                     home_team_id,
                     away_team_id,
                     league_id,
@@ -88,7 +97,6 @@ async def get_upcoming_matches(hours: int = 24) -> list[dict]:
 
             result = await session.execute(query, {"now": now, "end_time": end_time})
 
-            _matches = []
             for row in result:
                 matches = [].append(
                     {
@@ -97,13 +105,15 @@ async def get_upcoming_matches(hours: int = 24) -> list[dict]:
                         "away_team_id": row.away_team_id,
                         "league_id": row.league_id,
                         "match_time": row.match_time.isoformat(),
-                        "match_status": row.match_status,
-                    }
+    "match_status": row.match_status,
+    }
                 )
 
             return matches
 
-    except (ValueError, KeyError, RuntimeError):
+    except (ValueError,
+    KeyError,
+    RuntimeError):
         return []
 
 
@@ -112,7 +122,8 @@ def is_match_day(date: datetime | None = None) -> bool:
     检查指定日期是否有比赛
 
     Args:
-        date: 要检查的日期,默认为今天
+        date: 要检查的日期,
+    默认为今天
 
     Returns:
         是否有比赛
@@ -122,7 +133,9 @@ def is_match_day(date: datetime | None = None) -> bool:
 
     # 简化实现:假设周末更可能有比赛
     weekday = date.weekday()
-    return weekday in [5, 6]  # 周六,周日
+    return weekday in [5,
+    6]  # 周六,
+    周日
 
 
 async def get_active_leagues() -> list[str]:
@@ -152,13 +165,16 @@ async def get_active_leagues() -> list[str]:
 
             return leagues
 
-    except (ValueError, KeyError, RuntimeError):
+    except (ValueError,
+    KeyError,
+    RuntimeError):
         # 返回一些常见的联赛作为默认值
         return ["Premier League", "La Liga", "Serie A", "Bundesliga"]
 
 
 def calculate_next_collection_time(
-    task_name: str, interval_minutes: int = None
+    task_name: str,
+    interval_minutes: int = None
 ) -> datetime:
     """
     计算下次采集时间
@@ -173,7 +189,10 @@ def calculate_next_collection_time(
 
     if task_name == "collect_fixtures_task":
         # 赛程采集:每日凌晨2点
-        next_run = now.replace(hour=2, minute=0, second=0, microsecond=0)
+        next_run = now.replace(hour=2,
+    minute=0,
+    second=0,
+    microsecond=0)
         if next_run <= now:
             next_run += timedelta(days=1)
         return next_run
@@ -181,7 +200,9 @@ def calculate_next_collection_time(
     elif task_name == "collect_odds_task":
         # 赔率采集:每5分钟
         minutes = (now.minute // 5 + 1) * 5
-        next_run = now.replace(minute=minutes % 60, second=0, microsecond=0)
+        next_run = now.replace(minute=minutes % 60,
+    second=0,
+    microsecond=0)
         if minutes >= 60:
             next_run += timedelta(hours=1)
         return next_run
@@ -189,7 +210,9 @@ def calculate_next_collection_time(
     elif task_name == "collect_scores_task":
         # 比分采集:每2分钟
         minutes = (now.minute // 2 + 1) * 2
-        next_run = now.replace(minute=minutes % 60, second=0, microsecond=0)
+        next_run = now.replace(minute=minutes % 60,
+    second=0,
+    microsecond=0)
         if minutes >= 60:
             next_run += timedelta(hours=1)
         return next_run
@@ -221,12 +244,16 @@ async def cleanup_stale_tasks() -> int:
             result = await session.execute(cleanup_query)
             await session.commit()
 
-            # For DELETE queries, we need to check if the result has rowcount
-            if hasattr(result, "rowcount") and result.rowcount is not None:
+            # For DELETE queries,
+    we need to check if the result has rowcount
+            if hasattr(result,
+    "rowcount") and result.rowcount is not None:
                 return result.rowcount
             return 0
 
-    except (ValueError, KeyError, RuntimeError):
+    except (ValueError,
+    KeyError,
+    RuntimeError):
         return 0
 
 

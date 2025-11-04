@@ -156,7 +156,8 @@ def _implement_postgresql_partitioning_and_indexes():
     op.execute(
         text(
             """
-        CREATE OR REPLACE FUNCTION create_prediction_partition(year_val INTEGER, month_val INTEGER)
+        CREATE OR REPLACE FUNCTION create_prediction_partition(year_val INTEGER,
+    month_val INTEGER)
         RETURNS void AS $$
         DECLARE
             partition_name TEXT;
@@ -175,6 +176,7 @@ def _implement_postgresql_partitioning_and_indexes():
             ) THEN
                 EXECUTE format(
                     'CREATE TABLE %I PARTITION OF predictions FOR VALUES FROM (%L) TO (%L)',
+    
                     partition_name, range_start, range_end
                 );
                 RAISE NOTICE '已创建预测分区: %', partition_name;

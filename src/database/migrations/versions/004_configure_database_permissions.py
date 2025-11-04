@@ -375,10 +375,29 @@ def upgrade() -> None:
     connection.execute(
         text(
             """
-        INSERT INTO permission_audit_log (username, action, privilege_type, granted, granted_by, notes)
+        INSERT INTO permission_audit_log (username,
+    action,
+    privilege_type,
+    granted,
+    granted_by,
+    notes)
         VALUES
-        ('football_reader', 'INITIAL_SETUP', 'SELECT', true, 'migration_004', '初始化只读用户权限'),
-        ('football_writer', 'INITIAL_SETUP', 'SELECT,INSERT,UPDATE', true, 'migration_004', '初始化读写用户权限'),
+        ('football_reader',
+    'INITIAL_SETUP',
+    'SELECT',
+    true,
+    'migration_004',
+    '初始化只读用户权限'),
+    
+        ('football_writer',
+    'INITIAL_SETUP',
+    'SELECT,
+    INSERT,
+    UPDATE',
+    true,
+    'migration_004',
+    '初始化读写用户权限'),
+    
         ('football_admin', 'INITIAL_SETUP', 'ALL', true, 'migration_004', '初始化管理员用户权限');
     """
         )

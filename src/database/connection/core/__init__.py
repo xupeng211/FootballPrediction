@@ -3,7 +3,6 @@ Database connection core utilities
 """
 
 import logging
-from typing import Dict, Optional
 
 from src.core.logging import get_logger
 
@@ -18,7 +17,6 @@ class ConnectionCore:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """Initialize core utilities"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -26,7 +24,6 @@ class ConnectionCore:
     async def execute_query(self, query: str, params: dict | None = None):
         """Execute a database query"""
         # Placeholder implementation
-        pass
 
     async def test_connection(self) -> bool:
         """Test database connection"""

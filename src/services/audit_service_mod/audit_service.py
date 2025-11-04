@@ -21,7 +21,6 @@ class AuditService:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.events: list[AuditEvent] = []
 

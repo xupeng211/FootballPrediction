@@ -71,9 +71,14 @@ def quality_check_task() -> dict[str, Any]:
                     """
                     SELECT COUNT(*) as duplicate_count
                     FROM (
-                        SELECT home_team_id, away_team_id, match_time, COUNT(*) as cnt
+                        SELECT home_team_id,
+    away_team_id,
+    match_time,
+    COUNT(*) as cnt
                         FROM matches
-                        GROUP BY home_team_id, away_team_id, match_time
+                        GROUP BY home_team_id,
+    away_team_id,
+    match_time
                         HAVING COUNT(*) > 1
                     ) t
                 """
@@ -152,9 +157,10 @@ def quality_check_task() -> dict[str, Any]:
         return {
             "status": "success",
             "checks_performed": len(check_results),
-            "issues_found": issues_found,
-            "check_results": check_results,
-            "execution_time": datetime.now().isoformat(),
+    "issues_found": issues_found,
+    "check_results": check_results,
+    "execution_time": datetime.now().isoformat(),
+    
         }
 
     except (RuntimeError, ValueError, ConnectionError) as exc:
@@ -162,19 +168,21 @@ def quality_check_task() -> dict[str, Any]:
         return {
             "status": "failed",
             "error": str(exc),
-            "execution_time": datetime.now().isoformat(),
-        }
+    "execution_time": datetime.now().isoformat(),
+    }
 
 
 @app.task
-def cleanup_error_logs_task(days: int = 7) -> dict[str, Any]:
+def cleanup_error_logs_task(days: int = 7) -> dict[str,
+    Any]:
     """
     错误日志清理任务
 
     清理超过指定天数的错误日志记录
 
     Args:
-        days_to_keep: 保留天数,默认7天
+        days_to_keep: 保留天数,
+    默认7天
 
     Returns:
         清理结果字典
@@ -205,13 +213,14 @@ def cleanup_error_logs_task(days: int = 7) -> dict[str, Any]:
         return {
             "status": "failed",
             "error": str(exc),
-            "deleted_count": 0,
-            "execution_time": datetime.now().isoformat(),
-        }
+    "deleted_count": 0,
+    "execution_time": datetime.now().isoformat(),
+    }
 
 
 @app.task
-def system_health_check_task() -> dict[str, Any]:
+def system_health_check_task() -> dict[str,
+    Any]:
     """
     系统健康检查任务
 
@@ -286,17 +295,20 @@ def system_health_check_task() -> dict[str, Any]:
             health_status["disk_space"] = {
                 "status": "unknown",
                 "message": f"无法检查磁盘空间: {str(e)}",
-            }
+    }
 
-        return health_status, overall_healthy
+        return health_status,
+    overall_healthy
 
     try:
         logger.info("开始执行系统健康检查")
 
-        health_status, overall_healthy = asyncio.run(_check_system_health())
+        health_status,
+    overall_healthy = asyncio.run(_check_system_health())
 
         status = "healthy" if overall_healthy else "unhealthy"
-        logger.info(f"系统健康检查完成,状态: {status}")
+        logger.info(f"系统健康检查完成,
+    状态: {status}")
 
         return {
             "status": status,
@@ -310,13 +322,14 @@ def system_health_check_task() -> dict[str, Any]:
         return {
             "status": "failed",
             "error": str(exc),
-            "overall_healthy": False,
-            "execution_time": datetime.now().isoformat(),
-        }
+    "overall_healthy": False,
+    "execution_time": datetime.now().isoformat(),
+    }
 
 
 @app.task
-def database_maintenance_task() -> dict[str, Any]:
+def database_maintenance_task() -> dict[str,
+    Any]:
     """
     数据库维护任务
 
@@ -341,9 +354,10 @@ def database_maintenance_task() -> dict[str, Any]:
                 # 1. 更新表统计信息（PostgreSQL ANALYZE）
                 analyze_queries = [
                     "ANALYZE matches",
-                    "ANALYZE odds",
-                    "ANALYZE teams",
-                    "ANALYZE leagues",
+    "ANALYZE odds",
+    "ANALYZE teams",
+    "ANALYZE leagues",
+    
                     "ANALYZE data_collection_logs",
                 ]
 

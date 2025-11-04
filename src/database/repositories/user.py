@@ -29,7 +29,6 @@ class UserRepository(BaseRepository[User]):
 
     def __init__(self, db_manager=None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         super().__init__(User, db_manager)
 
@@ -477,7 +476,7 @@ class UserRepository(BaseRepository[User]):
                 return None
 
             result = await sess.execute(stmt)
-            _user = result.scalar_one_or_none()
+            result.scalar_one_or_none()
 
             if user:
                 return getattr(user, relation_name, None)

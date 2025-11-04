@@ -93,6 +93,33 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return len(result.scalars().all())
 
+def __build_query_check_condition():
+                        query = query.where(getattr(self.model_class, key) == value)
+
+            # 添加排序
+
+def __build_query_check_condition():
+                        field = order_field[1:]
+                        query = query.order_by(getattr(self.model_class, field).desc())
+                    else:
+                        query = query.order_by(
+                            getattr(self.model_class, order_field).asc()
+                        )
+
+            # 添加分页
+
+def __build_query_check_condition():
+                query = query.offset(query_spec.offset)
+
+            # 添加预加载
+
+def __build_query_check_condition():
+                        query = query.options(
+                            selectinload(getattr(self.model_class, include_field))
+                        )
+
+        return query
+
     def _build_query(self, query_spec: QuerySpec | None) -> Select:
         """构建查询"""
         query = select(self.model_class)
@@ -101,13 +128,13 @@ class BaseRepository(Generic[T, ID], ABC):
             # 添加过滤条件
             if query_spec.filters:
                 for key, value in query_spec.filters.items():
-                    if hasattr(self.model_class, key):
+                    __build_query_check_condition()
                         query = query.where(getattr(self.model_class, key) == value)
 
             # 添加排序
             if query_spec.order_by:
                 for order_field in query_spec.order_by:
-                    if order_field.startswith("-"):
+                    __build_query_check_condition()
                         field = order_field[1:]
                         query = query.order_by(getattr(self.model_class, field).desc())
                     else:
@@ -118,24 +145,47 @@ class BaseRepository(Generic[T, ID], ABC):
             # 添加分页
             if query_spec.limit:
                 query = query.limit(query_spec.limit)
-            if query_spec.offset:
+            __build_query_check_condition()
                 query = query.offset(query_spec.offset)
 
             # 添加预加载
             if query_spec.include:
                 for include_field in query_spec.include:
-                    if hasattr(self.model_class, include_field):
+                    __build_query_check_condition()
                         query = query.options(
                             selectinload(getattr(self.model_class, include_field))
                         )
 
         return query
 
+def __apply_filters_check_condition():
+                    # 支持IN操作
+                    query = query.where(getattr(self.model_class, key).in_(value))
+
+def __apply_filters_check_condition():
+                            query = query.where(
+                                getattr(self.model_class, key).like(val)
+                            )
+
+def __apply_filters_check_condition():
+                            query = query.where(
+                                getattr(self.model_class, key).notin_(val)
+                            )
+                else:
+                    query = query.where(getattr(self.model_class, key) == value)
+        return query
+
+def __apply_filters_check_condition():
+            query = query.limit(limit)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
     def _apply_filters(self, query: Select, filters: dict[str, Any]) -> Select:
         """应用过滤条件"""
         for key, value in filters.items():
             if hasattr(self.model_class, key):
-                if isinstance(value, (list, tuple)):
+                __apply_filters_check_condition()
                     # 支持IN操作
                     query = query.where(getattr(self.model_class, key).in_(value))
                 elif isinstance(value, dict):
@@ -147,13 +197,13 @@ class BaseRepository(Generic[T, ID], ABC):
                             query = query.where(getattr(self.model_class, key) < val)
                         elif operator == "$ne":
                             query = query.where(getattr(self.model_class, key) != val)
-                        elif operator == "$like":
+                        __apply_filters_check_condition()
                             query = query.where(
                                 getattr(self.model_class, key).like(val)
                             )
                         elif operator == "$in":
                             query = query.where(getattr(self.model_class, key).in_(val))
-                        elif operator == "$nin":
+                        __apply_filters_check_condition()
                             query = query.where(
                                 getattr(self.model_class, key).notin_(val)
                             )
@@ -168,7 +218,7 @@ class BaseRepository(Generic[T, ID], ABC):
         query = select(self.model_class)
         query = self._apply_filters(query, filters)
 
-        if limit:
+        __apply_filters_check_condition()
             query = query.limit(limit)
 
         result = await self.session.execute(query)

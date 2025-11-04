@@ -18,18 +18,23 @@ class FootballDataCollector(BaseCollector):
 
     def __init__(
         self,
-        api_key: str | None = None,
-        base_url: str = "https://api.football-data.org/v4",
-        **kwargs,
+    api_key: str | None = None,
+    base_url: str = "https://api.football-data.org/v4",
+    **kwargs,
+    
     ):
         # 从环境变量获取API密钥，如果未提供则使用默认值
-        api_key = api_key or os.getenv("FOOTBALL_DATA_API_KEY", "")
+        api_key = api_key or os.getenv("FOOTBALL_DATA_API_KEY",
+    "")
         if not api_key:
             raise CollectorError("Football-Data.org API key is required")
 
         # Football-Data.org的免费限制是10请求/分钟
-        kwargs.setdefault("rate_limit", 10)
-        super().__init__(api_key, base_url, **kwargs)
+        kwargs.setdefault("rate_limit",
+    10)
+        super().__init__(api_key,
+    base_url,
+    **kwargs)
 
         # 支持的联赛代码
         self.supported_competitions = [
@@ -52,14 +57,18 @@ class FootballDataCollector(BaseCollector):
             "Accept": "application/json",
         }
 
-    def _build_url(self, endpoint: str, **params) -> str:
+    def _build_url(self,
+    endpoint: str,
+    **params) -> str:
         """构建请求URL"""
         # 移除开头的斜杠并确保正确的路径
         endpoint = endpoint.lstrip("/")
-        return urljoin(self.base_url + "/", endpoint)
+        return urljoin(self.base_url + "/",
+    endpoint)
 
     async def collect_matches(
         self,
+    
         league_id: int | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
@@ -167,9 +176,10 @@ class FootballDataCollector(BaseCollector):
                         "team_id": team_id,
                         "team_info": {
                             "id": result.data.get("id"),
-                            "name": result.data.get("name"),
-                            "crest": result.data.get("crest"),
-                        },
+    "name": result.data.get("name"),
+    "crest": result.data.get("crest"),
+    },
+    
                     },
                     response_time=result.response_time,
                 )
@@ -215,9 +225,10 @@ class FootballDataCollector(BaseCollector):
                     data={
                         "competitions": supported_competitions,
                         "count": len(supported_competitions),
-                        "total_available": len(competitions),
-                        "supported_codes": self.supported_competitions,
-                    },
+    "total_available": len(competitions),
+    "supported_codes": self.supported_competitions,
+    },
+    
                     response_time=result.response_time,
                 )
             else:
@@ -259,9 +270,10 @@ class FootballDataCollector(BaseCollector):
 
     async def collect_comprehensive_data(
         self,
-        competition_codes: list[str] | None = None,
-        days_back: int = 30,
-        days_forward: int = 7,
+    competition_codes: list[str] | None = None,
+    days_back: int = 30,
+    days_forward: int = 7,
+    
     ) -> CollectionResult:
         """
         采集全面的足球数据
@@ -364,9 +376,10 @@ class FootballDataCollector(BaseCollector):
                     # 采集即将开始的比赛
                     matches_scheduled_result = await self.collect_matches(
                         comp_id,
-                        date_from=datetime.now(),
-                        date_to=date_to,
-                        status="SCHEDULED",
+    date_from=datetime.now(),
+    date_to=date_to,
+    status="SCHEDULED",
+    
                     )
                     comp_data["matches_scheduled"] = (
                         matches_scheduled_result.data
@@ -429,9 +442,10 @@ class FootballDataCollector(BaseCollector):
             comprehensive_data["stats"].update(
                 {
                     "total_competitions": len(target_competitions),
-                    "total_teams": total_teams,
-                    "total_matches_finished": total_matches_finished,
-                    "total_matches_scheduled": total_matches_scheduled,
+    "total_teams": total_teams,
+    "total_matches_finished": total_matches_finished,
+    "total_matches_scheduled": total_matches_scheduled,
+    
                     "total_matches": total_matches_finished + total_matches_scheduled,
                     "success_rate": (
                         comprehensive_data["stats"]["successful_requests"]

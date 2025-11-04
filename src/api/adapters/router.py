@@ -69,7 +69,8 @@ class ConfigLoadRequest(BaseModel):
 class ConfigResponse(BaseModel):
     """配置响应"""
 
-    configs: list[dict[str, Any]] = []
+    configs: list[dict[str,
+    Any]] = []
 
 
 class FootballMatch(BaseModel):
@@ -108,14 +109,17 @@ class DemoComparisonResponse(BaseModel):
     """演示比较响应"""
 
     match_id: int
-    adapters: list[dict[str, Any]]
-    comparison_data: dict[str, Any]
+    adapters: list[dict[str,
+    Any]]
+    comparison_data: dict[str,
+    Any]
 
 
 class DemoTransformationResponse(BaseModel):
     """演示转换响应"""
 
-    input_data: dict[str, Any]
+    input_data: dict[str,
+    Any]
     transformed_data: dict[str, Any]
     transformation_steps: list[str]
 
@@ -165,24 +169,31 @@ async def get_registry_status():
         registry = None
 
         # 检查src.adapters.registry的mock状态
-        if hasattr(src.adapters, "registry") and src.adapters.registry is not None:
+        if hasattr(src.adapters,
+    "registry") and src.adapters.registry is not None:
             reg_candidate = src.adapters.registry
             # 检查是否是MagicMock（测试状态）
-            if hasattr(reg_candidate, "_mock_name") or hasattr(reg_candidate, "status"):
+            if hasattr(reg_candidate,
+    "_mock_name") or hasattr(reg_candidate,
+    "status"):
                 registry = reg_candidate
 
         # 检查src.api.adapters.adapter_registry的mock状态
         if (
             registry is None
-            and hasattr(src.api.adapters, "adapter_registry")
+            and hasattr(src.api.adapters,
+    "adapter_registry")
             and src.api.adapters.adapter_registry is not None
         ):
             reg_candidate = src.api.adapters.adapter_registry
             # 检查是否是MagicMock（测试状态）
-            if hasattr(reg_candidate, "_mock_name") or hasattr(reg_candidate, "status"):
+            if hasattr(reg_candidate,
+    "_mock_name") or hasattr(reg_candidate,
+    "status"):
                 registry = reg_candidate
 
-        # 如果没有找到mock,创建默认实例
+        # 如果没有找到mock,
+    创建默认实例
         if registry is None:
             registry = AdapterRegistry()
             src.adapters.registry = registry
@@ -190,7 +201,9 @@ async def get_registry_status():
 
         # 确保注册表已初始化
         try:
-            if hasattr(registry, "status") and hasattr(registry.status, "value"):
+            if hasattr(registry,
+    "status") and hasattr(registry.status,
+    "value"):
                 if registry.status.value == "inactive":
                     await registry.initialize()
             else:
@@ -199,7 +212,6 @@ async def get_registry_status():
         except Exception as e:
             # 初始化失败时静默处理（可能是mock对象）
             logger.warning(f"Adapter registry initialization failed: {e}")
-            pass
 
         # 获取健康状态
         try:
@@ -267,7 +279,8 @@ async def initialize_registry():
         await registry.initialize()
         return {"status": "success", "message": "适配器注册表已初始化"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,
+    detail=str(e))
 
 
 @router.post("/registry/shutdown")
@@ -282,22 +295,29 @@ async def shutdown_registry():
         registry = None
 
         # 检查src.adapters.registry的mock状态
-        if hasattr(src.adapters, "registry") and src.adapters.registry is not None:
+        if hasattr(src.adapters,
+    "registry") and src.adapters.registry is not None:
             reg_candidate = src.adapters.registry
-            if hasattr(reg_candidate, "_mock_name") or hasattr(reg_candidate, "status"):
+            if hasattr(reg_candidate,
+    "_mock_name") or hasattr(reg_candidate,
+    "status"):
                 registry = reg_candidate
 
         # 检查src.api.adapters.adapter_registry的mock状态
         if (
             registry is None
-            and hasattr(src.api.adapters, "adapter_registry")
+            and hasattr(src.api.adapters,
+    "adapter_registry")
             and src.api.adapters.adapter_registry is not None
         ):
             reg_candidate = src.api.adapters.adapter_registry
-            if hasattr(reg_candidate, "_mock_name") or hasattr(reg_candidate, "status"):
+            if hasattr(reg_candidate,
+    "_mock_name") or hasattr(reg_candidate,
+    "status"):
                 registry = reg_candidate
 
-        # 如果没有找到mock,创建默认实例
+        # 如果没有找到mock,
+    创建默认实例
         if registry is None:
             registry = AdapterRegistry()
             src.adapters.registry = registry
@@ -313,11 +333,11 @@ async def shutdown_registry():
         except Exception as e:
             # 关闭失败时静默处理（可能是mock对象）
             logger.warning(f"Registry shutdown failed: {e}")
-            pass
 
         return {"status": "success", "message": "适配器注册表已关闭"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,
+    detail=str(e))
 
 
 # Configuration endpoints
@@ -334,12 +354,15 @@ async def get_adapter_configs():
 
         # 检查src.api.adapters.adapter_factory的mock状态
         if (
-            hasattr(src.api.adapters, "adapter_factory")
+            hasattr(src.api.adapters,
+    "adapter_factory")
             and src.api.adapters.adapter_factory is not None
         ):
             factory_candidate = src.api.adapters.adapter_factory
-            if hasattr(factory_candidate, "_mock_name") or hasattr(
-                factory_candidate, "get_adapter_config"
+            if hasattr(factory_candidate,
+    "_mock_name") or hasattr(
+                factory_candidate,
+    "get_adapter_config"
             ):
                 factory = factory_candidate
 
@@ -369,7 +392,6 @@ async def get_adapter_configs():
                 }
             except Exception as e:
                 logger.warning(f"Status details failed: {e}")
-                pass
 
         # 默认返回 - 测试期望的格式
         return {
@@ -405,21 +427,30 @@ async def load_adapter_config(config_data: ConfigLoadRequest):
             "status": "success",
             "message": f"Configuration '{config_data.name}' loaded successfully",
             "config": config_data.dict(),
-        }
+    }
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,
+    detail=str(e))
 
 
 # Football data endpoints
 @router.get("/football/matches")
 async def get_football_matches(
-    league_id: int | None = Query(None, description="联赛ID"),
-    team_id: int | None = Query(None, description="球队ID"),
-    date_from: str | None = Query(None, description="开始日期 (YYYY-MM-DD)"),
-    date_to: str | None = Query(None, description="结束日期 (YYYY-MM-DD)"),
-    live: bool | None = Query(None, description="仅直播比赛"),
+    league_id: int | None = Query(None,
+    description="联赛ID"),
+    
+    team_id: int | None = Query(None,
+    description="球队ID"),
+    date_from: str | None = Query(None,
+    description="开始日期 (YYYY-MM-DD)"),
+    
+    date_to: str | None = Query(None,
+    description="结束日期 (YYYY-MM-DD)"),
+    live: bool | None = Query(None,
+    description="仅直播比赛"),
+    
 ):
     """获取足球比赛列表"""
     try:
@@ -429,11 +460,13 @@ async def get_football_matches(
 
         # 优先使用测试mock的实例
         if (
-            hasattr(src.api.adapters, "adapter_registry")
+            hasattr(src.api.adapters,
+    "adapter_registry")
             and src.api.adapters.adapter_registry is not None
         ):
             registry = src.api.adapters.adapter_registry
-        elif hasattr(src.adapters, "registry") and src.adapters.registry is not None:
+        elif hasattr(src.adapters,
+    "registry") and src.adapters.registry is not None:
             registry = src.adapters.registry
         else:
             # 创建默认实例
@@ -448,7 +481,8 @@ async def get_football_matches(
             matches = [
                 FootballMatch(
                     id=123,
-                    home_team="Manchester United",
+    home_team="Manchester United",
+    
                     away_team="Liverpool",
                     league="Premier League",
                     date="2023-12-03",
@@ -457,9 +491,10 @@ async def get_football_matches(
                 ),
                 FootballMatch(
                     id=124,
-                    home_team="Arsenal",
-                    away_team="Chelsea",
-                    league="Premier League",
+    home_team="Arsenal",
+    away_team="Chelsea",
+    league="Premier League",
+    
                     date="2023-12-04",
                     status="live",
                     score="1-1",
@@ -480,9 +515,10 @@ async def get_football_matches(
             return {
                 "source": "demo_adapter",
                 "total_matches": len(matches),
-                "matches": [m.dict() for m in matches],
-                "filters": filters,
-                "message": "使用演示适配器返回模拟数据",
+    "matches": [m.dict() for m in matches],
+    "filters": filters,
+    "message": "使用演示适配器返回模拟数据",
+    
             }
 
         # 实际适配器模式 - 这里应该调用真实的适配器
@@ -490,9 +526,10 @@ async def get_football_matches(
         matches = [
             FootballMatch(
                 id=123,
-                home_team="Manchester United",
-                away_team="Liverpool",
-                league="Premier League",
+    home_team="Manchester United",
+    away_team="Liverpool",
+    league="Premier League",
+    
                 date="2023-12-03",
                 status="finished",
                 score="3-0",
@@ -513,9 +550,10 @@ async def get_football_matches(
         return {
             "source": "api_football",
             "total_matches": len(matches),
-            "matches": [m.dict() for m in matches],
-            "filters": filters,
-            "message": "数据获取成功",
+    "matches": [m.dict() for m in matches],
+    "filters": filters,
+    "message": "数据获取成功",
+    
         }
 
     except Exception as e:
@@ -527,13 +565,15 @@ async def get_football_match(match_id: int):
     """获取特定足球比赛详情"""
     try:
         if match_id == 999:
-            raise HTTPException(status_code=404, detail="Match not found")
+            raise HTTPException(status_code=404,
+    detail="Match not found")
 
         # 模拟比赛详情
         match = FootballMatch(
             id=match_id,
-            home_team="Manchester United",
-            away_team="Liverpool",
+    home_team="Manchester United",
+    away_team="Liverpool",
+    
             league="Premier League",
             date="2023-12-03",
             status="finished",
@@ -545,13 +585,17 @@ async def get_football_match(match_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,
+    detail=str(e))
 
 
 @router.get("/football/teams")
 async def get_football_teams(
-    league_id: int | None = Query(None, description="联赛ID"),
-    search: str | None = Query(None, description="搜索关键词"),
+    league_id: int | None = Query(None,
+    description="联赛ID"),
+    search: str | None = Query(None,
+    description="搜索关键词"),
+    
 ):
     """获取足球队列表"""
     try:
@@ -559,16 +603,18 @@ async def get_football_teams(
         teams = [
             FootballTeam(
                 id=111,
-                name="Manchester United",
-                league="Premier League",
-                country="England",
+    name="Manchester United",
+    league="Premier League",
+    country="England",
+    
                 founded=1878,
             ),
             FootballTeam(
                 id=222,
-                name="Liverpool",
-                league="Premier League",
-                country="England",
+    name="Liverpool",
+    league="Premier League",
+    country="England",
+    
                 founded=1892,
             ),
         ]
@@ -585,16 +631,19 @@ async def get_football_teams(
         return {
             "source": "api_football",
             "total_teams": len(teams),
-            "teams": [t.dict() for t in teams],
-            "filters": filters,
-        }
+    "teams": [t.dict() for t in teams],
+    "filters": filters,
+    }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,
+    detail=str(e))
 
 
 @router.get("/football/teams/{team_id}/players")
 async def get_team_players(
-    team_id: int, season: int | None = Query(None, description="赛季")
+    team_id: int,
+    season: int | None = Query(None,
+    description="赛季")
 ):
     """获取球队球员列表"""
     try:
@@ -602,32 +651,38 @@ async def get_team_players(
         players = [
             FootballPlayer(
                 id=1001,
-                name="Marcus Rashford",
+    name="Marcus Rashford",
+    
                 position="Forward",
                 age=26,
                 team="Manchester United",
             ),
             FootballPlayer(
                 id=1002,
-                name="Bruno Fernandes",
-                position="Midfielder",
-                age=29,
+    name="Bruno Fernandes",
+    position="Midfielder",
+    age=29,
+    
                 team="Manchester United",
             ),
         ]
 
         return {"players": [p.dict() for p in players]}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,
+    detail=str(e))
 
 
 # Demo endpoints
-@router.get("/demo/comparison", response_model=DemoComparisonResponse)
-async def demo_adapter_comparison(match_id: int = Query(..., description="比赛ID")):
+@router.get("/demo/comparison",
+    response_model=DemoComparisonResponse)
+async def demo_adapter_comparison(match_id: int = Query(...,
+    description="比赛ID")):
     """演示适配器比较功能"""
     try:
         return DemoComparisonResponse(
             match_id=match_id,
+    
             adapters=[
                 {"name": "api_football", "status": "active", "response_time": 150},
                 {"name": "opta", "status": "active", "response_time": 200},

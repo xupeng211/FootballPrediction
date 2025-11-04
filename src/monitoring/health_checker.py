@@ -160,25 +160,17 @@ class HealthChecker:
 
         return health
 
-    async def check_system_resources(self) -> dict[str, Any]:
-        """检查系统资源健康状态"""
-        import psutil
-
-        health = {
-            "status": HealthStatus.HEALTHY,
-            "timestamp": datetime.utcnow().isoformat(),
-            "details": {},
-        }
-
-        try:
+def _check_system_resources_handle_error():
             # CPU
             cpu_percent = psutil.cpu_percent(interval=1)
             health["details"]["cpu"] = {"usage_percent": cpu_percent}
 
-            if cpu_percent > 90:
+
+def _check_system_resources_check_condition():
                 health["status"] = HealthStatus.UNHEALTHY
                 health["details"]["cpu"]["error"] = f"High CPU usage: {cpu_percent}%"
-            elif cpu_percent > 80:
+
+def _check_system_resources_check_condition():
                 health["status"] = HealthStatus.DEGRADED
                 health["details"]["cpu"]["warning"] = f"High CPU usage: {cpu_percent}%"
 
@@ -189,12 +181,14 @@ class HealthChecker:
                 "available_gb": memory.available / (1024**3),
             }
 
-            if memory.percent > 90:
+
+def _check_system_resources_check_condition():
                 health["status"] = HealthStatus.UNHEALTHY
                 health["details"]["memory"][
                     "error"
                 ] = f"High memory usage: {memory.percent}%"
-            elif memory.percent > 80:
+
+def _check_system_resources_check_condition():
                 health["status"] = HealthStatus.DEGRADED
                 health["details"]["memory"][
                     "warning"
@@ -202,9 +196,8 @@ class HealthChecker:
 
             # 磁盘
             disk_issues = []
-            for partition in psutil.disk_partitions():
-                if partition.mountpoint and partition.device.startswith("/dev/"):
-                    try:
+
+def _check_system_resources_handle_error():
                         usage = psutil.disk_usage(partition.mountpoint)
                         percent = (usage.used / usage.total) * 100
                         health["details"]["disk"] = health["details"].get("disk", {})
@@ -213,16 +206,18 @@ class HealthChecker:
                             "free_gb": usage.free / (1024**3),
                         }
 
-                        if percent > 95:
+
+def _check_system_resources_check_condition():
                             disk_issues.append(
                                 f"{partition.mountpoint}: {percent:.1f}%"
                             )
-                        elif percent > 85:
+
+def _check_system_resources_check_condition():
                             health["status"] = HealthStatus.DEGRADED
                     except PermissionError:
                         continue
 
-            if disk_issues:
+def _check_system_resources_check_condition():
                 health["status"] = HealthStatus.UNHEALTHY
                 health["details"]["disk"][
                     "error"
@@ -238,7 +233,139 @@ class HealthChecker:
 
             # 判断负载是否过高（基于CPU核心数）
             cpu_count = psutil.cpu_count()
-            if load_avg[0] > cpu_count * 2:
+
+def _check_system_resources_check_condition():
+                health["status"] = HealthStatus.UNHEALTHY
+                health["details"]["load"][
+                    "error"
+                ] = f"High load: {load_avg[0]:.2f} (cores: {cpu_count})"
+
+        except (ValueError, RuntimeError, TimeoutError) as e:
+            health["status"] = HealthStatus.UNHEALTHY
+            health["details"]["error"] = str(e)
+
+        return health
+
+def _check_system_resources_handle_error():
+            # 检查进程
+            import psutil
+
+            process = psutil.Process()
+
+            # 进程状态
+
+def _check_system_resources_check_condition():
+                health["status"] = HealthStatus.UNHEALTHY
+                health["details"]["process"] = {"error": "Process is zombie"}
+
+            # 文件描述符
+
+def _check_system_resources_handle_error():
+                num_fds = process.num_fds()
+                health["details"]["file_descriptors"] = num_fds
+
+                # 检查文件描述符限制
+                import resource
+
+                soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+
+def _check_system_resources_check_condition():
+                    health["status"] = HealthStatus.DEGRADED
+                    health["details"][
+                        "file_descriptors_warning"
+                    ] = f"Approaching limit: {num_fds}/{soft_limit}"
+            except (AttributeError, OSError):
+                pass
+
+def _check_system_resources_check_condition():
+                health["status"] = HealthStatus.DEGRADED
+                health["details"]["errors"] = f"Recent errors: {recent_errors}"
+
+        except (ValueError, RuntimeError, TimeoutError) as e:
+            health["status"] = HealthStatus.UNHEALTHY
+            health["details"]["error"] = str(e)
+
+        return health
+
+    async def check_system_resources(self) -> dict[str, Any]:
+        """检查系统资源健康状态"""
+        import psutil
+
+        health = {
+            "status": HealthStatus.HEALTHY,
+            "timestamp": datetime.utcnow().isoformat(),
+            "details": {},
+        }
+
+        _check_system_resources_handle_error()
+            # CPU
+            cpu_percent = psutil.cpu_percent(interval=1)
+            health["details"]["cpu"] = {"usage_percent": cpu_percent}
+
+            _check_system_resources_check_condition()
+                health["status"] = HealthStatus.UNHEALTHY
+                health["details"]["cpu"]["error"] = f"High CPU usage: {cpu_percent}%"
+            _check_system_resources_check_condition()
+                health["status"] = HealthStatus.DEGRADED
+                health["details"]["cpu"]["warning"] = f"High CPU usage: {cpu_percent}%"
+
+            # 内存
+            memory = psutil.virtual_memory()
+            health["details"]["memory"] = {
+                "usage_percent": memory.percent,
+                "available_gb": memory.available / (1024**3),
+            }
+
+            _check_system_resources_check_condition()
+                health["status"] = HealthStatus.UNHEALTHY
+                health["details"]["memory"][
+                    "error"
+                ] = f"High memory usage: {memory.percent}%"
+            _check_system_resources_check_condition()
+                health["status"] = HealthStatus.DEGRADED
+                health["details"]["memory"][
+                    "warning"
+                ] = f"High memory usage: {memory.percent}%"
+
+            # 磁盘
+            disk_issues = []
+            for partition in psutil.disk_partitions():
+                if partition.mountpoint and partition.device.startswith("/dev/"):
+                    _check_system_resources_handle_error()
+                        usage = psutil.disk_usage(partition.mountpoint)
+                        percent = (usage.used / usage.total) * 100
+                        health["details"]["disk"] = health["details"].get("disk", {})
+                        health["details"]["disk"][partition.mountpoint] = {
+                            "usage_percent": percent,
+                            "free_gb": usage.free / (1024**3),
+                        }
+
+                        _check_system_resources_check_condition()
+                            disk_issues.append(
+                                f"{partition.mountpoint}: {percent:.1f}%"
+                            )
+                        _check_system_resources_check_condition()
+                            health["status"] = HealthStatus.DEGRADED
+                    except PermissionError:
+                        continue
+
+            _check_system_resources_check_condition()
+                health["status"] = HealthStatus.UNHEALTHY
+                health["details"]["disk"][
+                    "error"
+                ] = f"Disk full: {', '.join(disk_issues)}"
+
+            # 负载
+            load_avg = psutil.getloadavg()
+            health["details"]["load"] = {
+                "1min": load_avg[0],
+                "5min": load_avg[1],
+                "15min": load_avg[2],
+            }
+
+            # 判断负载是否过高（基于CPU核心数）
+            cpu_count = psutil.cpu_count()
+            _check_system_resources_check_condition()
                 health["status"] = HealthStatus.UNHEALTHY
                 health["details"]["load"][
                     "error"
@@ -258,19 +385,19 @@ class HealthChecker:
             "details": {},
         }
 
-        try:
+        _check_system_resources_handle_error()
             # 检查进程
             import psutil
 
             process = psutil.Process()
 
             # 进程状态
-            if process.status() == psutil.STATUS_ZOMBIE:
+            _check_system_resources_check_condition()
                 health["status"] = HealthStatus.UNHEALTHY
                 health["details"]["process"] = {"error": "Process is zombie"}
 
             # 文件描述符
-            try:
+            _check_system_resources_handle_error()
                 num_fds = process.num_fds()
                 health["details"]["file_descriptors"] = num_fds
 
@@ -278,7 +405,7 @@ class HealthChecker:
                 import resource
 
                 soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
-                if num_fds > soft_limit * 0.9:
+                _check_system_resources_check_condition()
                     health["status"] = HealthStatus.DEGRADED
                     health["details"][
                         "file_descriptors_warning"
@@ -300,7 +427,7 @@ class HealthChecker:
 
             # 检查最近的错误日志
             recent_errors = self._check_recent_errors()
-            if recent_errors > 10:
+            _check_system_resources_check_condition()
                 health["status"] = HealthStatus.DEGRADED
                 health["details"]["errors"] = f"Recent errors: {recent_errors}"
 

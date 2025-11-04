@@ -276,7 +276,13 @@ def upgrade():
                 connection.execute(
                     text(
                         """
-            INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
+            INSERT INTO permission_audit_log (username,
+    action,
+    table_name,
+    privilege_type,
+    granted,
+    granted_by,
+    notes)
             VALUES ('system', 'CREATE_TABLE', 'audit_logs', 'DDL', true, 'migration_005',
                    '创建增强的权限审计日志表,支持详细的操作记录和合规要求');
         """
@@ -300,7 +306,13 @@ def downgrade():
             connection.execute(
                 text(
                     """
-                INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
+                INSERT INTO permission_audit_log (username,
+    action,
+    table_name,
+    privilege_type,
+    granted,
+    granted_by,
+    notes)
                 VALUES ('system', 'DROP_TABLE', 'audit_logs', 'DDL', false, 'migration_005_downgrade',
                        '回滚:删除增强的权限审计日志表');
             """

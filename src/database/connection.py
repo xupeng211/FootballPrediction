@@ -47,8 +47,11 @@ Integrates retry mechanisms to improve connection reliability.
     DB_NAME: 数据库名称 / Database name
     DB_USER: 数据库用户名 / Database username
     DB_PASSWORD: 数据库密码 / Database password
-    DATABASE_RETRY_MAX_ATTEMPTS: 数据库重试最大尝试次数，默认5 / Database retry max attempts, default 5
-    DATABASE_RETRY_BASE_DELAY: 数据库重试基础延迟秒数,默认1.0 / Database retry base delay in seconds, default 1.0
+    DATABASE_RETRY_MAX_ATTEMPTS: 数据库重试最大尝试次数，默认5 / Database retry max attempts,
+    default 5
+    DATABASE_RETRY_BASE_DELAY: 数据库重试基础延迟秒数,
+    默认1.0 / Database retry base delay in seconds,
+    default 1.0
 
 依赖 / Dependencies:
     - sqlalchemy: 数据库ORM框架 / Database ORM framework
@@ -56,7 +59,8 @@ Integrates retry mechanisms to improve connection reliability.
     - src.utils.retry: 重试机制 / Retry mechanism
 
 重构历史 / Refactoring History:
-    - 原始文件:1110行,包含所有数据库连接管理功能
+    - 原始文件:1110行,
+    包含所有数据库连接管理功能
     - 重构为模块化结构:
       - roles.py: 数据库角色定义
       - config.py: 数据库配置

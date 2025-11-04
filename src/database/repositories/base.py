@@ -437,7 +437,6 @@ class BaseRepository(ABC, Generic[T]):
         Returns:
             关联数据
         """
-        pass
 
     def get_model_class(self) -> type[T]:
         """获取模型类"""
