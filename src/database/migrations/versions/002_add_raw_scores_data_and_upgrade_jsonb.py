@@ -183,7 +183,8 @@ def upgrade() -> None:
     if db_dialect != "sqlite":
         op.execute(
             """
-        CREATE OR REPLACE FUNCTION create_monthly_partition(table_name TEXT, year_month TEXT)
+        CREATE OR REPLACE FUNCTION create_monthly_partition(table_name TEXT,
+    year_month TEXT)
         RETURNS void AS $$
         DECLARE
             partition_name TEXT;

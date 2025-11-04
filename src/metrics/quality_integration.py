@@ -57,36 +57,48 @@ class QualityMetricsIntegrator:
             self.logger.error(f"集成高级度量失败: {e}")
             return existing_report
 
-    def _calculate_enhanced_overall_score(self, report: dict[str, Any]) -> float:
+    def _calculate_enhanced_overall_score(self,
+    report: dict[str,
+    Any]) -> float:
         """计算增强的综合分数"""
         scores = []
 
         # 原始质量分数
-        original_score = report.get("overall_score", 0)
+        original_score = report.get("overall_score",
+    0)
         scores.append(original_score)
 
         # 高级度量分数
-        advanced_score = report.get("advanced_metrics", {}).get(
+        advanced_score = report.get("advanced_metrics",
+    {}).get(
             "overall_advanced_score", 0
         )
         scores.append(advanced_score)
 
         # 代码质量分数
-        code_quality_score = report.get("code_quality_score", 0)
+        code_quality_score = report.get("code_quality_score",
+    0)
         scores.append(code_quality_score)
 
         # 安全分数
-        security_score = report.get("security_score", 0)
+        security_score = report.get("security_score",
+    0)
         scores.append(security_score)
 
         # 计算加权平均（高级度量权重更高）
         if scores:
-            # 原始分数 30%，高级度量 40%,代码质量 15%,安全 15%
+            # 原始分数 30%，高级度量 40%,
+    代码质量 15%,
+    安全 15%
             weights = [0.3, 0.4, 0.15, 0.15]
             weighted_score = sum(
-                score * weight for score, weight in zip(scores, weights, strict=False)
+                score * weight for score,
+    weight in zip(scores,
+    weights,
+    strict=False)
             )
-            return round(weighted_score, 2)
+            return round(weighted_score,
+    2)
 
         return 0.0
 
@@ -101,29 +113,47 @@ class QualityMetricsIntegrator:
         if complexity:
             summary["complexity"] = {
                 "avg_cyclomatic_complexity": complexity.get(
-                    "avg_cyclomatic_complexity", 0
+                    "avg_cyclomatic_complexity",
+    0
                 ),
-                "avg_cognitive_complexity": complexity.get(
-                    "avg_cognitive_complexity", 0
+    "avg_cognitive_complexity": complexity.get(
+                    "avg_cognitive_complexity",
+    0
                 ),
+    
                 "avg_maintainability_index": complexity.get(
-                    "avg_maintainability_index", 0
+                    "avg_maintainability_index",
+    0
                 ),
-                "max_nesting_depth": complexity.get("max_nesting_depth", 0),
-                "total_functions": complexity.get("total_functions", 0),
-                "total_classes": complexity.get("total_classes", 0),
+    "max_nesting_depth": complexity.get("max_nesting_depth",
+    0),
+    
+                "total_functions": complexity.get("total_functions",
+    0),
+    "total_classes": complexity.get("total_classes",
+    0),
+    
             }
 
         # 技术债务摘要
         debt = advanced_metrics.get("technical_debt", {})
         if debt:
             summary["technical_debt"] = {
-                "debt_score": debt.get("debt_score", 0),
-                "code_smells_count": len(debt.get("code_smells", [])),
-                "duplicate_code_count": len(debt.get("duplicate_code", [])),
-                "long_methods_count": len(debt.get("long_methods", [])),
-                "large_classes_count": len(debt.get("large_classes", [])),
-                "security_issues_count": len(debt.get("security_issues", [])),
+                "debt_score": debt.get("debt_score",
+    0),
+    "code_smells_count": len(debt.get("code_smells",
+    [])),
+    
+                "duplicate_code_count": len(debt.get("duplicate_code",
+    [])),
+    "long_methods_count": len(debt.get("long_methods",
+    [])),
+    
+                "large_classes_count": len(debt.get("large_classes",
+    [])),
+    "security_issues_count": len(debt.get("security_issues",
+    [])),
+    
             }
 
         # 性能摘要
@@ -133,8 +163,11 @@ class QualityMetricsIntegrator:
             summary["performance"] = {
                 "cpu_percent": system_metrics.get("cpu_percent", 0),
                 "memory_percent": system_metrics.get("memory", {}).get("percent", 0),
-                "disk_percent": system_metrics.get("disk", {}).get("percent", 0),
-                "process_count": system_metrics.get("process_count", 0),
+                "disk_percent": system_metrics.get("disk", {}).get("percent",
+    0),
+    "process_count": system_metrics.get("process_count",
+    0),
+    
             }
 
         # 生成建议
@@ -226,9 +259,10 @@ def main():
     # 模拟现有质量报告
     existing_report = {
         "timestamp": datetime.now().isoformat(),
-        "overall_score": 9.6,
-        "coverage_percentage": 84.4,
-        "code_quality_score": 10.0,
+    "overall_score": 9.6,
+    "coverage_percentage": 84.4,
+    "code_quality_score": 10.0,
+    
         "security_score": 10.0,
         "ruff_errors": 0,
         "mypy_errors": 0,
@@ -243,7 +277,9 @@ def main():
     print(f"原始综合分数: {existing_report['overall_score']}")
     print(f"增强综合分数: {enhanced_report.get('enhanced_overall_score', 0)}")
     print(
-        f"高级度量分数: {enhanced_report.get('advanced_metrics', {}).get('overall_advanced_score', 0)}"
+        f"高级度量分数: {enhanced_report.get('advanced_metrics',
+    {}).get('overall_advanced_score',
+    0)}"
     )
 
     # 显示高级摘要

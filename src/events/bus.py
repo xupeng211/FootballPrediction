@@ -23,11 +23,15 @@ class EventBus:
     pass  # 添加pass语句
     """事件总线"
 
-    负责事件的发布,订阅和分发.
-    Responsible for event publishing, subscription, and distribution.
+    负责事件的发布,
+    订阅和分发.
+    Responsible for event publishing,
+    subscription,
+    and distribution.
     """
 
-    def __init__(self, max_workers: int = 10):
+    def __init__(self,
+    max_workers: int = 10):
         """函数文档字符串"""
         # 添加pass语句
         """初始化事件总线"
@@ -52,15 +56,19 @@ class EventBus:
             logger.info("EventBus started")
 
             # 启动所有订阅的处理器
-            for event_type, handlers in self._subscribers.items():
+            for event_type,
+    handlers in self._subscribers.items():
                 for handler in handlers:
                     if not handler.is_subscribed_to(event_type):
                         queue: Any = asyncio.Queue()
                         self._queues[event_type] = queue
-                        handler.add_subscription(event_type, queue)
+                        handler.add_subscription(event_type,
+    queue)
 
                         task = asyncio.create_task(
-                            self._run_handler(handler, event_type, queue)
+                            self._run_handler(handler,
+    event_type,
+    queue)
                         )
                         self._tasks.append(task)
 
@@ -86,7 +94,8 @@ class EventBus:
 
             # 等待任务完成
             if self._tasks:
-                await asyncio.gather(*self._tasks, return_exceptions=True)
+                await asyncio.gather(*self._tasks,
+    return_exceptions=True)
             self._tasks.clear()
 
             # 停止所有处理器
@@ -105,8 +114,9 @@ class EventBus:
 
     async def subscribe(
         self,
-        event_type: str,
-        handler: EventHandler,
+    event_type: str,
+    handler: EventHandler,
+    
         filters: list[EventFilter] | None = None,
     ) -> None:
         """订阅事件"
@@ -124,14 +134,18 @@ class EventBus:
                 if filters:
                     self._filters[handler] = filters
 
-                # 如果总线已经在运行,立即启动处理器
+                # 如果总线已经在运行,
+    立即启动处理器
                 if self._running and not handler.is_subscribed_to(event_type):
                     queue: Any = asyncio.Queue()
                     self._queues[event_type] = queue
-                    handler.add_subscription(event_type, queue)
+                    handler.add_subscription(event_type,
+    queue)
 
                     task = asyncio.create_task(
-                        self._run_handler(handler, event_type, queue)
+                        self._run_handler(handler,
+    event_type,
+    queue)
                     )
                     self._tasks.append(task)
 
@@ -199,15 +213,21 @@ class EventBus:
         # 立即处理事件
         tasks = []
         for handler in handlers:
-            if self._should_handle(handler, event):
-                task = asyncio.create_task(self._handle_event(handler, event))
+            if self._should_handle(handler,
+    event):
+                task = asyncio.create_task(self._handle_event(handler,
+    event))
                 tasks.append(task)
 
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.gather(*tasks,
+    return_exceptions=True)
 
     async def _run_handler(
-        self, handler: EventHandler, event_type: str, queue: asyncio.Queue
+        self,
+    handler: EventHandler,
+    event_type: str,
+    queue: asyncio.Queue
     ) -> None:
         """运行事件处理器"
 
@@ -220,19 +240,23 @@ class EventBus:
             while self._running:
                 try:
                     # 等待事件,设置超时以避免永久阻塞
-                    event = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    event = await asyncio.wait_for(queue.get(),
+    timeout=1.0)
 
                     if event is None:  # 停止信号
                         break
 
                     # 检查过滤器
-                    if self._should_handle(handler, event):
-                        await self._handle_event(handler, event)
+                    if self._should_handle(handler,
+    event):
+                        await self._handle_event(handler,
+    event)
 
                     queue.task_done()
 
                 except TimeoutError:
-                    # 超时继续,保持运行
+                    # 超时继续,
+    保持运行
                     continue
                 except (
                     ValueError,
@@ -248,7 +272,9 @@ class EventBus:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"Fatal error in handler {handler.name}: {e}")
 
-    async def _handle_event(self, handler: EventHandler, event: Event) -> None:
+    async def _handle_event(self,
+    handler: EventHandler,
+    event: Event) -> None:
         """处理单个事件"
 
         Args:
@@ -257,23 +283,32 @@ class EventBus:
         """
         try:
             # 在线程池中执行同步处理器
-            if hasattr(handler.handle, "__self__"):
+            if hasattr(handler.handle,
+    "__self__"):
                 # 检查是否是异步方法
                 if asyncio.iscoroutinefunction(handler.handle):
                     await handler.handle(event)
                 else:
                     loop = asyncio.get_event_loop()
-                    await loop.run_in_executor(self._executor, handler.handle, event)
+                    await loop.run_in_executor(self._executor,
+    handler.handle,
+    event)
             else:
                 await handler.handle(event)
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
+        except (ValueError,
+    TypeError,
+    AttributeError,
+    KeyError,
+    RuntimeError) as e:
             logger.error(
                 f"Handler {handler.name} failed to process event {event.get_event_type()}: {e}",
                 exc_info=True,
             )
 
-    def _should_handle(self, handler: EventHandler, event: Event) -> bool:
+    def _should_handle(self,
+    handler: EventHandler,
+    event: Event) -> bool:
         """检查处理器是否应该处理事件"
 
         Args:
@@ -289,14 +324,16 @@ class EventBus:
             return False
 
         # 应用过滤器
-        filters = self._filters.get(handler, [])
+        filters = self._filters.get(handler,
+    [])
         for filter_obj in filters:
             if not filter_obj.should_process(event):
                 return False
 
         return True
 
-    def get_subscribers_count(self, event_type: str) -> int:
+    def get_subscribers_count(self,
+    event_type: str) -> int:
         """获取事件类型的订阅者数量"
 
         Args:
@@ -331,11 +368,12 @@ class EventBus:
         return {
             "running": self._running,
             "event_types": len(self._subscribers),
-            "total_subscribers": sum(
+    "total_subscribers": sum(
                 len(handlers) for handlers in self._subscribers.values()
             ),
-            "active_tasks": len(self._tasks),
-            "event_types_list": list(self._subscribers.keys()),
+    "active_tasks": len(self._tasks),
+    "event_types_list": list(self._subscribers.keys()),
+    
         }
 
 
@@ -382,9 +420,13 @@ def event_handler(event_types: list[str]):
     def decorator(cls: type[EventHandler]) -> type[EventHandler]:
         original_init = cls.__init__
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self,
+    *args,
+    **kwargs):
             """初始化装饰器"""
-            original_init(self, *args, **kwargs)
+            original_init(self,
+    *args,
+    **kwargs)
             # 自动订阅到事件总线
             bus = get_event_bus()
             for event_type in event_types:

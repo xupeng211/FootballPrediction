@@ -11,7 +11,6 @@ class Features:
     pass  # 添加pass语句
     """特征类 - 占位符实现"""
 
-    pass
 
 
 # 导出接口

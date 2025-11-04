@@ -29,12 +29,16 @@ class LineageReporter:
     """
     数据血缘报告器
 
-    负责向 Marquez 报告数据血缘信息,跟踪数据流转过程。
-    支持多种数据处理场景:采集、清洗,转换,聚合等.
+    负责向 Marquez 报告数据血缘信息,
+    跟踪数据流转过程。
+    支持多种数据处理场景:采集、清洗,
+    转换,
+    聚合等.
     """
 
     def __init__(
         self,
+    
         marquez_url: str = "http://localhost:5000",
         namespace: str = "football_prediction",
     ):
@@ -51,9 +55,11 @@ class LineageReporter:
 
     def start_job_run(
         self,
-        job_name: str,
-        job_type: str = "BATCH",
-        inputs: list[dict[str, Any]] | None = None,
+    job_name: str,
+    job_type: str = "BATCH",
+    inputs: list[dict[str,
+    Any]] | None = None,
+    
         description: str | None = None,
         source_location: str | None = None,
         parent_run_id: str | None = None,
@@ -101,15 +107,19 @@ class LineageReporter:
 
             run_facets["parentRun"] = parent_run.ParentRunFacet(
                 run=parent_run.ParentRun(
-                    runId=parent_run_id, namespace=self.namespace, name=job_name
+                    runId=parent_run_id,
+    namespace=self.namespace,
+    name=job_name
                 )
             )
 
         # 构建输入数据集
         input_datasets = []
         for input_info in inputs:
-            dataset_name = input_info.get("name", "unknown")
-            dataset_namespace = input_info.get("namespace", self.namespace)
+            dataset_name = input_info.get("name",
+    "unknown")
+            dataset_namespace = input_info.get("namespace",
+    self.namespace)
 
             dataset_facets = {}
             if "schema" in input_info:
@@ -120,17 +130,22 @@ class LineageReporter:
             input_datasets.append(
                 InputDataset(
                     namespace=dataset_namespace,
-                    name=dataset_name,
-                    facets=dataset_facets,
-                )
+    name=dataset_name,
+    facets=dataset_facets,
+    )
             )
 
         # 发送开始事件
         event = RunEvent(
             eventType="START",
+    
             eventTime=datetime.now(UTC).isoformat(),
-            run=Run(runId=run_id, facets=run_facets),
-            job=Job(namespace=self.namespace, name=job_name, facets=job_facets),
+    run=Run(runId=run_id,
+    facets=run_facets),
+    job=Job(namespace=self.namespace,
+    name=job_name,
+    facets=job_facets),
+    
             inputs=input_datasets,
             outputs=[],
             producer="football_prediction_lineage_reporter",
@@ -146,8 +161,10 @@ class LineageReporter:
 
     def complete_job_run(
         self,
-        job_name: str,
-        outputs: list[dict[str, Any]] | None = None,
+    job_name: str,
+    outputs: list[dict[str,
+    Any]] | None = None,
+    
         metrics: dict[str, Any] | None = None,
         run_id: str | None = None,
     ) -> bool:
@@ -192,13 +209,14 @@ class LineageReporter:
             output_datasets.append(
                 OutputDataset(
                     namespace=dataset_namespace,
-                    name=dataset_name,
-                    facets=dataset_facets,
-                )
+    name=dataset_name,
+    facets=dataset_facets,
+    )
             )
 
         # 构建运行指标
-        run_facets: dict[str, Any] = {}
+        run_facets: dict[str,
+    Any] = {}
         if metrics:
             run_facets["processing_engine"] = {
                 "processing_engine": {
@@ -211,8 +229,10 @@ class LineageReporter:
         # 发送完成事件
         event = RunEvent(
             eventType="COMPLETE",
-            eventTime=datetime.now(UTC).isoformat(),
-            run=Run(runId=run_id, facets=run_facets),
+    eventTime=datetime.now(UTC).isoformat(),
+    run=Run(runId=run_id,
+    facets=run_facets),
+    
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=output_datasets,
@@ -232,7 +252,10 @@ class LineageReporter:
             return False
 
     def fail_job_run(
-        self, job_name: str, error_message: str, run_id: str | None = None
+        self,
+    job_name: str,
+    error_message: str,
+    run_id: str | None = None
     ) -> bool:
         """
         标记作业运行失败
@@ -240,7 +263,8 @@ class LineageReporter:
         Args:
             job_name: 作业名称
             error_message: 错误信息
-            run_id: 运行ID（如果不提供,从活跃运行中获取）
+            run_id: 运行ID（如果不提供,
+    从活跃运行中获取）
 
         Returns:
             bool: 是否成功
@@ -255,15 +279,18 @@ class LineageReporter:
         # 构建错误信息
         run_facets = {
             "errorMessage": error_message_run.ErrorMessageRunFacet(
-                message=error_message, programmingLanguage="PYTHON"
+                message=error_message,
+    programmingLanguage="PYTHON"
             )
         }
 
         # 发送失败事件
         event = RunEvent(
             eventType="FAIL",
-            eventTime=datetime.now(UTC).isoformat(),
-            run=Run(runId=run_id, facets=run_facets),
+    eventTime=datetime.now(UTC).isoformat(),
+    run=Run(runId=run_id,
+    facets=run_facets),
+    
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=[],
@@ -287,9 +314,10 @@ class LineageReporter:
 
     def report_data_collection(
         self,
-        source_name: str,
-        target_table: str,
-        records_collected: int,
+    source_name: str,
+    target_table: str,
+    records_collected: int,
+    
         collection_time: datetime,
         source_config: dict[str, Any] | None = None,
     ) -> str:
@@ -334,14 +362,15 @@ class LineageReporter:
                 "statistics": {
                     "rowCount": records_collected,
                     "collectionTime": collection_time.isoformat(),
-                },
-            }
+    },
+    }
         ]
 
         # 完成作业
         self.complete_job_run(
             job_name=job_name,
-            outputs=outputs,
+    outputs=outputs,
+    
             metrics={
                 "records_collected": records_collected,
                 "collection_duration": "unknown",
@@ -353,9 +382,10 @@ class LineageReporter:
 
     def report_data_transformation(
         self,
-        source_tables: list[str],
-        target_table: str,
-        transformation_sql: str,
+    source_tables: list[str],
+    target_table: str,
+    transformation_sql: str,
+    
         records_processed: int,
         transformation_type: str = "ETL",
     ) -> str:

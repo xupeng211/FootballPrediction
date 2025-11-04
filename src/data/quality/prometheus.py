@@ -19,21 +19,18 @@ class PrometheusCollector:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.metrics: dict[str, Any] = {}
 
     def register_metric(self, name: str, metric_type: str, help_text: str):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """注册指标"""
         self.metrics[name] = {"type": metric_type, "help": help_text, "value": 0}
 
     def set_metric(self, name: str, value: float):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """设置指标值"""
         if name in self.metrics:
@@ -52,7 +49,6 @@ class PrometheusExporter:
 
     def __init__(self, collector: PrometheusCollector):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.collector = collector
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")

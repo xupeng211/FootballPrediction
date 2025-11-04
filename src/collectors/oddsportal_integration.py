@@ -28,7 +28,8 @@ class OddsPortalIntegration:
     pass  # 添加pass语句
     """OddsPortal爬虫集成管理器"""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self,
+    config_path: str | None = None):
         """函数文档字符串"""
         # 添加pass语句
         """
@@ -45,7 +46,9 @@ class OddsPortalIntegration:
         # 验证配置
         self._validate_config()
 
-    def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
+    def _load_config(self,
+    config_path: str | None = None) -> dict[str,
+    Any]:
         """加载配置文件"""
         if config_path is None:
             config_path = (
@@ -55,7 +58,8 @@ class OddsPortalIntegration:
             )
 
         try:
-            with open(config_path, encoding="utf-8") as f:
+            with open(config_path,
+    encoding="utf-8") as f:
                 config = yaml.safe_load(f)
             logger.info(f"Loaded OddsPortal configuration from {config_path}")
             return config
@@ -224,7 +228,8 @@ class OddsPortalIntegration:
             self.logger.error(f"Error scraping league matches for {league_key}: {e}")
             return []
 
-    def _convert_to_match_data(self, match: OddsPortalMatch) -> MatchData | None:
+    def _convert_to_match_data(self,
+    match: OddsPortalMatch) -> MatchData | None:
         """将OddsPortalMatch转换为MatchData"""
         try:
             # 创建比赛数据（MatchData不包含odds字段）
@@ -236,8 +241,9 @@ class OddsPortalIntegration:
 
             match_data = MatchData(
                 id=match_id,
-                home_team=match.home_team,
-                away_team=match.away_team,
+    home_team=match.home_team,
+    away_team=match.away_team,
+    
                 league=match.league,
                 match_date=match.match_date,
                 status=match.status,
@@ -297,10 +303,13 @@ class OddsPortalIntegration:
             return {
                 "status": (
                     "healthy"
-                    if all([connection_ok, config_ok, init_ok])
+                    if all([connection_ok,
+    config_ok,
+    init_ok])
                     else "unhealthy"
                 ),
-                "connection": connection_ok,
+    "connection": connection_ok,
+    
                 "configuration": config_ok,
                 "initialization": init_ok,
                 "timestamp": datetime.now().isoformat(),
@@ -310,23 +319,27 @@ class OddsPortalIntegration:
             return {
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat(),
-            }
+    "timestamp": datetime.now().isoformat(),
+    }
 
 
 class OddsPortalAdapter(DataSourceAdapter):
-    """OddsPortal适配器,实现DataSourceAdapter接口"""
+    """OddsPortal适配器,
+    实现DataSourceAdapter接口"""
 
-    def __init__(self, config_path: str | None = None, api_key: str | None = None):
+    def __init__(self,
+    config_path: str | None = None,
+    api_key: str | None = None):
         super().__init__(api_key)
         self.integration = OddsPortalIntegration(config_path)
         self.logger = get_logger(self.__class__.__name__)
 
     async def get_matches(
         self,
-        league_id: int | None = None,
-        date_from: datetime | None = None,
-        date_to: datetime | None = None,
+    league_id: int | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    
     ) -> list[MatchData]:
         """获取比赛列表"""
         try:
@@ -396,7 +409,8 @@ class OddsPortalAdapter(DataSourceAdapter):
             self.logger.error(f"Error fetching teams: {e}")
             return []
 
-    async def get_odds(self, match_id: int) -> list[OddsData]:
+    async def get_odds(self,
+    match_id: int) -> list[OddsData]:
         """获取赔率数据"""
         try:
             # 获取所有比赛并创建赔率数据
@@ -419,8 +433,9 @@ class OddsPortalAdapter(DataSourceAdapter):
                     if odds_portal_match and odds_portal_match.odds_home_win:
                         odds_data = OddsData(
                             match_id=match_id,
-                            home_win=odds_portal_match.odds_home_win,
-                            draw=odds_portal_match.odds_draw,
+    home_win=odds_portal_match.odds_home_win,
+    draw=odds_portal_match.odds_draw,
+    
                             away_win=odds_portal_match.odds_away_win,
                             source="oddsportal",
                             over_under=odds_portal_match.over_under,
@@ -502,7 +517,8 @@ async def main():
         # 显示前3个比赛
         for i, match in enumerate(matches[:3]):
             print(
-                f"Match {i + 1}: {match.home_team} vs {match.away_team} ({match.league})"
+                                f"Match {i +
+                    1}: {match.home_team} vs {match.away_team} ({match.league})"
             )
 
     except Exception as e:

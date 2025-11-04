@@ -37,7 +37,6 @@ class HealthChecker:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.timeout = 5.0  # 默认超时时间（秒）
 

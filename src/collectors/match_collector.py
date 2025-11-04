@@ -17,10 +17,14 @@ class MatchCollector(BaseCollector):
     """比赛数据采集器"""
 
     def __init__(
-        self, api_key: str | None = None, base_url: str | None = None, **kwargs
+        self,
+    api_key: str | None = None,
+    base_url: str | None = None,
+    **kwargs
     ):
         # 从环境变量获取默认值
-        api_key = api_key or os.getenv("FOOTBALL_DATA_API_KEY", "")
+        api_key = api_key or os.getenv("FOOTBALL_DATA_API_KEY",
+    "")
         base_url = base_url or os.getenv(
             "FOOTBALL_DATA_BASE_URL", "https://api.football-data.org/v4"
         )
@@ -58,12 +62,14 @@ class MatchCollector(BaseCollector):
                 [f"{k}={v}" for k, v in params.items() if v is not None]
             )
             return urljoin(self.base_url + "/", f"{endpoint}?{query_string}")
-        return urljoin(self.base_url + "/", endpoint)
+        return urljoin(self.base_url + "/",
+    endpoint)
 
     async def collect_matches(
         self,
-        league_id: int | None = None,
-        date_from: datetime | None = None,
+    league_id: int | None = None,
+    date_from: datetime | None = None,
+    
         date_to: datetime | None = None,
         status: str | None = None,
     ) -> CollectionResult:
@@ -100,16 +106,20 @@ class MatchCollector(BaseCollector):
                 success=False, error=f"Failed to collect matches: {str(e)}"
             )
 
-    async def collect_teams(self, league_id: int | None = None) -> CollectionResult:
+    async def collect_teams(self,
+    league_id: int | None = None) -> CollectionResult:
         """采集球队数据 - MatchCollector不实现此功能"""
         return CollectionResult(
-            success=False, error="MatchCollector does not support team collection"
+            success=False,
+    error="MatchCollector does not support team collection"
         )
 
-    async def collect_players(self, team_id: int | None = None) -> CollectionResult:
+    async def collect_players(self,
+    team_id: int | None = None) -> CollectionResult:
         """采集球员数据 - MatchCollector不实现此功能"""
         return CollectionResult(
-            success=False, error="MatchCollector does not support player collection"
+            success=False,
+    error="MatchCollector does not support player collection"
         )
 
     async def collect_leagues(self) -> CollectionResult:
@@ -159,8 +169,10 @@ class MatchCollector(BaseCollector):
             return []
 
     async def collect_upcoming_matches(
-        self, days_ahead: int = 7
-    ) -> list[dict[str, Any]]:
+        self,
+    days_ahead: int = 7
+    ) -> list[dict[str,
+    Any]]:
         """
         收集未来指定天数内的比赛
 
@@ -191,7 +203,8 @@ class MatchCollector(BaseCollector):
                 try:
                     matches = await self.fetch_matches(
                         str(comp_id),
-                        dateFrom=today.isoformat(),
+    dateFrom=today.isoformat(),
+    
                         dateTo=end_date.isoformat(),
                     )
 
@@ -216,11 +229,14 @@ class MatchCollector(BaseCollector):
             logger.error(f"Failed to collect upcoming matches: {e}")
 
         # 按比赛时间排序
-        upcoming_matches.sort(key=lambda x: x.get("utcDate", ""))
+        upcoming_matches.sort(key=lambda x: x.get("utcDate",
+    ""))
 
         return upcoming_matches
 
-    async def collect_recent_matches(self, days_back: int = 7) -> list[dict[str, Any]]:
+    async def collect_recent_matches(self,
+    days_back: int = 7) -> list[dict[str,
+    Any]]:
         """
         收集过去指定天数内的比赛结果
 
@@ -251,6 +267,7 @@ class MatchCollector(BaseCollector):
                 try:
                     matches = await self.fetch_matches(
                         str(comp_id),
+    
                         dateFrom=start_date.isoformat(),
                         dateTo=today.isoformat(),
                     )
@@ -276,11 +293,16 @@ class MatchCollector(BaseCollector):
             logger.error(f"Failed to collect recent matches: {e}")
 
         # 按比赛时间排序（最新的在前）
-        recent_matches.sort(key=lambda x: x.get("utcDate", ""), reverse=True)
+        recent_matches.sort(key=lambda x: x.get("utcDate",
+    ""),
+    reverse=True)
 
         return recent_matches
 
-    def normalize_match_data(self, match: dict[str, Any]) -> dict[str, Any]:
+    def normalize_match_data(self,
+    match: dict[str,
+    Any]) -> dict[str,
+    Any]:
         """
         标准化比赛数据格式
 
@@ -330,44 +352,55 @@ class MatchCollector(BaseCollector):
 
             return {
                 "external_id": str(match.get("id")),
-                "competition_id": competition.get("id"),
-                "competition_name": competition.get("name"),
-                "competition_code": competition.get("code"),
+    "competition_id": competition.get("id"),
+    "competition_name": competition.get("name"),
+    "competition_code": competition.get("code"),
+    
                 "match_date": match_date,
                 "status": normalized_status,
                 "home_team_id": home_team.get("id"),
-                "home_team_name": home_team.get("name"),
-                "home_team_short_name": home_team.get("shortName"),
-                "home_team_crest": home_team.get("crest"),
+    "home_team_name": home_team.get("name"),
+    "home_team_short_name": home_team.get("shortName"),
+    "home_team_crest": home_team.get("crest"),
+    
                 "away_team_id": away_team.get("id"),
-                "away_team_name": away_team.get("name"),
-                "away_team_short_name": away_team.get("shortName"),
-                "away_team_crest": away_team.get("crest"),
+    "away_team_name": away_team.get("name"),
+    "away_team_short_name": away_team.get("shortName"),
+    "away_team_crest": away_team.get("crest"),
+    
                 "home_score": home_score,
                 "away_score": away_score,
                 "result": result,
                 "matchday": match.get("matchday"),
-                "stage": match.get("stage"),
-                "venue": None,  # API中不包含venue信息
+    "stage": match.get("stage"),
+    "venue": None,
+    # API中不包含venue信息
                 "last_updated": match.get("lastUpdated"),
+    
             }
 
         except Exception as e:
             logger.error(f"Error normalizing match data: {e}")
             return {
-                "external_id": str(match.get("id", "")),
-                "error": str(e),
-                "raw_data": match,
+                "external_id": str(match.get("id",
+    "")),
+    "error": str(e),
+    "raw_data": match,
+    
             }
 
     async def collect_normalized_matches(
-        self, match_type: str = "all"
-    ) -> list[dict[str, Any]]:
+        self,
+    match_type: str = "all"
+    ) -> list[dict[str,
+    Any]]:
         """
         收集并标准化比赛数据
 
         Args:
-            match_type: 比赛类型 ('upcoming', 'recent', 'all')
+            match_type: 比赛类型 ('upcoming',
+    'recent',
+    'all')
 
         Returns:
             标准化的比赛数据列表
@@ -392,7 +425,8 @@ class MatchCollector(BaseCollector):
         valid_matches = [match for match in all_matches if "error" not in match]
 
         logger.info(
-            f"Collected and normalized {len(valid_matches)} matches (type: {match_type})"
+                        f"Collected and
+                normalized {len(valid_matches)} matches (type: {match_type})"
         )
 
         return valid_matches

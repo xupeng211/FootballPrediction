@@ -374,7 +374,18 @@ def upgrade() -> None:
     # 创建默认租户
     op.execute(
         """
-        INSERT INTO tenants (name, slug, contact_email, status, plan, max_users, max_predictions_per_day, max_api_calls_per_hour, storage_quota_mb, is_active, created_at, updated_at)
+        INSERT INTO tenants (name,
+    slug,
+    contact_email,
+    status,
+    plan,
+    max_users,
+    max_predictions_per_day,
+    max_api_calls_per_hour,
+    storage_quota_mb,
+    is_active,
+    created_at,
+    updated_at)
         VALUES (
             '默认租户',
             'default',

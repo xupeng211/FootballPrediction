@@ -11,7 +11,6 @@ class OddsCollector:
     pass  # 添加pass语句
     """桩 OddsCollector 类"""
 
-    pass
 
 
 class OddsCollectorManager:
@@ -20,7 +19,6 @@ class OddsCollectorManager:
     pass  # 添加pass语句
     """桩 OddsCollectorManager 类"""
 
-    pass
 
 
 class OddsSourceManager:
@@ -29,7 +27,6 @@ class OddsSourceManager:
     pass  # 添加pass语句
     """桩 OddsSourceManager 类"""
 
-    pass
 
 
 class OddsProcessor:
@@ -38,7 +35,6 @@ class OddsProcessor:
     pass  # 添加pass语句
     """桩 OddsProcessor 类"""
 
-    pass
 
 
 class OddsAnalyzer:
@@ -47,7 +43,6 @@ class OddsAnalyzer:
     pass  # 添加pass语句
     """桩 OddsAnalyzer 类"""
 
-    pass
 
 
 class OddsStorage:
@@ -56,7 +51,6 @@ class OddsStorage:
     pass  # 添加pass语句
     """桩 OddsStorage 类"""
 
-    pass
 
 
 def get_odds_manager():

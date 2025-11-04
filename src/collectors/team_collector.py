@@ -140,13 +140,15 @@ class TeamCollector(FootballDataCollector):
         try:
             return {
                 "external_id": str(team.get("id")),
-                "name": team.get("name"),
-                "short_name": team.get("shortName"),
-                "tla": team.get("tla"),  # Three Letter Abbreviation
+    "name": team.get("name"),
+    "short_name": team.get("shortName"),
+    "tla": team.get("tla"),
+    # Three Letter Abbreviation
                 "crest": team.get("crest"),
-                "address": team.get("address"),
-                "website": team.get("website"),
-                "founded": team.get("founded"),
+    "address": team.get("address"),
+    "website": team.get("website"),
+    "founded": team.get("founded"),
+    
                 "club_colors": team.get("clubColors"),
                 "venue": team.get("venue"),
                 "area": {
@@ -156,10 +158,13 @@ class TeamCollector(FootballDataCollector):
                     "flag": team.get("area", {}).get("flag"),
                 },
                 "coach": self._normalize_coach_data(team.get("coach", {})),
-                "squad": self._normalize_squad_data(team.get("squad", [])),
-                "running_competitions": self._normalize_competitions_data(
-                    team.get("runningCompetitions", [])
+                "squad": self._normalize_squad_data(team.get("squad",
+    [])),
+    "running_competitions": self._normalize_competitions_data(
+                    team.get("runningCompetitions",
+    [])
                 ),
+    
                 "last_updated": team.get("lastUpdated"),
                 "staff": team.get("staff", []),
             }
@@ -170,10 +175,13 @@ class TeamCollector(FootballDataCollector):
                 "external_id": str(team.get("id", "")),
                 "name": team.get("name", "Unknown Team"),
                 "error": str(e),
-                "raw_data": team,
-            }
+    "raw_data": team,
+    }
 
-    def _normalize_coach_data(self, coach: dict[str, Any]) -> dict[str, Any] | None:
+    def _normalize_coach_data(self,
+    coach: dict[str,
+    Any]) -> dict[str,
+    Any] | None:
         """标准化教练数据"""
         if not coach:
             return None
@@ -181,9 +189,10 @@ class TeamCollector(FootballDataCollector):
         try:
             return {
                 "id": coach.get("id"),
-                "first_name": coach.get("firstName"),
-                "last_name": coach.get("lastName"),
-                "name": coach.get("name"),
+    "first_name": coach.get("firstName"),
+    "last_name": coach.get("lastName"),
+    "name": coach.get("name"),
+    
                 "date_of_birth": coach.get("dateOfBirth"),
                 "nationality": coach.get("nationality"),
                 "contract": coach.get("contract", {}),
@@ -202,9 +211,10 @@ class TeamCollector(FootballDataCollector):
             try:
                 normalized_player = {
                     "id": player.get("id"),
-                    "name": player.get("name"),
-                    "position": player.get("position"),
-                    "date_of_birth": player.get("dateOfBirth"),
+    "name": player.get("name"),
+    "position": player.get("position"),
+    "date_of_birth": player.get("dateOfBirth"),
+    
                     "nationality": player.get("nationality"),
                     "shirt_number": None,  # API中不包含球衣号码
                     "contract_until": None,
@@ -226,9 +236,10 @@ class TeamCollector(FootballDataCollector):
             try:
                 normalized_comp = {
                     "id": comp.get("id"),
-                    "name": comp.get("name"),
-                    "code": comp.get("code"),
-                    "type": comp.get("type"),
+    "name": comp.get("name"),
+    "code": comp.get("code"),
+    "type": comp.get("type"),
+    
                     "emblem": comp.get("emblem"),
                 }
                 normalized_competitions.append(normalized_comp)
@@ -287,8 +298,11 @@ class TeamCollector(FootballDataCollector):
             return None
 
     async def collect_team_matches(
-        self, team_id: str, limit: int = 20
-    ) -> list[dict[str, Any]]:
+        self,
+    team_id: str,
+    limit: int = 20
+    ) -> list[dict[str,
+    Any]]:
         """
         收集特定球队的比赛数据
 
@@ -300,7 +314,8 @@ class TeamCollector(FootballDataCollector):
             比赛数据列表
         """
         try:
-            matches = await self.fetch_team_matches(team_id, limit=limit)
+            matches = await self.fetch_team_matches(team_id,
+    limit=limit)
             normalized_matches = []
 
             for match in matches:
@@ -318,8 +333,12 @@ class TeamCollector(FootballDataCollector):
             return []
 
     def _normalize_match_for_team(
-        self, match: dict[str, Any], team_id: str
-    ) -> dict[str, Any] | None:
+        self,
+    match: dict[str,
+    Any],
+    team_id: str
+    ) -> dict[str,
+    Any] | None:
         """为球队视角标准化比赛数据"""
         try:
             home_team = match.get("homeTeam", {})
@@ -352,14 +371,17 @@ class TeamCollector(FootballDataCollector):
 
             return {
                 "external_id": str(match.get("id")),
-                "match_date": match.get("utcDate"),
-                "status": match.get("status", "").lower(),
+    "match_date": match.get("utcDate"),
+    "status": match.get("status",
+    "").lower(),
+    
                 "is_home_team": is_home_team,
                 "opponent": {
                     "id": opponent.get("id"),
-                    "name": opponent.get("name"),
-                    "short_name": opponent.get("shortName"),
-                    "crest": opponent.get("crest"),
+    "name": opponent.get("name"),
+    "short_name": opponent.get("shortName"),
+    "crest": opponent.get("crest"),
+    
                 },
                 "team_score": team_score,
                 "opponent_score": opponent_score,
@@ -370,16 +392,19 @@ class TeamCollector(FootballDataCollector):
                     "id": match.get("competition", {}).get("id"),
                     "name": match.get("competition", {}).get("name"),
                     "code": match.get("competition", {}).get("code"),
-                },
-                "venue": match.get("venue"),
-                "last_updated": match.get("lastUpdated"),
+    },
+    "venue": match.get("venue"),
+    "last_updated": match.get("lastUpdated"),
+    
             }
 
         except Exception as e:
             logger.error(f"Error normalizing match data for team {team_id}: {e}")
             return None
 
-    async def search_teams(self, search_term: str) -> list[dict[str, Any]]:
+    async def search_teams(self,
+    search_term: str) -> list[dict[str,
+    Any]]:
         """
         搜索球队
 
@@ -406,8 +431,10 @@ class TeamCollector(FootballDataCollector):
                     teams = await self.fetch_teams(str(competition["id"]))
 
                     for team in teams:
-                        team_name = team.get("name", "").lower()
-                        short_name = team.get("shortName", "").lower()
+                        team_name = team.get("name",
+    "").lower()
+                        short_name = team.get("shortName",
+    "").lower()
                         tla = team.get("tla", "").lower()
 
                         # 检查是否匹配搜索词

@@ -28,7 +28,8 @@ from src.performance.profiler import get_profiler
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/api/v1/performance", tags=["performance"])
+router = APIRouter(prefix="/api/v1/performance",
+    tags=["performance"])
 
 # 全局实例
 performance_analyzer = PerformanceAnalyzer()
@@ -40,27 +41,43 @@ task_monitor = BackgroundTaskPerformanceMonitor()
 class PerformanceConfig(BaseModel):
     """性能配置"""
 
-    sample_rate: float = Field(default=1.0, ge=0.0, le=1.0, description="采样率")
+    sample_rate: float = Field(default=1.0,
+    ge=0.0,
+    le=1.0,
+    description="采样率")
     slow_request_threshold: float = Field(
-        default=1.0, gt=0, description="慢请求阈值(秒)"
+        default=1.0,
+    gt=0,
+    description="慢请求阈值(秒)"
     )
-    slow_query_threshold: float = Field(default=0.1, gt=0, description="慢查询阈值(秒)")
-    memory_threshold: int = Field(default=500, gt=0, description="内存阈值(MB)")
-    enable_profiling: bool = Field(default=False, description="是否启用性能分析")
+    slow_query_threshold: float = Field(default=0.1,
+    gt=0,
+    description="慢查询阈值(秒)")
+    memory_threshold: int = Field(default=500,
+    gt=0,
+    description="内存阈值(MB)")
+    enable_profiling: bool = Field(default=False,
+    description="是否启用性能分析")
 
 
 class ThresholdUpdate(BaseModel):
     """阈值更新"""
 
-    category: str = Field(..., description="类别")
-    metric: str = Field(..., description="指标")
-    value: float = Field(..., description="新的阈值值")
+    category: str = Field(...,
+    description="类别")
+    metric: str = Field(...,
+    description="指标")
+    value: float = Field(...,
+    description="新的阈值值")
 
 
 class PerformanceRequest(BaseModel):
     """性能分析请求"""
 
-    duration_minutes: int = Field(default=5, ge=1, le=60, description="分析时长(分钟)")
+    duration_minutes: int = Field(default=5,
+    ge=1,
+    le=60,
+    description="分析时长(分钟)")
     include_memory: bool = Field(default=True, description="是否包含内存分析")
     include_database: bool = Field(default=True, description="是否包含数据库分析")
 
@@ -93,9 +110,11 @@ async def get_performance_metrics():
             "timestamp": datetime.now().isoformat(),
             "system": {
                 "cpu_percent": psutil.cpu_percent(interval=1),
-                "memory_total": memory_info.total / 1024 / 1024,  # MB
+    "memory_total": memory_info.total / 1024 / 1024,
+    # MB
                 "memory_available": memory_info.available / 1024 / 1024,
-                "memory_percent": memory_info.percent,
+    "memory_percent": memory_info.percent,
+    
                 "process_memory": process_memory.rss / 1024 / 1024,
             },
             "database": db_stats,
@@ -163,13 +182,19 @@ async def stop_profiling():
         return {
             "message": "Performance profiling stopped",
             "results": {
-                "function_count": len(results.get("function_profiles", [])),
-                "memory_peak_mb": results.get("memory_peak", 0) / 1024 / 1024,
-                "top_slow_functions": results.get("function_profiles", [])[:5],
-            },
-        }
+                "function_count": len(results.get("function_profiles",
+    [])),
+    "memory_peak_mb": results.get("memory_peak",
+    0) / 1024 / 1024,
+    
+                "top_slow_functions": results.get("function_profiles",
+    [])[:5],
+    },
+    }
 
-    except (ValueError, KeyError, AttributeError) as e:
+    except (ValueError,
+    KeyError,
+    AttributeError) as e:
         logger.error(f"Failed to stop profiling: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to stop performance profiling"
@@ -205,11 +230,12 @@ async def get_profiling_results():
             "slow_queries": [
                 {
                     "query": q.query[:100] + "..." if len(q.query) > 100 else q.query,
-                    "execution_time": q.execution_time,
-                    "rows_affected": q.rows_affected,
-                }
+    "execution_time": q.execution_time,
+    "rows_affected": q.rows_affected,
+    }
                 for q in slow_queries[:10]
             ],
+    
         }
 
         return results
@@ -217,14 +243,17 @@ async def get_profiling_results():
     except (ValueError, KeyError, AttributeError) as e:
         logger.error(f"Failed to get profiling results: {str(e)}")
         raise HTTPException(
-            status_code=500, detail="Failed to retrieve profiling results"
+            status_code=500,
+    detail="Failed to retrieve profiling results"
         )
 
 
 @router.get("/report")
 async def get_performance_report(
     background_tasks: BackgroundTasks,
-    format: str = Query(default="json", regex="^(json|html)$"),
+    format: str = Query(default="json",
+    regex="^(json|html)$"),
+    
     include_recommendations: bool = Query(default=True),
 ):
     """生成性能报告"""
@@ -238,9 +267,10 @@ async def get_performance_report(
         # 生成报告
         report = performance_analyzer.generate_performance_report(
             api_stats=api_stats,
-            db_stats=db_stats,
-            cache_stats=cache_stats,
-            task_stats=task_stats,
+    db_stats=db_stats,
+    cache_stats=cache_stats,
+    task_stats=task_stats,
+    
         )
 
         # 格式化输出

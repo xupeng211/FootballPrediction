@@ -16,7 +16,6 @@ class PredictionStatistics:
 
     def __init__(self):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         self.total_predictions = 0
         self.correct_predictions = 0
@@ -24,7 +23,6 @@ class PredictionStatistics:
 
     def update(self, is_correct: bool):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """更新统计"""
         self.total_predictions += 1
@@ -45,7 +43,6 @@ class PredictionEngine:
 
     def __init__(self, config: PredictionConfig = None):
         """函数文档字符串"""
-        pass
         # 添加pass语句
         """初始化预测引擎"""
         self.config = config or PredictionConfig()

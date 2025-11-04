@@ -24,61 +24,89 @@ from src.security.jwt_auth import JWTAuthManager, UserAuth, get_jwt_auth_manager
 logger = logging.getLogger(__name__)
 
 # 创建认证路由器
-router = APIRouter(prefix="/auth", tags=["认证"])
+router = APIRouter(prefix="/auth",
+    tags=["认证"])
 
 
 # Pydantic模型定义
 class UserRegister(BaseModel):
     """用户注册请求"""
 
-    username: str = Field(..., min_length=3, max_length=50, description="用户名")
-    email: EmailStr = Field(..., description="邮箱地址")
-    password: str = Field(..., min_length=8, max_length=128, description="密码")
-    full_name: str | None = Field(None, max_length=100, description="全名")
+    username: str = Field(...,
+    min_length=3,
+    max_length=50,
+    description="用户名")
+    email: EmailStr = Field(...,
+    description="邮箱地址")
+    password: str = Field(...,
+    min_length=8,
+    max_length=128,
+    description="密码")
+    full_name: str | None = Field(None,
+    max_length=100,
+    description="全名")
 
 
 class UserLogin(BaseModel):
     """用户登录请求"""
 
-    username: str = Field(..., description="用户名或邮箱")
-    password: str = Field(..., description="密码")
-    remember_me: bool = Field(False, description="记住我")
+    username: str = Field(...,
+    description="用户名或邮箱")
+    password: str = Field(...,
+    description="密码")
+    remember_me: bool = Field(False,
+    description="记住我")
 
 
 class TokenResponse(BaseModel):
     """Token响应"""
 
-    access_token: str = Field(..., description="访问令牌")
-    refresh_token: str = Field(..., description="刷新令牌")
-    token_type: str = Field("bearer", description="令牌类型")
-    expires_in: int = Field(..., description="过期时间（秒）")
-    user_info: dict = Field(..., description="用户信息")
+    access_token: str = Field(...,
+    description="访问令牌")
+    refresh_token: str = Field(...,
+    description="刷新令牌")
+    token_type: str = Field("bearer",
+    description="令牌类型")
+    expires_in: int = Field(...,
+    description="过期时间（秒）")
+    user_info: dict = Field(...,
+    description="用户信息")
 
 
 class RefreshTokenRequest(BaseModel):
     """刷新令牌请求"""
 
-    refresh_token: str = Field(..., description="刷新令牌")
+    refresh_token: str = Field(...,
+    description="刷新令牌")
 
 
 class PasswordChangeRequest(BaseModel):
     """修改密码请求"""
 
-    current_password: str = Field(..., description="当前密码")
-    new_password: str = Field(..., min_length=8, max_length=128, description="新密码")
+    current_password: str = Field(...,
+    description="当前密码")
+    new_password: str = Field(...,
+    min_length=8,
+    max_length=128,
+    description="新密码")
 
 
 class PasswordResetRequest(BaseModel):
     """密码重置请求"""
 
-    email: EmailStr = Field(..., description="邮箱地址")
+    email: EmailStr = Field(...,
+    description="邮箱地址")
 
 
 class PasswordResetConfirm(BaseModel):
     """确认密码重置"""
 
-    token: str = Field(..., description="重置令牌")
-    new_password: str = Field(..., min_length=8, max_length=128, description="新密码")
+    token: str = Field(...,
+    description="重置令牌")
+    new_password: str = Field(...,
+    min_length=8,
+    max_length=128,
+    description="新密码")
 
 
 class UserResponse(BaseModel):
@@ -97,17 +125,19 @@ class UserResponse(BaseModel):
 MOCK_USERS = {
     1: UserAuth(
         id=1,
-        username="admin",
-        email="admin@football-prediction.com",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5G",  # admin123
+    username="admin",
+    email="admin@football-prediction.com",
+    hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5G",
+    # admin123
         role="admin",
         is_active=True,
     ),
     2: UserAuth(
         id=2,
-        username="user",
-        email="user@football-prediction.com",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5G",  # user123
+    username="user",
+    email="user@football-prediction.com",
+    hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5G",
+    # user123
         role="user",
         is_active=True,
     ),
@@ -115,7 +145,9 @@ MOCK_USERS = {
 
 
 async def authenticate_user(
-    username: str, password: str, auth_manager: JWTAuthManager
+    username: str,
+    password: str,
+    auth_manager: JWTAuthManager
 ) -> UserAuth:
     """
     验证用户凭据
@@ -138,7 +170,8 @@ async def authenticate_user(
     if not user:
         return None
 
-    if not auth_manager.verify_password(password, user.hashed_password):
+    if not auth_manager.verify_password(password,
+    user.hashed_password):
         return None
 
     return user
@@ -150,7 +183,8 @@ async def get_user_by_id(user_id: int) -> UserAuth:
 
 
 async def create_user(
-    user_data: UserRegister, auth_manager: JWTAuthManager
+    user_data: UserRegister,
+    auth_manager: JWTAuthManager
 ) -> UserAuth:
     """
     创建新用户
@@ -168,23 +202,26 @@ async def create_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"密码不符合要求: {'; '.join(errors)}",
-        )
+    )
 
     # 检查用户名和邮箱是否已存在
     for existing_user in MOCK_USERS.values():
         if existing_user.username == user_data.username:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="用户名已存在"
+                status_code=status.HTTP_400_BAD_REQUEST,
+    detail="用户名已存在"
             )
         if existing_user.email == user_data.email:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱已被注册"
+                status_code=status.HTTP_400_BAD_REQUEST,
+    detail="邮箱已被注册"
             )
 
     # 创建新用户（在真实应用中应该保存到数据库）
     new_user_id = max(MOCK_USERS.keys()) + 1
     new_user = UserAuth(
         id=new_user_id,
+    
         username=user_data.username,
         email=user_data.email,
         hashed_password=auth_manager.hash_password(user_data.password),
@@ -199,11 +236,14 @@ async def create_user(
 
 
 @router.post(
-    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def register(
     user_data: UserRegister,
     request: Request,
+    
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ):
     """
@@ -213,12 +253,14 @@ async def register(
     logger.info(f"用户注册请求: {user_data.username} from {client_ip}")
 
     # 创建用户
-    user = await create_user(user_data, auth_manager)
+    user = await create_user(user_data,
+    auth_manager)
 
     return UserResponse(
         id=user.id,
-        username=user.username,
-        email=user.email,
+    username=user.username,
+    email=user.email,
+    
         full_name=None,
         role=user.role,
         is_active=user.is_active,
@@ -226,11 +268,13 @@ async def register(
     )
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login",
+    response_model=TokenResponse)
 async def login(
     user_data: UserLogin,
     request: Request,
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
+    
 ):
     """
     用户登录
@@ -270,9 +314,10 @@ async def login(
     access_token = auth_manager.create_access_token(
         data={
             "sub": str(user.id),
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
+    "username": user.username,
+    "email": user.email,
+    "role": user.role,
+    
         },
         expires_delta=access_token_expire,
     )
@@ -285,9 +330,10 @@ async def login(
 
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in=int(access_token_expire.total_seconds()),
+    refresh_token=refresh_token,
+    token_type="bearer",
+    expires_in=int(access_token_expire.total_seconds()),
+    
         user_info={
             "id": user.id,
             "username": user.username,
@@ -298,11 +344,12 @@ async def login(
     )
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post("/refresh",
+    response_model=TokenResponse)
 async def refresh_token(
     token_data: RefreshTokenRequest,
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
-):
+    ):
     """
     刷新访问令牌
     """
@@ -312,7 +359,8 @@ async def refresh_token(
 
         if token_payload.token_type != "refresh":
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="无效的刷新令牌"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="无效的刷新令牌"
             )
 
         # 获取用户信息
@@ -329,9 +377,10 @@ async def refresh_token(
         new_access_token = auth_manager.create_access_token(
             data={
                 "sub": str(user.id),
-                "username": user.username,
-                "email": user.email,
-                "role": user.role,
+    "username": user.username,
+    "email": user.email,
+    "role": user.role,
+    
             },
             expires_delta=access_token_expire,
         )
@@ -346,9 +395,10 @@ async def refresh_token(
 
         return TokenResponse(
             access_token=new_access_token,
-            refresh_token=new_refresh_token,
-            token_type="bearer",
-            expires_in=int(access_token_expire.total_seconds()),
+    refresh_token=new_refresh_token,
+    token_type="bearer",
+    expires_in=int(access_token_expire.total_seconds()),
+    
             user_info={
                 "id": user.id,
                 "username": user.username,
@@ -379,7 +429,8 @@ async def logout(
     return {"message": "登出成功"}
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me",
+    response_model=UserResponse)
 async def get_current_user_info(current_user=Depends(get_current_active_user)):
     """
     获取当前用户信息
@@ -388,8 +439,9 @@ async def get_current_user_info(current_user=Depends(get_current_active_user)):
 
     return UserResponse(
         id=user.id,
-        username=user.username,
-        email=user.email,
+    username=user.username,
+    email=user.email,
+    
         full_name=None,
         role=user.role,
         is_active=user.is_active,
@@ -403,6 +455,7 @@ async def change_password(
     current_user=Depends(get_current_user),
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
     auth_context: AuthContext = Depends(get_auth_context),
+    
 ):
     """
     修改密码
@@ -411,19 +464,23 @@ async def change_password(
 
     # 验证当前密码
     if not auth_manager.verify_password(
-        password_data.current_password, user.hashed_password
+        password_data.current_password,
+    user.hashed_password
     ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="当前密码错误"
+            status_code=status.HTTP_400_BAD_REQUEST,
+    detail="当前密码错误"
         )
 
     # 验证新密码强度
-    is_valid, errors = auth_manager.validate_password_strength(
+    is_valid,
+    errors = auth_manager.validate_password_strength(
         password_data.new_password
     )
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+    
             detail=f"新密码不符合要求: {'; '.join(errors)}",
         )
 
@@ -479,7 +536,7 @@ async def request_password_reset(
 async def reset_password(
     reset_data: PasswordResetConfirm,
     auth_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
-):
+    ):
     """
     确认密码重置
     """
@@ -496,11 +553,13 @@ async def reset_password(
 
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在"
+                status_code=status.HTTP_404_NOT_FOUND,
+    detail="用户不存在"
             )
 
         # 验证新密码强度
-        is_valid, errors = auth_manager.validate_password_strength(
+        is_valid,
+    errors = auth_manager.validate_password_strength(
             reset_data.new_password
         )
         if not is_valid:

@@ -210,14 +210,16 @@ def cache_decorator(max_size: int = 128) -> Callable:
 
         # 添加缓存管理方法
         wrapper.cache_clear = lambda: cache.clear()
-        wrapper.cache_info = lambda: {"size": len(cache), "max_size": max_size}
+        wrapper.cache_info = lambda: {"size": len(cache),
+    "max_size": max_size}
 
         return wrapper
 
     return decorator
 
 
-def retry_decorator(max_attempts: int = 3, delay: float = 1.0) -> Callable:
+def retry_decorator(max_attempts: int = 3,
+    delay: float = 1.0) -> Callable:
     """重试装饰器
 
     在函数失败时自动重试.
@@ -232,12 +234,14 @@ def retry_decorator(max_attempts: int = 3, delay: float = 1.0) -> Callable:
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args,
+    **kwargs):
             last_exception = None
 
             for attempt in range(max_attempts):
                 try:
-                    return func(*args, **kwargs)
+                    return func(*args,
+    **kwargs)
                 except Exception as e:
                     last_exception = e
                     if attempt < max_attempts - 1:
@@ -522,7 +526,9 @@ class ValidationDecorator(BaseDecorator):
     为组件添加输入验证功能.
     """
 
-    def __init__(self, component: Component, validator: Callable | None = None):
+    def __init__(self,
+    component: Component,
+    validator: Callable | None = None):
         """初始化验证装饰器
 
         Args:
@@ -532,7 +538,9 @@ class ValidationDecorator(BaseDecorator):
         super().__init__(component)
         self.validator = validator or self._default_validator
 
-    def _default_validator(self, *args, **kwargs):
+    def _default_validator(self,
+    *args,
+    **kwargs):
         """默认验证器"""
         return True
 
@@ -596,8 +604,9 @@ class CacheDecorator(BaseDecorator):
         """获取缓存统计"""
         return {
             "cache_size": len(self._cache),
-            "max_size": self.cache_size,
-            "hit_rate": 0.0,  # 简化实现
+    "max_size": self.cache_size,
+    "hit_rate": 0.0,
+    # 简化实现
         }
 
 
@@ -607,7 +616,8 @@ def async_log(log_level: str = "INFO"):
 
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args,
+    **kwargs):
             print(f"[{log_level}] 开始执行异步函数: {func.__name__}")
             try:
                 result = await func(*args, **kwargs)
@@ -684,9 +694,11 @@ def create_decorated_service(service_name: str) -> Component:
     base_service = ConcreteComponent(service_name)
 
     # 添加装饰器
-    logged_service = LoggingDecorator(base_service, "INFO")
+    logged_service = LoggingDecorator(base_service,
+    "INFO")
     metrics_service = MetricsDecorator(logged_service)
-    cached_service = CacheDecorator(metrics_service, cache_size=64)
+    cached_service = CacheDecorator(metrics_service,
+    cache_size=64)
 
     return cached_service
 
@@ -695,6 +707,7 @@ def create_decorated_service(service_name: str) -> Component:
 __all__ = [
     "Component",
     "ConcreteComponent",
+    
     "BaseDecorator",
     "Decorator",
     "LoggingDecorator",

@@ -29,13 +29,20 @@ class PerformanceMonitoringIntegration:
         # 添加pass语句
         """初始化性能监控集成"""
         self.settings = get_settings()
-        # 使用getattr访问Pydantic Settings属性,提供默认值
-        self.enabled = getattr(self.settings, "PERFORMANCE_MONITORING_ENABLED", True)
+        # 使用getattr访问Pydantic Settings属性,
+    提供默认值
+        self.enabled = getattr(self.settings,
+    "PERFORMANCE_MONITORING_ENABLED",
+    True)
         self.sample_rate = float(
-            getattr(self.settings, "PERFORMANCE_MONITORING_SAMPLE_RATE", 1.0)
+            getattr(self.settings,
+    "PERFORMANCE_MONITORING_SAMPLE_RATE",
+    1.0)
         )
         self.profiling_enabled = getattr(
-            self.settings, "PERFORMANCE_PROFILING_ENABLED", False
+            self.settings,
+    "PERFORMANCE_PROFILING_ENABLED",
+    False
         )
 
         self._monitoring_middleware = None
@@ -43,7 +50,8 @@ class PerformanceMonitoringIntegration:
         self._cache_monitor = None
         self._task_monitor = None
 
-    def integrate_with_fastapi(self, app: FastAPI) -> None:
+    def integrate_with_fastapi(self,
+    app: FastAPI) -> None:
         """集成性能监控到FastAPI应用"""
         if not self.enabled:
             logger.info("Performance monitoring is disabled")
@@ -56,6 +64,7 @@ class PerformanceMonitoringIntegration:
             # 添加性能监控中间件
             app.add_middleware(
                 PerformanceMonitoringMiddleware,
+    
                 track_memory=True,
                 track_concurrency=True,
                 sample_rate=self.sample_rate,
@@ -132,7 +141,8 @@ class PerformanceMonitoringIntegration:
 
             results = stop_profiling()
             logger.info(
-                f"Performance profiling stopped: {results.get('function_count', 0)} functions profiled"
+                f"Performance profiling stopped: {results.get('function_count',
+    0)} functions profiled"
             )
 
         except (ValueError, RuntimeError, TimeoutError) as e:
@@ -146,30 +156,41 @@ class PerformanceMonitoringIntegration:
             "profiling_enabled": self.profiling_enabled,
             "thresholds": {
                 "response_time": {
-                    "slow": self.settings.get("SLOW_REQUEST_THRESHOLD", 1.0),
-                    "critical": self.settings.get("CRITICAL_REQUEST_THRESHOLD", 5.0),
+                    "slow": self.settings.get("SLOW_REQUEST_THRESHOLD",
+    1.0),
+    "critical": self.settings.get("CRITICAL_REQUEST_THRESHOLD",
+    5.0),
+    
                 },
                 "database": {
                     "slow_query": self.settings.get("SLOW_QUERY_THRESHOLD", 0.1),
                     "connection_pool": {
-                        "min": self.settings.get("DB_POOL_MIN", 1),
-                        "max": self.settings.get("DB_POOL_MAX", 20),
+                        "min": self.settings.get("DB_POOL_MIN",
+    1),
+    "max": self.settings.get("DB_POOL_MAX",
+    20),
+    
                     },
                 },
                 "cache": {
-                    "ttl": self.settings.get("CACHE_TTL", 3600),
-                    "max_size": self.settings.get("CACHE_MAX_SIZE", 1000),
+                    "ttl": self.settings.get("CACHE_TTL",
+    3600),
+    "max_size": self.settings.get("CACHE_MAX_SIZE",
+    1000),
+    
                 },
             },
         }
 
-    def update_config(self, config: dict) -> None:
+    def update_config(self,
+    config: dict) -> None:
         """更新性能监控配置"""
         try:
             # 更新采样率
             if "sample_rate" in config:
                 self.sample_rate = config["sample_rate"]
-                # 如果中间件已存在,更新其采样率
+                # 如果中间件已存在,
+    更新其采样率
                 if self._monitoring_middleware:
                     self._monitoring_middleware.sample_rate = self.sample_rate
 
@@ -184,7 +205,9 @@ class PerformanceMonitoringIntegration:
 
             logger.info("Performance monitoring configuration updated")
 
-        except (ValueError, RuntimeError, TimeoutError) as e:
+        except (ValueError,
+    RuntimeError,
+    TimeoutError) as e:
             logger.error(f"Failed to update performance monitoring config: {str(e)}")
 
     def create_performance_report(self) -> str | None:
@@ -208,9 +231,10 @@ class PerformanceMonitoringIntegration:
             # 生成报告
             report = analyzer.generate_performance_report(
                 api_stats=api_stats,
-                db_stats=db_stats,
-                cache_stats=cache_stats,
-                task_stats=task_stats,
+    db_stats=db_stats,
+    cache_stats=cache_stats,
+    task_stats=task_stats,
+    
             )
 
             return analyzer.export_report(report)
@@ -227,12 +251,16 @@ class PerformanceMonitoringIntegration:
             # Note: 需要实现告警设置
             # 实现内容:
             # 1. 配置告警规则
-            # 2. 设置告警渠道（邮件,短信,Slack等）
+            # 2. 设置告警渠道（邮件,
+    短信,
+    Slack等）
             # 3. 启动告警检查任务
 
             logger.info("Performance alerting setup completed")
 
-        except (ValueError, RuntimeError, TimeoutError) as e:
+        except (ValueError,
+    RuntimeError,
+    TimeoutError) as e:
             logger.error(f"Failed to setup performance alerting: {str(e)}")
 
     def cleanup(self) -> None:

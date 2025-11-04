@@ -93,6 +93,33 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return len(result.scalars().all())
 
+def __build_query_check_condition():
+                        query = query.where(getattr(self.model_class, key) == value)
+
+            # 添加排序
+
+def __build_query_check_condition():
+                        field = order_field[1:]
+                        query = query.order_by(getattr(self.model_class, field).desc())
+                    else:
+                        query = query.order_by(
+                            getattr(self.model_class, order_field).asc()
+                        )
+
+            # 添加分页
+
+def __build_query_check_condition():
+                query = query.offset(query_spec.offset)
+
+            # 添加预加载
+
+def __build_query_check_condition():
+                        query = query.options(
+                            selectinload(getattr(self.model_class, include_field))
+                        )
+
+        return query
+
     def _build_query(self, query_spec: QuerySpec | None) -> Select:
         """构建查询"""
         query = select(self.model_class)
@@ -101,13 +128,13 @@ class BaseRepository(Generic[T, ID], ABC):
             # 添加过滤条件
             if query_spec.filters:
                 for key, value in query_spec.filters.items():
-                    if hasattr(self.model_class, key):
+                    __build_query_check_condition()
                         query = query.where(getattr(self.model_class, key) == value)
 
             # 添加排序
             if query_spec.order_by:
                 for order_field in query_spec.order_by:
-                    if order_field.startswith("-"):
+                    __build_query_check_condition()
                         field = order_field[1:]
                         query = query.order_by(getattr(self.model_class, field).desc())
                     else:
@@ -118,24 +145,105 @@ class BaseRepository(Generic[T, ID], ABC):
             # 添加分页
             if query_spec.limit:
                 query = query.limit(query_spec.limit)
-            if query_spec.offset:
+            __build_query_check_condition()
                 query = query.offset(query_spec.offset)
 
             # 添加预加载
             if query_spec.include:
                 for include_field in query_spec.include:
-                    if hasattr(self.model_class, include_field):
+                    __build_query_check_condition()
                         query = query.options(
                             selectinload(getattr(self.model_class, include_field))
                         )
 
         return query
 
+def __apply_filters_check_condition():
+                    # 支持IN操作
+                    query = query.where(getattr(self.model_class, key).in_(value))
+
+def __apply_filters_check_condition():
+                            query = query.where(
+                                getattr(self.model_class, key).like(val)
+                            )
+
+def __apply_filters_check_condition():
+                            query = query.where(
+                                getattr(self.model_class, key).notin_(val)
+                            )
+                else:
+                    query = query.where(getattr(self.model_class, key) == value)
+        return query
+
+def __apply_filters_check_condition():
+            query = query.limit(limit)
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+def __apply_filters_process_logic():
+    """只读仓储基类 - 提供查询功能"""
+
+    @abstractmethod
+    async def get_by_id(self, id: ID) -> T | None:
+        """根据ID获取实体"""
+
+    @abstractmethod
+    async def get_all(self, query_spec: QuerySpec | None = None) -> list[T]:
+        """获取所有实体"""
+
+    async def create(self, entity: T) -> T:
+        """只读仓储不支持创建操作"""
+        raise NotImplementedError(
+
+def __apply_filters_process_logic():
+    """只写仓储基类 - 提供写入功能"""
+
+    @abstractmethod
+    async def create(self, entity: T) -> T:
+        """创建实体"""
+
+    @abstractmethod
+    async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
+        """更新实体"""
+
+    @abstractmethod
+    async def delete(self, id: ID) -> bool:
+        """删除实体"""
+
+    async def get_by_id(self, id: ID) -> T | None:
+        """只写仓储不支持查询操作"""
+        raise NotImplementedError(
+
+def __apply_filters_process_logic():
+    """完整仓储基类 - 提供读写功能"""
+
+    @abstractmethod
+    async def get_by_id(self, id: ID) -> T | None:
+        """根据ID获取实体"""
+
+    @abstractmethod
+    async def get_all(self, query_spec: QuerySpec | None = None) -> list[T]:
+        """获取所有实体"""
+
+    @abstractmethod
+    async def create(self, entity: T) -> T:
+        """创建实体"""
+
+    @abstractmethod
+    async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
+        """更新实体"""
+
+    @abstractmethod
+    async def delete(self, id: ID) -> bool:
+        """删除实体"""
+
+
     def _apply_filters(self, query: Select, filters: dict[str, Any]) -> Select:
         """应用过滤条件"""
         for key, value in filters.items():
             if hasattr(self.model_class, key):
-                if isinstance(value, (list, tuple)):
+                __apply_filters_check_condition()
                     # 支持IN操作
                     query = query.where(getattr(self.model_class, key).in_(value))
                 elif isinstance(value, dict):
@@ -147,13 +255,13 @@ class BaseRepository(Generic[T, ID], ABC):
                             query = query.where(getattr(self.model_class, key) < val)
                         elif operator == "$ne":
                             query = query.where(getattr(self.model_class, key) != val)
-                        elif operator == "$like":
+                        __apply_filters_check_condition()
                             query = query.where(
                                 getattr(self.model_class, key).like(val)
                             )
                         elif operator == "$in":
                             query = query.where(getattr(self.model_class, key).in_(val))
-                        elif operator == "$nin":
+                        __apply_filters_check_condition()
                             query = query.where(
                                 getattr(self.model_class, key).notin_(val)
                             )
@@ -168,7 +276,7 @@ class BaseRepository(Generic[T, ID], ABC):
         query = select(self.model_class)
         query = self._apply_filters(query, filters)
 
-        if limit:
+        __apply_filters_check_condition()
             query = query.limit(limit)
 
         result = await self.session.execute(query)
@@ -184,7 +292,7 @@ class BaseRepository(Generic[T, ID], ABC):
         return result.scalar_one_or_none()
 
 
-class ReadOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
+__apply_filters_process_logic()
     """只读仓储基类 - 提供查询功能"""
 
     @abstractmethod
@@ -214,7 +322,7 @@ class ReadOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
         )
 
 
-class WriteOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
+__apply_filters_process_logic()
     """只写仓储基类 - 提供写入功能"""
 
     @abstractmethod
@@ -242,7 +350,7 @@ class WriteOnlyRepository(Generic[T, ID], BaseRepository[T, ID]):
         )
 
 
-class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID]):
+__apply_filters_process_logic()
     """完整仓储基类 - 提供读写功能"""
 
     @abstractmethod
