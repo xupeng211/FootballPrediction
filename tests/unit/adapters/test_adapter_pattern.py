@@ -6,6 +6,9 @@ Adapter Pattern Test Suite
 """
 
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 from typing import Any
 from unittest.mock import Mock
 
