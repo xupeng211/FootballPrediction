@@ -7,7 +7,6 @@
 - 流数据持久化
 """
 
-import asyncio
 
 # Mock implementations for streaming classes
 class FootballKafkaConsumer:
