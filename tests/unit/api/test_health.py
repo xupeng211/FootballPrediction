@@ -55,7 +55,7 @@ app = create_mock_app()
 API_AVAILABLE = True
 TEST_SKIP_REASON = "API模块不可用"
 
-logger.debug("智能Mock兼容修复模式：Mock API应用已创建")  # TODO: Add logger import if needed
+# logger.debug("智能Mock兼容修复模式：Mock API应用已创建")  # 已注释：避免logger未定义错误
 
 
 #!/usr/bin/env python3
@@ -126,6 +126,10 @@ class TestHealthAPI:
     def test_health_endpoint_response_time(self, client):
         """测试健康检查响应时间"""
         import time
+
+import logging
+
+logger = logging.getLogger(__name__)
 
         start_time = time.time()
 
