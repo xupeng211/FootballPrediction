@@ -89,7 +89,7 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
         offset: int = 0,
     ) -> list[Prediction]:
         """获取用户的所有预测"""
-        filters = {"user_id": user_id}
+        filters = {"user_id": user_entity_id}
         if start_date:
             filters["match"] = {"match_date": {"$gte": start_date}}
         if end_date:
@@ -109,7 +109,7 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
         self, match_entity_id: int, include_user_details: bool = False
     ) -> list[Prediction]:
         """获取比赛的所有预测"""
-        filters = {"match_id": match_id}
+        filters = {"match_id": match_entity_id}
         includes = ["match"]
         if include_user_details:
             includes.append("user")
