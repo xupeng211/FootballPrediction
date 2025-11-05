@@ -15,6 +15,19 @@ from pydantic import BaseModel
 router = APIRouter()
 
 
+class Real_timeDataStreamingAPIRequest(BaseModel):
+    """Real-time Data Streaming API请求模型"""
+    data_source: str
+    query: str
+
+
+class Real_timeDataStreamingAPIResponse(BaseModel):
+    """Real-time Data Streaming API响应模型"""
+    success: bool
+    data: Any
+    message: str = "操作成功"
+
+
 class RealTimedatastreamingapirequest(BaseModel):
     """请求模型"""
 

@@ -47,7 +47,7 @@ async def get_match_features(
         match_data = result.fetchone()
 
         if not match_data:
-            raise HTTPException(status_code=404, detail="比赛未找到") from e
+            raise HTTPException(status_code=404, detail="比赛未找到")
         return {
             "match_id": match_data[0],
             "home_team_id": match_data[1],
