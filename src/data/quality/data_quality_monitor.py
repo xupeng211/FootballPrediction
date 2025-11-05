@@ -1,7 +1,4 @@
 """
-from typing import Dict, List
-from src.core.config import
-from src.core.config import
 数据质量监控器
 
 实现数据质量检查与异常检测功能。
@@ -20,6 +17,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy import text
 from src.database.connection import DatabaseManager
 
 

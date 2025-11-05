@@ -12,6 +12,7 @@ from typing import Any, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..database.models import Match
 from .base import BaseRepository, QuerySpec
 
 

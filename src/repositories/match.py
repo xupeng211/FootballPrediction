@@ -12,6 +12,7 @@ from typing import Any, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..database.models import Match
 from .base import BaseRepository, QuerySpec
 
 
@@ -42,9 +43,6 @@ class MatchRepository(BaseRepository):
 
     def __init__(self, session: AsyncSession):
         """初始化比赛仓储"""
-        # 假设有一个Match模型类
-        from ..database.models import Match
-
         super().__init__(session, Match)
 
     async def get_by_id(self, match_id: int) -> Optional["Match"]:
@@ -278,6 +276,10 @@ class MatchRepository(BaseRepository):
 
 class ReadOnlyMatchRepository(BaseRepository):
     """只读比赛仓储"""
+
+    def __init__(self, session: AsyncSession):
+        """初始化只读比赛仓储"""
+        super().__init__(session, Match)
 
     async def get_match_by_id(self, match_id: int) -> Optional["Match"]:
         """根据ID获取比赛"""

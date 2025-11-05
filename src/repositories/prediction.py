@@ -10,18 +10,18 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select, update
 
 from src.database.models import Prediction
 
-from .base import QuerySpec, ReadOnlyRepository, Repository
+from .base import QuerySpec, BaseRepository
 
 
-class PredictionRepositoryInterface(Repository[Prediction, int]):
+class PredictionRepositoryInterface(BaseRepository[Prediction, int]):
     """预测仓储接口"""
 
 
-class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
+class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
     """只读预测仓储"""
 
     async def find_one(self, query_spec: QuerySpec) -> Prediction | None:
@@ -285,10 +285,10 @@ class PredictionRepository(PredictionRepositoryInterface):
             created_at=datetime.utcnow(),
         )
 
-        self.session.add(prediction)
+        self.session.add(_prediction)
         await self.session.commit()
-        await self.session.refresh(prediction)
-        return prediction
+        await self.session.refresh(_prediction)
+        return _prediction
 
     async def update_by_id(
         self, id: int, update_data: dict[str, Any]
@@ -337,7 +337,7 @@ class PredictionRepository(PredictionRepositoryInterface):
                 notes=data.get("notes"),
                 created_at=datetime.utcnow(),
             )
-            predictions.append(prediction)
+            predictions.append(_prediction)
 
         self.session.add_all(predictions)
         await self.session.commit()

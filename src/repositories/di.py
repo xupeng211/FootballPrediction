@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import get_async_session
 
-from .base import Repository
+from .base import BaseRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .provider import RepositoryProvider, get_repository_provider
@@ -94,4 +94,4 @@ ReadOnlyMatchRepoDep = Annotated[
 ]
 
 # 通用仓储依赖类型
-RepositoryDep = Annotated[Repository, Depends(get_prediction_repository)]
+RepositoryDep = Annotated[PredictionRepository, Depends(get_prediction_repository)]

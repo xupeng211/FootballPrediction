@@ -16,8 +16,9 @@
 基于 DATA_DESIGN.md 第1.1节设计.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
+import hashlib
 
 from .base_collector import CollectionResult, DataCollector
 
@@ -261,16 +262,12 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 从数据库获取活跃联赛列表
-            # 在实际生产环境中,
-    这里会查询数据库获取配置的活跃联赛
+            # 在实际生产环境中，这里会查询数据库获取配置的活跃联赛
             # 目前返回主要联赛作为默认配置
             active_leagues = [
-                "PL",
-    # 英超
-                "PD",
-    # 西甲
-                "SA",
-    # 意甲
+                "PL",  # 英超
+                "PD",  # 西甲
+                "SA",  # 意甲
                 "BL1",  # 德甲
                 "FL1",  # 法甲
                 "CL",  # 欧冠
@@ -282,8 +279,7 @@ class FixturesCollector(DataCollector):
             return active_leagues
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get active leagues: {str(e)}")
-            return ["PL",
-    "PD"]  # 默认返回英超和西甲
+            return ["PL", "PD"]  # 默认返回英超和西甲
 
     async def _load_existing_matches(
         self,
@@ -299,9 +295,8 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 查询数据库中已存在的比赛
-            # 在实际生产环境中,
-    这里会查询数据库获取指定日期范围内的比赛
-            # 目前使用空集合作为占位符,允许重复插入（生产环境需要实现）
+            # 在实际生产环境中，这里会查询数据库获取指定日期范围内的比赛
+            # 目前使用空集合作为占位符，允许重复插入（生产环境需要实现）
             self.logger.info(f"加载 {date_from} 到 {date_to} 的已存在比赛ID")
             self._processed_matches = set()
 
@@ -375,9 +370,7 @@ class FixturesCollector(DataCollector):
         Returns:
             str: 比赛唯一键
         """
-        # 使用外部ID、主队,
-    客队,
-    比赛时间生成唯一键
+        # 使用外部ID、主队、客队、比赛时间生成唯一键
         key_components = [
             str(fixture_data.get("id", "")),
             str(fixture_data.get("homeTeam", {}).get("id", "")),
@@ -476,9 +469,5 @@ class FixturesCollector(DataCollector):
                 f"Found {len(self._missing_matches)} missing matches"
             )
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to detect missing matches: {str(e)}")

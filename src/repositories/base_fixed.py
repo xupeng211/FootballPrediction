@@ -7,9 +7,9 @@ Repository Base Classes - Rewritten Version
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
-from sqlalchemy import select
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
@@ -22,12 +22,11 @@ ID = TypeVar("ID")
 @dataclass
 class QuerySpec:
     """查询规范 - 简化版本"""
-
-    filters: dict[str, Any] | None = None
-    order_by: list[str] | None = None
-    limit: int | None = None
-    offset: int | None = None
-    include: list[str] | None = None
+    filters: Optional[Dict[str, Any]] = None
+    order_by: Optional[List[str]] = None
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    include: Optional[List[str]] = None
 
 
 class BaseRepository(Generic[T, ID], ABC):
@@ -43,24 +42,32 @@ class BaseRepository(Generic[T, ID], ABC):
         self.model_class = model_class
 
     @abstractmethod
-    async def get_by_id(self, id: ID) -> T | None:
+    async def get_by_id(self, id: ID) -> Optional[T]:
         """根据ID获取实体"""
+        pass
 
     @abstractmethod
-    async def get_all(self, query_spec: QuerySpec | None = None) -> list[T]:
+    async def get_all(
+        self,
+        query_spec: Optional[QuerySpec] = None
+    ) -> List[T]:
         """获取所有实体"""
+        pass
 
     @abstractmethod
     async def create(self, entity: T) -> T:
         """创建实体"""
+        pass
 
     @abstractmethod
-    async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
+    async def update(self, id: ID, update_data: Dict[str, Any]) -> Optional[T]:
         """更新实体"""
+        pass
 
     @abstractmethod
     async def delete(self, id: ID) -> bool:
         """删除实体"""
+        pass
 
     async def exists(self, id: ID) -> bool:
         """检查实体是否存在"""
@@ -68,7 +75,7 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
 
-    async def count(self, query_spec: QuerySpec | None = None) -> int:
+    async def count(self, query_spec: Optional[QuerySpec] = None) -> int:
         """计算实体数量"""
         query = select(self.model_class)
 
@@ -86,41 +93,12 @@ class BaseRepository(Generic[T, ID], ABC):
                         elif operator == "$ne":
                             query = query.where(getattr(self.model_class, key) != val)
                         elif operator == "$like":
-                            query = query.where(
-                                getattr(self.model_class, key).like(val)
-                            )
+                            query = query.where(getattr(self.model_class, key).like(val))
 
         result = await self.session.execute(query)
         return len(result.scalars().all())
 
-def __build_query_check_condition():
-                        query = query.where(getattr(self.model_class, key) == value)
-
-            # 添加排序
-
-def __build_query_check_condition():
-                        field = order_field[1:]
-                        query = query.order_by(getattr(self.model_class, field).desc())
-                    else:
-                        query = query.order_by(
-                            getattr(self.model_class, order_field).asc()
-                        )
-
-            # 添加分页
-
-def __build_query_check_condition():
-                query = query.offset(query_spec.offset)
-
-            # 添加预加载
-
-def __build_query_check_condition():
-                        query = query.options(
-                            selectinload(getattr(self.model_class, include_field))
-                        )
-
-        return query
-
-    def _build_query(self, query_spec: QuerySpec | None) -> Select:
+    def _build_query(self, query_spec: Optional[QuerySpec]) -> Select:
         """构建查询"""
         query = select(self.model_class)
 
@@ -128,64 +106,37 @@ def __build_query_check_condition():
             # 添加过滤条件
             if query_spec.filters:
                 for key, value in query_spec.filters.items():
-                    __build_query_check_condition()
+                    if hasattr(self.model_class, key):
                         query = query.where(getattr(self.model_class, key) == value)
 
             # 添加排序
             if query_spec.order_by:
                 for order_field in query_spec.order_by:
-                    __build_query_check_condition()
+                    if order_field.startswith('-'):
                         field = order_field[1:]
                         query = query.order_by(getattr(self.model_class, field).desc())
                     else:
-                        query = query.order_by(
-                            getattr(self.model_class, order_field).asc()
-                        )
+                        query = query.order_by(getattr(self.model_class, order_field).asc())
 
             # 添加分页
             if query_spec.limit:
                 query = query.limit(query_spec.limit)
-            __build_query_check_condition()
+            if query_spec.offset:
                 query = query.offset(query_spec.offset)
 
             # 添加预加载
             if query_spec.include:
                 for include_field in query_spec.include:
-                    __build_query_check_condition()
-                        query = query.options(
-                            selectinload(getattr(self.model_class, include_field))
-                        )
+                    if hasattr(self.model_class, include_field):
+                        query = query.options(selectinload(getattr(self.model_class, include_field)))
 
         return query
 
-def __apply_filters_check_condition():
-                    # 支持IN操作
-                    query = query.where(getattr(self.model_class, key).in_(value))
-
-def __apply_filters_check_condition():
-                            query = query.where(
-                                getattr(self.model_class, key).like(val)
-                            )
-
-def __apply_filters_check_condition():
-                            query = query.where(
-                                getattr(self.model_class, key).notin_(val)
-                            )
-                else:
-                    query = query.where(getattr(self.model_class, key) == value)
-        return query
-
-def __apply_filters_check_condition():
-            query = query.limit(limit)
-
-        result = await self.session.execute(query)
-        return result.scalars().all()
-
-    def _apply_filters(self, query: Select, filters: dict[str, Any]) -> Select:
+    def _apply_filters(self, query: Select, filters: Dict[str, Any]) -> Select:
         """应用过滤条件"""
         for key, value in filters.items():
             if hasattr(self.model_class, key):
-                __apply_filters_check_condition()
+                if isinstance(value, (list, tuple)):
                     # 支持IN操作
                     query = query.where(getattr(self.model_class, key).in_(value))
                 elif isinstance(value, dict):
@@ -197,34 +148,35 @@ def __apply_filters_check_condition():
                             query = query.where(getattr(self.model_class, key) < val)
                         elif operator == "$ne":
                             query = query.where(getattr(self.model_class, key) != val)
-                        __apply_filters_check_condition()
-                            query = query.where(
-                                getattr(self.model_class, key).like(val)
-                            )
+                        elif operator == "$like":
+                            query = query.where(getattr(self.model_class, key).like(val))
                         elif operator == "$in":
                             query = query.where(getattr(self.model_class, key).in_(val))
-                        __apply_filters_check_condition()
-                            query = query.where(
-                                getattr(self.model_class, key).notin_(val)
-                            )
+                        elif operator == "$nin":
+                            query = query.where(getattr(self.model_class, key).notin_(val))
                 else:
                     query = query.where(getattr(self.model_class, key) == value)
         return query
 
     async def find_by_filters(
-        self, filters: dict[str, Any], limit: int | None = None
-    ) -> list[T]:
+        self,
+        filters: Dict[str, Any],
+        limit: Optional[int] = None
+    ) -> List[T]:
         """根据过滤条件查找实体"""
         query = select(self.model_class)
         query = self._apply_filters(query, filters)
 
-        __apply_filters_check_condition()
+        if limit:
             query = query.limit(limit)
 
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def find_one_by_filters(self, filters: dict[str, Any]) -> T | None:
+    async def find_one_by_filters(
+        self,
+        filters: Dict[str, Any]
+    ) -> Optional[T]:
         """根据过滤条件查找单个实体"""
         query = select(self.model_class)
         query = self._apply_filters(query, filters)

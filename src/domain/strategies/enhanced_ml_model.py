@@ -14,6 +14,7 @@ from functools import lru_cache
 from typing import Any
 
 import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 
 from src.domain.strategies.base import (
     PredictionInput,
