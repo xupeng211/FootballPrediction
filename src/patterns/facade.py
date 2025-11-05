@@ -7,7 +7,7 @@ facade 主模块
 """
 
 # 导入拆分的模块
-from .patterns.facade_models import *  # TODO: Convert to explicit imports
+# FIXME: 星号导入已注释 - from .patterns.facade_models import *  # TODO: Convert to explicit imports
 
 # 导出所有公共接口
 __all__ = [
