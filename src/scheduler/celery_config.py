@@ -208,7 +208,7 @@ def should_collect_live_scores() -> bool:
         _matches = get_upcoming_matches(hours=2)
 
         # 如果有比赛,则需要采集实时比分
-        return len(matches) > 0
+        return len(_matches) > 0
 
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return False

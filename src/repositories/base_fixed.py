@@ -71,7 +71,7 @@ class BaseRepository(Generic[T, ID], ABC):
 
     async def exists(self, entity_entity_id: ID) -> bool:
         """检查实体是否存在"""
-        query = select(self.model_class).where(self.model_class.id == entity_id)
+        query = select(self.model_class).where(self.model_class.id == id)
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
 
