@@ -2,9 +2,6 @@
 适配器API路由
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Dict, List, Optional, Any
-
 router = APIRouter(prefix="/adapters", tags=["adapters"])
 
 @router.get("/info")
