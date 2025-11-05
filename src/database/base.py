@@ -90,7 +90,7 @@ class BaseModel(Base, TimestampMixin):
         }
         return cls(**filtered_data)
 
-    def update_from_dict(self, data: dict[str, Any]) -> None:
+    def update_from_dict(self, data: dict[str, Any], exclude_fields: set[str] | None = None) -> None:
         """
         从字典更新模型对象
 
@@ -98,9 +98,9 @@ class BaseModel(Base, TimestampMixin):
             data: 更新数据字典
             exclude_fields: 需要排除的字段集合
         """
-        if exclude_fields is None:
-            pass
-        {column.name for column in self.__table__.columns}
+        exclude_fields = exclude_fields or set()
+
+        allowed_fields = {column.name for column in self.__table__.columns}
         for key, value in data.items():
             setattr(self, key, value)
 

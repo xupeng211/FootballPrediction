@@ -7,6 +7,7 @@ Alembic环境配置
 import asyncio
 import os
 from logging.config import fileConfig
+from urllib.parse import urlparse, urlunparse
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
