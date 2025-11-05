@@ -1,4 +1,6 @@
 """
+from src.features.feature_definitions import FeatureCalculator
+from src.features.feature_store import FeatureStore
 feature_calculator 主模块
 
 此文件由长文件拆分工具自动生成
