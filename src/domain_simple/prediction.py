@@ -37,7 +37,7 @@ class Prediction:
     id: int | None = None,
     match_id: int = 0,
     user_id: int = 0,
-    
+
         prediction_type: PredictionType = PredictionType.MATCH_RESULT,
         predicted_value: str = "",
         confidence: float = 0.5,
@@ -196,7 +196,7 @@ class Prediction:
     "odds": self.odds,
     "stake": self.stake,
     "is_settled": self.is_settled,
-    
+
             "is_correct": self.is_correct,
             "actual_value": self.actual_value,
             "profit_loss": self.profit_loss,
@@ -205,7 +205,7 @@ class Prediction:
     "is_value_bet": self.is_value_bet(),
     "expected_value": self.get_expected_value(),
     "reasoning": self.reasoning,
-    
+
             "analysis_data": self.analysis_data,
             "created_at": self.created_at.isoformat(),
     "updated_at": self.updated_at.isoformat(),
@@ -223,18 +223,18 @@ class Prediction:
     0),
     user_id=data.get("user_id",
     0),
-    
+
             prediction_type=PredictionType(data.get("prediction_type",
     "match_result")),
     predicted_value=data.get("predicted_value",
     ""),
-    
+
             confidence=data.get("confidence",
     0.5),
     odds=data.get("odds"),
     stake=data.get("stake",
     1.0),
-    
+
         )
 
         # 设置状态

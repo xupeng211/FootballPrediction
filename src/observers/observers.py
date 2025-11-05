@@ -106,7 +106,7 @@ class MetricsObserver(Observer):
         """清理过期的指标数据"""
         cutoff_time = time.time() - self._aggregation_window
 
-        for metric_name, values in self._metrics.items():
+        for _metric_name, values in self._metrics.items():
             while values and values[0][0] < cutoff_time:
                 values.popleft()
 
@@ -114,7 +114,7 @@ class MetricsObserver(Observer):
         """返回观察的事件类型"""
         return [
             ObservableEventType.METRIC_UPDATE,
-    
+
             ObservableEventType.PREDICTION_COMPLETED,
             ObservableEventType.CACHE_HIT,
             ObservableEventType.CACHE_MISS,
@@ -140,7 +140,7 @@ class MetricsObserver(Observer):
     "min": min(recent_values),
     "max": max(recent_values),
     "avg": sum(recent_values) / len(recent_values),
-    
+
                 "latest": recent_values[-1] if recent_values else None,
             }
 
@@ -157,7 +157,7 @@ class MetricsObserver(Observer):
     "min": sorted_values[0],
     "max": sorted_values[-1],
     "mean": sum(sorted_values) / count,
-    
+
                 "p50": sorted_values[int(count * 0.5)],
     "p95": sorted_values[int(count * 0.95)],
     "p99": sorted_values[int(count * 0.99)],
@@ -295,7 +295,7 @@ class AlertingObserver(Observer):
     name: str,
     condition: Callable[[ObservableEvent],
     bool],
-    
+
         severity: str = "warning",
         message_template: str = None,
         cooldown_minutes: int = 5,
@@ -369,7 +369,7 @@ class AlertingObserver(Observer):
     event_type=event.event_type.value,
     source=event.source,
     **event.data,
-    
+
             ),
             "timestamp": datetime.utcnow(),
     "event": event,
@@ -409,7 +409,7 @@ class AlertingObserver(Observer):
     ObservableEventType.PERFORMANCE_DEGRADATION,
     ObservableEventType.ERROR_OCCURRED,
     ObservableEventType.THRESHOLD_EXCEEDED,
-    
+
         ]
 
     def get_alert_history(
@@ -417,7 +417,7 @@ class AlertingObserver(Observer):
     severity: str | None = None,
     since: datetime | None = None,
     limit: int = 50,
-    
+
     ) -> list[dict[str, Any]]:
         """获取告警历史"""
         history = list(self._alert_history)
@@ -550,7 +550,7 @@ class PerformanceObserver(Observer):
     "min": min(response_times),
     "max": max(response_times),
     "p50": sorted(response_times)[len(response_times) // 2],
-    
+
                 "p95": sorted(response_times)[int(len(response_times) * 0.95)],
                 "p99": sorted(response_times)[int(len(response_times) * 0.99)],
                 "count": len(response_times),
@@ -562,7 +562,7 @@ class PerformanceObserver(Observer):
     "_current_throughput",
     0),
     "total_requests": self._request_count,
-    
+
         }
 
         # 错误率

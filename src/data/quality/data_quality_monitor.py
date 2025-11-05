@@ -64,7 +64,7 @@ class DataQualityMonitor:
     "status": "healthy",
     "issues": [],
     "warnings": [],
-    
+
                 "details": {},
             }
 
@@ -179,7 +179,7 @@ class DataQualityMonitor:
                         if hours_since < self.thresholds["data_freshness_hours"]
                         else "stale"
                     ),
-    
+
                 }
             else:
                 return {
@@ -218,7 +218,7 @@ class DataQualityMonitor:
     "hours_since_update": round(hours_since,
     2),
     "status": "ok" if hours_since < 1 else "stale",
-    
+
                 }
             else:
                 return {
@@ -297,7 +297,7 @@ class DataQualityMonitor:
     "draw": float(row.draw_odds) if row.draw_odds else None,
     "away": float(row.away_odds) if row.away_odds else None,
     },
-    
+
                         "collected_at": row.collected_at.isoformat(),
     "severity": "high",
     }
@@ -393,7 +393,7 @@ class DataQualityMonitor:
     "created_at": row.created_at.isoformat(),
     "message": "比赛时间早于创建时间",
     "severity": "low",
-    
+
                     }
                 )
 
@@ -427,7 +427,7 @@ class DataQualityMonitor:
     anomalies
                 ),
     "quality_score": quality_score,
-    
+
                 "freshness_check": freshness_check,
                 "anomalies": {
                     "count": len(anomalies),
@@ -440,7 +440,7 @@ class DataQualityMonitor:
     "low_severity": len(
                         [a for a in anomalies if a.get("severity") == "low"]
                     ),
-    
+
                     "details": anomalies,
                 },
                 "recommendations": self._generate_recommendations(

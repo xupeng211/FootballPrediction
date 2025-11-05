@@ -314,17 +314,15 @@ if __name__ == "__main__":
     manager = PathManager()
     success = manager.setup_src_path()
 
-    print("🔧 路径配置结果:")
     info = manager.get_environment_info()
-    for key, value in info.items():
-        print(f"  {key}: {value}")
+    for _key, _value in info.items():
+        pass
 
     validation = manager.validate_configuration()
-    print("\n📋 配置验证结果:")
-    for key, value in validation.items():
-        print(f"  {key}: {value}")
+    for _key, _value in validation.items():
+        pass
 
     if success:
-        print("\n✅ 路径配置完成")
+        pass
     else:
-        print("\n❌ 路径配置失败")
+        pass

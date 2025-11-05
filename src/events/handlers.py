@@ -55,7 +55,7 @@ class MetricsEventHandler(EventHandler):
     MatchUpdatedEvent.get_event_type(),
     PredictionMadeEvent.get_event_type(),
     PredictionUpdatedEvent.get_event_type(),
-    
+
             UserRegisteredEvent.get_event_type(),
     TeamStatsUpdatedEvent.get_event_type(),
     ]
@@ -106,7 +106,7 @@ class LoggingEventHandler(EventHandler):
     MatchUpdatedEvent.get_event_type(),
     PredictionMadeEvent.get_event_type(),
     PredictionUpdatedEvent.get_event_type(),
-    
+
             UserRegisteredEvent.get_event_type(),
     TeamStatsUpdatedEvent.get_event_type(),
     ]
@@ -165,7 +165,7 @@ class CacheInvalidationHandler(EventHandler):
     MatchUpdatedEvent.get_event_type(),
     PredictionMadeEvent.get_event_type(),
     PredictionUpdatedEvent.get_event_type(),
-    
+
             TeamStatsUpdatedEvent.get_event_type(),
     ]
 
@@ -230,7 +230,7 @@ class NotificationEventHandler(EventHandler):
             MatchCreatedEvent.get_event_type(),
     PredictionMadeEvent.get_event_type(),
     UserRegisteredEvent.get_event_type(),
-    
+
         ]
 
     async def get_notifications(self) -> list[dict[str, Any]]:

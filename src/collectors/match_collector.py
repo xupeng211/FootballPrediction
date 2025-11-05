@@ -69,7 +69,7 @@ class MatchCollector(BaseCollector):
         self,
     league_id: int | None = None,
     date_from: datetime | None = None,
-    
+
         date_to: datetime | None = None,
         status: str | None = None,
     ) -> CollectionResult:
@@ -204,7 +204,7 @@ class MatchCollector(BaseCollector):
                     matches = await self.fetch_matches(
                         str(comp_id),
     dateFrom=today.isoformat(),
-    
+
                         dateTo=end_date.isoformat(),
                     )
 
@@ -267,7 +267,7 @@ class MatchCollector(BaseCollector):
                 try:
                     matches = await self.fetch_matches(
                         str(comp_id),
-    
+
                         dateFrom=start_date.isoformat(),
                         dateTo=today.isoformat(),
                     )
@@ -355,19 +355,19 @@ class MatchCollector(BaseCollector):
     "competition_id": competition.get("id"),
     "competition_name": competition.get("name"),
     "competition_code": competition.get("code"),
-    
+
                 "match_date": match_date,
                 "status": normalized_status,
                 "home_team_id": home_team.get("id"),
     "home_team_name": home_team.get("name"),
     "home_team_short_name": home_team.get("shortName"),
     "home_team_crest": home_team.get("crest"),
-    
+
                 "away_team_id": away_team.get("id"),
     "away_team_name": away_team.get("name"),
     "away_team_short_name": away_team.get("shortName"),
     "away_team_crest": away_team.get("crest"),
-    
+
                 "home_score": home_score,
                 "away_score": away_score,
                 "result": result,
@@ -376,7 +376,7 @@ class MatchCollector(BaseCollector):
     "venue": None,
     # API中不包含venue信息
                 "last_updated": match.get("lastUpdated"),
-    
+
             }
 
         except Exception as e:
@@ -386,7 +386,7 @@ class MatchCollector(BaseCollector):
     "")),
     "error": str(e),
     "raw_data": match,
-    
+
             }
 
     async def collect_normalized_matches(

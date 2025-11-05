@@ -36,8 +36,7 @@ try:
         PredictionProbabilities,
         RiskLevel,
     )
-except ImportError as e:
-    print(f"基础EV计算器导入错误: {e}")
+except ImportError:
 
     # 如果导入失败,使用备用定义
     # 定义基础类型以防导入失败
@@ -296,7 +295,7 @@ class EnhancedKellyCalculator:
         weights = {"accuracy": 0.4, "roi": 0.3, "consistency": 0.2, "max_drawdown": 0.1}
 
         factors = []
-        for metric, weight in weights.items():
+        for metric, _weight in weights.items():
             value = historical.get(metric, 0.0)
 
             if metric == "accuracy":

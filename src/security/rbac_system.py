@@ -46,4 +46,3 @@ class Role_BasedAccessControl:
 
 if __name__ == "__main__":
     service = Role_BasedAccessControl()
-    print("🚀 security特性初始化完成: Role-Based Access Control")

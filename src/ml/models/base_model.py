@@ -116,7 +116,7 @@ class BaseModel(abc.ABC):
     def train(
         self,
     training_data: pd.DataFrame,
-    
+
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
         """
@@ -232,7 +232,7 @@ class BaseModel(abc.ABC):
     "feature_names": self.feature_names,
     "hyperparameters": self.hyperparameters,
     "last_training_time": self.last_training_time,
-    
+
             "training_history_count": len(self.training_history),
     "feature_importance": self.get_feature_importance(),
     }

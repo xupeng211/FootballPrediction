@@ -71,8 +71,8 @@ Integrates retry mechanisms to improve connection reliability.
 """
 
 # 从definitions模块导入所有内容（替代connection_mod）
-from .definitions import DatabaseManager  # 角色定义; 核心管理器; 工厂函数; 会话获取
 from .definitions import (
+    DatabaseManager,  # 角色定义; 核心管理器; 工厂函数; 会话获取
     DatabaseRole,
     MultiUserDatabaseManager,
     get_admin_session,

@@ -9,6 +9,7 @@ import hashlib
 import secrets
 import uuid
 
+
 class CryptoUtils:
     """加密工具类"""
 
@@ -50,9 +51,9 @@ class CryptoUtils:
         """处理bcrypt导入错误"""
         try:
 
-            HAS_BCRYPT = True
+            pass
         except ImportError:
-            HAS_BCRYPT = False
+            pass
 
     @staticmethod
     def _verify_password_check_condition(password: str, hashed_password: str) -> bool:

@@ -79,9 +79,9 @@ class Subject(ABC):
         for observer in self._observers:
             try:
                 observer.update(self, data)
-            except Exception as e:
+            except Exception:
                 # 记录通知失败但不影响其他观察者
-                print(f"Observer {observer.name} notification failed: {e}")
+                pass
 
     def notify_event(self, event: ObservableEvent) -> None:
         """通知特定事件"""
@@ -90,8 +90,8 @@ class Subject(ABC):
         for observer in self._observers:
             try:
                 observer.update(self, event)
-            except Exception as e:
-                print(f"Observer {observer.name} notification failed: {e}")
+            except Exception:
+                pass
 
     def get_observers(self) -> list[Observer]:
         """获取所有观察者"""
@@ -143,8 +143,8 @@ class EventManager:
         for observer in self._global_observers:
             try:
                 observer.update(None, event)
-            except Exception as e:
-                print(f"Global observer {observer.name} notification failed: {e}")
+            except Exception:
+                pass
 
     def get_all_subjects(self) -> dict[str, Subject]:
         """获取所有被观察者"""

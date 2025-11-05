@@ -7,8 +7,8 @@ Event Bus Implementation
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Set
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class Event:
     """事件基类"""
 
-    def __init__(self, event_type: str, data: Optional[Dict] = None):
+    def __init__(self, event_type: str, data: dict | None = None):
         self.event_type = event_type
         self.data = data or {}
         self.timestamp = asyncio.get_event_loop().time()
@@ -30,7 +30,7 @@ class EventHandler:
 
     def __init__(self, name: str):
         self.name = name
-        self._subscribed_events: Set[str] = set()
+        self._subscribed_events: set[str] = set()
 
     async def handle(self, event: Event) -> None:
         """处理事件"""
@@ -48,12 +48,12 @@ class EventBus:
     """事件总线"""
 
     def __init__(self):
-        self._subscribers: Dict[str, List[EventHandler]] = {}
-        self._queues: Dict[str, Any] = {}
-        self._tasks: List[asyncio.Task] = []
+        self._subscribers: dict[str, list[EventHandler]] = {}
+        self._queues: dict[str, Any] = {}
+        self._tasks: list[asyncio.Task] = []
         self._running = False
         self._lock = asyncio.Lock()
-        self._filters: Dict[EventHandler, Dict] = {}
+        self._filters: dict[EventHandler, dict] = {}
         self._executor = ThreadPoolExecutor(max_workers=10)
 
     async def start(self) -> None:
@@ -122,7 +122,7 @@ class EventBus:
         if queue:
             await queue.put(event)
 
-    async def subscribe(self, event_type: str, handler: EventHandler, filters: Optional[Dict] = None) -> None:
+    async def subscribe(self, event_type: str, handler: EventHandler, filters: dict | None = None) -> None:
         """订阅事件"""
         async with self._lock:
             if event_type not in self._subscribers:
@@ -226,7 +226,7 @@ class EventBus:
 
 
 # 全局事件总线实例
-_event_bus: Optional[EventBus] = None
+_event_bus: EventBus | None = None
 
 
 def get_event_bus() -> EventBus:

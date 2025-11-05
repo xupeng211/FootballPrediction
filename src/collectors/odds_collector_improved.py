@@ -7,9 +7,9 @@ Improved Odds Collector (Backward Compatible)
 Provides backward compatible exports for the modular odds collector.
 """
 
-from .odds import OddsCollector  # 重新导出主要类和函数
 from .odds import (
     OddsAnalyzer,
+    OddsCollector,  # 重新导出主要类和函数
     OddsCollectorManager,
     OddsProcessor,
     OddsSourceManager,

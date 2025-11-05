@@ -512,18 +512,16 @@ async def _run_database_optimization(
                 results.extend(view_results)
 
             # 这里应该将结果保存到任务存储中
-            print(f"数据库优化 {optimization_id} 完成: {len(results)} 个操作")
 
-        except Exception as e:
-            print(f"数据库优化 {optimization_id} 失败: {str(e)}")
+        except Exception:
+            pass
 
 
 async def _clear_cache_by_pattern(pattern: str):
     """按模式清理缓存"""
     from src.optimizations.api_optimizations import clear_cache
 
-    result = await clear_cache(pattern)
-    print(f"缓存清理完成: {result}")
+    await clear_cache(pattern)
 
 
 async def _clear_cache_by_keys(keys: list[str]):
@@ -537,7 +535,6 @@ async def _clear_cache_by_keys(keys: list[str]):
         if await cache_manager.delete(key):
             cleared_count += 1
 
-    print(f"清理了 {cleared_count} 个缓存键")
 
 
 async def _clear_all_cache():
@@ -548,7 +545,6 @@ async def _clear_all_cache():
 async def _warm_cache(warm_config: dict[str, Any]):
     """缓存预热"""
     # 这里应该实现具体的缓存预热逻辑
-    print(f"缓存预热任务开始: {warm_config}")
 
 
 async def _analyze_cache_performance() -> dict[str, Any]:

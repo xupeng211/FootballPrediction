@@ -21,7 +21,7 @@ class FootballDataCollector(BaseCollector):
     api_key: str | None = None,
     base_url: str = "https://api.football-data.org/v4",
     **kwargs,
-    
+
     ):
         # 从环境变量获取API密钥，如果未提供则使用默认值
         api_key = api_key or os.getenv("FOOTBALL_DATA_API_KEY",
@@ -68,7 +68,7 @@ class FootballDataCollector(BaseCollector):
 
     async def collect_matches(
         self,
-    
+
         league_id: int | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
@@ -179,7 +179,7 @@ class FootballDataCollector(BaseCollector):
     "name": result.data.get("name"),
     "crest": result.data.get("crest"),
     },
-    
+
                     },
                     response_time=result.response_time,
                 )
@@ -228,7 +228,7 @@ class FootballDataCollector(BaseCollector):
     "total_available": len(competitions),
     "supported_codes": self.supported_competitions,
     },
-    
+
                     response_time=result.response_time,
                 )
             else:
@@ -273,7 +273,7 @@ class FootballDataCollector(BaseCollector):
     competition_codes: list[str] | None = None,
     days_back: int = 30,
     days_forward: int = 7,
-    
+
     ) -> CollectionResult:
         """
         采集全面的足球数据
@@ -379,7 +379,7 @@ class FootballDataCollector(BaseCollector):
     date_from=datetime.now(),
     date_to=date_to,
     status="SCHEDULED",
-    
+
                     )
                     comp_data["matches_scheduled"] = (
                         matches_scheduled_result.data
@@ -445,7 +445,7 @@ class FootballDataCollector(BaseCollector):
     "total_teams": total_teams,
     "total_matches_finished": total_matches_finished,
     "total_matches_scheduled": total_matches_scheduled,
-    
+
                     "total_matches": total_matches_finished + total_matches_scheduled,
                     "success_rate": (
                         comprehensive_data["stats"]["successful_requests"]

@@ -5,7 +5,6 @@ Observer Pattern Module
 提供观察者模式的实现，定义对象间的一对多依赖关系.
 """
 
-import json
 import queue
 import threading
 from abc import ABC, abstractmethod
@@ -78,8 +77,8 @@ class Subject(ABC):
         for observer in observers_copy:
             try:
                 observer.update(self, data)
-            except Exception as e:
-                print(f"通知观察者失败 {observer.get_observer_id()}: {e}")
+            except Exception:
+                pass
 
     def clear_observers(self) -> None:
         """清除所有观察者"""
@@ -236,12 +235,9 @@ class ConcreteObserver(Observer):
         if self.callback:
             try:
                 self.callback(subject, data)
-            except Exception as e:
-                print(f"回调执行失败 {self.observer_id}: {e}")
+            except Exception:
+                pass
 
-        print(
-            f"观察者 {self.observer_id} 收到来自 {getattr(subject, 'name', 'Unknown')} 的通知"
-        )
 
     def get_observer_id(self) -> str:
         """获取观察者ID"""
@@ -294,7 +290,6 @@ class LoggingObserver(Observer):
         }
 
         self.log_entries.append(log_entry)
-        print(f"[LOG] {json.dumps(log_entry, ensure_ascii=False)}")
 
     def get_observer_id(self) -> str:
         """获取观察者ID"""
@@ -417,9 +412,8 @@ class AlertingObserver(Observer):
                         "message": f"告警条件 {i} 被触发",
                     }
                     self.alerts.append(alert)
-                    print(f"[ALERT] {json.dumps(alert, ensure_ascii=False)}")
-            except Exception as e:
-                print(f"告警条件检查失败 {i}: {e}")
+            except Exception:
+                pass
 
     def get_observer_id(self) -> str:
         """获取观察者ID"""
@@ -480,7 +474,7 @@ class EventQueue:
             event = {"observer": observer, "subject": subject, "data": data}
             self._queue.put_nowait(event)
         except queue.Full:
-            print("事件队列已满，丢弃事件")
+            pass
 
     def _process_events(self) -> None:
         """处理事件队列"""
@@ -493,15 +487,15 @@ class EventQueue:
 
                 try:
                     observer.update(subject, data)
-                except Exception as e:
-                    print(f"异步通知处理失败: {e}")
+                except Exception:
+                    pass
 
                 self._queue.task_done()
 
             except queue.Empty:
                 continue
-            except Exception as e:
-                print(f"事件处理错误: {e}")
+            except Exception:
+                pass
 
 
 class AsyncSubject(Subject):
@@ -575,32 +569,25 @@ def create_observer_system() -> tuple[ConcreteSubject, list[Observer]]:
 
 def demonstrate_observer_pattern():
     """演示观察者模式的使用"""
-    print("=== 观察者模式演示 ===")
 
     subject, observers = create_observer_system()
-    print(f"创建了主题: {subject.name}")
-    print(f"注册了 {len(observers)} 个观察者")
 
     # 模拟状态变化
-    print("\n--- 模拟状态变化 ---")
     subject.set_state("status", "running")
     subject.set_state("user_count", 100)
     subject.set_state("error_count", 5)
 
     # 触发告警
-    print("\n--- 触发告警 ---")
     subject.set_state("error_count", 15)
 
     # 显示指标
-    metrics_observer = observers[1]
-    print(f"\n指标统计: {metrics_observer.get_metrics()}")
+    observers[1]
 
     # 显示告警
     alerting_observer = observers[2]
     alerts = alerting_observer.get_alerts()
-    print(f"告警数量: {len(alerts)}")
-    for alert in alerts:
-        print(f"  - {alert['message']}")
+    for _alert in alerts:
+        pass
 
 
 # 可观察服务实现

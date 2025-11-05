@@ -37,7 +37,7 @@ class DecoratorService:
         self.factory.load_config_from_file(config_path)
 
         # 加载全局装饰器
-        for name, config in self.factory._config_cache.items():
+        for _name, config in self.factory._config_cache.items():
             if config.conditions and config.conditions.get("global", False):
                 self._global_decorators.append(config)
 

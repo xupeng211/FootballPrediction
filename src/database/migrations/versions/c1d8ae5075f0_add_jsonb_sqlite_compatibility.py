@@ -146,9 +146,7 @@ def _verify_postgresql_jsonb_config():
                     if gin_index:
                         logger.info(f"    ✓ GIN索引 {gin_index['name']} 存在")
                     else:
-                        print(
-                            f"    ⚠ {jsonb_column} 字段缺少GIN索引,查询性能可能受影响"
-                        )
+                        pass
                 else:
                     logger.info(f"  ⚠ 表 {table_name} 缺少 {jsonb_column} 字段")
             else:

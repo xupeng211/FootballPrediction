@@ -46,4 +46,3 @@ class EncryptionService:
 
 if __name__ == "__main__":
     service = EncryptionService()
-    print("🚀 security特性初始化完成: Encryption Service")

@@ -51,7 +51,7 @@ class EnsemblePrediction:
     "ensemble_home_win_prob": self.ensemble_home_win_prob,
     "ensemble_draw_prob": self.ensemble_draw_prob,
     "ensemble_away_win_prob": self.ensemble_away_win_prob,
-    
+
             "ensemble_predicted_outcome": self.ensemble_predicted_outcome,
             "ensemble_confidence": self.ensemble_confidence,
             "strategy": self.strategy,
@@ -137,7 +137,7 @@ class PredictionService:
     match_data: dict[str,
     Any],
     model_name: str | None = None,
-    
+
         strategy: PredictionStrategy | None = None,
     ) -> Any:
         """
@@ -219,7 +219,7 @@ class PredictionService:
     home_team=home_team,
     away_team=away_team,
     predictions=predictions,
-    
+
             ensemble_home_win_prob=ensemble_result["home_win_prob"],
             ensemble_draw_prob=ensemble_result["draw_prob"],
             ensemble_away_win_prob=ensemble_result["away_win_prob"],
@@ -350,7 +350,7 @@ class PredictionService:
                 self.model_performance.keys(),
     key=lambda x: self.model_performance[x].get("accuracy",
     0),
-    
+
             )
             best_prediction = None
             for prediction in predictions:
@@ -399,7 +399,7 @@ class PredictionService:
         self,
     matches_data: list[dict[str,
     Any]],
-    
+
         model_name: str | None = None,
         strategy: PredictionStrategy | None = None,
     ) -> list[Any]:
@@ -475,7 +475,7 @@ class PredictionService:
     "trained_models": len(self.get_trained_models()),
     "default_strategy": self.default_strategy.value,
     "models": models_info,
-    
+
             "weights": self.model_weights.copy(),
     }
 

@@ -53,7 +53,7 @@ __all__ = [
     # Core classes
     "TTLCache",
     "AsyncTTLCache",
-    
+
     "CacheEntry",
     "CacheFactory",
     # Predefined instances

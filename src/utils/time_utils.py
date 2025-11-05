@@ -130,7 +130,7 @@ class TimeUtils:
         business_days = 0
         current = min(start, end)
 
-        for i in range(days + 1):
+        for _i in range(days + 1):
             if current.weekday() < 5:  # 周一到周五
                 business_days += 1
             current += timedelta(days=1)

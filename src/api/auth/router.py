@@ -274,7 +274,6 @@ async def request_password_reset(
 
     # 这里应该发送邮件,暂时返回令牌（实际生产中不应该返回）
     # TODO: 集成邮件服务
-    print(f"密码重置令牌: {reset_token}")  # 调试用
 
     # 记录密码重置请求指标 (暂时禁用)
     # increase_password_resets()
@@ -353,10 +352,9 @@ async def resend_verification_email(
             detail="邮箱已经验证过了",
         )
 
-    verification_token = auth_service.create_email_verification_token(current_user)
+    auth_service.create_email_verification_token(current_user)
 
     # TODO: 集成邮件服务
-    print(f"邮箱验证令牌: {verification_token}")  # 调试用
 
     return {"message": "验证邮件已发送"}
 

@@ -78,7 +78,7 @@ class PoissonModel(BaseModel):
 
     def train(
         self,
-    
+
         training_data: pd.DataFrame,
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
@@ -122,7 +122,7 @@ class PoissonModel(BaseModel):
     model_version=self.model_version,
     accuracy=metrics.get("accuracy",
     0.0),
-    
+
             precision=metrics.get("precision", 0.0),
             recall=metrics.get("recall", 0.0),
             f1_score=metrics.get("f1_score", 0.0),
@@ -134,7 +134,7 @@ class PoissonModel(BaseModel):
     training_time=training_time,
     features_used=[
                 "home_attack_strength",
-    
+
                 "home_defense_strength",
                 "away_attack_strength",
                 "away_defense_strength",
@@ -309,7 +309,7 @@ class PoissonModel(BaseModel):
 
         result = PredictionResult(
             match_id=match_id,
-    
+
             home_team=home_team,
             away_team=away_team,
             home_win_prob=home_win_prob,

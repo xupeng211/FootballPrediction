@@ -97,10 +97,8 @@ async def main():
     processor = SmartDataValidator()
 
     async for data in processor.process_data("sample_source"):
-        result = await processor.validate_data(data)
-        print(f"处理结果: {data}, 验证结果: {result}")
+        await processor.validate_data(data)
 
-    print("最终指标:", processor.get_metrics())
 
 
 if __name__ == "__main__":

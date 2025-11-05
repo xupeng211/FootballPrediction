@@ -340,7 +340,7 @@ class DataValidator:
         total_checks = 0
 
         for record in data:
-            for key, value in record.items():
+            for _key, value in record.items():
                 total_checks += 1
                 if value is None or value == "":
                     format_issues += 1

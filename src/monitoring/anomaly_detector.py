@@ -8,10 +8,10 @@ anomaly_detector 主模块
 
 # 导入拆分的模块
 from .monitoring.anomaly_detector_anomaly_detection import (
-    AnomalyType,
-    AnomalySeverity,
+    AnomalyDetector,
     AnomalyResult,
-    AnomalyDetector
+    AnomalySeverity,
+    AnomalyType,
 )
 
 # 导出所有公共接口

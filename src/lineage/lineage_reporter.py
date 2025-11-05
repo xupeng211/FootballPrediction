@@ -38,7 +38,7 @@ class LineageReporter:
 
     def __init__(
         self,
-    
+
         marquez_url: str = "http://localhost:5000",
         namespace: str = "football_prediction",
     ):
@@ -59,7 +59,7 @@ class LineageReporter:
     job_type: str = "BATCH",
     inputs: list[dict[str,
     Any]] | None = None,
-    
+
         description: str | None = None,
         source_location: str | None = None,
         parent_run_id: str | None = None,
@@ -138,14 +138,14 @@ class LineageReporter:
         # 发送开始事件
         event = RunEvent(
             eventType="START",
-    
+
             eventTime=datetime.now(UTC).isoformat(),
     run=Run(runId=run_id,
     facets=run_facets),
     job=Job(namespace=self.namespace,
     name=job_name,
     facets=job_facets),
-    
+
             inputs=input_datasets,
             outputs=[],
             producer="football_prediction_lineage_reporter",
@@ -164,7 +164,7 @@ class LineageReporter:
     job_name: str,
     outputs: list[dict[str,
     Any]] | None = None,
-    
+
         metrics: dict[str, Any] | None = None,
         run_id: str | None = None,
     ) -> bool:
@@ -232,7 +232,7 @@ class LineageReporter:
     eventTime=datetime.now(UTC).isoformat(),
     run=Run(runId=run_id,
     facets=run_facets),
-    
+
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=output_datasets,
@@ -290,7 +290,7 @@ class LineageReporter:
     eventTime=datetime.now(UTC).isoformat(),
     run=Run(runId=run_id,
     facets=run_facets),
-    
+
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=[],
@@ -317,7 +317,7 @@ class LineageReporter:
     source_name: str,
     target_table: str,
     records_collected: int,
-    
+
         collection_time: datetime,
         source_config: dict[str, Any] | None = None,
     ) -> str:
@@ -370,7 +370,7 @@ class LineageReporter:
         self.complete_job_run(
             job_name=job_name,
     outputs=outputs,
-    
+
             metrics={
                 "records_collected": records_collected,
                 "collection_duration": "unknown",
@@ -385,7 +385,7 @@ class LineageReporter:
     source_tables: list[str],
     target_table: str,
     transformation_sql: str,
-    
+
         records_processed: int,
         transformation_type: str = "ETL",
     ) -> str:

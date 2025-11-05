@@ -363,7 +363,7 @@ prediction_service = EnhancedPredictionService()
     response_model=PredictionResponse)
 async def predict_match(
     request: PredictionRequest,
-    
+
     background_tasks: BackgroundTasks,
     token: str = Depends(prediction_service.verify_token),
     db_session: AsyncSession = Depends(get_async_session),
@@ -392,7 +392,7 @@ async def predict_match(
     response = PredictionResponse(
         success=True,
     match_id=request.match_info.match_id,
-    
+
         prediction=PredictionResult(prediction_data["prediction"]),
     probabilities=prediction_data["probabilities"],
     confidence=(
@@ -411,7 +411,7 @@ async def predict_match(
     request.match_info.match_id,
     prediction_data["prediction"],
     prediction_data["processing_time_ms"],
-    
+
     )
 
     return response
@@ -423,7 +423,7 @@ async def predict_batch(
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
     token: str = Depends(prediction_service.verify_token),
-    
+
     db_session: AsyncSession = Depends(get_async_session),
     redis_client=Depends(get_redis_manager),
     ):
@@ -442,7 +442,7 @@ async def predict_batch(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
     detail="Batch size exceeds maximum limit of 1000 matches",
-    
+
         )
 
     # 并发预测处理
@@ -459,7 +459,7 @@ async def predict_batch(
     match_id=match_info.match_id,
     prediction=PredictionResult(prediction_data["prediction"]),
     probabilities=prediction_data["probabilities"],
-    
+
                     confidence=(
                         prediction_data["confidence"]
                         if request.include_confidence
@@ -496,7 +496,7 @@ async def predict_batch(
     response = BatchPredictionResponse(
         success=len(successful_predictions) > 0,
     total_matches=len(request.matches),
-    
+
         successful_predictions=successful_predictions,
         failed_predictions=failed_predictions,
         avg_response_time=avg_response_time,
