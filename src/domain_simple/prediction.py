@@ -34,7 +34,7 @@ class Prediction:
 
     def __init__(
         self,
-    id: int | None = None,
+        prediction_id: int | None = None,
     match_id: int = 0,
     user_id: int = 0,
 
@@ -44,7 +44,7 @@ class Prediction:
         odds: float | None = None,
         stake: float = 1.0,
     ):
-        self.id = id
+        self.id = prediction_id
         self.match_id = match_id
         self.user_id = user_id
         self.prediction_type = prediction_type

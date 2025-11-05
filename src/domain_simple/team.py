@@ -67,14 +67,14 @@ class Team:
 
     def __init__(
         self,
-        id: int | None = None,
+        team_id: int | None = None,
         name: str = "",
         short_name: str = "",
         founded_year: int | None = None,
         stadium: str = "",
         league_id: int = 0,
     ):
-        self.id = id
+        self.id = team_id
         self.name = name
         self.short_name = short_name
         self.founded_year = founded_year

@@ -36,7 +36,7 @@ class Content:
     pass  # 添加pass语句
     """内容类"""
 
-    def __init__(self, content_id: str, content_type: str, data: dict[str, Any]):
+    def __init__(self, content_entity_id: str, content_type: str, data: dict[str, Any]):
         """函数文档字符串"""
         pass  # 添加pass语句
         self.id = content_id
@@ -50,7 +50,7 @@ class UserProfile:
     pass  # 添加pass语句
     """用户配置文件类"""
 
-    def __init__(self, user_id: str, preferences: dict[str, Any] = None):
+    def __init__(self, user_entity_id: str, preferences: dict[str, Any] = None):
         """函数文档字符串"""
         pass  # 添加pass语句
         self.user_id = user_id
@@ -65,14 +65,14 @@ class AnalysisResult:
 
     def __init__(
         self,
-        id: str = "",
+        entity_id: str = "",
         analysis_type: str = "",
         result: dict[str, Any] = None,
         confidence: float = 0.0,
         timestamp: datetime | None = None,
-        content_id: str = "",
+        content_entity_id: str = "",
     ):
-        self.id = id
+        self.id = entity_id
         self.analysis_type = analysis_type
         self.result = result or {}
         self.confidence = confidence

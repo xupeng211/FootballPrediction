@@ -56,9 +56,9 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    async def get_by_id(self, id: int) -> Prediction | None:
+    async def get_by_id(self, entity_entity_id: int) -> Prediction | None:
         """根据ID获取预测"""
-        query = select(Prediction).where(Prediction.id == id)
+        query = select(Prediction).where(Prediction.id == entity_id)
         result = await self.session.execute(query)
         return result.scalars().first()
 
@@ -74,15 +74,15 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
         """删除预测"""
         raise NotImplementedError("This is a read-only repository")
 
-    async def exists(self, id: int) -> bool:
+    async def exists(self, entity_entity_id: int) -> bool:
         """检查预测是否存在"""
-        query = select(func.count(Prediction.id)).where(Prediction.id == id)
+        query = select(func.count(Prediction.id)).where(Prediction.id == entity_id)
         result = await self.session.execute(query)
         return result.scalar() > 0
 
     async def get_predictions_by_user(
         self,
-        user_id: int,
+        user_entity_id: int,
         start_date: date | None = None,
         end_date: date | None = None,
         limit: int = 100,
@@ -106,7 +106,7 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
         return await self.find_many(query_spec)
 
     async def get_predictions_by_match(
-        self, match_id: int, include_user_details: bool = False
+        self, match_entity_id: int, include_user_details: bool = False
     ) -> list[Prediction]:
         """获取比赛的所有预测"""
         filters = {"match_id": match_id}
@@ -121,7 +121,7 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
         return await self.find_many(query_spec)
 
     async def get_user_statistics(
-        self, user_id: int, period_days: int | None = None
+        self, user_entity_id: int, period_days: int | None = None
     ) -> dict[str, Any]:
         """获取用户统计信息"""
         query = select(
@@ -162,7 +162,7 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
             "average_confidence": float(stats.avg_confidence or 0),
         }
 
-    async def get_match_statistics(self, match_id: int) -> dict[str, Any]:
+    async def get_match_statistics(self, match_entity_id: int) -> dict[str, Any]:
         """获取比赛统计信息"""
         query = select(
             func.count(Prediction.id).label("total_predictions"),
@@ -203,9 +203,9 @@ class ReadOnlyPredictionRepository(BaseRepository[Prediction, int]):
 class PredictionRepository(PredictionRepositoryInterface):
     """预测仓储实现"""
 
-    async def get_by_id(self, id: int) -> Prediction | None:
+    async def get_by_id(self, entity_entity_id: int) -> Prediction | None:
         """根据ID获取预测"""
-        query = select(Prediction).where(Prediction.id == id)
+        query = select(Prediction).where(Prediction.id == entity_id)
         result = await self.session.execute(query)
         return result.scalars().first()
 
@@ -266,9 +266,9 @@ class PredictionRepository(PredictionRepositoryInterface):
             await self.session.rollback()
             return False
 
-    async def exists(self, id: int) -> bool:
+    async def exists(self, entity_entity_id: int) -> bool:
         """检查预测是否存在"""
-        query = select(func.count(Prediction.id)).where(Prediction.id == id)
+        query = select(func.count(Prediction.id)).where(Prediction.id == entity_id)
         result = await self.session.execute(query)
         return result.scalar() > 0
 
@@ -291,10 +291,10 @@ class PredictionRepository(PredictionRepositoryInterface):
         return _prediction
 
     async def update_by_id(
-        self, id: int, update_data: dict[str, Any]
+        self, entity_id: int, update_data: dict[str, Any]
     ) -> Prediction | None:
         """根据ID更新预测"""
-        query = update(Prediction).where(Prediction.id == id)
+        query = update(Prediction).where(Prediction.id == entity_id)
 
         # 更新时间戳
         update_data["updated_at"] = datetime.utcnow()
@@ -314,9 +314,9 @@ class PredictionRepository(PredictionRepositoryInterface):
             return await self.get_by_id(id)
         return None
 
-    async def delete_by_id(self, id: int) -> bool:
+    async def delete_by_id(self, entity_entity_id: int) -> bool:
         """根据ID删除预测"""
-        query = delete(Prediction).where(Prediction.id == id)
+        query = delete(Prediction).where(Prediction.id == entity_id)
         result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0

@@ -42,7 +42,7 @@ class BaseRepository(Generic[T, ID], ABC):
         self.model_class = model_class
 
     @abstractmethod
-    async def get_by_id(self, id: ID) -> T | None:
+    async def get_by_id(self, entity_entity_id: ID) -> T | None:
         """根据ID获取实体"""
         pass
 
@@ -60,18 +60,18 @@ class BaseRepository(Generic[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
+    async def update(self, entity_entity_id: ID, update_data: dict[str, Any]) -> T | None:
         """更新实体"""
         pass
 
     @abstractmethod
-    async def delete(self, id: ID) -> bool:
+    async def delete(self, entity_entity_id: ID) -> bool:
         """删除实体"""
         pass
 
-    async def exists(self, id: ID) -> bool:
+    async def exists(self, entity_entity_id: ID) -> bool:
         """检查实体是否存在"""
-        query = select(self.model_class).where(self.model_class.id == id)
+        query = select(self.model_class).where(self.model_class.id == entity_id)
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
 

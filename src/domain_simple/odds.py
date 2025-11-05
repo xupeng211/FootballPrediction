@@ -79,7 +79,7 @@ class Odds:
 
     def __init__(
         self,
-        id: int | None = None,
+        odds_id: int | None = None,
         match_id: int = 0,
         market_type: MarketType = MarketType.MATCH_RESULT,
         bookmaker: str = "",
@@ -87,7 +87,7 @@ class Odds:
         draw_odds: float | None = None,
         away_odds: float | None = None,
     ):
-        self.id = id
+        self.id = odds_id
         self.match_id = match_id
         self.market_type = market_type
         self.bookmaker = bookmaker
