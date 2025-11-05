@@ -110,7 +110,7 @@ class TestCryptoUtilsEnhanced:
     def test_verify_password_empty_credentials(self):
         """测试验证空密码凭据"""
         result = CryptoUtils.verify_password("", "")
-        assert result is True
+        assert result is False
 
     def test_verify_password_sha256_hash(self):
         """测试验证SHA256哈希密码"""
