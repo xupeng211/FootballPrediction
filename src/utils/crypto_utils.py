@@ -8,6 +8,7 @@ CryptoUtils
 import hashlib
 import secrets
 import uuid
+import bcrypt
 
 
 class CryptoUtils:
