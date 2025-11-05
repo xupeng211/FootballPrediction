@@ -63,7 +63,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
             Prediction: 创建的预测
         """
         # 执行原有预测逻辑
-        _prediction = await super().predict_match(
+        prediction = await super().predict_match(
             match_id, user_id, strategy_name, confidence, notes
         )
 
@@ -413,7 +413,7 @@ class EventDrivenUserService:
             创建的用户
         """
         # 创建用户（简化实现）
-        _user = {
+        user = {
             "id": 1,  # 实际应该由数据库生成
             "username": username,
             "email": email,
