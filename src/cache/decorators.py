@@ -2,14 +2,14 @@
 缓存装饰器模块
 """
 
+import asyncio
 import functools
 import logging
-import asyncio
-from typing import Callable, Optional
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
-def cache_result(ttl: int = 300, key_func: Optional[Callable] = None):
+def cache_result(ttl: int = 300, key_func: Callable | None = None):
     """缓存结果装饰器"""
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)

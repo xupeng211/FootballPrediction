@@ -125,7 +125,7 @@ class LeagueCollector(FootballDataCollector):
     "standings": normalized_standings,
     "current_matches": matches,
     "timestamp": datetime.utcnow().isoformat(),
-    
+
             }
 
             logger.info(f"Collected complete data for {competition_code}")
@@ -172,7 +172,7 @@ class LeagueCollector(FootballDataCollector):
     "")),
     "name": competition.get("name",
     "Unknown League"),
-    
+
                 "error": str(e),
     "raw_data": competition,
     }
@@ -191,7 +191,7 @@ class LeagueCollector(FootballDataCollector):
     "start_date": season.get("startDate"),
     "end_date": season.get("endDate"),
     "current_matchday": season.get("currentMatchday"),
-    
+
                 "winner": season.get("winner"),
             }
         except Exception as e:
@@ -245,7 +245,7 @@ class LeagueCollector(FootballDataCollector):
     },
     "played_games": team_standing.get("playedGames",
     0),
-    
+
                         "form": team_standing.get("form", None),
                         "won": team_standing.get("won", 0),
                         "draw": team_standing.get("draw", 0),
@@ -256,13 +256,13 @@ class LeagueCollector(FootballDataCollector):
     0),
     "goal_difference": team_standing.get("goalDifference",
     0),
-    
+
                         "competition": {
                             "id": competition.get("id"),
     "name": competition.get("name"),
     "code": competition.get("code"),
     },
-    
+
                         "group": group,
                         "stage": stage,
                         "table_type": table_type,
@@ -312,7 +312,7 @@ class LeagueCollector(FootballDataCollector):
     1),
     2,
     ),
-    
+
                     "average_points_per_game": round(
                         total_points / max(total_games_played,
     1),
@@ -321,7 +321,7 @@ class LeagueCollector(FootballDataCollector):
     "highest_points": (
                         max(team["points"] for team in standings) if standings else 0
                     ),
-    
+
                     "lowest_points": (
                         min(team["points"] for team in standings) if standings else 0
                     ),
@@ -329,7 +329,7 @@ class LeagueCollector(FootballDataCollector):
     "top_scorers": standings[:5],
     # 积分榜前5名
                 "timestamp": datetime.utcnow().isoformat(),
-    
+
             }
 
             logger.info(f"Collected statistics for {competition_code}")
@@ -399,7 +399,7 @@ class LeagueCollector(FootballDataCollector):
                     for comp in all_competitions
                     if comp.get("code") == competition_code
                 ),
-    
+
                 None,
             )
 
@@ -425,7 +425,7 @@ class LeagueCollector(FootballDataCollector):
     "matchday": matchday,
     "matches": matches,
     "total_matches": len(matches),
-    
+
                 "timestamp": datetime.utcnow().isoformat(),
             }
 

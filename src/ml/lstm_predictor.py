@@ -24,7 +24,6 @@ try:
     from tensorflow.keras.models import Sequential
     from tensorflow.keras.optimizers import Adam
 except ImportError:
-    print("警告: TensorFlow未安装,LSTM功能将不可用")
     tf = None
 
 from src.core.logging_system import get_logger
@@ -549,7 +548,6 @@ if __name__ == "__main__":
 
     async def test_lstm_predictor():
         """测试LSTM预测器"""
-        print("🧪 测试LSTM时间序列预测模型...")
 
         # 生成模拟历史数据
         np.random.seed(42)
@@ -578,33 +576,25 @@ if __name__ == "__main__":
                 }
             )
 
-        print(f"✅ 生成了 {len(mock_data)} 个模拟数据点")
 
         # 训练模型
         lstm_predictor.prepare_data(mock_data)
         X, y = lstm_predictor.prepare_data(mock_data)
 
-        print(f"✅ 数据准备完成: X.shape={X.shape}, y.shape={y.shape}")
 
         # 构建和训练模型
         lstm_predictor.build_model(input_shape=(X.shape[1], X.shape[2]))
-        training_stats = lstm_predictor.train(X, y)
+        lstm_predictor.train(X, y)
 
-        print(f"✅ 模型训练完成: {training_stats}")
 
         # 进行预测
         test_sequence = X[-1]  # 使用最后一个序列进行测试
-        prediction_result = lstm_predictor.predict(test_sequence)
+        lstm_predictor.predict(test_sequence)
 
-        print("✅ 预测完成:")
-        print(f"  预测值: {prediction_result.predicted_values[:3]}")
-        print(f"  置信区间: {prediction_result.confidence_intervals[:3]}")
 
         # 保存模型
         lstm_predictor.save_model()
-        print("✅ 模型已保存")
 
-        print("🎉 LSTM预测器测试完成!")
 
     # 运行测试
     asyncio.run(test_lstm_predictor())

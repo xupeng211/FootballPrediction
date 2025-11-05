@@ -6,12 +6,12 @@ API Cache Middleware
 """
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from ...cache.api_cache import get_api_cache, ApiCacheConfig
+from ...cache.api_cache import ApiCacheConfig, get_api_cache
 
 
 class CacheMiddleware(BaseHTTPMiddleware):

@@ -251,7 +251,7 @@ class PredictionContext:
     home_team=self.home_team,
     away_team=self.away_team,
     historical_data=self.historical_data,
-    
+
             additional_features={
                 "team_form": self.team_form,
                 "head_to_head": self.head_to_head,

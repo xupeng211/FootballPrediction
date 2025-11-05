@@ -148,7 +148,7 @@ class TeamCollector(FootballDataCollector):
     "address": team.get("address"),
     "website": team.get("website"),
     "founded": team.get("founded"),
-    
+
                 "club_colors": team.get("clubColors"),
                 "venue": team.get("venue"),
                 "area": {
@@ -164,7 +164,7 @@ class TeamCollector(FootballDataCollector):
                     team.get("runningCompetitions",
     [])
                 ),
-    
+
                 "last_updated": team.get("lastUpdated"),
                 "staff": team.get("staff", []),
             }
@@ -192,7 +192,7 @@ class TeamCollector(FootballDataCollector):
     "first_name": coach.get("firstName"),
     "last_name": coach.get("lastName"),
     "name": coach.get("name"),
-    
+
                 "date_of_birth": coach.get("dateOfBirth"),
                 "nationality": coach.get("nationality"),
                 "contract": coach.get("contract", {}),
@@ -214,7 +214,7 @@ class TeamCollector(FootballDataCollector):
     "name": player.get("name"),
     "position": player.get("position"),
     "date_of_birth": player.get("dateOfBirth"),
-    
+
                     "nationality": player.get("nationality"),
                     "shirt_number": None,  # API中不包含球衣号码
                     "contract_until": None,
@@ -239,7 +239,7 @@ class TeamCollector(FootballDataCollector):
     "name": comp.get("name"),
     "code": comp.get("code"),
     "type": comp.get("type"),
-    
+
                     "emblem": comp.get("emblem"),
                 }
                 normalized_competitions.append(normalized_comp)
@@ -374,14 +374,14 @@ class TeamCollector(FootballDataCollector):
     "match_date": match.get("utcDate"),
     "status": match.get("status",
     "").lower(),
-    
+
                 "is_home_team": is_home_team,
                 "opponent": {
                     "id": opponent.get("id"),
     "name": opponent.get("name"),
     "short_name": opponent.get("shortName"),
     "crest": opponent.get("crest"),
-    
+
                 },
                 "team_score": team_score,
                 "opponent_score": opponent_score,
@@ -395,7 +395,7 @@ class TeamCollector(FootballDataCollector):
     },
     "venue": match.get("venue"),
     "last_updated": match.get("lastUpdated"),
-    
+
             }
 
         except Exception as e:

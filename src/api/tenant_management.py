@@ -85,7 +85,7 @@ class TenantCreationRequestModel(BaseModel):
     description="自定义设置")
 
     @validator("slug")
-    def validate_slug(cls,
+    def validate_slug(self,
     v):
         """TODO: 添加函数文档"""
         """TODO: 添加函数文档"""  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
@@ -101,7 +101,7 @@ class TenantUpdateRequestModel(BaseModel):
 
     name: str | None = Field(
         None,
-    
+
         min_length=1,
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="租户名称",  # TODO: 将魔法数字 100 提取为常量
@@ -124,7 +124,7 @@ class TenantUpdateRequestModel(BaseModel):
     )  # TODO: 将魔法数字 50 提取为常量
     company_name: str | None = Field(
         None,
-    
+
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
         description="公司名称",  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
@@ -243,7 +243,7 @@ async def create_tenant(request: Request,
         # 创建租户
         creation_request = TenantCreationRequest(
             name=tenant_data.name,
-    
+
             slug=tenant_data.slug,
             contact_email=tenant_data.contact_email,
             company_name=tenant_data.company_name,
@@ -354,7 +354,7 @@ async def assign_user_role(
     user_id: int,
     role_data: RoleAssignmentRequestModel,
     request: Request,
-    
+
 ):
     """
     为用户分配角色
@@ -370,7 +370,7 @@ async def assign_user_role(
     tenant_id=tenant_id,
     role_code=role_data.role_code,
     assigned_by=tenant_context.user_id,
-    
+
             expires_at=role_data.expires_at,
         )
 
@@ -422,7 +422,7 @@ async def check_permission(
         tenant_service = TenantService(db)
         result = await tenant_service.check_user_permission(
             user_id=tenant_context.user_id,
-    
+
             tenant_id=tenant_id,
             permission_code=permission_data.permission_code,
             resource_context=permission_data.resource_context,
@@ -449,7 +449,7 @@ async def check_resource_quota(
     amount: int = Query(1,
     ge=1,
     description="需要的资源量"),
-    
+
 ):
     """
     检查资源配额
@@ -467,7 +467,7 @@ async def check_resource_quota(
         return QuotaCheckResponseModel(
             can_access=quota_check.can_access,
     current_usage=quota_check.current_usage,
-    
+
             max_limit=quota_check.max_limit,
             usage_percentage=quota_check.usage_percentage,
             reason=quota_check.reason,
@@ -498,7 +498,7 @@ async def list_tenants(
     skip: int = Query(0,
     ge=0,
     description="跳过数量"),
-    
+
     limit: int = Query(
         50,
     # TODO: 将魔法数字 50 提取为常量
@@ -512,7 +512,7 @@ async def list_tenants(
     description="状态筛选"),
     plan: TenantPlan | None = Query(None,
     description="计划筛选"),
-    
+
     search: str | None = Query(None, description="搜索关键词"),
 ):
     """

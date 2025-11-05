@@ -50,31 +50,24 @@ async def lifespan(app: FastAPI):
     """应用生命周期管理"""
     global db_pool
 
-    print("🚀 Starting Enhanced Football Prediction API...")
 
     # 初始化数据库连接池
     try:
         db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
-        print("✅ Database connection pool created")
 
         # 创建基础表结构
         await create_tables()
-        print("✅ Database tables initialized")
 
-    except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        print("⚠️  Running without database connection")
+    except Exception:
+        pass
 
-    print("✅ Enhanced API startup complete")
 
     yield
 
     # 清理资源
     if db_pool:
         await db_pool.close()
-        print("🔄 Database connections closed")
 
-    print("✅ Shutdown complete")
 
 
 async def create_tables():
@@ -91,7 +84,7 @@ async def create_tables():
     predicted_winner VARCHAR(100) NOT NULL,
     # TODO: 将魔法数字 100 提取为常量
                 confidence FLOAT NOT NULL,
-    
+
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """
@@ -106,7 +99,7 @@ async def create_tables():
                 away_team VARCHAR(100) NOT NULL,
     # TODO: 将魔法数字 100 提取为常量
                 match_date TIMESTAMP NOT NULL,
-    
+
                 league VARCHAR(100),
     # TODO: 将魔法数字 100 提取为常量
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -130,7 +123,7 @@ async def get_db_connection():
 # 创建 FastAPI 应用
 app = FastAPI(
     title="Football Prediction API - Enhanced",
-    
+
     description="Advanced football match prediction system with data access layer",
     version="2.1.0",
     lifespan=lifespan,
@@ -185,7 +178,7 @@ async def get_predictions():
         return [
             PredictionResponse(
                 id=row["id"],
-    
+
                 match_id=row["match_id"],
                 predicted_winner=row["predicted_winner"],
                 confidence=row["confidence"],
@@ -238,7 +231,7 @@ async def create_prediction(match_id: int,
     match_id=row["match_id"],
     predicted_winner=row["predicted_winner"],
     confidence=row["confidence"],
-    
+
             created_at=row["created_at"].isoformat(),
         )
 
@@ -272,7 +265,7 @@ async def get_prediction(prediction_id: int):
     match_id=row["match_id"],
     predicted_winner=row["predicted_winner"],
     confidence=row["confidence"],
-    
+
             created_at=row["created_at"].isoformat(),
         )
 
@@ -313,6 +306,6 @@ if __name__ == "__main__":
     port=8000,
     # TODO: 将魔法数字 8000 提取为常量
         reload=True,
-    
+
         log_level="info",
     )

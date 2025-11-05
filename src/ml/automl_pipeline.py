@@ -260,19 +260,16 @@ async def main():
     trainer = AutoMLPipeline()
 
     # 训练模型
-    training_result = await trainer.train_model(X, y)
-    print("训练结果:", training_result)
+    await trainer.train_model(X, y)
 
     # 预测
     test_features = pd.DataFrame(
         np.random.randn(5, 5), columns=[f"feature_{i}" for i in range(5)]
     )
-    prediction_result = await trainer.predict(test_features)
-    print("预测结果:", prediction_result)
+    await trainer.predict(test_features)
 
     # 性能监控
-    monitoring_result = await trainer.monitor_performance(X, y)
-    print("监控结果:", monitoring_result)
+    await trainer.monitor_performance(X, y)
 
 
 if __name__ == "__main__":

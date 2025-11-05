@@ -501,21 +501,14 @@ def main():
     """主函数,用于测试"""
     gate_system = QualityGateSystem()
 
-    print("🚪 质量门禁系统测试")
-    print("=" * 50)
 
     # 运行所有检查
     results = gate_system.run_all_checks()
 
-    print(f"\n📊 检查结果: {results['overall_status']}")
-    print(f"📈 平均分数: {results['average_score']:.2f}")
-    print(f"⏱️ 检查耗时: {results['duration_seconds']:.2f}秒")
-    print(f"🚦 阻止合并: {'是' if results['should_block'] else '否'}")
 
     # 显示详细结果
-    print("\n📋 详细结果:")
-    for result in results["results"]:
-        print(f"  {result['gate_name']}: {result['status']} ({result['score']:.2f})")
+    for _result in results["results"]:
+        pass
 
     # 生成报告
     report = gate_system.generate_report(results)
@@ -524,7 +517,6 @@ def main():
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
 
-    print(f"\n📄 报告已保存: {report_path}")
 
 
 if __name__ == "__main__":

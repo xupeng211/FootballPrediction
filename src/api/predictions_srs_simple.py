@@ -48,7 +48,7 @@ class MatchInfo(BaseModel):
     description="比赛ID")
     home_team: str = Field(
         ...,
-    
+
         description="主队名称",
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
@@ -60,7 +60,7 @@ class MatchInfo(BaseModel):
     )  # TODO: 将魔法数字 100 提取为常量
     league: str = Field(
         ...,
-    
+
         description="联赛名称",
         max_length=100,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
@@ -133,7 +133,7 @@ class BatchPredictionRequest(BaseModel):
     # TODO: 将魔法数字 100 提取为常量
         description="最大并发数",
     ge=1,
-    
+
         le=1000,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
 
@@ -377,7 +377,7 @@ async def predict_match_simple(
     background_tasks: BackgroundTasks,
     token: str = Depends(simple_prediction_service.verify_token),
     redis_client=Depends(get_redis_manager),
-    
+
 ):
     """
     SRS规范简化预测接口 - 不依赖数据库
@@ -405,7 +405,7 @@ async def predict_match_simple(
     # 构建响应
     response = PredictionResponse(
         success=True,
-    
+
         match_id=request.match_info.match_id,
         prediction=PredictionResult(prediction_data["prediction"]),
     probabilities=prediction_data["probabilities"],
@@ -425,7 +425,7 @@ async def predict_match_simple(
     request.match_info.match_id,
     prediction_data["prediction"],
     prediction_data["processing_time_ms"],
-    
+
     )
 
     return response
@@ -437,7 +437,7 @@ async def predict_batch_simple(
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
     token: str = Depends(simple_prediction_service.verify_token),
-    
+
     redis_client=Depends(get_redis_manager),
     ):
     """
@@ -474,7 +474,7 @@ async def predict_batch_simple(
     match_id=match_info.match_id,
     prediction=PredictionResult(prediction_data["prediction"]),
     probabilities=prediction_data["probabilities"],
-    
+
                     confidence=(
                         prediction_data["confidence"]
                         if request.include_confidence
@@ -513,7 +513,7 @@ async def predict_batch_simple(
     response = BatchPredictionResponse(
         success=len(successful_predictions) > 0,
     total_matches=len(request.matches),
-    
+
         successful_predictions=successful_predictions,
         failed_predictions=failed_predictions,
         avg_response_time=avg_response_time,
@@ -532,7 +532,7 @@ async def predict_batch_simple(
 @router.get("/metrics")
 async def get_prediction_metrics_simple(
     token: str = Depends(simple_prediction_service.verify_token),
-    
+
 ):
     """获取预测性能指标"""
     return {

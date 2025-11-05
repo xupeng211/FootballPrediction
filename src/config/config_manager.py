@@ -4,14 +4,14 @@ Configuration Manager Module
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ConfigManager:
     """配置管理器"""
 
     def __init__(self):
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
         self.load_default_config()
 
     def load_default_config(self):
@@ -70,7 +70,7 @@ class ConfigManager:
 config_manager = Config_Manager()
 
 
-def example() -> Optional[str]:
+def example() -> str | None:
     """示例函数"""
     return config_manager.get("example_value")
 

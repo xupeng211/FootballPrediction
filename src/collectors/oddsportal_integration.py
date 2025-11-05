@@ -9,7 +9,6 @@ OddsPortal Scraper Integration Module
 """
 
 import asyncio
-import json
 from pathlib import Path
 from typing import Any
 
@@ -243,7 +242,7 @@ class OddsPortalIntegration:
                 id=match_id,
     home_team=match.home_team,
     away_team=match.away_team,
-    
+
                 league=match.league,
                 match_date=match.match_date,
                 status=match.status,
@@ -309,7 +308,7 @@ class OddsPortalIntegration:
                     else "unhealthy"
                 ),
     "connection": connection_ok,
-    
+
                 "configuration": config_ok,
                 "initialization": init_ok,
                 "timestamp": datetime.now().isoformat(),
@@ -339,7 +338,7 @@ class OddsPortalAdapter(DataSourceAdapter):
     league_id: int | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
-    
+
     ) -> list[MatchData]:
         """获取比赛列表"""
         try:
@@ -435,7 +434,7 @@ class OddsPortalAdapter(DataSourceAdapter):
                             match_id=match_id,
     home_win=odds_portal_match.odds_home_win,
     draw=odds_portal_match.odds_draw,
-    
+
                             away_win=odds_portal_match.odds_away_win,
                             source="oddsportal",
                             over_under=odds_portal_match.over_under,
@@ -502,27 +501,20 @@ async def main():
         await integration.initialize()
 
         # 健康检查
-        health = await integration.health_check()
-        print(f"Health check: {json.dumps(health, indent=2)}")
+        await integration.health_check()
 
         # 获取数据源信息
-        info = await integration.get_source_info()
-        print(f"Source info: {json.dumps(info, indent=2)}")
+        await integration.get_source_info()
 
         # 抓取今日比赛（测试少量数据）
-        print("Testing today matches scraping...")
         matches = await integration.scrape_today_matches()
-        print(f"Found {len(matches)} today matches")
 
         # 显示前3个比赛
-        for i, match in enumerate(matches[:3]):
-            print(
-                                f"Match {i +
-                    1}: {match.home_team} vs {match.away_team} ({match.league})"
-            )
+        for _i, _match in enumerate(matches[:3]):
+            pass
 
-    except Exception as e:
-        print(f"Error: {e}")
+    except Exception:
+        pass
 
     finally:
         await integration.cleanup()

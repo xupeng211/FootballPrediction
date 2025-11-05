@@ -9,10 +9,10 @@ Provides backward compatible exports for the modular logging system.
 
 import os
 
-from .logging import LogLevel  # 重新导出主要类和函数
 from .logging import (
     LogCategory,
     LoggerManager,
+    LogLevel,  # 重新导出主要类和函数
     StructuredLogger,
     get_logger,
     log_async_performance,

@@ -168,7 +168,7 @@ class AutoBinder:
 
     def _scan_module(self, module) -> None:
         """扫描模块"""
-        for name, obj in inspect.getmembers(module, inspect.isclass):
+        for _name, obj in inspect.getmembers(module, inspect.isclass):
             # 跳过导入的类
             if obj.__module__ != module.__name__:
                 continue
@@ -230,7 +230,7 @@ class AutoBinder:
         for module_name in self._scanned_modules:
             try:
                 module = importlib.import_module(module_name)
-                for name, obj in inspect.getmembers(module, inspect.isclass):
+                for _name, obj in inspect.getmembers(module, inspect.isclass):
                     if obj.__module__ != module_name:
                         continue
 

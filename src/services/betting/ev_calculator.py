@@ -34,9 +34,7 @@ try:
     from src.core.logging_system import get_logger
 
     logger = get_logger(__name__)
-except ImportError as e:
-    print(f"导入错误: {e}")
-    print("请确保在项目根目录运行此脚本")
+except ImportError:
     sys.exit(1)
 
 
@@ -510,7 +508,7 @@ class BettingStrategyOptimizer:
         risk_penalty = np.mean([bet.risk_level.value for bet in bets]) * 5
 
         # 多样性加成
-        diversity_bonus = len(set(bet.bet_type for bet in bets)) * 2
+        diversity_bonus = len({bet.bet_type for bet in bets}) * 2
 
         total_score = base_score + ev_bonus - risk_penalty + diversity_bonus
         return min(max(total_score, 0.0), 100.0)

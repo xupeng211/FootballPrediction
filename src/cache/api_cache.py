@@ -344,7 +344,6 @@ class ApiCache:
 
         try:
             # 使用Redis模式匹配删除所有API缓存键
-            pattern = f"{self.config.key_prefix}:*"
 
             # 这里需要在RedisManager中实现模式匹配删除
             # 暂时返回True，表示操作成功

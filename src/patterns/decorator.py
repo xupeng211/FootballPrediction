@@ -131,9 +131,8 @@ def timing_decorator(func: Callable) -> Callable:
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        execution_time = end_time - start_time
+        end_time - start_time
 
-        print(f"函数 {func.__name__} 执行时间: {execution_time:.4f} 秒")
         return result
 
     return wrapper
@@ -154,15 +153,11 @@ def logging_decorator(log_level: str = "INFO") -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
-            print(f"[{log_level}] 调用函数: {func.__name__}")
-            print(f"[{log_level}] 参数: args={args}, kwargs={kwargs}")
 
             try:
                 result = func(*args, **kwargs)
-                print(f"[{log_level}] 函数 {func.__name__} 执行成功")
                 return result
-            except Exception as e:
-                print(f"[{log_level}] 函数 {func.__name__} 执行失败: {str(e)}")
+            except Exception:
                 raise
 
         return wrapper
@@ -192,11 +187,9 @@ def cache_decorator(max_size: int = 128) -> Callable:
 
             # 检查缓存
             if cache_key in cache:
-                print(f"缓存命中: {func.__name__}")
                 return cache[cache_key]
 
             # 缓存未命中，执行函数
-            print(f"缓存未命中: {func.__name__}")
             result = func(*args, **kwargs)
 
             # 缓存结果（简单的LRU实现）
@@ -245,11 +238,9 @@ def retry_decorator(max_attempts: int = 3,
                 except Exception as e:
                     last_exception = e
                     if attempt < max_attempts - 1:
-                        print(f"尝试 {attempt + 1}/{max_attempts} 失败: {str(e)}")
-                        print(f"等待 {delay} 秒后重试...")
                         time.sleep(delay)
                     else:
-                        print(f"所有 {max_attempts} 次尝试都失败了")
+                        pass
 
             raise last_exception
 
@@ -318,7 +309,6 @@ class DecoratorChain:
 @cache_decorator(max_size=64)
 def example_function(x: int, y: int) -> int:
     """示例函数，用于演示装饰器"""
-    print(f"执行计算: {x} + {y}")
     time.sleep(0.1)  # 模拟计算时间
     return x + y
 
@@ -352,45 +342,35 @@ def create_component_chain(
 
 def demonstrate_decorator_pattern():
     """演示装饰器模式的使用"""
-    print("=== 装饰器模式演示 ===")
 
     # 创建基础组件
     component = ConcreteComponent("数据处理组件")
-    print(f"基础操作: {component.operation()}")
 
     # 添加装饰器A
     decorated_a = ConcreteDecoratorA(component, "数据验证")
-    print(f"装饰A后: {decorated_a.operation()}")
 
     # 添加装饰器B
     decorated_ab = ConcreteDecoratorB(decorated_a)
-    print(f"装饰A+B后: {decorated_ab.operation()}")
 
     # 调用装饰器的额外行为
     if isinstance(decorated_ab, ConcreteDecoratorB):
-        print(f"额外行为: {decorated_ab.added_behavior()}")
+        pass
 
-    print("\n=== 函数装饰器演示 ===")
     # 演示函数装饰器
-    result1 = example_function(5, 3)
-    print(f"结果: {result1}")
+    example_function(5, 3)
 
     # 缓存命中
-    result2 = example_function(5, 3)
-    print(f"结果: {result2}")
+    example_function(5, 3)
 
-    print("\n=== 重试装饰器演示 ===")
     try:
         unstable_function(False)
-        print("稳定调用成功")
-    except Exception as e:
-        print(f"稳定调用失败: {e}")
+    except Exception:
+        pass
 
     try:
         unstable_function(True)
-        print("不稳定调用成功")
-    except Exception as e:
-        print(f"不稳定调用失败: {e}")
+    except Exception:
+        pass
 
 
 # 企业级装饰器实现
@@ -431,9 +411,7 @@ class LoggingDecorator(BaseDecorator):
 
     def operation(self) -> str:
         """执行带日志的操作"""
-        print(f"[{self.log_level}] 开始执行操作")
         result = self._component.operation()
-        print(f"[{self.log_level}] 操作完成: {result}")
         return result
 
 
@@ -463,9 +441,6 @@ class MetricsDecorator(BaseDecorator):
         duration = time.time() - start_time
         self.total_time += duration
 
-        print(
-            f"[指标] 调用次数: {self.call_count}, 耗时: {duration:.4f}s, 平均耗时: {self.total_time / self.call_count:.4f}s"
-        )
         return result
 
     def get_metrics(self) -> dict[str, Any]:
@@ -505,17 +480,14 @@ class RetryDecorator(BaseDecorator):
             try:
                 result = self._component.operation()
                 if attempt > 0:
-                    print(f"[重试] 第{attempt}次重试成功")
+                    pass
                 return result
             except Exception as e:
                 last_exception = e
                 if attempt < self.max_retries:
-                    print(
-                        f"[重试] 第{attempt + 1}次尝试失败，{self.delay}秒后重试: {e}"
-                    )
                     time.sleep(self.delay)
                 else:
-                    print("[重试] 所有重试均失败")
+                    pass
 
         raise last_exception
 
@@ -546,12 +518,9 @@ class ValidationDecorator(BaseDecorator):
 
     def operation(self) -> str:
         """执行带验证的操作"""
-        print("[验证] 开始验证输入...")
 
         if self.validator():
-            print("[验证] 验证通过")
             result = self._component.operation()
-            print("[验证] 输出验证通过")
             return result
         else:
             raise ValueError("验证失败")
@@ -579,26 +548,21 @@ class CacheDecorator(BaseDecorator):
         cache_key = str(id(self._component))
 
         if cache_key in self._cache:
-            print(f"[缓存] 命中缓存: {cache_key}")
             return self._cache[cache_key]
 
-        print(f"[缓存] 缓存未命中，执行操作: {cache_key}")
         result = self._component.operation()
 
         # 如果缓存满了，移除最旧的条目
         if len(self._cache) >= self.cache_size:
             oldest_key = next(iter(self._cache))
             del self._cache[oldest_key]
-            print(f"[缓存] 移除最旧缓存: {oldest_key}")
 
         self._cache[cache_key] = result
-        print(f"[缓存] 缓存结果: {cache_key}")
         return result
 
     def clear_cache(self):
         """清空缓存"""
         self._cache.clear()
-        print("[缓存] 缓存已清空")
 
     def get_cache_stats(self) -> dict[str, Any]:
         """获取缓存统计"""
@@ -618,13 +582,10 @@ def async_log(log_level: str = "INFO"):
         @wraps(func)
         async def wrapper(*args,
     **kwargs):
-            print(f"[{log_level}] 开始执行异步函数: {func.__name__}")
             try:
                 result = await func(*args, **kwargs)
-                print(f"[{log_level}] 异步函数完成: {func.__name__}")
                 return result
-            except Exception as e:
-                print(f"[{log_level}] 异步函数异常: {func.__name__}, 错误: {e}")
+            except Exception:
                 raise
 
         return wrapper
@@ -640,12 +601,10 @@ def async_metrics(func):
         start_time = time.time()
         try:
             result = await func(*args, **kwargs)
-            duration = time.time() - start_time
-            print(f"[异步指标] {func.__name__} 耗时: {duration:.4f}s")
+            time.time() - start_time
             return result
         except Exception:
-            duration = time.time() - start_time
-            print(f"[异步指标] {func.__name__} 异常，耗时: {duration:.4f}s")
+            time.time() - start_time
             raise
 
     return wrapper
@@ -663,17 +622,14 @@ def async_retry(max_retries: int = 3, delay: float = 1.0):
                 try:
                     result = await func(*args, **kwargs)
                     if attempt > 0:
-                        print(f"[异步重试] 第{attempt}次重试成功")
+                        pass
                     return result
                 except Exception as e:
                     last_exception = e
                     if attempt < max_retries:
-                        print(
-                            f"[异步重试] 第{attempt + 1}次尝试失败，{delay}秒后重试: {e}"
-                        )
                         await asyncio.sleep(delay)
                     else:
-                        print("[异步重试] 所有重试均失败")
+                        pass
 
             raise last_exception
 
@@ -707,7 +663,7 @@ def create_decorated_service(service_name: str) -> Component:
 __all__ = [
     "Component",
     "ConcreteComponent",
-    
+
     "BaseDecorator",
     "Decorator",
     "LoggingDecorator",

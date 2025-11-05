@@ -21,14 +21,12 @@ from .di import (
     ReadOnlyUserRepoDep,
     RepositoryDep,
     UserRepoDep,
-)
-from .di import get_match_repository as get_match_repo_dep
-from .di import get_prediction_repository as get_prediction_repo_dep
-from .di import (
     get_read_only_match_repository,
     get_read_only_prediction_repository,
     get_read_only_user_repository,
 )
+from .di import get_match_repository as get_match_repo_dep
+from .di import get_prediction_repository as get_prediction_repo_dep
 from .di import get_user_repository as get_user_repo_dep
 from .match import MatchRepository, MatchRepositoryInterface, ReadOnlyMatchRepository
 from .prediction import (

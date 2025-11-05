@@ -70,7 +70,7 @@ class DIContainer:
     interface: type[T],
     implementation: type[T] | None = None,
     instance: T | None = None,
-    
+
         factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册单例服务"""
@@ -79,7 +79,7 @@ class DIContainer:
     implementation=implementation,
     lifetime=ServiceLifetime.SINGLETON,
     instance=instance,
-    
+
             factory=factory,
         )
 
@@ -89,7 +89,7 @@ class DIContainer:
     implementation: type[T] | None = None,
     factory: Callable[[],
     T] | None = None,
-    
+
     ) -> "DIContainer":
         """注册作用域服务"""
         return self._register(
@@ -97,7 +97,7 @@ class DIContainer:
     implementation=implementation,
     lifetime=ServiceLifetime.SCOPED,
     factory=factory,
-    
+
         )
 
     def register_transient(
@@ -106,7 +106,7 @@ class DIContainer:
     implementation: type[T] | None = None,
     factory: Callable[[],
     T] | None = None,
-    
+
     ) -> "DIContainer":
         """注册瞬时服务"""
         return self._register(
@@ -114,7 +114,7 @@ class DIContainer:
     implementation=implementation,
     lifetime=ServiceLifetime.TRANSIENT,
     factory=factory,
-    
+
         )
 
     def _register(
@@ -122,7 +122,7 @@ class DIContainer:
     interface: type,
     implementation: type | None = None,
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-    
+
         instance: Any | None = None,
         factory: Callable | None = None,
     ) -> "DIContainer":
@@ -146,7 +146,7 @@ class DIContainer:
     implementation=implementation,
     lifetime=lifetime,
     factory=factory,
-    
+
             instance=instance,
             dependencies=dependencies,
         )
@@ -379,7 +379,7 @@ class ServiceCollection:
         self,
     interface: type[T],
     implementation: type[T] | None = None,
-    
+
         instance: T | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
@@ -396,7 +396,7 @@ class ServiceCollection:
 
     def add_scoped(
         self,
-    
+
         interface: type[T],
         implementation: type[T] | None = None,
         factory: Callable[[], T] | None = None,
@@ -414,7 +414,7 @@ class ServiceCollection:
     def add_transient(
         self,
     interface: type[T],
-    
+
         implementation: type[T] | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
@@ -454,7 +454,7 @@ def get_default_container() -> DIContainer:
 def configure_services(
     configurator: Callable[[ServiceCollection],
     None],
-    
+
 ) -> DIContainer:
     """配置服务"""
     collection = ServiceCollection()

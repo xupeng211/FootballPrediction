@@ -46,4 +46,3 @@ class AdvancedAuthenticationSystem:
 
 if __name__ == "__main__":
     service = AdvancedAuthenticationSystem()
-    print("🚀 security特性初始化完成: Advanced Authentication System")

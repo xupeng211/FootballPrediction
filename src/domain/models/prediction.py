@@ -206,7 +206,7 @@ class Prediction:
         self,
     predicted_home: int,
     predicted_away: int,
-    
+
         confidence: float | None = None,
         model_version: str | None = None,
     ) -> None:
@@ -233,7 +233,7 @@ class Prediction:
                 prediction_id=self.id or 0,
     user_id=self.user_id,
     match_id=self.match_id,
-    
+
                 predicted_home=self.score.predicted_home,
                 predicted_away=self.score.predicted_away,
                 confidence=float(self.confidence.value) if self.confidence else None,
@@ -244,7 +244,7 @@ class Prediction:
         self,
     actual_home: int,
     actual_away: int,
-    
+
         scoring_rules: dict[str, Decimal] | None = None,
     ) -> None:
         """评估预测结果"""
@@ -274,7 +274,7 @@ class Prediction:
     actual_home=actual_home,
     actual_away=actual_away,
     is_correct=self.score.is_correct_score,
-    
+
                 points_earned=(
                     int(self.points.total) if self.points is not None else None
                 ),
@@ -400,7 +400,7 @@ class Prediction:
     "is_correct_result": (
                 self.score.is_correct_result if self.score.is_evaluated else None
             ),
-    
+
             "accuracy": self.accuracy_score,
         }
 
@@ -455,7 +455,7 @@ class Prediction:
                 else None
             ),
     "created_at": self.created_at.isoformat(),
-    
+
             "evaluated_at": (
                 self.evaluated_at.isoformat() if self.evaluated_at else None
             ),
@@ -485,7 +485,7 @@ class Prediction:
         points = (
             PredictionPoints(
                 total=Decimal(str(points_data["total"])),
-    
+
                 score_bonus=Decimal(str(points_data["breakdown"]["score_bonus"])),
     result_bonus=Decimal(str(points_data["breakdown"]["result_bonus"])),
     confidence_bonus=Decimal(

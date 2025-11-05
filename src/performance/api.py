@@ -114,7 +114,7 @@ async def get_performance_metrics():
     # MB
                 "memory_available": memory_info.available / 1024 / 1024,
     "memory_percent": memory_info.percent,
-    
+
                 "process_memory": process_memory.rss / 1024 / 1024,
             },
             "database": db_stats,
@@ -186,7 +186,7 @@ async def stop_profiling():
     [])),
     "memory_peak_mb": results.get("memory_peak",
     0) / 1024 / 1024,
-    
+
                 "top_slow_functions": results.get("function_profiles",
     [])[:5],
     },
@@ -235,7 +235,7 @@ async def get_profiling_results():
     }
                 for q in slow_queries[:10]
             ],
-    
+
         }
 
         return results
@@ -253,7 +253,7 @@ async def get_performance_report(
     background_tasks: BackgroundTasks,
     format: str = Query(default="json",
     regex="^(json|html)$"),
-    
+
     include_recommendations: bool = Query(default=True),
 ):
     """生成性能报告"""
@@ -270,7 +270,7 @@ async def get_performance_report(
     db_stats=db_stats,
     cache_stats=cache_stats,
     task_stats=task_stats,
-    
+
         )
 
         # 格式化输出
