@@ -39,7 +39,7 @@ class Content:
     def __init__(self, content_entity_id: str, content_type: str, data: dict[str, Any]):
         """函数文档字符串"""
         pass  # 添加pass语句
-        self.id = content_id
+        self.id = content_entity_id
         self.content_type = content_type
         self.data = data
 
@@ -53,7 +53,7 @@ class UserProfile:
     def __init__(self, user_entity_id: str, preferences: dict[str, Any] = None):
         """函数文档字符串"""
         pass  # 添加pass语句
-        self.user_id = user_id
+        self.user_id = user_entity_id
         self.preferences = preferences or {}
 
 
@@ -77,7 +77,7 @@ class AnalysisResult:
         self.result = result or {}
         self.confidence = confidence
         self.timestamp = timestamp or datetime.now()
-        self.content_id = content_id
+        self.content_id = entity_id
 
 
 class ContentAnalysisService(SimpleService):
