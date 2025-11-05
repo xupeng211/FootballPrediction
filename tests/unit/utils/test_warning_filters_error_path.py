@@ -92,6 +92,8 @@ def test_warning_filters_module_reload():
     import importlib
 
     # 保存原始状态
+logger = logging.getLogger(__name__)
+
     original_filterwarnings = warnings.filterwarnings
     original_modules = sys.modules.copy()
 
@@ -144,7 +146,6 @@ def test_logger_error_message_format():
 
         # 验证logger配置
         if "src.utils.warning_filters" in sys.modules:
-            logger = logging.getLogger("src.utils.warning_filters")
             assert logger.name == "src.utils.warning_filters"
 
     finally:

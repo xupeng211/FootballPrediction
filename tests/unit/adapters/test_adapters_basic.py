@@ -1,3 +1,4 @@
+
 """
 适配器基础测试
 Basic Adapter Tests
@@ -6,6 +7,7 @@ Basic Adapter Tests
 """
 
 import os
+import logging
 import sys
 from datetime import datetime
 from typing import Any
@@ -41,6 +43,8 @@ except ImportError:
 
 try:
     from factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
+
+logger = logging.getLogger(__name__)
 
     FACTORY_AVAILABLE = True
 except ImportError:

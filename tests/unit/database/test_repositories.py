@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🗄️ 数据库仓储测试
 
@@ -6,6 +7,7 @@
 """
 
 import asyncio
+import logging
 import os
 
 # 模拟导入，避免循环依赖问题
@@ -23,6 +25,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 try:
     from src.database.connection import DatabaseManager
     from src.database.repositories.base import BaseRepository
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

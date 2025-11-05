@@ -7,10 +7,13 @@ JWT认证核心功能测试
 
 import os
 import sys
+import logging
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 # 添加src到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -397,10 +400,8 @@ class TestPasswordStrengthValidation:
 
         # 7个字符应该无效，8个字符应该有效（假设最小长度是8）
         # 这取决于实际的验证规则实现
-        logger.error(f"7 chars valid: {is_valid_7},
-    errors: {errors_7}")  # TODO: Add logger import if needed
-        logger.error(f"8 chars valid: {is_valid_8},
-    errors: {errors_8}")  # TODO: Add logger import if needed
+        logger.error(f"7 chars valid: {is_valid_7}, errors: {errors_7}")  # TODO: Add logger import if needed
+        logger.error(f"8 chars valid: {is_valid_8}, errors: {errors_8}")  # TODO: Add logger import if needed
 
     def test_password_complexity_requirements(self, auth_manager):
         """测试密码复杂度要求"""

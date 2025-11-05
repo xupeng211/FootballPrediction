@@ -4,6 +4,9 @@ Database Models Test
 """
 
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 模拟导入，避免循环依赖问题
 import sys

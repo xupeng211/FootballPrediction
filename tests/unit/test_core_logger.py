@@ -1,3 +1,4 @@
+
 """
 增强的测试文件 - 目标覆盖率 98%
 模块: core.logger
@@ -5,14 +6,17 @@
 """
 
 from unittest.mock import Mock, patch
+import logging
 
 import pytest
 
 # 导入目标模块
 from core.logger import *  # TODO: Convert to explicit imports
 from src.core.logger import get_logger
-from src.core.logger import setup_logger
+from src.core.logger import Logger
 
+
+logger = logging.getLogger(__name__)
 
 class TestLogger:
     """日志器测试"""
@@ -25,7 +29,7 @@ class TestLogger:
     def test_setup_logger(self):
         """测试设置日志器"""
         try:
-            setup_logger("test_setup")
+            Logger.setup_logger("test_setup")
             assert True
         except Exception:
             pytest.skip("Logger setup failed")

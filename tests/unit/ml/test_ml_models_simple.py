@@ -1,3 +1,4 @@
+
 """
 机器学习模型简化测试
 Simple ML Model Tests
@@ -7,6 +8,7 @@ Simple ML Model Tests
 """
 
 import os
+import logging
 
 # 直接导入，避免通过__init__.py
 import sys
@@ -22,6 +24,8 @@ try:
     from base_model import BaseModel, PredictionResult, TrainingResult
     from elo_model import EloModel
     from poisson_model import PoissonModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

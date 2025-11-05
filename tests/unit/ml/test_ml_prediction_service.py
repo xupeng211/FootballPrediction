@@ -1,3 +1,4 @@
+
 """
 ML预测服务测试
 ML Prediction Service Tests
@@ -12,6 +13,7 @@ ML Prediction Service Tests
 """
 
 import os
+import logging
 
 # 导入ML模块
 import sys
@@ -28,6 +30,8 @@ try:
     from ml.models.elo_model import EloModel
     from ml.models.poisson_model import PoissonModel
     from ml.prediction.prediction_service import (
+logger = logging.getLogger(__name__)
+
         EnsemblePrediction,
         PredictionService,
         PredictionStrategy,

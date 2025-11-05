@@ -7,9 +7,12 @@ API认证系统综合测试
 
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+import logging
 
 import pytest
 from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 try:
     from src.api.auth import (

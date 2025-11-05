@@ -1,3 +1,4 @@
+
 """
 Elo评级模型测试
 Elo Rating Model Tests
@@ -12,6 +13,7 @@ Elo Rating Model Tests
 """
 
 import os
+import logging
 
 # 导入ML模块
 import sys
@@ -26,6 +28,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 try:
     from ml.models.base_model import TrainingResult
     from ml.models.elo_model import EloModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

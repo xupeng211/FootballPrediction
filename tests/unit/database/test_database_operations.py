@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🗄️ 数据库操作测试 - 修复版本
 
@@ -7,6 +8,7 @@
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any
 from unittest.mock import AsyncMock
@@ -16,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # 使用模拟的数据库管理器
+logger = logging.getLogger(__name__)
+
 class MockDatabaseManager:
     """模拟数据库管理器"""
 

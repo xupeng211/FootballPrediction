@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🏗️ M2-P4-01: 领域服务生命周期测试
 Domain Service Lifecycle Tests
@@ -14,6 +15,7 @@ Domain Service Lifecycle Tests
 """
 
 from datetime import datetime
+import logging
 from typing import Any
 from unittest.mock import patch
 
@@ -623,6 +625,8 @@ class TestServiceLifecycleIntegration:
     def test_concurrent_service_initialization(self):
         """测试并发服务初始化"""
         import threading
+
+logger = logging.getLogger(__name__)
 
         container = ServiceContainer()
         container.register_service("match", MatchDomainService)

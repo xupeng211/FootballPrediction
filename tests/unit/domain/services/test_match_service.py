@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🏗️ M2-P4-01: 比赛领域服务测试
 Match Domain Service Tests
@@ -14,6 +15,7 @@ Match Domain Service Tests
 """
 
 from datetime import datetime, timedelta
+import logging
 from typing import Any
 
 import pytest
@@ -29,6 +31,8 @@ try:
     from src.domain.models.match import Match, MatchResult, MatchScore, MatchStatus
     from src.domain.models.team import Team
     from src.domain.services.match_service import MatchDomainService
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

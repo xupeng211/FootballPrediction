@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+
 """
 覆盖率改进集成测试
 演示阶段2工具链的集成效果
 """
 
 import sys
+import logging
 from pathlib import Path
 
 import pytest
@@ -110,6 +112,8 @@ class TestCoverageImprovementIntegration:
             from smart_quality_fixer import SmartQualityFixer
 
             # 创建实例
+logger = logging.getLogger(__name__)
+
             SmartQualityFixer()
             CoverageImprovementExecutor()
             Phase35AICoverageMaster()

@@ -1,3 +1,4 @@
+
 """
 高影响力测试 - 模块: core.logger
 专注于100%可运行的测试用例
@@ -14,6 +15,8 @@ except ImportError as e:
     logger.error(f"Warning: Import failed: {e}")  # TODO: Add logger import if needed
     # Mock implementation will be used
     import logging
+
+logger = logging.getLogger(__name__)
 
     def get_logger(name):
         return logging.getLogger(name)

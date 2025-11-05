@@ -1,3 +1,4 @@
+
 """
 API认证系统直接测试
 目标覆盖率: 45%
@@ -6,6 +7,7 @@ API认证系统直接测试
 """
 
 import os
+import logging
 import sys
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -75,6 +77,8 @@ MOCK_USERS = {}
 # JWT相关类（如果导入失败则使用简化版本）
 try:
     from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
+logger = logging.getLogger(__name__)
+
 except ImportError:
 
     class JWTAuthManager:

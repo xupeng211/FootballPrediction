@@ -1,12 +1,16 @@
+
 """审计服务测试"""
 
 from datetime import datetime
+import logging
 from unittest.mock import Mock
 
 import pytest
 
 from src.services.audit_service import AuditService
 
+
+logger = logging.getLogger(__name__)
 
 class TestAuditService:
     """审计服务测试"""

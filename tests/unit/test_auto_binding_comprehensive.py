@@ -1,3 +1,4 @@
+
 """
 AutoBinding 综合测试
 目标覆盖率: 40%
@@ -6,6 +7,7 @@ AutoBinding 综合测试
 """
 
 from abc import ABC, abstractmethod
+import logging
 from pathlib import Path
 from typing import TypeVar
 from unittest.mock import patch
@@ -584,6 +586,8 @@ class TestAutoBinderEdgeCases:
 
         # 创建一个模拟模块
         import types
+
+logger = logging.getLogger(__name__)
 
         temp_module = types.ModuleType("test_module")
         temp_module.AbstractBase = AbstractBase

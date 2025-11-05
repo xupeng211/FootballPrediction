@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🏗️ M2-P4-01: 预测领域服务测试
 Prediction Domain Service Tests
@@ -14,6 +15,7 @@ Prediction Domain Service Tests
 """
 
 from datetime import datetime, timedelta
+import logging
 from decimal import Decimal
 from typing import Any
 
@@ -37,6 +39,8 @@ try:
     )
     from src.domain.models.team import Team
     from src.domain.services.prediction_service import PredictionDomainService
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

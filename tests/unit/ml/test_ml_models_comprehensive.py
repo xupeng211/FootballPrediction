@@ -1,3 +1,4 @@
+
 """
 机器学习模型综合测试
 Comprehensive ML Model Tests
@@ -12,6 +13,7 @@ Comprehensive ML Model Tests
 """
 
 import os
+import logging
 
 # 导入ML模块
 import sys
@@ -27,6 +29,8 @@ try:
     from ml.models.base_model import BaseModel, PredictionResult, TrainingResult
     from ml.models.elo_model import EloModel
     from ml.models.poisson_model import PoissonModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

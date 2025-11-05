@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🧮 业务规则测试
 
@@ -6,6 +7,7 @@
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
@@ -14,6 +16,8 @@ import pytest
 
 
 # 业务规则引擎
+logger = logging.getLogger(__name__)
+
 class BusinessRuleEngine:
     """业务规则引擎"""
 

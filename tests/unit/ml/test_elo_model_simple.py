@@ -1,3 +1,4 @@
+
 """
 Elo模型简化测试
 Simple Elo Model Tests
@@ -6,6 +7,7 @@ Simple Elo Model Tests
 """
 
 import os
+import logging
 import sys
 import tempfile
 from datetime import datetime
@@ -20,6 +22,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src/ml/models"
 try:
     from base_model import PredictionResult, TrainingResult
     from elo_model import EloModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

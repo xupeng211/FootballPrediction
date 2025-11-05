@@ -1,8 +1,10 @@
+
 """
 WarningFilters最终覆盖率测试 - 针对第24-28行初始化代码
 """
 
 import sys
+import logging
 from unittest.mock import patch
 
 
@@ -151,6 +153,8 @@ class TestWarningFiltersFinalCoverage:
 
             # 重新导入模块
             import importlib
+
+logger = logging.getLogger(__name__)
 
             if "src.utils.warning_filters" in sys.modules:
                 del sys.modules["src.utils.warning_filters"]

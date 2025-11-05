@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+
 """
 测试API端点的独立脚本
 """
 
 import asyncio
+import logging
 import sys
 
 from dotenv import load_dotenv
@@ -32,6 +34,8 @@ async def test_data_sources_directly():
         try:
             # 测试获取少量数据
             from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
             date_from = datetime.now()
             date_to = date_from + timedelta(days=3)

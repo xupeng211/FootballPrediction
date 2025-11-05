@@ -1,3 +1,4 @@
+
 """
 WarningFilters完整测试 - 优化75%到90%+覆盖率
 针对警告过滤器设置模块进行全面测试
@@ -215,6 +216,8 @@ class TestWarningFiltersComplete:
         import time
 
         # 保存当前警告状态
+logger = logging.getLogger(__name__)
+
         original_filters = warnings.filters.copy()
 
         try:

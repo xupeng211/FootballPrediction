@@ -97,8 +97,8 @@ class TestCryptoUtilsComprehensive:
 
     def test_verify_password_edge_cases(self):
         """测试密码验证边界情况"""
-        # 空密码和空哈希
-        assert CryptoUtils.verify_password("", "") is True
+        # 空密码和空哈希 - 出于安全考虑应该返回False
+        assert CryptoUtils.verify_password("", "") is False
 
         # 非标准哈希格式
         assert CryptoUtils.verify_password("password", "invalid_hash") is False

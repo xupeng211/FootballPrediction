@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🎯 ML预测评估测试 - 机器学习模型预测和评估测试
 
@@ -7,6 +8,7 @@
 """
 
 import warnings
+import logging
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -27,6 +29,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 try:
     from src.ml.models.base_model import PredictionResult
     from src.ml.models.poisson_model import PoissonModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

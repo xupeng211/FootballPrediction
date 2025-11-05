@@ -1,3 +1,4 @@
+
 """
 预测API简化测试
 目标覆盖率: 45%
@@ -6,6 +7,7 @@
 """
 
 import os
+import logging
 import sys
 from datetime import datetime, timedelta
 from unittest.mock import patch
@@ -220,6 +222,8 @@ class TestPredictionAPIEndpoints:
     def client(self):
         """FastAPI测试客户端"""
         from fastapi import FastAPI
+
+logger = logging.getLogger(__name__)
 
         app = FastAPI()
         app.include_router(router, prefix="/api/v1")

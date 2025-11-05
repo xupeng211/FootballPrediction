@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🤖 ML模型训练测试 - 机器学习模型训练流程测试
 
@@ -7,6 +8,7 @@
 """
 
 import asyncio
+import logging
 import os
 import tempfile
 import warnings
@@ -34,6 +36,8 @@ try:
     )
     from src.ml.models.base_model import PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

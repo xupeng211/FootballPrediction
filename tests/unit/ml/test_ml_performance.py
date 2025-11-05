@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🚀 ML性能测试 - 机器学习模型性能测试
 
@@ -7,6 +8,7 @@
 """
 
 import asyncio
+import logging
 import os
 
 # 模拟导入，避免循环依赖问题
@@ -26,6 +28,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 try:
     from src.ml.models.base_model import PredictionResult
     from src.ml.models.poisson_model import PoissonModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

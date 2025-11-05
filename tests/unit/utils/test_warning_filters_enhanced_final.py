@@ -242,6 +242,8 @@ class TestWarningFiltersEnhancedFinal:
         import time
 
         # 保存当前警告状态
+logger = logging.getLogger(__name__)
+
         original_filters = warnings.filters.copy()
 
         try:

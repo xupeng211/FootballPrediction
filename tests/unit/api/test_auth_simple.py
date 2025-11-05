@@ -1,3 +1,4 @@
+
 """
 API认证系统简化测试
 目标覆盖率: 45%
@@ -6,6 +7,7 @@ API认证系统简化测试
 """
 
 import os
+import logging
 import sys
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -28,6 +30,8 @@ spec.loader.exec_module(auth_module)
 # 直接导入jwt_auth模块
 from src.security.jwt_auth import JWTAuthManager, TokenData, UserAuth
 
+
+logger = logging.getLogger(__name__)
 
 class TestAuthModels:
     """认证数据模型测试"""

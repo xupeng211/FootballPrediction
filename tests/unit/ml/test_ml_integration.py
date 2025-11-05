@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 🤖 ML集成测试 - 机器学习模块集成测试
 
@@ -7,6 +8,7 @@
 """
 
 import asyncio
+import logging
 import json
 import os
 
@@ -26,6 +28,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../src"))
 try:
     from src.ml.models.base_model import PredictionResult, TrainingResult
     from src.ml.models.poisson_model import PoissonModel
+
+logger = logging.getLogger(__name__)
 
     CAN_IMPORT = True
 except ImportError as e:

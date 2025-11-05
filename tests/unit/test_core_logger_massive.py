@@ -1,9 +1,11 @@
+
 """
 大规模测试套件 - core.logger
 目标: 创建30个可运行的测试用例
 """
 
 from unittest.mock import Mock, patch
+import logging
 
 import pytest
 
@@ -199,6 +201,8 @@ class TestLoggerIntegration:
         import time
 from src.core.logger import get_logger
 from src.core.logger import setup_logger
+
+logger = logging.getLogger(__name__)
 
         start = time.time()
         for i in range(100):
