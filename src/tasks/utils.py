@@ -244,16 +244,12 @@ async def cleanup_stale_tasks() -> int:
             result = await session.execute(cleanup_query)
             await session.commit()
 
-            # For DELETE queries,
-    we need to check if the result has rowcount
-            if hasattr(result,
-    "rowcount") and result.rowcount is not None:
+            # For DELETE queries, we need to check if the result has rowcount
+            if hasattr(result, "rowcount") and result.rowcount is not None:
                 return result.rowcount
             return 0
 
-    except (ValueError,
-    KeyError,
-    RuntimeError):
+    except (ValueError, KeyError, RuntimeError):
         return 0
 
 

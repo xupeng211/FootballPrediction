@@ -1,141 +1,237 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
 
 jobs:
-  code-quality:
+  quality-check:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff mypy bandit pytest pytest-cov
-        pip install -r requirements/requirements.lock
+        pip install -r requirements.txt
+        pip install ruff black mypy bandit safety
 
-    - name: Run Ruff
-      run: ruff check src/ tests/
-
-    - name: Run MyPy
-      run: mypy src/ --ignore-missing-imports || true
-
-    - name: Run Bandit security scan
-      run: bandit -r src/ -f json || true
-
-    - name: Run dependency audit
-      run: pip-audit || true
-
-    - name: Run Smart Quality Fixer
+    - name: Check code formatting with Black
       run: |
-        echo "🔧 运行智能质量修复工具检查"
-        python3 scripts/smart_quality_fixer.py --dry-run || true
+        black --check --diff src/ tests/
 
-    - name: Test Smart Quality Fixer functionality
+    - name: Lint with Ruff
       run: |
-        echo "✅ 验证智能质量修复工具功能"
-        python3 -m pytest tests/unit/scripts/test_smart_quality_fixer.py -v
+        ruff check src/ tests/ --output-format=github
 
-    - name: Run Quality Guardian
+    - name: Type check with MyPy
       run: |
-        echo "🛡️ 运行质量守护工具检查"
-        python3 scripts/quality_guardian.py --check-only || true
+        mypy src/ --ignore-missing-imports --no-strict-optional || true
 
-    - name: Test Quality Guardian functionality
+    - name: Security check with Bandit
       run: |
-        echo "✅ 验证质量守护工具功能"
-        python3 -m pytest tests/unit/scripts/test_quality_guardian.py -v
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Check dependencies for vulnerabilities
+      run: |
+        safety check --json --output safety-report.json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
 
   test:
+    name: Test Suite
     runs-on: ubuntu-latest
-    needs: code-quality
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas numpy aiohttp psutil scikit-learn redis
-        pip install -r requirements/requirements.lock
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-mock pytest-asyncio
 
-    - name: Run core tests with quality gate
+    - name: Run unit tests
       run: |
-        echo "🧪 运行核心功能测试 - 包含质量门禁"
-        pytest tests/unit/api/test_health.py \
-              tests/unit/test_config.py \
-              -v --cov=src --cov-report=xml \
-              --cov-report=term-missing || true
+        pytest tests/unit/ -v \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-fail-under=25 \
+          --junitxml=test-results.xml
 
-    - name: Run quality gate tests
+    - name: Run integration tests
       run: |
-        echo "🛡️ 执行质量门禁测试"
-        pytest -m "unit and (critical or smoke)" \
-              -v --cov=src --cov-report=xml || true
+        pytest tests/integration/ -v \
+          --junitxml=integration-test-results.xml || true
 
-    - name: Check coverage threshold
-      run: |
-        echo "📊 检查覆盖率阈值"
-        COVERAGE=$(python -c "
-import json
-try:
-    with open('coverage.xml') as f:
-        data = json.load(f)
-    except:
-        print('0')
-    else:
-        print(data.get('coverage', {}).get('line-rate', '0').replace('%', ''))
-        " || echo "0")
-
-        if (( $(echo "$COVERAGE < 30" | bc -l) )); then
-          echo "⚠️ 警告: 当前覆盖率 $COVERAGE% 低于30%目标"
-          echo "建议: 优先为核心模块添加测试以提升覆盖率"
-        else
-          echo "✅ 覆盖率达标: $COVERAGE% >= 30%"
-        fi
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          integration-test-results.xml
+          htmlcov/
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.11'
       with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [quality-check, test]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: xupeng211/football-prediction
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment"
+        # 这里添加实际的部署脚本
+        # 例如：kubectl apply -f k8s/staging/ 或 docker-compose up -d
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment"
+        # 这里添加实际的部署脚本
+        # 例如：kubectl apply -f k8s/production/ 或 docker-compose -f docker-compose.prod.yml up -d
+
+    - name: Health check
+      run: |
+        echo "Performing health check"
+        # 添加健康检查脚本
+        # curl -f https://api.yourdomain.com/health || exit 1
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name != 'pull_request'
+
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'xupeng211/football-prediction:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
       if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [quality-check, test, build]
+    if: always()
+
+    steps:
+    - name: Notify Slack on Success
+      if: needs.quality-check.result == 'success' && needs.test.result == 'success'
+      run: |
+        echo "✅ CI/CD Pipeline completed successfully!"
+        # 这里添加Slack通知逻辑
+
+    - name: Notify Slack on Failure
+      if: needs.quality-check.result == 'failure' || needs.test.result == 'failure'
+      run: |
+        echo "❌ CI/CD Pipeline failed!"
+        # 这里添加Slack通知逻辑
