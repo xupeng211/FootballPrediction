@@ -1,5 +1,3 @@
-from typing import Any
-
 #!/usr/bin/env python3
 """
 增强版EV计算器 - Issue #121优化版本
@@ -19,8 +17,10 @@ Issue: #121 EV计算算法参数调优
 import logging
 import math
 import sys
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 

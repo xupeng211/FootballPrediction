@@ -188,7 +188,7 @@ class SimplePredictionService:
             return token
         except Exception as e:
             logger.error(f"Token验证失败: {e}")
-            raise HTTPException(
+            raise HTTPException( from e
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
@@ -273,7 +273,7 @@ class SimplePredictionService:
 
         except Exception as e:
             logger.error(f"预测生成失败: {e}")
-            raise HTTPException(
+            raise HTTPException( from e
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
             )

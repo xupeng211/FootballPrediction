@@ -163,7 +163,7 @@ class ExternalTeam(Base):
     "created_at": self.created_at.isoformat() if self.created_at else None,
     "updated_at": self.updated_at.isoformat() if self.updated_at else None,
     "is_processed": self.is_processed,
-    
+
             "is_active": self.is_active,
             "data_quality_score": self.data_quality_score,
             "display_name": self.display_name,
@@ -204,22 +204,22 @@ class ExternalTeam(Base):
                 external_id=str(data.get("id")),
     name=data.get("name"),
     short_name=data.get("shortName"),
-    
+
                 tla=data.get("tla"),
     crest=data.get("crest"),
     address=data.get("address"),
     website=data.get("website"),
-    
+
                 founded=data.get("founded"),
     club_colors=data.get("clubColors"),
     venue=data.get("venue"),
     area_id=area.get("id"),
-    
+
                 area_name=area.get("name"),
     area_code=area.get("code"),
     area_flag=area.get("flag"),
     last_updated=last_updated,
-    
+
                 raw_data=data,
                 data_quality_score=quality_score,
             )
@@ -239,7 +239,7 @@ class ExternalTeam(Base):
     "")),
     name=data.get("name",
     "Unknown Team"),
-    
+
                 raw_data={"error": str(e),
     "original_data": data},
     data_quality_score=0,

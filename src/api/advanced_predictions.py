@@ -53,7 +53,7 @@ async def execute_advanced_prediction_api(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=str(e),  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.get("/advanced_prediction_api/status/{job_id}")

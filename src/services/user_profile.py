@@ -45,10 +45,10 @@ class User:
 
     pass  # 添加pass语句
 
-    def __init__(self, id: str, username: str):
+    def __init__(self, user_id: str, username: str):
         """函数文档字符串"""
         # 添加pass语句
-        self.id = id
+        self.id = user_id
         self.username = username
 
 
@@ -99,7 +99,7 @@ class UserProfileService(SimpleService):
     display_name=getattr(user,
     "display_name",
     user.username),
-    
+
             email=(
                 getattr(user.profile, "email", "") if hasattr(user, "profile") else ""
             ),
@@ -109,7 +109,7 @@ class UserProfileService(SimpleService):
     "text"),
     "language": content_preferences.get("language",
     "zh"),
-    
+
                 "behavior_patterns": behavior_patterns,
                 "notification_settings": self._get_notification_settings(user),
     "created_at": datetime.now(),
@@ -134,32 +134,23 @@ class UserProfileService(SimpleService):
         if not profile:
             return None
         # 更新画像数据
-        for key,
-    value in updates.items():
-            if hasattr(profile,
-    key):
-                setattr(profile,
-    key,
-    value)
+        for key, value in updates.items():
+            if hasattr(profile, key):
+                setattr(profile, key, value)
             else:
                 # Assume other keys are part of preferences
                 profile.preferences[key] = value
         return profile
 
-    def _analyze_user_interests(self,
-    user: User) -> list[str]:
+    def _analyze_user_interests(self, user: User) -> list[str]:
         """分析用户兴趣"""
         # 在实际系统中,这里会基于用户行为分析兴趣
         # 现在提供默认的兴趣列表
         default_interests = ["足球", "体育", "预测"]
         # 可以根据用户属性调整兴趣
-        if hasattr(user,
-    "profile") and hasattr(user.profile,
-    "favorite_teams"):
+        if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
             if user.profile.favorite_teams and isinstance(
-                user.profile.favorite_teams,
-    (list,
-    tuple)
+                user.profile.favorite_teams, (list, tuple)
             ):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
@@ -177,7 +168,7 @@ class UserProfileService(SimpleService):
     "zh"),
     "content_type": user_data.get("content_type",
     "text"),
-    
+
             "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
         }
         profile = UserProfile(
@@ -186,7 +177,7 @@ class UserProfileService(SimpleService):
     "Anonymous"),
     email=user_data.get("email",
     ""),
-    
+
             preferences={
                 **preferences,
                 "created_at": datetime.now(),

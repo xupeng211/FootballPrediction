@@ -37,6 +37,26 @@ class GetPredictionByIdQuery(ValidatableQuery):
         )
 
 
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
 class GetPredictionsByUserQuery(ValidatableQuery):
     """获取用户的所有预测查询"""
 
@@ -79,6 +99,26 @@ class GetPredictionsByUserQuery(ValidatableQuery):
         )
 
 
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
 class GetMatchPredictionsQuery(ValidatableQuery):
     """获取比赛的所有预测查询"""
 
@@ -98,6 +138,26 @@ class GetMatchPredictionsQuery(ValidatableQuery):
 
         if self.match_id <= 0:
             errors.append("比赛ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
 
         return (
             ValidationResult.success()
@@ -133,6 +193,26 @@ class GetUserStatsQuery(ValidatableQuery):
         )
 
 
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
 class GetMatchByIdQuery(ValidatableQuery):
     """根据ID获取比赛查询"""
 
@@ -152,6 +232,26 @@ class GetMatchByIdQuery(ValidatableQuery):
 
         if self.match_id <= 0:
             errors.append("比赛ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
 
         return (
             ValidationResult.success()
@@ -197,6 +297,26 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
         )
 
 
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
 class GetPredictionAnalyticsQuery(ValidatableQuery):
     """获取预测分析查询"""
 
@@ -220,6 +340,26 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
 
         if self.start_date and self.end_date and self.start_date > self.end_date:
             errors.append("开始日期不能晚于结束日期")
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
 
         if self.user_id is not None and self.user_id <= 0:
             errors.append("用户ID必须为正数")
@@ -259,6 +399,26 @@ class GetLeaderboardQuery(ValidatableQuery):
 
         if self.offset is not None and self.offset < 0:
             errors.append("偏移量不能为负数")
+
+        return (
+            ValidationResult.success()
+            if not errors
+            else ValidationResult.failure(errors)
+        )
+
+
+class GetUserByIdQuery(ValidatableQuery):
+    """根据ID获取用户查询"""
+
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+
+    def validate(self) -> ValidationResult:
+        """验证查询参数"""
+        errors = []
+
+        if self.user_id is not None and self.user_id <= 0:
+            errors.append("用户ID必须为正数")
 
         return (
             ValidationResult.success()

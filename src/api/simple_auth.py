@@ -221,7 +221,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
             detail="无效的认证令牌",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     # 简化实现:假设token格式为 "Bearer username"
     if token.startswith("Bearer "):
         username = token[7:]  # 移除 "Bearer " 前缀
@@ -235,7 +234,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
             detail="用户不存在",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     return user
 
 
@@ -262,7 +260,6 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="用户名或密码错误",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     # 简化的令牌（实际应用中应该使用JWT）
     access_token = f"Bearer {user.username}"
     expires_in = 3600  # 1小时

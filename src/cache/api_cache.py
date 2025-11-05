@@ -1,7 +1,7 @@
 # 简化版 api_cache 模块
 
 
-class Api_Cache:
+class ApiCache:
     def __init__(self):
         pass
 

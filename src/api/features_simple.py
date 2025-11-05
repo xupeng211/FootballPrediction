@@ -47,8 +47,7 @@ async def get_match_features(
         match_data = result.fetchone()
 
         if not match_data:
-            raise HTTPException(status_code=404, detail="比赛未找到")
-
+            raise HTTPException(status_code=404, detail="比赛未找到") from e
         return {
             "match_id": match_data[0],
             "home_team_id": match_data[1],
@@ -60,15 +59,13 @@ async def get_match_features(
 
     except SQLAlchemyError as e:
         logger.error(f"数据库查询错误: {e}")
-        raise HTTPException(status_code=500, detail="数据库查询失败")
+        raise HTTPException(status_code=500, detail="数据库查询失败") from e
     except HTTPException:
         # HTTPException会被FastAPI全局异常处理器捕获
         raise
     except Exception as e:
         logger.error(f"未知错误: {e}")
-        raise HTTPException(status_code=500, detail="服务器内部错误")
-
-
+        raise HTTPException(status_code=500, detail="服务器内部错误") from e
 @router.get("/health", response_model=dict[str, str])
 async def health_check() -> dict[str, str]:
     """
@@ -82,9 +79,7 @@ async def health_check() -> dict[str, str]:
         }
     except Exception as e:
         logger.error(f"健康检查失败: {e}")
-        raise HTTPException(status_code=500, detail="健康检查失败")
-
-
+        raise HTTPException(status_code=500, detail="健康检查失败") from e
 @router.get("/", response_model=dict[str, Any])
 async def get_features_info() -> dict[str, Any]:
     """
@@ -107,4 +102,4 @@ async def get_features_info() -> dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"获取服务信息失败: {e}")
-        raise HTTPException(status_code=500, detail="获取服务信息失败")
+        raise HTTPException(status_code=500, detail="获取服务信息失败") from e

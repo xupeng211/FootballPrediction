@@ -178,7 +178,7 @@ class ExternalMatch(Base):
     "status": self.status,
     "matchday": self.matchday,
     "stage": self.stage,
-    
+
             "venue": self.venue,
             "home_team_id": self.home_team_id,
             "home_team_name": self.home_team_name,
@@ -200,7 +200,7 @@ class ExternalMatch(Base):
     "created_at": self.created_at.isoformat() if self.created_at else None,
     "updated_at": self.updated_at.isoformat() if self.updated_at else None,
     "is_processed": self.is_processed,
-    
+
             "is_active": self.is_active,
             "match_title": self.match_title,
             "score_string": self.score_string,
@@ -260,29 +260,29 @@ class ExternalMatch(Base):
             return cls(
                 external_id=str(data.get("id")),
     competition_id=competition.get("id"),
-    
+
                 competition_name=competition.get("name"),
     competition_code=competition.get("code"),
     match_date=match_date,
     status=data.get("status",
     "").lower(),
-    
+
                 matchday=data.get("matchday"),
     stage=data.get("stage"),
     venue=None,
     # API中不包含venue信息
                 home_team_id=home_team.get("id"),
-    
+
                 home_team_name=home_team.get("name"),
     home_team_short_name=home_team.get("shortName"),
     home_team_crest=home_team.get("crest"),
     away_team_id=away_team.get("id"),
-    
+
                 away_team_name=away_team.get("name"),
     away_team_short_name=away_team.get("shortName"),
     away_team_crest=away_team.get("crest"),
     home_score=home_score,
-    
+
                 away_score=away_score,
                 result=result,
                 score_detail=score,
@@ -290,7 +290,7 @@ class ExternalMatch(Base):
     odds=data.get("odds"),
     last_updated=last_updated,
     raw_data=data,
-    
+
             )
 
         except Exception as e:
