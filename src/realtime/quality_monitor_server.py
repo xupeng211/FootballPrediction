@@ -287,9 +287,8 @@ class QualityMonitorServer:
                         "type": "quality",
                         "severity": "warning",
                         "title": "质量分数偏低",
-                        "message": f"当前质量分数: {current_metrics.get('overall_score',
-    0):.2f}",
-    "timestamp": datetime.now().isoformat(),
+                        "message": f"当前质量分数: {current_metrics.get('overall_score', 0):.2f}",
+                        "timestamp": datetime.now().isoformat(),
     "active": True,
 
                     }

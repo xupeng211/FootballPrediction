@@ -180,7 +180,7 @@ async def get_match_recommendations(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.post(
@@ -235,10 +235,10 @@ async def get_portfolio_recommendations(
         raise
     except Exception as e:
         logger.error(f"获取组合投注建议失败: {e}")
-        raise HTTPException(
+raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.get(
@@ -287,10 +287,10 @@ async def get_performance_analysis(
         raise
     except Exception as e:
         logger.error(f"历史表现分析失败: {e}")
-        raise HTTPException(
+raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.post(
@@ -335,10 +335,10 @@ async def update_match_odds(
         raise
     except Exception as e:
         logger.error(f"更新赔率失败: {e}")
-        raise HTTPException(
+raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.get(
@@ -396,10 +396,10 @@ async def get_available_strategies(
 
     except Exception as e:
         logger.error(f"获取策略列表失败: {e}")
-        raise HTTPException(
+raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.get(
@@ -436,10 +436,10 @@ async def check_srs_compliance(
         raise
     except Exception as e:
         logger.error(f"SRS合规性检查失败: {e}")
-        raise HTTPException(
+raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.get("/health", summary="投注服务健康检查", description="检查投注服务的运行状态")
@@ -515,10 +515,10 @@ async def get_metrics(betting_service: BettingService = Depends(get_betting_serv
 
     except Exception as e:
         logger.error(f"获取指标失败: {e}")
-        raise HTTPException(
+raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
 # 错误处理器

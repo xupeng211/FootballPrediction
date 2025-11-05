@@ -7,8 +7,6 @@ import logging
 import warnings
 from contextlib import asynccontextmanager
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -34,6 +32,8 @@ from src.monitoring.metrics_collector import MetricsCollector
 from src.observers import ObserverManager
 from src.performance.integration import setup_performance_monitoring
 from src.performance.middleware import PerformanceMonitoringMiddleware
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # 配置日志
 logging.basicConfig(
