@@ -175,8 +175,8 @@ async def get_match_recommendations(
 
     except HTTPException:
         raise
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"获取投注建议失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
@@ -184,6 +184,7 @@ async def get_match_recommendations(
         ) from e  # TODO: 将魔法数字 500 提取为常量
 
 
+@router.post(
     "/portfolio/recommendations",
     response_model=PortfolioRecommendationResponse,
     summary="获取组合投注建议",
@@ -233,9 +234,10 @@ async def get_portfolio_recommendations(
 
     except HTTPException:
         raise
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"获取组合投注建议失败: {e}")
+        raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         ) from e  # TODO: 将魔法数字 500 提取为常量
@@ -285,9 +287,10 @@ async def get_performance_analysis(
 
     except HTTPException:
         raise
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"历史表现分析失败: {e}")
+        raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         ) from e  # TODO: 将魔法数字 500 提取为常量
@@ -333,9 +336,10 @@ async def update_match_odds(
 
     except HTTPException:
         raise
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"更新赔率失败: {e}")
+        raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         ) from e  # TODO: 将魔法数字 500 提取为常量
@@ -394,9 +398,12 @@ async def get_available_strategies(
             "timestamp": datetime.now().isoformat(),
         }
 
-                error_msg = str(e)  # Store error in larger scope
+    except HTTPException:
+        raise
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"获取策略列表失败: {e}")
+        raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         ) from e  # TODO: 将魔法数字 500 提取为常量
@@ -434,9 +441,10 @@ async def check_srs_compliance(
 
     except HTTPException:
         raise
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"SRS合规性检查失败: {e}")
+        raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         ) from e  # TODO: 将魔法数字 500 提取为常量
@@ -470,8 +478,8 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
             "timestamp": datetime.now().isoformat(),
         }
 
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"健康检查失败: {e}")
         return {
             "status": "unhealthy",
@@ -480,6 +488,7 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         }
 
 
+@router.get(
     "/metrics", summary="获取投注服务指标", description="获取投注服务的性能和使用指标"
 )
 async def get_metrics(betting_service: BettingService = Depends(get_betting_service)):
@@ -513,9 +522,10 @@ async def get_metrics(betting_service: BettingService = Depends(get_betting_serv
             "timestamp": datetime.now().isoformat(),
         }
 
-                error_msg = str(e)  # Store error in larger scope
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"获取指标失败: {e}")
+        raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
         ) from e  # TODO: 将魔法数字 500 提取为常量
