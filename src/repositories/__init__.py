@@ -9,9 +9,6 @@ Provides abstraction layer for data access.
 from .base import (
     BaseRepository,
     QuerySpec,
-    ReadOnlyRepository,
-    Repository,
-    WriteOnlyRepository,
 )
 from .di import (
     MatchRepoDep,
@@ -49,9 +46,6 @@ from .user import ReadOnlyUserRepository, UserRepository, UserRepositoryInterfac
 __all__ = [
     # Base classes
     "BaseRepository",
-    "Repository",
-    "ReadOnlyRepository",
-    "WriteOnlyRepository",
     "QuerySpec",
     # Repository interfaces
     "PredictionRepositoryInterface",

@@ -11,6 +11,7 @@ from typing import Any, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..database.models import User
 from .base import BaseRepository, QuerySpec
 
 
@@ -32,9 +33,6 @@ class UserRepository(BaseRepository):
 
     def __init__(self, session: AsyncSession):
         """初始化用户仓储"""
-        # 假设有一个User模型类
-        from ..database.models import User
-
         super().__init__(session, User)
 
     async def get_by_id(self, user_id: int) -> Optional["User"]:
@@ -192,6 +190,10 @@ class UserRepository(BaseRepository):
 
 class ReadOnlyUserRepository(BaseRepository):
     """只读用户仓储"""
+
+    def __init__(self, session: AsyncSession):
+        """初始化只读用户仓储"""
+        super().__init__(session, User)
 
     async def get_user_by_id(self, user_id: int) -> Optional["User"]:
         """根据ID获取用户"""

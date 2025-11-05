@@ -220,7 +220,7 @@ class UpdateUserCommand(ValidatableCommand):
         from ..database.connection_mod import get_session
 
         async with get_session() as session:
-            await session.get(User, self.user_id)
+            user = await session.get(User, self.user_id)
             if not user:
                 errors.append("指定的用户不存在")
 
