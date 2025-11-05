@@ -67,7 +67,7 @@ async def collect_matches(
                 preferred_source=request.data_source,
             )
         else:
-            raise HTTPException(status_code=400, detail="无效的收集参数") from e
+            raise HTTPException(status_code=400, detail="无效的收集参数")
         return DataCollectionResponse(
             success=True,
             message=f"成功收集 {len(fixtures)} 场比赛",
@@ -355,7 +355,7 @@ async def test_data_source(
     try:
         adapter = data_source_manager.get_adapter(data_source)
         if not adapter:
-            raise HTTPException(status_code=404, detail=f"数据源 {data_source} 不可用") from e
+            raise HTTPException(status_code=404, detail=f"数据源 {data_source} 不可用")
         # 测试获取少量数据
         matches = await adapter.get_matches()
         teams = await adapter.get_teams()

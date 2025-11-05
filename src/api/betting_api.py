@@ -212,12 +212,9 @@ async def get_portfolio_recommendations(
 
         # 异步记录分析日志
         background_tasks.add_task(
-            logger.info(
-                f"组合投注建议生成完成: {len(request.match_ids)}场比赛, "
-                f"建议投注: {recommendations.get('portfolio_optimization',
-    {}).get('number_of_bets',
-    0)}个"
-            ),
+            logger.info,
+            f"组合投注建议生成完成: {len(request.match_ids)}场比赛, "
+            f"建议投注: {recommendations.get('portfolio_optimization', {}).get('number_of_bets', 0)}个"
         )
 
         return PortfolioRecommendationResponse(
