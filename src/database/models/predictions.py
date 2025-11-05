@@ -36,3 +36,7 @@ class PredictedResult(Enum):
 class Predictions(BaseModel):
     __table_args__ = {"extend_existing": True}
     __tablename__ = "predictions"
+
+
+# 为向后兼容性提供别名
+Prediction = Predictions

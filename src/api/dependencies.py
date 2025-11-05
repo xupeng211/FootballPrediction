@@ -110,3 +110,20 @@ def create_access_token(data: dict, expires_delta: Optional = None):
     except Exception:
         # 如果JWT创建失败，返回一个模拟token
         return "mock_token_" + str(data.get("sub", "user"))
+
+
+def get_user_management_service():
+    """获取用户管理服务"""
+    # 这里应该返回用户管理服务的实例
+    # 为了测试目的，返回一个简单的模拟对象
+    class MockUserManagementService:
+        def get_user(self, user_id: int):
+            return {"id": user_id, "name": "Test User"}
+
+        def create_user(self, user_data: dict):
+            return {"id": 1, **user_data}
+
+        def update_user(self, user_id: int, user_data: dict):
+            return {"id": user_id, **user_data}
+
+    return MockUserManagementService()

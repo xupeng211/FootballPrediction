@@ -1,6 +1,6 @@
 """
 仓储提供者
-Repository Provider
+BaseRepository Provider
 
 提供仓储实例的创建和依赖注入配置.
 Provides creation and dependency injection configuration for repository instances.
@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Match, Prediction, User
 
-from .base import BaseRepository, Repository
+from .base import BaseRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
 from .prediction import PredictionRepository, ReadOnlyPredictionRepository
 from .user import ReadOnlyUserRepository, UserRepository
@@ -23,29 +23,29 @@ ID = TypeVar("ID")
 
 
 @runtime_checkable
-class RepositoryFactory(Protocol):
+class BaseRepositoryFactory(Protocol):
     """仓储工厂协议"""
 
     def create_prediction_repository(
         self, session: AsyncSession, read_only: bool = False
-    ) -> Repository[Prediction, int]:
+    ) -> BaseRepository[Prediction, int]:
         """创建预测仓储"""
         ...
 
     def create_user_repository(
         self, session: AsyncSession, read_only: bool = False
-    ) -> Repository[User, int]:
+    ) -> BaseRepository[User, int]:
         """创建用户仓储"""
         ...
 
     def create_match_repository(
         self, session: AsyncSession, read_only: bool = False
-    ) -> Repository[Match, int]:
+    ) -> BaseRepository[Match, int]:
         """创建比赛仓储"""
         ...
 
 
-class DefaultRepositoryFactory:
+class DefaultBaseRepositoryFactory:
     """类文档字符串"""
 
     pass  # 添加pass语句
@@ -54,7 +54,7 @@ class DefaultRepositoryFactory:
     @staticmethod
     def create_prediction_repository(
         session: AsyncSession, read_only: bool = False
-    ) -> Repository[Prediction, int]:
+    ) -> BaseRepository[Prediction, int]:
         """创建预测仓储"""
         if read_only:
             return ReadOnlyPredictionRepository(session, Prediction)
@@ -63,7 +63,7 @@ class DefaultRepositoryFactory:
     @staticmethod
     def create_user_repository(
         session: AsyncSession, read_only: bool = False
-    ) -> Repository[User, int]:
+    ) -> BaseRepository[User, int]:
         """创建用户仓储"""
         if read_only:
             return ReadOnlyUserRepository(session, User)
@@ -72,32 +72,29 @@ class DefaultRepositoryFactory:
     @staticmethod
     def create_match_repository(
         session: AsyncSession, read_only: bool = False
-    ) -> Repository[Match, int]:
+    ) -> BaseRepository[Match, int]:
         """创建比赛仓储"""
         if read_only:
             return ReadOnlyMatchRepository(session, Match)
         return MatchRepository(session, Match)
 
 
-class RepositoryProvider:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
-    """仓储提供者"
+class BaseRepositoryProvider:
+    """仓储提供者
 
     管理仓储实例的创建和生命周期.
     Manages creation and lifecycle of repository instances.
     """
 
-    def __init__(self, factory: RepositoryFactory = None):
+    def __init__(self, factory: BaseRepositoryFactory = None):
         """函数文档字符串"""
         # 添加pass语句
-        self._factory = factory or DefaultRepositoryFactory()
+        self._factory = factory or DefaultBaseRepositoryFactory()
         self._repositories = {}
 
     def get_prediction_repository(
         self, session: AsyncSession, read_only: bool = False
-    ) -> Repository[Prediction, int]:
+    ) -> BaseRepository[Prediction, int]:
         """获取预测仓储实例"""
         key = f"prediction_{id(session)}_{read_only}"
         if key not in self._repositories:
@@ -108,7 +105,7 @@ class RepositoryProvider:
 
     def get_user_repository(
         self, session: AsyncSession, read_only: bool = False
-    ) -> Repository[User, int]:
+    ) -> BaseRepository[User, int]:
         """获取用户仓储实例"""
         key = f"user_{id(session)}_{read_only}"
         if key not in self._repositories:
@@ -119,7 +116,7 @@ class RepositoryProvider:
 
     def get_match_repository(
         self, session: AsyncSession, read_only: bool = False
-    ) -> Repository[Match, int]:
+    ) -> BaseRepository[Match, int]:
         """获取比赛仓储实例"""
         key = f"match_{id(session)}_{read_only}"
         if key not in self._repositories:
@@ -134,7 +131,7 @@ class RepositoryProvider:
         """清除仓储缓存"""
         self._repositories.clear()
 
-    def set_factory(self, factory: RepositoryFactory):
+    def set_factory(self, factory: BaseRepositoryFactory):
         """函数文档字符串"""
         # 添加pass语句
         """设置仓储工厂"""
@@ -143,18 +140,18 @@ class RepositoryProvider:
 
 
 # 全局仓储提供者实例
-_provider: RepositoryProvider = None
+_provider: BaseRepositoryProvider = None
 
 
-def get_repository_provider() -> RepositoryProvider:
+def get_repository_provider() -> BaseRepositoryProvider:
     """获取全局仓储提供者"""
     global _provider
     if _provider is None:
-        _provider = RepositoryProvider()
+        _provider = BaseRepositoryProvider()
     return _provider
 
 
-def set_repository_provider(provider: RepositoryProvider):
+def set_repository_provider(provider: BaseRepositoryProvider):
     """函数文档字符串"""
     pass  # 添加pass语句
     """设置全局仓储提供者"""
@@ -180,20 +177,25 @@ def _get_repository_cached(
 # 便捷函数
 def get_prediction_repository(
     session: AsyncSession, read_only: bool = False
-) -> Repository[Prediction, int]:
+) -> BaseRepository[Prediction, int]:
     """便捷函数:获取预测仓储"""
     return get_repository_provider().get_prediction_repository(session, read_only)
 
 
 def get_user_repository(
     session: AsyncSession, read_only: bool = False
-) -> Repository[User, int]:
+) -> BaseRepository[User, int]:
     """便捷函数:获取用户仓储"""
     return get_repository_provider().get_user_repository(session, read_only)
 
 
 def get_match_repository(
     session: AsyncSession, read_only: bool = False
-) -> Repository[Match, int]:
+) -> BaseRepository[Match, int]:
     """便捷函数:获取比赛仓储"""
     return get_repository_provider().get_match_repository(session, read_only)
+
+
+# 为向后兼容性提供别名
+RepositoryProvider = BaseRepositoryProvider
+DefaultRepositoryFactory = DefaultBaseRepositoryFactory  # 添加别名以支持旧的导入

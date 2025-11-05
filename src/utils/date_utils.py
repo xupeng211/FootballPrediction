@@ -218,22 +218,63 @@ class DateUtils:
         }
 
     @staticmethod
-    def get_month_start(dt: datetime) -> datetime:
+    def get_month_start(dt: datetime) -> datetime | None:
         """获取月份开始日期"""
+        if not isinstance(dt, (datetime, date)):
+            return None
+        if isinstance(dt, date):
+            dt = datetime(dt.year, dt.month, dt.day)
         return datetime(dt.year, dt.month, 1)
 
     @staticmethod
-    def get_month_end(dt: datetime) -> datetime:
+    def get_month_end(dt: datetime) -> datetime | None:
         """获取月份结束日期"""
+        if not isinstance(dt, (datetime, date)):
+            return None
+        if isinstance(dt, date):
+            dt = datetime(dt.year, dt.month, dt.day)
         if dt.month == 12:
             return datetime(dt.year + 1, 1, 1) - timedelta(days=1)
         else:
             return datetime(dt.year, dt.month + 1, 1) - timedelta(days=1)
 
     @staticmethod
-    def days_between(dt1: datetime, dt2: datetime) -> int:
+    def days_between(dt1: datetime, dt2: datetime) -> int | None:
         """计算两个日期之间的天数"""
-        return abs((dt2 - dt1).days)
+        if not isinstance(dt1, (datetime, date)) or not isinstance(dt2, (datetime, date)):
+            return None
+        if isinstance(dt1, date):
+            dt1 = datetime(dt1.year, dt1.month, dt1.day)
+        if isinstance(dt2, date):
+            dt2 = datetime(dt2.year, dt2.month, dt2.day)
+        return (dt2 - dt1).days
+
+    @staticmethod
+    def format_duration(seconds: int) -> str:
+        """格式化时间长度为人类可读格式"""
+        if not isinstance(seconds, (int, float)):
+            return "0秒"
+
+        try:
+            seconds = int(seconds)
+            if seconds < 0:
+                seconds = abs(seconds)
+
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            remaining_seconds = seconds % 60
+
+            parts = []
+            if hours > 0:
+                parts.append(f"{hours}小时")
+            if minutes > 0:
+                parts.append(f"{minutes}分")
+            if remaining_seconds > 0 or not parts:
+                parts.append(f"{remaining_seconds}秒")
+
+            return " ".join(parts)
+        except Exception:
+            return "0秒"
 
 
 # 缓存版本的函数
