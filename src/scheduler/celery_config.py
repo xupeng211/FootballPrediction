@@ -1,16 +1,10 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import redis
 
 # mypy: ignore-errors
 """
-from datetime import datetime, timezone
-        from datetime import date
-        from datetime import datetime, timedelta
-
-        from src.database.connection import DatabaseManager
-
 Celery调度器配置
 
 配置Celery任务队列和定时任务,实现足球数据的自动化采集调度。

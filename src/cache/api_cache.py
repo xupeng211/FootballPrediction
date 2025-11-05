@@ -9,6 +9,7 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
+from typing import Any, Optional
 
 from .redis_enhanced import get_redis_manager
 
