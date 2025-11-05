@@ -1,7 +1,10 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import redis
+from celery import Celery
+
+from src.database.connection import DatabaseManager
 
 # mypy: ignore-errors
 """
