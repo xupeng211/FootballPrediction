@@ -9,7 +9,7 @@ feature_calculator 主模块
 """
 
 # 导入拆分的模块
-from .features.feature_calculator_calculators import *  # TODO: Convert to explicit imports
+from .features.feature_calculator_calculators import FeatureCalculator  # TODO: Convert to explicit imports
 
 # 导出所有公共接口
 __all__ = ["FeatureCalculator"]
