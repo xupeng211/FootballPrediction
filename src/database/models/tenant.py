@@ -25,6 +25,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, relationship
 
 from src.database.base import BaseModel
+from src.database.models.user import User
 
 
 class TenantStatus(str, Enum):

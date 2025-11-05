@@ -345,9 +345,9 @@ def create_config_from_dict(config_data: dict[str, Any]) -> DIConfiguration:
 
 
 # 示例配置生成器
-def generate_sample_config(format: str = "yaml") -> str:
+def generate_sample_config(output_format: str = "yaml") -> str:
     """生成示例配置"""
-    if format.lower() == "yaml":
+    if output_format.lower() == "yaml":
         return """# 依赖注入配置"
 services:
   # 数据库服务
