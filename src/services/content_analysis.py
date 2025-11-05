@@ -225,7 +225,7 @@ class ContentAnalysisService(SimpleService):
             "巴塞罗那",
             "皇家马德里",
         ]
-        for team in teams:
+        for team in _teams:
             if team in text:
                 entities.append({"text": team, "type": "TEAM", "confidence": 0.9})
 

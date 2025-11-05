@@ -1,9 +1,35 @@
-import asyncio
-import logging
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
+from typing import Set
+from typing import Optional
 from typing import Any
+from typing import List
+from typing import Dict
+import logging
+from datetime import datetime
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+import asyncio
+
+
+class EventType(str, Enum):
+    """事件类型枚举"""
+    PREDICTION_CREATED = "prediction_created"
+    MATCH_STARTED = "match_started"
+    MATCH_SCORE_CHANGED = "match_score_changed"
+    MATCH_STATUS_CHANGED = "match_status_changed"
+    MATCH_ENDED = "match_ended"
+    ODDS_UPDATED = "odds_updated"
+    ODDS_SIGNIFICANT_CHANGE = "odds_significant_change"
+    SYSTEM_ALERT = "system_alert"
+
+
+@dataclass
+class RealtimeEvent:
+    """实时事件"""
+    event_type: EventType
+    data: Dict[str, Any]
+    timestamp: datetime = field(default_factory=datetime.now)
 
 # 检查比赛ID
 # 检查联赛
@@ -38,8 +64,7 @@ Manages client subscriptions to specific events with filtering and routing
 """
 
 
-class SubscriptionType(str,
-    Enum):
+class SubscriptionType(str, Enum):
     """订阅类型"""
 
     SPECIFIC_EVENT = "specific_event"  # 订阅特定事件类型
@@ -52,21 +77,19 @@ class SubscriptionType(str,
 @dataclass
 class SubscriptionFilter:
     """类文档字符串"""
-
     pass  # 添加pass语句
     """订阅过滤器"""
 
-    match_ids: list[int] | None = field(default_factory=list)  # 特定比赛ID
-    leagues: list[str] | None = field(default_factory=list)  # 特定联赛
-    users: list[str] | None = field(default_factory=list)  # 特定用户
-    min_confidence: float | None = None  # 最小置信度
-    event_sources: list[str] | None = field(default_factory=list)  # 事件源
-    custom_filters: dict[str,
-    Any] | None = field(default_factory=dict)  # 自定义过滤器
+    match_ids: Optional[List[int]] = field(default_factory=list)  # 特定比赛ID
+    leagues: Optional[List[str]] = field(default_factory=list)  # 特定联赛
+    users: Optional[List[str]] = field(default_factory=list)  # 特定用户
+    min_confidence: Optional[float] = None  # 最小置信度
+    event_sources: Optional[List[str]] = field(default_factory=list)  # 事件源
+    custom_filters: Optional[Dict[str, Any]] = field(
+        default_factory=dict
+    )  # 自定义过滤器
 
-    def matches(self,
-    event_data: dict[str,
-    Any]) -> bool:
+    def matches(self, event_data: Dict[str, Any]) -> bool:
         """检查事件是否匹配过滤器"""
         if self.match_ids and event_data.get("match_id") not in self.match_ids:
             return False
@@ -75,15 +98,13 @@ class SubscriptionFilter:
         if self.users and event_data.get("user_id") not in self.users:
             return False
         if self.min_confidence is not None:
-            confidence = event_data.get("confidence",
-    0)
+            confidence = event_data.get("confidence", 0)
             if confidence < self.min_confidence:
                 return False
         if self.event_sources and event_data.get("source") not in self.event_sources:
             return False
         if self.custom_filters:
-            for key,
-    value in self.custom_filters.items():
+            for key, value in self.custom_filters.items():
                 if event_data.get(key) != value:
                     return False
         return True
@@ -92,13 +113,12 @@ class SubscriptionFilter:
 @dataclass
 class Subscription:
     """类文档字符串"""
-
     pass  # 添加pass语句
     """订阅信息"""
 
     connection_id: str
     subscription_type: SubscriptionType
-    event_types: set[EventType]
+    event_types: Set[EventType]
     filters: SubscriptionFilter
     created_at: datetime = field(default_factory=datetime.now)
     last_activity: datetime = field(default_factory=datetime.now)
@@ -108,8 +128,7 @@ class Subscription:
         """更新最后活动时间"""
         self.last_activity = datetime.now()
 
-    def should_receive_event(self,
-    event: RealtimeEvent) -> bool:
+    def should_receive_event(self, event: RealtimeEvent) -> bool:
         """检查是否应该接收此事件"""
         if not self.is_active:
             return False
@@ -120,31 +139,28 @@ class Subscription:
 
 class SubscriptionManager:
     """类文档字符串"""
-
     pass  # 添加pass语句
     """订阅管理器"""
 
     def __init__(self):
         """函数文档字符串"""
-        # 添加pass语句
-        self.subscriptions: dict[str,
-    list[Subscription]] = (
-            {}
-        )  # connection_id -> subscriptions
-        self.event_subscribers: dict[EventType, set[str]] = (
-            {}
-        )  # event_type -> connection_ids
+        pass
+  # 添加pass语句
+        self.subscriptions: Dict[
+            str, List[Subscription]
+        ] = {}  # connection_id -> subscriptions
+        self.event_subscribers: Dict[
+            EventType, Set[str]
+        ] = {}  # event_type -> connection_ids
         self.logger = logging.getLogger(f"{__name__}.SubscriptionManager")
         asyncio.create_task(self._cleanup_inactive_subscriptions())
         self.logger.info("SubscriptionManager initialized")
 
     def subscribe(
         self,
-    connection_id: str,
-    event_type: EventType,
-    filters: dict[str,
-    Any] | None = None,
-    
+        connection_id: str,
+        event_type: EventType,
+        filters: Optional[Dict[str, Any]] = None,
         subscription_type: SubscriptionType = SubscriptionType.SPECIFIC_EVENT,
     ) -> bool:
         """订阅事件"""
@@ -202,11 +218,8 @@ class SubscriptionManager:
         self.logger.info(f"Removed all subscriptions for connection {connection_id}")
 
     def get_subscribers(
-        self,
-    event_type: EventType,
-    event_data: dict[str,
-    Any]
-    ) -> list[str]:
+        self, event_type: EventType, event_data: Dict[str, Any]
+    ) -> List[str]:
         """获取事件的订阅者"""
         if event_type not in self.event_subscribers:
             return []
@@ -217,7 +230,6 @@ class SubscriptionManager:
                     if subscription.should_receive_event(
                         RealtimeEvent(
                             event_type=event_type,
-    
                             data=event_data,
                             timestamp=datetime.now(),
                         )
@@ -226,7 +238,7 @@ class SubscriptionManager:
                         break
         return list(subscribers)
 
-    def get_connection_subscriptions(self, connection_id: str) -> list[dict[str, Any]]:
+    def get_connection_subscriptions(self, connection_id: str) -> List[Dict[str, Any]]:
         """获取连接的所有订阅"""
         if connection_id not in self.subscriptions:
             return []
@@ -243,14 +255,13 @@ class SubscriptionManager:
                     "custom_filters": sub.filters.custom_filters,
                 },
                 "created_at": sub.created_at.isoformat(),
-    "last_activity": sub.last_activity.isoformat(),
-    "is_active": sub.is_active,
-    }
+                "last_activity": sub.last_activity.isoformat(),
+                "is_active": sub.is_active,
+            }
             for sub in self.subscriptions[connection_id]
         ]
 
-    def update_subscription_activity(self,
-    connection_id: str) -> None:
+    def update_subscription_activity(self, connection_id: str) -> None:
         """更新订阅活动时间"""
         if connection_id in self.subscriptions:
             for subscription in self.subscriptions[connection_id]:
@@ -260,7 +271,7 @@ class SubscriptionManager:
         """获取总订阅数"""
         return sum(len(subs) for subs in self.subscriptions.values())
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""
         event_type_counts = {}
         for subscriptions in self.subscriptions.values():
@@ -271,10 +282,9 @@ class SubscriptionManager:
                     )
         return {
             "total_connections": len(self.subscriptions),
-    "total_subscriptions": self.get_total_subscriptions(),
-    "subscriptions_by_event_type": event_type_counts,
-    "event_types_supported": len(EventType),
-    
+            "total_subscriptions": self.get_total_subscriptions(),
+            "subscriptions_by_event_type": event_type_counts,
+            "event_types_supported": len(EventType),
         }
 
     async def _cleanup_inactive_subscriptions(self) -> None:
@@ -310,8 +320,8 @@ class SubscriptionManager:
 
 def subscribe_to_predictions(
     connection_id: str,
-    match_ids: list[int] | None = None,
-    min_confidence: float | None = None,
+    match_ids: Optional[List[int]] = None,
+    min_confidence: Optional[float] = None,
 ) -> bool:
     """订阅预测事件"""
     filters = {}
@@ -322,17 +332,16 @@ def subscribe_to_predictions(
     manager = get_subscription_manager()
     return manager.subscribe(
         connection_id,
-    EventType.PREDICTION_CREATED,
-    filters,
-    SubscriptionType.SPECIFIC_EVENT,
-    
+        EventType.PREDICTION_CREATED,
+        filters,
+        SubscriptionType.SPECIFIC_EVENT,
     )
 
 
 def subscribe_to_matches(
     connection_id: str,
-    match_ids: list[int] | None = None,
-    leagues: list[str] | None = None,
+    match_ids: Optional[List[int]] = None,
+    leagues: Optional[List[str]] = None,
 ) -> bool:
     """订阅比赛事件"""
     filters = {}
@@ -344,17 +353,13 @@ def subscribe_to_matches(
     success = True
     match_events = [
         EventType.MATCH_STARTED,
-    EventType.MATCH_SCORE_CHANGED,
-    EventType.MATCH_STATUS_CHANGED,
-    EventType.MATCH_ENDED,
-    
+        EventType.MATCH_SCORE_CHANGED,
+        EventType.MATCH_STATUS_CHANGED,
+        EventType.MATCH_ENDED,
     ]
     for event_type in match_events:
         if not manager.subscribe(
-            connection_id,
-    event_type,
-    filters,
-    SubscriptionType.MATCH_SPECIFIC
+            connection_id, event_type, filters, SubscriptionType.MATCH_SPECIFIC
         ):
             success = False
     return success
@@ -362,9 +367,8 @@ def subscribe_to_matches(
 
 def subscribe_to_odds(
     connection_id: str,
-    
-    match_ids: list[int] | None = None,
-    bookmakers: list[str] | None = None,
+    match_ids: Optional[List[int]] = None,
+    bookmakers: Optional[List[str]] = None,
 ) -> bool:
     """订阅赔率事件"""
     filters = {}
@@ -374,21 +378,17 @@ def subscribe_to_odds(
         filters["custom_filters"] = {"bookmakers": bookmakers}
     manager = get_subscription_manager()
     success = True
-    odds_events = [EventType.ODDS_UPDATED,
-    EventType.ODDS_SIGNIFICANT_CHANGE]
+    odds_events = [EventType.ODDS_UPDATED, EventType.ODDS_SIGNIFICANT_CHANGE]
     for event_type in odds_events:
         if not manager.subscribe(
-            connection_id,
-    event_type,
-    filters,
-    SubscriptionType.SPECIFIC_EVENT
+            connection_id, event_type, filters, SubscriptionType.SPECIFIC_EVENT
         ):
             success = False
     return success
 
 
 def subscribe_to_system_alerts(
-    connection_id: str, severity_levels: list[str] | None = None
+    connection_id: str, severity_levels: Optional[List[str]] = None
 ) -> bool:
     """订阅系统告警"""
     filters = {}
@@ -400,7 +400,7 @@ def subscribe_to_system_alerts(
     )
 
 
-_global_subscription_manager: SubscriptionManager | None = None
+_global_subscription_manager: Optional[SubscriptionManager] = None
 
 
 def get_subscription_manager() -> SubscriptionManager:

@@ -409,9 +409,7 @@ class PoissonModel(BaseModel):
             draw_prob /= total_prob
             away_win_prob /= total_prob
 
-        return home_win_prob,
-    draw_prob,
-    away_win_prob
+        return home_win_prob, draw_prob, away_win_prob
 
     def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
         """
