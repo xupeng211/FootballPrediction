@@ -63,9 +63,7 @@ def check_feature_store_availability() -> None:
         raise HTTPException(
             status_code=503,  # TODO: 将魔法数字 503 提取为常量
             detail="特征存储服务暂时不可用,请稍后重试",  # TODO: 将魔法数字 503 提取为常量
-        )
-
-
+        ) from e
 async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     """获取比赛基础信息"""
     logger.debug(f"查询比赛 {match_id} 的基础信息")

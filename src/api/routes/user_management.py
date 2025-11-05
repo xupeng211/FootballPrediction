@@ -110,7 +110,6 @@ async def update_user(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="只能更新自己的用户信息"
             )
-
         user = await user_service.update_user(user_id, request)
         return user
     except UserNotFoundError as e:
@@ -132,7 +131,6 @@ async def delete_user(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="只能删除自己的账户"
             )
-
         await user_service.delete_user(user_id)
     except UserNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -152,7 +150,6 @@ async def get_users(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以查看用户列表"
         )
-
     try:
         users = await user_service.get_users(
             skip=skip, limit=limit, active_only=active_only
@@ -177,7 +174,6 @@ async def search_users(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以搜索用户"
         )
-
     try:
         users = await user_service.search_users(query, limit)
         return users
@@ -220,7 +216,6 @@ async def deactivate_user(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以停用用户"
             )
-
         user = await user_service.deactivate_user(user_id)
         return user
     except UserNotFoundError as e:
@@ -240,7 +235,6 @@ async def activate_user(
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以激活用户"
             )
-
         user = await user_service.activate_user(user_id)
         return user
     except UserNotFoundError as e:
@@ -258,7 +252,6 @@ async def get_user_stats(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以查看用户统计"
         )
-
     try:
         stats = await user_service.get_user_stats()
         return stats

@@ -15,14 +15,14 @@ from pydantic import BaseModel
 router = APIRouter()
 
 
-class Real_timeDataStreamingAPIRequest(BaseModel):
+class RealTimedatastreamingapirequest(BaseModel):
     """请求模型"""
 
     config: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
 
 
-class Real_timeDataStreamingAPIResponse(BaseModel):
+class RealTimedatastreamingapiresponse(BaseModel):
     """响应模型"""
 
     success: bool

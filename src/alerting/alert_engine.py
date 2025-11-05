@@ -1,7 +1,7 @@
 # 简化版 alert_engine 模块
 
 
-class Alert_Engine:
+class AlertEngine:
     def __init__(self):
         pass
 

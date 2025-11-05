@@ -7,7 +7,7 @@ import os
 from typing import Any, Dict, Optional
 
 
-class Config_Manager:
+class ConfigManager:
     """配置管理器"""
 
     def __init__(self):

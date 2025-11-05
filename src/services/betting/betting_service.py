@@ -40,12 +40,12 @@ class EVCalculation:
     ev_home_win: float
     ev_draw: float
     ev_away_win: float
+    recommendation: str
+    confidence: float
     ev_over_2_5: float | None = None
     ev_under_2_5: float | None = None
     ev_bts_yes: float | None = None
     ev_bts_no: float | None = None
-    recommendation: str
-    confidence: float
 
 
 @dataclass
@@ -150,7 +150,7 @@ class EVCalculator:
             ev
             for ev in [
                 ev_home,
-    
+
                 ev_draw,
                 ev_away,
                 ev_over_2_5,
@@ -181,7 +181,7 @@ class EVCalculator:
         return EVCalculation(
             ev_home_win=ev_home,
     ev_draw=ev_draw,
-    
+
             ev_away_win=ev_away,
             ev_over_2_5=ev_over_2_5,
             ev_under_2_5=ev_under_2_5,
@@ -218,7 +218,7 @@ class BettingRecommendationEngine:
     bet_type="home_win",
     odds=odds.home_win,
     probability=probabilities.home_win,
-    
+
                     ev=ev_calc.ev_home_win,
                     kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
                         ev_calc.ev_home_win, odds.home_win
@@ -236,7 +236,7 @@ class BettingRecommendationEngine:
                     match_id=match_id,
     bet_type="draw",
     odds=odds.draw,
-    
+
                     probability=probabilities.draw,
                     ev=ev_calc.ev_draw,
                     kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
@@ -255,7 +255,7 @@ class BettingRecommendationEngine:
                     match_id=match_id,
     bet_type="away_win",
     odds=odds.away_win,
-    
+
                     probability=probabilities.away_win,
                     ev=ev_calc.ev_away_win,
                     kelly_fraction=self.ev_calculator.calculate_kelly_fraction(
@@ -274,7 +274,7 @@ class BettingRecommendationEngine:
                     match_id=match_id,
     bet_type="over_2_5",
     odds=odds.over_under_2_5[0] if odds.over_under_2_5 else 0.0,
-    
+
                     probability=(
                         probabilities.over_under_2_5[0]
                         if probabilities.over_under_2_5
@@ -369,19 +369,19 @@ class BettingService:
             return BettingOdds(
                 home_win=float(odds_data.get("home_win",
     0)),
-    
+
                 draw=float(odds_data.get("draw",
     0)),
     away_win=float(odds_data.get("away_win",
     0)),
-    
+
                 over_under_2_5=(
                     (
                         float(odds_data.get("over_2_5",
     0)),
     float(odds_data.get("under_2_5",
     0)),
-    
+
                     )
                     if odds_data.get("over_2_5") and odds_data.get("under_2_5")
                     else None
@@ -392,7 +392,7 @@ class BettingService:
     0)),
     float(odds_data.get("bts_no",
     0)),
-    
+
                     )
                     if odds_data.get("bts_yes") and odds_data.get("bts_no")
                     else None
@@ -412,19 +412,19 @@ class BettingService:
             return PredictionProbabilities(
                 home_win=float(prediction_data.get("home_win_prob",
     0)),
-    
+
                 draw=float(prediction_data.get("draw_prob",
     0)),
     away_win=float(prediction_data.get("away_win_prob",
     0)),
-    
+
                 over_under_2_5=(
                     (
                         float(prediction_data.get("over_2_5_prob",
     0)),
     float(prediction_data.get("under_2_5_prob",
     0)),
-    
+
                     )
                     if prediction_data.get("over_2_5_prob")
                     and prediction_data.get("under_2_5_prob")
@@ -436,7 +436,7 @@ class BettingService:
     0)),
     float(prediction_data.get("bts_no_prob",
     0)),
-    
+
                     )
                     if prediction_data.get("bts_yes_prob")
                     and prediction_data.get("bts_no_prob")
@@ -527,7 +527,7 @@ class BettingService:
                 if total_recommendations > 0
                 else 0
             ),
-    
+
             "period": {
                 "start": start_date.isoformat() if start_date else None,
     "end": end_date.isoformat() if end_date else None,

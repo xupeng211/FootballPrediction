@@ -53,12 +53,12 @@ async def get_current_user(
         # 这里应该解析JWT token，暂时返回模拟数据
         token_data = TokenData(user_id=1, username="test_user", role="user")
         return token_data
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
 
 async def require_admin(current_user: TokenData = Depends(get_current_user)):

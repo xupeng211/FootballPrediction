@@ -1,7 +1,7 @@
 # 简化版 fixtures_collector 模块
 
 
-class Fixtures_Collector:
+class FixturesCollector:
     def __init__(self):
         pass
 

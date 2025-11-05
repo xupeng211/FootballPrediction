@@ -128,7 +128,7 @@ class EloModel(BaseModel):
     model_version=self.model_version,
     accuracy=metrics.get("accuracy",
     0.0),
-    
+
             precision=metrics.get("precision", 0.0),
             recall=metrics.get("recall", 0.0),
             f1_score=metrics.get("f1_score", 0.0),
@@ -142,7 +142,7 @@ class EloModel(BaseModel):
     "away_elo",
     "elo_difference",
     "home_advantage"],
-    
+
             hyperparameters=self.hyperparameters.copy(),
             created_at=datetime.now(),
         )
@@ -331,20 +331,12 @@ class EloModel(BaseModel):
         )
 
         # 转换为胜平负概率
-        home_win_prob,
-    draw_prob,
-    away_win_prob = (
-            self._convert_expected_scores_to_probabilities(
-                home_expected,
-    away_expected,
-    home_elo - away_elo
+        home_win_prob, draw_prob, away_win_prob = self._convert_expected_scores_to_probabilities(
+                home_expected, away_expected, home_elo - away_elo
             )
-        )
 
         # 确定预测结果
-        probabilities = (home_win_prob,
-    draw_prob,
-    away_win_prob)
+        probabilities = (home_win_prob, draw_prob, away_win_prob)
         predicted_outcome = self.get_outcome_from_probabilities(probabilities)
         confidence = self.calculate_confidence(probabilities)
 
@@ -353,7 +345,7 @@ class EloModel(BaseModel):
     home_team=home_team,
     away_team=away_team,
     home_win_prob=home_win_prob,
-    
+
             draw_prob=draw_prob,
             away_win_prob=away_win_prob,
             predicted_outcome=predicted_outcome,
@@ -424,9 +416,7 @@ class EloModel(BaseModel):
             draw_prob /= total_prob
             away_win_prob /= total_prob
 
-        return home_win_prob,
-    draw_prob,
-    away_win_prob
+        return home_win_prob, draw_prob, away_win_prob
 
     def predict_proba(self, match_data: dict[str, Any]) -> tuple[float, float, float]:
         """
@@ -735,7 +725,7 @@ class EloModel(BaseModel):
             "home_team",
     "away_team",
     "home_score",
-    
+
             "away_score",
             "result",
         ]
@@ -752,8 +742,7 @@ class EloModel(BaseModel):
         min_samples = 50  # ELO模型需要的最小样本数
         if len(training_data) < min_samples:
             logger.warning(
-                f"Training data has only {len(training_data)} samples,
-    which may be insufficient"
+                f"Training data has only {len(training_data)} samples, which may be insufficient"
             )
 
         # 检查比分数据

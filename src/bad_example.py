@@ -1,7 +1,7 @@
 # 简化版 bad_example 模块
 
 
-class Bad_Example:
+class BadExample:
     """示例类"""
 
     EXAMPLE = "value"
