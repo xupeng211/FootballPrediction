@@ -22,17 +22,12 @@ python3 scripts/start_progressive_improvement.py
 source .venv/bin/activate && ruff check src/ --output-format=concise | head -10
 ```
 
-### 🚀 渐进式改进策略 (必读)
+### 🚀 渐进式改进策略
 
-**经过五轮验证的成熟策略** - 成功将项目从"完全无法运行"恢复到"企业级生产就绪"。
-
-**🎯 策略核心**
-- ✅ **渐进式改进** - 避免大规模变更风险
-- ✅ **四阶段流程** - 语法修复 → 功能重建 → 测试验证 → 成果提交
-- ✅ **测试驱动** - 以测试通过作为成功标准
-- ✅ **数据驱动** - 基于质量报告制定策略
-
-**📈 验证成果**: 25个 → 7个 → 14个 → 108个 → 稳定测试通过
+**核心策略**：避免大规模变更，采用四阶段流程
+1. **语法修复** → 2. **功能重建** → 3. **测试验证** → 4. **成果提交**
+- ✅ **测试驱动**：以测试通过作为成功标准
+- ✅ **数据驱动**：基于质量报告制定策略
 
 ### 📊 快速状态检查
 
@@ -69,14 +64,14 @@ print(f'✅ 核心功能: {hasattr(du.DateUtils, \"get_month_start\")} && {hasat
 
 ## 📊 项目概述
 
-**企业级足球预测系统** - 基于现代Python技术栈的生产级应用，采用DDD + CQRS架构模式。
+**足球预测系统** - 基于现代Python技术栈的Web应用，采用DDD + CQRS架构模式。
 
 **🎯 核心特性：**
 - **现代化架构**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL 全异步设计
-- **企业级设计**: DDD分层架构 + CQRS模式 + 依赖注入容器 + 事件驱动
-- **完整测试**: 385个测试用例，19种标准化标记，覆盖率30%（渐进式改进策略）
-- **智能开发**: 85+个自动化脚本，AI辅助质量修复和危机处理
-- **生产就绪**: Docker容器化，完整CI/CD，零停机部署方案
+- **分层架构**: DDD设计 + CQRS模式 + 依赖注入容器 + 事件驱动
+- **完整测试**: 195个测试文件，25+种标准化标记，覆盖率30%（渐进式改进）
+- **智能工具**: 113个自动化脚本，辅助质量修复和危机处理
+- **容器化**: Docker支持，完整CI/CD配置
 
 **🛠️ 技术栈**: Python 3.11+, 异步架构, 容器化部署, 多环境支持
 
@@ -113,7 +108,31 @@ python3 scripts/quality_guardian.py --check-only  # 全面质量检查
 
 ---
 
-## 🔧 核心开发命令
+## 🔧 开发指南
+
+### 📋 环境要求
+- **Python**: 3.11+
+- **数据库**: PostgreSQL 13+
+- **缓存**: Redis 6+
+- **容器**: Docker & Docker Compose (可选)
+
+### 🗄️ 数据库设置
+```bash
+# 创建数据库
+createdb football_prediction
+
+# 运行迁移
+alembic upgrade head
+
+# 填充种子数据（可选）
+python scripts/seed_data.py
+```
+
+### 📚 API文档访问
+- **本地开发**: http://localhost:8000/docs
+- **生产环境**: https://your-domain.com/docs
+
+### 🔧 核心开发命令
 
 ### ⭐ 必做命令（开发流程）
 ```bash
@@ -156,16 +175,8 @@ pytest --cov=src --cov-report=term-missing  # 查看具体覆盖情况
 ruff check src/ tests/     # 代码检查（替代make lint）
 ruff format src/ tests/    # 代码格式化（替代make fmt）
 
-# 智能修复工具（85+个自动化脚本）
-python3 scripts/smart_quality_fixer.py          # 智能自动修复
-python3 scripts/quality_guardian.py --check-only # 全面质量检查
-python3 scripts/fix_test_crisis.py             # 测试危机修复
-python3 scripts/precise_error_fixer.py         # 精确错误修复
-python3 scripts/continuous_improvement_engine.py # 持续改进引擎
-
-# 危机处理工具
-python3 scripts/emergency-response.sh           # 紧急响应脚本
-python3 scripts/final-check.sh                 # 最终检查脚本
+# 智能修复工具（详见下方工具体系章节）
+python3 scripts/smart_quality_fixer.py          # 智能自动修复（核心工具）
 ```
 
 **⚠️ 重要规则：**
@@ -175,12 +186,6 @@ python3 scripts/final-check.sh                 # 最终检查脚本
 - 使用`ruff check`替代`make lint`（项目已迁移到ruff）
 - **覆盖率阈值设置为30%**（pytest.ini配置），采用渐进式改进策略
 - **智能修复工具可解决80%的常见问题**
-
-### pytest使用场景
-虽然首选Makefile命令，但以下情况允许直接使用pytest：
-- 调试特定测试：`pytest tests/unit/api/test_predictions.py::test_prediction_simple -v`
-- 功能域测试：`pytest -m "unit and api" -v`
-- 快速反馈：`pytest -m "not slow" --maxfail=3`
 
 ---
 
@@ -234,7 +239,7 @@ service = container.resolve(PredictionService)
 
 ## 🧪 测试体系详解
 
-### 🎯 19种标准化测试标记
+### 🎯 25+种标准化测试标记
 
 **📊 核心测试类型**
 - `unit`: 单元测试 (85%) - 单个函数或类测试
@@ -280,11 +285,11 @@ pytest -m "unit and not slow"                    # 快速单元测试
 
 ## 📦 配置文件说明
 
-- **pytest.ini**: 19种标准化测试标记，覆盖率阈值30%，并行测试配置
+- **pytest.ini**: 25+种标准化测试标记，覆盖率阈值30%，并行测试配置
 - **pyproject.toml**: 项目构建配置，包含Ruff、MyPy、pytest等工具配置（注意：存在大量TODO注释需要清理）
 - **.ruffignore**: Ruff忽略规则，排除有问题的脚本文件
-- **Makefile**: 613行，600+个命令，完整开发工具链，包含CI/CD自动化
-- **scripts/**: 85+个自动化脚本，涵盖修复、测试、部署等全流程
+- **Makefile**: 1062行，600+个命令，完整开发工具链，包含CI/CD自动化
+- **scripts/**: 113个自动化脚本，涵盖修复、测试、部署等全流程
 - **requirements.txt**: 锁定的依赖版本，确保环境一致性
 
 ---
@@ -302,31 +307,21 @@ pip install pandas numpy aiohttp psutil scikit-learn  # 安装核心依赖
 
 # 代码质量问题
 ruff check src/ tests/                   # Ruff代码检查
-python3 scripts/smart_quality_fixer.py   # 智能自动修复（34KB核心脚本）
+python3 scripts/smart_quality_fixer.py   # 智能自动修复（核心工具）
 
 # 测试问题
 make test.unit                           # 运行单元测试
 python3 scripts/coverage_improvement_executor.py  # 覆盖率改进
 
-# 大量测试失败时的应急流程
-python3 scripts/smart_quality_fixer.py   # 1. 智能质量修复
-make test.unit                           # 2. 验证修复结果
-
 # 完全环境重置
 make clean && make install && make test.unit
-
-# 覆盖率问题
-make coverage                            # 生成覆盖率报告
-python3 scripts/coverage_booster.py     # 覆盖率增强
 ```
 
 ### 关键提醒
 - **推荐使用本地开发环境**，虚拟环境确保依赖隔离
 - **优先使用Makefile命令**而非直接pytest
 - **智能修复工具**可解决80%的常见问题
-- **85+个自动化脚本**覆盖开发全生命周期
-- **覆盖率渐进式改进**，当前阈值30%
-- **核心脚本**: `smart_quality_fixer.py` (34KB) 是主要的智能修复工具
+- **核心脚本**: `smart_quality_fixer.py` 是主要的智能修复工具
 
 ---
 
@@ -357,32 +352,31 @@ make test.unit                           # 3. 验证修复结果
 ```
 
 ### 🎯 项目状态
-- **🏆 成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
-- **🏗️ 架构**: DDD + CQRS + 依赖注入 + 异步架构 + 事件驱动
-- **🧪 测试**: 385个测试用例，19种标准化标记，覆盖率30%（渐进式改进策略）
-- **🛡️ 质量**: A+代码质量，Ruff + MyPy + bandit完整工具链
-- **🤖 智能化**: 85+个自动化脚本，AI辅助开发，智能质量修复
-- **📏 规模**: Makefile 613行，600+个命令，完整开发工具链
-- **🎯 推荐**: 本地开发环境，渐进式改进方法
+- **🏗️ 架构**: DDD + CQRS + 依赖注入 + 异步架构
+- **🧪 测试**: 195个测试文件，25+种标准化标记，覆盖率30%
+- **🛡️ 质量**: 完整的代码质量工具链（Ruff + MyPy + bandit）
+- **🤖 工具**: 113个自动化脚本，辅助开发和质量修复
+- **📏 规模**: Makefile 1062行，600+个开发命令
+- **🎯 方法**: 本地开发环境，渐进式改进方法
 
 ---
 
 ## 🛠️ 智能修复工具体系
 
-### 🤖 85+个自动化脚本概览
+### 🤖 113个自动化脚本概览
 完整的智能化开发工具链，覆盖开发、测试、部署、监控全流程：
 
-**🎯 核心修复工具（解决80%常见问题）**
+**🎯 核心修复工具**
 ```bash
-python3 scripts/smart_quality_fixer.py      # 🧠 智能质量修复（34KB核心脚本）
-python3 scripts/quality_guardian.py --check-only  # 🔍 全面质量检查
-python3 scripts/fix_test_crisis.py         # 🚨 测试危机自动修复
+python3 scripts/smart_quality_fixer.py      # 自动质量修复（核心脚本）
+python3 scripts/quality_guardian.py --check-only  # 全面质量检查
+python3 scripts/fix_test_crisis.py         # 测试危机修复
 ```
 
 **⚡ 高级修复工具集**
 ```bash
 # 📊 覆盖率专项提升
-python3 scripts/phase35_ai_coverage_master.py     # AI覆盖率大师
+python3 scripts/phase35_ai_coverage_master.py     # 覆盖率优化
 python3 scripts/coverage_improvement_executor.py  # 覆盖率执行器
 
 # 🔧 问题诊断和修复
@@ -397,44 +391,27 @@ python3 scripts/continuous_improvement_engine.py # 持续改进引擎
 
 **📈 监控和分析工具**
 ```bash
-python3 scripts/intelligent_quality_monitor.py   # 智能质量监控
-python3 scripts/quality_guardian.py              # 质量守护者
+python3 scripts/intelligent_quality_monitor.py   # 质量监控
+python3 scripts/quality_guardian.py              # 质量检查
 ```
 
 ### 🎯 工具选择指南
 
 | 场景 | 推荐工具 | 说明 |
 |------|----------|------|
-| 📝 日常开发 | `smart_quality_fixer.py` | 智能修复80%问题 |
-| 🧪 测试失败 | `fix_test_crisis.py` | 测试危机自动处理 |
-| 📊 覆盖率提升 | `phase35_ai_coverage_master.py` | AI驱动覆盖率优化 |
+| 📝 日常开发 | `smart_quality_fixer.py` | 自动修复常见问题 |
+| 🧪 测试失败 | `fix_test_crisis.py` | 测试危机处理 |
+| 📊 覆盖率提升 | `phase35_ai_coverage_master.py` | 覆盖率优化 |
 | 🚨 紧急情况 | `emergency-response.sh` | 紧急响应和恢复 |
 | 🔍 全面检查 | `quality_guardian.py --check-only` | 完整质量分析 |
 
 ### 💡 核心优势
-- **🤖 AI辅助**: 智能识别和修复常见问题
-- **⚡ 自动化**: 一键解决80%的开发问题
-- **🔄 持续改进**: 自动监控和优化代码质量
-- **🚨 危机处理**: 测试失败时的自动恢复机制
-
----
-
-## 📚 项目独特优势
-
-### 🤖 智能化开发体验
-- **85+个自动化脚本**：覆盖开发、测试、部署、监控全流程
-- **AI辅助修复**：智能识别和修复常见问题
-- **危机自动处理**：测试失败时的自动化恢复机制
-- **持续改进引擎**：代码质量的自动优化
-
-### 🎯 企业级成熟度
-- **零停机部署**：完整的生产部署方案
-- **监控体系**：全方位的性能和健康监控
-- **安全保证**：通过bandit安全扫描和依赖检查
-- **质量门控**：严格的代码质量准入标准
+- **⚡ 自动化**: 解决常见的开发问题
+- **🔄 持续改进**: 监控和优化代码质量
+- **🚨 危机处理**: 测试失败时的恢复机制
 
 ---
 
 ---
 
-*文档版本: v10.0 (重构优化版) | 维护者: Claude Code | 更新时间: 2025-11-05*
+*文档版本: v11.0 (结构优化版) | 维护者: Claude Code | 更新时间: 2025-11-05*
