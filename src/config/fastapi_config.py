@@ -37,10 +37,8 @@ from src.utils.i18n import I18nUtils, init_i18n
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(25行)，建议拆分
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-# TODO: 方法 def custom_openapi 过长(29行),
-    建议拆分
-# TODO: 方法 def create_chinese_app 过长(25行),
-    建议拆分
+# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+# TODO: 方法 def create_chinese_app 过长(25行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(28行)，建议拆分
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(29行)，建议拆分

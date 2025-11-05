@@ -67,7 +67,7 @@ class ConfigManager:
 
 
 # 全局配置实例
-config_manager = Config_Manager()
+config_manager = ConfigManager()
 
 
 def example() -> str | None:

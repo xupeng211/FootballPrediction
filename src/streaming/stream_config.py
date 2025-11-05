@@ -10,13 +10,12 @@
 
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class KafkaConfig:
     """类文档字符串"""
-
     pass  # 添加pass语句
     """Kafka基础配置"""
 
@@ -48,7 +47,6 @@ class KafkaConfig:
 @dataclass
 class TopicConfig:
     """类文档字符串"""
-
     pass  # 添加pass语句
     """Topic配置"""
 
@@ -62,7 +60,6 @@ class TopicConfig:
 
 class StreamConfig:
     """类文档字符串"""
-
     pass  # 添加pass语句
     """
     流式处理配置管理器
@@ -73,82 +70,62 @@ class StreamConfig:
 
     def __init__(self):
         """函数文档字符串"""
-        # 添加pass语句
+        pass
+  # 添加pass语句
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()
 
     def _load_kafka_config(self) -> KafkaConfig:
         """从环境变量加载Kafka配置"""
         return KafkaConfig(
-            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS",
-    "localhost:9092"),
-    security_protocol=os.getenv("KAFKA_SECURITY_PROTOCOL",
-    "PLAINTEXT"),
-    
+            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+            security_protocol=os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT"),
             producer_client_id=os.getenv(
-                "KAFKA_PRODUCER_CLIENT_ID",
-    "football-prediction-producer"
+                "KAFKA_PRODUCER_CLIENT_ID", "football-prediction-producer"
             ),
-    producer_acks=os.getenv("KAFKA_PRODUCER_ACKS",
-    "all"),
-    
-            producer_retries=int(os.getenv("KAFKA_PRODUCER_RETRIES",
-    "3")),
-    consumer_group_id=os.getenv(
-                "KAFKA_CONSUMER_GROUP_ID",
-    "football-prediction-consumers"
+            producer_acks=os.getenv("KAFKA_PRODUCER_ACKS", "all"),
+            producer_retries=int(os.getenv("KAFKA_PRODUCER_RETRIES", "3")),
+            consumer_group_id=os.getenv(
+                "KAFKA_CONSUMER_GROUP_ID", "football-prediction-consumers"
             ),
-    
             consumer_client_id=os.getenv(
-                "KAFKA_CONSUMER_CLIENT_ID",
-    "football-prediction-consumer"
+                "KAFKA_CONSUMER_CLIENT_ID", "football-prediction-consumer"
             ),
-    consumer_auto_offset_reset=os.getenv(
-                "KAFKA_CONSUMER_AUTO_OFFSET_RESET",
-    "latest"
+            consumer_auto_offset_reset=os.getenv(
+                "KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest"
             ),
-    
         )
 
-    def _init_topics(self) -> dict[str, TopicConfig]:
+    def _init_topics(self) -> Dict[str, TopicConfig]:
         """初始化Topic配置"""
         return {
             # 比赛数据流
             "matches-stream": TopicConfig(
                 name="matches-stream",
-    partitions=3,
-    retention_ms=86400000,
-    # 1天
+                partitions=3,
+                retention_ms=86400000,  # 1天
             ),
-    
             # 赔率数据流
             "odds-stream": TopicConfig(
                 name="odds-stream",
-    partitions=6,
-    # 赔率数据量大,
-    更多分区
-                retention_ms=43200000,
-    # 12小时
+                partitions=6,  # 赔率数据量大,更多分区
+                retention_ms=43200000,  # 12小时
             ),
             # 比分数据流
             "scores-stream": TopicConfig(
                 name="scores-stream",
-    partitions=3,
-    retention_ms=21600000,
-    # 6小时
+                partitions=3,
+                retention_ms=21600000,  # 6小时
             ),
-    
             # 处理结果流
             "processed-data-stream": TopicConfig(
                 name="processed-data-stream",
-    partitions=3,
-    retention_ms=604800000,
-    # 7天
+                partitions=3,
+                retention_ms=604800000,  # 7天
             ),
-    
         }
 
-    def get_producer_config(self) -> dict[str, Any]:
+    def get_producer_config(self) -> Dict[str, Any]:
         """获取生产者配置"""
         return {
             "bootstrap.servers": self.kafka_config.bootstrap_servers,
@@ -164,8 +141,8 @@ class StreamConfig:
         }
 
     def get_consumer_config(
-        self, consumer_group_id: str | None = None
-    ) -> dict[str, Any]:
+        self, consumer_group_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """获取消费者配置"""
         group_id = consumer_group_id or self.kafka_config.consumer_group_id
 
@@ -183,11 +160,11 @@ class StreamConfig:
             "heartbeat.interval.ms": 3000,
         }
 
-    def get_topic_config(self, topic_name: str) -> TopicConfig | None:
+    def get_topic_config(self, topic_name: str) -> Optional[TopicConfig]:
         """获取指定Topic配置"""
         return self.topics.get(topic_name)
 
-    def get_all_topics(self) -> list[str]:
+    def get_all_topics(self) -> List[str]:
         """获取所有Topic名称"""
         return list(self.topics.keys())
 
