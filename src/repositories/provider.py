@@ -198,4 +198,5 @@ def get_match_repository(
 
 # 为向后兼容性提供别名
 RepositoryProvider = BaseRepositoryProvider
+RepositoryFactory = BaseRepositoryFactory  # 添加别名以支持旧的导入
 DefaultRepositoryFactory = DefaultBaseRepositoryFactory  # 添加别名以支持旧的导入
