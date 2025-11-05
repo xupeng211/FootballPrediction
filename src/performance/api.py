@@ -251,7 +251,7 @@ async def get_profiling_results():
 @router.get("/report")
 async def get_performance_report(
     background_tasks: BackgroundTasks,
-    format: str = Query(default="json",
+    export_format: str = Query(default="json",
     regex="^(json|html)$"),
 
     include_recommendations: bool = Query(default=True),
