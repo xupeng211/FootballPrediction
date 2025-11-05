@@ -89,15 +89,15 @@ class Prediction:
 
 
 # 导出常用函数
-def create_test_team(id: int, name: str) -> Team:
+def create_test_team(item_id: int, name: str) -> Team:
     """创建测试用队伍"""
-    return Team(id=id, name=name, status=TeamStatus.ACTIVE)
+    return Team(id=item_id, name=name, status=TeamStatus.ACTIVE)
 
 
-def create_test_match(id: int, home_team: int, away_team: int) -> Match:
+def create_test_match(item_id: int, home_team: int, away_team: int) -> Match:
     """创建测试用比赛"""
     return Match(
-        id=id,
+        id=item_id,
         home_team_id=home_team,
         away_team_id=away_team,
         league_id=1,
