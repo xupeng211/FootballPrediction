@@ -7,9 +7,9 @@ Repository Base Classes - Rewritten Version
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Generic, TypeVar
 
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import Select
@@ -22,11 +22,11 @@ ID = TypeVar("ID")
 @dataclass
 class QuerySpec:
     """查询规范 - 简化版本"""
-    filters: Optional[Dict[str, Any]] = None
-    order_by: Optional[List[str]] = None
-    limit: Optional[int] = None
-    offset: Optional[int] = None
-    include: Optional[List[str]] = None
+    filters: dict[str, Any] | None = None
+    order_by: list[str] | None = None
+    limit: int | None = None
+    offset: int | None = None
+    include: list[str] | None = None
 
 
 class BaseRepository(Generic[T, ID], ABC):
@@ -42,15 +42,15 @@ class BaseRepository(Generic[T, ID], ABC):
         self.model_class = model_class
 
     @abstractmethod
-    async def get_by_id(self, id: ID) -> Optional[T]:
+    async def get_by_id(self, id: ID) -> T | None:
         """根据ID获取实体"""
         pass
 
     @abstractmethod
     async def get_all(
         self,
-        query_spec: Optional[QuerySpec] = None
-    ) -> List[T]:
+        query_spec: QuerySpec | None = None
+    ) -> list[T]:
         """获取所有实体"""
         pass
 
@@ -60,7 +60,7 @@ class BaseRepository(Generic[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def update(self, id: ID, update_data: Dict[str, Any]) -> Optional[T]:
+    async def update(self, id: ID, update_data: dict[str, Any]) -> T | None:
         """更新实体"""
         pass
 
@@ -75,7 +75,7 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return result.scalar_one_or_none() is not None
 
-    async def count(self, query_spec: Optional[QuerySpec] = None) -> int:
+    async def count(self, query_spec: QuerySpec | None = None) -> int:
         """计算实体数量"""
         query = select(self.model_class)
 
@@ -98,7 +98,7 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return len(result.scalars().all())
 
-    def _build_query(self, query_spec: Optional[QuerySpec]) -> Select:
+    def _build_query(self, query_spec: QuerySpec | None) -> Select:
         """构建查询"""
         query = select(self.model_class)
 
@@ -132,7 +132,7 @@ class BaseRepository(Generic[T, ID], ABC):
 
         return query
 
-    def _apply_filters(self, query: Select, filters: Dict[str, Any]) -> Select:
+    def _apply_filters(self, query: Select, filters: dict[str, Any]) -> Select:
         """应用过滤条件"""
         for key, value in filters.items():
             if hasattr(self.model_class, key):
@@ -160,9 +160,9 @@ class BaseRepository(Generic[T, ID], ABC):
 
     async def find_by_filters(
         self,
-        filters: Dict[str, Any],
-        limit: Optional[int] = None
-    ) -> List[T]:
+        filters: dict[str, Any],
+        limit: int | None = None
+    ) -> list[T]:
         """根据过滤条件查找实体"""
         query = select(self.model_class)
         query = self._apply_filters(query, filters)
@@ -175,8 +175,8 @@ class BaseRepository(Generic[T, ID], ABC):
 
     async def find_one_by_filters(
         self,
-        filters: Dict[str, Any]
-    ) -> Optional[T]:
+        filters: dict[str, Any]
+    ) -> T | None:
         """根据过滤条件查找单个实体"""
         query = select(self.model_class)
         query = self._apply_filters(query, filters)
