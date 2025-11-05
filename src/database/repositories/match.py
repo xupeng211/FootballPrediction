@@ -491,7 +491,7 @@ class MatchRepository(BaseRepository[Match]):
             "form": [],  # 最近比赛结果列表
         }
 
-        for match in matches:
+        for match in _matches:
             if match.status != MatchStatus.FINISHED.value:
                 continue
 
