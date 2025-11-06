@@ -97,7 +97,7 @@ jobs:
 
     - name: Upload security reports
       if: matrix.check == 'bandit' || matrix.check == 'security-audit'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: |
@@ -217,7 +217,7 @@ jobs:
         EOF
 
     - name: Upload performance metrics
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-metrics
         path: performance-metrics.json
