@@ -20,10 +20,10 @@ import hashlib
 from datetime import datetime, timedelta
 from typing import Any
 
-from .base_collector import CollectionResult, DataCollector
+from src.collectors.base_collector import CollectionResult, BaseCollector
 
 
-class FixturesCollector(DataCollector):
+class FixturesCollector(BaseCollector):
     """
     赛程数据采集器
 

@@ -17,7 +17,7 @@ from .feature_definitions import (
     OddsFeatures,
     RecentPerformanceFeatures,
 )
-from .feature_store import FootballFeatureStore
+# from .feature_store import FootballFeatureStore  # 暂时禁用有问题的导入
 
 __all__ = [
     "MatchEntity",
@@ -27,6 +27,6 @@ __all__ = [
     "OddsFeatures",
     "AllMatchFeatures",
     "AllTeamFeatures",
-    "FootballFeatureStore",
+    # "FootballFeatureStore",  # 暂时禁用
     "FeatureCalculator",
 ]
