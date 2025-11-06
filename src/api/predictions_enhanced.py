@@ -206,6 +206,7 @@ class EnhancedPredictionService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
+            )
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
@@ -268,6 +269,7 @@ class EnhancedPredictionService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
+            )
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
@@ -427,10 +429,9 @@ async def predict_batch(
     # 检查批量请求限制
     if len(request.matches) > 1000:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-    detail="Batch size exceeds maximum limit of 1000 matches",
-
-        )
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Batch size exceeds maximum limit of 1000 matches",
+            )
 
     # 并发预测处理
     semaphore = asyncio.Semaphore(request.max_concurrent)
@@ -534,3 +535,4 @@ async def log_batch_prediction(total: int, successful: int, total_time: float):
     """记录批量预测日志"""
     logger.info(
         f"Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
+    )
