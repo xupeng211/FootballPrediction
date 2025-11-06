@@ -241,7 +241,9 @@ class DateUtils:
     @staticmethod
     def days_between(dt1: datetime, dt2: datetime) -> int | None:
         """计算两个日期之间的天数"""
-        if not isinstance(dt1, (datetime, date)) or not isinstance(dt2, (datetime, date)):
+        if not isinstance(dt1, (datetime, date)) or not isinstance(
+            dt2, (datetime, date)
+        ):
             return None
         if isinstance(dt1, date):
             dt1 = datetime(dt1.year, dt1.month, dt1.day)

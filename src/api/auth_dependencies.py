@@ -3,7 +3,7 @@
 Authentication Dependencies Module
 """
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 
@@ -53,23 +53,29 @@ async def get_current_user(
         # 这里应该解析JWT token，暂时返回模拟数据
         token_data = TokenData(user_id=1, username="test_user", role="user")
         return token_data
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
 
 async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials = Security(security, auto_error=False),
+    request: Request,
 ):
     """获取当前用户（可选）"""
-    if not credentials:
+    # 尝试从Authorization头获取token
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
         return None
 
     try:
-        # 这里应该解析JWT token，暂时返回模拟数据
+        if not auth_header.startswith("Bearer "):
+            return None
+
+        auth_header.split(" ")[1]
+        # 这里应该解析JWT token，暂时返回模拟数据用于测试
         token_data = TokenData(user_id=1, username="test_user", role="user")
         return token_data
     except Exception:

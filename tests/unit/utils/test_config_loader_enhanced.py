@@ -6,7 +6,6 @@ ConfigLoader模块增强测试 - 快速提升覆盖率
 import json
 import os
 import tempfile
-from pathlib import Path
 
 from src.utils.config_loader import load_config_from_file
 
@@ -21,7 +20,7 @@ class TestConfigLoaderEnhanced:
 
     def test_load_config_empty_file(self):
         """测试加载空文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
 
         try:
@@ -33,15 +32,12 @@ class TestConfigLoaderEnhanced:
     def test_load_config_valid_json(self):
         """测试加载有效的JSON文件"""
         config_data = {
-            "database": {
-                "host": "localhost",
-                "port": 5432
-            },
+            "database": {"host": "localhost", "port": 5432},
             "debug": True,
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
             temp_path = f.name
 
@@ -53,7 +49,7 @@ class TestConfigLoaderEnhanced:
 
     def test_load_config_empty_json(self):
         """测试加载空JSON文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({}, f)
             temp_path = f.name
 
@@ -67,7 +63,7 @@ class TestConfigLoaderEnhanced:
         """测试加载无效的JSON文件"""
         invalid_json = '{"key": "value", invalid}'
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write(invalid_json)
             temp_path = f.name
 
@@ -86,13 +82,10 @@ class TestConfigLoaderEnhanced:
             "boolean": True,
             "null": None,
             "array": [1, 2, "three"],
-            "nested": {
-                "inner": "value",
-                "list": ["a", "b", "c"]
-            }
+            "nested": {"inner": "value", "list": ["a", "b", "c"]},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(complex_config, f)
             temp_path = f.name
 
@@ -116,7 +109,7 @@ features:
   - monitoring
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             temp_path = f.name
 
@@ -135,7 +128,7 @@ features:
         """测试加载.yml扩展名文件"""
         yaml_content = "key: value\nnumber: 42"
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             f.write(yaml_content)
             temp_path = f.name
 
@@ -151,7 +144,7 @@ features:
 
     def test_load_config_unsupported_extension(self):
         """测试加载不支持扩展名的文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("some content")
             temp_path = f.name
 
@@ -169,7 +162,7 @@ key: value
 unclosed: [1, 2, 3
 """
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(malformed_yaml)
             temp_path = f.name
 
@@ -182,7 +175,7 @@ unclosed: [1, 2, 3
     def test_load_config_file_permission_error(self):
         """测试文件权限错误（模拟）"""
         # 创建一个临时文件然后删除，模拟权限错误
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump({"test": "data"}, f)
             temp_path = f.name
 
@@ -200,10 +193,10 @@ unclosed: [1, 2, 3
             "chinese": "你好世界",
             "emoji": "🌍🚀",
             "special": "áéíóú",
-            "mixed": "Hello 世界"
+            "mixed": "Hello 世界",
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(unicode_config, f, ensure_ascii=False)
             temp_path = f.name
 
@@ -219,7 +212,7 @@ unclosed: [1, 2, 3
         for i in range(1000):
             large_config[f"key_{i}"] = f"value_{i}" * 10
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(large_config, f)
             temp_path = f.name
 
@@ -255,16 +248,12 @@ unclosed: [1, 2, 3
                 "url": "postgresql://user:pass@localhost/db",
                 "pool_size": 10,
                 "max_overflow": 20,
-                "echo": False
+                "echo": False,
             },
-            "redis": {
-                "host": "localhost",
-                "port": 6379,
-                "db": 0
-            }
+            "redis": {"host": "localhost", "port": 6379, "db": 0},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(db_config, f, indent=2)
             temp_path = f.name
 
@@ -282,14 +271,10 @@ unclosed: [1, 2, 3
             "version": "2.0.0",
             "debug": False,
             "log_level": "INFO",
-            "features": {
-                "auth": True,
-                "caching": True,
-                "monitoring": True
-            }
+            "features": {"auth": True, "caching": True, "monitoring": True},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(app_config, f, indent=2)
             temp_path = f.name
 
@@ -312,7 +297,7 @@ unclosed: [1, 2, 3
             # 特殊字符路径
             "file with spaces.json",
             # 非常长的路径
-            "a" * 500 + ".json"
+            "a" * 500 + ".json",
         ]
 
         for path in test_cases:
@@ -322,14 +307,16 @@ unclosed: [1, 2, 3
         # 测试JSON解析过程中的各种异常
         problematic_jsons = [
             '{"incomplete": ',  # 不完整的JSON
-            '{:}',              # 无效的JSON语法
-            'null',             # 不是对象
-            'true',             # 布尔值而不是对象
-            '[]',               # 数组而不是对象
+            "{:}",  # 无效的JSON语法
+            "null",  # 不是对象
+            "true",  # 布尔值而不是对象
+            "[]",  # 数组而不是对象
         ]
 
-        for i, json_content in enumerate(problematic_jsons):
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        for _i, json_content in enumerate(problematic_jsons):
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
                 f.write(json_content)
                 temp_path = f.name
 

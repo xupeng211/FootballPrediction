@@ -21,9 +21,9 @@ except ImportError:
     SLOWAPI_AVAILABLE = False
 
 from src.api.health import router as health_router
+from src.api.predictions.optimized_router import router as optimized_predictions_router
 from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
-from src.api.predictions.optimized_router import router as optimized_predictions_router
 from src.config.openapi_config import setup_openapi
 from src.core.event_application import initialize_event_system, shutdown_event_system
 from src.cqrs.application import initialize_cqrs
@@ -114,8 +114,11 @@ if SLOWAPI_AVAILABLE:
 async def root():
     """根端点"""
     return RootResponse(
-        service="Football Prediction API", version="2.0.0", status="healthy",
-        docs_url="/docs", health_check="/health"
+        service="Football Prediction API",
+        version="2.0.0",
+        status="healthy",
+        docs_url="/docs",
+        health_check="/health",
     )
 
 

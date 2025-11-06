@@ -5,13 +5,14 @@ Simple Integration Tests
 测试系统基本功能，避免复杂依赖问题。
 """
 
-import pytest
 import asyncio
 import time
+from collections.abc import Callable
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from typing import Dict, Any, List, Callable
-from dataclasses import dataclass
+from typing import Any
+from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 
 @pytest.mark.integration
@@ -33,11 +34,11 @@ class TestSimpleEventSystem:
                     self.subscribers[event_type] = []
                 self.subscribers[event_type].append(handler)
 
-            async def publish(self, event_type: str, data: Dict[str, Any]):
+            async def publish(self, event_type: str, data: dict[str, Any]):
                 event = {
                     "type": event_type,
                     "data": data,
-                    "timestamp": datetime.utcnow()
+                    "timestamp": datetime.utcnow(),
                 }
                 self.events.append(event)
 
@@ -48,8 +49,8 @@ class TestSimpleEventSystem:
                                 await handler(event)
                             else:
                                 handler(event)
-                        except Exception as e:
-                            print(f"Handler error: {e}")
+                        except Exception:
+                            pass
 
             def get_events(self):
                 return self.events
@@ -152,7 +153,7 @@ class TestSimpleSystemIntegration:
         services = {
             "cache": AsyncMock(),
             "database": AsyncMock(),
-            "notification": AsyncMock()
+            "notification": AsyncMock(),
         }
         return services
 
@@ -187,6 +188,7 @@ class TestSimpleSystemIntegration:
 
     async def test_async_workflow(self, mock_services):
         """测试异步工作流"""
+
         # 模拟异步操作
         async def process_data(data):
             # 异步处理步骤1
@@ -213,7 +215,7 @@ class TestSimpleSystemIntegration:
         # 模拟服务失败和恢复
         mock_services["database"].query.side_effect = [
             Exception("Connection failed"),  # 第一次失败
-            {"id": 1, "name": "recovered"}  # 第二次成功
+            {"id": 1, "name": "recovered"},  # 第二次成功
         ]
 
         # 模拟重试逻辑
@@ -224,7 +226,7 @@ class TestSimpleSystemIntegration:
             try:
                 result = await mock_services["database"].query("SELECT * FROM test")
                 break
-            except Exception as e:
+            except Exception:
                 if attempt == max_retries - 1:
                     raise
                 await asyncio.sleep(0.01)  # 等待后重试
@@ -255,6 +257,7 @@ class TestSimplePerformanceIntegration:
 
     async def test_concurrent_operations(self):
         """测试并发操作"""
+
         async def quick_operation(operation_id):
             await asyncio.sleep(0.01)  # 模拟短暂操作
             return {"id": operation_id, "completed": True}
@@ -271,6 +274,7 @@ class TestSimplePerformanceIntegration:
 
     async def test_batch_processing(self):
         """测试批量处理"""
+
         async def process_item(item):
             await asyncio.sleep(0.001)  # 模拟处理时间
             return {"item": item, "processed": True}
@@ -301,7 +305,7 @@ class TestSimplePerformanceIntegration:
             data_sizes.append(len(data))
 
             # 模拟数据处理
-            processed = [item for item in data if item["value"] % 2 == 0]
+            [item for item in data if item["value"] % 2 == 0]
 
         # 验证数据大小正确
         assert data_sizes == [100, 1000, 10000]
@@ -343,6 +347,7 @@ class TestSimpleDataIntegration:
 
     async def test_data_validation(self, mock_database):
         """测试数据验证"""
+
         # 模拟数据验证逻辑
         def validate_data(data):
             required_fields = ["id", "name", "value"]

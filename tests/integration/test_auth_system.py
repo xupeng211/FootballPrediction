@@ -185,12 +185,16 @@ async def test_existing_users():
 async def main():
     """主测试函数"""
     logger.debug("🚀 开始用户认证系统测试")  # TODO: Add logger import if needed
-    logger.debug(f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")  # TODO: Add logger import if needed
+    logger.debug(
+        f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )  # TODO: Add logger import if needed
     logger.debug(f"🔗 API地址: {API_BASE_URL}")  # TODO: Add logger import if needed
 
     # 测试API健康状态
     if not await test_api_health():
-        logger.debug("\n❌ API服务不可用，测试终止")  # TODO: Add logger import if needed
+        logger.debug(
+            "\n❌ API服务不可用，测试终止"
+        )  # TODO: Add logger import if needed
         return
 
     # 测试现有用户

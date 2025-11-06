@@ -5,23 +5,24 @@ Cache Integration Tests
 测试Redis缓存操作的完整功能，包括缓存读写、过期策略和数据一致性。
 """
 
-import pytest
 import asyncio
 import json
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from datetime import datetime
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
+from src.cache.decorators import cache_result
 from src.cache.redis_manager import RedisManager
 from src.cache.unified_cache import UnifiedCacheManager
-from src.cache.decorators import cache_result
 
 
 @pytest.fixture
 def mock_redis():
     """模拟Redis客户端"""
-    from unittest.mock import MagicMock
+
     mock_redis = MagicMock()
     mock_redis.ping.return_value = True
     mock_redis.set.return_value = True
@@ -119,13 +120,10 @@ class TestRedisOperations:
         # 复杂数据结构
         complex_data = {
             "user_id": 123,
-            "preferences": {
-                "theme": "dark",
-                "language": "zh-CN"
-            },
+            "preferences": {"theme": "dark", "language": "zh-CN"},
             "last_login": str(datetime.now()),
             "is_active": True,
-            "tags": ["football", "predictions", "data"]
+            "tags": ["football", "predictions", "data"],
         }
 
         # 设置复杂对象
@@ -264,7 +262,7 @@ class TestCacheReliability:
         # 模拟内存使用监控
         mock_redis.info.return_value = {
             "used_memory": "1048576",  # 1MB
-            "used_memory_human": "1.00M"
+            "used_memory_human": "1.00M",
         }
 
         # 检查内存使用
@@ -289,7 +287,7 @@ class TestCacheBusinessLogic:
             "username": "test_user",
             "login_time": str(datetime.now()),
             "permissions": ["read", "write"],
-            "preferences": {"theme": "dark", "language": "zh-CN"}
+            "preferences": {"theme": "dark", "language": "zh-CN"},
         }
 
         # 缓存用户会话
@@ -297,7 +295,9 @@ class TestCacheBusinessLogic:
         mock_redis.get.return_value = json.dumps(session_data)
         mock_redis.expire.return_value = True
 
-        result = await redis_manager.cache_user_session(user_id, session_data, expire_seconds=3600)
+        result = await redis_manager.cache_user_session(
+            user_id, session_data, expire_seconds=3600
+        )
         assert result is True
 
         # 获取用户会话
@@ -316,16 +316,18 @@ class TestCacheBusinessLogic:
                 "match_id": 123,
                 "home_team": "Team A",
                 "away_team": "Team B",
-                "score": "2-1"
+                "score": "2-1",
             },
-            "timestamp": str(datetime.now())
+            "timestamp": str(datetime.now()),
         }
 
         # 缓存API响应
         mock_redis.set.return_value = True
         mock_redis.get.return_value = json.dumps(api_response)
 
-        result = await redis_manager.cache_api_response(cache_key, api_response, expire_seconds=300)
+        result = await redis_manager.cache_api_response(
+            cache_key, api_response, expire_seconds=300
+        )
         assert result is True
 
         # 获取缓存的响应
@@ -345,17 +347,19 @@ class TestCacheBusinessLogic:
                 "draw_prob": 0.25,
                 "away_win_prob": 0.10,
                 "predicted_outcome": "home",
-                "confidence": 0.78
+                "confidence": 0.78,
             },
             "model_version": "v2.1",
-            "created_at": str(datetime.now())
+            "created_at": str(datetime.now()),
         }
 
         # 缓存预测结果
         mock_redis.set.return_value = True
         mock_redis.get.return_value = json.dumps(prediction_data)
 
-        result = await redis_manager.cache_prediction_result(match_id, prediction_data, expire_seconds=600)
+        result = await redis_manager.cache_prediction_result(
+            match_id, prediction_data, expire_seconds=600
+        )
         assert result is True
 
         # 获取缓存的预测
@@ -409,7 +413,7 @@ class TestCacheDataConsistency:
             "team_1_basic",
             "team_1_stats",
             "team_1_matches",
-            "team_1_predictions"
+            "team_1_predictions",
         ]
 
         for key in cache_keys:
@@ -448,9 +452,7 @@ class TestCacheL1L2Integration:
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
         return UnifiedCacheManager(
-            redis_client=mock_redis,
-            local_cache_size=10,
-            default_ttl=300
+            redis_client=mock_redis, local_cache_size=10, default_ttl=300
         )
 
     async def test_l1_l2_cache_hierarchy(self, cache_manager, mock_redis):
@@ -560,7 +562,7 @@ class TestCacheDecoratorIntegration:
         call_count = 0
 
         @cache_result(ttl=300)
-        async def expensive_async_function(data: Dict[str, Any]) -> Dict[str, Any]:
+        async def expensive_async_function(data: dict[str, Any]) -> dict[str, Any]:
             nonlocal call_count
             call_count += 1
             await asyncio.sleep(0.01)  # 模拟异步操作
@@ -584,15 +586,14 @@ class TestCacheDecoratorIntegration:
 
         @cache_result(ttl=300)
         def process_complex_data(
-            items: List[Dict[str, Any]],
-            config: Dict[str, Any]
-        ) -> Dict[str, Any]:
+            items: list[dict[str, Any]], config: dict[str, Any]
+        ) -> dict[str, Any]:
             nonlocal call_count
             call_count += 1
             return {
                 "count": len(items),
                 "config_hash": hash(str(config)),
-                "items": items
+                "items": items,
             }
 
         items = [{"id": 1, "name": "item1"}, {"id": 2, "name": "item2"}]
@@ -629,9 +630,7 @@ class TestCacheRealWorldScenarios:
     def cache_manager(self, mock_redis):
         """创建缓存管理器"""
         return UnifiedCacheManager(
-            redis_client=mock_redis,
-            local_cache_size=20,
-            default_ttl=600
+            redis_client=mock_redis, local_cache_size=20, default_ttl=600
         )
 
     async def test_database_query_caching(self, cache_manager):
@@ -639,7 +638,9 @@ class TestCacheRealWorldScenarios:
         # 模拟数据库查询
         query_call_count = 0
 
-        async def simulate_database_query(query: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+        async def simulate_database_query(
+            query: str, params: dict[str, Any]
+        ) -> list[dict[str, Any]]:
             nonlocal query_call_count
             query_call_count += 1
             await asyncio.sleep(0.05)  # 模拟数据库延迟
@@ -647,7 +648,9 @@ class TestCacheRealWorldScenarios:
 
         # 使用缓存装饰器
         @cache_result(ttl=300)
-        async def cached_query(query: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
+        async def cached_query(
+            query: str, params: dict[str, Any]
+        ) -> list[dict[str, Any]]:
             return await simulate_database_query(query, params)
 
         # 第一次查询
@@ -661,25 +664,29 @@ class TestCacheRealWorldScenarios:
         assert result1 == result2
 
         # 不同参数的查询 - 应该执行新的查询
-        result3 = await cached_query("SELECT * FROM teams", {"filter": "inactive"})
+        await cached_query("SELECT * FROM teams", {"filter": "inactive"})
         assert query_call_count == 2
 
     async def test_api_response_caching(self, cache_manager):
         """测试API响应缓存场景"""
         api_call_count = 0
 
-        async def simulate_api_call(endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        async def simulate_api_call(
+            endpoint: str, params: dict[str, Any]
+        ) -> dict[str, Any]:
             nonlocal api_call_count
             api_call_count += 1
             await asyncio.sleep(0.1)  # 模拟API延迟
             return {
                 "endpoint": endpoint,
                 "data": f"response_for_{params.get('id', 'default')}",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
         @cache_result(ttl=60)
-        async def cached_api_call(endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        async def cached_api_call(
+            endpoint: str, params: dict[str, Any]
+        ) -> dict[str, Any]:
             return await simulate_api_call(endpoint, params)
 
         # 第一次API调用
@@ -698,7 +705,7 @@ class TestCacheRealWorldScenarios:
         warmup_data = {
             "teams:active": [{"id": 1, "name": "Team A"}, {"id": 2, "name": "Team B"}],
             "matches:today": [{"id": 1, "home": "Team A", "away": "Team B"}],
-            "predictions:latest": [{"match_id": 1, "prediction": "home_win"}]
+            "predictions:latest": [{"match_id": 1, "prediction": "home_win"}],
         }
 
         # 预热缓存

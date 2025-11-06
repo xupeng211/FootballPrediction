@@ -5,12 +5,12 @@ Simplified Cache Integration Tests
 使用改进的Mock策略进行缓存集成测试，避免依赖真实Redis。
 """
 
-import pytest
 import asyncio
 import json
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Any, Dict, Optional
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.cache.redis_manager import RedisManager
 
@@ -37,7 +37,7 @@ class TestSimplifiedCacheOperations:
         # 模拟信息查询
         redis_client.info.return_value = {
             "used_memory": "1048576",
-            "used_memory_human": "1.00M"
+            "used_memory_human": "1.00M",
         }
 
         return redis_client
@@ -45,7 +45,10 @@ class TestSimplifiedCacheOperations:
     @pytest.fixture
     async def redis_manager(self, mock_redis):
         """创建带有Mock的Redis管理器"""
-        with patch('src.cache.redis_enhanced.redis.async_redis.from_url', return_value=mock_redis):
+        with patch(
+            "src.cache.redis_enhanced.redis.async_redis.from_url",
+            return_value=mock_redis,
+        ):
             # 直接创建RedisManager实例
             manager = RedisManager()
             manager._redis_client = mock_redis
@@ -85,7 +88,9 @@ class TestSimplifiedCacheOperations:
         mock_redis.setex.return_value = True
 
         # 设置带过期时间的缓存
-        result = await redis_manager.set_with_expire(test_key, test_value, expire_seconds)
+        result = await redis_manager.set_with_expire(
+            test_key, test_value, expire_seconds
+        )
         assert result is True
 
         # 验证调用了setex方法
@@ -137,13 +142,10 @@ class TestSimplifiedCacheOperations:
         # 复杂数据结构
         complex_data = {
             "user_id": 123,
-            "preferences": {
-                "theme": "dark",
-                "language": "zh-CN"
-            },
+            "preferences": {"theme": "dark", "language": "zh-CN"},
             "last_login": str(datetime.now()),
             "is_active": True,
-            "tags": ["football", "predictions", "data"]
+            "tags": ["football", "predictions", "data"],
         }
 
         # Mock JSON操作
@@ -179,7 +181,7 @@ class TestSimplifiedCacheOperations:
         # Mock内存使用信息
         mock_redis.info.return_value = {
             "used_memory": "2097152",  # 2MB
-            "used_memory_human": "2.00M"
+            "used_memory_human": "2.00M",
         }
 
         # 检查内存使用
@@ -225,7 +227,7 @@ class TestSimplifiedCacheOperations:
             "username": "test_user",
             "login_time": str(datetime.now()),
             "permissions": ["read", "write"],
-            "preferences": {"theme": "dark", "language": "zh-CN"}
+            "preferences": {"theme": "dark", "language": "zh-CN"},
         }
 
         # Mock会话缓存操作
@@ -234,7 +236,9 @@ class TestSimplifiedCacheOperations:
         mock_redis.expire.return_value = True
 
         # 缓存用户会话
-        result = await redis_manager.cache_user_session(user_id, session_data, expire_seconds=3600)
+        result = await redis_manager.cache_user_session(
+            user_id, session_data, expire_seconds=3600
+        )
         assert result is True
 
         # 获取用户会话
@@ -252,10 +256,10 @@ class TestSimplifiedCacheOperations:
                 "draw_prob": 0.25,
                 "away_win_prob": 0.10,
                 "predicted_outcome": "home",
-                "confidence": 0.78
+                "confidence": 0.78,
             },
             "model_version": "v2.1",
-            "created_at": str(datetime.now())
+            "created_at": str(datetime.now()),
         }
 
         # Mock预测缓存操作
@@ -263,7 +267,9 @@ class TestSimplifiedCacheOperations:
         mock_redis.get.return_value = json.dumps(prediction_data)
 
         # 缓存预测结果
-        result = await redis_manager.cache_prediction_result(match_id, prediction_data, expire_seconds=600)
+        result = await redis_manager.cache_prediction_result(
+            match_id, prediction_data, expire_seconds=600
+        )
         assert result is True
 
         # 获取缓存的预测

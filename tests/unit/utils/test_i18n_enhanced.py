@@ -6,13 +6,13 @@ I18n模块增强测试 - 快速提升覆盖率
 from pathlib import Path
 
 from src.utils.i18n import (
-    supported_languages,
     LOCALE_DIR,
-    init_i18n,
-    get_text,
-    set_language,
+    I18nUtils,
     get_current_language,
-    I18nUtils
+    get_text,
+    init_i18n,
+    set_language,
+    supported_languages,
 )
 
 
@@ -40,7 +40,7 @@ class TestI18nEnhanced:
             init_i18n()
             assert True  # 如果到达这里说明初始化成功
         except Exception:
-            assert False, "init_i18n不应该抛出异常"
+            raise AssertionError("init_i18n不应该抛出异常")
 
         # 多次调用应该也是安全的
         try:
@@ -49,7 +49,7 @@ class TestI18nEnhanced:
             init_i18n()
             assert True
         except Exception:
-            assert False, "多次调用init_i18n应该是安全的"
+            raise AssertionError("多次调用init_i18n应该是安全的")
 
     def test_get_text_with_default(self):
         """测试带默认值的获取翻译文本"""

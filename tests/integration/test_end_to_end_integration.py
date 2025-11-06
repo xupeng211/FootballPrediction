@@ -6,18 +6,18 @@ End-to-End Integration Tests
 Tests complete business workflows, validating collaboration between system components.
 """
 
-import pytest
 import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
-from unittest.mock import Mock, patch, AsyncMock
+from typing import Any
+
+import pytest
+
 
 # 模拟外部依赖和响应
 class MockServiceResponse:
     """模拟服务响应"""
 
-    def __init__(self, data: Dict[str, Any], status_code: int = 200):
+    def __init__(self, data: dict[str, Any], status_code: int = 200):
         self.data = data
         self.status_code = status_code
 
@@ -37,7 +37,7 @@ class MockDatabaseService:
         self.predictions = {}
         self.users = {}
 
-    async def create_team(self, team_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_team(self, team_data: dict[str, Any]) -> dict[str, Any]:
         """创建球队"""
         team_id = len(self.teams) + 1
         team_data["id"] = team_id
@@ -45,7 +45,7 @@ class MockDatabaseService:
         self.teams[team_id] = team_data
         return team_data
 
-    async def create_match(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_match(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """创建比赛"""
         match_id = len(self.matches) + 1
         match_data["id"] = match_id
@@ -54,7 +54,9 @@ class MockDatabaseService:
         self.matches[match_id] = match_data
         return match_data
 
-    async def create_prediction(self, prediction_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_prediction(
+        self, prediction_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """创建预测"""
         prediction_id = len(self.predictions) + 1
         prediction_data["id"] = prediction_id
@@ -62,11 +64,11 @@ class MockDatabaseService:
         self.predictions[prediction_id] = prediction_data
         return prediction_data
 
-    async def get_team(self, team_id: int) -> Dict[str, Any]:
+    async def get_team(self, team_id: int) -> dict[str, Any]:
         """获取球队"""
         return self.teams.get(team_id)
 
-    async def get_match(self, match_id: int) -> Dict[str, Any]:
+    async def get_match(self, match_id: int) -> dict[str, Any]:
         """获取比赛"""
         return self.matches.get(match_id)
 
@@ -77,7 +79,7 @@ class MockFeatureService:
     def __init__(self):
         self.features_cache = {}
 
-    async def calculate_team_features(self, team_id: int) -> Dict[str, Any]:
+    async def calculate_team_features(self, team_id: int) -> dict[str, Any]:
         """计算球队特征"""
         # 模拟特征计算
         return {
@@ -86,21 +88,19 @@ class MockFeatureService:
             "avg_goals_scored": 2.1,
             "avg_goals_conceded": 1.3,
             "home_advantage": 0.8,
-            "calculated_at": datetime.now().isoformat()
+            "calculated_at": datetime.now().isoformat(),
         }
 
-    async def calculate_match_features(self, home_team_id: int, away_team_id: int) -> Dict[str, Any]:
+    async def calculate_match_features(
+        self, home_team_id: int, away_team_id: int
+    ) -> dict[str, Any]:
         """计算比赛特征"""
         return {
             "home_team_id": home_team_id,
             "away_team_id": away_team_id,
-            "head_to_head": {
-                "home_wins": 3,
-                "away_wins": 2,
-                "draws": 1
-            },
+            "head_to_head": {"home_wins": 3, "away_wins": 2, "draws": 1},
             "recent_encounters": 6,
-            "calculated_at": datetime.now().isoformat()
+            "calculated_at": datetime.now().isoformat(),
         }
 
 
@@ -110,10 +110,13 @@ class MockPredictionService:
     def __init__(self):
         self.models = ["poisson", "neural_network", "ensemble"]
 
-    async def predict_match(self, features: Dict[str, Any], model: str = "ensemble") -> Dict[str, Any]:
+    async def predict_match(
+        self, features: dict[str, Any], model: str = "ensemble"
+    ) -> dict[str, Any]:
         """预测比赛结果"""
         # 模拟预测逻辑
         import random
+
         random.seed(42)  # 确保可预测的结果
 
         home_prob = random.uniform(0.3, 0.7)
@@ -129,12 +132,12 @@ class MockPredictionService:
             "probabilities": {
                 "home_win": round(home_prob, 3),
                 "draw": round(draw_prob, 3),
-                "away_win": round(away_prob, 3)
+                "away_win": round(away_prob, 3),
             },
             "predicted_outcome": outcomes[max_prob_index],
             "confidence": round(max(probabilities), 3),
             "features_used": list(features.keys()),
-            "calculated_at": datetime.now().isoformat()
+            "calculated_at": datetime.now().isoformat(),
         }
 
 
@@ -144,7 +147,7 @@ def mock_services():
     return {
         "database": MockDatabaseService(),
         "features": MockFeatureService(),
-        "prediction": MockPredictionService()
+        "prediction": MockPredictionService(),
     }
 
 
@@ -159,14 +162,14 @@ class TestEndToEndPredictionWorkflow:
             "name": "Home Team FC",
             "short_name": "HTF",
             "country": "Test Country",
-            "founded_year": 2020
+            "founded_year": 2020,
         }
 
         away_team_data = {
             "name": "Away Team FC",
             "short_name": "ATF",
             "country": "Test Country",
-            "founded_year": 2018
+            "founded_year": 2018,
         }
 
         home_team = await mock_services["database"].create_team(home_team_data)
@@ -181,15 +184,19 @@ class TestEndToEndPredictionWorkflow:
             "away_team_id": away_team["id"],
             "match_date": (datetime.now() + timedelta(days=1)).isoformat(),
             "league": "Test League",
-            "venue": "Test Stadium"
+            "venue": "Test Stadium",
         }
 
         match = await mock_services["database"].create_match(match_data)
         assert match["id"] is not None
 
         # 3. 计算特征
-        home_features = await mock_services["features"].calculate_team_features(home_team["id"])
-        away_features = await mock_services["features"].calculate_team_features(away_team["id"])
+        home_features = await mock_services["features"].calculate_team_features(
+            home_team["id"]
+        )
+        away_features = await mock_services["features"].calculate_team_features(
+            away_team["id"]
+        )
         match_features = await mock_services["features"].calculate_match_features(
             home_team["id"], away_team["id"]
         )
@@ -202,7 +209,7 @@ class TestEndToEndPredictionWorkflow:
         combined_features = {
             "home_team": home_features,
             "away_team": away_features,
-            "match": match_features
+            "match": match_features,
         }
 
         prediction = await mock_services["prediction"].predict_match(combined_features)
@@ -223,10 +230,12 @@ class TestEndToEndPredictionWorkflow:
             "away_win_prob": prediction["probabilities"]["away_win"],
             "confidence": prediction["confidence"],
             "model": prediction["model"],
-            "features_used": prediction["features_used"]
+            "features_used": prediction["features_used"],
         }
 
-        saved_prediction = await mock_services["database"].create_prediction(prediction_data)
+        saved_prediction = await mock_services["database"].create_prediction(
+            prediction_data
+        )
 
         assert saved_prediction["id"] is not None
         assert saved_prediction["match_id"] == match["id"]
@@ -239,9 +248,9 @@ class TestEndToEndPredictionWorkflow:
 
         # 验证预测一致性
         probability_sum = (
-            prediction["probabilities"]["home_win"] +
-            prediction["probabilities"]["draw"] +
-            prediction["probabilities"]["away_win"]
+            prediction["probabilities"]["home_win"]
+            + prediction["probabilities"]["draw"]
+            + prediction["probabilities"]["away_win"]
         )
         assert abs(probability_sum - 1.0) < 0.01  # 允许小的浮点误差
 
@@ -254,7 +263,7 @@ class TestEndToEndPredictionWorkflow:
                 "name": f"Batch Team {i+1} FC",
                 "short_name": f"BT{i+1}",
                 "country": "Test Country",
-                "founded_year": 2020 + i
+                "founded_year": 2020 + i,
             }
             team = await mock_services["database"].create_team(team_data)
             teams_data.append(team)
@@ -263,10 +272,10 @@ class TestEndToEndPredictionWorkflow:
         matches_data = []
         for i in range(2):
             match_data = {
-                "home_team_id": teams_data[i*2]["id"],
-                "away_team_id": teams_data[i*2+1]["id"],
-                "match_date": (datetime.now() + timedelta(days=i+1)).isoformat(),
-                "league": "Batch Test League"
+                "home_team_id": teams_data[i * 2]["id"],
+                "away_team_id": teams_data[i * 2 + 1]["id"],
+                "match_date": (datetime.now() + timedelta(days=i + 1)).isoformat(),
+                "league": "Batch Test League",
             }
             match = await mock_services["database"].create_match(match_data)
             matches_data.append(match)
@@ -275,8 +284,12 @@ class TestEndToEndPredictionWorkflow:
         predictions = []
         for match in matches_data:
             # 计算特征
-            home_features = await mock_services["features"].calculate_team_features(match["home_team_id"])
-            away_features = await mock_services["features"].calculate_team_features(match["away_team_id"])
+            home_features = await mock_services["features"].calculate_team_features(
+                match["home_team_id"]
+            )
+            away_features = await mock_services["features"].calculate_team_features(
+                match["away_team_id"]
+            )
             match_features = await mock_services["features"].calculate_match_features(
                 match["home_team_id"], match["away_team_id"]
             )
@@ -284,11 +297,13 @@ class TestEndToEndPredictionWorkflow:
             combined_features = {
                 "home_team": home_features,
                 "away_team": away_features,
-                "match": match_features
+                "match": match_features,
             }
 
             # 执行预测
-            prediction = await mock_services["prediction"].predict_match(combined_features)
+            prediction = await mock_services["prediction"].predict_match(
+                combined_features
+            )
             predictions.append(prediction)
 
         # 4. 验证批量结果
@@ -309,7 +324,7 @@ class TestEndToEndPredictionWorkflow:
         team_data = {
             "name": "Model Test Team",
             "short_name": "MTT",
-            "country": "Test Country"
+            "country": "Test Country",
         }
 
         team = await mock_services["database"].create_team(team_data)
@@ -318,18 +333,22 @@ class TestEndToEndPredictionWorkflow:
             "home_team_id": team["id"],
             "away_team_id": team["id"],  # 使用同一个团队作为示例
             "match_date": (datetime.now() + timedelta(days=2)).isoformat(),
-            "league": "Model Test League"
+            "league": "Model Test League",
         }
 
-        match = await mock_services["database"].create_match(match_data)
+        await mock_services["database"].create_match(match_data)
 
         # 计算特征
-        features = await mock_services["features"].calculate_match_features(team["id"], team["id"])
+        features = await mock_services["features"].calculate_match_features(
+            team["id"], team["id"]
+        )
 
         # 使用不同模型进行预测
         model_predictions = {}
         for model in ["poisson", "neural_network", "ensemble"]:
-            prediction = await mock_services["prediction"].predict_match(features, model)
+            prediction = await mock_services["prediction"].predict_match(
+                features, model
+            )
             model_predictions[model] = prediction
 
         # 验证模型预测结果
@@ -340,7 +359,7 @@ class TestEndToEndPredictionWorkflow:
             assert "predicted_outcome" in prediction
 
         # 验证不同模型可能有不同的结果
-        outcomes = [pred["predicted_outcome"] for pred in model_predictions.values()]
+        [pred["predicted_outcome"] for pred in model_predictions.values()]
         # 不一定需要不同，但应该有置信度差异
         confidences = [pred["confidence"] for pred in model_predictions.values()]
         assert len(set(confidences)) >= 1  # 至少有一些差异
@@ -360,11 +379,7 @@ class TestEndToEndDataWorkflow:
             "league": "External League",
             "match_date": "2024-01-15T15:00:00Z",
             "venue": "External Stadium",
-            "odds": {
-                "home_win": 2.10,
-                "draw": 3.40,
-                "away_win": 3.20
-            }
+            "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
         }
 
         # 2. 数据验证和标准化
@@ -395,7 +410,7 @@ class TestEndToEndDataWorkflow:
                 "venue": data.get("venue", "Unknown"),
                 "odds": data.get("odds", {}),
                 "source": "external",
-                "processed_at": datetime.now().isoformat()
+                "processed_at": datetime.now().isoformat(),
             }
 
         transformed_data = transform_match_data(external_match_data)
@@ -408,15 +423,19 @@ class TestEndToEndDataWorkflow:
         extracted_features = {
             "has_odds": bool(transformed_data["odds"]),
             "odds_implied_prob": {},
-            "data_completeness": 0.8
+            "data_completeness": 0.8,
         }
 
         if transformed_data["odds"]:
             odds = transformed_data["odds"]
             extracted_features["odds_implied_prob"] = {
-                "home_win": round(1 / odds["home_win"], 3) if odds["home_win"] > 0 else 0,
+                "home_win": (
+                    round(1 / odds["home_win"], 3) if odds["home_win"] > 0 else 0
+                ),
                 "draw": round(1 / odds["draw"], 3) if odds["draw"] > 0 else 0,
-                "away_win": round(1 / odds["away_win"], 3) if odds["away_win"] > 0 else 0
+                "away_win": (
+                    round(1 / odds["away_win"], 3) if odds["away_win"] > 0 else 0
+                ),
             }
 
         assert extracted_features["has_odds"] is True
@@ -428,7 +447,7 @@ class TestEndToEndDataWorkflow:
             "original_data": external_match_data,
             "transformed_data": transformed_data,
             "extracted_features": extracted_features,
-            "stored_at": datetime.now().isoformat()
+            "stored_at": datetime.now().isoformat(),
         }
 
         # 验证数据完整性
@@ -445,7 +464,7 @@ class TestEndToEndDataWorkflow:
             "home_score": None,
             "away_score": None,
             "minute": None,
-            "events": []
+            "events": [],
         }
 
         # 2. 模拟实时更新事件
@@ -454,7 +473,7 @@ class TestEndToEndDataWorkflow:
                 "timestamp": "2024-01-15T15:01:00Z",
                 "event": "match_start",
                 "status": "live",
-                "minute": 1
+                "minute": 1,
             },
             {
                 "timestamp": "2024-01-15T15:23:00Z",
@@ -462,7 +481,7 @@ class TestEndToEndDataWorkflow:
                 "team": "home",
                 "player": "Player A",
                 "minute": 23,
-                "score": {"home": 1, "away": 0}
+                "score": {"home": 1, "away": 0},
             },
             {
                 "timestamp": "2024-01-15T15:67:00Z",
@@ -470,15 +489,15 @@ class TestEndToEndDataWorkflow:
                 "team": "away",
                 "player": "Player B",
                 "minute": 67,
-                "score": {"home": 1, "away": 1}
+                "score": {"home": 1, "away": 1},
             },
             {
                 "timestamp": "2024-01-15T16:95:00Z",
                 "event": "match_end",
                 "status": "finished",
                 "final_score": {"home": 1, "away": 1},
-                "minute": 95
-            }
+                "minute": 95,
+            },
         ]
 
         # 3. 处理实时更新
@@ -487,11 +506,13 @@ class TestEndToEndDataWorkflow:
         processed_events = []
         for update in live_updates:
             # 更新比赛状态
-            current_match_state.update({
-                "status": update["status"],
-                "minute": update.get("minute"),
-                "last_update": update["timestamp"]
-            })
+            current_match_state.update(
+                {
+                    "status": update["status"],
+                    "minute": update.get("minute"),
+                    "last_update": update["timestamp"],
+                }
+            )
 
             if "score" in update:
                 current_match_state["home_score"] = update["score"]["home"]
@@ -502,7 +523,7 @@ class TestEndToEndDataWorkflow:
                 "event_type": update["event"],
                 "timestamp": update["timestamp"],
                 "details": update,
-                "processed_at": datetime.now().isoformat()
+                "processed_at": datetime.now().isoformat(),
             }
             processed_events.append(processed_event)
 
@@ -535,7 +556,7 @@ class TestEndToEndDataWorkflow:
                         "home_score": 2,
                         "away_score": 1,
                         "date": "2024-01-15",
-                        "status": "completed"
+                        "status": "completed",
                     },
                     {
                         "match_id": 2,
@@ -544,9 +565,9 @@ class TestEndToEndDataWorkflow:
                         "home_score": 0,
                         "away_score": 0,
                         "date": "2024-01-16",
-                        "status": "completed"
-                    }
-                ]
+                        "status": "completed",
+                    },
+                ],
             },
             {
                 "name": "low_quality_dataset",
@@ -558,10 +579,10 @@ class TestEndToEndDataWorkflow:
                         "home_score": -1,  # 无效比分
                         "away_score": None,  # 缺少比分
                         "date": "invalid_date",  # 无效日期
-                        "status": "unknown_status"  # 无效状态
+                        "status": "unknown_status",  # 无效状态
                     }
-                ]
-            }
+                ],
+            },
         ]
 
         # 2. 数据质量检查函数
@@ -575,18 +596,30 @@ class TestEndToEndDataWorkflow:
                 record_issues = []
 
                 # 检查必需字段
-                required_fields = ["match_id", "home_team", "away_team", "date", "status"]
+                required_fields = [
+                    "match_id",
+                    "home_team",
+                    "away_team",
+                    "date",
+                    "status",
+                ]
                 for field in required_fields:
                     if field not in record or not record[field]:
                         record_issues.append(f"missing_{field}")
 
                 # 检查数据有效性
                 if "home_score" in record and record["home_score"] is not None:
-                    if not isinstance(record["home_score"], int) or record["home_score"] < 0:
+                    if (
+                        not isinstance(record["home_score"], int)
+                        or record["home_score"] < 0
+                    ):
                         record_issues.append("invalid_home_score")
 
                 if "away_score" in record and record["away_score"] is not None:
-                    if not isinstance(record["away_score"], int) or record["away_score"] < 0:
+                    if (
+                        not isinstance(record["away_score"], int)
+                        or record["away_score"] < 0
+                    ):
                         record_issues.append("invalid_away_score")
 
                 # 检查日期格式
@@ -599,7 +632,12 @@ class TestEndToEndDataWorkflow:
                 if not record_issues:
                     valid_records += 1
                 else:
-                    quality_issues.extend([f"record_{record.get('match_id', 'unknown')}: {issue}" for issue in record_issues])
+                    quality_issues.extend(
+                        [
+                            f"record_{record.get('match_id', 'unknown')}: {issue}"
+                            for issue in record_issues
+                        ]
+                    )
 
             quality_score = (valid_records / total_records) if total_records > 0 else 0
 
@@ -608,7 +646,7 @@ class TestEndToEndDataWorkflow:
                 "total_records": total_records,
                 "valid_records": valid_records,
                 "quality_score": round(quality_score, 3),
-                "quality_issues": quality_issues[:10]  # 限制问题数量
+                "quality_issues": quality_issues[:10],  # 限制问题数量
             }
 
         # 3. 执行质量检查
@@ -621,13 +659,17 @@ class TestEndToEndDataWorkflow:
         assert len(quality_results) == 2
 
         # 高质量数据集应该有高分数
-        high_quality_result = next(r for r in quality_results if r["dataset_name"] == "high_quality_dataset")
+        high_quality_result = next(
+            r for r in quality_results if r["dataset_name"] == "high_quality_dataset"
+        )
         assert high_quality_result["quality_score"] == 1.0
         assert high_quality_result["valid_records"] == 2
         assert len(high_quality_result["quality_issues"]) == 0
 
         # 低质量数据集应该有低分数
-        low_quality_result = next(r for r in quality_results if r["dataset_name"] == "low_quality_dataset")
+        low_quality_result = next(
+            r for r in quality_results if r["dataset_name"] == "low_quality_dataset"
+        )
         assert low_quality_result["quality_score"] == 0.0
         assert low_quality_result["valid_records"] == 0
         assert len(low_quality_result["quality_issues"]) > 0
@@ -636,13 +678,14 @@ class TestEndToEndDataWorkflow:
         quality_report = {
             "generated_at": datetime.now().isoformat(),
             "total_datasets": len(quality_results),
-            "overall_quality_score": sum(r["quality_score"] for r in quality_results) / len(quality_results),
+            "overall_quality_score": sum(r["quality_score"] for r in quality_results)
+            / len(quality_results),
             "dataset_results": quality_results,
             "recommendations": [
                 "Improve data validation at source",
                 "Implement automated data cleaning",
-                "Add data quality monitoring alerts"
-            ]
+                "Add data quality monitoring alerts",
+            ],
         }
 
         assert quality_report["overall_quality_score"] == 0.5  # (1.0 + 0.0) / 2
@@ -690,10 +733,10 @@ class TestEndToEndErrorHandling:
                 "team_id": None,  # 损坏的数据
                 "recent_form": "invalid_format",  # 应该是列表
                 "avg_goals_scored": "not_a_number",  # 应该是数字
-                "calculated_at": "invalid_date"
+                "calculated_at": "invalid_date",
             },
             "away_team": {},
-            "match": {}
+            "match": {},
         }
 
         # 2. 数据验证和修复函数
@@ -715,7 +758,13 @@ class TestEndToEndErrorHandling:
                             try:
                                 fixed_value[sub_key] = eval(sub_value)
                             except:
-                                fixed_value[sub_key] = ["D", "D", "D", "D", "D"]  # 默认值
+                                fixed_value[sub_key] = [
+                                    "D",
+                                    "D",
+                                    "D",
+                                    "D",
+                                    "D",
+                                ]  # 默认值
                         elif not isinstance(sub_value, list):
                             fixed_value[sub_key] = ["D", "D", "D", "D", "D"]
                         else:
@@ -761,7 +810,7 @@ class TestEndToEndErrorHandling:
                 "confidence": 0.5,
                 "features_used": list(fixed_features.keys()),
                 "calculated_at": datetime.now().isoformat(),
-                "fallback_used": True
+                "fallback_used": True,
             }
 
         assert "probabilities" in prediction
@@ -769,7 +818,6 @@ class TestEndToEndErrorHandling:
 
     async def test_timeout_handling(self, mock_services):
         """测试超时处理"""
-        import asyncio
 
         # 1. 模拟慢服务
         async def slow_feature_calculation(team_id):
@@ -784,12 +832,14 @@ class TestEndToEndErrorHandling:
             try:
                 result = await asyncio.wait_for(func(*args), timeout=timeout)
                 return result
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # 超时后返回默认值
                 return {"team_id": args[0], "timeout": True, "default": True}
 
         # 3. 执行带超时的操作
-        features = await timeout_wrapper(mock_services["features"].calculate_team_features, 1)
+        features = await timeout_wrapper(
+            mock_services["features"].calculate_team_features, 1
+        )
 
         # 4. 验证超时处理
         assert features["team_id"] == 1
@@ -806,43 +856,54 @@ class TestEndToEndPerformance:
     async def test_concurrent_prediction_processing(self, mock_services):
         """测试并发预测处理"""
         import time
-        import asyncio
 
         # 1. 准备测试数据
         teams = []
         for i in range(10):
-            team = await mock_services["database"].create_team({
-                "name": f"Perf Team {i+1}",
-                "short_name": f"PT{i+1}",
-                "country": "Test Country"
-            })
+            team = await mock_services["database"].create_team(
+                {
+                    "name": f"Perf Team {i+1}",
+                    "short_name": f"PT{i+1}",
+                    "country": "Test Country",
+                }
+            )
             teams.append(team)
 
         matches = []
         for i in range(5):
-            match = await mock_services["database"].create_match({
-                "home_team_id": teams[i*2]["id"],
-                "away_team_id": teams[i*2+1]["id"],
-                "match_date": (datetime.now() + timedelta(days=i+1)).isoformat(),
-                "league": "Performance Test League"
-            })
+            match = await mock_services["database"].create_match(
+                {
+                    "home_team_id": teams[i * 2]["id"],
+                    "away_team_id": teams[i * 2 + 1]["id"],
+                    "match_date": (datetime.now() + timedelta(days=i + 1)).isoformat(),
+                    "league": "Performance Test League",
+                }
+            )
             matches.append(match)
 
         # 2. 并发预测函数
         async def predict_match_async(match_id, home_team_id, away_team_id):
             # 计算特征
-            home_features = await mock_services["features"].calculate_team_features(home_team_id)
-            away_features = await mock_services["features"].calculate_team_features(away_team_id)
-            match_features = await mock_services["features"].calculate_match_features(home_team_id, away_team_id)
+            home_features = await mock_services["features"].calculate_team_features(
+                home_team_id
+            )
+            away_features = await mock_services["features"].calculate_team_features(
+                away_team_id
+            )
+            match_features = await mock_services["features"].calculate_match_features(
+                home_team_id, away_team_id
+            )
 
             combined_features = {
                 "home_team": home_features,
                 "away_team": away_features,
-                "match": match_features
+                "match": match_features,
             }
 
             # 执行预测
-            prediction = await mock_services["prediction"].predict_match(combined_features)
+            prediction = await mock_services["prediction"].predict_match(
+                combined_features
+            )
             return prediction
 
         # 3. 执行并发预测
@@ -851,9 +912,7 @@ class TestEndToEndPerformance:
         prediction_tasks = []
         for match in matches:
             task = predict_match_async(
-                match["id"],
-                match["home_team_id"],
-                match["away_team_id"]
+                match["id"], match["home_team_id"], match["away_team_id"]
             )
             prediction_tasks.append(task)
 
@@ -876,7 +935,6 @@ class TestEndToEndPerformance:
     async def test_memory_usage_simulation(self, mock_services):
         """测试内存使用模拟"""
         import gc
-        import sys
 
         # 获取初始内存状态
         gc.collect()
@@ -885,19 +943,23 @@ class TestEndToEndPerformance:
         # 1. 创建大量数据
         large_dataset = []
         for i in range(100):
-            team = await mock_services["database"].create_team({
-                "name": f"Memory Team {i}",
-                "short_name": f"MT{i}",
-                "country": "Memory Country",
-                "description": "A" * 100,  # 增加内存使用
-                "metadata": {f"key_{j}": f"value_{j}" for j in range(20)}
-            })
+            team = await mock_services["database"].create_team(
+                {
+                    "name": f"Memory Team {i}",
+                    "short_name": f"MT{i}",
+                    "country": "Memory Country",
+                    "description": "A" * 100,  # 增加内存使用
+                    "metadata": {f"key_{j}": f"value_{j}" for j in range(20)},
+                }
+            )
             large_dataset.append(team)
 
         # 2. 处理数据
         processed_data = []
         for team in large_dataset:
-            features = await mock_services["features"].calculate_team_features(team["id"])
+            features = await mock_services["features"].calculate_team_features(
+                team["id"]
+            )
             features["team_name"] = team["name"]
             features["description"] = team.get("description", "")
             processed_data.append(features)
@@ -926,7 +988,7 @@ class TestEndToEndPerformance:
             {
                 "name": f"Batch Team {i+1}",
                 "short_name": f"BT{i+1}",
-                "country": "Batch Country"
+                "country": "Batch Country",
             }
             for i in range(batch_size)
         ]
@@ -942,28 +1004,34 @@ class TestEndToEndPerformance:
         start_time = time.time()
         features_list = []
         for team in created_teams:
-            features = await mock_services["features"].calculate_team_features(team["id"])
+            features = await mock_services["features"].calculate_team_features(
+                team["id"]
+            )
             features_list.append(features)
         batch_features_time = time.time() - start_time
 
         # 3. 批量预测
         start_time = time.time()
         predictions = []
-        for i in range(0, len(created_teams)-1, 2):
-            if i+1 < len(created_teams):
+        for i in range(0, len(created_teams) - 1, 2):
+            if i + 1 < len(created_teams):
                 home_features = features_list[i]
-                away_features = features_list[i+1]
-                match_features = await mock_services["features"].calculate_match_features(
-                    created_teams[i]["id"], created_teams[i+1]["id"]
+                away_features = features_list[i + 1]
+                match_features = await mock_services[
+                    "features"
+                ].calculate_match_features(
+                    created_teams[i]["id"], created_teams[i + 1]["id"]
                 )
 
                 combined_features = {
                     "home_team": home_features,
                     "away_team": away_features,
-                    "match": match_features
+                    "match": match_features,
                 }
 
-                prediction = await mock_services["prediction"].predict_match(combined_features)
+                prediction = await mock_services["prediction"].predict_match(
+                    combined_features
+                )
                 predictions.append(prediction)
         batch_prediction_time = time.time() - start_time
 

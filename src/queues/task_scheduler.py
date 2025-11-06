@@ -10,18 +10,19 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any
 
-from .fifo_queue import FIFOQueue, QueueTask, TaskPriority, QueueStatus, queue_manager
+from .fifo_queue import QueueTask, TaskPriority, queue_manager
 
 logger = logging.getLogger(__name__)
 
 
 class SchedulerStatus(Enum):
     """调度器状态"""
+
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
@@ -31,13 +32,14 @@ class SchedulerStatus(Enum):
 @dataclass
 class ScheduledTask:
     """定时任务"""
+
     id: str
     task_type: str
     schedule_time: datetime
-    data: Dict[str, Any]
+    data: dict[str, Any]
     priority: TaskPriority
     is_recurring: bool = False
-    recurrence_interval: Optional[timedelta] = None
+    recurrence_interval: timedelta | None = None
     max_attempts: int = 3
     attempts: int = 0
 
@@ -50,43 +52,51 @@ class ScheduledTask:
             priority=self.priority,
             created_at=datetime.now(),
             max_attempts=self.max_attempts,
-            scheduled_at=self.schedule_time
+            scheduled_at=self.schedule_time,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            'id': self.id,
-            'task_type': self.task_type,
-            'schedule_time': self.schedule_time.isoformat(),
-            'data': self.data,
-            'priority': self.priority.value,
-            'is_recurring': self.is_recurring,
-            'recurrence_interval': self.recurrence_interval.total_seconds() if self.recurrence_interval else None,
-            'max_attempts': self.max_attempts,
-            'attempts': self.attempts
+            "id": self.id,
+            "task_type": self.task_type,
+            "schedule_time": self.schedule_time.isoformat(),
+            "data": self.data,
+            "priority": self.priority.value,
+            "is_recurring": self.is_recurring,
+            "recurrence_interval": (
+                self.recurrence_interval.total_seconds()
+                if self.recurrence_interval
+                else None
+            ),
+            "max_attempts": self.max_attempts,
+            "attempts": self.attempts,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ScheduledTask':
+    def from_dict(cls, data: dict[str, Any]) -> "ScheduledTask":
         """从字典创建"""
         return cls(
-            id=data['id'],
-            task_type=data['task_type'],
-            schedule_time=datetime.fromisoformat(data['schedule_time']),
-            data=data['data'],
-            priority=TaskPriority(data['priority']),
-            is_recurring=data.get('is_recurring', False),
-            recurrence_interval=timedelta(seconds=data['recurrence_interval']) if data.get('recurrence_interval') else None,
-            max_attempts=data.get('max_attempts', 3),
-            attempts=data.get('attempts', 0)
+            id=data["id"],
+            task_type=data["task_type"],
+            schedule_time=datetime.fromisoformat(data["schedule_time"]),
+            data=data["data"],
+            priority=TaskPriority(data["priority"]),
+            is_recurring=data.get("is_recurring", False),
+            recurrence_interval=(
+                timedelta(seconds=data["recurrence_interval"])
+                if data.get("recurrence_interval")
+                else None
+            ),
+            max_attempts=data.get("max_attempts", 3),
+            attempts=data.get("attempts", 0),
         )
 
 
 class TaskHandler:
     """任务处理器接口"""
 
-    async def handle_task(self, task: QueueTask) -> Dict[str, Any]:
+    async def handle_task(self, task: QueueTask) -> dict[str, Any]:
         """处理任务"""
         raise NotImplementedError
 
@@ -94,7 +104,7 @@ class TaskHandler:
 class DefaultTaskHandler(TaskHandler):
     """默认任务处理器"""
 
-    async def handle_task(self, task: QueueTask) -> Dict[str, Any]:
+    async def handle_task(self, task: QueueTask) -> dict[str, Any]:
         """默认处理逻辑"""
         logger.info(f"处理任务: {task.id} (类型: {task.task_type})")
 
@@ -102,11 +112,11 @@ class DefaultTaskHandler(TaskHandler):
         await asyncio.sleep(0.1)  # 模拟处理时间
 
         result = {
-            'task_id': task.id,
-            'task_type': task.task_type,
-            'status': 'completed',
-            'processed_at': datetime.now().isoformat(),
-            'data': task.data
+            "task_id": task.id,
+            "task_type": task.task_type,
+            "status": "completed",
+            "processed_at": datetime.now().isoformat(),
+            "data": task.data,
         }
 
         logger.debug(f"任务 {task.id} 处理完成")
@@ -120,16 +130,16 @@ class TaskScheduler:
         self.max_workers = max_workers
         self.current_workers = 0
         self.status = SchedulerStatus.IDLE
-        self.handlers: Dict[str, TaskHandler] = {}
-        self.scheduled_tasks: List[ScheduledTask] = []
-        self.worker_tasks: Dict[str, asyncio.Task] = {}
+        self.handlers: dict[str, TaskHandler] = {}
+        self.scheduled_tasks: list[ScheduledTask] = []
+        self.worker_tasks: dict[str, asyncio.Task] = {}
         self.statistics = {
-            'total_scheduled': 0,
-            'total_completed': 0,
-            'total_failed': 0,
-            'average_processing_time': 0.0,
-            'processing_times': [],
-            'created_at': datetime.now().isoformat()
+            "total_scheduled": 0,
+            "total_completed": 0,
+            "total_failed": 0,
+            "average_processing_time": 0.0,
+            "processing_times": [],
+            "created_at": datetime.now().isoformat(),
         }
 
     def register_handler(self, task_type: str, handler: TaskHandler):
@@ -137,12 +147,16 @@ class TaskScheduler:
         self.handlers[task_type] = handler
         logger.info(f"注册任务处理器: {task_type}")
 
-    def schedule_task(self, task_type: str, data: Dict[str, Any],
-                      schedule_time: Optional[datetime] = None,
-                      priority: TaskPriority = TaskPriority.NORMAL,
-                      is_recurring: bool = False,
-                      recurrence_interval: Optional[timedelta] = None,
-                      **kwargs) -> str:
+    def schedule_task(
+        self,
+        task_type: str,
+        data: dict[str, Any],
+        schedule_time: datetime | None = None,
+        priority: TaskPriority = TaskPriority.NORMAL,
+        is_recurring: bool = False,
+        recurrence_interval: timedelta | None = None,
+        **kwargs,
+    ) -> str:
         """调度任务"""
         if schedule_time is None:
             schedule_time = datetime.now()
@@ -155,14 +169,18 @@ class TaskScheduler:
             priority=priority,
             is_recurring=is_recurring,
             recurrence_interval=recurrence_interval,
-            **kwargs
+            **kwargs,
         )
 
         self.scheduled_tasks.append(scheduled_task)
-        self.scheduled_tasks.sort(key=lambda t: (t.schedule_time, t.priority.value, t.id))
+        self.scheduled_tasks.sort(
+            key=lambda t: (t.schedule_time, t.priority.value, t.id)
+        )
 
-        self.statistics['total_scheduled'] += 1
-        logger.info(f"调度任务: {scheduled_task.id} (类型: {task_type}, 时间: {schedule_time})")
+        self.statistics["total_scheduled"] += 1
+        logger.info(
+            f"调度任务: {scheduled_task.id} (类型: {task_type}, 时间: {schedule_time})"
+        )
 
         return scheduled_task.id
 
@@ -190,7 +208,7 @@ class TaskScheduler:
         logger.info("任务调度器停止")
 
         # 取消所有工作任务
-        for task_id, worker_task in self.worker_tasks.items():
+        for _task_id, worker_task in self.worker_tasks.items():
             worker_task.cancel()
 
         # 等待工作任务完成
@@ -247,7 +265,10 @@ class TaskScheduler:
         """工作循环"""
         while self.status != SchedulerStatus.STOPPED:
             try:
-                if self.status == SchedulerStatus.PAUSED or self.current_workers >= self.max_workers:
+                if (
+                    self.status == SchedulerStatus.PAUSED
+                    or self.current_workers >= self.max_workers
+                ):
                     await asyncio.sleep(0.5)
                     continue
 
@@ -296,42 +317,50 @@ class TaskScheduler:
         finally:
             # 更新统计信息
             processing_time = (datetime.now() - start_time).total_seconds()
-            self.statistics['processing_times'].append(processing_time)
+            self.statistics["processing_times"].append(processing_time)
 
             # 保持最近100个处理时间的统计
-            if len(self.statistics['processing_times']) > 100:
-                self.statistics['processing_times'] = self.statistics['processing_times'][-100:]
+            if len(self.statistics["processing_times"]) > 100:
+                self.statistics["processing_times"] = self.statistics[
+                    "processing_times"
+                ][-100:]
 
-            if self.statistics['processing_times']:
-                self.statistics['average_processing_time'] = sum(self.statistics['processing_times']) / len(self.statistics['processing_times'])
+            if self.statistics["processing_times"]:
+                self.statistics["average_processing_time"] = sum(
+                    self.statistics["processing_times"]
+                ) / len(self.statistics["processing_times"])
 
-    async def _complete_task(self, task: QueueTask, result: Dict[str, Any]):
+    async def _complete_task(self, task: QueueTask, result: dict[str, Any]):
         """完成任务"""
-        self.statistics['total_completed'] += 1
+        self.statistics["total_completed"] += 1
 
         # 如果是Redis队列，标记任务完成
         default_queue = queue_manager.get_queue("default")
-        if default_queue and hasattr(default_queue, 'complete_task'):
+        if default_queue and hasattr(default_queue, "complete_task"):
             await default_queue.complete_task(task.id)
 
         # 如果是定时任务且是重复任务，重新调度
         for scheduled_task in self.scheduled_tasks:
             if scheduled_task.id == task.id and scheduled_task.is_recurring:
                 scheduled_task.attempts = 0  # 重置尝试次数
-                scheduled_task.schedule_time = datetime.now() + scheduled_task.recurrence_interval
+                scheduled_task.schedule_time = (
+                    datetime.now() + scheduled_task.recurrence_interval
+                )
                 self.scheduled_tasks.append(scheduled_task)
-                self.scheduled_tasks.sort(key=lambda t: (t.schedule_time, t.priority.value, t.id))
+                self.scheduled_tasks.sort(
+                    key=lambda t: (t.schedule_time, t.priority.value, t.id)
+                )
                 break
 
         logger.info(f"任务 {task.id} 处理完成")
 
     async def _fail_task(self, task: QueueTask, error_message: str):
         """任务失败处理"""
-        self.statistics['total_failed'] += 1
+        self.statistics["total_failed"] += 1
 
         # 如果是Redis队列，标记任务失败
         default_queue = queue_manager.get_queue("default")
-        if default_queue and hasattr(default_queue, 'fail_task'):
+        if default_queue and hasattr(default_queue, "fail_task"):
             await default_queue.fail_task(task.id, error_message)
 
         # 如果是定时任务，根据最大尝试次数决定是否重新调度
@@ -344,7 +373,9 @@ class TaskScheduler:
                     delay = timedelta(minutes=5 * scheduled_task.attempts)
                     scheduled_task.schedule_time = datetime.now() + delay
                     self.scheduled_tasks.append(scheduled_task)
-                    self.scheduled_tasks.sort(key=lambda t: (t.schedule_time, t.priority.value, t.id))
+                    self.scheduled_tasks.sort(
+                        key=lambda t: (t.schedule_time, t.priority.value, t.id)
+                    )
                 else:
                     logger.error(f"任务 {task.id} 超过最大尝试次数，放弃调度")
 
@@ -354,7 +385,7 @@ class TaskScheduler:
 
     def _cleanup_task(self, task_name: str):
         """清理完成的任务"""
-        task_id = task_name.split('_')[-1]  # 从任务名称提取ID
+        task_id = task_name.split("_")[-1]  # 从任务名称提取ID
 
         # 查找并删除工作记录
         if task_id in self.worker_tasks:
@@ -373,17 +404,17 @@ class TaskScheduler:
             del self.worker_tasks[task_id]
             self.current_workers = max(0, self.current_workers - 1)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取调度器统计信息"""
         stats = self.statistics.copy()
-        stats['status'] = self.status.value
-        stats['current_workers'] = self.current_workers
-        stats['max_workers'] = self.max_workers
-        stats['scheduled_tasks_count'] = len(self.scheduled_tasks)
+        stats["status"] = self.status.value
+        stats["current_workers"] = self.current_workers
+        stats["max_workers"] = self.max_workers
+        stats["scheduled_tasks_count"] = len(self.scheduled_tasks)
 
         return stats
 
-    def get_scheduled_tasks(self) -> List[Dict[str, Any]]:
+    def get_scheduled_tasks(self) -> list[dict[str, Any]]:
         """获取定时任务列表"""
         return [task.to_dict() for task in self.scheduled_tasks]
 
@@ -398,17 +429,20 @@ def get_scheduler() -> TaskScheduler:
     return global_scheduler
 
 
-def schedule_task(task_type: str, data: Dict[str, Any],
-                 schedule_time: Optional[datetime] = None,
-                 priority: TaskPriority = TaskPriority.NORMAL,
-                 **kwargs) -> str:
+def schedule_task(
+    task_type: str,
+    data: dict[str, Any],
+    schedule_time: datetime | None = None,
+    priority: TaskPriority = TaskPriority.NORMAL,
+    **kwargs,
+) -> str:
     """便捷的任务调度函数"""
     return global_scheduler.schedule_task(
         task_type=task_type,
         data=data,
         schedule_time=schedule_time,
         priority=priority,
-        **kwargs
+        **kwargs,
     )
 
 

@@ -5,11 +5,13 @@ Simple Integration Tests
 专注于测试基础功能和已验证可用的模块。
 """
 
-import pytest
 import asyncio
 import time
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 
 # 测试基础Python功能和异步操作
 @pytest.mark.integration
@@ -61,6 +63,7 @@ class TestSimpleIntegration:
     @pytest.mark.asyncio
     async def test_async_operations_integration(self):
         """测试异步操作集成"""
+
         # 1. 测试简单异步函数
         async def simple_async_function():
             await asyncio.sleep(0.01)  # 模拟异步操作
@@ -132,7 +135,7 @@ class TestSimpleIntegration:
         config = {
             "database_url": "sqlite:///test.db",
             "redis_url": "redis://localhost:6379",
-            "debug": True
+            "debug": True,
         }
 
         assert "database_url" in config
@@ -165,6 +168,7 @@ class TestSimpleIntegration:
 
     def test_data_validation_integration(self):
         """测试数据验证集成"""
+
         # 1. 测试基础数据验证
         def validate_string(data):
             return isinstance(data, str) and len(data) > 0
@@ -191,15 +195,11 @@ class TestSimpleIntegration:
             required_fields = ["name", "email", "age"]
             return all(field in data for field in required_fields)
 
-        valid_user = {
-            "name": "张三",
-            "email": "zhangsan@example.com",
-            "age": 25
-        }
+        valid_user = {"name": "张三", "email": "zhangsan@example.com", "age": 25}
 
         invalid_user = {
             "name": "李四",
-            "email": "lisi@example.com"
+            "email": "lisi@example.com",
             # 缺少age字段
         }
 
@@ -213,7 +213,7 @@ class TestSimpleIntegration:
         import tempfile
 
         # 2. 测试临时文件操作
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
             temp_file.write("测试内容")
             temp_file_path = temp_file.name
 
@@ -221,7 +221,7 @@ class TestSimpleIntegration:
         assert os.path.exists(temp_file_path)
 
         # 读取文件内容
-        with open(temp_file_path, 'r') as f:
+        with open(temp_file_path) as f:
             content = f.read()
             assert content == "测试内容"
 
@@ -237,10 +237,7 @@ class TestSimpleIntegration:
         data = {
             "name": "测试数据",
             "numbers": [1, 2, 3, 4, 5],
-            "nested": {
-                "key1": "value1",
-                "key2": "value2"
-            }
+            "nested": {"key1": "value1", "key2": "value2"},
         }
 
         json_string = json.dumps(data, ensure_ascii=False)
@@ -256,7 +253,7 @@ class TestSimpleIntegration:
         invalid_json = '{"invalid": json'
         try:
             json.loads(invalid_json)
-            assert False, "应该抛出JSON解析错误"
+            raise AssertionError("应该抛出JSON解析错误")
         except json.JSONDecodeError:
             assert True  # 正确捕获JSON错误
 

@@ -5,25 +5,24 @@ FIFO队列系统单元测试
 测试 src.queues.fifo_queue 模块的功能
 """
 
-import pytest
 import asyncio
-import uuid
-from datetime import datetime, timedelta
-import sys
 import os
+import sys
+from datetime import datetime
+
+import pytest
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.queues.fifo_queue import (
     MemoryFIFOQueue,
+    QueueManager,
+    QueueStatus,
     QueueTask,
     TaskPriority,
-    QueueStatus,
-    QueueManager,
     create_task,
     enqueue_task,
-    dequeue_task
 )
 
 
@@ -38,7 +37,7 @@ class TestQueueTask:
             task_type="test_task",
             data=task_data,
             priority=TaskPriority.NORMAL,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         assert task.id == "test-123"
@@ -56,32 +55,32 @@ class TestQueueTask:
             task_type="test_task",
             data=task_data,
             priority=TaskPriority.HIGH,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         task_dict = task.to_dict()
-        assert task_dict['id'] == "test-123"
-        assert task_dict['task_type'] == "test_task"
-        assert task_dict['data'] == task_data
-        assert task_dict['priority'] == TaskPriority.HIGH.value
-        assert isinstance(task_dict['created_at'], str)
+        assert task_dict["id"] == "test-123"
+        assert task_dict["task_type"] == "test_task"
+        assert task_dict["data"] == task_data
+        assert task_dict["priority"] == TaskPriority.HIGH.value
+        assert isinstance(task_dict["created_at"], str)
 
     def test_queue_task_from_dict(self):
         """测试从字典创建队列任务"""
         task_dict = {
-            'id': 'test-123',
-            'task_type': 'test_task',
-            'data': {'test': 'data'},
-            'priority': TaskPriority.HIGH.value,
-            'created_at': datetime.now().isoformat(),
-            'attempts': 1,
-            'max_attempts': 5
+            "id": "test-123",
+            "task_type": "test_task",
+            "data": {"test": "data"},
+            "priority": TaskPriority.HIGH.value,
+            "created_at": datetime.now().isoformat(),
+            "attempts": 1,
+            "max_attempts": 5,
         }
 
         task = QueueTask.from_dict(task_dict)
-        assert task.id == 'test-123'
-        assert task.task_type == 'test_task'
-        assert task.data == {'test': 'data'}
+        assert task.id == "test-123"
+        assert task.task_type == "test_task"
+        assert task.data == {"test": "data"}
         assert task.priority == TaskPriority.HIGH
         assert task.attempts == 1
         assert task.max_attempts == 5
@@ -170,27 +169,29 @@ class TestMemoryFIFOQueue:
     async def test_queue_statistics(self, queue):
         """测试队列统计信息"""
         stats = queue.get_statistics()
-        assert 'total_enqueued' in stats
-        assert 'total_dequeued' in stats
-        assert 'queue_size' in stats
-        assert 'created_at' in stats
+        assert "total_enqueued" in stats
+        assert "total_dequeued" in stats
+        assert "queue_size" in stats
+        assert "created_at" in stats
 
-        initial_enqueued = stats['total_enqueued']
+        initial_enqueued = stats["total_enqueued"]
 
         task = create_task("test_task", {"data": "test"})
         await queue.enqueue(task)
         await queue.dequeue()
 
         updated_stats = queue.get_statistics()
-        assert updated_stats['total_enqueued'] == initial_enqueued + 1
-        assert updated_stats['total_dequeued'] == initial_enqueued + 1
+        assert updated_stats["total_enqueued"] == initial_enqueued + 1
+        assert updated_stats["total_dequeued"] == initial_enqueued + 1
 
     @pytest.mark.asyncio
     async def test_priority_ordering(self, queue):
         """测试优先级排序"""
         low_task = create_task("low_task", {"priority": "low"}, TaskPriority.LOW)
         high_task = create_task("high_task", {"priority": "high"}, TaskPriority.HIGH)
-        normal_task = create_task("normal_task", {"priority": "normal"}, TaskPriority.NORMAL)
+        normal_task = create_task(
+            "normal_task", {"priority": "normal"}, TaskPriority.NORMAL
+        )
 
         # 按不同优先级入队
         await queue.enqueue(low_task)
@@ -328,15 +329,17 @@ class TestUtilityFunctions:
         """测试入队工具函数"""
         # 创建全局管理器的队列
         from src.queues.fifo_queue import queue_manager
+
         queue_manager.create_queue("util_test", "memory")
 
-        task_id = enqueue_task("util_test", "test_type", {"key": "value"})
+        enqueue_task("util_test", "test_type", {"key": "value"})
         # 注意：这里我们无法直接测试异步结果，但可以验证函数调用不报错
 
     def test_dequeue_task_with_manager(self):
         """测试出队工具函数"""
         # 创建全局管理器的队列
         from src.queues.fifo_queue import queue_manager
+
         queue_manager.create_queue("util_test2", "memory")
 
         # 测试调用不出错

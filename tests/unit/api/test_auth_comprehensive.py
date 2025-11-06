@@ -30,6 +30,7 @@ try:
         create_user,
         get_user_by_id,
     )
+
     logger.info("Successfully imported auth components")
 except ImportError as e:
     logger.error(f"Warning: Import failed: {e}")

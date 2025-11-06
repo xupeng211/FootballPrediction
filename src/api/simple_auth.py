@@ -247,7 +247,9 @@ async def register_user(user_data: SimpleUserRegister):
         )
         return {"message": "用户注册成功", "user": user.dict()}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post("/login")

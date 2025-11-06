@@ -1,0 +1,16 @@
+{
+  "status": "GOOD",
+  "total_tests": 6,
+  "passed_tests": 5,
+  "failed_tests": 1,
+  "success_rate": 83.33333333333334,
+  "test_results": {
+    "work_creation": "WorkItem(id='test_work_001', title='测试作业项目', description='这是一个用于测试的作业项目', work_type='development', status='in_progress', priority='medium', completion_percentage=0, started_at='2025-11-06T23:15:13.686085', completed_at=None, deliverables=['测试交付成果'], technical_details={'test': True}, test_results={}, files_modified=['test_file.py'], time_spent_minutes=0, challenges_faced=[], solutions_implemented=[], next_steps=[])",
+    "work_completion": true,
+    "issue_generation": true,
+    "data_persistence": true,
+    "github_cli": true,
+    "error_handling": false
+  },
+  "timestamp": "2025-11-06T23:15:16.450890"
+}

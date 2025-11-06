@@ -6,22 +6,21 @@ Feature Engineering Simple Tests
 Tests core functionality of feature engineering system based on actual module structure.
 """
 
-import pytest
-import pandas as pd
+from datetime import datetime
+
 import numpy as np
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+import pandas as pd
+import pytest
 
 from src.features import (
-    MatchEntity,
-    TeamEntity,
-    RecentPerformanceFeatures,
-    HistoricalMatchupFeatures,
-    OddsFeatures,
     AllMatchFeatures,
     AllTeamFeatures,
-    FeatureCalculator
+    FeatureCalculator,
+    HistoricalMatchupFeatures,
+    MatchEntity,
+    OddsFeatures,
+    RecentPerformanceFeatures,
+    TeamEntity,
 )
 from src.features.entities import FeatureEntity, FeatureKey
 
@@ -39,7 +38,7 @@ class TestFeatureEntitiesSimple:
             "match_date": datetime(2024, 1, 15, 15, 0),
             "home_score": 2,
             "away_score": 1,
-            "status": "FT"
+            "status": "FT",
         }
 
         # 创建比赛实体
@@ -51,7 +50,7 @@ class TestFeatureEntitiesSimple:
             match_date=match_data["match_date"],
             home_score=match_data["home_score"],
             away_score=match_data["away_score"],
-            status=match_data["status"]
+            status=match_data["status"],
         )
 
         # 验证实体属性
@@ -70,7 +69,7 @@ class TestFeatureEntitiesSimple:
             "team_name": "Team A",
             "league_id": 39,
             "founded_year": 1900,
-            "home_city": "City A"
+            "home_city": "City A",
         }
 
         # 创建球队实体
@@ -79,7 +78,7 @@ class TestFeatureEntitiesSimple:
             team_name=team_data["team_name"],
             league_id=team_data["league_id"],
             founded_year=team_data["founded_year"],
-            home_city=team_data["home_city"]
+            home_city=team_data["home_city"],
         )
 
         # 验证实体属性
@@ -106,7 +105,7 @@ class TestFeatureEntitiesSimple:
             feature_key=feature_key,
             feature_value=feature_value,
             timestamp=datetime(2024, 1, 15, 10, 0),
-            expiration_time=datetime(2024, 1, 22, 10, 0)
+            expiration_time=datetime(2024, 1, 22, 10, 0),
         )
 
         assert feature_entity.feature_key.name == "team_performance"
@@ -121,7 +120,7 @@ class TestFeatureEntitiesSimple:
             feature_key=feature_key,
             feature_value={"test": "value"},
             timestamp=datetime(2024, 1, 10, 10, 0),
-            expiration_time=datetime(2024, 1, 12, 10, 0)  # 已过期
+            expiration_time=datetime(2024, 1, 12, 10, 0),  # 已过期
         )
 
         # 未过期
@@ -151,7 +150,7 @@ class TestFeatureDefinitionsSimple:
         features = RecentPerformanceFeatures(
             team_id=1,
             recent_matches=recent_matches,
-            calculation_date=datetime(2024, 1, 30)
+            calculation_date=datetime(2024, 1, 30),
         )
 
         # 验证基本属性
@@ -160,9 +159,15 @@ class TestFeatureDefinitionsSimple:
         assert features.matches_played == 5
 
         # 手动计算统计指标（简化版本）
-        wins = sum(1 for match in recent_matches if match["home_score"] > match["away_score"])
-        draws = sum(1 for match in recent_matches if match["home_score"] == match["away_score"])
-        losses = sum(1 for match in recent_matches if match["home_score"] < match["away_score"])
+        wins = sum(
+            1 for match in recent_matches if match["home_score"] > match["away_score"]
+        )
+        draws = sum(
+            1 for match in recent_matches if match["home_score"] == match["away_score"]
+        )
+        losses = sum(
+            1 for match in recent_matches if match["home_score"] < match["away_score"]
+        )
         goals_scored = sum(match["home_score"] for match in recent_matches)
         goals_conceded = sum(match["away_score"] for match in recent_matches)
 
@@ -177,11 +182,36 @@ class TestFeatureDefinitionsSimple:
         """测试历史对战特征"""
         # 创建历史对战数据
         historical_matches = [
-            {"date": "2023-01-15", "home_score": 2, "away_score": 1, "home_team": "Team A"},
-            {"date": "2023-06-20", "home_score": 1, "away_score": 1, "home_team": "Team B"},
-            {"date": "2023-09-10", "home_score": 0, "away_score": 2, "home_team": "Team A"},
-            {"date": "2023-12-05", "home_score": 3, "away_score": 1, "home_team": "Team B"},
-            {"date": "2024-01-15", "home_score": 1, "away_score": 2, "home_team": "Team A"},
+            {
+                "date": "2023-01-15",
+                "home_score": 2,
+                "away_score": 1,
+                "home_team": "Team A",
+            },
+            {
+                "date": "2023-06-20",
+                "home_score": 1,
+                "away_score": 1,
+                "home_team": "Team B",
+            },
+            {
+                "date": "2023-09-10",
+                "home_score": 0,
+                "away_score": 2,
+                "home_team": "Team A",
+            },
+            {
+                "date": "2023-12-05",
+                "home_score": 3,
+                "away_score": 1,
+                "home_team": "Team B",
+            },
+            {
+                "date": "2024-01-15",
+                "home_score": 1,
+                "away_score": 2,
+                "home_team": "Team A",
+            },
         ]
 
         # 创建特征
@@ -189,7 +219,7 @@ class TestFeatureDefinitionsSimple:
             team_a_id=1,
             team_b_id=2,
             historical_matches=historical_matches,
-            calculation_date=datetime(2024, 1, 30)
+            calculation_date=datetime(2024, 1, 30),
         )
 
         # 验证基本属性
@@ -198,13 +228,35 @@ class TestFeatureDefinitionsSimple:
         assert len(features.historical_matches) == 5
 
         # 手动计算对战统计
-        team_a_wins = sum(1 for match in historical_matches
-                         if (match["home_team"] == "Team A" and match["home_score"] > match["away_score"]) or
-                            (match["home_team"] == "Team B" and match["away_score"] > match["home_score"]))
-        team_b_wins = sum(1 for match in historical_matches
-                         if (match["home_team"] == "Team B" and match["home_score"] > match["away_score"]) or
-                            (match["home_team"] == "Team A" and match["away_score"] > match["home_score"]))
-        draws = sum(1 for match in historical_matches if match["home_score"] == match["away_score"])
+        team_a_wins = sum(
+            1
+            for match in historical_matches
+            if (
+                match["home_team"] == "Team A"
+                and match["home_score"] > match["away_score"]
+            )
+            or (
+                match["home_team"] == "Team B"
+                and match["away_score"] > match["home_score"]
+            )
+        )
+        team_b_wins = sum(
+            1
+            for match in historical_matches
+            if (
+                match["home_team"] == "Team B"
+                and match["home_score"] > match["away_score"]
+            )
+            or (
+                match["home_team"] == "Team A"
+                and match["away_score"] > match["home_score"]
+            )
+        )
+        draws = sum(
+            1
+            for match in historical_matches
+            if match["home_score"] == match["away_score"]
+        )
 
         # 验证计算结果
         assert team_a_wins == 2
@@ -222,14 +274,12 @@ class TestFeatureDefinitionsSimple:
             "under_2_5": 1.95,
             "btts": 1.75,
             "bookmaker": "Bet365",
-            "timestamp": "2024-01-15T10:00:00"
+            "timestamp": "2024-01-15T10:00:00",
         }
 
         # 创建特征
         features = OddsFeatures(
-            match_id=12345,
-            odds_data=odds_data,
-            calculation_date=datetime(2024, 1, 15)
+            match_id=12345, odds_data=odds_data, calculation_date=datetime(2024, 1, 15)
         )
 
         # 验证基本属性
@@ -249,7 +299,9 @@ class TestFeatureDefinitionsSimple:
         assert abs(away_win_implied_prob - 0.313) < 0.01
 
         # 验证庄家优势
-        total_implied_prob = home_win_implied_prob + draw_implied_prob + away_win_implied_prob
+        total_implied_prob = (
+            home_win_implied_prob + draw_implied_prob + away_win_implied_prob
+        )
         bookmaker_margin = total_implied_prob - 1.0
         assert bookmaker_margin > 0
 
@@ -257,20 +309,16 @@ class TestFeatureDefinitionsSimple:
         """测试完整比赛特征"""
         # 创建子特征
         recent_perf = RecentPerformanceFeatures(
-            team_id=1,
-            recent_matches=[],
-            calculation_date=datetime.now()
+            team_id=1, recent_matches=[], calculation_date=datetime.now()
         )
         historical_matchup = HistoricalMatchupFeatures(
             team_a_id=1,
             team_b_id=2,
             historical_matches=[],
-            calculation_date=datetime.now()
+            calculation_date=datetime.now(),
         )
         odds_features = OddsFeatures(
-            match_id=12345,
-            odds_data={},
-            calculation_date=datetime.now()
+            match_id=12345, odds_data={}, calculation_date=datetime.now()
         )
 
         # 创建完整特征
@@ -280,7 +328,7 @@ class TestFeatureDefinitionsSimple:
             away_team_id=2,
             recent_performance=recent_perf,
             historical_matchup=historical_matchup,
-            odds_features=odds_features
+            odds_features=odds_features,
         )
 
         # 验证特征组合
@@ -295,16 +343,14 @@ class TestFeatureDefinitionsSimple:
         """测试完整球队特征"""
         # 创建子特征
         recent_perf = RecentPerformanceFeatures(
-            team_id=1,
-            recent_matches=[],
-            calculation_date=datetime.now()
+            team_id=1, recent_matches=[], calculation_date=datetime.now()
         )
 
         # 创建完整特征
         all_features = AllTeamFeatures(
             team_id=1,
             recent_performance=recent_perf,
-            additional_features={"strength": 0.8, "form": "good"}
+            additional_features={"strength": 0.8, "form": "good"},
         )
 
         # 验证特征组合
@@ -325,21 +371,23 @@ class TestFeatureCalculatorSimple:
     @pytest.fixture
     def sample_team_matches(self):
         """示例球队比赛数据"""
-        return pd.DataFrame({
-            "match_id": [1, 2, 3, 4, 5, 6, 7, 8],
-            "team_id": [1, 1, 1, 1, 1, 1, 1, 1],
-            "opponent_id": [2, 3, 4, 5, 2, 3, 4, 5],
-            "home_score": [2, 1, 3, 0, 1, 2, 1, 0],
-            "away_score": [1, 1, 0, 1, 1, 1, 2, 1],
-            "is_home": [True, False, True, False, True, False, True, False],
-            "date": pd.date_range("2024-01-01", periods=8),
-            "result": ["W", "D", "W", "L", "D", "W", "D", "L"]
-        })
+        return pd.DataFrame(
+            {
+                "match_id": [1, 2, 3, 4, 5, 6, 7, 8],
+                "team_id": [1, 1, 1, 1, 1, 1, 1, 1],
+                "opponent_id": [2, 3, 4, 5, 2, 3, 4, 5],
+                "home_score": [2, 1, 3, 0, 1, 2, 1, 0],
+                "away_score": [1, 1, 0, 1, 1, 1, 2, 1],
+                "is_home": [True, False, True, False, True, False, True, False],
+                "date": pd.date_range("2024-01-01", periods=8),
+                "result": ["W", "D", "W", "L", "D", "W", "D", "L"],
+            }
+        )
 
     def test_calculator_initialization(self, calculator):
         """测试计算器初始化"""
         assert calculator is not None
-        assert hasattr(calculator, 'config')
+        assert hasattr(calculator, "config")
 
     def test_calculate_recent_performance_simple(self, sample_team_matches):
         """测试计算近期战绩特征"""
@@ -350,17 +398,21 @@ class TestFeatureCalculatorSimple:
         recent_matches = sample_team_matches.tail(5)  # 取最近5场比赛
 
         # 计算基本统计
-        wins = (recent_matches['result'] == 'W').sum()
-        draws = (recent_matches['result'] == 'D').sum()
-        losses = (recent_matches['result'] == 'L').sum()
-        goals_scored = recent_matches['home_score'].sum() + recent_matches['away_score'].sum()
-        goals_conceded = recent_matches['away_score'].sum() + recent_matches['home_score'].sum()
+        (recent_matches["result"] == "W").sum()
+        (recent_matches["result"] == "D").sum()
+        (recent_matches["result"] == "L").sum()
+        (
+            recent_matches["home_score"].sum() + recent_matches["away_score"].sum()
+        )
+        (
+            recent_matches["away_score"].sum() + recent_matches["home_score"].sum()
+        )
 
         # 创建特征对象
         features = RecentPerformanceFeatures(
             team_id=team_id,
-            recent_matches=recent_matches.to_dict('records'),
-            calculation_date=calculation_date
+            recent_matches=recent_matches.to_dict("records"),
+            calculation_date=calculation_date,
         )
 
         # 验证计算结果
@@ -370,14 +422,16 @@ class TestFeatureCalculatorSimple:
     def test_calculate_historical_matchup_simple(self):
         """测试计算历史对战特征"""
         # 创建历史对战数据
-        historical_data = pd.DataFrame({
-            "match_id": [101, 102, 103, 104, 105],
-            "home_team_id": [1, 2, 1, 2, 1],
-            "away_team_id": [2, 1, 2, 1, 2],
-            "home_score": [2, 1, 0, 2, 1],
-            "away_score": [1, 1, 2, 1, 1],
-            "date": pd.date_range("2023-01-01", periods=5)
-        })
+        historical_data = pd.DataFrame(
+            {
+                "match_id": [101, 102, 103, 104, 105],
+                "home_team_id": [1, 2, 1, 2, 1],
+                "away_team_id": [2, 1, 2, 1, 2],
+                "home_score": [2, 1, 0, 2, 1],
+                "away_score": [1, 1, 2, 1, 1],
+                "date": pd.date_range("2023-01-01", periods=5),
+            }
+        )
 
         team_a_id = 1
         team_b_id = 2
@@ -385,16 +439,22 @@ class TestFeatureCalculatorSimple:
 
         # 计算对战统计
         team_a_matches = historical_data[
-            ((historical_data['home_team_id'] == team_a_id) | (historical_data['away_team_id'] == team_a_id)) &
-            ((historical_data['home_team_id'] == team_b_id) | (historical_data['away_team_id'] == team_b_id))
+            (
+                (historical_data["home_team_id"] == team_a_id)
+                | (historical_data["away_team_id"] == team_a_id)
+            )
+            & (
+                (historical_data["home_team_id"] == team_b_id)
+                | (historical_data["away_team_id"] == team_b_id)
+            )
         ]
 
         # 创建特征对象
         features = HistoricalMatchupFeatures(
             team_a_id=team_a_id,
             team_b_id=team_b_id,
-            historical_matches=team_a_matches.to_dict('records'),
-            calculation_date=calculation_date
+            historical_matches=team_a_matches.to_dict("records"),
+            calculation_date=calculation_date,
         )
 
         # 验证计算结果
@@ -409,7 +469,7 @@ class TestFeatureCalculatorSimple:
             "draw": 3.40,
             "away_win": 3.20,
             "bookmaker": "Bet365",
-            "timestamp": datetime(2024, 1, 15, 10, 0)
+            "timestamp": datetime(2024, 1, 15, 10, 0),
         }
 
         match_id = 12345
@@ -437,16 +497,12 @@ class TestFeatureCalculatorSimple:
         """测试批量特征计算"""
         # 创建多个球队的比赛数据
         teams_data = {
-            1: pd.DataFrame({
-                "match_id": [1, 2, 3],
-                "team_id": [1, 1, 1],
-                "goals": [2, 1, 3]
-            }),
-            2: pd.DataFrame({
-                "match_id": [4, 5, 6],
-                "team_id": [2, 2, 2],
-                "goals": [1, 2, 1]
-            })
+            1: pd.DataFrame(
+                {"match_id": [1, 2, 3], "team_id": [1, 1, 1], "goals": [2, 1, 3]}
+            ),
+            2: pd.DataFrame(
+                {"match_id": [4, 5, 6], "team_id": [2, 2, 2], "goals": [1, 2, 1]}
+            ),
         }
 
         calculation_date = datetime(2024, 1, 15)
@@ -454,13 +510,13 @@ class TestFeatureCalculatorSimple:
 
         # 批量计算特征
         for team_id, team_data in teams_data.items():
-            avg_goals = team_data['goals'].mean()
+            team_data["goals"].mean()
 
             # 创建简化的特征对象
             features = RecentPerformanceFeatures(
                 team_id=team_id,
-                recent_matches=team_data.to_dict('records'),
-                calculation_date=calculation_date
+                recent_matches=team_data.to_dict("records"),
+                calculation_date=calculation_date,
             )
             features_list.append(features)
 
@@ -473,33 +529,36 @@ class TestFeatureCalculatorSimple:
         """测试特征计算性能"""
         # 创建大数据集
         np.random.seed(42)
-        large_dataset = pd.DataFrame({
-            "match_id": range(1000),
-            "team_id": np.random.randint(1, 11, 1000),
-            "goals_scored": np.random.poisson(1.5, 1000),
-            "goals_conceded": np.random.poisson(1.2, 1000),
-            "date": pd.date_range("2023-01-01", periods=1000)
-        })
+        large_dataset = pd.DataFrame(
+            {
+                "match_id": range(1000),
+                "team_id": np.random.randint(1, 11, 1000),
+                "goals_scored": np.random.poisson(1.5, 1000),
+                "goals_conceded": np.random.poisson(1.2, 1000),
+                "date": pd.date_range("2023-01-01", periods=1000),
+            }
+        )
 
         import time
+
         start_time = time.time()
 
         # 为每个球队计算特征
-        team_ids = large_dataset['team_id'].unique()
+        team_ids = large_dataset["team_id"].unique()
         features_list = []
 
         for team_id in team_ids:
-            team_data = large_dataset[large_dataset['team_id'] == team_id]
+            team_data = large_dataset[large_dataset["team_id"] == team_id]
 
             # 计算统计数据
-            avg_goals_scored = team_data['goals_scored'].mean()
-            avg_goals_conceded = team_data['goals_conceded'].mean()
+            team_data["goals_scored"].mean()
+            team_data["goals_conceded"].mean()
 
             # 创建特征
             features = RecentPerformanceFeatures(
                 team_id=team_id,
-                recent_matches=team_data.to_dict('records'),
-                calculation_date=datetime.now()
+                recent_matches=team_data.to_dict("records"),
+                calculation_date=datetime.now(),
             )
             features_list.append(features)
 
@@ -518,9 +577,27 @@ class TestFeatureEngineeringPipelineSimple:
         """测试简化的特征工程流水线"""
         # 原始数据
         raw_matches = [
-            {"match_id": 12345, "home_team_id": 1, "away_team_id": 2, "home_score": 2, "away_score": 1},
-            {"match_id": 12346, "home_team_id": 2, "away_team_id": 3, "home_score": 1, "away_score": 1},
-            {"match_id": 12347, "home_team_id": 3, "away_team_id": 4, "home_score": 3, "away_score": 0}
+            {
+                "match_id": 12345,
+                "home_team_id": 1,
+                "away_team_id": 2,
+                "home_score": 2,
+                "away_score": 1,
+            },
+            {
+                "match_id": 12346,
+                "home_team_id": 2,
+                "away_team_id": 3,
+                "home_score": 1,
+                "away_score": 1,
+            },
+            {
+                "match_id": 12347,
+                "home_team_id": 3,
+                "away_team_id": 4,
+                "home_score": 3,
+                "away_score": 0,
+            },
         ]
 
         # 特征提取流水线
@@ -534,7 +611,7 @@ class TestFeatureEngineeringPipelineSimple:
                 "goal_difference": match_data["home_score"] - match_data["away_score"],
                 "home_win": match_data["home_score"] > match_data["away_score"],
                 "draw": match_data["home_score"] == match_data["away_score"],
-                "away_win": match_data["home_score"] < match_data["away_score"]
+                "away_win": match_data["home_score"] < match_data["away_score"],
             }
 
         # 执行特征提取
@@ -558,7 +635,7 @@ class TestFeatureEngineeringPipelineSimple:
             "home_possession": 65.5,
             "away_possession": 34.5,
             "home_shots": 12,
-            "away_shots": 8
+            "away_shots": 8,
         }
 
         # 特征转换
@@ -570,11 +647,12 @@ class TestFeatureEngineeringPipelineSimple:
                 "away_team_id": features["away_team_id"],
                 "total_goals": features["home_score"] + features["away_score"],
                 "goal_difference": features["home_score"] - features["away_score"],
-                "possession_difference": features["home_possession"] - features["away_possession"],
+                "possession_difference": features["home_possession"]
+                - features["away_possession"],
                 "shots_difference": features["home_shots"] - features["away_shots"],
                 "home_win": 1 if features["home_score"] > features["away_score"] else 0,
                 "draw": 1 if features["home_score"] == features["away_score"] else 0,
-                "away_win": 1 if features["home_score"] < features["away_score"] else 0
+                "away_win": 1 if features["home_score"] < features["away_score"] else 0,
             }
             return transformed
 
@@ -609,16 +687,23 @@ class TestFeatureEngineeringPipelineSimple:
             "home_corners": 6,
             "away_corners": 4,
             "home_fouls": 10,
-            "away_fouls": 12
+            "away_fouls": 12,
         }
 
         # 特征选择
         def select_important_features(features):
             """选择重要特征"""
             important_features = [
-                "match_id", "home_team_id", "away_team_id",
-                "total_goals", "goal_difference", "possession_difference",
-                "shots_difference", "home_win", "draw", "away_win"
+                "match_id",
+                "home_team_id",
+                "away_team_id",
+                "total_goals",
+                "goal_difference",
+                "possession_difference",
+                "shots_difference",
+                "home_win",
+                "draw",
+                "away_win",
             ]
             return {k: v for k, v in features.items() if k in important_features}
 
@@ -636,11 +721,24 @@ class TestFeatureEngineeringPipelineSimple:
         """测试简化的流水线执行"""
         # 输入数据
         matches_data = [
-            {"match_id": 12345, "home_team_id": 1, "away_team_id": 2, "home_score": 2, "away_score": 1},
-            {"match_id": 12346, "home_team_id": 2, "away_team_id": 3, "home_score": 1, "away_score": 1}
+            {
+                "match_id": 12345,
+                "home_team_id": 1,
+                "away_team_id": 2,
+                "home_score": 2,
+                "away_score": 1,
+            },
+            {
+                "match_id": 12346,
+                "home_team_id": 2,
+                "away_team_id": 3,
+                "home_score": 1,
+                "away_score": 1,
+            },
         ]
 
         import time
+
         start_time = time.time()
 
         # 完整流水线
@@ -654,7 +752,7 @@ class TestFeatureEngineeringPipelineSimple:
                     "home_team_id": match["home_team_id"],
                     "away_team_id": match["away_team_id"],
                     "total_goals": match["home_score"] + match["away_score"],
-                    "goal_difference": match["home_score"] - match["away_score"]
+                    "goal_difference": match["home_score"] - match["away_score"],
                 }
                 extracted.append(features)
 
@@ -675,14 +773,14 @@ class TestFeatureEngineeringPipelineSimple:
                     "home_team_id": features["home_team_id"],
                     "away_team_id": features["away_team_id"],
                     "total_goals": features["total_goals"],
-                    "home_win": features["home_win"]
+                    "home_win": features["home_win"],
                 }
                 selected.append(selected_features)
 
             return {
                 "extracted_features": extracted,
                 "transformed_features": transformed,
-                "selected_features": selected
+                "selected_features": selected,
             }
 
         # 执行流水线
@@ -708,15 +806,17 @@ class TestFeatureEngineeringIntegrationSimple:
     def test_end_to_end_feature_workflow_simple(self):
         """测试简化的端到端特征工作流"""
         # 1. 准备原始数据
-        raw_matches = pd.DataFrame({
-            "match_id": [12345, 12346, 12347],
-            "home_team_id": [1, 2, 3],
-            "away_team_id": [2, 3, 1],
-            "home_score": [2, 1, 3],
-            "away_score": [1, 2, 0],
-            "date": pd.date_range("2024-01-01", periods=3),
-            "league_id": [39, 39, 39]
-        })
+        raw_matches = pd.DataFrame(
+            {
+                "match_id": [12345, 12346, 12347],
+                "home_team_id": [1, 2, 3],
+                "away_team_id": [2, 3, 1],
+                "home_score": [2, 1, 3],
+                "away_score": [1, 2, 0],
+                "date": pd.date_range("2024-01-01", periods=3),
+                "league_id": [39, 39, 39],
+            }
+        )
 
         # 2. 特征提取
         def extract_features_from_dataframe(df):
@@ -731,7 +831,7 @@ class TestFeatureEngineeringIntegrationSimple:
                     "goal_difference": row["home_score"] - row["away_score"],
                     "home_win": row["home_score"] > row["away_score"],
                     "draw": row["home_score"] == row["away_score"],
-                    "away_win": row["home_score"] < row["away_score"]
+                    "away_win": row["home_score"] < row["away_score"],
                 }
                 features_list.append(features)
             return features_list
@@ -746,8 +846,13 @@ class TestFeatureEngineeringIntegrationSimple:
             for features in features_list:
                 validation = {
                     "valid_total_goals": features["total_goals"] >= 0,
-                    "valid_goal_difference": isinstance(features["goal_difference"], int),
-                    "valid_result_encoding": sum([features["home_win"], features["draw"], features["away_win"]]) == 1
+                    "valid_goal_difference": isinstance(
+                        features["goal_difference"], int
+                    ),
+                    "valid_result_encoding": sum(
+                        [features["home_win"], features["draw"], features["away_win"]]
+                    )
+                    == 1,
                 }
                 validation_results.append(validation)
             return validation_results
@@ -768,7 +873,7 @@ class TestFeatureEngineeringIntegrationSimple:
             "home_team_id": 1,
             "away_team_id": 2,
             "home_score": 2,
-            "away_score": 1
+            "away_score": 1,
         }
 
         # 两次计算特征
@@ -780,7 +885,7 @@ class TestFeatureEngineeringIntegrationSimple:
                 "away_team_id": data["away_team_id"],
                 "total_goals": data["home_score"] + data["away_score"],
                 "goal_difference": data["home_score"] - data["away_score"],
-                "home_win": data["home_score"] > data["away_score"]
+                "home_win": data["home_score"] > data["away_score"],
             }
 
         features1 = calculate_features(match_data)
@@ -796,16 +901,19 @@ class TestFeatureEngineeringIntegrationSimple:
         """测试可扩展性"""
         # 创建大数据集
         np.random.seed(42)
-        large_data = pd.DataFrame({
-            "match_id": range(1, 1001),
-            "home_team_id": np.random.randint(1, 51, 1000),
-            "away_team_id": np.random.randint(1, 51, 1000),
-            "home_score": np.random.poisson(1.5, 1000),
-            "away_score": np.random.poisson(1.2, 1000),
-            "date": pd.date_range("2023-01-01", periods=1000)
-        })
+        large_data = pd.DataFrame(
+            {
+                "match_id": range(1, 1001),
+                "home_team_id": np.random.randint(1, 51, 1000),
+                "away_team_id": np.random.randint(1, 51, 1000),
+                "home_score": np.random.poisson(1.5, 1000),
+                "away_score": np.random.poisson(1.2, 1000),
+                "date": pd.date_range("2023-01-01", periods=1000),
+            }
+        )
 
         import time
+
         start_time = time.time()
 
         # 批量特征计算
@@ -816,7 +924,7 @@ class TestFeatureEngineeringIntegrationSimple:
                 "home_team_id": row["home_team_id"],
                 "away_team_id": row["away_team_id"],
                 "total_goals": row["home_score"] + row["away_score"],
-                "goal_difference": row["home_score"] - row["away_score"]
+                "goal_difference": row["home_score"] - row["away_score"],
             }
             features_list.append(features)
 

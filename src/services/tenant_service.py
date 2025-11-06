@@ -14,10 +14,9 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.database.models.tenant import RolePermission
-
 from src.core.exceptions import ResourceNotFoundError, ValidationError
 from src.database.models.tenant import (
+    RolePermission,
     Tenant,
     TenantPlan,
     TenantRole,

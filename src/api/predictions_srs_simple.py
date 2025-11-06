@@ -186,7 +186,9 @@ class SimplePredictionService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-
+            )
+,
+            )
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
         try:
@@ -269,6 +271,7 @@ class SimplePredictionService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
+            )
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
@@ -382,10 +385,11 @@ async def predict_match_simple(
     if not await simple_prediction_service.check_rate_limit(token,
     redis_client):
         raise HTTPException(
-            
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-    detail="Rate limit exceeded: 100 requests per minute",
-    # TODO: 将魔法数字 100 提取为常量
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limit exceeded: 100 requests per minute",
+            )
+    # TODO: 将魔法数字 100 提取为常量,
+            )
         )
 
     # 生成预测
@@ -445,9 +449,11 @@ async def predict_batch_simple(
     # 检查批量请求限制
     if len(request.matches) > 1000:  # TODO: 将魔法数字 1000 提取为常量
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-    detail="Batch size exceeds maximum limit of 1000 matches",
-    # TODO: 将魔法数字 1000 提取为常量
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Batch size exceeds maximum limit of 1000 matches",
+            )
+    # TODO: 将魔法数字 1000 提取为常量,
+            )
         )
 
     # 并发预测处理

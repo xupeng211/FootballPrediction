@@ -5,13 +5,13 @@ Simplified Database Integration Tests
 使用简化的数据模型进行数据库集成测试，避免复杂的关系定义。
 """
 
-import pytest
-import asyncio
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import select
 
-from .test_models_simple import TestBase, TestTeam, TestMatch, TestPrediction
+import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from .test_models_simple import TestBase, TestMatch, TestPrediction, TestTeam
 
 
 @pytest.mark.integration
@@ -53,7 +53,7 @@ class TestSimpleDatabaseOperations:
             country="Test Country",
             founded_year=2024,
             venue="Test Stadium",
-            website="https://test-team.com"
+            website="https://test-team.com",
         )
 
         test_db_session.add(team)
@@ -103,7 +103,7 @@ class TestSimpleDatabaseOperations:
             away_team_id=away_team.id,
             match_date=datetime.utcnow() + timedelta(days=1),
             league="Test League",
-            status="scheduled"
+            status="scheduled",
         )
 
         test_db_session.add(match)
@@ -139,7 +139,7 @@ class TestSimpleDatabaseOperations:
             home_team_id=home_team.id,
             away_team_id=away_team.id,
             match_date=datetime.utcnow() + timedelta(days=1),
-            league="Prediction League"
+            league="Prediction League",
         )
 
         test_db_session.add(match)
@@ -154,7 +154,7 @@ class TestSimpleDatabaseOperations:
             away_win_prob=0.15,
             predicted_outcome="home",
             confidence=0.75,
-            model_version="test_model_v1"
+            model_version="test_model_v1",
         )
 
         test_db_session.add(prediction)
@@ -193,7 +193,9 @@ class TestSimpleDatabaseOperations:
         """测试事务回滚"""
         try:
             async with test_db_session.begin():
-                team = TestTeam(name="Rollback Team", short_name="RT", country="Country")
+                team = TestTeam(
+                    name="Rollback Team", short_name="RT", country="Country"
+                )
                 test_db_session.add(team)
 
                 # 故意抛出异常触发回滚
@@ -218,7 +220,7 @@ class TestSimpleDatabaseOperations:
                 name=f"Performance Team {i}",
                 short_name=f"PT{i}",
                 country="Test Country",
-                founded_year=2020 + (i % 10)
+                founded_year=2020 + (i % 10),
             )
             teams.append(team)
 

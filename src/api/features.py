@@ -25,6 +25,7 @@ router = APIRouter(prefix="/features", tags=["特征管理"])
 # 全局特征存储实例（惰性初始化,避免导入时报错）
 feature_store: FootballFeatureStore | None = None
 
+
 def get_feature_store() -> FootballFeatureStore | None:
     """获取（或初始化）特征存储实例."""
     global feature_store
@@ -44,15 +45,16 @@ def get_feature_store() -> FootballFeatureStore | None:
         feature_store = None
     return feature_store
 
+
 def validate_match_id(match_id: int) -> None:
     """验证比赛ID参数"""
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
         raise HTTPException(
-            
             status_code=400,
             detail="比赛ID必须大于0",  # TODO: 将魔法数字 400 提取为常量
         )  # TODO: 将魔法数字 400 提取为常量
+
 
 def check_feature_store_availability() -> None:
     """检查特征存储服务可用性"""
@@ -62,6 +64,8 @@ def check_feature_store_availability() -> None:
             status_code=503,  # TODO: 将魔法数字 503 提取为常量
             detail="特征存储服务暂时不可用,请稍后重试",  # TODO: 将魔法数字 503 提取为常量
         )
+
+
 async def get_match_info(session: AsyncSession, match_id: int) -> Match:
     """获取比赛基础信息"""
     logger.debug(f"查询比赛 {match_id} 的基础信息")
@@ -100,7 +104,8 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="查询比赛信息失败",  # TODO: 将魔法数字 500 提取为常量
-)  # TODO: 将魔法数字 500 提取为常量
+        )  # TODO: 将魔法数字 500 提取为常量
+
 
 async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any], str]:
     """获取特征数据（支持优雅降级）"""
@@ -132,6 +137,7 @@ async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any]
     ) as feature_error:
         logger.error(f"获取特征数据失败: {feature_error}")
         return {}, str(feature_error)  # 优雅降级:返回空特征而不是完全失败
+
 
 def build_response_data(
     match: Match,
@@ -166,6 +172,7 @@ def build_response_data(
 
     return response_data
 
+
 @router.get("/{match_id}")
 async def get_match_features_improved(
     match_id: int, session: Session = Depends(get_db_session), include_raw: bool = False
@@ -199,6 +206,7 @@ async def get_match_features_improved(
 
     logger.info("比赛 %s 特征获取完成: %s", match_id, response_data["status"])
     return response_data
+
 
 @router.get("/health", summary="特征服务健康检查")
 async def health_check() -> dict[str, Any]:

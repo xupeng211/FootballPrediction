@@ -24,11 +24,13 @@ api_optimizer = APIOptimizer()
 
 # ==================== 请求/响应模型 ====================
 
+
 class OptimizationRequestModel(BaseModel):
     """优化请求模型"""
 
     optimization_type: str = Field(..., description="优化类型")
     parameters: dict[str, Any] | None = Field(None, description="优化参数")
+
 
 class CacheOperationModel(BaseModel):
     """缓存操作模型"""
@@ -36,6 +38,7 @@ class CacheOperationModel(BaseModel):
     operation: str = Field(..., description="操作类型: clear, warm, analyze")
     pattern: str | None = Field(None, description="缓存模式")
     keys: list[str] | None = Field(None, description="特定键列表")
+
 
 class PerformanceAnalysisModel(BaseModel):
     """性能分析模型"""
@@ -45,6 +48,7 @@ class PerformanceAnalysisModel(BaseModel):
     )
     include_details: bool = Field(True, description="是否包含详细信息")
 
+
 class DatabaseOptimizationModel(BaseModel):
     """数据库优化模型"""
 
@@ -53,7 +57,9 @@ class DatabaseOptimizationModel(BaseModel):
     analyze_tables: bool = Field(True, description="分析表")
     refresh_views: bool = Field(True, description="刷新物化视图")
 
+
 # ==================== 性能监控端点 ====================
+
 
 @router.get("/metrics")
 @require_permission("performance.view")
@@ -111,6 +117,7 @@ async def get_performance_metrics(
 
     return metrics_summary
 
+
 @router.get("/dashboard")
 @require_permission("performance.view")
 async def get_performance_dashboard():
@@ -161,6 +168,7 @@ async def get_performance_dashboard():
     }
 
     return dashboard_data
+
 
 @router.get("/alerts")
 @require_permission("performance.view")
@@ -223,7 +231,9 @@ async def get_performance_alerts(
         "critical_count": len([a for a in alerts if a["severity"] == "critical"]),
     }
 
+
 # ==================== 数据库优化端点 ====================
+
 
 @router.post("/database/optimize")
 @require_permission("performance.optimize")
@@ -253,6 +263,7 @@ async def optimize_database(
             "物化视图刷新" if optimization_config.refresh_views else None,
         ],
     }
+
 
 @router.get("/database/analysis")
 @require_permission("performance.view")
@@ -292,6 +303,7 @@ async def get_database_analysis():
         finally:
             await db_optimizer.db.close()
 
+
 @router.get("/database/optimization/{optimization_id}")
 @require_permission("performance.view")
 async def get_optimization_status(optimization_id: str):
@@ -318,7 +330,9 @@ async def get_optimization_status(optimization_id: str):
         ],
     }
 
+
 # ==================== 缓存管理端点 ====================
+
 
 @router.post("/cache/manage")
 @require_permission("performance.manage")
@@ -367,10 +381,10 @@ async def manage_cache(
 
     else:
         raise HTTPException(
-            
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"不支持的操作类型: {cache_operation.operation}",
         )
+
 
 @router.get("/cache/statistics")
 @require_permission("performance.view")
@@ -415,7 +429,9 @@ async def get_cache_statistics():
 
     return cache_stats
 
+
 # ==================== API优化端点 ====================
+
 
 @router.post("/api/optimize")
 @require_permission("performance.optimize")
@@ -453,6 +469,7 @@ async def optimize_api_performance(optimization_request: OptimizationRequestMode
             detail=f"不支持的优化类型: {optimization_request.optimization_type}",
         )
 
+
 @router.get("/api/analysis")
 @require_permission("performance.view")
 async def get_api_performance_analysis():
@@ -464,7 +481,9 @@ async def get_api_performance_analysis():
     performance_report = await api_optimizer.generate_performance_report()
     return performance_report
 
+
 # ==================== 后台任务函数 ====================
+
 
 async def _run_database_optimization(
     optimization_id: str, optimization_config: dict[str, Any]
@@ -496,11 +515,13 @@ async def _run_database_optimization(
         except Exception:
             pass
 
+
 async def _clear_cache_by_pattern(pattern: str):
     """按模式清理缓存"""
     from src.optimizations.api_optimizations import clear_cache
 
     await clear_cache(pattern)
+
 
 async def _clear_cache_by_keys(keys: list[str]):
     """按键清理缓存"""
@@ -513,13 +534,16 @@ async def _clear_cache_by_keys(keys: list[str]):
         if await cache_manager.delete(key):
             cleared_count += 1
 
+
 async def _clear_all_cache():
     """清理所有缓存"""
     await _clear_cache_by_pattern("*")
 
+
 async def _warm_cache(warm_config: dict[str, Any]):
     """缓存预热"""
     # 这里应该实现具体的缓存预热逻辑
+
 
 async def _analyze_cache_performance() -> dict[str, Any]:
     """分析缓存性能"""
@@ -530,6 +554,7 @@ async def _analyze_cache_performance() -> dict[str, Any]:
         "memory_efficiency": 85.2,
         "key_distribution": {"frequently_accessed": 450, "rarely_accessed": 800},
     }
+
 
 def _generate_database_recommendations(
     table_sizes: list[dict[str, Any]],
@@ -558,7 +583,9 @@ def _generate_database_recommendations(
 
     return recommendations
 
+
 # ==================== 健康检查端点 ====================
+
 
 @router.get("/health", tags=["健康检查"])
 async def performance_management_health():

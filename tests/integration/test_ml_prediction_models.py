@@ -53,7 +53,7 @@ def create_mock_training_data():
     matches = []
     np.random.seed(42)  # 确保可重复性
 
-    for i in range(200):  # 生成200场比赛
+    for _i in range(200):  # 生成200场比赛
         home_team = np.random.choice(teams)
         away_team = np.random.choice([t for t in teams if t != home_team])
 

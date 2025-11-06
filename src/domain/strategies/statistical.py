@@ -46,28 +46,22 @@ class StatisticalStrategy(PredictionStrategy):
         self._min_sample_size = 5
         self.logger = logging.getLogger(__name__)
 
-    async def initialize(self,
-    config: dict[str,
-    Any]) -> None:
+    async def initialize(self, config: dict[str, Any]) -> None:
         """初始化统计策略"
 
-        Args:
-            config: 配置参数,
-    包含:
-                - min_sample_size: 最小样本数量
-                - weight_recent_games: 近期比赛权重
-                - home_advantage_factor: 主场优势因子
-                - model_weights: 不同统计模型的权重
+            Args:
+                config: 配置参数,
+        包含:
+                    - min_sample_size: 最小样本数量
+                    - weight_recent_games: 近期比赛权重
+                    - home_advantage_factor: 主场优势因子
+                    - model_weights: 不同统计模型的权重
         """
         self.config = config
-        self._min_sample_size = config.get("min_sample_size",
-    5)
+        self._min_sample_size = config.get("min_sample_size", 5)
         self._model_params = {
-            "weight_recent_games": config.get("weight_recent_games",
-    0.7),
-    "home_advantage_factor": config.get("home_advantage_factor",
-    1.2),
-
+            "weight_recent_games": config.get("weight_recent_games", 0.7),
+            "home_advantage_factor": config.get("home_advantage_factor", 1.2),
             "poisson_lambda": config.get("poisson_lambda", 1.35),
             "model_weights": config.get(
                 "model_weights",
@@ -109,20 +103,17 @@ class StatisticalStrategy(PredictionStrategy):
         )
 
         # 计算置信度
-        confidence = await self._calculate_confidence(processed_input,
-    final_pred)
+        confidence = await self._calculate_confidence(processed_input, final_pred)
 
         # 创建概率分布
         probability_distribution = await self._calculate_probability_distribution(
-            processed_input,
-    final_pred
+            processed_input, final_pred
         )
 
         # 创建输出
         output = PredictionOutput(
             predicted_home_score=final_pred[0],
-    predicted_away_score=final_pred[1],
-
+            predicted_away_score=final_pred[1],
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance={
@@ -151,8 +142,7 @@ class StatisticalStrategy(PredictionStrategy):
         return output
 
     async def batch_predict(
-        self,
-    inputs: list[PredictionInput]
+        self, inputs: list[PredictionInput]
     ) -> list[PredictionOutput]:
         """批量预测"""
         outputs = []
@@ -161,24 +151,20 @@ class StatisticalStrategy(PredictionStrategy):
             outputs.append(output)
         return outputs
 
-    async def _poisson_prediction(self,
-    input_data: PredictionInput) -> tuple[int,
-    int]:
+    async def _poisson_prediction(self, input_data: PredictionInput) -> tuple[int, int]:
         """使用泊松分布预测比分"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
-            return (1,
-    1)
+            return (1, 1)
 
         # 获取球队平均进球数
         home_avg_goals = await self._get_team_average_goals(
             input_data.home_team.id,
-    True,
-    )
+            True,
+        )
         away_avg_goals = await self._get_team_average_goals(
             input_data.away_team.id,
-    False,
-
+            False,
         )
 
         # 应用主场优势
@@ -209,14 +195,12 @@ class StatisticalStrategy(PredictionStrategy):
 
                 if prob > max_prob:
                     max_prob = prob
-                    best_score = (home_goals,
-    away_goals)
+                    best_score = (home_goals, away_goals)
 
         return best_score
 
     async def _historical_average_prediction(
-        self,
-    input_data: PredictionInput
+        self, input_data: PredictionInput
     ) -> tuple[int, int]:
         """基于历史平均得分预测"""
         # 检查球队ID是否为空
@@ -229,8 +213,7 @@ class StatisticalStrategy(PredictionStrategy):
         away_scores = await self._get_team_away_scores(input_data.away_team.id)
 
         if not home_scores or not away_scores:
-            return (1,
-    1)
+            return (1, 1)
 
         avg_home = np.mean([s[0] for s in home_scores])
         avg_away = np.mean([s[1] for s in away_scores])
@@ -238,28 +221,22 @@ class StatisticalStrategy(PredictionStrategy):
         # 应用主场优势
         avg_home *= self._model_params["home_advantage_factor"]
 
-        return (int(round(avg_home)),
-    int(round(avg_away)))
+        return (int(round(avg_home)), int(round(avg_away)))
 
     async def _team_form_prediction(
-        self,
-    input_data: PredictionInput
-    ) -> tuple[int,
-    int]:
+        self, input_data: PredictionInput
+    ) -> tuple[int, int]:
         """基于球队近期状态预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
             return (1, 1)
 
         # 获取最近5场比赛
-        home_recent = await self._get_recent_games(input_data.home_team.id,
-    5)
-        away_recent = await self._get_recent_games(input_data.away_team.id,
-    5)
+        home_recent = await self._get_recent_games(input_data.home_team.id, 5)
+        away_recent = await self._get_recent_games(input_data.away_team.id, 5)
 
         if not home_recent or not away_recent:
-            return (1,
-    1)
+            return (1, 1)
 
         # 计算近期平均得分（带权重）
         home_weighted = 0
@@ -291,23 +268,18 @@ class StatisticalStrategy(PredictionStrategy):
         # 应用主场优势
         home_avg *= self._model_params["home_advantage_factor"]
 
-        return (int(round(home_avg)),
-    int(round(away_avg)))
+        return (int(round(home_avg)), int(round(away_avg)))
 
     async def _head_to_head_prediction(
-        self,
-    input_data: PredictionInput
-    ) -> tuple[int,
-    int]:
+        self, input_data: PredictionInput
+    ) -> tuple[int, int]:
         """基于对战历史预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
-            return (1,
-    1)
+            return (1, 1)
 
         h2h_games = await self._get_head_to_head_games(
             input_data.home_team.id,
-
             input_data.away_team.id,
             limit=10,
         )
@@ -333,14 +305,10 @@ class StatisticalStrategy(PredictionStrategy):
         # 应用主场优势
         avg_home *= self._model_params["home_advantage_factor"]
 
-        return (int(round(avg_home)),
-    int(round(avg_away)))
+        return (int(round(avg_home)), int(round(avg_away)))
 
     async def _ensemble_predictions(
-        self,
-    predictions: dict[str,
-    tuple[int,
-    int]]
+        self, predictions: dict[str, tuple[int, int]]
     ) -> tuple[int, int]:
         """集成多个预测结果"""
         weights = self._model_params["model_weights"]
@@ -364,9 +332,7 @@ class StatisticalStrategy(PredictionStrategy):
         return (int(round(avg_home)), int(round(avg_away)))
 
     async def _calculate_confidence(
-        self,
-        input_data: PredictionInput,
-        prediction: tuple[int, int]
+        self, input_data: PredictionInput, prediction: tuple[int, int]
     ) -> float:
         """计算预测置信度"""
         confidence_factors = []
@@ -383,11 +349,9 @@ class StatisticalStrategy(PredictionStrategy):
         else:
             home_games = len(await self._get_team_games(input_data.home_team.id))
             away_games = len(await self._get_team_games(input_data.away_team.id))
-        if min(home_games,
-    away_games) >= self._min_sample_size * 2:
+        if min(home_games, away_games) >= self._min_sample_size * 2:
             confidence_factors.append(0.8)
-        elif min(home_games,
-    away_games) >= self._min_sample_size:
+        elif min(home_games, away_games) >= self._min_sample_size:
             confidence_factors.append(0.6)
         else:
             confidence_factors.append(0.3)
@@ -400,18 +364,14 @@ class StatisticalStrategy(PredictionStrategy):
         return np.mean(confidence_factors)
 
     async def _calculate_probability_distribution(
-        self,
-        input_data: PredictionInput,
-        prediction: tuple[int, int]
+        self, input_data: PredictionInput, prediction: tuple[int, int]
     ) -> dict[str, float]:
         """计算结果概率分布"""
         # 基于泊松分布计算概率
         if input_data.home_team.id is None or input_data.away_team.id is None:
             return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33}
-        home_avg = await self._get_team_average_goals(input_data.home_team.id,
-    True)
-        away_avg = await self._get_team_average_goals(input_data.away_team.id,
-    False)
+        home_avg = await self._get_team_average_goals(input_data.home_team.id, True)
+        away_avg = await self._get_team_average_goals(input_data.away_team.id, False)
 
         home_avg *= self._model_params["home_advantage_factor"]
 
@@ -420,10 +380,8 @@ class StatisticalStrategy(PredictionStrategy):
         prob_draw = 0
         prob_away_win = 0
 
-        for home_goals in range(0,
-    10):
-            for away_goals in range(0,
-    10):
+        for home_goals in range(0, 10):
+            for away_goals in range(0, 10):
                 prob_home = (
                     math.exp(-home_avg) * home_avg**home_goals
                 ) / math.factorial(home_goals)
@@ -442,9 +400,7 @@ class StatisticalStrategy(PredictionStrategy):
         return {"home_win": prob_home_win, "draw": prob_draw, "away_win": prob_away_win}
 
     # 以下为辅助方法,实际项目中需要从数据库或缓存获取数据
-    async def _get_team_average_goals(self,
-    team_id: int,
-    is_home: bool) -> float:
+    async def _get_team_average_goals(self, team_id: int, is_home: bool) -> float:
         """获取球队平均进球数"""
         # 模拟数据，实际应从数据库获取
         return 1.5 if is_home else 1.2
@@ -454,29 +410,14 @@ class StatisticalStrategy(PredictionStrategy):
         # 模拟数据
         return [(2, 1), (1, 1), (3, 0), (1, 2), (2, 0)]
 
-    async def _get_team_away_scores(self,
-    team_id: int) -> list[tuple[int,
-    int]]:
+    async def _get_team_away_scores(self, team_id: int) -> list[tuple[int, int]]:
         """获取球队客场比分历史"""
         # 模拟数据
-        return [(1,
-    2),
-    (0,
-    1),
-    (2,
-    2),
-    (1,
-    3),
-    (0,
-    0)]
+        return [(1, 2), (0, 1), (2, 2), (1, 3), (0, 0)]
 
     async def _get_recent_games(
-        self,
-    team_id: int,
-    limit: int
-    ) -> list[tuple[int,
-    int,
-    bool]]:
+        self, team_id: int, limit: int
+    ) -> list[tuple[int, int, bool]]:
         """获取最近比赛"""
         # 模拟数据,返回(主场得分,客场得分,是否主场)
         return [(2, 1, True), (1, 2, False), (3, 0, True), (0, 0, False), (2, 1, True)]
@@ -487,12 +428,8 @@ class StatisticalStrategy(PredictionStrategy):
         return [{"game_id": i} for i in range(20)]
 
     async def _get_head_to_head_games(
-        self,
-    home_team_id: int,
-    away_team_id: int,
-    limit: int
-    ) -> list[dict[str,
-    Any]]:
+        self, home_team_id: int, away_team_id: int, limit: int
+    ) -> list[dict[str, Any]]:
         """获取对战历史"""
         # 模拟数据
         return [
@@ -511,10 +448,7 @@ class StatisticalStrategy(PredictionStrategy):
         ]
 
     async def update_metrics(
-        self,
-    actual_results: list[tuple[Prediction,
-    dict[str,
-    Any]]]
+        self, actual_results: list[tuple[Prediction, dict[str, Any]]]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:
@@ -545,8 +479,7 @@ class StatisticalStrategy(PredictionStrategy):
             correct_predictions / total_predictions if total_predictions > 0 else 0
         )
         mean_error = np.mean(score_errors) if score_errors else 0
-        precision = max(0,
-    1 - mean_error / 5)  # 简化的精确率
+        precision = max(0, 1 - mean_error / 5)  # 简化的精确率
         recall = accuracy  # 简化处理
         f1_score = (
             2 * (precision * recall) / (precision + recall)
@@ -556,7 +489,6 @@ class StatisticalStrategy(PredictionStrategy):
 
         self._metrics = StrategyMetrics(
             accuracy=accuracy,
-
             precision=precision,
             recall=recall,
             f1_score=f1_score,

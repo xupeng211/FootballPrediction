@@ -240,10 +240,6 @@ class BettingCoreTester:
 
     async def run_core_tests(self):
         """运行核心功能测试"""
-        print("=" * 80)
-        print("EV计算和投注策略核心功能测试")
-        print("Issue #116 核心算法验证")
-        print("=" * 80)
 
         try:
             # 1. EV计算精度测试
@@ -273,14 +269,12 @@ class BettingCoreTester:
             return self.test_results
 
         except Exception as e:
-            print(f"❌ 测试执行失败: {e}")
             self.test_results["test_status"] = "error"
             self.test_results["error"] = str(e)
             return self.test_results
 
     async def _test_ev_calculation_precision(self):
         """测试EV计算精度"""
-        print("\n📊 测试EV计算精度...")
 
         calculator = CoreEVCalculator()
         test_cases = [
@@ -296,9 +290,8 @@ class BettingCoreTester:
             calculated = calculator.calculate_ev(prob, odds)
             if abs(calculated - expected) <= 0.01:  # 1%容差
                 passed += 1
-                print(f"  ✅ 概率={prob}, 赔率={odds}, EV={calculated:.3f}")
             else:
-                print(f"  ❌ 概率={prob}, 期望={expected:.3f}, 实际={calculated:.3f}")
+                pass
 
         accuracy = passed / len(test_cases)
         self.test_results["individual_tests"]["ev_calculation"] = {
@@ -308,11 +301,9 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-        print(f"  📈 EV计算精度: {accuracy*100:.1f}%")
 
     async def _test_kelly_criterion(self):
         """测试Kelly准则"""
-        print("\n🧮 测试Kelly准则...")
 
         calculator = CoreEVCalculator()
         test_cases = [
@@ -328,9 +319,8 @@ class BettingCoreTester:
             min_exp, max_exp = expected_range
             if min_exp <= kelly <= max_exp:
                 passed += 1
-                print(f"  ✅ EV={ev}, Kelly={kelly:.3f}")
             else:
-                print(f"  ❌ EV={ev}, 期望范围={expected_range}, 实际={kelly:.3f}")
+                pass
 
         accuracy = passed / len(test_cases)
         self.test_results["individual_tests"]["kelly_criterion"] = {
@@ -340,11 +330,9 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-        print(f"  📈 Kelly准则精度: {accuracy*100:.1f}%")
 
     async def _test_risk_assessment(self):
         """测试风险评估"""
-        print("\n⚠️ 测试风险评估...")
 
         calculator = CoreEVCalculator()
         test_cases = [
@@ -355,16 +343,13 @@ class BettingCoreTester:
         ]
 
         passed = 0
-        for prob, odds, ev, expected_risk in test_cases:
+        for prob, odds, _ev, expected_risk in test_cases:
             calculated_ev = calculator.calculate_ev(prob, odds)
             assessed_risk = calculator.assess_risk_level(prob, odds, calculated_ev)
             if assessed_risk == expected_risk:
                 passed += 1
-                print(f"  ✅ 概率={prob}, 风险={assessed_risk.value}")
             else:
-                print(
-                    f"  ❌ 概率={prob}, 期望={expected_risk.value}, 实际={assessed_risk.value}"
-                )
+                pass
 
         accuracy = passed / len(test_cases)
         self.test_results["individual_tests"]["risk_assessment"] = {
@@ -374,11 +359,9 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-        print(f"  📈 风险评估精度: {accuracy*100:.1f}%")
 
     async def _test_value_rating(self):
         """测试价值评级"""
-        print("\n⭐ 测试价值评级...")
 
         calculator = CoreEVCalculator()
         test_cases = [
@@ -393,9 +376,8 @@ class BettingCoreTester:
             rating = calculator.calculate_value_rating(ev, prob, 2.0)
             if rating >= min_expected:
                 passed += 1
-                print(f"  ✅ EV={ev}, 评级={rating:.1f}")
             else:
-                print(f"  ❌ EV={ev}, 期望≥{min_expected}, 实际={rating:.1f}")
+                pass
 
         accuracy = passed / len(test_cases)
         self.test_results["individual_tests"]["value_rating"] = {
@@ -405,11 +387,9 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-        print(f"  📈 价值评级精度: {accuracy*100:.1f}%")
 
     async def _test_srs_compliance(self):
         """测试SRS合规性"""
-        print("\n🛡️ 测试SRS合规性...")
 
         calculator = CoreEVCalculator()
         test_cases = [
@@ -428,15 +408,8 @@ class BettingCoreTester:
 
             if compliance["overall_compliance"] == should_comply:
                 passed += 1
-                status = "✅ 合规" if should_comply else "✅ 不合规"
-                print(f"  {status}: 概率={prob}, EV={ev:.3f}")
             else:
-                status = (
-                    "❌ 应该合规但实际不合规"
-                    if should_comply
-                    else "❌ 应该不合规但实际合规"
-                )
-                print(f"  {status}: 概率={prob}, EV={ev:.3f}")
+                pass
 
         accuracy = passed / len(test_cases)
         self.test_results["individual_tests"]["srs_compliance"] = {
@@ -446,11 +419,9 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.8 else "failed",
         }
 
-        print(f"  📈 SRS合规性精度: {accuracy*100:.1f}%")
 
     async def _test_strategy_optimization(self):
         """测试策略优化"""
-        print("\n🎯 测试策略优化...")
 
         optimizer = CoreStrategyOptimizer()
         strategies = ["conservative", "balanced", "srs_compliant"]
@@ -474,14 +445,11 @@ class BettingCoreTester:
                 ]
                 if all(key in result for key in required_keys):
                     passed += 1
-                    print(
-                        f"  ✅ {strategy_name}: EV={result['ev']:.3f}, 建议={result['recommendation']}"
-                    )
                 else:
-                    print(f"  ❌ {strategy_name}: 结果结构不完整")
+                    pass
 
-            except Exception as e:
-                print(f"  ❌ {strategy_name}: 异常 ({e})")
+            except Exception:
+                pass
 
         accuracy = passed / len(strategies)
         self.test_results["individual_tests"]["strategy_optimization"] = {
@@ -491,11 +459,9 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-        print(f"  📈 策略优化精度: {accuracy*100:.1f}%")
 
     async def _test_comprehensive_scenarios(self):
         """测试综合场景"""
-        print("\n🌟 测试综合场景...")
 
         optimizer = CoreStrategyOptimizer()
 
@@ -545,16 +511,11 @@ class BettingCoreTester:
 
                 if srs_ok and recommendation_ok:
                     passed += 1
-                    print(
-                        f"  ✅ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']}"
-                    )
                 else:
-                    print(
-                        f"  ⚠️ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']} (需要改进)"
-                    )
+                    pass
 
-            except Exception as e:
-                print(f"  ❌ {scenario['name']}: 异常 ({e})")
+            except Exception:
+                pass
 
         accuracy = passed / len(scenarios)
         self.test_results["individual_tests"]["comprehensive_scenarios"] = {
@@ -564,7 +525,6 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.7 else "failed",
         }
 
-        print(f"  📈 综合场景精度: {accuracy*100:.1f}%")
 
     def _calculate_summary(self):
         """计算测试总结"""
@@ -620,37 +580,18 @@ class BettingCoreTester:
 
     def generate_report(self):
         """生成测试报告"""
-        print("\n" + "=" * 80)
-        print("📊 EV计算和投注策略核心功能测试报告")
-        print("=" * 80)
 
-        print(f"\n🎯 测试状态: {self.test_results['test_status']}")
-        print(f"📅 测试时间: {self.test_results['test_date']}")
-        print(f"🔢 Issue编号: #{self.test_results['issue_number']}")
 
         if "summary" in self.test_results:
             summary = self.test_results["summary"]
-            print("\n📈 总体结果:")
-            print(f"  - 总测试数: {summary['total_tests']}")
-            print(f"  - 通过测试数: {summary['total_passed']}")
-            print(f"  - 总体准确率: {summary['overall_accuracy']*100:.1f}%")
 
-            critical = summary["critical_scores"]
-            print("\n🔧 关键功能评分:")
-            print(f"  - EV计算精度: {critical['ev_calculation']*100:.1f}%")
-            print(f"  - Kelly准则: {critical['kelly_criterion']*100:.1f}%")
-            print(f"  - SRS合规性: {critical['srs_compliance']*100:.1f}%")
-            print(f"  - 风险评估: {critical['risk_assessment']*100:.1f}%")
+            summary["critical_scores"]
 
-        print("\n📋 详细测试结果:")
-        for test_name, result in self.test_results["individual_tests"].items():
-            status_icon = (
+        for _test_name, result in self.test_results["individual_tests"].items():
+            (
                 "✅"
                 if result["status"] == "passed"
                 else "⚠️" if result["status"] == "partially_passed" else "❌"
-            )
-            print(
-                f"  {status_icon} {test_name}: {result['accuracy']*100:.1f}% ({result['passed']}/{result['total']})"
             )
 
         # 保存报告
@@ -658,41 +599,26 @@ class BettingCoreTester:
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(self.test_results, f, indent=2, ensure_ascii=False, default=str)
 
-        print(f"\n📄 测试报告已保存到: {report_path}")
 
         if self.test_results["test_status"] == "passed":
-            print("\n🎉 Issue #116 EV计算和投注策略核心功能完全实现！")
-            print("✅ EV计算算法: 精确实现")
-            print("✅ Kelly Criterion: 正确应用")
-            print("✅ 风险评估: 功能完善")
-            print("✅ SRS合规性: 完全符合")
-            print("✅ 投注策略: 逻辑正确")
-            print("✅ Issue #116 核心功能可以标记为完成！")
+            pass
         elif self.test_results["test_status"] == "partially_passed":
-            print("\n⚠️ Issue #116 部分完成，核心功能已实现")
-            print("🔧 主要算法正确，需要完善细节和集成")
+            pass
         else:
-            print("\n❌ Issue #116 测试未通过，需要修复问题")
+            pass
 
 
 async def main():
     """主函数"""
-    print("开始执行EV计算和投注策略核心功能测试...")
-    print("测试Issue #116: EV计算和投注策略核心算法")
 
     tester = BettingCoreTester()
     test_result = await tester.run_core_tests()
     tester.generate_report()
 
-    print("\n" + "=" * 80)
     if test_result["test_status"] in ["passed", "partially_passed"]:
-        print("🎉 核心功能测试完成！")
-        print(
-            f"状态: {'完全通过' if test_result['test_status'] == 'passed' else '部分通过'}"
-        )
+        pass
     else:
-        print("❌ 核心功能测试失败")
-    print("=" * 80)
+        pass
 
 
 if __name__ == "__main__":

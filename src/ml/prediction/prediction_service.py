@@ -48,10 +48,9 @@ class EnsemblePrediction:
             "home_team": self.home_team,
             "away_team": self.away_team,
             "predictions": [p.to_dict() for p in self.predictions],
-    "ensemble_home_win_prob": self.ensemble_home_win_prob,
-    "ensemble_draw_prob": self.ensemble_draw_prob,
-    "ensemble_away_win_prob": self.ensemble_away_win_prob,
-
+            "ensemble_home_win_prob": self.ensemble_home_win_prob,
+            "ensemble_draw_prob": self.ensemble_draw_prob,
+            "ensemble_away_win_prob": self.ensemble_away_win_prob,
             "ensemble_predicted_outcome": self.ensemble_predicted_outcome,
             "ensemble_confidence": self.ensemble_confidence,
             "strategy": self.strategy,
@@ -134,10 +133,8 @@ class PredictionService:
 
     def predict_match(
         self,
-    match_data: dict[str,
-    Any],
-    model_name: str | None = None,
-
+        match_data: dict[str, Any],
+        model_name: str | None = None,
         strategy: PredictionStrategy | None = None,
     ) -> Any:
         """
@@ -164,14 +161,10 @@ class PredictionService:
 
         # 使用集成策略
         strategy = strategy or self.default_strategy
-        return self._ensemble_predict(match_data,
-    strategy)
+        return self._ensemble_predict(match_data, strategy)
 
     def _ensemble_predict(
-        self,
-    match_data: dict[str,
-    Any],
-    strategy: PredictionStrategy
+        self, match_data: dict[str, Any], strategy: PredictionStrategy
     ) -> EnsemblePrediction:
         """
         集成预测
@@ -216,10 +209,9 @@ class PredictionService:
 
         return EnsemblePrediction(
             match_id=match_id,
-    home_team=home_team,
-    away_team=away_team,
-    predictions=predictions,
-
+            home_team=home_team,
+            away_team=away_team,
+            predictions=predictions,
             ensemble_home_win_prob=ensemble_result["home_win_prob"],
             ensemble_draw_prob=ensemble_result["draw_prob"],
             ensemble_away_win_prob=ensemble_result["away_win_prob"],
@@ -227,11 +219,9 @@ class PredictionService:
             ensemble_confidence=ensemble_result["confidence"],
             strategy=strategy.value,
             created_at=datetime.now(),
-    )
+        )
 
-    def _weighted_ensemble(self,
-    predictions: list[PredictionResult]) -> dict[str,
-    Any]:
+    def _weighted_ensemble(self, predictions: list[PredictionResult]) -> dict[str, Any]:
         """
         加权集成预测
 
@@ -248,8 +238,7 @@ class PredictionService:
 
         for prediction in predictions:
             model_name = prediction.model_name
-            weight = self.model_weights.get(model_name,
-    1.0)
+            weight = self.model_weights.get(model_name, 1.0)
 
             weighted_home_win += prediction.home_win_prob * weight
             weighted_draw += prediction.draw_prob * weight
@@ -329,9 +318,7 @@ class PredictionService:
             "confidence": confidence,
         }
 
-    def _best_performing(self,
-    predictions: list[PredictionResult]) -> dict[str,
-    Any]:
+    def _best_performing(self, predictions: list[PredictionResult]) -> dict[str, Any]:
         """
         选择表现最好的模型的预测
 
@@ -348,9 +335,7 @@ class PredictionService:
             # 选择性能最好的模型
             best_model_name = max(
                 self.model_performance.keys(),
-    key=lambda x: self.model_performance[x].get("accuracy",
-    0),
-
+                key=lambda x: self.model_performance[x].get("accuracy", 0),
             )
             best_prediction = None
             for prediction in predictions:
@@ -370,36 +355,23 @@ class PredictionService:
         }
 
     def _get_outcome_from_probabilities(
-        self,
-    probabilities: tuple[float,
-    float,
-    float]
+        self, probabilities: tuple[float, float, float]
     ) -> str:
         """从概率分布获取预测结果"""
-        outcomes = ["home_win",
-    "draw",
-    "away_win"]
-        max_index = max(range(3),
-    key=lambda i: probabilities[i])
+        outcomes = ["home_win", "draw", "away_win"]
+        max_index = max(range(3), key=lambda i: probabilities[i])
         return outcomes[max_index]
 
-    def _calculate_confidence(self,
-    probabilities: tuple[float,
-    float,
-    float]) -> float:
+    def _calculate_confidence(self, probabilities: tuple[float, float, float]) -> float:
         """计算预测置信度"""
         max_prob = max(probabilities)
         min_prob = min(probabilities)
         confidence = max_prob + (max_prob - min_prob) * 0.1  # 考虑概率分布的离散程度
-        return min(max(confidence,
-    0.1),
-    1.0)
+        return min(max(confidence, 0.1), 1.0)
 
     def predict_batch(
         self,
-    matches_data: list[dict[str,
-    Any]],
-
+        matches_data: list[dict[str, Any]],
         model_name: str | None = None,
         strategy: PredictionStrategy | None = None,
     ) -> list[Any]:
@@ -421,8 +393,7 @@ class PredictionService:
                 results.append(result)
             except Exception as e:
                 logger.error(
-                    f"Failed to predict match {match_data.get('match_id',
-    'unknown')}: {e}"
+                    f"Failed to predict match {match_data.get('match_id', 'unknown')}: {e}"
                 )
                 continue
 
@@ -472,17 +443,13 @@ class PredictionService:
 
         return {
             "total_models": len(self.models),
-    "trained_models": len(self.get_trained_models()),
-    "default_strategy": self.default_strategy.value,
-    "models": models_info,
-
+            "trained_models": len(self.get_trained_models()),
+            "default_strategy": self.default_strategy.value,
+            "models": models_info,
             "weights": self.model_weights.copy(),
-    }
+        }
 
-    def train_all_models(self,
-    training_data,
-    validation_data=None) -> dict[str,
-    Any]:
+    def train_all_models(self, training_data, validation_data=None) -> dict[str, Any]:
         """
         训练所有模型
 

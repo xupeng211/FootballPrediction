@@ -4,9 +4,8 @@ Response模块增强测试 - 快速提升覆盖率
 """
 
 import re
-from datetime import datetime
 
-from src.utils.response import APIResponseModel, APIResponse, ResponseUtils
+from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
 
 class TestAPIResponseModel:
@@ -15,10 +14,7 @@ class TestAPIResponseModel:
     def test_model_creation_basic(self):
         """测试基本模型创建"""
         model = APIResponseModel(
-            success=True,
-            message="操作成功",
-            data={"id": 1},
-            code="200"
+            success=True, message="操作成功", data={"id": 1}, code="200"
         )
 
         assert model.success is True
@@ -28,10 +24,7 @@ class TestAPIResponseModel:
 
     def test_model_creation_minimal(self):
         """测试最小参数模型创建"""
-        model = APIResponseModel(
-            success=False,
-            message="错误"
-        )
+        model = APIResponseModel(success=False, message="错误")
 
         assert model.success is False
         assert model.message == "错误"
@@ -42,34 +35,24 @@ class TestAPIResponseModel:
         """测试各种数据类型的模型创建"""
         # 测试字典数据
         model_dict = APIResponseModel(
-            success=True,
-            message="字典数据",
-            data={"key": "value", "number": 42}
+            success=True, message="字典数据", data={"key": "value", "number": 42}
         )
         assert model_dict.data["key"] == "value"
 
         # 测试列表数据
         model_list = APIResponseModel(
-            success=True,
-            message="列表数据",
-            data=[1, 2, 3, "four"]
+            success=True, message="列表数据", data=[1, 2, 3, "four"]
         )
         assert len(model_list.data) == 4
 
         # 测试字符串数据
         model_str = APIResponseModel(
-            success=True,
-            message="字符串数据",
-            data="Hello World"
+            success=True, message="字符串数据", data="Hello World"
         )
         assert model_str.data == "Hello World"
 
         # 测试数字数据
-        model_num = APIResponseModel(
-            success=True,
-            message="数字数据",
-            data=123.45
-        )
+        model_num = APIResponseModel(success=True, message="数字数据", data=123.45)
         assert model_num.data == 123.45
 
 
@@ -87,7 +70,7 @@ class TestAPIResponseEnhanced:
 
         # 验证时间戳格式
         timestamp = response["timestamp"]
-        assert re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', timestamp)
+        assert re.match(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", timestamp)
 
     def test_success_with_data(self):
         """测试带数据的成功响应"""
@@ -148,10 +131,7 @@ class TestAPIResponseEnhanced:
 
     def test_error_with_custom_message_and_code(self):
         """测试自定义消息和代码的错误响应"""
-        response = APIResponse.error(
-            message="用户不存在",
-            code=404
-        )
+        response = APIResponse.error(message="用户不存在", code=404)
 
         assert response["success"] is False
         assert response["message"] == "用户不存在"
@@ -161,11 +141,7 @@ class TestAPIResponseEnhanced:
     def test_error_with_data(self):
         """测试带数据的错误响应"""
         error_data = {"field": "email", "reason": "格式不正确"}
-        response = APIResponse.error(
-            message="验证失败",
-            code=400,
-            data=error_data
-        )
+        response = APIResponse.error(message="验证失败", code=400, data=error_data)
 
         assert response["success"] is False
         assert response["message"] == "验证失败"
@@ -176,7 +152,9 @@ class TestAPIResponseEnhanced:
         """测试错误响应别名方法"""
         error_data = {"detail": "权限不足"}
         response1 = APIResponse.error(message="权限错误", code=403, data=error_data)
-        response2 = APIResponse.error_response(message="权限错误", code=403, data=error_data)
+        response2 = APIResponse.error_response(
+            message="权限错误", code=403, data=error_data
+        )
 
         # 两个方法应该产生相同的结果
         assert response1["success"] == response2["success"]
@@ -240,10 +218,7 @@ class TestAPIResponseEnhanced:
         """测试真实世界场景"""
         # 场景1: 用户登录成功
         login_data = {"user_id": 123, "token": "abc123", "expires_in": 3600}
-        login_response = APIResponse.success(
-            data=login_data,
-            message="登录成功"
-        )
+        login_response = APIResponse.success(data=login_data, message="登录成功")
 
         assert login_response["success"] is True
         assert login_response["data"]["user_id"] == 123
@@ -251,12 +226,10 @@ class TestAPIResponseEnhanced:
         # 场景2: 数据验证失败
         validation_errors = [
             {"field": "email", "message": "邮箱格式不正确"},
-            {"field": "password", "message": "密码长度不能少于8位"}
+            {"field": "password", "message": "密码长度不能少于8位"},
         ]
         validation_response = APIResponse.error(
-            message="数据验证失败",
-            code=422,
-            data=validation_errors
+            message="数据验证失败", code=422, data=validation_errors
         )
 
         assert validation_response["success"] is False
@@ -264,19 +237,14 @@ class TestAPIResponseEnhanced:
         assert len(validation_response["data"]) == 2
 
         # 场景3: 数据查询结果为空
-        empty_response = APIResponse.success(
-            data=[],
-            message="查询成功，无数据"
-        )
+        empty_response = APIResponse.success(data=[], message="查询成功，无数据")
 
         assert empty_response["success"] is True
         assert empty_response["data"] == []
 
         # 场景4: 系统内部错误
         system_error_response = APIResponse.error(
-            message="系统内部错误，请联系管理员",
-            code=500,
-            data={"error_id": "ERR_001"}
+            message="系统内部错误，请联系管理员", code=500, data={"error_id": "ERR_001"}
         )
 
         assert system_error_response["success"] is False

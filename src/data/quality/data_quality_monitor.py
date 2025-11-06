@@ -60,10 +60,9 @@ class DataQualityMonitor:
         try:
             freshness_report: dict[str, Any] = {
                 "check_time": datetime.now().isoformat(),
-    "status": "healthy",
-    "issues": [],
-    "warnings": [],
-
+                "status": "healthy",
+                "issues": [],
+                "warnings": [],
                 "details": {},
             }
 
@@ -105,12 +104,11 @@ class DataQualityMonitor:
             self.logger.error(f"数据新鲜度检查失败: {str(e)}")
             return {
                 "check_time": datetime.now().isoformat(),
-    "status": "error",
-    "error": str(e),
-    }
+                "status": "error",
+                "error": str(e),
+            }
 
-    async def detect_anomalies(self) -> list[dict[str,
-    Any]]:
+    async def detect_anomalies(self) -> list[dict[str, Any]]:
         """
         异常检测
 
@@ -136,23 +134,17 @@ class DataQualityMonitor:
             self.logger.info(f"异常检测完成,发现{len(anomalies)}个异常")
             return anomalies
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"异常检测失败: {str(e)}")
             return [
                 {
                     "type": "detection_error",
                     "message": f"异常检测过程出错: {str(e)}",
-    "timestamp": datetime.now().isoformat(),
-    }
+                    "timestamp": datetime.now().isoformat(),
+                }
             ]
 
-    async def _check_fixtures_age(self,
-    session) -> dict[str,
-    Any]:
+    async def _check_fixtures_age(self, session) -> dict[str, Any]:
         """检查赛程数据年龄"""
         try:
             # 查询最近的采集日志
@@ -171,27 +163,21 @@ class DataQualityMonitor:
                 ).total_seconds() / 3600
                 return {
                     "last_update": result.last_update.isoformat(),
-    "hours_since_update": round(hours_since,
-    2),
-    "status": (
+                    "hours_since_update": round(hours_since, 2),
+                    "status": (
                         "ok"
                         if hours_since < self.thresholds["data_freshness_hours"]
                         else "stale"
                     ),
-
                 }
             else:
                 return {
                     "last_update": None,
                     "hours_since_update": float("inf"),
-    "status": "no_data",
-    }
+                    "status": "no_data",
+                }
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"检查赛程数据年龄失败: {str(e)}")
             return {"status": "error", "error": str(e)}
 
@@ -214,23 +200,17 @@ class DataQualityMonitor:
                 ).total_seconds() / 3600
                 return {
                     "last_update": result.last_update.isoformat(),
-    "hours_since_update": round(hours_since,
-    2),
-    "status": "ok" if hours_since < 1 else "stale",
-
+                    "hours_since_update": round(hours_since, 2),
+                    "status": "ok" if hours_since < 1 else "stale",
                 }
             else:
                 return {
                     "last_update": None,
                     "hours_since_update": float("inf"),
-    "status": "no_data",
-    }
+                    "status": "no_data",
+                }
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"检查赔率数据年龄失败: {str(e)}")
             return {"status": "error", "error": str(e)}
 
@@ -242,17 +222,11 @@ class DataQualityMonitor:
 
             return {"count": 0, "matches": [], "check_time": datetime.now().isoformat()}
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"查找缺失比赛失败: {str(e)}")
             return {"count": 0, "error": str(e)}
 
-    async def _find_suspicious_odds(self,
-    session) -> list[dict[str,
-    Any]]:
+    async def _find_suspicious_odds(self, session) -> list[dict[str, Any]]:
         """查找可疑赔率"""
         suspicious_odds: list[Any] = []
 
@@ -293,30 +267,23 @@ class DataQualityMonitor:
                         "bookmaker": row.bookmaker,
                         "odds": {
                             "home": float(row.home_odds) if row.home_odds else None,
-    "draw": float(row.draw_odds) if row.draw_odds else None,
-    "away": float(row.away_odds) if row.away_odds else None,
-    },
-
+                            "draw": float(row.draw_odds) if row.draw_odds else None,
+                            "away": float(row.away_odds) if row.away_odds else None,
+                        },
                         "collected_at": row.collected_at.isoformat(),
-    "severity": "high",
-    }
+                        "severity": "high",
+                    }
                 )
 
             # 查找赔率急剧变化
 
             return suspicious_odds
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"查找可疑赔率失败: {str(e)}")
             return []
 
-    async def _find_unusual_scores(self,
-    session) -> list[dict[str,
-    Any]]:
+    async def _find_unusual_scores(self, session) -> list[dict[str, Any]]:
         """查找异常比分"""
         unusual_scores: list[Any] = []
 
@@ -350,23 +317,17 @@ class DataQualityMonitor:
                         "away_team_id": row.away_team_id,
                         "score": f"{row.home_score}-{row.away_score}",
                         "match_time": row.match_time.isoformat(),
-    "severity": "medium",
-    }
+                        "severity": "medium",
+                    }
                 )
 
             return unusual_scores
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"查找异常比分失败: {str(e)}")
             return []
 
-    async def _check_data_consistency(self,
-    session) -> list[dict[str,
-    Any]]:
+    async def _check_data_consistency(self, session) -> list[dict[str, Any]]:
         """检查数据一致性"""
         consistency_issues: list[Any] = []
 
@@ -389,10 +350,9 @@ class DataQualityMonitor:
                         "type": "inconsistent_match_time",
                         "match_id": row.id,
                         "match_time": row.match_time.isoformat(),
-    "created_at": row.created_at.isoformat(),
-    "message": "比赛时间早于创建时间",
-    "severity": "low",
-
+                        "created_at": row.created_at.isoformat(),
+                        "message": "比赛时间早于创建时间",
+                        "severity": "low",
                     }
                 )
 
@@ -421,25 +381,22 @@ class DataQualityMonitor:
 
             report: dict[str, Any] = {
                 "report_time": datetime.now().isoformat(),
-    "overall_status": self._determine_overall_status(
-                    freshness_check,
-    anomalies
+                "overall_status": self._determine_overall_status(
+                    freshness_check, anomalies
                 ),
-    "quality_score": quality_score,
-
+                "quality_score": quality_score,
                 "freshness_check": freshness_check,
                 "anomalies": {
                     "count": len(anomalies),
-    "high_severity": len(
+                    "high_severity": len(
                         [a for a in anomalies if a.get("severity") == "high"]
                     ),
-    "medium_severity": len(
+                    "medium_severity": len(
                         [a for a in anomalies if a.get("severity") == "medium"]
                     ),
-    "low_severity": len(
+                    "low_severity": len(
                         [a for a in anomalies if a.get("severity") == "low"]
                     ),
-
                     "details": anomalies,
                 },
                 "recommendations": self._generate_recommendations(
@@ -456,13 +413,11 @@ class DataQualityMonitor:
             self.logger.error(f"生成数据质量报告失败: {str(e)}")
             return {
                 "report_time": datetime.now().isoformat(),
-    "overall_status": "error",
-    "error": str(e),
-    }
+                "overall_status": "error",
+                "error": str(e),
+            }
 
-    def _calculate_quality_score(self,
-    freshness_check: dict,
-    anomalies: list) -> float:
+    def _calculate_quality_score(self, freshness_check: dict, anomalies: list) -> float:
         """计算质量评分（0-100）"""
         score = 100.0
 
@@ -483,12 +438,9 @@ class DataQualityMonitor:
         score -= medium_severity_count * 8
         score -= low_severity_count * 3
 
-        return max(0.0,
-    score)
+        return max(0.0, score)
 
-    def _determine_overall_status(self,
-    freshness_check: dict,
-    anomalies: list) -> str:
+    def _determine_overall_status(self, freshness_check: dict, anomalies: list) -> str:
         """确定总体状态"""
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
 
@@ -500,9 +452,7 @@ class DataQualityMonitor:
             return "healthy"
 
     def _generate_recommendations(
-        self,
-    freshness_check: dict,
-    anomalies: list
+        self, freshness_check: dict, anomalies: list
     ) -> list[str]:
         """生成改进建议"""
         recommendations: list[Any] = []

@@ -5,6 +5,7 @@
 
 # 桩实现
 
+
 class DataCompletenessResult:
     """数据完整性结果桩实现"""
 

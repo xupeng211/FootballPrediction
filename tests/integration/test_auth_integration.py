@@ -5,17 +5,15 @@ Authentication Integration Tests
 测试认证系统的完整功能，包括JWT令牌、用户认证、权限验证和安全机制。
 """
 
-import pytest
-import asyncio
 import time
-import jwt
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
-from fastapi import status
 
 from src.api.auth_dependencies import get_current_user, get_current_user_optional
-from src.api.simple_auth import create_access_token, verify_token, authenticate_user
+from src.api.simple_auth import authenticate_user, create_access_token, verify_token
 from src.core.auth import AuthManager
 from src.database.models import User
 
@@ -31,7 +29,7 @@ class TestJWTTokenManagement:
             "user_id": 123,
             "username": "test_user",
             "email": "test@example.com",
-            "permissions": ["read", "write"]
+            "permissions": ["read", "write"],
         }
 
         # 创建访问令牌
@@ -55,10 +53,7 @@ class TestJWTTokenManagement:
         user_data = {"user_id": 123, "username": "test_user"}
 
         # 创建短期令牌（1秒）
-        token = create_access_token(
-            data=user_data,
-            expires_delta=timedelta(seconds=1)
-        )
+        token = create_access_token(data=user_data, expires_delta=timedelta(seconds=1))
 
         # 立即验证应该成功
         payload = verify_token(token)
@@ -114,14 +109,14 @@ class TestUserAuthenticationFlow:
             "username": "test_user",
             "email": "test@example.com",
             "is_active": True,
-            "permissions": ["read", "write"]
+            "permissions": ["read", "write"],
         }
         auth_service.get_user_by_id.return_value = {
             "user_id": 123,
             "username": "test_user",
             "email": "test@example.com",
             "is_active": True,
-            "permissions": ["read", "write"]
+            "permissions": ["read", "write"],
         }
         return auth_service
 
@@ -134,7 +129,7 @@ class TestUserAuthenticationFlow:
             username="test_user",
             email="test@example.com",
             hashed_password="$2b$12$hashed_password",
-            is_active=True
+            is_active=True,
         )
         return user_service
 
@@ -144,11 +139,11 @@ class TestUserAuthenticationFlow:
         password = "test_password"
 
         # 模拟成功认证
-        with patch('src.api.simple_auth.get_user_service') as mock_get_service:
+        with patch("src.api.simple_auth.get_user_service") as mock_get_service:
             mock_get_service.return_value = mock_user_service
 
             # 模拟密码验证
-            with patch('src.api.simple_auth.verify_password') as mock_verify:
+            with patch("src.api.simple_auth.verify_password") as mock_verify:
                 mock_verify.return_value = True
 
                 # 执行认证
@@ -161,11 +156,11 @@ class TestUserAuthenticationFlow:
         username = "test_user"
         password = "wrong_password"
 
-        with patch('src.api.simple_auth.get_user_service') as mock_get_service:
+        with patch("src.api.simple_auth.get_user_service") as mock_get_service:
             mock_get_service.return_value = mock_user_service
 
             # 模拟密码验证失败
-            with patch('src.api.simple_auth.verify_password') as mock_verify:
+            with patch("src.api.simple_auth.verify_password") as mock_verify:
                 mock_verify.return_value = False
 
                 # 执行认证
@@ -177,7 +172,7 @@ class TestUserAuthenticationFlow:
         username = "nonexistent_user"
         password = "test_password"
 
-        with patch('src.api.simple_auth.get_user_service') as mock_get_service:
+        with patch("src.api.simple_auth.get_user_service") as mock_get_service:
             mock_user_service = AsyncMock()
             mock_user_service.get_user_by_username.return_value = None
             mock_get_service.return_value = mock_user_service
@@ -192,7 +187,7 @@ class TestUserAuthenticationFlow:
             "user_id": 123,
             "username": "test_user",
             "email": "test@example.com",
-            "permissions": ["read", "write"]
+            "permissions": ["read", "write"],
         }
 
         # 创建令牌
@@ -200,10 +195,8 @@ class TestUserAuthenticationFlow:
 
         # 模拟HTTP认证头
         from fastapi.security import HTTPAuthorizationCredentials
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         # 提取当前用户
         current_user = get_current_user(credentials=credentials)
@@ -222,10 +215,8 @@ class TestUserAuthenticationFlow:
         token = create_access_token(data=user_data, expires_delta=timedelta(hours=1))
 
         from fastapi.security import HTTPAuthorizationCredentials
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         current_user = get_current_user_optional(credentials=credentials)
         assert current_user is not None
@@ -289,7 +280,7 @@ class TestAuthManagerIntegration:
             "user_id": user_id,
             "username": "test_user",
             "login_time": datetime.utcnow().isoformat(),
-            "last_activity": datetime.utcnow().isoformat()
+            "last_activity": datetime.utcnow().isoformat(),
         }
 
         # 设置Redis客户端
@@ -324,7 +315,7 @@ class TestAuthManagerIntegration:
         user_data = {
             "user_id": 123,
             "username": "test_user",
-            "permissions": ["read", "write", "admin"]
+            "permissions": ["read", "write", "admin"],
         }
 
         # 验证用户权限
@@ -339,34 +330,42 @@ class TestAuthManagerIntegration:
             "user_id": 123,
             "username": "test_user",
             "role": "user",
-            "permissions": ["read", "write:own"]
+            "permissions": ["read", "write:own"],
         }
 
         admin_data = {
             "user_id": 456,
             "username": "admin_user",
             "role": "admin",
-            "permissions": ["read", "write", "delete", "manage_users"]
+            "permissions": ["read", "write", "delete", "manage_users"],
         }
 
         # 定义角色权限映射
         role_permissions = {
             "user": ["read", "write:own"],
-            "admin": ["read", "write", "delete", "manage_users"]
+            "admin": ["read", "write", "delete", "manage_users"],
         }
 
         # 检查用户权限
-        user_has_read = await auth_manager.check_role_permission(user_data, "read", role_permissions)
+        user_has_read = await auth_manager.check_role_permission(
+            user_data, "read", role_permissions
+        )
         assert user_has_read is True
 
-        user_has_delete = await auth_manager.check_role_permission(user_data, "delete", role_permissions)
+        user_has_delete = await auth_manager.check_role_permission(
+            user_data, "delete", role_permissions
+        )
         assert user_has_delete is False
 
         # 检查管理员权限
-        admin_has_delete = await auth_manager.check_role_permission(admin_data, "delete", role_permissions)
+        admin_has_delete = await auth_manager.check_role_permission(
+            admin_data, "delete", role_permissions
+        )
         assert admin_has_delete is True
 
-        admin_has_super = await auth_manager.check_role_permission(admin_data, "super_admin", role_permissions)
+        admin_has_super = await auth_manager.check_role_permission(
+            admin_data, "super_admin", role_permissions
+        )
         assert admin_has_super is False
 
 
@@ -380,6 +379,7 @@ class TestAPISecurityIntegration:
         """创建测试客户端"""
         try:
             from src.main import app
+
             return TestClient(app)
         except ImportError:
             # 如果无法导入应用，创建模拟客户端
@@ -424,8 +424,7 @@ class TestAPISecurityIntegration:
         # 创建已过期的令牌
         user_data = {"user_id": 123, "username": "test_user"}
         expired_token = create_access_token(
-            data=user_data,
-            expires_delta=timedelta(seconds=-1)  # 已过期
+            data=user_data, expires_delta=timedelta(seconds=-1)  # 已过期
         )
 
         # 验证过期令牌
@@ -441,9 +440,7 @@ class TestSecurityVulnerabilities:
     def test_token_brute_force_protection(self):
         """测试令牌暴力破解保护"""
         # 模拟暴力破解尝试
-        invalid_tokens = [
-            f"guess_token_{i}" for i in range(10)
-        ]
+        invalid_tokens = [f"guess_token_{i}" for i in range(10)]
 
         success_count = 0
         for token in invalid_tokens:
@@ -493,7 +490,9 @@ class TestSecurityVulnerabilities:
         """测试时序攻击抵抗"""
         # 创建有效令牌
         user_data = {"user_id": 123, "username": "test_user"}
-        valid_token = create_access_token(data=user_data, expires_delta=timedelta(hours=1))
+        valid_token = create_access_token(
+            data=user_data, expires_delta=timedelta(hours=1)
+        )
 
         # 测试有效令牌和无效令牌的验证时间
         import time

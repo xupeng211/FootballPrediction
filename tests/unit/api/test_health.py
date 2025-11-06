@@ -5,17 +5,18 @@ API健康检查单元测试
 测试 src.api.health 模块的功能
 """
 
-import pytest
-import sys
 import os
-from unittest.mock import Mock, patch
+import sys
+from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 try:
-    from src.api.health import router, health_check, system_health, database_health
+    from src.api.health import database_health, health_check, router, system_health
     from src.main_simple import app
 except ImportError:
     # 如果无法导入，使用模拟测试
@@ -95,7 +96,7 @@ class TestHealthAPI:
             assert "database" in data
             assert "status" in data
 
-    @patch('src.api.health.psutil')
+    @patch("src.api.health.psutil")
     def test_system_metrics_with_mock(self, mock_psutil):
         """测试系统指标（使用模拟）"""
         # 模拟psutil返回数据
@@ -113,7 +114,7 @@ class TestHealthAPI:
         else:
             pytest.skip("system_health function not available")
 
-    @patch('src.api.health.time.time')
+    @patch("src.api.health.time.time")
     def test_timestamp_in_health_response(self, mock_time):
         """测试健康响应包含时间戳"""
         mock_time.return_value = 1234567890.123
@@ -159,7 +160,7 @@ class TestHealthAPI:
     async def test_async_health_check(self):
         """测试异步健康检查（如果存在）"""
         # 检查是否有异步版本的健康检查
-        if hasattr(health_check, '__code__') and health_check.__code__.co_flags & 0x80:
+        if hasattr(health_check, "__code__") and health_check.__code__.co_flags & 0x80:
             result = await health_check()
             assert isinstance(result, dict)
         else:
@@ -197,24 +198,31 @@ class TestHealthAPI:
     def test_custom_health_indicators(self):
         """测试自定义健康指标"""
         # 如果存在自定义健康指标检查
-        if hasattr(health_check, '__code__'):
+        if hasattr(health_check, "__code__"):
             # 检查函数是否有自定义实现
             source_lines = health_check.__code__.co_firstlineno
             assert source_lines > 0  # 基本验证函数存在
         else:
             pytest.skip("health_check function not available")
 
-    @pytest.mark.parametrize("status,expected_code", [
-        ("healthy", 200),
-        ("degraded", 200),
-        ("unhealthy", 503),
-    ])
+    @pytest.mark.parametrize(
+        "status,expected_code",
+        [
+            ("healthy", 200),
+            ("degraded", 200),
+            ("unhealthy", 503),
+        ],
+    )
     def test_health_status_response_codes(self, status, expected_code):
         """测试不同健康状态对应的HTTP状态码"""
         # 这个测试需要根据实际实现调整
         if health_check:
             # 模拟不同状态的健康检查
-            with patch.object(health_check, 'return_value', {"status": status, "timestamp": "2024-01-01T00:00:00Z"}):
+            with patch.object(
+                health_check,
+                "return_value",
+                {"status": status, "timestamp": "2024-01-01T00:00:00Z"},
+            ):
                 if app:
                     client = TestClient(app)
                     response = client.get("/health")
@@ -260,8 +268,10 @@ class TestHealthAPIIntegration:
     @pytest.fixture
     def mock_external_dependencies(self):
         """模拟外部依赖"""
-        with patch('src.api.health.psutil') as mock_psutil, \
-             patch('src.api.health.time.time') as mock_time:
+        with (
+            patch("src.api.health.psutil") as mock_psutil,
+            patch("src.api.health.time.time") as mock_time,
+        ):
             mock_psutil.cpu_percent.return_value = 25.0
             mock_psutil.virtual_memory.return_value.percent = 50.0
             mock_psutil.disk_usage.return_value.percent = 30.0
@@ -307,12 +317,11 @@ class TestHealthRouter:
     def test_router_initialization(self):
         """测试路由器初始化"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
 
     def test_router_endpoints(self):
         """测试路由器端点"""
         routes = [route.path for route in router.routes]
-        expected_endpoints = ["/health", "/health/system", "/health/database"]
 
         # 至少应该有基础健康检查端点
         assert "/health" in routes

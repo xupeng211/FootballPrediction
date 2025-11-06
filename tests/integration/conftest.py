@@ -6,20 +6,15 @@ Integration Tests Configuration
 """
 
 import asyncio
+from collections.abc import AsyncGenerator
+from unittest.mock import MagicMock
+
 import pytest
-import tempfile
-import os
-from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock
-
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from src.main import app
-from src.database.connection import get_async_session
 from src.database.models import Base
-from src.core.config import get_settings
+from src.main import app
 
 
 @pytest.fixture(scope="session")
@@ -53,9 +48,7 @@ async def test_db_engine():
 async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
     """创建测试数据库会话"""
     async_session = async_sessionmaker(
-        test_db_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        test_db_engine, class_=AsyncSession, expire_on_commit=False
     )
 
     async with async_session() as session:
@@ -95,7 +88,7 @@ def mock_settings():
 @pytest.fixture
 async def sample_data(test_db_session: AsyncSession):
     """创建测试数据"""
-    from src.database.models import Team, Match
+    from src.database.models import Match, Team
 
     # 创建测试球队
     teams = [
@@ -103,14 +96,14 @@ async def sample_data(test_db_session: AsyncSession):
             name="Test Team A",
             short_name="TTA",
             country="Test Country",
-            founded_year=2020
+            founded_year=2020,
         ),
         Team(
             name="Test Team B",
             short_name="TTB",
             country="Test Country",
-            founded_year=2021
-        )
+            founded_year=2021,
+        ),
     ]
 
     for team in teams:
@@ -120,6 +113,7 @@ async def sample_data(test_db_session: AsyncSession):
 
     # 创建测试比赛
     from datetime import datetime
+
     match = Match(
         home_team_id=teams[0].id,
         away_team_id=teams[1].id,
@@ -128,7 +122,7 @@ async def sample_data(test_db_session: AsyncSession):
         match_date=datetime(2024, 1, 15, 15, 0, 0),
         league="Test League",
         status="upcoming",
-        venue="Test Stadium"
+        venue="Test Stadium",
     )
 
     test_db_session.add(match)
@@ -139,15 +133,13 @@ async def sample_data(test_db_session: AsyncSession):
     for team in teams:
         await test_db_session.refresh(team)
 
-    return {
-        "teams": teams,
-        "match": match
-    }
+    return {"teams": teams, "match": match}
 
 
 @pytest.fixture
 def override_db_dependency(test_db_session: AsyncSession):
     """覆盖数据库依赖"""
+
     async def get_test_db():
         yield test_db_session
 

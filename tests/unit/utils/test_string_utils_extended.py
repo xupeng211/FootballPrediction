@@ -5,30 +5,31 @@
 补充 src.utils.string_utils 模块的测试覆盖
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.utils.string_utils import (
-    clean_string,
-    normalize_text,
-    extract_numbers,
-    format_phone_number,
-    validate_email,
-    generate_slug,
-    truncate_text,
-    reverse_string,
-    count_words,
     capitalize_words,
-    remove_special_chars,
-    is_palindrome,
+    clean_string,
+    count_words,
+    extract_numbers,
     find_substring_positions,
+    format_phone_number,
+    generate_slug,
+    is_palindrome,
+    join_text,
+    normalize_text,
+    remove_special_chars,
     replace_multiple,
+    reverse_string,
     split_text,
-    join_text
+    truncate_text,
+    validate_email,
 )
 
 
@@ -147,7 +148,10 @@ class TestStringUtilsExtended:
         """测试移除特殊字符"""
         assert remove_special_chars("hello@world!") == "helloworld"
         assert remove_special_chars("test#123$%^") == "test123"
-        assert remove_special_chars("keep-underscores_and spaces", keep_chars="_ ") == "keep-underscores_and spaces"
+        assert (
+            remove_special_chars("keep-underscores_and spaces", keep_chars="_ ")
+            == "keep-underscores_and spaces"
+        )
 
     def test_is_palindrome(self):
         """测试回文检测"""
@@ -155,7 +159,10 @@ class TestStringUtilsExtended:
         assert is_palindrome("level") is True
         assert is_palindrome("hello") is False
         assert is_palindrome("") is True  # 空字符串是回文
-        assert is_palindrome("A man a plan a canal Panama".replace(" ", "").lower()) is True
+        assert (
+            is_palindrome("A man a plan a canal Panama".replace(" ", "").lower())
+            is True
+        )
 
     def test_find_substring_positions(self):
         """测试查找子字符串位置"""
@@ -250,15 +257,18 @@ class TestStringUtilsExtended:
         assert isinstance(result, str)
         assert len(result) <= 23  # 考虑省略号
 
-    @pytest.mark.parametrize("input_text,expected", [
-        ("simple", "simple"),
-        ("  spaced  ", "spaced"),
-        ("CAPITAL", "capital"),
-        ("Mixed CASE", "mixed case"),
-        ("with-dashes", "withdashes"),
-        ("with_underscores", "withunderscores"),
-        ("with123numbers", "with123numbers"),
-    ])
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("simple", "simple"),
+            ("  spaced  ", "spaced"),
+            ("CAPITAL", "capital"),
+            ("Mixed CASE", "mixed case"),
+            ("with-dashes", "withdashes"),
+            ("with_underscores", "withunderscores"),
+            ("with123numbers", "with123numbers"),
+        ],
+    )
     def test_clean_string_parametrized(self, input_text, expected):
         """参数化测试字符串清理"""
         result = clean_string(input_text)
@@ -275,7 +285,6 @@ class TestStringUtilsExtended:
 
     def test_memory_efficiency(self):
         """测试内存效率"""
-        import sys
 
         # 处理大字符串
         large_string = "x" * 1000000

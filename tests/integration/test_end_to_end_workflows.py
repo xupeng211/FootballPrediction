@@ -5,10 +5,8 @@ End-to-End Business Logic Integration Tests
 测试完整的业务流程，从数据收集到预测生成的整个链条。
 """
 
+
 import pytest
-import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 
 
@@ -28,7 +26,7 @@ class TestDataCollectionWorkflow:
         collect_data = {
             "collection_type": "teams",
             "data_source": "mock",
-            "force_refresh": False
+            "force_refresh": False,
         }
 
         response = test_client.post("/api/data/collect/teams", json=collect_data)
@@ -49,7 +47,7 @@ class TestDataCollectionWorkflow:
             "collection_type": "all",
             "days_ahead": 30,
             "data_source": "mock",
-            "force_refresh": False
+            "force_refresh": False,
         }
 
         response = test_client.post("/api/data/collect/all", json=collect_data)
@@ -73,13 +71,12 @@ class TestPredictionWorkflow:
     async def test_single_match_prediction_workflow(self, test_client: TestClient):
         """测试单场比赛预测工作流"""
         # 1. 创建预测请求
-        prediction_request = {
-            "model_version": "default",
-            "include_details": True
-        }
+        prediction_request = {"model_version": "default", "include_details": True}
 
         # 2. 生成预测
-        response = test_client.post("/api/predictions/1/predict", json=prediction_request)
+        response = test_client.post(
+            "/api/predictions/1/predict", json=prediction_request
+        )
         # 接受201或404
         assert response.status_code in [201, 404]
 
@@ -97,10 +94,7 @@ class TestPredictionWorkflow:
     async def test_batch_prediction_workflow(self, test_client: TestClient):
         """测试批量预测工作流"""
         # 1. 创建批量预测请求
-        batch_request = {
-            "match_ids": [1, 2, 3, 4, 5],
-            "model_version": "default"
-        }
+        batch_request = {"match_ids": [1, 2, 3, 4, 5], "model_version": "default"}
 
         # 2. 生成批量预测
         response = test_client.post("/api/predictions/batch", json=batch_request)
@@ -130,11 +124,11 @@ class TestPredictionWorkflow:
     async def test_prediction_verification_workflow(self, test_client: TestClient):
         """测试预测验证工作流"""
         # 1. 验证预测结果
-        verification_data = {
-            "actual_result": "home"
-        }
+        verification_data = {"actual_result": "home"}
 
-        response = test_client.post("/api/predictions/1/verify", params=verification_data)
+        response = test_client.post(
+            "/api/predictions/1/verify", params=verification_data
+        )
         assert response.status_code in [200, 404]
 
         # 2. 验证验证结果
@@ -259,7 +253,7 @@ class TestBusinessLogicIntegration:
 
                 prediction_response = test_client.post(
                     f"/api/predictions/{match_id}/predict",
-                    json={"model_version": "default"}
+                    json={"model_version": "default"},
                 )
                 assert prediction_response.status_code in [201, 404]
 
@@ -267,9 +261,9 @@ class TestBusinessLogicIntegration:
                     prediction = prediction_response.json()
                     # 验证预测结果的业务逻辑
                     total_prob = (
-                        prediction["home_win_prob"] +
-                        prediction["draw_prob"] +
-                        prediction["away_win_prob"]
+                        prediction["home_win_prob"]
+                        + prediction["draw_prob"]
+                        + prediction["away_win_prob"]
                     )
                     assert abs(total_prob - 1.0) < 0.01  # 允许小的浮点误差
                     assert prediction["confidence"] >= 0
@@ -289,8 +283,10 @@ class TestBusinessLogicIntegration:
         assert predictions_response.status_code in [200, 404]
 
         # 3. 验证数据一致性
-        if (stats_response.status_code == 200 and
-            predictions_response.status_code == 200):
+        if (
+            stats_response.status_code == 200
+            and predictions_response.status_code == 200
+        ):
 
             stats_data = stats_response.json()
             predictions_data = predictions_response.json()
@@ -330,11 +326,7 @@ class TestPerformanceIntegration:
         import time
 
         # 测试多个端点的响应时间
-        endpoints = [
-            "/api/health",
-            "/api/",
-            "/api/monitoring/status"
-        ]
+        endpoints = ["/api/health", "/api/", "/api/monitoring/status"]
 
         response_times = []
 
@@ -344,11 +336,13 @@ class TestPerformanceIntegration:
             end_time = time.time()
 
             # 记录响应时间（接受404状态码）
-            response_times.append({
-                "endpoint": endpoint,
-                "status_code": response.status_code,
-                "response_time": end_time - start_time
-            })
+            response_times.append(
+                {
+                    "endpoint": endpoint,
+                    "status_code": response.status_code,
+                    "response_time": end_time - start_time,
+                }
+            )
 
         # 验证平均响应时间
         avg_time = sum(r["response_time"] for r in response_times) / len(response_times)
@@ -357,8 +351,7 @@ class TestPerformanceIntegration:
         # 验证所有端点都在合理时间内响应
         for result in response_times:
             assert result["response_time"] < 2.0, (
-                f"Endpoint {result['endpoint']} took "
-                f"{result['response_time']:.2f}s"
+                f"Endpoint {result['endpoint']} took " f"{result['response_time']:.2f}s"
             )
 
     def test_concurrent_request_handling(self, test_client: TestClient):
@@ -375,10 +368,12 @@ class TestPerformanceIntegration:
                 response = test_client.get("/api/health")
                 end_time = time.time()
 
-                results.append({
-                    "status_code": response.status_code,
-                    "response_time": end_time - start_time
-                })
+                results.append(
+                    {
+                        "status_code": response.status_code,
+                        "response_time": end_time - start_time,
+                    }
+                )
             except Exception as e:
                 errors.append(str(e))
 

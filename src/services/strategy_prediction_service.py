@@ -38,9 +38,8 @@ class StrategyPredictionService:
 
     def __init__(
         self,
-    strategy_factory: PredictionStrategyFactory,
-    prediction_domain_service: PredictionDomainService,
-
+        strategy_factory: PredictionStrategyFactory,
+        prediction_domain_service: PredictionDomainService,
         match_repository: MatchRepository,
         prediction_repository: PredictionRepository,
         default_strategy: str = "ensemble_predictor",
@@ -76,10 +75,9 @@ class StrategyPredictionService:
 
     async def predict_match(
         self,
-    match_id: int,
-    user_id: int,
-    strategy_name: str | None = None,
-
+        match_id: int,
+        user_id: int,
+        strategy_name: str | None = None,
         confidence: float | None = None,
         notes: str | None = None,
     ) -> Prediction:
@@ -111,10 +109,9 @@ class StrategyPredictionService:
         # 创建预测上下文
         context = PredictionContext(
             match=match,
-    home_team=home_team,
-    away_team=away_team,
-    user_id=user_id,
-
+            home_team=home_team,
+            away_team=away_team,
+            user_id=user_id,
         )
 
         # 准备预测输入
@@ -126,10 +123,9 @@ class StrategyPredictionService:
         # 使用领域服务创建预测
         _prediction = self._prediction_domain_service.create_prediction(
             user_id=user_id,
-    match=match,
-    predicted_home=prediction_output.predicted_home_score,
-    predicted_away=prediction_output.predicted_away_score,
-
+            match=match,
+            predicted_home=prediction_output.predicted_home_score,
+            predicted_away=prediction_output.predicted_away_score,
             confidence=prediction_output.confidence,
             notes=notes,
         )
@@ -138,7 +134,9 @@ class StrategyPredictionService:
         await self._prediction_repository.create(_prediction)
 
         # 记录预测详情
-        await self._log_prediction_details(_prediction, prediction_output, strategy_name)
+        await self._log_prediction_details(
+            _prediction, prediction_output, strategy_name
+        )
 
         logger.info(
             f"用户 {user_id} 对比赛 {match_id} 完成预测,使用策略: {strategy_name}"
@@ -147,10 +145,7 @@ class StrategyPredictionService:
         return _prediction
 
     async def batch_predict(
-        self,
-    match_ids: list[int],
-    user_id: int,
-    strategy_name: str | None = None
+        self, match_ids: list[int], user_id: int, strategy_name: str | None = None
     ) -> list[Prediction]:
         """批量预测比赛"
 
@@ -180,10 +175,7 @@ class StrategyPredictionService:
             away_team = await self._get_team_info(match.away_team_id)
 
             context = PredictionContext(
-                match=match,
-    home_team=home_team,
-    away_team=away_team,
-    user_id=user_id
+                match=match, home_team=home_team, away_team=away_team, user_id=user_id
             )
 
             prediction_input = await self._prepare_prediction_input(context)
@@ -198,7 +190,6 @@ class StrategyPredictionService:
         for context, output in zip(contexts, prediction_outputs, strict=False):
             _prediction = self._prediction_domain_service.create_prediction(
                 user_id=user_id,
-
                 match=context.match,
                 predicted_home=output.predicted_home_score,
                 predicted_away=output.predicted_away_score,
@@ -214,20 +205,17 @@ class StrategyPredictionService:
         return predictions
 
     async def compare_strategies(
-        self,
-    match_id: int,
-    strategy_names: list[str] | None = None
-    ) -> dict[str,
-    PredictionOutput]:
+        self, match_id: int, strategy_names: list[str] | None = None
+    ) -> dict[str, PredictionOutput]:
         """比较不同策略的预测结果"
 
-        Args:
-            match_id: 比赛ID
-            strategy_names: 要比较的策略列表,
-    None表示比较所有可用策略
+            Args:
+                match_id: 比赛ID
+                strategy_names: 要比较的策略列表,
+        None表示比较所有可用策略
 
-        Returns:
-            Dict[str, PredictionOutput]: 各策略的预测结果
+            Returns:
+                Dict[str, PredictionOutput]: 各策略的预测结果
         """
         # 获取比赛信息
         match = await self._match_repository.get_by_id(match_id)
@@ -267,20 +255,17 @@ class StrategyPredictionService:
         return results
 
     async def get_strategy_performance(
-        self,
-    strategy_name: str,
-    days: int = 30
-    ) -> dict[str,
-    Any] | None:
+        self, strategy_name: str, days: int = 30
+    ) -> dict[str, Any] | None:
         """获取策略性能指标"
 
-        Args:
-            strategy_name: 策略名称
-            days: 统计天数
+            Args:
+                strategy_name: 策略名称
+                days: 统计天数
 
-        Returns:
-            Optional[Dict[str,
-    Any]]: 性能指标
+            Returns:
+                Optional[Dict[str,
+        Any]]: 性能指标
         """
         strategy = self._strategy_factory.get_strategy(strategy_name)
         if not strategy:
@@ -310,15 +295,12 @@ class StrategyPredictionService:
                 "f1_score": metrics.f1_score,
                 "total_predictions": metrics.total_predictions,
                 "last_updated": metrics.last_updated.isoformat(),
-    },
-    "actual_performance": actual_performance,
-    "recent_predictions_count": len(recent_predictions),
-
+            },
+            "actual_performance": actual_performance,
+            "recent_predictions_count": len(recent_predictions),
         }
 
-    async def update_strategy_weights(self,
-    strategy_weights: dict[str,
-    float]) -> None:
+    async def update_strategy_weights(self, strategy_weights: dict[str, float]) -> None:
         """更新集成策略的权重"
 
         Args:
@@ -354,13 +336,11 @@ class StrategyPredictionService:
                 "name": name,
                 "type": strategy.strategy_type.value,
                 "healthy": strategy.is_healthy(),
-    "is_default": name == self._default_strategy,
-    "metrics": (
+                "is_default": name == self._default_strategy,
+                "metrics": (
                     strategy.get_metrics().__dict__ if strategy.get_metrics() else None
                 ),
-    "health": health_report.get(name,
-    {}),
-
+                "health": health_report.get(name, {}),
             }
 
         return strategies_info
@@ -382,8 +362,7 @@ class StrategyPredictionService:
         return Team(id=team_id, name=f"Team_{team_id}", league_id=1)
 
     async def _prepare_prediction_input(
-        self,
-    context: PredictionContext
+        self, context: PredictionContext
     ) -> PredictionInput:
         """准备预测输入数据"""
         # 收集历史数据
@@ -392,21 +371,18 @@ class StrategyPredictionService:
         # 创建预测输入
         return PredictionInput(
             match=context.match,
-    home_team=context.home_team,
-    away_team=context.away_team,
-
+            home_team=context.home_team,
+            away_team=context.away_team,
             historical_data=historical_data,
             additional_features={
                 "user_id": context.user_id,
                 "request_time": context.timestamp.isoformat(),
-    },
-    )
+            },
+        )
 
     async def _collect_historical_data(
-        self,
-    context: PredictionContext
-    ) -> dict[str,
-    Any]:
+        self, context: PredictionContext
+    ) -> dict[str, Any]:
         """收集历史数据"""
         # 这里应该从数据库或缓存获取历史数据
         # 简化实现,返回模拟数据
@@ -435,10 +411,9 @@ class StrategyPredictionService:
 
     async def _log_prediction_details(
         self,
-    prediction: Prediction,
-    prediction_output: PredictionOutput,
-    strategy_name: str,
-
+        prediction: Prediction,
+        prediction_output: PredictionOutput,
+        strategy_name: str,
     ) -> None:
         """记录预测详情"""
         details = {

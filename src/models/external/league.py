@@ -29,11 +29,7 @@ class ExternalLeague(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     external_id = Column(
-        String(50),
-        unique=True,
-        nullable=False,
-        index=True,
-        comment="外部API的联赛ID"
+        String(50), unique=True, nullable=False, index=True, comment="外部API的联赛ID"
     )
 
     # 联赛基本信息
@@ -60,10 +56,7 @@ class ExternalLeague(Base):
     raw_data = Column(JSON, nullable=True, comment="原始API数据")
     created_at = Column(DateTime, default=datetime.utcnow, comment="创建时间")
     updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        comment="更新时间"
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间"
     )
 
     # 状态标志
@@ -153,9 +146,7 @@ class ExternalLeague(Base):
 
     @classmethod
     def from_api_data(
-        cls,
-        data: dict[str, Any],
-        is_supported: bool = False
+        cls, data: dict[str, Any], is_supported: bool = False
     ) -> "ExternalLeague":
         """从API数据创建实例"""
         try:
@@ -328,14 +319,13 @@ class ExternalLeague(Base):
         except Exception as e:
             # 记录错误但不抛出异常
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Error updating league {self.external_id}: {e}")
             return False
 
     def update_statistics(
-        self,
-        total_teams: int = None,
-        total_matches: int = None
+        self, total_teams: int = None, total_matches: int = None
     ) -> None:
         """更新统计信息"""
         if total_teams is not None:
@@ -369,10 +359,7 @@ class ExternalLeagueStandings(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     league_id = Column(
-        Integer,
-        ForeignKey("external_leagues.id"),
-        nullable=False,
-        comment="联赛ID"
+        Integer, ForeignKey("external_leagues.id"), nullable=False, comment="联赛ID"
     )
     external_league_id = Column(String(50), nullable=False, comment="外部联赛ID")
 
@@ -411,10 +398,7 @@ class ExternalLeagueStandings(Base):
     raw_data = Column(JSON, nullable=True, comment="原始API数据")
     created_at = Column(DateTime, default=datetime.utcnow, comment="创建时间")
     updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        comment="更新时间"
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间"
     )
 
     # 关联关系
@@ -470,10 +454,7 @@ class ExternalLeagueStandings(Base):
 
     @classmethod
     def from_api_data(
-        cls,
-        data: dict[str, Any],
-        league_id: int,
-        external_league_id: str
+        cls, data: dict[str, Any], league_id: int, external_league_id: str
     ) -> "ExternalLeagueStandings":
         """从API数据创建实例"""
         try:

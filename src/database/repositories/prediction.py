@@ -24,6 +24,7 @@ Prediction = Predictions
 # 预测状态常量
 class PredictionStatus:
     """类文档字符串"""
+
     pass  # 添加pass语句
     PENDING = "pending"
     COMPLETED = "completed"
@@ -42,7 +43,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     def __init__(self, db_manager=None):
         """函数文档字符串"""
         pass
-  # 添加pass语句
+        # 添加pass语句
         super().__init__(Predictions, db_manager)
 
     # ========================================
@@ -74,7 +75,9 @@ class PredictionRepository(BaseRepository[Predictions]):
 
         return await self.find_by(filters=filters, limit=limit)
 
-    async def get_by_user(self, user_id: str, status: str | None = None) -> list[Prediction]:
+    async def get_by_user(
+        self, user_id: str, status: str | None = None
+    ) -> list[Prediction]:
         """
         获取指定用户的预测
 
@@ -93,7 +96,9 @@ class PredictionRepository(BaseRepository[Predictions]):
 
         return await self.find_by(filters=filters)
 
-    async def get_by_status(self, status: PredictionStatus, limit: int | None = None) -> list[Prediction]:
+    async def get_by_status(
+        self, status: PredictionStatus, limit: int | None = None
+    ) -> list[Prediction]:
         """
         根据状态获取预测
 
@@ -106,9 +111,9 @@ class PredictionRepository(BaseRepository[Predictions]):
         """
         return await self.find_by(
             filters={
-                "status": status
-                if isinstance(status, PredictionStatus)
-                else str(status)
+                "status": (
+                    status if isinstance(status, PredictionStatus) else str(status)
+                )
             },
             limit=limit,
         )

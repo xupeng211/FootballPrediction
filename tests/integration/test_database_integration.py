@@ -5,14 +5,12 @@ Database Integration Tests
 测试数据库操作的完整功能，包括模型CRUD、事务处理和数据完整性。
 """
 
-import pytest
-import asyncio
-from datetime import datetime, date
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from src.database.models import Team, Match, Prediction
-from src.database.connection import get_async_session
+import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.database.models import Match, Prediction, Team
 
 
 @pytest.mark.integration
@@ -29,7 +27,7 @@ class TestDatabaseModels:
             country="Test Country",
             founded_year=2024,
             venue="Test Stadium",
-            website="https://test-team.com"
+            website="https://test-team.com",
         )
 
         test_db_session.add(team)
@@ -62,7 +60,9 @@ class TestDatabaseModels:
         result = await test_db_session.execute(stmt)
         assert result.scalar_one_or_none() is None
 
-    async def test_match_crud_operations(self, test_db_session: AsyncSession, sample_data):
+    async def test_match_crud_operations(
+        self, test_db_session: AsyncSession, sample_data
+    ):
         """测试比赛CRUD操作"""
         teams = sample_data["teams"]
         match = sample_data["match"]
@@ -91,7 +91,9 @@ class TestDatabaseModels:
         assert match_with_team[0].id == match.id
         assert match_with_team[1].id == teams[0].id
 
-    async def test_prediction_crud_operations(self, test_db_session: AsyncSession, sample_data):
+    async def test_prediction_crud_operations(
+        self, test_db_session: AsyncSession, sample_data
+    ):
         """测试预测CRUD操作"""
         match = sample_data["match"]
 
@@ -103,7 +105,7 @@ class TestDatabaseModels:
             away_win_prob=0.15,
             predicted_outcome="home",
             confidence=0.75,
-            model_version="test_model_v1"
+            model_version="test_model_v1",
         )
 
         test_db_session.add(prediction)
@@ -197,7 +199,9 @@ class TestDatabaseTransactions:
 class TestDatabaseRelationships:
     """数据库关系集成测试"""
 
-    async def test_match_team_relationship(self, test_db_session: AsyncSession, sample_data):
+    async def test_match_team_relationship(
+        self, test_db_session: AsyncSession, sample_data
+    ):
         """测试比赛与球队关系"""
         teams = sample_data["teams"]
         match = sample_data["match"]
@@ -216,7 +220,9 @@ class TestDatabaseRelationships:
         assert fetched_match.home_team_id == teams[0].id
         assert fetched_match.away_team_id == teams[1].id
 
-    async def test_prediction_match_relationship(self, test_db_session: AsyncSession, sample_data):
+    async def test_prediction_match_relationship(
+        self, test_db_session: AsyncSession, sample_data
+    ):
         """测试预测与比赛关系"""
         match = sample_data["match"]
 
@@ -229,7 +235,7 @@ class TestDatabaseRelationships:
                 away_win_prob=0.2,
                 predicted_outcome="home",
                 confidence=0.7,
-                model_version="model_v1"
+                model_version="model_v1",
             ),
             Prediction(
                 match_id=match.id,
@@ -238,8 +244,8 @@ class TestDatabaseRelationships:
                 away_win_prob=0.2,
                 predicted_outcome="draw",
                 confidence=0.6,
-                model_version="model_v2"
-            )
+                model_version="model_v2",
+            ),
         ]
 
         for pred in predictions:
@@ -285,7 +291,7 @@ class TestDatabaseConstraints:
             away_win_prob=0.2,
             predicted_outcome="home",
             confidence=0.7,
-            model_version="test_model"
+            model_version="test_model",
         )
 
         test_db_session.add(prediction)
@@ -321,7 +327,7 @@ class TestDatabasePerformance:
                 name=f"Performance Team {i}",
                 short_name=f"PT{i}",
                 country="Test Country",
-                founded_year=2020 + (i % 10)
+                founded_year=2020 + (i % 10),
             )
             teams.append(team)
 
@@ -352,9 +358,7 @@ class TestDatabasePerformance:
         teams = []
         for i in range(50):
             team = Team(
-                name=f"Query Team {i}",
-                short_name=f"QT{i}",
-                country="Test Country"
+                name=f"Query Team {i}", short_name=f"QT{i}", country="Test Country"
             )
             teams.append(team)
 

@@ -10,8 +10,7 @@ import pytest
 
 # 导入目标模块
 from core.logger import *  # TODO: Convert to explicit imports
-from src.core.logger import get_logger
-from src.core.logger import setup_logger
+from src.core.logger import get_logger, setup_logger
 
 
 class TestLogger:

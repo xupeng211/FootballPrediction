@@ -3,7 +3,6 @@
 """
 
 from dataclasses import dataclass
-from typing import Optional, List
 from datetime import datetime
 
 # 常量
@@ -17,29 +16,31 @@ CANCELLED = "CANCELLED"
 @dataclass
 class MatchStatus:
     """比赛状态枚举类"""
+
     status: str
 
     @classmethod
-    def scheduled(cls) -> 'MatchStatus':
+    def scheduled(cls) -> "MatchStatus":
         return cls(SCHEDULED)
 
     @classmethod
-    def live(cls) -> 'MatchStatus':
+    def live(cls) -> "MatchStatus":
         return cls(LIVE)
 
     @classmethod
-    def finished(cls) -> 'MatchStatus':
+    def finished(cls) -> "MatchStatus":
         return cls(FINISHED)
 
 
 @dataclass
 class FootballTeam:
     """足球队数据模型"""
-    id: Optional[int] = None
-    name: Optional[str] = None
-    league: Optional[str] = None
-    country: Optional[str] = None
-    founded_year: Optional[int] = None
+
+    id: int | None = None
+    name: str | None = None
+    league: str | None = None
+    country: str | None = None
+    founded_year: int | None = None
 
     def __post_init__(self):
         if self.name is None:
@@ -49,12 +50,13 @@ class FootballTeam:
 @dataclass
 class FootballPlayer:
     """足球运动员数据模型"""
-    id: Optional[int] = None
-    name: Optional[str] = None
-    team_id: Optional[int] = None
-    position: Optional[str] = None
-    age: Optional[int] = None
-    jersey_number: Optional[int] = None
+
+    id: int | None = None
+    name: str | None = None
+    team_id: int | None = None
+    position: str | None = None
+    age: int | None = None
+    jersey_number: int | None = None
 
     def __post_init__(self):
         if self.name is None:
@@ -64,14 +66,15 @@ class FootballPlayer:
 @dataclass
 class FootballMatch:
     """足球比赛数据模型"""
-    id: Optional[int] = None
-    home_team: Optional[FootballTeam] = None
-    away_team: Optional[FootballTeam] = None
-    status: Optional[MatchStatus] = None
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    match_date: Optional[datetime] = None
-    venue: Optional[str] = None
+
+    id: int | None = None
+    home_team: FootballTeam | None = None
+    away_team: FootballTeam | None = None
+    status: MatchStatus | None = None
+    home_score: int | None = None
+    away_score: int | None = None
+    match_date: datetime | None = None
+    venue: str | None = None
 
     def __post_init__(self):
         if self.status is None:
@@ -85,15 +88,15 @@ class FootballMatch:
 class FootballApiAdaptee:
     """足球API被适配者基类"""
 
-    def fetch_match_data(self, match_id: int) -> Optional[dict]:
+    def fetch_match_data(self, match_id: int) -> dict | None:
         """获取比赛数据"""
         raise NotImplementedError("子类必须实现此方法")
 
-    def fetch_team_data(self, team_id: int) -> Optional[dict]:
+    def fetch_team_data(self, team_id: int) -> dict | None:
         """获取球队数据"""
         raise NotImplementedError("子类必须实现此方法")
 
-    def fetch_player_data(self, player_id: int) -> Optional[dict]:
+    def fetch_player_data(self, player_id: int) -> dict | None:
         """获取球员数据"""
         raise NotImplementedError("子类必须实现此方法")
 
@@ -101,16 +104,18 @@ class FootballApiAdaptee:
 class ApiFootballAdaptee(FootballApiAdaptee):
     """API-Football被适配者"""
 
-    def __init__(self, api_key: str, base_url: str = "https://api-football-v1.p.rapidapi.com"):
+    def __init__(
+        self, api_key: str, base_url: str = "https://api-football-v1.p.rapidapi.com"
+    ):
         self.api_key = api_key
         self.base_url = base_url
 
-    def fetch_match_data(self, match_id: int) -> Optional[dict]:
+    def fetch_match_data(self, match_id: int) -> dict | None:
         """从API-Football获取比赛数据"""
         # TODO: 实现API调用逻辑
         return {"id": match_id, "source": "api-football"}
 
-    def fetch_team_data(self, team_id: int) -> Optional[dict]:
+    def fetch_team_data(self, team_id: int) -> dict | None:
         """从API-Football获取球队数据"""
         # TODO: 实现API调用逻辑
         return {"id": team_id, "source": "api-football"}
@@ -123,12 +128,12 @@ class OptaDataAdaptee(FootballApiAdaptee):
         self.api_key = api_key
         self.base_url = base_url
 
-    def fetch_match_data(self, match_id: int) -> Optional[dict]:
+    def fetch_match_data(self, match_id: int) -> dict | None:
         """从Opta获取比赛数据"""
         # TODO: 实现API调用逻辑
         return {"id": match_id, "source": "opta"}
 
-    def fetch_player_data(self, player_id: int) -> Optional[dict]:
+    def fetch_player_data(self, player_id: int) -> dict | None:
         """从Opta获取球员数据"""
         # TODO: 实现API调用逻辑
         return {"id": player_id, "source": "opta"}
@@ -159,25 +164,27 @@ class FootballDataTransformer:
 class FootballApiAdapter:
     """足球API适配器基类"""
 
-    def __init__(self, adaptee: FootballApiAdaptee, transformer: FootballDataTransformer):
+    def __init__(
+        self, adaptee: FootballApiAdaptee, transformer: FootballDataTransformer
+    ):
         self.adaptee = adaptee
         self.transformer = transformer
 
-    def get_match(self, match_id: int) -> Optional[FootballMatch]:
+    def get_match(self, match_id: int) -> FootballMatch | None:
         """获取比赛信息"""
         data = self.adaptee.fetch_match_data(match_id)
         if data:
             return self.transformer.transform_to_match(data)
         return None
 
-    def get_team(self, team_id: int) -> Optional[FootballTeam]:
+    def get_team(self, team_id: int) -> FootballTeam | None:
         """获取球队信息"""
         data = self.adaptee.fetch_team_data(team_id)
         if data:
             return self.transformer.transform_to_team(data)
         return None
 
-    def get_player(self, player_id: int) -> Optional[FootballPlayer]:
+    def get_player(self, player_id: int) -> FootballPlayer | None:
         """获取球员信息"""
         data = self.adaptee.fetch_player_data(player_id)
         if data:
@@ -206,10 +213,10 @@ class OptaDataAdapter(FootballApiAdapter):
 class CompositeFootballAdapter:
     """复合适配器,集成多个足球数据源"""
 
-    def __init__(self, adapters: List[FootballApiAdapter]):
+    def __init__(self, adapters: list[FootballApiAdapter]):
         self.adapters = adapters
 
-    def get_match(self, match_id: int) -> Optional[FootballMatch]:
+    def get_match(self, match_id: int) -> FootballMatch | None:
         """从多个数据源获取比赛信息"""
         for adapter in self.adapters:
             try:
@@ -220,7 +227,7 @@ class CompositeFootballAdapter:
                 continue
         return None
 
-    def get_team(self, team_id: int) -> Optional[FootballTeam]:
+    def get_team(self, team_id: int) -> FootballTeam | None:
         """从多个数据源获取球队信息"""
         for adapter in self.adapters:
             try:
@@ -255,14 +262,14 @@ class FootballDataAdapter:
         if player.id:
             self.players[player.id] = player
 
-    def get_match(self, match_id: int) -> Optional[FootballMatch]:
+    def get_match(self, match_id: int) -> FootballMatch | None:
         """获取比赛数据"""
         return self.matches.get(match_id)
 
-    def get_team(self, team_id: int) -> Optional[FootballTeam]:
+    def get_team(self, team_id: int) -> FootballTeam | None:
         """获取球队数据"""
         return self.teams.get(team_id)
 
-    def get_player(self, player_id: int) -> Optional[FootballPlayer]:
+    def get_player(self, player_id: int) -> FootballPlayer | None:
         """获取球员数据"""
         return self.players.get(player_id)

@@ -6,14 +6,16 @@ Data Collectors Simple Tests
 Tests core functionality of data collection system based on actual module structure.
 """
 
-import pytest
-import asyncio
-import json
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from unittest.mock import patch
 
-from src.data.collectors import BaseCollector, FixturesCollector, OddsCollector, ScoresCollector
+import pytest
+
+from src.data.collectors import (
+    BaseCollector,
+    FixturesCollector,
+    OddsCollector,
+    ScoresCollector,
+)
 
 
 class TestBaseCollectorSimple:
@@ -68,18 +70,20 @@ class TestFixturesCollectorSimple:
         """测试赛程采集器初始化"""
         assert fixtures_collector is not None
         assert isinstance(fixtures_collector.config, dict)
-        assert hasattr(fixtures_collector, 'collect')
+        assert hasattr(fixtures_collector, "collect")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_mock(self, fixtures_collector):
         """测试模拟采集赛程数据"""
         # 模拟采集方法
-        with patch.object(fixtures_collector, 'collect') as mock_collect:
+        with patch.object(fixtures_collector, "collect") as mock_collect:
             expected_data = [
                 {"match_id": 12345, "home_team": "Team A", "away_team": "Team B"},
-                {"match_id": 12346, "home_team": "Team C", "away_team": "Team D"}
+                {"match_id": 12346, "home_team": "Team C", "away_team": "Team D"},
             ]
-            mock_collect.return_value = fixtures_collector.create_success_result(expected_data)
+            mock_collect.return_value = fixtures_collector.create_success_result(
+                expected_data
+            )
 
             result = await fixtures_collector.collect()
 
@@ -93,21 +97,21 @@ class TestFixturesCollectorSimple:
             "match_id": 12345,
             "home_team": "Team A",
             "away_team": "Team B",
-            "date": "2024-01-15T15:00:00Z"
+            "date": "2024-01-15T15:00:00Z",
         }
 
         invalid_match = {
             "match_id": None,  # 无效ID
-            "home_team": "",   # 空队伍名
-            "away_team": None
+            "home_team": "",  # 空队伍名
+            "away_team": None,
         }
 
         # 基本验证逻辑
         def validate_match(match):
             return (
-                match.get("match_id") is not None and
-                match.get("home_team") and
-                match.get("away_team")
+                match.get("match_id") is not None
+                and match.get("home_team")
+                and match.get("away_team")
             )
 
         assert validate_match(valid_match) is True
@@ -131,17 +135,19 @@ class TestOddsCollectorSimple:
     @pytest.mark.asyncio
     async def test_collect_odds_mock(self, odds_collector):
         """测试模拟采集赔率数据"""
-        with patch.object(odds_collector, 'collect') as mock_collect:
+        with patch.object(odds_collector, "collect") as mock_collect:
             expected_data = [
                 {
                     "match_id": 12345,
                     "home_win": 2.10,
                     "draw": 3.40,
                     "away_win": 3.20,
-                    "bookmaker": "Bet365"
+                    "bookmaker": "Bet365",
                 }
             ]
-            mock_collect.return_value = odds_collector.create_success_result(expected_data)
+            mock_collect.return_value = odds_collector.create_success_result(
+                expected_data
+            )
 
             result = await odds_collector.collect()
 
@@ -184,16 +190,18 @@ class TestScoresCollectorSimple:
     @pytest.mark.asyncio
     async def test_collect_scores_mock(self, scores_collector):
         """测试模拟采集比分数据"""
-        with patch.object(scores_collector, 'collect') as mock_collect:
+        with patch.object(scores_collector, "collect") as mock_collect:
             expected_data = [
                 {
                     "match_id": 12345,
                     "status": "LIVE",
                     "minute": 65,
-                    "score": {"home": 2, "away": 1}
+                    "score": {"home": 2, "away": 1},
                 }
             ]
-            mock_collect.return_value = scores_collector.create_success_result(expected_data)
+            mock_collect.return_value = scores_collector.create_success_result(
+                expected_data
+            )
 
             result = await scores_collector.collect()
 
@@ -211,8 +219,8 @@ class TestScoresCollectorSimple:
             "events": [
                 {"type": "goal", "minute": 23, "team": "home"},
                 {"type": "goal", "minute": 45, "team": "away"},
-                {"type": "goal", "minute": 67, "team": "home"}
-            ]
+                {"type": "goal", "minute": 67, "team": "home"},
+            ],
         }
 
         # 验证比分处理
@@ -233,28 +241,28 @@ class TestDataCollectorsIntegrationSimple:
         scores_collector = ScoresCollector({"live_only": False})
 
         # 模拟采集赛程数据
-        with patch.object(fixtures_collector, 'collect') as mock_fixtures:
-            mock_fixtures.return_value = fixtures_collector.create_success_result([
-                {"match_id": 12345, "home_team": "Team A", "away_team": "Team B"}
-            ])
+        with patch.object(fixtures_collector, "collect") as mock_fixtures:
+            mock_fixtures.return_value = fixtures_collector.create_success_result(
+                [{"match_id": 12345, "home_team": "Team A", "away_team": "Team B"}]
+            )
 
             fixtures_result = await fixtures_collector.collect()
             assert fixtures_result.success is True
 
         # 模拟采集赔率数据
-        with patch.object(odds_collector, 'collect') as mock_odds:
-            mock_odds.return_value = odds_collector.create_success_result([
-                {"match_id": 12345, "home_win": 2.10, "draw": 3.40, "away_win": 3.20}
-            ])
+        with patch.object(odds_collector, "collect") as mock_odds:
+            mock_odds.return_value = odds_collector.create_success_result(
+                [{"match_id": 12345, "home_win": 2.10, "draw": 3.40, "away_win": 3.20}]
+            )
 
             odds_result = await odds_collector.collect()
             assert odds_result.success is True
 
         # 模拟采集比分数据
-        with patch.object(scores_collector, 'collect') as mock_scores:
-            mock_scores.return_value = scores_collector.create_success_result([
-                {"match_id": 12345, "status": "FT", "home_score": 2, "away_score": 1}
-            ])
+        with patch.object(scores_collector, "collect") as mock_scores:
+            mock_scores.return_value = scores_collector.create_success_result(
+                [{"match_id": 12345, "status": "FT", "home_score": 2, "away_score": 1}]
+            )
 
             scores_result = await scores_collector.collect()
             assert scores_result.success is True
@@ -265,6 +273,7 @@ class TestDataCollectorsIntegrationSimple:
 
     def test_data_quality_validation_simple(self):
         """测试简化的数据质量验证"""
+
         def validate_match_data(match_data):
             """验证比赛数据质量"""
             required_fields = ["match_id", "home_team", "away_team"]
@@ -281,7 +290,7 @@ class TestDataCollectorsIntegrationSimple:
             "match_id": 12345,
             "home_team": "Team A",
             "away_team": "Team B",
-            "date": "2024-01-15T15:00:00Z"
+            "date": "2024-01-15T15:00:00Z",
         }
 
         is_valid, errors = validate_match_data(valid_match)
@@ -291,7 +300,7 @@ class TestDataCollectorsIntegrationSimple:
         # 测试无效数据
         invalid_match = {
             "match_id": None,
-            "home_team": "Team A"
+            "home_team": "Team A",
             # 缺少 away_team
         }
 
@@ -305,14 +314,14 @@ class TestDataCollectorsIntegrationSimple:
         collector = FixturesCollector({"league_id": 39})
 
         # 模拟网络错误
-        with patch.object(collector, 'collect') as mock_collect:
+        with patch.object(collector, "collect") as mock_collect:
             mock_collect.side_effect = Exception("Network error")
 
             with pytest.raises(Exception):
                 await collector.collect()
 
         # 模拟成功恢复
-        with patch.object(collector, 'collect') as mock_collect:
+        with patch.object(collector, "collect") as mock_collect:
             mock_collect.return_value = collector.create_success_result([])
 
             result = await collector.collect()
@@ -331,7 +340,7 @@ class TestDataCollectorsIntegrationSimple:
                     "match_id": i,
                     "home_team": f"Team {i}",
                     "away_team": f"Team {i+1}",
-                    "date": "2024-01-15T15:00:00Z"
+                    "date": "2024-01-15T15:00:00Z",
                 }
                 data.append(match)
             return data
@@ -350,8 +359,20 @@ class TestDataCollectorsIntegrationSimple:
     def test_data_transformation_simple(self):
         """测试简化的数据转换"""
         raw_data = [
-            {"match_id": 12345, "home": "Team A", "away": "Team B", "home_score": 2, "away_score": 1},
-            {"match_id": 12346, "home": "Team C", "away": "Team D", "home_score": 1, "away_score": 1}
+            {
+                "match_id": 12345,
+                "home": "Team A",
+                "away": "Team B",
+                "home_score": 2,
+                "away_score": 1,
+            },
+            {
+                "match_id": 12346,
+                "home": "Team C",
+                "away": "Team D",
+                "home_score": 1,
+                "away_score": 1,
+            },
         ]
 
         # 数据转换：统一字段名
@@ -363,7 +384,7 @@ class TestDataCollectorsIntegrationSimple:
                 "away_team": match["away"],
                 "home_score": match["home_score"],
                 "away_score": match["away_score"],
-                "total_goals": match["home_score"] + match["away_score"]
+                "total_goals": match["home_score"] + match["away_score"],
             }
             transformed_data.append(transformed_match)
 

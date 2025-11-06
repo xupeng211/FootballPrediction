@@ -4,14 +4,14 @@ from .base_unified import BaseService
 from .content_analysis import ContentAnalysisService
 from .data_processing import DataProcessingService
 from .manager import ServiceManager, service_manager
-from .user_profile import UserProfileService
 from .prediction_service import (
-    PredictionService,
     PredictionResult,
+    PredictionService,
     get_prediction_service,
     predict_match,
-    predict_match_async
+    predict_match_async,
 )
+from .user_profile import UserProfileService
 
 """
 足球预测系统业务服务模块

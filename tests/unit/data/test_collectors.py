@@ -6,14 +6,16 @@ Data Collectors Tests
 Tests core functionality of data collection system.
 """
 
-import pytest
-import asyncio
-import json
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from unittest.mock import AsyncMock, patch
 
-from src.data.collectors import BaseCollector, FixturesCollector, OddsCollector, ScoresCollector
+import pytest
+
+from src.data.collectors import (
+    BaseCollector,
+    FixturesCollector,
+    OddsCollector,
+    ScoresCollector,
+)
 from src.data.collectors.streaming_collector import StreamingCollector
 
 
@@ -29,9 +31,9 @@ class TestBaseCollector:
         """测试基础采集器初始化"""
         assert collector is not None
         assert collector.name == "test_collector"
-        assert hasattr(collector, 'logger')
-        assert hasattr(collector, 'session')
-        assert hasattr(collector, 'cache')
+        assert hasattr(collector, "logger")
+        assert hasattr(collector, "session")
+        assert hasattr(collector, "cache")
 
     @pytest.mark.asyncio
     async def test_base_collector_abstract_methods(self, collector):
@@ -46,7 +48,7 @@ class TestBaseCollector:
     @pytest.mark.asyncio
     async def test_base_collector_http_request(self, collector):
         """测试HTTP请求功能"""
-        with patch.object(collector.session, 'get') as mock_get:
+        with patch.object(collector.session, "get") as mock_get:
             mock_response = AsyncMock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"data": "test"}
@@ -60,7 +62,7 @@ class TestBaseCollector:
     @pytest.mark.asyncio
     async def test_base_collector_error_handling(self, collector):
         """测试错误处理"""
-        with patch.object(collector.session, 'get') as mock_get:
+        with patch.object(collector.session, "get") as mock_get:
             mock_get.side_effect = Exception("Network error")
 
             with pytest.raises(Exception):
@@ -79,8 +81,8 @@ class TestFixturesCollector:
         """测试赛程采集器初始化"""
         assert fixtures_collector is not None
         assert fixtures_collector.name == "fixtures_collector"
-        assert hasattr(fixtures_collector, 'processed_matches')
-        assert hasattr(fixtures_collector, 'leagues')
+        assert hasattr(fixtures_collector, "processed_matches")
+        assert hasattr(fixtures_collector, "leagues")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_success(self, fixtures_collector):
@@ -93,12 +95,12 @@ class TestFixturesCollector:
                     "away_team": {"id": 2, "name": "Team B"},
                     "league": {"id": 39, "name": "Premier League"},
                     "date": "2024-01-15T15:00:00Z",
-                    "status": "NS"
+                    "status": "NS",
                 }
             ]
         }
 
-        with patch.object(fixtures_collector, '_make_request') as mock_request:
+        with patch.object(fixtures_collector, "_make_request") as mock_request:
             mock_request.return_value = mock_api_response
 
             result = await fixtures_collector.collect_data()
@@ -110,7 +112,7 @@ class TestFixturesCollector:
     @pytest.mark.asyncio
     async def test_collect_fixtures_empty_response(self, fixtures_collector):
         """测试空响应处理"""
-        with patch.object(fixtures_collector, '_make_request') as mock_request:
+        with patch.object(fixtures_collector, "_make_request") as mock_request:
             mock_request.return_value = {"matches": []}
 
             result = await fixtures_collector.collect_data()
@@ -124,24 +126,26 @@ class TestFixturesCollector:
             "id": 12345,
             "league_id": 39,
             "home_team": "Team A",
-            "away_team": "Team B"
+            "away_team": "Team B",
         }
         match2 = {
             "id": 12345,
             "league_id": 39,
             "home_team": "Team A",
-            "away_team": "Team B"
+            "away_team": "Team B",
         }
         match3 = {
             "id": 67890,
             "league_id": 39,
             "home_team": "Team C",
-            "away_team": "Team D"
+            "away_team": "Team D",
         }
 
         # 添加重复比赛
         fixtures_collector.processed_matches.add("12345_39")
-        unique_matches = fixtures_collector._deduplicate_matches([match1, match2, match3])
+        unique_matches = fixtures_collector._deduplicate_matches(
+            [match1, match2, match3]
+        )
 
         assert len(unique_matches) == 2
         assert unique_matches[0]["id"] == 67890  # 新比赛应该保留
@@ -154,7 +158,7 @@ class TestFixturesCollector:
             "home_team": {"id": 1, "name": "Team A"},
             "away_team": {"id": 2, "name": "Team B"},
             "league": {"id": 39, "name": "Premier League"},
-            "date": "2024-01-15T15:00:00Z"
+            "date": "2024-01-15T15:00:00Z",
         }
 
         invalid_match = {
@@ -162,7 +166,7 @@ class TestFixturesCollector:
             "home_team": None,  # 缺少主队
             "away_team": {"id": 2, "name": "Team B"},
             "league": {"id": 39, "name": "Premier League"},
-            "date": "invalid_date"  # 无效日期
+            "date": "invalid_date",  # 无效日期
         }
 
         assert fixtures_collector._validate_match(valid_match) is True
@@ -173,7 +177,7 @@ class TestFixturesCollector:
         """测试联赛数据处理"""
         league_data = [
             {"id": 39, "name": "Premier League", "country": "England"},
-            {"id": 140, "name": "La Liga", "country": "Spain"}
+            {"id": 140, "name": "La Liga", "country": "Spain"},
         ]
 
         processed_leagues = fixtures_collector._process_league_data(league_data)
@@ -197,8 +201,8 @@ class TestOddsCollector:
         """测试赔率采集器初始化"""
         assert odds_collector is not None
         assert odds_collector.name == "odds_collector"
-        assert hasattr(odds_collector, 'bookmakers')
-        assert hasattr(odds_collector, 'odds_history')
+        assert hasattr(odds_collector, "bookmakers")
+        assert hasattr(odds_collector, "odds_history")
 
     @pytest.mark.asyncio
     async def test_collect_odds_success(self, odds_collector):
@@ -211,7 +215,7 @@ class TestOddsCollector:
                     "home_win": 2.10,
                     "draw": 3.40,
                     "away_win": 3.20,
-                    "timestamp": "2024-01-15T10:00:00Z"
+                    "timestamp": "2024-01-15T10:00:00Z",
                 },
                 {
                     "match_id": 12345,
@@ -219,12 +223,12 @@ class TestOddsCollector:
                     "home_win": 2.15,
                     "draw": 3.35,
                     "away_win": 3.25,
-                    "timestamp": "2024-01-15T10:00:00Z"
-                }
+                    "timestamp": "2024-01-15T10:00:00Z",
+                },
             ]
         }
 
-        with patch.object(odds_collector, '_make_request') as mock_request:
+        with patch.object(odds_collector, "_make_request") as mock_request:
             mock_request.return_value = mock_odds_response
 
             result = await odds_collector.collect_data()
@@ -238,7 +242,7 @@ class TestOddsCollector:
         odds_data = [
             {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
             {"home_win": 2.15, "draw": 3.35, "away_win": 3.25},
-            {"home_win": 2.05, "draw": 3.45, "away_win": 3.30}
+            {"home_win": 2.05, "draw": 3.45, "away_win": 3.30},
         ]
 
         avg_odds = odds_collector._calculate_average_odds(odds_data)
@@ -253,13 +257,13 @@ class TestOddsCollector:
         normal_odds = [
             {"home_win": 2.10, "timestamp": "2024-01-15T10:00:00Z"},
             {"home_win": 2.15, "timestamp": "2024-01-15T11:00:00Z"},
-            {"home_win": 2.12, "timestamp": "2024-01-15T12:00:00Z"}
+            {"home_win": 2.12, "timestamp": "2024-01-15T12:00:00Z"},
         ]
 
         anomalous_odds = [
             {"home_win": 2.10, "timestamp": "2024-01-15T10:00:00Z"},
             {"home_win": 2.15, "timestamp": "2024-01-15T11:00:00Z"},
-            {"home_win": 4.50, "timestamp": "2024-01-15T12:00:00Z"}  # 异常跳跃
+            {"home_win": 4.50, "timestamp": "2024-01-15T12:00:00Z"},  # 异常跳跃
         ]
 
         normal_anomalies = odds_collector._detect_odds_anomalies(normal_odds)
@@ -275,9 +279,9 @@ class TestOddsCollector:
 
         probabilities = odds_collector._calculate_implied_probability(odds)
 
-        assert abs(probabilities["home_win"] - (1/2.10)) < 0.01
-        assert abs(probabilities["draw"] - (1/3.40)) < 0.01
-        assert abs(probabilities["away_win"] - (1/3.20)) < 0.01
+        assert abs(probabilities["home_win"] - (1 / 2.10)) < 0.01
+        assert abs(probabilities["draw"] - (1 / 3.40)) < 0.01
+        assert abs(probabilities["away_win"] - (1 / 3.20)) < 0.01
 
         # 验证概率总和（考虑庄家优势）
         total_prob = sum(probabilities.values())
@@ -296,7 +300,7 @@ class TestScoresCollector:
         """测试比分采集器初始化"""
         assert scores_collector is not None
         assert scores_collector.name == "scores_collector"
-        assert hasattr(scores_collector, 'live_matches')
+        assert hasattr(scores_collector, "live_matches")
 
     @pytest.mark.asyncio
     async def test_collect_live_scores(self, scores_collector):
@@ -311,13 +315,13 @@ class TestScoresCollector:
                     "events": [
                         {"type": "goal", "minute": 23, "team": "home"},
                         {"type": "goal", "minute": 45, "team": "away"},
-                        {"type": "goal", "minute": 65, "team": "home"}
-                    ]
+                        {"type": "goal", "minute": 65, "team": "home"},
+                    ],
                 }
             ]
         }
 
-        with patch.object(scores_collector, '_make_request') as mock_request:
+        with patch.object(scores_collector, "_make_request") as mock_request:
             mock_request.return_value = mock_scores_response
 
             result = await scores_collector.collect_data()
@@ -334,7 +338,13 @@ class TestScoresCollector:
             {"type": "goal", "minute": 23, "team": "home", "player": "Player A"},
             {"type": "yellow_card", "minute": 45, "team": "away", "player": "Player B"},
             {"type": "red_card", "minute": 67, "team": "home", "player": "Player C"},
-            {"type": "substitution", "minute": 78, "team": "away", "player_in": "Player D", "player_out": "Player E"}
+            {
+                "type": "substitution",
+                "minute": 78,
+                "team": "away",
+                "player_in": "Player D",
+                "player_out": "Player E",
+            },
         ]
 
         processed_events = scores_collector._process_events(events)
@@ -351,14 +361,14 @@ class TestScoresCollector:
             "match_id": 12345,
             "status": "FT",
             "score": {"home": 2, "away": 1},
-            "events": []
+            "events": [],
         }
 
         invalid_score = {
             "match_id": None,  # 无效ID
             "status": "INVALID_STATUS",  # 无效状态
             "score": {"home": -1, "away": 1},  # 无效比分
-            "events": None
+            "events": None,
         }
 
         assert scores_collector._validate_score(valid_score) is True
@@ -377,13 +387,13 @@ class TestStreamingCollector:
         """测试流数据采集器初始化"""
         assert streaming_collector is not None
         assert streaming_collector.name == "streaming_collector"
-        assert hasattr(streaming_collector, 'websocket')
-        assert hasattr(streaming_collector, 'is_streaming')
+        assert hasattr(streaming_collector, "websocket")
+        assert hasattr(streaming_collector, "is_streaming")
 
     @pytest.mark.asyncio
     async def test_start_streaming(self, streaming_collector):
         """测试开始流数据采集"""
-        with patch.object(streaming_collector, '_connect_websocket') as mock_connect:
+        with patch.object(streaming_collector, "_connect_websocket") as mock_connect:
             mock_connect.return_value = AsyncMock()
 
             await streaming_collector.start_streaming()
@@ -396,7 +406,9 @@ class TestStreamingCollector:
         """测试停止流数据采集"""
         streaming_collector.is_streaming = True
 
-        with patch.object(streaming_collector, '_disconnect_websocket') as mock_disconnect:
+        with patch.object(
+            streaming_collector, "_disconnect_websocket"
+        ) as mock_disconnect:
             await streaming_collector.stop_streaming()
 
             assert streaming_collector.is_streaming is False
@@ -411,11 +423,13 @@ class TestStreamingCollector:
             "data": {
                 "score": {"home": 1, "away": 0},
                 "minute": 35,
-                "event": {"type": "goal", "team": "home"}
-            }
+                "event": {"type": "goal", "team": "home"},
+            },
         }
 
-        processed_data = await streaming_collector._process_streaming_data(streaming_data)
+        processed_data = await streaming_collector._process_streaming_data(
+            streaming_data
+        )
 
         assert processed_data["match_id"] == 12345
         assert processed_data["score"]["home"] == 1
@@ -426,7 +440,7 @@ class TestStreamingCollector:
         """测试流数据处理错误"""
         invalid_data = {"invalid": "data"}
 
-        with patch.object(streaming_collector.logger, 'error') as mock_logger:
+        with patch.object(streaming_collector.logger, "error") as mock_logger:
             result = await streaming_collector._process_streaming_data(invalid_data)
 
             assert result is None
@@ -444,10 +458,14 @@ class TestDataCollectorsIntegration:
         scores_collector = ScoresCollector()
 
         # 模拟采集赛程数据
-        with patch.object(fixtures_collector, '_make_request') as mock_fixtures:
+        with patch.object(fixtures_collector, "_make_request") as mock_fixtures:
             mock_fixtures.return_value = {
                 "matches": [
-                    {"id": 12345, "home_team": {"name": "Team A"}, "away_team": {"name": "Team B"}}
+                    {
+                        "id": 12345,
+                        "home_team": {"name": "Team A"},
+                        "away_team": {"name": "Team B"},
+                    }
                 ]
             }
 
@@ -455,10 +473,15 @@ class TestDataCollectorsIntegration:
             assert len(fixtures_data["matches"]) > 0
 
         # 模拟采集赔率数据
-        with patch.object(odds_collector, '_make_request') as mock_odds:
+        with patch.object(odds_collector, "_make_request") as mock_odds:
             mock_odds.return_value = {
                 "odds": [
-                    {"match_id": 12345, "home_win": 2.10, "draw": 3.40, "away_win": 3.20}
+                    {
+                        "match_id": 12345,
+                        "home_win": 2.10,
+                        "draw": 3.40,
+                        "away_win": 3.20,
+                    }
                 ]
             }
 
@@ -466,7 +489,7 @@ class TestDataCollectorsIntegration:
             assert len(odds_data["odds"]) > 0
 
         # 模拟采集比分数据
-        with patch.object(scores_collector, '_make_request') as mock_scores:
+        with patch.object(scores_collector, "_make_request") as mock_scores:
             mock_scores.return_value = {
                 "matches": [
                     {"id": 12345, "status": "LIVE", "score": {"home": 1, "away": 0}}
@@ -486,10 +509,10 @@ class TestDataCollectorsIntegration:
         collector = FixturesCollector()
 
         # 模拟网络错误，然后恢复
-        with patch.object(collector, '_make_request') as mock_request:
+        with patch.object(collector, "_make_request") as mock_request:
             mock_request.side_effect = [
                 Exception("Network error"),  # 第一次失败
-                {"matches": []}  # 第二次成功
+                {"matches": []},  # 第二次成功
             ]
 
             # 第一次调用应该失败
@@ -507,7 +530,7 @@ class TestDataCollectorsIntegration:
 
         collector = OddsCollector()
 
-        with patch.object(collector, '_make_request') as mock_request:
+        with patch.object(collector, "_make_request") as mock_request:
             mock_request.return_value = {
                 "odds": [{"match_id": i, "home_win": 2.0 + i * 0.1} for i in range(100)]
             }
@@ -531,7 +554,7 @@ class TestDataCollectorsIntegration:
             "away_team": {"id": 2, "name": "Team B"},
             "league": {"id": 39, "name": "Premier League"},
             "date": "2024-01-15T15:00:00Z",
-            "status": "NS"
+            "status": "NS",
         }
 
         # 测试无效数据
@@ -539,7 +562,11 @@ class TestDataCollectorsIntegration:
             {},  # 空数据
             {"id": None},  # 缺少ID
             {"id": 12345, "home_team": None},  # 缺少主队
-            {"id": 12345, "home_team": {"name": "Team A"}, "away_team": None},  # 缺少客队
+            {
+                "id": 12345,
+                "home_team": {"name": "Team A"},
+                "away_team": None,
+            },  # 缺少客队
         ]
 
         assert collector._validate_match(valid_match) is True

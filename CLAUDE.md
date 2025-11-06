@@ -150,31 +150,34 @@ pytest --cov=src --cov-report=term-missing  # 查看覆盖详情
 ### 🎯 一键修复工具
 ```bash
 python3 scripts/smart_quality_fixer.py      # 智能自动修复（核心工具）
-python3 scripts/quality_guardian.py --check-only  # 全面质量检查
 make fix-code                               # 一键修复格式和语法
+make ci-auto-fix                            # CI/CD自动修复流程
 ```
 
 ### 📊 质量检查命令
 ```bash
 make check-quality     # 完整质量检查
-make lint             # 运行flake8和mypy
+make lint             # 运行代码检查
 make fmt              # 使用black和isort格式化
 make syntax-check     # 语法错误检查
+make ci-check         # CI/CD质量检查
 ```
 
 ### 🛠️ 现代化工具
 ```bash
-# Ruff - 统一代码检查和格式化（推荐）
+# Ruff - 统一代码检查和格式化（主要工具）
 ruff check src/ tests/       # 代码检查
 ruff format src/ tests/      # 代码格式化
 ruff check src/ tests/ --fix # 自动修复
+
+# 类型检查和安全
+mypy src/ --ignore-missing-imports  # MyPy类型检查
+bandit -r src/                     # 安全检查
 
 # 传统工具链（备用）
 black src/ tests/            # Black格式化
 isort src/ tests/            # 导入排序
 flake8 src/ tests/           # 代码检查
-mypy src/ --ignore-missing-imports  # MyPy类型检查
-bandit -r src/               # 安全检查
 ```
 
 ---
@@ -182,20 +185,22 @@ bandit -r src/               # 安全检查
 ## 🚀 开发工作流程
 
 ### 📋 推荐开发流程
-1. **启动**: `make install && make env-check`
-2. **修复**: `python3 scripts/smart_quality_fixer.py`
+1. **环境启动**: `make install && make env-check`
+2. **智能修复**: `python3 scripts/smart_quality_fixer.py`
 3. **开发**: 编写代码和测试
-4. **验证**: `make test.unit && make coverage`
-5. **提交**: `make prepush`
+4. **质量检查**: `make ci-check`
+5. **测试验证**: `make test.unit && make coverage`
+6. **提交**: `make prepush`
 
 ### 🎯 渐进式改进策略
 当遇到大量质量问题时：
-1. **语法修复** - 修复invalid-syntax错误
+1. **语法修复** - 运行 `make ci-auto-fix` 修复语法错误
 2. **功能重建** - 恢复影响测试的核心功能
-3. **测试验证** - 确保测试通过
-4. **成果提交** - 记录改进成果
+3. **测试验证** - 运行 `make test-crisis-fix` 解决测试危机
+4. **质量提升** - 执行 `make improve-test-quality`
+5. **成果提交** - 记录改进成果
 
-### 📈 质量监控
+### 📈 质量监控和CI/CD
 ```bash
 # 检查语法错误数量
 ruff check src/ --output-format=concise | grep "invalid-syntax" | wc -l
@@ -205,6 +210,12 @@ pytest tests/unit/utils/ tests/unit/core/ --maxfail=5 -x --tb=no | grep -E "(PAS
 
 # 验证核心功能
 python3 -c "import src.utils.date_utils as du; import src.cache.decorators as cd; print(f'✅ 核心功能正常')"
+
+# 运行完整CI/CD流程
+make ci-full-workflow
+
+# 生成质量报告
+make ci-quality-report
 ```
 
 ---
@@ -215,6 +226,8 @@ python3 -c "import src.utils.date_utils as du; import src.cache.decorators as cd
 ```bash
 make up              # 启动所有服务（app + db + redis + nginx）
 make down            # 停止所有服务
+make deploy          # 构建并部署容器
+make rollback TAG=<sha>  # 回滚到指定版本
 docker-compose exec app make test.unit  # 容器中运行测试
 ```
 
@@ -225,8 +238,22 @@ docker-compose exec app make test.unit  # 容器中运行测试
 
 ### 🔍 访问地址
 - **API文档**: http://localhost:8000/docs
-- **监控面板**: http://localhost:3000（Grafana）
+- **应用服务**: http://localhost:8000
 - **数据库**: localhost:5432
+- **Redis**: localhost:6379
+- **Nginx代理**: http://localhost:80
+
+### 🚀 部署工作流
+```bash
+# 开发环境部署
+make dev-setup
+
+# 生产环境部署
+make devops-deploy
+
+# 环境验证
+make devops-validate
+```
 
 ---
 
@@ -234,14 +261,17 @@ docker-compose exec app make test.unit  # 容器中运行测试
 
 ### 🚨 测试失败处理
 ```bash
-# 1. 测试危机修复
-python3 scripts/fix_test_crisis.py
+# 1. 测试危机修复（首选）
+make solve-test-crisis
 
 # 2. 智能质量修复
 python3 scripts/smart_quality_fixer.py
 
 # 3. 验证修复结果
 make test.unit
+
+# 4. 生成状态报告
+make test-status-report
 ```
 
 ### 🔧 环境问题修复
@@ -250,15 +280,28 @@ make test.unit
 make clean && make install && make test.unit
 
 # 依赖缺失问题
-source .venv/bin/activate
-pip install pandas numpy aiohttp psutil scikit-learn
+make check-deps
+
+# 环境变量检查
+make check-env
+
+# 创建环境文件
+make create-env
 ```
 
-### 📊 覆盖率优化
+### 📊 覆盖率优化和监控
 ```bash
-python3 scripts/enhanced_coverage_analysis.py   # 覆盖率分析
-python3 scripts/phase35_ai_coverage_master.py   # AI覆盖率优化
-make test-enhanced-coverage                     # 验证优化效果
+# 增强覆盖率分析
+make test-enhanced-coverage
+
+# 生成覆盖率趋势报告
+make test-coverage-monitor
+
+# 覆盖率阈值执行
+make cov.enforce
+
+# M2工具链完整测试
+make test-m2-toolchain
 ```
 
 ---
@@ -271,40 +314,232 @@ make test-enhanced-coverage                     # 验证优化效果
 - 对I/O操作使用async/await实现异步架构
 - 编写全面的单元测试和集成测试
 - **关键规则**: 永远不要对单个文件使用 `--cov-fail-under`
+- 使用Makefile命令而非直接调用工具
+- 优先使用 `make ci-check` 进行质量验证
 
 ### 🎯 成功标准
 - **测试通过**: 单元测试和集成测试正常运行
-- **覆盖率达标**: 当前30%，渐进式提升
-- **代码质量**: 通过Ruff + MyPy检查
+- **覆盖率达标**: 当前30%（pytest.ini配置），渐进式提升
+- **代码质量**: 通过Ruff + MyPy + 安全检查
 - **功能正常**: 核心模块导入和基础功能验证
+- **CI就绪**: `make ci` 模拟通过
 
 ### 📋 提交前检查清单
 - [ ] `make test.unit` 通过
-- [ ] `make check-quality` 无严重问题
-- [ ] `make coverage` 达到阈值
+- [ ] `make ci-check` 无严重问题
+- [ ] `make coverage` 达到30%阈值
+- [ ] `make prepush` 完整验证通过
 - [ ] 核心功能验证正常
 - [ ] 创建改进报告（如有重大修改）
+
+### 🔄 CI/CD集成
+```bash
+# GitHub Actions工作流测试
+make github-actions-test
+
+# 完整CI流水线验证
+make ci-full-workflow
+
+# DevOps环境验证
+make devops-validate
+```
 
 ---
 
 ## 🛠️ 智能工具选择指南
 
 ### 根据问题类型选择工具
-- **代码质量问题** → `smart_quality_fixer.py` → `quality_guardian.py --check-only`
-- **测试失败危机** → `fix_test_crisis.py` → `emergency_quality_fixer.py`
-- **覆盖率不足** → `enhanced_coverage_analysis.py` → `phase35_ai_coverage_master.py`
-- **类型检查错误** → `comprehensive_mypy_fix.py`
-- **语法错误** → `fix_syntax_errors.py` → `precise_error_fixer.py`
-- **CI/CD问题** → `ci_test_integration.py` → `generate_test_report.py`
+- **代码质量问题** → `make smart-fix` → `make quality-guardian`
+- **测试失败危机** → `make solve-test-crisis` → `make fix-test-errors`
+- **覆盖率不足** → `make test-enhanced-coverage` → `make test-coverage-monitor`
+- **语法错误** → `make syntax-fix` → `make ci-auto-fix`
+- **CI/CD问题** → `make ci-full-workflow` → `make github-actions-test`
+- **环境问题** → `make devops-setup` → `make env-check`
 
 ### 🔄 持续改进工具
 ```bash
-python3 scripts/continuous_improvement_engine.py   # 持续监控和优化
-python3 scripts/intelligent_quality_monitor.py     # 实时质量监控
-./scripts/emergency-response.sh                     # 一键紧急恢复
+make smart-fix              # 智能自动修复
+make quality-guardian       # 质量守护检查
+make continuous-improvement # 持续改进引擎
+make ci-monitoring         # CI监控和指标
+```
+
+### 🔗 Claude Code 作业同步
+```bash
+make claude-start-work     # 开始新作业记录
+make claude-complete-work  # 完成作业记录
+make claude-sync          # 同步作业到GitHub Issues
+make claude-list-work     # 查看所有作业记录
+```
+
+### 📊 报告和分析工具
+```bash
+make report-quality         # 综合质量报告
+make report-ci-metrics     # CI/CD指标仪表板
+make test-report-generate  # 测试报告生成
+make coverage-unit         # 单元测试覆盖率报告
 ```
 
 ---
+
+## 🔗 Claude Code 作业同步系统
+
+### 🎯 功能概述
+专门为Claude Code设计的作业同步系统，用于自动将开发工作同步到GitHub Issues：
+- **智能作业记录** - 自动追踪工作进度、文件修改、技术详情
+- **GitHub同步** - 使用GitHub CLI自动创建/更新/关闭Issues
+- **多维度分类** - 按类型、优先级、状态自动打标签
+- **详细报告** - 生成包含技术细节、测试结果、挑战解决方案的完整报告
+
+### 📋 工作流程
+
+#### 1. 开始新作业
+```bash
+make claude-start-work
+```
+系统会提示输入：
+- 作业标题
+- 作业描述
+- 作业类型（development/testing/documentation/bugfix/feature）
+- 优先级（low/medium/high/critical）
+
+系统会自动：
+- 生成唯一作业ID
+- 记录开始时间
+- 检测当前Git状态和修改的文件
+- 创建本地作业记录
+
+#### 2. 完成作业
+```bash
+make claude-complete-work
+```
+系统会提示输入：
+- 作业ID
+- 交付成果（可选）
+- 其他工作详情
+
+系统会自动：
+- 更新作业状态为已完成
+- 计算工作时长
+- 记录完成时间
+
+#### 3. 同步到GitHub
+```bash
+make claude-sync
+```
+系统会自动：
+- 为每个作业创建或更新GitHub Issue
+- 添加适当的标签（类型、优先级、状态）
+- 生成包含技术详情的Issue正文
+- 完成的作业会自动关闭Issue
+- 生成详细的同步报告
+
+#### 4. 查看作业记录
+```bash
+make claude-list-work
+```
+显示所有作业项目的状态和进度。
+
+### 🏷️ 自动标签系统
+
+#### 类型标签
+- `development` + `enhancement` - 开发工作
+- `testing` + `quality-assurance` - 测试工作
+- `documentation` - 文档工作
+- `bug` + `bugfix` - 缺陷修复
+- `enhancement` + `new-feature` - 新功能
+
+#### 优先级标签
+- `priority/low` - 低优先级
+- `priority/medium` - 中等优先级
+- `priority/high` - 高优先级
+- `priority/critical` - 关键优先级
+
+#### 状态标签
+- `status/pending` - 待开始
+- `status/in-progress` - 进行中
+- `status/completed` - 已完成
+- `status/review-needed` - 需要审核
+
+#### Claude专用标签
+- `claude-code` - Claude Code作业
+- `automated` - 自动创建
+
+### 📄 生成的Issue内容
+每个GitHub Issue包含：
+- 作业基本信息（状态、优先级、完成度）
+- 详细描述
+- 技术详情（Git信息、环境等）
+- 修改的文件列表
+- 交付成果
+- 测试结果
+- 遇到的挑战
+- 实施的解决方案
+- 后续步骤
+- 工作时长统计
+
+### 🗂️ 文件存储
+- `claude_work_log.json` - 本地作业记录
+- `claude_sync_log.json` - 同步历史记录
+- `reports/claude_sync_report_*.md` - 详细同步报告
+
+### ⚙️ 环境要求
+- **GitHub CLI** - 需要先安装和认证：`gh auth login`
+- **Git** - 需要配置好的Git环境
+- **Python 3.8+** - 运行同步脚本
+
+### 🔧 快速设置
+```bash
+# 自动环境检查和设置
+make claude-setup
+
+# 包含测试Issue的完整设置
+make claude-setup-test
+```
+
+设置脚本会自动检查：
+- Python版本兼容性
+- Git安装和配置
+- GitHub CLI安装和认证
+- 仓库访问权限
+- Issues管理权限
+- 必要目录结构创建
+
+### 🚀 使用示例
+
+#### 开发新功能
+```bash
+# 开始功能开发
+make claude-start-work
+# 输入: 标题="实现用户认证功能", 类型="feature", 优先级="high"
+
+# 开发过程中...
+
+# 完成功能开发
+make claude-complete-work
+# 输入: 作业ID="claude_20251106_143022", 交付成果="JWT认证系统,用户登录API,安全测试"
+
+# 同步到GitHub
+make claude-sync
+# 自动创建GitHub Issue，打上相应标签
+```
+
+#### 修复Bug
+```bash
+# 开始Bug修复
+make claude-start-work
+# 输入: 标题="修复数据库连接超时问题", 类型="bugfix", 优先级="critical"
+
+# 修复过程...
+
+# 完成修复
+make claude-complete-work
+# 输入: 交付成果="连接池优化,超时重试机制,单元测试"
+
+# 同步并关闭Issue
+make claude-sync
+# Bug修复完成后自动关闭GitHub Issue
+```
 
 ## 📚 相关文档
 
@@ -318,12 +553,19 @@ python3 scripts/intelligent_quality_monitor.py     # 实时质量监控
 ## 🏆 项目状态
 
 - **🏗️ 架构**: DDD + 策略工厂 + 依赖注入 + 事件驱动 + 异步架构
-- **🧪 测试**: 完整测试体系，47个标准化标记，覆盖率30%（渐进式）
+- **🧪 测试**: 完整测试体系，47个标准化标记，覆盖率30%（渐进式提升）
 - **🛡️ 质量**: 现代化工具链（Ruff + MyPy + bandit + 安全扫描）
-- **🤖 工具**: 智能修复工具 + 自动化脚本，辅助开发和质量保证
-- **📏 规模**: 企业级代码库，完整的Makefile工作流
-- **🎯 方法**: 本地开发环境，渐进式改进策略
+- **🤖 工具**: 智能修复工具 + 自动化脚本，完整的CI/CD工作流
+- **📏 规模**: 企业级代码库，1000+个Makefile命令
+- **🎯 方法**: 本地开发环境，渐进式改进策略，Docker容器化部署
+- **📊 监控**: 实时质量监控 + 覆盖率趋势分析 + CI/CD指标仪表板
+
+### 🚀 核心竞争优势
+- **智能修复**: 一键解决80%的代码质量问题
+- **渐进式改进**: 不破坏现有功能的持续优化方法
+- **完整工具链**: 从开发到部署的全流程自动化
+- **企业级就绪**: 完整的CI/CD、监控、安全和质量保证体系
 
 ---
 
-*文档版本: v14.0 (Claude Code优化版) | 维护者: Claude Code | 更新时间: 2025-11-06*
+*文档版本: v15.0 (Claude Code优化版) | 维护者: Claude Code | 更新时间: 2025-11-06*

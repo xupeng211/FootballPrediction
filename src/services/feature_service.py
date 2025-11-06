@@ -6,20 +6,14 @@
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database.models import Match, Team
-from ..features.engineering import (
-    FeatureCalculator,
-    AllMatchFeatures,
-    AllTeamFeatures
-)
+from ..features.engineering import AllMatchFeatures, AllTeamFeatures, FeatureCalculator
 from ..features.feature_definitions import (
-    RecentPerformanceFeatures,
     HistoricalMatchupFeatures,
-    OddsFeatures
+    OddsFeatures,
+    RecentPerformanceFeatures,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,10 +31,8 @@ class FeatureService:
         self.logger = logger
 
     async def get_match_features(
-        self,
-        match_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[AllMatchFeatures]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> AllMatchFeatures | None:
         """获取比赛特征
 
         Args:
@@ -56,9 +48,13 @@ class FeatureService:
             )
 
             if features:
-                self.logger.info(f"Successfully calculated features for match {match_id}")
+                self.logger.info(
+                    f"Successfully calculated features for match {match_id}"
+                )
             else:
-                self.logger.warning(f"Failed to calculate features for match {match_id}")
+                self.logger.warning(
+                    f"Failed to calculate features for match {match_id}"
+                )
 
             return features
 
@@ -67,10 +63,8 @@ class FeatureService:
             return None
 
     async def get_team_features(
-        self,
-        team_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[AllTeamFeatures]:
+        self, team_id: int, calculation_date: datetime | None = None
+    ) -> AllTeamFeatures | None:
         """获取球队特征
 
         Args:
@@ -97,10 +91,8 @@ class FeatureService:
             return None
 
     async def batch_get_match_features(
-        self,
-        match_ids: List[int],
-        calculation_date: Optional[datetime] = None
-    ) -> Dict[int, Optional[AllMatchFeatures]]:
+        self, match_ids: list[int], calculation_date: datetime | None = None
+    ) -> dict[int, AllMatchFeatures | None]:
         """批量获取比赛特征
 
         Args:
@@ -127,13 +119,11 @@ class FeatureService:
 
         except Exception as e:
             self.logger.error(f"Error in batch feature calculation: {e}")
-            return {match_id: None for match_id in match_ids}
+            return dict.fromkeys(match_ids)
 
     async def get_recent_performance_features(
-        self,
-        team_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[RecentPerformanceFeatures]:
+        self, team_id: int, calculation_date: datetime | None = None
+    ) -> RecentPerformanceFeatures | None:
         """获取球队近期战绩特征
 
         Args:
@@ -154,15 +144,17 @@ class FeatureService:
             return features
 
         except Exception as e:
-            self.logger.error(f"Error getting recent performance for team {team_id}: {e}")
+            self.logger.error(
+                f"Error getting recent performance for team {team_id}: {e}"
+            )
             return None
 
     async def get_historical_matchup_features(
         self,
         home_team_id: int,
         away_team_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[HistoricalMatchupFeatures]:
+        calculation_date: datetime | None = None,
+    ) -> HistoricalMatchupFeatures | None:
         """获取历史对战特征
 
         Args:
@@ -184,14 +176,14 @@ class FeatureService:
             return features
 
         except Exception as e:
-            self.logger.error(f"Error getting H2H features for {home_team_id} vs {away_team_id}: {e}")
+            self.logger.error(
+                f"Error getting H2H features for {home_team_id} vs {away_team_id}: {e}"
+            )
             return None
 
     async def get_odds_features(
-        self,
-        match_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[OddsFeatures]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> OddsFeatures | None:
         """获取赔率特征
 
         Args:
@@ -215,10 +207,7 @@ class FeatureService:
             self.logger.error(f"Error getting odds features for match {match_id}: {e}")
             return None
 
-    async def validate_feature_data(
-        self,
-        features: AllMatchFeatures
-    ) -> bool:
+    async def validate_feature_data(self, features: AllMatchFeatures) -> bool:
         """验证特征数据完整性
 
         Args:
@@ -238,13 +227,18 @@ class FeatureService:
                 features.home_team_recent,
                 features.away_team_recent,
                 features.historical_matchup,
-                features.odds_features
+                features.odds_features,
             ]
 
             if not all(required_parts):
                 missing_parts = []
-                part_names = ['match_entity', 'home_team_recent', 'away_team_recent',
-                             'historical_matchup', 'odds_features']
+                part_names = [
+                    "match_entity",
+                    "home_team_recent",
+                    "away_team_recent",
+                    "historical_matchup",
+                    "odds_features",
+                ]
 
                 for i, part in enumerate(required_parts):
                     if not part:
@@ -273,10 +267,8 @@ class FeatureService:
             return False
 
     async def get_feature_summary(
-        self,
-        match_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[Dict]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> dict | None:
         """获取特征摘要信息
 
         Args:
@@ -293,35 +285,41 @@ class FeatureService:
                 return None
 
             summary = {
-                'match_id': match_id,
-                'calculation_date': calculation_date.isoformat() if calculation_date else datetime.now().isoformat(),
-                'data_quality': {
-                    'has_complete_features': await self.validate_feature_data(features),
-                    'feature_parts_count': 5,
-                    'missing_parts': []
+                "match_id": match_id,
+                "calculation_date": (
+                    calculation_date.isoformat()
+                    if calculation_date
+                    else datetime.now().isoformat()
+                ),
+                "data_quality": {
+                    "has_complete_features": await self.validate_feature_data(features),
+                    "feature_parts_count": 5,
+                    "missing_parts": [],
                 },
-                'key_metrics': {
-                    'home_team_form': features.home_team_recent.recent_5_win_rate,
-                    'away_team_form': features.away_team_recent.recent_5_win_rate,
-                    'h2h_home_advantage': features.historical_matchup.h2h_home_win_rate,
-                    'market_confidence': features.odds_features.bookmaker_consensus
-                }
+                "key_metrics": {
+                    "home_team_form": features.home_team_recent.recent_5_win_rate,
+                    "away_team_form": features.away_team_recent.recent_5_win_rate,
+                    "h2h_home_advantage": features.historical_matchup.h2h_home_win_rate,
+                    "market_confidence": features.odds_features.bookmaker_consensus,
+                },
             }
 
             # 检查缺失部分
             if not features.match_entity:
-                summary['data_quality']['missing_parts'].append('match_entity')
+                summary["data_quality"]["missing_parts"].append("match_entity")
             if not features.home_team_recent:
-                summary['data_quality']['missing_parts'].append('home_team_recent')
+                summary["data_quality"]["missing_parts"].append("home_team_recent")
             if not features.away_team_recent:
-                summary['data_quality']['missing_parts'].append('away_team_recent')
+                summary["data_quality"]["missing_parts"].append("away_team_recent")
             if not features.historical_matchup:
-                summary['data_quality']['missing_parts'].append('historical_matchup')
+                summary["data_quality"]["missing_parts"].append("historical_matchup")
             if not features.odds_features:
-                summary['data_quality']['missing_parts'].append('odds_features')
+                summary["data_quality"]["missing_parts"].append("odds_features")
 
             return summary
 
         except Exception as e:
-            self.logger.error(f"Error generating feature summary for match {match_id}: {e}")
+            self.logger.error(
+                f"Error generating feature summary for match {match_id}: {e}"
+            )
             return None

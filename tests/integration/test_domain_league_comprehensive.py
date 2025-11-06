@@ -916,7 +916,7 @@ class TestLeagueDomainComprehensive:
 
         # 赛季进行
         season.start_season()
-        for round_num in range(1, 16):  # 进行一半
+        for _round_num in range(1, 16):  # 进行一半
             season.advance_round()
 
         # 验证中期状态
