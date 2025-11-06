@@ -5,6 +5,13 @@ from .content_analysis import ContentAnalysisService
 from .data_processing import DataProcessingService
 from .manager import ServiceManager, service_manager
 from .user_profile import UserProfileService
+from .prediction_service import (
+    PredictionService,
+    PredictionResult,
+    get_prediction_service,
+    predict_match,
+    predict_match_async
+)
 
 """
 足球预测系统业务服务模块
@@ -23,6 +30,12 @@ __all__ = [
     "ContentAnalysisService",
     "UserProfileService",
     "DataProcessingService",
+    "PredictionService",
+    # 预测相关
+    "PredictionResult",
+    "get_prediction_service",
+    "predict_match",
+    "predict_match_async",
     # 服务管理
     "ServiceManager",
     "service_manager",

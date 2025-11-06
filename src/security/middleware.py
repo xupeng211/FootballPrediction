@@ -423,4 +423,4 @@ class SecurityConfig:
 
 
 # 全局安全配置实例
-security_config = SecurityConfig() from e  # TODO: B904 exception chaining
+security_config = SecurityConfig()

@@ -73,8 +73,7 @@ async def test_collector():
 
             # 测试收集比赛数据
             logger.debug("📊 收集比赛数据...")  # TODO: Add logger import if needed
-            fixtures = await collector.collect_all_fixtures(
-                days_ahead=7,
+            fixtures = await collector.collect_all_fixtures(days_ahead=7,
                 force_refresh=True,
                 preferred_source="mock",  # 只收集7天的数据用于测试
             )
@@ -83,8 +82,7 @@ async def test_collector():
 
             # 测试收集球队数据
             logger.debug("⚽ 收集球队数据...")  # TODO: Add logger import if needed
-            teams = await collector.collect_teams(
-                force_refresh=True, preferred_source="mock"
+            teams = await collector.collect_teams(force_refresh=True, preferred_source="mock"
             )
 
             logger.debug(f"✅ 成功收集 {len(teams)} 支球队")  # TODO: Add logger import if needed
@@ -125,8 +123,7 @@ async def test_specific_team():
             team_name = "Manchester United"
             logger.debug(f"🔍 收集 {team_name} 的比赛数据...")  # TODO: Add logger import if needed
 
-            fixtures = await collector.collect_team_fixtures(
-                team_name=team_name,
+            fixtures = await collector.collect_team_fixtures(team_name=team_name,
                 days_ahead=30,
                 force_refresh=True,
                 preferred_source="mock",
@@ -142,9 +139,7 @@ async def test_specific_team():
                     logger.debug(f"     联赛: {fixture['league']}")  # TODO: Add logger import if needed
                     logger.debug(f"     时间: {fixture['match_date']}")  # TODO: Add logger import if needed
                     logger.debug(f"     状态: {fixture['status']}")  # TODO: Add logger import if needed
-                    logger.debug(f"     场地: {fixture.get('venue',
-    'N/A')}")  # TODO: Add logger import if needed
-                    logger.debug()  # TODO: Add logger import if needed
+                    logger.debug(f"     场地: {fixture.get('venue', 'N/A')}")  # TODO: Add logger import if needed
 
     except Exception as e:
         logger.debug(f"❌ 指定球队测试失败: {e}")  # TODO: Add logger import if needed
@@ -171,8 +166,7 @@ async def test_league_data():
             league_name = "英超"
             logger.debug(f"🏆 收集 {league_name} 的比赛数据...")  # TODO: Add logger import if needed
 
-            fixtures = await collector.collect_league_fixtures(
-                league_name=league_name,
+            fixtures = await collector.collect_league_fixtures(league_name=league_name,
                 days_ahead=15,
                 force_refresh=True,
                 preferred_source="mock",

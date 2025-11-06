@@ -550,8 +550,7 @@ class BettingCoreTester:
                     )
                 else:
                     print(
-                        f"  ⚠️ {scenario['name']}: EV={result['ev']:.3f},"
-    建议={result['recommendation']} (需要改进)"
+                        f"  ⚠️ {scenario['name']}: EV={result['ev']:.3f}, 建议={result['recommendation']} (需要改进)"
                     )
 
             except Exception as e:

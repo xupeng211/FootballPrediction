@@ -25,7 +25,7 @@ make test.unit
 
 ```bash
 make install          # 安装依赖
-make test.unit        # 运行单元测试（385个测试）
+make test.unit        # 运行单元测试
 make coverage         # 查看覆盖率报告
 make fix-code         # 一键修复代码质量问题
 make prepush          # 提交前完整验证
@@ -70,24 +70,39 @@ src/
 
 **策略工厂模式 - 动态创建预测策略**
 ```python
-strategy = StrategyFactory.create_strategy("ml_model")
+from src.domain.strategies.factory import PredictionStrategyFactory
+
+factory = PredictionStrategyFactory()
+strategy = await factory.create_strategy("ml_predictor", "ml_model")
 service = PredictionService(strategy)
 prediction = await service.create_prediction(data)
 ```
 
-**CQRS模式 - 命令查询分离**
+**依赖注入容器 - 轻量级DI实现**
 ```python
-# 写操作
-await command_bus.handle(CreatePredictionCommand(...))
-# 读操作
-predictions = await query_bus.handle(GetPredictionsQuery(...))
+from src.core.di import DIContainer, ServiceCollection
+
+# 创建容器
+container = ServiceCollection()
+container.add_singleton(DatabaseManager)
+container.add_transient(PredictionService)
+di_container = container.build_container()
+
+# 解析服务
+service = di_container.resolve(PredictionService)
 ```
 
-**依赖注入容器**
+**事件驱动架构**
 ```python
-container = Container()
-container.register_singleton(DatabaseManager)
-service = container.resolve(PredictionService)
+from src.core.event_application import initialize_event_system
+from src.domain.events.prediction_events import PredictionCreatedEvent
+
+# 初始化事件系统
+await initialize_event_system()
+
+# 发布事件
+event = PredictionCreatedEvent(prediction_id="123", match_data=data)
+await event_bus.publish(event)
 ```
 
 ---
@@ -125,7 +140,7 @@ pytest --cov=src --cov-report=term-missing  # 查看覆盖详情
 
 ### ⚠️ 重要测试规则
 - **永远不要**对单个文件使用 `--cov-fail-under`
-- **覆盖率阈值**: 30%（渐进式改进策略）
+- **覆盖率阈值**: 30%（pytest.ini配置，渐进式改进策略）
 - **优先使用**: Makefile命令而非直接pytest
 
 ---
@@ -149,10 +164,17 @@ make syntax-check     # 语法错误检查
 
 ### 🛠️ 现代化工具
 ```bash
-ruff check src/ tests/       # Ruff代码检查（替代flake8）
-ruff format src/ tests/      # Ruff格式化（替代black + isort）
-ruff check src/ tests/ --fix # Ruff自动修复
+# Ruff - 统一代码检查和格式化（推荐）
+ruff check src/ tests/       # 代码检查
+ruff format src/ tests/      # 代码格式化
+ruff check src/ tests/ --fix # 自动修复
+
+# 传统工具链（备用）
+black src/ tests/            # Black格式化
+isort src/ tests/            # 导入排序
+flake8 src/ tests/           # 代码检查
 mypy src/ --ignore-missing-imports  # MyPy类型检查
+bandit -r src/               # 安全检查
 ```
 
 ---
@@ -251,7 +273,7 @@ make test-enhanced-coverage                     # 验证优化效果
 - **关键规则**: 永远不要对单个文件使用 `--cov-fail-under`
 
 ### 🎯 成功标准
-- **测试通过**: 385个测试用例正常运行
+- **测试通过**: 单元测试和集成测试正常运行
 - **覆盖率达标**: 当前30%，渐进式提升
 - **代码质量**: 通过Ruff + MyPy检查
 - **功能正常**: 核心模块导入和基础功能验证
@@ -295,13 +317,13 @@ python3 scripts/intelligent_quality_monitor.py     # 实时质量监控
 
 ## 🏆 项目状态
 
-- **🏗️ 架构**: DDD + CQRS + 依赖注入 + 异步架构
-- **🧪 测试**: 195个测试文件，25+种标准化标记，覆盖率30%
-- **🛡️ 质量**: 完整的代码质量工具链（Ruff + MyPy + bandit）
-- **🤖 工具**: 113个自动化脚本，辅助开发和质量修复
-- **📏 规模**: Makefile 1062行，600+个开发命令
-- **🎯 方法**: 本地开发环境，渐进式改进方法
+- **🏗️ 架构**: DDD + 策略工厂 + 依赖注入 + 事件驱动 + 异步架构
+- **🧪 测试**: 完整测试体系，47个标准化标记，覆盖率30%（渐进式）
+- **🛡️ 质量**: 现代化工具链（Ruff + MyPy + bandit + 安全扫描）
+- **🤖 工具**: 智能修复工具 + 自动化脚本，辅助开发和质量保证
+- **📏 规模**: 企业级代码库，完整的Makefile工作流
+- **🎯 方法**: 本地开发环境，渐进式改进策略
 
 ---
 
-*文档版本: v13.0 (优化精简版) | 维护者: Claude Code | 更新时间: 2025-11-06*
+*文档版本: v14.0 (Claude Code优化版) | 维护者: Claude Code | 更新时间: 2025-11-06*

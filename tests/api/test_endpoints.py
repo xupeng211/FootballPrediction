@@ -586,10 +586,8 @@ pytest.mark.unit(TestErrorHandling)
 pytest.mark.integration(TestAPIPerformance)
 
 # Critical path markers
-pytest.mark.critical(test_health_check_basic)
-pytest.mark.critical(test_get_predictions_list)
-pytest.mark.critical(test_create_prediction_request)
-pytest.mark.critical(test_get_match_by_id)
+# Note: pytest.mark.critical should be applied to test functions directly
+# rather than using separate marker statements
 
 # API endpoints test marker
 pytest.mark.api(TestHealthEndpoints)

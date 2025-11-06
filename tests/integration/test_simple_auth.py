@@ -37,8 +37,7 @@ class SimpleAuthTester:
         logger.debug("\n👤 测试1: 用户创建功能")  # TODO: Add logger import if needed
 
         try:
-            user = SimpleUser(
-                id=1,
+            user = SimpleUser(id=1,
                 username="testuser",
                 email="test@example.com",
                 password="test123",
@@ -53,8 +52,7 @@ class SimpleAuthTester:
             logger.debug(f"   角色: {user.role}")  # TODO: Add logger import if needed
             logger.debug(f"   状态: {'激活' if user.is_active else '未激活'}")  # TODO: Add logger import if needed
 
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "user_creation",
                     "status": "PASS",
                     "message": "用户创建功能正常",
@@ -64,8 +62,7 @@ class SimpleAuthTester:
 
         except Exception as e:
             logger.debug(f"❌ 用户创建失败: {str(e)}")  # TODO: Add logger import if needed
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "user_creation",
                     "status": "FAIL",
                     "message": f"用户创建失败: {str(e)}",
@@ -79,8 +76,7 @@ class SimpleAuthTester:
 
         try:
             # 创建测试用户
-            user = SimpleUser(
-                id=2,
+            user = SimpleUser(id=2,
                 username="storage_test",
                 email="storage@test.com",
                 password="test123",
@@ -100,8 +96,7 @@ class SimpleAuthTester:
                 logger.debug(f"   存储用户名: {stored_user.username}")  # TODO: Add logger import if needed
                 logger.debug(f"   存储邮箱: {stored_user.email}")  # TODO: Add logger import if needed
 
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "user_storage",
                         "status": "PASS",
                         "message": "用户存储功能正常",
@@ -110,8 +105,7 @@ class SimpleAuthTester:
                 return True
             else:
                 logger.debug("❌ 用户存储失败：无法检索存储的用户")  # TODO: Add logger import if needed
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "user_storage",
                         "status": "FAIL",
                         "message": "无法检索存储的用户",
@@ -121,8 +115,7 @@ class SimpleAuthTester:
 
         except Exception as e:
             logger.debug(f"❌ 用户存储异常: {str(e)}")  # TODO: Add logger import if needed
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "user_storage",
                     "status": "FAIL",
                     "message": f"用户存储异常: {str(e)}",
@@ -145,8 +138,7 @@ class SimpleAuthTester:
 
             if correct_result and not incorrect_result:
                 logger.debug("✅ 密码验证功能正常")  # TODO: Add logger import if needed
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "password_validation",
                         "status": "PASS",
                         "message": "密码验证功能正常",
@@ -155,8 +147,7 @@ class SimpleAuthTester:
                 return True
             else:
                 logger.debug("❌ 密码验证功能异常")  # TODO: Add logger import if needed
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "password_validation",
                         "status": "FAIL",
                         "message": "密码验证逻辑错误",
@@ -166,8 +157,7 @@ class SimpleAuthTester:
 
         except Exception as e:
             logger.debug(f"❌ 密码验证异常: {str(e)}")  # TODO: Add logger import if needed
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "password_validation",
                     "status": "FAIL",
                     "message": f"密码验证异常: {str(e)}",
@@ -180,8 +170,7 @@ class SimpleAuthTester:
         logger.debug("\n🎫 测试4: 令牌生成功能")  # TODO: Add logger import if needed
 
         try:
-            user = SimpleUser(
-                id=3,
+            user = SimpleUser(id=3,
                 username="token_test",
                 email="token@test.com",
                 password="test123",
@@ -197,8 +186,7 @@ class SimpleAuthTester:
                 logger.debug(f"   令牌前缀: {token[:20]}...")  # TODO: Add logger import if needed
                 logger.debug("   令牌类型: Bearer")  # TODO: Add logger import if needed
 
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "token_generation",
                         "status": "PASS",
                         "message": "令牌生成功能正常",
@@ -207,8 +195,7 @@ class SimpleAuthTester:
                 return True
             else:
                 logger.debug("❌ 令牌生成失败：令牌为空或格式错误")  # TODO: Add logger import if needed
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "token_generation",
                         "status": "FAIL",
                         "message": "令牌为空或格式错误",
@@ -218,8 +205,7 @@ class SimpleAuthTester:
 
         except Exception as e:
             logger.debug(f"❌ 令牌生成异常: {str(e)}")  # TODO: Add logger import if needed
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "token_generation",
                     "status": "FAIL",
                     "message": f"令牌生成异常: {str(e)}",
@@ -232,8 +218,7 @@ class SimpleAuthTester:
         logger.debug("\n🔍 测试5: 令牌验证功能")  # TODO: Add logger import if needed
 
         try:
-            user = SimpleUser(
-                id=4,
+            user = SimpleUser(id=4,
                 username="validation_test",
                 email="validation@test.com",
                 password="test123",
@@ -257,8 +242,7 @@ class SimpleAuthTester:
                 logger.debug("   无效令牌验证: 拒绝")  # TODO: Add logger import if needed
                 logger.debug(f"   验证用户名: {valid_user.username}")  # TODO: Add logger import if needed
 
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "token_validation",
                         "status": "PASS",
                         "message": "令牌验证功能正常",
@@ -272,8 +256,7 @@ class SimpleAuthTester:
                     f"   无效令牌验证: {'拒绝' if invalid_user is None else '通过（错误）'}"
                 )
 
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "token_validation",
                         "status": "FAIL",
                         "message": "令牌验证逻辑错误",
@@ -283,8 +266,7 @@ class SimpleAuthTester:
 
         except Exception as e:
             logger.debug(f"❌ 令牌验证异常: {str(e)}")  # TODO: Add logger import if needed
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "token_validation",
                     "status": "FAIL",
                     "message": f"令牌验证异常: {str(e)}",
@@ -298,8 +280,7 @@ class SimpleAuthTester:
 
         try:
             # 步骤1: 创建用户
-            user = SimpleUser(
-                id=5,
+            user = SimpleUser(id=5,
                 username="flow_test",
                 email="flow@test.com",
                 password="test123",
@@ -331,8 +312,7 @@ class SimpleAuthTester:
                 logger.debug("   验证令牌: 成功")  # TODO: Add logger import if needed
                 logger.debug("   用户信息一致性: 通过")  # TODO: Add logger import if needed
 
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "complete_auth_flow",
                         "status": "PASS",
                         "message": "完整认证流程正常",
@@ -341,8 +321,7 @@ class SimpleAuthTester:
                 return True
             else:
                 logger.debug("❌ 完整认证流程失败：用户信息不一致")  # TODO: Add logger import if needed
-                self.test_results.append(
-                    {
+                self.test_results.append({
                         "test": "complete_auth_flow",
                         "status": "FAIL",
                         "message": "用户信息不一致",
@@ -352,8 +331,7 @@ class SimpleAuthTester:
 
         except Exception as e:
             logger.debug(f"❌ 完整认证流程异常: {str(e)}")  # TODO: Add logger import if needed
-            self.test_results.append(
-                {
+            self.test_results.append({
                     "test": "complete_auth_flow",
                     "status": "FAIL",
                     "message": f"完整认证流程异常: {str(e)}",
@@ -368,8 +346,7 @@ class SimpleAuthTester:
         logger.debug("=" * 62)  # TODO: Add logger import if needed
 
         total_tests = len(self.test_results)
-        passed_tests = sum(
-            1 for result in self.test_results if result["status"] == "PASS"
+        passed_tests = sum(1 for result in self.test_results if result["status"] == "PASS"
         )
         success_rate = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
 

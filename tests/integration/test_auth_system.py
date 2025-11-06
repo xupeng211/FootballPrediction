@@ -58,9 +58,7 @@ async def test_api_health():
                 health_data = response.json()
                 print_success(f"API健康状态: {health_data.get('status')}")
                 print_info(
-                    f"数据库延迟: {health_data.get('checks',
-    {}).get('database',
-    {}).get('latency_ms')}ms"
+                    f"数据库延迟: {health_data.get('checks', {}).get('database', {}).get('latency_ms')}ms"
                 )
                 return True
             else:

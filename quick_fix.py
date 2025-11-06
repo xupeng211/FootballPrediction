@@ -1,50 +1,52 @@
-import os
+#!/usr/bin/env python3
+"""
+快速HTTPException语法修复
+"""
 
-def fix_imports_in_file(file_path):
-    """修复单个文件的导入问题"""
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+import re
+from pathlib import Path
 
-    lines = content.split('\n')
-    new_lines = []
-    
-    for line in lines:
-        if line.strip().startswith('from ') and 'import' in line:
-            indent = len(line) - len(line.lstrip())
-            if any(keyword in line for keyword in ['services.',
-    'api.',
-    'database.',
-    'core.']):
-                new_lines.append(line)
-                new_lines.append(' ' * (indent + 4) + 'except ImportError as e:')
-                new_lines.append(' ' * (indent + 8) + 'print(f"Warning: Import failed: {e}")')
-                new_lines.append(' ' * (indent + 8) + '# Mock implementation will be used')
+def fix_http_exception_errors(content):
+    """修复HTTPException语法错误"""
+    # 修复分离的HTTPException参数
+    pattern1 = r'raise HTTPException\(\s*\)\s+status_code=([^,]+),\s+detail=([^)]+)\s*\)'
+    content = re.sub(pattern1, r'raise HTTPException(\n    status_code=\1,\n    detail=\2\n)', content)
+
+    # 删除多余的异常链片段
+    content = re.sub(r'\s+\) from e\s*# TODO: B904 exception chaining', '', content)
+
+    # 修复不完整的HTTPException
+    content = re.sub(r'raise HTTPException\(\s*\)\s+status_code=([^,]+),\s+detail=([^)]+)\)',
+                    r'raise HTTPException(\n    status_code=\1,\n    detail=\2\n)', content)
+
+    return content
+
+def main():
+    """主函数"""
+    api_files = [
+        "src/api/betting_api.py",
+        "src/api/features.py",
+        "src/api/middleware.py",
+        "src/api/auth/router.py",
+        "src/api/auth_dependencies.py"
+    ]
+
+    for file_path in api_files:
+        path = Path(file_path)
+        if path.exists():
+            print(f"修复文件: {file_path}")
+
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            fixed_content = fix_http_exception_errors(content)
+
+            if fixed_content != content:
+                with open(path, 'w', encoding='utf-8') as f:
+                    f.write(fixed_content)
+                print(f"  ✅ 已修复")
             else:
-                new_lines.append(line)
-        else:
-            new_lines.append(line)
+                print(f"  ℹ️ 无需修复")
 
-    modified_content = '\n'.join(new_lines)
-
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(modified_content)
-    return True
-
-# 要修复的文件列表
-files_to_fix = [
-    'tests/unit/database/test_models.py',
-    'tests/unit/services/test_monitoring_service.py',
-    'tests/unit/services/test_prediction_service.py',
-    'tests/unit/test_core_logger_enhanced.py'
-]
-
-fixed_count = 0
-for file_path in files_to_fix:
-    if os.path.exists(file_path):
-        fix_imports_in_file(file_path)
-        print(f'已修复: {file_path}')
-        fixed_count += 1
-    else:
-        print(f'文件不存在: {file_path}')
-
-print(f'\n总共修复了 {fixed_count} 个文件')
+if __name__ == "__main__":
+    main()
