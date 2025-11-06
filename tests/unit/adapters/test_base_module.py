@@ -216,8 +216,8 @@ class TestTargetFromBaseModule:
         # 验证抽象方法存在
         assert hasattr(Target, "request")
 
-        # Mock类已实现，所以不是抽象的
-        assert not getattr(Target.request, "__isabstractmethod__", False)
+        # Target类的request方法应该是抽象的
+        assert getattr(Target.request, "__isabstractmethod__", False)
 
 
 class TestAdapterFromBaseModule:
