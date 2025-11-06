@@ -75,12 +75,16 @@ class TenantMiddleware(BaseHTTPMiddleware):
             tenant = await self._extract_tenant(request)
             if not tenant:
                 raise HTTPException(
+                    
+                )
                     status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
                 )
 
             # 验证租户状态
             if not self._validate_tenant_status(tenant):
                 raise HTTPException(
+                    ... from e
+                )
                     status_code=status.HTTP_403_FORBIDDEN, detail="租户状态异常"
                 )
 
@@ -113,7 +117,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="内部服务器错误",
-            ) from e
+            ) from e  # TODO: B904 exception chaining
 
     async def _extract_tenant(self, request: Request) -> Tenant | None:
         """
@@ -261,6 +265,8 @@ def require_permission(
 
             if not request:
                 raise HTTPException(
+                    
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="无法获取请求上下文",
                 )
@@ -270,6 +276,8 @@ def require_permission(
             )
             if not tenant_context or not tenant_context.is_authenticated:
                 raise HTTPException(
+                    ... from e
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证的访问"
                 )
 
@@ -290,6 +298,8 @@ def require_permission(
 
                     if not permission_result.granted:
                         raise HTTPException(
+                            ... from e
+                        )
                             status_code=status.HTTP_403_FORBIDDEN,
                             detail=f"权限不足: {permission_result.reason or '无权限'}",
                         )
@@ -327,6 +337,8 @@ def require_tenant_role(role_code: str):
 
             if not request:
                 raise HTTPException(
+                    ... from e
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="无法获取请求上下文",
                 )
@@ -336,6 +348,8 @@ def require_tenant_role(role_code: str):
             )
             if not tenant_context or not tenant_context.is_authenticated:
                 raise HTTPException(
+                    ... from e
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证的访问"
                 )
 
@@ -357,6 +371,8 @@ def require_tenant_role(role_code: str):
 
                 if not has_role:
                     raise HTTPException(
+                        ... from e
+                    )
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=f"需要角色: {role_code}",
                     )
@@ -395,6 +411,8 @@ def check_resource_quota(resource_type: str, amount: int = 1):
 
             if not request:
                 raise HTTPException(
+                    ... from e
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="无法获取请求上下文",
                 )
@@ -404,6 +422,8 @@ def check_resource_quota(resource_type: str, amount: int = 1):
             )
             if not tenant_context or not tenant_context.is_authenticated:
                 raise HTTPException(
+                    ... from e
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="未认证的访问"
                 )
 
@@ -420,6 +440,8 @@ def check_resource_quota(resource_type: str, amount: int = 1):
 
                 if not quota_check.can_access:
                     raise HTTPException(
+                        ... from e
+                    )
                         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                         detail=f"资源配额不足: {quota_check.reason}",
                     )
@@ -458,3 +480,5 @@ def has_permission(permission_code: str) -> bool:
     # 实际实现需要依赖当前请求
     # 这里只是示例接口
     return False
+
+                ) from e  # TODO: B904 exception chaining

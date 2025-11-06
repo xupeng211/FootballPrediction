@@ -58,7 +58,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from e
+        ) from e  # TODO: B904 exception chaining
 
 
 async def require_admin(current_user: TokenData = Depends(get_current_user)):
@@ -68,3 +68,5 @@ async def require_admin(current_user: TokenData = Depends(get_current_user)):
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
         )
     return current_user
+
+        ) from e  # TODO: B904 exception chaining

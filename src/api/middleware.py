@@ -82,6 +82,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 检查是否超过限制
         if len(self.clients[client_ip]) >= self.calls:
             raise HTTPException(
+                
+            )
                 status_code=429,  # TODO: 将魔法数字 429 提取为常量
                 detail="Rate limit exceeded",  # TODO: 将魔法数字 429 提取为常量
             )  # TODO: 将魔法数字 429 提取为常量
@@ -108,6 +110,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             raise HTTPException(
+                ... from e
+            )
                 status_code=401,  # TODO: 将魔法数字 401 提取为常量
                 detail="Missing or invalid token",  # TODO: 将魔法数字 401 提取为常量
             )  # TODO: 将魔法数字 401 提取为常量
@@ -220,4 +224,4 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                 content=json.dumps({"detail": "Internal server error"}),
                 status_code=500,  # TODO: 将魔法数字 500 提取为常量
                 media_type="application/json",
-            )
+            ) from e  # TODO: B904 exception chaining

@@ -157,7 +157,7 @@ async def get_leagues(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"获取联赛失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        ) from e  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量，B904 exception chaining
 
 
 @router.get("/leagues/{league_id}", response_model=LeagueInfo)
@@ -179,7 +179,7 @@ async def get_league(league_id: int):
         raise HTTPException(
             status_code=404,  # TODO: 将魔法数字 404 提取为常量
             detail="联赛不存在",  # TODO: 将魔法数字 404 提取为常量
-        )  # TODO: 将魔法数字 404 提取为常量
+        ) from e  # TODO: 将魔法数字 404 提取为常量，B904 exception chaining
 
 
 # ============================================================================
@@ -233,7 +233,7 @@ async def get_teams(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"获取球队失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: 将魔法数字 500 提取为常量，B904 exception chaining
 
 
 @router.get("/teams/{team_id}", response_model=TeamInfo)

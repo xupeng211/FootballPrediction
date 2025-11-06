@@ -200,7 +200,7 @@ async def get_prediction(
 
     except Exception as e:
         logger.error(f"获取预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取预测失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取预测失败: {str(e)}") from e  # TODO: B904 exception chaining
 
 
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)
@@ -287,7 +287,7 @@ async def batch_predict(request: BatchPredictionRequest):
 
     except Exception as e:
         logger.error(f"批量预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"批量预测失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"批量预测失败: {str(e)}") from e  # TODO: B904 exception chaining
 
 
 @router.get("/history/{match_id}", response_model=PredictionHistory)
@@ -383,4 +383,4 @@ async def verify_prediction(
 
     except Exception as e:
         logger.error(f"验证预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"验证预测失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"验证预测失败: {str(e)}") from e  # TODO: B904 exception chaining

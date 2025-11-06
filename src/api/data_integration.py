@@ -78,7 +78,7 @@ async def collect_matches(
 
     except Exception as e:
         logger.error(f"收集比赛数据失败: {e}")
-        raise HTTPException(status_code=500, detail=f"收集比赛数据失败: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"收集比赛数据失败: {str(e)}") from e  # TODO: B904 exception chaining
 
 
 @router.post("/collect/teams", response_model=DataCollectionResponse)
@@ -152,7 +152,7 @@ async def collect_all_data(
 
     except Exception as e:
         logger.error(f"收集所有数据失败: {e}")
-        raise HTTPException(status_code=500, detail=f"收集所有数据失败: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"收集所有数据失败: {str(e)}") from e  # TODO: B904 exception chaining
 
 
 @router.get("/sources/status", response_model=DataSourceStatusResponse)
@@ -242,7 +242,7 @@ async def get_matches(
 
     except Exception as e:
         logger.error(f"获取比赛列表失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取比赛列表失败: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"获取比赛列表失败: {str(e)}") from e  # TODO: B904 exception chaining
 
 
 @router.get("/teams", response_model=list[TeamResponse])
@@ -340,7 +340,7 @@ async def get_data_stats(
 
     except Exception as e:
         logger.error(f"获取数据统计失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取数据统计失败: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"获取数据统计失败: {str(e)}") from e  # TODO: B904 exception chaining
 
 
 @router.post("/test-data-source")

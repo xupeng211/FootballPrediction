@@ -204,6 +204,8 @@ class EnhancedPredictionService:
             token = credentials.credentials
             if not token or len(token) < 10:
                 raise HTTPException(
+                    
+                )
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token",
                     headers={"WWW-Authenticate": "Bearer"},
@@ -211,11 +213,11 @@ class EnhancedPredictionService:
             return token
         except Exception as e:
             logger.error(f"Token验证失败: {e}")
-            raise HTTPException(
+            raise HTTPException(... from e
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-            ) from e
+            ) from e  # TODO: B904 exception chaining
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
@@ -278,7 +280,7 @@ class EnhancedPredictionService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
-            ) from e
+            ) from e  # TODO: B904 exception chaining
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
@@ -381,6 +383,8 @@ async def predict_match(
     if not await prediction_service.check_rate_limit(token,
     redis_client):
         raise HTTPException(
+            
+        )
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
     detail="Rate limit exceeded: 100 requests per minute",
     )
@@ -440,6 +444,8 @@ async def predict_batch(
     # 检查批量请求限制
     if len(request.matches) > 1000:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
     detail="Batch size exceeds maximum limit of 1000 matches",
 
@@ -550,4 +556,4 @@ async def log_batch_prediction(total: int, successful: int, total_time: float):
     """记录批量预测日志"""
     logger.info(
         f"Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
-    )
+    ) from e  # TODO: B904 exception chaining

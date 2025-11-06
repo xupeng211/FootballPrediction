@@ -176,7 +176,7 @@ async def get_alert_rules() -> dict[str, Any]:
     alerting_observer = manager.get_alerting_observer()
 
     if not alerting_observer:
-        raise HTTPException(status_code=404, detail="告警观察者未找到")
+        raise HTTPException(status_code=404, detail="告警观察者未找到") from e  # TODO: B904 exception chaining
 
     return {
         "rules": alerting_observer.get_alert_rules(),
@@ -212,7 +212,7 @@ async def get_prediction_metrics() -> dict[str, Any]:
     prediction_subject = manager.get_prediction_metrics_subject()
 
     if not prediction_subject:
-        raise HTTPException(status_code=404, detail="预测指标被观察者未找到")
+        raise HTTPException(status_code=404, detail="预测指标被观察者未找到") from e  # TODO: B904 exception chaining
 
     return prediction_subject.get_prediction_metrics()
 
@@ -317,7 +317,7 @@ async def get_performance_metrics() -> dict[str, Any]:
     performance_observer = manager._observers.get("performance")
 
     if not performance_observer:
-        raise HTTPException(status_code=404, detail="性能观察者未找到")
+        raise HTTPException(status_code=404, detail="性能观察者未找到") from e  # TODO: B904 exception chaining
 
     return performance_observer.get_performance_metrics()
 
@@ -348,7 +348,7 @@ async def trigger_performance_check(
     prediction_subject = manager.get_prediction_metrics_subject()
 
     if not prediction_subject:
-        raise HTTPException(status_code=404, detail="预测指标被观察者未找到")
+        raise HTTPException(status_code=404, detail="预测指标被观察者未找到") from e  # TODO: B904 exception chaining
 
     # 后台任务检查性能
     background_tasks.add_task(prediction_subject.check_performance_degradation)
@@ -382,7 +382,7 @@ async def disable_observer(observer_name: str) -> dict[str, str]:
     observer = manager.get_observer(observer_name)
 
     if not observer:
-        raise HTTPException(status_code=404, detail=f"观察者 {observer_name} 未找到")
+        raise HTTPException(status_code=404, detail=f"观察者 {observer_name} 未找到") from e  # TODO: B904 exception chaining
 
     observer.disable()
     return {"message": f"观察者 {observer_name} 已禁用"}
@@ -399,3 +399,5 @@ async def clear_subject_history(subject_name: str) -> dict[str, str]:
 
     subject.clear_history()
     return {"message": f"被观察者 {subject_name} 的事件历史已清空"}
+
+        ) from e  # TODO: B904 exception chaining
