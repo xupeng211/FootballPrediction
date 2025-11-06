@@ -14,14 +14,12 @@ from pydantic import BaseModel
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql://postgres:enhanced_db_password_2024@localhost:5433/football_prediction_staging",
-    # TODO: 将魔法数字 5433 提取为常量
 )
 
 # Redis 配置
 REDIS_URL = os.getenv(
     "REDIS_URL",
     "redis://:minimal_redis_password_2024@localhost:6379/0",
-    # TODO: 将魔法数字 6379 提取为常量
 )
 
 
@@ -82,7 +80,6 @@ async def create_tables():
                 id SERIAL PRIMARY KEY,
     match_id INTEGER NOT NULL,
     predicted_winner VARCHAR(100) NOT NULL,
-    # TODO: 将魔法数字 100 提取为常量
                 confidence FLOAT NOT NULL,
 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -95,13 +92,10 @@ async def create_tables():
             CREATE TABLE IF NOT EXISTS matches (
                 id SERIAL PRIMARY KEY,
     home_team VARCHAR(100) NOT NULL,
-    # TODO: 将魔法数字 100 提取为常量
                 away_team VARCHAR(100) NOT NULL,
-    # TODO: 将魔法数字 100 提取为常量
                 match_date TIMESTAMP NOT NULL,
 
                 league VARCHAR(100),
-    # TODO: 将魔法数字 100 提取为常量
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """
@@ -162,13 +156,10 @@ async def get_predictions():
     """获取所有预测"""
     if not db_pool:
         raise HTTPException(
-            ... from e
+            pass
         )
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         rows = await conn.fetch(
@@ -196,23 +187,17 @@ async def create_prediction(match_id: int,
     """创建新预测"""
     if not db_pool:
         raise HTTPException(
-            ... from e
+            pass
         )
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
 
     if confidence < 0 or confidence > 1:
         raise HTTPException(
-            ... from e
+            pass
         )
             status_code=400,
-    # TODO: 将魔法数字 400 提取为常量
             detail="Confidence must be between 0 and 1",
-    # TODO: 将魔法数字 400 提取为常量
-        )  # TODO: 将魔法数字 400 提取为常量
 
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -245,13 +230,10 @@ async def get_prediction(prediction_id: int):
     """获取特定预测"""
     if not db_pool:
         raise HTTPException(
-            ... from e
+            pass
         )
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow(
@@ -261,12 +243,9 @@ async def get_prediction(prediction_id: int):
 
         if not row:
             raise HTTPException(
-                ... from e
+                pass
             )
                 status_code=404,
-    # TODO: 将魔法数字 404 提取为常量
-                detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
-            )  # TODO: 将魔法数字 404 提取为常量
 
         return PredictionResponse(
             id=row["id"],
@@ -283,13 +262,10 @@ async def delete_prediction(prediction_id: int):
     """删除预测"""
     if not db_pool:
         raise HTTPException(
-            ... from e
+            pass
         )
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
 
     async with db_pool.acquire() as conn:
         result = await conn.execute(
@@ -299,12 +275,9 @@ async def delete_prediction(prediction_id: int):
 
         if result == "DELETE 0":
             raise HTTPException(
-                ... from e
+                pass
             )
                 status_code=404,
-    # TODO: 将魔法数字 404 提取为常量
-                detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
-            )  # TODO: 将魔法数字 404 提取为常量
 
         return {"message": "Prediction deleted successfully"}
 
@@ -316,7 +289,6 @@ if __name__ == "__main__":
         "app_enhanced:app",
     host="0.0.0.0",
     port=8000,
-    # TODO: 将魔法数字 8000 提取为常量
         reload=True,
 
         log_level="info",
