@@ -112,6 +112,8 @@ async def get_db_connection():
     """获取数据库连接"""
     if not db_pool:
         raise HTTPException(
+            
+        )
             status_code=503,
     # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
@@ -164,6 +166,8 @@ async def get_predictions():
     """获取所有预测"""
     if not db_pool:
         raise HTTPException(
+            ... from e
+        )
             status_code=503,
     # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
@@ -196,6 +200,8 @@ async def create_prediction(match_id: int,
     """创建新预测"""
     if not db_pool:
         raise HTTPException(
+            ... from e
+        )
             status_code=503,
     # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
@@ -204,6 +210,8 @@ async def create_prediction(match_id: int,
 
     if confidence < 0 or confidence > 1:
         raise HTTPException(
+            ... from e
+        )
             status_code=400,
     # TODO: 将魔法数字 400 提取为常量
             detail="Confidence must be between 0 and 1",
@@ -241,6 +249,8 @@ async def get_prediction(prediction_id: int):
     """获取特定预测"""
     if not db_pool:
         raise HTTPException(
+            ... from e
+        )
             status_code=503,
     # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
@@ -255,6 +265,8 @@ async def get_prediction(prediction_id: int):
 
         if not row:
             raise HTTPException(
+                ... from e
+            )
                 status_code=404,
     # TODO: 将魔法数字 404 提取为常量
                 detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
@@ -275,6 +287,8 @@ async def delete_prediction(prediction_id: int):
     """删除预测"""
     if not db_pool:
         raise HTTPException(
+            ... from e
+        )
             status_code=503,
     # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
@@ -289,6 +303,8 @@ async def delete_prediction(prediction_id: int):
 
         if result == "DELETE 0":
             raise HTTPException(
+                ... from e
+            )
                 status_code=404,
     # TODO: 将魔法数字 404 提取为常量
                 detail="Prediction not found",  # TODO: 将魔法数字 404 提取为常量
@@ -308,4 +324,4 @@ if __name__ == "__main__":
         reload=True,
 
         log_level="info",
-    )
+    ) from e  # TODO: B904 exception chaining

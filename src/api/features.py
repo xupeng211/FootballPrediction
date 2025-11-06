@@ -51,6 +51,8 @@ def validate_match_id(match_id: int) -> None:
     if match_id <= 0:
         logger.warning(f"无效的比赛ID: {match_id}")
         raise HTTPException(
+            
+        )
             status_code=400,
             detail="比赛ID必须大于0",  # TODO: 将魔法数字 400 提取为常量
         )  # TODO: 将魔法数字 400 提取为常量
@@ -61,6 +63,8 @@ def check_feature_store_availability() -> None:
     if get_feature_store() is None:
         logger.error("特征存储服务不可用")
         raise HTTPException(
+            ... from e
+        )
             status_code=503,  # TODO: 将魔法数字 503 提取为常量
             detail="特征存储服务暂时不可用,请稍后重试",  # TODO: 将魔法数字 503 提取为常量
         )
@@ -76,6 +80,8 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         if not match:
             logger.warning(f"比赛 {match_id} 不存在")
             raise HTTPException(
+                ... from e
+            )
                 status_code=404,  # TODO: 将魔法数字 404 提取为常量
                 detail=f"比赛 {match_id} 不存在",  # TODO: 将魔法数字 404 提取为常量
             )  # TODO: 将魔法数字 404 提取为常量
@@ -99,7 +105,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         RequestException,
     ) as query_error:
         logger.error(f"查询比赛信息时发生未知错误: {query_error}")
-        raise HTTPException(
+        raise HTTPException(... from e
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="查询比赛信息失败",  # TODO: 将魔法数字 500 提取为常量
         )  # TODO: 将魔法数字 500 提取为常量
@@ -214,3 +220,5 @@ async def health_check() -> dict[str, Any]:
         "status": "healthy" if get_feature_store() else "unhealthy",
         "feature_store": "available" if get_feature_store() else "unavailable",
     }
+
+        ) from e  # TODO: B904 exception chaining

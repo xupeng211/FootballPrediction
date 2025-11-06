@@ -62,6 +62,8 @@ async def get_current_user(
     user = await auth_service.get_current_user(token)
     if not user:
         raise HTTPException(
+            
+        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的认证令牌",
             headers={"WWW-Authenticate": "Bearer"},
@@ -105,13 +107,13 @@ async def register(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        ) from e
+            detail=str(e) from e,
+        ) from e  # TODO: B904 exception chaining
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"注册失败: {str(e)}",
-        ) from e
+            detail=f"注册失败: {str(e) from e}",
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post(
@@ -137,6 +139,8 @@ async def login(
 
     if not login_result:
         raise HTTPException(
+            
+        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",
             headers={"WWW-Authenticate": "Bearer"},
@@ -164,6 +168,8 @@ async def refresh_token(
 
     if not access_token:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的刷新令牌",
             headers={"WWW-Authenticate": "Bearer"},
@@ -208,6 +214,8 @@ async def update_current_user(
 
     if not update_data:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="没有提供有效的更新字段",
         )
@@ -242,6 +250,8 @@ async def change_password(
 
     if not success:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="当前密码错误",
         )
@@ -302,6 +312,8 @@ async def reset_password(
 
     if not success:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="无效或已过期的重置令牌",
         )
@@ -327,6 +339,8 @@ async def verify_email(
 
     if not success:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="无效或已过期的验证令牌",
         )
@@ -348,6 +362,8 @@ async def resend_verification_email(
     """
     if current_user.is_verified:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="邮箱已经验证过了",
         )
@@ -379,3 +395,5 @@ async def logout(
 
 # 导出router供其他模块使用
 __all__ = ["router"]
+
+        ) from e  # TODO: B904 exception chaining

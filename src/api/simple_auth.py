@@ -217,6 +217,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
     # 实际应用中应该验证JWT令牌
     if not token:
         raise HTTPException(
+            
+        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的认证令牌",
             headers={"WWW-Authenticate": "Bearer"},
@@ -230,6 +232,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
     user = auth_service.get_user_by_username(username)
     if not user:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户不存在",
             headers={"WWW-Authenticate": "Bearer"},
@@ -247,15 +251,17 @@ async def register_user(user_data: SimpleUserRegister):
         )
         return {"message": "用户注册成功", "user": user.dict()}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e  # TODO: B904 exception chaining
 
 
-@router.post("/login")
+@router.post("/login") from e
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     """用户登录"""
     user = auth_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
+            
+        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",
             headers={"WWW-Authenticate": "Bearer"},
@@ -283,3 +289,5 @@ async def logout_user():
 
 # 导出router
 __all__ = ["router"]
+
+        ) from e  # TODO: B904 exception chaining

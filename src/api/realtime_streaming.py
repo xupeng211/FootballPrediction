@@ -83,3 +83,5 @@ async def health_check():
         "service": "Real-time Data Streaming API",
         "timestamp": datetime.now().isoformat(),
     }
+
+        ) from e  # TODO: B904 exception chaining

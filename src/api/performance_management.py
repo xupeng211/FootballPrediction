@@ -382,6 +382,8 @@ async def manage_cache(
 
     else:
         raise HTTPException(
+            
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"不支持的操作类型: {cache_operation.operation}",
         )
@@ -448,6 +450,8 @@ async def optimize_api_performance(optimization_request: OptimizationRequestMode
 
         if not endpoint:
             raise HTTPException(
+                ... from e
+            )
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="端点优化需要指定endpoint参数",
             )
@@ -466,6 +470,8 @@ async def optimize_api_performance(optimization_request: OptimizationRequestMode
 
     else:
         raise HTTPException(
+            ... from e
+        )
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"不支持的优化类型: {optimization_request.optimization_type}",
         )
@@ -602,3 +608,5 @@ async def performance_management_health():
             "cache_manager": "healthy",
         },
     }
+
+        ) from e  # TODO: B904 exception chaining

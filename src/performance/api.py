@@ -129,7 +129,7 @@ async def get_performance_metrics():
         logger.error(f"Failed to get performance metrics: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance metrics"
-        )
+        ) from e
 
 
 @router.post("/profiling/start")
@@ -139,7 +139,7 @@ async def start_profiling(config: PerformanceRequest):
         profiler = get_profiler()
 
         if profiler.active_profiling:
-            raise HTTPException(status_code=400, detail="Profiling is already active")
+            raise HTTPException(status_code=400, detail="Profiling is already active") from e  # TODO: B904 exception chaining
 
         # 启动分析
         profiler.start_profiling()
@@ -164,7 +164,7 @@ async def start_profiling(config: PerformanceRequest):
         logger.error(f"Failed to start profiling: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to start performance profiling"
-        )
+        ) from e
 
 
 @router.post("/profiling/stop")
@@ -174,7 +174,7 @@ async def stop_profiling():
         profiler = get_profiler()
 
         if not profiler.active_profiling:
-            raise HTTPException(status_code=400, detail="No active profiling session")
+            raise HTTPException(status_code=400, detail="No active profiling session") from e  # TODO: B904 exception chaining
 
         # 停止分析并获取结果
         results = profiler.stop_profiling()
@@ -301,4 +301,4 @@ async def get_performance_report(
         logger.error(f"Failed to generate performance report: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to generate performance report"
-        )
+        ) from e  # TODO: B904 exception chaining

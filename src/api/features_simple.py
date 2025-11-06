@@ -59,12 +59,12 @@ async def get_match_features(
 
     except SQLAlchemyError as e:
         logger.error(f"数据库查询错误: {e}")
-        raise HTTPException(status_code=500, detail="数据库查询失败") from e
+        raise HTTPException(status_code=500, detail="数据库查询失败") from e  # TODO: B904 exception chaining
     except HTTPException:
         # HTTPException会被FastAPI全局异常处理器捕获
         raise
     except Exception as e:
-        logger.error(f"未知错误: {e}")
+        logger.error(f"未知错误: {e}") from e
         raise HTTPException(status_code=500, detail="服务器内部错误") from e
 @router.get("/health", response_model=dict[str, str])
 async def health_check() -> dict[str, str]:
@@ -79,7 +79,7 @@ async def health_check() -> dict[str, str]:
         }
     except Exception as e:
         logger.error(f"健康检查失败: {e}")
-        raise HTTPException(status_code=500, detail="健康检查失败") from e
+        raise HTTPException(status_code=500, detail="健康检查失败") from e  # TODO: B904 exception chaining
 @router.get("/", response_model=dict[str, Any])
 async def get_features_info() -> dict[str, Any]:
     """

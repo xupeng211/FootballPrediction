@@ -272,6 +272,8 @@ async def get_tenant(tenant_id: int):
 
         if not tenant:
             raise HTTPException(
+                
+            )
                 status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
             )
 
@@ -395,6 +397,8 @@ async def revoke_user_role(tenant_id: int,
 
         if not success:
             raise HTTPException(
+                ... from e
+            )
                 status_code=status.HTTP_404_NOT_FOUND, detail="角色分配不存在"
             )
 
@@ -415,7 +419,9 @@ async def check_permission(
     """
     tenant_context = get_tenant_context(request)
     if not tenant_context:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+        raise HTTPException(
+            ... from estatus_code=status.HTTP_401_UNAUTHORIZED,
+        )
     detail="未认证")
 
     async with get_db_session() as db:
@@ -557,6 +563,8 @@ async def tenant_health_check(tenant_id: int):
 
         if not tenant:
             raise HTTPException(
+                ... from e
+            )
                 status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
             )
 
@@ -595,4 +603,4 @@ def _calculate_health_score(tenant: Tenant) -> float:
     if tenant.days_until_expiry is not None and tenant.days_until_expiry < 7:
         score -= 15.0  # TODO: 将魔法数字 15 提取为常量
 
-    return max(0.0, score)
+    return max(0.0, score) from e  # TODO: B904 exception chaining
