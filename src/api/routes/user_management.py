@@ -75,7 +75,10 @@ async def get_current_user_info(
         user = await user_service.get_user_by_id(current_user["id"])
         return user
     except UserNotFoundError as e:
-        raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
@@ -104,11 +107,13 @@ async def update_user(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="只能更新自己的用户信息",
             )
-            )
         user = await user_service.update_user(user_id, request)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -129,7 +134,10 @@ async def delete_user(
             )
         await user_service.delete_user(user_id)
     except UserNotFoundError as e:
-        raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 @router.get("/", response_model=list[UserResponse])
 async def get_users(
@@ -217,7 +225,10 @@ async def deactivate_user(
         user = await user_service.deactivate_user(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 @router.post("/{user_id}/activate", response_model=UserResponse)
 async def activate_user(
@@ -237,7 +248,10 @@ async def activate_user(
         user = await user_service.activate_user(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 @router.get("/stats", response_model=dict)
 async def get_user_stats(

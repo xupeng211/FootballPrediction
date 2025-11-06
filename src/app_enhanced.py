@@ -112,13 +112,9 @@ async def get_db_connection():
     """获取数据库连接"""
     if not db_pool:
         raise HTTPException(
-            
-        )
             status_code=503,
-    # TODO: 将魔法数字 503 提取为常量
             detail="Database not available",
-    # TODO: 将魔法数字 503 提取为常量
-        )  # TODO: 将魔法数字 503 提取为常量
+        )
     return db_pool
 
 
