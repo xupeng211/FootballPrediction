@@ -145,6 +145,8 @@ pydantic-core==2.27.2
     # via pydantic
 pydantic-settings==2.7.0
     # via -r base.txt
+pyjwt==2.10.1
+    # via -r base.txt
 python-dateutil==2.9.0.post0
     # via
     #   celery
