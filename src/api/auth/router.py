@@ -103,13 +103,12 @@ async def register(
         return user
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
-            detail=str(e)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"注册失败: {str(e)}",
+        )
 
 
 @router.post(
@@ -206,7 +205,7 @@ async def update_current_user(
 
     if not update_data:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="没有提供有效的更新字段",
         )
 
@@ -240,7 +239,7 @@ async def change_password(
 
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="当前密码错误",
         )
 
@@ -300,7 +299,7 @@ async def reset_password(
 
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="无效或已过期的重置令牌",
         )
 
@@ -325,7 +324,7 @@ async def verify_email(
 
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="无效或已过期的验证令牌",
         )
 
@@ -346,7 +345,7 @@ async def resend_verification_email(
     """
     if current_user.is_verified:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="邮箱已经验证过了",
         )
 
