@@ -122,8 +122,7 @@ async def add_match_to_monitoring(
 
         if not success:
             raise HTTPException(
-                status_code=400,
-                detail="Failed to add match to monitoring"
+                status_code=400, detail="Failed to add match to monitoring"
             )
 
         # 发送通知
@@ -147,9 +146,11 @@ async def add_match_to_monitoring(
         }
 
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=400, detail=f"Invalid status: {request.status}"
+        ) from e  # TODO: B904 exception chaining
     except Exception as e:
-        logger.error(f"Failed to add match to monitoring: {e}") 
+        logger.error(f"Failed to add match to monitoring: {e}")
         raise HTTPException(status_code=500, detail="Failed to add match to monitoring")
 
 
@@ -181,8 +182,7 @@ async def update_match_score(
 
         if not score_changed:
             raise HTTPException(
-                status_code=404,
-                detail="Match not found or score unchanged"
+                status_code=404, detail="Match not found or score unchanged"
             )
 
         # 获取比赛信息
@@ -214,10 +214,12 @@ async def update_match_score(
 
     except Exception as e:
         logger.error(f"Failed to update match score: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update match score") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=500, detail="Failed to update match score"
+        ) from e  # TODO: B904 exception chaining
 
 
-@router.put("/{match_id}/status", summary="更新比赛状态") 
+@router.put("/{match_id}/status", summary="更新比赛状态")
 async def update_match_status(
     match_id: int, request: UpdateStatusRequest, background_tasks: BackgroundTasks
 ):
@@ -249,9 +251,7 @@ async def update_match_status(
 
         if not status_changed:
             raise HTTPException(
-                
-            )
-status_code=404, detail="Match not found or status unchanged"
+                status_code=404, detail="Match not found or status unchanged"
             )
 
         # 获取比赛信息
@@ -281,9 +281,11 @@ status_code=404, detail="Match not found or status unchanged"
         }
 
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=400, detail=f"Invalid status: {request.status}"
+        ) from e  # TODO: B904 exception chaining
     except Exception as e:
-        logger.error(f"Failed to update match status: {e}") 
+        logger.error(f"Failed to update match status: {e}")
         raise HTTPException(status_code=500, detail="Failed to update match status")
 
 
@@ -303,14 +305,16 @@ async def get_match_info(match_id: int):
         match_info = await service.get_match_info(match_id)
 
         if not match_info:
-            raise HTTPException(status_code=404, detail="Match not found") from e  # TODO: B904 exception chaining
+            raise HTTPException(
+                status_code=404, detail="Match not found"
+            ) from e  # TODO: B904 exception chaining
 
         return match_info
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get match info: {e}") 
+        logger.error(f"Failed to get match info: {e}")
         raise HTTPException(status_code=500, detail="Failed to get match info")
 
 
@@ -353,10 +357,12 @@ async def get_league_matches(
 
     except Exception as e:
         logger.error(f"Failed to get league matches: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get league matches") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=500, detail="Failed to get league matches"
+        ) from e  # TODO: B904 exception chaining
 
 
-@router.get("/live", summary="获取直播比赛") 
+@router.get("/live", summary="获取直播比赛")
 async def get_live_matches(
     league: str | None = Query(None, description="联赛过滤"),
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
@@ -411,10 +417,12 @@ async def get_match_service_stats():
 
     except Exception as e:
         logger.error(f"Failed to get service stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get service stats") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=500, detail="Failed to get service stats"
+        ) from e  # TODO: B904 exception chaining
 
 
-@router.post("/{match_id}/subscribe", summary="订阅比赛更新") 
+@router.post("/{match_id}/subscribe", summary="订阅比赛更新")
 async def subscribe_to_match_updates(
     match_id: int, user_id: str = Query(..., description="用户ID")
 ):
@@ -454,7 +462,7 @@ async def subscribe_to_match_updates(
 
 @router.delete("/{match_id}/subscribe", summary="取消订阅比赛更新")
 async def unsubscribe_from_match_updates(
-    match_id: int, user_id: str = Query(..., description="用户ID") 
+    match_id: int, user_id: str = Query(..., description="用户ID")
 ):
     """
     取消订阅比赛更新通知
@@ -471,7 +479,9 @@ async def unsubscribe_from_match_updates(
         success = await service.unsubscribe_from_match(match_id, user_id)
 
         if not success:
-            raise HTTPException(status_code=404, detail="Match not found") from e  # TODO: B904 exception chaining
+            raise HTTPException(
+                status_code=404, detail="Match not found"
+            ) from e  # TODO: B904 exception chaining
 
         return {
             "success": True,
@@ -487,7 +497,7 @@ async def unsubscribe_from_match_updates(
         logger.error(f"Failed to unsubscribe from match updates: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to unsubscribe from match updates"
-        ) 
+        )
 
 
 @router.post("/broadcast/alert", summary="广播比赛告警")
@@ -535,7 +545,9 @@ async def broadcast_match_alert(
 
     except Exception as e:
         logger.error(f"Failed to broadcast match alert: {e}")
-        raise HTTPException(status_code=500, detail="Failed to broadcast match alert") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=500, detail="Failed to broadcast match alert"
+        ) from e  # TODO: B904 exception chaining
 
 
 # ============================================================================
