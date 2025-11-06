@@ -337,7 +337,7 @@ async def collector_health() -> dict[str, Any]:
     try:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
-        {
+        return {
             "status": "healthy",
             "timestamp": collector_status,
             "metrics_collector": collector_status,
@@ -376,7 +376,7 @@ async def start_collector() -> dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.start()
-        {"message": "指标收集器启动成功"}
+        return {"message": "指标收集器启动成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
         raise HTTPException(
@@ -389,7 +389,7 @@ async def stop_collector() -> dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.stop()
-        {"message": "指标收集器停止成功"}
+        return {"message": "指标收集器停止成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)
         raise HTTPException(

@@ -146,7 +146,7 @@ async def get_recent_prediction_stats(
     if not analytics_handler:
         raise HTTPException(
             status_code=404, detail="分析处理器未找到"
-        ) from e  # TODO: B904 exception chaining
+        )
     analytics_data = analytics_handler.get_analytics_data()
     daily_predictions = analytics_data.get("daily_predictions", {})
     cutoff_date = (datetime.utcnow() - timedelta(days=days)).date()

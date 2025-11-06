@@ -199,7 +199,7 @@ class JWTAuthManager:
                 jti=jti,
             )
 
-        except jwt.ExpiredSignatureError:
+        except jwt.ExpiredSignatureError as e:
             raise ValueError("Token has expired") from e
         except jwt.JWTError as e:
             logger.error(f"JWT decode error: {e}")
