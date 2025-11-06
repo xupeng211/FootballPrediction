@@ -5,7 +5,6 @@ Enhanced FastAPI Application with Data Access Layer
 
 import os
 from contextlib import asynccontextmanager
-from typing import List
 
 import asyncpg
 from fastapi import FastAPI, HTTPException
@@ -23,6 +22,7 @@ db_pool = None
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
+
     id: int
     match_id: int
     home_team: str
@@ -39,16 +39,13 @@ async def lifespan(app: FastAPI):
     global db_pool
     try:
         db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
-        print("✅ 数据库连接池初始化成功")
         yield
-    except Exception as e:
-        print(f"❌ 数据库连接失败: {e}")
+    except Exception:
         yield
     finally:
         # 关闭时清理连接池
         if db_pool:
             await db_pool.close()
-            print("✅ 数据库连接池已关闭")
 
 
 # 创建 FastAPI 应用
@@ -76,7 +73,7 @@ async def health_check():
     return {"status": "healthy", "database": "connected" if db_pool else "disconnected"}
 
 
-@app.get("/predictions", response_model=List[PredictionResponse])
+@app.get("/predictions", response_model=list[PredictionResponse])
 async def get_predictions():
     """获取所有预测"""
     pool = await get_db_connection()
@@ -100,31 +97,25 @@ async def get_predictions():
                     away_team=row["away_team"],
                     prediction=row["prediction"],
                     confidence=row["confidence"],
-                    created_at=str(row["created_at"])
+                    created_at=str(row["created_at"]),
                 )
                 for row in rows
             ]
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch predictions: {str(e)}"
+            status_code=500, detail=f"Failed to fetch predictions: {str(e)}"
         )
 
 
 @app.post("/predictions", response_model=PredictionResponse)
 async def create_prediction(
-    match_id: int,
-    home_team: str,
-    away_team: str,
-    prediction: str,
-    confidence: float
+    match_id: int, home_team: str, away_team: str, prediction: str, confidence: float
 ):
     """创建新预测"""
     # 验证confidence范围
     if confidence < 0 or confidence > 1:
         raise HTTPException(
-            status_code=400,
-            detail="Confidence must be between 0 and 1"
+            status_code=400, detail="Confidence must be between 0 and 1"
         )
 
     pool = await get_db_connection()
@@ -137,7 +128,11 @@ async def create_prediction(
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id, match_id, home_team, away_team, prediction, confidence, created_at
                 """,
-                match_id, home_team, away_team, prediction, confidence
+                match_id,
+                home_team,
+                away_team,
+                prediction,
+                confidence,
             )
 
             return PredictionResponse(
@@ -147,12 +142,11 @@ async def create_prediction(
                 away_team=row["away_team"],
                 prediction=row["prediction"],
                 confidence=row["confidence"],
-                created_at=str(row["created_at"])
+                created_at=str(row["created_at"]),
             )
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create prediction: {str(e)}"
+            status_code=500, detail=f"Failed to create prediction: {str(e)}"
         )
 
 
@@ -169,14 +163,11 @@ async def get_prediction(prediction_id: int):
                 FROM predictions
                 WHERE id = $1
                 """,
-                prediction_id
+                prediction_id,
             )
 
             if not row:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Prediction not found"
-                )
+                raise HTTPException(status_code=404, detail="Prediction not found")
 
             return PredictionResponse(
                 id=row["id"],
@@ -185,17 +176,17 @@ async def get_prediction(prediction_id: int):
                 away_team=row["away_team"],
                 prediction=row["prediction"],
                 confidence=row["confidence"],
-                created_at=str(row["created_at"])
+                created_at=str(row["created_at"]),
             )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to fetch prediction: {str(e)}"
+            status_code=500, detail=f"Failed to fetch prediction: {str(e)}"
         )
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)
