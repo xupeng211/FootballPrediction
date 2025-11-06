@@ -19,8 +19,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 # 直接导入auth.py文件，避免包导入问题
 import importlib.util
 
+# 动态构建auth.py文件路径
+auth_file_path = os.path.join(os.path.dirname(__file__), "../../..", "src", "api", "auth.py")
+
 spec = importlib.util.spec_from_file_location(
-    "auth_module", "/home/user/projects/FootballPrediction/src/api/auth.py"
+    "auth_module", auth_file_path
 )
 auth_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(auth_module)

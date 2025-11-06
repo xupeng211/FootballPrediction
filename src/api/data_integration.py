@@ -112,7 +112,7 @@ async def collect_teams(
 
     except Exception as e:
         logger.error(f"收集球队数据失败: {e}")
-        raise HTTPException(status_code=500, detail=f"收集球队数据失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"收集球队数据失败: {str(e)}") from e
 
 
 @router.post("/collect/all", response_model=DataCollectionResponse)
@@ -195,7 +195,7 @@ async def get_data_source_status(
 
     except Exception as e:
         logger.error(f"获取数据源状态失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取数据源状态失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取数据源状态失败: {str(e)}") from e
 
 
 @router.get("/matches", response_model=list[MatchResponse])
@@ -287,7 +287,7 @@ async def get_teams(
 
     except Exception as e:
         logger.error(f"获取球队列表失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取球队列表失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取球队列表失败: {str(e)}") from e
 
 
 @router.get("/stats", response_model=dict[str, Any])
