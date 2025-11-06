@@ -1,0 +1,139 @@
+# Filebeat Configuration for Football Prediction System
+# Author: Claude Code
+# Version: 1.0
+# Purpose: Collect and ship logs to Logstash/Elasticsearch
+
+filebeat.inputs:
+  # Application logs
+  - type: log
+    enabled: true
+    paths:
+      - /app/logs/*.log
+      - /app/logs/*.txt
+    fields:
+      service: football-prediction
+      environment: production
+      log_type: application
+    fields_under_root: false
+    multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+    multiline.negate: true
+    multiline.match: after
+    scan_frequency: 10s
+    harvester_buffer_size: 16384
+    max_bytes: 10485760
+
+  # Nginx access logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/*.access.log
+    fields:
+      service: nginx
+      environment: production
+      log_type: access
+    fields_under_root: false
+    processors:
+      - dissect:
+          tokenizer: '%{IPORHOST:client_ip} %{NGINX_USER:nginx_user} \[%{NGINX_TIME:time_local}\] "%{NGINX_METHOD:method} %{NGINX_PATH:path}(?:%{NGINX_QUERY:query})?" %{NGINX_STATUS:status} %{NGINX_BYTES_SENT:body_bytes_sent} "%{NGINX_REFERER:referer}" "%{NGINX_USER_AGENT:user_agent}"'
+          field: message
+      - timestamp:
+          field: time_local
+          layouts:
+            - '02/Jan/2006:15:04:05 -0700'
+            - '2006-01-02T15:04:05-07:00'
+          test:
+            - '02/Jan/2006:15:04:05 -0700'
+
+  # Nginx error logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/nginx/error.log
+      - /var/log/nginx/*.error.log
+    fields:
+      service: nginx
+      environment: production
+      log_type: error
+    fields_under_root: false
+    multiline.pattern: '^\d{4}/\d{2}/\d{2}'
+    multiline.negate: true
+    multiline.match: after
+
+  # System logs
+  - type: syslog
+    enabled: true
+    protocol.udp:
+      host: "localhost"
+      port: 514
+    fields:
+      service: system
+      environment: production
+      log_type: syslog
+    fields_under_root: false
+
+# Global processors
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+# Output configuration
+output.logstash:
+  hosts: ["logstash:5044"]
+  compression_level: 3
+  escape_html: false
+  proxy_url: ""
+  proxy_headers: {}
+
+# Elasticsearch output (alternative to Logstash)
+# output.elasticsearch:
+#   hosts: ["elasticsearch:9200"]
+#   index: "football-prediction-%{+yyyy.MM.dd}"
+#   template.name: "football-prediction"
+#   template.pattern: "football-prediction-*"
+#   template.settings:
+#     index:
+#       number_of_shards: 1
+#       number_of_replicas: 1
+#   template.mappings:
+#     properties:
+#       "@timestamp":
+#         type: date
+#       "service":
+#         type: keyword
+#       "environment":
+#         type: keyword
+#       "log_type":
+#         type: keyword
+#       "level":
+#         type: keyword
+#       "message":
+#         type: text
+#         analyzer: standard
+#   setup.template.name: "football-prediction"
+#   setup.template.pattern: "football-prediction-*"
+
+# Logging configuration
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# Monitoring
+monitoring.enabled: false
+
+# Queue configuration
+queue.mem:
+  events: 4096
+  flush.min_events: 512
+  flush.timeout: 1s
+
+# Path configuration
+path.data: /var/lib/filebeat
+path.logs: /var/log/filebeat
+path.home: /usr/share/filebeat
