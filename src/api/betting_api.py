@@ -1,5 +1,3 @@
-from datetime import datetime
-
 #!/usr/bin/env python3
 """
 投注API模块
@@ -16,6 +14,7 @@ Betting API Module
 Issue: #116 EV计算和投注策略
 """
 
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException, Query

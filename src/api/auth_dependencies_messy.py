@@ -71,9 +71,9 @@ async def get_current_user_messy(
         # 模拟用户数据
         token_data = TokenData(user_id=1, username="test_user_messy", role="user")
         return token_data
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
