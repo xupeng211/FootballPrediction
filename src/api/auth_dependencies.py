@@ -58,6 +58,22 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"}
+        )
+
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Security(security, auto_error=False),
+):
+    """获取当前用户（可选）"""
+    if not credentials:
+        return None
+
+    try:
+        # 这里应该解析JWT token，暂时返回模拟数据
+        token_data = TokenData(user_id=1, username="test_user", role="user")
+        return token_data
+    except Exception:
+        return None
 
 
 async def require_admin(current_user: TokenData = Depends(get_current_user)):

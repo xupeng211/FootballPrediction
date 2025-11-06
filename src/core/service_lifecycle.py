@@ -160,7 +160,7 @@ class ServiceLifecycleManager:
         except Exception as e:
             service_info.state = ServiceState.ERROR
             logger.error(f"服务启动失败: {name} - {e}")
-            raise ServiceLifecycleError(f"服务启动失败: {name}") from e
+            raise ServiceLifecycleError(f"服务启动失败: {name}")
 
     def stop_service(self, name: str) -> None:
         """停止服务"""
@@ -203,7 +203,7 @@ class ServiceLifecycleManager:
         except Exception as e:
             service_info.state = ServiceState.ERROR
             logger.error(f"服务停止失败: {name} - {e}")
-            raise ServiceLifecycleError(f"服务停止失败: {name}") from e
+            raise ServiceLifecycleError(f"服务停止失败: {name}")
 
     async def _start_service_async(self, name: str) -> None:
         """异步启动服务"""

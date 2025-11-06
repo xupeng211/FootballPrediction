@@ -33,7 +33,7 @@ class FileUtils:
             with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}")
+            raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}") from e
 
     @staticmethod
     def write_json(

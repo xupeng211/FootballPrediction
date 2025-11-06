@@ -200,10 +200,10 @@ class JWTAuthManager:
             )
 
         except jwt.ExpiredSignatureError:
-            raise ValueError("Token has expired")
+            raise ValueError("Token has expired") from e
         except jwt.JWTError as e:
             logger.error(f"JWT decode error: {e}")
-            raise ValueError("Invalid token")
+            raise ValueError("Invalid token") from e
 
     async def blacklist_token(self, jti: str, exp: datetime) -> None:
         """
@@ -328,10 +328,10 @@ class JWTAuthManager:
 
             return email
 
-        except jwt.ExpiredSignatureError:
-            raise ValueError("Password reset token has expired")
-        except jwt.JWTError:
-            raise ValueError("Invalid password reset token")
+        except jwt.ExpiredSignatureError as e:
+            raise ValueError("Password reset token has expired") from e
+        except jwt.JWTError as e:
+            raise ValueError("Invalid password reset token") from e
 
     async def close(self) -> None:
         """关闭Redis连接"""

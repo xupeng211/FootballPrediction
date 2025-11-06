@@ -29,8 +29,7 @@ try:
     import os
     import sys
 
-    sys.path.append(
-        os.path.join(os.path.dirname(__file__), "src", "services", "betting")
+    sys.path.append(os.path.join(os.path.dirname(__file__), "src", "services", "betting")
     )
 
     from ev_calculator import (
@@ -175,14 +174,10 @@ class BettingEVStrategyTester:
 
             if abs(calculated_ev - expected_ev) <= tolerance:
                 passed_tests += 1
-                print(
-                    f"  ✅ 测试案例 {i+1}: 通过 (概率={probability},"
-    赔率={odds},
-    EV={calculated_ev:.3f})"
+                print(f"  ✅ 测试案例 {i+1}: 通过 (概率={probability}, 赔率={odds}, EV={calculated_ev:.3f})"
                 )
             else:
-                print(
-                    f"  ❌ 测试案例 {i+1}: 失败 (期望={expected_ev:.3f}, 实际={calculated_ev:.3f})"
+                print(f"  ❌ 测试案例 {i+1}: 失败 (期望={expected_ev:.3f}, 实际={calculated_ev:.3f})"
                 )
 
         accuracy_rate = passed_tests / total_tests
@@ -213,8 +208,7 @@ class BettingEVStrategyTester:
         total_tests = len(test_cases)
 
         for i, (ev, odds, probability, expected_range) in enumerate(test_cases):
-            kelly_fraction = ev_calculator.calculate_kelly_fraction(
-                ev, odds, probability
+            kelly_fraction = ev_calculator.calculate_kelly_fraction(ev, odds, probability
             )
             min_expected, max_expected = expected_range
 
@@ -222,9 +216,8 @@ class BettingEVStrategyTester:
                 passed_tests += 1
                 print(f"  ✅ 测试案例 {i+1}: 通过 (Kelly={kelly_fraction:.3f})")
             else:
-                print(
-                    f"  ❌ 测试案例 {i+1}: 失败 (期望范围={expected_range},"
-    实际={kelly_fraction:.3f})"
+                print(f"  ❌ 测试案例 {i+1}: 失败 (期望范围={expected_range}, "
+                    f"实际={kelly_fraction:.3f})"
                 )
 
         accuracy_rate = passed_tests / total_tests
@@ -261,8 +254,7 @@ class BettingEVStrategyTester:
         try:
             # 创建模拟EV计算结果
             mock_ev_calculations = self._create_mock_ev_calculations()
-            portfolio = optimizer.optimize_portfolio(
-                mock_ev_calculations, optimizer.strategies["srs_compliant"]
+            portfolio = optimizer.optimize_portfolio(mock_ev_calculations, optimizer.strategies["srs_compliant"]
             )
 
             if portfolio and "recommended_bets" in portfolio:
@@ -314,27 +306,22 @@ class BettingEVStrategyTester:
 
         if compliant_ev >= srs_requirements["min_ev_threshold"]:
             passed_tests += 1
-            print(
-                f"  ✅ EV阈值符合要求: {compliant_ev:.3f} ≥ {srs_requirements['min_ev_threshold']}"
+            print(f"  ✅ EV阈值符合要求: {compliant_ev:.3f} ≥ {srs_requirements['min_ev_threshold']}"
             )
         else:
-            print(
-                f"  ❌ EV阈值不符合要求: {compliant_ev:.3f} < {srs_requirements['min_ev_threshold']}"
+            print(f"  ❌ EV阈值不符合要求: {compliant_ev:.3f} < {srs_requirements['min_ev_threshold']}"
             )
 
         if compliant_probability >= srs_requirements["min_confidence"]:
             passed_tests += 1
-            print(
-                f"  ✅ 置信度符合要求: {compliant_probability} ≥ {srs_requirements['min_confidence']}"
+            print(f"  ✅ 置信度符合要求: {compliant_probability} ≥ {srs_requirements['min_confidence']}"
             )
         else:
-            print(
-                f"  ❌ 置信度不符合要求: {compliant_probability} < {srs_requirements['min_confidence']}"
+            print(f"  ❌ 置信度不符合要求: {compliant_probability} < {srs_requirements['min_confidence']}"
             )
 
         # 测试风险管理
-        risk_level = ev_calculator.assess_risk_level(
-            compliant_probability, compliant_odds, compliant_ev
+        risk_level = ev_calculator.assess_risk_level(compliant_probability, compliant_odds, compliant_ev
         )
         if risk_level.value <= srs_requirements["max_risk_level"].value:
             passed_tests += 1
@@ -343,8 +330,7 @@ class BettingEVStrategyTester:
             print(f"  ❌ 风险等级过高: {risk_level.name}")
 
         # 测试Kelly准则实现
-        kelly_fraction = ev_calculator.calculate_kelly_fraction(
-            compliant_ev, compliant_odds, compliant_probability
+        kelly_fraction = ev_calculator.calculate_kelly_fraction(compliant_ev, compliant_odds, compliant_probability
         )
         if kelly_fraction > 0 and kelly_fraction <= 0.25:
             passed_tests += 1
@@ -390,18 +376,15 @@ class BettingEVStrategyTester:
 
         for probability, odds, expected_ev, expected_risk in risk_test_cases:
             calculated_ev = ev_calculator.calculate_ev(probability, odds)
-            assessed_risk = ev_calculator.assess_risk_level(
-                probability, odds, calculated_ev
+            assessed_risk = ev_calculator.assess_risk_level(probability, odds, calculated_ev
             )
 
             if assessed_risk == expected_risk:
                 passed_tests += 1
-                print(
-                    f"  ✅ 风险评估: 概率={probability}, 风险={assessed_risk.name} (正确)"
+                print(f"  ✅ 风险评估: 概率={probability}, 风险={assessed_risk.name} (正确)"
                 )
             else:
-                print(
-                    f"  ❌ 风险评估: 概率={probability}, 期望={expected_risk.name}, 实际={assessed_risk.name}"
+                print(f"  ❌ 风险评估: 概率={probability}, 期望={expected_risk.name}, 实际={assessed_risk.name}"
                 )
 
         # 测试价值评级
@@ -419,8 +402,7 @@ class BettingEVStrategyTester:
                 print(f"  ✅ 价值评级: EV={ev}, 评级={value_rating:.1f}")
             else:
                 total_tests += 1
-                print(
-                    f"  ❌ 价值评级: EV={ev}, 期望≥{min_expected_rating}, 实际={value_rating:.1f}"
+                print(f"  ❌ 价值评级: EV={ev}, 期望≥{min_expected_rating}, 实际={value_rating:.1f}"
                 )
 
         # 测试破产概率计算
@@ -461,16 +443,14 @@ class BettingEVStrategyTester:
         for strategy_name in strategies:
             try:
                 strategy = optimizer.strategies[strategy_name]
-                portfolio = optimizer.optimize_portfolio(
-                    ev_calculations, strategy, max_total_stake=0.1
+                portfolio = optimizer.optimize_portfolio(ev_calculations, strategy, max_total_stake=0.1
                 )
 
                 # 验证优化结果
                 if self._validate_portfolio_optimization(portfolio, strategy):
                     passed_tests += 1
                     print(f"  ✅ {strategy_name}策略优化: 成功")
-                    print(
-                        f"    - 推荐投注数: {len(portfolio.get('recommended_bets', []))}"
+                    print(f"    - 推荐投注数: {len(portfolio.get('recommended_bets', []))}"
                     )
                     print(f"    - 总投注比例: {portfolio.get('total_stake', 0):.3f}")
                     print(f"    - 期望收益: {portfolio.get('expected_return', 0):.3f}")
@@ -481,8 +461,7 @@ class BettingEVStrategyTester:
                 print(f"  ❌ {strategy_name}策略优化: 异常 ({e})")
 
         # 测试多样化评分
-        diversity_score = optimizer._assess_portfolio_risk(
-            portfolio.get("recommended_bets", []) if "portfolio" in locals() else []
+        diversity_score = optimizer._assess_portfolio_risk(portfolio.get("recommended_bets", []) if "portfolio" in locals() else []
         )
         if diversity_score:
             passed_tests += 1
@@ -512,8 +491,7 @@ class BettingEVStrategyTester:
         engine = create_betting_recommendation_engine()
 
         # 创建模拟数据
-        odds = BettingOdds(
-            home_win=2.1,
+        odds = BettingOdds(home_win=2.1,
             draw=3.4,
             away_win=3.2,
             over_2_5=1.9,
@@ -522,8 +500,7 @@ class BettingEVStrategyTester:
             confidence=0.95,
         )
 
-        probabilities = PredictionProbabilities(
-            home_win=0.65,
+        probabilities = PredictionProbabilities(home_win=0.65,
             draw=0.25,
             away_win=0.10,
             over_2_5=0.55,
@@ -534,8 +511,7 @@ class BettingEVStrategyTester:
 
         try:
             # 测试单场比赛建议生成
-            recommendations = await engine.generate_match_recommendations(
-                match_id="test_match_001",
+            recommendations = await engine.generate_match_recommendations(match_id="test_match_001",
                 odds=odds,
                 probabilities=probabilities,
                 strategy_name="srs_compliant",
@@ -544,15 +520,12 @@ class BettingEVStrategyTester:
             if self._validate_recommendations(recommendations):
                 print("  ✅ 投注建议生成: 成功")
                 print(f"    - 策略: {recommendations.get('strategy_used')}")
-                print(
-                    f"    - 个体投注数: {len(recommendations.get('individual_bets', []))}"
+                print(f"    - 个体投注数: {len(recommendations.get('individual_bets', []))}"
                 )
-                print(
-                    f"    - 总体建议: {recommendations.get('overall_recommendation',
+                print(f"    - 总体建议: {recommendations.get('overall_recommendation',
     {}).get('action')}"
                 )
-                print(
-                    f"    - SRS合规: {recommendations.get('srs_compliance',
+                print(f"    - SRS合规: {recommendations.get('srs_compliance',
     {}).get('overall_compliance',
     False)}"
                 )
@@ -607,8 +580,7 @@ class BettingEVStrategyTester:
                 print(f"    {status_icon} {component}: {'正常' if status else '异常'}")
 
             # 测试SRS配置
-            srs_config_valid = self._validate_srs_configuration(
-                betting_service.srs_config
+            srs_config_valid = self._validate_srs_configuration(betting_service.srs_config
             )
             if srs_config_valid:
                 print("  ✅ SRS配置: 有效")
@@ -656,8 +628,7 @@ class BettingEVStrategyTester:
         from src.services.betting.ev_calculator import EVCalculation
 
         return [
-            EVCalculation(
-                bet_type=BetType.HOME_WIN,
+            EVCalculation(bet_type=BetType.HOME_WIN,
                 probability=0.65,
                 odds=2.1,
                 ev=0.365,
@@ -670,8 +641,7 @@ class BettingEVStrategyTester:
                 bust_probability=0.03,
                 suggested_stake=0.015,
             ),
-            EVCalculation(
-                bet_type=BetType.DRAW,
+            EVCalculation(bet_type=BetType.DRAW,
                 probability=0.25,
                 odds=3.4,
                 ev=-0.15,
@@ -691,8 +661,7 @@ class BettingEVStrategyTester:
         from src.services.betting.ev_calculator import EVCalculation
 
         return [
-            EVCalculation(
-                BetType.HOME_WIN,
+            EVCalculation(BetType.HOME_WIN,
                 0.7,
                 2.0,
                 0.4,
@@ -705,8 +674,7 @@ class BettingEVStrategyTester:
                 0.01,
                 0.02,
             ),
-            EVCalculation(
-                BetType.DRAW,
+            EVCalculation(BetType.DRAW,
                 0.3,
                 3.5,
                 0.05,
@@ -719,8 +687,7 @@ class BettingEVStrategyTester:
                 0.08,
                 0.003,
             ),
-            EVCalculation(
-                BetType.AWAY_WIN,
+            EVCalculation(BetType.AWAY_WIN,
                 0.15,
                 5.0,
                 -0.25,
@@ -733,8 +700,7 @@ class BettingEVStrategyTester:
                 0.0,
                 0.0,
             ),
-            EVCalculation(
-                BetType.OVER_2_5,
+            EVCalculation(BetType.OVER_2_5,
                 0.6,
                 1.9,
                 0.14,
@@ -747,8 +713,7 @@ class BettingEVStrategyTester:
                 0.02,
                 0.012,
             ),
-            EVCalculation(
-                BetType.UNDER_2_5,
+            EVCalculation(BetType.UNDER_2_5,
                 0.4,
                 2.1,
                 -0.16,
@@ -763,8 +728,7 @@ class BettingEVStrategyTester:
             ),
         ]
 
-    def _validate_portfolio_optimization(
-        self, portfolio: dict, strategy: BettingStrategy
+    def _validate_portfolio_optimization(self, portfolio: dict, strategy: BettingStrategy
     ) -> bool:
         """验证组合优化结果"""
         if not portfolio:
@@ -836,14 +800,11 @@ class BettingEVStrategyTester:
         overall_accuracy = total_passed / total_tests if total_tests > 0 else 0
 
         # 计算关键指标
-        ev_calculation_acc = individual_tests.get("EV计算准确性", {}).get(
-            "accuracy_rate", 0
+        ev_calculation_acc = individual_tests.get("EV计算准确性", {}).get("accuracy_rate", 0
         )
-        kelly_criterion_acc = individual_tests.get("Kelly Criterion实现", {}).get(
-            "accuracy_rate", 0
+        kelly_criterion_acc = individual_tests.get("Kelly Criterion实现", {}).get("accuracy_rate", 0
         )
-        srs_compliance_acc = individual_tests.get("SRS合规性检查", {}).get(
-            "accuracy_rate", 0
+        srs_compliance_acc = individual_tests.get("SRS合规性检查", {}).get("accuracy_rate", 0
         )
 
         # 判断测试状态
@@ -909,16 +870,13 @@ class BettingEVStrategyTester:
 
             critical_scores = results.get("critical_component_scores", {})
             print("\n🔧 关键组件评分:")
-            print(
-                f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy',
+            print(f"  - EV计算准确性: {critical_scores.get('ev_calculation_accuracy',
     0)*100:.1f}%"
             )
-            print(
-                f"  - Kelly Criterion: {critical_scores.get('kelly_criterion_accuracy',
+            print(f"  - Kelly Criterion: {critical_scores.get('kelly_criterion_accuracy',
     0)*100:.1f}%"
             )
-            print(
-                f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy',
+            print(f"  - SRS合规性: {critical_scores.get('srs_compliance_accuracy',
     0)*100:.1f}%"
             )
 
@@ -929,8 +887,7 @@ class BettingEVStrategyTester:
                 if result["status"] == "passed"
                 else "⚠️" if result["status"] == "partially_passed" else "❌"
             )
-            print(
-                f"  {status_icon} {test_name}: {result['accuracy_rate']*100:.1f}% ({result['passed']}/{result['total']})"
+            print(f"  {status_icon} {test_name}: {result['accuracy_rate']*100:.1f}% ({result['passed']}/{result['total']})"
             )
 
         print("\n💡 建议:")
@@ -974,8 +931,7 @@ async def main():
     print("\n" + "=" * 80)
     if test_result["test_status"] in ["passed", "partially_passed"]:
         print("🎉 测试完成！")
-        print(
-            f"测试状态: {'通过' if test_result['test_status'] == 'passed' else '部分通过'}"
+        print(f"测试状态: {'通过' if test_result['test_status'] == 'passed' else '部分通过'}"
         )
         if test_result["test_status"] == "passed":
             print("✅ Issue #116 EV计算和投注策略功能完全实现")

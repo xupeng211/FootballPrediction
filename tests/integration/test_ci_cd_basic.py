@@ -20,10 +20,8 @@ def _test_basic_ci_functionality_handle_error():
 
     # 测试2: 基础模块导入
     tests_total += 1
-
-def _test_basic_ci_functionality_handle_error():
+    try:
         import sys
-
         print("✅ 基础模块导入成功")
         tests_passed += 1
     except Exception as e:
@@ -98,8 +96,7 @@ def _test_basic_ci_functionality_process_logic():
 
 def _test_basic_ci_functionality_handle_error():
         # 执行简单测试
-        test_result = subprocess.run(
-            [sys.executable, "test_simple_working.py"],
+        test_result = subprocess.run([sys.executable, "test_simple_working.py"],
             capture_output=True,
             text=True,
             timeout=10,
@@ -234,8 +231,7 @@ def test_basic_ci_functionality(client):
     tests_total += 1
     _test_basic_ci_functionality_handle_error()
         # 执行简单测试
-        test_result = subprocess.run(
-            [sys.executable, "test_simple_working.py"],
+        test_result = subprocess.run([sys.executable, "test_simple_working.py"],
             capture_output=True,
             text=True,
             timeout=10,
@@ -312,8 +308,7 @@ def test_deployment_readiness(client):
         status_icon = "✅" if status else "❌"
         print(f"   {status_icon} {check_name}: {'就绪' if status else '未就绪'}")
 
-    readiness_score = sum(1 for _, status in readiness_checks if status) / len(
-        readiness_checks
+    readiness_score = sum(1 for _, status in readiness_checks if status) / len(readiness_checks
     )
     print(f"\n🎯 部署就绪度: {readiness_score:.1f}")
 
