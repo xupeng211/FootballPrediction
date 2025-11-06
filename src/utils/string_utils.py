@@ -441,9 +441,12 @@ def clean_string(text: str, remove_special_chars: bool = True, keep_numbers: boo
 
     Returns:
         清理后的字符串
+
+    Raises:
+        TypeError: 当输入不是字符串时
     """
     if not isinstance(text, str):
-        return str(text)
+        raise TypeError(f"Expected str, got {type(text).__name__}")
 
     # 基础清理：去除首尾空格
     cleaned = text.strip()
@@ -676,7 +679,13 @@ def count_words(text: str) -> int:
 
     Returns:
         单词数量
+
+    Raises:
+        TypeError: 当输入不是字符串时
     """
+    if not isinstance(text, str):
+        raise TypeError(f"Expected str, got {type(text).__name__}")
+
     return StringUtils.count_words(text)
 
 
@@ -707,12 +716,14 @@ def remove_special_chars(text: str, keep_chars: str = "") -> str:
 
     import re
     if keep_chars:
-        # 构建允许的字符集模式
-        allowed_pattern = f'[a-zA-Z0-9\\s{re.escape(keep_chars)}]'
-        return ''.join(re.findall(allowed_pattern, text))
+        # 构建允许的字符集模式，包括保留字符和连字符
+        allowed_pattern = f'[a-zA-Z0-9\\s\\-{re.escape(keep_chars)}]'
+        result = ''.join(re.findall(allowed_pattern, text))
     else:
-        # 默认只保留字母数字和空格
-        return re.sub(r'[^a-zA-Z0-9\s]', '', text)
+        # 默认保留字母数字、空格和连字符
+        result = re.sub(r'[^a-zA-Z0-9\\s-]', '', text)
+
+    return result
 
 
 def is_palindrome(text: str) -> bool:
