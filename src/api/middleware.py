@@ -212,3 +212,4 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                 content=json.dumps({"detail": "Internal server error"}),
                 status_code=500,  # TODO: 将魔法数字 500 提取为常量
                 media_type="application/json",
+            )
