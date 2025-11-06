@@ -131,7 +131,6 @@ async def delete_user(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="只能删除自己的账户",
             )
-            )
         await user_service.delete_user(user_id)
     except UserNotFoundError as e:
         raise HTTPException(

@@ -186,9 +186,7 @@ class SimplePredictionService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
-,
-            )
+                )
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
         try:

@@ -570,4 +570,4 @@ def _calculate_health_score(tenant: Tenant) -> float:
     if tenant.days_until_expiry is not None and tenant.days_until_expiry < 7:
         score -= 15.0  # TODO: 将魔法数字 15 提取为常量
 
-    return max(0.0, score) from e  # TODO: B904 exception chaining
+    return max(0.0, score)
