@@ -25,20 +25,17 @@ from src.services.user_management_service import (
 router = APIRouter(prefix="/api/v1/users", tags=["用户管理"])
 security = HTTPBearer()
 
-
 class LoginRequest(BaseModel):
     """登录请求模型"""
 
     email: str
     password: str
 
-
 class ChangePasswordRequest(BaseModel):
     """修改密码请求模型"""
 
     old_password: str
     new_password: str
-
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 async def register_user(
@@ -54,7 +51,6 @@ async def register_user(
     except ValueError as e:
         raise HTTPException(... from estatus_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e  # TODO: B904 exception chaining
 
-
 @router.post("/login", response_model=UserAuthResponse)
 async def login_user(
     request: LoginRequest,
@@ -69,7 +65,6 @@ async def login_user(
     except (UserNotFoundError, InvalidCredentialsError) as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: dict = Depends(get_current_user),
@@ -81,7 +76,6 @@ async def get_current_user_info(
         return user
     except UserNotFoundError as e:
         raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
-
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
@@ -95,7 +89,6 @@ async def get_user(
     except UserNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
-
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: int,
@@ -108,8 +101,6 @@ async def update_user(
         # 检查权限：只能更新自己的信息
         if current_user["id"] != user_id:
             raise HTTPException(
-                ... from e
-            )
                 status_code=status.HTTP_403_FORBIDDEN, detail="只能更新自己的用户信息"
             )
         user = await user_service.update_user(user_id, request)
@@ -118,7 +109,6 @@ async def update_user(
         raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
 
 @router.delete("/{user_id}", status_code=204)
 async def delete_user(
@@ -131,14 +121,11 @@ async def delete_user(
         # 检查权限：只能删除自己的账户
         if current_user["id"] != user_id:
             raise HTTPException(
-                ... from e
-            )
                 status_code=status.HTTP_403_FORBIDDEN, detail="只能删除自己的账户"
             )
         await user_service.delete_user(user_id)
     except UserNotFoundError as e:
         raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
-
 
 @router.get("/", response_model=list[UserResponse])
 async def get_users(
@@ -153,7 +140,6 @@ async def get_users(
     if not current_user.get("is_admin", False):
         raise HTTPException(
             
-        )
             status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以查看用户列表"
         )
     try:
@@ -162,10 +148,9 @@ async def get_users(
         )
         return users
     except Exception as e:
-        raise HTTPException(... from e
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
-
+)
 
 @router.get("/search/{query}", response_model=list[UserResponse])
 async def search_users(
@@ -178,18 +163,15 @@ async def search_users(
     # 检查权限
     if not current_user.get("is_admin", False):
         raise HTTPException(
-            ... from e
-        )
             status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以搜索用户"
         )
     try:
         users = await user_service.search_users(query, limit)
         return users
     except Exception as e:
-        raise HTTPException(... from e
+        raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR_ERROR, detail=str(e)
-        )
-
+)
 
 @router.post("/change-password", status_code=200)
 async def change_password(
@@ -210,7 +192,6 @@ async def change_password(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-
 @router.post("/{user_id}/deactivate", response_model=UserResponse)
 async def deactivate_user(
     user_id: int,
@@ -222,15 +203,12 @@ async def deactivate_user(
         # 检查权限：只有管理员可以停用用户
         if not current_user.get("is_admin", False):
             raise HTTPException(
-                ... from e
-            )
                 status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以停用用户"
             )
         user = await user_service.deactivate_user(user_id)
         return user
     except UserNotFoundError as e:
         raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
-
 
 @router.post("/{user_id}/activate", response_model=UserResponse)
 async def activate_user(
@@ -244,14 +222,12 @@ async def activate_user(
         if not current_user.get("is_admin", False):
             raise HTTPException(
                 
-            )
                 status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以激活用户"
             )
         user = await user_service.activate_user(user_id)
         return user
     except UserNotFoundError as e:
         raise HTTPException(... from estatus_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e  # TODO: B904 exception chaining
-
 
 @router.get("/stats", response_model=dict)
 async def get_user_stats(
@@ -263,13 +239,11 @@ async def get_user_stats(
     if not current_user.get("is_admin", False):
         raise HTTPException(
             
-        )
             status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以查看用户统计"
         )
     try:
         stats = await user_service.get_user_stats()
         return stats
     except Exception as e:
-        raise HTTPException(... from e
+        raise HTTPException(...
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        ) from e  # TODO: B904 exception chaining

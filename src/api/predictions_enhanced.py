@@ -34,7 +34,6 @@ except ImportError:
         def __init__(self):
             pass
 
-
 try:
     from src.ml.automl_pipeline import AutoMLPipeline
 except ImportError:
@@ -43,14 +42,12 @@ except ImportError:
         def __init__(self):
             pass
 
-
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions",
     tags=["predictions-srs"])
 
 # JWT Token认证
 security = HTTPBearer()
-
 
 class PredictionResult(str,
     Enum):
@@ -59,7 +56,6 @@ class PredictionResult(str,
     HOME_WIN = "home_win"
     DRAW = "draw"
     AWAY_WIN = "away_win"
-
 
 @dataclass
 class PredictionMetrics:
@@ -74,7 +70,6 @@ class PredictionMetrics:
     f1_score: float = 0.0
     auc_roc: float = 0.0
     response_time_ms: float = 0.0
-
 
 # Pydantic模型定义
 class MatchInfo(BaseModel):
@@ -97,7 +92,6 @@ class MatchInfo(BaseModel):
     description="比赛场地",
     max_length=200)
 
-
 class PredictionRequest(BaseModel):
     """预测请求模型"""
 
@@ -107,7 +101,6 @@ class PredictionRequest(BaseModel):
     description="是否包含置信度")
     include_features: bool = Field(False,
     description="是否包含特征分析")
-
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
@@ -138,7 +131,6 @@ class PredictionResponse(BaseModel):
     description="SRS合规性信息"
     )
 
-
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
 
@@ -154,7 +146,6 @@ class BatchPredictionRequest(BaseModel):
     description="最大并发数",
     ge=1,
     le=1000)
-
 
 class BatchPredictionResponse(BaseModel):
     """批量预测响应模型"""
@@ -177,7 +168,6 @@ class BatchPredictionResponse(BaseModel):
     str | float | bool] = Field(
         ..., description="SRS合规性信息"
     )
-
 
 class EnhancedPredictionService:
     """类文档字符串"""
@@ -205,7 +195,6 @@ class EnhancedPredictionService:
             if not token or len(token) < 10:
                 raise HTTPException(
                     
-                )
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token",
                     headers={"WWW-Authenticate": "Bearer"},
@@ -213,11 +202,10 @@ class EnhancedPredictionService:
             return token
         except Exception as e:
             logger.error(f"Token验证失败: {e}")
-            raise HTTPException(... from e
+            raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-            ) from e  # TODO: B904 exception chaining
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
@@ -280,7 +268,6 @@ class EnhancedPredictionService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
-            ) from e  # TODO: B904 exception chaining
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
@@ -311,7 +298,7 @@ class EnhancedPredictionService:
         # 添加随机性和其他因素
         home_prob += (
             features["recent_form_diff"] * 0.1 + features["h2h_advantage"] * 0.05
-        )
+)
         home_prob = max(0.1,
     min(0.9,
     home_prob))  # 限制在0.1-0.9之间
@@ -356,10 +343,8 @@ class EnhancedPredictionService:
     },
     }
 
-
 # 创建预测服务实例
 prediction_service = EnhancedPredictionService()
-
 
 @router.post("/predict",
     response_model=PredictionResponse)
@@ -384,7 +369,6 @@ async def predict_match(
     redis_client):
         raise HTTPException(
             
-        )
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
     detail="Rate limit exceeded: 100 requests per minute",
     )
@@ -420,7 +404,6 @@ async def predict_match(
 
     return response
 
-
 @router.post("/predict/batch",
     response_model=BatchPredictionResponse)
 async def predict_batch(
@@ -444,8 +427,6 @@ async def predict_batch(
     # 检查批量请求限制
     if len(request.matches) > 1000:
         raise HTTPException(
-            ... from e
-        )
             status_code=status.HTTP_400_BAD_REQUEST,
     detail="Batch size exceeds maximum limit of 1000 matches",
 
@@ -517,7 +498,6 @@ async def predict_batch(
 
     return response
 
-
 @router.get("/metrics")
 async def get_prediction_metrics(token: str = Depends(prediction_service.verify_token)):
     """获取预测性能指标"""
@@ -544,16 +524,13 @@ async def get_prediction_metrics(token: str = Depends(prediction_service.verify_
         },
     }
 
-
 async def log_prediction(match_id: int, prediction: str, response_time: float):
     """记录预测日志"""
     logger.info(
         f"Prediction logged - Match: {match_id}, Result: {prediction}, Time: {response_time:.2f}ms"
     )
 
-
 async def log_batch_prediction(total: int, successful: int, total_time: float):
     """记录批量预测日志"""
     logger.info(
         f"Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
-    ) from e  # TODO: B904 exception chaining

@@ -30,7 +30,6 @@ router = APIRouter(prefix="/predictions-srs",
 # JWT Token认证
 security = HTTPBearer()
 
-
 class PredictionResult(str,
     Enum):
     """预测结果枚举"""
@@ -38,7 +37,6 @@ class PredictionResult(str,
     HOME_WIN = "home_win"
     DRAW = "draw"
     AWAY_WIN = "away_win"
-
 
 # Pydantic模型定义
 class MatchInfo(BaseModel):
@@ -73,7 +71,6 @@ class MatchInfo(BaseModel):
     # TODO: 将魔法数字 200 提取为常量
     )  # TODO: 将魔法数字 200 提取为常量
 
-
 class PredictionRequest(BaseModel):
     """预测请求模型"""
 
@@ -83,7 +80,6 @@ class PredictionRequest(BaseModel):
     description="是否包含置信度")
     include_features: bool = Field(False,
     description="是否包含特征分析")
-
 
 class PredictionResponse(BaseModel):
     """预测响应模型"""
@@ -115,7 +111,6 @@ class PredictionResponse(BaseModel):
     description="SRS合规性信息"
     )
 
-
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
 
@@ -136,7 +131,6 @@ class BatchPredictionRequest(BaseModel):
 
         le=1000,  # TODO: 将魔法数字 100 提取为常量
     )  # TODO: 将魔法数字 100 提取为常量
-
 
 class BatchPredictionResponse(BaseModel):
     """批量预测响应模型"""
@@ -160,7 +154,6 @@ class BatchPredictionResponse(BaseModel):
         ..., description="SRS合规性信息"
     )
 
-
 class SimplePredictionService:
     """类文档字符串"""
 
@@ -182,7 +175,6 @@ class SimplePredictionService:
             if not token or len(token) < 10:
                 raise HTTPException(
                     
-                )
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token",
                     headers={"WWW-Authenticate": "Bearer"},
@@ -190,11 +182,10 @@ class SimplePredictionService:
             return token
         except Exception as e:
             logger.error(f"Token验证失败: {e}")
-            raise HTTPException(... from e
+            raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-            ) from e  # TODO: B904 exception chaining
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
@@ -231,7 +222,7 @@ class SimplePredictionService:
                 if (
                     len(self._rate_limit_cache[token])
                     >= 100  # TODO: 将魔法数字 100 提取为常量
-                ):  # TODO: 将魔法数字 100 提取为常量
+):  # TODO: 将魔法数字 100 提取为常量
                     return False
 
                 self._rate_limit_cache[token].append(current_time)
@@ -278,7 +269,6 @@ class SimplePredictionService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
-            ) from e  # TODO: B904 exception chaining
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""
@@ -367,10 +357,8 @@ class SimplePredictionService:
     },
     }
 
-
 # 创建简化版预测服务实例
 simple_prediction_service = SimplePredictionService()
-
 
 @router.post("/predict",
     response_model=PredictionResponse)
@@ -395,7 +383,6 @@ async def predict_match_simple(
     redis_client):
         raise HTTPException(
             
-        )
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
     detail="Rate limit exceeded: 100 requests per minute",
     # TODO: 将魔法数字 100 提取为常量
@@ -434,7 +421,6 @@ async def predict_match_simple(
 
     return response
 
-
 @router.post("/predict/batch",
     response_model=BatchPredictionResponse)
 async def predict_batch_simple(
@@ -459,8 +445,6 @@ async def predict_batch_simple(
     # 检查批量请求限制
     if len(request.matches) > 1000:  # TODO: 将魔法数字 1000 提取为常量
         raise HTTPException(
-            ... from e
-        )
             status_code=status.HTTP_400_BAD_REQUEST,
     detail="Batch size exceeds maximum limit of 1000 matches",
     # TODO: 将魔法数字 1000 提取为常量
@@ -534,7 +518,6 @@ async def predict_batch_simple(
 
     return response
 
-
 @router.get("/metrics")
 async def get_prediction_metrics_simple(
     token: str = Depends(simple_prediction_service.verify_token),
@@ -572,7 +555,6 @@ async def get_prediction_metrics_simple(
         },
     }
 
-
 @router.get("/health")
 async def health_check():
     """健康检查接口 - 不依赖数据库"""
@@ -584,7 +566,6 @@ async def health_check():
     "version": "v1.0-srs-simple",
     }
 
-
 async def log_prediction_simple(match_id: int,
     prediction: str,
     response_time: float):
@@ -593,9 +574,7 @@ async def log_prediction_simple(match_id: int,
         f"Simple Prediction logged - Match: {match_id}, Result: {prediction}, Time: {response_time:.2f}ms"
     )
 
-
 async def log_batch_prediction_simple(total: int, successful: int, total_time: float):
     """记录批量预测日志"""
     logger.info(
         f"Simple Batch prediction - Total: {total}, Successful: {successful}, Total time: {total_time:.2f}ms"
-    ) from e  # TODO: B904 exception chaining

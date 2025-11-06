@@ -77,7 +77,7 @@ async def create_prediction(
         result = await service.create_prediction(command)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/predictions/{prediction_id}", response_model=PredictionResponse)
@@ -105,7 +105,7 @@ async def list_predictions(
         result = await service.list_predictions(user_id, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # 比赛查询端点
@@ -151,7 +151,7 @@ async def list_matches(
         result = await service.list_matches(date_from, date_to, limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # 用户查询端点
@@ -191,7 +191,7 @@ async def list_users(
         result = await service.list_users(limit, offset)
         return result
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # 分析查询端点

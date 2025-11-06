@@ -20,7 +20,6 @@ from starlette.responses import Response
 
 logger = logging.getLogger(__name__)
 
-
 class TimingMiddleware(BaseHTTPMiddleware):
     """计时中间件,记录请求处理时间"""
 
@@ -31,7 +30,6 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
         response.headers["X-Process-Time"] = str(process_time)
         return response
-
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """日志中间件,记录请求信息"""
@@ -49,7 +47,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.error(f"Error {request_id}: {str(e)}")
             raise
-
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """简单的速率限制中间件"""
@@ -82,16 +79,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 检查是否超过限制
         if len(self.clients[client_ip]) >= self.calls:
             raise HTTPException(
-                
-            )
                 status_code=429,  # TODO: 将魔法数字 429 提取为常量
-                detail="Rate limit exceeded",  # TODO: 将魔法数字 429 提取为常量
-            )  # TODO: 将魔法数字 429 提取为常量
+                detail="Rate limit exceeded",
+            )
 
         self.clients[client_ip].append(current_time)
 
         return await call_next(request)
-
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
     """简单的认证中间件"""
@@ -110,11 +104,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             raise HTTPException(
-                ... from e
-            )
                 status_code=401,  # TODO: 将魔法数字 401 提取为常量
                 detail="Missing or invalid token",  # TODO: 将魔法数字 401 提取为常量
-            )  # TODO: 将魔法数字 401 提取为常量
+            )
 
         # 这里可以添加token验证逻辑
         # token = auth_header.split(" ")[1]
@@ -122,7 +114,6 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # request.state.user = user_info
 
         return await call_next(request)
-
 
 class CORSMiddleware(BaseHTTPMiddleware):
     """CORS中间件"""
@@ -149,7 +140,6 @@ class CORSMiddleware(BaseHTTPMiddleware):
 
         return response
 
-
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件"""
 
@@ -165,7 +155,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         return response
-
 
 class CacheMiddleware(BaseHTTPMiddleware):
     """简单的缓存中间件"""
@@ -209,7 +198,6 @@ class CacheMiddleware(BaseHTTPMiddleware):
 
         return response
 
-
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """错误处理中间件"""
 
@@ -224,4 +212,3 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                 content=json.dumps({"detail": "Internal server error"}),
                 status_code=500,  # TODO: 将魔法数字 500 提取为常量
                 media_type="application/json",
-            ) from e  # TODO: B904 exception chaining
