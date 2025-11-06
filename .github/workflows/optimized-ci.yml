@@ -179,7 +179,7 @@ jobs:
         # 智能测试选择
         if [ "${{ needs.detect-changes.outputs.src-changed }}" == "true" ]; then
           # 源码变更，运行相关测试
-          pytest tests/unit/ tests/integration/ -x             --cov=src --cov-report=xml --cov-report=html             --dist=loadscope --auto-adjust-parallelism             -m "not slow"
+          pytest tests/unit/ tests/integration/ -x             --cov=src --cov-report=xml --cov-report=html             --dist=loadscope -n auto             -m "not slow"
         else
           # 仅测试变更，运行快速检查
           pytest tests/unit/ -x --maxfail=5             -m "smoke or critical"
