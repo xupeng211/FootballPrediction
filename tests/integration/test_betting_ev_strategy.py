@@ -179,7 +179,6 @@ class BettingEVStrategyTester:
             "status": "passed" if accuracy_rate >= 0.9 else "failed",
         }
 
-
     async def _test_kelly_criterion_implementation(self):
         """测试Kelly Criterion实现"""
 
@@ -214,7 +213,6 @@ class BettingEVStrategyTester:
             "accuracy_rate": accuracy_rate,
             "status": "passed" if accuracy_rate >= 0.9 else "failed",
         }
-
 
     async def _test_betting_strategies(self):
         """测试投注策略"""
@@ -258,7 +256,6 @@ class BettingEVStrategyTester:
             "accuracy_rate": accuracy_rate,
             "status": "passed" if accuracy_rate >= 0.9 else "failed",
         }
-
 
     async def _test_srs_compliance(self):
         """测试SRS合规性"""
@@ -327,7 +324,6 @@ class BettingEVStrategyTester:
             "status": "passed" if accuracy_rate >= 0.9 else "failed",
         }
 
-
     async def _test_risk_management(self):
         """测试风险管理功能"""
 
@@ -387,7 +383,6 @@ class BettingEVStrategyTester:
             "status": "passed" if accuracy_rate >= 0.9 else "failed",
         }
 
-
     async def _test_portfolio_optimization(self):
         """测试组合优化"""
 
@@ -437,7 +432,6 @@ class BettingEVStrategyTester:
                 "passed" if accuracy_rate >= 0.8 else "failed"
             ),  # 组合优化容差稍宽
         }
-
 
     async def _test_recommendation_engine(self):
         """测试投注建议引擎"""
@@ -499,7 +493,6 @@ class BettingEVStrategyTester:
             "status": "passed" if accuracy_rate >= 0.9 else "failed",
         }
 
-
     async def _test_service_integration(self):
         """测试服务集成"""
 
@@ -542,7 +535,6 @@ class BettingEVStrategyTester:
                 "components_status": components_status,
                 "status": "passed" if accuracy_rate >= 0.9 else "failed",
             }
-
 
         except Exception as e:
             self.test_results["individual_tests"][test_name] = {
@@ -808,7 +800,6 @@ class BettingEVStrategyTester:
     async def _generate_test_report(self):
         """生成测试报告"""
 
-
         if "test_results" in self.test_results:
             results = self.test_results["test_results"]
 
@@ -835,7 +826,6 @@ class BettingEVStrategyTester:
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(self.test_results, f, indent=2, ensure_ascii=False, default=str)
 
-
         if self.test_results["test_status"] == "passed":
             pass
         elif self.test_results["test_status"] == "partially_passed":
@@ -855,7 +845,6 @@ async def main():
             pass
     else:
         pass
-
 
 
 if __name__ == "__main__":

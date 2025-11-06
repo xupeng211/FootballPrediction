@@ -287,7 +287,9 @@ class WorkflowTester:
             create_tasks = [self.create_test_user(uid) for uid in user_ids]
             create_results = await asyncio.gather(*create_tasks)
             created_users = [
-                uid for uid, result in zip(user_ids, create_results, strict=False) if result
+                uid
+                for uid, result in zip(user_ids, create_results, strict=False)
+                if result
             ]
 
             if len(created_users) < 2:
@@ -298,7 +300,9 @@ class WorkflowTester:
             login_tasks = [self.login_user(uid) for uid in created_users]
             login_results = await asyncio.gather(*login_tasks)
             logged_users = [
-                uid for uid, result in zip(created_users, login_results, strict=False) if result
+                uid
+                for uid, result in zip(created_users, login_results, strict=False)
+                if result
             ]
 
             # 并发创建预测

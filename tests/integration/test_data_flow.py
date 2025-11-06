@@ -456,7 +456,6 @@ class TestDataFlowPerformance:
 
         import time
 
-
         # Create large dataset
         large_dataset = []
         for i in range(1000):

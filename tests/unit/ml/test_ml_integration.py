@@ -336,9 +336,7 @@ class TestMLWorkflowIntegration:
 
         # 至少应该有一些性能差异
         accuracies = list(version_metrics.values())
-        assert (
-            len({round(acc, 3) for acc in accuracies}) >= 1
-        )  # 可能相同，但至少要测试
+        assert len({round(acc, 3) for acc in accuracies}) >= 1  # 可能相同，但至少要测试
 
     def test_error_recovery_and_robustness(self):
         """测试错误恢复和鲁棒性"""

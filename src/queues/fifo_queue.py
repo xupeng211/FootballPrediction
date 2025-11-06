@@ -482,8 +482,6 @@ async def enqueue_task(
     return await queue_manager.enqueue_to_queue(queue_name, task)
 
 
-async def dequeue_task(
-    queue_name: str, timeout: int | None = None
-) -> QueueTask | None:
+async def dequeue_task(queue_name: str, timeout: int | None = None) -> QueueTask | None:
     """便捷的出队函数"""
     return await queue_manager.dequeue_from_queue(queue_name, timeout)

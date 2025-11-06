@@ -301,7 +301,6 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-
     async def _test_kelly_criterion(self):
         """测试Kelly准则"""
 
@@ -329,7 +328,6 @@ class BettingCoreTester:
             "accuracy": accuracy,
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
-
 
     async def _test_risk_assessment(self):
         """测试风险评估"""
@@ -359,7 +357,6 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
 
-
     async def _test_value_rating(self):
         """测试价值评级"""
 
@@ -386,7 +383,6 @@ class BettingCoreTester:
             "accuracy": accuracy,
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
-
 
     async def _test_srs_compliance(self):
         """测试SRS合规性"""
@@ -418,7 +414,6 @@ class BettingCoreTester:
             "accuracy": accuracy,
             "status": "passed" if accuracy >= 0.8 else "failed",
         }
-
 
     async def _test_strategy_optimization(self):
         """测试策略优化"""
@@ -458,7 +453,6 @@ class BettingCoreTester:
             "accuracy": accuracy,
             "status": "passed" if accuracy >= 0.9 else "failed",
         }
-
 
     async def _test_comprehensive_scenarios(self):
         """测试综合场景"""
@@ -525,7 +519,6 @@ class BettingCoreTester:
             "status": "passed" if accuracy >= 0.7 else "failed",
         }
 
-
     def _calculate_summary(self):
         """计算测试总结"""
         individual_tests = self.test_results["individual_tests"]
@@ -581,7 +574,6 @@ class BettingCoreTester:
     def generate_report(self):
         """生成测试报告"""
 
-
         if "summary" in self.test_results:
             summary = self.test_results["summary"]
 
@@ -598,7 +590,6 @@ class BettingCoreTester:
         report_path = Path("test_betting_core_report.json")
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(self.test_results, f, indent=2, ensure_ascii=False, default=str)
-
 
         if self.test_results["test_status"] == "passed":
             pass
