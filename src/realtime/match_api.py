@@ -181,9 +181,8 @@ async def update_match_score(
 
         if not score_changed:
             raise HTTPException(
-                ... 
-            )
-                status_code=404, detail="Match not found or score unchanged"
+                status_code=404,
+                detail="Match not found or score unchanged"
             )
 
         # 获取比赛信息
@@ -252,7 +251,7 @@ async def update_match_status(
             raise HTTPException(
                 
             )
-                status_code=404, detail="Match not found or status unchanged"
+status_code=404, detail="Match not found or status unchanged"
             )
 
         # 获取比赛信息

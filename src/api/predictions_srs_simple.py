@@ -385,10 +385,9 @@ async def predict_match_simple(
         raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Rate limit exceeded: 100 requests per minute",
-            )
-    # TODO: 将魔法数字 100 提取为常量,
-            )
-        )
+                )
+        # TODO: 将魔法数字 100 提取为常量
+        return True
 
     # 生成预测
     prediction_data = await simple_prediction_service.generate_prediction(

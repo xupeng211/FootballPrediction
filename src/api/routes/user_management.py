@@ -49,7 +49,10 @@ async def register_user(
     except UserAlreadyExistsError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except ValueError as e:
-        raise HTTPException(... from estatus_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 @router.post("/login", response_model=UserAuthResponse)
 async def login_user(
@@ -153,7 +156,6 @@ async def get_users(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="只有管理员可以查看用户列表",
             )
-        )
     try:
         users = await user_service.get_users(
             skip=skip, limit=limit, active_only=active_only
@@ -202,7 +204,10 @@ async def change_password(
         )
         return {"message": "密码修改成功" if success else "密码修改失败"}
     except (UserNotFoundError, InvalidCredentialsError) as e:
-        raise HTTPException(... from estatus_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        ) from e  # TODO: B904 exception chaining
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

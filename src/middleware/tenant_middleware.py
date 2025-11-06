@@ -82,9 +82,8 @@ class TenantMiddleware(BaseHTTPMiddleware):
             # 验证租户状态
             if not self._validate_tenant_status(tenant):
                 raise HTTPException(
-                    ... from e
-                )
-                    status_code=status.HTTP_403_FORBIDDEN, detail="租户状态异常"
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="租户状态异常"
                 )
 
             # 提取用户信息
@@ -266,7 +265,7 @@ def require_permission(
                 raise HTTPException(
                     
                 )
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="无法获取请求上下文",
                 )
 
