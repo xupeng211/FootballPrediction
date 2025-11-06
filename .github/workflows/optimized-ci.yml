@@ -1,5 +1,6 @@
 name: Optimized CI Pipeline
 
+# Updated: 2025-11-07 - Added aiosqlite dependency fix
 on:
   push:
     branches: [ main, develop ]
