@@ -76,7 +76,7 @@ async def get_current_user(
             raise credentials_exception
 
         token_data = TokenData(username=username, user_id=user_id)
-    except JWTError as e:
+    except JWTError:
         raise credentials_exception
     except Exception:
         # 如果JWT解析失败，返回一个模拟用户
@@ -114,6 +114,7 @@ def create_access_token(data: dict, expires_delta: Optional = None):
 
 def get_user_management_service():
     """获取用户管理服务"""
+
     # 这里应该返回用户管理服务的实例
     # 为了测试目的，返回一个简单的模拟对象
     class MockUserManagementService:

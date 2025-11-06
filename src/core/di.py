@@ -67,62 +67,53 @@ class DIContainer:
 
     def register_singleton(
         self,
-    interface: type[T],
-    implementation: type[T] | None = None,
-    instance: T | None = None,
-
+        interface: type[T],
+        implementation: type[T] | None = None,
+        instance: T | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册单例服务"""
         return self._register(
             interface=interface,
-    implementation=implementation,
-    lifetime=ServiceLifetime.SINGLETON,
-    instance=instance,
-
+            implementation=implementation,
+            lifetime=ServiceLifetime.SINGLETON,
+            instance=instance,
             factory=factory,
         )
 
     def register_scoped(
         self,
-    interface: type[T],
-    implementation: type[T] | None = None,
-    factory: Callable[[],
-    T] | None = None,
-
+        interface: type[T],
+        implementation: type[T] | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册作用域服务"""
         return self._register(
             interface=interface,
-    implementation=implementation,
-    lifetime=ServiceLifetime.SCOPED,
-    factory=factory,
-
+            implementation=implementation,
+            lifetime=ServiceLifetime.SCOPED,
+            factory=factory,
         )
 
     def register_transient(
         self,
-    interface: type[T],
-    implementation: type[T] | None = None,
-    factory: Callable[[],
-    T] | None = None,
-
+        interface: type[T],
+        implementation: type[T] | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册瞬时服务"""
         return self._register(
             interface=interface,
-    implementation=implementation,
-    lifetime=ServiceLifetime.TRANSIENT,
-    factory=factory,
-
+            implementation=implementation,
+            lifetime=ServiceLifetime.TRANSIENT,
+            factory=factory,
         )
 
     def _register(
         self,
-    interface: type,
-    implementation: type | None = None,
-    lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-
+        interface: type,
+        implementation: type | None = None,
+        lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
         instance: Any | None = None,
         factory: Callable | None = None,
     ) -> "DIContainer":
@@ -143,10 +134,9 @@ class DIContainer:
 
         descriptor = ServiceDescriptor(
             interface=interface,
-    implementation=implementation,
-    lifetime=lifetime,
-    factory=factory,
-
+            implementation=implementation,
+            lifetime=lifetime,
+            factory=factory,
             instance=instance,
             dependencies=dependencies,
         )
@@ -184,8 +174,7 @@ class DIContainer:
         else:  # TRANSIENT
             return self._create_instance(descriptor)
 
-    def _get_singleton(self,
-    descriptor: ServiceDescriptor) -> Any:
+    def _get_singleton(self, descriptor: ServiceDescriptor) -> Any:
         """获取单例实例"""
         if descriptor.interface in self._singletons:
             return self._singletons[descriptor.interface]
@@ -194,8 +183,7 @@ class DIContainer:
         self._singletons[descriptor.interface] = instance
         return instance
 
-    def _get_scoped(self,
-    descriptor: ServiceDescriptor) -> Any:
+    def _get_scoped(self, descriptor: ServiceDescriptor) -> Any:
         """获取作用域实例"""
         if self._current_scope is None:
             # 如果没有作用域, 当作单例处理
@@ -239,8 +227,7 @@ class DIContainer:
 
         raise DependencyInjectionError(f"无法创建实例: {descriptor.interface.__name__}")
 
-    def _analyze_dependencies(self,
-    cls: type) -> list[type]:
+    def _analyze_dependencies(self, cls: type) -> list[type]:
         """分析类的依赖"""
         dependencies = []
 
@@ -257,9 +244,7 @@ class DIContainer:
 
         return dependencies
 
-    def _get_constructor_params(self,
-    cls: type) -> dict[str,
-    Any]:
+    def _get_constructor_params(self, cls: type) -> dict[str, Any]:
         """获取构造函数参数"""
         params = {}
         sig = inspect.signature(cls.__init__)
@@ -294,25 +279,19 @@ class DIContainer:
         if scope_name is None:
             scope_name = f"scope_{datetime.now().timestamp()}"
 
-        return DIScope(self,
-    scope_name)
+        return DIScope(self, scope_name)
 
-    def clear_scope(self,
-    scope_name: str) -> None:
+    def clear_scope(self, scope_name: str) -> None:
         """清除作用域"""
         if scope_name in self._scoped_instances:
             # 清理作用域内的资源
             scope_instances = self._scoped_instances[scope_name]
             for instance in scope_instances.values():
                 # 如果实例有 cleanup 方法
-                if hasattr(instance,
-    "cleanup") and callable(instance.cleanup):
+                if hasattr(instance, "cleanup") and callable(instance.cleanup):
                     try:
                         instance.cleanup()
-                    except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError) as e:
+                    except (ValueError, TypeError, AttributeError, KeyError) as e:
                         logger.error(f"清理资源失败: {e}")
 
             del self._scoped_instances[scope_name]
@@ -372,31 +351,25 @@ class ServiceCollection:
     def __init__(self):
         """函数文档字符串"""
         # 添加pass语句
-        self._registrations: list[Callable[[DIContainer],
-    None]] = []
+        self._registrations: list[Callable[[DIContainer], None]] = []
 
     def add_singleton(
         self,
-    interface: type[T],
-    implementation: type[T] | None = None,
-
+        interface: type[T],
+        implementation: type[T] | None = None,
         instance: T | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加单例服务"""
         self._registrations.append(
             lambda container: container.register_singleton(
-                interface,
-    implementation,
-    instance,
-    factory
+                interface, implementation, instance, factory
             )
         )
         return self
 
     def add_scoped(
         self,
-
         interface: type[T],
         implementation: type[T] | None = None,
         factory: Callable[[], T] | None = None,
@@ -404,32 +377,26 @@ class ServiceCollection:
         """添加作用域服务"""
         self._registrations.append(
             lambda container: container.register_scoped(
-                interface,
-    implementation,
-    factory
+                interface, implementation, factory
             )
         )
         return self
 
     def add_transient(
         self,
-    interface: type[T],
-
+        interface: type[T],
         implementation: type[T] | None = None,
         factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加瞬时服务"""
         self._registrations.append(
             lambda container: container.register_transient(
-                interface,
-    implementation,
-    factory
+                interface, implementation, factory
             )
         )
         return self
 
-    def build_container(self,
-    name: str = "default") -> DIContainer:
+    def build_container(self, name: str = "default") -> DIContainer:
         """构建容器"""
         container = DIContainer(name)
 
@@ -452,9 +419,7 @@ def get_default_container() -> DIContainer:
 
 
 def configure_services(
-    configurator: Callable[[ServiceCollection],
-    None],
-
+    configurator: Callable[[ServiceCollection], None],
 ) -> DIContainer:
     """配置服务"""
     collection = ServiceCollection()
@@ -474,15 +439,12 @@ def resolve(service_type: type[T]) -> T:
 
 
 def inject(
-    service_type: type[T],
-    container: DIContainer | None = None
-) -> Callable[[Callable],
-    Callable]:
+    service_type: type[T], container: DIContainer | None = None
+) -> Callable[[Callable], Callable]:
     """依赖注入装饰器"""
 
     def decorator(func: Callable) -> Callable:
-        def wrapper(*args,
-    **kwargs):
+        def wrapper(*args, **kwargs):
             """函数文档字符串"""
             # 添加pass语句
             if container is None:
@@ -495,8 +457,7 @@ def inject(
             if "service" in sig.parameters:
                 kwargs["service"] = instance
 
-            return func(*args,
-    **kwargs)
+            return func(*args, **kwargs)
 
         return wrapper
 

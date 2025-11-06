@@ -5,40 +5,32 @@
 目标：将string_utils.py的覆盖率从55%提升到70%
 """
 
-import pytest
-import sys
 import os
+import sys
 import time
 
+import pytest
+
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.utils.string_utils import (
     StringUtils,
-    clean_string,
-    normalize_text,
-    extract_numbers,
-    format_phone_number,
-    validate_email,
-    generate_slug,
-    truncate_text,
-    reverse_string,
-    count_words,
     batch_clean_strings,
-    validate_batch_emails,
-    normalize_string,
-    truncate_string,
-    is_empty,
-    strip_html,
-    format_currency,
-    snake_to_camel,
-    camel_to_snake,
+    cached_slug,
+    extract_numbers,
     find_substring_positions,
-    replace_multiple,
-    split_text,
+    format_currency,
+    is_empty,
     join_text,
-    is_palindrome,
-    cached_slug
+    normalize_string,
+    replace_multiple,
+    reverse_string,
+    split_text,
+    strip_html,
+    truncate_string,
+    validate_batch_emails,
+    validate_email,
 )
 
 
@@ -112,10 +104,10 @@ class TestStringUtilsComprehensive:
     def test_char_frequency(self):
         """测试字符频率统计"""
         freq = StringUtils.char_frequency("hello")
-        assert freq['h'] == 1
-        assert freq['e'] == 1
-        assert freq['l'] == 2
-        assert freq['o'] == 1
+        assert freq["h"] == 1
+        assert freq["e"] == 1
+        assert freq["l"] == 2
+        assert freq["o"] == 1
 
         freq = StringUtils.char_frequency("")
         assert freq == {}
@@ -124,11 +116,15 @@ class TestStringUtilsComprehensive:
         """测试别名方法"""
         # 测试is_valid_email
         assert StringUtils.is_valid_email("test@example.com") is True
-        assert StringUtils.is_valid_email("test@example.com") == StringUtils.validate_email("test@example.com")
+        assert StringUtils.is_valid_email(
+            "test@example.com"
+        ) == StringUtils.validate_email("test@example.com")
 
         # 测试is_valid_phone
         assert StringUtils.is_valid_phone("13812345678") is True
-        assert StringUtils.is_valid_phone("13812345678") == StringUtils.validate_phone_number("13812345678")
+        assert StringUtils.is_valid_phone(
+            "13812345678"
+        ) == StringUtils.validate_phone_number("13812345678")
 
     def test_performance_and_large_data(self):
         """测试性能和大数据处理"""
@@ -326,7 +322,9 @@ class TestStringUtilsPerformance:
 
         word_count = StringUtils.count_words(large_text)
         cleaned = StringUtils.clean_string(large_text)
-        reversed_text = StringUtils.reverse_string(large_text[:1000])  # 只反转前1000个字符
+        reversed_text = StringUtils.reverse_string(
+            large_text[:1000]
+        )  # 只反转前1000个字符
 
         end_time = time.time()
 
@@ -343,7 +341,9 @@ class TestStringUtilsPerformance:
         """测试批量操作性能"""
         # 创建大量数据
         strings = [f"  test string {i}  " for i in range(1000)]
-        emails = [f"user{i}@example.com" if i % 2 == 0 else f"invalid{i}" for i in range(1000)]
+        emails = [
+            f"user{i}@example.com" if i % 2 == 0 else f"invalid{i}" for i in range(1000)
+        ]
 
         # 测试批量操作性能
         start_time = time.time()
@@ -395,9 +395,10 @@ def split_text(text: str, separator=None, maxsplit: int = -1) -> list[str]:
     if isinstance(separator, list):
         # 多分隔符情况：使用正则表达式
         import re
+
         # 转义所有分隔符
         escaped_separators = [re.escape(sep) for sep in separator]
-        pattern = '|'.join(escaped_separators)
+        pattern = "|".join(escaped_separators)
         result = re.split(pattern, text)
         return result
     else:
@@ -413,12 +414,15 @@ def join_text(texts: list[str], separator: str = ",") -> str:
     return separator.join(str(text) for text in texts)
 
 
-@pytest.mark.parametrize("input_text,expected_length", [
-    ("hello", 5),
-    ("", 0),
-    ("a" * 100, 100),
-    ("测试中文", 4),
-])
+@pytest.mark.parametrize(
+    "input_text,expected_length",
+    [
+        ("hello", 5),
+        ("", 0),
+        ("a" * 100, 100),
+        ("测试中文", 4),
+    ],
+)
 def test_reverse_string_parametrized(input_text, expected_length):
     """参数化测试字符串反转"""
     result = reverse_string(input_text)
@@ -426,20 +430,23 @@ def test_reverse_string_parametrized(input_text, expected_length):
     assert result == input_text[::-1]
 
 
-@pytest.mark.parametrize("email,expected", [
-    ("simple@example.com", True),
-    ("very.common@example.com", True),
-    ("disposable.style.email.with+symbol@example.com", True),
-    ("other.email-with-dash@example.com", True),
-    ("fully-qualified-domain@example.com", True),
-    ("user.name+tag+sorting@example.com", True),
-    ("x@example.com", True),
-    ("example-indeed@strange-example.com", True),
-    ("admin@mailserver1", False),  # 缺少顶级域名
-    ("example@s.example", True),
-    ("mailhost!username@example.org", False),  # 不允许的字符
-    ("user%example.com@example.org", False),  # 不允许的字符
-])
+@pytest.mark.parametrize(
+    "email,expected",
+    [
+        ("simple@example.com", True),
+        ("very.common@example.com", True),
+        ("disposable.style.email.with+symbol@example.com", True),
+        ("other.email-with-dash@example.com", True),
+        ("fully-qualified-domain@example.com", True),
+        ("user.name+tag+sorting@example.com", True),
+        ("x@example.com", True),
+        ("example-indeed@strange-example.com", True),
+        ("admin@mailserver1", False),  # 缺少顶级域名
+        ("example@s.example", True),
+        ("mailhost!username@example.org", False),  # 不允许的字符
+        ("user%example.com@example.org", False),  # 不允许的字符
+    ],
+)
 def test_email_validation_parametrized(email, expected):
     """参数化测试邮箱验证"""
     result = validate_email(email)

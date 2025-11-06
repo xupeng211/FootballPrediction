@@ -14,22 +14,28 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+
 class Real_timeDataStreamingAPIRequest(BaseModel):
     """Real-time Data Streaming API请求模型"""
+
     data_source: str
     query: str
 
+
 class Real_timeDataStreamingAPIResponse(BaseModel):
     """Real-time Data Streaming API响应模型"""
+
     success: bool
     data: Any
     message: str = "操作成功"
+
 
 class RealTimedatastreamingapirequest(BaseModel):
     """请求模型"""
 
     config: dict[str, Any] = {}
     parameters: dict[str, Any] = {}
+
 
 class RealTimedatastreamingapiresponse(BaseModel):
     """响应模型"""
@@ -38,6 +44,7 @@ class RealTimedatastreamingapiresponse(BaseModel):
     data: dict[str, Any] | None = None
     message: str
     timestamp: datetime
+
 
 @router.post("/real_time_data_streaming_api/execute")
 async def execute_real_time_data_streaming_api(
@@ -57,6 +64,7 @@ async def execute_real_time_data_streaming_api(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/real_time_data_streaming_api/status/{job_id}")
 async def get_real_time_data_streaming_api_status(job_id: str):
     """获取Real-time Data Streaming API执行状态"""
@@ -67,6 +75,7 @@ async def get_real_time_data_streaming_api_status(job_id: str):
         "progress": 100,
         "result": {"data": "sample_result"},
     }
+
 
 @router.get("/real_time_data_streaming_api/health")
 async def health_check():

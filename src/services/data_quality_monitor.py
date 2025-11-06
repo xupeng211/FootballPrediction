@@ -100,6 +100,5 @@ async def main():
         await processor.validate_data(data)
 
 
-
 if __name__ == "__main__":
     asyncio.run(main())

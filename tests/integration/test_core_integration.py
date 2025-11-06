@@ -5,10 +5,11 @@ Core Module Integration Tests
 测试核心业务模块的集成功能，包括配置、日志、验证等。
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
+
+import pytest
 
 # 使用简化的导入方式
 try:
@@ -49,20 +50,11 @@ class TestCoreModuleIntegration:
             pytest.skip("AppConfig not available")
 
         # 1. 测试配置加载
-        with patch('src.core.config.load_config') as mock_load:
+        with patch("src.core.config.load_config") as mock_load:
             mock_config = {
-                "database": {
-                    "url": "sqlite:///test.db",
-                    "echo": False
-                },
-                "cache": {
-                    "redis_url": "redis://localhost:6379",
-                    "default_ttl": 3600
-                },
-                "api": {
-                    "title": "Test API",
-                    "version": "1.0.0"
-                }
+                "database": {"url": "sqlite:///test.db", "echo": False},
+                "cache": {"redis_url": "redis://localhost:6379", "default_ttl": 3600},
+                "api": {"title": "Test API", "version": "1.0.0"},
             }
             mock_load.return_value = mock_config
 
@@ -75,17 +67,20 @@ class TestCoreModuleIntegration:
             assert config.api.title == "Test API"
 
         # 2. 测试环境变量配置
-        with patch.dict('os.environ', {
-            'DATABASE_URL': 'postgresql://test/test',
-            'REDIS_URL': 'redis://localhost:6379/1'
-        }):
+        with patch.dict(
+            "os.environ",
+            {
+                "DATABASE_URL": "postgresql://test/test",
+                "REDIS_URL": "redis://localhost:6379/1",
+            },
+        ):
             # 模拟环境变量配置
             config = AppConfig()
             config.load_from_env()
 
             # 验证环境变量读取
-            assert hasattr(config, 'database')
-            assert hasattr(config, 'cache')
+            assert hasattr(config, "database")
+            assert hasattr(config, "cache")
 
     def test_logging_system_integration(self):
         """测试日志系统集成"""
@@ -94,13 +89,13 @@ class TestCoreModuleIntegration:
 
         # 验证日志器创建
         assert logger is not None
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'warning')
-        assert hasattr(logger, 'error')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "warning")
+        assert hasattr(logger, "error")
 
         # 2. 测试日志输出
-        with patch('src.core.logging.logger') as mock_logger:
-            test_logger = get_logger('test_module')
+        with patch("src.core.logging.logger") as mock_logger:
+            test_logger = get_logger("test_module")
 
             # 测试不同级别的日志
             test_logger.info("测试信息日志")
@@ -202,7 +197,7 @@ class TestCoreModuleIntegration:
 
         try:
             risky_operation()
-            assert False, "应该抛出异常"
+            raise AssertionError("应该抛出异常")
         except CustomError:
             assert True  # 正确捕获自定义异常
 
@@ -215,14 +210,22 @@ class TestCoreModuleIntegration:
             "name": "Test User",
             "email": "test@example.com",
             "age": 25,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }
 
         validation_rules = {
             "name": {"type": str, "required": True},
-            "email": {"type": str, "required": True, "validator": validator.validate_email},
+            "email": {
+                "type": str,
+                "required": True,
+                "validator": validator.validate_email,
+            },
             "age": {"type": int, "required": True, "min_value": 0, "max_value": 150},
-            "created_at": {"type": str, "required": True, "validator": validator.validate_datetime}
+            "created_at": {
+                "type": str,
+                "required": True,
+                "validator": validator.validate_datetime,
+            },
         }
 
         # 验证数据
@@ -234,7 +237,7 @@ class TestCoreModuleIntegration:
             "name": "",  # 无效：空字符串
             "email": "invalid-email",  # 无效：格式错误
             "age": -5,  # 无效：负数
-            "created_at": "invalid-date"  # 无效：格式错误
+            "created_at": "invalid-date",  # 无效：格式错误
         }
 
         is_valid = validator.validate_dict(invalid_data, validation_rules)
@@ -243,6 +246,7 @@ class TestCoreModuleIntegration:
     @pytest.mark.asyncio
     async def test_async_operations_integration(self):
         """测试异步操作集成"""
+
         # 1. 测试异步任务执行
         async def async_task():
             await asyncio.sleep(0.01)  # 模拟异步操作

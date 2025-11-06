@@ -5,17 +5,14 @@ Event System Integration Tests
 测试事件驱动架构的完整功能，包括事件发布、订阅、处理和传播机制。
 """
 
-import pytest
 import asyncio
 import time
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from typing import Dict, Any, List, Callable
-from dataclasses import dataclass
 
-from src.api.events import EventBus, Event, EventHandler
+import pytest
 from src.core.events import DomainEvent, EventStore
-from src.database.models import Event as EventModel
+
+from src.api.events import Event, EventBus
 
 
 @pytest.mark.integration
@@ -37,9 +34,9 @@ class TestEventBusIntegration:
                 "match_id": 123,
                 "prediction": "home_win",
                 "confidence": 0.85,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             },
-            source="prediction_service"
+            source="prediction_service",
         )
 
     async def test_event_publish_and_subscribe(self, event_bus, sample_event):
@@ -105,9 +102,17 @@ class TestEventBusIntegration:
 
         # 发布多个不同置信度的事件
         events = [
-            Event("match_prediction_completed", {"match_id": 1, "confidence": 0.9}, "test"),
-            Event("match_prediction_completed", {"match_id": 2, "confidence": 0.7}, "test"),
-            Event("match_prediction_completed", {"match_id": 3, "confidence": 0.95}, "test"),
+            Event(
+                "match_prediction_completed", {"match_id": 1, "confidence": 0.9}, "test"
+            ),
+            Event(
+                "match_prediction_completed", {"match_id": 2, "confidence": 0.7}, "test"
+            ),
+            Event(
+                "match_prediction_completed",
+                {"match_id": 3, "confidence": 0.95},
+                "test",
+            ),
         ]
 
         for event in events:
@@ -128,7 +133,9 @@ class TestEventBusIntegration:
             received_events.append(event)
 
         # 订阅事件
-        subscription_id = event_bus.subscribe("match_prediction_completed", event_handler)
+        subscription_id = event_bus.subscribe(
+            "match_prediction_completed", event_handler
+        )
 
         # 发布事件（应该被接收）
         await event_bus.publish(sample_event)
@@ -215,10 +222,10 @@ class TestDomainEventIntegration:
             event_data={
                 "old_name": "Old Team Name",
                 "new_name": "New Team Name",
-                "changed_by": "admin_user"
+                "changed_by": "admin_user",
             },
             version=1,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
 
     async def test_domain_event_creation(self, sample_domain_event):
@@ -246,7 +253,9 @@ class TestDomainEventIntegration:
 
         # 创建多个事件
         events = [
-            DomainEvent(aggregate_id, "match_created", {"home_team": "A", "away_team": "B"}, 1),
+            DomainEvent(
+                aggregate_id, "match_created", {"home_team": "A", "away_team": "B"}, 1
+            ),
             DomainEvent(aggregate_id, "match_started", {"kickoff_time": "15:00"}, 2),
             DomainEvent(aggregate_id, "goal_scored", {"team": "A", "minute": 25}, 3),
             DomainEvent(aggregate_id, "match_finished", {"final_score": "2-1"}, 4),
@@ -275,10 +284,7 @@ class TestDomainEventIntegration:
         # 创建大量事件
         for i in range(10):
             event = DomainEvent(
-                aggregate_id,
-                f"event_{i}",
-                {"data": f"value_{i}"},
-                i + 1
+                aggregate_id, f"event_{i}", {"data": f"value_{i}"}, i + 1
             )
             await event_store.save_event(event)
 
@@ -287,7 +293,7 @@ class TestDomainEventIntegration:
             "team_id": aggregate_id,
             "name": "Test Team",
             "points": 25,
-            "version": 10
+            "version": 10,
         }
 
         snapshot_id = await event_store.create_snapshot(aggregate_id, snapshot_data, 10)
@@ -305,7 +311,9 @@ class TestDomainEventIntegration:
 
         # 创建初始事件和快照
         initial_events = [
-            DomainEvent(aggregate_id, "player_created", {"name": "John Doe", "age": 25}, 1),
+            DomainEvent(
+                aggregate_id, "player_created", {"name": "John Doe", "age": 25}, 1
+            ),
             DomainEvent(aggregate_id, "stats_updated", {"goals": 5, "assists": 3}, 2),
         ]
 
@@ -313,7 +321,13 @@ class TestDomainEventIntegration:
             await event_store.save_event(event)
 
         # 创建快照
-        snapshot_data = {"name": "John Doe", "age": 25, "goals": 5, "assists": 3, "version": 2}
+        snapshot_data = {
+            "name": "John Doe",
+            "age": 25,
+            "goals": 5,
+            "assists": 3,
+            "version": 2,
+        }
         await event_store.create_snapshot(aggregate_id, snapshot_data, 2)
 
         # 添加更多事件
@@ -340,6 +354,7 @@ class TestEventProcessingIntegration:
     def event_processor(self):
         """创建事件处理器"""
         from src.core.events import EventProcessor
+
         return EventProcessor()
 
     @pytest.fixture
@@ -351,12 +366,14 @@ class TestEventProcessingIntegration:
                 "match_id": 123,
                 "home_team": "Team A",
                 "away_team": "Team B",
-                "requested_by": "user_456"
+                "requested_by": "user_456",
             },
-            source="api_gateway"
+            source="api_gateway",
         )
 
-    async def test_prediction_event_processing(self, event_processor, sample_prediction_event):
+    async def test_prediction_event_processing(
+        self, event_processor, sample_prediction_event
+    ):
         """测试预测事件处理"""
         processed_events = []
 
@@ -366,14 +383,14 @@ class TestEventProcessingIntegration:
                 "match_id": event.data["match_id"],
                 "prediction": "home_win",
                 "confidence": 0.78,
-                "processed_at": datetime.utcnow().isoformat()
+                "processed_at": datetime.utcnow().isoformat(),
             }
 
             # 发布预测完成事件
             completion_event = Event(
                 type="prediction_completed",
                 data=prediction_result,
-                source="prediction_service"
+                source="prediction_service",
             )
 
             processed_events.append(completion_event)
@@ -404,10 +421,7 @@ class TestEventProcessingIntegration:
         event_processor.register_handler("batch_test", batch_handler)
 
         # 创建批量事件
-        events = [
-            Event("batch_test", {"index": i}, "batch_test")
-            for i in range(20)
-        ]
+        events = [Event("batch_test", {"index": i}, "batch_test") for i in range(20)]
 
         # 批量处理
         start_time = time.time()
@@ -463,8 +477,7 @@ class TestEventProcessingIntegration:
 
         # 处理需要重试的事件
         result = await event_processor.process_event_with_retry(
-            Event("retry_test", {"data": "test"}, "test"),
-            max_retries=3
+            Event("retry_test", {"data": "test"}, "test"), max_retries=3
         )
 
         # 验证重试成功
@@ -482,16 +495,31 @@ class TestEventSourcingIntegration:
     def event_sourced_aggregate(self):
         """创建事件溯源聚合"""
         from src.domain.aggregates import TeamAggregate
+
         return TeamAggregate()
 
     async def test_aggregate_state_reconstruction(self, event_sourced_aggregate):
         """测试聚合状态重建"""
         # 创建领域事件序列
         events = [
-            DomainEvent("team_1", "team_created", {"name": "New Team", "country": "Country"}, 1),
-            DomainEvent("team_1", "team_renamed", {"old_name": "New Team", "new_name": "Renamed Team"}, 2),
-            DomainEvent("team_1", "manager_changed", {"old_manager": None, "new_manager": "John Coach"}, 3),
-            DomainEvent("team_1", "points_added", {"points": 3, "competition": "League"}, 4),
+            DomainEvent(
+                "team_1", "team_created", {"name": "New Team", "country": "Country"}, 1
+            ),
+            DomainEvent(
+                "team_1",
+                "team_renamed",
+                {"old_name": "New Team", "new_name": "Renamed Team"},
+                2,
+            ),
+            DomainEvent(
+                "team_1",
+                "manager_changed",
+                {"old_manager": None, "new_manager": "John Coach"},
+                3,
+            ),
+            DomainEvent(
+                "team_1", "points_added", {"points": 3, "competition": "League"}, 4
+            ),
         ]
 
         # 重放事件重建状态
@@ -512,7 +540,7 @@ class TestEventSourcingIntegration:
             "team_1",
             "player_signed",
             {"player_name": "New Player", "position": "forward"},
-            1
+            1,
         )
 
         # 应用有效事件应该成功
@@ -532,7 +560,7 @@ class TestEventSourcingIntegration:
                 "team_1",
                 f"event_{i}",
                 {"data": f"value_{i}", "timestamp": time.time()},
-                i + 1
+                i + 1,
             )
             event_sourced_aggregate.apply(event)
 
@@ -567,11 +595,23 @@ class TestRealWorldEventScenarios:
 
         # 模拟比赛生命周期
         match_events = [
-            Event("match_created", {"match_id": 123, "home": "A", "away": "B"}, "scheduler"),
+            Event(
+                "match_created",
+                {"match_id": 123, "home": "A", "away": "B"},
+                "scheduler",
+            ),
             Event("match_started", {"match_id": 123, "kickoff": "15:00"}, "referee"),
-            Event("goal_scored", {"match_id": 123, "team": "A", "scorer": "Player1", "minute": 25}, "score_tracker"),
+            Event(
+                "goal_scored",
+                {"match_id": 123, "team": "A", "scorer": "Player1", "minute": 25},
+                "score_tracker",
+            ),
             Event("match_finished", {"match_id": 123, "final_score": "2-1"}, "referee"),
-            Event("prediction_processed", {"match_id": 123, "result": "home_win", "accuracy": "correct"}, "ai_service"),
+            Event(
+                "prediction_processed",
+                {"match_id": 123, "result": "home_win", "accuracy": "correct"},
+                "ai_service",
+            ),
         ]
 
         # 发布所有事件
@@ -590,11 +630,9 @@ class TestRealWorldEventScenarios:
         pipeline_stages = []
 
         async def pipeline_tracker(event: Event):
-            pipeline_stages.append({
-                "stage": event.type,
-                "timestamp": event.timestamp,
-                "data": event.data
-            })
+            pipeline_stages.append(
+                {"stage": event.type, "timestamp": event.timestamp, "data": event.data}
+            )
 
         event_bus = EventBus()
         event_bus.subscribe("prediction_*", pipeline_tracker)
@@ -602,11 +640,31 @@ class TestRealWorldEventScenarios:
         # 模拟预测流水线
         pipeline_events = [
             Event("prediction_requested", {"match_id": 456, "model": "v2.1"}, "api"),
-            Event("data_collected", {"match_id": 456, "features_count": 150}, "data_service"),
-            Event("model_executed", {"match_id": 456, "inference_time": 0.05}, "ml_service"),
-            Event("prediction_generated", {"match_id": 456, "prediction": "draw", "confidence": 0.62}, "ml_service"),
-            Event("prediction_validated", {"match_id": 456, "validation_passed": True}, "validator"),
-            Event("prediction_stored", {"match_id": 456, "storage_id": "pred_789"}, "database"),
+            Event(
+                "data_collected",
+                {"match_id": 456, "features_count": 150},
+                "data_service",
+            ),
+            Event(
+                "model_executed",
+                {"match_id": 456, "inference_time": 0.05},
+                "ml_service",
+            ),
+            Event(
+                "prediction_generated",
+                {"match_id": 456, "prediction": "draw", "confidence": 0.62},
+                "ml_service",
+            ),
+            Event(
+                "prediction_validated",
+                {"match_id": 456, "validation_passed": True},
+                "validator",
+            ),
+            Event(
+                "prediction_stored",
+                {"match_id": 456, "storage_id": "pred_789"},
+                "database",
+            ),
         ]
 
         for event in pipeline_events:
@@ -632,11 +690,31 @@ class TestRealWorldEventScenarios:
 
         # 模拟系统监控事件
         monitoring_events = [
-            Event("system_startup", {"service": "prediction_api", "version": "1.2.3"}, "system"),
-            Event("system_health_check", {"cpu_usage": 45.2, "memory_usage": 67.8, "status": "healthy"}, "monitor"),
-            Event("system_performance", {"avg_response_time": 120, "requests_per_second": 150}, "metrics"),
-            Event("system_alert", {"type": "warning", "message": "High memory usage detected"}, "monitor"),
-            Event("system_recovery", {"action": "memory_cleanup", "result": "success"}, "recovery"),
+            Event(
+                "system_startup",
+                {"service": "prediction_api", "version": "1.2.3"},
+                "system",
+            ),
+            Event(
+                "system_health_check",
+                {"cpu_usage": 45.2, "memory_usage": 67.8, "status": "healthy"},
+                "monitor",
+            ),
+            Event(
+                "system_performance",
+                {"avg_response_time": 120, "requests_per_second": 150},
+                "metrics",
+            ),
+            Event(
+                "system_alert",
+                {"type": "warning", "message": "High memory usage detected"},
+                "monitor",
+            ),
+            Event(
+                "system_recovery",
+                {"action": "memory_cleanup", "result": "success"},
+                "recovery",
+            ),
         ]
 
         for event in monitoring_events:

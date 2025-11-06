@@ -43,42 +43,32 @@ class PoissonModel(BaseModel):
             "max_goals": 10,  # 最大考虑进球数
         }
 
-    def prepare_features(self,
-    match_data: dict[str,
-    Any]) -> np.ndarray:
+    def prepare_features(self, match_data: dict[str, Any]) -> np.ndarray:
         """
-        准备特征 - 泊松模型主要依赖历史统计数据
+            准备特征 - 泊松模型主要依赖历史统计数据
 
-        Args:
-            match_data: 比赛数据，需要包含历史统计
+            Args:
+                match_data: 比赛数据，需要包含历史统计
 
-        Returns:
-            特征向量 [home_attack,
-    home_defense,
-    away_attack,
-    away_defense]
+            Returns:
+                特征向量 [home_attack,
+        home_defense,
+        away_attack,
+        away_defense]
         """
         home_team = match_data.get("home_team")
         away_team = match_data.get("away_team")
 
         # 获取球队强度
-        home_attack = self.team_attack_strength.get(home_team,
-    1.0)
-        home_defense = self.team_defense_strength.get(home_team,
-    1.0)
-        away_attack = self.team_attack_strength.get(away_team,
-    1.0)
-        away_defense = self.team_defense_strength.get(away_team,
-    1.0)
+        home_attack = self.team_attack_strength.get(home_team, 1.0)
+        home_defense = self.team_defense_strength.get(home_team, 1.0)
+        away_attack = self.team_attack_strength.get(away_team, 1.0)
+        away_defense = self.team_defense_strength.get(away_team, 1.0)
 
-        return np.array([home_attack,
-    home_defense,
-    away_attack,
-    away_defense])
+        return np.array([home_attack, home_defense, away_attack, away_defense])
 
     def train(
         self,
-
         training_data: pd.DataFrame,
         validation_data: pd.DataFrame | None = None,
     ) -> TrainingResult:
@@ -119,22 +109,19 @@ class PoissonModel(BaseModel):
 
         result = TrainingResult(
             model_name=self.model_name,
-    model_version=self.model_version,
-    accuracy=metrics.get("accuracy",
-    0.0),
-
+            model_version=self.model_version,
+            accuracy=metrics.get("accuracy", 0.0),
             precision=metrics.get("precision", 0.0),
             recall=metrics.get("recall", 0.0),
             f1_score=metrics.get("f1_score", 0.0),
             confusion_matrix=metrics.get("confusion_matrix", []),
             training_samples=len(training_data),
-    validation_samples=(
+            validation_samples=(
                 len(validation_data) if validation_data is not None else 0
             ),
-    training_time=training_time,
-    features_used=[
+            training_time=training_time,
+            features_used=[
                 "home_attack_strength",
-
                 "home_defense_strength",
                 "away_attack_strength",
                 "away_defense_strength",
@@ -180,27 +167,21 @@ class PoissonModel(BaseModel):
 
             # 主队统计
             team_goals_scored[home_team] = (
-                team_goals_scored.get(home_team,
-    0) + home_score
+                team_goals_scored.get(home_team, 0) + home_score
             )
             team_goals_conceded[home_team] = (
-                team_goals_conceded.get(home_team,
-    0) + away_score
+                team_goals_conceded.get(home_team, 0) + away_score
             )
-            team_matches[home_team] = team_matches.get(home_team,
-    0) + 1
+            team_matches[home_team] = team_matches.get(home_team, 0) + 1
 
             # 客队统计
             team_goals_scored[away_team] = (
-                team_goals_scored.get(away_team,
-    0) + away_score
+                team_goals_scored.get(away_team, 0) + away_score
             )
             team_goals_conceded[away_team] = (
-                team_goals_conceded.get(away_team,
-    0) + home_score
+                team_goals_conceded.get(away_team, 0) + home_score
             )
-            team_matches[away_team] = team_matches.get(away_team,
-    0) + 1
+            team_matches[away_team] = team_matches.get(away_team, 0) + 1
 
         # 计算球队攻防强度
         min_matches = self.hyperparameters["min_matches_per_team"]
@@ -247,9 +228,7 @@ class PoissonModel(BaseModel):
 
                 # 限制在合理范围内
                 self.team_attack_strength[team] = np.clip(
-                    self.team_attack_strength[team],
-    0.2,
-    3.0
+                    self.team_attack_strength[team], 0.2, 3.0
                 )
                 self.team_defense_strength[team] = np.clip(
                     self.team_defense_strength[team], 0.2, 3.0
@@ -284,32 +263,24 @@ class PoissonModel(BaseModel):
 
         # 计算期望进球数
         home_expected_goals = self._calculate_expected_goals(
-            home_team,
-    away_team,
-    is_home=True
+            home_team, away_team, is_home=True
         )
         away_expected_goals = self._calculate_expected_goals(
-            away_team,
-    home_team,
-    is_home=False
+            away_team, home_team, is_home=False
         )
 
         # 计算概率分布
         home_win_prob, draw_prob, away_win_prob = self._calculate_match_probabilities(
-            home_expected_goals,
-    away_expected_goals
+            home_expected_goals, away_expected_goals
         )
 
         # 确定预测结果
-        probabilities = (home_win_prob,
-    draw_prob,
-    away_win_prob)
+        probabilities = (home_win_prob, draw_prob, away_win_prob)
         predicted_outcome = self.get_outcome_from_probabilities(probabilities)
         confidence = self.calculate_confidence(probabilities)
 
         result = PredictionResult(
             match_id=match_id,
-
             home_team=home_team,
             away_team=away_team,
             home_win_prob=home_win_prob,
@@ -329,10 +300,7 @@ class PoissonModel(BaseModel):
         return result
 
     def _calculate_expected_goals(
-        self,
-    team: str,
-    opponent: str,
-    is_home: bool
+        self, team: str, opponent: str, is_home: bool
     ) -> float:
         """
         计算期望进球数
@@ -345,10 +313,8 @@ class PoissonModel(BaseModel):
         Returns:
             期望进球数
         """
-        team_attack = self.team_attack_strength.get(team,
-    1.0)
-        opponent_defense = self.team_defense_strength.get(opponent,
-    1.0)
+        team_attack = self.team_attack_strength.get(team, 1.0)
+        opponent_defense = self.team_defense_strength.get(opponent, 1.0)
 
         if is_home:
             base_avg = self.average_goals_home
@@ -361,13 +327,10 @@ class PoissonModel(BaseModel):
             base_avg * team_attack * opponent_defense * (1 + home_advantage)
         )
 
-        return max(expected_goals,
-    0.1)  # 确保至少0.1
+        return max(expected_goals, 0.1)  # 确保至少0.1
 
     def _calculate_match_probabilities(
-        self,
-    home_expected: float,
-    away_expected: float
+        self, home_expected: float, away_expected: float
     ) -> tuple[float, float, float]:
         """
         计算比赛结果概率
@@ -389,10 +352,8 @@ class PoissonModel(BaseModel):
         for home_goals in range(max_goals + 1):
             for away_goals in range(max_goals + 1):
                 # 使用泊松分布计算概率
-                home_prob = stats.poisson.pmf(home_goals,
-    home_expected)
-                away_prob = stats.poisson.pmf(away_goals,
-    away_expected)
+                home_prob = stats.poisson.pmf(home_goals, home_expected)
+                away_prob = stats.poisson.pmf(away_goals, away_expected)
                 combined_prob = home_prob * away_prob
 
                 if home_goals > away_goals:
@@ -428,24 +389,17 @@ class PoissonModel(BaseModel):
         away_team = match_data["away_team"]
 
         home_expected_goals = self._calculate_expected_goals(
-            home_team,
-    away_team,
-    is_home=True
+            home_team, away_team, is_home=True
         )
         away_expected_goals = self._calculate_expected_goals(
-            away_team,
-    home_team,
-    is_home=False
+            away_team, home_team, is_home=False
         )
 
         return self._calculate_match_probabilities(
-            home_expected_goals,
-    away_expected_goals
+            home_expected_goals, away_expected_goals
         )
 
-    def evaluate(self,
-    test_data: pd.DataFrame) -> dict[str,
-    float]:
+    def evaluate(self, test_data: pd.DataFrame) -> dict[str, float]:
         """
         评估模型性能
 
@@ -489,22 +443,12 @@ class PoissonModel(BaseModel):
             recall_score,
         )
 
-        accuracy = accuracy_score(actuals,
-    predictions)
+        accuracy = accuracy_score(actuals, predictions)
         precision = precision_score(
-            actuals,
-    predictions,
-    average="weighted",
-    zero_division=0
+            actuals, predictions, average="weighted", zero_division=0
         )
-        recall = recall_score(actuals,
-    predictions,
-    average="weighted",
-    zero_division=0)
-        f1 = f1_score(actuals,
-    predictions,
-    average="weighted",
-    zero_division=0)
+        recall = recall_score(actuals, predictions, average="weighted", zero_division=0)
+        f1 = f1_score(actuals, predictions, average="weighted", zero_division=0)
 
         cm = confusion_matrix(actuals, predictions).tolist()
 
@@ -522,11 +466,8 @@ class PoissonModel(BaseModel):
         return metrics
 
     def _cross_validate(
-        self,
-    training_data: pd.DataFrame,
-    folds: int = 5
-    ) -> dict[str,
-    float]:
+        self, training_data: pd.DataFrame, folds: int = 5
+    ) -> dict[str, float]:
         """
         交叉验证
 
@@ -539,9 +480,7 @@ class PoissonModel(BaseModel):
         """
         from sklearn.model_selection import KFold
 
-        kf = KFold(n_splits=folds,
-    shuffle=True,
-    random_state=42)
+        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
         fold_metrics = []
 
         for fold, (train_idx, val_idx) in enumerate(kf.split(training_data)):

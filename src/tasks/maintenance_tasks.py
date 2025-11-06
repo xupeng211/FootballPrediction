@@ -41,7 +41,11 @@ def quality_check_task() -> dict[str, Any]:
             "timestamp": datetime.now().isoformat(),
             "database_status": db_status,
             "redis_status": redis_status,
-            "overall_status": "healthy" if db_status == "healthy" and redis_status == "healthy" else "degraded"
+            "overall_status": (
+                "healthy"
+                if db_status == "healthy" and redis_status == "healthy"
+                else "degraded"
+            ),
         }
 
     except Exception as e:
@@ -49,7 +53,7 @@ def quality_check_task() -> dict[str, Any]:
         return {
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
-            "overall_status": "error"
+            "overall_status": "error",
         }
 
 
@@ -73,15 +77,12 @@ def cleanup_logs_task() -> dict[str, Any]:
         return {
             "timestamp": datetime.now().isoformat(),
             "cleaned_files": cleaned_files,
-            "files_count": len(cleaned_files)
+            "files_count": len(cleaned_files),
         }
 
     except Exception as e:
         logger.error(f"日志清理失败: {e}")
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "error": str(e)
-        }
+        return {"timestamp": datetime.now().isoformat(), "error": str(e)}
 
 
 @app.task
@@ -93,7 +94,7 @@ def system_health_task() -> dict[str, Any]:
         # 系统资源使用情况
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
 
         return {
             "timestamp": datetime.now().isoformat(),
@@ -102,7 +103,9 @@ def system_health_task() -> dict[str, Any]:
             "memory_available_gb": memory.available / (1024**3),
             "disk_percent": disk.percent,
             "disk_free_gb": disk.free / (1024**3),
-            "status": "healthy" if cpu_percent < 80 and memory.percent < 80 else "warning"
+            "status": (
+                "healthy" if cpu_percent < 80 and memory.percent < 80 else "warning"
+            ),
         }
 
     except Exception as e:
@@ -110,7 +113,7 @@ def system_health_task() -> dict[str, Any]:
         return {
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
-            "status": "error"
+            "status": "error",
         }
 
 
@@ -126,7 +129,9 @@ def database_maintenance_task() -> dict[str, Any]:
 
             # 清理过期数据（示例：删除30天前的日志）
             result = session.execute(
-                text("DELETE FROM system_logs WHERE created_at < NOW() - INTERVAL '30 days'")
+                text(
+                    "DELETE FROM system_logs WHERE created_at < NOW() - INTERVAL '30 days'"
+                )
             )
             deleted_count = result.rowcount
 
@@ -136,7 +141,7 @@ def database_maintenance_task() -> dict[str, Any]:
             "timestamp": datetime.now().isoformat(),
             "analyzed": True,
             "deleted_records": deleted_count,
-            "status": "completed"
+            "status": "completed",
         }
 
     except Exception as e:
@@ -144,5 +149,5 @@ def database_maintenance_task() -> dict[str, Any]:
         return {
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
-            "status": "error"
+            "status": "error",
         }

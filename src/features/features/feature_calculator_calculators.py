@@ -11,20 +11,19 @@
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.models import Match, Team, MatchResult, Odds
+from ...database.models import Match, Odds, Team
+from ..entities import MatchEntity, TeamEntity
 from ..feature_definitions import (
-    RecentPerformanceFeatures,
+    AllMatchFeatures,
+    AllTeamFeatures,
     HistoricalMatchupFeatures,
     OddsFeatures,
-    AllMatchFeatures,
-    AllTeamFeatures
+    RecentPerformanceFeatures,
 )
-from ..entities import MatchEntity, TeamEntity
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +39,8 @@ class FeatureCalculator:
         self.logger = logger
 
     async def calculate_recent_performance_features(
-        self,
-        team_id: int,
-        calculation_date: datetime,
-        days_back: int = 30
-    ) -> Optional[RecentPerformanceFeatures]:
+        self, team_id: int, calculation_date: datetime, days_back: int = 30
+    ) -> RecentPerformanceFeatures | None:
         """计算球队近期战绩特征
 
         Args:
@@ -59,12 +55,17 @@ class FeatureCalculator:
             # 查询最近5场比赛
             start_date = calculation_date - timedelta(days=days_back)
 
-            query = select(Match).where(
-                Match.match_date < calculation_date,
-                Match.match_date >= start_date,
-                (Match.home_team_id == team_id) | (Match.away_team_id == team_id),
-                Match.status == 'FINISHED'
-            ).order_by(Match.match_date.desc()).limit(5)
+            query = (
+                select(Match)
+                .where(
+                    Match.match_date < calculation_date,
+                    Match.match_date >= start_date,
+                    (Match.home_team_id == team_id) | (Match.away_team_id == team_id),
+                    Match.status == "FINISHED",
+                )
+                .order_by(Match.match_date.desc())
+                .limit(5)
+            )
 
             result = await self.db_session.execute(query)
             matches = result.scalars().all()
@@ -75,10 +76,16 @@ class FeatureCalculator:
 
             # 统计近期战绩
             recent_5 = {
-                'wins': 0, 'draws': 0, 'losses': 0,
-                'goals_for': 0, 'goals_against': 0, 'points': 0,
-                'home_wins': 0, 'away_wins': 0,
-                'home_goals_for': 0, 'away_goals_for': 0
+                "wins": 0,
+                "draws": 0,
+                "losses": 0,
+                "goals_for": 0,
+                "goals_against": 0,
+                "points": 0,
+                "home_wins": 0,
+                "away_wins": 0,
+                "home_goals_for": 0,
+                "away_goals_for": 0,
             }
 
             for match in matches:
@@ -87,46 +94,48 @@ class FeatureCalculator:
                 opponent_score = match.away_score if is_home else match.home_score
 
                 # 基础统计
-                recent_5['goals_for'] += team_score or 0
-                recent_5['goals_against'] += opponent_score or 0
+                recent_5["goals_for"] += team_score or 0
+                recent_5["goals_against"] += opponent_score or 0
 
                 # 胜负统计
                 if team_score > opponent_score:
-                    recent_5['wins'] += 1
-                    recent_5['points'] += 3
+                    recent_5["wins"] += 1
+                    recent_5["points"] += 3
                     if is_home:
-                        recent_5['home_wins'] += 1
+                        recent_5["home_wins"] += 1
                     else:
-                        recent_5['away_wins'] += 1
+                        recent_5["away_wins"] += 1
                 elif team_score == opponent_score:
-                    recent_5['draws'] += 1
-                    recent_5['points'] += 1
+                    recent_5["draws"] += 1
+                    recent_5["points"] += 1
                 else:
-                    recent_5['losses'] += 1
+                    recent_5["losses"] += 1
 
                 # 主客场进球统计
                 if is_home:
-                    recent_5['home_goals_for'] += team_score or 0
+                    recent_5["home_goals_for"] += team_score or 0
                 else:
-                    recent_5['away_goals_for'] += team_score or 0
+                    recent_5["away_goals_for"] += team_score or 0
 
             return RecentPerformanceFeatures(
                 team_id=team_id,
                 calculation_date=calculation_date,
-                recent_5_wins=recent_5['wins'],
-                recent_5_draws=recent_5['draws'],
-                recent_5_losses=recent_5['losses'],
-                recent_5_goals_for=recent_5['goals_for'],
-                recent_5_goals_against=recent_5['goals_against'],
-                recent_5_points=recent_5['points'],
-                recent_5_home_wins=recent_5['home_wins'],
-                recent_5_away_wins=recent_5['away_wins'],
-                recent_5_home_goals_for=recent_5['home_goals_for'],
-                recent_5_away_goals_for=recent_5['away_goals_for']
+                recent_5_wins=recent_5["wins"],
+                recent_5_draws=recent_5["draws"],
+                recent_5_losses=recent_5["losses"],
+                recent_5_goals_for=recent_5["goals_for"],
+                recent_5_goals_against=recent_5["goals_against"],
+                recent_5_points=recent_5["points"],
+                recent_5_home_wins=recent_5["home_wins"],
+                recent_5_away_wins=recent_5["away_wins"],
+                recent_5_home_goals_for=recent_5["home_goals_for"],
+                recent_5_away_goals_for=recent_5["away_goals_for"],
             )
 
         except Exception as e:
-            self.logger.error(f"Error calculating recent performance for team {team_id}: {e}")
+            self.logger.error(
+                f"Error calculating recent performance for team {team_id}: {e}"
+            )
             return None
 
     async def calculate_historical_matchup_features(
@@ -134,8 +143,8 @@ class FeatureCalculator:
         home_team_id: int,
         away_team_id: int,
         calculation_date: datetime,
-        years_back: int = 5
-    ) -> Optional[HistoricalMatchupFeatures]:
+        years_back: int = 5,
+    ) -> HistoricalMatchupFeatures | None:
         """计算历史对战特征
 
         Args:
@@ -151,87 +160,104 @@ class FeatureCalculator:
             # 查询历史对战记录
             start_date = calculation_date - timedelta(days=years_back * 365)
 
-            query = select(Match).where(
-                Match.match_date < calculation_date,
-                Match.match_date >= start_date,
-                ((Match.home_team_id == home_team_id) & (Match.away_team_id == away_team_id)) |
-                ((Match.home_team_id == away_team_id) & (Match.away_team_id == home_team_id)),
-                Match.status == 'FINISHED'
-            ).order_by(Match.match_date.desc())
+            query = (
+                select(Match)
+                .where(
+                    Match.match_date < calculation_date,
+                    Match.match_date >= start_date,
+                    (
+                        (Match.home_team_id == home_team_id)
+                        & (Match.away_team_id == away_team_id)
+                    )
+                    | (
+                        (Match.home_team_id == away_team_id)
+                        & (Match.away_team_id == home_team_id)
+                    ),
+                    Match.status == "FINISHED",
+                )
+                .order_by(Match.match_date.desc())
+            )
 
             result = await self.db_session.execute(query)
             matches = result.scalars().all()
 
             if not matches:
-                self.logger.warning(f"No H2H matches found between {home_team_id} and {away_team_id}")
+                self.logger.warning(
+                    f"No H2H matches found between {home_team_id} and {away_team_id}"
+                )
                 return None
 
             # 统计历史对战
             h2h_stats = {
-                'total_matches': len(matches),
-                'home_wins': 0, 'away_wins': 0, 'draws': 0,
-                'home_goals_total': 0, 'away_goals_total': 0,
-                'recent_5_home_wins': 0, 'recent_5_away_wins': 0, 'recent_5_draws': 0
+                "total_matches": len(matches),
+                "home_wins": 0,
+                "away_wins": 0,
+                "draws": 0,
+                "home_goals_total": 0,
+                "away_goals_total": 0,
+                "recent_5_home_wins": 0,
+                "recent_5_away_wins": 0,
+                "recent_5_draws": 0,
             }
 
             # 近5次交手统计
-            recent_matches = matches[:5]
+            matches[:5]
 
             for i, match in enumerate(matches):
                 is_home_at_home = match.home_team_id == home_team_id
 
                 # 进球统计
                 if is_home_at_home:
-                    h2h_stats['home_goals_total'] += match.home_score or 0
-                    h2h_stats['away_goals_total'] += match.away_score or 0
+                    h2h_stats["home_goals_total"] += match.home_score or 0
+                    h2h_stats["away_goals_total"] += match.away_score or 0
 
                     home_team_score = match.home_score or 0
                     away_team_score = match.away_score or 0
                 else:
-                    h2h_stats['home_goals_total'] += match.away_score or 0
-                    h2h_stats['away_goals_total'] += match.home_score or 0
+                    h2h_stats["home_goals_total"] += match.away_score or 0
+                    h2h_stats["away_goals_total"] += match.home_score or 0
 
                     home_team_score = match.away_score or 0
                     away_team_score = match.home_score or 0
 
                 # 胜负统计
                 if home_team_score > away_team_score:
-                    h2h_stats['home_wins'] += 1
+                    h2h_stats["home_wins"] += 1
                     if i < 5:  # 近5次交手
-                        h2h_stats['recent_5_home_wins'] += 1
+                        h2h_stats["recent_5_home_wins"] += 1
                 elif home_team_score == away_team_score:
-                    h2h_stats['draws'] += 1
+                    h2h_stats["draws"] += 1
                     if i < 5:
-                        h2h_stats['recent_5_draws'] += 1
+                        h2h_stats["recent_5_draws"] += 1
                 else:
-                    h2h_stats['away_wins'] += 1
+                    h2h_stats["away_wins"] += 1
                     if i < 5:
-                        h2h_stats['recent_5_away_wins'] += 1
+                        h2h_stats["recent_5_away_wins"] += 1
 
             return HistoricalMatchupFeatures(
                 home_team_id=home_team_id,
                 away_team_id=away_team_id,
                 calculation_date=calculation_date,
-                h2h_total_matches=h2h_stats['total_matches'],
-                h2h_home_wins=h2h_stats['home_wins'],
-                h2h_away_wins=h2h_stats['away_wins'],
-                h2h_draws=h2h_stats['draws'],
-                h2h_home_goals_total=h2h_stats['home_goals_total'],
-                h2h_away_goals_total=h2h_stats['away_goals_total'],
-                h2h_recent_5_home_wins=h2h_stats['recent_5_home_wins'],
-                h2h_recent_5_away_wins=h2h_stats['recent_5_away_wins'],
-                h2h_recent_5_draws=h2h_stats['recent_5_draws']
+                h2h_total_matches=h2h_stats["total_matches"],
+                h2h_home_wins=h2h_stats["home_wins"],
+                h2h_away_wins=h2h_stats["away_wins"],
+                h2h_draws=h2h_stats["draws"],
+                h2h_home_goals_total=h2h_stats["home_goals_total"],
+                h2h_away_goals_total=h2h_stats["away_goals_total"],
+                h2h_recent_5_home_wins=h2h_stats["recent_5_home_wins"],
+                h2h_recent_5_away_wins=h2h_stats["recent_5_away_wins"],
+                h2h_recent_5_draws=h2h_stats["recent_5_draws"],
             )
 
         except Exception as e:
-            self.logger.error(f"Error calculating H2H features for {home_team_id} vs {away_team_id}: {e}")
+            self.logger.error(
+                f"Error calculating H2H features for {home_team_id} vs {away_team_id}: {e}"
+            )
             return None
 
     async def calculate_odds_features(
-        self,
-        match_id: int,
-        calculation_date: datetime
-    ) -> Optional[OddsFeatures]:
+        self, match_id: int, calculation_date: datetime
+    ) -> OddsFeatures | None:
         """计算赔率特征
 
         Args:
@@ -243,23 +269,38 @@ class FeatureCalculator:
         """
         try:
             # 查询赔率数据 - 获取主胜赔率
-            home_odds_query = select(Odds).where(
-                Odds.match_id == match_id,
-                Odds.bet_type == 'home_win',
-                Odds.is_active == True
-            ).order_by(Odds.created_at.desc()).limit(1)
+            home_odds_query = (
+                select(Odds)
+                .where(
+                    Odds.match_id == match_id,
+                    Odds.bet_type == "home_win",
+                    Odds.is_active,
+                )
+                .order_by(Odds.created_at.desc())
+                .limit(1)
+            )
 
-            draw_odds_query = select(Odds).where(
-                Odds.match_id == match_id,
-                Odds.bet_type == 'draw',
-                Odds.is_active == True
-            ).order_by(Odds.created_at.desc()).limit(1)
+            draw_odds_query = (
+                select(Odds)
+                .where(
+                    Odds.match_id == match_id,
+                    Odds.bet_type == "draw",
+                    Odds.is_active,
+                )
+                .order_by(Odds.created_at.desc())
+                .limit(1)
+            )
 
-            away_odds_query = select(Odds).where(
-                Odds.match_id == match_id,
-                Odds.bet_type == 'away_win',
-                Odds.is_active == True
-            ).order_by(Odds.created_at.desc()).limit(1)
+            away_odds_query = (
+                select(Odds)
+                .where(
+                    Odds.match_id == match_id,
+                    Odds.bet_type == "away_win",
+                    Odds.is_active,
+                )
+                .order_by(Odds.created_at.desc())
+                .limit(1)
+            )
 
             # 执行查询
             home_odds_result = await self.db_session.execute(home_odds_query)
@@ -296,18 +337,18 @@ class FeatureCalculator:
                 bookmaker_count=1,  # 简化实现，基于实际查询结果
                 max_home_odds=home_odds,
                 min_home_odds=home_odds,
-                odds_range_home=0.0  # 简化实现
+                odds_range_home=0.0,  # 简化实现
             )
 
         except Exception as e:
-            self.logger.error(f"Error calculating odds features for match {match_id}: {e}")
+            self.logger.error(
+                f"Error calculating odds features for match {match_id}: {e}"
+            )
             return None
 
     async def calculate_all_match_features(
-        self,
-        match_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[AllMatchFeatures]:
+        self, match_id: int, calculation_date: datetime | None = None
+    ) -> AllMatchFeatures | None:
         """计算比赛的所有特征
 
         Args:
@@ -338,7 +379,7 @@ class FeatureCalculator:
                 match_date=match.match_date,
                 home_score=match.home_score,
                 away_score=match.away_score,
-                status=match.status
+                status=match.status,
             )
 
             # 计算各部分特征
@@ -366,18 +407,18 @@ class FeatureCalculator:
                 home_team_recent=home_recent,
                 away_team_recent=away_recent,
                 historical_matchup=h2h_features,
-                odds_features=odds_features
+                odds_features=odds_features,
             )
 
         except Exception as e:
-            self.logger.error(f"Error calculating all features for match {match_id}: {e}")
+            self.logger.error(
+                f"Error calculating all features for match {match_id}: {e}"
+            )
             return None
 
     async def calculate_team_features(
-        self,
-        team_id: int,
-        calculation_date: Optional[datetime] = None
-    ) -> Optional[AllTeamFeatures]:
+        self, team_id: int, calculation_date: datetime | None = None
+    ) -> AllTeamFeatures | None:
         """计算球队的所有特征
 
         Args:
@@ -405,7 +446,7 @@ class FeatureCalculator:
                 id=team.id,
                 name=team.name,
                 short_name=team.short_name,
-                country=team.country
+                country=team.country,
             )
 
             # 计算近期战绩特征
@@ -418,8 +459,7 @@ class FeatureCalculator:
                 return None
 
             return AllTeamFeatures(
-                team_entity=team_entity,
-                recent_performance=recent_performance
+                team_entity=team_entity, recent_performance=recent_performance
             )
 
         except Exception as e:
@@ -427,10 +467,8 @@ class FeatureCalculator:
             return None
 
     async def batch_calculate_match_features(
-        self,
-        match_ids: List[int],
-        calculation_date: Optional[datetime] = None
-    ) -> Dict[int, Optional[AllMatchFeatures]]:
+        self, match_ids: list[int], calculation_date: datetime | None = None
+    ) -> dict[int, AllMatchFeatures | None]:
         """批量计算比赛特征
 
         Args:
@@ -446,10 +484,14 @@ class FeatureCalculator:
         results = {}
         for match_id in match_ids:
             try:
-                features = await self.calculate_all_match_features(match_id, calculation_date)
+                features = await self.calculate_all_match_features(
+                    match_id, calculation_date
+                )
                 results[match_id] = features
             except Exception as e:
-                self.logger.error(f"Failed to calculate features for match {match_id}: {e}")
+                self.logger.error(
+                    f"Failed to calculate features for match {match_id}: {e}"
+                )
                 results[match_id] = None
 
         return results

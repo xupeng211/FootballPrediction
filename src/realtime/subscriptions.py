@@ -8,6 +8,7 @@ from typing import Any
 
 class EventType(str, Enum):
     """事件类型枚举"""
+
     PREDICTION_CREATED = "prediction_created"
     MATCH_STARTED = "match_started"
     MATCH_SCORE_CHANGED = "match_score_changed"
@@ -21,9 +22,11 @@ class EventType(str, Enum):
 @dataclass
 class RealtimeEvent:
     """实时事件"""
+
     event_type: EventType
     data: dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
+
 
 # 检查比赛ID
 # 检查联赛
@@ -71,6 +74,7 @@ class SubscriptionType(str, Enum):
 @dataclass
 class SubscriptionFilter:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """订阅过滤器"""
 
@@ -79,9 +83,7 @@ class SubscriptionFilter:
     users: list[str] | None = field(default_factory=list)  # 特定用户
     min_confidence: float | None = None  # 最小置信度
     event_sources: list[str] | None = field(default_factory=list)  # 事件源
-    custom_filters: dict[str, Any] | None = field(
-        default_factory=dict
-    )  # 自定义过滤器
+    custom_filters: dict[str, Any] | None = field(default_factory=dict)  # 自定义过滤器
 
     def matches(self, event_data: dict[str, Any]) -> bool:
         """检查事件是否匹配过滤器"""
@@ -107,6 +109,7 @@ class SubscriptionFilter:
 @dataclass
 class Subscription:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """订阅信息"""
 
@@ -133,19 +136,20 @@ class Subscription:
 
 class SubscriptionManager:
     """类文档字符串"""
+
     pass  # 添加pass语句
     """订阅管理器"""
 
     def __init__(self):
         """函数文档字符串"""
         pass
-  # 添加pass语句
-        self.subscriptions: dict[
-            str, list[Subscription]
-        ] = {}  # connection_id -> subscriptions
-        self.event_subscribers: dict[
-            EventType, set[str]
-        ] = {}  # event_type -> connection_ids
+        # 添加pass语句
+        self.subscriptions: dict[str, list[Subscription]] = (
+            {}
+        )  # connection_id -> subscriptions
+        self.event_subscribers: dict[EventType, set[str]] = (
+            {}
+        )  # event_type -> connection_ids
         self.logger = logging.getLogger(f"{__name__}.SubscriptionManager")
         asyncio.create_task(self._cleanup_inactive_subscriptions())
         self.logger.info("SubscriptionManager initialized")

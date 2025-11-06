@@ -1059,4 +1059,38 @@ improve-all: ## 🚀 完整改进流程
 	@make improve-status
 	@echo "$(BLUE)💡 现在按照建议执行改进工作$(RESET)"
 
-.PHONY: improve-start improve-status improve-syntax improve-test improve-report improve-all
+# ============================================================================
+# 🔗 Claude Code 作业同步工具
+# ============================================================================
+
+claude-sync: ## Claude: 同步Claude Code作业到GitHub Issues
+	@echo "$(YELLOW)🔗 同步Claude Code作业到GitHub Issues...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/claude_work_sync.py sync
+
+claude-start-work: ## Claude: 开始新的Claude Code作业记录
+	@echo "$(YELLOW)📝 开始新的Claude Code作业记录...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/claude_work_sync.py start-work
+
+claude-complete-work: ## Claude: 完成Claude Code作业记录
+	@echo "$(YELLOW)✅ 完成Claude Code作业记录...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/claude_work_sync.py complete-work
+
+claude-list-work: ## Claude: 列出所有Claude Code作业记录
+	@echo "$(YELLOW)📋 列出Claude Code作业记录...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/claude_work_sync.py list-work
+
+claude-setup: ## Claude: 设置和检查Claude Code作业同步环境
+	@echo "$(YELLOW)🔧 设置Claude Code作业同步环境...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/setup_claude_sync.py
+
+claude-setup-test: ## Claude: 设置环境并测试Issue创建
+	@echo "$(YELLOW)🧪 设置Claude Code环境并测试Issue创建...$(RESET)"
+	@$(ACTIVATE) && \
+	python3 scripts/setup_claude_sync.py --test-issue
+
+.PHONY: improve-start improve-status improve-syntax improve-test improve-report improve-all claude-sync claude-start-work claude-complete-work claude-list-work claude-setup claude-setup-test

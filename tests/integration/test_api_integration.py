@@ -5,11 +5,10 @@ API Integration Tests
 测试API端点的完整功能，包括请求响应、错误处理和业务逻辑。
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
-
-from src.database.models import Team, Match
 
 
 @pytest.mark.integration
@@ -65,7 +64,7 @@ class TestAPIIntegration:
         response = test_client.get("/api/monitoring/metrics")
         assert response.status_code in [200, 404]
 
-    @patch('src.cache.redis_manager.RedisManager')
+    @patch("src.cache.redis_manager.RedisManager")
     def test_api_with_redis_integration(self, mock_redis, test_client: TestClient):
         """测试API与Redis集成"""
         # 模拟Redis连接
@@ -93,7 +92,7 @@ class TestAPIIntegration:
         response = test_client.post(
             "/api/data/collect/matches",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         # 应该返回422或404
         assert response.status_code in [404, 422]
@@ -130,7 +129,6 @@ class TestAPIIntegration:
     def test_api_concurrent_requests(self, test_client: TestClient):
         """测试API并发请求处理"""
         import threading
-        import time
 
         results = []
 
@@ -171,7 +169,7 @@ class TestAPIBusinessLogic:
             "name": "Integration Test Team",
             "short_name": "ITT",
             "country": "Test Country",
-            "founded_year": 2024
+            "founded_year": 2024,
         }
 
         # 由于端点可能不存在，我们接受404状态
@@ -184,7 +182,7 @@ class TestAPIBusinessLogic:
             "home_team_id": 1,
             "away_team_id": 2,
             "match_date": "2024-01-15T15:00:00",
-            "league": "Test League"
+            "league": "Test League",
         }
 
         response = test_client.post("/api/matches", json=match_data)
@@ -195,7 +193,7 @@ class TestAPIBusinessLogic:
         prediction_request = {
             "home_team_id": 1,
             "away_team_id": 2,
-            "model_version": "default"
+            "model_version": "default",
         }
 
         response = test_client.post("/api/predictions", json=prediction_request)
@@ -235,7 +233,9 @@ class TestAPIPerformance:
         # 并发执行10个请求
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [executor.submit(make_request) for _ in range(10)]
-            results = [future.result() for future in concurrent.futures.as_completed(futures)]
+            results = [
+                future.result() for future in concurrent.futures.as_completed(futures)
+            ]
 
         # 验证所有请求都有响应
         assert len(results) == 10

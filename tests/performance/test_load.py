@@ -7,28 +7,30 @@ Version: 1.0
 Purpose: Test system performance under various load conditions
 """
 
-import pytest
 import asyncio
-import time
-import statistics
 import concurrent.futures
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List, Dict, Any
-import psutil
+import statistics
 import threading
+import time
+from unittest.mock import AsyncMock
+
+import psutil
+import pytest
 
 # Import system components
 try:
-    from src.main import app
     from fastapi.testclient import TestClient
+
+    from src.core.config import Config
+    from src.main import app
     from src.queues.fifo_queue import MemoryFIFOQueue
     from src.services.prediction import PredictionService
-    from src.core.config import Config
 except ImportError as e:
     pytest.skip(f"Cannot import required modules: {e}", allow_module_level=True)
 
 # Test client
 client = TestClient(app)
+
 
 class TestAPIPerformance:
     """API性能测试"""
@@ -49,7 +51,9 @@ class TestAPIPerformance:
 
         # Performance assertions
         avg_response_time = statistics.mean(response_times)
-        p95_response_time = statistics.quantiles(response_times, n=20)[18]  # 95th percentile
+        p95_response_time = statistics.quantiles(response_times, n=20)[
+            18
+        ]  # 95th percentile
 
         assert avg_response_time < 50  # Average should be under 50ms
         assert p95_response_time < 100  # 95% should be under 100ms
@@ -58,13 +62,14 @@ class TestAPIPerformance:
     @pytest.mark.performance
     def test_concurrent_health_checks(self):
         """测试并发健康检查"""
+
         def make_request():
             start_time = time.time()
             response = client.get("/health")
             end_time = time.time()
             return {
                 "status_code": response.status_code,
-                "response_time": (end_time - start_time) * 1000
+                "response_time": (end_time - start_time) * 1000,
             }
 
         # Make 50 concurrent requests
@@ -109,7 +114,10 @@ class TestAPIPerformance:
 
         # Performance assertions
         assert throughput > 50  # Should handle at least 50 RPS
-        assert statistics.mean(response_times) < 100  # Average response time under 100ms
+        assert (
+            statistics.mean(response_times) < 100
+        )  # Average response time under 100ms
+
 
 class TestDatabasePerformance:
     """数据库性能测试"""
@@ -149,9 +157,12 @@ class TestDatabasePerformance:
 
         # Mock different query complexities
         query_scenarios = [
-            ("SELECT * FROM matches LIMIT 10", 10),      # Simple query
+            ("SELECT * FROM matches LIMIT 10", 10),  # Simple query
             ("SELECT * FROM matches WHERE date > '2025-01-01'", 100),  # Medium query
-            ("SELECT * FROM matches JOIN teams ON matches.home_team_id = teams.id", 200),  # Complex query
+            (
+                "SELECT * FROM matches JOIN teams ON matches.home_team_id = teams.id",
+                200,
+            ),  # Complex query
         ]
 
         for query, expected_delay in query_scenarios:
@@ -172,6 +183,7 @@ class TestDatabasePerformance:
             avg_time = statistics.mean(execution_times)
             assert avg_time < expected_delay * 1.5  # Should be within 50% of expected
 
+
 class TestQueuePerformance:
     """队列系统性能测试"""
 
@@ -188,9 +200,7 @@ class TestQueuePerformance:
 
         for i in range(1000):
             task_id = await queue.enqueue(
-                task_type="test",
-                data={"payload": f"test_data_{i}"},
-                priority="normal"
+                task_type="test", data={"payload": f"test_data_{i}"}, priority="normal"
             )
             task_ids.append(task_id)
 
@@ -227,7 +237,7 @@ class TestQueuePerformance:
                 task_id = await queue.enqueue(
                     task_type="test",
                     data={"worker": worker_id, "task": i},
-                    priority="normal"
+                    priority="normal",
                 )
                 if task_id:
                     tasks_enqueued += 1
@@ -262,6 +272,7 @@ class TestQueuePerformance:
         assert total_dequeued <= 500  # Should not exceed enqueued tasks
         assert total_time < 10.0  # Should complete within 10 seconds
 
+
 class TestMemoryPerformance:
     """内存性能测试"""
 
@@ -274,11 +285,9 @@ class TestMemoryPerformance:
         # Perform memory-intensive operations
         large_data = []
         for i in range(1000):
-            large_data.append({
-                "id": i,
-                "data": "x" * 1000,  # 1KB per item
-                "timestamp": time.time()
-            })
+            large_data.append(
+                {"id": i, "data": "x" * 1000, "timestamp": time.time()}  # 1KB per item
+            )
 
         peak_memory = process.memory_info().rss / 1024 / 1024  # MB
 
@@ -287,6 +296,7 @@ class TestMemoryPerformance:
 
         # Force garbage collection
         import gc
+
         gc.collect()
 
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
@@ -311,14 +321,14 @@ class TestMemoryPerformance:
         for cycle in range(10):
             # Create temporary objects
             temp_objects = []
-            for i in range(100):
-                temp_objects.append({
-                    "cycle": cycle,
-                    "data": "x" * 1000,
-                    "nested": {
-                        "more_data": "y" * 500
+            for _i in range(100):
+                temp_objects.append(
+                    {
+                        "cycle": cycle,
+                        "data": "x" * 1000,
+                        "nested": {"more_data": "y" * 500},
                     }
-                })
+                )
 
             # Simulate some processing
             await asyncio.sleep(0.01)
@@ -328,6 +338,7 @@ class TestMemoryPerformance:
 
         # Force garbage collection
         import gc
+
         gc.collect()
 
         final_memory = process.memory_info().rss
@@ -335,6 +346,7 @@ class TestMemoryPerformance:
 
         # Memory leak assertions
         assert memory_increase < 50 * 1024 * 1024  # Less than 50MB increase
+
 
 class TestSystemResourcePerformance:
     """系统资源性能测试"""
@@ -346,7 +358,7 @@ class TestSystemResourcePerformance:
 
         # Measure baseline CPU
         time.sleep(1)
-        baseline_cpu = process.cpu_percent()
+        process.cpu_percent()
 
         # Perform CPU-intensive operations
         def cpu_intensive_task():
@@ -374,7 +386,9 @@ class TestSystemResourcePerformance:
 
         # Performance assertions
         assert total_time < 2.0  # Should complete within 2 seconds
-        assert load_cpu < 400  # CPU usage should be reasonable (400% = 4 cores fully utilized)
+        assert (
+            load_cpu < 400
+        )  # CPU usage should be reasonable (400% = 4 cores fully utilized)
 
     @pytest.mark.performance
     @pytest.mark.asyncio
@@ -391,18 +405,20 @@ class TestSystemResourcePerformance:
 
         # Read performance test
         read_start = time.time()
-        with open("/tmp/test_write.performance", "r") as f:
+        with open("/tmp/test_write.performance") as f:
             read_data = f.read()
         read_time = time.time() - read_start
 
         # Cleanup
         import os
+
         os.remove("/tmp/test_write.performance")
 
         # I/O performance assertions
         assert write_time < 0.1  # Should write 1MB in < 100ms
-        assert read_time < 0.1   # Should read 1MB in < 100ms
+        assert read_time < 0.1  # Should read 1MB in < 100ms
         assert read_data == test_data  # Data integrity
+
 
 class TestScalabilityPerformance:
     """可扩展性性能测试"""
@@ -417,7 +433,7 @@ class TestScalabilityPerformance:
             start_time = time.time()
 
             # Simulate processing
-            for i in range(items):
+            for _i in range(items):
                 _ = sum(j * j for j in range(100))
 
             end_time = time.time()
@@ -437,14 +453,16 @@ class TestScalabilityPerformance:
         # Calculate scaling factor between consecutive workloads
         scaling_factors = []
         for i in range(1, len(response_times)):
-            factor = response_times[i] / response_times[i-1]
-            workload_factor = workloads[i] / workloads[i-1]
+            factor = response_times[i] / response_times[i - 1]
+            workload_factor = workloads[i] / workloads[i - 1]
             scaling_efficiency = factor / workload_factor
             scaling_factors.append(scaling_efficiency)
 
         # Scalability assertions
         avg_efficiency = statistics.mean(scaling_factors)
-        assert avg_efficiency < 2.0  # Should scale reasonably (not more than 2x slower than linear)
+        assert (
+            avg_efficiency < 2.0
+        )  # Should scale reasonably (not more than 2x slower than linear)
 
     @pytest.mark.performance
     @pytest.mark.asyncio
@@ -478,6 +496,7 @@ class TestScalabilityPerformance:
 
         assert peak_throughput > initial_throughput  # Should improve with concurrency
         assert len(results) == sum(concurrent_levels) * 10  # All tasks should complete
+
 
 # Test markers
 pytest.mark.performance(TestAPIPerformance)

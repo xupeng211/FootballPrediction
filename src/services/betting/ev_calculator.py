@@ -35,6 +35,7 @@ except ImportError:
 
 class BetType(Enum):
     """投注类型枚举"""
+
     HOME_WIN = "home_win"
     AWAY_WIN = "away_win"
     DRAW = "draw"
@@ -47,6 +48,7 @@ class BetType(Enum):
 @dataclass
 class BetOdds:
     """投注赔率"""
+
     home_win: float
     draw: float
     away_win: float
@@ -59,6 +61,7 @@ class BetOdds:
 @dataclass
 class ProbabilityEstimate:
     """概率估算"""
+
     home_win: float
     draw: float
     away_win: float
@@ -71,6 +74,7 @@ class ProbabilityEstimate:
 @dataclass
 class EVResult:
     """EV计算结果"""
+
     bet_type: BetType
     odds: float
     probability: float
@@ -128,7 +132,7 @@ class EVCalculator:
         odds: float,
         probability: float,
         min_ev: float = 0.05,
-        min_kelly: float = 0.01
+        min_kelly: float = 0.01,
     ) -> EVResult:
         """
         分析投注价值
@@ -161,13 +165,11 @@ class EVCalculator:
             probability=probability,
             ev=ev,
             kelly_fraction=kelly,
-            recommendation=recommendation
+            recommendation=recommendation,
         )
 
     def analyze_full_market(
-        self,
-        bet_odds: BetOdds,
-        probabilities: ProbabilityEstimate
+        self, bet_odds: BetOdds, probabilities: ProbabilityEstimate
     ) -> list[EVResult]:
         """
         分析完整市场
@@ -182,54 +184,35 @@ class EVCalculator:
         results = []
 
         # 主胜
-        results.append(self.analyze_bet(
-            bet_odds.home_win,
-            probabilities.home_win
-        ))
+        results.append(self.analyze_bet(bet_odds.home_win, probabilities.home_win))
         results[-1].bet_type = BetType.HOME_WIN
 
         # 平局
-        results.append(self.analyze_bet(
-            bet_odds.draw,
-            probabilities.draw
-        ))
+        results.append(self.analyze_bet(bet_odds.draw, probabilities.draw))
         results[-1].bet_type = BetType.DRAW
 
         # 客胜
-        results.append(self.analyze_bet(
-            bet_odds.away_win,
-            probabilities.away_win
-        ))
+        results.append(self.analyze_bet(bet_odds.away_win, probabilities.away_win))
         results[-1].bet_type = BetType.AWAY_WIN
 
         # 大小球
         if bet_odds.over_2_5 and probabilities.over_2_5:
-            results.append(self.analyze_bet(
-                bet_odds.over_2_5,
-                probabilities.over_2_5
-            ))
+            results.append(self.analyze_bet(bet_odds.over_2_5, probabilities.over_2_5))
             results[-1].bet_type = BetType.OVER_2_5
 
         if bet_odds.under_2_5 and probabilities.under_2_5:
-            results.append(self.analyze_bet(
-                bet_odds.under_2_5,
-                probabilities.under_2_5
-            ))
+            results.append(
+                self.analyze_bet(bet_odds.under_2_5, probabilities.under_2_5)
+            )
             results[-1].bet_type = BetType.UNDER_2_5
 
         # 两队进球
         if bet_odds.btts_yes and probabilities.btts_yes:
-            results.append(self.analyze_bet(
-                bet_odds.btts_yes,
-                probabilities.btts_yes
-            ))
+            results.append(self.analyze_bet(bet_odds.btts_yes, probabilities.btts_yes))
             results[-1].bet_type = BetType.BTTS_YES
 
         if bet_odds.btts_no and probabilities.btts_no:
-            results.append(self.analyze_bet(
-                bet_odds.btts_no,
-                probabilities.btts_no
-            ))
+            results.append(self.analyze_bet(bet_odds.btts_no, probabilities.btts_no))
             results[-1].bet_type = BetType.BTTS_NO
 
         return results
@@ -267,7 +250,7 @@ class BettingStrategy:
         bet_odds: BetOdds,
         probabilities: ProbabilityEstimate,
         bankroll: float = 1000.0,
-        max_simultaneous_bets: int = 5
+        max_simultaneous_bets: int = 5,
     ) -> dict[str, Any]:
         """
         生成投注建议
@@ -291,7 +274,7 @@ class BettingStrategy:
         advice = {
             "recommendation": "hold" if not best_bets else "bet",
             "total_ev": sum(r.ev for r in best_bets),
-            "recommended_bets": []
+            "recommended_bets": [],
         }
 
         total_kelly = sum(r.kelly_fraction for r in best_bets)
@@ -299,19 +282,23 @@ class BettingStrategy:
         for bet_result in best_bets:
             # 根据Kelly比例分配资金
             if total_kelly > 0:
-                bet_amount = bankroll * (bet_result.kelly_fraction / total_kelly) * 0.5  # 保守因子
+                bet_amount = (
+                    bankroll * (bet_result.kelly_fraction / total_kelly) * 0.5
+                )  # 保守因子
             else:
                 bet_amount = 0
 
-            advice["recommended_bets"].append({
-                "bet_type": bet_result.bet_type.value,
-                "odds": bet_result.odds,
-                "probability": bet_result.probability,
-                "ev": bet_result.ev,
-                "kelly_fraction": bet_result.kelly_fraction,
-                "recommended_amount": round(bet_amount, 2),
-                "recommendation": bet_result.recommendation
-            })
+            advice["recommended_bets"].append(
+                {
+                    "bet_type": bet_result.bet_type.value,
+                    "odds": bet_result.odds,
+                    "probability": bet_result.probability,
+                    "ev": bet_result.ev,
+                    "kelly_fraction": bet_result.kelly_fraction,
+                    "recommended_amount": round(bet_amount, 2),
+                    "recommendation": bet_result.recommendation,
+                }
+            )
 
         return advice
 
@@ -332,7 +319,7 @@ class BettingStrategy:
                 "total_expected_value": 0.0,
                 "total_kelly_fraction": 0.0,
                 "diversification_score": 0.0,
-                "risk_score": 0.0
+                "risk_score": 0.0,
             }
 
         total_ev = sum(b["ev"] for b in bets)
@@ -349,7 +336,7 @@ class BettingStrategy:
             "total_expected_value": total_ev,
             "total_kelly_fraction": total_kelly,
             "diversification_score": diversification,
-            "risk_score": risk_score
+            "risk_score": risk_score,
         }
 
 
@@ -373,5 +360,5 @@ __all__ = [
     "ProbabilityEstimate",
     "EVResult",
     "create_ev_calculator",
-    "create_betting_strategy"
+    "create_betting_strategy",
 ]

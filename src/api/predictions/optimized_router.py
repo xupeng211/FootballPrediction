@@ -6,20 +6,16 @@ Optimized Prediction Router
 Provides high-performance prediction API endpoints with caching strategies and performance monitoring.
 """
 
-import asyncio
 import logging
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from src.cache.unified_cache import get_cache_manager, cached, performance_monitor
+from src.cache.unified_cache import cached, get_cache_manager, performance_monitor
+from src.core.dependencies import get_current_user_optional
 from src.performance.monitoring import get_system_monitor
-from src.performance.optimizer import get_performance_optimizer
-from src.core.dependencies import get_current_user_optional, get_db_session
-from src.database.base import get_db
-from src.domain.models import Prediction, Match
 from src.services.prediction_service import PredictionService
 
 logger = logging.getLogger(__name__)
@@ -27,9 +23,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/predictions/v2", tags=["optimized-predictions"])
 
 # 全局服务实例
-_prediction_service: Optional[PredictionService] = None
+_prediction_service: PredictionService | None = None
 _cache_manager = get_cache_manager()
 _system_monitor = get_system_monitor()
+
 
 def get_prediction_service() -> PredictionService:
     """获取预测服务实例"""
@@ -56,19 +53,21 @@ async def health_check():
         if current_metrics.memory_percent > 95:
             service_status = "critical"
 
-        return JSONResponse(content={
-            "status": service_status,
-            "timestamp": datetime.utcnow().isoformat(),
-            "cache_stats": {
-                "hit_rate": cache_stats.get("hit_rate", 0),
-                "local_cache_size": cache_stats.get("local_cache_size", 0)
-            },
-            "system_metrics": {
-                "cpu_percent": current_metrics.cpu_percent,
-                "memory_percent": current_metrics.memory_percent,
-                "response_time_avg": current_metrics.response_time_avg
+        return JSONResponse(
+            content={
+                "status": service_status,
+                "timestamp": datetime.utcnow().isoformat(),
+                "cache_stats": {
+                    "hit_rate": cache_stats.get("hit_rate", 0),
+                    "local_cache_size": cache_stats.get("local_cache_size", 0),
+                },
+                "system_metrics": {
+                    "cpu_percent": current_metrics.cpu_percent,
+                    "memory_percent": current_metrics.memory_percent,
+                    "response_time_avg": current_metrics.response_time_avg,
+                },
             }
-        })
+        )
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return JSONResponse(
@@ -76,8 +75,8 @@ async def health_check():
             content={
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
-            }
+                "timestamp": datetime.utcnow().isoformat(),
+            },
         )
 
 
@@ -88,7 +87,7 @@ async def get_optimized_prediction(
     match_id: int,
     background_tasks: BackgroundTasks,
     include_details: bool = Query(False, description="是否包含详细分析"),
-    current_user = Depends(get_current_user_optional)
+    current_user=Depends(get_current_user_optional),
 ):
     """
     获取优化的比赛预测结果
@@ -99,7 +98,7 @@ async def get_optimized_prediction(
         start_time = datetime.utcnow()
 
         # 获取预测服务
-        prediction_service = get_prediction_service()
+        get_prediction_service()
 
         # 尝试从缓存获取
         cache_key = f"prediction_{match_id}_{include_details}"
@@ -107,12 +106,17 @@ async def get_optimized_prediction(
 
         if cached_prediction:
             logger.info(f"Cache hit for prediction {match_id}")
-            return JSONResponse(content={
-                "status": "success",
-                "data": cached_prediction,
-                "cached": True,
-                "execution_time_ms": (datetime.utcnow() - start_time).total_seconds() * 1000
-            })
+            return JSONResponse(
+                content={
+                    "status": "success",
+                    "data": cached_prediction,
+                    "cached": True,
+                    "execution_time_ms": (
+                        datetime.utcnow() - start_time
+                    ).total_seconds()
+                    * 1000,
+                }
+            )
 
         # 缓存未命中，生成预测
         logger.info(f"Generating prediction for match {match_id}")
@@ -126,21 +130,21 @@ async def get_optimized_prediction(
             cache_key,
             prediction_data,
             "prediction_result",
-            1800  # 30分钟缓存
+            1800,  # 30分钟缓存
         )
 
         # 记录系统指标
         execution_time = (datetime.utcnow() - start_time).total_seconds()
-        _system_monitor.record_metrics(
-            _system_monitor.get_current_metrics()
-        )
+        _system_monitor.record_metrics(_system_monitor.get_current_metrics())
 
-        return JSONResponse(content={
-            "status": "success",
-            "data": prediction_data,
-            "cached": False,
-            "execution_time_ms": execution_time * 1000
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": prediction_data,
+                "cached": False,
+                "execution_time_ms": execution_time * 1000,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error generating prediction for match {match_id}: {e}")
@@ -153,7 +157,7 @@ async def get_optimized_prediction(
 async def get_popular_predictions(
     limit: int = Query(10, ge=1, le=50, description="返回数量限制"),
     time_range: str = Query("24h", description="时间范围 (1h, 24h, 7d)"),
-    current_user = Depends(get_current_user_optional)
+    current_user=Depends(get_current_user_optional),
 ):
     """
     获取热门预测
@@ -164,22 +168,23 @@ async def get_popular_predictions(
         time_mapping = {
             "1h": timedelta(hours=1),
             "24h": timedelta(hours=24),
-            "7d": timedelta(days=7)
+            "7d": timedelta(days=7),
         }
         time_delta = time_mapping.get(time_range, timedelta(hours=24))
 
         # 生成缓存键
-        cache_key = f"popular_{limit}_{time_range}"
 
         # 模拟热门预测数据
         popular_data = await _get_popular_predictions_data(limit, time_delta)
 
-        return JSONResponse(content={
-            "status": "success",
-            "data": popular_data,
-            "time_range": time_range,
-            "limit": limit
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": popular_data,
+                "time_range": time_range,
+                "limit": limit,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error getting popular predictions: {e}")
@@ -193,8 +198,8 @@ async def get_user_prediction_history(
     user_id: int,
     page: int = Query(1, ge=1, description="页码"),
     size: int = Query(20, ge=1, le=100, description="每页数量"),
-    status_filter: Optional[str] = Query(None, description="状态过滤"),
-    current_user = Depends(get_current_user_optional)
+    status_filter: str | None = Query(None, description="状态过滤"),
+    current_user=Depends(get_current_user_optional),
 ):
     """
     获取用户预测历史
@@ -206,22 +211,23 @@ async def get_user_prediction_history(
             raise HTTPException(status_code=403, detail="无权访问其他用户的预测历史")
 
         # 生成缓存键
-        cache_key = f"user_history_{user_id}_{page}_{size}_{status_filter}"
 
         # 模拟用户历史数据
         history_data = await _get_user_prediction_history_data(
             user_id, page, size, status_filter
         )
 
-        return JSONResponse(content={
-            "status": "success",
-            "data": history_data,
-            "pagination": {
-                "page": page,
-                "size": size,
-                "has_more": len(history_data) == size
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": history_data,
+                "pagination": {
+                    "page": page,
+                    "size": size,
+                    "has_more": len(history_data) == size,
+                },
             }
-        })
+        )
 
     except HTTPException:
         raise
@@ -235,7 +241,7 @@ async def get_user_prediction_history(
 @performance_monitor(threshold=1.0)
 async def get_prediction_statistics(
     time_range: str = Query("7d", description="统计时间范围"),
-    current_user = Depends(get_current_user_optional)
+    current_user=Depends(get_current_user_optional),
 ):
     """
     获取预测统计信息
@@ -246,19 +252,21 @@ async def get_prediction_statistics(
         time_mapping = {
             "1d": timedelta(days=1),
             "7d": timedelta(days=7),
-            "30d": timedelta(days=30)
+            "30d": timedelta(days=30),
         }
         time_delta = time_mapping.get(time_range, timedelta(days=7))
 
         # 生成统计数据
         stats_data = await _get_prediction_statistics_data(time_delta)
 
-        return JSONResponse(content={
-            "status": "success",
-            "data": stats_data,
-            "time_range": time_range,
-            "generated_at": datetime.utcnow().isoformat()
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": stats_data,
+                "time_range": time_range,
+                "generated_at": datetime.utcnow().isoformat(),
+            }
+        )
 
     except Exception as e:
         logger.error(f"Error getting prediction statistics: {e}")
@@ -267,8 +275,7 @@ async def get_prediction_statistics(
 
 @router.post("/cache/warmup")
 async def warmup_cache(
-    background_tasks: BackgroundTasks,
-    current_user = Depends(get_current_user_optional)
+    background_tasks: BackgroundTasks, current_user=Depends(get_current_user_optional)
 ):
     """
     缓存预热
@@ -282,11 +289,13 @@ async def warmup_cache(
         # 异步执行缓存预热
         background_tasks.add_task(_execute_cache_warmup)
 
-        return JSONResponse(content={
-            "status": "success",
-            "message": "缓存预热任务已启动",
-            "timestamp": datetime.utcnow().isoformat()
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "message": "缓存预热任务已启动",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
 
     except HTTPException:
         raise
@@ -297,8 +306,8 @@ async def warmup_cache(
 
 @router.delete("/cache/clear")
 async def clear_cache(
-    pattern: Optional[str] = Query(None, description="清除模式"),
-    current_user = Depends(get_current_user_optional)
+    pattern: str | None = Query(None, description="清除模式"),
+    current_user=Depends(get_current_user_optional),
 ):
     """
     清除缓存
@@ -315,11 +324,13 @@ async def clear_cache(
         else:
             await _cache_manager.invalidate_pattern("")
 
-        return JSONResponse(content={
-            "status": "success",
-            "message": f"缓存已清除: {pattern or '全部'}",
-            "timestamp": datetime.utcnow().isoformat()
-        })
+        return JSONResponse(
+            content={
+                "status": "success",
+                "message": f"缓存已清除: {pattern or '全部'}",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
 
     except HTTPException:
         raise
@@ -329,7 +340,9 @@ async def clear_cache(
 
 
 # 辅助函数
-async def _generate_prediction_data(match_id: int, include_details: bool) -> Dict[str, Any]:
+async def _generate_prediction_data(
+    match_id: int, include_details: bool
+) -> dict[str, Any]:
     """生成预测数据"""
     # 模拟预测算法
     import random
@@ -342,52 +355,56 @@ async def _generate_prediction_data(match_id: int, include_details: bool) -> Dic
         "probabilities": {
             "home_win": round(random.uniform(0.2, 0.6), 3),
             "draw": round(random.uniform(0.2, 0.4), 3),
-            "away_win": round(random.uniform(0.2, 0.6), 3)
+            "away_win": round(random.uniform(0.2, 0.6), 3),
         },
         "created_at": datetime.utcnow().isoformat(),
-        "model_version": "v2.1.0"
+        "model_version": "v2.1.0",
     }
 
     if include_details:
-        base_prediction.update({
-            "analysis": {
-                "team_form": random.uniform(0.3, 0.9),
-                "head_to_head": random.uniform(0.2, 0.8),
-                "injuries": random.uniform(0.0, 0.3),
-                "weather_impact": random.uniform(0.0, 0.2)
-            },
-            "key_factors": [
-                "主队近期状态良好",
-                "客场作战能力",
-                "历史交锋记录"
-            ]
-        })
+        base_prediction.update(
+            {
+                "analysis": {
+                    "team_form": random.uniform(0.3, 0.9),
+                    "head_to_head": random.uniform(0.2, 0.8),
+                    "injuries": random.uniform(0.0, 0.3),
+                    "weather_impact": random.uniform(0.0, 0.2),
+                },
+                "key_factors": ["主队近期状态良好", "客场作战能力", "历史交锋记录"],
+            }
+        )
 
     return base_prediction
 
 
-async def _get_popular_predictions_data(limit: int, time_delta: timedelta) -> List[Dict[str, Any]]:
+async def _get_popular_predictions_data(
+    limit: int, time_delta: timedelta
+) -> list[dict[str, Any]]:
     """获取热门预测数据"""
     # 模拟热门预测
     import random
 
     popular_data = []
     for i in range(limit):
-        popular_data.append({
-            "prediction_id": f"popular_{i}",
-            "match_id": random.randint(1000, 9999),
-            "predicted_outcome": random.choice(["home_win", "draw", "away_win"]),
-            "confidence_score": round(random.uniform(0.7, 0.95), 3),
-            "popularity_score": round(random.uniform(0.5, 1.0), 3),
-            "created_at": (datetime.utcnow() - random.uniform(0, time_delta.total_seconds())).isoformat()
-        })
+        popular_data.append(
+            {
+                "prediction_id": f"popular_{i}",
+                "match_id": random.randint(1000, 9999),
+                "predicted_outcome": random.choice(["home_win", "draw", "away_win"]),
+                "confidence_score": round(random.uniform(0.7, 0.95), 3),
+                "popularity_score": round(random.uniform(0.5, 1.0), 3),
+                "created_at": (
+                    datetime.utcnow() - random.uniform(0, time_delta.total_seconds())
+                ).isoformat(),
+            }
+        )
 
     return popular_data
 
 
 async def _get_user_prediction_history_data(
-    user_id: int, page: int, size: int, status_filter: Optional[str]
-) -> List[Dict[str, Any]]:
+    user_id: int, page: int, size: int, status_filter: str | None
+) -> list[dict[str, Any]]:
     """获取用户预测历史数据"""
     # 模拟历史数据
     import random
@@ -397,20 +414,30 @@ async def _get_user_prediction_history_data(
 
     for i in range(size):
         prediction_id = f"user_{user_id}_pred_{offset + i}"
-        history_data.append({
-            "prediction_id": prediction_id,
-            "match_id": random.randint(1000, 9999),
-            "predicted_outcome": random.choice(["home_win", "draw", "away_win"]),
-            "actual_outcome": random.choice(["home_win", "draw", "away_win", "pending"]),
-            "confidence_score": round(random.uniform(0.6, 0.95), 3),
-            "status": random.choice(["correct", "incorrect", "pending"]) if not status_filter else status_filter,
-            "created_at": (datetime.utcnow() - timedelta(days=random.randint(1, 30))).isoformat()
-        })
+        history_data.append(
+            {
+                "prediction_id": prediction_id,
+                "match_id": random.randint(1000, 9999),
+                "predicted_outcome": random.choice(["home_win", "draw", "away_win"]),
+                "actual_outcome": random.choice(
+                    ["home_win", "draw", "away_win", "pending"]
+                ),
+                "confidence_score": round(random.uniform(0.6, 0.95), 3),
+                "status": (
+                    random.choice(["correct", "incorrect", "pending"])
+                    if not status_filter
+                    else status_filter
+                ),
+                "created_at": (
+                    datetime.utcnow() - timedelta(days=random.randint(1, 30))
+                ).isoformat(),
+            }
+        )
 
     return history_data
 
 
-async def _get_prediction_statistics_data(time_delta: timedelta) -> Dict[str, Any]:
+async def _get_prediction_statistics_data(time_delta: timedelta) -> dict[str, Any]:
     """获取预测统计数据"""
     # 模拟统计数据
     import random
@@ -422,17 +449,17 @@ async def _get_prediction_statistics_data(time_delta: timedelta) -> Dict[str, An
         "popular_outcomes": {
             "home_win": random.randint(300, 800),
             "draw": random.randint(200, 500),
-            "away_win": random.randint(200, 600)
+            "away_win": random.randint(200, 600),
         },
         "performance_metrics": {
             "avg_response_time_ms": round(random.uniform(100, 500), 2),
             "cache_hit_rate": round(random.uniform(0.7, 0.95), 3),
-            "daily_predictions": random.randint(50, 200)
+            "daily_predictions": random.randint(50, 200),
         },
         "time_period": {
             "start": (datetime.utcnow() - time_delta).isoformat(),
-            "end": datetime.utcnow().isoformat()
-        }
+            "end": datetime.utcnow().isoformat(),
+        },
     }
 
 
@@ -443,7 +470,9 @@ async def _execute_cache_warmup():
 
         # 预热热门预测缓存
         popular_data = await _get_popular_predictions_data(20, timedelta(hours=24))
-        await _cache_manager.set("popular_20_24h", popular_data, "popular_predictions", 600)
+        await _cache_manager.set(
+            "popular_20_24h", popular_data, "popular_predictions", 600
+        )
 
         # 预热统计数据缓存
         stats_data = await _get_prediction_statistics_data(timedelta(days=7))

@@ -3,8 +3,7 @@
 Internationalization Support Test
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.utils.i18n import (
     I18nUtils,
@@ -132,8 +131,8 @@ class TestI18nUtils:
 class TestI18nInit:
     """国际化初始化测试"""
 
-    @patch('src.utils.i18n.gettext')
-    @patch('src.utils.i18n.os.getenv')
+    @patch("src.utils.i18n.gettext")
+    @patch("src.utils.i18n.os.getenv")
     def test_init_i18n_success(self, mock_getenv, mock_gettext):
         """测试成功初始化"""
         mock_getenv.return_value = "zh_CN"
@@ -143,7 +142,7 @@ class TestI18nInit:
         # 验证调用了相关方法
         mock_getenv.assert_called_once_with("LANGUAGE", "zh_CN")
 
-    @patch('src.utils.i18n.gettext')
+    @patch("src.utils.i18n.gettext")
     def test_init_i18n_with_exception(self, mock_gettext):
         """测试初始化异常处理"""
         # 模拟gettext抛出异常
@@ -152,10 +151,12 @@ class TestI18nInit:
         # 应该不抛出异常
         init_i18n()  # 应该正常完成
 
-    @patch('src.utils.i18n.gettext.bindtextdomain')
-    @patch('src.utils.i18n.gettext.textdomain')
-    @patch('src.utils.i18n.gettext.install')
-    def test_init_i18n_full_flow(self, mock_install, mock_textdomain, mock_bindtextdomain):
+    @patch("src.utils.i18n.gettext.bindtextdomain")
+    @patch("src.utils.i18n.gettext.textdomain")
+    @patch("src.utils.i18n.gettext.install")
+    def test_init_i18n_full_flow(
+        self, mock_install, mock_textdomain, mock_bindtextdomain
+    ):
         """测试完整的初始化流程"""
         init_i18n()
 

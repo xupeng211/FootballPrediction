@@ -5,12 +5,12 @@ Complete Mock Cache Integration Tests
 使用完全独立的Mock实现进行缓存测试，不依赖真实的Redis实现。
 """
 
-import pytest
 import asyncio
 import json
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
-from typing import Any, Dict, Optional
+from typing import Any
+
+import pytest
 
 
 class MockRedisManager:
@@ -38,7 +38,7 @@ class MockRedisManager:
         self._data[key] = value
         return True
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """模拟获取操作"""
         if not self._connected:
             return None
@@ -86,29 +86,33 @@ class MockRedisManager:
             return True
         return False
 
-    async def get_memory_usage(self) -> Dict[str, Any]:
+    async def get_memory_usage(self) -> dict[str, Any]:
         """模拟内存使用情况"""
         return {
             "used_memory": str(len(str(self._data))),
-            "used_memory_human": f"{len(str(self._data))}B"
+            "used_memory_human": f"{len(str(self._data))}B",
         }
 
-    async def cache_user_session(self, user_id: str, session_data: Dict, expire_seconds: int = 3600) -> bool:
+    async def cache_user_session(
+        self, user_id: str, session_data: dict, expire_seconds: int = 3600
+    ) -> bool:
         """缓存用户会话"""
         key = f"user_session:{user_id}"
         return await self.set_with_expire(key, session_data, expire_seconds)
 
-    async def get_user_session(self, user_id: str) -> Optional[Dict]:
+    async def get_user_session(self, user_id: str) -> dict | None:
         """获取用户会话"""
         key = f"user_session:{user_id}"
         return await self.get(key)
 
-    async def cache_prediction_result(self, match_id: int, prediction_data: Dict, expire_seconds: int = 600) -> bool:
+    async def cache_prediction_result(
+        self, match_id: int, prediction_data: dict, expire_seconds: int = 600
+    ) -> bool:
         """缓存预测结果"""
         key = f"prediction:{match_id}"
         return await self.set_with_expire(key, prediction_data, expire_seconds)
 
-    async def get_prediction_result(self, match_id: int) -> Optional[Dict]:
+    async def get_prediction_result(self, match_id: int) -> dict | None:
         """获取预测结果"""
         key = f"prediction:{match_id}"
         return await self.get(key)
@@ -151,7 +155,9 @@ class TestMockCacheOperations:
         expire_seconds = 1  # 1秒过期
 
         # 设置带过期时间的缓存
-        result = await redis_manager.set_with_expire(test_key, test_value, expire_seconds)
+        result = await redis_manager.set_with_expire(
+            test_key, test_value, expire_seconds
+        )
         assert result is True
 
         # 立即获取应该存在
@@ -209,13 +215,10 @@ class TestMockCacheOperations:
         # 复杂数据结构
         complex_data = {
             "user_id": 123,
-            "preferences": {
-                "theme": "dark",
-                "language": "zh-CN"
-            },
+            "preferences": {"theme": "dark", "language": "zh-CN"},
             "last_login": str(datetime.now()),
             "is_active": True,
-            "tags": ["football", "predictions", "data"]
+            "tags": ["football", "predictions", "data"],
         }
 
         # 设置复杂对象
@@ -262,6 +265,7 @@ class TestMockCacheOperations:
     @pytest.mark.asyncio
     async def test_concurrent_operations(self, redis_manager):
         """测试并发操作"""
+
         async def cache_operation(index):
             key = f"concurrent_test_{index}"
             value = {"index": index, "thread_id": id(asyncio.current_task())}
@@ -292,11 +296,13 @@ class TestMockCacheOperations:
             "username": "test_user",
             "login_time": str(datetime.now()),
             "permissions": ["read", "write"],
-            "preferences": {"theme": "dark", "language": "zh-CN"}
+            "preferences": {"theme": "dark", "language": "zh-CN"},
         }
 
         # 缓存用户会话
-        result = await redis_manager.cache_user_session(user_id, session_data, expire_seconds=3600)
+        result = await redis_manager.cache_user_session(
+            user_id, session_data, expire_seconds=3600
+        )
         assert result is True
 
         # 获取用户会话
@@ -314,14 +320,16 @@ class TestMockCacheOperations:
                 "draw_prob": 0.25,
                 "away_win_prob": 0.10,
                 "predicted_outcome": "home",
-                "confidence": 0.78
+                "confidence": 0.78,
             },
             "model_version": "v2.1",
-            "created_at": str(datetime.now())
+            "created_at": str(datetime.now()),
         }
 
         # 缓存预测结果
-        result = await redis_manager.cache_prediction_result(match_id, prediction_data, expire_seconds=600)
+        result = await redis_manager.cache_prediction_result(
+            match_id, prediction_data, expire_seconds=600
+        )
         assert result is True
 
         # 获取缓存的预测

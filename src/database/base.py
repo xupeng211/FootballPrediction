@@ -4,13 +4,13 @@ SQLAlchemy基础模型和数据库连接
 提供所有数据模型的基础类,包含通用字段和方法，以及数据库连接函数。
 """
 
+from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
-from typing import Any, Generator, AsyncGenerator
-from contextlib import contextmanager, asynccontextmanager
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer, create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 
 class Base(DeclarativeBase):
@@ -92,7 +92,9 @@ class BaseModel(Base, TimestampMixin):
         }
         return cls(**filtered_data)
 
-    def update_from_dict(self, data: dict[str, Any], exclude_fields: set[str] | None = None) -> None:
+    def update_from_dict(
+        self, data: dict[str, Any], exclude_fields: set[str] | None = None
+    ) -> None:
         """
         从字典更新模型对象
 
@@ -122,10 +124,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # 异步数据库引擎和会话
 async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(
-    bind=async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    bind=async_engine, class_=AsyncSession, expire_on_commit=False
 )
+
 
 def get_db() -> Generator[Session, None, None]:
     """
@@ -141,6 +142,7 @@ def get_db() -> Generator[Session, None, None]:
     finally:
         db.close()
 
+
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
     获取异步数据库会话
@@ -154,6 +156,7 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
 
 # 导出基础类,供其他模型使用
 __all__ = ["Base", "BaseModel", "TimestampMixin"]

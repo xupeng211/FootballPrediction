@@ -49,4 +49,6 @@ async def health_check() -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(status_code=503, detail=f"Service unavailable: {str(e)}") from e  # TODO: B904 exception chaining
+        raise HTTPException(
+            status_code=503, detail=f"Service unavailable: {str(e)}"
+        ) from e  # TODO: B904 exception chaining

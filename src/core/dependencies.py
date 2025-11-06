@@ -6,25 +6,25 @@ Core Dependencies Module
 Provides core dependency injection functions for FastAPI applications.
 """
 
-import asyncio
-from typing import Optional, Generator, AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
+
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session
 
+from ..database.base import get_async_db, get_db
 from .logging_system import get_logger
-from ..database.base import get_db, get_async_db
-from ..api.dependencies import get_current_user
 
 logger = get_logger(__name__)
 
 # HTTP Bearer 认证方案
 security = HTTPBearer(auto_error=False)
 
+
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
-) -> Optional[dict]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> dict | None:
     """
     可选的用户认证依赖
     Optional user authentication dependency
@@ -42,11 +42,12 @@ async def get_current_user_optional(
             "id": 1,
             "email": "test@example.com",
             "is_active": True,
-            "is_admin": False
+            "is_admin": False,
         }
     except Exception as e:
         logger.warning(f"User authentication failed: {e}")
         return None
+
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -62,6 +63,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
+
 def get_sync_db_session() -> Generator[Session, None, None]:
     """
     获取同步数据库会话
@@ -73,8 +75,9 @@ def get_sync_db_session() -> Generator[Session, None, None]:
     with get_db() as session:
         yield session
 
+
 async def get_current_user_required(
-    current_user: Optional[dict] = Depends(get_current_user_optional)
+    current_user: dict | None = Depends(get_current_user_optional),
 ) -> dict:
     """
     必需的用户认证依赖
@@ -91,8 +94,9 @@ async def get_current_user_required(
         )
     return current_user
 
+
 async def get_admin_user(
-    current_user: dict = Depends(get_current_user_required)
+    current_user: dict = Depends(get_current_user_required),
 ) -> dict:
     """
     管理员用户依赖
@@ -103,10 +107,10 @@ async def get_admin_user(
     """
     if not current_user.get("is_admin", False):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required"
         )
     return current_user
+
 
 # 数据库连接池依赖
 async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
@@ -120,9 +124,7 @@ async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
     from ..database.base import async_engine
 
     async_session_local = async_sessionmaker(
-        bind=async_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        bind=async_engine, class_=AsyncSession, expire_on_commit=False
     )
 
     try:
@@ -130,6 +132,7 @@ async def get_db_pool() -> AsyncGenerator[async_sessionmaker, None]:
     finally:
         # 清理资源（如果需要）
         pass
+
 
 # 缓存依赖
 async def get_cache_manager():
@@ -141,7 +144,9 @@ async def get_cache_manager():
     Provides dependency injection for cache manager.
     """
     from ..cache.unified_cache import get_cache_manager
+
     return get_cache_manager()
+
 
 # 性能监控依赖
 async def get_performance_monitor():
@@ -153,7 +158,9 @@ async def get_performance_monitor():
     Provides dependency injection for performance monitor.
     """
     from ..performance.monitoring import get_system_monitor
+
     return get_system_monitor()
+
 
 # 日志记录器依赖
 def get_request_logger():
@@ -165,6 +172,7 @@ def get_request_logger():
     Provides dependency injection for request logger.
     """
     return get_logger(__name__)
+
 
 # 测试依赖
 async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
@@ -183,6 +191,7 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
             await session.rollback()
             await session.close()
 
+
 # 依赖注入函数映射
 DEPENDENCIES = {
     "current_user_optional": get_current_user_optional,
@@ -196,6 +205,7 @@ DEPENDENCIES = {
     "request_logger": get_request_logger,
     "test_db": get_test_db,
 }
+
 
 def get_dependency(dependency_name: str):
     """

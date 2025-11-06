@@ -21,25 +21,33 @@ def test_domain_models(client):
         from src.domain.models.team import Team
 
         team = Team(name="Test Team", short_name="TT", code="TTC")
-        logger.debug(f"✅ Team模型创建成功: {team.display_name}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"✅ Team模型创建成功: {team.display_name}"
+        )  # TODO: Add logger import if needed
 
         # 测试Match模型
         from src.domain.models.match import Match
 
         match = Match(home_team_id=1, away_team_id=2, league_id=100)
-        logger.debug(f"✅ Match模型创建成功: {match}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"✅ Match模型创建成功: {match}"
+        )  # TODO: Add logger import if needed
 
         # 测试Prediction模型
         from src.domain.models.prediction import Prediction
 
         prediction = Prediction(match_id=1, user_id=100)
-        logger.debug(f"✅ Prediction模型创建成功: {prediction}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"✅ Prediction模型创建成功: {prediction}"
+        )  # TODO: Add logger import if needed
 
         # 测试League模型
         from src.domain.models.league import League
 
         league = League(name="Test League", short_name="TL", code="L01")
-        logger.debug(f"✅ League模型创建成功: {league.display_name}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"✅ League模型创建成功: {league.display_name}"
+        )  # TODO: Add logger import if needed
 
         return True
 
@@ -65,7 +73,9 @@ def test_prediction_logic(client):
         # 测试预测
         prediction.make_prediction(2, 1, confidence=0.75)
 
-        logger.debug(f"✅ 预测逻辑测试成功: {prediction}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"✅ 预测逻辑测试成功: {prediction}"
+        )  # TODO: Add logger import if needed
         return True
 
     except Exception as e:
@@ -84,7 +94,9 @@ def test_api_models(client):
         return True
 
     except Exception as e:
-        logger.debug(f"❌ API数据模型测试失败: {e}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"❌ API数据模型测试失败: {e}"
+        )  # TODO: Add logger import if needed
         return False
 
 
@@ -100,7 +112,9 @@ def test_utils_functionality(client):
         dict1 = {"a": 1, "b": 2}
         dict2 = {"c": 3, "d": 4}
         merged = DictUtils.deep_merge(dict1, dict2)
-        logger.debug(f"✅ 字典合并测试成功: {merged}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"✅ 字典合并测试成功: {merged}"
+        )  # TODO: Add logger import if needed
 
         # 测试文件工具
         import tempfile
@@ -109,7 +123,9 @@ def test_utils_functionality(client):
             test_data = {"test": "data"}
             FileUtils.write_json(test_data, f.name)
             loaded_data = FileUtils.read_json(f.name)
-            logger.debug(f"✅ 文件操作测试成功: {loaded_data}")  # TODO: Add logger import if needed
+            logger.debug(
+                f"✅ 文件操作测试成功: {loaded_data}"
+            )  # TODO: Add logger import if needed
             os.unlink(f.name)
 
         return True
@@ -140,7 +156,9 @@ def main():
         logger.debug()  # TODO: Add logger import if needed
 
     logger.debug("=" * 50)  # TODO: Add logger import if needed
-    logger.debug(f"📊 测试结果: {passed}/{total} 通过")  # TODO: Add logger import if needed
+    logger.debug(
+        f"📊 测试结果: {passed}/{total} 通过"
+    )  # TODO: Add logger import if needed
 
     if passed == total:
         logger.debug("🎉 所有核心功能测试通过！")  # TODO: Add logger import if needed

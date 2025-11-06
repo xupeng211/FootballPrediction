@@ -20,7 +20,7 @@ import hashlib
 from datetime import datetime, timedelta
 from typing import Any
 
-from src.collectors.base_collector import CollectionResult, BaseCollector
+from src.collectors.base_collector import BaseCollector, CollectionResult
 
 
 class FixturesCollector(BaseCollector):
@@ -35,7 +35,6 @@ class FixturesCollector(BaseCollector):
 
     def __init__(
         self,
-
         data_source: str = "football_api",
         api_key: str | None = None,
         base_url: str = "https://api.football-data.org/v4",
@@ -49,21 +48,18 @@ class FixturesCollector(BaseCollector):
             api_key: API密钥
             base_url: API基础URL
         """
-        super().__init__(data_source,
-    **kwargs)
+        super().__init__(data_source, **kwargs)
         self.api_key = api_key
         self.base_url = base_url
 
         # 防重复:记录已处理的比赛ID
         self._processed_matches: set[str] = set()
         # 防丢失:记录应该存在但缺失的比赛
-        self._missing_matches: list[dict[str,
-    Any]] = []
+        self._missing_matches: list[dict[str, Any]] = []
 
     async def collect_fixtures(
         self,
-    leagues: list[str] | None = None,
-
+        leagues: list[str] | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
         **kwargs,
@@ -111,17 +107,15 @@ class FixturesCollector(BaseCollector):
             )
 
             # 加载已存在的比赛ID（防重复）
-            await self._load_existing_matches(date_from,
-    date_to)
+            await self._load_existing_matches(date_from, date_to)
 
             # 按联赛采集赛程数据
             for league_code in leagues:
                 try:
                     league_fixtures = await self._collect_league_fixtures(
                         league_code,
-    date_from,
-    date_to,
-
+                        date_from,
+                        date_to,
                     )
 
                     # 处理每场比赛
@@ -162,10 +156,9 @@ class FixturesCollector(BaseCollector):
 
                 except (
                     ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-
+                    TypeError,
+                    AttributeError,
+                    KeyError,
                     RuntimeError,
                 ) as e:
                     error_count += 1
@@ -177,14 +170,11 @@ class FixturesCollector(BaseCollector):
                     )
 
             # 检测并处理缺失的比赛（防丢失）
-            await self._detect_missing_matches(collected_data,
-    date_from,
-    date_to)
+            await self._detect_missing_matches(collected_data, date_from, date_to)
 
             # 保存到Bronze层原始数据表
             if collected_data:
-                await self._save_to_bronze_layer("raw_match_data",
-    collected_data)
+                await self._save_to_bronze_layer("raw_match_data", collected_data)
 
             # 确定最终状态
             total_collected = len(collected_data)
@@ -197,7 +187,6 @@ class FixturesCollector(BaseCollector):
 
             result = CollectionResult(
                 data_source=self.data_source,
-
                 collection_type="fixtures",
                 records_collected=total_collected,
                 success_count=success_count,
@@ -218,36 +207,31 @@ class FixturesCollector(BaseCollector):
             self.logger.error(f"Fixtures collection failed: {str(e)}")
             return CollectionResult(
                 data_source=self.data_source,
-    collection_type="fixtures",
-    records_collected=0,
-    success_count=0,
-
+                collection_type="fixtures",
+                records_collected=0,
+                success_count=0,
                 error_count=1,
                 status="failed",
                 error_message=str(e),
-    )
+            )
 
-    async def collect_odds(self,
-    **kwargs) -> CollectionResult:
+    async def collect_odds(self, **kwargs) -> CollectionResult:
         """赛程采集器不处理赔率数据"""
         return CollectionResult(
             data_source=self.data_source,
-    collection_type="odds",
-
+            collection_type="odds",
             records_collected=0,
             success_count=0,
             error_count=0,
             status="skipped",
         )
 
-    async def collect_live_scores(self,
-    **kwargs) -> CollectionResult:
+    async def collect_live_scores(self, **kwargs) -> CollectionResult:
         """赛程采集器不处理实时比分数据"""
         return CollectionResult(
             data_source=self.data_source,
-    collection_type="live_scores",
-    records_collected=0,
-
+            collection_type="live_scores",
+            records_collected=0,
             success_count=0,
             error_count=0,
             status="skipped",
@@ -282,9 +266,7 @@ class FixturesCollector(BaseCollector):
             return ["PL", "PD"]  # 默认返回英超和西甲
 
     async def _load_existing_matches(
-        self,
-    date_from: datetime,
-    date_to: datetime
+        self, date_from: datetime, date_to: datetime
     ) -> None:
         """
         加载已存在的比赛ID（防重复机制）
@@ -314,12 +296,8 @@ class FixturesCollector(BaseCollector):
             self._processed_matches = set()
 
     async def _collect_league_fixtures(
-        self,
-    league_code: str,
-    date_from: datetime,
-    date_to: datetime
-    ) -> list[dict[str,
-    Any]]:
+        self, league_code: str, date_from: datetime, date_to: datetime
+    ) -> list[dict[str, Any]]:
         """
         采集指定联赛的赛程数据
 
@@ -337,30 +315,21 @@ class FixturesCollector(BaseCollector):
 
             params = {
                 "dateFrom": date_from.strftime("%Y-%m-%d"),
-    "dateTo": date_to.strftime("%Y-%m-%d"),
-    "status": "SCHEDULED",
-    }
+                "dateTo": date_to.strftime("%Y-%m-%d"),
+                "status": "SCHEDULED",
+            }
 
-            response = await self._make_request(url=url,
-    headers=headers,
-    params=params)
+            response = await self._make_request(url=url, headers=headers, params=params)
 
-            return response.get("matches",
-    [])
+            return response.get("matches", [])
 
-        except (ValueError,
-    TypeError,
-    AttributeError,
-    KeyError,
-    RuntimeError) as e:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(
                 f"Failed to collect fixtures for league {league_code}: {str(e)}"
             )
             return []
 
-    def _generate_match_key(self,
-    fixture_data: dict[str,
-    Any]) -> str:
+    def _generate_match_key(self, fixture_data: dict[str, Any]) -> str:
         """
         生成比赛唯一键（防重复）
 
@@ -379,15 +348,11 @@ class FixturesCollector(BaseCollector):
         ]
 
         key_string = "|".join(key_components)
-        return hashlib.md5(key_string.encode(),
-    usedforsecurity=False).hexdigest()
+        return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
     async def _clean_fixture_data(
-        self,
-    raw_fixture: dict[str,
-    Any]
-    ) -> dict[str,
-    Any] | None:
+        self, raw_fixture: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """
         清洗和标准化赛程数据
 
@@ -400,39 +365,29 @@ class FixturesCollector(BaseCollector):
         try:
             # 基础字段验证
             if not all(
-                key in raw_fixture for key in ["id",
-    "homeTeam",
-    "awayTeam",
-    "utcDate"]
+                key in raw_fixture for key in ["id", "homeTeam", "awayTeam", "utcDate"]
             ):
                 return None
 
             # 时间标准化为UTC
             match_time = datetime.fromisoformat(
-                raw_fixture["utcDate"].replace("Z",
-    "+00:00")
+                raw_fixture["utcDate"].replace("Z", "+00:00")
             )
 
             cleaned_data = {
                 "external_match_id": str(raw_fixture["id"]),
                 "external_league_id": str(
-                    raw_fixture.get("competition", {}).get("id",
-    "")
+                    raw_fixture.get("competition", {}).get("id", "")
                 ),
-    "external_home_team_id": str(raw_fixture["homeTeam"]["id"]),
-    "external_away_team_id": str(raw_fixture["awayTeam"]["id"]),
-
+                "external_home_team_id": str(raw_fixture["homeTeam"]["id"]),
+                "external_away_team_id": str(raw_fixture["awayTeam"]["id"]),
                 "match_time": match_time.isoformat(),
-    "status": raw_fixture.get("status",
-    "SCHEDULED"),
-    "season": raw_fixture.get("season",
-    {}).get("id"),
-
+                "status": raw_fixture.get("status", "SCHEDULED"),
+                "season": raw_fixture.get("season", {}).get("id"),
                 "matchday": raw_fixture.get("matchday"),
-    "raw_data": raw_fixture,
-    "collected_at": datetime.now().isoformat(),
-    "processed": False,
-
+                "raw_data": raw_fixture,
+                "collected_at": datetime.now().isoformat(),
+                "processed": False,
             }
 
             return cleaned_data
@@ -443,10 +398,8 @@ class FixturesCollector(BaseCollector):
 
     async def _detect_missing_matches(
         self,
-    collected_data: list[dict[str,
-    Any]],
-    date_from: datetime,
-
+        collected_data: list[dict[str, Any]],
+        date_from: datetime,
         date_to: datetime,
     ) -> None:
         """

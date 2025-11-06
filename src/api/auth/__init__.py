@@ -17,7 +17,7 @@ MOCK_USERS = {
         "email": "test@example.com",
         "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4QF8xq4.8K",  # password123
         "is_active": True,
-        "created_at": "2024-01-01T00:00:00Z"
+        "created_at": "2024-01-01T00:00:00Z",
     },
     "admin@example.com": {
         "id": 2,
@@ -25,9 +25,10 @@ MOCK_USERS = {
         "password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4QF8xq4.8K",  # password123
         "is_active": True,
         "is_admin": True,
-        "created_at": "2024-01-01T00:00:00Z"
-    }
+        "created_at": "2024-01-01T00:00:00Z",
+    },
 }
+
 
 # 模拟的Pydantic模型（用于测试）
 class UserRegister:
@@ -36,10 +37,12 @@ class UserRegister:
         self.password = password
         self.full_name = full_name
 
+
 class UserLogin:
     def __init__(self, email: str, password: str):
         self.email = email
         self.password = password
+
 
 class UserResponse:
     def __init__(self, id: int, email: str, is_active: bool, full_name: str = None):
@@ -48,30 +51,42 @@ class UserResponse:
         self.is_active = is_active
         self.full_name = full_name
 
+
 class TokenResponse:
-    def __init__(self, access_token: str, refresh_token: str, token_type: str = "bearer", expires_in: int = 1800):
+    def __init__(
+        self,
+        access_token: str,
+        refresh_token: str,
+        token_type: str = "bearer",
+        expires_in: int = 1800,
+    ):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.token_type = token_type
         self.expires_in = expires_in
 
+
 class RefreshTokenRequest:
     def __init__(self, refresh_token: str):
         self.refresh_token = refresh_token
 
+
 class PasswordResetRequest:
     def __init__(self, email: str):
         self.email = email
+
 
 class PasswordResetConfirm:
     def __init__(self, token: str, new_password: str):
         self.token = token
         self.new_password = new_password
 
+
 class PasswordChangeRequest:
     def __init__(self, current_password: str, new_password: str):
         self.current_password = current_password
         self.new_password = new_password
+
 
 # 模拟的认证函数（用于测试）
 def authenticate_user(email: str, password: str):
@@ -81,6 +96,7 @@ def authenticate_user(email: str, password: str):
         return user
     return None
 
+
 def create_user(email: str, password: str, **kwargs):
     """模拟创建用户函数"""
     user_id = max(user["id"] for user in MOCK_USERS.values()) + 1 if MOCK_USERS else 1
@@ -89,8 +105,9 @@ def create_user(email: str, password: str, **kwargs):
         "email": email,
         "is_active": True,
         "created_at": "2024-01-01T00:00:00Z",
-        **kwargs
+        **kwargs,
     }
+
 
 def get_user_by_id(user_id: int):
     """模拟根据ID获取用户函数"""
@@ -98,6 +115,7 @@ def get_user_by_id(user_id: int):
         if user["id"] == user_id:
             return user
     return None
+
 
 __all__ = [
     "router",
@@ -112,5 +130,5 @@ __all__ = [
     "PasswordChangeRequest",
     "authenticate_user",
     "create_user",
-    "get_user_by_id"
+    "get_user_by_id",
 ]

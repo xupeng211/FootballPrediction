@@ -5,24 +5,25 @@
 基于 src.utils.string_utils 模块的实际函数编写测试
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 from src.utils.string_utils import (
-    cached_slug,
     batch_clean_strings,
-    validate_batch_emails,
-    normalize_string,
-    truncate_string,
-    is_empty,
-    strip_html,
+    cached_slug,
+    camel_to_snake,
     format_currency,
+    is_empty,
+    normalize_string,
     snake_to_camel,
-    camel_to_snake
+    strip_html,
+    truncate_string,
+    validate_batch_emails,
 )
 
 
@@ -221,7 +222,7 @@ class TestStringUtilsActual:
         import time
 
         # 大批量字符串清理
-        large_list = ["  test string {}  ".format(i) for i in range(1000)]
+        large_list = [f"  test string {i}  " for i in range(1000)]
 
         start_time = time.time()
         result = batch_clean_strings(large_list)
@@ -245,26 +246,32 @@ class TestStringUtilsActual:
         assert "<img" not in result
         assert "<br" not in result
 
-    @pytest.mark.parametrize("input_snake,expected_camel", [
-        ("hello", "hello"),
-        ("hello_world", "helloWorld"),
-        ("test_case", "testCase"),
-        ("multiple_words_here", "multipleWordsHere"),
-        ("", ""),
-    ])
+    @pytest.mark.parametrize(
+        "input_snake,expected_camel",
+        [
+            ("hello", "hello"),
+            ("hello_world", "helloWorld"),
+            ("test_case", "testCase"),
+            ("multiple_words_here", "multipleWordsHere"),
+            ("", ""),
+        ],
+    )
     def test_snake_to_camel_parametrized(self, input_snake, expected_camel):
         """参数化测试蛇形转驼峰"""
         result = snake_to_camel(input_snake)
         assert result == expected_camel
 
-    @pytest.mark.parametrize("input_camel,expected_snake", [
-        ("hello", "hello"),
-        ("helloWorld", "hello_world"),
-        ("testCase", "test_case"),
-        ("multipleWordsHere", "multiple_words_here"),
-        ("HelloWorld", "hello_world"),
-        ("", ""),
-    ])
+    @pytest.mark.parametrize(
+        "input_camel,expected_snake",
+        [
+            ("hello", "hello"),
+            ("helloWorld", "hello_world"),
+            ("testCase", "test_case"),
+            ("multipleWordsHere", "multiple_words_here"),
+            ("HelloWorld", "hello_world"),
+            ("", ""),
+        ],
+    )
     def test_camel_to_snake_parametrized(self, input_camel, expected_snake):
         """参数化测试驼峰转蛇形"""
         result = camel_to_snake(input_camel)
@@ -296,7 +303,7 @@ class TestStringUtilsActual:
             "invalid-email",
             "user@domain.org",
             "another.invalid",
-            "test123@test.com"
+            "test123@test.com",
         ]
 
         result = validate_batch_emails(mixed_emails)

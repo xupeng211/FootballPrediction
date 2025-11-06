@@ -5,23 +5,22 @@
 测试数据清洗、队列系统等模块的集成功能
 """
 
-import pytest
-import asyncio
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import sys
 import os
+import sys
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 try:
-    from test_data_cleaning import FootballDataCleaner as Cleaner
     from src.queues.fifo_queue import MemoryFIFOQueue, QueueTask, TaskPriority
     from src.utils.string_utils import cached_slug, normalize_string, truncate_string
-except ImportError as e:
-    print(f"Import error: {e}")
+    from test_data_cleaning import FootballDataCleaner as Cleaner
+except ImportError:
     # 如果导入失败，使用模拟测试
     Cleaner = None
     MemoryFIFOQueue = None
@@ -35,18 +34,26 @@ class TestDataPipelineIntegration:
     @pytest.fixture
     def sample_data(self):
         """创建示例数据"""
-        return pd.DataFrame({
-            'match_id': [1, 2, 3, 4, 5],
-            'home_team_id': [100, 200, 300, 400, 500],
-            'away_team_id': [200, 100, 400, 300, 600],
-            'home_score': [2, np.nan, 0, 3, 1],
-            'away_score': [1, 2, np.nan, 0, 0],
-            'match_date': ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
-            'home_goals': [2, np.nan, 0, 3, 1],
-            'away_goals': [1, 2, np.nan, 0, 0],
-            'possession_home': [60.5, 45.2, np.nan, 58.7, 49.8],
-            'possession_away': [39.5, np.nan, 47.9, 41.3, 50.2]
-        })
+        return pd.DataFrame(
+            {
+                "match_id": [1, 2, 3, 4, 5],
+                "home_team_id": [100, 200, 300, 400, 500],
+                "away_team_id": [200, 100, 400, 300, 600],
+                "home_score": [2, np.nan, 0, 3, 1],
+                "away_score": [1, 2, np.nan, 0, 0],
+                "match_date": [
+                    "2024-01-01",
+                    "2024-01-02",
+                    "2024-01-03",
+                    "2024-01-04",
+                    "2024-01-05",
+                ],
+                "home_goals": [2, np.nan, 0, 3, 1],
+                "away_goals": [1, 2, np.nan, 0, 0],
+                "possession_home": [60.5, 45.2, np.nan, 58.7, 49.8],
+                "possession_away": [39.5, np.nan, 47.9, 41.3, 50.2],
+            }
+        )
 
     @pytest.fixture
     def cleaner(self):
@@ -68,7 +75,7 @@ class TestDataPipelineIntegration:
         """测试数据清洗集成"""
         if cleaner and sample_data is not None:
             # 清洗数据
-            cleaned_data = cleaner.clean_dataset(sample_data, 'matches')
+            cleaned_data = cleaner.clean_dataset(sample_data, "matches")
 
             # 验证清洗结果
             assert isinstance(cleaned_data, pd.DataFrame)
@@ -78,8 +85,8 @@ class TestDataPipelineIntegration:
             # 获取清洗报告
             report = cleaner.get_cleaning_report()
             assert isinstance(report, dict)
-            assert 'original_shape' in report
-            assert 'cleaned_shape' in report
+            assert "original_shape" in report
+            assert "cleaned_shape" in report
         else:
             pytest.skip("Required components not available")
 
@@ -88,18 +95,14 @@ class TestDataPipelineIntegration:
         """测试队列系统集成"""
         if queue and QueueTask and TaskPriority:
             # 创建任务
-            task_data = {
-                "match_id": 123,
-                "home_team": "Team A",
-                "away_team": "Team B"
-            }
+            task_data = {"match_id": 123, "home_team": "Team A", "away_team": "Team B"}
 
             task = QueueTask(
                 id="integration_test_1",
                 task_type="match_processing",
                 data=task_data,
                 priority=TaskPriority.NORMAL,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             # 入队任务
@@ -120,18 +123,18 @@ class TestDataPipelineIntegration:
         """测试数据处理到队列的工作流"""
         if cleaner and queue and QueueTask and TaskPriority:
             # 1. 清洗数据
-            cleaned_data = cleaner.clean_dataset(sample_data, 'matches')
+            cleaned_data = cleaner.clean_dataset(sample_data, "matches")
 
             # 2. 为清洗后的数据创建队列任务
             tasks = []
             for _, row in cleaned_data.iterrows():
                 task_data = {
-                    "match_id": row.get('match_id'),
-                    "home_team_id": row.get('home_team_id'),
-                    "away_team_id": row.get('away_team_id'),
-                    "home_score": row.get('home_score'),
-                    "away_score": row.get('away_score'),
-                    "match_date": row.get('match_date')
+                    "match_id": row.get("match_id"),
+                    "home_team_id": row.get("home_team_id"),
+                    "away_team_id": row.get("away_team_id"),
+                    "home_score": row.get("home_score"),
+                    "away_score": row.get("away_score"),
+                    "match_date": row.get("match_date"),
                 }
 
                 task = QueueTask(
@@ -139,7 +142,7 @@ class TestDataPipelineIntegration:
                     task_type="match_data_processing",
                     data=task_data,
                     priority=TaskPriority.NORMAL,
-                    created_at=datetime.now()
+                    created_at=datetime.now(),
                 )
                 tasks.append(task)
 
@@ -160,7 +163,7 @@ class TestDataPipelineIntegration:
 
             # 6. 验证处理结果
             assert len(processed_tasks) == len(tasks)
-            for i, task in enumerate(processed_tasks):
+            for _i, task in enumerate(processed_tasks):
                 assert task.task_type == "match_data_processing"
                 assert "match_id" in task.data
         else:
@@ -200,16 +203,16 @@ class TestDataPipelineIntegration:
 
             # 步骤1: 数据清洗
             try:
-                cleaned_data = cleaner.clean_dataset(sample_data, 'matches')
-                workflow_results['cleaning'] = {
-                    'success': True,
-                    'original_rows': len(sample_data),
-                    'cleaned_rows': len(cleaned_data),
-                    'missing_values_before': sample_data.isnull().sum().sum(),
-                    'missing_values_after': cleaned_data.isnull().sum().sum()
+                cleaned_data = cleaner.clean_dataset(sample_data, "matches")
+                workflow_results["cleaning"] = {
+                    "success": True,
+                    "original_rows": len(sample_data),
+                    "cleaned_rows": len(cleaned_data),
+                    "missing_values_before": sample_data.isnull().sum().sum(),
+                    "missing_values_after": cleaned_data.isnull().sum().sum(),
                 }
             except Exception as e:
-                workflow_results['cleaning'] = {'success': False, 'error': str(e)}
+                workflow_results["cleaning"] = {"success": False, "error": str(e)}
 
             # 步骤2: 数据转换和队列处理
             try:
@@ -217,12 +220,20 @@ class TestDataPipelineIntegration:
                 tasks = []
                 for _, row in cleaned_data.iterrows():
                     task_data = {
-                        'match_id': int(row.get('match_id')),
-                        'home_team_id': int(row.get('home_team_id')),
-                        'away_team_id': int(row.get('away_team_id')),
-                        'home_score': float(row.get('home_score')) if not pd.isna(row.get('home_score')) else 0.0,
-                        'away_score': float(row.get('away_score')) if not pd.isna(row.get('away_score')) else 0.0,
-                        'match_date': str(row.get('match_date'))
+                        "match_id": int(row.get("match_id")),
+                        "home_team_id": int(row.get("home_team_id")),
+                        "away_team_id": int(row.get("away_team_id")),
+                        "home_score": (
+                            float(row.get("home_score"))
+                            if not pd.isna(row.get("home_score"))
+                            else 0.0
+                        ),
+                        "away_score": (
+                            float(row.get("away_score"))
+                            if not pd.isna(row.get("away_score"))
+                            else 0.0
+                        ),
+                        "match_date": str(row.get("match_date")),
                     }
 
                     task = QueueTask(
@@ -230,7 +241,7 @@ class TestDataPipelineIntegration:
                         task_type="etl_processing",
                         data=task_data,
                         priority=TaskPriority.NORMAL,
-                        created_at=datetime.now()
+                        created_at=datetime.now(),
                     )
                     tasks.append(task)
 
@@ -238,14 +249,14 @@ class TestDataPipelineIntegration:
                 for task in tasks:
                     await queue.enqueue(task)
 
-                workflow_results['queueing'] = {
-                    'success': True,
-                    'tasks_created': len(tasks),
-                    'queue_size_after': await queue.get_size()
+                workflow_results["queueing"] = {
+                    "success": True,
+                    "tasks_created": len(tasks),
+                    "queue_size_after": await queue.get_size(),
                 }
 
             except Exception as e:
-                workflow_results['queueing'] = {'success': False, 'error': str(e)}
+                workflow_results["queueing"] = {"success": False, "error": str(e)}
 
             # 步骤3: 任务处理
             try:
@@ -255,27 +266,30 @@ class TestDataPipelineIntegration:
                     if task:
                         # 模拟任务处理
                         processed_data = task.data.copy()
-                        processed_data['processed_at'] = datetime.now().isoformat()
-                        processed_data['processing_status'] = 'completed'
+                        processed_data["processed_at"] = datetime.now().isoformat()
+                        processed_data["processing_status"] = "completed"
                         processed_tasks.append(processed_data)
 
-                workflow_results['processing'] = {
-                    'success': True,
-                    'tasks_processed': len(processed_tasks),
-                    'all_processed': all(t.get('processing_status') == 'completed' for t in processed_tasks)
+                workflow_results["processing"] = {
+                    "success": True,
+                    "tasks_processed": len(processed_tasks),
+                    "all_processed": all(
+                        t.get("processing_status") == "completed"
+                        for t in processed_tasks
+                    ),
                 }
 
             except Exception as e:
-                workflow_results['processing'] = {'success': False, 'error': str(e)}
+                workflow_results["processing"] = {"success": False, "error": str(e)}
 
             # 验证整体工作流
-            assert workflow_results['cleaning']['success']
-            assert workflow_results['queueing']['success']
-            assert workflow_results['processing']['success']
+            assert workflow_results["cleaning"]["success"]
+            assert workflow_results["queueing"]["success"]
+            assert workflow_results["processing"]["success"]
 
             # 验证数据完整性
-            original_count = workflow_results['cleaning']['original_rows']
-            final_count = workflow_results['processing']['tasks_processed']
+            original_count = workflow_results["cleaning"]["original_rows"]
+            final_count = workflow_results["processing"]["tasks_processed"]
             assert final_count <= original_count  # 处理的任务数不应该超过原始数据行数
 
         else:
@@ -285,18 +299,20 @@ class TestDataPipelineIntegration:
         """测试错误处理集成"""
         if cleaner:
             # 测试处理无效数据
-            invalid_data = pd.DataFrame({
-                'match_id': ['invalid', 'not_a_number', None],
-                'home_team_id': [100, np.nan, 'invalid'],
-                'away_team_id': [200, 'invalid', np.nan],
-                'home_score': [2, 'invalid', None],
-                'away_score': ['invalid', 2, np.nan],
-                'match_date': ['invalid_date', None, 'another_invalid']
-            })
+            invalid_data = pd.DataFrame(
+                {
+                    "match_id": ["invalid", "not_a_number", None],
+                    "home_team_id": [100, np.nan, "invalid"],
+                    "away_team_id": [200, "invalid", np.nan],
+                    "home_score": [2, "invalid", None],
+                    "away_score": ["invalid", 2, np.nan],
+                    "match_date": ["invalid_date", None, "another_invalid"],
+                }
+            )
 
             # 清洗器应该能处理无效数据而不崩溃
             try:
-                result = cleaner.clean_dataset(invalid_data, 'matches')
+                result = cleaner.clean_dataset(invalid_data, "matches")
                 assert isinstance(result, pd.DataFrame)
                 # 即使是无效数据，也应该返回某种形式的结果
             except Exception as e:
@@ -309,25 +325,28 @@ class TestDataPipelineIntegration:
         """测试性能集成"""
         if cleaner:
             # 创建较大的数据集
-            large_data = pd.DataFrame({
-                'match_id': range(1000),
-                'home_team_id': np.random.randint(1, 1000, 1000),
-                'away_team_id': np.random.randint(1, 1000, 1000),
-                'home_score': np.random.randint(0, 10, 1000),
-                'away_score': np.random.randint(0, 10, 1000),
-                'match_date': [f'2024-01-{i%30+1:02d}' for i in range(1000)]
-            })
+            large_data = pd.DataFrame(
+                {
+                    "match_id": range(1000),
+                    "home_team_id": np.random.randint(1, 1000, 1000),
+                    "away_team_id": np.random.randint(1, 1000, 1000),
+                    "home_score": np.random.randint(0, 10, 1000),
+                    "away_score": np.random.randint(0, 10, 1000),
+                    "match_date": [f"2024-01-{i%30+1:02d}" for i in range(1000)],
+                }
+            )
 
             # 随机添加一些缺失值
-            for col in ['home_score', 'away_score']:
+            for col in ["home_score", "away_score"]:
                 missing_indices = np.random.choice(1000, size=100, replace=False)
                 large_data.loc[missing_indices, col] = np.nan
 
             # 测试处理性能
             import time
+
             start_time = time.time()
 
-            result = cleaner.clean_dataset(large_data, 'matches')
+            result = cleaner.clean_dataset(large_data, "matches")
 
             end_time = time.time()
             processing_time = end_time - start_time
@@ -347,32 +366,36 @@ class TestDataPipelineIntegration:
         if cleaner and sample_data is not None:
             # 检查原始数据质量
             original_quality = {
-                'total_rows': len(sample_data),
-                'missing_values': sample_data.isnull().sum().sum(),
-                'duplicate_rows': sample_data.duplicated().sum(),
-                'data_types': sample_data.dtypes.to_dict()
+                "total_rows": len(sample_data),
+                "missing_values": sample_data.isnull().sum().sum(),
+                "duplicate_rows": sample_data.duplicated().sum(),
+                "data_types": sample_data.dtypes.to_dict(),
             }
 
             # 清洗数据
-            cleaned_data = cleaner.clean_dataset(sample_data, 'matches')
+            cleaned_data = cleaner.clean_dataset(sample_data, "matches")
 
             # 检查清洗后数据质量
             cleaned_quality = {
-                'total_rows': len(cleaned_data),
-                'missing_values': cleaned_data.isnull().sum().sum(),
-                'duplicate_rows': cleaned_data.duplicated().sum(),
-                'data_types': cleaned_data.dtypes.to_dict()
+                "total_rows": len(cleaned_data),
+                "missing_values": cleaned_data.isnull().sum().sum(),
+                "duplicate_rows": cleaned_data.duplicated().sum(),
+                "data_types": cleaned_data.dtypes.to_dict(),
             }
 
             # 验证数据质量改进
-            assert cleaned_quality['missing_values'] <= original_quality['missing_values']
-            assert cleaned_quality['duplicate_rows'] <= original_quality['duplicate_rows']
+            assert (
+                cleaned_quality["missing_values"] <= original_quality["missing_values"]
+            )
+            assert (
+                cleaned_quality["duplicate_rows"] <= original_quality["duplicate_rows"]
+            )
 
             # 获取清洗报告
             report = cleaner.get_cleaning_report()
             assert isinstance(report, dict)
-            assert 'cleaning_steps' in report
-            assert len(report['cleaning_steps']) > 0
+            assert "cleaning_steps" in report
+            assert len(report["cleaning_steps"]) > 0
         else:
             pytest.skip("Required components not available")
 
@@ -387,7 +410,7 @@ class TestStringProcessingIntegration:
             "Python Programming @#$%^",
             "  Test String with multiple   spaces  ",
             "Café and naïve text",
-            "Special characters: !@#$%^&*()"
+            "Special characters: !@#$%^&*()",
         ]
 
         results = []
@@ -399,21 +422,21 @@ class TestStringProcessingIntegration:
                 truncated = truncate_string(slug, 20)
 
                 result = {
-                    'original': text,
-                    'normalized': normalized,
-                    'slug': slug,
-                    'truncated': truncated,
-                    'original_length': len(text),
-                    'final_length': len(truncated)
+                    "original": text,
+                    "normalized": normalized,
+                    "slug": slug,
+                    "truncated": truncated,
+                    "original_length": len(text),
+                    "final_length": len(truncated),
                 }
                 results.append(result)
 
         # 验证处理结果
         assert len(results) == len(test_strings)
         for result in results:
-            assert result['final_length'] <= 23  # 20 + "..."
-            assert result['final_length'] <= result['original_length']
-            assert " " not in result['slug']  # slug中不应该有空格
+            assert result["final_length"] <= 23  # 20 + "..."
+            assert result["final_length"] <= result["original_length"]
+            assert " " not in result["slug"]  # slug中不应该有空格
 
     def test_batch_string_processing(self):
         """测试批量字符串处理"""
@@ -423,7 +446,7 @@ class TestStringProcessingIntegration:
                 "Test String 2",
                 "Test String 3",
                 "Test String 4",
-                "Test String 5"
+                "Test String 5",
             ]
 
             # 批量处理
@@ -437,6 +460,9 @@ class TestStringProcessingIntegration:
 
             # 验证一致性
             for i, original in enumerate(test_strings):
-                assert slugs[i].lower() in original.lower() or original.lower() in slugs[i].lower()
+                assert (
+                    slugs[i].lower() in original.lower()
+                    or original.lower() in slugs[i].lower()
+                )
         else:
             pytest.skip("String processing functions not available")

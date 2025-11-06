@@ -141,7 +141,7 @@ class TestPoissonModel:
         teams = [f"Team_{i}" for i in range(1, 11)]  # 10支球队
 
         data = []
-        for i in range(n_matches):
+        for _i in range(n_matches):
             home_team = np.random.choice(teams)
             away_team = np.random.choice([t for t in teams if t != home_team])
 
@@ -417,7 +417,7 @@ class TestEloModel:
         teams = [f"Team_{i}" for i in range(1, 21)]  # 20支球队
 
         data = []
-        for i in range(n_matches):
+        for _i in range(n_matches):
             home_team = np.random.choice(teams)
             away_team = np.random.choice([t for t in teams if t != home_team])
 
@@ -633,7 +633,7 @@ class TestMLModelIntegration:
         teams = [f"Team_{i}" for i in range(1, 16)]  # 15支球队
 
         data = []
-        for i in range(n_matches):
+        for _i in range(n_matches):
             home_team = np.random.choice(teams)
             away_team = np.random.choice([t for t in teams if t != home_team])
 

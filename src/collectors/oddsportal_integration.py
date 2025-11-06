@@ -34,7 +34,7 @@ class OddsPortalIntegration:
         try:
             config_file = Path(config_path)
             if config_file.exists():
-                with open(config_file, encoding='utf-8') as f:
+                with open(config_file, encoding="utf-8") as f:
                     return yaml.safe_load(f)
             else:
                 # 返回默认配置
@@ -43,13 +43,13 @@ class OddsPortalIntegration:
                         "delay_min": 1.0,
                         "delay_max": 3.0,
                         "retry_count": 3,
-                        "timeout": 30
+                        "timeout": 30,
                     },
                     "data_source": {
                         "name": "oddsportal",
                         "priority": 1,
-                        "enabled": True
-                    }
+                        "enabled": True,
+                    },
                 }
         except Exception as e:
             self.logger.warning(f"加载配置文件失败: {e}")
@@ -68,7 +68,9 @@ class OddsPortalIntegration:
                     matches.append(match_data)
 
                 # 添加延迟避免被封
-                await asyncio.sleep(self.config.get("scraper", {}).get("delay_min", 1.0))
+                await asyncio.sleep(
+                    self.config.get("scraper", {}).get("delay_min", 1.0)
+                )
 
             except Exception as e:
                 self.logger.error(f"获取比赛数据失败 {match_id}: {e}")
@@ -88,7 +90,9 @@ class OddsPortalIntegration:
                     odds_list.append(odds_data)
 
                 # 添加延迟避免被封
-                await asyncio.sleep(self.config.get("scraper", {}).get("delay_min", 1.0))
+                await asyncio.sleep(
+                    self.config.get("scraper", {}).get("delay_min", 1.0)
+                )
 
             except Exception as e:
                 self.logger.error(f"获取赔率数据失败 {match_id}: {e}")
@@ -108,7 +112,9 @@ class OddsPortalIntegration:
                     teams.append(team_data)
 
                 # 添加延迟避免被封
-                await asyncio.sleep(self.config.get("scraper", {}).get("delay_min", 1.0))
+                await asyncio.sleep(
+                    self.config.get("scraper", {}).get("delay_min", 1.0)
+                )
 
             except Exception as e:
                 self.logger.error(f"获取队伍数据失败 {team_id}: {e}")
@@ -124,7 +130,7 @@ class OddsPortalIntegration:
             competition_id=match.competition_id,
             match_time=match.match_time,
             status=match.status,
-            score=match.score
+            score=match.score,
         )
 
     def _convert_odds_data(self, match_id: str, odds: dict) -> OddsData:
@@ -139,7 +145,7 @@ class OddsPortalIntegration:
             btts_yes=odds.get("btts_yes"),
             btts_no=odds.get("btts_no"),
             source="oddsportal",
-            collection_time=datetime.now()
+            collection_time=datetime.now(),
         )
 
     def _convert_team_data(self, team: dict) -> TeamData:
@@ -149,7 +155,7 @@ class OddsPortalIntegration:
             name=team.get("name"),
             country=team.get("country"),
             founded=team.get("founded"),
-            stadium=team.get("stadium")
+            stadium=team.get("stadium"),
         )
 
 
@@ -192,7 +198,9 @@ def create_oddsportal_adapter() -> OddsPortalAdapter:
     return OddsPortalAdapter()
 
 
-def create_oddsportal_integration(config_path: str = "config/oddsportal_config.yaml") -> OddsPortalIntegration:
+def create_oddsportal_integration(
+    config_path: str = "config/oddsportal_config.yaml",
+) -> OddsPortalIntegration:
     """创建OddsPortal集成实例"""
     return OddsPortalIntegration(config_path)
 
@@ -202,5 +210,5 @@ __all__ = [
     "OddsPortalIntegration",
     "OddsPortalAdapter",
     "create_oddsportal_adapter",
-    "create_oddsportal_integration"
+    "create_oddsportal_integration",
 ]

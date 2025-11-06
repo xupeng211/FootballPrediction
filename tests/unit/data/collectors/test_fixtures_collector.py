@@ -5,17 +5,18 @@
 测试 src.data.collectors.fixtures_collector 模块的功能
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timedelta
-import sys
 import os
+import sys
+from datetime import datetime, timedelta
+
+import pytest
 
 # 添加src目录到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
-from src.data.collectors.fixtures_collector import FixturesCollector
 from src.data.collectors.base_collector import CollectionResult
+from src.data.collectors.fixtures_collector import FixturesCollector
 
 
 class TestFixturesCollector:
@@ -29,9 +30,9 @@ class TestFixturesCollector:
     def test_collector_initialization(self, collector):
         """测试采集器初始化"""
         assert collector is not None
-        assert hasattr(collector, 'collect_fixtures')
-        assert hasattr(collector, 'collect_fixtures_by_date_range')
-        assert hasattr(collector, 'collect_fixtures_by_team')
+        assert hasattr(collector, "collect_fixtures")
+        assert hasattr(collector, "collect_fixtures_by_date_range")
+        assert hasattr(collector, "collect_fixtures_by_team")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_basic(self, collector):
@@ -40,9 +41,9 @@ class TestFixturesCollector:
         result = await collector.collect_fixtures()
 
         assert isinstance(result, CollectionResult)
-        assert hasattr(result, 'success')
-        assert hasattr(result, 'data')
-        assert hasattr(result, 'message')
+        assert hasattr(result, "success")
+        assert hasattr(result, "data")
+        assert hasattr(result, "message")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_by_date_range(self, collector):
@@ -53,7 +54,7 @@ class TestFixturesCollector:
         result = await collector.collect_fixtures_by_date_range(start_date, end_date)
 
         assert isinstance(result, CollectionResult)
-        assert hasattr(result, 'success')
+        assert hasattr(result, "success")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_by_team(self, collector):
@@ -63,7 +64,7 @@ class TestFixturesCollector:
         result = await collector.collect_fixtures_by_team(team_id)
 
         assert isinstance(result, CollectionResult)
-        assert hasattr(result, 'success')
+        assert hasattr(result, "success")
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_by_league(self, collector):
@@ -73,7 +74,7 @@ class TestFixturesCollector:
         result = await collector.collect_fixtures_by_league(league_id)
 
         assert isinstance(result, CollectionResult)
-        assert hasattr(result, 'success')
+        assert hasattr(result, "success")
 
     def test_data_validation(self, collector):
         """测试数据验证功能"""
@@ -84,7 +85,7 @@ class TestFixturesCollector:
             "away_team_id": 101,
             "match_date": "2024-01-01T15:00:00Z",
             "league_id": 456,
-            "status": "NS"
+            "status": "NS",
         }
 
         # 验证数据格式（具体验证逻辑取决于实现）
@@ -105,7 +106,7 @@ class TestFixturesCollector:
         tasks = [
             collector.collect_fixtures(),
             collector.collect_fixtures_by_team(123),
-            collector.collect_fixtures_by_league(456)
+            collector.collect_fixtures_by_league(456),
         ]
 
         # 并发执行
@@ -125,7 +126,7 @@ class TestFixturesCollector:
             "2024-01-01T15:00:00Z",
             "01/01/2024",
             datetime.now(),
-            datetime.now().isoformat()
+            datetime.now().isoformat(),
         ]
 
         for date_format in date_formats:
@@ -144,7 +145,7 @@ class TestFixturesCollector:
     def test_rate_limiting(self, collector):
         """测试频率限制功能"""
         # 如果采集器实现了频率限制
-        assert hasattr(collector, 'collect_fixtures')
+        assert hasattr(collector, "collect_fixtures")
 
     @pytest.mark.asyncio
     async def test_large_dataset_handling(self, collector):
@@ -166,7 +167,7 @@ class TestFixturesCollector:
             "away_team_id",
             "match_date",
             "league_id",
-            "status"
+            "status",
         ]
 
         # 验证预期的字段存在
@@ -185,7 +186,7 @@ class TestFixturesCollectorConfiguration:
             api_key="custom_key",
             base_url="https://custom.api.com",
             timeout=30,
-            retry_attempts=5
+            retry_attempts=5,
         )
 
     def test_custom_configuration(self, custom_collector):
@@ -230,7 +231,7 @@ class TestFixturesCollectorIntegration:
         results = await asyncio.gather(
             integration_collector.collect_fixtures(),
             integration_collector.collect_fixtures(),
-            integration_collector.collect_fixtures()
+            integration_collector.collect_fixtures(),
         )
 
         # 验证结果类型一致
@@ -274,8 +275,9 @@ class TestFixturesCollectorPerformance:
     @pytest.mark.asyncio
     async def test_memory_usage(self, performance_collector):
         """测试内存使用"""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         memory_before = process.memory_info().rss

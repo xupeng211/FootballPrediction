@@ -7,24 +7,23 @@ Version: 1.0
 Purpose: Test complete data flow from collection to prediction
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timedelta
-import json
-from typing import Dict, Any, List
 
 # Import system components
 try:
+    from src.data.cleaning import FootballDataCleaner
     from src.data.fixtures_collector import FixturesCollector
     from src.data.odds_collector import OddsCollector
     from src.data.scores_collector import ScoresCollector
-    from src.services.prediction import PredictionService
-    from src.queues.fifo_queue import MemoryFIFOQueue, RedisFIFOQueue
-    from src.data.cleaning import FootballDataCleaner
+
     from src.core.config import Config
+    from src.queues.fifo_queue import MemoryFIFOQueue, RedisFIFOQueue
+    from src.services.prediction import PredictionService
 except ImportError as e:
     pytest.skip(f"Cannot import required modules: {e}", allow_module_level=True)
+
 
 # Test fixtures
 @pytest.fixture
@@ -33,6 +32,7 @@ async def mock_queue():
     queue = MemoryFIFOQueue(max_size=100)
     await queue.initialize()
     return queue
+
 
 @pytest.fixture
 async def sample_raw_match_data():
@@ -44,48 +44,35 @@ async def sample_raw_match_data():
                 "id": 1,
                 "name": "Manchester United FC",
                 "shortName": "Man United",
-                "crest": "https://crests.football-data.org/66.png"
+                "crest": "https://crests.football-data.org/66.png",
             },
             "awayTeam": {
                 "id": 2,
                 "name": "Liverpool FC",
                 "shortName": "Liverpool",
-                "crest": "https://crests.football-data.org/86.png"
+                "crest": "https://crests.football-data.org/86.png",
             },
             "competition": {
                 "id": 39,
                 "name": "Premier League",
                 "code": "PL",
                 "type": "LEAGUE",
-                "emblem": "https://crests.football-data.org/PL.png"
+                "emblem": "https://crests.football-data.org/PL.png",
             },
             "utcDate": "2025-11-10T15:00:00Z",
             "status": "SCHEDULED",
             "matchday": 12,
             "venue": "Old Trafford",
-            "referees": [
-                {
-                    "id": 12345,
-                    "name": "Michael Oliver",
-                    "role": "REFEREE"
-                }
-            ]
+            "referees": [{"id": 12345, "name": "Michael Oliver", "role": "REFEREE"}],
         },
         "head2head": {
             "numberOfMatches": 10,
             "totalGoals": 28,
-            "homeTeam": {
-                "wins": 4,
-                "draws": 3,
-                "losses": 3
-            },
-            "awayTeam": {
-                "wins": 3,
-                "draws": 3,
-                "losses": 4
-            }
-        }
+            "homeTeam": {"wins": 4, "draws": 3, "losses": 3},
+            "awayTeam": {"wins": 3, "draws": 3, "losses": 4},
+        },
     }
+
 
 @pytest.fixture
 async def sample_raw_odds_data():
@@ -101,39 +88,35 @@ async def sample_raw_odds_data():
                         "id": 1,
                         "name": "Match Winner",
                         "values": [
-                            {
-                                "odd": "2.10",
-                                "value": "HOME_TEAM"
-                            },
-                            {
-                                "odd": "3.40",
-                                "value": "DRAW"
-                            },
-                            {
-                                "odd": "3.80",
-                                "value": "AWAY_TEAM"
-                            }
-                        ]
+                            {"odd": "2.10", "value": "HOME_TEAM"},
+                            {"odd": "3.40", "value": "DRAW"},
+                            {"odd": "3.80", "value": "AWAY_TEAM"},
+                        ],
                     }
-                ]
+                ],
             }
         ],
-        "last_updated": "2025-11-06T08:00:00Z"
+        "last_updated": "2025-11-06T08:00:00Z",
     }
+
 
 class TestDataCollectionFlow:
     """数据收集流程测试"""
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_fixtures_collection_workflow(self, mock_queue, sample_raw_match_data):
+    async def test_fixtures_collection_workflow(
+        self, mock_queue, sample_raw_match_data
+    ):
         """测试赛程数据收集工作流"""
 
         # Mock external API response
-        with patch('src.data.fixtures_collector.requests.get') as mock_get:
+        with patch("src.data.fixtures_collector.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.status_code = 200
-            mock_response.json.return_value = {"matches": [sample_raw_match_data["match"]]}
+            mock_response.json.return_value = {
+                "matches": [sample_raw_match_data["match"]]
+            }
             mock_get.return_value = mock_response
 
             # Initialize fixtures collector
@@ -153,7 +136,7 @@ class TestDataCollectionFlow:
     async def test_odds_collection_workflow(self, mock_queue, sample_raw_odds_data):
         """测试赔率数据收集工作流"""
 
-        with patch('src.data.odds_collector.requests.get') as mock_get:
+        with patch("src.data.odds_collector.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.json.return_value = sample_raw_odds_data
@@ -179,22 +162,16 @@ class TestDataCollectionFlow:
                 {
                     "id": 123456,
                     "score": {
-                        "fullTime": {
-                            "homeTeam": 2,
-                            "awayTeam": 1
-                        },
-                        "halfTime": {
-                            "homeTeam": 1,
-                            "awayTeam": 1
-                        }
+                        "fullTime": {"homeTeam": 2, "awayTeam": 1},
+                        "halfTime": {"homeTeam": 1, "awayTeam": 1},
                     },
                     "status": "FINISHED",
-                    "utcDate": "2025-11-08T16:30:00Z"
+                    "utcDate": "2025-11-08T16:30:00Z",
                 }
             ]
         }
 
-        with patch('src.data.scores_collector.requests.get') as mock_get:
+        with patch("src.data.scores_collector.requests.get") as mock_get:
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.json.return_value = sample_scores_data
@@ -209,6 +186,7 @@ class TestDataCollectionFlow:
             assert len(scores_data) > 0
             assert "score" in scores_data[0]
             assert scores_data[0]["status"] == "FINISHED"
+
 
 class TestDataProcessingFlow:
     """数据处理流程测试"""
@@ -246,28 +224,16 @@ class TestDataProcessingFlow:
             "away_team": {"id": 2, "name": "Liverpool"},
             "league": {"id": 39, "name": "Premier League"},
             "date": "2025-11-10T15:00:00Z",
-            "venue": "Old Trafford"
+            "venue": "Old Trafford",
         }
 
         # Mock historical data for feature calculation
-        historical_data = [
-            {
-                "home_team_id": 1,
-                "away_team_id": 2,
-                "result": "home_win",
-                "date": "2025-10-15T15:00:00Z"
-            },
-            {
-                "home_team_id": 1,
-                "away_team_id": 3,
-                "result": "draw",
-                "date": "2025-10-08T15:00:00Z"
-            }
-        ]
 
-        with patch('src.ml.features.calculate_team_form') as mock_form, \
-             patch('src.ml.features.calculate_h2h_stats') as mock_h2h, \
-             patch('src.ml.features.calculate_home_advantage') as mock_advantage:
+        with (
+            patch("src.ml.features.calculate_team_form") as mock_form,
+            patch("src.ml.features.calculate_h2h_stats") as mock_h2h,
+            patch("src.ml.features.calculate_home_advantage") as mock_advantage,
+        ):
 
             mock_form.return_value = {"home_form": 0.75, "away_form": 0.65}
             mock_h2h.return_value = {"h2h_win_rate": 0.6, "h2h_goals": 2.5}
@@ -278,7 +244,7 @@ class TestDataProcessingFlow:
                 "home_team_id": sample_cleaned_data["home_team"]["id"],
                 "away_team_id": sample_cleaned_data["away_team"]["id"],
                 "league_id": sample_cleaned_data["league"]["id"],
-                "venue": sample_cleaned_data["venue"]
+                "venue": sample_cleaned_data["venue"],
             }
 
             # Add calculated features
@@ -292,6 +258,7 @@ class TestDataProcessingFlow:
             assert "h2h_win_rate" in features
             assert "home_advantage" in features
 
+
 class TestPredictionWorkflow:
     """预测工作流测试"""
 
@@ -301,14 +268,6 @@ class TestPredictionWorkflow:
         """测试端到端预测流程"""
 
         # Step 1: Collect and process data
-        sample_match_data = {
-            "id": 123456,
-            "home_team": {"id": 1, "name": "Manchester United"},
-            "away_team": {"id": 2, "name": "Liverpool"},
-            "league": {"id": 39, "name": "Premier League"},
-            "date": "2025-11-10T15:00:00Z",
-            "venue": "Old Trafford"
-        }
 
         sample_features = {
             "home_team_id": 1,
@@ -317,35 +276,29 @@ class TestPredictionWorkflow:
             "away_form": 0.72,
             "h2h_history": 0.60,
             "home_advantage": 0.15,
-            "league_importance": 0.9
+            "league_importance": 0.9,
         }
 
         # Step 2: Create prediction request
         prediction_request = {
             "match_id": 123456,
             "features": sample_features,
-            "priority": "normal"
+            "priority": "normal",
         }
 
         # Add to queue
         task_id = await mock_queue.enqueue(
-            task_type="prediction",
-            data=prediction_request,
-            priority="normal"
+            task_type="prediction", data=prediction_request, priority="normal"
         )
         assert task_id is not None
 
         # Step 3: Process prediction (mock the ML model)
-        with patch('src.ml.models.PredictionModel.predict') as mock_predict:
+        with patch("src.ml.models.PredictionModel.predict") as mock_predict:
             mock_predict.return_value = {
                 "predicted_result": "home_win",
-                "probabilities": {
-                    "home_win": 0.65,
-                    "draw": 0.20,
-                    "away_win": 0.15
-                },
+                "probabilities": {"home_win": 0.65, "draw": 0.20, "away_win": 0.15},
                 "confidence": 0.75,
-                "model_version": "1.2.0"
+                "model_version": "1.2.0",
             }
 
             # Dequeue and process task
@@ -376,9 +329,9 @@ class TestPredictionWorkflow:
                     "home_form": 0.8 + (i * 0.02),
                     "away_form": 0.7 - (i * 0.02),
                     "h2h_history": 0.6,
-                    "home_advantage": 0.15
+                    "home_advantage": 0.15,
                 },
-                "priority": "normal"
+                "priority": "normal",
             }
             prediction_requests.append(request)
 
@@ -386,9 +339,7 @@ class TestPredictionWorkflow:
         task_ids = []
         for request in prediction_requests:
             task_id = await mock_queue.enqueue(
-                task_type="prediction",
-                data=request,
-                priority="normal"
+                task_type="prediction", data=request, priority="normal"
             )
             task_ids.append(task_id)
 
@@ -396,26 +347,26 @@ class TestPredictionWorkflow:
 
         # Process all tasks
         processed_results = []
-        with patch('src.ml.models.PredictionModel.predict') as mock_predict:
+        with patch("src.ml.models.PredictionModel.predict") as mock_predict:
             mock_predict.return_value = {
                 "predicted_result": "home_win",
                 "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
                 "confidence": 0.70,
-                "model_version": "1.2.0"
+                "model_version": "1.2.0",
             }
 
             for _ in range(5):
                 task = await mock_queue.dequeue()
                 if task:
                     result = mock_predict(**task.data["features"])
-                    processed_results.append({
-                        "match_id": task.data["match_id"],
-                        "prediction": result
-                    })
+                    processed_results.append(
+                        {"match_id": task.data["match_id"], "prediction": result}
+                    )
 
         assert len(processed_results) == 5
         assert all("match_id" in result for result in processed_results)
         assert all("prediction" in result for result in processed_results)
+
 
 class TestErrorHandlingInDataFlow:
     """数据流错误处理测试"""
@@ -425,7 +376,7 @@ class TestErrorHandlingInDataFlow:
     async def test_data_collection_error_recovery(self, mock_queue):
         """测试数据收集错误恢复"""
 
-        with patch('src.data.fixtures_collector.requests.get') as mock_get:
+        with patch("src.data.fixtures_collector.requests.get") as mock_get:
             # Simulate network error
             mock_get.side_effect = Exception("Network timeout")
 
@@ -446,27 +397,25 @@ class TestErrorHandlingInDataFlow:
         # Add a task with invalid data
         invalid_request = {
             "match_id": "invalid_id",  # Should be integer
-            "features": {}  # Missing required features
+            "features": {},  # Missing required features
         }
 
-        task_id = await mock_queue.enqueue(
-            task_type="prediction",
-            data=invalid_request,
-            priority="normal"
+        await mock_queue.enqueue(
+            task_type="prediction", data=invalid_request, priority="normal"
         )
 
         # Process task and handle error
         task = await mock_queue.dequeue()
         assert task is not None
 
-        with patch('src.ml.models.PredictionModel.predict') as mock_predict:
+        with patch("src.ml.models.PredictionModel.predict") as mock_predict:
             # Simulate model error
             mock_predict.side_effect = ValueError("Invalid input data")
 
             # Should handle the error
             try:
-                result = mock_predict(**task.data["features"])
-                assert False, "Should have raised an exception"
+                mock_predict(**task.data["features"])
+                raise AssertionError("Should have raised an exception")
             except ValueError:
                 pass  # Expected error
 
@@ -482,9 +431,7 @@ class TestErrorHandlingInDataFlow:
         # Fill the queue
         for i in range(5):  # More than max_size
             task_id = await small_queue.enqueue(
-                task_type="test",
-                data={"test": i},
-                priority="normal"
+                task_type="test", data={"test": i}, priority="normal"
             )
 
             if i < 3:
@@ -497,6 +444,7 @@ class TestErrorHandlingInDataFlow:
         stats = small_queue.get_stats()
         assert stats["queue_size"] == 3
 
+
 class TestDataFlowPerformance:
     """数据流性能测试"""
 
@@ -507,18 +455,20 @@ class TestDataFlowPerformance:
         """测试数据处理性能"""
 
         import time
-        import pandas as pd
+
 
         # Create large dataset
         large_dataset = []
         for i in range(1000):
-            large_dataset.append({
-                "id": i,
-                "home_team": {"id": i % 20, "name": f"Team_{i % 20}"},
-                "away_team": {"id": (i + 1) % 20, "name": f"Team_{(i + 1) % 20}"},
-                "date": "2025-11-10T15:00:00Z",
-                "status": "SCHEDULED"
-            })
+            large_dataset.append(
+                {
+                    "id": i,
+                    "home_team": {"id": i % 20, "name": f"Team_{i % 20}"},
+                    "away_team": {"id": (i + 1) % 20, "name": f"Team_{(i + 1) % 20}"},
+                    "date": "2025-11-10T15:00:00Z",
+                    "status": "SCHEDULED",
+                }
+            )
 
         # Test cleaning performance
         cleaner = FootballDataCleaner()
@@ -556,7 +506,7 @@ class TestDataFlowPerformance:
             task_id = await queue.enqueue(
                 task_type="test",
                 data={"test_data": i, "timestamp": time.time()},
-                priority="normal"
+                priority="normal",
             )
             task_ids.append(task_id)
 
@@ -580,6 +530,7 @@ class TestDataFlowPerformance:
         assert dequeue_time < 2.0  # Should dequeue within 2 seconds
         assert enqueue_time < 1000 / 500  # More than 500 ops/second
         assert dequeue_time < 1000 / 500  # More than 500 ops/second
+
 
 # Test markers
 pytest.mark.integration(TestDataCollectionFlow)

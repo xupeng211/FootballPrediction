@@ -28,10 +28,8 @@ class StrategyCreationError(Exception):
     """策略创建错误"""
 
 
-
 class StrategyConfigurationError(Exception):
     """策略配置错误"""
-
 
 
 class PredictionStrategyFactory:

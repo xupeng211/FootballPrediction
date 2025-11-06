@@ -7,10 +7,10 @@ import json
 from datetime import datetime
 
 from src.utils.formatters import (
+    format_currency,
     format_datetime,
     format_json,
-    format_currency,
-    format_percentage
+    format_percentage,
 )
 
 
@@ -68,10 +68,10 @@ class TestFormattersEnhanced:
         data = {
             "users": [
                 {"id": 1, "name": "Alice", "active": True},
-                {"id": 2, "name": "Bob", "active": False}
+                {"id": 2, "name": "Bob", "active": False},
             ],
             "total": 2,
-            "metadata": None
+            "metadata": None,
         }
 
         result = format_json(data)
@@ -168,7 +168,7 @@ class TestFormattersEnhanced:
             "customer": "张三",
             "amount": 1234.56,
             "discount_rate": 0.15,
-            "order_date": datetime(2023, 12, 25, 14, 30, 0)
+            "order_date": datetime(2023, 12, 25, 14, 30, 0),
         }
 
         # 格式化各个字段
@@ -182,7 +182,7 @@ class TestFormattersEnhanced:
             "客户": order_data["customer"],
             "日期": formatted_date,
             "金额": formatted_amount,
-            "折扣": formatted_discount
+            "折扣": formatted_discount,
         }
 
         # 转换为JSON

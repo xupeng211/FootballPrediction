@@ -7,15 +7,12 @@ Version: 1.0
 Coverage Goal: Test all critical API endpoints
 """
 
-import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi.testclient import TestClient
-from fastapi import FastAPI, HTTPException
-import json
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 # Import application modules
 try:
@@ -23,10 +20,12 @@ try:
 except ImportError:
     # Fallback to simple app for testing
     from fastapi import FastAPI
+
     app = FastAPI()
 
 # Test client setup
 client = TestClient(app)
+
 
 # Fixtures and utilities
 @pytest.fixture
@@ -34,45 +33,33 @@ def mock_db():
     """Mock database connection"""
     return AsyncMock()
 
+
 @pytest.fixture
 def mock_redis():
     """Mock Redis connection"""
     return AsyncMock()
+
 
 @pytest.fixture
 def auth_headers():
     """Mock authentication headers"""
     return {"Authorization": "Bearer mock_test_token"}
 
+
 @pytest.fixture
 def sample_match_data():
     """Sample match data for testing"""
     return {
         "id": 12345,
-        "home_team": {
-            "id": 1,
-            "name": "Manchester United",
-            "short_name": "MU"
-        },
-        "away_team": {
-            "id": 2,
-            "name": "Liverpool",
-            "short_name": "LIV"
-        },
-        "league": {
-            "id": 39,
-            "name": "Premier League",
-            "country": "England"
-        },
+        "home_team": {"id": 1, "name": "Manchester United", "short_name": "MU"},
+        "away_team": {"id": 2, "name": "Liverpool", "short_name": "LIV"},
+        "league": {"id": 39, "name": "Premier League", "country": "England"},
         "venue": "Old Trafford",
         "date": "2025-11-10T15:00:00.000Z",
         "status": "scheduled",
-        "odds": {
-            "home_win": 2.10,
-            "draw": 3.40,
-            "away_win": 3.80
-        }
+        "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.80},
     }
+
 
 @pytest.fixture
 def sample_prediction_data():
@@ -82,15 +69,12 @@ def sample_prediction_data():
         "match_id": 12345,
         "predicted_result": "home_win",
         "confidence": 0.75,
-        "probabilities": {
-            "home_win": 0.65,
-            "draw": 0.20,
-            "away_win": 0.15
-        },
+        "probabilities": {"home_win": 0.65, "draw": 0.20, "away_win": 0.15},
         "status": "completed",
         "created_at": "2025-11-06T08:00:00.000Z",
-        "updated_at": "2025-11-06T08:30:00.000Z"
+        "updated_at": "2025-11-06T08:30:00.000Z",
     }
+
 
 class TestHealthEndpoints:
     """健康检查API端点测试"""
@@ -98,7 +82,7 @@ class TestHealthEndpoints:
     @pytest.mark.asyncio
     async def test_health_check_basic(self):
         """测试基础健康检查"""
-        with patch('src.api.health.get_database_status') as mock_db_status:
+        with patch("src.api.health.get_database_status") as mock_db_status:
             mock_db_status.return_value = {"status": "healthy", "response_time_ms": 5}
 
             response = client.get("/health")
@@ -113,8 +97,10 @@ class TestHealthEndpoints:
     @pytest.mark.asyncio
     async def test_health_check_system_info(self):
         """测试系统信息健康检查"""
-        with patch('psutil.virtual_memory') as mock_memory, \
-             patch('psutil.cpu_percent') as mock_cpu:
+        with (
+            patch("psutil.virtual_memory") as mock_memory,
+            patch("psutil.cpu_percent") as mock_cpu,
+        ):
 
             mock_memory.return_value.percent = 45.2
             mock_cpu.return_value = 25.8
@@ -130,13 +116,13 @@ class TestHealthEndpoints:
     @pytest.mark.asyncio
     async def test_health_check_database(self):
         """测试数据库健康检查"""
-        with patch('src.api.health.DatabaseManager') as mock_db:
+        with patch("src.api.health.DatabaseManager") as mock_db:
             mock_instance = AsyncMock()
             mock_instance.check_connection.return_value = {
                 "status": "healthy",
                 "response_time_ms": 12,
                 "pool_size": 10,
-                "active_connections": 3
+                "active_connections": 3,
             }
             mock_db.return_value = mock_instance
 
@@ -147,18 +133,21 @@ class TestHealthEndpoints:
             assert "database" in data
             assert data["database"]["connection"] == "healthy"
 
+
 class TestPredictionEndpoints:
     """预测服务API端点测试"""
 
     @pytest.mark.asyncio
     async def test_get_predictions_list(self, sample_prediction_data):
         """测试获取预测列表"""
-        with patch('src.services.prediction.PredictionService.get_predictions') as mock_get:
+        with patch(
+            "src.services.prediction.PredictionService.get_predictions"
+        ) as mock_get:
             mock_get.return_value = {
                 "predictions": [sample_prediction_data],
                 "total": 1,
                 "limit": 20,
-                "offset": 0
+                "offset": 0,
             }
 
             response = client.get("/api/v1/predictions")
@@ -172,12 +161,14 @@ class TestPredictionEndpoints:
     @pytest.mark.asyncio
     async def test_get_predictions_with_filters(self, sample_prediction_data):
         """测试带过滤条件的预测查询"""
-        with patch('src.services.prediction.PredictionService.get_predictions') as mock_get:
+        with patch(
+            "src.services.prediction.PredictionService.get_predictions"
+        ) as mock_get:
             mock_get.return_value = {
                 "predictions": [sample_prediction_data],
                 "total": 1,
                 "limit": 10,
-                "offset": 0
+                "offset": 0,
             }
 
             response = client.get("/api/v1/predictions?limit=10&status=completed")
@@ -198,18 +189,20 @@ class TestPredictionEndpoints:
                 "home_form": 0.85,
                 "away_form": 0.72,
                 "h2h_history": 0.60,
-                "home_advantage": 0.15
+                "home_advantage": 0.15,
             },
-            "priority": "normal"
+            "priority": "normal",
         }
 
-        with patch('src.services.prediction.PredictionService.create_prediction') as mock_create:
+        with patch(
+            "src.services.prediction.PredictionService.create_prediction"
+        ) as mock_create:
             mock_create.return_value = {
                 "id": "pred_12346",
                 "status": "pending",
                 "match_id": 12345,
                 "estimated_completion": "2025-11-06T08:35:00.000Z",
-                "created_at": "2025-11-06T08:30:00.000Z"
+                "created_at": "2025-11-06T08:30:00.000Z",
             }
 
             response = client.post("/api/v1/predictions", json=prediction_request)
@@ -225,7 +218,7 @@ class TestPredictionEndpoints:
         """测试创建预测的无效数据"""
         invalid_request = {
             "match_id": "invalid_id",  # Should be integer
-            "features": {}
+            "features": {},
         }
 
         response = client.post("/api/v1/predictions", json=invalid_request)
@@ -234,7 +227,9 @@ class TestPredictionEndpoints:
     @pytest.mark.asyncio
     async def test_get_prediction_by_id(self, sample_prediction_data):
         """测试根据ID获取预测"""
-        with patch('src.services.prediction.PredictionService.get_prediction_by_id') as mock_get:
+        with patch(
+            "src.services.prediction.PredictionService.get_prediction_by_id"
+        ) as mock_get:
             mock_get.return_value = sample_prediction_data
 
             response = client.get("/api/v1/predictions/pred_12345")
@@ -248,8 +243,12 @@ class TestPredictionEndpoints:
     @pytest.mark.asyncio
     async def test_get_prediction_not_found(self):
         """测试获取不存在的预测"""
-        with patch('src.services.prediction.PredictionService.get_prediction_by_id') as mock_get:
-            mock_get.side_effect = HTTPException(status_code=404, detail="Prediction not found")
+        with patch(
+            "src.services.prediction.PredictionService.get_prediction_by_id"
+        ) as mock_get:
+            mock_get.side_effect = HTTPException(
+                status_code=404, detail="Prediction not found"
+            )
 
             response = client.get("/api/v1/predictions/nonexistent_id")
             assert response.status_code == 404
@@ -257,7 +256,9 @@ class TestPredictionEndpoints:
     @pytest.mark.asyncio
     async def test_get_match_predictions(self, sample_prediction_data):
         """测试获取比赛的预测"""
-        with patch('src.services.prediction.PredictionService.get_match_predictions') as mock_get:
+        with patch(
+            "src.services.prediction.PredictionService.get_match_predictions"
+        ) as mock_get:
             mock_get.return_value = [sample_prediction_data]
 
             response = client.get("/api/v1/predictions/match/12345")
@@ -268,18 +269,19 @@ class TestPredictionEndpoints:
             assert len(data) == 1
             assert data[0]["match_id"] == 12345
 
+
 class TestDataManagementEndpoints:
     """数据管理API端点测试"""
 
     @pytest.mark.asyncio
     async def test_get_matches_list(self, sample_match_data):
         """测试获取比赛列表"""
-        with patch('src.services.data.MatchService.get_matches') as mock_get:
+        with patch("src.services.data.MatchService.get_matches") as mock_get:
             mock_get.return_value = {
                 "matches": [sample_match_data],
                 "total": 1,
                 "limit": 20,
-                "offset": 0
+                "offset": 0,
             }
 
             response = client.get("/api/v1/matches")
@@ -293,7 +295,7 @@ class TestDataManagementEndpoints:
     @pytest.mark.asyncio
     async def test_get_match_by_id(self, sample_match_data):
         """测试根据ID获取比赛"""
-        with patch('src.services.data.MatchService.get_match_by_id') as mock_get:
+        with patch("src.services.data.MatchService.get_match_by_id") as mock_get:
             mock_get.return_value = sample_match_data
 
             response = client.get("/api/v1/matches/12345")
@@ -310,15 +312,15 @@ class TestDataManagementEndpoints:
         """测试获取球队列表"""
         sample_teams = [
             {"id": 1, "name": "Manchester United", "short_name": "MU"},
-            {"id": 2, "name": "Liverpool", "short_name": "LIV"}
+            {"id": 2, "name": "Liverpool", "short_name": "LIV"},
         ]
 
-        with patch('src.services.data.TeamService.get_teams') as mock_get:
+        with patch("src.services.data.TeamService.get_teams") as mock_get:
             mock_get.return_value = {
                 "teams": sample_teams,
                 "total": 2,
                 "limit": 20,
-                "offset": 0
+                "offset": 0,
             }
 
             response = client.get("/api/v1/teams")
@@ -336,10 +338,10 @@ class TestDataManagementEndpoints:
             "name": "Manchester United",
             "short_name": "MU",
             "founded": 1878,
-            "stadium": "Old Trafford"
+            "stadium": "Old Trafford",
         }
 
-        with patch('src.services.data.TeamService.get_team_by_id') as mock_get:
+        with patch("src.services.data.TeamService.get_team_by_id") as mock_get:
             mock_get.return_value = sample_team
 
             response = client.get("/api/v1/teams/1")
@@ -354,15 +356,15 @@ class TestDataManagementEndpoints:
         """测试获取联赛列表"""
         sample_leagues = [
             {"id": 39, "name": "Premier League", "country": "England"},
-            {"id": 140, "name": "La Liga", "country": "Spain"}
+            {"id": 140, "name": "La Liga", "country": "Spain"},
         ]
 
-        with patch('src.services.data.LeagueService.get_leagues') as mock_get:
+        with patch("src.services.data.LeagueService.get_leagues") as mock_get:
             mock_get.return_value = {
                 "leagues": sample_leagues,
                 "total": 2,
                 "limit": 20,
-                "offset": 0
+                "offset": 0,
             }
 
             response = client.get("/api/v1/leagues")
@@ -380,10 +382,10 @@ class TestDataManagementEndpoints:
             "home_win": 2.10,
             "draw": 3.40,
             "away_win": 3.80,
-            "updated_at": "2025-11-06T08:00:00.000Z"
+            "updated_at": "2025-11-06T08:00:00.000Z",
         }
 
-        with patch('src.services.data.OddsService.get_odds') as mock_get:
+        with patch("src.services.data.OddsService.get_odds") as mock_get:
             mock_get.return_value = [sample_odds]
 
             response = client.get("/api/v1/odds?match_id=12345")
@@ -393,6 +395,7 @@ class TestDataManagementEndpoints:
             assert isinstance(data, list)
             assert len(data) == 1
             assert "home_win" in data[0]
+
 
 class TestSystemManagementEndpoints:
     """系统管理API端点测试"""
@@ -405,22 +408,19 @@ class TestSystemManagementEndpoints:
                 "total_predictions": 15420,
                 "total_matches": 12800,
                 "total_teams": 50,
-                "total_leagues": 10
+                "total_leagues": 10,
             },
             "performance": {
                 "avg_response_time_ms": 45,
                 "queue_size": 25,
                 "active_workers": 4,
-                "success_rate": 0.98
+                "success_rate": 0.98,
             },
-            "accuracy": {
-                "overall_accuracy": 0.78,
-                "last_30_days": 0.82
-            },
-            "timestamp": "2025-11-06T08:30:00.000Z"
+            "accuracy": {"overall_accuracy": 0.78, "last_30_days": 0.82},
+            "timestamp": "2025-11-06T08:30:00.000Z",
         }
 
-        with patch('src.services.monitoring.SystemService.get_stats') as mock_get:
+        with patch("src.services.monitoring.SystemService.get_stats") as mock_get:
             mock_get.return_value = sample_stats
 
             response = client.get("/api/v1/stats")
@@ -443,11 +443,11 @@ class TestSystemManagementEndpoints:
                 "predictions": True,
                 "real_time_data": True,
                 "batch_processing": True,
-                "advanced_analytics": True
-            }
+                "advanced_analytics": True,
+            },
         }
 
-        with patch('src.services.version.VersionService.get_version') as mock_get:
+        with patch("src.services.version.VersionService.get_version") as mock_get:
             mock_get.return_value = version_info
 
             response = client.get("/api/v1/version")
@@ -467,10 +467,10 @@ class TestSystemManagementEndpoints:
             "completed_tasks": 15420,
             "failed_tasks": 10,
             "success_rate": 0.9993,
-            "avg_processing_time": 2.5
+            "avg_processing_time": 2.5,
         }
 
-        with patch('src.services.queue.QueueService.get_status') as mock_get:
+        with patch("src.services.queue.QueueService.get_status") as mock_get:
             mock_get.return_value = queue_status
 
             response = client.post("/api/v1/queue/status")
@@ -479,6 +479,7 @@ class TestSystemManagementEndpoints:
             data = response.json()
             assert "queue_size" in data
             assert "success_rate" in data
+
 
 class TestErrorHandling:
     """API错误处理测试"""
@@ -492,9 +493,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_validation_error(self):
         """测试数据验证错误"""
-        invalid_data = {
-            "invalid_field": "invalid_value"
-        }
+        invalid_data = {"invalid_field": "invalid_value"}
 
         response = client.post("/api/v1/predictions", json=invalid_data)
         assert response.status_code == 422
@@ -515,11 +514,14 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_server_error_handling(self):
         """测试服务器错误处理"""
-        with patch('src.services.prediction.PredictionService.get_predictions') as mock_get:
+        with patch(
+            "src.services.prediction.PredictionService.get_predictions"
+        ) as mock_get:
             mock_get.side_effect = Exception("Database connection failed")
 
             response = client.get("/api/v1/predictions")
             assert response.status_code == 500
+
 
 class TestAPIPerformance:
     """API性能测试"""
@@ -542,12 +544,14 @@ class TestAPIPerformance:
     @pytest.mark.asyncio
     async def test_predictions_list_performance(self):
         """测试预测列表性能"""
-        with patch('src.services.prediction.PredictionService.get_predictions') as mock_get:
+        with patch(
+            "src.services.prediction.PredictionService.get_predictions"
+        ) as mock_get:
             mock_get.return_value = {
                 "predictions": [],
                 "total": 0,
                 "limit": 20,
-                "offset": 0
+                "offset": 0,
             }
 
             start_time = time.time()
@@ -575,6 +579,7 @@ class TestAPIPerformance:
         # All requests should succeed
         success_count = sum(1 for r in responses if r.status_code == 200)
         assert success_count == 10
+
 
 # Integration test markers
 pytest.mark.unit(TestHealthEndpoints)

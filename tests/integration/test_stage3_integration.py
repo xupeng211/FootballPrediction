@@ -456,18 +456,26 @@ class Stage3IntegrationTester:
         ]
 
         for test_name, test_func in tests:
-            logger.debug(f"\n🔍 执行 {test_name}测试...")  # TODO: Add logger import if needed
+            logger.debug(
+                f"\n🔍 执行 {test_name}测试..."
+            )  # TODO: Add logger import if needed
             self.test_results["total_tests"] += 1
 
             try:
                 if await test_func():
-                    logger.debug(f"✅ {test_name}测试通过")  # TODO: Add logger import if needed
+                    logger.debug(
+                        f"✅ {test_name}测试通过"
+                    )  # TODO: Add logger import if needed
                     self.test_results["passed_tests"] += 1
                 else:
-                    logger.debug(f"❌ {test_name}测试失败")  # TODO: Add logger import if needed
+                    logger.debug(
+                        f"❌ {test_name}测试失败"
+                    )  # TODO: Add logger import if needed
                     self.test_results["failed_tests"] += 1
             except Exception as e:
-                logger.debug(f"❌ {test_name}测试异常: {e}")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"❌ {test_name}测试异常: {e}"
+                )  # TODO: Add logger import if needed
                 self.test_results["failed_tests"] += 1
                 self.test_results["errors"].append(f"{test_name}: {e}")
 
@@ -483,10 +491,18 @@ class Stage3IntegrationTester:
 
         logger.debug("\n" + "=" * 60)  # TODO: Add logger import if needed
         logger.debug("📊 第三阶段集成测试完成!")  # TODO: Add logger import if needed
-        logger.debug(f"   总计: {self.test_results['total_tests']}")  # TODO: Add logger import if needed
-        logger.debug(f"   通过: {self.test_results['passed_tests']}")  # TODO: Add logger import if needed
-        logger.error(f"   失败: {self.test_results['failed_tests']}")  # TODO: Add logger import if needed
-        logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")  # TODO: Add logger import if needed
+        logger.debug(
+            f"   总计: {self.test_results['total_tests']}"
+        )  # TODO: Add logger import if needed
+        logger.debug(
+            f"   通过: {self.test_results['passed_tests']}"
+        )  # TODO: Add logger import if needed
+        logger.error(
+            f"   失败: {self.test_results['failed_tests']}"
+        )  # TODO: Add logger import if needed
+        logger.debug(
+            f"   耗时: {duration.total_seconds():.2f} 秒"
+        )  # TODO: Add logger import if needed
 
         if self.test_results["errors"]:
             logger.debug("\n❌ 错误详情:")  # TODO: Add logger import if needed
@@ -499,19 +515,27 @@ class Stage3IntegrationTester:
                 self.test_results["passed_tests"] / self.test_results["total_tests"]
             ) * 100
 
-        logger.debug(f"\n🎯 成功率: {success_rate:.1f}%")  # TODO: Add logger import if needed
+        logger.debug(
+            f"\n🎯 成功率: {success_rate:.1f}%"
+        )  # TODO: Add logger import if needed
 
         if self.test_results["failed_tests"] == 0:
             logger.debug("🎉 所有测试通过！")  # TODO: Add logger import if needed
             logger.debug("✅ 缓存功能正常工作")  # TODO: Add logger import if needed
-            logger.debug("✅ 数据模型创建和转换正确")  # TODO: Add logger import if needed
+            logger.debug(
+                "✅ 数据模型创建和转换正确"
+            )  # TODO: Add logger import if needed
             logger.debug("✅ 数据采集器集成成功")  # TODO: Add logger import if needed
             logger.debug("✅ 缓存失效机制有效")  # TODO: Add logger import if needed
             logger.debug("✅ 同步状态跟踪正常")  # TODO: Add logger import if needed
-            logger.debug("🚀 第三阶段集成验证完成！")  # TODO: Add logger import if needed
+            logger.debug(
+                "🚀 第三阶段集成验证完成！"
+            )  # TODO: Add logger import if needed
             return True
         else:
-            logger.debug("⚠️  部分测试失败，请检查实现")  # TODO: Add logger import if needed
+            logger.debug(
+                "⚠️  部分测试失败，请检查实现"
+            )  # TODO: Add logger import if needed
             return False
 
 
@@ -526,7 +550,9 @@ async def main():
         # 运行所有测试
         success = await tester.run_all_tests()
 
-        logger.debug(f"\n退出码: {0 if success else 1}")  # TODO: Add logger import if needed
+        logger.debug(
+            f"\n退出码: {0 if success else 1}"
+        )  # TODO: Add logger import if needed
         return success
 
     except Exception as e:

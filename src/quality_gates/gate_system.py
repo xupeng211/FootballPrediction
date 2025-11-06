@@ -501,10 +501,8 @@ def main():
     """主函数,用于测试"""
     gate_system = QualityGateSystem()
 
-
     # 运行所有检查
     results = gate_system.run_all_checks()
-
 
     # 显示详细结果
     for _result in results["results"]:
@@ -516,7 +514,6 @@ def main():
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
-
 
 
 if __name__ == "__main__":

@@ -727,30 +727,30 @@ class NotificationManager:
             return False
 
         def add_channel(self, channel: NotificationChannel):
-                """添加新的通知渠道"""
-                self.channels[channel.id] = channel
-                self._initialize_client(channel)
-                self.logger.info(f"已添加通知渠道: {channel.id}")
+            """添加新的通知渠道"""
+            self.channels[channel.id] = channel
+            self._initialize_client(channel)
+            self.logger.info(f"已添加通知渠道: {channel.id}")
 
         def remove_channel(self, channel_id: str):
-                """移除通知渠道"""
-                if channel_id in self.channels:
-                    del self.channels[channel_id]
-                    if channel_id in self.clients:
-                        del self.clients[channel_id]
-                    self.logger.info(f"已移除通知渠道: {channel_id}")
+            """移除通知渠道"""
+            if channel_id in self.channels:
+                del self.channels[channel_id]
+                if channel_id in self.clients:
+                    del self.clients[channel_id]
+                self.logger.info(f"已移除通知渠道: {channel_id}")
 
         def get_channel_status(self) -> dict[str, dict[str, Any]]:
-                """获取所有渠道的状态"""
-                status = {}
-                for channel_id, channel in self.channels.items():
-                    status[channel_id] = {
-                        "name": channel.name,
-                        "type": channel.type,
-                        "enabled": channel.enabled,
-                        "has_client": channel_id in self.clients,
-                    }
-                return status
+            """获取所有渠道的状态"""
+            status = {}
+            for channel_id, channel in self.channels.items():
+                status[channel_id] = {
+                    "name": channel.name,
+                    "type": channel.type,
+                    "enabled": channel.enabled,
+                    "has_client": channel_id in self.clients,
+                }
+            return status
 
 
 # 全局通知管理器实例

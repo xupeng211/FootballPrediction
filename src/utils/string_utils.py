@@ -428,8 +428,13 @@ def camel_to_snake(name: str) -> str:
     return StringUtils.camel_to_snake(name)
 
 
-def clean_string(text: str, remove_special_chars: bool = True, keep_numbers: bool = False,
-                keep_chars: str = "", to_lower: bool = True) -> str:
+def clean_string(
+    text: str,
+    remove_special_chars: bool = True,
+    keep_numbers: bool = False,
+    keep_chars: str = "",
+    to_lower: bool = True,
+) -> str:
     """清理字符串（模块级别包装函数，符合测试期望）
 
     Args:
@@ -459,12 +464,14 @@ def clean_string(text: str, remove_special_chars: bool = True, keep_numbers: boo
     if keep_chars:
         # 构建允许的字符集
         import re
-        allowed_pattern = f'[a-zA-Z0-9\\s{re.escape(keep_chars)}]'
-        cleaned = ''.join(re.findall(allowed_pattern, cleaned))
+
+        allowed_pattern = f"[a-zA-Z0-9\\s{re.escape(keep_chars)}]"
+        cleaned = "".join(re.findall(allowed_pattern, cleaned))
     elif remove_special_chars:
         # 默认移除特殊字符，保留字母数字和基本空格
         import re
-        cleaned = re.sub(r'[^a-zA-Z0-9\s]', '', cleaned)
+
+        cleaned = re.sub(r"[^a-zA-Z0-9\s]", "", cleaned)
 
     # 如果需要保留数字
     if keep_numbers:
@@ -475,7 +482,7 @@ def clean_string(text: str, remove_special_chars: bool = True, keep_numbers: boo
         pass
 
     # 规范化空格
-    cleaned = ' '.join(cleaned.split())
+    cleaned = " ".join(cleaned.split())
 
     return cleaned
 
@@ -494,12 +501,14 @@ def normalize_text(text: str) -> str:
 
     # Unicode标准化：去除重音符号
     import unicodedata
-    normalized = unicodedata.normalize('NFKD', text)
+
+    normalized = unicodedata.normalize("NFKD", text)
 
     # 移除重音符号（组合字符）和其他非ASCII字符
-    result = ''.join(
-        char for char in normalized
-        if unicodedata.category(char)[0] != 'Mn' and ord(char) < 128
+    result = "".join(
+        char
+        for char in normalized
+        if unicodedata.category(char)[0] != "Mn" and ord(char) < 128
     )
 
     return result
@@ -518,8 +527,9 @@ def extract_numbers(text: str) -> list[str]:
         return []
 
     import re
+
     # 提取整数和负数
-    numbers = re.findall(r'-?\d+', text)
+    numbers = re.findall(r"-?\d+", text)
     return numbers
 
 
@@ -536,17 +546,18 @@ def format_phone_number(phone: str) -> str:
         return str(phone)
 
     import re
+
     # 移除所有非数字字符（除了开头的+）
-    cleaned = re.sub(r'[^\d+]', '', phone)
+    cleaned = re.sub(r"[^\d+]", "", phone)
 
     # 处理国际号码
-    if cleaned.startswith('+'):
+    if cleaned.startswith("+"):
         return cleaned  # 国际号码保持原格式
 
     # 处理美国格式号码
     if len(cleaned) == 10:
         return f"({cleaned[:3]}) {cleaned[3:6]}-{cleaned[6:]}"
-    elif len(cleaned) == 11 and cleaned.startswith('1'):
+    elif len(cleaned) == 11 and cleaned.startswith("1"):
         # 去掉开头的1，格式化美国号码
         return f"({cleaned[1:4]}) {cleaned[4:7]}-{cleaned[7:]}"
 
@@ -573,17 +584,17 @@ def validate_email(email: str) -> bool:
         return False
 
     # 基本格式检查
-    if '@' not in email:
+    if "@" not in email:
         return False
 
-    local, domain = email.split('@', 1)
+    local, domain = email.split("@", 1)
 
     # 本地部分不能为空或以点开头/结尾
-    if not local or local.startswith('.') or local.endswith('.'):
+    if not local or local.startswith(".") or local.endswith("."):
         return False
 
     # 不能有连续的点号
-    if '..' in email:
+    if ".." in email:
         return False
 
     # 本地部分不能超过64个字符
@@ -591,12 +602,13 @@ def validate_email(email: str) -> bool:
         return False
 
     # 域名部分检查
-    if '.' not in domain:
+    if "." not in domain:
         return False
 
     # 使用更严格的正则表达式
     import re
-    pattern = r'^[a-zA-Z0-9](\.?[a-zA-Z0-9_+-])*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$'
+
+    pattern = r"^[a-zA-Z0-9](\.?[a-zA-Z0-9_+-])*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$"
     return bool(re.match(pattern, email))
 
 
@@ -613,20 +625,21 @@ def generate_slug(text: str) -> str:
         return str(text)
 
     import re
+
     # 转换为小写
     slug = text.lower()
 
     # 移除特殊字符，保留字母数字、空格和连字符
-    slug = re.sub(r'[^a-z0-9\s\-]', '', slug)
+    slug = re.sub(r"[^a-z0-9\s\-]", "", slug)
 
     # 将多个空格替换为单个连字符
-    slug = re.sub(r'\s+', '-', slug.strip())
+    slug = re.sub(r"\s+", "-", slug.strip())
 
     # 移除多余的连字符
-    slug = re.sub(r'-+', '-', slug)
+    slug = re.sub(r"-+", "-", slug)
 
     # 移除首尾连字符
-    slug = slug.strip('-')
+    slug = slug.strip("-")
 
     return slug
 
@@ -715,13 +728,14 @@ def remove_special_chars(text: str, keep_chars: str = "") -> str:
         return str(text)
 
     import re
+
     if keep_chars:
         # 构建允许的字符集模式，包括保留字符和连字符
-        allowed_pattern = f'[a-zA-Z0-9\\s\\-{re.escape(keep_chars)}]'
-        result = ''.join(re.findall(allowed_pattern, text))
+        allowed_pattern = f"[a-zA-Z0-9\\s\\-{re.escape(keep_chars)}]"
+        result = "".join(re.findall(allowed_pattern, text))
     else:
         # 默认保留字母数字、空格和连字符
-        result = re.sub(r'[^a-zA-Z0-9\\s-]', '', text)
+        result = re.sub(r"[^a-zA-Z0-9\\s-]", "", text)
 
     return result
 
@@ -778,7 +792,7 @@ def replace_multiple(text: str, replacements: dict[str, str]) -> str:
     return result
 
 
-def split_text(text: str, separator = None, maxsplit: int = -1) -> list[str]:
+def split_text(text: str, separator=None, maxsplit: int = -1) -> list[str]:
     """分割文本（模块级别包装函数，符合测试期望）
 
     Args:
@@ -795,9 +809,10 @@ def split_text(text: str, separator = None, maxsplit: int = -1) -> list[str]:
     if isinstance(separator, list):
         # 多分隔符情况：使用正则表达式
         import re
+
         # 转义所有分隔符
         escaped_separators = [re.escape(sep) for sep in separator]
-        pattern = '|'.join(escaped_separators)
+        pattern = "|".join(escaped_separators)
         result = re.split(pattern, text)
         return result
     else:

@@ -7,17 +7,14 @@ Integration Test Runner
 """
 
 import os
-import sys
 import subprocess
-import asyncio
+import sys
 from datetime import datetime
 from pathlib import Path
 
 
 def run_integration_tests():
     """运行集成测试"""
-    print("🧪 运行集成测试套件")
-    print("=" * 40)
 
     # 确保在正确的目录
     project_root = Path(__file__).parent.parent.parent
@@ -26,99 +23,85 @@ def run_integration_tests():
     try:
         # 运行集成测试
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "tests/integration/",
             "-v",
             "--tb=short",
             "--maxfail=10",
-            "-m", "integration"
+            "-m",
+            "integration",
         ]
 
-        print(f"🚀 执行命令: {' '.join(cmd)}")
-        print()
 
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
 
-        print(result.stdout)
         if result.stderr:
-            print("错误输出:")
-            print(result.stderr)
+            pass
 
         return result.returncode == 0
 
-    except Exception as e:
-        print(f"❌ 运行集成测试时出错: {e}")
+    except Exception:
         return False
 
 
 def validate_test_structure():
     """验证测试结构"""
-    print("🔍 验证集成测试结构")
-    print("=" * 30)
 
     integration_dir = Path("tests/integration")
     if not integration_dir.exists():
-        print("❌ 集成测试目录不存在")
         return False
 
     # 检查测试文件
     test_files = list(integration_dir.glob("test_*.py"))
-    print(f"📁 发现 {len(test_files)} 个集成测试文件:")
 
-    for test_file in test_files:
-        print(f"  ✅ {test_file.name}")
+    for _test_file in test_files:
+        pass
 
     # 检查配置文件
-    config_files = [
-        integration_dir / "__init__.py",
-        integration_dir / "conftest.py"
-    ]
+    config_files = [integration_dir / "__init__.py", integration_dir / "conftest.py"]
 
     for config_file in config_files:
         if config_file.exists():
-            print(f"  ✅ {config_file.name}")
+            pass
         else:
-            print(f"  ❌ {config_file.name} (缺失)")
+            pass
 
     return len(test_files) > 0
 
 
 def generate_coverage_report():
     """生成覆盖率报告"""
-    print("📊 生成覆盖率报告")
-    print("=" * 30)
 
     try:
         # 运行带覆盖率的测试
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "tests/integration/",
             "--cov=src",
             "--cov-report=term-missing",
             "--cov-report=html",
             "--cov-report=xml",
-            "-m", "integration"
+            "-m",
+            "integration",
         ]
 
-        print("🚀 生成覆盖率报告...")
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode == 0:
-            print("✅ 覆盖率报告生成成功")
-            print("📁 HTML报告: htmlcov/index.html")
-            print("📄 XML报告: coverage.xml")
+            pass
         else:
-            print("❌ 覆盖率报告生成失败")
-            print(result.stderr)
+            pass
 
-    except Exception as e:
-        print(f"❌ 生成覆盖率报告时出错: {e}")
+    except Exception:
+        pass
 
 
 def create_integration_test_report():
     """创建集成测试报告"""
-    print("📝 创建集成测试报告")
-    print("=" * 30)
 
     report_content = f"""# 集成测试扩展报告
 
@@ -257,46 +240,32 @@ def create_integration_test_report():
 """
 
     report_file = Path("docs/INTEGRATION_TEST_REPORT.md")
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report_content)
 
-    print(f"📝 报告已保存到: {report_file}")
     return report_file
 
 
 def main():
     """主函数"""
-    import os
-    from datetime import datetime
 
-    print("🚀 足球预测系统 - 集成测试扩展工具")
-    print("=" * 50)
-    print(f"⏰ 执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%M')}")
-    print(f"📁 项目路径: {os.getcwd()}")
-    print()
 
     # 验证测试结构
     if not validate_test_structure():
-        print("\n❌ 集成测试结构验证失败，请检查文件完整性")
         return 1
 
-    print("\n" + "=" * 50)
 
     # 运行集成测试
     if run_integration_tests():
-        print("\n✅ 集成测试全部通过！")
 
         # 生成覆盖率报告
-        print("\n")
         generate_coverage_report()
 
         # 创建报告
-        report_file = create_integration_test_report()
-        print(f"\n📊 集成测试报告: {report_file}")
+        create_integration_test_report()
 
         return 0
     else:
-        print("\n❌ 集成测试存在问题，请检查测试输出")
         return 1
 
 

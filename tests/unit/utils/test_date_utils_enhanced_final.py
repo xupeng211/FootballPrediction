@@ -26,7 +26,7 @@ class TestDateUtilsEnhancedFinal:
 
         # 预定义格式
         formats = DateUtils.DATETIME_FORMATS
-        for format_name, format_str in formats.items():
+        for _format_name, format_str in formats.items():
             result = DateUtils.format_datetime(dt, format_str)
             assert isinstance(result, str)
             assert len(result) > 0
@@ -455,7 +455,7 @@ class TestDateUtilsEnhancedFinal:
         assert "us" in formats
 
         # 验证格式字符串有效性
-        for format_name, format_str in formats.items():
+        for _format_name, format_str in formats.items():
             assert isinstance(format_str, str)
             assert len(format_str) > 0
             # 尝试格式化当前时间

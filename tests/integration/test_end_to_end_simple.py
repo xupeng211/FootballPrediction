@@ -5,14 +5,13 @@ Simplified End-to-End Integration Tests
 避免依赖复杂的FastAPI应用，直接测试核心业务逻辑的端到端流程。
 """
 
-import pytest
-import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
-from typing import Any, Dict, Optional
+from unittest.mock import AsyncMock
 
-from .test_models_simple import TestTeam, TestMatch, TestPrediction
+import pytest
+
 from .test_cache_mock import MockRedisManager
+from .test_models_simple import TestMatch, TestPrediction, TestTeam
 
 
 @pytest.mark.integration
@@ -23,11 +22,7 @@ class TestSimplifiedEndToEndWorkflows:
     @pytest.fixture
     async def mock_database(self):
         """创建模拟数据库"""
-        return {
-            "teams": {},
-            "matches": {},
-            "predictions": {}
-        }
+        return {"teams": {}, "matches": {}, "predictions": {}}
 
     @pytest.fixture
     async def mock_cache(self):
@@ -41,7 +36,7 @@ class TestSimplifiedEndToEndWorkflows:
             "database": mock_database,
             "cache": mock_cache,
             "data_collector": AsyncMock(),
-            "prediction_engine": AsyncMock()
+            "prediction_engine": AsyncMock(),
         }
 
     @pytest.mark.asyncio
@@ -53,14 +48,14 @@ class TestSimplifiedEndToEndWorkflows:
             short_name="MU",
             country="England",
             founded_year=1878,
-            venue="Old Trafford"
+            venue="Old Trafford",
         )
         away_team = TestTeam(
             name="Liverpool",
             short_name="LIV",
             country="England",
             founded_year=1892,
-            venue="Anfield"
+            venue="Anfield",
         )
 
         # 保存到数据库
@@ -73,23 +68,29 @@ class TestSimplifiedEndToEndWorkflows:
             away_team_id=2,
             match_date=datetime.utcnow() + timedelta(days=7),
             league="Premier League",
-            status="scheduled"
+            status="scheduled",
         )
 
         mock_services["database"]["matches"][1] = match
 
         # 3. 缓存球队信息
-        await mock_services["cache"].set(f"team:1", {
-            "name": home_team.name,
-            "short_name": home_team.short_name,
-            "venue": home_team.venue
-        })
+        await mock_services["cache"].set(
+            "team:1",
+            {
+                "name": home_team.name,
+                "short_name": home_team.short_name,
+                "venue": home_team.venue,
+            },
+        )
 
-        await mock_services["cache"].set(f"team:2", {
-            "name": away_team.name,
-            "short_name": away_team.short_name,
-            "venue": away_team.venue
-        })
+        await mock_services["cache"].set(
+            "team:2",
+            {
+                "name": away_team.name,
+                "short_name": away_team.short_name,
+                "venue": away_team.venue,
+            },
+        )
 
         # 4. 生成预测（模拟）
         prediction_data = {
@@ -100,10 +101,12 @@ class TestSimplifiedEndToEndWorkflows:
             "predicted_outcome": "home",
             "confidence": 0.72,
             "model_version": "v1.0",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }
 
-        mock_services["prediction_engine"].generate_prediction.return_value = prediction_data
+        mock_services["prediction_engine"].generate_prediction.return_value = (
+            prediction_data
+        )
 
         # 执行预测
         prediction = await mock_services["prediction_engine"].generate_prediction(1)
@@ -116,7 +119,7 @@ class TestSimplifiedEndToEndWorkflows:
             away_win_prob=prediction["away_win_prob"],
             predicted_outcome=prediction["predicted_outcome"],
             confidence=prediction["confidence"],
-            model_version=prediction["model_version"]
+            model_version=prediction["model_version"],
         )
 
         mock_services["database"]["predictions"][1] = test_prediction
@@ -138,7 +141,11 @@ class TestSimplifiedEndToEndWorkflows:
         assert cached_prediction["predicted_outcome"] == "home"
 
         # 验证预测逻辑
-        total_prob = prediction["home_win_prob"] + prediction["draw_prob"] + prediction["away_win_prob"]
+        total_prob = (
+            prediction["home_win_prob"]
+            + prediction["draw_prob"]
+            + prediction["away_win_prob"]
+        )
         assert abs(total_prob - 1.0) < 0.01  # 概率和应该接近1
 
     @pytest.mark.asyncio
@@ -150,7 +157,7 @@ class TestSimplifiedEndToEndWorkflows:
             "home_team": "Chelsea",
             "away_team": "Arsenal",
             "match_date": "2024-12-15T20:00:00",
-            "league": "Premier League"
+            "league": "Premier League",
         }
 
         # 2. 模拟数据收集
@@ -165,12 +172,12 @@ class TestSimplifiedEndToEndWorkflows:
             home_team = TestTeam(
                 name=collected_data["home_team"],
                 short_name=collected_data["home_team"][:3].upper(),
-                country="England"
+                country="England",
             )
             away_team = TestTeam(
                 name=collected_data["away_team"],
                 short_name=collected_data["away_team"][:3].upper(),
-                country="England"
+                country="England",
             )
 
             mock_services["database"]["teams"][101] = home_team
@@ -182,13 +189,15 @@ class TestSimplifiedEndToEndWorkflows:
                 home_team_id=101,
                 away_team_id=102,
                 match_date=match_date,
-                league=collected_data["league"]
+                league=collected_data["league"],
             )
 
             mock_services["database"]["matches"][101] = match
 
         # 4. 缓存收集的数据
-        await mock_services["cache"].set_with_expire(f"match_data:{101}", collected_data, expire_seconds=3600)
+        await mock_services["cache"].set_with_expire(
+            f"match_data:{101}", collected_data, expire_seconds=3600
+        )
 
         # 验证数据收集工作流
         assert len(mock_services["database"]["teams"]) >= 2
@@ -208,7 +217,7 @@ class TestSimplifiedEndToEndWorkflows:
             league="Premier League",
             status="finished",
             home_score=2,
-            away_score=1
+            away_score=1,
         )
 
         mock_services["database"]["matches"][201] = match
@@ -221,7 +230,7 @@ class TestSimplifiedEndToEndWorkflows:
             away_win_prob=0.15,
             predicted_outcome="home",
             confidence=0.75,
-            model_version="v1.0"
+            model_version="v1.0",
         )
 
         mock_services["database"]["predictions"][201] = prediction
@@ -240,7 +249,7 @@ class TestSimplifiedEndToEndWorkflows:
             "actual_result": actual_result,
             "is_correct": is_correct,
             "confidence": prediction.confidence,
-            "validated_at": datetime.utcnow().isoformat()
+            "validated_at": datetime.utcnow().isoformat(),
         }
 
         # 5. 缓存验证结果
@@ -261,9 +270,9 @@ class TestSimplifiedEndToEndWorkflows:
             match = TestMatch(
                 home_team_id=100 + i,
                 away_team_id=200 + i,
-                match_date=datetime.utcnow() + timedelta(days=i+1),
+                match_date=datetime.utcnow() + timedelta(days=i + 1),
                 league="Premier League",
-                status="scheduled"
+                status="scheduled",
             )
             matches.append(match)
             mock_services["database"]["matches"][300 + i] = match
@@ -277,7 +286,7 @@ class TestSimplifiedEndToEndWorkflows:
             probs = [max(0.1, p) for p in probs]
             # 归一化使概率和为1
             prob_sum = sum(probs)
-            probs = [p/prob_sum for p in probs]
+            probs = [p / prob_sum for p in probs]
 
             prediction_data = {
                 "match_id": match.id,
@@ -286,7 +295,7 @@ class TestSimplifiedEndToEndWorkflows:
                 "away_win_prob": probs[2],
                 "predicted_outcome": ["home", "draw", "away"][i % 3],
                 "confidence": min(0.95, 0.7 + (i * 0.05)),  # 确保置信度不超过1
-                "model_version": "v1.0"
+                "model_version": "v1.0",
             }
             batch_predictions.append(prediction_data)
 
@@ -299,7 +308,7 @@ class TestSimplifiedEndToEndWorkflows:
                 away_win_prob=pred_data["away_win_prob"],
                 predicted_outcome=pred_data["predicted_outcome"],
                 confidence=pred_data["confidence"],
-                model_version=pred_data["model_version"]
+                model_version=pred_data["model_version"],
             )
             mock_services["database"]["predictions"][pred_data["match_id"]] = prediction
 
@@ -308,10 +317,12 @@ class TestSimplifiedEndToEndWorkflows:
             "batch_id": "batch_001",
             "predictions": batch_predictions,
             "created_at": datetime.utcnow().isoformat(),
-            "total_predictions": len(batch_predictions)
+            "total_predictions": len(batch_predictions),
         }
 
-        await mock_services["cache"].set("batch_predictions:batch_001", batch_cache_data)
+        await mock_services["cache"].set(
+            "batch_predictions:batch_001", batch_cache_data
+        )
 
         # 验证批量预测工作流
         assert len(batch_predictions) == 5
@@ -336,7 +347,7 @@ class TestSimplifiedEndToEndWorkflows:
                 "error_type": "database_connection",
                 "error_message": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
-                "retry_count": 0
+                "retry_count": 0,
             }
             await mock_services["cache"].set("error_log:001", error_log)
 
@@ -351,7 +362,7 @@ class TestSimplifiedEndToEndWorkflows:
         recovery_log = {
             "status": "recovered",
             "recovered_at": datetime.utcnow().isoformat(),
-            "operations_completed": 1
+            "operations_completed": 1,
         }
         await mock_services["cache"].set("recovery_log:001", recovery_log)
 
@@ -370,10 +381,7 @@ class TestSimplifiedEndToEndWorkflows:
         import time
 
         # 1. 模拟性能监控
-        performance_metrics = {
-            "start_time": time.time(),
-            "operations": []
-        }
+        performance_metrics = {"start_time": time.time(), "operations": []}
 
         # 2. 执行一系列操作并记录性能
         for i in range(10):
@@ -388,17 +396,23 @@ class TestSimplifiedEndToEndWorkflows:
 
             end_time = time.time()
 
-            performance_metrics["operations"].append({
-                "operation_id": i,
-                "duration": end_time - start_time,
-                "type": "database_and_cache"
-            })
+            performance_metrics["operations"].append(
+                {
+                    "operation_id": i,
+                    "duration": end_time - start_time,
+                    "type": "database_and_cache",
+                }
+            )
 
         # 3. 计算性能统计
         total_duration = time.time() - performance_metrics["start_time"]
         avg_operation_time = total_duration / len(performance_metrics["operations"])
-        max_operation_time = max(op["duration"] for op in performance_metrics["operations"])
-        min_operation_time = min(op["duration"] for op in performance_metrics["operations"])
+        max_operation_time = max(
+            op["duration"] for op in performance_metrics["operations"]
+        )
+        min_operation_time = min(
+            op["duration"] for op in performance_metrics["operations"]
+        )
 
         performance_summary = {
             "total_operations": len(performance_metrics["operations"]),
@@ -406,7 +420,8 @@ class TestSimplifiedEndToEndWorkflows:
             "avg_operation_time": avg_operation_time,
             "max_operation_time": max_operation_time,
             "min_operation_time": min_operation_time,
-            "operations_per_second": len(performance_metrics["operations"]) / total_duration
+            "operations_per_second": len(performance_metrics["operations"])
+            / total_duration,
         }
 
         # 4. 缓存性能指标

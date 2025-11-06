@@ -4,19 +4,18 @@
 测试特征计算器的核心功能
 """
 
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.features.features.feature_calculator_calculators import FeatureCalculator
 from src.features.feature_definitions import (
-    RecentPerformanceFeatures,
     HistoricalMatchupFeatures,
     OddsFeatures,
-    AllMatchFeatures
+    RecentPerformanceFeatures,
 )
-from src.database.models import Match, Team, Odds
+from src.features.features.feature_calculator_calculators import FeatureCalculator
 
 
 @pytest.fixture
@@ -62,7 +61,9 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_calculate_recent_performance_features_success(self, feature_calculator, mock_db_session):
+    async def test_calculate_recent_performance_features_success(
+        self, feature_calculator, mock_db_session
+    ):
         """测试成功计算近期战绩特征"""
         # 准备测试数据
         team_id = 100
@@ -75,22 +76,22 @@ class TestFeatureCalculator:
                 away_team_id=200,
                 home_score=2,
                 away_score=1,
-                status='FINISHED'
+                status="FINISHED",
             ),
             MagicMock(
                 home_team_id=200,
                 away_team_id=team_id,
                 home_score=0,
                 away_score=3,
-                status='FINISHED'
+                status="FINISHED",
             ),
             MagicMock(
                 home_team_id=team_id,
                 away_team_id=300,
                 home_score=1,
                 away_score=1,
-                status='FINISHED'
-            )
+                status="FINISHED",
+            ),
         ]
 
         # 模拟数据库查询结果
@@ -115,7 +116,9 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_calculate_recent_performance_features_no_matches(self, feature_calculator, mock_db_session):
+    async def test_calculate_recent_performance_features_no_matches(
+        self, feature_calculator, mock_db_session
+    ):
         """测试没有比赛记录时的处理"""
         team_id = 100
         calculation_date = datetime.now()
@@ -135,7 +138,9 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_calculate_historical_matchup_features_success(self, feature_calculator, mock_db_session):
+    async def test_calculate_historical_matchup_features_success(
+        self, feature_calculator, mock_db_session
+    ):
         """测试成功计算历史对战特征"""
         home_team_id = 100
         away_team_id = 200
@@ -147,14 +152,14 @@ class TestFeatureCalculator:
                 home_team_id=home_team_id,
                 away_team_id=away_team_id,
                 home_score=2,
-                away_score=1
+                away_score=1,
             ),
             MagicMock(
                 home_team_id=away_team_id,
                 away_team_id=home_team_id,
                 home_score=1,
-                away_score=2
-            )
+                away_score=2,
+            ),
         ]
 
         # 模拟数据库查询结果
@@ -178,7 +183,9 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_calculate_odds_features_success(self, feature_calculator, mock_db_session):
+    async def test_calculate_odds_features_success(
+        self, feature_calculator, mock_db_session
+    ):
         """测试成功计算赔率特征"""
         match_id = 1
         calculation_date = datetime.now()
@@ -205,11 +212,15 @@ class TestFeatureCalculator:
 
         # 设置execute方法的返回值序列
         mock_db_session.execute.side_effect = [
-            mock_home_result, mock_draw_result, mock_away_result
+            mock_home_result,
+            mock_draw_result,
+            mock_away_result,
         ]
 
         # 执行测试
-        result = await feature_calculator.calculate_odds_features(match_id, calculation_date)
+        result = await feature_calculator.calculate_odds_features(
+            match_id, calculation_date
+        )
 
         # 验证结果
         assert result is not None
@@ -223,7 +234,9 @@ class TestFeatureCalculator:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_calculate_odds_features_incomplete_data(self, feature_calculator, mock_db_session):
+    async def test_calculate_odds_features_incomplete_data(
+        self, feature_calculator, mock_db_session
+    ):
         """测试赔率数据不完整的处理"""
         match_id = 1
         calculation_date = datetime.now()
@@ -239,14 +252,18 @@ class TestFeatureCalculator:
         mock_db_session.execute.return_value = mock_result
 
         # 执行测试
-        result = await feature_calculator.calculate_odds_features(match_id, calculation_date)
+        result = await feature_calculator.calculate_odds_features(
+            match_id, calculation_date
+        )
 
         # 验证结果
         assert result is None
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_calculate_all_match_features_success(self, feature_calculator, mock_db_session, sample_match):
+    async def test_calculate_all_match_features_success(
+        self, feature_calculator, mock_db_session, sample_match
+    ):
         """测试成功计算完整比赛特征"""
         match_id = 1
         calculation_date = datetime.now()
@@ -265,23 +282,35 @@ class TestFeatureCalculator:
         # 设置execute方法的返回值序列
         mock_db_session.execute.side_effect = [
             match_result,  # 比赛查询
-            AsyncMock(scalars=AsyncMock(all=AsyncMock(return_value=[MagicMock()]))),  # 主队近期战绩
-            AsyncMock(scalars=AsyncMock(all=AsyncMock(return_value=[MagicMock()]))),  # 客队近期战绩
-            AsyncMock(scalars=AsyncMock(all=AsyncMock(return_value=[MagicMock()]))),  # 历史对战
+            AsyncMock(
+                scalars=AsyncMock(all=AsyncMock(return_value=[MagicMock()]))
+            ),  # 主队近期战绩
+            AsyncMock(
+                scalars=AsyncMock(all=AsyncMock(return_value=[MagicMock()]))
+            ),  # 客队近期战绩
+            AsyncMock(
+                scalars=AsyncMock(all=AsyncMock(return_value=[MagicMock()]))
+            ),  # 历史对战
             AsyncMock(),  # 主胜赔率
             AsyncMock(),  # 平局赔率
-            AsyncMock()   # 客胜赔率
+            AsyncMock(),  # 客胜赔率
         ]
 
         # 模拟各个特征计算方法
-        feature_calculator.calculate_recent_performance_features = AsyncMock(side_effect=[
-            home_recent, away_recent
-        ])
-        feature_calculator.calculate_historical_matchup_features = AsyncMock(return_value=h2h_features)
-        feature_calculator.calculate_odds_features = AsyncMock(return_value=odds_features)
+        feature_calculator.calculate_recent_performance_features = AsyncMock(
+            side_effect=[home_recent, away_recent]
+        )
+        feature_calculator.calculate_historical_matchup_features = AsyncMock(
+            return_value=h2h_features
+        )
+        feature_calculator.calculate_odds_features = AsyncMock(
+            return_value=odds_features
+        )
 
         # 执行测试
-        result = await feature_calculator.calculate_all_match_features(match_id, calculation_date)
+        result = await feature_calculator.calculate_all_match_features(
+            match_id, calculation_date
+        )
 
         # 验证结果
         assert result is not None
@@ -299,15 +328,11 @@ class TestFeatureCalculator:
         calculation_date = datetime.now()
 
         # 模拟单个特征计算结果
-        mock_features = {
-            1: MagicMock(),
-            2: None,  # 模拟失败情况
-            3: MagicMock()
-        }
+        mock_features = {1: MagicMock(), 2: None, 3: MagicMock()}  # 模拟失败情况
 
-        feature_calculator.calculate_all_match_features = AsyncMock(side_effect=[
-            mock_features[1], mock_features[2], mock_features[3]
-        ])
+        feature_calculator.calculate_all_match_features = AsyncMock(
+            side_effect=[mock_features[1], mock_features[2], mock_features[3]]
+        )
 
         # 执行测试
         result = await feature_calculator.batch_calculate_match_features(
@@ -335,7 +360,7 @@ class TestFeatureDefinitions:
             recent_5_losses=1,
             recent_5_goals_for=8,
             recent_5_goals_against=4,
-            recent_5_points=10
+            recent_5_points=10,
         )
 
         assert features.recent_5_win_rate == 0.6  # 3/5
@@ -352,7 +377,7 @@ class TestFeatureDefinitions:
             h2h_away_wins=2,
             h2h_draws=2,
             h2h_home_goals_total=15,
-            h2h_away_goals_total=10
+            h2h_away_goals_total=10,
         )
 
         assert features.h2h_home_win_rate == 0.6  # 6/10
@@ -366,7 +391,7 @@ class TestFeatureDefinitions:
             calculation_date=datetime.now(),
             home_odds_avg=2.0,
             draw_odds_avg=3.0,
-            away_odds_avg=4.0
+            away_odds_avg=4.0,
         )
 
         # 手动设置隐含概率来测试计算属性
@@ -374,4 +399,6 @@ class TestFeatureDefinitions:
         features.draw_implied_probability = 0.3333  # 1/3.0
         features.away_implied_probability = 0.25  # 1/4.0
 
-        assert features.market_efficiency == pytest.approx(1.0833)  # 0.5 + 0.3333 + 0.25
+        assert features.market_efficiency == pytest.approx(
+            1.0833
+        )  # 0.5 + 0.3333 + 0.25

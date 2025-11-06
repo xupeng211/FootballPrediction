@@ -35,7 +35,8 @@ async def test_feature_calculator():
 
     # 创建示例数据
     matches = [
-        MatchResult(match_id="test_001",
+        MatchResult(
+            match_id="test_001",
             home_team="Team A",
             away_team="Team B",
             home_score=2,
@@ -50,7 +51,8 @@ async def test_feature_calculator():
             total_goals=3,
             goal_difference=1,
         ),
-        MatchResult(match_id="test_002",
+        MatchResult(
+            match_id="test_002",
             home_team="Team B",
             away_team="Team C",
             home_score=1,
@@ -88,7 +90,8 @@ async def test_advanced_trainer():
     n_samples = 200
     n_features = 10
 
-    X = pd.DataFrame(np.random.randn(n_samples, n_features),
+    X = pd.DataFrame(
+        np.random.randn(n_samples, n_features),
         columns=[f"feature_{i}" for i in range(n_features)],
     )
     y = pd.Series(np.random.choice([0, 1, 2], n_samples))
@@ -98,7 +101,8 @@ async def test_advanced_trainer():
     trainer = AdvancedModelTrainer()
 
     # 测试训练
-    result = await trainer.train_model(X,
+    result = await trainer.train_model(
+        X,
         y,
         model_type=ModelType.RANDOM_FOREST.value,
         hyperparameter_tuning=False,  # 跳过网格搜索以加快测试
@@ -106,7 +110,8 @@ async def test_advanced_trainer():
 
     if result["success"]:
         # 测试预测
-        test_X = pd.DataFrame(np.random.randn(5, n_features),
+        test_X = pd.DataFrame(
+            np.random.randn(5, n_features),
             columns=[f"feature_{i}" for i in range(n_features)],
         )
         pred_result = await trainer.predict(test_X)
@@ -131,7 +136,8 @@ async def test_ensemble_trainer():
     n_samples = 150
     n_features = 8
 
-    X = pd.DataFrame(np.random.randn(n_samples, n_features),
+    X = pd.DataFrame(
+        np.random.randn(n_samples, n_features),
         columns=[f"feature_{i}" for i in range(n_features)],
     )
     y = pd.Series(np.random.choice([0, 1, 2], n_samples))
@@ -141,7 +147,8 @@ async def test_ensemble_trainer():
     trainer = EnsembleTrainer()
 
     # 测试集成训练
-    result = await trainer.train_ensemble(X,
+    result = await trainer.train_ensemble(
+        X,
         y,
         model_types=[ModelType.RANDOM_FOREST.value],  # 只测试一个模型以加快速度
         hyperparameter_tuning=False,
@@ -149,7 +156,8 @@ async def test_ensemble_trainer():
 
     if result["success"]:
         # 测试集成预测
-        test_X = pd.DataFrame(np.random.randn(5, n_features),
+        test_X = pd.DataFrame(
+            np.random.randn(5, n_features),
             columns=[f"feature_{i}" for i in range(n_features)],
         )
         pred_result = await trainer.predict_ensemble(test_X)
@@ -167,7 +175,8 @@ async def test_complete_pipeline():
     logger.info("Testing Complete Training Pipeline...")
 
     # 运行完整管道（使用示例数据）
-    result = await train_football_prediction_model(use_sample_data=True,
+    result = await train_football_prediction_model(
+        use_sample_data=True,
         config={
             "models_dir": "models/test",
             "hyperparameter_tuning": False,  # 跳过网格搜索以加快测试
@@ -199,7 +208,8 @@ async def test_feature_importance():
     logger.info(f"Prepared {len(X)} samples with {len(feature_columns)} features")
 
     # 训练一个简单的模型
-    result = await pipeline.train_single_model(X, y, model_type=ModelType.RANDOM_FOREST.value, hyperparameter_tuning=False
+    result = await pipeline.train_single_model(
+        X, y, model_type=ModelType.RANDOM_FOREST.value, hyperparameter_tuning=False
     )
 
     if result["success"] and "feature_importance" in result:
@@ -261,7 +271,8 @@ async def run_all_tests():
     if passed == total:
         logger.info("\n🎉 All tests passed! ML Pipeline is working correctly.")
     else:
-        logger.warning(f"\n⚠️ {total - passed} test(s) failed. Please check the implementation."
+        logger.warning(
+            f"\n⚠️ {total - passed} test(s) failed. Please check the implementation."
         )
 
     return results
