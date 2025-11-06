@@ -1,0 +1,219 @@
+# Application Alert Rules for Football Prediction System
+# Author: Claude Code
+# Version: 1.0
+# Purpose: Monitor application health and performance
+
+groups:
+  - name: application.rules
+    rules:
+      # Application is down
+      - alert: ApplicationDown
+        expr: up{job="football-prediction"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Football Prediction application is down"
+          description: "Football Prediction application has been down for more than 1 minute."
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes."
+
+      # High response time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for the last 5 minutes."
+
+      # Memory usage high
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes / 1024 / 1024) > 512
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}MB for more than 5 minutes."
+
+      # CPU usage high
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% for more than 5 minutes."
+
+  - name: business.rules
+    rules:
+      # Prediction queue size high
+      - alert: PredictionQueueBacklog
+        expr: queue_size > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prediction queue backlog"
+          description: "Queue size is {{ $value }} items, processing may be delayed."
+
+      # Low prediction accuracy
+      - alert: LowPredictionAccuracy
+        expr: prediction_accuracy < 0.6
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low prediction accuracy"
+          description: "Prediction accuracy is {{ $value | humanizePercentage }}, below expected threshold."
+
+      # High prediction failure rate
+      - alert: HighPredictionFailureRate
+        expr: prediction_failure_rate > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High prediction failure rate"
+          description: "Prediction failure rate is {{ $value | humanizePercentage }}, system needs attention."
+
+      # No recent predictions
+      - alert: NoRecentPredictions
+        expr: time() - prediction_last_timestamp > 3600
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No recent predictions"
+          description: "No predictions have been generated in the last hour."
+
+  - name: database.rules
+    rules:
+      # Database connection issues
+      - alert: DatabaseConnectionIssues
+        expr: database_connections_active / database_connections_max > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool nearly full"
+          description: "Database connection pool usage is {{ $value | humanizePercentage }}."
+
+      # Slow queries
+      - alert: SlowDatabaseQueries
+        expr: database_query_duration_seconds{quantile="0.95"} > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile query time is {{ $value }}s."
+
+  - name: cache.rules
+    rules:
+      # Redis connection issues
+      - alert: RedisConnectionIssues
+        expr: redis_connected_clients == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis connection lost"
+          description: "No active Redis connections detected."
+
+      # Low cache hit rate
+      - alert: LowCacheHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}, consider cache optimization."
+
+  - name: system.rules
+    rules:
+      # Disk space usage high
+      - alert: DiskSpaceUsageHigh
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space usage critical"
+          description: "Disk space usage is {{ $value }}% on {{ $labels.instance }}."
+
+      # High load average
+      - alert: HighLoadAverage
+        expr: node_load15 > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system load"
+          description: "15-minute load average is {{ $value }} on {{ $labels.instance }}."
+
+      # Memory usage high
+      - alert: HighSystemMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High system memory usage"
+          description: "System memory usage is {{ $value }}% on {{ $labels.instance }}."
+
+  - name: security.rules
+    rules:
+      # High failed login attempts
+      - alert: HighFailedLoginAttempts
+        expr: rate(failed_login_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed login attempts"
+          description: "Failed login rate is {{ $value }} attempts per second."
+
+      # Suspicious API activity
+      - alert: SuspiciousAPIActivity
+        expr: rate(api_requests_total{status="401"}[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Suspicious API activity"
+          description: "High rate of unauthorized API requests: {{ $value }} req/s."
+
+  - name: availability.rules
+    rules:
+      # SSL certificate expiry
+      - alert: SSLCertificateExpiring
+        expr: ssl_certificate_expiry_days < 30
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.domain }} expires in {{ $value }} days."
+
+      # Service endpoints down
+      - alert: ServiceEndpointDown
+        expr: up{job=~"nginx|postgres-exporter|redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service endpoint down"
+          description: "Service {{ $labels.job }} on {{ $labels.instance }} is down."

@@ -1,0 +1,262 @@
+# Alertmanager Configuration for Football Prediction System
+# Author: Claude Code
+# Version: 1.0
+# Purpose: Alert routing and notification configuration
+
+global:
+  # SMTP configuration for email notifications
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@football-prediction.com'
+  smtp_auth_username: 'alerts@football-prediction.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+  # Default templates
+  templates:
+    - '/etc/alertmanager/templates/*.tmpl'
+
+# Route configuration for alerts
+route:
+  # Group alerts by alert name
+  group_by: ['alertname', 'cluster', 'service']
+
+  # Wait 30 seconds before sending first notification
+  group_wait: 30s
+
+  # Wait 5 minutes before sending repeat notifications
+  group_interval: 5m
+
+  # Wait 4 hours before resolving an alert
+  repeat_interval: 4h
+
+  # Default receiver
+  receiver: 'web.hook'
+
+  # Routes for different severity levels
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 30m
+      routes:
+        # Application down alerts
+        - match:
+            alertname: 'ApplicationDown'
+          receiver: 'application-down'
+          group_wait: 0s
+          repeat_interval: 5m
+
+        # Database connection issues
+        - match:
+            alertname: 'DatabaseConnectionIssues'
+          receiver: 'database-alerts'
+          group_wait: 10s
+          repeat_interval: 15m
+
+    # Warning alerts
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 60s
+      repeat_interval: 2h
+      routes:
+        # High error rate
+        - match:
+            alertname: 'HighErrorRate'
+          receiver: 'error-rate-alerts'
+          repeat_interval: 1h
+
+        # High response time
+        - match:
+            alertname: 'HighResponseTime'
+          receiver: 'performance-alerts'
+          repeat_interval: 1h
+
+    # Business alerts
+    - match:
+        alertname: 'PredictionQueueBacklog'
+      receiver: 'business-alerts'
+      group_wait: 2m
+      repeat_interval: 1h
+
+# Inhibition rules to prevent alert spam
+inhibit_rules:
+  # Inhibit warning alerts when critical alerts are firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+
+  # Inhibit database alerts when application is down
+  - source_match:
+      alertname: 'ApplicationDown'
+    target_match:
+      alertname: 'DatabaseConnectionIssues'
+    equal: ['cluster']
+
+# Receivers configuration
+receivers:
+  # Webhook receiver for all alerts
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://localhost:5000/webhooks/alert'
+        send_resolved: true
+        http_config:
+          bearer_token: 'your-webhook-token'
+
+  # Critical alerts receiver
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'ops-team@football-prediction.com'
+        subject: '[CRITICAL] Football Prediction System Alert'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#critical-alerts'
+        title: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* https://wiki.football-prediction.com/runbooks/{{ .Labels.alertname }}
+          {{ end }}
+
+  # Application down receiver
+  - name: 'application-down'
+    email_configs:
+      - to: 'dev-team@football-prediction.com,ops-team@football-prediction.com'
+        subject: '🚨 APPLICATION DOWN - Football Prediction System'
+        body: |
+          URGENT: Football Prediction application is down!
+
+          Time: {{ .Alerts.Firing.StartsAt }}
+          Duration: {{ .Alerts.Firing.Duration }}
+
+          Immediate action required!
+
+          Check:
+          - Application logs
+          - Server status
+          - Database connectivity
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#incidents'
+        title: '🔴 APPLICATION DOWN'
+        text: 'Football Prediction application is down! Immediate attention required!'
+
+  # Database alerts receiver
+  - name: 'database-alerts'
+    email_configs:
+      - to: 'dba-team@football-prediction.com'
+        subject: '🗄️ Database Alert - Football Prediction System'
+        body: |
+          Database alert detected:
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#database-alerts'
+        title: 'Database Alert'
+
+  # Warning alerts receiver
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'ops-team@football-prediction.com'
+        subject: '⚠️ Warning - Football Prediction System'
+        body: |
+          Warning alert:
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#warnings'
+        title: 'Warning Alert'
+
+  # Performance alerts receiver
+  - name: 'performance-alerts'
+    email_configs:
+      - to: 'performance-team@football-prediction.com'
+        subject: '📈 Performance Alert - Football Prediction System'
+        body: |
+          Performance issue detected:
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#performance'
+
+  # Error rate alerts receiver
+  - name: 'error-rate-alerts'
+    email_configs:
+      - to: 'dev-team@football-prediction.com'
+        subject: '❌ High Error Rate - Football Prediction System'
+        body: |
+          High error rate detected:
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#errors'
+
+  # Business alerts receiver
+  - name: 'business-alerts'
+    email_configs:
+      - to: 'business-team@football-prediction.com'
+        subject: '💼 Business Alert - Football Prediction System'
+        body: |
+          Business alert:
+
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Impact: {{ .Labels.impact | default "Medium" }}
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        send_resolved: true
+        channel: '#business-metrics'
+
+# Time intervals for different alert states
+time_intervals:
+  - name: 'short'
+    interval: 5m
+  - name: 'medium'
+    interval: 30m
+  - name: 'long'
+    interval: 2h
+
+# Silence configuration (can be used to suppress alerts temporarily)
+# silences:
+#   - matchers:
+#       - name: 'ApplicationDown'
+#         value: 'football-prediction'
+#     startsAt: '2025-11-06T10:00:00Z'
+#     endsAt: '2025-11-06T12:00:00Z'
+#     createdBy: 'admin@football-prediction.com'
+#     comment: 'Scheduled maintenance window'
