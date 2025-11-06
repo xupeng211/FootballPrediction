@@ -24,9 +24,7 @@ from src.services.tenant_service import TenantCreationRequest, TenantService
 router = APIRouter(prefix="/api/v1/tenants",
     tags=["多租户管理"])
 
-
 # ==================== 请求/响应模型 ==================== None
-
 
 class TenantCreationRequestModel(BaseModel):
     """租户创建请求模型"""
@@ -95,7 +93,6 @@ class TenantCreationRequestModel(BaseModel):
             raise ValueError("租户标识符只能包含小写字母、数字和连字符")
         return v
 
-
 class TenantUpdateRequestModel(BaseModel):
     """租户更新请求模型"""
 
@@ -144,7 +141,6 @@ class TenantUpdateRequestModel(BaseModel):
     Any] | None = Field(None,
     description="品牌定制")
 
-
 class TenantResponseModel(BaseModel):
     """租户响应模型"""
 
@@ -173,7 +169,6 @@ class TenantResponseModel(BaseModel):
 
         from_attributes = True
 
-
 class RoleAssignmentRequestModel(BaseModel):
     """角色分配请求模型"""
 
@@ -181,7 +176,6 @@ class RoleAssignmentRequestModel(BaseModel):
     description="角色代码")
     expires_at: datetime | None = Field(None,
     description="过期时间")
-
 
 class PermissionCheckRequestModel(BaseModel):
     """权限检查请求模型"""
@@ -192,7 +186,6 @@ class PermissionCheckRequestModel(BaseModel):
     Any] | None = Field(None,
     description="资源上下文")
 
-
 class QuotaCheckResponseModel(BaseModel):
     """配额检查响应模型"""
 
@@ -201,7 +194,6 @@ class QuotaCheckResponseModel(BaseModel):
     max_limit: int
     usage_percentage: float
     reason: str | None
-
 
 class TenantStatisticsResponseModel(BaseModel):
     """租户统计响应模型"""
@@ -216,9 +208,7 @@ class TenantStatisticsResponseModel(BaseModel):
     Any]
     quota_status: dict[str, QuotaCheckResponseModel]
 
-
 # ==================== 租户管理端点 ==================== None
-
 
 @router.post(
     "/",
@@ -257,7 +247,6 @@ async def create_tenant(request: Request,
         tenant = await tenant_service.create_tenant(creation_request, creator_id)
         return TenantResponseModel.from_orm(tenant)
 
-
 @router.get("/{tenant_id}", response_model=TenantResponseModel)
 @require_permission("tenant.view")
 async def get_tenant(tenant_id: int):
@@ -273,12 +262,10 @@ async def get_tenant(tenant_id: int):
         if not tenant:
             raise HTTPException(
                 
-            )
                 status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
             )
 
         return TenantResponseModel.from_orm(tenant)
-
 
 @router.put("/{tenant_id}", response_model=TenantResponseModel)
 @require_permission("tenant.manage")
@@ -299,7 +286,6 @@ async def update_tenant(tenant_id: int, update_data: TenantUpdateRequestModel):
         tenant = await tenant_service.update_tenant(tenant_id, updates)
         return TenantResponseModel.from_orm(tenant)
 
-
 @router.post("/{tenant_id}/suspend")
 @require_permission("tenant.manage")
 async def suspend_tenant(
@@ -314,7 +300,6 @@ async def suspend_tenant(
         tenant_service = TenantService(db)
         tenant = await tenant_service.suspend_tenant(tenant_id, reason)
         return {"message": "租户已暂停", "tenant_id": tenant.id}
-
 
 @router.post("/{tenant_id}/activate")
 @require_permission("tenant.manage")
@@ -331,7 +316,6 @@ async def activate_tenant(
         tenant = await tenant_service.activate_tenant(tenant_id, plan)
         return {"message": "租户已激活", "tenant_id": tenant.id}
 
-
 @router.get("/{tenant_id}/statistics", response_model=TenantStatisticsResponseModel)
 @require_permission("tenant.analytics")
 async def get_tenant_statistics(tenant_id: int):
@@ -345,9 +329,7 @@ async def get_tenant_statistics(tenant_id: int):
         stats = await tenant_service.get_tenant_statistics(tenant_id)
         return TenantStatisticsResponseModel(**stats)
 
-
 # ==================== 权限管理端点 ==================== None
-
 
 @router.post("/{tenant_id}/users/{user_id}/roles")
 @require_permission("roles.manage")
@@ -378,7 +360,6 @@ async def assign_user_role(
 
         return {"message": "角色分配成功", "assignment_id": assignment.id}
 
-
 @router.delete("/{tenant_id}/users/{user_id}/roles/{role_code}")
 @require_permission("roles.manage")
 async def revoke_user_role(tenant_id: int,
@@ -397,13 +378,10 @@ async def revoke_user_role(tenant_id: int,
 
         if not success:
             raise HTTPException(
-                ... from e
-            )
                 status_code=status.HTTP_404_NOT_FOUND, detail="角色分配不存在"
             )
 
         return {"message": "角色撤销成功"}
-
 
 @router.post("/{tenant_id}/permissions/check")
 @require_permission("permissions.check")
@@ -441,9 +419,7 @@ async def check_permission(
             "reason": result.reason,
         }
 
-
 # ==================== 资源配额端点 ==================== None
-
 
 @router.get(
     "/{tenant_id}/quota/{resource_type}", response_model=QuotaCheckResponseModel
@@ -479,7 +455,6 @@ async def check_resource_quota(
             reason=quota_check.reason,
         )
 
-
 @router.post("/{tenant_id}/usage/update")
 @require_permission("usage.update")
 async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
@@ -493,9 +468,7 @@ async def update_usage_metrics(tenant_id: int, metrics: dict[str, Any]):
         await tenant_service.update_usage_metrics(tenant_id, metrics)
         return {"message": "使用指标更新成功"}
 
-
 # ==================== 租户列表和搜索 ==================== None
-
 
 @router.get("/",
     response_model=list[TenantResponseModel])
@@ -535,9 +508,7 @@ async def list_tenants(
 
         return []
 
-
 # ==================== 健康检查和状态端点 ==================== None
-
 
 @router.get("/health", tags=["健康检查"])
 async def tenant_management_health():
@@ -547,7 +518,6 @@ async def tenant_management_health():
         "service": "tenant_management",
         "timestamp": datetime.utcnow().isoformat(),
     }
-
 
 @router.get("/{tenant_id}/health")
 @require_permission("tenant.view")
@@ -563,8 +533,6 @@ async def tenant_health_check(tenant_id: int):
 
         if not tenant:
             raise HTTPException(
-                ... from e
-            )
                 status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
             )
 
@@ -578,7 +546,6 @@ async def tenant_health_check(tenant_id: int):
             "days_until_expiry": tenant.days_until_expiry,
             "health_score": _calculate_health_score(tenant),
         }
-
 
 # 重复的类定义已清理
 def _calculate_health_score(tenant: Tenant) -> float:

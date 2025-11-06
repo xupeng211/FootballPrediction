@@ -51,7 +51,7 @@ async def health_check():
             status_code=500,
             detail={
                 "status": "error",
-                "timestamp": time.time() from e,
+                "timestamp": time.time(),
                 "error": str(e),
                 "checks": {
                     "database": {"status": "error", "error": str(e)},
@@ -82,7 +82,7 @@ async def liveness_check():
             status_code=500,
             detail={
                 "status": "error",
-                "error": str(e) from e,
+                "error": str(e),
                 "service": "football-prediction-api",
             },
         )
@@ -127,5 +127,3 @@ async def detailed_health():
             "system": {"status": "ok", "cpu_usage": "15%", "memory_usage": "45%"},
         },
     }
-
-        ) from e  # TODO: B904 exception chaining

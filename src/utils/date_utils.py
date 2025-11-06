@@ -276,6 +276,18 @@ class DateUtils:
         except Exception:
             return "0秒"
 
+    @staticmethod
+    def format_duration_between(start: datetime, end: datetime) -> str:
+        """格式化两个时间点之间的时长"""
+        if not isinstance(start, datetime) or not isinstance(end, datetime):
+            return "0秒"
+
+        try:
+            duration_seconds = int((end - start).total_seconds())
+            return DateUtils.format_duration(duration_seconds)
+        except Exception:
+            return "0秒"
+
 
 # 缓存版本的函数
 @lru_cache(maxsize=128)
@@ -287,4 +299,4 @@ def cached_format_datetime(dt: datetime, format_str: str = "%Y-%m-%d %H:%M:%S") 
 @lru_cache(maxsize=256)
 def cached_time_ago(dt: datetime, reference: datetime | None = None) -> str:
     """缓存版本的时间差格式化"""
-    return DateUtils.time_ago(dt, reference)
+    return DateUtils.time_ago(dt)

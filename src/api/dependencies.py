@@ -76,7 +76,7 @@ async def get_current_user(
             raise credentials_exception
 
         token_data = TokenData(username=username, user_id=user_id)
-    except JWTError:
+    except JWTError as e:
         raise credentials_exception
     except Exception:
         # 如果JWT解析失败，返回一个模拟用户

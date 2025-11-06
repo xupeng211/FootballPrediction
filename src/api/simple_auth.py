@@ -1,14 +1,14 @@
 from datetime import datetime
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
+
 """
 简化的用户认证API
 
 提供基本的用户认证功能,避免复杂依赖问题
 """
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
 
 # 简化的依赖,避免复杂导入
 # from src.database.connection import get_async_session
@@ -217,8 +217,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
     # 实际应用中应该验证JWT令牌
     if not token:
         raise HTTPException(
-            
-        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的认证令牌",
             headers={"WWW-Authenticate": "Bearer"},
@@ -232,8 +230,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> SimpleUser:
     user = auth_service.get_user_by_username(username)
     if not user:
         raise HTTPException(
-            ... from e
-        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户不存在",
             headers={"WWW-Authenticate": "Bearer"},
@@ -254,14 +250,12 @@ async def register_user(user_data: SimpleUserRegister):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e  # TODO: B904 exception chaining
 
 
-@router.post("/login") from e
+@router.post("/login")
 async def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
     """用户登录"""
     user = auth_service.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
-            
-        )
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",
             headers={"WWW-Authenticate": "Bearer"},
@@ -289,5 +283,3 @@ async def logout_user():
 
 # 导出router
 __all__ = ["router"]
-
-        ) from e  # TODO: B904 exception chaining

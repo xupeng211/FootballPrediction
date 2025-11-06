@@ -399,5 +399,3 @@ async def clear_subject_history(subject_name: str) -> dict[str, str]:
 
     subject.clear_history()
     return {"message": f"被观察者 {subject_name} 的事件历史已清空"}
-
-        ) from e  # TODO: B904 exception chaining

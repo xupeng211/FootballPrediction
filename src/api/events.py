@@ -205,5 +205,3 @@ def _find_handler(handler_type):
             if isinstance(handler, handler_type):
                 return handler
     return None
-
-        ) from e  # TODO: B904 exception chaining
