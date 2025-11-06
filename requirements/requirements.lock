@@ -27,6 +27,8 @@ asyncpg==0.30.0
     # via -r base.txt
 attrs==25.4.0
     # via aiohttp
+backoff==2.2.1
+    # via -r base.txt
 bcrypt==5.0.0
     # via passlib
 billiard==4.2.2
