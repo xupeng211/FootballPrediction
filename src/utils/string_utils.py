@@ -426,3 +426,214 @@ def snake_to_camel(name: str) -> str:
 def camel_to_snake(name: str) -> str:
     """驼峰命名转下划线命名（包装函数）"""
     return StringUtils.camel_to_snake(name)
+
+
+def clean_string(text: str, remove_special_chars: bool = False) -> str:
+    """清理字符串（模块级别包装函数）
+
+    Args:
+        text: 需要清理的字符串
+        remove_special_chars: 是否移除特殊字符
+
+    Returns:
+        清理后的字符串
+    """
+    return StringUtils.clean_string(text, remove_special_chars)
+
+
+def normalize_text(text: str) -> str:
+    """标准化文本（模块级别包装函数）
+
+    Args:
+        text: 需要标准化的文本
+
+    Returns:
+        标准化后的文本
+    """
+    return StringUtils.clean_text(text)
+
+
+def extract_numbers(text: str) -> list[float]:
+    """提取数字（模块级别包装函数）
+
+    Args:
+        text: 包含数字的文本
+
+    Returns:
+        提取的数字列表
+    """
+    return StringUtils.extract_numbers(text)
+
+
+def format_phone_number(phone: str) -> str:
+    """格式化电话号码（模块级别包装函数）
+
+    Args:
+        phone: 原始电话号码
+
+    Returns:
+        格式化后的电话号码
+    """
+    return StringUtils.sanitize_phone_number(phone)
+
+
+def validate_email(email: str) -> bool:
+    """验证邮箱地址（模块级别包装函数）
+
+    Args:
+        email: 邮箱地址
+
+    Returns:
+        是否为有效邮箱
+    """
+    return StringUtils.validate_email(email)
+
+
+def generate_slug(text: str) -> str:
+    """生成URL友好的slug（模块级别包装函数）
+
+    Args:
+        text: 需要转换的文本
+
+    Returns:
+        URL友好的slug
+    """
+    return StringUtils.slugify(text)
+
+
+def truncate_text(text: str, length: int = 50, suffix: str = "...") -> str:
+    """截断文本（模块级别包装函数）
+
+    Args:
+        text: 需要截断的文本
+        length: 最大长度
+        suffix: 后缀
+
+    Returns:
+        截断后的文本
+    """
+    return StringUtils.truncate(text, length, suffix)
+
+
+def reverse_string(text: str) -> str:
+    """反转字符串（模块级别包装函数）
+
+    Args:
+        text: 需要反转的字符串
+
+    Returns:
+        反转后的字符串
+    """
+    return StringUtils.reverse_string(text)
+
+
+def count_words(text: str) -> int:
+    """计算单词数（模块级别包装函数）
+
+    Args:
+        text: 文本内容
+
+    Returns:
+        单词数量
+    """
+    return StringUtils.count_words(text)
+
+
+def capitalize_words(text: str) -> str:
+    """首字母大写（模块级别包装函数）
+
+    Args:
+        text: 需要处理的文本
+
+    Returns:
+        首字母大写的文本
+    """
+    return StringUtils.capitalize_words(text)
+
+
+def remove_special_chars(text: str) -> str:
+    """移除特殊字符（模块级别包装函数）
+
+    Args:
+        text: 需要处理的文本
+
+    Returns:
+        移除特殊字符后的文本
+    """
+    return StringUtils.clean_string(text, remove_special_chars=True)
+
+
+def is_palindrome(text: str) -> bool:
+    """检查是否为回文（模块级别包装函数）
+
+    Args:
+        text: 需要检查的文本
+
+    Returns:
+        是否为回文
+    """
+    return StringUtils.is_palindrome(text)
+
+
+def find_substring_positions(text: str, substring: str) -> list[tuple[int, int]]:
+    """查找子字符串位置（模块级别包装函数）
+
+    Args:
+        text: 原文本
+        substring: 需要查找的子字符串
+
+    Returns:
+        位置列表 [(start, end), ...]
+    """
+    positions = []
+    start = 0
+    while True:
+        pos = text.find(substring, start)
+        if pos == -1:
+            break
+        positions.append((pos, pos + len(substring)))
+        start = pos + 1
+    return positions
+
+
+def replace_multiple(text: str, replacements: dict[str, str]) -> str:
+    """批量替换文本（模块级别包装函数）
+
+    Args:
+        text: 原文本
+        replacements: 替换字典 {old: new, ...}
+
+    Returns:
+        替换后的文本
+    """
+    result = text
+    for old, new in replacements.items():
+        result = result.replace(old, new)
+    return result
+
+
+def split_text(text: str, separator: str = None, maxsplit: int = -1) -> list[str]:
+    """分割文本（模块级别包装函数）
+
+    Args:
+        text: 需要分割的文本
+        separator: 分隔符
+        maxsplit: 最大分割次数
+
+    Returns:
+        分割后的文本列表
+    """
+    return text.split(separator, maxsplit) if maxsplit != -1 else text.split(separator)
+
+
+def join_text(texts: list[str], separator: str = " ") -> str:
+    """连接文本（模块级别包装函数）
+
+    Args:
+        texts: 需要连接的文本列表
+        separator: 连接符
+
+    Returns:
+        连接后的文本
+    """
+    return separator.join(str(text) for text in texts)
