@@ -115,7 +115,9 @@ class TestWarningFiltersComplete:
                 warnings.warn("Test user warning", UserWarning, stacklevel=2)
 
                 # 测试DeprecationWarning
-                warnings.warn("Test deprecation warning", DeprecationWarning, stacklevel=2)
+                warnings.warn(
+                    "Test deprecation warning", DeprecationWarning, stacklevel=2
+                )
 
                 # 测试FutureWarning
                 warnings.warn("Test future warning", FutureWarning, stacklevel=2)
@@ -265,7 +267,9 @@ class TestWarningFiltersComplete:
                 with warnings.catch_warnings(record=True) as w:
                     warnings.simplefilter("always")
                     try:
-                        warnings.warn(f"Test {warning_type.__name__}", warning_type, stacklevel=2)
+                        warnings.warn(
+                            f"Test {warning_type.__name__}", warning_type, stacklevel=2
+                        )
                         # 警告应该被处理，不抛出异常
                         assert isinstance(w, list)
                     except Exception:

@@ -401,12 +401,8 @@ class TestFeatureCalculatorSimple:
         (recent_matches["result"] == "W").sum()
         (recent_matches["result"] == "D").sum()
         (recent_matches["result"] == "L").sum()
-        (
-            recent_matches["home_score"].sum() + recent_matches["away_score"].sum()
-        )
-        (
-            recent_matches["away_score"].sum() + recent_matches["home_score"].sum()
-        )
+        (recent_matches["home_score"].sum() + recent_matches["away_score"].sum())
+        (recent_matches["away_score"].sum() + recent_matches["home_score"].sum())
 
         # 创建特征对象
         features = RecentPerformanceFeatures(

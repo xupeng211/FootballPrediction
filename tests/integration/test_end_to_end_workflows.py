@@ -5,7 +5,6 @@ End-to-End Business Logic Integration Tests
 测试完整的业务流程，从数据收集到预测生成的整个链条。
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 

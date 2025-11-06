@@ -34,7 +34,6 @@ def run_integration_tests():
             "integration",
         ]
 
-
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=project_root)
 
         if result.stderr:
@@ -249,11 +248,9 @@ def create_integration_test_report():
 def main():
     """主函数"""
 
-
     # 验证测试结构
     if not validate_test_structure():
         return 1
-
 
     # 运行集成测试
     if run_integration_tests():

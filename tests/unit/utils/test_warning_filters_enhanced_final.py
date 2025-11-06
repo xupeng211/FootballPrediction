@@ -185,7 +185,11 @@ class TestWarningFiltersEnhancedFinal:
                 warnings.warn("TensorFlow warning", UserWarning, stacklevel=2)
                 warnings.warn("Sklearn warning", DeprecationWarning, stacklevel=2)
                 warnings.warn("Pandas warning", FutureWarning, stacklevel=2)
-                warnings.warn("Pending deprecation warning", PendingDeprecationWarning, stacklevel=2)
+                warnings.warn(
+                    "Pending deprecation warning",
+                    PendingDeprecationWarning,
+                    stacklevel=2,
+                )
 
                 # 其他类型的警告应该被捕获
                 warnings.warn("Runtime warning", RuntimeWarning, stacklevel=2)
