@@ -124,7 +124,7 @@ async def add_match_to_monitoring(
             raise HTTPException(
                 
             )
-                status_code=400, detail="Failed to add match to monitoring"
+    status_code=400, detail="Failed to add match to monitoring"
             )
 
         # 发送通知

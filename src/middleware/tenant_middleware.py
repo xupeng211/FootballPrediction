@@ -77,7 +77,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 raise HTTPException(
                     
                 )
-                    status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
+    status_code=status.HTTP_404_NOT_FOUND, detail="租户不存在"
                 )
 
             # 验证租户状态

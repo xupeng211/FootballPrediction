@@ -398,9 +398,9 @@ async def check_permission(
     tenant_context = get_tenant_context(request)
     if not tenant_context:
         raise HTTPException(
-            ... from estatus_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="未认证"
         )
-    detail="未认证")
 
     async with get_db_session() as db:
         tenant_service = TenantService(db)
