@@ -174,6 +174,125 @@ class APIEndpointProfiler:
 
         return decorator
 
+    def record_endpoint_request(
+        self,
+        endpoint: str,
+        method: str,
+        duration: float,
+        status_code: int,
+        request_size: int = 0,
+        response_size: int = 0,
+    ) -> None:
+        """记录端点请求性能数据
+
+        Args:
+            endpoint: API端点路径
+            method: HTTP方法
+            duration: 请求持续时间(秒)
+            status_code: HTTP状态码
+            request_size: 请求大小(字节)
+            response_size: 响应大小(字节)
+        """
+        success = status_code < 400
+        error = f"HTTP {status_code}" if not success else None
+
+        # 记录到现有统计系统
+        self.record_call(endpoint, duration, success, error)
+
+        # 额外记录HTTP方法信息
+        with self.lock:
+            stats = self.stats[endpoint]
+            if not hasattr(stats, 'method_info'):
+                stats.method_info = {}
+
+            method_key = f"{method}_{status_code}"
+            if method_key not in stats.method_info:
+                stats.method_info[method_key] = {
+                    'count': 0,
+                    'total_duration': 0.0,
+                    'request_size_total': 0,
+                    'response_size_total': 0
+                }
+
+            method_stats = stats.method_info[method_key]
+            method_stats['count'] += 1
+            method_stats['total_duration'] += duration
+            method_stats['request_size_total'] += request_size
+            method_stats['response_size_total'] += response_size
+
+    def get_endpoint_stats(self, endpoint: str) -> dict[str, Any]:
+        """获取端点性能统计
+
+        Args:
+            endpoint: 端点路径
+
+        Returns:
+            端点性能统计数据
+        """
+        with self.lock:
+            stats = self.stats.get(endpoint, ProfileStats())
+
+            result = {
+                "call_count": stats.call_count,
+                "avg_time": stats.avg_time,
+                "min_time": stats.min_time if stats.min_time != float("inf") else 0.0,
+                "max_time": stats.max_time,
+                "error_count": stats.error_count,
+                "error_rate": (stats.error_count / stats.call_count) if stats.call_count > 0 else 0.0,
+                "success_rate": ((stats.call_count - stats.error_count) / stats.call_count) if stats.call_count > 0 else 1.0
+            }
+
+            # 添加HTTP方法统计
+            if hasattr(stats, 'method_info') and stats.method_info:
+                result["method_stats"] = {}
+                for method_key, method_stats in stats.method_info.items():
+                    method, status_code = method_key.split('_', 1)
+                    if method not in result["method_stats"]:
+                        result["method_stats"][method] = {
+                            "requests": 0,
+                            "avg_duration": 0.0,
+                            "avg_request_size": 0.0,
+                            "avg_response_size": 0.0
+                        }
+
+                    result["method_stats"][method]["requests"] += method_stats['count']
+                    result["method_stats"][method]["avg_duration"] = (
+                        method_stats['total_duration'] / method_stats['count']
+                    )
+                    result["method_stats"][method]["avg_request_size"] = (
+                        method_stats['request_size_total'] / method_stats['count']
+                    )
+                    result["method_stats"][method]["avg_response_size"] = (
+                        method_stats['response_size_total'] / method_stats['count']
+                    )
+
+            return result
+
+    def get_slow_endpoints(self, threshold: float = 0.5) -> list[dict[str, Any]]:
+        """获取慢端点列表
+
+        Args:
+            threshold: 慢端点阈值(秒)
+
+        Returns:
+            慢端点列表，按平均响应时间降序排列
+        """
+        slow_endpoints = []
+
+        with self.lock:
+            for endpoint, stats in self.stats.items():
+                if stats.call_count > 0 and stats.avg_time > threshold:
+                    slow_endpoints.append({
+                        "endpoint": endpoint,
+                        "avg_time": stats.avg_time,
+                        "call_count": stats.call_count,
+                        "max_time": stats.max_time,
+                        "error_rate": (stats.error_count / stats.call_count) if stats.call_count > 0 else 0.0
+                    })
+
+        # 按平均响应时间降序排列
+        return sorted(slow_endpoints, key=lambda x: x["avg_time"], reverse=True)
+
     def get_summary_report(self) -> dict[str, Any]:
         """获取摘要报告"""
         with self.lock:
@@ -195,6 +314,7 @@ class APIEndpointProfiler:
                 "error_rate": (total_errors / total_calls) * 100,
                 "top_slowest": self.get_top_slowest(5),
                 "endpoint_count": len(self.stats),
+                "slow_endpoints": self.get_slow_endpoints(0.5)[:10]  # 前10个最慢端点
             }
 
 
