@@ -268,9 +268,16 @@ class DIContainer:
                 params[param_name] = self.resolve(param_type)
             else:
                 # 尝试自动注册
-                logger.warning(f"自动注册类型: {param_type.__name__}")
-                self.register_transient(param_type)
-                params[param_name] = self.resolve(param_type)
+                if isinstance(param_type, str):
+                    logger.warning(f"自动注册类型: {param_type}")
+                    # 字符串类型暂时跳过自动注册
+                    raise DependencyInjectionError(
+                        f"无法解析字符串类型注解: {param_type}。请使用具体的类型对象。"
+                    )
+                else:
+                    logger.warning(f"自动注册类型: {param_type.__name__}")
+                    self.register_transient(param_type)
+                    params[param_name] = self.resolve(param_type)
 
         return params
 

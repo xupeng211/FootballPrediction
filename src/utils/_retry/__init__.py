@@ -107,17 +107,47 @@ async def async_retry_with_exponential_backoff(
     return decorator
 
 
-def retry(config: RetryConfig | None = None):
-    """函数文档字符串"""
-    pass  # 添加pass语句
-    """通用的重试装饰器"""
-    if config is None:
-        config = RetryConfig()
+def retry(
+    config_or_max_attempts=None,
+    delay=None,
+    max_attempts=None,
+    base_delay=None,
+    **kwargs,
+):
+    """通用的重试装饰器（支持多种调用方式）"""
 
+    # 支持旧接口：retry(max_attempts=3, delay=0.01)
+    if config_or_max_attempts is None or isinstance(
+        config_or_max_attempts, (int, float)
+    ):
+        max_attempts = (
+            config_or_max_attempts if config_or_max_attempts is not None else 3
+        )
+        base_delay = delay if delay is not None else 1.0
+        return retry_with_exponential_backoff(
+            max_attempts=int(max_attempts),
+            base_delay=base_delay,
+            max_delay=kwargs.get("max_delay", 60.0),
+            exceptions=kwargs.get("exceptions", (Exception,)),
+        )
+
+    # 支持新接口：retry(RetryConfig(...))
+    if isinstance(config_or_max_attempts, RetryConfig):
+        config = config_or_max_attempts
+        return retry_with_exponential_backoff(
+            max_attempts=config.max_attempts,
+            base_delay=config.base_delay,
+            max_delay=config.max_delay,
+            exceptions=config.retryable_exceptions,
+        )
+
+    # 默认配置
+    config = RetryConfig()
     return retry_with_exponential_backoff(
         max_attempts=config.max_attempts,
         base_delay=config.base_delay,
         max_delay=config.max_delay,
+        exceptions=config.retryable_exceptions,
     )
 
 

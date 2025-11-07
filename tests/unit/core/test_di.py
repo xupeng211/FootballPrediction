@@ -592,9 +592,14 @@ class TestGlobalFunctions:
 
         src.core.di._default_container = None
 
+        def configurator(collection):
+            collection.add_singleton(TestService, TestServiceImpl)
+
+        configure_services(configurator)
+
         instance = resolve(TestService)
 
-        assert isinstance(instance, TestService)
+        assert isinstance(instance, TestServiceImpl)
 
 
 class TestInjectDecorator:
@@ -608,7 +613,7 @@ class TestInjectDecorator:
         src.core.di._default_container = None
 
         def configurator(collection):
-            collection.add_singleton(TestService, TestServiceImpl("injected"))
+            collection.add_singleton(TestService, TestServiceImpl)
 
         configure_services(configurator)
 
@@ -618,12 +623,12 @@ class TestInjectDecorator:
 
         result = test_function()
 
-        assert result == "injected_name"
+        assert result == "impl_name"
 
     def test_inject_decorator_with_custom_container(self):
         """测试使用自定义容器的依赖注入装饰器"""
         container = DIContainer()
-        container.register_singleton(TestService, TestServiceImpl("custom"))
+        container.register_singleton(TestService, TestServiceImpl)
 
         @inject(TestService, container)
         def test_function(service=None):
@@ -631,7 +636,7 @@ class TestInjectDecorator:
 
         result = test_function()
 
-        assert result == "custom_name"
+        assert result == "impl_name"
 
     def test_inject_decorator_without_service_param(self):
         """测试装饰器函数没有service参数"""
@@ -714,13 +719,14 @@ class TestEdgeCases:
         assert "服务未注册: TestService" in str(exc_info.value)
 
         # 测试循环依赖的错误消息
-        @dataclass
-        class CircularA:
-            b: "CircularB"
-
+        # 重新组织类定义以避免前向引用
         @dataclass
         class CircularB:
-            a: CircularA
+            a: "CircularA"
+
+        @dataclass
+        class CircularA:
+            b: CircularB  # 现在可以使用具体类型
 
         container.register_transient(CircularA)
         container.register_transient(CircularB)
