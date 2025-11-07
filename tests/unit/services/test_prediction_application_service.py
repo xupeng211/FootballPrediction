@@ -4,10 +4,10 @@ from datetime import datetime
 from unittest.mock import Mock
 
 import pytest
-from src.database.models.prediction import Prediction
 
 from src.database.models.match import Match
 from src.database.models.team import Team
+from src.domain.models.prediction import Prediction
 from src.models.prediction_service import PredictionService
 
 

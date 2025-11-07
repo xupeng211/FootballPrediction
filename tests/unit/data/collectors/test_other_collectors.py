@@ -6,6 +6,7 @@
 """
 
 import pytest
+
 from src.collectors.base_collector import CollectionResult
 
 
@@ -47,6 +48,7 @@ class TestOtherCollectors:
         """测试赔率采集器导入"""
         try:
             from src.data.collectors.odds_collector import OddsCollector
+
             assert OddsCollector is not None
         except ImportError:
             pytest.skip("OddsCollector not available")
@@ -55,6 +57,7 @@ class TestOtherCollectors:
         """测试比分采集器导入"""
         try:
             from src.data.collectors.scores_collector import ScoresCollector
+
             assert ScoresCollector is not None
         except ImportError:
             pytest.skip("ScoresCollector not available")
@@ -63,6 +66,7 @@ class TestOtherCollectors:
         """测试流采集器导入"""
         try:
             from src.data.collectors.streaming_collector import StreamingCollector
+
             assert StreamingCollector is not None
         except ImportError:
             pytest.skip("StreamingCollector not available")

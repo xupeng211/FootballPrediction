@@ -62,7 +62,7 @@ class FixturesCollector(BaseCollector):
             base_url=base_url,
             timeout=timeout,
             max_retries=max_retries,
-            rate_limit=rate_limit
+            rate_limit=rate_limit,
         )
         self.data_source = data_source
         self.logger = logging.getLogger(__name__)
@@ -232,14 +232,20 @@ class FixturesCollector(BaseCollector):
         """赛程采集器不处理赔率数据"""
         return CollectionResult(
             success=True,
-            data={"message": "Odds collection skipped", "data_source": self.data_source},
+            data={
+                "message": "Odds collection skipped",
+                "data_source": self.data_source,
+            },
         )
 
     async def collect_live_scores(self, **kwargs) -> CollectionResult:
         """赛程采集器不处理实时比分数据"""
         return CollectionResult(
             success=True,
-            data={"message": "Live scores collection skipped", "data_source": self.data_source},
+            data={
+                "message": "Live scores collection skipped",
+                "data_source": self.data_source,
+            },
         )
 
     async def _get_active_leagues(self) -> list[str]:
@@ -464,8 +470,7 @@ class FixturesCollector(BaseCollector):
         try:
             if not league_id:
                 return CollectionResult(
-                    success=False,
-                    error="League ID is required for team collection"
+                    success=False, error="League ID is required for team collection"
                 )
 
             endpoint = f"competitions/{league_id}/teams"
@@ -483,8 +488,7 @@ class FixturesCollector(BaseCollector):
         except Exception as e:
             logger.error(f"Failed to collect teams: {str(e)}")
             return CollectionResult(
-                success=False,
-                error=f"Team collection failed: {str(e)}"
+                success=False, error=f"Team collection failed: {str(e)}"
             )
 
     async def collect_players(self, team_id: int | None = None) -> CollectionResult:
@@ -492,8 +496,7 @@ class FixturesCollector(BaseCollector):
         try:
             if not team_id:
                 return CollectionResult(
-                    success=False,
-                    error="Team ID is required for player collection"
+                    success=False, error="Team ID is required for player collection"
                 )
 
             endpoint = f"teams/{team_id}"
@@ -511,8 +514,7 @@ class FixturesCollector(BaseCollector):
         except Exception as e:
             logger.error(f"Failed to collect players: {str(e)}")
             return CollectionResult(
-                success=False,
-                error=f"Player collection failed: {str(e)}"
+                success=False, error=f"Player collection failed: {str(e)}"
             )
 
     async def collect_leagues(self) -> CollectionResult:
@@ -533,8 +535,7 @@ class FixturesCollector(BaseCollector):
         except Exception as e:
             logger.error(f"Failed to collect leagues: {str(e)}")
             return CollectionResult(
-                success=False,
-                error=f"League collection failed: {str(e)}"
+                success=False, error=f"League collection failed: {str(e)}"
             )
 
     # 添加测试需要的方法
@@ -542,10 +543,7 @@ class FixturesCollector(BaseCollector):
         self, start_date: datetime, end_date: datetime
     ) -> CollectionResult:
         """按日期范围采集赛程"""
-        return await self.collect_fixtures(
-            date_from=start_date,
-            date_to=end_date
-        )
+        return await self.collect_fixtures(date_from=start_date, date_to=end_date)
 
     async def collect_fixtures_by_team(self, team_id: int) -> CollectionResult:
         """按球队采集赛程"""
@@ -571,8 +569,7 @@ class FixturesCollector(BaseCollector):
         except Exception as e:
             logger.error(f"Failed to collect fixtures for team {team_id}: {str(e)}")
             return CollectionResult(
-                success=False,
-                error=f"Team fixtures collection failed: {str(e)}"
+                success=False, error=f"Team fixtures collection failed: {str(e)}"
             )
 
     async def collect_fixtures_by_league(self, league_id: int) -> CollectionResult:
@@ -580,14 +577,19 @@ class FixturesCollector(BaseCollector):
         return await self.collect_matches(league_id=league_id)
 
     # 添加缺失的辅助方法
-    async def _save_to_bronze_layer(self, table_name: str, data: list[dict[str, Any]]) -> None:
+    async def _save_to_bronze_layer(
+        self, table_name: str, data: list[dict[str, Any]]
+    ) -> None:
         """保存数据到Bronze层（模拟实现）"""
         self.logger.info(f"模拟保存 {len(data)} 条记录到 {table_name} 表")
         # 在实际实现中，这里会将数据保存到数据库
         pass
 
     async def _make_request(
-        self, url: str, headers: dict[str, str] | None = None, params: dict[str, Any] | None = None
+        self,
+        url: str,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """发起HTTP请求（模拟实现）"""
         # 在测试环境中返回模拟数据
@@ -601,7 +603,7 @@ class FixturesCollector(BaseCollector):
                     "competition": {"id": 456},
                     "status": "SCHEDULED",
                     "season": {"id": 2024},
-                    "matchday": 1
+                    "matchday": 1,
                 }
             ]
         }
