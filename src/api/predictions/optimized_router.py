@@ -188,7 +188,9 @@ async def get_popular_predictions(
 
     except Exception as e:
         logger.error(f"Error getting popular predictions: {e}")
-        raise HTTPException(status_code=500, detail=f"获取热门预测失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取热门预测失败: {str(e)}"
+        ) from e
 
 
 @router.get("/user/{user_id}/history")
@@ -233,7 +235,9 @@ async def get_user_prediction_history(
         raise
     except Exception as e:
         logger.error(f"Error getting user prediction history: {e}")
-        raise HTTPException(status_code=500, detail=f"获取预测历史失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取预测历史失败: {str(e)}"
+        ) from e
 
 
 @router.get("/statistics")
@@ -270,7 +274,9 @@ async def get_prediction_statistics(
 
     except Exception as e:
         logger.error(f"Error getting prediction statistics: {e}")
-        raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取统计信息失败: {str(e)}"
+        ) from e
 
 
 @router.post("/cache/warmup")
@@ -301,7 +307,9 @@ async def warmup_cache(
         raise
     except Exception as e:
         logger.error(f"Error starting cache warmup: {e}")
-        raise HTTPException(status_code=500, detail=f"缓存预热启动失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"缓存预热启动失败: {str(e)}"
+        ) from e
 
 
 @router.delete("/cache/clear")

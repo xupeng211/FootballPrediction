@@ -5,18 +5,17 @@ Domain Entities Test Module
 测试核心领域实体的功能和行为
 """
 
-import pytest
 from datetime import datetime
 
 from src.domain.entities import (
-    Team,
-    Match,
     League,
-    Prediction,
+    Match,
     MatchStatus,
+    Prediction,
+    Team,
     TeamStatus,
-    create_test_team,
     create_test_match,
+    create_test_team,
     validate_prediction_confidence,
 )
 
@@ -86,7 +85,7 @@ class TestTeam:
             name="Test Team",
             status=TeamStatus.ACTIVE,
             league_id=100,
-            created_at=created_at
+            created_at=created_at,
         )
 
         assert team.id == 1
@@ -125,7 +124,7 @@ class TestMatch:
             home_team_id=100,
             away_team_id=200,
             league_id=10,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
 
         assert match.id == 1
@@ -155,7 +154,7 @@ class TestMatch:
             started_at=started_at,
             finished_at=finished_at,
             home_score=2,
-            away_score=1
+            away_score=1,
         )
 
         assert match.id == 1
@@ -176,21 +175,21 @@ class TestMatch:
             home_team_id=100,
             away_team_id=200,
             league_id=10,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
         match2 = Match(
             id=1,
             home_team_id=100,
             away_team_id=200,
             league_id=10,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
         match3 = Match(
             id=2,
             home_team_id=300,
             away_team_id=400,
             league_id=20,
-            status=MatchStatus.LIVE
+            status=MatchStatus.LIVE,
         )
 
         assert match1 == match2
@@ -203,7 +202,7 @@ class TestMatch:
             home_team_id=100,
             away_team_id=200,
             league_id=10,
-            status=MatchStatus.SCHEDULED
+            status=MatchStatus.SCHEDULED,
         )
         repr_str = repr(match)
 
@@ -234,7 +233,7 @@ class TestLeague:
             name="Test League",
             country="Test Country",
             season="2023",
-            is_active=False
+            is_active=False,
         )
 
         assert league.id == 1
@@ -276,7 +275,7 @@ class TestPrediction:
             user_id=200,
             predicted_result="HOME_WIN",
             confidence=0.8,
-            created_at=created_at
+            created_at=created_at,
         )
 
         assert prediction.id == 1
@@ -297,7 +296,7 @@ class TestPrediction:
             predicted_result="HOME_WIN",
             confidence=0.8,
             created_at=created_at,
-            is_correct=True
+            is_correct=True,
         )
 
         assert prediction.id == 1
@@ -317,7 +316,7 @@ class TestPrediction:
             user_id=200,
             predicted_result="HOME_WIN",
             confidence=0.8,
-            created_at=created_at
+            created_at=created_at,
         )
         prediction2 = Prediction(
             id=1,
@@ -325,7 +324,7 @@ class TestPrediction:
             user_id=200,
             predicted_result="HOME_WIN",
             confidence=0.8,
-            created_at=created_at
+            created_at=created_at,
         )
         prediction3 = Prediction(
             id=2,
@@ -333,7 +332,7 @@ class TestPrediction:
             user_id=400,
             predicted_result="AWAY_WIN",
             confidence=0.6,
-            created_at=created_at
+            created_at=created_at,
         )
 
         assert prediction1 == prediction2
@@ -348,7 +347,7 @@ class TestPrediction:
             user_id=200,
             predicted_result="HOME_WIN",
             confidence=0.8,
-            created_at=created_at
+            created_at=created_at,
         )
         repr_str = repr(prediction)
 
@@ -424,10 +423,7 @@ class TestIntegrationScenarios:
         """测试完整比赛工作流程"""
         # 创建联赛
         league = League(
-            id=1,
-            name="Premier League",
-            country="England",
-            season="2023/2024"
+            id=1, name="Premier League", country="England", season="2023/2024"
         )
 
         # 创建队伍
@@ -448,7 +444,7 @@ class TestIntegrationScenarios:
             user_id=300,
             predicted_result="HOME_WIN",
             confidence=0.7,
-            created_at=created_at
+            created_at=created_at,
         )
 
         # 验证数据完整性

@@ -5,22 +5,22 @@ Authentication Dependencies Test Module
 测试FastAPI认证依赖的功能和行为
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials
 
 from src.api.auth_dependencies import (
-    TokenData,
     RateLimiter,
     SecurityHeaders,
+    TokenData,
     get_current_user,
     get_current_user_optional,
-    require_admin,
     rate_limiter,
-    security_headers,
+    require_admin,
     security,
+    security_headers,
 )
 
 
@@ -73,7 +73,7 @@ class TestRateLimiter:
         """测试RateLimiter创建"""
         limiter = RateLimiter()
 
-        assert hasattr(limiter, 'requests')
+        assert hasattr(limiter, "requests")
         assert isinstance(limiter.requests, dict)
         assert len(limiter.requests) == 0
 
@@ -111,7 +111,7 @@ class TestSecurityHeaders:
         """测试SecurityHeaders创建"""
         headers = SecurityHeaders()
 
-        assert hasattr(headers, 'headers')
+        assert hasattr(headers, "headers")
         assert isinstance(headers.headers, dict)
 
     def test_security_headers_default_values(self):
@@ -151,8 +151,10 @@ class TestGetCurrentUser:
 
     async def test_get_current_user_success(self, mock_credentials):
         """测试成功获取当前用户"""
-        with patch('src.api.auth_dependencies.TokenData') as mock_token_data:
-            mock_token_data.return_value = TokenData(user_id=1, username="test_user", role="user")
+        with patch("src.api.auth_dependencies.TokenData") as mock_token_data:
+            mock_token_data.return_value = TokenData(
+                user_id=1, username="test_user", role="user"
+            )
 
             result = await get_current_user(mock_credentials)
 
@@ -163,7 +165,10 @@ class TestGetCurrentUser:
 
     async def test_get_current_user_exception_handling(self, mock_credentials):
         """测试异常处理"""
-        with patch('src.api.auth_dependencies.TokenData', side_effect=Exception("Token parsing failed")):
+        with patch(
+            "src.api.auth_dependencies.TokenData",
+            side_effect=Exception("Token parsing failed"),
+        ):
             with pytest.raises(HTTPException) as exc_info:
                 await get_current_user(mock_credentials)
 
@@ -178,7 +183,7 @@ class TestGetCurrentUser:
             "bearer_token_123",
             "complex_jwt_token_string",
             "empty",
-            "very_long_token_string_that_might_be_used_in_production"
+            "very_long_token_string_that_might_be_used_in_production",
         ]
 
         for token in credentials_list:
@@ -215,7 +220,9 @@ class TestGetCurrentUserOptional:
 
         assert result is None
 
-    async def test_get_current_user_optional_invalid_auth_format(self, mock_request_with_auth):
+    async def test_get_current_user_optional_invalid_auth_format(
+        self, mock_request_with_auth
+    ):
         """测试无效的认证格式"""
         # 修改请求头为无效格式
         mock_request_with_auth.headers = {"Authorization": "InvalidFormat token"}
@@ -242,9 +249,14 @@ class TestGetCurrentUserOptional:
 
         assert result is None
 
-    async def test_get_current_user_optional_exception_handling(self, mock_request_with_auth):
+    async def test_get_current_user_optional_exception_handling(
+        self, mock_request_with_auth
+    ):
         """测试异常处理"""
-        with patch('src.api.auth_dependencies.TokenData', side_effect=Exception("Unexpected error")):
+        with patch(
+            "src.api.auth_dependencies.TokenData",
+            side_effect=Exception("Unexpected error"),
+        ):
             result = await get_current_user_optional(mock_request_with_auth)
 
             # 在异常情况下应该返回None，而不是抛出异常
@@ -255,8 +267,8 @@ class TestGetCurrentUserOptional:
         auth_schemes = [
             ("Bearer token123", True),
             ("bearer token456", False),  # 小写bearer不应该被接受
-            ("Token token789", False),   # 非Bearer方案
-            ("", False),                 # 空字符串
+            ("Token token789", False),  # 非Bearer方案
+            ("", False),  # 空字符串
         ]
 
         for auth_header, should_succeed in auth_schemes:
@@ -350,8 +362,8 @@ class TestGlobalInstances:
         """测试全局security实例"""
         assert security is not None
         # HTTPBearer实例的scheme_name属性是'httpbearer'
-        assert hasattr(security, 'scheme') or hasattr(security, 'scheme_name')
-        if hasattr(security, 'scheme_name'):
+        assert hasattr(security, "scheme") or hasattr(security, "scheme_name")
+        if hasattr(security, "scheme_name"):
             assert security.scheme_name.lower() in ["bearer", "httpbearer"]
 
 
@@ -420,7 +432,10 @@ class TestIntegrationScenarios:
         # 测试各种错误情况下的HTTPException
         mock_credentials = Mock(spec=HTTPAuthorizationCredentials)
 
-        with patch('src.api.auth_dependencies.TokenData', side_effect=ValueError("Invalid token")):
+        with patch(
+            "src.api.auth_dependencies.TokenData",
+            side_effect=ValueError("Invalid token"),
+        ):
             with pytest.raises(HTTPException) as exc_info:
                 await get_current_user(mock_credentials)
 

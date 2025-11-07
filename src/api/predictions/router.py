@@ -164,7 +164,9 @@ async def get_recent_predictions(
 
     except Exception as e:
         logger.error(f"获取最近预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取最近预测失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取最近预测失败: {str(e)}"
+        ) from e
 
 
 @router.get("/{match_id}", response_model=PredictionResult)
@@ -335,7 +337,9 @@ async def get_prediction_history(
 
     except Exception as e:
         logger.error(f"获取历史记录失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取历史记录失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取历史记录失败: {str(e)}"
+        ) from e
 
 
 @router.post("/{match_id}/verify", response_model=PredictionVerification)

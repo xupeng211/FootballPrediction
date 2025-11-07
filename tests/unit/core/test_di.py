@@ -6,22 +6,23 @@ Dependency Injection System Tests
 Tests the integrity and correctness of core dependency injection functionality.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
+from unittest.mock import Mock, patch
+
+import pytest
 
 from src.core.di import (
-    ServiceLifetime,
-    ServiceDescriptor,
+    DependencyInjectionError,
     DIContainer,
     DIScope,
     ServiceCollection,
-    DependencyInjectionError,
-    get_default_container,
+    ServiceDescriptor,
+    ServiceLifetime,
     configure_services,
-    resolve,
+    get_default_container,
     inject,
+    resolve,
 )
 
 
@@ -107,7 +108,7 @@ class TestServiceDescriptor:
         descriptor = ServiceDescriptor(
             interface=TestService,
             implementation=TestService,
-            lifetime=ServiceLifetime.TRANSIENT
+            lifetime=ServiceLifetime.TRANSIENT,
         )
 
         assert descriptor.interface == TestService
@@ -130,7 +131,7 @@ class TestServiceDescriptor:
             lifetime=ServiceLifetime.SINGLETON,
             factory=factory,
             instance=instance,
-            dependencies=[AnotherTestService]
+            dependencies=[AnotherTestService],
         )
 
         assert descriptor.interface == TestService
@@ -145,7 +146,7 @@ class TestServiceDescriptor:
         descriptor = ServiceDescriptor(
             interface=TestService,
             implementation=TestService,
-            lifetime=ServiceLifetime.TRANSIENT
+            lifetime=ServiceLifetime.TRANSIENT,
         )
 
         assert descriptor.dependencies == []
@@ -312,6 +313,7 @@ class TestDIContainer:
 
     def test_circular_dependency_detection(self):
         """测试循环依赖检测"""
+
         @dataclass
         class ServiceA:
             b: "ServiceB"
@@ -334,13 +336,15 @@ class TestDIContainer:
         container = DIContainer()
         container.register_scoped(TestService, TestServiceImpl)
 
-        with patch('src.core.di.logger') as mock_logger:
+        with patch("src.core.di.logger") as mock_logger:
             instance1 = container.resolve(TestService)
             instance2 = container.resolve(TestService)
 
             # 应该当作单例处理
             assert instance1 is instance2
-            mock_logger.warning.assert_called_with("没有活动的作用域, 将作用域服务当作单例处理")
+            mock_logger.warning.assert_called_with(
+                "没有活动的作用域, 将作用域服务当作单例处理"
+            )
 
     def test_is_registered(self):
         """测试检查服务是否已注册"""
@@ -400,7 +404,7 @@ class TestDIContainer:
         container.register_scoped(ServiceWithCleanup)
 
         # 创建并进入作用域
-        with container.create_scope("test_scope") as scope:
+        with container.create_scope("test_scope"):
             # 解析服务创建实例
             instance = container.resolve(ServiceWithCleanup)
             assert not instance.is_cleaned_up()
@@ -419,7 +423,7 @@ class TestDIContainer:
 
         container.register_scoped(BadCleanupService)
 
-        with patch('src.core.di.logger') as mock_logger:
+        with patch("src.core.di.logger") as mock_logger:
             with container.create_scope("test_scope"):
                 container.resolve(ServiceWithCleanup)
                 container.resolve(BadCleanupService)
@@ -436,7 +440,7 @@ class TestDIScope:
         container = DIContainer()
         container.register_scoped(TestService, TestServiceImpl)
 
-        with container.create_scope("test_scope") as scope:
+        with container.create_scope("test_scope"):
             assert container._current_scope == "test_scope"
 
             instance1 = container.resolve(TestService)
@@ -523,10 +527,11 @@ class TestServiceCollection:
         """测试链式注册"""
         collection = ServiceCollection()
 
-        result = (collection
-                  .add_singleton(TestService, TestServiceImpl)
-                  .add_transient(AnotherTestService)
-                  .add_scoped(ServiceWithCleanup))
+        result = (
+            collection.add_singleton(TestService, TestServiceImpl)
+            .add_transient(AnotherTestService)
+            .add_scoped(ServiceWithCleanup)
+        )
 
         assert isinstance(result, ServiceCollection)
         assert len(collection._registrations) == 3
@@ -539,6 +544,7 @@ class TestGlobalFunctions:
         """测试获取默认容器"""
         # 清除全局容器
         import src.core.di
+
         src.core.di._default_container = None
 
         container1 = get_default_container()
@@ -550,6 +556,7 @@ class TestGlobalFunctions:
 
     def test_configure_services(self):
         """测试配置服务"""
+
         def configurator(collection):
             collection.add_singleton(TestService, TestServiceImpl)
 
@@ -566,6 +573,7 @@ class TestGlobalFunctions:
         """测试从默认容器解析服务"""
         # 清除并重新配置默认容器
         import src.core.di
+
         src.core.di._default_container = None
 
         def configurator(collection):
@@ -581,6 +589,7 @@ class TestGlobalFunctions:
         """测试没有默认容器时解析服务"""
         # 清除全局容器
         import src.core.di
+
         src.core.di._default_container = None
 
         instance = resolve(TestService)
@@ -595,6 +604,7 @@ class TestInjectDecorator:
         """测试依赖注入装饰器"""
         # 清除并重新配置默认容器
         import src.core.di
+
         src.core.di._default_container = None
 
         def configurator(collection):
@@ -627,6 +637,7 @@ class TestInjectDecorator:
         """测试装饰器函数没有service参数"""
         # 清除并重新配置默认容器
         import src.core.di
+
         src.core.di._default_container = None
 
         def configurator(collection):
@@ -648,6 +659,7 @@ class TestEdgeCases:
 
     def test_service_with_no_constructor_params(self):
         """测试没有构造函数参数的服务"""
+
         class NoParamsService:
             pass
 
@@ -660,6 +672,7 @@ class TestEdgeCases:
 
     def test_service_with_default_params(self):
         """测试有默认参数的服务"""
+
         class DefaultParamsService:
             def __init__(self, name: str = "default", value: int = 42):
                 self.name = name
@@ -675,6 +688,7 @@ class TestEdgeCases:
 
     def test_auto_registration_of_dependencies(self):
         """测试自动注册依赖"""
+
         class AutoService:
             def __init__(self, test_service: TestService):
                 self.test_service = test_service
@@ -682,7 +696,7 @@ class TestEdgeCases:
         container = DIContainer()
         container.register_singleton(AutoService)
 
-        with patch('src.core.di.logger') as mock_logger:
+        with patch("src.core.di.logger") as mock_logger:
             instance = container.resolve(AutoService)
 
             assert isinstance(instance, AutoService)
@@ -724,6 +738,7 @@ class TestIntegrationScenarios:
 
     def test_complex_dependency_graph(self):
         """测试复杂依赖图"""
+
         class DatabaseService:
             def __init__(self):
                 self.connected = True
@@ -747,7 +762,9 @@ class TestIntegrationScenarios:
                 self.user_service = user_service
 
         class ApplicationService:
-            def __init__(self, orders: OrderService, users: UserService, logging: LoggingService):
+            def __init__(
+                self, orders: OrderService, users: UserService, logging: LoggingService
+            ):
                 self.orders = orders
                 self.users = users
                 self.logging = logging

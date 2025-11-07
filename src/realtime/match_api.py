@@ -151,7 +151,9 @@ async def add_match_to_monitoring(
         ) from e  # TODO: B904 exception chaining
     except Exception as e:
         logger.error(f"Failed to add match to monitoring: {e}")
-        raise HTTPException(status_code=500, detail="Failed to add match to monitoring") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to add match to monitoring"
+        ) from e
 
 
 @router.put("/{match_id}/score", summary="更新比赛比分")
@@ -286,7 +288,9 @@ async def update_match_status(
         ) from e  # TODO: B904 exception chaining
     except Exception as e:
         logger.error(f"Failed to update match status: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update match status") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to update match status"
+        ) from e
 
 
 @router.get("/{match_id}", summary="获取比赛信息")
