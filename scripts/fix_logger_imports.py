@@ -3,14 +3,14 @@
 批量修复测试文件中的logger导入问题
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_logger_imports(file_path):
     """修复单个文件中的logger导入问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -166,7 +166,7 @@ def main():
         else:
             print(f"❌ 文件不存在: {file_path}")
 
-    print(f"\n修复完成！")
+    print("\n修复完成！")
     print(f"总共处理: {total_count} 个文件")
     print(f"成功修复: {fixed_count} 个文件")
 

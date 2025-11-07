@@ -3,9 +3,8 @@
 修复被sed命令破坏的HTTPException语法
 """
 
-import re
-import os
 from pathlib import Path
+
 
 def fix_http_exception_syntax(content):
     """修复HTTPException语法错误"""
@@ -50,7 +49,7 @@ def main():
     fixed_files = 0
     for py_file in Path("src").rglob("*.py"):
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, encoding='utf-8') as f:
                 content = f.read()
 
             # 检查是否有语法错误

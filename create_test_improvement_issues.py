@@ -7,8 +7,8 @@
 import json
 import subprocess
 from dataclasses import dataclass
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -16,7 +16,7 @@ class TestIssueData:
     """测试Issue数据结构"""
     title: str
     body: str
-    labels: List[str]
+    labels: list[str]
     priority: str
 
 
@@ -91,7 +91,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 *自动生成时间: {timestamp}*
 """
 
-    def analyze_test_status(self) -> Dict[str, Any]:
+    def analyze_test_status(self) -> dict[str, Any]:
         """分析测试状态"""
         test_analysis = {
             "overall_coverage": 0,
@@ -111,7 +111,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
             # 读取覆盖率报告
             try:
-                with open("coverage.json", 'r') as f:
+                with open("coverage.json") as f:
                     coverage_data = json.load(f)
                     test_analysis["overall_coverage"] = coverage_data.get("totals", {}).get("percent_covered", 0)
                     test_analysis["coverage_by_module"] = coverage_data.get("files", {})
@@ -139,7 +139,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         return test_analysis
 
-    def create_test_improvement_issues(self, analysis: Dict[str, Any]) -> List[TestIssueData]:
+    def create_test_improvement_issues(self, analysis: dict[str, Any]) -> list[TestIssueData]:
         """创建测试改进Issues"""
         issues = []
 
@@ -167,7 +167,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         return issues
 
-    def _create_coverage_improvement_issue(self, analysis: Dict[str, Any], coverage_gap: float) -> TestIssueData:
+    def _create_coverage_improvement_issue(self, analysis: dict[str, Any], coverage_gap: float) -> TestIssueData:
         """创建覆盖率改进Issue"""
         current_coverage = analysis["overall_coverage"]
         target_coverage = 30
@@ -193,7 +193,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         return TestIssueData(title, body, labels, "high")
 
-    def _create_failed_tests_issue(self, analysis: Dict[str, Any], failed_count: int) -> TestIssueData:
+    def _create_failed_tests_issue(self, analysis: dict[str, Any], failed_count: int) -> TestIssueData:
         """创建失败测试修复Issue"""
         failed_test_names = [test.split("::")[-1] for test in analysis["failed_tests"][:5]]
 
@@ -225,7 +225,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         return TestIssueData(title, body, labels, "critical")
 
-    def _identify_low_coverage_modules(self, analysis: Dict[str, Any]) -> List[tuple]:
+    def _identify_low_coverage_modules(self, analysis: dict[str, Any]) -> list[tuple]:
         """识别低覆盖率模块"""
         # 模拟低覆盖率模块数据
         low_modules = [
@@ -267,7 +267,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         return TestIssueData(title, body, labels, "medium")
 
-    def _create_test_quality_issue(self, analysis: Dict[str, Any]) -> TestIssueData:
+    def _create_test_quality_issue(self, analysis: dict[str, Any]) -> TestIssueData:
         """创建测试质量提升Issue"""
         total_tests = sum(data["total"] for data in analysis["test_count_by_type"].values())
         total_passed = sum(data["passed"] for data in analysis["test_count_by_type"].values())
@@ -302,7 +302,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         return TestIssueData(title, body, labels, "medium")
 
-    def save_test_issues(self, issues: List[TestIssueData], filename: str = "test_improvement_issues.json"):
+    def save_test_issues(self, issues: list[TestIssueData], filename: str = "test_improvement_issues.json"):
         """保存测试Issues到文件"""
         issues_data = []
         for issue in issues:
@@ -318,7 +318,7 @@ pytest tests/{test_path} --cov={module} --cov-report=term-missing
 
         print(f"💾 测试改进Issues已保存到 {filename}")
 
-    def print_test_issues_summary(self, issues: List[TestIssueData]):
+    def print_test_issues_summary(self, issues: list[TestIssueData]):
         """打印测试Issues摘要"""
         print("\n" + "="*60)
         print("🧪 生成的测试改进Issues摘要")

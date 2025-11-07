@@ -4,13 +4,18 @@
 用于在主应用修复期间提供基础的监控功能
 """
 
-import os
-import sys
-import time
 import logging
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
-from fastapi import FastAPI, Response
+import time
+
 import uvicorn
+from fastapi import FastAPI, Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)

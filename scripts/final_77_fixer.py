@@ -8,7 +8,6 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Set
 
 
 class Final77Fixer:
@@ -19,7 +18,7 @@ class Final77Fixer:
         self.error_count = 0
         self.start_time = time.time()
 
-    def execute_final_fix(self) -> Dict[str, any]:
+    def execute_final_fix(self) -> dict[str, any]:
         """执行最终的77个问题修复"""
         print("🚀 最终解决：77个剩余运行时安全问题")
         print("=" * 60)
@@ -88,7 +87,7 @@ class Final77Fixer:
         except subprocess.CalledProcessError as e:
             print(f"    ❌ 备份失败: {e}")
 
-    def _analyze_remaining_issues(self) -> Dict[str, any]:
+    def _analyze_remaining_issues(self) -> dict[str, any]:
         """详细分析剩余问题"""
         print("  🔧 详细分析剩余的F821,F405,F403,A002问题...")
 
@@ -124,7 +123,7 @@ class Final77Fixer:
 
         return issues
 
-    def _parse_error_details(self, output: str, error_type: str, issues: Dict):
+    def _parse_error_details(self, output: str, error_type: str, issues: dict):
         """解析错误详情"""
         for line in output.split('\n'):
             if error_type in line and '.py' in line:
@@ -187,7 +186,7 @@ class Final77Fixer:
 
         return fix_count
 
-    def _fix_f821_undefined_names(self, f821_data: Dict) -> int:
+    def _fix_f821_undefined_names(self, f821_data: dict) -> int:
         """修复F821未定义名称问题"""
         print(f"    🔧 修复F821未定义名称: {f821_data['total']} 个")
         fix_count = 0
@@ -214,7 +213,7 @@ class Final77Fixer:
             print(f"      🔧 处理文件: {path}")
 
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content
@@ -282,7 +281,7 @@ class Final77Fixer:
 
         return content
 
-    def _fix_a002_parameter_conflicts(self, a002_data: Dict) -> int:
+    def _fix_a002_parameter_conflicts(self, a002_data: dict) -> int:
         """修复A002参数名冲突问题"""
         print(f"    🔧 修复A002参数名冲突: {a002_data['total']} 个")
         fix_count = 0
@@ -315,7 +314,7 @@ class Final77Fixer:
             print(f"      🔧 处理文件: {path}")
 
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content
@@ -358,7 +357,7 @@ class Final77Fixer:
 
         return fix_count
 
-    def _fix_f403_star_imports(self, f403_data: Dict) -> int:
+    def _fix_f403_star_imports(self, f403_data: dict) -> int:
         """修复F403星号导入问题"""
         print(f"    🔧 修复F403星号导入: {f403_data['total']} 个")
         fix_count = 0
@@ -372,7 +371,7 @@ class Final77Fixer:
             print(f"      🔧 处理文件: {path}")
 
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content
@@ -443,11 +442,11 @@ class Final77Fixer:
                 ['ruff', 'check', 'src/', '--fix'],
                 capture_output=True, text=True
             )
-            print(f"        ✅ ruff清理完成")
+            print("        ✅ ruff清理完成")
         except Exception as e:
             print(f"        ❌ ruff清理失败: {e}")
 
-    def _verify_final_results(self) -> Dict[str, int]:
+    def _verify_final_results(self) -> dict[str, int]:
         """验证最终修复结果"""
         print("  🔧 验证最终修复结果...")
 
@@ -477,7 +476,7 @@ class Final77Fixer:
 
         return verification
 
-    def _generate_final_report(self, fix_results: Dict, verification: Dict):
+    def _generate_final_report(self, fix_results: dict, verification: dict):
         """生成最终修复报告"""
         print("\n" + "=" * 60)
         print("📊 最终77个问题解决报告")
@@ -491,15 +490,15 @@ class Final77Fixer:
         for fix_type, count in fix_results.items():
             print(f"   {fix_type}: {count} 个")
 
-        print(f"\n🎯 总体结果:")
+        print("\n🎯 总体结果:")
         print(f"   总修复数量: {total_fixed} 个")
         print(f"   执行时间: {total_time:.1f} 秒")
 
         # 验证结果
         if verification.get('total', 0) == 0:
-            print(f"\n🎉 恭喜！所有77个问题已完全解决！")
+            print("\n🎉 恭喜！所有77个问题已完全解决！")
         else:
-            print(f"\n📈 改善情况:")
+            print("\n📈 改善情况:")
             print(f"   剩余问题: {verification.get('total', 0)} 个")
             improvement = max(0, 77 - verification.get('total', 0))
             print(f"   解决问题: {improvement} 个")
@@ -508,13 +507,13 @@ class Final77Fixer:
         # 状态评估
         remaining = verification.get('total', 0)
         if remaining == 0:
-            print(f"\n✅ 状态: 完美 - 零运行时安全问题")
+            print("\n✅ 状态: 完美 - 零运行时安全问题")
         elif remaining <= 10:
-            print(f"\n🟢 状态: 优秀 - 剩余极少数问题")
+            print("\n🟢 状态: 优秀 - 剩余极少数问题")
         elif remaining <= 25:
-            print(f"\n🟡 状态: 良好 - 大幅改善")
+            print("\n🟡 状态: 良好 - 大幅改善")
         else:
-            print(f"\n🟠 状态: 有待改善 - 需要进一步处理")
+            print("\n🟠 状态: 有待改善 - 需要进一步处理")
 
 
 def main():

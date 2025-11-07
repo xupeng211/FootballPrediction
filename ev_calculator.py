@@ -4,8 +4,8 @@
 EV Calculator
 """
 
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -67,7 +67,7 @@ class EVCalculator:
         )
 
     def analyze_betting_opportunity(self, odds: float, model_probability: float,
-                                   market_probability: float = None) -> Dict[str, Any]:
+                                   market_probability: float = None) -> dict[str, Any]:
         """
         分析投注机会
 

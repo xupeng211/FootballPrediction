@@ -45,7 +45,9 @@ class UserLogin:
 
 
 class UserResponse:
-    def __init__(self, user_id: int, email: str, is_active: bool, full_name: str = None):
+    def __init__(
+        self, user_id: int, email: str, is_active: bool, full_name: str = None
+    ):
         self.id = user_id
         self.email = email
         self.is_active = is_active

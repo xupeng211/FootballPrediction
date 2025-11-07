@@ -12,7 +12,7 @@ import logging
 import os
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -31,7 +31,7 @@ class PerformanceBenchmark:
         self.optimized_metrics = {}
 
     async def simulate_database_queries(self,
-    use_cache: bool = False) -> Dict[str,
+    use_cache: bool = False) -> dict[str,
     Any]:
         """模拟数据库查询性能测试"""
         logger.info(f"🧪 开始{'缓存' if use_cache else '无缓存'}查询性能测试...")
@@ -145,7 +145,7 @@ class PerformanceBenchmark:
 
     async def run_concurrent_test(self,
     use_cache: bool = False,
-    concurrent_connections: int = 20) -> Dict[str,
+    concurrent_connections: int = 20) -> dict[str,
     Any]:
         """运行并发查询测试"""
         logger.info(f"🚀 开始{'缓存' if use_cache else '无缓存'}并发查询测试 ({concurrent_connections}并发)...")
@@ -192,7 +192,7 @@ class PerformanceBenchmark:
             'avg_response_time': total_time / len(results)
         }
 
-        logger.info(f"✅ 并发测试完成:")
+        logger.info("✅ 并发测试完成:")
         logger.info(f"  - 并发连接数: {concurrent_connections}")
         logger.info(f"  - 总耗时: {total_time:.3f}s")
         logger.info(f"  - QPS: {metrics['qps']:.1f}")
@@ -200,7 +200,7 @@ class PerformanceBenchmark:
 
         return metrics
 
-    async def run_comprehensive_benchmark(self) -> Dict[str, Any]:
+    async def run_comprehensive_benchmark(self) -> dict[str, Any]:
         """运行综合性能基准测试"""
         logger.info("🎯 开始综合性能基准测试...")
 
@@ -259,11 +259,11 @@ class PerformanceBenchmark:
                 'achieved_improvement': max(avg_time_improvement,
     qps_improvement,
     concurrent_qps_improvement),
-    
+
                 'target_met': max(avg_time_improvement,
     qps_improvement,
     concurrent_qps_improvement) >= 50.0,
-    
+
                 'overall_cache_hit_rate': (optimized_metrics['cache_hit_rate'] + optimized_concurrent['cache_hit_rate']) / 2
             }
         }
@@ -271,7 +271,7 @@ class PerformanceBenchmark:
         logger.info("✅ 综合性能基准测试完成")
         return benchmark_report
 
-    def generate_performance_report(self, report: Dict[str, Any]) -> str:
+    def generate_performance_report(self, report: dict[str, Any]) -> str:
         """生成性能报告"""
         report_lines = [
             "=" * 80,
@@ -325,7 +325,7 @@ class PerformanceBenchmark:
 
         return "\n".join(report_lines)
 
-    async def run_benchmark(self) -> Dict[str, Any]:
+    async def run_benchmark(self) -> dict[str, Any]:
         """运行完整的基准测试"""
         try:
             report = await self.run_comprehensive_benchmark()

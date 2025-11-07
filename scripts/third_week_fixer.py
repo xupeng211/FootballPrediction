@@ -19,10 +19,8 @@
 
 import re
 import subprocess
-import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
 
 
 class ThirdWeekFixer:
@@ -33,7 +31,7 @@ class ThirdWeekFixer:
         self.error_count = 0
         self.start_time = time.time()
 
-    def execute_week3(self) -> Dict[str, any]:
+    def execute_week3(self) -> dict[str, any]:
         """执行第三周的完整修复流程"""
         print("🚀 第三周：系统性修复 - 432个运行时安全问题解决")
         print("=" * 70)
@@ -128,7 +126,7 @@ class ThirdWeekFixer:
 
         return fix_count
 
-    def _parse_f821_issues(self, ruff_output: str) -> Dict[Path, List[Dict]]:
+    def _parse_f821_issues(self, ruff_output: str) -> dict[Path, list[dict]]:
         """解析F821问题并按文件分组"""
         files_to_fix = {}
 
@@ -157,10 +155,10 @@ class ThirdWeekFixer:
 
         return files_to_fix
 
-    def _fix_f821_in_file(self, file_path: Path, issues: List[Dict]) -> int:
+    def _fix_f821_in_file(self, file_path: Path, issues: list[dict]) -> int:
         """修复单个文件中的F821问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 lines = f.readlines()
 
             original_lines = lines.copy()
@@ -220,7 +218,7 @@ class ThirdWeekFixer:
             print(f"        ❌ 修复文件失败 {file_path}: {e}")
             return 0
 
-    def _find_import_section_end(self, lines: List[str]) -> int:
+    def _find_import_section_end(self, lines: list[str]) -> int:
         """找到导入部分的结束位置"""
         for i, line in enumerate(lines):
             stripped = line.strip()
@@ -305,7 +303,7 @@ class ThirdWeekFixer:
 
         return fix_count
 
-    def _parse_f403_issues(self, ruff_output: str) -> Dict[Path, List[str]]:
+    def _parse_f403_issues(self, ruff_output: str) -> dict[Path, list[str]]:
         """解析F403问题并按文件分组"""
         files_to_fix = {}
 
@@ -320,10 +318,10 @@ class ThirdWeekFixer:
 
         return files_to_fix
 
-    def _fix_f403_in_file(self, file_path: Path, star_imports: List[str]) -> int:
+    def _fix_f403_in_file(self, file_path: Path, star_imports: list[str]) -> int:
         """修复单个文件中的F403星号导入问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -400,7 +398,7 @@ class ThirdWeekFixer:
 
         return fix_count
 
-    def _parse_a002_issues(self, ruff_output: str) -> Dict[Path, List[str]]:
+    def _parse_a002_issues(self, ruff_output: str) -> dict[Path, list[str]]:
         """解析A002问题并按文件分组"""
         files_to_fix = {}
 
@@ -422,10 +420,10 @@ class ThirdWeekFixer:
 
         return files_to_fix
 
-    def _fix_a002_in_file(self, file_path: Path, conflicts: List[str], replacements: Dict[str, str]) -> int:
+    def _fix_a002_in_file(self, file_path: Path, conflicts: list[str], replacements: dict[str, str]) -> int:
         """修复单个文件中的A002问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -459,7 +457,7 @@ class ThirdWeekFixer:
             print(f"        ❌ 修复文件失败 {file_path}: {e}")
             return 0
 
-    def _verify_fixes(self) -> Dict[str, int]:
+    def _verify_fixes(self) -> dict[str, int]:
         """验证修复效果"""
         print("    🔧 验证修复效果...")
 
@@ -484,7 +482,7 @@ class ThirdWeekFixer:
 
         return verification_results
 
-    def _generate_week3_report(self, results: Dict[str, any]):
+    def _generate_week3_report(self, results: dict[str, any]):
         """生成第三周修复报告"""
         print("\n" + "=" * 70)
         print("📊 第三周修复总结报告")
@@ -504,7 +502,7 @@ class ThirdWeekFixer:
         total_fixed = results['total']['fixed']
         total_success = results['total']['success']
 
-        print(f"\n🎯 总体结果:")
+        print("\n🎯 总体结果:")
         print(f"   预期修复: {total_expected} 个问题")
         print(f"   实际修复: {total_fixed} 个问题")
         print(f"   修复率: {(total_fixed/total_expected*100):.1f}%")
@@ -513,7 +511,7 @@ class ThirdWeekFixer:
 
         # 显示验证结果
         if 'verification' in results:
-            print(f"\n🔍 验证结果:")
+            print("\n🔍 验证结果:")
             verification = results['verification']
             for code, remaining in verification.items():
                 if remaining >= 0:
@@ -528,12 +526,12 @@ class ThirdWeekFixer:
         )
 
         if remaining_issues > 0:
-            print(f"\n💡 后续建议:")
+            print("\n💡 后续建议:")
             print(f"   - 还有 {remaining_issues} 个问题需要手动处理")
-            print(f"   - 建议运行 `ruff check src/ --fix` 进行补充修复")
-            print(f"   - 复杂问题可能需要人工干预")
+            print("   - 建议运行 `ruff check src/ --fix` 进行补充修复")
+            print("   - 复杂问题可能需要人工干预")
         else:
-            print(f"\n🎉 恭喜！所有运行时安全问题已解决！")
+            print("\n🎉 恭喜！所有运行时安全问题已解决！")
 
 
 def main():

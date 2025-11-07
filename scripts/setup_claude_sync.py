@@ -15,11 +15,11 @@ Date: 2025-11-06
 Version: 1.0.0
 """
 
+import json
 import subprocess
 import sys
-import json
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
 
 class ClaudeSyncSetup:
@@ -33,7 +33,7 @@ class ClaudeSyncSetup:
             "reports/github/comments"
         ]
 
-    def run_command(self, command: List[str], timeout: int = 30) -> Dict[str, Any]:
+    def run_command(self, command: list[str], timeout: int = 30) -> dict[str, Any]:
         """运行命令"""
         try:
             result = subprocess.run(
@@ -63,7 +63,7 @@ class ClaudeSyncSetup:
                 "returncode": -1
             }
 
-    def check_python_version(self) -> Dict[str, Any]:
+    def check_python_version(self) -> dict[str, Any]:
         """检查Python版本"""
         version = sys.version_info
         return {
@@ -72,7 +72,7 @@ class ClaudeSyncSetup:
             "message": f"Python {version.major}.{version.minor}.{version.micro}"
         }
 
-    def check_git(self) -> Dict[str, Any]:
+    def check_git(self) -> dict[str, Any]:
         """检查Git环境"""
         # 检查Git是否安装
         git_check = self.run_command(["git", "--version"])
@@ -102,7 +102,7 @@ class ClaudeSyncSetup:
             "error": None
         }
 
-    def check_github_cli(self) -> Dict[str, Any]:
+    def check_github_cli(self) -> dict[str, Any]:
         """检查GitHub CLI"""
         # 检查gh命令是否存在
         gh_check = self.run_command(["gh", "--version"])
@@ -128,7 +128,7 @@ class ClaudeSyncSetup:
             "error": None
         }
 
-    def check_repository_access(self) -> Dict[str, Any]:
+    def check_repository_access(self) -> dict[str, Any]:
         """检查仓库访问权限"""
         gh_check = self.run_command(["gh", "repo", "view"])
         if not gh_check["success"]:
@@ -177,7 +177,7 @@ class ClaudeSyncSetup:
                 success = False
         return success
 
-    def check_permissions(self) -> Dict[str, Any]:
+    def check_permissions(self) -> dict[str, Any]:
         """检查GitHub Issues权限"""
         try:
             # 尝试列出Issues（测试权限）
@@ -204,7 +204,7 @@ class ClaudeSyncSetup:
                 "error": str(e)
             }
 
-    def test_issue_creation(self, dry_run: bool = True) -> Dict[str, Any]:
+    def test_issue_creation(self, dry_run: bool = True) -> dict[str, Any]:
         """测试Issue创建功能"""
         if dry_run:
             return {
@@ -251,7 +251,7 @@ If you see this issue, the setup is working correctly! You can safely close this
         from datetime import datetime
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    def run_full_setup(self, test_issue: bool = False) -> Dict[str, Any]:
+    def run_full_setup(self, test_issue: bool = False) -> dict[str, Any]:
         """运行完整的环境检查和设置"""
         print("🔧 Claude Code 作业同步环境设置")
         print("=" * 60)
@@ -400,7 +400,7 @@ If you see this issue, the setup is working correctly! You can safely close this
             print("⚠️ 环境设置需要处理一些问题才能正常使用")
 
         # 输出详细状态
-        print(f"\n📈 组件状态:")
+        print("\n📈 组件状态:")
         print(f"   Python: {'✅' if python_check['valid'] else '❌'}")
         print(f"   Git: {'✅' if git_check['installed'] and git_check['configured'] else '⚠️' if git_check['installed'] else '❌'}")
         print(f"   GitHub CLI: {'✅' if gh_check.get('authenticated') else '⚠️' if gh_check.get('installed') else '❌'}")
@@ -410,12 +410,12 @@ If you see this issue, the setup is working correctly! You can safely close this
 
         # 输出建议
         if results["recommendations"]:
-            print(f"\n💡 改进建议:")
+            print("\n💡 改进建议:")
             for i, rec in enumerate(results["recommendations"], 1):
                 print(f"   {i}. {rec}")
 
         # 输出下一步操作
-        print(f"\n🚀 下一步操作:")
+        print("\n🚀 下一步操作:")
         if results["overall_status"] == "excellent":
             print("   🎯 开始使用: make claude-start-work")
             print("   📋 查看帮助: make claude-list-work")
@@ -429,7 +429,7 @@ If you see this issue, the setup is working correctly! You can safely close this
 
         return results
 
-    def generate_setup_report(self, results: Dict[str, Any]) -> str:
+    def generate_setup_report(self, results: dict[str, Any]) -> str:
         """生成设置报告"""
         report = f"""# Claude Code 作业同步环境设置报告
 

@@ -10,9 +10,8 @@ import time
 from datetime import datetime
 
 import pytest
-from src.core.events import DomainEvent, EventStore
 
-from src.api.events import Event, EventBus
+from src.events import Event, EventBus
 
 
 @pytest.mark.integration

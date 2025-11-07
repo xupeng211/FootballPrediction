@@ -5,10 +5,9 @@ Coverage Booster Tool - Boost from 3% to 30%
 """
 
 import os
-import subprocess
 import re
-from pathlib import Path
-from typing import List, Dict, Tuple
+import subprocess
+
 
 def get_current_coverage() -> float:
     """获取当前覆盖率"""
@@ -31,7 +30,7 @@ def get_current_coverage() -> float:
     except:
         return 0.0
 
-def create_targeted_tests() -> List[str]:
+def create_targeted_tests() -> list[str]:
     """创建针对高价值模块的测试"""
 
     # 基于覆盖率分析，优先测试这些高价值模块
@@ -359,7 +358,7 @@ class TestModuleFunctionality:
 
     return created_tests
 
-def run_coverage_test() -> Tuple[float, int]:
+def run_coverage_test() -> tuple[float, int]:
     """运行覆盖率测试"""
     try:
         result = subprocess.run(
@@ -408,7 +407,7 @@ def main():
     print("\\n🧪 运行覆盖率测试...")
     final_coverage, passed_tests = run_coverage_test()
 
-    print(f"\\n📊 覆盖率提升结果:")
+    print("\\n📊 覆盖率提升结果:")
     print(f"   初始覆盖率: {initial_coverage}%")
     print(f"   最终覆盖率: {final_coverage}%")
     print(f"   提升幅度: {final_coverage - initial_coverage:.1f}%")

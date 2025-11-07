@@ -4,14 +4,12 @@
 优化各个脚本工具之间的依赖关系和集成
 """
 
-import os
-import sys
-import json
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Any, Set
-from dataclasses import dataclass
 import ast
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -19,8 +17,8 @@ class ToolInfo:
     """工具信息"""
     name: str
     path: Path
-    dependencies: List[str]
-    dependents: List[str]
+    dependencies: list[str]
+    dependents: list[str]
     functionality: str
     status: str  # working, broken, needs_improvement
 
@@ -32,9 +30,9 @@ class ToolIntegrationOptimizer:
         self.project_root = project_root or Path(__file__).parent.parent
         self.scripts_dir = self.project_root / "scripts"
         self.src_dir = self.project_root / "src"
-        self.tools: Dict[str, ToolInfo] = {}
+        self.tools: dict[str, ToolInfo] = {}
 
-    def discover_tools(self) -> Dict[str, ToolInfo]:
+    def discover_tools(self) -> dict[str, ToolInfo]:
         """发现所有工具脚本"""
         print("🔍 发现工具脚本...")
 
@@ -52,7 +50,7 @@ class ToolIntegrationOptimizer:
     def _analyze_tool(self, script_path: Path) -> ToolInfo:
         """分析工具脚本"""
         try:
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 解析AST
@@ -81,7 +79,7 @@ class ToolIntegrationOptimizer:
             print(f"❌ 分析工具失败 {script_path}: {e}")
             return None
 
-    def _extract_imports(self, tree: ast.AST) -> List[str]:
+    def _extract_imports(self, tree: ast.AST) -> list[str]:
         """提取导入语句"""
         imports = []
 
@@ -95,7 +93,7 @@ class ToolIntegrationOptimizer:
 
         return imports
 
-    def _identify_dependencies(self, imports: List[str]) -> List[str]:
+    def _identify_dependencies(self, imports: list[str]) -> list[str]:
         """识别工具依赖"""
         dependencies = []
 
@@ -174,7 +172,7 @@ class ToolIntegrationOptimizer:
                     if other_name != tool_name and tool_name in other_info.dependencies:
                         tool_info.dependents.append(other_name)
 
-    def analyze_integration(self) -> Dict[str, Any]:
+    def analyze_integration(self) -> dict[str, Any]:
         """分析工具集成情况"""
         print("📊 分析工具集成...")
 
@@ -213,7 +211,7 @@ class ToolIntegrationOptimizer:
             } for name, tool in self.tools.items()}
         }
 
-    def _find_dependency_chains(self) -> List[List[str]]:
+    def _find_dependency_chains(self) -> list[list[str]]:
         """找出依赖链"""
         chains = []
 
@@ -250,8 +248,8 @@ class ToolIntegrationOptimizer:
         return unique_chains[:10]  # 返回前10条链
 
     def generate_optimization_suggestions(self,
-    analysis: Dict[str,
-    Any]) -> List[Dict[str,
+    analysis: dict[str,
+    Any]) -> list[dict[str,
     Any]]:
         """生成优化建议"""
         suggestions = []
@@ -305,7 +303,7 @@ class ToolIntegrationOptimizer:
 
         return suggestions
 
-    def create_integration_workflow(self) -> Dict[str, List[str]]:
+    def create_integration_workflow(self) -> dict[str, list[str]]:
         """创建集成工作流"""
         workflow = {
             'quality_improvement': [

@@ -8,8 +8,7 @@ python3 create_optimization_issues.py
 """
 
 import subprocess
-import json
-from datetime import datetime
+
 
 class GitHubIssueCreator:
     """GitHub Issue 创建器"""
@@ -95,7 +94,7 @@ class GitHubIssueCreator:
             if result:
                 created_issues.append(issue["title"])
 
-        print(f"\n🎉 Issues创建完成!")
+        print("\n🎉 Issues创建完成!")
         print(f"成功创建: {len(created_issues)}/{len(issues)} 个Issues")
 
         return created_issues

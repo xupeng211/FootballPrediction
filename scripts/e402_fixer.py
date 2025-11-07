@@ -4,14 +4,13 @@ E402模块导入位置规范化工具
 解决模块导入位置问题
 """
 
-import re
-import os
 from pathlib import Path
+
 
 def fix_e402_in_file(file_path):
     """修复单个文件中的E402错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -127,7 +126,7 @@ def main():
             print(f"⚠️  文件不存在: {file_path}")
 
     print("=" * 60)
-    print(f"📊 修复完成:")
+    print("📊 修复完成:")
     print(f"   总共修复: {total_fixes} 个导入位置问题")
     print(f"   处理文件: {len(target_files)} 个")
 

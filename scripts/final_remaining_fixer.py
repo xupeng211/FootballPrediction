@@ -8,7 +8,6 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Set
 
 
 class FinalRemainingFixer:
@@ -19,7 +18,7 @@ class FinalRemainingFixer:
         self.error_count = 0
         self.start_time = time.time()
 
-    def execute_final_fix(self) -> Dict[str, any]:
+    def execute_final_fix(self) -> dict[str, any]:
         """执行最终的71个问题修复"""
         print("🚀 最终解决：71个剩余运行时安全问题")
         print("=" * 60)
@@ -86,7 +85,7 @@ class FinalRemainingFixer:
         except subprocess.CalledProcessError as e:
             print(f"    ❌ 备份失败: {e}")
 
-    def _analyze_issues_by_type(self) -> Dict[str, int]:
+    def _analyze_issues_by_type(self) -> dict[str, int]:
         """分析问题类型分布"""
         print("  🔧 分析F821,F405,F403,A002问题分布...")
 
@@ -146,7 +145,7 @@ class FinalRemainingFixer:
 
         return fix_count
 
-    def _parse_f821_issues(self, output: str) -> Dict[str, List[str]]:
+    def _parse_f821_issues(self, output: str) -> dict[str, list[str]]:
         """解析F821问题"""
         issues = {}
 
@@ -167,10 +166,10 @@ class FinalRemainingFixer:
 
         return issues
 
-    def _fix_f821_in_file(self, file_path: Path, undefined_names: List[str]) -> int:
+    def _fix_f821_in_file(self, file_path: Path, undefined_names: list[str]) -> int:
         """修复单个文件中的F821问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -285,7 +284,7 @@ class FinalRemainingFixer:
     def _fix_a002_in_file(self, file_path: Path) -> int:
         """修复单个文件中的A002问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -342,7 +341,7 @@ class FinalRemainingFixer:
 
         return fix_count
 
-    def _parse_f403_files(self, output: str) -> List[str]:
+    def _parse_f403_files(self, output: str) -> list[str]:
         """解析F403问题文件"""
         files = set()
 
@@ -358,7 +357,7 @@ class FinalRemainingFixer:
     def _fix_f403_in_file(self, file_path: Path) -> int:
         """修复单个文件中的F403问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -423,11 +422,11 @@ class FinalRemainingFixer:
                 ['ruff', 'check', 'src/', '--fix'],
                 capture_output=True, text=True
             )
-            print(f"    ✅ ruff最终清理完成")
+            print("    ✅ ruff最终清理完成")
         except Exception as e:
             print(f"    ❌ ruff清理失败: {e}")
 
-    def _verify_final_results(self) -> Dict[str, int]:
+    def _verify_final_results(self) -> dict[str, int]:
         """验证最终修复结果"""
         verification = {}
         error_codes = ['F821', 'F405', 'F403', 'A002']
@@ -455,7 +454,7 @@ class FinalRemainingFixer:
 
         return verification
 
-    def _generate_final_report(self, fix_results: Dict, verification: Dict):
+    def _generate_final_report(self, fix_results: dict, verification: dict):
         """生成最终报告"""
         print("\n" + "=" * 60)
         print("📊 最终71个问题解决报告")
@@ -470,7 +469,7 @@ class FinalRemainingFixer:
             if fix_type != 'total' and count > 0:
                 print(f"   {fix_type}: {count} 个")
 
-        print(f"\n🎯 总体结果:")
+        print("\n🎯 总体结果:")
         print(f"   总修复数量: {total_fixed} 个")
         print(f"   执行时间: {total_time:.1f} 秒")
 
@@ -479,7 +478,7 @@ class FinalRemainingFixer:
         original_problems = 71
         solved = original_problems - remaining
 
-        print(f"\n📈 问题改善:")
+        print("\n📈 问题改善:")
         print(f"   原始问题: {original_problems} 个")
         print(f"   解决问题: {solved} 个")
         print(f"   剩余问题: {remaining} 个")
@@ -487,17 +486,17 @@ class FinalRemainingFixer:
 
         # 状态评估
         if remaining == 0:
-            print(f"\n🎉 完美！所有71个问题已完全解决！")
-            print(f"✅ 状态: 完美 - 零运行时安全问题")
+            print("\n🎉 完美！所有71个问题已完全解决！")
+            print("✅ 状态: 完美 - 零运行时安全问题")
         elif remaining <= 10:
-            print(f"\n🟢 优秀！剩余问题极少")
-            print(f"✅ 状态: 优秀 - 接近零问题")
+            print("\n🟢 优秀！剩余问题极少")
+            print("✅ 状态: 优秀 - 接近零问题")
         elif remaining <= 25:
-            print(f"\n🟡 良好！大幅改善")
-            print(f"📊 状态: 良好 - 显著进步")
+            print("\n🟡 良好！大幅改善")
+            print("📊 状态: 良好 - 显著进步")
         else:
-            print(f"\n🟠 有待改善")
-            print(f"📊 状态: 有待改善 - 需要进一步处理")
+            print("\n🟠 有待改善")
+            print("📊 状态: 有待改善 - 需要进一步处理")
 
 
 def main():

@@ -6,13 +6,14 @@
 
 import os
 
+
 def fix_file_a002(file_path, replacements):
     """修复单个文件中的A002问题"""
     if not os.path.exists(file_path):
         return False
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original = content

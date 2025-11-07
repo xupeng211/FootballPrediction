@@ -7,7 +7,7 @@
 import os
 import re
 from pathlib import Path
-from typing import List, Dict, Tuple
+
 
 def analyze_test_errors():
     """分析测试错误类型"""
@@ -415,7 +415,7 @@ def run_systematic_fix():
         print(f"  {fix}")
 
     # 验证修复效果
-    print(f"\n🧪 验证修复效果...")
+    print("\n🧪 验证修复效果...")
     test_result = os.system("python -m pytest tests/unit/domain/test_events.py --collect-only -q > /dev/null 2>&1")
     if test_result == 0:
         print("✅ test_events.py 修复成功!")
@@ -428,12 +428,12 @@ def main():
     """主函数"""
     fixes = run_systematic_fix()
 
-    print(f"\n📊 修复摘要:")
+    print("\n📊 修复摘要:")
     print(f"• 修复问题数: {len(fixes)}")
-    print(f"• 修复类型: 类定义、模块创建、循环导入、函数缺失")
-    print(f"• 下一步: 运行测试验证修复效果")
+    print("• 修复类型: 类定义、模块创建、循环导入、函数缺失")
+    print("• 下一步: 运行测试验证修复效果")
 
-    print(f"\n🎯 建议下一步行动:")
+    print("\n🎯 建议下一步行动:")
     print("1. 运行 pytest 验证修复效果")
     print("2. 继续修复剩余的测试错误")
     print("3. 更新GitHub Issues #209进度")

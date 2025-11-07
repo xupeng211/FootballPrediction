@@ -196,9 +196,9 @@ class TestLoggerIntegration:
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
 
-        import time
-from src.core.logger import get_logger
-from src.core.logger import setup_logger
+              import time
+        from src.core.logger import get_logger
+        from src.core.logger import setup_logger
 
         start = time.time()
         for i in range(100):

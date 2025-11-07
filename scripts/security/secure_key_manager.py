@@ -4,17 +4,16 @@
 用于生成、轮换和管理系统中的敏感密钥和密码
 """
 
+import argparse
+import json
+import logging
 import os
-import sys
 import secrets
 import string
-import hashlib
-import json
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any, Optional
-import argparse
-import logging
+from typing import Any
 
 # 设置日志
 logging.basicConfig(
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 class SecureKeyManager:
     """安全密钥管理器"""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         if project_root is None:
             self.project_root = Path(__file__).parent.parent.parent
         else:
@@ -49,7 +48,7 @@ class SecureKeyManager:
         random_part = secrets.token_urlsafe(length)
         return f"{prefix}_{random_part}"
 
-    def generate_all_keys(self) -> Dict[str, str]:
+    def generate_all_keys(self) -> dict[str, str]:
         """生成所有需要的密钥"""
         keys = {
             'JWT_SECRET_KEY': self.generate_secure_key(64),
@@ -77,7 +76,7 @@ class SecureKeyManager:
             backup_path = self.backup_dir / f"{env_file}.backup.{timestamp}"
 
             # 复制文件
-            with open(env_path, 'r', encoding='utf-8') as src:
+            with open(env_path, encoding='utf-8') as src:
                 with open(backup_path, 'w', encoding='utf-8') as dst:
                     dst.write(src.read())
 
@@ -115,9 +114,9 @@ class SecureKeyManager:
             logger.error(f"密钥轮换失败: {e}")
             return False
 
-    def _update_env_file(self, env_path: Path, new_keys: Dict[str, str]):
+    def _update_env_file(self, env_path: Path, new_keys: dict[str, str]):
         """更新环境变量文件"""
-        with open(env_path, 'r', encoding='utf-8') as f:
+        with open(env_path, encoding='utf-8') as f:
             content = f.read()
 
         # 更新密钥
@@ -140,7 +139,7 @@ class SecureKeyManager:
         with open(env_path, 'w', encoding='utf-8') as f:
             f.write(content)
 
-    def _save_rotation_record(self, env_file: str, new_keys: Dict[str, str], backup_path: Path):
+    def _save_rotation_record(self, env_file: str, new_keys: dict[str, str], backup_path: Path):
         """保存密钥轮换记录"""
         record = {
             'env_file': env_file,
@@ -160,7 +159,7 @@ class SecureKeyManager:
 
         logger.info(f"密钥轮换记录已保存: {record_path}")
 
-    def check_key_age(self, env_file: str) -> Dict[str, Any]:
+    def check_key_age(self, env_file: str) -> dict[str, Any]:
         """检查密钥年龄"""
         # 查找最近的轮换记录
         record_files = list(self.backup_dir.glob(f"key_rotation_{env_file}_*.json"))
@@ -171,7 +170,7 @@ class SecureKeyManager:
         # 获取最新的记录
         latest_record = max(record_files, key=lambda x: x.stat().st_mtime)
 
-        with open(latest_record, 'r', encoding='utf-8') as f:
+        with open(latest_record, encoding='utf-8') as f:
             record = json.load(f)
 
         rotation_time = datetime.fromisoformat(record['rotation_time'])
@@ -191,14 +190,14 @@ class SecureKeyManager:
             'record_file': str(latest_record)
         }
 
-    def validate_security(self) -> Dict[str, Any]:
+    def validate_security(self) -> dict[str, Any]:
         """验证安全配置"""
         issues = []
 
         # 检查 .gitignore
         gitignore_path = self.project_root / ".gitignore"
         if gitignore_path.exists():
-            with open(gitignore_path, 'r') as f:
+            with open(gitignore_path) as f:
                 gitignore_content = f.read()
 
             required_entries = ['.env', '.env.production', '.env.local']
@@ -237,7 +236,7 @@ class SecureKeyManager:
         """检查密钥强度"""
         weak_keys = []
 
-        with open(env_path, 'r') as f:
+        with open(env_path) as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
                 if '=' in line and not line.startswith('#'):
@@ -299,7 +298,7 @@ class SecureKeyManager:
         ]
 
         if gitignore_path.exists():
-            with open(gitignore_path, 'r') as f:
+            with open(gitignore_path) as f:
                 existing_content = f.read()
         else:
             existing_content = ""

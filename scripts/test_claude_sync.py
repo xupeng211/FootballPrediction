@@ -14,12 +14,10 @@ Date: 2025-11-06
 Version: 1.0.0
 """
 
-import sys
 import json
-import tempfile
-import shutil
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).resolve().parent.parent
@@ -177,7 +175,7 @@ def test_data_persistence():
             print("✅ 作业日志文件存在")
 
             # 验证文件内容
-            with open(work_log_file, 'r', encoding='utf-8') as f:
+            with open(work_log_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             print(f"   记录数量: {len(data)}")
@@ -290,7 +288,7 @@ def test_error_handling():
         passed = sum(1 for _, result in error_tests if result)
         total = len(error_tests)
 
-        print(f"✅ 错误处理测试完成")
+        print("✅ 错误处理测试完成")
         print(f"   通过: {passed}/{total}")
 
         for test_name, result in error_tests:
@@ -363,13 +361,13 @@ def run_validation_suite():
     passed_tests = sum(1 for result in test_results.values() if result)
     failed_tests = total_tests - passed_tests
 
-    print(f"📈 测试统计:")
+    print("📈 测试统计:")
     print(f"   总测试数: {total_tests}")
     print(f"   通过测试: {passed_tests}")
     print(f"   失败测试: {failed_tests}")
     print(f"   成功率: {(passed_tests/total_tests*100):.1f}%")
 
-    print(f"\n📋 详细结果:")
+    print("\n📋 详细结果:")
     for test_name, result in test_results.items():
         status = "✅ 通过" if result else "❌ 失败"
         test_display_name = {
@@ -383,7 +381,7 @@ def run_validation_suite():
         print(f"   {status} {test_display_name.get(test_name, test_name)}")
 
     # 总体评估
-    print(f"\n🎯 系统可用性评估:")
+    print("\n🎯 系统可用性评估:")
     if failed_tests == 0:
         print("   🎉 系统完全可用，所有功能正常")
         overall_status = "EXCELLENT"
@@ -394,7 +392,7 @@ def run_validation_suite():
         print("   ⚠️ 系统存在多个问题，需要修复后使用")
         overall_status = "NEEDS_ATTENTION"
 
-    print(f"\n🚀 建议:")
+    print("\n🚀 建议:")
     if overall_status == "EXCELLENT":
         print("   🎯 可以开始使用: make claude-start-work")
         print("   📋 查看帮助: make claude-list-work")

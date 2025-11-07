@@ -6,6 +6,7 @@ Git集成工具库
 import subprocess
 from pathlib import Path
 
+
 class QuickGitManager:
     """快速Git管理器"""
 

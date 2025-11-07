@@ -3,14 +3,14 @@
 清理并重新修复logger导入问题
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def clean_and_fix_logger(file_path):
     """清理并重新修复单个文件中的logger问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -118,7 +118,7 @@ def main():
 
     for py_file in tests_dir.rglob('*.py'):
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, encoding='utf-8') as f:
                 content = f.read()
 
             # 检查是否有logger问题
@@ -141,7 +141,7 @@ def main():
         else:
             print(f"⏭️  跳过（无需修复）: {file_path}")
 
-    print(f"\n修复完成！")
+    print("\n修复完成！")
     print(f"总共处理: {len(problem_files)} 个文件")
     print(f"成功修复: {fixed_count} 个文件")
 

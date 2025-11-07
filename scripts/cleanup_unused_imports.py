@@ -7,12 +7,9 @@ Unused Imports Cleanup Tool
 """
 
 import ast
-import os
 import re
-from pathlib import Path
-from typing import List, Set, Tuple
-
 import subprocess
+from pathlib import Path
 
 
 class UnusedImportsCleaner:
@@ -23,7 +20,7 @@ class UnusedImportsCleaner:
         self.python_files = []
         self.cleanup_results = {}
 
-    def find_python_files(self) -> List[Path]:
+    def find_python_files(self) -> list[Path]:
         """查找所有Python文件"""
         python_files = []
         for file_path in self.source_dir.rglob("*.py"):
@@ -37,7 +34,7 @@ class UnusedImportsCleaner:
                 python_files.append(file_path)
         return python_files
 
-    def get_unused_imports_ruff(self, file_path: Path) -> List[str]:
+    def get_unused_imports_ruff(self, file_path: Path) -> list[str]:
         """使用ruff获取未使用的导入"""
         try:
             # 运行ruff检查
@@ -75,10 +72,10 @@ class UnusedImportsCleaner:
             print(f"警告: 无法检查文件 {file_path}")
             return []
 
-    def extract_import_info(self, file_path: Path) -> Tuple[List[ast.Import], List[ast.ImportFrom]]:
+    def extract_import_info(self, file_path: Path) -> tuple[list[ast.Import], list[ast.ImportFrom]]:
         """提取文件中的导入信息"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -97,10 +94,10 @@ class UnusedImportsCleaner:
             print(f"警告: 无法解析文件 {file_path}: {e}")
             return [], []
 
-    def remove_unused_imports(self, file_path: Path, unused_names: Set[str]) -> bool:
+    def remove_unused_imports(self, file_path: Path, unused_names: set[str]) -> bool:
         """移除未使用的导入"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 lines = f.readlines()
 
             imports, imports_from = self.extract_import_info(file_path)
@@ -270,7 +267,7 @@ class UnusedImportsCleaner:
         print(f"🗑️ 移除导入数: {summary['total_removed']}")
 
         if dry_run and summary['total_removed'] > 0:
-            print(f"\n💡 要实际执行清理，请使用 --no-dry-run 参数")
+            print("\n💡 要实际执行清理，请使用 --no-dry-run 参数")
 
         return summary
 
@@ -313,7 +310,7 @@ def main():
         summary = cleaner.cleanup_all_files(dry_run=not args.no_dry_run)
 
         if not args.no_dry_run and summary['total_removed'] > 0:
-            print(f"\n✅ 清理完成！建议运行代码检查确认清理结果:")
+            print("\n✅ 清理完成！建议运行代码检查确认清理结果:")
             print(f"   ruff check {args.source_dir}/")
             print(f"   python -m py_compile {args.source_dir}/")
 

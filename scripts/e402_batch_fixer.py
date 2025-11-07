@@ -4,14 +4,13 @@ E402批量修复工具
 专门处理模块导入位置问题
 """
 
-import re
 from pathlib import Path
-from typing import List, Tuple
 
-def fix_e402_in_file(file_path: Path) -> Tuple[int, bool]:
+
+def fix_e402_in_file(file_path: Path) -> tuple[int, bool]:
     """修复单个文件中的E402错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -132,7 +131,7 @@ def fix_e402_in_file(file_path: Path) -> Tuple[int, bool]:
         print(f"❌ 修复文件失败 {file_path}: {e}")
         return 0, False
 
-def find_e402_files() -> List[Path]:
+def find_e402_files() -> list[Path]:
     """查找包含E402错误的Python文件"""
     import subprocess
 
@@ -187,13 +186,13 @@ def main():
             if fixes > 0:
                 print(f"   ✅ 修复了 {fixes} 个导入位置问题")
             else:
-                print(f"   ℹ️  没有发现可修复的问题")
+                print("   ℹ️  没有发现可修复的问题")
         else:
-            print(f"   ❌ 修复失败")
+            print("   ❌ 修复失败")
         print()
 
     print("=" * 50)
-    print(f"📊 修复总结:")
+    print("📊 修复总结:")
     print(f"   处理文件: {len(files_to_fix)} 个")
     print(f"   成功修复: {success_count} 个")
     print(f"   修复错误: {total_fixes} 个")

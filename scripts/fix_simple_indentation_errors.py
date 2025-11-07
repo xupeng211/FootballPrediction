@@ -5,13 +5,12 @@
 专门修复简单的HTTPException缩进和括号错位问题
 """
 
-import re
 import ast
+import re
 from pathlib import Path
-from typing import List, Tuple
 
 
-def fix_httpexception_structure(content: str) -> Tuple[str, int]:
+def fix_httpexception_structure(content: str) -> tuple[str, int]:
     """修复HTTPException结构错误"""
     fixes_count = 0
 
@@ -36,7 +35,7 @@ def fix_httpexception_structure(content: str) -> Tuple[str, int]:
     return content, fixes_count
 
 
-def fix_indentation_errors(content: str) -> Tuple[str, int]:
+def fix_indentation_errors(content: str) -> tuple[str, int]:
     """修复简单的缩进错误"""
     lines = content.split('\n')
     fixed_lines = []
@@ -66,7 +65,7 @@ def fix_file(file_path: Path) -> dict:
     }
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -153,7 +152,7 @@ def main():
             print(f"⚠️  文件不存在: {file_path_str}")
 
     print()
-    print(f"📊 修复统计:")
+    print("📊 修复统计:")
     print(f"  处理文件: {len(results)}")
     print(f"  成功修复: {success_count}")
     print(f"  仍有问题: {len(results) - success_count}")

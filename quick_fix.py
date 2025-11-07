@@ -6,6 +6,7 @@
 import re
 from pathlib import Path
 
+
 def fix_http_exception_errors(content):
     """修复HTTPException语法错误"""
     # 修复分离的HTTPException参数
@@ -36,7 +37,7 @@ def main():
         if path.exists():
             print(f"修复文件: {file_path}")
 
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 content = f.read()
 
             fixed_content = fix_http_exception_errors(content)
@@ -44,9 +45,9 @@ def main():
             if fixed_content != content:
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(fixed_content)
-                print(f"  ✅ 已修复")
+                print("  ✅ 已修复")
             else:
-                print(f"  ℹ️ 无需修复")
+                print("  ℹ️ 无需修复")
 
 if __name__ == "__main__":
     main()

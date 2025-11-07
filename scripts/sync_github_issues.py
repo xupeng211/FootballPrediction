@@ -16,10 +16,10 @@ Version: 1.0.0
 
 import json
 import subprocess
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
+
 
 class GitHubIssueSynchronizer:
     """GitHub Issue同步器"""
@@ -93,7 +93,7 @@ class GitHubIssueSynchronizer:
             }
         ]
 
-    def check_git_status(self) -> Dict[str, Any]:
+    def check_git_status(self) -> dict[str, Any]:
         """检查Git状态"""
         try:
             result = subprocess.run(
@@ -125,7 +125,7 @@ class GitHubIssueSynchronizer:
         except Exception:
             return "unknown"
 
-    def get_commit_history(self, limit: int = 10) -> List[Dict[str, str]]:
+    def get_commit_history(self, limit: int = 10) -> list[dict[str, str]]:
         """获取最近的提交历史"""
         try:
             result = subprocess.run(
@@ -150,7 +150,7 @@ class GitHubIssueSynchronizer:
             print(f"获取提交历史失败: {e}")
             return []
 
-    def generate_issue_update_comment(self, issue: Dict[str, Any]) -> str:
+    def generate_issue_update_comment(self, issue: dict[str, Any]) -> str:
         """生成Issue更新评论"""
         comment = f"""## 🎉 Issue #{issue['number']} 完成报告
 
@@ -192,7 +192,7 @@ class GitHubIssueSynchronizer:
 
         return comment
 
-    def generate_sync_report(self) -> Dict[str, Any]:
+    def generate_sync_report(self) -> dict[str, Any]:
         """生成同步报告"""
         git_status = self.check_git_status()
         commit_history = self.get_commit_history(5)
@@ -221,7 +221,7 @@ class GitHubIssueSynchronizer:
 
         return report
 
-    def save_sync_report(self, report: Dict[str, Any]) -> str:
+    def save_sync_report(self, report: dict[str, Any]) -> str:
         """保存同步报告"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = f"github_issues_sync_report_{timestamp}.json"
@@ -377,7 +377,7 @@ class GitHubIssueSynchronizer:
             print(f"❌ 保存更新指南失败: {e}")
             raise
 
-    def run_synchronization(self) -> Dict[str, Any]:
+    def run_synchronization(self) -> dict[str, Any]:
         """运行完整的同步流程"""
         print("🚀 开始GitHub Issues同步...")
         print("=" * 60)

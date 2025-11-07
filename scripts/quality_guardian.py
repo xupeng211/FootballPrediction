@@ -6,15 +6,14 @@ Quality Guardian
 集成的代码质量守护系统，提供全面的质量检查、修复和监控功能
 """
 
-import os
-import sys
-import json
-import subprocess
 import argparse
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+import json
 import logging
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 # 导入其他修复工具
 try:
@@ -76,7 +75,7 @@ class QualityGuardian:
             "action_items": [],
         }
 
-    def run_full_quality_check(self) -> Dict[str, Any]:
+    def run_full_quality_check(self) -> dict[str, Any]:
         """运行完整的质量检查"""
         print("🛡️ 质量守护系统")
         print("=" * 60)
@@ -117,7 +116,7 @@ class QualityGuardian:
 
         return self.quality_status
 
-    def _collect_quality_metrics(self) -> Dict[str, Any]:
+    def _collect_quality_metrics(self) -> dict[str, Any]:
         """收集基础质量指标"""
         metrics = {
             "timestamp": datetime.now().isoformat(),
@@ -190,7 +189,7 @@ class QualityGuardian:
         self.quality_status.update(metrics)
         return metrics
 
-    def _analyze_code_quality(self) -> Dict[str, Any]:
+    def _analyze_code_quality(self) -> dict[str, Any]:
         """分析代码质量"""
         quality = {
             "score": 0,
@@ -218,7 +217,7 @@ class QualityGuardian:
         self.quality_status["code_quality"] = quality["score"]
         return quality
 
-    def _check_test_health(self) -> Dict[str, Any]:
+    def _check_test_health(self) -> dict[str, Any]:
         """检查测试健康度"""
         health = {
             "score": 0,
@@ -256,7 +255,7 @@ class QualityGuardian:
         self.quality_status["test_health"] = health["score"]
         return health
 
-    def _check_security(self) -> Dict[str, Any]:
+    def _check_security(self) -> dict[str, Any]:
         """检查安全性"""
         security = {
             "score": 0,
@@ -312,7 +311,7 @@ class QualityGuardian:
 
         self.quality_status["overall_score"] = round(overall_score, 2)
 
-    def _generate_quality_report(self) -> Dict[str, Any]:
+    def _generate_quality_report(self) -> dict[str, Any]:
         """生成质量报告"""
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -331,7 +330,7 @@ class QualityGuardian:
         logger.info(f"质量报告已保存: {report_file}")
         return report
 
-    def _analyze_quality_trends(self) -> Dict[str, Any]:
+    def _analyze_quality_trends(self) -> dict[str, Any]:
         """分析质量趋势"""
         trends = {
             "coverage_trend": "stable",
@@ -365,7 +364,7 @@ class QualityGuardian:
 
         return trends
 
-    def _compare_with_benchmarks(self) -> Dict[str, Any]:
+    def _compare_with_benchmarks(self) -> dict[str, Any]:
         """与基准比较"""
         benchmarks = {
             "industry_average": {"coverage": 75, "code_quality": 7, "security": 8},
@@ -496,7 +495,7 @@ class QualityGuardian:
 
         print("\n" + "=" * 60)
 
-    def run_auto_fix(self, fix_types: List[str] = None) -> Dict[str, Any]:
+    def run_auto_fix(self, fix_types: list[str] = None) -> dict[str, Any]:
         """运行自动修复"""
         if fix_types is None:
             fix_types = ["syntax", "imports", "mypy", "ruff", "tests"]
@@ -534,7 +533,7 @@ class QualityGuardian:
         print("🎯 优化质量标准...")
         return self.optimizer.run_optimization()
 
-    def run_guardian_cycle(self) -> Dict[str, Any]:
+    def run_guardian_cycle(self) -> dict[str, Any]:
         """运行完整的守护周期"""
         print("🛡️ 启动质量守护周期")
         print("=" * 60)

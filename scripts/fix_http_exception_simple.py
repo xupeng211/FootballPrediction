@@ -8,7 +8,7 @@ Simple HTTPException Syntax Fix Script
 
 import os
 import subprocess
-import sys
+
 
 def run_sed_command(pattern, file_path):
     """运行sed命令"""
@@ -65,7 +65,7 @@ def manual_fix_file(file_path):
     """手动修复特定文件的HTTPException问题"""
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -123,10 +123,10 @@ def manual_fix_file(file_path):
         if fixed_content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            print(f"  ✅ 手动修复完成")
+            print("  ✅ 手动修复完成")
             return True
         else:
-            print(f"  ℹ️  无需手动修复")
+            print("  ℹ️  无需手动修复")
             return False
 
     except Exception as e:
@@ -172,7 +172,7 @@ def main():
             print(f"⚠️  文件不存在: {file_path}")
 
     print("\n" + "="*60)
-    print(f"📊 修复统计:")
+    print("📊 修复统计:")
     print(f"  🔧 sed修复: {fixed_count} 个文件")
     print(f"  ✋ 手动修复: {manual_fixed_count} 个文件")
     print(f"  📁 总文件数: {len(api_files)} 个文件")

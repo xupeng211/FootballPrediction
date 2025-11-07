@@ -4,10 +4,11 @@
 确保代码符合质量标准才能通过CI/CD
 """
 
+import json
 import subprocess
 import sys
-import json
 from pathlib import Path
+
 
 class QualityGate:
     def __init__(self):

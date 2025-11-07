@@ -4,9 +4,9 @@
 Intelligent B904 Exception Handling Fixer - Distinguish HTTPException and other exceptions
 """
 
-import re
 import os
-from pathlib import Path
+import re
+
 
 def is_http_exception_line(line: str) -> bool:
     """检查是否是HTTPException相关的raise语句"""
@@ -31,7 +31,7 @@ def fix_b904_intelligently(file_path: str) -> int:
         return 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         fixes_count = 0

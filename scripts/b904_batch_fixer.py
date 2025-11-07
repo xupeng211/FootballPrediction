@@ -5,11 +5,10 @@ B904异常处理批量修复工具
 """
 
 import re
-from pathlib import Path
-from typing import List, Dict
 import subprocess
 
-def find_b904_errors() -> List[Dict]:
+
+def find_b904_errors() -> list[dict]:
     """查找所有B904错误"""
     try:
         result = subprocess.run(
@@ -41,7 +40,7 @@ def find_b904_errors() -> List[Dict]:
 def fix_http_exception_in_file(file_path: str) -> int:
     """修复单个文件中的HTTPException B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -114,11 +113,11 @@ def main():
         if fixes > 0:
             print(f"   ✅ 修复了 {fixes} 个B904错误")
         else:
-            print(f"   ℹ️  需要手动处理")
+            print("   ℹ️  需要手动处理")
         print()
 
     print("=" * 50)
-    print(f"📊 修复总结:")
+    print("📊 修复总结:")
     print(f"   处理文件: {len(files_to_fix)} 个")
     print(f"   修复错误: {total_fixes} 个")
 

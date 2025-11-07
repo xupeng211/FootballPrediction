@@ -4,10 +4,10 @@
 Simplified Intelligent Tools Optimizer
 """
 
-import os
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 
 def create_shared_libraries():
     """创建共享工具库"""
@@ -359,18 +359,18 @@ def main():
     with open("tools_optimization_summary.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False, default=str)
 
-    print(f"\\n🎉 智能工具优化完成!")
+    print("\\n🎉 智能工具优化完成!")
     print(f"   共享库: {len(libraries)}个")
     print(f"   工具链: {len(chains)}个")
-    print(f"\\n📄 总结已保存: tools_optimization_summary.json")
+    print("\\n📄 总结已保存: tools_optimization_summary.json")
 
     # 显示使用示例
-    print(f"\\n💡 使用示例:")
-    print(f"   # 运行测试工具链")
-    print(f"   python3 scripts/tool_chains/testing_tool_chain.py")
-    print(f"   ")
-    print(f"   # 运行部署工具链")
-    print(f"   python3 scripts/tool_chains/deployment_tool_chain.py")
+    print("\\n💡 使用示例:")
+    print("   # 运行测试工具链")
+    print("   python3 scripts/tool_chains/testing_tool_chain.py")
+    print("   ")
+    print("   # 运行部署工具链")
+    print("   python3 scripts/tool_chains/deployment_tool_chain.py")
 
     return summary
 

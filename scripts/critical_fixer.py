@@ -6,9 +6,9 @@
 
 import re
 from pathlib import Path
-from typing import List, Tuple
 
-def fix_f821_issues() -> Tuple[int, bool]:
+
+def fix_f821_issues() -> tuple[int, bool]:
     """修复F821未定义名称问题 - 最安全的方式"""
     print("🔧 修复F821未定义名称问题")
 
@@ -66,7 +66,7 @@ def fix_f821_issues() -> Tuple[int, bool]:
 def fix_f821_in_file(file_path: Path, common_fixes: dict, common_imports: dict) -> int:
     """修复单个文件中的F821问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -118,7 +118,7 @@ def fix_f821_in_file(file_path: Path, common_fixes: dict, common_imports: dict) 
         print(f"❌ 修复文件失败 {file_path}: {e}")
         return 0
 
-def fix_f405_issues() -> Tuple[int, bool]:
+def fix_f405_issues() -> tuple[int, bool]:
     """修复F405可能未定义名称问题"""
     print("🔧 修复F405可能未定义名称问题")
 
@@ -139,13 +139,13 @@ def fix_f405_issues() -> Tuple[int, bool]:
             print(f"  ✅ 修复约 {fix_count} 个F405问题")
             return fix_count, True
         else:
-            print(f"  ⚠️  F405自动修复部分失败")
+            print("  ⚠️  F405自动修复部分失败")
             return 5, True  # 部分成功
     except Exception as e:
         print(f"❌ F405修复失败: {e}")
         return 0, False
 
-def fix_a002_issues() -> Tuple[int, bool]:
+def fix_a002_issues() -> tuple[int, bool]:
     """修复A002参数名与内置函数冲突"""
     print("🔧 修复A002参数名冲突问题")
 
@@ -195,7 +195,7 @@ def fix_a002_issues() -> Tuple[int, bool]:
 def fix_a002_in_file(file_path: Path, conflict_fixes: dict) -> int:
     """修复单个文件中的A002问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -253,7 +253,7 @@ def main():
         success = False
 
     print("\n" + "=" * 50)
-    print(f"📊 修复总结:")
+    print("📊 修复总结:")
     print(f"   F821未定义名称: {f821_fixes} 个")
     print(f"   F405可能未定义: {f405_fixes} 个")
     print(f"   A002参数冲突: {a002_fixes} 个")

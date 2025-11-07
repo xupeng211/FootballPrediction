@@ -7,8 +7,8 @@
 import json
 import subprocess
 from dataclasses import dataclass
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any
 
 
 @dataclass
@@ -16,7 +16,7 @@ class IssueData:
     """Issue数据结构"""
     title: str
     body: str
-    labels: List[str]
+    labels: list[str]
     issue_type: str
 
 
@@ -27,7 +27,7 @@ class GitHubIssuesCreator:
         self.issues = []
         self.templates = self._load_templates()
 
-    def _load_templates(self) -> Dict[str, str]:
+    def _load_templates(self) -> dict[str, str]:
         """加载Issue模板"""
         return {
             "syntax_fix": """
@@ -121,7 +121,7 @@ class GitHubIssuesCreator:
 """
         }
 
-    def analyze_quality_issues(self) -> Dict[str, Any]:
+    def analyze_quality_issues(self) -> dict[str, Any]:
         """分析质量问题"""
         try:
             # 运行ruff检查获取JSON输出
@@ -153,7 +153,7 @@ class GitHubIssuesCreator:
             "sample_errors": errors[:10]  # 取前10个作为样本
         }
 
-    def _get_mock_error_data(self) -> List[Dict[str, Any]]:
+    def _get_mock_error_data(self) -> list[dict[str, Any]]:
         """获取模拟错误数据（当无法运行ruff时使用）"""
         return [
             {
@@ -188,7 +188,7 @@ class GitHubIssuesCreator:
             }
         ]
 
-    def create_syntax_fix_issues(self, analysis: Dict[str, Any]) -> List[IssueData]:
+    def create_syntax_fix_issues(self, analysis: dict[str, Any]) -> list[IssueData]:
         """创建语法修复类Issues"""
         issues = []
 
@@ -225,7 +225,7 @@ class GitHubIssuesCreator:
 
         return issues
 
-    def _create_single_syntax_issue(self, error_code: str, count: int, files: List[str]) -> IssueData:
+    def _create_single_syntax_issue(self, error_code: str, count: int, files: list[str]) -> IssueData:
         """创建单个语法修复Issue"""
         error_info = self._get_error_info(error_code)
 
@@ -246,7 +246,7 @@ class GitHubIssuesCreator:
 
         return IssueData(title, body, labels, "syntax_fix")
 
-    def _create_batch_syntax_issue(self, error_code: str, count: int, batch_num: int, files: List[str]) -> IssueData:
+    def _create_batch_syntax_issue(self, error_code: str, count: int, batch_num: int, files: list[str]) -> IssueData:
         """创建批量语法修复Issue"""
         error_info = self._get_error_info(error_code)
 
@@ -267,7 +267,7 @@ class GitHubIssuesCreator:
 
         return IssueData(title, body, labels, "syntax_fix")
 
-    def create_code_quality_issues(self, analysis: Dict[str, Any]) -> List[IssueData]:
+    def create_code_quality_issues(self, analysis: dict[str, Any]) -> list[IssueData]:
         """创建代码质量类Issues"""
         issues = []
 
@@ -289,7 +289,7 @@ class GitHubIssuesCreator:
 
         return issues
 
-    def _create_quality_issue(self, error_code: str, info: Dict[str, Any], count: int) -> IssueData:
+    def _create_quality_issue(self, error_code: str, info: dict[str, Any], count: int) -> IssueData:
         """创建代码质量Issue"""
         title = f"🔍 代码质量改进: {info['name']} ({count}个问题)"
 
@@ -308,7 +308,7 @@ class GitHubIssuesCreator:
 
         return IssueData(title, body, labels, "code_quality")
 
-    def _get_error_info(self, error_code: str) -> Dict[str, str]:
+    def _get_error_info(self, error_code: str) -> dict[str, str]:
         """获取错误信息"""
         error_map = {
             "invalid-syntax": {"name": "语法错误", "severity": "critical"},
@@ -323,7 +323,7 @@ class GitHubIssuesCreator:
         }
         return error_map.get(error_code, {"name": "未知错误", "severity": "medium"})
 
-    def _get_related_tests(self, files: List[str]) -> str:
+    def _get_related_tests(self, files: list[str]) -> str:
         """获取相关测试路径"""
         if not files:
             return "tests/unit/"
@@ -342,7 +342,7 @@ class GitHubIssuesCreator:
 
         return " ".join(list(set(test_paths))) if test_paths else "tests/unit/"
 
-    def generate_issues(self) -> List[IssueData]:
+    def generate_issues(self) -> list[IssueData]:
         """生成所有Issues"""
         print("🔍 分析项目质量问题...")
         analysis = self.analyze_quality_issues()
@@ -363,7 +363,7 @@ class GitHubIssuesCreator:
         print(f"✅ 共生成 {len(all_issues)} 个Issues")
         return all_issues
 
-    def save_issues_to_file(self, issues: List[IssueData], filename: str = "generated_issues.json"):
+    def save_issues_to_file(self, issues: list[IssueData], filename: str = "generated_issues.json"):
         """保存Issues到文件"""
         issues_data = []
         for issue in issues:
@@ -379,7 +379,7 @@ class GitHubIssuesCreator:
 
         print(f"💾 Issues已保存到 {filename}")
 
-    def print_issues_summary(self, issues: List[IssueData]):
+    def print_issues_summary(self, issues: list[IssueData]):
         """打印Issues摘要"""
         print("\n" + "="*60)
         print("📋 生成的GitHub Issues摘要")

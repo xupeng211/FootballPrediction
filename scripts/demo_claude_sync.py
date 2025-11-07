@@ -14,10 +14,10 @@ Date: 2025-11-06
 Version: 1.0.0
 """
 
-import sys
 import json
+import sys
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # 添加项目路径
 project_root = Path(__file__).resolve().parent.parent
@@ -65,7 +65,7 @@ def demo_workflow():
     )
 
     synchronizer.add_work_item(work_item)
-    print(f"✅ 作业项目已创建")
+    print("✅ 作业项目已创建")
     print(f"   ID: {work_item.id}")
     print(f"   标题: {work_item.title}")
     print(f"   类型: {work_item.work_type}")
@@ -275,7 +275,7 @@ def main():
         print("✅ 环境检查完成，开始演示...")
         result = demo_workflow()
 
-        print(f"\n🎯 演示成功完成！")
+        print("\n🎯 演示成功完成！")
         print(f"   演示作业ID: {result['demo_id']}")
         print(f"   生成的Issue内容长度: {result['issue_length']}字符")
 

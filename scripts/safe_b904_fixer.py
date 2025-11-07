@@ -4,9 +4,9 @@
 Safe B904 Exception Handling Fixer - Specifically for HTTPException
 """
 
-import re
 import os
-from pathlib import Path
+import re
+
 
 def fix_http_exception_b904_safely(file_path: str) -> int:
     """安全地修复文件中的HTTPException B904错误"""
@@ -16,7 +16,7 @@ def fix_http_exception_b904_safely(file_path: str) -> int:
         return 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content

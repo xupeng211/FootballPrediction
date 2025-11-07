@@ -5,13 +5,12 @@ Git Flow 工作流设置脚本
 """
 
 import os
-import sys
-import json
 import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, List, Any
+
 import requests
-from datetime import datetime
+
 
 class GitFlowSetup:
     """Git Flow工作流配置器"""
@@ -34,7 +33,7 @@ class GitFlowSetup:
             print("请运行: export GITHUB_TOKEN=your_token")
             sys.exit(1)
 
-    def _api_request(self, method: str, endpoint: str, data: Dict = None) -> Dict:
+    def _api_request(self, method: str, endpoint: str, data: dict = None) -> dict:
         """发送GitHub API请求"""
         url = f"{self.api_base}/{endpoint}"
         headers = {
@@ -137,7 +136,7 @@ class GitFlowSetup:
 
         return success
 
-    def _update_branch_protection(self, branch: str, protection: Dict) -> bool:
+    def _update_branch_protection(self, branch: str, protection: dict) -> bool:
         """更新单个分支的保护规则"""
         endpoint = f"branches/{branch}/protection"
         result = self._api_request("PUT", endpoint, protection)
@@ -489,7 +488,7 @@ echo "✅ All pre-push checks passed!"
         claude_file = Path("CLAUDE.md")
         if claude_file.exists():
             try:
-                with open(claude_file, 'r', encoding='utf-8') as f:
+                with open(claude_file, encoding='utf-8') as f:
                     content = f.read()
 
                 # 添加Git工作流部分

@@ -5,12 +5,12 @@
 """
 
 import re
-from pathlib import Path
+
 
 def fix_b904_in_file(file_path, line_numbers):
     """安全地修复指定文件中指定行的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         fix_count = 0
@@ -75,7 +75,7 @@ def main():
     if result.returncode == 0:
         print("✅ betting_api.py的所有B904错误已修复")
     else:
-        print(f"⚠️  betting_api.py仍有B904错误需要处理")
+        print("⚠️  betting_api.py仍有B904错误需要处理")
         print(result.stdout)
 
 if __name__ == "__main__":

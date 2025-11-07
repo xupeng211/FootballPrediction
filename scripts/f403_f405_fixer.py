@@ -5,7 +5,7 @@ F403/F405星号导入修复器
 """
 
 import os
-import re
+
 
 def fix_star_imports():
     """修复星号导入问题"""
@@ -37,7 +37,7 @@ def fix_star_imports():
     for file_path, fixes in star_import_fixes.items():
         if os.path.exists(file_path):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content
@@ -72,7 +72,7 @@ def remove_unused_star_imports():
 
     for file_path in files_with_star_imports:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 lines = f.readlines()
 
             # 查找并注释掉星号导入行

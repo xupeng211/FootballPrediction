@@ -5,10 +5,11 @@
 独立验证数据清洗模块的功能，避免依赖问题
 """
 
-import sys
 import os
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))

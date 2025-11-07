@@ -15,18 +15,17 @@ XGBoost/LightGBM环境配置与性能验证
 import asyncio
 import json
 import logging
-import os
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 # 添加项目根目录到Python路径
 sys.path.append(str(Path(__file__).parent))
@@ -40,11 +39,11 @@ logger = logging.getLogger(__name__)
 # 导入高级模型训练器
 try:
     from src.ml.advanced_model_trainer import (
+        LGB_AVAILABLE,
+        XGB_AVAILABLE,
         AdvancedModelTrainer,
         EnsembleTrainer,
         ModelType,
-        XGB_AVAILABLE,
-        LGB_AVAILABLE,
     )
 
     ADVANCED_TRAINER_AVAILABLE = True
@@ -74,12 +73,12 @@ except ImportError:
 class EnhancedMLTrainingSystem:
     """增强ML训练系统，集成真实数据源和优化的XGBoost/LightGBM环境"""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = config or {}
-        self.training_history: List[Dict] = []
+        self.training_history: list[dict] = []
         self.best_model = None
         self.best_accuracy = 0.0
-        self.feature_importance: Dict[str, float] = {}
+        self.feature_importance: dict[str, float] = {}
         self.scaler = StandardScaler()
         self.label_encoder = LabelEncoder()
 
@@ -100,7 +99,7 @@ class EnhancedMLTrainingSystem:
 
     def generate_enhanced_training_data(
         self, n_samples: int = 2000
-    ) -> Tuple[pd.DataFrame, pd.Series]:
+    ) -> tuple[pd.DataFrame, pd.Series]:
         """生成增强训练数据，基于SRS成功经验扩展"""
         logger.info(f"生成增强训练数据，样本数: {n_samples}")
 
@@ -313,7 +312,7 @@ class EnhancedMLTrainingSystem:
 
     async def train_enhanced_models(self,
     X: pd.DataFrame,
-    y: pd.Series) -> Dict[str,
+    y: pd.Series) -> dict[str,
     Any]:
         """训练增强模型集合"""
         logger.info("开始训练增强模型集合...")
@@ -479,9 +478,9 @@ class EnhancedMLTrainingSystem:
 
     async def _train_basic_models(
         self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """基础模型训练实现（回退方案）"""
-        from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+        from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 
         model_results = {}
         best_accuracy = 0.0
@@ -506,7 +505,7 @@ class EnhancedMLTrainingSystem:
                     "training_time": training_time,
                     "feature_importance": dict(zip(X_train.columns,
     model.feature_importances_)),
-    
+
                 }
 
                 if accuracy > best_accuracy:
@@ -523,7 +522,7 @@ class EnhancedMLTrainingSystem:
 
     async def _train_ensemble_model(
         self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """训练集成模型"""
         if not ADVANCED_TRAINER_AVAILABLE:
             return {"error": "高级模型训练器不可用"}
@@ -553,7 +552,7 @@ class EnhancedMLTrainingSystem:
             logger.error(f"集成模型训练异常: {e}")
             return {"error": str(e)}
 
-    def analyze_feature_importance(self, top_n: int = 20) -> Dict[str, Any]:
+    def analyze_feature_importance(self, top_n: int = 20) -> dict[str, Any]:
         """分析特征重要性"""
         if not self.feature_importance:
             return {"error": "没有可用的特征重要性数据"}
@@ -630,7 +629,7 @@ class EnhancedMLTrainingSystem:
             logger.error(f"保存训练结果失败: {e}")
             return False
 
-    async def run_comprehensive_training(self) -> Dict[str, Any]:
+    async def run_comprehensive_training(self) -> dict[str, Any]:
         """运行综合训练流程"""
         logger.info("=" * 60)
         logger.info("🚀 增强ML训练系统开始运行")
@@ -658,13 +657,13 @@ class EnhancedMLTrainingSystem:
                 "best_model_accuracy": training_results.get("best_model",
     {}).get("accuracy",
     0),
-    
+
                 "ensemble_accuracy": training_results.get("ensemble_result", {}).get(
                     "ensemble_accuracy", 0
                 ),
                 "improvement_over_srs": training_results.get("improvement_over_srs",
     {}),
-    
+
                 "xgboost_available": XGB_AVAILABLE,
                 "lightgbm_available": LGB_AVAILABLE,
                 "advanced_trainer_available": ADVANCED_TRAINER_AVAILABLE,

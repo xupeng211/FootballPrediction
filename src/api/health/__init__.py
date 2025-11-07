@@ -57,7 +57,7 @@ async def health_check():
                     "database": {"status": "error", "error": str(e)},
                 },
             },
-        )
+        ) from e
 
 
 @router.get("/liveness")
@@ -85,7 +85,7 @@ async def liveness_check():
                 "error": str(e),
                 "service": "football-prediction-api",
             },
-        )
+        ) from e
 
 
 @router.get("/readiness")

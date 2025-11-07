@@ -5,10 +5,9 @@
 """
 
 import re
-from pathlib import Path
-from typing import List, Tuple, Dict
 import subprocess
-import json
+from pathlib import Path
+
 
 class SecondWeekFixer:
     """第二周修复器"""
@@ -17,7 +16,7 @@ class SecondWeekFixer:
         self.fixes_made = 0
         self.errors_encountered = 0
 
-    def fix_f821_undefined_names(self) -> Tuple[int, bool]:
+    def fix_f821_undefined_names(self) -> tuple[int, bool]:
         """修复F821未定义名称问题"""
         print("🔧 Day 8-9: 修复F821未定义名称 (37个)")
 
@@ -47,7 +46,7 @@ class SecondWeekFixer:
         file_path = Path("src/api/betting_api.py")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -101,10 +100,10 @@ class SecondWeekFixer:
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"    ✅ betting_api.py 变量作用域修复完成")
+                print("    ✅ betting_api.py 变量作用域修复完成")
                 return 10  # 估算修复数量
             else:
-                print(f"    ℹ️  betting_api.py 没有需要修复的变量作用域问题")
+                print("    ℹ️  betting_api.py 没有需要修复的变量作用域问题")
                 return 0
 
         except Exception as e:
@@ -117,7 +116,7 @@ class SecondWeekFixer:
         file_path = Path("src/tasks/streaming_tasks.py")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -184,7 +183,7 @@ class StreamConfig:
             if content != original_content:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(content)
-                print(f"    ✅ streaming_tasks.py 类定义修复完成")
+                print("    ✅ streaming_tasks.py 类定义修复完成")
                 return 4  # 修复了4个未定义类
 
             return 0
@@ -202,7 +201,7 @@ class StreamConfig:
         event_service_path = Path("src/services/event_prediction_service.py")
         if event_service_path.exists():
             try:
-                with open(event_service_path, 'r', encoding='utf-8') as f:
+                with open(event_service_path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content
@@ -227,7 +226,7 @@ class StreamConfig:
 
         return fix_count
 
-    def fix_f405_undefined_names(self) -> Tuple[int, bool]:
+    def fix_f405_undefined_names(self) -> tuple[int, bool]:
         """修复F405可能未定义问题"""
         print("🔧 Day 10: 修复F405可能未定义 (26个)")
 
@@ -274,7 +273,7 @@ class StreamConfig:
             path = Path(file_path)
             if path.exists():
                 try:
-                    with open(path, 'r', encoding='utf-8') as f:
+                    with open(path, encoding='utf-8') as f:
                         content = f.read()
 
                     original_content = content
@@ -307,7 +306,7 @@ class StreamConfig:
 
         return fix_count
 
-    def fix_f403_star_imports(self) -> Tuple[int, bool]:
+    def fix_f403_star_imports(self) -> tuple[int, bool]:
         """修复F403星号导入问题"""
         print("🔧 Day 11: 修复F403星号导入 (12个)")
 
@@ -318,7 +317,7 @@ class StreamConfig:
             # 主要修复scores_collector_improved.py
             file_path = Path("src/collectors/scores_collector_improved.py")
             if file_path.exists():
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content
@@ -341,7 +340,7 @@ class StreamConfig:
                 if content != original_content:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(content)
-                    print(f"    ✅ scores_collector_improved.py 星号导入修复完成")
+                    print("    ✅ scores_collector_improved.py 星号导入修复完成")
                     fix_count += 3  # 修复了3个星号导入
 
         except Exception as e:
@@ -386,7 +385,7 @@ class StreamConfig:
 
         return fix_count
 
-    def fix_a002_parameter_conflicts(self) -> Tuple[int, bool]:
+    def fix_a002_parameter_conflicts(self) -> tuple[int, bool]:
         """修复A002参数名与内置函数冲突"""
         print("🔧 Day 12: 修复A002参数冲突 (26个)")
 
@@ -443,7 +442,7 @@ class StreamConfig:
     def _fix_a002_in_file(self, file_path: Path, replacements: dict) -> int:
         """修复单个文件中的A002问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content

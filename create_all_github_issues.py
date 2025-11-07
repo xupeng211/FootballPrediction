@@ -6,11 +6,11 @@ Batch Create All Progressive Improvement Issues to Remote GitHub Repository
 
 import json
 import subprocess
-import time
 import sys
-from typing import Dict, List, Any
+import time
 
-def create_issue_with_gh(title: str, body: str, labels: List[str]) -> bool:
+
+def create_issue_with_gh(title: str, body: str, labels: list[str]) -> bool:
     """使用GitHub CLI创建单个Issue"""
     try:
         # 将body写入临时文件
@@ -50,7 +50,7 @@ def main():
 
     # 读取Issues数据
     try:
-        with open("progressive_improvement_issues.json", "r", encoding="utf-8") as f:
+        with open("progressive_improvement_issues.json", encoding="utf-8") as f:
             issues = json.load(f)
     except FileNotFoundError:
         print("❌ 找不到 progressive_improvement_issues.json 文件")
@@ -103,7 +103,7 @@ def main():
         os.remove("/tmp/issue_body.md")
 
     # 显示结果
-    print(f"\n📊 创建结果摘要")
+    print("\n📊 创建结果摘要")
     print("=" * 30)
     print(f"✅ 成功创建: {created_count} 个Issues")
     print(f"❌ 创建失败: {failed_count} 个Issues")
@@ -111,7 +111,7 @@ def main():
 
     # 显示创建的Issue URLs
     if created_urls:
-        print(f"\n🔗 已创建的Issues:")
+        print("\n🔗 已创建的Issues:")
         for i, url in enumerate(created_urls, 1):
             print(f"{i}. {url}")
 

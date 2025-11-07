@@ -3,9 +3,9 @@
 统一测试工具库
 """
 
-import subprocess
 import re
-from typing import Dict, Optional
+import subprocess
+
 
 class QuickTestRunner:
     """快速测试运行器"""

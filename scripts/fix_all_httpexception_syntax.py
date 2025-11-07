@@ -4,9 +4,9 @@
 """
 
 import re
-import os
 import subprocess
 from pathlib import Path
+
 
 def check_syntax(file_path):
     """检查文件语法是否正确"""
@@ -147,7 +147,7 @@ def main():
         # 先检查当前语法状态
         is_valid, error_msg = check_syntax(str(full_path))
         if is_valid:
-            print(f"✅ 语法正确，无需修复")
+            print("✅ 语法正确，无需修复")
             already_good_count += 1
             continue
 
@@ -155,7 +155,7 @@ def main():
 
         try:
             # 读取文件内容
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 修复语法
@@ -169,13 +169,13 @@ def main():
                 # 验证修复效果
                 is_valid_after, error_msg_after = check_syntax(str(full_path))
                 if is_valid_after:
-                    print(f"✅ 修复成功")
+                    print("✅ 修复成功")
                     fixed_count += 1
                 else:
                     print(f"❌ 修复失败: {error_msg_after[:100]}...")
                     error_count += 1
             else:
-                print(f"⚪ 内容无变化")
+                print("⚪ 内容无变化")
                 error_count += 1
 
         except Exception as e:
@@ -184,7 +184,7 @@ def main():
 
     print("\n" + "=" * 50)
     print("🎉 HTTPException语法修复完成!")
-    print(f"📊 修复统计:")
+    print("📊 修复统计:")
     print(f"   修复成功: {fixed_count} 个文件")
     print(f"   已经正确: {already_good_count} 个文件")
     print(f"   修复失败: {error_count} 个文件")
@@ -193,7 +193,7 @@ def main():
     if error_count > 0:
         print(f"\n⚠️  有 {error_count} 个文件需要手动处理")
     else:
-        print(f"\n✅ 所有文件语法修复成功!")
+        print("\n✅ 所有文件语法修复成功!")
 
 if __name__ == "__main__":
     main()

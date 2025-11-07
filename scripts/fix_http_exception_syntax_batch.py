@@ -8,14 +8,13 @@ Batch Fix HTTPException Syntax Errors Script
 
 import os
 import re
-import sys
-from pathlib import Path
+
 
 def fix_http_exception_syntax(file_path):
     """修复单个文件中的HTTPException语法错误"""
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -133,7 +132,7 @@ def main():
             failed_count += 1
 
     print("\n" + "="*60)
-    print(f"📊 修复统计:")
+    print("📊 修复统计:")
     print(f"  ✅ 修复成功: {fixed_count} 个文件")
     print(f"  ❌ 修复失败: {failed_count} 个文件")
     print(f"  📁 总文件数: {len(api_files)} 个文件")

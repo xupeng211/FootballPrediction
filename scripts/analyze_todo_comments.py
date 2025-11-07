@@ -4,9 +4,9 @@
 """
 
 import re
-import os
 from collections import Counter
 from pathlib import Path
+
 
 def analyze_todos():
     """分析TODO注释"""
@@ -17,7 +17,7 @@ def analyze_todos():
     # 遍历所有Python文件
     for py_file in Path("src").rglob("*.py"):
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, encoding='utf-8') as f:
                 content = f.read()
 
             # 查找所有TODO注释
@@ -66,21 +66,21 @@ def main():
     print("🔍 分析TODO注释...")
     total_todos, todo_types, todo_files = analyze_todos()
 
-    print(f"\n📊 TODO注释统计:")
+    print("\n📊 TODO注释统计:")
     print(f"   总数量: {total_todos}")
     print(f"   涉及文件: {len(todo_files)}")
 
-    print(f"\n🏆 最常见的TODO类型 (前10):")
+    print("\n🏆 最常见的TODO类型 (前10):")
     for todo, count in todo_types.most_common(10):
         print(f"   {count:3d}: {todo}")
 
-    print(f"\n📁 TODO最多的文件 (前10):")
+    print("\n📁 TODO最多的文件 (前10):")
     for file_path, count in todo_files.most_common(10):
         print(f"   {count:3d}: {file_path}")
 
     # 分类显示
     categories = categorize_todos(todo_types)
-    print(f"\n📋 TODO分类统计:")
+    print("\n📋 TODO分类统计:")
     for category, items in categories.items():
         total = sum(count for _, count in items)
         print(f"   {category}: {total} 项")

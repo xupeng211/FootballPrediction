@@ -4,18 +4,16 @@
 智能分析和改进代码覆盖率，提供具体的改进建议和自动化修复
 """
 
-import os
-import sys
-import json
-import subprocess
 import ast
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
-from collections import defaultdict, Counter
+import json
 import re
-import time
+import subprocess
+import sys
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 
 @dataclass
 class CoverageMetrics:
@@ -24,7 +22,7 @@ class CoverageMetrics:
     covered_lines: int
     missing_lines: int
     coverage_percentage: float
-    file_coverage: Dict[str, Dict[str, Any]]
+    file_coverage: dict[str, dict[str, Any]]
 
 @dataclass
 class CoverageIssue:
@@ -33,8 +31,8 @@ class CoverageIssue:
     issue_type: str
     description: str
     severity: str
-    suggested_fixes: List[str]
-    line_numbers: List[int]
+    suggested_fixes: list[str]
+    line_numbers: list[int]
 
 @dataclass
 class ImprovementAction:
@@ -55,7 +53,7 @@ class CoverageAnalyzer:
         self.coverage_data = None
         self.issues = []
 
-    def collect_coverage_data(self) -> Optional[CoverageMetrics]:
+    def collect_coverage_data(self) -> CoverageMetrics | None:
         """收集覆盖率数据"""
         print("📊 收集覆盖率数据...")
 
@@ -87,7 +85,7 @@ class CoverageAnalyzer:
                 print("❌ 覆盖率报告文件不存在")
                 return None
 
-            with open(coverage_file, 'r') as f:
+            with open(coverage_file) as f:
                 coverage_json = json.load(f)
 
             # 解析覆盖率数据
@@ -106,11 +104,11 @@ class CoverageAnalyzer:
                     'total_lines': file_data.get('summary',
     {}).get('num_statements',
     0),
-    
+
                     'covered_lines': file_data.get('summary',
     {}).get('covered_lines',
     0),
-    
+
                     'missing_lines': file_data.get('missing_lines', []),
                     'coverage': file_data.get('summary', {}).get('percent_covered', 0)
                 }
@@ -133,7 +131,7 @@ class CoverageAnalyzer:
             print(f"❌ 收集覆盖率数据失败: {e}")
             return None
 
-    def analyze_coverage_issues(self, metrics: CoverageMetrics) -> List[CoverageIssue]:
+    def analyze_coverage_issues(self, metrics: CoverageMetrics) -> list[CoverageIssue]:
         """分析覆盖率问题"""
         print("🔍 分析覆盖率问题...")
 
@@ -181,12 +179,12 @@ class CoverageAnalyzer:
 
     def _analyze_uncovered_code(self,
     file_path: Path,
-    missing_lines: List[int]) -> List[CoverageIssue]:
+    missing_lines: list[int]) -> list[CoverageIssue]:
         """分析未覆盖的代码"""
         issues = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
                 lines = content.split('\n')
 
@@ -207,7 +205,7 @@ class CoverageAnalyzer:
                         description=f"未覆盖的函数定义 (行 {start}-{end})",
                         severity="high",
                         suggested_fixes=[
-                            f"为函数创建单元测试",
+                            "为函数创建单元测试",
                             "测试函数的所有分支",
                             "添加边界条件测试",
                             "测试异常情况"
@@ -248,7 +246,7 @@ class CoverageAnalyzer:
 
         return issues
 
-    def _group_consecutive_lines(self, lines: List[int]) -> List[Tuple[int, int]]:
+    def _group_consecutive_lines(self, lines: list[int]) -> list[tuple[int, int]]:
         """将连续的行号分组"""
         if not lines:
             return []
@@ -306,7 +304,7 @@ class TestGenerator:
         self.test_dir = project_root / "tests"
 
     def generate_tests_for_issues(self,
-    issues: List[CoverageIssue]) -> List[ImprovementAction]:
+    issues: list[CoverageIssue]) -> list[ImprovementAction]:
         """为覆盖率问题生成测试改进建议"""
         print("🧪 生成测试改进建议...")
 
@@ -325,13 +323,13 @@ class TestGenerator:
         print(f"✅ 生成了 {len(actions)} 个改进建议")
         return actions
 
-    def _generate_function_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+    def _generate_function_tests(self, issue: CoverageIssue) -> list[ImprovementAction]:
         """为函数生成测试"""
         actions = []
 
         try:
             file_path = self.project_root / issue.file_path
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 提取函数名
@@ -377,13 +375,13 @@ def test_{func_name}_error_cases():
 
         return actions
 
-    def _generate_error_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+    def _generate_error_tests(self, issue: CoverageIssue) -> list[ImprovementAction]:
         """为错误处理生成测试"""
         test_file_path = self._get_test_file_path(issue.file_path)
 
         action = ImprovementAction(
             action_type="create_error_test",
-            description=f"为错误处理代码创建异常测试",
+            description="为错误处理代码创建异常测试",
             file_path=test_file_path,
             estimated_impact=f"提升覆盖率 {len(issue.line_numbers)}%",
             implementation=f"""
@@ -410,13 +408,13 @@ def test_recovery_mechanism():
         )
         return [action]
 
-    def _generate_logic_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+    def _generate_logic_tests(self, issue: CoverageIssue) -> list[ImprovementAction]:
         """为复杂逻辑生成测试"""
         test_file_path = self._get_test_file_path(issue.file_path)
 
         action = ImprovementAction(
             action_type="create_logic_test",
-            description=f"为复杂逻辑创建多场景测试",
+            description="为复杂逻辑创建多场景测试",
             file_path=test_file_path,
             estimated_impact=f"提升覆盖率 {len(issue.line_numbers) * 1.5}%",
             implementation=f"""
@@ -448,13 +446,13 @@ def test_logic_combinations():
         )
         return [action]
 
-    def _generate_coverage_tests(self, issue: CoverageIssue) -> List[ImprovementAction]:
+    def _generate_coverage_tests(self, issue: CoverageIssue) -> list[ImprovementAction]:
         """为低覆盖率文件生成通用测试"""
         test_file_path = self._get_test_file_path(issue.file_path)
 
         action = ImprovementAction(
             action_type="create_coverage_test",
-            description=f"为低覆盖率文件创建基础测试",
+            description="为低覆盖率文件创建基础测试",
             file_path=test_file_path,
             estimated_impact=f"提升覆盖率 {20 - issue.severity_score}%",
             implementation=f"""
@@ -525,8 +523,8 @@ class CoverageImprovementExecutor:
 
     def _generate_report(self,
     metrics: CoverageMetrics,
-    issues: List[CoverageIssue],
-    actions: List[ImprovementAction]):
+    issues: list[CoverageIssue],
+    actions: list[ImprovementAction]):
         """生成改进报告"""
         report_dir = self.project_root / "reports"
         report_dir.mkdir(exist_ok=True)
@@ -613,7 +611,7 @@ class CoverageImprovementExecutor:
 
         print(f"📄 改进报告已生成: {report_file}")
 
-    def _propose_improvements(self, actions: List[ImprovementAction]) -> bool:
+    def _propose_improvements(self, actions: list[ImprovementAction]) -> bool:
         """提议改进方案"""
         print(f"\n🎯 生成了 {len(actions)} 个改进建议")
         print("建议优先级前5的改进方案:")
@@ -632,7 +630,7 @@ class CoverageImprovementExecutor:
             print("\n跳过改进实施")
             return True
 
-    def _implement_improvements(self, actions: List[ImprovementAction]) -> bool:
+    def _implement_improvements(self, actions: list[ImprovementAction]) -> bool:
         """实施改进建议"""
         print("🔧 实施改进建议...")
 

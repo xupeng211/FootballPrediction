@@ -5,12 +5,11 @@ Smart Coverage Enhancement Strategy
 """
 
 import os
-import subprocess
 import re
-from pathlib import Path
-from typing import List, Dict, Tuple
+import subprocess
 
-def analyze_current_coverage() -> Dict:
+
+def analyze_current_coverage() -> dict:
     """分析当前覆盖率状况"""
     try:
         result = subprocess.run(
@@ -70,7 +69,7 @@ def analyze_current_coverage() -> Dict:
         print(f"分析覆盖率失败: {e}")
         return {}
 
-def create_high_impact_tests() -> List[str]:
+def create_high_impact_tests() -> list[str]:
     """创建高影响力的测试，专注于已经可以运行的模块"""
 
     # 基于之前分析，优先创建这些模块的测试
@@ -340,7 +339,7 @@ class TestLoggerIntegration:
 
     return created_tests
 
-def run_targeted_coverage_test(test_files: List[str]) -> Dict:
+def run_targeted_coverage_test(test_files: list[str]) -> dict:
     """运行针对性的覆盖率测试"""
     try:
         cmd = ["python3", "-m", "pytest"] + test_files + ["--cov=src", "--cov-report=term", "--tb=no", "-q"]
@@ -406,7 +405,7 @@ def main():
     if existing_files:
         coverage_result = run_targeted_coverage_test(existing_files)
 
-        print(f"\\n📊 测试结果:")
+        print("\\n📊 测试结果:")
         print(f"   总覆盖率: {coverage_result['total_coverage']}%")
         print(f"   通过测试: {coverage_result['passed_tests']}")
         print(f"   失败测试: {coverage_result['failed_tests']}")
@@ -415,7 +414,7 @@ def main():
         initial_coverage = current_coverage.get('total', 0)
         improvement = coverage_result['total_coverage'] - initial_coverage
 
-        print(f"\\n📈 覆盖率进展:")
+        print("\\n📈 覆盖率进展:")
         print(f"   初始覆盖率: {initial_coverage}%")
         print(f"   当前覆盖率: {coverage_result['total_coverage']}%")
         print(f"   提升幅度: {improvement:.1f}%")

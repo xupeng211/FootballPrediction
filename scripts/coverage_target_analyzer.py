@@ -4,9 +4,9 @@
 分析当前覆盖率状态并制定精确的提升策略
 """
 
+import re
 import subprocess
 import sys
-import re
 from pathlib import Path
 
 
@@ -53,8 +53,8 @@ def calculate_target_improvements(module_data, target_coverage=15):
     target_covered = int(total_lines * target_coverage / 100)
     needed_lines = target_covered - total_covered
 
-    print(f"📊 覆盖率分析报告")
-    print(f"=" * 50)
+    print("📊 覆盖率分析报告")
+    print("=" * 50)
     print(f"当前整体覆盖率: {total_covered * 100 / total_lines:.2f}%")
     print(f"目标覆盖率: {target_coverage}%")
     print(f"需要额外覆盖的代码行数: {needed_lines}")

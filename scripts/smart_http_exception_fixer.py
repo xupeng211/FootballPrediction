@@ -9,11 +9,12 @@ Smart HTTPException Fixer
 import os
 import re
 
+
 def fix_http_exception_in_file(file_path):
     """智能修复文件中的HTTPException语法错误"""
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -27,7 +28,7 @@ def fix_http_exception_in_file(file_path):
 
         new_content = re.sub(pattern1, replacement1, content, flags=re.MULTILINE | re.DOTALL)
         if new_content != content:
-            print(f"  ✅ 修复模式1: 分离的HTTPException参数")
+            print("  ✅ 修复模式1: 分离的HTTPException参数")
             content = new_content
             changes_made = True
 
@@ -38,7 +39,7 @@ def fix_http_exception_in_file(file_path):
 
         new_content = re.sub(pattern2, replacement2, content, flags=re.MULTILINE | re.DOTALL)
         if new_content != content:
-            print(f"  ✅ 修复模式2: 带异常链的HTTPException")
+            print("  ✅ 修复模式2: 带异常链的HTTPException")
             content = new_content
             changes_made = True
 
@@ -46,7 +47,7 @@ def fix_http_exception_in_file(file_path):
         pattern3 = r'\n\s*\)\s+from\s+e\s*#\s*TODO:\s*B904\s+exception\s+chaining\s*$'
         new_content = re.sub(pattern3, '', content)
         if new_content != content:
-            print(f"  ✅ 修复模式3: 删除末尾异常链片段")
+            print("  ✅ 修复模式3: 删除末尾异常链片段")
             content = new_content
             changes_made = True
 
@@ -65,7 +66,7 @@ def fix_http_exception_in_file(file_path):
 
         new_content = re.sub(pattern4, fix_complex_match, content, flags=re.MULTILINE | re.DOTALL)
         if new_content != content:
-            print(f"  ✅ 修复模式4: 复杂分离情况")
+            print("  ✅ 修复模式4: 复杂分离情况")
             content = new_content
             changes_made = True
 
@@ -79,7 +80,7 @@ def fix_http_exception_in_file(file_path):
                 f.write(content)
             return changes_made
         else:
-            print(f"  ℹ️  无需修复")
+            print("  ℹ️  无需修复")
             return False
 
     except Exception as e:
@@ -116,15 +117,15 @@ def main():
             print(f"\n⚠️  文件不存在: {file_path}")
 
     print(f"\n{'='*50}")
-    print(f"📊 修复统计:")
+    print("📊 修复统计:")
     print(f"  ✅ 成功修复: {fixed_count} 个文件")
     print(f"  📁 总文件数: {len(api_files)} 个文件")
 
     if fixed_count > 0:
-        print(f"\n🎯 下一步验证:")
-        print(f"  ruff check src/api/betting_api.py --output-format=concise")
+        print("\n🎯 下一步验证:")
+        print("  ruff check src/api/betting_api.py --output-format=concise")
 
-    print(f"\n✨ 智能修复完成!")
+    print("\n✨ 智能修复完成!")
 
 if __name__ == "__main__":
     main()

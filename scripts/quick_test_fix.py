@@ -4,7 +4,6 @@
 快速跳过不存在函数的测试，确保所有测试通过
 """
 
-import pytest
 from pathlib import Path
 
 
@@ -16,7 +15,7 @@ def fix_date_utils_tests():
         print("❌ 测试文件不存在")
         return False
 
-    with open(test_file, 'r', encoding='utf-8') as f:
+    with open(test_file, encoding='utf-8') as f:
         content = f.read()
 
     # 将不存在的函数测试改为跳过

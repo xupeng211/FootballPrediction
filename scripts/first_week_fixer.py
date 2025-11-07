@@ -5,11 +5,11 @@
 """
 
 import re
-from pathlib import Path
-from typing import List, Tuple
 import subprocess
+from pathlib import Path
 
-def fix_f821_f405_issues() -> Tuple[int, bool]:
+
+def fix_f821_f405_issues() -> tuple[int, bool]:
     """修复F821未定义名称和F405可能未定义问题"""
     print("🔧 Day 1-2: 修复F821/F405导入问题")
 
@@ -39,7 +39,7 @@ def fix_betting_api_scope_issues() -> int:
     file_path = Path("src/api/betting_api.py")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -81,7 +81,7 @@ def fix_streaming_tasks_undefined_classes() -> int:
     file_path = Path("src/tasks/streaming_tasks.py")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -99,7 +99,7 @@ def fix_streaming_tasks_undefined_classes() -> int:
         ]
 
         for class_name in undefined_classes:
-            if class_name in content and f'from' not in content.split(class_name)[0].split('\n')[-2:]:
+            if class_name in content and 'from' not in content.split(class_name)[0].split('\n')[-2:]:
                 # 添加导入语句
                 if class_name == 'FootballKafkaConsumer':
                     imports_to_add.append('from src.streaming.kafka_consumer import FootballKafkaConsumer')
@@ -161,7 +161,7 @@ def fix_other_import_issues() -> int:
 
     return fix_count
 
-def fix_a002_parameter_conflicts() -> Tuple[int, bool]:
+def fix_a002_parameter_conflicts() -> tuple[int, bool]:
     """修复A002参数名与内置函数冲突"""
     print("🔧 Day 3-4: 修复A002参数冲突")
 
@@ -216,7 +216,7 @@ def fix_a002_parameter_conflicts() -> Tuple[int, bool]:
 def fix_a002_in_file(file_path: Path, replacements: dict) -> int:
     """修复单个文件中的A002问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -254,7 +254,7 @@ def fix_a002_in_file(file_path: Path, replacements: dict) -> int:
         print(f"    ❌ 修复文件失败 {file_path}: {e}")
         return 0
 
-def fix_f403_star_imports() -> Tuple[int, bool]:
+def fix_f403_star_imports() -> tuple[int, bool]:
     """修复F403星号导入问题"""
     print("🔧 Day 5-6: 修复F403星号导入")
 
@@ -295,7 +295,7 @@ def fix_f403_star_imports() -> Tuple[int, bool]:
 def fix_f403_in_file(file_path: Path) -> int:
     """修复单个文件中的F403问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
