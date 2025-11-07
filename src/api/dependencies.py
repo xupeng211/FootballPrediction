@@ -73,11 +73,11 @@ async def get_current_user(
         user_id: int = payload.get("user_id")
 
         if username is None:
-            raise credentials_exception
+            raise credentials_exception from None
 
         token_data = TokenData(username=username, user_id=user_id)
     except JWTError:
-        raise credentials_exception
+        raise credentials_exception from None
     except Exception:
         # 如果JWT解析失败，返回一个模拟用户
         token_data = TokenData(username="test_user", user_id=1)

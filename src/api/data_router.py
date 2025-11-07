@@ -254,7 +254,7 @@ async def get_team(team_id: int):
         raise HTTPException(
             status_code=404,  # TODO: 将魔法数字 404 提取为常量
             detail="球队不存在",  # TODO: 将魔法数字 404 提取为常量
-        )  # TODO: 将魔法数字 404 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/teams/{team_id}/statistics", response_model=TeamStatistics)
@@ -281,7 +281,7 @@ async def get_team_statistics(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="获取统计失败",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 # ============================================================================
@@ -354,7 +354,7 @@ async def get_matches(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"获取比赛失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/matches/{match_id}", response_model=MatchInfo)
@@ -380,7 +380,7 @@ async def get_match(match_id: int):
         raise HTTPException(
             status_code=404,  # TODO: 将魔法数字 404 提取为常量
             detail="比赛不存在",  # TODO: 将魔法数字 404 提取为常量
-        )  # TODO: 将魔法数字 404 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
@@ -406,7 +406,7 @@ async def get_match_statistics(match_id: int):
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="获取统计失败",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 # ============================================================================
@@ -449,7 +449,7 @@ async def get_odds(
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"获取赔率失败: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/odds/{match_id}", response_model=list[OddsInfo])
@@ -476,7 +476,7 @@ async def get_match_odds(match_id: int):
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail="获取赔率失败",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 # 导出所有必要的符号以保持兼容性

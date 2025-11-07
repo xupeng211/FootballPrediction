@@ -151,7 +151,7 @@ async def add_match_to_monitoring(
         ) from e  # TODO: B904 exception chaining
     except Exception as e:
         logger.error(f"Failed to add match to monitoring: {e}")
-        raise HTTPException(status_code=500, detail="Failed to add match to monitoring")
+        raise HTTPException(status_code=500, detail="Failed to add match to monitoring") from e
 
 
 @router.put("/{match_id}/score", summary="更新比赛比分")
@@ -286,7 +286,7 @@ async def update_match_status(
         ) from e  # TODO: B904 exception chaining
     except Exception as e:
         logger.error(f"Failed to update match status: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update match status")
+        raise HTTPException(status_code=500, detail="Failed to update match status") from e
 
 
 @router.get("/{match_id}", summary="获取比赛信息")
@@ -315,7 +315,7 @@ async def get_match_info(match_id: int):
         raise
     except Exception as e:
         logger.error(f"Failed to get match info: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get match info")
+        raise HTTPException(status_code=500, detail="Failed to get match info") from e
 
 
 @router.get("/league/{league}", summary="获取联赛比赛")
@@ -398,7 +398,7 @@ async def get_live_matches(
 
     except Exception as e:
         logger.error(f"Failed to get live matches: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get live matches")
+        raise HTTPException(status_code=500, detail="Failed to get live matches") from e
 
 
 @router.get("/stats", response_model=MatchStatsResponse, summary="获取比赛服务统计")
@@ -457,7 +457,7 @@ async def subscribe_to_match_updates(
         logger.error(f"Failed to subscribe to match updates: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to subscribe to match updates"
-        )
+        ) from e
 
 
 @router.delete("/{match_id}/subscribe", summary="取消订阅比赛更新")
@@ -497,7 +497,7 @@ async def unsubscribe_from_match_updates(
         logger.error(f"Failed to unsubscribe from match updates: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to unsubscribe from match updates"
-        )
+        ) from e
 
 
 @router.post("/broadcast/alert", summary="广播比赛告警")

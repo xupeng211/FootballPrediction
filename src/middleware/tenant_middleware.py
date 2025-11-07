@@ -18,7 +18,7 @@ from src.database.models.tenant import Tenant
 from src.services.auth_service import AuthService
 from src.services.tenant_service import TenantService
 
-security = HTTPBearer(auto_error=False)
+security = HTTPBearer()
 
 
 class TenantContext:

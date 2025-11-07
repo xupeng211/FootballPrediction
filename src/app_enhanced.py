@@ -104,7 +104,7 @@ async def get_predictions():
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch predictions: {str(e)}"
-        )
+        ) from e
 
 
 @app.post("/predictions", response_model=PredictionResponse)
@@ -147,7 +147,7 @@ async def create_prediction(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to create prediction: {str(e)}"
-        )
+        ) from e
 
 
 @app.get("/predictions/{prediction_id}", response_model=PredictionResponse)
@@ -183,7 +183,7 @@ async def get_prediction(prediction_id: int):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch prediction: {str(e)}"
-        )
+        ) from e
 
 
 if __name__ == "__main__":

@@ -172,7 +172,7 @@ class EnhancedPredictionService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token verification failed",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from e
 
     async def check_rate_limit(self, token: str, redis_client) -> bool:
         """检查请求频率限制"""
@@ -235,7 +235,7 @@ class EnhancedPredictionService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Prediction failed: {str(e)}",
-            )
+            ) from e
 
     async def _extract_features(self, match_info: MatchInfo) -> dict:
         """提取比赛特征"""

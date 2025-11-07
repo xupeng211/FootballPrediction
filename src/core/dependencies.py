@@ -19,7 +19,7 @@ from .logging_system import get_logger
 logger = get_logger(__name__)
 
 # HTTP Bearer 认证方案
-security = HTTPBearer(auto_error=False)
+security = HTTPBearer()
 
 
 async def get_current_user_optional(
