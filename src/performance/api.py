@@ -111,7 +111,7 @@ async def get_performance_metrics():
         logger.error(f"Failed to get performance metrics: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance metrics"
-        )
+        ) from e
 
 
 @router.post("/profiling/start")
@@ -148,7 +148,7 @@ async def start_profiling(config: PerformanceRequest):
         logger.error(f"Failed to start profiling: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to start performance profiling"
-        )
+        ) from e
 
 
 @router.post("/profiling/stop")
@@ -178,7 +178,7 @@ async def stop_profiling():
         logger.error(f"Failed to stop profiling: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to stop performance profiling"
-        )
+        ) from e
 
 
 @router.get("/profiling/results")
@@ -223,7 +223,7 @@ async def get_profiling_results():
         logger.error(f"Failed to get profiling results: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve profiling results"
-        )
+        ) from e
 
 
 @router.get("/report")

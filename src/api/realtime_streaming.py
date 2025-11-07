@@ -62,7 +62,7 @@ async def execute_real_time_data_streaming_api(
             timestamp=datetime.now(),
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/real_time_data_streaming_api/status/{job_id}")

@@ -50,7 +50,7 @@ async def register_user(
         user = await user_service.create_user(request)
         return user
     except UserAlreadyExistsError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -69,7 +69,9 @@ async def login_user(
         )
         return auth_response
     except (UserNotFoundError, InvalidCredentialsError) as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)
+        ) from e
 
 
 @router.get("/me", response_model=UserResponse)
@@ -97,7 +99,7 @@ async def get_user(
         user = await user_service.get_user_by_id(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -122,7 +124,7 @@ async def update_user(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
         ) from e  # TODO: B904 exception chaining
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
 @router.delete("/{user_id}", status_code=204)
@@ -169,7 +171,7 @@ async def get_users(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        ) from e
 
 
 @router.get("/search/{query}", response_model=list[UserResponse])
@@ -192,7 +194,7 @@ async def search_users(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        ) from e
 
 
 @router.post("/change-password", status_code=200)
@@ -214,7 +216,7 @@ async def change_password(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from e  # TODO: B904 exception chaining
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
 @router.post("/{user_id}/deactivate", response_model=UserResponse)
@@ -279,4 +281,4 @@ async def get_user_stats(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        ) from e

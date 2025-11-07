@@ -137,7 +137,7 @@ class PredictionDomainService:
         actual_home: int,
         actual_away: int,
         scoring_rules: dict[str, Any] | None = None,
-    ) -> None:
+    ) -> Prediction:
         """评估预测"""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能评估待处理的预测")
@@ -161,11 +161,18 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             actual_home=actual_home,
             actual_away=actual_away,
+            is_correct=(
+                prediction.score.is_correct_result if prediction.score else False
+            ),
             points_earned=points_earned,
         )
         self._events.append(event)
 
-    def cancel_prediction(self, prediction: Prediction) -> None:
+        return prediction
+
+    def cancel_prediction(
+        self, prediction: Prediction, reason: str = "用户取消"
+    ) -> None:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能取消待处理的预测")
@@ -176,7 +183,7 @@ class PredictionDomainService:
         if prediction.id is None:
             raise ValueError("预测ID不能为空")
 
-        event = PredictionCancelledEvent(prediction_id=prediction.id)
+        event = PredictionCancelledEvent(prediction_id=prediction.id, reason=reason)
         self._events.append(event)
 
     def expire_prediction(self, prediction: Prediction) -> None:
@@ -210,7 +217,9 @@ class PredictionDomainService:
         # 创建新的积分对象
         from decimal import Decimal
 
-        prediction.points = PredictionPoints(total=Decimal(str(new_points)))
+        prediction.points = PredictionPoints(
+            base_points=Decimal(str(new_points)), total=Decimal(str(new_points))
+        )
 
         # 记录领域事件
         if prediction.id is None:
