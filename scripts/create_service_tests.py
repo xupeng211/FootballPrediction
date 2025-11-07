@@ -83,8 +83,7 @@ class ServiceAnalyzer:
                         func_info = self._analyze_runtime_function(obj)
                         analysis['functions'].append(func_info)
 
-            print(f"✅ 发现 {len(analysis['classes'])} 个类,
-    {len(analysis['functions'])} 个函数")
+            print(f"✅ 发现 {len(analysis['classes'])} 个类, {len(analysis['functions'])} 个函数")
             return analysis
 
         except Exception as e:

@@ -146,9 +146,7 @@ async def add_match_to_monitoring(
         }
 
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail=f"Invalid status: {request.status}"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
     except Exception as e:
         logger.error(f"Failed to add match to monitoring: {e}")
         raise HTTPException(
@@ -216,9 +214,7 @@ async def update_match_score(
 
     except Exception as e:
         logger.error(f"Failed to update match score: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to update match score"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=500, detail="Failed to update match score")
 
 
 @router.put("/{match_id}/status", summary="更新比赛状态")
@@ -283,9 +279,7 @@ async def update_match_status(
         }
 
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail=f"Invalid status: {request.status}"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
     except Exception as e:
         logger.error(f"Failed to update match status: {e}")
         raise HTTPException(
@@ -309,9 +303,7 @@ async def get_match_info(match_id: int):
         match_info = await service.get_match_info(match_id)
 
         if not match_info:
-            raise HTTPException(
-                status_code=404, detail="Match not found"
-            ) from e  # TODO: B904 exception chaining
+            raise HTTPException(status_code=404, detail="Match not found")
 
         return match_info
 
@@ -361,9 +353,7 @@ async def get_league_matches(
 
     except Exception as e:
         logger.error(f"Failed to get league matches: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to get league matches"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=500, detail="Failed to get league matches")
 
 
 @router.get("/live", summary="获取直播比赛")
@@ -421,9 +411,7 @@ async def get_match_service_stats():
 
     except Exception as e:
         logger.error(f"Failed to get service stats: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to get service stats"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=500, detail="Failed to get service stats")
 
 
 @router.post("/{match_id}/subscribe", summary="订阅比赛更新")
@@ -483,9 +471,7 @@ async def unsubscribe_from_match_updates(
         success = await service.unsubscribe_from_match(match_id, user_id)
 
         if not success:
-            raise HTTPException(
-                status_code=404, detail="Match not found"
-            ) from e  # TODO: B904 exception chaining
+            raise HTTPException(status_code=404, detail="Match not found")
 
         return {
             "success": True,
@@ -549,9 +535,7 @@ async def broadcast_match_alert(
 
     except Exception as e:
         logger.error(f"Failed to broadcast match alert: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to broadcast match alert"
-        ) from e  # TODO: B904 exception chaining
+        raise HTTPException(status_code=500, detail="Failed to broadcast match alert")
 
 
 # ============================================================================

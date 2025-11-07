@@ -47,18 +47,25 @@ make test.unit
 ### 🏗️ 技术栈
 - **后端**: FastAPI + SQLAlchemy 2.0 + Redis + PostgreSQL
 - **架构**: DDD + CQRS + 依赖注入 + 事件驱动
-- **测试**: 195个测试文件，25+种标记，覆盖率30%
+- **测试**: 195个测试文件，47种标记，覆盖率30%
 - **工具**: 113个自动化脚本，600+个Makefile命令
 
 ### 🎯 核心模块结构
 ```
 src/
 ├── domain/           # 业务实体和领域逻辑
+│   ├── entities/     # 领域实体 (Match, Team, Prediction)
+│   ├── strategies/   # 预测策略工厂模式
+│   └── services/     # 领域服务
 ├── api/             # FastAPI路由和CQRS处理
+│   ├── app.py       # FastAPI应用入口
+│   └── routes/      # API路由模块
 ├── services/        # 业务服务和数据处理
 ├── database/        # 数据访问层和仓储模式
+│   └── repositories/ # 仓储实现
 ├── cache/           # Redis缓存管理
-├── core/            # 配置、认证、验证
+├── core/            # 配置、认证、验证、DI容器
+├── cqrs/            # CQRS命令和查询处理
 ├── data/            # 数据收集和处理
 ├── features/        # 特征工程
 ├── ml/              # 机器学习模型
@@ -105,6 +112,20 @@ event = PredictionCreatedEvent(prediction_id="123", match_data=data)
 await event_bus.publish(event)
 ```
 
+**CQRS模式**
+```python
+from src.cqrs.commands import CreatePredictionCommand
+from src.cqrs.queries import GetPredictionsByUserQuery
+
+# 命令执行
+command = CreatePredictionCommand(match_id=123, user_id=456, ...)
+result = await cqrs_app.execute_command(command)
+
+# 查询执行
+query = GetPredictionsByUserQuery(user_id=456)
+predictions = await cqrs_app.execute_query(query)
+```
+
 ---
 
 ## 🧪 测试体系详解
@@ -129,6 +150,9 @@ pytest -m "not slow"          # 排除慢速测试
 pytest -m "api and critical"  # API关键功能测试
 pytest -m "domain or services" # 业务逻辑测试
 pytest -m "ml"                 # 机器学习模块测试
+pytest -m "database"           # 数据库相关测试
+pytest -m "cache"              # 缓存相关测试
+pytest -m "auth"               # 认证相关测试
 ```
 
 **调试特定测试**
@@ -545,18 +569,21 @@ make claude-sync
 
 - `CLAUDE_IMPROVEMENT_STRATEGY.md` - 渐进式改进策略详解
 - `README.md` - 项目总体介绍和部署指南
-- `TOOLS.md` - 113个自动化脚本详细说明
-- `docs/TEST_IMPROVEMENT_GUIDE.md` - 测试改进机制指南
+- `docs/ARCHITECTURE.md` - 系统架构详细文档
+- `docs/TESTING_GUIDE.md` - 测试指南和最佳实践
+- `docs/DEVELOPMENT_SETUP.md` - 开发环境配置指南
+- `docs/DEPLOYMENT_COMPREHENSIVE_GUIDE.md` - 部署指南
+- `docs/API_REFERENCE.md` - API参考文档
 
 ---
 
 ## 🏆 项目状态
 
-- **🏗️ 架构**: DDD + 策略工厂 + 依赖注入 + 事件驱动 + 异步架构
+- **🏗️ 架构**: DDD + CQRS + 策略工厂 + 依赖注入 + 事件驱动 + 异步架构
 - **🧪 测试**: 完整测试体系，47个标准化标记，覆盖率30%（渐进式提升）
 - **🛡️ 质量**: 现代化工具链（Ruff + MyPy + bandit + 安全扫描）
 - **🤖 工具**: 智能修复工具 + 自动化脚本，完整的CI/CD工作流
-- **📏 规模**: 企业级代码库，1000+个Makefile命令
+- **📏 规模**: 企业级代码库，113个自动化脚本，600+个Makefile命令
 - **🎯 方法**: 本地开发环境，渐进式改进策略，Docker容器化部署
 - **📊 监控**: 实时质量监控 + 覆盖率趋势分析 + CI/CD指标仪表板
 
@@ -565,7 +592,8 @@ make claude-sync
 - **渐进式改进**: 不破坏现有功能的持续优化方法
 - **完整工具链**: 从开发到部署的全流程自动化
 - **企业级就绪**: 完整的CI/CD、监控、安全和质量保证体系
+- **自动化同步**: Claude Code作业与GitHub Issues的双向同步
 
 ---
 
-*文档版本: v15.0 (Claude Code优化版) | 维护者: Claude Code | 更新时间: 2025-11-06*
+*文档版本: v16.0 (Claude Code优化版) | 维护者: Claude Code | 更新时间: 2025-11-07*
