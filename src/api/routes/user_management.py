@@ -124,7 +124,9 @@ async def update_user(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
         ) from e  # TODO: B904 exception chaining
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.delete("/{user_id}", status_code=204)
@@ -216,7 +218,9 @@ async def change_password(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from e  # TODO: B904 exception chaining
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.post("/{user_id}/deactivate", response_model=UserResponse)

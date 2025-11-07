@@ -358,6 +358,11 @@ test.int: ## Test: Run integration tests only (marked with 'integration')
 	pytest -m "integration" && \
 	echo "$(GREEN)✅ Integration tests passed$(RESET)"
 
+test.smart: ## Test: Run Smart Tests optimized组合 (通过率>90%, 执行时间<2分钟)
+	@$(ACTIVATE) && \
+	echo "$(BLUE)🚀 Running Smart Tests optimized组合...$(RESET)" && \
+	python3 scripts/run_smart_tests.py
+
 test.e2e: ## Test: Run end-to-end tests only (marked with 'e2e')
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running end-to-end tests only...$(RESET)" && \

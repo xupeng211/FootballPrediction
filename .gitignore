@@ -153,3 +153,7 @@ local_reports/
 # 性能测试报告数据文件
 stress_test_report_*.json
 *.log
+
+# Claude Code 日志文件
+claude_sync_log.json
+claude_work_log.json
