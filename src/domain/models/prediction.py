@@ -128,29 +128,27 @@ class PredictionScore:
 
 @dataclass
 class PredictionPoints:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """预测积分值对象"""
 
-    total: Decimal = Decimal("0")
+    base_points: Decimal = Decimal("0")  # 基础积分
     score_bonus: Decimal = Decimal("0")  # 精确比分奖励
     result_bonus: Decimal = Decimal("0")  # 结果正确奖励
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
+    total: Decimal = Decimal("0")  # 总积分
 
     def __post_init__(self):
-        """函数文档字符串"""
-        # 添加pass语句
         """四舍五入到两位小数"""
-        self.total = self.total.quantize(Decimal("0.01"))
+        self.base_points = self.base_points.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
         self.result_bonus = self.result_bonus.quantize(Decimal("0.01"))
         self.confidence_bonus = self.confidence_bonus.quantize(Decimal("0.01"))
+        self.total = self.total.quantize(Decimal("0.01"))
 
     @property
     def breakdown(self) -> dict[str, Decimal]:
         """积分明细"""
         return {
+            "base_points": self.base_points,
             "score_bonus": self.score_bonus,
             "result_bonus": self.result_bonus,
             "confidence_bonus": self.confidence_bonus,

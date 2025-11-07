@@ -33,7 +33,7 @@ def check_prerequisites():
     files_exist = True
     for filename in ["generated_issues.json", "test_improvement_issues.json"]:
         try:
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 data = json.load(f)
                 print(f"✅ {filename}: {len(data)}个Issues")
         except FileNotFoundError:
@@ -50,10 +50,10 @@ def show_preview():
 
     # 加载Issues数据
     try:
-        with open("generated_issues.json", 'r') as f:
+        with open("generated_issues.json") as f:
             main_issues = json.load(f)
 
-        with open("test_improvement_issues.json", 'r') as f:
+        with open("test_improvement_issues.json") as f:
             test_issues = json.load(f)
 
         all_issues = main_issues + test_issues
@@ -68,7 +68,7 @@ def show_preview():
         print(f"🔥 High: {high_count}个")
         print(f"⚡ Medium: {medium_count}个")
 
-        print(f"\n📝 前5个Issues预览:")
+        print("\n📝 前5个Issues预览:")
         for i, issue in enumerate(all_issues[:5], 1):
             print(f"{i}. {issue['title']}")
             print(f"   🏷️  {', '.join(issue['labels'])}")
@@ -121,9 +121,9 @@ def main():
     # 显示示例命令
     show_sample_commands()
 
-    print(f"\n🎯 准备完成！")
-    print(f"💡 现在可以运行以下命令开始创建Issues:")
-    print(f"   python3 create_remote_github_issues.py")
+    print("\n🎯 准备完成！")
+    print("💡 现在可以运行以下命令开始创建Issues:")
+    print("   python3 create_remote_github_issues.py")
 
     return True
 

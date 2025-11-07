@@ -3,9 +3,9 @@
 更新GitHub Issues，标记所有优先级任务为已完成
 """
 
-import os
 import json
 from datetime import datetime
+
 
 def create_completion_report():
     """创建任务完成报告"""
@@ -68,24 +68,24 @@ def main():
     print(f"• P2优先级: ✅ {report['summary']['p2_completed']}")
     print(f"• P3优先级: ✅ {report['summary']['p3_completed']}")
 
-    print(f"\n🚀 核心成就:")
+    print("\n🚀 核心成就:")
     for key, value in report['achievements'].items():
         print(f"• {key.replace('_', ' ').title()}: {value}")
 
-    print(f"\n📈 覆盖率亮点:")
+    print("\n📈 覆盖率亮点:")
     for module, coverage in report['coverage_highlights'].items():
         print(f"• {module}: {coverage}")
 
-    print(f"\n🔧 技术成就:")
+    print("\n🔧 技术成就:")
     for achievement in report['technical_achievements']:
         print(f"• {achievement}")
 
-    print(f"\n📋 后续步骤:")
+    print("\n📋 后续步骤:")
     for step in report['next_steps']:
         print(f"• {step}")
 
-    print(f"\n✅ 报告已保存: priority_tasks_completion_report.json")
-    print(f"\n🎯 所有优先级任务已完成！项目测试基础已建立。")
+    print("\n✅ 报告已保存: priority_tasks_completion_report.json")
+    print("\n🎯 所有优先级任务已完成！项目测试基础已建立。")
 
 if __name__ == "__main__":
     main()

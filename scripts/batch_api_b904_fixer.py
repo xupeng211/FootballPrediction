@@ -8,15 +8,14 @@ Batch B904 Exception Fixer for API Modules
 
 import re
 import subprocess
-import sys
-from pathlib import Path
+
 
 def fix_b904_in_file(file_path):
     """修复单个文件中的B904错误"""
     print(f"🔧 修复文件: {file_path}")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 修复模式: 在HTTPException后添加 from e

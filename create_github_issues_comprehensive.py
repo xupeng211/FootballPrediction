@@ -5,10 +5,8 @@
 """
 
 import json
-import subprocess
-import sys
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any
 
 
 def main():
@@ -18,7 +16,7 @@ def main():
 
     # 检查是否已生成Issues文件
     try:
-        with open("generated_issues.json", 'r', encoding='utf-8') as f:
+        with open("generated_issues.json", encoding='utf-8') as f:
             main_issues = json.load(f)
         print(f"✅ 加载主要Issues: {len(main_issues)}个")
     except FileNotFoundError:
@@ -26,7 +24,7 @@ def main():
         return
 
     try:
-        with open("test_improvement_issues.json", 'r', encoding='utf-8') as f:
+        with open("test_improvement_issues.json", encoding='utf-8') as f:
             test_issues = json.load(f)
         print(f"✅ 加载测试Issues: {len(test_issues)}个")
     except FileNotFoundError:
@@ -56,7 +54,7 @@ def main():
     print("- GITHUB_ISSUES_STANDARD_GUIDE.md: 标准执行指南")
 
 
-def generate_manual_guide(issues: List[Dict[str, Any]]) -> str:
+def generate_manual_guide(issues: list[dict[str, Any]]) -> str:
     """生成手动创建指南"""
     guide = "# 🚀 综合GitHub Issues创建指南\n\n"
     guide += f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
@@ -107,9 +105,9 @@ def generate_manual_guide(issues: List[Dict[str, Any]]) -> str:
             guide += "**标签:**\n"
             guide += f"`{', '.join(issue['labels'])}`\n\n"
             guide += "**内容:**\n"
-            guide += f"<details>\n<summary>点击展开Issue内容</summary>\n\n"
+            guide += "<details>\n<summary>点击展开Issue内容</summary>\n\n"
             guide += f"```markdown\n{issue['body']}\n```\n\n"
-            guide += f"</details>\n\n"
+            guide += "</details>\n\n"
             guide += "---\n\n"
 
     if high_issues:
@@ -121,9 +119,9 @@ def generate_manual_guide(issues: List[Dict[str, Any]]) -> str:
             guide += "**标签:**\n"
             guide += f"`{', '.join(issue['labels'])}`\n\n"
             guide += "**内容:**\n"
-            guide += f"<details>\n<summary>点击展开Issue内容</summary>\n\n"
+            guide += "<details>\n<summary>点击展开Issue内容</summary>\n\n"
             guide += f"```markdown\n{issue['body']}\n```\n\n"
-            guide += f"</details>\n\n"
+            guide += "</details>\n\n"
             guide += "---\n\n"
 
     if medium_issues:
@@ -135,9 +133,9 @@ def generate_manual_guide(issues: List[Dict[str, Any]]) -> str:
             guide += "**标签:**\n"
             guide += f"`{', '.join(issue['labels'])}`\n\n"
             guide += "**内容:**\n"
-            guide += f"<details>\n<summary>点击展开Issue内容</summary>\n\n"
+            guide += "<details>\n<summary>点击展开Issue内容</summary>\n\n"
             guide += f"```markdown\n{issue['body']}\n```\n\n"
-            guide += f"</details>\n\n"
+            guide += "</details>\n\n"
             guide += "---\n\n"
 
     guide += "## 📋 执行建议\n\n"
@@ -161,7 +159,7 @@ def generate_manual_guide(issues: List[Dict[str, Any]]) -> str:
     return guide
 
 
-def generate_execution_summary(issues: List[Dict[str, Any]]) -> str:
+def generate_execution_summary(issues: list[dict[str, Any]]) -> str:
     """生成执行总结"""
     summary = "# 📊 综合质量改进执行总结\n\n"
 

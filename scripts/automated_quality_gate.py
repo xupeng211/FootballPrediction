@@ -6,6 +6,7 @@
 import subprocess
 import sys
 
+
 def run_syntax_check():
     """运行语法检查"""
     try:

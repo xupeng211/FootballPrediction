@@ -6,12 +6,9 @@ Emergency Code Quality Fixer
 快速修复关键的未定义名称和导入错误，确保代码可正常运行。
 """
 
-import ast
 import re
 import subprocess
-import sys
 from pathlib import Path
-from typing import List, Set, Tuple
 
 
 class EmergencyQualityFixer:
@@ -22,7 +19,7 @@ class EmergencyQualityFixer:
         self.fix_count = 0
         self.error_files = {}
 
-    def find_files_with_errors(self) -> List[Path]:
+    def find_files_with_errors(self) -> list[Path]:
         """查找有错误的文件"""
         try:
             # 使用ruff检查F821错误
@@ -46,7 +43,7 @@ class EmergencyQualityFixer:
             print(f"错误检查失败: {e}")
             return []
 
-    def analyze_missing_imports(self, file_path: Path) -> Set[str]:
+    def analyze_missing_imports(self, file_path: Path) -> set[str]:
         """分析缺失的导入"""
         try:
             result = subprocess.run(
@@ -73,7 +70,7 @@ class EmergencyQualityFixer:
     def fix_file_imports(self, file_path: Path) -> bool:
         """修复文件的导入问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 分析缺失的导入
@@ -146,7 +143,7 @@ class EmergencyQualityFixer:
     def fix_fastapi_specific_issues(self, file_path: Path) -> bool:
         """修复FastAPI特定的导入问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -261,7 +258,7 @@ class EmergencyQualityFixer:
             if self.fix_fastapi_specific_issues(file_path):
                 fixed_count += 1
 
-        print(f"\n📊 修复完成:")
+        print("\n📊 修复完成:")
         print(f"  修复文件数: {fixed_count}/{len(error_files)}")
         print(f"  总修复操作: {self.fix_count}")
 

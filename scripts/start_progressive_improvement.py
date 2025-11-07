@@ -8,8 +8,8 @@ Progressive Improvement Starter Script
 
 import os
 import subprocess
-import sys
 from datetime import datetime
+
 
 def run_command(cmd, description):
     """运行命令并显示结果"""
@@ -66,9 +66,9 @@ def assess_current_status():
         import sys
         sys.path.insert(0, 'src')
 
+        import cache.decorators as cd
         import utils.date_utils as du
         import utils.validators as val
-        import cache.decorators as cd
 
         print("✅ 核心功能验证:")
         print(f"  - DateUtils完整: {hasattr(du, 'DateUtils')}")
@@ -81,7 +81,7 @@ def assess_current_status():
 
 def suggest_next_steps():
     """建议下一步行动"""
-    print(f"\n🎯 建议的下一步行动:")
+    print("\n🎯 建议的下一步行动:")
     print("=" * 50)
     print("基于当前状态，建议按照以下顺序执行:")
     print()
@@ -104,7 +104,7 @@ def suggest_next_steps():
 
 def show_improvement_history():
     """显示改进历史"""
-    print(f"\n📈 改进历史回顾:")
+    print("\n📈 改进历史回顾:")
     print("=" * 50)
 
     history = [
@@ -137,14 +137,14 @@ def main():
     # 建议下一步行动
     suggest_next_steps()
 
-    print(f"\n💡 提示:")
+    print("\n💡 提示:")
     print("=" * 50)
     print("1. 详细的改进策略请参考 CLAUDE_IMPROVEMENT_STRATEGY.md")
     print("2. 每个改进阶段都应该创建相应的改进报告")
     print("3. 保持渐进式方法，避免一次性大规模变更")
     print("4. 以测试通过作为成功标准")
 
-    print(f"\n✅ 渐进式改进启动器完成!")
+    print("\n✅ 渐进式改进启动器完成!")
     print("现在您可以按照建议开始改进工作了。")
 
 if __name__ == "__main__":

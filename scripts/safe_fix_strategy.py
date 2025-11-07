@@ -4,12 +4,12 @@
 分阶段、安全地解决剩余代码质量问题
 """
 
-import subprocess
 import json
-from pathlib import Path
-from typing import List, Dict, Tuple
 import shutil
+import subprocess
 from datetime import datetime
+from pathlib import Path
+
 
 class SafeFixStrategy:
     """安全修复策略类"""
@@ -32,7 +32,7 @@ class SafeFixStrategy:
             print("❌ src目录不存在")
             return ""
 
-    def analyze_issue_files(self, issue_codes: List[str]) -> Dict[str, List[str]]:
+    def analyze_issue_files(self, issue_codes: list[str]) -> dict[str, list[str]]:
         """分析特定问题类型的文件分布"""
         try:
             cmd = ['ruff', 'check', 'src/', '--output-format=json'] + [f'--select={code}' for code in issue_codes]
@@ -58,7 +58,7 @@ class SafeFixStrategy:
             print(f"❌ 分析失败: {e}")
             return {}
 
-    def _fallback_analysis(self, issue_codes: List[str]) -> Dict[str, List[str]]:
+    def _fallback_analysis(self, issue_codes: list[str]) -> dict[str, list[str]]:
         """备用分析方法"""
         files_by_issue = {code: [] for code in issue_codes}
 
@@ -78,7 +78,7 @@ class SafeFixStrategy:
 
         return files_by_issue
 
-    def fix_high_risk_issues(self) -> Tuple[int, bool]:
+    def fix_high_risk_issues(self) -> tuple[int, bool]:
         """修复高风险问题 (F821, F405, F403)"""
         print("🔴 第一阶段：修复高风险问题")
 
@@ -106,7 +106,7 @@ class SafeFixStrategy:
 
         return total_fixes, success
 
-    def fix_medium_risk_issues(self) -> Tuple[int, bool]:
+    def fix_medium_risk_issues(self) -> tuple[int, bool]:
         """修复中风险问题 (E402, B904, N801, N806)"""
         print("\n🟡 第二阶段：修复中风险问题")
 
@@ -144,7 +144,7 @@ class SafeFixStrategy:
 
         return total_fixes, success
 
-    def _fix_file_by_code(self, file_path: str, code: str) -> Tuple[int, bool]:
+    def _fix_file_by_code(self, file_path: str, code: str) -> tuple[int, bool]:
         """按代码类型修复单个文件"""
         try:
             # 使用ruff的自动修复功能
@@ -159,7 +159,7 @@ class SafeFixStrategy:
             print(f"   ❌ 修复失败: {e}")
             return 0, False
 
-    def _fix_e402_issues(self, files: List[str]) -> Tuple[int, bool]:
+    def _fix_e402_issues(self, files: list[str]) -> tuple[int, bool]:
         """修复E402问题"""
         try:
             # 使用之前创建的E402修复工具
@@ -170,7 +170,7 @@ class SafeFixStrategy:
             print(f"   ❌ E402修复失败: {e}")
             return 0, False
 
-    def _fix_b904_issues(self, files: List[str]) -> Tuple[int, bool]:
+    def _fix_b904_issues(self, files: list[str]) -> tuple[int, bool]:
         """修复B904问题"""
         try:
             # 使用之前创建的B904修复工具
@@ -181,7 +181,7 @@ class SafeFixStrategy:
             print(f"   ❌ B904修复失败: {e}")
             return 0, False
 
-    def _fix_n801_issues(self, files: List[str]) -> Tuple[int, bool]:
+    def _fix_n801_issues(self, files: list[str]) -> tuple[int, bool]:
         """修复N801问题"""
         try:
             # 使用之前创建的类名修复工具
@@ -278,7 +278,7 @@ def main():
     strategy.generate_report(phase1_fixes, phase2_fixes, overall_success)
 
     print("\n" + "=" * 60)
-    print(f"🎉 修复策略执行完成!")
+    print("🎉 修复策略执行完成!")
     print(f"📊 总修复: {phase1_fixes + phase2_fixes} 个问题")
     print(f"📁 备份位置: {backup_path}")
     print(f"📄 状态: {'✅ 成功' if overall_success else '⚠️  部分成功'}")

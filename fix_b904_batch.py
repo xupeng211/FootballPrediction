@@ -4,13 +4,13 @@
 """
 
 import re
-import os
 from pathlib import Path
+
 
 def fix_b904_in_file(file_path):
     """修复单个文件中的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -69,7 +69,7 @@ def main():
             fixes = fix_b904_in_file(file_path)
             total_fixes += fixes
 
-    print(f"\n📊 修复完成:")
+    print("\n📊 修复完成:")
     print(f"   总共修复: {total_fixes} 个B904错误")
     print(f"   处理文件: {len(api_files)} 个")
 

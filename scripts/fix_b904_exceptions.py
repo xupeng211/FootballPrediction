@@ -6,11 +6,9 @@ Batch Fix Tool for B904 Exception Handling Issues
 自动修复所有B904异常处理问题，提高代码质量和错误处理能力.
 """
 
-import os
 import re
 import subprocess
-import sys
-from pathlib import Path
+
 
 def run_command(cmd, description=""):
     """运行命令并处理结果"""
@@ -53,7 +51,7 @@ def fix_b904_in_file(file_path):
     print(f"🔧 修复文件: {file_path}")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         # 修复模式1: raise Exception(... )  →  raise Exception(... ) from e

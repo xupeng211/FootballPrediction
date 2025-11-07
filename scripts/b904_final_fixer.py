@@ -6,12 +6,12 @@ B904最终修复工具
 
 import re
 from pathlib import Path
-from typing import List, Tuple
 
-def fix_b904_in_file(file_path: Path) -> Tuple[int, bool]:
+
+def fix_b904_in_file(file_path: Path) -> tuple[int, bool]:
     """修复单个文件中的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -64,7 +64,7 @@ def fix_b904_in_file(file_path: Path) -> Tuple[int, bool]:
         print(f"❌ 修复文件失败 {file_path}: {e}")
         return 0, False
 
-def find_b904_files() -> List[Path]:
+def find_b904_files() -> list[Path]:
     """查找包含B904错误的Python文件"""
     import subprocess
     try:
@@ -118,13 +118,13 @@ def main():
             if fixes > 0:
                 print(f"   ✅ 修复了 {fixes} 个B904错误")
             else:
-                print(f"   ℹ️  没有发现可修复的错误")
+                print("   ℹ️  没有发现可修复的错误")
         else:
-            print(f"   ❌ 修复失败")
+            print("   ❌ 修复失败")
         print()
 
     print("=" * 50)
-    print(f"📊 修复总结:")
+    print("📊 修复总结:")
     print(f"   处理文件: {len(files_to_fix)} 个")
     print(f"   成功修复: {success_count} 个")
     print(f"   修复错误: {total_fixes} 个")

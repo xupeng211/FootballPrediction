@@ -11,7 +11,6 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, List, Set, Optional
 
 
 class Ultimate74Fixer:
@@ -22,7 +21,7 @@ class Ultimate74Fixer:
         self.error_count = 0
         self.start_time = time.time()
 
-    def execute_ultimate_fix(self) -> Dict[str, any]:
+    def execute_ultimate_fix(self) -> dict[str, any]:
         """执行最终的74个问题修复"""
         print("🚀 终极解决：74个剩余运行时安全问题")
         print("=" * 70)
@@ -85,7 +84,7 @@ class Ultimate74Fixer:
         except subprocess.CalledProcessError as e:
             print(f"    ❌ 备份失败: {e}")
 
-    def _detailed_analysis(self) -> Dict[str, Dict]:
+    def _detailed_analysis(self) -> dict[str, dict]:
         """详细分析74个问题"""
         print("  🔧 详细分析74个F821,F405,F403,A002问题...")
 
@@ -119,7 +118,7 @@ class Ultimate74Fixer:
 
         return analysis
 
-    def _parse_error_detailed(self, output: str, error_type: str, analysis: Dict):
+    def _parse_error_detailed(self, output: str, error_type: str, analysis: dict):
         """解析错误详情"""
         for line in output.split('\n'):
             if error_type in line and '.py' in line:
@@ -161,7 +160,7 @@ class Ultimate74Fixer:
 
                     analysis['details'].append(detail)
 
-    def _fix_f821_missing_imports(self, f821_analysis: Dict) -> int:
+    def _fix_f821_missing_imports(self, f821_analysis: dict) -> int:
         """修复F821缺失导入问题"""
         print(f"    🔧 修复F821缺失导入: {f821_analysis['total']} 个")
         fix_count = 0
@@ -209,7 +208,7 @@ class Ultimate74Fixer:
     def _fix_missing_import(self, file_path: Path, name: str, import_line: str) -> int:
         """修复缺失导入"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             if import_line not in content:
@@ -241,10 +240,10 @@ class Ultimate74Fixer:
             print(f"        ❌ 导入修复失败: {e}")
             return 0
 
-    def _fix_variable_scope(self, file_path: Path, detail: Dict) -> int:
+    def _fix_variable_scope(self, file_path: Path, detail: dict) -> int:
         """修复变量作用域问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -287,7 +286,7 @@ class Ultimate74Fixer:
             print(f"        ❌ 变量作用域修复失败: {e}")
             return 0
 
-    def _fix_a002_parameter_conflicts(self, a002_analysis: Dict) -> int:
+    def _fix_a002_parameter_conflicts(self, a002_analysis: dict) -> int:
         """修复A002参数名冲突问题"""
         print(f"    🔧 修复A002参数名冲突: {a002_analysis['total']} 个")
         fix_count = 0
@@ -340,7 +339,7 @@ class Ultimate74Fixer:
     def _fix_a002_in_file(self, file_path: Path, conflict_name: str, replacement: str) -> int:
         """修复单个文件中的A002问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -374,7 +373,7 @@ class Ultimate74Fixer:
             print(f"        ❌ A002文件修复失败 {file_path}: {e}")
             return 0
 
-    def _fix_f403_star_imports(self, f403_analysis: Dict) -> int:
+    def _fix_f403_star_imports(self, f403_analysis: dict) -> int:
         """修复F403星号导入问题"""
         print(f"    🔧 修复F403星号导入: {f403_analysis['total']} 个")
         fix_count = 0
@@ -402,7 +401,7 @@ class Ultimate74Fixer:
     def _fix_f403_in_file(self, file_path: Path) -> int:
         """修复单个文件中的F403星号导入问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             original_content = content
@@ -415,7 +414,7 @@ class Ultimate74Fixer:
                 stripped = line.strip()
                 if stripped.startswith('from ') and ' import *' in stripped:
                     # 将星号导入转换为注释
-                    new_lines.append(f"# TODO: Replace star import with explicit imports")
+                    new_lines.append("# TODO: Replace star import with explicit imports")
                     new_lines.append(f"# TODO: {stripped}")
                     fix_count += 1
                 else:
@@ -434,7 +433,7 @@ class Ultimate74Fixer:
             print(f"        ❌ F403文件修复失败 {file_path}: {e}")
             return 0
 
-    def _fix_f405_undefined_from_star(self, f405_analysis: Dict) -> int:
+    def _fix_f405_undefined_from_star(self, f405_analysis: dict) -> int:
         """修复F405星号导入导致的未定义问题"""
         print(f"    🔧 修复F405星号导入导致的未定义: {f405_analysis['total']} 个")
         fix_count = 0
@@ -471,12 +470,12 @@ class Ultimate74Fixer:
                 ['ruff', 'check', 'src/', '--fix'],
                 capture_output=True, text=True
             )
-            print(f"        ✅ ruff最终清理完成")
+            print("        ✅ ruff最终清理完成")
 
         except Exception as e:
             print(f"        ❌ 最终清理失败: {e}")
 
-    def _verify_final_results(self) -> Dict[str, int]:
+    def _verify_final_results(self) -> dict[str, int]:
         """验证最终修复结果"""
         print("  🔧 验证最终修复结果...")
 
@@ -506,7 +505,7 @@ class Ultimate74Fixer:
 
         return verification
 
-    def _generate_ultimate_report(self, fix_results: Dict, verification: Dict, analysis: Dict):
+    def _generate_ultimate_report(self, fix_results: dict, verification: dict, analysis: dict):
         """生成终极报告"""
         print("\n" + "=" * 70)
         print("📊 终极74个问题解决报告")
@@ -521,7 +520,7 @@ class Ultimate74Fixer:
             if fix_type != 'total' and count > 0:
                 print(f"   {fix_type}: {count} 个")
 
-        print(f"\n🎯 总体结果:")
+        print("\n🎯 总体结果:")
         print(f"   总修复数量: {total_fixed} 个")
         print(f"   执行时间: {total_time:.1f} 秒")
 
@@ -530,7 +529,7 @@ class Ultimate74Fixer:
         remaining = verification.get('total', 0)
         solved = original_problems - remaining
 
-        print(f"\n📈 问题改善:")
+        print("\n📈 问题改善:")
         print(f"   原始问题: {original_problems} 个")
         print(f"   解决问题: {solved} 个")
         print(f"   剩余问题: {remaining} 个")
@@ -538,20 +537,20 @@ class Ultimate74Fixer:
 
         # 状态评估
         if remaining == 0:
-            print(f"\n🎉 完美！所有74个问题已完全解决！")
-            print(f"✅ 状态: 完美 - 零运行时安全问题")
+            print("\n🎉 完美！所有74个问题已完全解决！")
+            print("✅ 状态: 完美 - 零运行时安全问题")
         elif remaining <= 5:
-            print(f"\n🟢 优秀！剩余问题极少")
-            print(f"✅ 状态: 优秀 - 接近零问题")
+            print("\n🟢 优秀！剩余问题极少")
+            print("✅ 状态: 优秀 - 接近零问题")
         elif remaining <= 15:
-            print(f"\n🟡 良好！大幅改善")
-            print(f"📊 状态: 良好 - 显著进步")
+            print("\n🟡 良好！大幅改善")
+            print("📊 状态: 良好 - 显著进步")
         else:
-            print(f"\n🟠 有待改善")
-            print(f"📊 状态: 有待改善 - 需要进一步处理")
+            print("\n🟠 有待改善")
+            print("📊 状态: 有待改善 - 需要进一步处理")
 
         # 详细问题分析
-        print(f"\n📋 详细问题分析:")
+        print("\n📋 详细问题分析:")
         for error_type, data in analysis.items():
             print(f"   {error_type.upper()}:")
             print(f"     总数: {data['total']} 个")

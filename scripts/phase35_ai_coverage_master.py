@@ -5,12 +5,10 @@ Phase 3.5 AI驱动的智能覆盖率提升系统
 """
 
 import ast
-import subprocess
-import json
-from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
 import re
-from collections import defaultdict
+import subprocess
+from pathlib import Path
+
 
 class Phase35AICoverageMaster:
     def __init__(self):
@@ -19,7 +17,7 @@ class Phase35AICoverageMaster:
         self.generated_tests = []
         self.ai_insights = []
 
-    def intelligent_coverage_analysis(self) -> Dict:
+    def intelligent_coverage_analysis(self) -> dict:
         """智能覆盖率分析系统"""
         print("🧠 启动AI驱动覆盖率分析...")
 
@@ -42,7 +40,7 @@ class Phase35AICoverageMaster:
             'strategy': strategy
         }
 
-    def _collect_base_coverage_data(self) -> Dict:
+    def _collect_base_coverage_data(self) -> dict:
         """收集基础覆盖率数据"""
         print("   🔍 收集基础覆盖率数据...")
 
@@ -61,15 +59,15 @@ class Phase35AICoverageMaster:
                 for line in output_lines:
                     if '综合覆盖率分数:' in line:
                         coverage_data['overall'] = float(line.split(':')[-1].strip().replace('%',
-    
+
     ''))
                     elif '函数覆盖率:' in line:
                         coverage_data['function'] = float(line.split(':')[-1].strip().replace('%',
-    
+
     ''))
                     elif '估算行覆盖率:' in line:
                         coverage_data['line'] = float(line.split(':')[-1].strip().replace('%',
-    
+
     ''))
 
                 # 深度模块分析
@@ -90,7 +88,7 @@ class Phase35AICoverageMaster:
 
         return {'overall': 55.4, 'modules': {}}
 
-    def _deep_module_analysis(self, module_path: str) -> Dict:
+    def _deep_module_analysis(self, module_path: str) -> dict:
         """深度模块分析"""
         path = Path(module_path)
         python_files = list(path.rglob('*.py'))
@@ -174,7 +172,7 @@ class Phase35AICoverageMaster:
 
         return complexity
 
-    def _analyze_test_correlation(self, func_name: str, test_content: str) -> Dict:
+    def _analyze_test_correlation(self, func_name: str, test_content: str) -> dict:
         """分析测试关联度"""
         correlation = {
             'confidence': 0.0,
@@ -209,7 +207,7 @@ class Phase35AICoverageMaster:
 
         return correlation
 
-    def _identify_module_patterns(self, analysis: Dict) -> List[Dict]:
+    def _identify_module_patterns(self, analysis: dict) -> list[dict]:
         """识别模块模式"""
         patterns = []
 
@@ -254,7 +252,7 @@ class Phase35AICoverageMaster:
 
         return patterns
 
-    def _identify_coverage_patterns(self, coverage_data: Dict) -> Dict:
+    def _identify_coverage_patterns(self, coverage_data: dict) -> dict:
         """识别覆盖率模式"""
         patterns = {
             'module_distribution': {},
@@ -272,7 +270,7 @@ class Phase35AICoverageMaster:
 
         return patterns
 
-    def _predict_improvement_opportunities(self, patterns: Dict) -> Dict:
+    def _predict_improvement_opportunities(self, patterns: dict) -> dict:
         """预测改进机会"""
         opportunities = {
             'high_impact': [],
@@ -304,7 +302,7 @@ class Phase35AICoverageMaster:
 
         return opportunities
 
-    def _generate_intelligent_strategy(self, predictions: Dict) -> Dict:
+    def _generate_intelligent_strategy(self, predictions: dict) -> dict:
         """生成智能策略"""
         strategy = {
             'phase_1': {
@@ -344,7 +342,7 @@ class Phase35AICoverageMaster:
 
         return strategy
 
-    def execute_intelligent_strategy(self, strategy: Dict) -> Dict:
+    def execute_intelligent_strategy(self, strategy: dict) -> dict:
         """执行智能策略"""
         print("🚀 执行AI智能策略...")
 
@@ -366,7 +364,7 @@ class Phase35AICoverageMaster:
 
         return results
 
-    def _execute_phase_1(self, phase_1: Dict) -> Dict:
+    def _execute_phase_1(self, phase_1: dict) -> dict:
         """执行第一阶段：快速胜利"""
         print("   🎯 Phase 1: 快速胜利执行...")
 
@@ -387,7 +385,7 @@ class Phase35AICoverageMaster:
             'improvement': improvement
         }
 
-    def _execute_phase_2(self, phase_2: Dict) -> Dict:
+    def _execute_phase_2(self, phase_2: dict) -> dict:
         """执行第二阶段：中等影响"""
         print("   🎯 Phase 2: 中等影响执行...")
 
@@ -410,7 +408,7 @@ class Phase35AICoverageMaster:
 
     def _create_ai_generated_basic_tests(self,
     module: str,
-    function_count: int) -> Dict:
+    function_count: int) -> dict:
         """创建AI生成的基础测试"""
         print(f"      🔧 为 {module} 创建AI基础测试...")
 
@@ -434,7 +432,7 @@ class Phase35AICoverageMaster:
             'estimated_improvement': estimated_improvement
         }
 
-    def _create_ai_comprehensive_tests(self, module: str, function_count: int) -> Dict:
+    def _create_ai_comprehensive_tests(self, module: str, function_count: int) -> dict:
         """创建AI生成的综合测试"""
         print(f"      🔧 为 {module} 创建AI综合测试...")
 
@@ -456,7 +454,7 @@ class Phase35AICoverageMaster:
             'estimated_improvement': estimated_improvement
         }
 
-    def _generate_smart_basic_tests(self, module: str, max_functions: int) -> List[str]:
+    def _generate_smart_basic_tests(self, module: str, max_functions: int) -> list[str]:
         """生成智能基础测试"""
         test_files = []
 
@@ -528,7 +526,7 @@ if __name__ == "__main__":
 
     def _generate_comprehensive_test_suite(self,
     module: str,
-    max_functions: int) -> List[str]:
+    max_functions: int) -> list[str]:
         """生成综合测试套件"""
         test_files = []
 
@@ -624,7 +622,7 @@ if __name__ == "__main__":
 
         return test_files
 
-    def verify_ai_improvement(self, original_coverage: float) -> Dict:
+    def verify_ai_improvement(self, original_coverage: float) -> dict:
         """验证AI改进效果"""
         print("\n🔍 验证AI改进效果...")
 

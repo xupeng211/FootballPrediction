@@ -4,13 +4,11 @@
 处理剩余的58个E402错误
 """
 
-import re
-import sys
-from pathlib import Path
-from typing import List, Dict, Tuple
 import subprocess
+from pathlib import Path
 
-def find_e402_files() -> List[Dict]:
+
+def find_e402_files() -> list[dict]:
     """查找所有E402错误"""
     try:
         result = subprocess.run(
@@ -36,7 +34,7 @@ def find_e402_files() -> List[Dict]:
 def fix_e402_in_file(file_path: Path) -> int:
     """修复单个文件中的E402错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -149,11 +147,11 @@ def main():
         if fixes > 0:
             print(f"   ✅ 修复了 {fixes} 个导入位置问题")
         else:
-            print(f"   ℹ️  没有发现可修复的问题")
+            print("   ℹ️  没有发现可修复的问题")
         print()
 
     print("=" * 60)
-    print(f"📊 修复总结:")
+    print("📊 修复总结:")
     print(f"   处理文件: {len(files_to_fix)} 个")
     print(f"   修复错误: {total_fixes} 个")
 

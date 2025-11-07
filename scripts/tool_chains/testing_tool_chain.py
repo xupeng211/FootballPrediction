@@ -10,8 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "libraries"))
 
 try:
-    from testing_library import quick_test, quick_coverage_test
     from logging_library import get_logger
+    from testing_library import quick_coverage_test, quick_test
 except ImportError:
     print("请先运行优化器创建库文件")
     sys.exit(1)

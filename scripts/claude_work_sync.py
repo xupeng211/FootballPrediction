@@ -16,13 +16,13 @@ Version: 2.0.0
 """
 
 import json
+import os
 import subprocess
 import time
-import os
-from datetime import datetime, timedelta
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+from typing import Any
 
 
 @dataclass
@@ -35,16 +35,16 @@ class WorkItem:
     status: str  # 'pending', 'in_progress', 'completed', 'review'
     priority: str  # 'low', 'medium', 'high', 'critical'
     completion_percentage: int
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    deliverables: List[str] = None
-    technical_details: Dict[str, Any] = None
-    test_results: Dict[str, Any] = None
-    files_modified: List[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    deliverables: list[str] = None
+    technical_details: dict[str, Any] = None
+    test_results: dict[str, Any] = None
+    files_modified: list[str] = None
     time_spent_minutes: int = 0
-    challenges_faced: List[str] = None
-    solutions_implemented: List[str] = None
-    next_steps: List[str] = None
+    challenges_faced: list[str] = None
+    solutions_implemented: list[str] = None
+    next_steps: list[str] = None
 
     def __post_init__(self):
         if self.deliverables is None:
@@ -92,7 +92,7 @@ class ClaudeWorkSynchronizer:
             'critical': ['priority/critical']
         }
 
-    def run_git_command(self, command: List[str]) -> Dict[str, Any]:
+    def run_git_command(self, command: list[str]) -> dict[str, Any]:
         """运行Git命令"""
         try:
             result = subprocess.run(
@@ -117,7 +117,7 @@ class ClaudeWorkSynchronizer:
                 "returncode": -1
             }
 
-    def run_gh_command(self, command: List[str]) -> Dict[str, Any]:
+    def run_gh_command(self, command: list[str]) -> dict[str, Any]:
         """运行GitHub CLI命令"""
         try:
             result = subprocess.run(
@@ -149,7 +149,7 @@ class ClaudeWorkSynchronizer:
                 "returncode": -1
             }
 
-    def get_git_status(self) -> Dict[str, Any]:
+    def get_git_status(self) -> dict[str, Any]:
         """获取Git状态信息"""
         status = {}
 
@@ -174,20 +174,20 @@ class ClaudeWorkSynchronizer:
 
         return status
 
-    def load_work_log(self) -> List[WorkItem]:
+    def load_work_log(self) -> list[WorkItem]:
         """加载作业日志"""
         if not self.work_log_file.exists():
             return []
 
         try:
-            with open(self.work_log_file, 'r', encoding='utf-8') as f:
+            with open(self.work_log_file, encoding='utf-8') as f:
                 data = json.load(f)
                 return [WorkItem(**item) for item in data]
         except Exception as e:
             print(f"❌ 加载作业日志失败: {e}")
             return []
 
-    def save_work_log(self, work_items: List[WorkItem]):
+    def save_work_log(self, work_items: list[WorkItem]):
         """保存作业日志"""
         try:
             with open(self.work_log_file, 'w', encoding='utf-8') as f:
@@ -195,19 +195,19 @@ class ClaudeWorkSynchronizer:
         except Exception as e:
             print(f"❌ 保存作业日志失败: {e}")
 
-    def load_sync_log(self) -> Dict[str, Any]:
+    def load_sync_log(self) -> dict[str, Any]:
         """加载同步日志"""
         if not self.sync_log_file.exists():
             return {}
 
         try:
-            with open(self.sync_log_file, 'r', encoding='utf-8') as f:
+            with open(self.sync_log_file, encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
             print(f"❌ 加载同步日志失败: {e}")
             return {}
 
-    def save_sync_log(self, sync_data: Dict[str, Any]):
+    def save_sync_log(self, sync_data: dict[str, Any]):
         """保存同步日志"""
         try:
             with open(self.sync_log_file, 'w', encoding='utf-8') as f:
@@ -276,11 +276,11 @@ class ClaudeWorkSynchronizer:
 
     def complete_work_item(self, work_id: str,
                           completion_percentage: int = 100,
-                          deliverables: List[str] = None,
-                          test_results: Dict[str, Any] = None,
-                          challenges: List[str] = None,
-                          solutions: List[str] = None,
-                          next_steps: List[str] = None) -> bool:
+                          deliverables: list[str] = None,
+                          test_results: dict[str, Any] = None,
+                          challenges: list[str] = None,
+                          solutions: list[str] = None,
+                          next_steps: list[str] = None) -> bool:
         """完成作业项目"""
         work_items = self.load_work_log()
 
@@ -408,7 +408,7 @@ class ClaudeWorkSynchronizer:
 
         return body
 
-    def create_or_update_github_issue(self, work_item: WorkItem) -> Dict[str, Any]:
+    def create_or_update_github_issue(self, work_item: WorkItem) -> dict[str, Any]:
         """创建或更新GitHub Issue"""
 
         # 准备标签
@@ -527,7 +527,7 @@ class ClaudeWorkSynchronizer:
             "labels": labels
         }
 
-    def sync_all_work_items(self) -> Dict[str, Any]:
+    def sync_all_work_items(self) -> dict[str, Any]:
         """同步所有作业项目到GitHub Issues"""
         print("🚀 开始同步Claude Code作业到GitHub Issues")
         print("=" * 80)
@@ -601,7 +601,7 @@ class ClaudeWorkSynchronizer:
 
         return results
 
-    def generate_sync_report(self, results: Dict[str, Any]):
+    def generate_sync_report(self, results: dict[str, Any]):
         """生成同步报告"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.project_root / "reports" / f"claude_sync_report_{timestamp}.md"
@@ -661,13 +661,13 @@ class ClaudeWorkSynchronizer:
         except Exception as e:
             print(f"❌ 保存同步报告失败: {e}")
 
-    def print_sync_summary(self, results: Dict[str, Any]):
+    def print_sync_summary(self, results: dict[str, Any]):
         """打印同步总结"""
         print("\n" + "=" * 80)
         print("📊 Claude Code 作业同步总结")
         print("=" * 80)
 
-        print(f"📈 同步统计:")
+        print("📈 同步统计:")
         print(f"   总作业项目: {results['total_items']}")
         print(f"   成功同步: {results['successful_syncs']}")
         print(f"   同步失败: {results['failed_syncs']}")
@@ -676,7 +676,7 @@ class ClaudeWorkSynchronizer:
         print(f"   成功率: {success_rate:.1f}%")
 
         if results['successful_syncs'] > 0:
-            print(f"\n✅ 成功同步的Issues:")
+            print("\n✅ 成功同步的Issues:")
             for sync_result in results["sync_results"]:
                 if sync_result["result"]["success"]:
                     issue_num = sync_result["result"].get("issue_number", "N/A")
@@ -691,14 +691,14 @@ class ClaudeWorkSynchronizer:
                     print(f"   Issue #{issue_num} ({title}): {action_desc.get(action, '处理')}")
 
         if results['failed_syncs'] > 0:
-            print(f"\n❌ 同步失败的项目:")
+            print("\n❌ 同步失败的项目:")
             for sync_result in results["sync_results"]:
                 if not sync_result["result"]["success"]:
                     title = sync_result["title"][:40] + "..." if len(sync_result["title"]) > 40 else sync_result["title"]
                     action = sync_result["result"]["action"]
                     print(f"   {title}: {action}")
 
-        print(f"\n🎯 建议:")
+        print("\n🎯 建议:")
         if results['failed_syncs'] == 0:
             print("   🎉 所有作业项目都已成功同步！")
             print("   📄 建议查看GitHub仓库确认所有Issues状态")

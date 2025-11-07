@@ -5,11 +5,11 @@ Final Coverage Push - Focused on reaching 30% target
 """
 
 import os
-import subprocess
 import re
-from typing import List, Dict, Tuple
+import subprocess
 
-def create_massive_test_suite() -> List[str]:
+
+def create_massive_test_suite() -> list[str]:
     """创建大量可运行的测试套件"""
 
     # 核心模块列表，这些是我们确定可以运行的模块
@@ -645,7 +645,7 @@ class Test{module_name.split('.')[-1].title()}Integration:
 
     return created_files
 
-def run_massive_coverage_test(test_files: List[str]) -> Dict:
+def run_massive_coverage_test(test_files: list[str]) -> dict:
     """运行大规模覆盖率测试"""
     # 过滤存在的文件
     existing_files = [f for f in test_files if os.path.exists(f)]
@@ -690,7 +690,7 @@ def main():
     print("\\n🧪 运行大规模覆盖率测试...")
     coverage_result = run_massive_coverage_test(created_files)
 
-    print(f"\\n📊 最终测试结果:")
+    print("\\n📊 最终测试结果:")
     print(f"   总覆盖率: {coverage_result['total_coverage']}%")
     print(f"   通过测试: {coverage_result['passed_tests']}")
     print(f"   失败测试: {coverage_result['failed_tests']}")
@@ -706,7 +706,7 @@ def main():
         print(f"\\n📈 距离目标还差 {gap}%")
         print(f"   📊 当前覆盖率: {coverage_result['total_coverage']}%")
         print(f"   🧪 通过测试: {coverage_result['passed_tests']}")
-        print(f"   💡 建议: 需要更多模块的测试来进一步提升覆盖率")
+        print("   💡 建议: 需要更多模块的测试来进一步提升覆盖率")
         return False
 
 if __name__ == "__main__":

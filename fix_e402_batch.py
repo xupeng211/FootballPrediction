@@ -3,14 +3,13 @@
 批量修复E402模块导入位置错误的工具
 """
 
-import re
-import os
 from pathlib import Path
+
 
 def fix_e402_in_file(file_path):
     """修复单个文件中的E402错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -119,7 +118,7 @@ def main():
             fixes = fix_e402_in_file(file_path)
             total_fixes += fixes
 
-    print(f"\n📊 修复完成:")
+    print("\n📊 修复完成:")
     print(f"   总共修复: {total_fixes} 个E402错误")
     print(f"   处理文件: {len(api_files) + len([f for f in important_files if f.is_file()])} 个")
 

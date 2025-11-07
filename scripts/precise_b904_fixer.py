@@ -4,9 +4,9 @@
 Precise B904 Exception Handling Fixer - Handle remaining B904 errors
 """
 
-import re
 import os
-from pathlib import Path
+import re
+
 
 def fix_b904_errors_in_file(file_path: str) -> int:
     """精确修复文件中的B904错误"""
@@ -16,7 +16,7 @@ def fix_b904_errors_in_file(file_path: str) -> int:
         return 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         fixes_count = 0

@@ -5,7 +5,7 @@
 
 import logging
 import sys
-from datetime import datetime
+
 
 class SimpleLogger:
     """简单日志器"""

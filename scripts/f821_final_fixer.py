@@ -6,6 +6,7 @@ F821未定义名称最终修复器
 
 import os
 
+
 def fix_f821_issues():
     """修复F821未定义名称问题"""
 
@@ -33,7 +34,7 @@ def fix_f821_issues():
     for file_path, replacements in fixes.items():
         if os.path.exists(file_path):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content

@@ -5,11 +5,10 @@ API语法错误批量修复工具 - Issue #345专用
 专门用于修复API文件中的HTTPException语法错误和其他常见语法问题。
 """
 
-import re
 import ast
 import os
+import re
 from pathlib import Path
-from typing import List, Dict, Tuple
 
 
 class APISyntaxFixer:
@@ -31,11 +30,11 @@ class APISyntaxFixer:
             # 这里主要是标记文件需要手动检查
         ]
 
-    def check_syntax_errors(self, file_path: Path) -> List[str]:
+    def check_syntax_errors(self, file_path: Path) -> list[str]:
         """检查文件的语法错误"""
         errors = []
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 content = f.read()
 
             # 尝试解析AST
@@ -64,7 +63,7 @@ class APISyntaxFixer:
 
         return errors
 
-    def fix_http_exception_syntax(self, content: str) -> Tuple[str, int]:
+    def fix_http_exception_syntax(self, content: str) -> tuple[str, int]:
         """修复HTTPException语法错误"""
         original_content = content
         fixes_count = 0
@@ -77,7 +76,7 @@ class APISyntaxFixer:
 
         return content, fixes_count
 
-    def fix_indentation_issues(self, content: str) -> Tuple[str, int]:
+    def fix_indentation_issues(self, content: str) -> tuple[str, int]:
         """尝试修复简单的缩进问题"""
         lines = content.split('\n')
         fixed_lines = []
@@ -94,7 +93,7 @@ class APISyntaxFixer:
 
         return '\n'.join(fixed_lines), fixes_count
 
-    def fix_file(self, file_path: Path) -> Dict[str, any]:
+    def fix_file(self, file_path: Path) -> dict[str, any]:
         """修复单个文件"""
         result = {
             'file': str(file_path),
@@ -114,7 +113,7 @@ class APISyntaxFixer:
                 return result
 
             # 读取文件内容
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding='utf-8') as f:
                 original_content = f.read()
 
             # 应用修复
@@ -155,7 +154,7 @@ class APISyntaxFixer:
 
         return result
 
-    def scan_api_directory(self, api_dir: Path = None) -> List[Dict[str, any]]:
+    def scan_api_directory(self, api_dir: Path = None) -> list[dict[str, any]]:
         """扫描API目录中的所有Python文件"""
         if api_dir is None:
             api_dir = Path('src/api')
@@ -169,7 +168,7 @@ class APISyntaxFixer:
 
         return python_files
 
-    def fix_all_api_files(self) -> Dict[str, any]:
+    def fix_all_api_files(self) -> dict[str, any]:
         """修复所有API文件"""
         print("🔧 开始扫描API文件...")
         python_files = self.scan_api_directory()
@@ -194,7 +193,7 @@ class APISyntaxFixer:
                     print(f"    - {error}")
 
                 # 尝试修复
-                print(f"  🔧 尝试修复...")
+                print("  🔧 尝试修复...")
                 result = self.fix_file(file_path)
                 results.append(result)
 
@@ -205,7 +204,7 @@ class APISyntaxFixer:
                     print(f"  ❌ {result['message']}")
                     self.failed_files.append(file_path)
             else:
-                print(f"  ✅ 文件语法正确")
+                print("  ✅ 文件语法正确")
 
         return {
             'total_files': len(python_files),
@@ -215,7 +214,7 @@ class APISyntaxFixer:
             'results': results
         }
 
-    def generate_report(self, results: Dict[str, any]) -> str:
+    def generate_report(self, results: dict[str, any]) -> str:
         """生成修复报告"""
         report = []
         report.append("# API语法错误修复报告")
@@ -307,7 +306,7 @@ def main():
         print(f"\n⚠️  有 {len(fixer.failed_files)} 个文件需要手动修复")
         return 1
     else:
-        print(f"\n✅ 所有语法错误已成功修复！")
+        print("\n✅ 所有语法错误已成功修复！")
         return 0
 
 

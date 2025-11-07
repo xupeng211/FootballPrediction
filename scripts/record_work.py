@@ -14,14 +14,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from datetime import datetime
 
 # 添加项目路径
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "scripts"))
 
-from claude_work_sync import ClaudeWorkSynchronizer, WorkItem
+from claude_work_sync import ClaudeWorkSynchronizer
 
 
 def start_work(title, description, work_type, priority="medium"):
@@ -35,7 +34,7 @@ def start_work(title, description, work_type, priority="medium"):
         priority=priority
     )
 
-    print(f"✅ 作业记录已创建")
+    print("✅ 作业记录已创建")
     print(f"   ID: {work_item.id}")
     print(f"   标题: {work_item.title}")
     print(f"   类型: {work_item.work_type}")
@@ -74,7 +73,7 @@ def complete_work(work_id, deliverables=None, test_results_json=None):
         if deliverables_list:
             print(f"   交付成果: {len(deliverables_list)}项")
         if test_results:
-            print(f"   测试结果: 已记录")
+            print("   测试结果: 已记录")
     else:
         print(f"❌ 完成作业 {work_id} 失败")
 
@@ -170,7 +169,7 @@ def main():
                 work_type=args.work_type,
                 priority=args.priority
             )
-            print(f"\n💡 下一步使用以下命令完成这个作业:")
+            print("\n💡 下一步使用以下命令完成这个作业:")
             print(f"   python record_work.py complete-work {work_id} --deliverables \"交付成果1,交付成果2\"")
 
         elif args.command == 'complete-work':
@@ -179,8 +178,8 @@ def main():
                 deliverables=args.deliverables,
                 test_results_json=args.test_results
             )
-            print(f"\n💡 下一步同步到GitHub:")
-            print(f"   make claude-sync")
+            print("\n💡 下一步同步到GitHub:")
+            print("   make claude-sync")
 
         elif args.command == 'list-work':
             list_work()

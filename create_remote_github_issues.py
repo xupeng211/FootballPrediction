@@ -5,11 +5,10 @@ Create Issues Directly in Remote GitHub Repository
 """
 
 import json
+import os
 import subprocess
 import time
-import sys
-import os
-from typing import Dict, List, Any
+from typing import Any
 
 
 class RemoteGitHubIssuesCreator:
@@ -44,13 +43,13 @@ class RemoteGitHubIssuesCreator:
             print("💡 请运行: gh auth login")
             return False
 
-    def load_issues_data(self) -> List[Dict[str, Any]]:
+    def load_issues_data(self) -> list[dict[str, Any]]:
         """加载Issues数据"""
         all_issues = []
 
         # 加载主要Issues
         try:
-            with open("generated_issues.json", 'r', encoding='utf-8') as f:
+            with open("generated_issues.json", encoding='utf-8') as f:
                 main_issues = json.load(f)
                 all_issues.extend(main_issues)
                 print(f"✅ 加载主要Issues: {len(main_issues)}个")
@@ -61,7 +60,7 @@ class RemoteGitHubIssuesCreator:
 
         # 加载测试Issues
         try:
-            with open("test_improvement_issues.json", 'r', encoding='utf-8') as f:
+            with open("test_improvement_issues.json", encoding='utf-8') as f:
                 test_issues = json.load(f)
                 all_issues.extend(test_issues)
                 print(f"✅ 加载测试Issues: {len(test_issues)}个")
@@ -73,7 +72,7 @@ class RemoteGitHubIssuesCreator:
         print(f"📊 总计Issues: {len(all_issues)}个")
         return all_issues
 
-    def create_single_issue(self, issue: Dict[str, Any], index: int, total: int) -> bool:
+    def create_single_issue(self, issue: dict[str, Any], index: int, total: int) -> bool:
         """创建单个Issue"""
         title = issue["title"]
         body = issue["body"]
@@ -133,7 +132,7 @@ class RemoteGitHubIssuesCreator:
             print(f"❌ 异常: {title[:60]} - {e}")
             return False
 
-    def create_issues_batch(self, issues: List[Dict[str, Any]], batch_size: int = 10) -> int:
+    def create_issues_batch(self, issues: list[dict[str, Any]], batch_size: int = 10) -> int:
         """批量创建Issues"""
         total = len(issues)
         success_count = 0
@@ -266,7 +265,7 @@ class RemoteGitHubIssuesCreator:
         success_count = self.create_issues_batch(issues)
 
         # 显示结果
-        print(f"\n📊 创建结果:")
+        print("\n📊 创建结果:")
         print("=" * 30)
         print(f"✅ 成功创建: {success_count}/{len(issues)} 个Issues")
         print(f"📈 成功率: {success_count/len(issues)*100:.1f}%")
@@ -276,14 +275,14 @@ class RemoteGitHubIssuesCreator:
             print(f"🔗 仓库地址: https://github.com/{self.repo}")
 
             # 显示创建的Issues
-            print(f"\n📋 显示最近创建的Issues:")
+            print("\n📋 显示最近创建的Issues:")
             self.show_created_issues(min(success_count, 10))
 
-            print(f"\n💡 后续操作:")
+            print("\n💡 后续操作:")
             print(f"   1. 访问仓库查看所有Issues: https://github.com/{self.repo}/issues")
-            print(f"   2. 按优先级开始处理Issues")
-            print(f"   3. 使用项目看板追踪进度")
-            print(f"   4. 参考 QUALITY_IMPROVEMENT_ROADMAP.md 执行策略")
+            print("   2. 按优先级开始处理Issues")
+            print("   3. 使用项目看板追踪进度")
+            print("   4. 参考 QUALITY_IMPROVEMENT_ROADMAP.md 执行策略")
 
         return success_count > 0
 
@@ -309,7 +308,7 @@ class RemoteGitHubIssuesCreator:
         success_count = self.create_issues_batch(issues)
 
         # 显示结果
-        print(f"\n📊 批量创建完成:")
+        print("\n📊 批量创建完成:")
         print(f"✅ 成功: {success_count}/{len(issues)} 个Issues")
 
         if success_count > 0:

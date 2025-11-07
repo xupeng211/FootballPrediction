@@ -6,20 +6,19 @@
 
 import json
 import subprocess
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+
 
 class QualityMonitor:
     def __init__(self):
         self.data_file = Path('quality_metrics_history.json')
         self.metrics = self.load_historical_data()
 
-    def load_historical_data(self) -> Dict:
+    def load_historical_data(self) -> dict:
         """加载历史质量数据"""
         if self.data_file.exists():
-            with open(self.data_file, 'r') as f:
+            with open(self.data_file) as f:
                 return json.load(f)
         return {'history': [], 'baseline': None}
 
@@ -28,7 +27,7 @@ class QualityMonitor:
         with open(self.data_file, 'w') as f:
             json.dump(self.metrics, f, indent=2)
 
-    def collect_current_metrics(self) -> Dict:
+    def collect_current_metrics(self) -> dict:
         """收集当前的质量指标"""
         timestamp = datetime.now().isoformat()
 
@@ -171,7 +170,7 @@ class QualityMonitor:
         self.save_metrics()
         return current_metrics
 
-    def generate_trend_report(self) -> Dict:
+    def generate_trend_report(self) -> dict:
         """生成趋势报告"""
         if not self.metrics['history']:
             return {'error': '没有历史数据'}
@@ -210,7 +209,7 @@ class QualityMonitor:
             'overall_quality_score': self.calculate_quality_score(latest)
         }
 
-    def calculate_quality_score(self, metrics: Dict) -> float:
+    def calculate_quality_score(self, metrics: dict) -> float:
         """计算综合质量分数 (0-100)"""
         score = 100.0
 

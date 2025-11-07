@@ -7,6 +7,7 @@ HTTPException语法修复工具
 import re
 from pathlib import Path
 
+
 def fix_http_exception_syntax(content: str) -> str:
     """修复HTTPException语法错误"""
     lines = content.split('\n')
@@ -110,7 +111,7 @@ def main():
         print(f"\n📝 处理文件: {file_path}")
 
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 original_content = f.read()
 
             # 应用修复

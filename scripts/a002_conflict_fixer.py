@@ -6,7 +6,7 @@ A002参数冲突快速修复器
 
 import os
 import re
-from pathlib import Path
+
 
 def fix_a002_conflicts():
     """修复A002参数冲突"""
@@ -53,7 +53,7 @@ def fix_a002_conflicts():
     for file_path, patterns in replacements.items():
         if os.path.exists(file_path):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding='utf-8') as f:
                     content = f.read()
 
                 original_content = content

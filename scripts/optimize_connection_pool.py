@@ -9,11 +9,9 @@ Database Connection Pool Optimization Script
 import asyncio
 import logging
 import time
-from contextlib import asynccontextmanager
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.pool import NullPool
 
 from src.core.config import get_settings
 
@@ -341,13 +339,13 @@ class ConnectionPoolOptimizer:
                 'summary': {
                     'total_configs_tested': len(comparison_results),
                     'successful_configs': len([r for r in comparison_results.values() if 'error' not in r]),
-    
-    
+
+
                     'best_config': max(
                         [(name,
     results) for name,
     results in comparison_results.items() if 'error' not in results],
-    
+
                         key=lambda x: x[1]['successful_connections']
                     )[0] if comparison_results else None
                 }

@@ -10,9 +10,9 @@ from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from src.database.performance import DatabaseOptimizer
 
 from src.database.base import get_db_session
-from src.database.performance import DatabaseOptimizer
 from src.middleware.tenant_middleware import require_permission
 from src.optimizations.api_optimizations import APIOptimizer
 from src.optimizations.database_optimizations import DatabaseOptimizerFactory

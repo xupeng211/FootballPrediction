@@ -5,15 +5,13 @@ B904异常处理自动修复工具
 """
 
 import re
-import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
 def fix_b904_in_file(file_path: Path) -> int:
     """修复单个文件中的B904错误"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -42,7 +40,7 @@ def fix_b904_in_file(file_path: Path) -> int:
 
         for except_var, block_content in except_blocks:
             # 在块中查找raise语句
-            raise_pattern = rf'(\s+)(raise\s+\w+Exception\([^)]*\))\n'
+            raise_pattern = r'(\s+)(raise\s+\w+Exception\([^)]*\))\n'
             raise_matches = re.findall(raise_pattern, block_content)
 
             for indent, raise_stmt in raise_matches:
@@ -66,7 +64,7 @@ def fix_b904_in_file(file_path: Path) -> int:
         return 0
 
 
-def find_b904_files() -> List[Path]:
+def find_b904_files() -> list[Path]:
     """查找包含B904错误的Python文件"""
     import subprocess
     try:
@@ -119,11 +117,11 @@ def main():
         if fixes > 0:
             print(f"   ✅ 修复了 {fixes} 个B904错误")
         else:
-            print(f"   ℹ️  没有发现可自动修复的错误")
+            print("   ℹ️  没有发现可自动修复的错误")
         print()
 
     print("=" * 50)
-    print(f"📊 修复总结:")
+    print("📊 修复总结:")
     print(f"   处理文件: {len(files_to_fix)} 个")
     print(f"   修复错误: {total_fixes} 个")
 

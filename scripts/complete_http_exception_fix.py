@@ -9,11 +9,12 @@ Complete HTTPException Fix Script
 import os
 import re
 
+
 def complete_fix_file(file_path):
     """完整修复文件的HTTPException问题"""
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -92,22 +93,22 @@ def main():
         if os.path.exists(file_path):
             print(f"\n🔧 处理: {file_path}")
             if complete_fix_file(file_path):
-                print(f"  ✅ 修复完成")
+                print("  ✅ 修复完成")
                 fixed_count += 1
             else:
-                print(f"  ℹ️  无需修复")
+                print("  ℹ️  无需修复")
         else:
             print(f"\n⚠️  文件不存在: {file_path}")
 
     print(f"\n{'='*50}")
-    print(f"📊 修复统计:")
+    print("📊 修复统计:")
     print(f"  ✅ 成功修复: {fixed_count} 个文件")
     print(f"  📁 总文件数: {len(api_files)} 个文件")
 
-    print(f"\n🎯 验证修复效果:")
-    print(f"  ruff check src/api/betting_api.py --output-format=concise")
+    print("\n🎯 验证修复效果:")
+    print("  ruff check src/api/betting_api.py --output-format=concise")
 
-    print(f"\n✨ 完整修复完成!")
+    print("\n✨ 完整修复完成!")
 
 if __name__ == "__main__":
     main()

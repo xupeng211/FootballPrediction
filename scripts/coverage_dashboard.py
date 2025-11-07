@@ -4,14 +4,13 @@
 实时监控和分析测试覆盖率进展
 """
 
+import argparse
 import json
-import sys
 import time
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-import argparse
+from typing import Any
 
 
 @dataclass
@@ -24,7 +23,7 @@ class CoverageSnapshot:
     missing_statements: int
     src_files_count: int
     covered_files_count: int
-    top_files: List[Dict[str, Any]]
+    top_files: list[dict[str, Any]]
 
 
 class CoverageDashboard:
@@ -35,14 +34,14 @@ class CoverageDashboard:
         self.data_file = self.project_root / "coverage_data.json"
         self.coverage_file = self.project_root / "coverage.json"
 
-    def get_current_coverage(self) -> Optional[CoverageSnapshot]:
+    def get_current_coverage(self) -> CoverageSnapshot | None:
         """获取当前覆盖率数据"""
         if not self.coverage_file.exists():
             print("❌ coverage.json文件不存在，请先运行测试生成覆盖率报告")
             return None
 
         try:
-            with open(self.coverage_file, 'r', encoding='utf-8') as f:
+            with open(self.coverage_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             totals = data['totals']
@@ -70,8 +69,8 @@ class CoverageDashboard:
                 missing_statements=totals['missing_lines'],
                 src_files_count=len(src_files),
                 covered_files_count=len([f for f in src_files.values() if f['summary']['percent_covered'] > 0]),
-    
-    
+
+
                 top_files=top_files
             )
 
@@ -85,7 +84,7 @@ class CoverageDashboard:
             # 读取历史数据
             history = []
             if self.data_file.exists():
-                with open(self.data_file, 'r', encoding='utf-8') as f:
+                with open(self.data_file, encoding='utf-8') as f:
                     history = json.load(f)
 
             # 添加新快照
@@ -103,13 +102,13 @@ class CoverageDashboard:
         except Exception as e:
             print(f"❌ 保存快照失败: {e}")
 
-    def load_history(self) -> List[CoverageSnapshot]:
+    def load_history(self) -> list[CoverageSnapshot]:
         """加载历史覆盖率数据"""
         try:
             if not self.data_file.exists():
                 return []
 
-            with open(self.data_file, 'r', encoding='utf-8') as f:
+            with open(self.data_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             return [CoverageSnapshot(**item) for item in data]
@@ -142,7 +141,7 @@ class CoverageDashboard:
             coverage_change = current.total_coverage - previous.total_coverage
             statements_change = current.covered_statements - previous.covered_statements
 
-            print(f"\n📈 自上次记录以来的进展:")
+            print("\n📈 自上次记录以来的进展:")
             print(f"   覆盖率变化: {coverage_change:+.2f}%")
             print(f"   新增覆盖语句: {statements_change:+,}")
 
@@ -158,7 +157,7 @@ class CoverageDashboard:
 
         # 目标进度
         targets = [5, 10, 15, 25, 50]
-        print(f"\n🎯 目标进度:")
+        print("\n🎯 目标进度:")
         for target in targets:
             if current.total_coverage >= target:
                 print(f"   ✅ {target}% - 已达成")
@@ -168,7 +167,7 @@ class CoverageDashboard:
 
         # 覆盖率最高的文件
         if current.top_files:
-            print(f"\n🏆 覆盖率最高的文件:")
+            print("\n🏆 覆盖率最高的文件:")
             for i, file_info in enumerate(current.top_files[:5], 1):
                 filename = file_info['file'].replace('src/', '')
                 coverage = file_info['coverage']
@@ -178,7 +177,7 @@ class CoverageDashboard:
 
         # 历史趋势
         if len(history) >= 3:
-            print(f"\n📊 历史趋势 (最近5次记录):")
+            print("\n📊 历史趋势 (最近5次记录):")
             for snapshot in history[-5:]:
                 time_str = snapshot.timestamp[:19].replace('T', ' ')
                 print(f"   {time_str} - {snapshot.total_coverage:.2f}%")

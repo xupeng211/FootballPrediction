@@ -12,10 +12,11 @@ Maintenance Logger System
 
 import json
 import sqlite3
-from pathlib import Path
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
+
 
 @dataclass
 class MaintenanceRecord:
@@ -31,7 +32,7 @@ class MaintenanceRecord:
     health_score_after: int
     execution_time_seconds: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 class MaintenanceLogger:
     """维护日志记录器"""
@@ -122,7 +123,7 @@ class MaintenanceLogger:
             print(f"❌ 记录维护日志失败: {e}")
             return False
 
-    def log_health_snapshot(self, health_report: Dict[str, Any]):
+    def log_health_snapshot(self, health_report: dict[str, Any]):
         """记录健康快照"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -153,7 +154,7 @@ class MaintenanceLogger:
         except Exception as e:
             print(f"❌ 记录健康快照失败: {e}")
 
-    def get_maintenance_history(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_maintenance_history(self, days: int = 30) -> list[dict[str, Any]]:
         """获取维护历史记录"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -176,7 +177,7 @@ class MaintenanceLogger:
             print(f"❌ 获取维护历史失败: {e}")
             return []
 
-    def get_health_trends(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_health_trends(self, days: int = 30) -> list[dict[str, Any]]:
         """获取健康趋势数据"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -199,7 +200,7 @@ class MaintenanceLogger:
             print(f"❌ 获取健康趋势失败: {e}")
             return []
 
-    def generate_maintenance_report(self, days: int = 7) -> Dict[str, Any]:
+    def generate_maintenance_report(self, days: int = 7) -> dict[str, Any]:
         """生成维护报告"""
         maintenance_history = self.get_maintenance_history(days)
         health_trends = self.get_health_trends(days)
@@ -231,7 +232,7 @@ class MaintenanceLogger:
                 "successful_activities": successful_maintenance,
                 "success_rate": round(successful_maintenance / total_maintenance * 100,
     2) if total_maintenance > 0 else 0,
-    
+
                 "total_files_affected": total_files_affected,
                 "total_size_freed_mb": round(total_size_freed, 2),
                 "total_issues_fixed": total_issues_fixed
@@ -247,7 +248,7 @@ class MaintenanceLogger:
 
         return report
 
-    def save_maintenance_report(self, report: Dict[str, Any]) -> Path:
+    def save_maintenance_report(self, report: dict[str, Any]) -> Path:
         """保存维护报告"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = self.logs_dir / f"maintenance_report_{timestamp}.json"
@@ -316,7 +317,7 @@ def main():
     report = logger.generate_maintenance_report(7)
     report_file = logger.save_maintenance_report(report)
 
-    print(f"📝 测试维护日志记录完成")
+    print("📝 测试维护日志记录完成")
     print(f"📊 维护报告已生成: {report_file}")
 
 if __name__ == "__main__":

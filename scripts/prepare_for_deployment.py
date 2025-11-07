@@ -4,11 +4,9 @@
 快速完成项目部署前的关键配置
 """
 
-import os
 import sys
-import json
 from pathlib import Path
-from typing import Dict, List
+
 
 class DeploymentPreparation:
     """部署准备工具"""

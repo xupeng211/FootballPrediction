@@ -6,9 +6,10 @@
 """
 
 import asyncio
-import webbrowser
 import time
+import webbrowser
 from datetime import datetime
+
 import httpx
 
 
