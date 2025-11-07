@@ -12,7 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, TypeVar
+from typing import Any, TypeVar, get_type_hints
 
 from .exceptions import DependencyInjectionError
 
@@ -210,7 +210,39 @@ class DIContainer:
 
         # 如果有工厂方法
         if descriptor.factory:
-            return descriptor.factory()
+            # 解析工厂方法的依赖
+            factory_params = {}
+            sig = inspect.signature(descriptor.factory)
+
+            for param_name, param in sig.parameters.items():
+                if param_name == "self":
+                    continue
+
+                param_type = param.annotation
+
+                # 对于*args和**kwargs参数，跳过处理（Mock对象通常有这些参数）
+                if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                    continue
+
+                if param_type == inspect.Parameter.empty:
+                    if param.default == inspect.Parameter.empty:
+                        raise DependencyInjectionError(
+                            f"工厂方法参数 {param_name} 没有类型注解且没有默认值"
+                        )
+                    continue
+
+                if param_type in self._services:
+                    factory_params[param_name] = self.resolve(param_type)
+                elif param_type.__module__ in ("builtins", "__builtin__"):
+                    raise DependencyInjectionError(
+                        f"工厂方法不支持内置类型: {param_type.__name__}"
+                    )
+                else:
+                    logger.warning(f"自动注册工厂方法依赖类型: {param_type.__name__}")
+                    self.register_transient(param_type)
+                    factory_params[param_name] = self.resolve(param_type)
+
+            return descriptor.factory(**factory_params)
 
         # 如果有实现类
         if descriptor.implementation:
@@ -222,6 +254,10 @@ class DIContainer:
                 )
                 instance = descriptor.implementation(**constructor_params)
                 return instance
+            except TypeError as e:
+                raise DependencyInjectionError(f"无法实例化类型: {descriptor.implementation.__name__}。错误: {str(e)}") from e
+            except Exception as e:
+                raise DependencyInjectionError(f"创建实例时发生错误: {str(e)}") from e
             finally:
                 self._building.pop()
 
@@ -247,20 +283,35 @@ class DIContainer:
     def _get_constructor_params(self, cls: type) -> dict[str, Any]:
         """获取构造函数参数"""
         params = {}
+
+        # 检查是否有自定义的__init__方法
+        if '__init__' not in cls.__dict__:
+            # 使用默认的__init__方法，不需要参数
+            return params
+
         sig = inspect.signature(cls.__init__)
 
         for param_name, param in sig.parameters.items():
             if param_name == "self":
                 continue
 
-            # 获取参数的类型
-            param_type = param.annotation
+            # 获取参数的类型并解析字符串注解
+            param_type = self._resolve_type_annotation(cls, param.annotation)
+
+            # 对于*args和**kwargs参数，检查是否有类型注解
+            if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                if param_type == inspect.Parameter.empty and param.default == inspect.Parameter.empty:
+                    raise DependencyInjectionError(
+                        f"参数 {param_name} 没有类型注解且没有默认值"
+                    )
+                continue
 
             if param_type == inspect.Parameter.empty:
                 if param.default == inspect.Parameter.empty:
                     raise DependencyInjectionError(
                         f"参数 {param_name} 没有类型注解且没有默认值"
                     )
+                # 有默认值但没有类型注解，跳过此参数
                 continue
 
             # 解析依赖
@@ -269,17 +320,44 @@ class DIContainer:
             else:
                 # 尝试自动注册
                 if isinstance(param_type, str):
-                    logger.warning(f"自动注册类型: {param_type}")
-                    # 字符串类型暂时跳过自动注册
+                    # 如果经过解析后仍然是字符串，说明无法解析
+                    logger.warning(f"无法解析字符串类型注解: {param_type}")
                     raise DependencyInjectionError(
                         f"无法解析字符串类型注解: {param_type}。请使用具体的类型对象。"
                     )
+                elif param_type.__module__ in ("builtins", "__builtin__"):
+                    # 对于内置类型，如果有默认值则使用默认值，否则抛出异常
+                    if param.default != inspect.Parameter.empty:
+                        # 有默认值的内置类型参数，跳过注入
+                        continue
+                    else:
+                        # 没有默认值的内置类型参数，需要显式注册
+                        raise DependencyInjectionError(
+                            f"不支持自动注册内置类型: {param_type.__name__}。请显式注册或提供默认值。"
+                        )
                 else:
                     logger.warning(f"自动注册类型: {param_type.__name__}")
                     self.register_transient(param_type)
                     params[param_name] = self.resolve(param_type)
 
         return params
+
+    def _resolve_type_annotation(self, cls: type, annotation: Any) -> Any:
+        """解析类型注解，处理字符串类型注解"""
+        if isinstance(annotation, str):
+            try:
+                # 使用 get_type_hints 解析字符串类型注解
+                type_hints = get_type_hints(cls)
+                # 获取当前参数的真实类型
+                sig = inspect.signature(cls.__init__)
+                for param_name, param in sig.parameters.items():
+                    if param.annotation == annotation:
+                        return type_hints.get(param_name, annotation)
+                return annotation
+            except (NameError, AttributeError, TypeError):
+                # 如果解析失败，返回原始注解
+                return annotation
+        return annotation
 
     def create_scope(self, scope_name: str | None = None) -> "DIScope":
         """创建新的作用域"""
