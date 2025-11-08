@@ -602,7 +602,6 @@ class TestIntelligentCacheWarmupManager:
         mock_cache_manager = MagicMock()
         manager = IntelligentCacheWarmupManager(mock_cache_manager)
 
-
         plan_id = await manager.create_warmup_plan(
             strategy=WarmupStrategy.ACCESS_PATTERN, keys=["key1", "key2"]
         )

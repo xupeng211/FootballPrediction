@@ -3,8 +3,8 @@
 """
 
 import time
-import asyncio
-from typing import Callable
+from collections.abc import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -26,14 +26,15 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
         # 记录请求开始
         self.active_requests[request_id] = start_time
         current_concurrent = len(self.active_requests)
-        self.max_concurrent_requests = max(self.max_concurrent_requests, current_concurrent)
+        self.max_concurrent_requests = max(
+            self.max_concurrent_requests, current_concurrent
+        )
 
         try:
             # 获取请求大小
-            request_size = 0
             try:
                 body = await request.body()
-                request_size = len(body)
+                len(body)
             except (ValueError, RuntimeError, TimeoutError):
                 pass
 
@@ -45,9 +46,8 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             duration = end_time - start_time
 
             # 记录响应大小
-            response_size = 0
             try:
-                response_size = len(response.body) if hasattr(response, 'body') else 0
+                len(response.body) if hasattr(response, "body") else 0
             except (ValueError, RuntimeError, TimeoutError):
                 pass
 
@@ -73,7 +73,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
                 "avg_response_time": 0,
                 "max_concurrent_requests": self.max_concurrent_requests,
                 "current_concurrent": len(self.active_requests),
-                "total_requests": 0
+                "total_requests": 0,
             }
 
         return {
@@ -82,7 +82,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             "min_response_time": min(self.request_times),
             "max_concurrent_requests": self.max_concurrent_requests,
             "current_concurrent": len(self.active_requests),
-            "total_requests": len(self.request_times)
+            "total_requests": len(self.request_times),
         }
 
 
@@ -142,7 +142,9 @@ class DatabasePerformanceMiddleware:
 
     def get_avg_query_time(self) -> float:
         """获取平均查询时间"""
-        return sum(self.query_times) / len(self.query_times) if self.query_times else 0.0
+        return (
+            sum(self.query_times) / len(self.query_times) if self.query_times else 0.0
+        )
 
 
 # 为了向后兼容，提供别名

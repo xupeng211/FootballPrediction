@@ -99,6 +99,7 @@ def _upgrade_handle_error():
         logger.info("   ✅ idx_recent_matches 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_recent_matches 索引创建失败: {e}")
+
     logger.info("2. 创建 idx_team_matches 索引...")
 
 def _upgrade_handle_error():
@@ -253,6 +254,7 @@ def upgrade() -> None:
         logger.info("   ✅ idx_recent_matches 索引创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ❌ idx_recent_matches 索引创建失败: {e}")
+
     logger.info("2. 创建 idx_team_matches 索引...")
     _upgrade_handle_error()
         conn.execute(

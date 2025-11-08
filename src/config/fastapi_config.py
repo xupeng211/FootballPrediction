@@ -141,10 +141,9 @@ def create_chinese_app() -> FastAPI:
 
     app = FastAPI(
         title=I18nUtils.translate("Football Prediction API"),
-    description=I18nUtils.translate(
+        description=I18nUtils.translate(
             "Machine Learning Based Football Match Prediction System"
         ),
-    
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",

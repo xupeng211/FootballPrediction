@@ -629,9 +629,7 @@ class CacheConsistencyManager:
             self.stats["errors"] += 1
             return None
 
-    async def write(
-        self, key: str, value: Any, session_id: str | None = None
-    ) -> bool:
+    async def write(self, key: str, value: Any, session_id: str | None = None) -> bool:
         """写入操作"""
         try:
             # 执行写入
