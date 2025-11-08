@@ -1,4 +1,4 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -180,10 +180,8 @@ class TeamForm:
         return f"状态: {self.recent_form_string} ({streak_str})"
 
 
+@dataclass
 class Team:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """
     球队领域模型
 

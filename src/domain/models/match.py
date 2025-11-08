@@ -1,4 +1,4 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -70,10 +70,8 @@ class MatchScore:
         return f"{self.home_score}-{self.away_score}"
 
 
+@dataclass
 class Match:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """
     比赛领域模型
 

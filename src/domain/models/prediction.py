@@ -1,4 +1,4 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
@@ -24,10 +24,8 @@ class PredictionStatus(Enum):
     EXPIRED = "expired"  # 已过期
 
 
+@dataclass
 class ConfidenceScore:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """置信度值对象"""
 
     value: Decimal
@@ -53,10 +51,8 @@ class ConfidenceScore:
         return f"{self.value:.2f} ({self.level})"
 
 
+@dataclass
 class PredictionScore:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """预测比分值对象"""
 
     predicted_home: int
@@ -156,10 +152,8 @@ class PredictionPoints:
         return f"{self.total} 分"
 
 
+@dataclass
 class Prediction:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """
     预测领域模型
 

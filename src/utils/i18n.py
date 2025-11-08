@@ -66,6 +66,11 @@ def set_language(language: str) -> None:
         language: 语言代码
     """
     global _current_language
+
+    # 添加类型检查和错误处理
+    if not isinstance(language, str):
+        return
+
     if language in supported_languages:
         _current_language = language
 

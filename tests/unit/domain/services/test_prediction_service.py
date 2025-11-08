@@ -572,7 +572,18 @@ class TestPredictionServiceIntegration:
         # 创建模拟数据
         home_team = Team(id=1, name="Home Team")
         away_team = Team(id=2, name="Away Team")
-        match = Match(id=1, home_team=home_team, away_team=away_team)
+        from datetime import timedelta
+
+        future_time = datetime.now() + timedelta(days=1)
+        match = Match(
+            id=1,
+            home_team_id=1,
+            away_team_id=2,
+            league_id=1,
+            season="2024",
+            match_date=future_time,
+            status=MatchStatus.SCHEDULED,
+        )
 
         # 1. 创建预测
         prediction = service.create_prediction(
@@ -607,7 +618,18 @@ class TestPredictionServiceIntegration:
         # 创建预测
         home_team = Team(id=1, name="Home Team")
         away_team = Team(id=2, name="Away Team")
-        match = Match(id=1, home_team=home_team, away_team=away_team)
+        from datetime import timedelta
+
+        future_time = datetime.now() + timedelta(days=1)
+        match = Match(
+            id=1,
+            home_team_id=1,
+            away_team_id=2,
+            league_id=1,
+            season="2024",
+            match_date=future_time,
+            status=MatchStatus.SCHEDULED,
+        )
 
         prediction = service.create_prediction(
             user_id=123, match=match, predicted_home=1, predicted_away=1

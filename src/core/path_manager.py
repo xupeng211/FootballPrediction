@@ -34,6 +34,10 @@ class PathManager:
         logger.info(f"项目根目录: {self.project_root}")
         logger.info(f"src路径: {self.src_path}")
 
+    def get_project_root(self) -> Path:
+        """获取项目根目录"""
+        return self.project_root
+
     def _detect_project_root(self) -> Path:
         """自动检测项目根目录"""
         current = Path.cwd()

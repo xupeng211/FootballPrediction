@@ -75,7 +75,7 @@ class ExponentialBackoffStrategy:
 
     def get_delay(self, attempt: int = 0) -> float:
         """获取指定尝试次数的延迟时间"""
-        return self.initial_delay * (self.multiplier ** attempt)
+        return self.initial_delay * (self.multiplier**attempt)
 
 
 class PolynomialBackoffStrategy:
@@ -88,7 +88,11 @@ class PolynomialBackoffStrategy:
 
     def get_delay(self, attempt: int = 0) -> float:
         """获取指定尝试次数的延迟时间"""
-        return self.initial_delay * (attempt ** self.exponent) if attempt > 0 else self.initial_delay
+        return (
+            self.initial_delay * (attempt**self.exponent)
+            if attempt > 0
+            else self.initial_delay
+        )
 
 
 class BackoffStrategy:

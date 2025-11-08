@@ -204,21 +204,36 @@ pytest --cov=src --cov-report=term-missing
 pytest tests/unit/utils/ --cov=src.utils --cov-report=term-missing -v
 ```
 
-### ⚠️ 重要测试规则
-- **永远不要**对单个文件使用 `--cov-fail-under`
+### ⚠️ 重要测试规则（关键）
+- **永远不要**对单个文件使用 `--cov-fail-under` - 会导致测试失败
 - **覆盖率阈值**: 30%（pytest.ini配置，渐进式改进策略）
-- **优先使用**: Makefile命令而非直接pytest
+- **优先使用**: Makefile命令而非直接pytest - 确保环境一致性
 - **测试环境修复**: 270个语法错误已修复，100+核心测试已恢复
 - **Smart Tests**: 核心稳定测试组合，执行时间<2分钟，通过率>90%
+
+### 🔧 测试环境问题诊断
+```bash
+# 当测试出现问题时，按以下顺序排查：
+make env-check                    # 1. 环境检查
+python3 scripts/smart_quality_fixer.py  # 2. 智能修复
+make test.unit                    # 3. 验证修复
+make coverage                     # 4. 检查覆盖率
+```
 
 ---
 
 ## 🔧 代码质量工具链
 
-### 🎯 一键修复工具
+### 🎯 一键修复工具（推荐使用顺序）
 ```bash
+# 1️⃣ 首选智能修复（解决80%问题）
 python3 scripts/smart_quality_fixer.py      # 智能自动修复（核心工具）
+
+# 2️⃣ 传统工具链修复
 make fix-code                               # 一键修复格式和语法
+ruff check src/ tests/ --fix               # Ruff自动修复（推荐）
+
+# 3️⃣ CI/CD环境修复
 make ci-auto-fix                            # CI/CD自动修复流程
 ```
 
@@ -231,24 +246,26 @@ make syntax-check     # 语法错误检查
 make ci-check         # CI/CD质量检查
 ```
 
-### 🛠️ 现代化工具
+### 🛠️ 现代化工具链（Ruff优先）
 ```bash
-# Ruff - 统一代码检查和格式化（主要工具）
-ruff check src/ tests/       # 代码检查
-ruff format src/ tests/      # 代码格式化
-ruff check src/ tests/ --fix # 自动修复
+# 🔥 Ruff - 统一代码检查和格式化（主要工具）
+ruff check src/ tests/              # 代码检查
+ruff format src/ tests/             # 代码格式化
+ruff check src/ tests/ --fix        # 自动修复（推荐）
+ruff check src/ tests/ --fix --unsafe  # 包含不安全修复
 
-# 类型检查和安全
+# 🔍 类型检查和安全验证
 mypy src/ --ignore-missing-imports  # MyPy类型检查
 bandit -r src/                     # 安全检查
+pip-audit                          # 依赖漏洞检查
 
-# 传统工具链（备用）
-black src/ tests/            # Black格式化
-isort src/ tests/            # 导入排序
-flake8 src/ tests/           # 代码检查
+# 📦 传统工具链（备用/兼容）
+black src/ tests/                  # Black格式化
+isort src/ tests/                  # 导入排序
+flake8 src/ tests/                 # 代码检查
 
-# 智能修复工具
-python3 scripts/smart_quality_fixer.py  # 一键智能修复（推荐）
+# 🤖 智能修复工具（一键解决）
+python3 scripts/smart_quality_fixer.py  # 智能自动修复（首选）
 ```
 
 ---
@@ -379,14 +396,15 @@ make test-m2-toolchain
 
 ## 🎯 最佳实践
 
-### ✅ 开发原则
+### ✅ 开发原则（核心准则）
 - 使用依赖注入容器管理组件生命周期
 - 遵循仓储模式进行数据访问抽象
 - 对I/O操作使用async/await实现异步架构
 - 编写全面的单元测试和集成测试
 - **关键规则**: 永远不要对单个文件使用 `--cov-fail-under`
-- 使用Makefile命令而非直接调用工具
-- 优先使用 `make ci-check` 进行质量验证
+- **工具使用**: 优先使用Makefile命令而非直接调用工具
+- **质量保证**: 优先使用 `make ci-check` 进行质量验证
+- **智能修复**: 遇到质量问题时首先使用 `smart_quality_fixer.py`
 
 ### 🎯 成功标准
 - **测试通过**: 单元测试和集成测试正常运行
@@ -679,4 +697,25 @@ make claude-sync
 
 ---
 
-*文档版本: v18.0 (2025年更新版) | 维护者: Claude Code | 更新时间: 2025-11-08*
+---
+
+## 🆕 新增改进内容（2025-11-08更新）
+
+### 🔧 工具链优化
+- **Ruff优先策略** - 明确Ruff作为主要代码检查和格式化工具
+- **修复工具排序** - 按推荐使用顺序重新组织修复工具
+- **问题诊断流程** - 添加测试环境问题的标准化排查步骤
+
+### 📋 关键规则强化
+- **覆盖率使用禁忌** - 强调单个文件不要使用 `--cov-fail-under`
+- **Makefile优先原则** - 确保环境一致性和工具链标准化
+- **智能修复优先** - 遇到问题时首先使用智能修复工具
+
+### 🎯 实用性增强
+- **命令分类优化** - 更清晰的工具分类和使用场景
+- **错误排查指导** - 添加常见问题的解决流程
+- **最佳实践细化** - 更具体的开发准则和质量标准
+
+---
+
+*文档版本: v18.1 (2025-11-08更新版) | 维护者: Claude Code | 更新内容: 工具链优化和使用指导增强*

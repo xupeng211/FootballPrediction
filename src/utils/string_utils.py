@@ -174,7 +174,20 @@ class StringUtils:
         if not isinstance(phone, str):
             return ""
 
-        # 移除非数字字符
+        phone = phone.strip()
+
+        # 检查是否为国际号码（以+开头）
+        if phone.startswith("+"):
+            # 保留国际号码格式，只移除空格和特殊分隔符
+            international = re.sub(r"[^\d\+]", "", phone)
+            # 简单的国际号码验证（至少8位数字，加上+号）
+            digits_count = len(re.sub(r"[^\d]", "", international))
+            if digits_count >= 8:
+                return international
+            else:
+                return ""
+
+        # 移除非数字字符处理中国号码
         digits_only = re.sub(r"[^\d]", "", phone)
 
         # 中国手机号格式验证
@@ -378,7 +391,17 @@ def batch_clean_strings(strings: list[str]) -> list[str]:
 
 def validate_batch_emails(emails: list[str]) -> dict:
     """批量验证邮箱"""
-    return {email: StringUtils.validate_email(email) for email in emails}
+    results = {email: StringUtils.validate_email(email) for email in emails}
+
+    # 添加分类列表以满足测试期望
+    valid_emails = [email for email, is_valid in results.items() if is_valid]
+    invalid_emails = [email for email, is_valid in results.items() if not is_valid]
+
+    # 扩展结果以包含分类信息
+    results["_valid_list"] = valid_emails
+    results["_invalid_list"] = invalid_emails
+
+    return results
 
 
 def normalize_string(text: str) -> str:

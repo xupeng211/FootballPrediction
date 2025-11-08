@@ -108,14 +108,23 @@ def validate_data_types(data: dict, schema: dict) -> list[str]:
     for field, expected_type in schema.items():
         if field in data:
             value = data[field]
-            if expected_type == "str" and not isinstance(value, str):
-                errors.append(f"Field '{field}' should be string")
-            elif expected_type == "int" and not isinstance(value, int):
-                errors.append(f"Field '{field}' should be integer")
-            elif expected_type == "float" and not isinstance(value, (int, float)):
-                errors.append(f"Field '{field}' should be number")
-            elif expected_type == "bool" and not isinstance(value, bool):
-                errors.append(f"Field '{field}' should be boolean")
-            elif expected_type == "list" and not isinstance(value, list):
-                errors.append(f"Field '{field}' should be list")
+
+            # 支持字符串类型和实际类型对象
+            if isinstance(expected_type, str):
+                # 字符串格式
+                if expected_type == "str" and not isinstance(value, str):
+                    errors.append(f"Field '{field}' should be string")
+                elif expected_type == "int" and not isinstance(value, int):
+                    errors.append(f"Field '{field}' should be integer")
+                elif expected_type == "float" and not isinstance(value, (int, float)):
+                    errors.append(f"Field '{field}' should be number")
+                elif expected_type == "bool" and not isinstance(value, bool):
+                    errors.append(f"Field '{field}' should be boolean")
+                elif expected_type == "list" and not isinstance(value, list):
+                    errors.append(f"Field '{field}' should be list")
+            else:
+                # 实际类型对象
+                if not isinstance(value, expected_type):
+                    type_name = expected_type.__name__
+                    errors.append(f"Field '{field}' should be {type_name}")
     return errors

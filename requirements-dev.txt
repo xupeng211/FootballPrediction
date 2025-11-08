@@ -1,28 +1,36 @@
 # 开发依赖
 # Development dependencies
 
--r base.txt
+-r requirements.txt
 
-# 代码质量
-ruff==0.14.1
-mypy==1.13.0
-black==24.10.0
-isort==5.13.2
+# 额外的开发工具
+ruff>=0.14.1
+mypy>=1.18.2
+black>=25.9.0
+isort>=7.0.0
 
-# 测试
-pytest==8.3.4
-pytest-asyncio==0.24.0
-pytest-cov==6.0.0
-pytest-mock==3.14.0
-pytest-xdist==3.6.1
-factory-boy==3.3.1
+# 测试相关
+pytest>=8.4.2
+pytest-asyncio>=1.2.0
+pytest-cov>=7.0.0
+pytest-mock>=3.14.0
+pytest-xdist>=3.6.1
+pytest-timeout>=2.3.0
+factory-boy>=3.3.1
 
 # 开发工具
-pre-commit==4.0.1
-ipython==8.31.0
-jupyter==1.1.1
-pip-tools==7.4.1
+pre-commit>=4.0.1
+ipython>=8.31.0
+jupyter>=1.1.1
+pip-tools>=7.4.1
 
 # 文档
-mkdocs==1.6.1
-mkdocs-material==9.5.49
+mkdocs>=1.6.1
+mkdocs-material>=9.5.49
+
+# 确保aiosqlite正确版本
+aiosqlite>=0.17.0
+
+# 安全工具
+bandit>=1.8.6
+safety>=3.2.0
