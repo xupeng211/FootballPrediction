@@ -325,6 +325,47 @@ test-crisis-launcher: ## Test: Launch interactive test crisis solution tool
 	echo "$(YELLOW)🚀 启动测试危机解决方案工具...$(RESET)" && \
 	$(PYTHON) scripts/launch_test_crisis_solution.py
 
+# ============================================================================
+# 🔍 质量门禁检查工具
+# ============================================================================
+quality-quick-check: ## Quality: Run quick quality check (Issue #359)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)⚡ 运行快速质量检查...$(RESET)" && \
+	$(PYTHON) scripts/quick_quality_checker.py && \
+	echo "$(GREEN)✅ 快速质量检查完成$(RESET)"
+
+quality-gate-check: ## Quality: Run comprehensive quality gate check
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)🎯 运行质量门禁检查...$(RESET)" && \
+	$(PYTHON) scripts/quality_gate_checker.py && \
+	echo "$(GREEN)✅ 质量门禁检查完成$(RESET)"
+
+quality-dashboard: ## Quality: Generate quality dashboard
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)📊 生成质量仪表板...$(RESET)" && \
+	echo "$(BLUE)1️⃣ 快速检查..." && \
+	make quality-quick-check > reports/quick_quality_report.txt 2>&1 && \
+	echo "$(BLUE)2️⃣ 代码质量分析..." && \
+	ruff check src/ --output-format=json > reports/ruff_issues.json 2>&1 || true && \
+	echo "$(BLUE)3️⃣ 测试状态分析..." && \
+	pytest --collect-only -q > reports/test_collection.txt 2>&1 || true && \
+	echo "$(GREEN)✅ 质量仪表板生成完成$(RESET)" && \
+	echo "$(BLUE)📋 报告位置: reports/$(RESET)"
+
+quality-improvement-cycle: ## Quality: Complete quality improvement cycle (Issue #359)
+	@$(ACTIVATE) && \
+	echo "$(RED)🚀 执行完整质量改进周期...$(RESET)" && \
+	echo "$(BLUE)Step 1: 快速质量检查..." && \
+	make quality-quick-check && \
+	echo "$(BLUE)Step 2: 代码质量修复..." && \
+	make fix-code && \
+	echo "$(BLUE)Step 3: 质量门禁验证..." && \
+	make quality-gate-check && \
+	echo "$(BLUE)Step 4: 生成质量报告..." && \
+	make quality-dashboard && \
+	echo "$(GREEN)🎉 质量改进周期完成$(RESET)" && \
+	echo "$(BLUE)📋 查看报告: reports/quick_quality_report.txt$(RESET)"
+
 github-issues-update: ## Quality: Update GitHub issues for test coverage crisis
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)🔧 更新GitHub Issues...$(RESET)" && \
