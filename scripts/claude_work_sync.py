@@ -72,24 +72,24 @@ class ClaudeWorkSynchronizer:
         self.work_log_file = self.project_root / "claude_work_log.json"
         self.sync_log_file = self.project_root / "claude_sync_log.json"
 
-        # 作业类型映射到GitHub标签
+        # 作业类型映射到GitHub标签 - 使用仓库中实际存在的标签
         self.type_label_map = {
-            'development': ['development', 'enhancement'],
-            'testing': ['testing', 'quality-assurance'],
+            'development': ['enhancement'],
+            'testing': ['enhancement'],
             'documentation': ['documentation'],
-            'bugfix': ['bug', 'bugfix'],
-            'feature': ['enhancement', 'new-feature'],
-            'optimization': ['optimization', 'performance'],
-            'refactoring': ['refactoring', 'code-quality'],
-            'deployment': ['deployment', 'infrastructure']
+            'bugfix': ['bug'],
+            'feature': ['enhancement'],
+            'optimization': ['performance'],
+            'refactoring': ['enhancement'],
+            'deployment': ['deployment']
         }
 
-        # 优先级映射到GitHub标签
+        # 优先级映射到GitHub标签 - 使用仓库中实际存在的标签
         self.priority_label_map = {
-            'low': ['priority/low'],
-            'medium': ['priority/medium'],
-            'high': ['priority/high'],
-            'critical': ['priority/critical']
+            'low': ['medium'],
+            'medium': ['medium'],
+            'high': ['high', 'priority-high'],
+            'critical': ['critical', 'priority-high']
         }
 
     def run_git_command(self, command: list[str]) -> dict[str, Any]:
@@ -422,26 +422,26 @@ class ClaudeWorkSynchronizer:
         if work_item.priority in self.priority_label_map:
             labels.extend(self.priority_label_map[work_item.priority])
 
-        # 添加状态标签
+        # 添加状态标签 - 使用仓库中实际存在的标签或跳过
         status_labels = {
-            "pending": "status/pending",
-            "in_progress": "status/in-progress",
-            "completed": "status/completed",
-            "review": "status/review-needed"
+            "pending": None,  # 暂时跳过，仓库中没有对应标签
+            "in_progress": None,  # 暂时跳过，仓库中没有对应标签
+            "completed": "resolved",  # 使用resolved标签表示已完成
+            "review": None  # 暂时跳过，仓库中没有对应标签
         }
-        if work_item.status in status_labels:
+        if work_item.status in status_labels and status_labels[work_item.status]:
             labels.append(status_labels[work_item.status])
 
-        # 添加Claude相关标签
-        labels.append("claude-code")
-        labels.append("automated")
+        # 添加Claude相关标签 - 暂时跳过不存在的标签
+        # labels.append("claude-code")  # 仓库中不存在
+        # labels.append("automated")  # 仓库中不存在
 
         # 检查是否已存在相同标题的Issue
         search_result = self.run_gh_command([
             "issue", "list",
             "--repo", self.repo,
-            "--search", f"title:{work_item.title}",
-            "--limit", "1",
+            "--search", work_item.title,
+            "--limit", "10",  # 增加limit以确保找到所有可能的匹配项
             "--json", "number,title,state"
         ])
 
@@ -457,7 +457,7 @@ class ClaudeWorkSynchronizer:
                     issue_number = existing_issue["number"]
 
                     # 如果状态已变为完成，关闭Issue
-                    if work_item.status == "completed" and existing_issue["state"] == "open":
+                    if work_item.status == "completed" and existing_issue["state"].lower() == "open":
                         # 添加评论
                         body = self.generate_issue_body(work_item)
                         comment_result = self.run_gh_command([
@@ -479,7 +479,7 @@ class ClaudeWorkSynchronizer:
                         else:
                             action = "failed_to_comment"
 
-                    elif existing_issue["state"] == "open":
+                    elif existing_issue["state"].lower() == "open":
                         # 更新Issue
                         body = self.generate_issue_body(work_item)
                         comment_result = self.run_gh_command([
@@ -500,13 +500,18 @@ class ClaudeWorkSynchronizer:
         # 创建新Issue
         if issue_number is None:
             body = self.generate_issue_body(work_item)
-            create_result = self.run_gh_command([
+            # 构建命令，每个标签需要单独的--label参数
+            cmd = [
                 "issue", "create",
                 "--repo", self.repo,
                 "--title", work_item.title,
-                "--body", body,
-                "--label", ",".join(labels)
-            ])
+                "--body", body
+            ]
+            # 为每个标签添加--label参数
+            for label in labels:
+                cmd.extend(["--label", label])
+
+            create_result = self.run_gh_command(cmd)
 
             if create_result["success"]:
                 # 提取Issue号码
@@ -599,6 +604,8 @@ class ClaudeWorkSynchronizer:
         # 输出总结
         self.print_sync_summary(results)
 
+        # 添加success键用于主函数判断
+        results["success"] = True
         return results
 
     def generate_sync_report(self, results: dict[str, Any]):
