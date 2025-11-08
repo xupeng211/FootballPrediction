@@ -1,20 +1,7 @@
-from datetime import datetime
-
-"""
-增强版预测API - 符合SRS规范
-SRS Compliant Enhanced Prediction API
-
-实现需求:
-- /predict API:输入赛事信息返回胜/平/负概率
-- API响应时间 ≤ 200ms
-- 模型准确率 ≥ 65%
-- 支持1000场比赛并发请求
-- Token校验与请求频率限制
-"""
-
 import asyncio
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -26,6 +13,7 @@ from src.cache.redis_manager import get_redis_manager
 from src.core.logging_system import get_logger
 from src.database.connection import get_async_session
 
+# 尝试导入可选的ML模块
 try:
     from src.ml.advanced_model_trainer import AdvancedModelTrainer
 except ImportError:
@@ -44,6 +32,18 @@ except ImportError:
             pass
 
 
+"""
+增强版预测API - 符合SRS规范
+SRS Compliant Enhanced Prediction API
+
+实现需求:
+- /predict API:输入赛事信息返回胜/平/负概率
+- API响应时间 ≤ 200ms
+- 模型准确率 ≥ 65%
+- 支持1000场比赛并发请求
+- Token校验与请求频率限制
+"""
+
 logger = get_logger(__name__)
 router = APIRouter(prefix="/predictions", tags=["predictions-srs"])
 
@@ -61,9 +61,6 @@ class PredictionResult(str, Enum):
 
 @dataclass
 class PredictionMetrics:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """预测性能指标"""
 
     accuracy: float = 0.0
@@ -137,14 +134,9 @@ class BatchPredictionResponse(BaseModel):
 
 
 class EnhancedPredictionService:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """增强版预测服务"""
 
     def __init__(self):
-        """函数文档字符串"""
-        # 添加pass语句
         self.model_trainer = AdvancedModelTrainer()
         self.automl_pipeline = AutoMLPipeline()
         self.metrics = PredictionMetrics()

@@ -1,4 +1,12 @@
+import logging
+from datetime import datetime
 from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from .manager import get_websocket_manager
+from .match_service import MatchStatus, get_realtime_match_service
 
 """
 实时比赛状态API端点
@@ -9,14 +17,6 @@ Realtime Match Status API Endpoints
 Provides HTTP API endpoints for real-time match status functionality
 """
 
-import logging
-from datetime import datetime
-
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
-from pydantic import BaseModel, Field
-
-from .manager import get_websocket_manager
-from .match_service import MatchStatus, get_realtime_match_service
 
 router = APIRouter(prefix="/matches", tags=["realtime-matches"])
 logger = logging.getLogger(__name__)
@@ -145,8 +145,10 @@ async def add_match_to_monitoring(
             "added_at": datetime.now().isoformat(),
         }
 
-    except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid status: {request.status}"
+        ) from e
     except Exception as e:
         logger.error(f"Failed to add match to monitoring: {e}")
         raise HTTPException(
@@ -214,7 +216,9 @@ async def update_match_score(
 
     except Exception as e:
         logger.error(f"Failed to update match score: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update match score")
+        raise HTTPException(
+            status_code=500, detail="Failed to update match score"
+        ) from e
 
 
 @router.put("/{match_id}/status", summary="更新比赛状态")
@@ -278,8 +282,10 @@ async def update_match_status(
             "match_info": match_info,
         }
 
-    except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid status: {request.status}"
+        ) from e
     except Exception as e:
         logger.error(f"Failed to update match status: {e}")
         raise HTTPException(
@@ -353,7 +359,9 @@ async def get_league_matches(
 
     except Exception as e:
         logger.error(f"Failed to get league matches: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get league matches")
+        raise HTTPException(
+            status_code=500, detail="Failed to get league matches"
+        ) from e
 
 
 @router.get("/live", summary="获取直播比赛")
@@ -411,7 +419,9 @@ async def get_match_service_stats():
 
     except Exception as e:
         logger.error(f"Failed to get service stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get service stats")
+        raise HTTPException(
+            status_code=500, detail="Failed to get service stats"
+        ) from e
 
 
 @router.post("/{match_id}/subscribe", summary="订阅比赛更新")
@@ -535,7 +545,9 @@ async def broadcast_match_alert(
 
     except Exception as e:
         logger.error(f"Failed to broadcast match alert: {e}")
-        raise HTTPException(status_code=500, detail="Failed to broadcast match alert")
+        raise HTTPException(
+            status_code=500, detail="Failed to broadcast match alert"
+        ) from e
 
 
 # ============================================================================
