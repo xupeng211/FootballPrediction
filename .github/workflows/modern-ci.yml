@@ -88,7 +88,7 @@ jobs:
         safety check --json --output safety-report.json || echo "⚠️ 依赖安全检查发现问题"
 
     - name: Upload Security Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
@@ -182,7 +182,7 @@ jobs:
         fi
 
     - name: Upload Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-py${{ matrix.python-version }}
@@ -235,7 +235,7 @@ jobs:
         echo "API性能测试占位符"
 
     - name: Upload Performance Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: performance-results
@@ -361,7 +361,7 @@ jobs:
         EOF
 
     - name: Upload Quality Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quality-report
         path: quality-report.md
