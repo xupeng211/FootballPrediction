@@ -3,33 +3,30 @@
 Database Optimization Tests
 """
 
-import pytest
 import asyncio
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
-from src.api.optimization.database_query_optimizer import (
-    DatabasePerformanceAnalyzer,
-    QueryMetrics,
-    get_database_analyzer
+import pytest
+
+from src.api.optimization.connection_pool_optimizer import (
+    ConnectionPoolOptimizer,
+    PoolMetrics,
+    PoolOptimizationConfig,
 )
 from src.api.optimization.database_performance_middleware import (
     DatabasePerformanceMiddleware,
     QueryOptimizationAdvisor,
     get_database_middleware,
-    get_optimization_advisor
+    get_optimization_advisor,
 )
-from src.api.optimization.connection_pool_optimizer import (
-    ConnectionPoolOptimizer,
-    PoolOptimizationConfig,
-    PoolMetrics,
-    get_connection_pool_optimizer
+from src.api.optimization.database_query_optimizer import (
+    DatabasePerformanceAnalyzer,
+    QueryMetrics,
+    get_database_analyzer,
 )
 from src.api.optimization.query_execution_analyzer import (
-    QueryExecutionAnalyzer,
-    ExecutionPlanAnalysis,
     ExecutionPlanNode,
-    get_query_execution_analyzer
+    QueryExecutionAnalyzer,
 )
 
 
@@ -73,9 +70,10 @@ class TestDatabasePerformanceAnalyzer:
         rows_examined = 50
 
         query_hash = await analyzer.analyze_query(
-            query, execution_time,
+            query,
+            execution_time,
             rows_returned=rows_returned,
-            rows_examined=rows_examined
+            rows_examined=rows_examined,
         )
 
         # 验证查询指标被正确记录
@@ -98,8 +96,8 @@ class TestDatabasePerformanceAnalyzer:
 
         # 验证慢查询被记录
         assert len(analyzer.slow_queries) == 1
-        assert analyzer.slow_queries[0]['query_text'] == slow_query
-        assert analyzer.slow_queries[0]['execution_time'] == 2.5
+        assert analyzer.slow_queries[0]["query_text"] == slow_query
+        assert analyzer.slow_queries[0]["execution_time"] == 2.5
 
     @pytest.mark.asyncio
     async def test_error_rate_calculation(self):
@@ -132,10 +130,10 @@ class TestDatabasePerformanceAnalyzer:
 
         summary = analyzer.get_performance_summary()
 
-        assert summary['total_queries'] == 30  # 3 queries * 10 executions
-        assert summary['unique_queries'] == 3
-        assert summary['avg_response_time'] == 0.1  # 3.0 total time / 30 executions
-        assert summary['total_errors'] == 3
+        assert summary["total_queries"] == 30  # 3 queries * 10 executions
+        assert summary["unique_queries"] == 3
+        assert summary["avg_response_time"] == 0.1  # 3.0 total time / 30 executions
+        assert summary["total_errors"] == 3
 
     @pytest.mark.asyncio
     async def test_optimization_suggestions(self):
@@ -143,11 +141,13 @@ class TestDatabasePerformanceAnalyzer:
         analyzer = DatabasePerformanceAnalyzer()
 
         # 添加慢查询
-        slow_query_hash = await analyzer.analyze_query("SELECT * FROM large_table", 2.0)
+        await analyzer.analyze_query("SELECT * FROM large_table", 2.0)
 
         # 添加高错误率查询
         error_query_hash = analyzer.generate_query_hash("SELECT * FROM error_table")
-        analyzer.query_metrics[error_query_hash] = QueryMetrics(error_query_hash, "Error query")
+        analyzer.query_metrics[error_query_hash] = QueryMetrics(
+            error_query_hash, "Error query"
+        )
         for i in range(10):
             analyzer.query_metrics[error_query_hash].record_execution(
                 0.1, error=(i % 2 == 0)  # 50%错误率
@@ -156,11 +156,11 @@ class TestDatabasePerformanceAnalyzer:
         suggestions = await analyzer.get_optimization_suggestions()
 
         # 应该有慢查询建议
-        slow_query_suggestions = [s for s in suggestions if s['type'] == 'slow_query']
+        slow_query_suggestions = [s for s in suggestions if s["type"] == "slow_query"]
         assert len(slow_query_suggestions) > 0
 
         # 应该有高错误率建议
-        error_suggestions = [s for s in suggestions if s['type'] == 'high_error_rate']
+        error_suggestions = [s for s in suggestions if s["type"] == "high_error_rate"]
         assert len(error_suggestions) > 0
 
 
@@ -223,8 +223,7 @@ class TestDatabasePerformanceMiddleware:
     def test_middleware_initialization(self):
         """测试中间件初始化"""
         middleware = DatabasePerformanceMiddleware(
-            enable_query_tracking=True,
-            slow_query_threshold=2.0
+            enable_query_tracking=True, slow_query_threshold=2.0
         )
 
         assert middleware.enable_query_tracking is True
@@ -290,8 +289,8 @@ class TestQueryOptimizationAdvisor:
         advisor = QueryOptimizationAdvisor()
 
         assert advisor.optimimization_rules is not None
-        assert 'select_star' in advisor.optimization_rules
-        assert 'missing_where' in advisor.optimization_rules
+        assert "select_star" in advisor.optimization_rules
+        assert "missing_where" in advisor.optimization_rules
 
     @pytest.mark.asyncio
     async def test_select_star_detection(self):
@@ -303,8 +302,9 @@ class TestQueryOptimizationAdvisor:
 
         # 应该检测到SELECT *问题
         select_star_suggestions = [
-            s for s in analysis['optimization_suggestions']
-            if s['rule'] == 'select_star'
+            s
+            for s in analysis["optimization_suggestions"]
+            if s["rule"] == "select_star"
         ]
         assert len(select_star_suggestions) > 0
 
@@ -318,8 +318,9 @@ class TestQueryOptimizationAdvisor:
 
         # 应该检测到缺失WHERE条件
         missing_where_suggestions = [
-            s for s in analysis['optimization_suggestions']
-            if s['rule'] == 'missing_where'
+            s
+            for s in analysis["optimization_suggestions"]
+            if s["rule"] == "missing_where"
         ]
         assert len(missing_where_suggestions) > 0
 
@@ -333,8 +334,9 @@ class TestQueryOptimizationAdvisor:
 
         # 应该检测到LIKE前导通配符
         like_suggestions = [
-            s for s in analysis['optimization_suggestions']
-            if s['rule'] == 'like_leading_wildcard'
+            s
+            for s in analysis["optimization_suggestions"]
+            if s["rule"] == "like_leading_wildcard"
         ]
         assert len(like_suggestions) > 0
 
@@ -371,7 +373,7 @@ class TestQueryOptimizationAdvisor:
         analysis = await advisor.analyze_query_for_optimization(query)
 
         # 应该有索引建议
-        assert len(analysis['index_suggestions']) > 0
+        assert len(analysis["index_suggestions"]) > 0
 
 
 class TestConnectionPoolOptimizer:
@@ -380,9 +382,7 @@ class TestConnectionPoolOptimizer:
     def test_optimizer_initialization(self):
         """测试优化器初始化"""
         config = PoolOptimizationConfig(
-            min_pool_size=2,
-            max_pool_size=10,
-            optimization_interval=60
+            min_pool_size=2, max_pool_size=10, optimization_interval=60
         )
 
         optimizer = ConnectionPoolOptimizer(config)
@@ -515,27 +515,27 @@ class TestQueryExecutionAnalyzer:
 
         # 模拟执行计划数据
         plan_data = {
-            'Plan': {
-                'Node Type': 'Seq Scan',
-                'Relation Name': 'users',
-                'Startup Cost': 0.0,
-                'Total Cost': 15.5,
-                'Plan Rows': 100,
-                'Plan Width': 20,
-                'Actual Total Time': 2.5,
-                'Actual Rows': 150,
-                'Actual Loops': 1
+            "Plan": {
+                "Node Type": "Seq Scan",
+                "Relation Name": "users",
+                "Startup Cost": 0.0,
+                "Total Cost": 15.5,
+                "Plan Rows": 100,
+                "Plan Width": 20,
+                "Actual Total Time": 2.5,
+                "Actual Rows": 150,
+                "Actual Loops": 1,
             },
-            'Execution Time': 3.0,
-            'Planning Time': 0.1
+            "Execution Time": 3.0,
+            "Planning Time": 0.1,
         }
 
         execution_plan = analyzer._parse_execution_plan(plan_data)
 
         assert len(execution_plan) == 1
         node = execution_plan[0]
-        assert node.node_type == 'Seq Scan'
-        assert node.relation_name == 'users'
+        assert node.node_type == "Seq Scan"
+        assert node.relation_name == "users"
         assert node.total_cost == 15.5
         assert node.actual_total_time == 2.5
 
@@ -545,23 +545,18 @@ class TestQueryExecutionAnalyzer:
 
         # 创建带索引的执行计划节点
         node_with_index = ExecutionPlanNode(
-            node_type='Index Scan',
-            relation_name='users',
-            index_name='idx_users_email'
+            node_type="Index Scan", relation_name="users", index_name="idx_users_email"
         )
 
         # 创建子节点
-        child_node = ExecutionPlanNode(
-            node_type='Seq Scan',
-            relation_name='orders'
-        )
+        child_node = ExecutionPlanNode(node_type="Seq Scan", relation_name="orders")
         node_with_index.plans.append(child_node)
 
         execution_plan = [node_with_index]
 
         used_indexes = analyzer._identify_used_indexes(execution_plan)
 
-        assert 'idx_users_email' in used_indexes
+        assert "idx_users_email" in used_indexes
 
     def test_missing_indexes_detection(self):
         """测试缺失索引检测"""
@@ -569,9 +564,7 @@ class TestQueryExecutionAnalyzer:
 
         # 创建全表扫描节点
         seq_scan_node = ExecutionPlanNode(
-            node_type='Seq Scan',
-            relation_name='large_table',
-            rows=5000  # 大表
+            node_type="Seq Scan", relation_name="large_table", rows=5000  # 大表
         )
 
         execution_plan = [seq_scan_node]
@@ -579,10 +572,12 @@ class TestQueryExecutionAnalyzer:
         # 模拟查询
         query = "SELECT * FROM large_table WHERE category = 'electronics'"
 
-        missing_indexes = asyncio.run(analyzer._detect_missing_indexes(query, execution_plan))
+        missing_indexes = asyncio.run(
+            analyzer._detect_missing_indexes(query, execution_plan)
+        )
 
         assert len(missing_indexes) > 0
-        assert missing_indexes[0]['table'] == 'large_table'
+        assert missing_indexes[0]["table"] == "large_table"
 
     def test_performance_issues_identification(self):
         """测试性能问题识别"""
@@ -590,8 +585,7 @@ class TestQueryExecutionAnalyzer:
 
         # 创建慢查询节点
         slow_node = ExecutionPlanNode(
-            node_type='Seq Scan',
-            actual_total_time=6.0  # 超过5秒阈值
+            node_type="Seq Scan", actual_total_time=6.0  # 超过5秒阈值
         )
 
         execution_plan = [slow_node]
@@ -599,7 +593,7 @@ class TestQueryExecutionAnalyzer:
         issues = analyzer._identify_performance_issues(execution_plan, 6.0)
 
         assert len(issues) > 0
-        slow_execution_issues = [i for i in issues if i['type'] == 'slow_execution']
+        slow_execution_issues = [i for i in issues if i["type"] == "slow_execution"]
         assert len(slow_execution_issues) > 0
 
     def test_analysis_statistics(self):
@@ -609,24 +603,24 @@ class TestQueryExecutionAnalyzer:
         # 添加一些分析历史
         analyzer.analysis_history = [
             {
-                'timestamp': '2024-01-01T00:00:00',
-                'execution_time': 1.5,
-                'total_cost': 100.0,
-                'issues_count': 2
+                "timestamp": "2024-01-01T00:00:00",
+                "execution_time": 1.5,
+                "total_cost": 100.0,
+                "issues_count": 2,
             },
             {
-                'timestamp': '2024-01-01T01:00:00',
-                'execution_time': 2.0,
-                'total_cost': 150.0,
-                'issues_count': 1
-            }
+                "timestamp": "2024-01-01T01:00:00",
+                "execution_time": 2.0,
+                "total_cost": 150.0,
+                "issues_count": 1,
+            },
         ]
 
         stats = analyzer.get_analysis_statistics()
 
-        assert stats['total_analyzed'] == 2
-        assert stats['avg_execution_time'] == 1.75  # (1.5 + 2.0) / 2
-        assert stats['avg_total_cost'] == 125.0  # (100.0 + 150.0) / 2
+        assert stats["total_analyzed"] == 2
+        assert stats["avg_execution_time"] == 1.75  # (1.5 + 2.0) / 2
+        assert stats["avg_total_cost"] == 125.0  # (100.0 + 150.0) / 2
 
 
 class TestExecutionPlanNode:
@@ -635,32 +629,24 @@ class TestExecutionPlanNode:
     def test_node_creation(self):
         """测试节点创建"""
         node = ExecutionPlanNode(
-            node_type='Index Scan',
-            relation_name='users',
-            index_name='idx_users_email'
+            node_type="Index Scan", relation_name="users", index_name="idx_users_email"
         )
 
-        assert node.node_type == 'Index Scan'
-        assert node.relation_name == 'users'
-        assert node.index_name == 'idx_users_email'
+        assert node.node_type == "Index Scan"
+        assert node.relation_name == "users"
+        assert node.index_name == "idx_users_email"
         assert node.plans == []  # 默认空列表
 
     def test_node_with_children(self):
         """测试带子节点的节点"""
-        parent_node = ExecutionPlanNode(
-            node_type='Nested Loop',
-            join_type='Inner'
-        )
+        parent_node = ExecutionPlanNode(node_type="Nested Loop", join_type="Inner")
 
-        child_node = ExecutionPlanNode(
-            node_type='Index Scan',
-            relation_name='users'
-        )
+        child_node = ExecutionPlanNode(node_type="Index Scan", relation_name="users")
 
         parent_node.plans.append(child_node)
 
         assert len(parent_node.plans) == 1
-        assert parent_node.plans[0].node_type == 'Index Scan'
+        assert parent_node.plans[0].node_type == "Index Scan"
 
 
 class TestIntegration:
@@ -672,7 +658,7 @@ class TestIntegration:
         # 获取各个组件
         db_analyzer = get_database_analyzer()
         middleware = get_database_middleware()
-        advisor = get_optimization_advisor()
+        get_optimization_advisor()
 
         # 启动监控
         await middleware.start_monitoring()
@@ -681,7 +667,7 @@ class TestIntegration:
         queries = [
             ("SELECT * FROM users WHERE active = true", 0.5),
             ("SELECT * FROM large_table WHERE category = 'test'", 2.5),  # 慢查询
-            ("SELECT id, name FROM products", 0.3)
+            ("SELECT id, name FROM products", 0.3),
         ]
 
         for query, exec_time in queries:

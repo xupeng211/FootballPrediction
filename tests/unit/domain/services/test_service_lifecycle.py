@@ -669,7 +669,7 @@ class TestServiceLifecycleIntegration:
 
         # 获取服务信息用于监控
         service_infos = container.get_service_infos()
-        for name, info in service_infos.items():
+        for _name, info in service_infos.items():
             assert "created_at" in info
             assert "healthy" in info
             assert "initialized" in info

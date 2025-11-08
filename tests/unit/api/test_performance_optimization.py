@@ -3,20 +3,17 @@ API性能优化测试
 API Performance Optimization Tests
 """
 
-import pytest
 import asyncio
-import time
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from src.api.optimization.enhanced_performance_middleware import (
+    EnhancedPerformanceMiddleware,
     PerformanceMetrics,
     PerformanceOptimizer,
-    EnhancedPerformanceMiddleware
 )
-from src.api.optimization.smart_cache_system import (
-    SmartCacheManager,
-    CacheEntry
-)
+from src.api.optimization.smart_cache_system import CacheEntry, SmartCacheManager
 
 
 class TestPerformanceMetrics:
@@ -29,7 +26,7 @@ class TestPerformanceMetrics:
         assert metrics.max_history == 100
         assert len(metrics.request_history) == 0
         assert len(metrics.endpoint_stats) == 0
-        assert metrics.global_stats['total_requests'] == 0
+        assert metrics.global_stats["total_requests"] == 0
 
     def test_record_request(self):
         """测试请求记录"""
@@ -37,8 +34,8 @@ class TestPerformanceMetrics:
 
         metrics.record_request("GET", "/api/v1/test", 200, 0.1, "/api/v1/test")
 
-        assert metrics.global_stats['total_requests'] == 1
-        assert metrics.global_stats['total_time'] == 0.1
+        assert metrics.global_stats["total_requests"] == 1
+        assert metrics.global_stats["total_time"] == 0.1
         assert len(metrics.request_history) == 1
         assert "/api/v1/test" in metrics.endpoint_stats
 
@@ -48,15 +45,17 @@ class TestPerformanceMetrics:
 
         # 记录多个请求
         for i in range(5):
-            metrics.record_request("GET", "/api/v1/test", 200, 0.1 + i * 0.05, "/api/v1/test")
+            metrics.record_request(
+                "GET", "/api/v1/test", 200, 0.1 + i * 0.05, "/api/v1/test"
+            )
 
         stats = metrics.get_endpoint_stats("/api/v1/test")
 
-        assert stats['request_count'] == 5
-        assert stats['avg_response_time'] == 0.2  # (0.1 + 0.15 + 0.2 + 0.25 + 0.3) / 5
-        assert stats['min_response_time'] == 0.1
-        assert stats['max_response_time'] == 0.3
-        assert stats['error_rate'] == 0.0
+        assert stats["request_count"] == 5
+        assert stats["avg_response_time"] == 0.2  # (0.1 + 0.15 + 0.2 + 0.25 + 0.3) / 5
+        assert stats["min_response_time"] == 0.1
+        assert stats["max_response_time"] == 0.3
+        assert stats["error_rate"] == 0.0
 
     def test_error_rate_calculation(self):
         """测试错误率计算"""
@@ -69,7 +68,7 @@ class TestPerformanceMetrics:
 
         stats = metrics.get_endpoint_stats("/api/v1/test")
 
-        assert stats['error_rate'] == 66.66666666666666  # 2/3 * 100
+        assert stats["error_rate"] == 66.66666666666666  # 2/3 * 100
 
 
 class TestPerformanceOptimizer:
@@ -81,13 +80,15 @@ class TestPerformanceOptimizer:
         optimizer = PerformanceOptimizer()
 
         # 记录良好性能的请求
-        for i in range(10):
+        for _i in range(10):
             metrics.record_request("GET", "/api/v1/fast", 200, 0.1, "/api/v1/fast")
 
         suggestions = optimizer.analyze_performance(metrics)
 
         # 良好性能应该没有高优先级建议
-        high_severity = [s for s in suggestions if s['severity'] in ['critical', 'high']]
+        high_severity = [
+            s for s in suggestions if s["severity"] in ["critical", "high"]
+        ]
         assert len(high_severity) == 0
 
     def test_analyze_slow_endpoints(self):
@@ -96,14 +97,14 @@ class TestPerformanceOptimizer:
         optimizer = PerformanceOptimizer()
 
         # 记录慢请求
-        for i in range(5):
+        for _i in range(5):
             metrics.record_request("GET", "/api/v1/slow", 200, 1.5, "/api/v1/slow")
 
         suggestions = optimizer.analyze_performance(metrics)
 
         # 应该有响应时间相关的建议
         response_time_suggestions = [
-            s for s in suggestions if s['type'] == 'response_time'
+            s for s in suggestions if s["type"] == "response_time"
         ]
         assert len(response_time_suggestions) > 0
 
@@ -120,9 +121,7 @@ class TestPerformanceOptimizer:
         suggestions = optimizer.analyze_performance(metrics)
 
         # 应该有错误率相关的建议
-        error_suggestions = [
-            s for s in suggestions if s['type'] == 'error_rate'
-        ]
+        error_suggestions = [s for s in suggestions if s["type"] == "error_rate"]
         assert len(error_suggestions) > 0
 
 
@@ -135,8 +134,8 @@ class TestSmartCacheManager:
 
         assert cache_manager.max_memory_size > 0
         assert len(cache_manager.local_cache) == 0
-        assert cache_manager.cache_stats['hits'] == 0
-        assert cache_manager.cache_stats['misses'] == 0
+        assert cache_manager.cache_stats["hits"] == 0
+        assert cache_manager.cache_stats["misses"] == 0
 
     @pytest.mark.asyncio
     async def test_cache_set_and_get(self):
@@ -259,7 +258,7 @@ class TestEnhancedPerformanceMiddleware:
         # 禁用状态下应该直接返回结果
         assert result == mock_response
         # 不应该记录任何指标
-        assert middleware.metrics.global_stats['total_requests'] == 0
+        assert middleware.metrics.global_stats["total_requests"] == 0
 
 
 class TestCacheIntegration:
@@ -300,11 +299,11 @@ class TestCacheIntegration:
 
         stats = cache_manager.get_cache_stats()
 
-        assert stats['hits'] == 2
-        assert stats['misses'] == 1
-        assert stats['hit_rate'] == 66.66666666666666  # 2/3 * 100
-        assert stats['sets'] == 2
-        assert stats['local_cache_size'] == 2
+        assert stats["hits"] == 2
+        assert stats["misses"] == 1
+        assert stats["hit_rate"] == 66.66666666666666  # 2/3 * 100
+        assert stats["sets"] == 2
+        assert stats["local_cache_size"] == 2
 
     @pytest.mark.asyncio
     async def test_cache_optimization(self):
@@ -320,8 +319,8 @@ class TestCacheIntegration:
         # 检查是否被清理（超过内存限制）
         optimization_result = await cache_manager.optimize_cache()
 
-        assert 'evicted_lru' in optimization_result
-        assert optimization_result['evicted_lru'] >= 0
+        assert "evicted_lru" in optimization_result
+        assert optimization_result["evicted_lru"] >= 0
 
 
 if __name__ == "__main__":

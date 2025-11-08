@@ -2,8 +2,8 @@
 API response utilities test
 """
 
-import pytest
 from datetime import datetime
+
 from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
 

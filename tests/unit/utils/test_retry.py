@@ -115,7 +115,6 @@ class TestRetryExports:
     def test_backward_compatibility(self):
         """测试向后兼容性"""
         # 验证导入的符号类型正确
-        from typing import Type
 
         assert isinstance(RetryConfig, type)
         assert isinstance(BackoffStrategy, type)
@@ -200,7 +199,6 @@ class TestRetryBasicFunctionality:
 
         # 验证初始状态
         assert hasattr(breaker, "state")
-        initial_state = breaker.state
 
         # 熔断器应该有基本的状态管理
         assert hasattr(breaker, "failure_threshold")
@@ -219,7 +217,7 @@ class TestRetryBasicFunctionality:
             "polynomial": PolynomialBackoffStrategy(initial_delay=1.0, exponent=2.0),
         }
 
-        for name, strategy in strategies.items():
+        for _name, strategy in strategies.items():
             assert strategy is not None
             assert hasattr(strategy, "delay") or hasattr(strategy, "get_delay")
 

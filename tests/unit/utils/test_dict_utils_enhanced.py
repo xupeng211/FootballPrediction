@@ -123,7 +123,7 @@ class TestDictUtilsEnhanced:
         large_dict = {f"key_{i}": f"value_{i}" for i in range(1000)}
 
         start_time = time.time()
-        for i in range(10):
+        for _i in range(10):
             if hasattr(DictUtils, "flatten_dict"):
                 result = DictUtils.flatten_dict(large_dict)
                 assert isinstance(result, dict)

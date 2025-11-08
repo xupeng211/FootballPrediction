@@ -6,22 +6,24 @@ Redis Cluster Manager
 """
 
 import asyncio
+import bisect
+import hashlib
 import json
 import logging
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
-import hashlib
-import bisect
+from typing import Any
 
 try:
     import redis.asyncio as aioredis
-    import redis
     from redis.cluster import RedisCluster
     from redis.sentinel import Sentinel
+
+    import redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -33,14 +35,16 @@ logger = logging.getLogger(__name__)
 
 class CacheConsistencyStrategy(Enum):
     """缓存一致性策略"""
+
     EVENTUAL_CONSISTENCY = "eventual"  # 最终一致性
-    STRONG_CONSISTENCY = "strong"      # 强一致性
-    READ_YOUR_WRITES = "ryw"          # 读己之写
-    SESSION_CONSISTENCY = "session"   # 会话一致性
+    STRONG_CONSISTENCY = "strong"  # 强一致性
+    READ_YOUR_WRITES = "ryw"  # 读己之写
+    SESSION_CONSISTENCY = "session"  # 会话一致性
 
 
 class NodeStatus(Enum):
     """节点状态"""
+
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     RECOVERING = "recovering"
@@ -49,27 +53,29 @@ class NodeStatus(Enum):
 
 class ReplicationStrategy(Enum):
     """复制策略"""
-    MASTER_SLAVE = "master_slave"      # 主从复制
-    MULTI_MASTER = "multi_master"      # 多主复制
-    CONSISTENT_HASHING = "hashing"    # 一致性哈希
-    QUORUM = "quorum"                 # 法定人数
+
+    MASTER_SLAVE = "master_slave"  # 主从复制
+    MULTI_MASTER = "multi_master"  # 多主复制
+    CONSISTENT_HASHING = "hashing"  # 一致性哈希
+    QUORUM = "quorum"  # 法定人数
 
 
 @dataclass
 class ClusterNode:
     """集群节点配置"""
+
     node_id: str
     host: str
     port: int
-    password: Optional[str] = None
+    password: str | None = None
     db: int = 0
     weight: int = 1
     is_master: bool = False
     status: NodeStatus = NodeStatus.HEALTHY
-    last_health_check: Optional[datetime] = None
+    last_health_check: datetime | None = None
     failure_count: int = 0
     max_failures: int = 3
-    connection: Optional[Any] = None
+    connection: Any | None = None
 
     def __post_init__(self):
         if self.last_health_check is None:
@@ -79,6 +85,7 @@ class ClusterNode:
 @dataclass
 class ClusterMetrics:
     """集群指标"""
+
     total_nodes: int = 0
     healthy_nodes: int = 0
     failed_nodes: int = 0
@@ -96,9 +103,10 @@ class ClusterMetrics:
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
-    ttl: Optional[int] = None
+    ttl: int | None = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     accessed_at: datetime = field(default_factory=datetime.utcnow)
     access_count: int = 0
@@ -116,7 +124,10 @@ class CacheEntry:
 
     def is_valid(self) -> bool:
         """验证缓存条目有效性"""
-        if self.ttl and (datetime.utcnow() - self.created_at).total_seconds() > self.ttl:
+        if (
+            self.ttl
+            and (datetime.utcnow() - self.created_at).total_seconds() > self.ttl
+        ):
             return False
         return self.checksum == self._calculate_checksum()
 
@@ -126,9 +137,9 @@ class ConsistentHashRing:
 
     def __init__(self, replicas: int = 150):
         self.replicas = replicas
-        self.ring: Dict[int, str] = {}
-        self.sorted_keys: List[int] = []
-        self.nodes: Dict[str, ClusterNode] = {}
+        self.ring: dict[int, str] = {}
+        self.sorted_keys: list[int] = []
+        self.nodes: dict[str, ClusterNode] = {}
 
     def add_node(self, node: ClusterNode):
         """添加节点到哈希环"""
@@ -160,7 +171,7 @@ class ConsistentHashRing:
             del self.ring[key]
             self.sorted_keys.remove(key)
 
-    def get_node(self, key: str) -> Optional[ClusterNode]:
+    def get_node(self, key: str) -> ClusterNode | None:
         """根据键获取对应的节点"""
         if not self.ring:
             return None
@@ -175,7 +186,7 @@ class ConsistentHashRing:
         node_id = self.ring[self.sorted_keys[idx]]
         return self.nodes.get(node_id)
 
-    def get_nodes_for_key(self, key: str, count: int = 1) -> List[ClusterNode]:
+    def get_nodes_for_key(self, key: str, count: int = 1) -> list[ClusterNode]:
         """获取键对应的多个节点（用于复制）"""
         if not self.ring:
             return []
@@ -209,13 +220,15 @@ class ConsistentHashRing:
 class RedisClusterManager:
     """Redis集群管理器"""
 
-    def __init__(self,
-                 consistency_strategy: CacheConsistencyStrategy = CacheConsistencyStrategy.EVENTUAL_CONSISTENCY,
-                 replication_strategy: ReplicationStrategy = ReplicationStrategy.CONSISTENT_HASHING,
-                 replication_factor: int = 2,
-                 health_check_interval: int = 30,
-                 connection_timeout: int = 5,
-                 max_retries: int = 3):
+    def __init__(
+        self,
+        consistency_strategy: CacheConsistencyStrategy = CacheConsistencyStrategy.EVENTUAL_CONSISTENCY,
+        replication_strategy: ReplicationStrategy = ReplicationStrategy.CONSISTENT_HASHING,
+        replication_factor: int = 2,
+        health_check_interval: int = 30,
+        connection_timeout: int = 5,
+        max_retries: int = 3,
+    ):
 
         self.consistency_strategy = consistency_strategy
         self.replication_strategy = replication_strategy
@@ -224,39 +237,45 @@ class RedisClusterManager:
         self.connection_timeout = connection_timeout
         self.max_retries = max_retries
 
-        self.nodes: Dict[str, ClusterNode] = {}
+        self.nodes: dict[str, ClusterNode] = {}
         self.hash_ring = ConsistentHashRing()
         self.metrics = ClusterMetrics()
         self.is_monitoring = False
-        self.monitoring_task: Optional[asyncio.Task] = None
+        self.monitoring_task: asyncio.Task | None = None
 
         # 会话一致性支持
-        self.session_cache: Dict[str, Dict[str, Any]] = {}
+        self.session_cache: dict[str, dict[str, Any]] = {}
 
         # 读写分离
-        self.master_nodes: Set[str] = set()
-        self.slave_nodes: Set[str] = set()
+        self.master_nodes: set[str] = set()
+        self.slave_nodes: set[str] = set()
 
         # 缓存统计
-        self.operation_stats: Dict[str, int] = {
-            'hits': 0, 'misses': 0, 'sets': 0, 'deletes': 0,
-            'errors': 0, 'retries': 0
+        self.operation_stats: dict[str, int] = {
+            "hits": 0,
+            "misses": 0,
+            "sets": 0,
+            "deletes": 0,
+            "errors": 0,
+            "retries": 0,
         }
 
         if not REDIS_AVAILABLE:
             logger.warning("Redis not available, using mock implementation")
 
-    async def add_node(self, node_config: Dict[str, Any]) -> bool:
+    async def add_node(self, node_config: dict[str, Any]) -> bool:
         """添加集群节点"""
         try:
             node = ClusterNode(
-                node_id=node_config.get('node_id', f"{node_config['host']}:{node_config['port']}"),
-                host=node_config['host'],
-                port=node_config['port'],
-                password=node_config.get('password'),
-                db=node_config.get('db', 0),
-                weight=node_config.get('weight', 1),
-                is_master=node_config.get('is_master', False)
+                node_id=node_config.get(
+                    "node_id", f"{node_config['host']}:{node_config['port']}"
+                ),
+                host=node_config["host"],
+                port=node_config["port"],
+                password=node_config.get("password"),
+                db=node_config.get("db", 0),
+                weight=node_config.get("weight", 1),
+                is_master=node_config.get("is_master", False),
             )
 
             # 尝试连接节点
@@ -314,19 +333,20 @@ class RedisClusterManager:
         if not REDIS_AVAILABLE:
             # 使用Mock Redis
             from .mock_redis import MockRedisManager
+
             node.connection = MockRedisManager()
             node.status = NodeStatus.HEALTHY
             return
 
         try:
-            if hasattr(aioredis, 'from_url'):
+            if hasattr(aioredis, "from_url"):
                 connection = aioredis.from_url(
                     f"redis://{node.host}:{node.port}/{node.db}",
                     password=node.password,
                     socket_timeout=self.connection_timeout,
                     socket_connect_timeout=self.connection_timeout,
                     retry_on_timeout=True,
-                    max_connections=10
+                    max_connections=10,
                 )
 
                 # 测试连接
@@ -347,23 +367,27 @@ class RedisClusterManager:
 
     async def _disconnect_node(self, node: ClusterNode):
         """断开Redis节点连接"""
-        if node.connection and hasattr(node.connection, 'close'):
+        if node.connection and hasattr(node.connection, "close"):
             try:
                 await node.connection.close()
             except Exception as e:
                 logger.error(f"Error closing connection to {node.node_id}: {e}")
 
-    async def get(self, key: str, session_id: Optional[str] = None) -> Optional[Any]:
+    async def get(self, key: str, session_id: str | None = None) -> Any | None:
         """获取缓存值"""
         start_time = time.time()
 
         try:
             # 会话一致性检查
-            if (self.consistency_strategy == CacheConsistencyStrategy.SESSION_CONSISTENCY
-                and session_id and session_id in self.session_cache):
+            if (
+                self.consistency_strategy
+                == CacheConsistencyStrategy.SESSION_CONSISTENCY
+                and session_id
+                and session_id in self.session_cache
+            ):
                 session_data = self.session_cache[session_id]
                 if key in session_data:
-                    self.operation_stats['hits'] += 1
+                    self.operation_stats["hits"] += 1
                     return session_data[key]
 
             # 选择节点
@@ -373,11 +397,14 @@ class RedisClusterManager:
                 try:
                     value = await self._get_from_node(node, key)
                     if value is not None:
-                        self.operation_stats['hits'] += 1
+                        self.operation_stats["hits"] += 1
 
                         # 更新会话缓存
-                        if (self.consistency_strategy == CacheConsistencyStrategy.SESSION_CONSISTENCY
-                            and session_id):
+                        if (
+                            self.consistency_strategy
+                            == CacheConsistencyStrategy.SESSION_CONSISTENCY
+                            and session_id
+                        ):
                             if session_id not in self.session_cache:
                                 self.session_cache[session_id] = {}
                             self.session_cache[session_id][key] = value
@@ -387,16 +414,18 @@ class RedisClusterManager:
                         return value
 
                 except Exception as e:
-                    logger.warning(f"Failed to get key {key} from node {node.node_id}: {e}")
+                    logger.warning(
+                        f"Failed to get key {key} from node {node.node_id}: {e}"
+                    )
                     await self._handle_node_error(node)
                     continue
 
-            self.operation_stats['misses'] += 1
+            self.operation_stats["misses"] += 1
             return None
 
         except Exception as e:
             logger.error(f"Error getting key {key}: {e}")
-            self.operation_stats['errors'] += 1
+            self.operation_stats["errors"] += 1
             return None
 
         finally:
@@ -404,8 +433,13 @@ class RedisClusterManager:
             response_time = time.time() - start_time
             self._update_avg_response_time(response_time)
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None,
-                  session_id: Optional[str] = None) -> bool:
+    async def set(
+        self,
+        key: str,
+        value: Any,
+        ttl: int | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """设置缓存值"""
         start_time = time.time()
 
@@ -423,30 +457,40 @@ class RedisClusterManager:
                         success_count += 1
 
                 except Exception as e:
-                    logger.warning(f"Failed to set key {key} to node {node.node_id}: {e}")
+                    logger.warning(
+                        f"Failed to set key {key} to node {node.node_id}: {e}"
+                    )
                     await self._handle_node_error(node)
 
             # 强一致性要求所有节点都成功
-            min_success = 1 if self.consistency_strategy != CacheConsistencyStrategy.STRONG_CONSISTENCY else len(nodes)
+            min_success = (
+                1
+                if self.consistency_strategy
+                != CacheConsistencyStrategy.STRONG_CONSISTENCY
+                else len(nodes)
+            )
 
             if success_count >= min_success:
-                self.operation_stats['sets'] += 1
+                self.operation_stats["sets"] += 1
 
                 # 更新会话缓存
-                if (self.consistency_strategy == CacheConsistencyStrategy.SESSION_CONSISTENCY
-                    and session_id):
+                if (
+                    self.consistency_strategy
+                    == CacheConsistencyStrategy.SESSION_CONSISTENCY
+                    and session_id
+                ):
                     if session_id not in self.session_cache:
                         self.session_cache[session_id] = {}
                     self.session_cache[session_id][key] = value
 
                 return True
             else:
-                self.operation_stats['errors'] += 1
+                self.operation_stats["errors"] += 1
                 return False
 
         except Exception as e:
             logger.error(f"Error setting key {key}: {e}")
-            self.operation_stats['errors'] += 1
+            self.operation_stats["errors"] += 1
             return False
 
         finally:
@@ -467,27 +511,35 @@ class RedisClusterManager:
                         success_count += 1
 
                 except Exception as e:
-                    logger.warning(f"Failed to delete key {key} from node {node.node_id}: {e}")
+                    logger.warning(
+                        f"Failed to delete key {key} from node {node.node_id}: {e}"
+                    )
                     await self._handle_node_error(node)
 
             if success_count > 0:
-                self.operation_stats['deletes'] += 1
+                self.operation_stats["deletes"] += 1
                 return True
             else:
-                self.operation_stats['errors'] += 1
+                self.operation_stats["errors"] += 1
                 return False
 
         except Exception as e:
             logger.error(f"Error deleting key {key}: {e}")
-            self.operation_stats['errors'] += 1
+            self.operation_stats["errors"] += 1
             return False
 
-    async def _select_nodes_for_read(self, key: str) -> List[ClusterNode]:
+    async def _select_nodes_for_read(self, key: str) -> list[ClusterNode]:
         """选择读操作节点"""
-        if self.replication_strategy == ReplicationStrategy.MASTER_SLAVE and self.slave_nodes:
+        if (
+            self.replication_strategy == ReplicationStrategy.MASTER_SLAVE
+            and self.slave_nodes
+        ):
             # 优先选择从节点读
-            healthy_slaves = [self.nodes[node_id] for node_id in self.slave_nodes
-                            if self.nodes[node_id].status == NodeStatus.HEALTHY]
+            healthy_slaves = [
+                self.nodes[node_id]
+                for node_id in self.slave_nodes
+                if self.nodes[node_id].status == NodeStatus.HEALTHY
+            ]
             if healthy_slaves:
                 return [random.choice(healthy_slaves)]
 
@@ -497,26 +549,33 @@ class RedisClusterManager:
             return [node]
 
         # 如果首选节点不可用，选择其他健康节点
-        healthy_nodes = [n for n in self.nodes.values() if n.status == NodeStatus.HEALTHY]
+        healthy_nodes = [
+            n for n in self.nodes.values() if n.status == NodeStatus.HEALTHY
+        ]
         return [random.choice(healthy_nodes)] if healthy_nodes else []
 
-    async def _select_nodes_for_write(self, key: str) -> List[ClusterNode]:
+    async def _select_nodes_for_write(self, key: str) -> list[ClusterNode]:
         """选择写操作节点"""
         if self.replication_strategy == ReplicationStrategy.CONSISTENT_HASHING:
             return self.hash_ring.get_nodes_for_key(key, self.replication_factor)
 
         elif self.replication_strategy == ReplicationStrategy.MASTER_SLAVE:
             # 写主节点
-            masters = [self.nodes[node_id] for node_id in self.master_nodes
-                      if self.nodes[node_id].status == NodeStatus.HEALTHY]
+            masters = [
+                self.nodes[node_id]
+                for node_id in self.master_nodes
+                if self.nodes[node_id].status == NodeStatus.HEALTHY
+            ]
             if masters:
                 return masters
 
         # 默认策略：选择健康节点
-        healthy_nodes = [n for n in self.nodes.values() if n.status == NodeStatus.HEALTHY]
-        return healthy_nodes[:self.replication_factor] if healthy_nodes else []
+        healthy_nodes = [
+            n for n in self.nodes.values() if n.status == NodeStatus.HEALTHY
+        ]
+        return healthy_nodes[: self.replication_factor] if healthy_nodes else []
 
-    async def _select_nodes_for_key(self, key: str) -> List[ClusterNode]:
+    async def _select_nodes_for_key(self, key: str) -> list[ClusterNode]:
         """选择所有可能包含该键的节点"""
         nodes = []
 
@@ -527,7 +586,7 @@ class RedisClusterManager:
 
         return [node for node in nodes if node.status != NodeStatus.FAILED]
 
-    async def _get_from_node(self, node: ClusterNode, key: str) -> Optional[Any]:
+    async def _get_from_node(self, node: ClusterNode, key: str) -> Any | None:
         """从特定节点获取值"""
         if not node.connection:
             return None
@@ -559,16 +618,19 @@ class RedisClusterManager:
             return False
 
         try:
-            data = json.dumps({
-                'key': cache_entry.key,
-                'value': cache_entry.value,
-                'ttl': cache_entry.ttl,
-                'created_at': cache_entry.created_at.isoformat(),
-                'accessed_at': cache_entry.accessed_at.isoformat(),
-                'access_count': cache_entry.access_count,
-                'version': cache_entry.version,
-                'checksum': cache_entry.checksum
-            }, default=str)
+            data = json.dumps(
+                {
+                    "key": cache_entry.key,
+                    "value": cache_entry.value,
+                    "ttl": cache_entry.ttl,
+                    "created_at": cache_entry.created_at.isoformat(),
+                    "accessed_at": cache_entry.accessed_at.isoformat(),
+                    "access_count": cache_entry.access_count,
+                    "version": cache_entry.version,
+                    "checksum": cache_entry.checksum,
+                },
+                default=str,
+            )
 
             cache_key = f"cache:{cache_entry.key}"
 
@@ -608,18 +670,24 @@ class RedisClusterManager:
 
         if node.failure_count >= node.max_failures:
             node.status = NodeStatus.FAILED
-            logger.warning(f"Node {node.node_id} marked as failed after {node.failure_count} failures")
+            logger.warning(
+                f"Node {node.node_id} marked as failed after {node.failure_count} failures"
+            )
         else:
             node.status = NodeStatus.UNHEALTHY
             logger.warning(f"Node {node.node_id} marked as unhealthy")
 
     def _update_avg_response_time(self, response_time: float):
         """更新平均响应时间"""
-        total_ops = self.operation_stats['hits'] + self.operation_stats['misses'] + self.operation_stats['sets']
+        total_ops = (
+            self.operation_stats["hits"]
+            + self.operation_stats["misses"]
+            + self.operation_stats["sets"]
+        )
         if total_ops > 0:
             self.metrics.avg_response_time = (
-                (self.metrics.avg_response_time * (total_ops - 1) + response_time) / total_ops
-            )
+                self.metrics.avg_response_time * (total_ops - 1) + response_time
+            ) / total_ops
 
     async def start_health_monitoring(self):
         """开始健康监控"""
@@ -670,7 +738,9 @@ class RedisClusterManager:
                 return
 
             # 执行ping测试
-            await asyncio.wait_for(node.connection.ping(), timeout=self.connection_timeout)
+            await asyncio.wait_for(
+                node.connection.ping(), timeout=self.connection_timeout
+            )
 
             # 更新健康状态
             if node.status in [NodeStatus.UNHEALTHY, NodeStatus.FAILED]:
@@ -688,55 +758,65 @@ class RedisClusterManager:
     async def _update_metrics(self):
         """更新集群指标"""
         self.metrics.total_nodes = len(self.nodes)
-        self.metrics.healthy_nodes = len([n for n in self.nodes.values() if n.status == NodeStatus.HEALTHY])
-        self.metrics.failed_nodes = len([n for n in self.nodes.values() if n.status == NodeStatus.FAILED])
+        self.metrics.healthy_nodes = len(
+            [n for n in self.nodes.values() if n.status == NodeStatus.HEALTHY]
+        )
+        self.metrics.failed_nodes = len(
+            [n for n in self.nodes.values() if n.status == NodeStatus.FAILED]
+        )
 
         # 计算缓存命中率
-        total_requests = self.operation_stats['hits'] + self.operation_stats['misses']
+        total_requests = self.operation_stats["hits"] + self.operation_stats["misses"]
         if total_requests > 0:
-            self.metrics.cache_hit_rate = (self.operation_stats['hits'] / total_requests) * 100
+            self.metrics.cache_hit_rate = (
+                self.operation_stats["hits"] / total_requests
+            ) * 100
 
         self.metrics.total_operations = sum(self.operation_stats.values())
-        self.metrics.failed_operations = self.operation_stats['errors']
+        self.metrics.failed_operations = self.operation_stats["errors"]
         self.metrics.last_updated = datetime.utcnow()
 
-    async def get_cluster_status(self) -> Dict[str, Any]:
+    async def get_cluster_status(self) -> dict[str, Any]:
         """获取集群状态"""
         await self._update_metrics()
 
         return {
-            'cluster_info': {
-                'total_nodes': self.metrics.total_nodes,
-                'healthy_nodes': self.metrics.healthy_nodes,
-                'failed_nodes': self.metrics.failed_nodes,
-                'replication_strategy': self.replication_strategy.value,
-                'consistency_strategy': self.consistency_strategy.value,
-                'replication_factor': self.replication_factor
+            "cluster_info": {
+                "total_nodes": self.metrics.total_nodes,
+                "healthy_nodes": self.metrics.healthy_nodes,
+                "failed_nodes": self.metrics.failed_nodes,
+                "replication_strategy": self.replication_strategy.value,
+                "consistency_strategy": self.consistency_strategy.value,
+                "replication_factor": self.replication_factor,
             },
-            'nodes': {
+            "nodes": {
                 node_id: {
-                    'host': node.host,
-                    'port': node.port,
-                    'status': node.status.value,
-                    'is_master': node.is_master,
-                    'weight': node.weight,
-                    'failure_count': node.failure_count,
-                    'last_health_check': node.last_health_check.isoformat() if node.last_health_check else None
+                    "host": node.host,
+                    "port": node.port,
+                    "status": node.status.value,
+                    "is_master": node.is_master,
+                    "weight": node.weight,
+                    "failure_count": node.failure_count,
+                    "last_health_check": (
+                        node.last_health_check.isoformat()
+                        if node.last_health_check
+                        else None
+                    ),
                 }
                 for node_id, node in self.nodes.items()
             },
-            'metrics': {
-                'cache_hit_rate': round(self.metrics.cache_hit_rate, 2),
-                'avg_response_time': round(self.metrics.avg_response_time, 4),
-                'total_operations': self.metrics.total_operations,
-                'failed_operations': self.metrics.failed_operations,
-                'operation_stats': self.operation_stats.copy(),
-                'last_updated': self.metrics.last_updated.isoformat()
+            "metrics": {
+                "cache_hit_rate": round(self.metrics.cache_hit_rate, 2),
+                "avg_response_time": round(self.metrics.avg_response_time, 4),
+                "total_operations": self.metrics.total_operations,
+                "failed_operations": self.metrics.failed_operations,
+                "operation_stats": self.operation_stats.copy(),
+                "last_updated": self.metrics.last_updated.isoformat(),
             },
-            'health_monitoring': {
-                'active': self.is_monitoring,
-                'check_interval': self.health_check_interval
-            }
+            "health_monitoring": {
+                "active": self.is_monitoring,
+                "check_interval": self.health_check_interval,
+            },
         }
 
     async def cleanup_session_cache(self, session_id: str):
@@ -755,37 +835,37 @@ class RedisClusterManager:
 
 
 # 全局Redis集群管理器实例
-_cluster_manager: Optional[RedisClusterManager] = None
+_cluster_manager: RedisClusterManager | None = None
 
 
-def get_redis_cluster_manager() -> Optional[RedisClusterManager]:
+def get_redis_cluster_manager() -> RedisClusterManager | None:
     """获取全局Redis集群管理器实例"""
     global _cluster_manager
     return _cluster_manager
 
 
-async def initialize_redis_cluster(config: Dict[str, Any]) -> RedisClusterManager:
+async def initialize_redis_cluster(config: dict[str, Any]) -> RedisClusterManager:
     """初始化Redis集群管理器"""
     global _cluster_manager
 
     consistency_strategy = CacheConsistencyStrategy(
-        config.get('consistency_strategy', 'eventual')
+        config.get("consistency_strategy", "eventual")
     )
     replication_strategy = ReplicationStrategy(
-        config.get('replication_strategy', 'hashing')
+        config.get("replication_strategy", "hashing")
     )
 
     _cluster_manager = RedisClusterManager(
         consistency_strategy=consistency_strategy,
         replication_strategy=replication_strategy,
-        replication_factor=config.get('replication_factor', 2),
-        health_check_interval=config.get('health_check_interval', 30),
-        connection_timeout=config.get('connection_timeout', 5),
-        max_retries=config.get('max_retries', 3)
+        replication_factor=config.get("replication_factor", 2),
+        health_check_interval=config.get("health_check_interval", 30),
+        connection_timeout=config.get("connection_timeout", 5),
+        max_retries=config.get("max_retries", 3),
     )
 
     # 添加节点
-    nodes = config.get('nodes', [])
+    nodes = config.get("nodes", [])
     for node_config in nodes:
         await _cluster_manager.add_node(node_config)
 

@@ -261,8 +261,7 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 从数据库获取活跃联赛列表
-            # 在实际生产环境中,
-    这里会查询数据库获取配置的活跃联赛
+            # 在实际生产环境中，这里会查询数据库获取配置的活跃联赛
             # 目前返回主要联赛作为默认配置
             active_leagues = [
                 "PL",
@@ -299,8 +298,7 @@ class FixturesCollector(DataCollector):
         """
         try:
             # 查询数据库中已存在的比赛
-            # 在实际生产环境中,
-    这里会查询数据库获取指定日期范围内的比赛
+            # 在实际生产环境中，这里会查询数据库获取指定日期范围内的比赛
             # 目前使用空集合作为占位符,允许重复插入（生产环境需要实现）
             self.logger.info(f"加载 {date_from} 到 {date_to} 的已存在比赛ID")
             self._processed_matches = set()
@@ -375,9 +373,7 @@ class FixturesCollector(DataCollector):
         Returns:
             str: 比赛唯一键
         """
-        # 使用外部ID、主队,
-    客队,
-    比赛时间生成唯一键
+        # 使用外部ID、主队、客队、比赛时间生成唯一键
         key_components = [
             str(fixture_data.get("id", "")),
             str(fixture_data.get("homeTeam", {}).get("id", "")),

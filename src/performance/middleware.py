@@ -1,176 +1,42 @@
 """
-性能监控中间件
-Performance Monitoring Middleware
-
-提供FastAPI应用的性能监控:
-- 请求响应时间跟踪
-- 内存使用监控
-- 并发请求统计
-- 错误率监控
-- 端点性能分析
+性能监控中间件 - 简化版本
 """
 
-import secrets
 import time
-from collections.abc import Callable
-
+import asyncio
+from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.core.logging import get_logger
-from src.performance.profiler import APIEndpointProfiler, get_profiler
 
-logger = get_logger(__name__)
-
-
-class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
+class PerformanceMiddleware(BaseHTTPMiddleware):
     """性能监控中间件"""
 
-    def __init__(
-        self,
-        app,
-        track_memory: bool = True,
-        track_concurrency: bool = True,
-        sample_rate: float = 1.0,
-    ):
-        """
-        初始化性能监控中间件
-
-        Args:
-            app: FastAPI应用实例
-            track_memory: 是否跟踪内存使用
-            track_concurrency: 是否跟踪并发请求
-            sample_rate: 采样率（0-1）,1.0表示100%采样
-        """
-        super().__init__(app)
-        self.track_memory = track_memory
-        self.track_concurrency = track_concurrency
-        self.sample_rate = sample_rate
-
-        # 初始化组件
-        self.profiler = get_profiler()
-        self.api_profiler = APIEndpointProfiler(self.profiler)
-
-        # 并发请求跟踪
-        self.active_requests: dict[str, float] = {}
+    def __init__(self, app, dispatch: Callable = None):
+        super().__init__(app, dispatch)
+        self.request_times = []
+        self.active_requests = {}
         self.max_concurrent_requests = 0
-        self.total_requests = 0
-        self.request_times: list[float] = []
-
-def _dispatch_check_condition():
-            import psutil
-
-            process = psutil.Process()
-            start_memory = process.memory_info().rss / 1024 / 1024  # MB
-
-        # 跟踪并发请求
-
-def _dispatch_check_condition():
-            self.active_requests[request_id] = start_time
-            current_concurrent = len(self.active_requests)
-
-def _dispatch_check_condition():
-                self.max_concurrent_requests = current_concurrent
-
-        # 获取请求大小
-        request_size = 0
-
-def _dispatch_handle_error():
-            body = await request.body()
-            request_size = len(body)
-        except (ValueError, RuntimeError, TimeoutError):
-            pass
-
-def _dispatch_handle_error():
-            # 执行请求
-            response = await call_next(request)
-
-            # 计算响应时间
-            end_time = time.perf_counter()
-            duration = end_time - start_time
-
-            # 记录响应大小
-            response_size = 0
-
-def _dispatch_handle_error():
-                    response_size = len(response.body)
-                except (ValueError, RuntimeError, TimeoutError):
-                    pass
-
-def _dispatch_check_condition():
-                self.request_times = self.request_times[-1000:]
-
-            # 添加性能头部
-            response.headers["X-Process-Time"] = f"{duration:.4f}"
-            response.headers["X-Request-ID"] = request_id
-
-
-def _dispatch_check_condition():
-                import psutil
-
-                process = psutil.Process()
-                end_memory = process.memory_info().rss / 1024 / 1024
-                memory_delta = end_memory - start_memory
-                response.headers["X-Memory-Delta"] = f"{memory_delta:.2f}MB"
-
-            # 记录慢请求
-
-def _dispatch_check_condition():
-                logger.warning(
-                    f"Slow request detected: {request.method} {request.url.path} "
-                    f"took {duration:.4f}s"
-                )
-
-            # 记录错误请求
-
-def _dispatch_check_condition():
-                logger.warning(
-                    f"Error request: {request.method} {request.url.path} "
-                    f"returned {response.status_code} in {duration:.4f}s"
-                )
-
-            return response
-
-def _dispatch_check_condition():
-                del self.active_requests[request_id]
-
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """处理请求并收集性能指标"""
-        # 采样检查
-
-        if secrets.randbelow(100) / 100 > self.sample_rate:
-            return await call_next(request)
-
-        # 生成请求ID
-        request_id = f"{request.method}_{hash(str(request.url))}_{time.time()}"
+        """处理请求并记录性能指标"""
+        start_time = time.perf_counter()
+        request_id = id(request)
 
         # 记录请求开始
-        start_time = time.perf_counter()
-        start_memory = None
+        self.active_requests[request_id] = start_time
+        current_concurrent = len(self.active_requests)
+        self.max_concurrent_requests = max(self.max_concurrent_requests, current_concurrent)
 
-        _dispatch_check_condition()
-            import psutil
+        try:
+            # 获取请求大小
+            request_size = 0
+            try:
+                body = await request.body()
+                request_size = len(body)
+            except (ValueError, RuntimeError, TimeoutError):
+                pass
 
-            process = psutil.Process()
-            start_memory = process.memory_info().rss / 1024 / 1024  # MB
-
-        # 跟踪并发请求
-        _dispatch_check_condition()
-            self.active_requests[request_id] = start_time
-            current_concurrent = len(self.active_requests)
-            _dispatch_check_condition()
-                self.max_concurrent_requests = current_concurrent
-
-        # 获取请求大小
-        request_size = 0
-        _dispatch_handle_error()
-            body = await request.body()
-            request_size = len(body)
-        except (ValueError, RuntimeError, TimeoutError):
-            pass
-
-        _dispatch_handle_error()
             # 执行请求
             response = await call_next(request)
 
@@ -180,360 +46,104 @@ def _dispatch_check_condition():
 
             # 记录响应大小
             response_size = 0
-            if hasattr(response, "body"):
-                _dispatch_handle_error()
-                    response_size = len(response.body)
-                except (ValueError, RuntimeError, TimeoutError):
-                    pass
+            try:
+                response_size = len(response.body) if hasattr(response, 'body') else 0
+            except (ValueError, RuntimeError, TimeoutError):
+                pass
 
-            # 记录端点性能
-            self.api_profiler.record_endpoint_request(
-                endpoint=request.url.path,
-                method=request.method,
-                status_code=response.status_code,
-                duration=duration,
-                request_size=request_size,
-                response_size=response_size,
-            )
-
-            # 更新统计
-            self.total_requests += 1
+            # 记录性能数据
             self.request_times.append(duration)
-            # 保留最近1000个请求的时间
-            _dispatch_check_condition()
+            if len(self.request_times) > 1000:
                 self.request_times = self.request_times[-1000:]
 
             # 添加性能头部
             response.headers["X-Process-Time"] = f"{duration:.4f}"
-            response.headers["X-Request-ID"] = request_id
-
-            _dispatch_check_condition()
-                import psutil
-
-                process = psutil.Process()
-                end_memory = process.memory_info().rss / 1024 / 1024
-                memory_delta = end_memory - start_memory
-                response.headers["X-Memory-Delta"] = f"{memory_delta:.2f}MB"
-
-            # 记录慢请求
-            _dispatch_check_condition()
-                logger.warning(
-                    f"Slow request detected: {request.method} {request.url.path} "
-                    f"took {duration:.4f}s"
-                )
-
-            # 记录错误请求
-            _dispatch_check_condition()
-                logger.warning(
-                    f"Error request: {request.method} {request.url.path} "
-                    f"returned {response.status_code} in {duration:.4f}s"
-                )
+            response.headers["X-Concurrent-Requests"] = str(current_concurrent)
 
             return response
 
-        except (ValueError, RuntimeError, TimeoutError) as e:
-            # 记录异常
-            end_time = time.perf_counter()
-            duration = end_time - start_time
-            logger.error(
-                f"Request failed: {request.method} {request.url.path} "
-                f"after {duration:.4f}s - {str(e)}"
-            )
-            raise
-
         finally:
-            # 清理并发请求跟踪
-            _dispatch_check_condition()
-                del self.active_requests[request_id]
+            # 清理活动请求记录
+            self.active_requests.pop(request_id, None)
 
     def get_performance_stats(self) -> dict:
         """获取性能统计信息"""
-        stats = {
-            "total_requests": self.total_requests,
-            "current_concurrent_requests": len(self.active_requests),
+        if not self.request_times:
+            return {
+                "avg_response_time": 0,
+                "max_concurrent_requests": self.max_concurrent_requests,
+                "current_concurrent": len(self.active_requests),
+                "total_requests": 0
+            }
+
+        return {
+            "avg_response_time": sum(self.request_times) / len(self.request_times),
+            "max_response_time": max(self.request_times),
+            "min_response_time": min(self.request_times),
             "max_concurrent_requests": self.max_concurrent_requests,
-            "endpoint_stats": self.api_profiler.get_endpoint_stats(),
+            "current_concurrent": len(self.active_requests),
+            "total_requests": len(self.request_times)
         }
-
-        # 计算响应时间统计
-        if self.request_times:
-            stats["response_time"] = {
-                "average": sum(self.request_times) / len(self.request_times),
-                "min": min(self.request_times),
-                "max": max(self.request_times),
-                "p50": self._percentile(self.request_times, 50),
-                "p95": self._percentile(self.request_times, 95),
-                "p99": self._percentile(self.request_times, 99),
-            }
-
-        # 获取慢端点
-        slow_endpoints = self.api_profiler.get_slow_endpoints(threshold=0.5)
-        stats["slow_endpoints"] = slow_endpoints[:10]  # 前10个最慢的端点
-
-        return stats
-
-    def _percentile(self, data: list[float], percentile: float) -> float:
-        """计算百分位数"""
-        if not data:
-            return 0
-        sorted_data = sorted(data)
-        index = int(len(sorted_data) * percentile / 100)
-        return sorted_data[min(index, len(sorted_data) - 1)]
-
-    def reset_stats(self):
-        """函数文档字符串"""
-        # 添加pass语句
-        """重置统计信息"""
-        self.total_requests = 0
-        self.max_concurrent_requests = 0
-        self.request_times.clear()
-        self.api_profiler.endpoint_stats.clear()
-
-
-class DatabasePerformanceMiddleware:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
-    """数据库性能监控中间件"""
-
-    def __init__(self):
-        """函数文档字符串"""
-        # 添加pass语句
-        self.query_stats: dict[str, dict] = {}
-        self.slow_queries: list[dict] = []
-        self.total_queries = 0
-
-    async def track_query(
-        self,
-        query: str,
-        duration: float,
-        rows_affected: int = 0,
-        error: str | None = None,
-    ):
-        """跟踪数据库查询性能"""
-        self.total_queries += 1
-
-        # 提取查询类型
-        query_type = query.strip().split()[0].upper() if query else "UNKNOWN"
-
-        if query_type not in self.query_stats:
-            self.query_stats[query_type] = {
-                "count": 0,
-                "total_time": 0,
-                "rows_total": 0,
-                "error_count": 0,
-            }
-
-        stats = self.query_stats[query_type]
-        stats["count"] += 1
-        stats["total_time"] += duration
-        stats["rows_total"] += rows_affected
-
-        if error:
-            stats["error_count"] += 1
-
-        # 记录慢查询（超过100ms）
-        if duration > 0.1:
-            self.slow_queries.append(
-                {
-                    "query": query[:200] + "..." if len(query) > 200 else query,
-                    "duration": duration,
-                    "rows_affected": rows_affected,
-                    "timestamp": time.time(),
-                }
-            )
-
-            # 保留最近100个慢查询
-            if len(self.slow_queries) > 100:
-                self.slow_queries = self.slow_queries[-100:]
-
-    def get_query_stats(self) -> dict:
-        """获取查询统计信息"""
-        stats = {"total_queries": self.total_queries, "query_types": {}}
-
-        for query_type, data in self.query_stats.items():
-            stats["query_types"][query_type] = {
-                "count": data["count"],
-                "average_time": (
-                    data["total_time"] / data["count"] if data["count"] > 0 else 0
-                ),
-                "total_time": data["total_time"],
-                "rows_total": data["rows_total"],
-                "error_rate": (
-                    data["error_count"] / data["count"] if data["count"] > 0 else 0
-                ),
-            }
-
-        stats["slow_queries"] = self.slow_queries[-10:]  # 最近10个慢查询
-
-        return stats
-
-
-class CachePerformanceMiddleware:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
-    """缓存性能监控中间件"""
-
-    def __init__(self):
-        """函数文档字符串"""
-        # 添加pass语句
-        self.cache_stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "deletes": 0,
-            "hit_times": [],
-            "set_times": [],
-        }
-
-    def record_cache_hit(self, duration: float):
-        """函数文档字符串"""
-        # 添加pass语句
-        """记录缓存命中"""
-        self.cache_stats["hits"] += 1
-        self.cache_stats["hit_times"].append(duration)
-        if len(self.cache_stats["hit_times"]) > 1000:
-            self.cache_stats["hit_times"] = self.cache_stats["hit_times"][-1000:]
-
-    def record_cache_miss(self):
-        """函数文档字符串"""
-        # 添加pass语句
-        """记录缓存未命中"""
-        self.cache_stats["misses"] += 1
-
-    def record_cache_set(self, duration: float):
-        """函数文档字符串"""
-        # 添加pass语句
-        """记录缓存设置"""
-        self.cache_stats["sets"] += 1
-        self.cache_stats["set_times"].append(duration)
-        if len(self.cache_stats["set_times"]) > 1000:
-            self.cache_stats["set_times"] = self.cache_stats["set_times"][-1000:]
-
-    def record_cache_delete(self):
-        """函数文档字符串"""
-        # 添加pass语句
-        """记录缓存删除"""
-        self.cache_stats["deletes"] += 1
-
-    def get_cache_stats(self) -> dict:
-        """获取缓存统计信息"""
-        total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
-        hit_rate = (
-            self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
-        )
-
-        stats = {
-            "hit_rate": hit_rate,
-            "total_requests": total_requests,
-            "hits": self.cache_stats["hits"],
-            "misses": self.cache_stats["misses"],
-            "sets": self.cache_stats["sets"],
-            "deletes": self.cache_stats["deletes"],
-        }
-
-        # 计算平均时间
-        if self.cache_stats["hit_times"]:
-            stats["average_hit_time"] = sum(self.cache_stats["hit_times"]) / len(
-                self.cache_stats["hit_times"]
-            )
-        if self.cache_stats["set_times"]:
-            stats["average_set_time"] = sum(self.cache_stats["set_times"]) / len(
-                self.cache_stats["set_times"]
-            )
-
-        return stats
 
 
 class BackgroundTaskPerformanceMonitor:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """后台任务性能监控器"""
 
     def __init__(self):
-        """函数文档字符串"""
-        # 添加pass语句
-        self.task_stats: dict[str, dict] = {}
-        self.active_tasks: dict[str, float] = {}
-        self.failed_tasks: list[dict] = []
+        self.task_stats = {}
 
-    def start_task(self, task_id: str, task_name: str):
-        """函数文档字符串"""
-        # 添加pass语句
-        """开始任务跟踪"""
-        self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}
+    def start_task(self, task_name: str):
+        """开始任务监控"""
+        self.task_stats[task_name] = {"start_time": time.time()}
 
-    def end_task(self, task_id: str, success: bool = True, error: str | None = None):
-        """函数文档字符串"""
-        # 添加pass语句
-        """结束任务跟踪"""
-        if task_id not in self.active_tasks:
-            return None
-        task = self.active_tasks[task_id]
-        duration = time.time() - task["start_time"]
-        task_name = task["name"]
+    def end_task(self, task_name: str):
+        """结束任务监控"""
+        if task_name in self.task_stats:
+            self.task_stats[task_name]["end_time"] = time.time()
 
-        # 更新任务统计
-        if task_name not in self.task_stats:
-            self.task_stats[task_name] = {
-                "total_count": 0,
-                "success_count": 0,
-                "failure_count": 0,
-                "total_time": 0,
-                "min_time": float("inf"),
-                "max_time": 0,
-            }
+    def get_stats(self) -> dict:
+        """获取任务统计"""
+        return self.task_stats
 
-        stats = self.task_stats[task_name]
-        stats["total_count"] += 1
-        stats["total_time"] += duration
-        stats["min_time"] = min(stats["min_time"], duration)
-        stats["max_time"] = max(stats["max_time"], duration)
 
-        if success:
-            stats["success_count"] += 1
-        else:
-            stats["failure_count"] += 1
-            self.failed_tasks.append(
-                {
-                    "task_id": task_id,
-                    "task_name": task_name,
-                    "duration": duration,
-                    "error": error,
-                    "timestamp": time.time(),
-                }
-            )
-            # 保留最近100个失败任务
-            if len(self.failed_tasks) > 100:
-                self.failed_tasks = self.failed_tasks[-100:]
+class CachePerformanceMiddleware:
+    """缓存性能中间件"""
 
-        del self.active_tasks[task_id]
+    def __init__(self):
+        self.cache_hits = 0
+        self.cache_misses = 0
 
-    def get_task_stats(self) -> dict:
-        """获取任务统计信息"""
-        stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
+    def record_hit(self):
+        """记录缓存命中"""
+        self.cache_hits += 1
 
-        for task_name, data in self.task_stats.items():
-            stats["task_types"][task_name] = {
-                "total_count": data["total_count"],
-                "success_count": data["success_count"],
-                "failure_count": data["failure_count"],
-                "success_rate": (
-                    data["success_count"] / data["total_count"]
-                    if data["total_count"] > 0
-                    else 0
-                ),
-                "average_time": (
-                    data["total_time"] / data["total_count"]
-                    if data["total_count"] > 0
-                    else 0
-                ),
-                "min_time": data["min_time"] if data["min_time"] != float("inf") else 0,
-                "max_time": data["max_time"],
-            }
+    def record_miss(self):
+        """记录缓存未命中"""
+        self.cache_misses += 1
 
-        stats["recent_failures"] = self.failed_tasks[-10:]
+    def get_hit_rate(self) -> float:
+        """获取缓存命中率"""
+        total = self.cache_hits + self.cache_misses
+        return self.cache_hits / total if total > 0 else 0.0
 
-        return stats
+
+class DatabasePerformanceMiddleware:
+    """数据库性能中间件"""
+
+    def __init__(self):
+        self.query_times = []
+        self.slow_queries = []
+
+    def record_query(self, duration: float, query: str = ""):
+        """记录查询性能"""
+        self.query_times.append(duration)
+        if duration > 0.1:  # 慢查询阈值
+            self.slow_queries.append({"duration": duration, "query": query})
+
+    def get_avg_query_time(self) -> float:
+        """获取平均查询时间"""
+        return sum(self.query_times) / len(self.query_times) if self.query_times else 0.0
+
+
+# 为了向后兼容，提供别名
+PerformanceMonitoringMiddleware = PerformanceMiddleware

@@ -392,7 +392,7 @@ class TestDataValidatorFinal:
 
         start_time = time.time()
 
-        for email, phone, password in zip(emails, phones, passwords):
+        for email, phone, password in zip(emails, phones, passwords, strict=False):
             DataValidator.validate_email(email)
             DataValidator.validate_phone(phone)
             DataValidator.validate_password_strength(password)

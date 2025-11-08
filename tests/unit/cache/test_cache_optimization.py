@@ -3,42 +3,37 @@
 Cache System Optimization Tests
 """
 
-import pytest
-import asyncio
 import time
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Any, Dict, List
 
-from src.cache.redis_cluster_manager import (
-    RedisClusterManager,
-    ClusterNode,
-    ConsistentHashRing,
-    CacheEntry,
-    get_redis_cluster_manager
+import pytest
+
+from src.cache.cache_consistency_manager import (
+    CacheVersion,
+    VectorClock,
+    get_cache_consistency_manager,
 )
 from src.cache.distributed_cache_manager import (
+    CacheEvictionPolicy,
     DistributedCacheManager,
     MemoryCache,
-    CacheLevel,
-    CacheEvictionPolicy,
-    get_distributed_cache_manager
-)
-from src.cache.cache_consistency_manager import (
-    CacheConsistencyManager,
-    VectorClock,
-    CacheVersion,
-    ConsistencyLevel,
-    ConflictResolutionStrategy,
-    get_cache_consistency_manager
+    get_distributed_cache_manager,
 )
 from src.cache.intelligent_cache_warmup import (
-    IntelligentCacheWarmupManager,
     AccessPatternAnalyzer,
-    WarmupStrategy,
+    IntelligentCacheWarmupManager,
     PriorityLevel,
+    WarmupStrategy,
     WarmupTask,
-    get_intelligent_warmup_manager
+    get_intelligent_warmup_manager,
+)
+from src.cache.redis_cluster_manager import (
+    CacheEntry,
+    ClusterNode,
+    ConsistentHashRing,
+    RedisClusterManager,
+    get_redis_cluster_manager,
 )
 
 
@@ -48,10 +43,7 @@ class TestClusterNode:
     def test_node_creation(self):
         """测试节点创建"""
         node = ClusterNode(
-            node_id="test_node",
-            host="localhost",
-            port=6379,
-            is_master=True
+            node_id="test_node", host="localhost", port=6379, is_master=True
         )
 
         assert node.node_id == "test_node"
@@ -73,7 +65,7 @@ class TestClusterNode:
         assert node.last_health_check is not None
 
         # 测试达到最大失败次数
-        for i in range(node.max_failures - 1):
+        for _i in range(node.max_failures - 1):
             node.failure_count += 1
 
         assert node.failure_count == node.max_failures
@@ -159,11 +151,7 @@ class TestCacheEntry:
 
     def test_cache_entry_creation(self):
         """测试缓存条目创建"""
-        entry = CacheEntry(
-            key="test_key",
-            value={"data": "test_value"},
-            ttl=3600
-        )
+        entry = CacheEntry(key="test_key", value={"data": "test_value"}, ttl=3600)
 
         assert entry.key == "test_key"
         assert entry.value == {"data": "test_value"}
@@ -174,11 +162,7 @@ class TestCacheEntry:
     def test_cache_entry_expiration(self):
         """测试缓存条目过期"""
         # 创建已过期的条目
-        entry = CacheEntry(
-            key="expired_key",
-            value="test_value",
-            ttl=1  # 1秒TTL
-        )
+        entry = CacheEntry(key="expired_key", value="test_value", ttl=1)  # 1秒TTL
 
         # 等待过期
         time.sleep(2)
@@ -215,10 +199,7 @@ class TestRedisClusterManager:
 
     def test_manager_initialization(self):
         """测试管理器初始化"""
-        manager = RedisClusterManager(
-            health_check_interval=30,
-            connection_timeout=5
-        )
+        manager = RedisClusterManager(health_check_interval=30, connection_timeout=5)
 
         assert manager.health_check_interval == 30
         assert manager.connection_timeout == 5
@@ -231,22 +212,22 @@ class TestRedisClusterManager:
         manager = RedisClusterManager()
 
         node_config = {
-            'node_id': 'test_node',
-            'host': 'localhost',
-            'port': 6379,
-            'is_master': True
+            "node_id": "test_node",
+            "host": "localhost",
+            "port": 6379,
+            "is_master": True,
         }
 
         # 使用Mock连接
-        with patch('src.cache.redis_cluster_manager.MockRedisManager') as mock_redis:
+        with patch("src.cache.redis_cluster_manager.MockRedisManager") as mock_redis:
             mock_instance = MagicMock()
             mock_redis.return_value = mock_instance
 
             result = await manager.add_node(node_config)
 
             assert result is True
-            assert 'test_node' in manager.nodes
-            assert manager.nodes['test_node'].node_id == 'test_node'
+            assert "test_node" in manager.nodes
+            assert manager.nodes["test_node"].node_id == "test_node"
 
     @pytest.mark.asyncio
     async def test_remove_node(self):
@@ -254,20 +235,16 @@ class TestRedisClusterManager:
         manager = RedisClusterManager()
 
         # 先添加节点
-        node_config = {
-            'node_id': 'test_node',
-            'host': 'localhost',
-            'port': 6379
-        }
+        node_config = {"node_id": "test_node", "host": "localhost", "port": 6379}
 
-        with patch('src.cache.redis_cluster_manager.MockRedisManager'):
+        with patch("src.cache.redis_cluster_manager.MockRedisManager"):
             await manager.add_node(node_config)
 
         # 移除节点
-        result = await manager.remove_node('test_node')
+        result = await manager.remove_node("test_node")
 
         assert result is True
-        assert 'test_node' not in manager.nodes
+        assert "test_node" not in manager.nodes
 
     @pytest.mark.asyncio
     async def test_get_cache_miss(self):
@@ -309,10 +286,10 @@ class TestRedisClusterManager:
 
         status = await manager.get_cluster_status()
 
-        assert 'cluster_info' in status
-        assert 'nodes' in status
-        assert 'metrics' in status
-        assert status['cluster_info']['total_nodes'] == 0
+        assert "cluster_info" in status
+        assert "nodes" in status
+        assert "metrics" in status
+        assert status["cluster_info"]["total_nodes"] == 0
 
 
 class TestMemoryCache:
@@ -363,7 +340,7 @@ class TestMemoryCache:
 
     def test_memory_cache_eviction(self):
         """测试内存缓存淘汰"""
-        from src.cache.distributed_cache_manager import CacheConfig, CacheEvictionPolicy
+        from src.cache.distributed_cache_manager import CacheConfig
 
         config = CacheConfig(max_size=2, eviction_policy=CacheEvictionPolicy.LRU)
         cache = MemoryCache(config)
@@ -393,11 +370,11 @@ class TestMemoryCache:
 
         metrics = cache.get_metrics()
 
-        assert metrics['hits'] == 1
-        assert metrics['misses'] == 1
-        assert metrics['sets'] == 1
-        assert metrics['size'] == 1
-        assert 'hit_rate' in metrics
+        assert metrics["hits"] == 1
+        assert metrics["misses"] == 1
+        assert metrics["sets"] == 1
+        assert metrics["size"] == 1
+        assert "hit_rate" in metrics
 
 
 class TestVectorClock:
@@ -474,10 +451,7 @@ class TestCacheVersion:
     def test_cache_version_creation(self):
         """测试缓存版本创建"""
         version = CacheVersion(
-            key="test_key",
-            version=1,
-            timestamp=datetime.utcnow(),
-            node_id="node1"
+            key="test_key", version=1, timestamp=datetime.utcnow(), node_id="node1"
         )
 
         assert version.key == "test_key"
@@ -492,7 +466,7 @@ class TestCacheVersion:
             version=1,
             timestamp=datetime.utcnow(),
             node_id="node1",
-            data="test_value"
+            data="test_value",
         )
 
         # 新版本应该是有效的
@@ -530,10 +504,10 @@ class TestAccessPatternAnalyzer:
     def test_calculate_frequency(self):
         """测试计算访问频率"""
         analyzer = AccessPatternAnalyzer()
-        now = datetime.utcnow()
+        datetime.utcnow()
 
         # 添加多个访问记录
-        for i in range(10):
+        for _i in range(10):
             analyzer.record_access("key1", duration=0.1)
 
         # 计算频率
@@ -548,8 +522,9 @@ class TestAccessPatternAnalyzer:
         # 添加定期访问记录
         for i in range(5):
             access_time = now + timedelta(hours=i * 2)
-            analyzer.patterns["key1"] = analyzer.patterns.get("key1",
-                type('', (), {'access_times': [], 'last_access': None})())
+            analyzer.patterns["key1"] = analyzer.patterns.get(
+                "key1", type("", (), {"access_times": [], "last_access": None})()
+            )
             analyzer.patterns["key1"].access_times.append(access_time)
             analyzer.patterns["key1"].last_access = access_time
 
@@ -570,20 +545,20 @@ class TestAccessPatternAnalyzer:
 
         analysis = analyzer.analyze_patterns()
 
-        assert 'total_keys' in analysis
-        assert 'high_frequency_keys' in analysis
-        assert 'time_based_patterns' in analysis
-        assert analysis['total_keys'] == 5
+        assert "total_keys" in analysis
+        assert "high_frequency_keys" in analysis
+        assert "time_based_patterns" in analysis
+        assert analysis["total_keys"] == 5
 
     def test_get_warmup_candidates(self):
         """测试获取预热候选"""
         analyzer = AccessPatternAnalyzer()
 
         # 创建不同频率的访问模式
-        for i in range(50):
+        for _i in range(50):
             analyzer.record_access("high_freq_key", duration=0.1)
 
-        for i in range(10):
+        for _i in range(10):
             analyzer.record_access("low_freq_key", duration=0.1)
 
         candidates = analyzer.get_warmup_candidates(limit=10)
@@ -600,7 +575,7 @@ class TestIntelligentCacheWarmupManager:
     def test_manager_initialization(self):
         """测试管理器初始化"""
         mock_cache_manager = MagicMock()
-        config = {'max_concurrent_tasks': 3}
+        config = {"max_concurrent_tasks": 3}
 
         manager = IntelligentCacheWarmupManager(mock_cache_manager, config)
 
@@ -627,11 +602,9 @@ class TestIntelligentCacheWarmupManager:
         mock_cache_manager = MagicMock()
         manager = IntelligentCacheWarmupManager(mock_cache_manager)
 
-        from src.cache.intelligent_cache_warmup import WarmupStrategy
 
         plan_id = await manager.create_warmup_plan(
-            strategy=WarmupStrategy.ACCESS_PATTERN,
-            keys=["key1", "key2"]
+            strategy=WarmupStrategy.ACCESS_PATTERN, keys=["key1", "key2"]
         )
 
         assert plan_id in manager.warmup_plans
@@ -668,7 +641,7 @@ class TestIntelligentCacheWarmupManager:
             task_id="test_task",
             key="test_key",
             priority=PriorityLevel.HIGH,
-            data_loader=test_loader
+            data_loader=test_loader,
         )
 
         # 执行任务
@@ -688,15 +661,15 @@ class TestIntelligentCacheWarmupManager:
         manager = IntelligentCacheWarmupManager(mock_cache_manager)
 
         # 添加一些统计数据
-        manager.stats['successful_warmups'] = 10
-        manager.stats['failed_warmups'] = 2
+        manager.stats["successful_warmups"] = 10
+        manager.stats["failed_warmups"] = 2
 
         stats = await manager.get_warmup_statistics()
 
-        assert 'statistics' in stats
-        assert stats['statistics']['successful_warmups'] == 10
-        assert stats['statistics']['failed_warmups'] == 2
-        assert 'pattern_analysis' in stats
+        assert "statistics" in stats
+        assert stats["statistics"]["successful_warmups"] == 10
+        assert stats["statistics"]["failed_warmups"] == 2
+        assert "pattern_analysis" in stats
 
 
 class TestIntegration:
@@ -725,9 +698,7 @@ class TestIntegration:
         await warmup_manager.record_access("test_key", duration=0.1)
 
         # 创建预热计划
-        plan_id = await warmup_manager.create_warmup_plan(
-            keys=["test_key"]
-        )
+        plan_id = await warmup_manager.create_warmup_plan(keys=["test_key"])
 
         assert plan_id in warmup_manager.warmup_plans
 
@@ -735,10 +706,6 @@ class TestIntegration:
     async def test_global_functions(self):
         """测试全局获取函数"""
         # 测试全局实例获取
-        from src.cache.redis_cluster_manager import get_redis_cluster_manager
-        from src.cache.distributed_cache_manager import get_distributed_cache_manager
-        from src.cache.cache_consistency_manager import get_cache_consistency_manager
-        from src.cache.intelligent_cache_warmup import get_intelligent_warmup_manager
 
         # 应该返回None（因为还没有初始化）
         assert get_redis_cluster_manager() is None
@@ -757,7 +724,7 @@ class TestIntegration:
         assert result is None
 
         # 测试分布式缓存错误处理
-        config = {'max_size': 0}  # 无效配置
+        config = {"max_size": 0}  # 无效配置
         cache = MemoryCache(config)
 
         result = cache.set("test_key", "test_value")

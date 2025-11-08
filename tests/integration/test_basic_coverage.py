@@ -89,8 +89,8 @@ def test_utils_string_utils_basic():
         from src.utils.string_utils import StringUtils
 
         # 测试字符串验证
-        assert StringUtils.is_valid_email("test@example.com") == True
-        assert StringUtils.is_valid_email("invalid-email") == False
+        assert StringUtils.is_valid_email("test@example.com")
+        assert not StringUtils.is_valid_email("invalid-email")
         logger.debug("✅ email验证功能正常")  # TODO: Add logger import if needed
 
         # 测试字符串清理

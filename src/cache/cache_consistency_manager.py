@@ -6,58 +6,66 @@ Cache Consistency Manager
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Callable, Union
-import hashlib
-import threading
-from collections import defaultdict, deque
 import uuid
+from abc import ABC, abstractmethod
+from collections import defaultdict, deque
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ConsistencyLevel(Enum):
     """一致性级别"""
-    STRONG = "strong"              # 强一致性
-    EVENTUAL = "eventual"          # 最终一致性
-    SESSION = "session"            # 会话一致性
+
+    STRONG = "strong"  # 强一致性
+    EVENTUAL = "eventual"  # 最终一致性
+    SESSION = "session"  # 会话一致性
     MONOTONIC_READ = "monotonic_read"  # 单调读一致性
-    MONOTONIC_WRITE = "monotonic_write" # 单调写一致性
-    CAUSAL = "causal"              # 因果一致性
+    MONOTONIC_WRITE = "monotonic_write"  # 单调写一致性
+    CAUSAL = "causal"  # 因果一致性
 
 
 class ConflictResolutionStrategy(Enum):
     """冲突解决策略"""
-    LAST_WRITE_WINS = "last_write_wins"    # 最后写入获胜
+
+    LAST_WRITE_WINS = "last_write_wins"  # 最后写入获胜
     FIRST_WRITE_WINS = "first_write_wins"  # 首次写入获胜
-    TIMESTAMP_ORDER = "timestamp_order"    # 时间戳顺序
-    VECTOR_CLOCK = "vector_clock"          # 向量时钟
-    MERGE = "merge"                        # 合并策略
-    CUSTOM = "custom"                      # 自定义策略
+    TIMESTAMP_ORDER = "timestamp_order"  # 时间戳顺序
+    VECTOR_CLOCK = "vector_clock"  # 向量时钟
+    MERGE = "merge"  # 合并策略
+    CUSTOM = "custom"  # 自定义策略
 
 
 class InvalidationStrategy(Enum):
     """失效策略"""
-    IMMEDIATE = "immediate"          # 立即失效
-    DELAYED = "delayed"              # 延迟失效
-    BROADCAST = "broadcast"          # 广播失效
-    PUBLISHER_SUBSCRIBER = "pub_sub" # 发布订阅模式
-    TTL_BASED = "ttl_based"          # 基于TTL失效
+
+    IMMEDIATE = "immediate"  # 立即失效
+    DELAYED = "delayed"  # 延迟失效
+    BROADCAST = "broadcast"  # 广播失效
+    PUBLISHER_SUBSCRIBER = "pub_sub"  # 发布订阅模式
+    TTL_BASED = "ttl_based"  # 基于TTL失效
 
 
 class CacheEvent:
     """缓存事件"""
 
-    def __init__(self, event_type: str, key: str, data: Any = None,
-                 timestamp: Optional[datetime] = None,
-                 source_node: Optional[str] = None,
-                 correlation_id: Optional[str] = None):
+    def __init__(
+        self,
+        event_type: str,
+        key: str,
+        data: Any = None,
+        timestamp: datetime | None = None,
+        source_node: str | None = None,
+        correlation_id: str | None = None,
+    ):
         self.event_id = str(uuid.uuid4())
         self.event_type = event_type
         self.key = key
@@ -68,34 +76,34 @@ class CacheEvent:
         self.processed = False
         self.retry_count = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            'event_id': self.event_id,
-            'event_type': self.event_type,
-            'key': self.key,
-            'data': self.data,
-            'timestamp': self.timestamp.isoformat(),
-            'source_node': self.source_node,
-            'correlation_id': self.correlation_id,
-            'processed': self.processed,
-            'retry_count': self.retry_count
+            "event_id": self.event_id,
+            "event_type": self.event_type,
+            "key": self.key,
+            "data": self.data,
+            "timestamp": self.timestamp.isoformat(),
+            "source_node": self.source_node,
+            "correlation_id": self.correlation_id,
+            "processed": self.processed,
+            "retry_count": self.retry_count,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'CacheEvent':
+    def from_dict(cls, data: dict[str, Any]) -> "CacheEvent":
         """从字典创建事件"""
         event = cls(
-            event_type=data['event_type'],
-            key=data['key'],
-            data=data.get('data'),
-            timestamp=datetime.fromisoformat(data['timestamp']),
-            source_node=data.get('source_node'),
-            correlation_id=data.get('correlation_id')
+            event_type=data["event_type"],
+            key=data["key"],
+            data=data.get("data"),
+            timestamp=datetime.fromisoformat(data["timestamp"]),
+            source_node=data.get("source_node"),
+            correlation_id=data.get("correlation_id"),
         )
-        event.event_id = data['event_id']
-        event.processed = data.get('processed', False)
-        event.retry_count = data.get('retry_count', 0)
+        event.event_id = data["event_id"]
+        event.processed = data.get("processed", False)
+        event.retry_count = data.get("retry_count", 0)
         return event
 
 
@@ -104,21 +112,21 @@ class VectorClock:
 
     def __init__(self, node_id: str):
         self.node_id = node_id
-        self.clock: Dict[str, int] = defaultdict(int)
+        self.clock: dict[str, int] = defaultdict(int)
         self.clock[node_id] = 1
 
-    def increment(self) -> 'VectorClock':
+    def increment(self) -> "VectorClock":
         """递增本地时钟"""
         self.clock[self.node_id] += 1
         return self
 
-    def update(self, other: 'VectorClock') -> 'VectorClock':
+    def update(self, other: "VectorClock") -> "VectorClock":
         """更新时钟（合并操作）"""
         for node_id, timestamp in other.clock.items():
             self.clock[node_id] = max(self.clock[node_id], timestamp)
         return self
 
-    def happens_before(self, other: 'VectorClock') -> bool:
+    def happens_before(self, other: "VectorClock") -> bool:
         """检查是否先于另一个事件发生"""
         # 如果所有分量都小于等于对方，且至少有一个严格小于
         all_less_equal = all(
@@ -131,16 +139,16 @@ class VectorClock:
         )
         return all_less_equal and any_strict_less
 
-    def is_concurrent(self, other: 'VectorClock') -> bool:
+    def is_concurrent(self, other: "VectorClock") -> bool:
         """检查是否并发"""
         return not (self.happens_before(other) or other.happens_before(self))
 
-    def to_dict(self) -> Dict[str, int]:
+    def to_dict(self) -> dict[str, int]:
         """转换为字典"""
         return dict(self.clock)
 
     @classmethod
-    def from_dict(cls, node_id: str, data: Dict[str, int]) -> 'VectorClock':
+    def from_dict(cls, node_id: str, data: dict[str, int]) -> "VectorClock":
         """从字典创建向量时钟"""
         clock = cls(node_id)
         clock.clock.update(data)
@@ -150,13 +158,14 @@ class VectorClock:
 @dataclass
 class CacheVersion:
     """缓存版本信息"""
+
     key: str
     version: int
     timestamp: datetime
     node_id: str
-    vector_clock: Optional[VectorClock] = None
+    vector_clock: VectorClock | None = None
     checksum: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.checksum:
@@ -193,7 +202,9 @@ class ConsistencyAlgorithm(ABC):
         pass
 
     @abstractmethod
-    async def resolve_conflict(self, key: str, versions: List[CacheVersion]) -> CacheVersion:
+    async def resolve_conflict(
+        self, key: str, versions: list[CacheVersion]
+    ) -> CacheVersion:
         """解决冲突"""
         pass
 
@@ -223,9 +234,7 @@ class StrongConsistencyAlgorithm(ConsistencyAlgorithm):
             for i in range(self.node_count):
                 other_node_id = f"node_{i}"
                 if other_node_id != node_id:
-                    task = asyncio.create_task(
-                        self._read_from_node(key, other_node_id)
-                    )
+                    task = asyncio.create_task(self._read_from_node(key, other_node_id))
                     tasks.append(task)
 
             # 等待足够多的响应
@@ -269,7 +278,7 @@ class StrongConsistencyAlgorithm(ConsistencyAlgorithm):
                 version=int(time.time() * 1000000),  # 微秒时间戳
                 timestamp=datetime.utcnow(),
                 node_id=node_id,
-                data=value
+                data=value,
             )
 
             # 写入多个节点
@@ -313,9 +322,7 @@ class StrongConsistencyAlgorithm(ConsistencyAlgorithm):
 
             for i in range(self.node_count):
                 target_node_id = f"node_{i}"
-                task = asyncio.create_task(
-                    self._invalidate_node(key, target_node_id)
-                )
+                task = asyncio.create_task(self._invalidate_node(key, target_node_id))
                 tasks.append(task)
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -329,7 +336,9 @@ class StrongConsistencyAlgorithm(ConsistencyAlgorithm):
         finally:
             await self.lock_manager.release(lock_key, node_id)
 
-    async def resolve_conflict(self, key: str, versions: List[CacheVersion]) -> CacheVersion:
+    async def resolve_conflict(
+        self, key: str, versions: list[CacheVersion]
+    ) -> CacheVersion:
         """解决冲突（强一致性使用最新时间戳）"""
         if not versions:
             raise ValueError("No versions to resolve")
@@ -337,12 +346,14 @@ class StrongConsistencyAlgorithm(ConsistencyAlgorithm):
         # 选择时间戳最新的版本
         return max(versions, key=lambda v: v.timestamp)
 
-    async def _read_from_node(self, key: str, node_id: str) -> Optional[CacheVersion]:
+    async def _read_from_node(self, key: str, node_id: str) -> CacheVersion | None:
         """从特定节点读取"""
         # 这里实现具体的节点读取逻辑
         pass
 
-    async def _write_to_node(self, key: str, version: CacheVersion, node_id: str) -> bool:
+    async def _write_to_node(
+        self, key: str, version: CacheVersion, node_id: str
+    ) -> bool:
         """写入特定节点"""
         # 这里实现具体的节点写入逻辑
         pass
@@ -380,7 +391,7 @@ class EventualConsistencyAlgorithm(ConsistencyAlgorithm):
             timestamp=datetime.utcnow(),
             node_id=node_id,
             vector_clock=self.vector_clock,
-            data=value
+            data=value,
         )
 
         # 写入本地
@@ -395,11 +406,7 @@ class EventualConsistencyAlgorithm(ConsistencyAlgorithm):
     async def invalidate(self, key: str, node_id: str) -> bool:
         """最终一致性失效"""
         # 创建失效事件
-        event = CacheEvent(
-            event_type="invalidate",
-            key=key,
-            source_node=node_id
-        )
+        event = CacheEvent(event_type="invalidate", key=key, source_node=node_id)
 
         # 本地失效
         success = await self._invalidate_local(key)
@@ -410,7 +417,9 @@ class EventualConsistencyAlgorithm(ConsistencyAlgorithm):
 
         return success
 
-    async def resolve_conflict(self, key: str, versions: List[CacheVersion]) -> CacheVersion:
+    async def resolve_conflict(
+        self, key: str, versions: list[CacheVersion]
+    ) -> CacheVersion:
         """解决冲突"""
         if not versions:
             raise ValueError("No versions to resolve")
@@ -462,7 +471,7 @@ class EventualConsistencyAlgorithm(ConsistencyAlgorithm):
             event_type="write",
             key=key,
             data=version.to_dict(),
-            source_node=self.node_id
+            source_node=self.node_id,
         )
         await self._propagate_event(event)
 
@@ -471,7 +480,9 @@ class EventualConsistencyAlgorithm(ConsistencyAlgorithm):
         # 实现事件传播逻辑
         pass
 
-    async def _merge_versions(self, key: str, versions: List[CacheVersion]) -> CacheVersion:
+    async def _merge_versions(
+        self, key: str, versions: list[CacheVersion]
+    ) -> CacheVersion:
         """合并版本"""
         # 实现版本合并逻辑
         pass
@@ -481,7 +492,7 @@ class DistributedLockManager:
     """分布式锁管理器"""
 
     def __init__(self):
-        self.locks: Dict[str, Dict[str, Any]] = {}
+        self.locks: dict[str, dict[str, Any]] = {}
         self.lock_timeout = 30.0
 
     async def acquire(self, lock_key: str, node_id: str, timeout: float = 10.0) -> bool:
@@ -491,20 +502,20 @@ class DistributedLockManager:
         while time.time() - start_time < timeout:
             if lock_key not in self.locks:
                 self.locks[lock_key] = {
-                    'owner': node_id,
-                    'acquired_at': time.time(),
-                    'expires_at': time.time() + self.lock_timeout
+                    "owner": node_id,
+                    "acquired_at": time.time(),
+                    "expires_at": time.time() + self.lock_timeout,
                 }
                 return True
 
             # 检查锁是否过期
             lock_info = self.locks[lock_key]
-            if time.time() > lock_info['expires_at']:
+            if time.time() > lock_info["expires_at"]:
                 # 锁已过期，可以获取
                 self.locks[lock_key] = {
-                    'owner': node_id,
-                    'acquired_at': time.time(),
-                    'expires_at': time.time() + self.lock_timeout
+                    "owner": node_id,
+                    "acquired_at": time.time(),
+                    "expires_at": time.time() + self.lock_timeout,
                 }
                 return True
 
@@ -515,7 +526,7 @@ class DistributedLockManager:
 
     async def release(self, lock_key: str, node_id: str) -> bool:
         """释放分布式锁"""
-        if lock_key in self.locks and self.locks[lock_key]['owner'] == node_id:
+        if lock_key in self.locks and self.locks[lock_key]["owner"] == node_id:
             del self.locks[lock_key]
             return True
         return False
@@ -526,7 +537,7 @@ class DistributedLockManager:
             return False
 
         lock_info = self.locks[lock_key]
-        if time.time() > lock_info['expires_at']:
+        if time.time() > lock_info["expires_at"]:
             del self.locks[lock_key]
             return False
 
@@ -536,8 +547,12 @@ class DistributedLockManager:
 class CacheConsistencyManager:
     """缓存一致性管理器"""
 
-    def __init__(self, node_id: str, consistency_level: ConsistencyLevel,
-                 conflict_strategy: ConflictResolutionStrategy = ConflictResolutionStrategy.LAST_WRITE_WINS):
+    def __init__(
+        self,
+        node_id: str,
+        consistency_level: ConsistencyLevel,
+        conflict_strategy: ConflictResolutionStrategy = ConflictResolutionStrategy.LAST_WRITE_WINS,
+    ):
         self.node_id = node_id
         self.consistency_level = consistency_level
         self.conflict_strategy = conflict_strategy
@@ -546,7 +561,7 @@ class CacheConsistencyManager:
         self.algorithm = self._create_consistency_algorithm()
 
         # 事件系统
-        self.event_handlers: Dict[str, List[Callable]] = defaultdict(list)
+        self.event_handlers: dict[str, list[Callable]] = defaultdict(list)
         self.event_queue = asyncio.Queue()
         self.event_processor_running = False
 
@@ -554,12 +569,16 @@ class CacheConsistencyManager:
         self.version_manager = VersionManager()
 
         # 会话一致性支持
-        self.session_context: Dict[str, Dict[str, Any]] = {}
+        self.session_context: dict[str, dict[str, Any]] = {}
 
         # 统计信息
         self.stats = {
-            'reads': 0, 'writes': 0, 'invalidations': 0,
-            'conflicts': 0, 'resolutions': 0, 'errors': 0
+            "reads": 0,
+            "writes": 0,
+            "invalidations": 0,
+            "conflicts": 0,
+            "resolutions": 0,
+            "errors": 0,
         }
 
     def _create_consistency_algorithm(self) -> ConsistencyAlgorithm:
@@ -573,67 +592,74 @@ class CacheConsistencyManager:
             # 其他一致性级别的实现
             return EventualConsistencyAlgorithm(self.node_id, self.conflict_strategy)
 
-    async def read(self, key: str, session_id: Optional[str] = None) -> Any:
+    async def read(self, key: str, session_id: str | None = None) -> Any:
         """读取操作"""
         try:
             # 会话一致性检查
-            if (self.consistency_level == ConsistencyLevel.SESSION
-                and session_id and session_id in self.session_context):
+            if (
+                self.consistency_level == ConsistencyLevel.SESSION
+                and session_id
+                and session_id in self.session_context
+            ):
                 session_data = self.session_context[session_id]
                 if key in session_data:
                     return session_data[key]
 
             # 执行读取
             result = await self.algorithm.read(key, self.node_id)
-            self.stats['reads'] += 1
+            self.stats["reads"] += 1
 
             # 更新会话上下文
-            if (self.consistency_level == ConsistencyLevel.SESSION
-                and session_id and result is not None):
+            if (
+                self.consistency_level == ConsistencyLevel.SESSION
+                and session_id
+                and result is not None
+            ):
                 if session_id not in self.session_context:
                     self.session_context[session_id] = {}
                 self.session_context[session_id][key] = result
 
             # 触发读取事件
-            await self._trigger_event('read', {'key': key, 'result': result})
+            await self._trigger_event("read", {"key": key, "result": result})
 
             return result
 
         except Exception as e:
             logger.error(f"Read error for key {key}: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return None
 
-    async def write(self, key: str, value: Any, session_id: Optional[str] = None) -> bool:
+    async def write(
+        self, key: str, value: Any, session_id: str | None = None
+    ) -> bool:
         """写入操作"""
         try:
             # 执行写入
             success = await self.algorithm.write(key, value, self.node_id)
-            self.stats['writes'] += 1
+            self.stats["writes"] += 1
 
             if success:
                 # 更新会话上下文
-                if (self.consistency_level == ConsistencyLevel.SESSION
-                    and session_id):
+                if self.consistency_level == ConsistencyLevel.SESSION and session_id:
                     if session_id not in self.session_context:
                         self.session_context[session_id] = {}
                     self.session_context[session_id][key] = value
 
                 # 触发写入事件
-                await self._trigger_event('write', {'key': key, 'value': value})
+                await self._trigger_event("write", {"key": key, "value": value})
 
             return success
 
         except Exception as e:
             logger.error(f"Write error for key {key}: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
     async def invalidate(self, key: str) -> bool:
         """失效操作"""
         try:
             success = await self.algorithm.invalidate(key, self.node_id)
-            self.stats['invalidations'] += 1
+            self.stats["invalidations"] += 1
 
             if success:
                 # 清理会话上下文
@@ -642,28 +668,32 @@ class CacheConsistencyManager:
                         del session_data[key]
 
                 # 触发失效事件
-                await self._trigger_event('invalidate', {'key': key})
+                await self._trigger_event("invalidate", {"key": key})
 
             return success
 
         except Exception as e:
             logger.error(f"Invalidate error for key {key}: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
-    async def resolve_conflict(self, key: str, versions: List[CacheVersion]) -> CacheVersion:
+    async def resolve_conflict(
+        self, key: str, versions: list[CacheVersion]
+    ) -> CacheVersion:
         """解决冲突"""
         try:
-            self.stats['conflicts'] += 1
+            self.stats["conflicts"] += 1
             resolved = await self.algorithm.resolve_conflict(key, versions)
-            self.stats['resolutions'] += 1
+            self.stats["resolutions"] += 1
 
-            logger.info(f"Resolved conflict for key {key}: selected version from {resolved.node_id}")
+            logger.info(
+                f"Resolved conflict for key {key}: selected version from {resolved.node_id}"
+            )
             return resolved
 
         except Exception as e:
             logger.error(f"Conflict resolution error for key {key}: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             # 返回第一个版本作为默认
             return versions[0]
 
@@ -685,7 +715,7 @@ class CacheConsistencyManager:
             try:
                 event = await asyncio.wait_for(self.event_queue.get(), timeout=1.0)
                 await self._process_event(event)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except Exception as e:
                 logger.error(f"Event processing error: {e}")
@@ -723,7 +753,7 @@ class CacheConsistencyManager:
         """处理远程失效"""
         await self.version_manager.remove_version(key)
 
-    async def _trigger_event(self, event_name: str, data: Dict[str, Any]):
+    async def _trigger_event(self, event_name: str, data: dict[str, Any]):
         """触发事件"""
         if event_name in self.event_handlers:
             for handler in self.event_handlers[event_name]:
@@ -744,21 +774,29 @@ class CacheConsistencyManager:
         if session_id in self.session_context:
             del self.session_context[session_id]
 
-    async def get_statistics(self) -> Dict[str, Any]:
+    async def get_statistics(self) -> dict[str, Any]:
         """获取统计信息"""
         total_operations = sum(self.stats.values())
-        error_rate = (self.stats['errors'] / total_operations * 100) if total_operations > 0 else 0
-        conflict_rate = (self.stats['conflicts'] / self.stats['writes'] * 100) if self.stats['writes'] > 0 else 0
+        error_rate = (
+            (self.stats["errors"] / total_operations * 100)
+            if total_operations > 0
+            else 0
+        )
+        conflict_rate = (
+            (self.stats["conflicts"] / self.stats["writes"] * 100)
+            if self.stats["writes"] > 0
+            else 0
+        )
 
         return {
-            'consistency_level': self.consistency_level.value,
-            'conflict_strategy': self.conflict_strategy.value,
-            'statistics': self.stats.copy(),
-            'total_operations': total_operations,
-            'error_rate': round(error_rate, 2),
-            'conflict_rate': round(conflict_rate, 2),
-            'active_sessions': len(self.session_context),
-            'event_processor_running': self.event_processor_running
+            "consistency_level": self.consistency_level.value,
+            "conflict_strategy": self.conflict_strategy.value,
+            "statistics": self.stats.copy(),
+            "total_operations": total_operations,
+            "error_rate": round(error_rate, 2),
+            "conflict_rate": round(conflict_rate, 2),
+            "active_sessions": len(self.session_context),
+            "event_processor_running": self.event_processor_running,
         }
 
 
@@ -766,10 +804,10 @@ class VersionManager:
     """版本管理器"""
 
     def __init__(self):
-        self.versions: Dict[str, CacheVersion] = {}
+        self.versions: dict[str, CacheVersion] = {}
         self.lock = asyncio.Lock()
 
-    async def get_version(self, key: str) -> Optional[CacheVersion]:
+    async def get_version(self, key: str) -> CacheVersion | None:
         """获取版本"""
         async with self.lock:
             return self.versions.get(key)
@@ -785,17 +823,17 @@ class VersionManager:
             if key in self.versions:
                 del self.versions[key]
 
-    async def get_all_versions(self) -> Dict[str, CacheVersion]:
+    async def get_all_versions(self) -> dict[str, CacheVersion]:
         """获取所有版本"""
         async with self.lock:
             return self.versions.copy()
 
 
 # 全局缓存一致性管理器实例
-_consistency_manager: Optional[CacheConsistencyManager] = None
+_consistency_manager: CacheConsistencyManager | None = None
 
 
-def get_cache_consistency_manager() -> Optional[CacheConsistencyManager]:
+def get_cache_consistency_manager() -> CacheConsistencyManager | None:
     """获取全局缓存一致性管理器实例"""
     global _consistency_manager
     return _consistency_manager
@@ -804,7 +842,7 @@ def get_cache_consistency_manager() -> Optional[CacheConsistencyManager]:
 async def initialize_cache_consistency(
     node_id: str,
     consistency_level: ConsistencyLevel = ConsistencyLevel.EVENTUAL,
-    conflict_strategy: ConflictResolutionStrategy = ConflictResolutionStrategy.LAST_WRITE_WINS
+    conflict_strategy: ConflictResolutionStrategy = ConflictResolutionStrategy.LAST_WRITE_WINS,
 ) -> CacheConsistencyManager:
     """初始化缓存一致性管理器"""
     global _consistency_manager
@@ -812,11 +850,13 @@ async def initialize_cache_consistency(
     _consistency_manager = CacheConsistencyManager(
         node_id=node_id,
         consistency_level=consistency_level,
-        conflict_strategy=conflict_strategy
+        conflict_strategy=conflict_strategy,
     )
 
     # 启动事件处理器
     await _consistency_manager.start_event_processor()
 
-    logger.info(f"Cache consistency manager initialized with {consistency_level.value} consistency")
+    logger.info(
+        f"Cache consistency manager initialized with {consistency_level.value} consistency"
+    )
     return _consistency_manager

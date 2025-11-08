@@ -60,7 +60,7 @@ def create_comprehensive_training_data(num_matches: int = 1000) -> pd.DataFrame:
     ]
 
     data = []
-    for i in range(num_matches):
+    for _i in range(num_matches):
         home_team = np.random.choice(teams)
         away_team = np.random.choice([t for t in teams if t != home_team])
 
@@ -337,7 +337,7 @@ class TestMLWorkflowIntegration:
         # 至少应该有一些性能差异
         accuracies = list(version_metrics.values())
         assert (
-            len(set(round(acc, 3) for acc in accuracies)) >= 1
+            len({round(acc, 3) for acc in accuracies}) >= 1
         )  # 可能相同，但至少要测试
 
     def test_error_recovery_and_robustness(self):
@@ -525,7 +525,7 @@ class TestMLModelDeployment:
         predictions = []
         prediction_times = []
 
-        for i in range(10):
+        for _i in range(10):
             start_time = datetime.now()
             test_data = create_batch_prediction_data(1)[0]
             prediction = model.predict(test_data)

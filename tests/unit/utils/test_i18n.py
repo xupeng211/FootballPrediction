@@ -3,8 +3,7 @@
 Internationalization Support Test
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.utils.i18n import (
     I18nUtils,
