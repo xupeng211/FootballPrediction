@@ -33,16 +33,31 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+            ${{ runner.os }}-pip-
+
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/Library/Caches/pip
+            /tmp/pip-cache
+          key: ${{ runner.os }}-python-packages-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}-${{ env.PYTHON_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-python-packages-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}-
+            ${{ runner.os }}-python-packages-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # 确保aiosqlite正确安装
+          pip install "aiosqlite>=0.17.0" --no-cache-dir
           make install
           pip install bandit safety pytest-cov pytest-benchmark
 
@@ -178,7 +193,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
@@ -291,7 +306,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
