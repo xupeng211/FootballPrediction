@@ -73,22 +73,22 @@ class PredictionModel:
         }
         self.logger.info(f"PredictionModel initialized: {model_name}")
 
-    def train(self, X: pd.DataFrame, y: pd.Series, **kwargs) -> dict[str, Any]:
+    def train(self, x: pd.DataFrame, y: pd.Series, **kwargs) -> dict[str, Any]:
         """
         训练模型
 
         Args:
-            X: 特征数据
+            x: 特征数据
             y: 目标数据
             **kwargs: 其他参数
 
         Returns:
             训练结果
         """
-        self.logger.info(f"Training model {self.model_name} with {len(X)} samples")
+        self.logger.info(f"Training model {self.model_name} with {len(x)} samples")
 
         # 桩实现:模拟训练
-        self.feature_columns = list(X.columns)
+        self.feature_columns = list(x.columns)
         self.is_trained = True
 
         # 模拟训练指标
@@ -97,8 +97,8 @@ class PredictionModel:
             "precision": np.random.uniform(0.6, 0.9),
             "recall": np.random.uniform(0.6, 0.9),
             "f1_score": np.random.uniform(0.6, 0.9),
-            "training_samples": len(X),
-            "feature_count": len(X.columns),
+            "training_samples": len(x),
+            "feature_count": len(x.columns),
             "training_time": np.random.uniform(0.1, 5.0),
         }
 
@@ -110,12 +110,12 @@ class PredictionModel:
         )
         return metrics
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
+    def predict(self, x: pd.DataFrame) -> np.ndarray:
         """
         预测
 
         Args:
-            X: 特征数据
+            x: 特征数据
 
         Returns:
             预测结果
@@ -123,23 +123,23 @@ class PredictionModel:
         if not self.is_trained:
             raise ValueError("Model must be trained before prediction")
 
-        self.logger.debug(f"Predicting {len(X)} samples")
+        self.logger.debug(f"Predicting {len(x)} samples")
 
         # 桩实现:生成随机预测
         if self.model_type == "classification":
             n_classes = 3  # 默认3分类
-            predictions = np.random.randint(0, n_classes, size=len(X))
+            predictions = np.random.randint(0, n_classes, size=len(x))
         else:
-            predictions = np.random.uniform(0, 1, size=len(X))
+            predictions = np.random.uniform(0, 1, size=len(x))
 
         return predictions
 
-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+    def predict_proba(self, x: pd.DataFrame) -> np.ndarray:
         """
         预测概率
 
         Args:
-            X: 特征数据
+            x: 特征数据
 
         Returns:
             预测概率
@@ -147,28 +147,28 @@ class PredictionModel:
         if not self.is_trained:
             raise ValueError("Model must be trained before prediction")
 
-        self.logger.debug(f"Predicting probabilities for {len(X)} samples")
+        self.logger.debug(f"Predicting probabilities for {len(x)} samples")
 
         # 桩实现:生成随机概率
         n_classes = 3  # 默认3分类
-        proba = np.random.dirichlet(np.ones(n_classes), size=len(X))
+        proba = np.random.dirichlet(np.ones(n_classes), size=len(x))
 
         return proba
 
-    def evaluate(self, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
+    def evaluate(self, x: pd.DataFrame, y: pd.Series) -> dict[str, float]:
         """
         评估模型
 
         Args:
-            X: 特征数据
+            x: 特征数据
             y: 真实标签
 
         Returns:
             评估指标
         """
-        self.logger.info(f"Evaluating model with {len(X)} samples")
+        self.logger.info(f"Evaluating model with {len(x)} samples")
 
-        self.predict(X)
+        self.predict(x)
 
         # 桩实现:计算模拟指标
         metrics = {
@@ -255,17 +255,17 @@ class PredictionModel:
 
         return importance
 
-    def explain_prediction(self, X: pd.DataFrame) -> dict[str, Any]:
+    def explain_prediction(self, x: pd.DataFrame) -> dict[str, Any]:
         """
         解释预测结果
 
         Args:
-            X: 特征数据
+            x: 特征数据
 
         Returns:
             解释结果
         """
-        predictions = self.predict(X)
+        predictions = self.predict(x)
 
         # 桩实现:生成模拟解释
         explanations = []

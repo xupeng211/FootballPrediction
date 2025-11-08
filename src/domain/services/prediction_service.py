@@ -1,11 +1,3 @@
-"""
-预测领域服务
-Prediction Domain Service
-
-处理预测相关的复杂业务逻辑.
-Handles complex business logic related to predictions.
-"""
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -20,6 +12,14 @@ from src.domain.events.prediction_events import (
 )
 from src.domain.models.match import Match, MatchStatus
 from src.domain.models.prediction import Prediction, PredictionPoints, PredictionStatus
+
+"""
+预测领域服务
+Prediction Domain Service
+
+处理预测相关的复杂业务逻辑.
+Handles complex business logic related to predictions.
+"""
 
 
 class PredictionDomainService:
@@ -237,7 +237,7 @@ class PredictionDomainService:
     def calculate_prediction_confidence(
         self,
         user_history: dict[str, Any],
-        match重要性: float,
+        match_importance: float,
         team_form_diff: float | None = None,
     ) -> float:
         """计算预测信心度"""
@@ -249,7 +249,7 @@ class PredictionDomainService:
             base_confidence += (accuracy_rate - 0.5) * 0.3
 
         # 根据比赛重要性调整
-        base_confidence += (match重要性 - 0.5) * 0.2
+        base_confidence += (match_importance - 0.5) * 0.2
 
         # 根据球队状态差异调整
         if team_form_diff:
