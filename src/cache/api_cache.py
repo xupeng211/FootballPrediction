@@ -9,7 +9,6 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 from .redis_enhanced import get_redis_manager
 
@@ -63,7 +62,7 @@ class CacheMetrics:
 class ApiCache:
     """高性能API缓存系统"""
 
-    def __init__(self, config: ApiCacheConfig | None = None):
+    def __init__(self, config: Optional[ApiCacheConfig] = None):
         self.config = config or ApiCacheConfig()
         self.redis_manager = get_redis_manager()
         self.metrics = CacheMetrics()
@@ -75,9 +74,9 @@ class ApiCache:
         self,
         endpoint: str,
         method: str = "GET",
-        params: dict | None = None,
-        headers: dict | None = None,
-        user_id: str | None = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
+        user_id: Optional[str] = None,
     ) -> str:
         """生成缓存键"""
 
@@ -153,7 +152,7 @@ class ApiCache:
             self.metrics.errors += 1
             return None
 
-    def _calculate_ttl(self, base_ttl: int | None = None) -> int:
+    def _calculate_ttl(self, base_ttl: Optional[int] = None) -> int:
         """计算TTL"""
         if base_ttl is None:
             return self.config.default_ttl
@@ -166,10 +165,10 @@ class ApiCache:
         self,
         endpoint: str,
         method: str = "GET",
-        params: dict | None = None,
-        headers: dict | None = None,
-        user_id: str | None = None,
-    ) -> Any | None:
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
+        user_id: Optional[str] = None,
+    ) -> Optional[Any]:
         """获取缓存值"""
 
         try:
@@ -202,11 +201,11 @@ class ApiCache:
         endpoint: str,
         value: Any,
         method: str = "GET",
-        params: dict | None = None,
-        headers: dict | None = None,
-        user_id: str | None = None,
-        ttl: int | None = None,
-        tags: list[str] | None = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
+        user_id: Optional[str] = None,
+        ttl: Optional[int] = None,
+        tags: Optional[list[str]] = None,
     ) -> bool:
         """设置缓存值"""
 
@@ -249,9 +248,9 @@ class ApiCache:
         self,
         endpoint: str,
         method: str = "GET",
-        params: dict | None = None,
-        headers: dict | None = None,
-        user_id: str | None = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
+        user_id: Optional[str] = None,
     ) -> bool:
         """删除缓存值"""
 
@@ -366,10 +365,10 @@ class ApiCache:
 
 
 # 全局缓存实例
-_api_cache_instance: ApiCache | None = None
+_api_cache_instance: Optional[ApiCache] = None
 
 
-def get_api_cache(config: ApiCacheConfig | None = None) -> ApiCache:
+def get_api_cache(config: Optional[ApiCacheConfig] = None) -> ApiCache:
     """获取全局API缓存实例"""
     global _api_cache_instance
 
@@ -382,8 +381,8 @@ def get_api_cache(config: ApiCacheConfig | None = None) -> ApiCache:
 # 便捷装饰器
 def cache_api_response(
     ttl: int = 300,
-    tags: list[str] | None = None,
-    key_params: list[str] | None = None,
+    tags: Optional[list[str]] = None,
+    key_params: Optional[list[str]] = None,
     cache_user_specific: bool = False,
 ):
     """API响应缓存装饰器"""
