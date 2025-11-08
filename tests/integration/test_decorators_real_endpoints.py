@@ -5,10 +5,14 @@ decorators API真实端点测试
 """
 
 
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 
 from src.main import app
+
+logger = logging.getLogger(__name__)
 
 client = TestClient(app)
 

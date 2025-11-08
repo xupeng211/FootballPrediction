@@ -4,6 +4,7 @@ Phase 5.0 - 最后冲刺15%企业级覆盖率
 League领域模型comprehensive测试，业务逻辑全覆盖
 """
 
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -17,6 +18,8 @@ from src.domain.models.league import (
     LeagueStatus,
     LeagueType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TestLeagueSettingsComprehensive:

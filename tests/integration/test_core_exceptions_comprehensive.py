@@ -4,6 +4,8 @@ Phase 3.2 - Core模块异常系统全面测试
 异常处理comprehensive测试，基础设施快速覆盖
 """
 
+import logging
+
 import pytest
 
 from src.core.exceptions import (
@@ -36,6 +38,8 @@ from src.core.exceptions import (
     TrackingError,
     ValidationError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TestCoreExceptionsComprehensive:

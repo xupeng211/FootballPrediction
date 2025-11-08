@@ -6,10 +6,13 @@ Core Module Integration Tests
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 # 使用简化的导入方式
 try:

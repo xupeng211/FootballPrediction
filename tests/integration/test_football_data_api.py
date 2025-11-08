@@ -15,7 +15,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import logging
+
 from src.collectors.data_sources import data_source_manager
+
+logger = logging.getLogger(__name__)
 
 
 async def test_football_data_api():

@@ -5,6 +5,7 @@ Phase 3.1 - Utils模块文件工具类全面测试
 """
 
 import json
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -12,6 +13,8 @@ from pathlib import Path
 import pytest
 
 from src.utils.file_utils import FileUtils
+
+logger = logging.getLogger(__name__)
 
 
 class TestFileUtilsComprehensive:

@@ -4,6 +4,7 @@ Phase 2 - Database模块核心功能测试
 专注于提升database核心文件的测试覆盖率
 """
 
+import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -17,6 +18,8 @@ from src.database.models.league import League
 from src.database.models.match import Match
 from src.database.models.predictions import Predictions
 from src.database.models.team import Team
+
+logger = logging.getLogger(__name__)
 
 
 class TestDatabaseCorePhase2:

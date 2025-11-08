@@ -4,9 +4,12 @@
 验证从1.06%基准开始的改进成果
 """
 
+import logging
 import subprocess
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def run_coverage_test():

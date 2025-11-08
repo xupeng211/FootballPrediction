@@ -4,7 +4,10 @@
 不依赖pytest或conftest，直接测试关键模块导入
 """
 
+import logging
 import sys
+
+logger = logging.getLogger(__name__)
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, ".")

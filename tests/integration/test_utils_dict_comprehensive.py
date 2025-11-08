@@ -4,9 +4,13 @@ Phase 3.1 - Utils模块全面测试
 字典工具类comprehensive测试，快速提升覆盖率
 """
 
+import logging
+
 import pytest
 
 from src.utils.dict_utils import DictUtils
+
+logger = logging.getLogger(__name__)
 
 
 class TestDictUtilsComprehensive:

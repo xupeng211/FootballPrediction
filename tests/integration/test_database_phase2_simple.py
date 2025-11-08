@@ -4,6 +4,7 @@ Phase 2 - Database模块简化测试
 专注于实际可测试的database核心功能
 """
 
+import logging
 import os
 from unittest.mock import patch
 
@@ -16,6 +17,8 @@ from src.database.models.league import League
 from src.database.models.match import Match
 from src.database.models.predictions import Predictions
 from src.database.models.team import Team
+
+logger = logging.getLogger(__name__)
 
 
 class TestDatabaseSimplePhase2:

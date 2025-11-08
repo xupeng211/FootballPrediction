@@ -12,11 +12,15 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+import logging
+
 from src.collectors.oddsportal_integration import (
     OddsPortalAdapter,
     OddsPortalIntegration,
 )
 from src.core.logging_system import get_logger
+
+logger = logging.getLogger(__name__)
 
 logger = get_logger(__name__)
 

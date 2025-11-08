@@ -6,10 +6,13 @@
 """
 
 import asyncio
+import logging
 from datetime import datetime
 
 import httpx
 from passlib.context import CryptContext
+
+logger = logging.getLogger(__name__)
 
 # 测试配置
 API_BASE_URL = "http://localhost:8000/api/v1"

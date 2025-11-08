@@ -5,9 +5,12 @@
 """
 
 import importlib
+import logging
 import subprocess
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def test_python_environment():

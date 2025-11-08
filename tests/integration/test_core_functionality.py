@@ -6,8 +6,11 @@ Core Functionality Quick Tests
 针对最核心的业务逻辑进行快速测试验证
 """
 
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, os.path.dirname(__file__))
 

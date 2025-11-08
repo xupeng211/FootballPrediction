@@ -13,7 +13,11 @@ load_dotenv()
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
+import logging
+
 from src.collectors.data_sources import data_source_manager
+
+logger = logging.getLogger(__name__)
 
 
 async def test_data_source_api():

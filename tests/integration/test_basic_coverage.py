@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 #!/usr/bin/env python3
 """
 基础覆盖率测试用例

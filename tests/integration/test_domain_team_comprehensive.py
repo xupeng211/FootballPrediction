@@ -4,11 +4,14 @@ Phase 5.0 - 最后冲刺15%企业级覆盖率
 Team领域模型comprehensive测试，业务逻辑全覆盖
 """
 
+import logging
 from datetime import datetime
 
 import pytest
 
 from src.domain.models.team import DomainError, Team, TeamForm, TeamStats, TeamType
+
+logger = logging.getLogger(__name__)
 
 
 class TestTeamStatsComprehensive:
