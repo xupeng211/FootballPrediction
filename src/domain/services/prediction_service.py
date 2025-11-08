@@ -87,6 +87,7 @@ class PredictionDomainService:
             predicted_home=predicted_home,
             predicted_away=predicted_away,
             confidence=confidence,
+            prediction=_prediction,
         )
         self._events.append(event)
 
@@ -95,28 +96,46 @@ class PredictionDomainService:
     def update_prediction(
         self,
         prediction: Prediction,
-        new_predicted_home: int,
-        new_predicted_away: int,
+        new_predicted_home: int | None = None,
+        new_predicted_away: int | None = None,
+        confidence: float | None = None,
         new_confidence: float | None = None,
         new_notes: str | None = None,
-    ) -> None:
+        notes: str | None = None,  # 兼容性参数
+    ) -> Prediction:
         """更新预测"""
         # 验证预测状态
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能更新待处理的预测")
 
-        # 验证比分
-        if new_predicted_home < 0 or new_predicted_away < 0:
-            raise ValueError("预测比分不能为负数")
-
         # 记录旧值
         old_home = prediction.score.predicted_home if prediction.score else None
         old_away = prediction.score.predicted_away if prediction.score else None
 
+        # 确定新的预测值
+        final_home = new_predicted_home if new_predicted_home is not None else old_home
+        final_away = new_predicted_away if new_predicted_away is not None else old_away
+
+        # 验证比分（如果提供）
+        if final_home is not None and final_home < 0:
+            raise ValueError("预测比分不能为负数")
+        if final_away is not None and final_away < 0:
+            raise ValueError("预测比分不能为负数")
+
+        # 使用confidence或new_confidence（向后兼容）
+        final_confidence = confidence or new_confidence
+
+        # 如果没有提供任何更新参数，只更新confidence
+        if final_home is None or final_away is None:
+            # 只更新confidence
+            if final_confidence is not None and prediction.score:
+                prediction.make_prediction(
+                    final_home or 0, final_away or 0, final_confidence
+                )
+            return prediction
+
         # 更新预测
-        prediction.make_prediction(
-            new_predicted_home, new_predicted_away, new_confidence
-        )
+        prediction.make_prediction(final_home, final_away, final_confidence)
 
         # 记录领域事件
         if prediction.id is None:
@@ -126,10 +145,12 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             old_predicted_home=old_home or 0,
             old_predicted_away=old_away or 0,
-            new_predicted_home=new_predicted_home,
-            new_predicted_away=new_predicted_away,
+            new_predicted_home=final_home,
+            new_predicted_away=final_away,
         )
         self._events.append(event)
+
+        return prediction
 
     def evaluate_prediction(
         self,
@@ -172,7 +193,7 @@ class PredictionDomainService:
 
     def cancel_prediction(
         self, prediction: Prediction, reason: str = "用户取消"
-    ) -> None:
+    ) -> Prediction:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:
             raise ValueError("只能取消待处理的预测")
@@ -185,6 +206,8 @@ class PredictionDomainService:
 
         event = PredictionCancelledEvent(prediction_id=prediction.id, reason=reason)
         self._events.append(event)
+
+        return prediction
 
     def expire_prediction(self, prediction: Prediction) -> None:
         """使预测过期"""
@@ -297,3 +320,11 @@ class PredictionDomainService:
     def clear_domain_events(self) -> None:
         """清除领域事件"""
         self._events.clear()
+
+    def clear_events(self) -> None:
+        """清除事件（别名方法）"""
+        self.clear_domain_events()
+
+    def get_events(self) -> list[Any]:
+        """获取事件（别名方法）"""
+        return self.get_domain_events()

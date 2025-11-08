@@ -334,7 +334,7 @@ class PerformanceEnhancementService:
         if not self.performance_metrics:
             return ["没有性能数据可分析"]
 
-        latest = self.performance_metrics[-1]
+        self.performance_metrics[-1]
         avg_cpu = sum(m.cpu_usage for m in self.performance_metrics) / len(
             self.performance_metrics
         )

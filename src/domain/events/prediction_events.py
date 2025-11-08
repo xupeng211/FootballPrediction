@@ -47,6 +47,7 @@ class PredictionCreatedEvent(DomainEvent):
         predicted_home: int,
         predicted_away: int,
         confidence: float | None = None,
+        prediction=None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -56,6 +57,7 @@ class PredictionCreatedEvent(DomainEvent):
         self.predicted_home = predicted_home
         self.predicted_away = predicted_away
         self.confidence = confidence
+        self.prediction = prediction
 
     def _get_event_data(self) -> dict[str, Any]:
         return {

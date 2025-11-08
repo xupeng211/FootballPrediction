@@ -596,7 +596,7 @@ class TestPredictionServiceIntegration:
         updated_prediction = service.update_prediction(
             prediction=prediction, confidence=0.9, notes="Updated"
         )
-        assert updated_prediction.confidence == 0.9
+        assert float(updated_prediction.confidence.value) == 0.9
 
         # 3. 评估预测
         service.clear_events()
@@ -604,7 +604,9 @@ class TestPredictionServiceIntegration:
             prediction=updated_prediction, actual_home=2, actual_away=1
         )
         assert evaluated_prediction.status == PredictionStatus.EVALUATED
-        assert evaluated_prediction.points.total_points == 30.0
+        assert (
+            evaluated_prediction.points.total_points == 34.0
+        )  # 10基础分 + 20准确度奖励 + 4置信度奖励
 
         # 4. 验证工作流程中的事件
         events = service.get_events()

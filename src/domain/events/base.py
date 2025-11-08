@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
@@ -45,6 +45,7 @@ class DomainEvent(ABC):
             "data": self._get_event_data(),
         }
 
+    @abstractmethod
     def _get_event_data(self) -> dict[str, Any]:
         """
         获取事件特定数据

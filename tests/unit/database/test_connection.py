@@ -36,7 +36,7 @@ class TestDatabaseConnection:
     @pytest.fixture
     def database_manager(self, mock_database_config):
         """创建数据库管理器实例"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             mock_manager = Mock()
             MockDBManager.return_value = mock_manager
             return mock_manager
@@ -98,7 +98,7 @@ class TestDatabaseConnectionErrorHandling:
     @pytest.mark.database
     def test_connection_error_handling(self):
         """测试连接错误处理"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             # 模拟连接错误
             mock_db = Mock()
             mock_db.connect.side_effect = Exception("Connection failed")
@@ -119,7 +119,7 @@ class TestDatabaseConnectionErrorHandling:
     @pytest.mark.database
     def test_connection_timeout_handling(self):
         """测试连接超时处理"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             # 模拟连接超时
             mock_db = Mock()
             mock_db.connect.side_effect = TimeoutError("Connection timeout")
@@ -137,7 +137,7 @@ class TestDatabaseHealth:
     def test_database_health_check(self):
         """测试数据库健康检查"""
         # 模拟健康检查
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             mock_db = Mock()
             mock_db.health_check.return_value = {"status": "healthy", "connections": 5}
             MockDBManager.return_value = mock_db
@@ -150,7 +150,7 @@ class TestDatabaseHealth:
     @pytest.mark.database
     def test_database_health_check_unhealthy(self):
         """测试数据库不健康状态"""
-        with patch("database.base.DatabaseManager") as MockDBManager:
+        with patch("src.database.connection.DatabaseManager") as MockDBManager:
             mock_db = Mock()
             mock_db.health_check.return_value = {
                 "status": "unhealthy",

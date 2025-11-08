@@ -24,6 +24,7 @@ from src.core.exceptions import (
     DependencyInjectionError,
     DomainError,
     FootballPredictionError,
+    FootballTimeout,  # 使用新的别名而不是TimeoutError
     LineageError,
     ModelError,
     PipelineError,
@@ -34,7 +35,6 @@ from src.core.exceptions import (
     StreamingError,
     TaskExecutionError,
     TaskRetryError,
-    TimeoutError,
     TrackingError,
     ValidationError,
 )
@@ -280,7 +280,7 @@ class TestCoreExceptionsComprehensive:
             AuthenticationError,
             AuthorizationError,
             RateLimitError,
-            TimeoutError,
+            FootballTimeout,
             AdapterError,
             StreamingError,
         ]

@@ -259,13 +259,15 @@ class ConfigurationBinder:
                     # 在单例模式下，预执行工厂函数以获取返回类型
                     if lifetime == ServiceLifetime.SINGLETON:
                         instance = factory_func()
-                        if hasattr(instance, '__class__'):
+                        if hasattr(instance, "__class__"):
                             service_type = instance.__class__
                         # 现在用这个实例注册单例
                         self.container.register_singleton(
                             service_type, instance=instance
                         )
-                        logger.debug(f"注册工厂单例服务: {service_name} -> {service_type.__name__}")
+                        logger.debug(
+                            f"注册工厂单例服务: {service_name} -> {service_type.__name__}"
+                        )
                         return
                 except Exception as e:
                     logger.debug(f"无法预执行工厂函数: {e}")
@@ -310,6 +312,7 @@ class ConfigurationBinder:
                 class DynamicType:
                     def __init__(self):
                         self.name = type_name
+
                 return DynamicType
             else:
                 raise DependencyInjectionError(f"无效的类型名称: {type_name}") from e
@@ -352,7 +355,9 @@ class ConfigurationBinder:
             # 处理 environment 条件（从环境变量获取）
             elif condition.startswith("environment =="):
                 env_name = condition.split("'")[1]
-                current_env = os.environ.get("ENVIRONMENT", os.environ.get("ENV", "development"))
+                current_env = os.environ.get(
+                    "ENVIRONMENT", os.environ.get("ENV", "development")
+                )
                 return current_env == env_name
 
             # 默认情况下返回True（条件不限制）

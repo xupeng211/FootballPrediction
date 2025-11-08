@@ -158,9 +158,7 @@ class AsyncTaskManager:
         except asyncio.QueueFull as e:
             raise ValueError("任务队列已满") from e
 
-    async def get_task_result(
-        self, task_id: str, timeout: float | None = None
-    ) -> Any:
+    async def get_task_result(self, task_id: str, timeout: float | None = None) -> Any:
         """获取任务结果"""
         start_time = time.time()
 

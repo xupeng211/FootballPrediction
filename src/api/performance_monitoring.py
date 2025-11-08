@@ -90,7 +90,9 @@ async def get_performance_status():
 
     except Exception as e:
         logger.error(f"获取性能状态失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取性能状态失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取性能状态失败: {str(e)}"
+        ) from e
 
 
 @router.get("/metrics", response_model=list[PerformanceStats])
@@ -122,7 +124,9 @@ async def get_performance_metrics(
 
     except Exception as e:
         logger.error(f"获取性能指标失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取性能指标失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取性能指标失败: {str(e)}"
+        ) from e
 
 
 @router.get("/report", response_model=PerformanceReport)
@@ -162,7 +166,9 @@ async def get_performance_report():
 
     except Exception as e:
         logger.error(f"获取性能报告失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取性能报告失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取性能报告失败: {str(e)}"
+        ) from e
 
 
 @router.get("/recommendations", response_model=list[Recommendation])
@@ -195,7 +201,9 @@ async def get_performance_recommendations():
 
     except Exception as e:
         logger.error(f"获取性能建议失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取性能建议失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取性能建议失败: {str(e)}"
+        ) from e
 
 
 @router.post("/optimize")
@@ -213,7 +221,9 @@ async def apply_performance_optimization(config: OptimizationConfig) -> dict[str
 
     except Exception as e:
         logger.error(f"应用性能优化失败: {e}")
-        raise HTTPException(status_code=500, detail=f"应用性能优化失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"应用性能优化失败: {str(e)}"
+        ) from e
 
 
 @router.get("/health")
@@ -295,4 +305,6 @@ async def get_task_statistics():
 
     except Exception as e:
         logger.error(f"获取任务统计失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取任务统计失败: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"获取任务统计失败: {str(e)}"
+        ) from e

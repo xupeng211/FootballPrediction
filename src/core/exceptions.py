@@ -135,8 +135,8 @@ class FootballTimeoutError(FootballPredictionError):
     """超时异常"""
 
 
-# 别名，保持向后兼容
-TimeoutError = FootballTimeoutError
+# 别名，保持向后兼容 - 使用不同的名称避免遮蔽内置类型
+FootballTimeout = FootballTimeoutError
 
 
 class AdapterError(FootballPredictionError):
