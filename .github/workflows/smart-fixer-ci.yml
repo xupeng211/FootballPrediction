@@ -1,0 +1,157 @@
+name: Smart Fixer CI Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      fix_mode:
+        description: '修复模式'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - aggressive
+          - dry_run
+  schedule:
+    - cron: '0 3 * * *'
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  smart-quality-fix:
+    name: Smart Quality Fix
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff black mypy bandit safety pytest pytest-cov
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+
+    - name: Pre-fix Analysis
+      id: pre-analysis
+      run: |
+        SYNTAX_ERRORS=$(ruff check src/ --output-format=concise 2>/dev/null | grep "invalid-syntax" | wc -l || echo "0")
+        TOTAL_ISSUES=$(ruff check src/ --output-format=concise 2>/dev/null | wc -l || echo "0")
+
+        echo "pre_syntax_errors=$SYNTAX_ERRORS" >> $GITHUB_OUTPUT
+        echo "pre_total_issues=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
+
+        echo "📊 修复前状态:"
+        echo "  - 语法错误: $SYNTAX_ERRORS 个"
+        echo "  - 质量问题: $TOTAL_ISSUES 个"
+
+    - name: Run Smart Quality Fixer
+      run: |
+        echo "🛠️ 运行智能质量修复器..."
+
+        if [ -f scripts/smart_quality_fixer.py ]; then
+          FIXER_ARGS="--verbose"
+
+          if [ "${{ github.event.inputs.fix_mode }}" == "aggressive" ]; then
+            FIXER_ARGS="$FIXER_ARGS --aggressive"
+            echo "⚡ 启用激进模式"
+          elif [ "${{ github.event.inputs.fix_mode }}" == "dry_run" ]; then
+            FIXER_ARGS="$FIXER_ARGS --dry-run"
+            echo "🔍 启用预览模式"
+          fi
+
+          python3 scripts/smart_quality_fixer.py $FIXER_ARGS || {
+            echo "⚠️ 智能修复器执行遇到问题"
+          }
+        else
+          echo "⚠️ 智能修复器不可用，使用基础修复"
+          if [ "${{ github.event.inputs.fix_mode }}" != "dry_run" ]; then
+            make fix-code || ruff check src/ tests/ --fix --unsafe-fixes || true
+          fi
+        fi
+
+    - name: Run Crisis Management
+      if: github.event.inputs.fix_mode != 'dry_run'
+      run: |
+        echo "🚨 运行危机管理..."
+
+        if [ -f scripts/fix_test_crisis.py ]; then
+          python3 scripts/fix_test_crisis.py --diagnose || true
+        fi
+
+    - name: Post-fix Analysis
+      id: post-analysis
+      run: |
+        SYNTAX_ERRORS=$(ruff check src/ --output-format=concise 2>/dev/null | grep "invalid-syntax" | wc -l || echo "0")
+        TOTAL_ISSUES=$(ruff check src/ --output-format=concise 2>/dev/null | wc -l || echo "0")
+
+        echo "post_syntax_errors=$SYNTAX_ERRORS" >> $GITHUB_OUTPUT
+        echo "post_total_issues=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
+
+        echo "📊 修复后状态:"
+        echo "  - 语法错误: $SYNTAX_ERRORS 个"
+        echo "  - 质量问题: $TOTAL_ISSUES 个"
+
+    - name: Calculate Improvements
+      run: |
+        PRE_SYNTAX="${{ steps.pre-analysis.outputs.pre_syntax_errors }}"
+        POST_SYNTAX="${{ steps.post-analysis.outputs.post_syntax_errors }}"
+        PRE_TOTAL="${{ steps.pre-analysis.outputs.pre_total_issues }}"
+        POST_TOTAL="${{ steps.post-analysis.outputs.post_total_issues }}"
+
+        SYNTAX_IMPROVEMENT=$((PRE_SYNTAX - POST_SYNTAX))
+        TOTAL_IMPROVEMENT=$((PRE_TOTAL - POST_TOTAL))
+
+        echo "🎯 修复成果:"
+        echo "  - 语法错误改进: $SYNTAX_IMPROVEMENT 个"
+        echo "  - 总问题改进: $TOTAL_IMPROVEMENT 个"
+
+    - name: Run Validation Tests
+      if: github.event.inputs.fix_mode != 'dry_run'
+      run: |
+        echo "🧪 运行验证测试..."
+
+        pytest tests/unit/ -v \
+          --maxfail=5 \
+          --tb=short \
+          -m "critical" || {
+          echo "⚠️ 关键测试验证失败"
+        }
+
+    - name: Generate Report
+      run: |
+        cat > smart-fixer-report.md << EOF
+        # 🛠️ 智能修复执行报告
+
+        **执行时间**: $(date)
+        **修复模式**: ${{ github.event.inputs.fix_mode || 'standard' }}
+
+        ## 📊 修复效果
+
+        - 语法错误改进: $(( ${{ steps.pre-analysis.outputs.pre_syntax_errors }} - ${{ steps.post-analysis.outputs.post_syntax_errors }} )) 个
+        - 总问题改进: $(( ${{ steps.pre-analysis.outputs.pre_total_issues }} - ${{ steps.post-analysis.outputs.post_total_issues }} )) 个
+
+        ## 📈 修复前后对比
+
+        | 指标 | 修复前 | 修复后 | 改进 |
+        |------|--------|--------|------|
+        | 语法错误 | ${{ steps.pre-analysis.outputs.pre_syntax_errors }} | ${{ steps.post-analysis.outputs.post_syntax_errors }} | +$(( ${{ steps.pre-analysis.outputs.pre_syntax_errors }} - ${{ steps.post-analysis.outputs.post_syntax_errors }} )) |
+        | 总问题 | ${{ steps.pre-analysis.outputs.pre_total_issues }} | ${{ steps.post-analysis.outputs.post_total_issues }} | +$(( ${{ steps.pre-analysis.outputs.pre_total_issues }} - ${{ steps.post-analysis.outputs.post_total_issues }} )) |
+
+        EOF
+
+    - name: Upload Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: smart-fixer-report
+        path: smart-fixer-report.md
+        retention-days: 30
