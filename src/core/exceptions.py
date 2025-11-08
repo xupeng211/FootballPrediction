@@ -135,6 +135,10 @@ class FootballTimeoutError(FootballPredictionError):
     """超时异常"""
 
 
+# 别名，保持向后兼容
+TimeoutError = FootballTimeoutError
+
+
 class AdapterError(FootballPredictionError):
     """适配器相关异常"""
 

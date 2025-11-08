@@ -15,9 +15,6 @@ T = TypeVar("T")
 
 
 class RetryConfig:
-    """类文档字符串"""
-
-    pass  # 添加pass语句
     """重试配置类"""
 
     def __init__(
@@ -28,17 +25,76 @@ class RetryConfig:
         exponential_base: float = 2.0,
         jitter: bool = True,
         retryable_exceptions: tuple = (Exception,),
+        delay: float = None,  # 兼容性参数，映射到base_delay
+        backoff_strategy: str = None,  # 退避策略参数
     ):
         self.max_attempts = max_attempts
-        self.base_delay = base_delay
+        # 支持delay参数以保持向后兼容
+        if delay is not None:
+            self.base_delay = delay
+        else:
+            self.base_delay = base_delay
         self.max_delay = max_delay
         self.exponential_base = exponential_base
         self.jitter = jitter
         self.retryable_exceptions = retryable_exceptions
+        self.backoff_strategy = backoff_strategy
 
 
 class RetryError(Exception):
     """重试失败异常"""
+
+
+class FixedBackoffStrategy:
+    """固定退避策略"""
+
+    def __init__(self, delay: float = 1.0):
+        self.delay = delay
+
+
+class LinearBackoffStrategy:
+    """线性退避策略"""
+
+    def __init__(self, initial_delay: float = 1.0, increment: float = 0.5):
+        self.initial_delay = initial_delay
+        self.increment = increment
+        self.delay = initial_delay  # 添加delay属性以兼容测试
+
+    def get_delay(self, attempt: int = 0) -> float:
+        """获取指定尝试次数的延迟时间"""
+        return self.initial_delay + (self.increment * attempt)
+
+
+class ExponentialBackoffStrategy:
+    """指数退避策略"""
+
+    def __init__(self, initial_delay: float = 1.0, multiplier: float = 2.0):
+        self.initial_delay = initial_delay
+        self.multiplier = multiplier
+        self.delay = initial_delay  # 添加delay属性以兼容测试
+
+    def get_delay(self, attempt: int = 0) -> float:
+        """获取指定尝试次数的延迟时间"""
+        return self.initial_delay * (self.multiplier ** attempt)
+
+
+class PolynomialBackoffStrategy:
+    """多项式退避策略"""
+
+    def __init__(self, initial_delay: float = 1.0, exponent: float = 2.0):
+        self.initial_delay = initial_delay
+        self.exponent = exponent
+        self.delay = initial_delay  # 添加delay属性以兼容测试
+
+    def get_delay(self, attempt: int = 0) -> float:
+        """获取指定尝试次数的延迟时间"""
+        return self.initial_delay * (attempt ** self.exponent) if attempt > 0 else self.initial_delay
+
+
+class BackoffStrategy:
+    """退避策略基类"""
+
+    pass
 
 
 def retry_with_exponential_backoff(
@@ -165,12 +221,7 @@ def async_retry(config: RetryConfig | None = None):
     )
 
 
-# 简单的别名
-BackoffStrategy = RetryConfig
-ExponentialBackoffStrategy = RetryConfig
-FixedBackoffStrategy = RetryConfig
-LinearBackoffStrategy = RetryConfig
-PolynomialBackoffStrategy = RetryConfig
+# 导出别名
 retry_sync = retry
 retry_async = async_retry
 

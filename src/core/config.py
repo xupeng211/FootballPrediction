@@ -63,7 +63,10 @@ class Config:
                 logging.warning(f"配置文件加载失败: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置项 - 支持默认值,确保程序健壮性"""
+        """获取配置项 - 支持点号分隔的嵌套键和默认值,确保程序健壮性"""
+        # 支持点号分隔的嵌套键
+        if '.' in key:
+            return self.get_nested(key, default)
         return self.config.get(str(key), default)
 
     def set(self, key: str, value: Any) -> None:
@@ -77,6 +80,51 @@ class Config:
         with open(self.config_file, "w", encoding="utf-8") as f:
             # ensure_ascii=False保证中文字符正确显示
             json.dump(self.config, f, ensure_ascii=False, indent=2)
+
+    def load_from_dict(self, data: dict[str, Any]) -> None:
+        """从字典加载配置"""
+        if not isinstance(data, dict):
+            raise ValueError("配置数据必须是字典类型")
+        self.config.update(data)
+
+    def load_from_file(self, file_path: str | Path) -> None:
+        """从文件加载配置"""
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"配置文件不存在: {file_path}")
+
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    raise ValueError("配置文件内容必须是字典格式")
+                self.config.update(data)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"配置文件格式错误: {e}") from e
+
+    def get_nested(self, key_path: str, default: Any = None) -> Any:
+        """获取嵌套配置项，支持点号分隔的路径"""
+        keys = key_path.split('.')
+        current = self.config
+
+        try:
+            for key in keys:
+                current = current[key]
+            return current
+        except (KeyError, TypeError):
+            return default
+
+    def set_nested(self, key_path: str, value: Any) -> None:
+        """设置嵌套配置项，支持点号分隔的路径"""
+        keys = key_path.split('.')
+        current = self.config
+
+        for key in keys[:-1]:
+            if key not in current:
+                current[key] = {}
+            current = current[key]
+
+        current[keys[-1]] = value
 
 
 SettingsClass = BaseSettings if HAS_PYDANTIC else object
