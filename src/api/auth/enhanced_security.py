@@ -14,7 +14,7 @@ import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 # ============================================================================
 # 配置和常量
@@ -50,8 +50,9 @@ class UserCredentials(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     password: str = Field(..., min_length=8, max_length=128, description="密码")
 
-    @validator("password")
-    def validate_password(self, v):
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
         if not any(c.isupper() for c in v):
             raise ValueError("密码必须包含至少一个大写字母")
         if not any(c.islower() for c in v):

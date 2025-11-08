@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 # ============================================================================
 # 基础验证器
@@ -378,14 +378,16 @@ class SecureUserInput(BaseModel):
     email: str | None = Field(None, description="邮箱地址")
     number_input: float | None = Field(None, ge=0, le=1000000, description="数字输入")
 
-    @validator("text_input")
-    def sanitize_text_input(self, v):
+    @field_validator("text_input")
+    @classmethod
+    def sanitize_text_input(cls, v):
         """清理文本输入"""
         validator = BaseValidator()
         return validator.sanitize_string(v, max_length=1000)
 
-    @validator("email")
-    def validate_email_format(self, v):
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, v):
         """验证邮箱格式"""
         if v is not None:
             validator = BaseValidator()
@@ -401,16 +403,18 @@ class SecureFileUpload(BaseModel):
     file_size: int = Field(..., ge=0, description="文件大小（字节）")
     file_type: str = Field(default="image", description="文件类型")
 
-    @validator("filename")
-    def validate_filename_safe(self, v):
+    @field_validator("filename")
+    @classmethod
+    def validate_filename_safe(cls, v):
         """验证文件名安全性"""
         is_valid, error_msg = FileUploadValidator.validate_filename(v)
         if not is_valid:
             raise ValueError(error_msg)
         return v
 
-    @validator("file_type")
-    def validate_file_type(self, v):
+    @field_validator("file_type")
+    @classmethod
+    def validate_file_type(cls, v):
         """验证文件类型"""
         if v not in FileUploadValidator.ALLOWED_EXTENSIONS:
             raise ValueError(f"不支持的文件类型: {v}")

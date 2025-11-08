@@ -4,12 +4,15 @@
 测试数据清洗、缺失值处理和数据预处理功能
 """
 
+import logging
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+
+logger = logging.getLogger(__name__)
 
 from src.data.processing.data_preprocessor import (
     DataPreprocessor,
@@ -20,9 +23,6 @@ from src.data.processing.football_data_cleaner import (
     clean_football_data,
 )
 from src.data.processing.missing_data_handler import (
-import logging
-
-logger = logging.getLogger(__name__)
     MissingDataHandler,
     handle_missing_data,
 )

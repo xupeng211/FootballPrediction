@@ -65,7 +65,7 @@ class Config:
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置项 - 支持点号分隔的嵌套键和默认值,确保程序健壮性"""
         # 支持点号分隔的嵌套键
-        if '.' in key:
+        if "." in key:
             return self.get_nested(key, default)
         return self.config.get(str(key), default)
 
@@ -104,7 +104,7 @@ class Config:
 
     def get_nested(self, key_path: str, default: Any = None) -> Any:
         """获取嵌套配置项，支持点号分隔的路径"""
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         current = self.config
 
         try:
@@ -116,7 +116,7 @@ class Config:
 
     def set_nested(self, key_path: str, value: Any) -> None:
         """设置嵌套配置项，支持点号分隔的路径"""
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         current = self.config
 
         for key in keys[:-1]:

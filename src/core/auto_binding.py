@@ -117,6 +117,10 @@ class AutoBinder:
                             f"注册命名实现: {interface.__name__} -> {impl.__name__}"
                         )
 
+    def auto_scan_and_bind(self, module_path: str) -> None:
+        """扫描并绑定指定模块 - bind_from_assembly的别名"""
+        self.bind_from_assembly(module_path)
+
     def auto_bind(self) -> None:
         """执行自动绑定"""
         logger.info("开始自动绑定")

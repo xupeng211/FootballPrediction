@@ -6,14 +6,14 @@ ServiceLifecycleManager 综合测试
 """
 
 import asyncio
+import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.core.service_lifecycle import (
-import logging
-
 logger = logging.getLogger(__name__)
+
+from src.core.service_lifecycle import (
     ServiceInfo,
     ServiceLifecycleError,
     ServiceLifecycleManager,

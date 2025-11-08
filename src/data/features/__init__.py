@@ -5,7 +5,7 @@ from .feature_definitions import (
     team_entity,
     team_recent_stats_view,
 )
-from .feature_store import Feature_Store as FootballFeatureStore
+from .feature_store import FeatureStore as FootballFeatureStore
 
 """
 特征仓库模块

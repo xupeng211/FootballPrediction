@@ -8,10 +8,7 @@ from decimal import Decimal
 
 import pytest
 
-import logging
-
 from src.domain.models.prediction import (
-
     ConfidenceScore,
     DomainError,
     Prediction,

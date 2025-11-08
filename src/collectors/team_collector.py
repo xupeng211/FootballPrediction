@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from .base_collector import FootballDataCollector
+from .football_data_collector import FootballDataCollector
 
 logger = logging.getLogger(__name__)
 

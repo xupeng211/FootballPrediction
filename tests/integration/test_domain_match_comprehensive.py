@@ -8,10 +8,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-import logging
-
 from src.domain.models.match import (
-
     DomainError,
     Match,
     MatchResult,
