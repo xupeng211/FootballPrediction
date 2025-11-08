@@ -1,0 +1,172 @@
+# 质量门禁配置
+# Quality Gate Configuration
+# 确保代码质量和测试覆盖率标准
+
+version: "1.0"
+project: "FootballPrediction"
+updated: "2025-11-07"
+
+# 质量门禁标准
+quality_gates:
+  # 代码质量标准
+  code_quality:
+    ruff_errors: 0          # 不允许Ruff错误
+    ruff_warnings: 250      # 最多250个警告（考虑到项目规模）
+    mypy_errors: 0           # 不允许MyPy错误
+    mypy_warnings: 3         # 最多3个警告
+
+  # 测试覆盖率标准
+  coverage:
+    minimum: 40             # 最低覆盖率40%
+    core_modules: 41          # 核心模块最低41%
+    api_modules: 35          # API模块最低35%
+
+  # 测试通过率标准
+  test_success:
+    minimum_pass_rate: 55   # 最低55%通过率（考虑到当前项目状态）
+    critical_tests: 70     # 关键测试70%通过率
+
+  # 性能标准
+  performance:
+    max_test_duration: 120  # 单个测试最长120秒
+    max_suite_duration: 600 # 测试套件最长10分钟
+
+# 模块覆盖率要求
+module_coverage:
+  # 核心模块 - 必须达到高覆盖率
+  core:
+    di: 90
+    config_di: 55
+    exceptions: 100
+
+  # API模块 - 生产就绪标准
+  api:
+    routes: 35
+    predictions: 40
+    health: 70
+
+  # 服务模块 - 业务关键
+  services:
+    prediction: 45
+    database: 40
+    cache: 35
+
+  # 工具模块 - 基础功能
+  utils:
+    date_utils: 85
+    string_utils: 85
+    validators: 80
+
+# 质量检查配置
+quality_checks:
+  # 静态分析
+  static_analysis:
+    enabled: true
+    tools: ["ruff", "mypy", "bandit"]
+
+  # 安全扫描
+  security:
+    enabled: true
+    tools: ["bandit"]
+    severity_threshold: "medium"
+
+  # 依赖检查
+  dependencies:
+    enabled: true
+    check_vulnerabilities: true
+    outdated_packages: false
+
+# 报告配置
+reporting:
+  # 覆盖率报告
+  coverage:
+    format: ["html", "xml", "term"]
+    output_dir: "reports/coverage"
+
+  # 质量报告
+  quality:
+    format: ["json", "html"]
+    output_dir: "reports/quality"
+
+  # 测试报告
+  test_results:
+    format: ["html", "junit"]
+    output_dir: "reports/tests"
+
+# CI/CD集成
+ci_cd:
+  # GitHub Actions集成
+  github_actions:
+    enabled: true
+    workflow_files: [".github/workflows/*.yml"]
+
+  # 质量门禁失败处理
+  failure_handling:
+    block_merge: true        # 阻止合并质量不合格的PR
+    notify_team: true         # 通知团队
+    create_issue: false      # 不自动创建Issue
+
+  # 自动修复
+  auto_fix:
+    enabled: true
+    tools: ["ruff", "black"]
+    max_attempts: 3
+
+# 监控和告警
+monitoring:
+  # 质量趋势监控
+  trends:
+    coverage_history: true
+    quality_metrics: true
+    test_performance: true
+
+  # 告警阈值
+  alerts:
+    coverage_drop: 5        # 覆盖率下降5%告警
+    test_failures: 10       # 测试失败超过10个告警
+    quality_degradation: true  # 质量下降告警
+
+# 例外情况处理
+exceptions:
+  # 允许的质量债务（带时间限制）
+  allowed_debt:
+    - module: "legacy_code"
+      coverage_threshold: 20
+      reason: "遗留代码，计划重构"
+      deadline: "2025-12-31"
+
+    - module: "experimental_features"
+      coverage_threshold: 30
+      reason: "实验性功能"
+      deadline: "2025-11-30"
+
+# 验证命令
+validation_commands:
+  # 本地验证
+  local:
+    - name: "代码质量检查"
+      command: "make check-quality"
+    - name: "测试覆盖率检查"
+      command: "make coverage"
+    - name: "完整CI验证"
+      command: "make ci-check"
+
+  # CI验证
+  ci:
+    - name: "语法检查"
+      command: "python3 -m py_compile src/"
+    - name: "类型检查"
+      command: "mypy src/ --ignore-missing-imports"
+    - name: "安全扫描"
+      command: "bandit -r src/ --exit-zero"
+    - name: "测试运行"
+      command: "make test.unit"
+
+# 配置更新日志
+changelog:
+  - version: "1.0"
+    date: "2025-11-07"
+    changes:
+      - "初始质量门禁配置"
+      - "基于41%覆盖率成就制定标准"
+      - "整合智能修复系统"

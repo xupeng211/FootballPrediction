@@ -157,3 +157,6 @@ stress_test_report_*.json
 # Claude Code 日志文件
 claude_sync_log.json
 claude_work_log.json
+# 临时修复脚本 - 完成后删除
+
+fix_*.py
