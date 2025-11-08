@@ -1,0 +1,66 @@
+[
+  {
+    "title": "🧪 测试覆盖率提升: 9.8% → 30% (提升20.2%)",
+    "body": "\n## 🧪 测试改进任务: 覆盖率提升\n\n### 📊 测试状态\n- **当前覆盖率**: 9.8%\n- **目标覆盖率**: 30%\n- **失败测试**: 6个测试失败\n- **测试类型**: 全项目\n- **目标模块**: src/utils, src/cache, src/core\n\n### 🔧 测试工具链\n```bash\n# 运行测试\npytest tests/unit/ -v --cov=src\n\n# 覆盖率报告\npytest tests/unit/ --cov=src --cov-report=html\n\n# 调试特定测试\npytest tests/unit/::test_name -v -s\n\n# 覆盖率详情\npytest tests/unit/ --cov=src --cov-report=term-missing\n```\n\n### 📋 改进步骤\n1. **分析失败原因**\n   ```bash\n   pytest tests/unit/ --tb=short\n   ```\n\n2. **修复测试代码**\n   - 更新测试用例\n   - 修复断言逻辑\n   - 完善Mock/Stub\n\n3. **增强覆盖率**\n   - 添加缺失的测试场景\n   - 提高边界条件覆盖\n   - 增加异常处理测试\n\n4. **验证改进**\n   ```bash\n   pytest tests/unit/ --cov=src --cov-fail-under=30\n   ```\n\n### 🎯 具体任务\n- [ ] 修复 6 个失败测试\n- [ ] 添加 40 个测试用例\n- [ ] 提升覆盖率 20.2%\n- [ ] 确保所有测试通过\n\n### ✅ 完成标准\n- [ ] 所有测试通过\n- [ ] 覆盖率达到目标\n- [ ] 测试质量良好（无脆弱测试）\n- [ ] 性能测试在时限内完成\n\n### 📚 参考资料\n- [pytest文档](https://docs.pytest.org/)\n- [测试覆盖率指南](https://coverage.readthedocs.io/)\n- [项目测试规范](./TESTING_GUIDELINES.md)\n\n---\n*自动生成时间: 2025-11-05 12:08:59*\n",
+    "labels": [
+      "enhancement",
+      "test-improvement",
+      "coverage",
+      "high"
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "🚨 修复失败测试: 6个测试用例失败",
+    "body": "\n## 🧪 测试改进任务: 失败测试修复\n\n### 📊 测试状态\n- **当前覆盖率**: 9.8%\n- **目标覆盖率**: 30%\n- **失败测试**: 6个: test_get_month_start_invalid_input, test_get_month_end_invalid_input, test_days_between_negative, test_days_between_invalid_input, test_format_duration_basic\n- **测试类型**: 单元测试\n- **目标模块**: tests/unit/utils\n\n### 🔧 测试工具链\n```bash\n# 运行测试\npytest tests/unit/utils/ -v --cov=src.utils\n\n# 覆盖率报告\npytest tests/unit/utils/ --cov=src.utils --cov-report=html\n\n# 调试特定测试\npytest tests/unit/utils/::test_name -v -s\n\n# 覆盖率详情\npytest tests/unit/utils/ --cov=src.utils --cov-report=term-missing\n```\n\n### 📋 改进步骤\n1. **分析失败原因**\n   ```bash\n   pytest tests/unit/utils/ --tb=short\n   ```\n\n2. **修复测试代码**\n   - 更新测试用例\n   - 修复断言逻辑\n   - 完善Mock/Stub\n\n3. **增强覆盖率**\n   - 添加缺失的测试场景\n   - 提高边界条件覆盖\n   - 增加异常处理测试\n\n4. **验证改进**\n   ```bash\n   pytest tests/unit/utils/ --cov=src.utils --cov-fail-under=30\n   ```\n\n### 🎯 具体任务\n- [ ] 修复 6 个失败测试\n- [ ] 添加 0 个测试用例\n- [ ] 提升覆盖率 0%\n- [ ] 确保所有测试通过\n\n### ✅ 完成标准\n- [ ] 所有测试通过\n- [ ] 覆盖率达到目标\n- [ ] 测试质量良好（无脆弱测试）\n- [ ] 性能测试在时限内完成\n\n### 📚 参考资料\n- [pytest文档](https://docs.pytest.org/)\n- [测试覆盖率指南](https://coverage.readthedocs.io/)\n- [项目测试规范](./TESTING_GUIDELINES.md)\n\n---\n*自动生成时间: 2025-11-05 12:08:59*\n\n### 🔍 失败测试详情\n- `tests/unit/utils/test_date_utils_basic.py::TestDateUtilsBasic::test_get_month_start_invalid_input`\n- `tests/unit/utils/test_date_utils_basic.py::TestDateUtilsBasic::test_get_month_end_invalid_input`\n- `tests/unit/utils/test_date_utils_basic.py::TestDateUtilsBasic::test_days_between_negative`\n- `tests/unit/utils/test_date_utils_basic.py::TestDateUtilsBasic::test_days_between_invalid_input`\n- `tests/unit/utils/test_date_utils_basic.py::TestDateUtilsBasic::test_format_duration_basic`\n- `tests/unit/utils/test_date_utils_basic.py::TestDateUtilsBasic::test_format_duration_invalid_input`\n",
+    "labels": [
+      "bug",
+      "test-failure",
+      "critical"
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "🧪 api模块覆盖率提升: 15% → 30%",
+    "body": "\n## 🧪 测试改进任务: api模块覆盖率\n\n### 📊 测试状态\n- **当前覆盖率**: 15%\n- **目标覆盖率**: 30%\n- **失败测试**: 无\n- **测试类型**: 单元测试\n- **目标模块**: src.api\n\n### 🔧 测试工具链\n```bash\n# 运行测试\npytest tests/unit/api/ -v --cov=src.api\n\n# 覆盖率报告\npytest tests/unit/api/ --cov=src.api --cov-report=html\n\n# 调试特定测试\npytest tests/unit/api/::test_name -v -s\n\n# 覆盖率详情\npytest tests/unit/api/ --cov=src.api --cov-report=term-missing\n```\n\n### 📋 改进步骤\n1. **分析失败原因**\n   ```bash\n   pytest tests/unit/api/ --tb=short\n   ```\n\n2. **修复测试代码**\n   - 更新测试用例\n   - 修复断言逻辑\n   - 完善Mock/Stub\n\n3. **增强覆盖率**\n   - 添加缺失的测试场景\n   - 提高边界条件覆盖\n   - 增加异常处理测试\n\n4. **验证改进**\n   ```bash\n   pytest tests/unit/api/ --cov=src.api --cov-fail-under=30\n   ```\n\n### 🎯 具体任务\n- [ ] 修复 0 个失败测试\n- [ ] 添加 7 个测试用例\n- [ ] 提升覆盖率 15%\n- [ ] 确保所有测试通过\n\n### ✅ 完成标准\n- [ ] 所有测试通过\n- [ ] 覆盖率达到目标\n- [ ] 测试质量良好（无脆弱测试）\n- [ ] 性能测试在时限内完成\n\n### 📚 参考资料\n- [pytest文档](https://docs.pytest.org/)\n- [测试覆盖率指南](https://coverage.readthedocs.io/)\n- [项目测试规范](./TESTING_GUIDELINES.md)\n\n---\n*自动生成时间: 2025-11-05 12:08:59*\n",
+    "labels": [
+      "enhancement",
+      "test-improvement",
+      "coverage",
+      "medium"
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "🧪 services模块覆盖率提升: 8% → 30%",
+    "body": "\n## 🧪 测试改进任务: services模块覆盖率\n\n### 📊 测试状态\n- **当前覆盖率**: 8%\n- **目标覆盖率**: 30%\n- **失败测试**: 无\n- **测试类型**: 单元测试\n- **目标模块**: src.services\n\n### 🔧 测试工具链\n```bash\n# 运行测试\npytest tests/unit/services/ -v --cov=src.services\n\n# 覆盖率报告\npytest tests/unit/services/ --cov=src.services --cov-report=html\n\n# 调试特定测试\npytest tests/unit/services/::test_name -v -s\n\n# 覆盖率详情\npytest tests/unit/services/ --cov=src.services --cov-report=term-missing\n```\n\n### 📋 改进步骤\n1. **分析失败原因**\n   ```bash\n   pytest tests/unit/services/ --tb=short\n   ```\n\n2. **修复测试代码**\n   - 更新测试用例\n   - 修复断言逻辑\n   - 完善Mock/Stub\n\n3. **增强覆盖率**\n   - 添加缺失的测试场景\n   - 提高边界条件覆盖\n   - 增加异常处理测试\n\n4. **验证改进**\n   ```bash\n   pytest tests/unit/services/ --cov=src.services --cov-fail-under=30\n   ```\n\n### 🎯 具体任务\n- [ ] 修复 0 个失败测试\n- [ ] 添加 11 个测试用例\n- [ ] 提升覆盖率 22%\n- [ ] 确保所有测试通过\n\n### ✅ 完成标准\n- [ ] 所有测试通过\n- [ ] 覆盖率达到目标\n- [ ] 测试质量良好（无脆弱测试）\n- [ ] 性能测试在时限内完成\n\n### 📚 参考资料\n- [pytest文档](https://docs.pytest.org/)\n- [测试覆盖率指南](https://coverage.readthedocs.io/)\n- [项目测试规范](./TESTING_GUIDELINES.md)\n\n---\n*自动生成时间: 2025-11-05 12:08:59*\n",
+    "labels": [
+      "enhancement",
+      "test-improvement",
+      "coverage",
+      "medium"
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "🧪 database模块覆盖率提升: 12% → 30%",
+    "body": "\n## 🧪 测试改进任务: database模块覆盖率\n\n### 📊 测试状态\n- **当前覆盖率**: 12%\n- **目标覆盖率**: 30%\n- **失败测试**: 无\n- **测试类型**: 单元测试\n- **目标模块**: src.database\n\n### 🔧 测试工具链\n```bash\n# 运行测试\npytest tests/unit/database/ -v --cov=src.database\n\n# 覆盖率报告\npytest tests/unit/database/ --cov=src.database --cov-report=html\n\n# 调试特定测试\npytest tests/unit/database/::test_name -v -s\n\n# 覆盖率详情\npytest tests/unit/database/ --cov=src.database --cov-report=term-missing\n```\n\n### 📋 改进步骤\n1. **分析失败原因**\n   ```bash\n   pytest tests/unit/database/ --tb=short\n   ```\n\n2. **修复测试代码**\n   - 更新测试用例\n   - 修复断言逻辑\n   - 完善Mock/Stub\n\n3. **增强覆盖率**\n   - 添加缺失的测试场景\n   - 提高边界条件覆盖\n   - 增加异常处理测试\n\n4. **验证改进**\n   ```bash\n   pytest tests/unit/database/ --cov=src.database --cov-fail-under=30\n   ```\n\n### 🎯 具体任务\n- [ ] 修复 0 个失败测试\n- [ ] 添加 9 个测试用例\n- [ ] 提升覆盖率 18%\n- [ ] 确保所有测试通过\n\n### ✅ 完成标准\n- [ ] 所有测试通过\n- [ ] 覆盖率达到目标\n- [ ] 测试质量良好（无脆弱测试）\n- [ ] 性能测试在时限内完成\n\n### 📚 参考资料\n- [pytest文档](https://docs.pytest.org/)\n- [测试覆盖率指南](https://coverage.readthedocs.io/)\n- [项目测试规范](./TESTING_GUIDELINES.md)\n\n---\n*自动生成时间: 2025-11-05 12:08:59*\n",
+    "labels": [
+      "enhancement",
+      "test-improvement",
+      "coverage",
+      "medium"
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "✨ 测试质量提升: 当前通过率92.9%，目标95%+",
+    "body": "\n## 🧪 测试改进任务: 测试质量提升\n\n### 📊 测试状态\n- **当前覆盖率**: 9.8%\n- **目标覆盖率**: 30%\n- **失败测试**: 通过率92.9%\n- **测试类型**: 全项目\n- **目标模块**: tests/\n\n### 🔧 测试工具链\n```bash\n# 运行测试\npytest tests/ -v --cov=src\n\n# 覆盖率报告\npytest tests/ --cov=src --cov-report=html\n\n# 调试特定测试\npytest tests/::test_name -v -s\n\n# 覆盖率详情\npytest tests/ --cov=src --cov-report=term-missing\n```\n\n### 📋 改进步骤\n1. **分析失败原因**\n   ```bash\n   pytest tests/ --tb=short\n   ```\n\n2. **修复测试代码**\n   - 更新测试用例\n   - 修复断言逻辑\n   - 完善Mock/Stub\n\n3. **增强覆盖率**\n   - 添加缺失的测试场景\n   - 提高边界条件覆盖\n   - 增加异常处理测试\n\n4. **验证改进**\n   ```bash\n   pytest tests/ --cov=src --cov-fail-under=30\n   ```\n\n### 🎯 具体任务\n- [ ] 修复 10 个失败测试\n- [ ] 添加 0 个测试用例\n- [ ] 提升覆盖率 0%\n- [ ] 确保所有测试通过\n\n### ✅ 完成标准\n- [ ] 所有测试通过\n- [ ] 覆盖率达到目标\n- [ ] 测试质量良好（无脆弱测试）\n- [ ] 性能测试在时限内完成\n\n### 📚 参考资料\n- [pytest文档](https://docs.pytest.org/)\n- [测试覆盖率指南](https://coverage.readthedocs.io/)\n- [项目测试规范](./TESTING_GUIDELINES.md)\n\n---\n*自动生成时间: 2025-11-05 12:08:59*\n\n### 📊 测试质量分析\n- **unit测试**: 94/100 通过 (94.0%)\n- **integration测试**: 28/30 通过 (93.3%)\n- **e2e测试**: 8/10 通过 (80.0%)\n",
+    "labels": [
+      "enhancement",
+      "test-quality",
+      "medium"
+    ],
+    "priority": "medium"
+  }
+]

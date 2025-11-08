@@ -122,12 +122,12 @@ class User:
 
     def __init__(
         self,
-        id: int | None = None,
+        user_id: int | None = None,
         username: str = "",
         email: str = "",
         role: UserRole = UserRole.USER,
     ):
-        self.id = id
+        self.id = user_id
         self.username = username
         self.email = email
         self.role = role

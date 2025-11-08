@@ -213,7 +213,7 @@ class ServiceLifecycleManager:
                 service_info.service.start(), timeout=service_info.startup_timeout
             )
         except TimeoutError:
-            raise ServiceLifecycleError(f"服务启动超时: {name}")
+            raise ServiceLifecycleError(f"服务启动超时: {name}") from None
 
     async def _stop_service_async(self, name: str) -> None:
         """异步停止服务"""

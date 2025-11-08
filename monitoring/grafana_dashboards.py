@@ -7,7 +7,6 @@ Grafana监控仪表板
 """
 
 import logging
-from typing import Dict, List
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ class GrafanaDashboards:
         self.logger = logging.getLogger(__name__)
         self.logger.info("初始化monitoring特性: Grafana Dashboards")
 
-    def process(self, data: Dict) -> Dict:
+    def process(self, data: dict) -> dict:
         """处理数据"""
         result = {
             "status": "success",
@@ -30,7 +29,7 @@ class GrafanaDashboards:
         }
         return result
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         """获取状态"""
         return {
             "feature": "Grafana Dashboards",

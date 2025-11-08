@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 
 from src.core.exceptions import ResourceNotFoundError, ValidationError
 from src.database.models.tenant import (
+    RolePermission,
     Tenant,
     TenantPlan,
     TenantRole,

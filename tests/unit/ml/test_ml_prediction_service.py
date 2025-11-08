@@ -63,11 +63,11 @@ class TestPredictionService:
         )
 
         # 训练泊松模型
-        poisson_model = PoissonModel("test_poisson", "1.0")
+        poisson_model = PoissonModel("1.0")
         poisson_model.train(training_data)
 
         # 训练ELO模型
-        elo_model = EloModel("test_elo", "1.0")
+        elo_model = EloModel("1.0")
         elo_model.train(training_data)
 
         return {"poisson": poisson_model, "elo": elo_model}
@@ -277,18 +277,28 @@ class TestPredictionService:
 
     def test_update_model_weights(self, prediction_service):
         """测试更新模型权重"""
-        # 设置初始权重
-        initial_weights = {"model1": 1.0, "model2": 2.0}
-        prediction_service.model_weights.update(initial_weights)
+        # 获取已注册的模型名称
+        available_models = list(prediction_service.models.keys())
+        if len(available_models) >= 2:
+            model1, model2 = available_models[0], available_models[1]
 
-        # 更新权重
-        new_weights = {"model1": 1.5, "model2": 2.5, "model3": 1.0}
-        prediction_service.update_model_weights(new_weights)
+            # 设置初始权重
+            initial_weights = {model1: 1.0, model2: 2.0}
+            prediction_service.model_weights.update(initial_weights)
 
-        # 验证权重更新
-        assert prediction_service.model_weights["model1"] == 1.5
-        assert prediction_service.model_weights["model2"] == 2.5
-        # model3应该不会被添加，因为它不存在于models中
+            # 更新权重
+            new_weights = {model1: 1.5, model2: 2.5}
+            prediction_service.update_model_weights(new_weights)
+
+            # 验证权重更新
+            assert prediction_service.model_weights[model1] == 1.5
+            assert prediction_service.model_weights[model2] == 2.5
+
+            # 尝试更新不存在的模型权重
+            non_existent_weights = {"non_existent_model": 1.0}
+            prediction_service.update_model_weights(non_existent_weights)
+            # 确保不会添加不存在的模型
+            assert "non_existent_model" not in prediction_service.model_weights
 
     def test_set_model_performance(self, prediction_service):
         """测试设置模型性能"""

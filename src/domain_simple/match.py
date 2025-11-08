@@ -36,14 +36,14 @@ class Match:
 
     def __init__(
         self,
-        id: int | None = None,
+        match_id: int | None = None,
         home_team_id: int = 0,
         away_team_id: int = 0,
         league_id: int = 0,
         scheduled_time: datetime | None = None,
         status: MatchStatus = MatchStatus.SCHEDULED,
     ):
-        self.id = id
+        self.id = match_id
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
         self.league_id = league_id

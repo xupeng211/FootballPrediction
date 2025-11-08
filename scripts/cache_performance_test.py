@@ -12,7 +12,7 @@ import logging
 import random
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 import aiohttp
 import numpy as np
@@ -33,8 +33,8 @@ class TestConfig:
     concurrent_requests: int = 50
     total_requests: int = 1000
     test_duration: int = 60  # 秒
-    endpoints: List[str] = None
-    payload_variants: Dict[str, List[Dict]] = None
+    endpoints: list[str] = None
+    payload_variants: dict[str, list[dict]] = None
 
     def __post_init__(self):
         if self.endpoints is None:
@@ -141,7 +141,7 @@ class CachePerformanceTester:
         if self.session:
             await self.session.close()
 
-    async def run_single_request(self, endpoint: str) -> Dict[str, Any]:
+    async def run_single_request(self, endpoint: str) -> dict[str, Any]:
         """执行单个请求"""
         start_time = time.time()
 
@@ -207,7 +207,7 @@ class CachePerformanceTester:
                 "error": str(e)
             }
 
-    async def run_concurrent_requests(self, num_requests: int) -> List[Dict[str, Any]]:
+    async def run_concurrent_requests(self, num_requests: int) -> list[dict[str, Any]]:
         """执行并发请求"""
         # 创建任务列表
         tasks = []
@@ -237,7 +237,7 @@ class CachePerformanceTester:
 
         return valid_results
 
-    def calculate_metrics(self, results: List[Dict[str, Any]]) -> TestResult:
+    def calculate_metrics(self, results: list[dict[str, Any]]) -> TestResult:
         """计算性能指标"""
         if not results:
             raise ValueError("没有测试结果")
@@ -324,25 +324,25 @@ class CachePerformanceTester:
         print("📊 Redis缓存性能测试结果")
         print("="*60)
 
-        print(f"📈 请求统计:")
+        print("📈 请求统计:")
         print(f"  总请求数: {result.total_requests}")
         print(f"  成功请求: {result.successful_requests}")
         print(f"  失败请求: {result.failed_requests}")
         print(f"  成功率: {(1 - result.error_rate) * 100:.2f}%")
 
-        print(f"\n🎯 缓存性能:")
+        print("\n🎯 缓存性能:")
         print(f"  缓存命中: {result.cache_hits}")
         print(f"  缓存未命中: {result.cache_misses}")
         print(f"  命中率: {result.cache_hit_rate * 100:.2f}%")
 
-        print(f"\n⚡ 响应时间:")
+        print("\n⚡ 响应时间:")
         print(f"  平均响应时间: {result.avg_response_time * 1000:.2f}ms")
         print(f"  最小响应时间: {result.min_response_time * 1000:.2f}ms")
         print(f"  最大响应时间: {result.max_response_time * 1000:.2f}ms")
         print(f"  P95响应时间: {result.p95_response_time * 1000:.2f}ms")
         print(f"  P99响应时间: {result.p99_response_time * 1000:.2f}ms")
 
-        print(f"\n🚀 吞吐量:")
+        print("\n🚀 吞吐量:")
         print(f"  每秒请求数: {result.requests_per_second:.2f} RPS")
 
         # 性能评级
@@ -360,7 +360,7 @@ class CachePerformanceTester:
         else:
             speed_grade = "🔴 需要改进"
 
-        print(f"\n🏆 性能评级:")
+        print("\n🏆 性能评级:")
         print(f"  缓存效果: {cache_grade}")
         print(f"  响应速度: {speed_grade}")
 

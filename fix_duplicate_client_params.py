@@ -3,14 +3,14 @@
 修复测试文件中重复的client参数
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_duplicate_client_params(file_path):
     """修复单个文件中的重复client参数"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -57,7 +57,7 @@ def main():
             if fix_duplicate_client_params(str(py_file)):
                 fixed_count += 1
 
-    print(f"\n📊 修复完成:")
+    print("\n📊 修复完成:")
     print(f"   总文件数: {total_count}")
     print(f"   修复文件数: {fixed_count}")
     print(f"   无需修复文件数: {total_count - fixed_count}")

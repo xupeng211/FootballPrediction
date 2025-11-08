@@ -8,9 +8,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List
 
-def run_command(command: str, timeout: int = 60) -> Dict[str, str]:
+
+def run_command(command: str, timeout: int = 60) -> dict[str, str]:
     """运行命令并返回结果"""
     try:
         result = subprocess.run(

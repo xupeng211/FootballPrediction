@@ -4,13 +4,13 @@
 简化Git Flow工作流程的常用操作
 """
 
+import argparse
+import json
+import re
 import subprocess
 import sys
-import argparse
-import re
-from typing import List, Optional, Dict
 from pathlib import Path
-import json
+
 
 class GitFlowAutomation:
     """Git Flow自动化工具"""
@@ -19,11 +19,11 @@ class GitFlowAutomation:
         self.current_branch = self._get_current_branch()
         self.config = self._load_config()
 
-    def _load_config(self) -> Dict:
+    def _load_config(self) -> dict:
         """加载配置文件"""
         config_file = Path(__file__).parent / "git_flow_config.json"
         if config_file.exists():
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, encoding='utf-8') as f:
                 return json.load(f)
         return {
             "main_branch": "main",
@@ -47,7 +47,7 @@ class GitFlowAutomation:
         except subprocess.CalledProcessError:
             return "unknown"
 
-    def run_git_command(self, command: List[str], show_output: bool = True) -> bool:
+    def run_git_command(self, command: list[str], show_output: bool = True) -> bool:
         """执行Git命令"""
         try:
             if show_output:
@@ -134,7 +134,7 @@ class GitFlowAutomation:
     self.config['develop_branch']]):
                 return False
 
-        print(f"📥 拉取最新的develop分支...")
+        print("📥 拉取最新的develop分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
@@ -174,7 +174,7 @@ class GitFlowAutomation:
     self.config['develop_branch']]):
                 return False
 
-        print(f"📥 拉取最新的develop分支...")
+        print("📥 拉取最新的develop分支...")
         if not self.run_git_command(['git',
     'pull',
     'origin',
@@ -218,7 +218,7 @@ class GitFlowAutomation:
         if not self.run_git_command(['git', 'tag', version]):
             return False
 
-        print(f"📤 推送main分支和标签到远程...")
+        print("📤 推送main分支和标签到远程...")
         if not self.run_git_command(['git',
     'push',
     'origin',
@@ -227,7 +227,7 @@ class GitFlowAutomation:
         if not self.run_git_command(['git', 'push', 'origin', version]):
             return False
 
-        print(f"🔄 同步到develop分支...")
+        print("🔄 同步到develop分支...")
         if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
             return False
         if not self.run_git_command(['git', 'merge', release_branch, '--no-ff']):
@@ -307,7 +307,7 @@ class GitFlowAutomation:
         if not self.run_git_command(['git', 'tag', patch_version]):
             return False
 
-        print(f"📤 紧急推送到远程...")
+        print("📤 紧急推送到远程...")
         if not self.run_git_command(['git',
     'push',
     'origin',
@@ -316,7 +316,7 @@ class GitFlowAutomation:
         if not self.run_git_command(['git', 'push', 'origin', patch_version]):
             return False
 
-        print(f"🔄 同步到develop分支...")
+        print("🔄 同步到develop分支...")
         if not self.run_git_command(['git', 'checkout', self.config['develop_branch']]):
             return False
         if not self.run_git_command(['git', 'merge', hotfix_branch, '--no-ff']):

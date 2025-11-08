@@ -83,8 +83,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if len(self.clients[client_ip]) >= self.calls:
             raise HTTPException(
                 status_code=429,  # TODO: 将魔法数字 429 提取为常量
-                detail="Rate limit exceeded",  # TODO: 将魔法数字 429 提取为常量
-            )  # TODO: 将魔法数字 429 提取为常量
+                detail="Rate limit exceeded",
+            )
 
         self.clients[client_ip].append(current_time)
 
@@ -110,7 +110,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             raise HTTPException(
                 status_code=401,  # TODO: 将魔法数字 401 提取为常量
                 detail="Missing or invalid token",  # TODO: 将魔法数字 401 提取为常量
-            )  # TODO: 将魔法数字 401 提取为常量
+            )
 
         # 这里可以添加token验证逻辑
         # token = auth_header.split(" ")[1]

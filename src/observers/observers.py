@@ -25,8 +25,7 @@ class MetricsObserver(Observer):
     Collects and aggregates system metrics.
     """
 
-    def __init__(self,
-    aggregation_window: int = 60):
+    def __init__(self, aggregation_window: int = 60):
         """函数文档字符串"""
         # 添加pass语句
         """初始化指标观察者"
@@ -36,17 +35,13 @@ class MetricsObserver(Observer):
         """
         super().__init__("MetricsObserver")
         self._aggregation_window = aggregation_window
-        self._metrics: dict[str,
-    deque] = defaultdict(lambda: deque(maxlen=1000))
-        self._counters: dict[str,
-    int] = defaultdict(int)
-        self._gauges: dict[str,
-    float] = {}
+        self._metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self._counters: dict[str, int] = defaultdict(int)
+        self._gauges: dict[str, float] = {}
         self._histograms: dict[str, list[float]] = defaultdict(list)
         self._last_cleanup = time.time()
 
-    async def update(self,
-    event: ObservableEvent) -> None:
+    async def update(self, event: ObservableEvent) -> None:
         """处理事件并更新指标"""
         now = time.time()
 
@@ -67,13 +62,11 @@ class MetricsObserver(Observer):
         elif event.event_type == ObservableEventType.ERROR_OCCURRED:
             self._counters["errors"] += 1
 
-    async def _handle_metric_update(self,
-    event: ObservableEvent) -> None:
+    async def _handle_metric_update(self, event: ObservableEvent) -> None:
         """处理指标更新事件"""
         metric_name = event.data.get("metric_name")
         metric_value = event.data.get("metric_value")
-        metric_type = event.data.get("metric_type",
-    "gauge")
+        metric_type = event.data.get("metric_type", "gauge")
 
         if not metric_name or metric_value is None:
             return None
@@ -83,24 +76,21 @@ class MetricsObserver(Observer):
             self._counters[metric_name] = metric_value
         elif metric_type == "gauge":
             self._gauges[metric_name] = metric_value
-            self._metrics[metric_name].append((timestamp,
-    metric_value))
+            self._metrics[metric_name].append((timestamp, metric_value))
         elif metric_type == "histogram":
             self._histograms[metric_name].append(metric_value)
             # 限制历史数据大小
             if len(self._histograms[metric_name]) > 10000:
                 self._histograms[metric_name] = self._histograms[metric_name][-5000:]
 
-    async def _handle_prediction_completed(self,
-    event: ObservableEvent) -> None:
+    async def _handle_prediction_completed(self, event: ObservableEvent) -> None:
         """处理预测完成事件"""
         self._counters["predictions_completed"] += 1
 
         # 记录预测延迟
         latency = event.data.get("latency_ms")
         if latency:
-            self._metrics["prediction_latency"].append((time.time(),
-    latency))
+            self._metrics["prediction_latency"].append((time.time(), latency))
 
     async def _cleanup_old_metrics(self) -> None:
         """清理过期的指标数据"""
@@ -114,7 +104,6 @@ class MetricsObserver(Observer):
         """返回观察的事件类型"""
         return [
             ObservableEventType.METRIC_UPDATE,
-
             ObservableEventType.PREDICTION_COMPLETED,
             ObservableEventType.CACHE_HIT,
             ObservableEventType.CACHE_MISS,
@@ -137,10 +126,9 @@ class MetricsObserver(Observer):
             recent_values = [v for _, v in values]
             result["aggregations"][metric_name] = {
                 "count": len(recent_values),
-    "min": min(recent_values),
-    "max": max(recent_values),
-    "avg": sum(recent_values) / len(recent_values),
-
+                "min": min(recent_values),
+                "max": max(recent_values),
+                "avg": sum(recent_values) / len(recent_values),
                 "latest": recent_values[-1] if recent_values else None,
             }
 
@@ -154,19 +142,17 @@ class MetricsObserver(Observer):
             result["aggregations"][f"{metric_name}_histogram"] = {
                 "count": count,
                 "sum": sum(sorted_values),
-    "min": sorted_values[0],
-    "max": sorted_values[-1],
-    "mean": sum(sorted_values) / count,
-
+                "min": sorted_values[0],
+                "max": sorted_values[-1],
+                "mean": sum(sorted_values) / count,
                 "p50": sorted_values[int(count * 0.5)],
-    "p95": sorted_values[int(count * 0.95)],
-    "p99": sorted_values[int(count * 0.99)],
-    }
+                "p95": sorted_values[int(count * 0.95)],
+                "p99": sorted_values[int(count * 0.99)],
+            }
 
         return result
 
-    def get_stats(self) -> dict[str,
-    Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取观察者统计信息"""
         stats = super().get_stats()
         stats.update(
@@ -198,11 +184,9 @@ class LoggingObserver(Observer):
         super().__init__("LoggingObserver")
         self._logger = logging.getLogger(f"{__name__}.{self.name}")
         self._logger.setLevel(log_level)
-        self._log_counts: dict[str,
-    int] = defaultdict(int)
+        self._log_counts: dict[str, int] = defaultdict(int)
 
-    async def update(self,
-    event: ObservableEvent) -> None:
+    async def update(self, event: ObservableEvent) -> None:
         """记录事件到日志"""
         # 更新计数
         self._log_counts[event.event_type.value] += 1
@@ -265,8 +249,8 @@ class LoggingObserver(Observer):
         stats.update(
             {
                 "total_logs": sum(self._log_counts.values()),
-    "log_counts": dict(self._log_counts),
-    }
+                "log_counts": dict(self._log_counts),
+            }
         )
         return stats
 
@@ -283,19 +267,15 @@ class AlertingObserver(Observer):
         # 添加pass语句
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
-        self._alert_rules: dict[str,
-    dict[str,
-    Any]] = {}
+        self._alert_rules: dict[str, dict[str, Any]] = {}
         self._alert_history: deque = deque(maxlen=1000)
         self._alert_cooldown: dict[str, datetime] = {}
         self._default_cooldown = timedelta(minutes=5)
 
     def add_alert_rule(
         self,
-    name: str,
-    condition: Callable[[ObservableEvent],
-    bool],
-
+        name: str,
+        condition: Callable[[ObservableEvent], bool],
         severity: str = "warning",
         message_template: str = None,
         cooldown_minutes: int = 5,
@@ -314,24 +294,17 @@ class AlertingObserver(Observer):
             "severity": severity,
             "message_template": message_template or f"Alert triggered: {name}",
             "cooldown": timedelta(minutes=cooldown_minutes),
-    "trigger_count": 0,
-    "last_triggered": None,
-    }
+            "trigger_count": 0,
+            "last_triggered": None,
+        }
 
-    async def update(self,
-    event: ObservableEvent) -> None:
+    async def update(self, event: ObservableEvent) -> None:
         """检查事件并触发告警"""
         for rule_name, rule in self._alert_rules.items():
-            await self._check_rule(rule_name,
-    rule,
-    event)
+            await self._check_rule(rule_name, rule, event)
 
     async def _check_rule(
-        self,
-    rule_name: str,
-    rule: dict[str,
-    Any],
-    event: ObservableEvent
+        self, rule_name: str, rule: dict[str, Any], event: ObservableEvent
     ) -> None:
         """检查单个告警规则"""
         # 检查冷却时间
@@ -340,16 +313,10 @@ class AlertingObserver(Observer):
                 return None
         # 检查触发条件
         if rule["condition"](event):
-            await self._trigger_alert(rule_name,
-    rule,
-    event)
+            await self._trigger_alert(rule_name, rule, event)
 
     async def _trigger_alert(
-        self,
-    rule_name: str,
-    rule: dict[str,
-    Any],
-    event: ObservableEvent
+        self, rule_name: str, rule: dict[str, Any], event: ObservableEvent
     ) -> None:
         """触发告警"""
         # 更新规则统计
@@ -366,14 +333,13 @@ class AlertingObserver(Observer):
             "severity": rule["severity"],
             "message": rule["message_template"].format(
                 event=event,
-    event_type=event.event_type.value,
-    source=event.source,
-    **event.data,
-
+                event_type=event.event_type.value,
+                source=event.source,
+                **event.data,
             ),
             "timestamp": datetime.utcnow(),
-    "event": event,
-    }
+            "event": event,
+        }
 
         # 记录告警历史
         self._alert_history.append(alert)
@@ -381,9 +347,7 @@ class AlertingObserver(Observer):
         # 发送告警通知
         await self._send_alert(alert)
 
-    async def _send_alert(self,
-    alert: dict[str,
-    Any]) -> None:
+    async def _send_alert(self, alert: dict[str, Any]) -> None:
         """发送告警通知"""
         # 这里可以集成各种通知渠道:
         # - 邮件
@@ -406,18 +370,16 @@ class AlertingObserver(Observer):
         """返回观察的事件类型"""
         return [
             ObservableEventType.SYSTEM_ALERT,
-    ObservableEventType.PERFORMANCE_DEGRADATION,
-    ObservableEventType.ERROR_OCCURRED,
-    ObservableEventType.THRESHOLD_EXCEEDED,
-
+            ObservableEventType.PERFORMANCE_DEGRADATION,
+            ObservableEventType.ERROR_OCCURRED,
+            ObservableEventType.THRESHOLD_EXCEEDED,
         ]
 
     def get_alert_history(
         self,
-    severity: str | None = None,
-    since: datetime | None = None,
-    limit: int = 50,
-
+        severity: str | None = None,
+        since: datetime | None = None,
+        limit: int = 50,
     ) -> list[dict[str, Any]]:
         """获取告警历史"""
         history = list(self._alert_history)
@@ -452,9 +414,9 @@ class AlertingObserver(Observer):
         stats.update(
             {
                 "alert_rules_count": len(self._alert_rules),
-    "alerts_count": len(self._alert_history),
-    "active_cooldowns": len(self._alert_cooldown),
-    }
+                "alerts_count": len(self._alert_history),
+                "active_cooldowns": len(self._alert_cooldown),
+            }
         )
         return stats
 
@@ -466,8 +428,7 @@ class PerformanceObserver(Observer):
     Monitors system performance metrics.
     """
 
-    def __init__(self,
-    window_size: int = 100):
+    def __init__(self, window_size: int = 100):
         """函数文档字符串"""
         # 添加pass语句
         """初始化性能观察者"
@@ -533,12 +494,11 @@ class PerformanceObserver(Observer):
         """返回观察的事件类型"""
         return [
             ObservableEventType.PREDICTION_COMPLETED,
-    ObservableEventType.ERROR_OCCURRED,
-    ObservableEventType.PERFORMANCE_DEGRADATION,
-    ]
+            ObservableEventType.ERROR_OCCURRED,
+            ObservableEventType.PERFORMANCE_DEGRADATION,
+        ]
 
-    def get_performance_metrics(self) -> dict[str,
-    Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """获取性能指标"""
         result = {}
 
@@ -547,10 +507,9 @@ class PerformanceObserver(Observer):
             response_times = list(self._response_times)
             result["response_time"] = {
                 "avg": sum(response_times) / len(response_times),
-    "min": min(response_times),
-    "max": max(response_times),
-    "p50": sorted(response_times)[len(response_times) // 2],
-
+                "min": min(response_times),
+                "max": max(response_times),
+                "p50": sorted(response_times)[len(response_times) // 2],
                 "p95": sorted(response_times)[int(len(response_times) * 0.95)],
                 "p99": sorted(response_times)[int(len(response_times) * 0.99)],
                 "count": len(response_times),
@@ -558,11 +517,8 @@ class PerformanceObserver(Observer):
 
         # 吞吐量
         result["throughput"] = {
-            "current": getattr(self,
-    "_current_throughput",
-    0),
-    "total_requests": self._request_count,
-
+            "current": getattr(self, "_current_throughput", 0),
+            "total_requests": self._request_count,
         }
 
         # 错误率

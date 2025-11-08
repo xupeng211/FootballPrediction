@@ -351,10 +351,11 @@ async def create_processing_cache(redis_client=None) -> ProcessingCache:
 # 缓存装饰器
 def cache_result(ttl: int = 3600, key_prefix: str = None):
     """缓存结果装饰器"""
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             # 获取缓存实例
-            cache = getattr(wrapper, '_cache_instance', None)
+            cache = getattr(wrapper, "_cache_instance", None)
             if not cache:
                 return await func(*args, **kwargs)
 
@@ -383,4 +384,5 @@ def cache_result(ttl: int = 3600, key_prefix: str = None):
         wrapper.__doc__ = func.__doc__
 
         return wrapper
+
     return decorator

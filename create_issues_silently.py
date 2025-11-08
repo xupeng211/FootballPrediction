@@ -7,9 +7,9 @@ Create GitHub Issues for optimization tasks (non-interactive version)
 python3 create_issues_silently.py
 """
 
-import subprocess
 import json
-from datetime import datetime
+import subprocess
+
 
 class GitHubIssueCreator:
     """GitHub Issue 创建器"""
@@ -120,7 +120,7 @@ class GitHubIssueCreator:
             else:
                 failed_issues.append(issue["title"])
 
-        print(f"\n🎊 Issues创建完成!")
+        print("\n🎊 Issues创建完成!")
         print(f"✅ 成功创建: {len(created_issues)}/{len(issues)} 个Issues")
         print(f"❌ 创建失败: {len(failed_issues)} 个Issues")
 
@@ -130,7 +130,7 @@ class GitHubIssueCreator:
                 print(f"   - {issue}")
 
         if created_issues:
-            print(f"\n📋 成功创建的Issues:")
+            print("\n📋 成功创建的Issues:")
             for issue in created_issues:
                 print(f"   - {issue['title']}")
                 print(f"     {issue['url']}")
@@ -571,7 +571,7 @@ def main():
     if created_issues:
         print(f"\n🎊 成功创建 {len(created_issues)} 个Issues!")
         print("📋 你可以在GitHub仓库中查看这些Issues")
-        print(f"🔗 使用 'gh issue list --label optimization' 查看所有优化Issues")
+        print("🔗 使用 'gh issue list --label optimization' 查看所有优化Issues")
         print(f"🌐 仓库地址: https://github.com/{creator.repo_owner}/{creator.repo_name}/issues")
 
         # 生成Issue摘要

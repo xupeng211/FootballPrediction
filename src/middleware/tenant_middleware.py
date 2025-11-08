@@ -18,7 +18,7 @@ from src.database.models.tenant import Tenant
 from src.services.auth_service import AuthService
 from src.services.tenant_service import TenantService
 
-security = HTTPBearer(auto_error=False)
+security = HTTPBearer()
 
 
 class TenantContext:
@@ -113,7 +113,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="内部服务器错误",
-            ) from e
+            ) from e  # TODO: B904 exception chaining
 
     async def _extract_tenant(self, request: Request) -> Tenant | None:
         """

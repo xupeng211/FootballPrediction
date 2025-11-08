@@ -34,17 +34,16 @@ class Prediction:
 
     def __init__(
         self,
-    id: int | None = None,
-    match_id: int = 0,
-    user_id: int = 0,
-
+        prediction_id: int | None = None,
+        match_id: int = 0,
+        user_id: int = 0,
         prediction_type: PredictionType = PredictionType.MATCH_RESULT,
         predicted_value: str = "",
         confidence: float = 0.5,
         odds: float | None = None,
         stake: float = 1.0,
     ):
-        self.id = id
+        self.id = prediction_id
         self.match_id = match_id
         self.user_id = user_id
         self.prediction_type = prediction_type
@@ -79,12 +78,10 @@ class Prediction:
                 home, away = predicted_value.split(":")
                 self.predicted_home = int(home.strip())
                 self.predicted_away = int(away.strip())
-            except (ValueError,
-    AttributeError):
+            except (ValueError, AttributeError):
                 pass
 
-    def settle(self,
-    actual_value: str) -> None:
+    def settle(self, actual_value: str) -> None:
         """结算预测"""
         if self.is_settled:
             return None
@@ -105,8 +102,7 @@ class Prediction:
 
         self.updated_at = datetime.now()
 
-    def _check_correctness(self,
-    actual_value: str) -> bool:
+    def _check_correctness(self, actual_value: str) -> bool:
         """检查预测是否正确"""
         if self.prediction_type == PredictionType.MATCH_RESULT:
             # 直接比较比赛结果
@@ -144,8 +140,7 @@ class Prediction:
         else:
             return PredictionConfidence.LOW
 
-    def is_value_bet(self,
-    threshold: float = 1.0) -> bool:
+    def is_value_bet(self, threshold: float = 1.0) -> bool:
         """判断是否为价值投注"""
         if not self.odds or self.odds <= 1:
             return False
@@ -163,15 +158,12 @@ class Prediction:
         lose_ev = (1 - self.confidence) * (-self.stake)
         return win_ev + lose_ev
 
-    def add_reasoning(self,
-    reasoning: str) -> None:
+    def add_reasoning(self, reasoning: str) -> None:
         """添加预测理由"""
         self.reasoning = reasoning
         self.updated_at = datetime.now()
 
-    def add_analysis_data(self,
-    key: str,
-    value: Any) -> None:
+    def add_analysis_data(self, key: str, value: Any) -> None:
         """添加分析数据"""
         self.analysis_data[key] = value
         self.updated_at = datetime.now()
@@ -182,8 +174,7 @@ class Prediction:
             return 0.0
         return (self.profit_loss / self.stake) * 100
 
-    def to_dict(self) -> dict[str,
-    Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -193,60 +184,43 @@ class Prediction:
             "predicted_value": self.predicted_value,
             "confidence": self.confidence,
             "confidence_level": self.get_confidence_level().value,
-    "odds": self.odds,
-    "stake": self.stake,
-    "is_settled": self.is_settled,
-
+            "odds": self.odds,
+            "stake": self.stake,
+            "is_settled": self.is_settled,
             "is_correct": self.is_correct,
             "actual_value": self.actual_value,
             "profit_loss": self.profit_loss,
             "return_amount": self.return_amount,
             "roi": self.get_roi(),
-    "is_value_bet": self.is_value_bet(),
-    "expected_value": self.get_expected_value(),
-    "reasoning": self.reasoning,
-
+            "is_value_bet": self.is_value_bet(),
+            "expected_value": self.get_expected_value(),
+            "reasoning": self.reasoning,
             "analysis_data": self.analysis_data,
             "created_at": self.created_at.isoformat(),
-    "updated_at": self.updated_at.isoformat(),
-    "settled_at": self.settled_at.isoformat() if self.settled_at else None,
-    }
+            "updated_at": self.updated_at.isoformat(),
+            "settled_at": self.settled_at.isoformat() if self.settled_at else None,
+        }
 
     @classmethod
-    def from_dict(cls,
-    data: dict[str,
-    Any]) -> "Prediction":
+    def from_dict(cls, data: dict[str, Any]) -> "Prediction":
         """从字典创建实例"""
         _prediction = cls(
             id=data.get("id"),
-    match_id=data.get("match_id",
-    0),
-    user_id=data.get("user_id",
-    0),
-
-            prediction_type=PredictionType(data.get("prediction_type",
-    "match_result")),
-    predicted_value=data.get("predicted_value",
-    ""),
-
-            confidence=data.get("confidence",
-    0.5),
-    odds=data.get("odds"),
-    stake=data.get("stake",
-    1.0),
-
+            match_id=data.get("match_id", 0),
+            user_id=data.get("user_id", 0),
+            prediction_type=PredictionType(data.get("prediction_type", "match_result")),
+            predicted_value=data.get("predicted_value", ""),
+            confidence=data.get("confidence", 0.5),
+            odds=data.get("odds"),
+            stake=data.get("stake", 1.0),
         )
 
         # 设置状态
-        _prediction.is_settled = data.get("is_settled",
-    False)
-        _prediction.is_correct = data.get("is_correct",
-    False)
+        _prediction.is_settled = data.get("is_settled", False)
+        _prediction.is_correct = data.get("is_correct", False)
         _prediction.actual_value = data.get("actual_value")
-        _prediction.profit_loss = data.get("profit_loss",
-    0.0)
-        _prediction.return_amount = data.get("return_amount",
-    0.0)
+        _prediction.profit_loss = data.get("profit_loss", 0.0)
+        _prediction.return_amount = data.get("return_amount", 0.0)
 
         # 设置附加信息
         _prediction.reasoning = data.get("reasoning", "")

@@ -6,10 +6,10 @@ Quick B904 Exception Handler Fixer
 针对单个文件的快速B904错误修复工具.
 """
 
-import re
 import subprocess
 import sys
 from pathlib import Path
+
 
 def get_b904_lines(file_path):
     """获取文件中B904错误的具体行号"""
@@ -46,7 +46,7 @@ def fix_b904_in_file(file_path):
     print(f"📍 发现 {len(b904_lines)} 个B904错误")
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
 
         fixed_count = 0

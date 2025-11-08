@@ -22,7 +22,6 @@ router = APIRouter(prefix="/api/v1/performance", tags=["性能管理"])
 # 全局API优化器实例
 api_optimizer = APIOptimizer()
 
-
 # ==================== 请求/响应模型 ====================
 
 
@@ -534,7 +533,6 @@ async def _clear_cache_by_keys(keys: list[str]):
     for key in keys:
         if await cache_manager.delete(key):
             cleared_count += 1
-
 
 
 async def _clear_all_cache():

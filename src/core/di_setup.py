@@ -193,12 +193,12 @@ def register_service(
 
 # 示例:创建配置文件的便捷函数
 def create_di_config(
-    output_path: str = "configs/di-config.yaml", format: str = "yaml"
+    output_path: str = "configs/di-config.yaml", output_format: str = "yaml"
 ) -> None:
     """创建依赖注入配置文件"""
     from .config_di import generate_sample_config
 
-    config_content = generate_sample_config(format)
+    config_content = generate_sample_config(output_format)
 
     # 确保目录存在
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)

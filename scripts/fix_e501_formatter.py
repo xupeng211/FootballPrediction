@@ -8,10 +8,11 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_long_lines_in_file(file_path: str, max_length: int = 88) -> int:
     """修复单个文件中的长行问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
     except Exception as e:
         print(f"读取文件 {file_path} 失败: {e}")

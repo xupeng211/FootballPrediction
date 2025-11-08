@@ -12,13 +12,13 @@ import json
 import logging
 import time
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 # 配置日志
 logging.basicConfig(
@@ -135,7 +135,7 @@ def generate_test_data(n_samples: int = 1000) -> tuple[pd.DataFrame, pd.Series]:
 
 def test_xgboost(
     X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """测试XGBoost模型"""
     if not XGB_AVAILABLE:
         return {"error": "XGBoost不可用"}
@@ -194,7 +194,7 @@ def test_xgboost(
 
 def test_lightgbm(
     X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """测试LightGBM模型"""
     if not LGB_AVAILABLE:
         return {"error": "LightGBM不可用"}

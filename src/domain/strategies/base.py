@@ -36,10 +36,8 @@ class PredictionInput:
     match: Match
     home_team: Team
     away_team: Team
-    historical_data: dict[str,
-    Any] | None = None
-    additional_features: dict[str,
-    Any] | None = field(default_factory=dict)
+    historical_data: dict[str, Any] | None = None
+    additional_features: dict[str, Any] | None = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -53,10 +51,8 @@ class PredictionOutput:
     predicted_home_score: int
     predicted_away_score: int
     confidence: float
-    probability_distribution: dict[str,
-    float] | None = None
-    feature_importance: dict[str,
-    float] | None = None
+    probability_distribution: dict[str, float] | None = None
+    feature_importance: dict[str, float] | None = None
     metadata: dict[str, Any] | None = field(default_factory=dict)
     strategy_used: str | None = None
     execution_time_ms: float | None = None
@@ -90,9 +86,7 @@ class PredictionStrategy(ABC):
         self.config: dict[str, Any] = {}
 
     @abstractmethod
-    async def initialize(self,
-    config: dict[str,
-    Any]) -> None:
+    async def initialize(self, config: dict[str, Any]) -> None:
         """初始化策略"
 
         Args:
@@ -100,8 +94,7 @@ class PredictionStrategy(ABC):
         """
 
     @abstractmethod
-    async def predict(self,
-    input_data: PredictionInput) -> PredictionOutput:
+    async def predict(self, input_data: PredictionInput) -> PredictionOutput:
         """执行预测"
 
         Args:
@@ -113,8 +106,7 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def batch_predict(
-        self,
-    inputs: list[PredictionInput]
+        self, inputs: list[PredictionInput]
     ) -> list[PredictionOutput]:
         """批量预测"
 
@@ -127,16 +119,13 @@ class PredictionStrategy(ABC):
 
     @abstractmethod
     async def update_metrics(
-        self,
-    actual_results: list[tuple[Prediction,
-    dict[str,
-    Any]]]
+        self, actual_results: list[tuple[Prediction, dict[str, Any]]]
     ) -> None:
         """更新策略性能指标"
 
-        Args:
-            actual_results: 实际结果列表,
-    包含预测和实际比赛结果
+            Args:
+                actual_results: 实际结果列表,
+        包含预测和实际比赛结果
         """
 
     def get_metrics(self) -> StrategyMetrics | None:
@@ -147,19 +136,15 @@ class PredictionStrategy(ABC):
         """检查策略是否健康可用"""
         return self._is_initialized and self._metrics is not None
 
-    def get_config(self) -> dict[str,
-    Any]:
+    def get_config(self) -> dict[str, Any]:
         """获取策略配置"""
         return self.config.copy()
 
-    def update_config(self,
-    new_config: dict[str,
-    Any]) -> None:
+    def update_config(self, new_config: dict[str, Any]) -> None:
         """更新策略配置"""
         self.config.update(new_config)
 
-    async def validate_input(self,
-    input_data: PredictionInput) -> bool:
+    async def validate_input(self, input_data: PredictionInput) -> bool:
         """验证输入数据有效性"
 
         Args:
@@ -179,8 +164,7 @@ class PredictionStrategy(ABC):
         # 子类可以覆盖此方法进行特定验证
         return True
 
-    async def pre_process(self,
-    input_data: PredictionInput) -> PredictionInput:
+    async def pre_process(self, input_data: PredictionInput) -> PredictionInput:
         """预处理输入数据"
 
         Args:
@@ -227,16 +211,12 @@ class PredictionContext:
     away_team: Team
 
     # 配置参数
-    strategy_config: dict[str,
-    Any] = field(default_factory=dict)
-    global_config: dict[str,
-    Any] = field(default_factory=dict)
+    strategy_config: dict[str, Any] = field(default_factory=dict)
+    global_config: dict[str, Any] = field(default_factory=dict)
 
     # 中间数据
-    historical_data: dict[str,
-    Any] | None = None
-    team_form: dict[str,
-    Any] | None = None
+    historical_data: dict[str, Any] | None = None
+    team_form: dict[str, Any] | None = None
     head_to_head: list[dict[str, Any]] | None = None
 
     # 元数据
@@ -248,10 +228,9 @@ class PredictionContext:
         """转换为预测输入对象"""
         return PredictionInput(
             match=self.match,
-    home_team=self.home_team,
-    away_team=self.away_team,
-    historical_data=self.historical_data,
-
+            home_team=self.home_team,
+            away_team=self.away_team,
+            historical_data=self.historical_data,
             additional_features={
                 "team_form": self.team_form,
                 "head_to_head": self.head_to_head,

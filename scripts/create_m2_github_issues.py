@@ -7,9 +7,9 @@ M2 Planning GitHub Issues Generator
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any
+
 
 class M2GitHubIssuesGenerator:
     """M2规划GitHub Issues生成器"""
@@ -22,7 +22,7 @@ class M2GitHubIssuesGenerator:
             "due_date": "2025-12-01"
         }
 
-    def generate_phase1_issues(self) -> List[Dict[str, Any]]:
+    def generate_phase1_issues(self) -> list[dict[str, Any]]:
         """生成阶段1的Issues"""
         print("📝 生成阶段1 Issues: 基础覆盖率扩展 (目标15%)")
 
@@ -271,7 +271,7 @@ make ci-test
 
         return phase1_issues
 
-    def generate_phase2_issues(self) -> List[Dict[str, Any]]:
+    def generate_phase2_issues(self) -> list[dict[str, Any]]:
         """生成阶段2的Issues"""
         print("📝 生成阶段2 Issues: API层覆盖率提升 (目标25%)")
 
@@ -520,7 +520,7 @@ python3 scripts/check_doc_coverage.py
 
         return phase2_issues
 
-    def generate_phase3_issues(self) -> List[Dict[str, Any]]:
+    def generate_phase3_issues(self) -> list[dict[str, Any]]:
         """生成阶段3的Issues"""
         print("📝 生成阶段3 Issues: 数据层覆盖率攻坚 (目标35%)")
 
@@ -769,7 +769,7 @@ pytest tests/performance/ -v
 
         return phase3_issues
 
-    def generate_phase4_issues(self) -> List[Dict[str, Any]]:
+    def generate_phase4_issues(self) -> list[dict[str, Any]]:
         """生成阶段4的Issues"""
         print("📝 生成阶段4 Issues: 业务逻辑层覆盖 (目标50%)")
 
@@ -1021,7 +1021,7 @@ python3 scripts/verify_m2_coverage.py
 
         return phase4_issues
 
-    def generate_all_issues(self) -> List[Dict[str, Any]]:
+    def generate_all_issues(self) -> list[dict[str, Any]]:
         """生成所有Issues"""
         print("🚀 生成M2规划的所有GitHub Issues...")
 
@@ -1037,7 +1037,7 @@ python3 scripts/verify_m2_coverage.py
 
         return all_issues
 
-    def create_issue_templates(self) -> Dict[str, Any]:
+    def create_issue_templates(self) -> dict[str, Any]:
         """创建Issue模板"""
         print("📋 创建标准化Issue模板...")
 
@@ -1310,14 +1310,14 @@ python3 create_m2_issues.py
         # 保存到文件
         data = self.save_issues_to_files()
 
-        print(f"\\n🎉 M2 GitHub Issues生成完成!")
+        print("\\n🎉 M2 GitHub Issues生成完成!")
         print(f"   总Issues数: {len(issues)}")
         print(f"   预估总工时: {sum(issue['estimated_hours'] for issue in issues)}小时")
-        print(f"   覆盖4个阶段，从1.42%到50%覆盖率目标")
-        print(f"\\n📄 生成的文件:")
-        print(f"   - m2_github_issues.json (完整数据)")
-        print(f"   - create_m2_issues.py (创建脚本)")
-        print(f"   - M2_GitHub_Issues_Plan.md (执行计划)")
+        print("   覆盖4个阶段，从1.42%到50%覆盖率目标")
+        print("\\n📄 生成的文件:")
+        print("   - m2_github_issues.json (完整数据)")
+        print("   - create_m2_issues.py (创建脚本)")
+        print("   - M2_GitHub_Issues_Plan.md (执行计划)")
 
         return data
 

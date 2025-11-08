@@ -4,14 +4,12 @@
 验证开发环境的完整性和配置正确性
 """
 
-import os
-import sys
-import subprocess
-import json
 import platform
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+
 
 class Colors:
     """颜色常量"""
@@ -41,7 +39,7 @@ class DevelopmentEnvironmentChecker:
         self.failed = 0
         self.warnings = 0
 
-    def _get_system_info(self) -> Dict:
+    def _get_system_info(self) -> dict:
         """获取系统信息"""
         return {
             "platform": platform.system(),
@@ -55,7 +53,7 @@ class DevelopmentEnvironmentChecker:
 
     def run_command(self,
     command: str,
-    cwd: Optional[Path] = None) -> Tuple[bool,
+    cwd: Path | None = None) -> tuple[bool,
     str,
     str]:
         """运行系统命令"""

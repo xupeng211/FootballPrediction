@@ -18,13 +18,11 @@ class HistoricalMatch:
     """历史比赛 - 占位符实现"""
 
 
-
 class HistoricalStrategy:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """历史策略 - 占位符实现"""
-
 
 
 # 导出所有公共接口

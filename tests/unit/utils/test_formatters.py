@@ -81,7 +81,7 @@ class TestFormatJson:
         """测试带缩进的JSON格式化"""
         data = {"name": "张三", "age": 25}
         result = format_json(data, indent=2)
-        lines = result.split('\n')
+        lines = result.split("\n")
         assert len(lines) > 1  # 应该有多行
         assert "  " in result  # 应该包含缩进
 
@@ -89,7 +89,7 @@ class TestFormatJson:
         """测试嵌套数据JSON格式化"""
         data = {
             "user": {"name": "李四", "profile": {"age": 30, "city": "北京"}},
-            "scores": [85, 90, 78]
+            "scores": [85, 90, 78],
         }
         result = format_json(data)
         parsed = json.loads(result)
@@ -285,7 +285,7 @@ class TestFormattersIntegration:
             "product": "测试商品",
             "price": 123.456,
             "currency": "CNY",
-            "formatted_price": format_currency(123.456, "CNY")
+            "formatted_price": format_currency(123.456, "CNY"),
         }
 
         json_result = format_json(data, indent=2)
@@ -301,7 +301,7 @@ class TestFormattersIntegration:
                 "success_rate": 0.8547,
                 "error_rate": 0.1453,
                 "formatted_success": format_percentage(0.8547, 1),
-                "formatted_error": format_percentage(0.1453, 1)
+                "formatted_error": format_percentage(0.1453, 1),
             }
         }
 
@@ -321,12 +321,9 @@ class TestFormattersIntegration:
                 "revenue": 1234567.89,
                 "formatted_revenue": format_currency(1234567.89, "CNY"),
                 "profit_margin": 0.2345,
-                "formatted_margin": format_percentage(0.2345, 2)
+                "formatted_margin": format_percentage(0.2345, 2),
             },
-            "metadata": {
-                "version": "1.0.0",
-                "author": "测试用户"
-            }
+            "metadata": {"version": "1.0.0", "author": "测试用户"},
         }
 
         # 确保所有格式化都正确
@@ -351,7 +348,7 @@ class TestFormattersEdgeCases:
             "emoji": "🎉🚀💻",
             "arabic": "اختبار",
             "russian": "тест",
-            "currency": format_currency(123.45, "¥")
+            "currency": format_currency(123.45, "¥"),
         }
 
         result = format_json(unicode_data)

@@ -5,7 +5,7 @@ Create simple working test files
 """
 
 import os
-from pathlib import Path
+
 
 def create_basic_test_file(test_file_path: str, module_name: str) -> bool:
     """创建基础可工作的测试文件"""

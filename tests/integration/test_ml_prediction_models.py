@@ -53,7 +53,7 @@ def create_mock_training_data():
     matches = []
     np.random.seed(42)  # 确保可重复性
 
-    for i in range(200):  # 生成200场比赛
+    for _i in range(200):  # 生成200场比赛
         home_team = np.random.choice(teams)
         away_team = np.random.choice([t for t in teams if t != home_team])
 
@@ -281,12 +281,10 @@ def test_prediction_service(training_data):
 
                 logger.info(f"✅ {strategy.value} 预测结果:")
                 logger.info(
-                    f"   - 预测结果: {result.predicted_outcome if hasattr(result,
-    'predicted_outcome') else result.ensemble_predicted_outcome}"
+                    f"   - 预测结果: {result.predicted_outcome if hasattr(result, 'predicted_outcome') else result.ensemble_predicted_outcome}"
                 )
                 logger.info(
-                    f"   - 置信度: {result.confidence if hasattr(result,
-    'confidence') else result.ensemble_confidence:.3f}"
+                    f"   - 置信度: {result.confidence if hasattr(result, 'confidence') else result.ensemble_confidence:.3f}"
                 )
 
             except Exception as e:
@@ -337,13 +335,19 @@ def main():
 
         try:
             if test_func():
-                logger.debug(f"✅ {test_name} 测试通过")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"✅ {test_name} 测试通过"
+                )  # TODO: Add logger import if needed
                 passed += 1
             else:
-                logger.debug(f"❌ {test_name} 测试失败")  # TODO: Add logger import if needed
+                logger.debug(
+                    f"❌ {test_name} 测试失败"
+                )  # TODO: Add logger import if needed
                 failed += 1
         except Exception as e:
-            logger.debug(f"❌ {test_name} 测试异常: {e}")  # TODO: Add logger import if needed
+            logger.debug(
+                f"❌ {test_name} 测试异常: {e}"
+            )  # TODO: Add logger import if needed
             logger.exception(f"Exception in {test_name}")
             failed += 1
 
@@ -356,10 +360,14 @@ def main():
     logger.debug(f"   通过: {passed}")  # TODO: Add logger import if needed
     logger.error(f"   失败: {failed}")  # TODO: Add logger import if needed
     logger.error(f"   总计: {passed + failed}")  # TODO: Add logger import if needed
-    logger.debug(f"   耗时: {duration.total_seconds():.2f} 秒")  # TODO: Add logger import if needed
+    logger.debug(
+        f"   耗时: {duration.total_seconds():.2f} 秒"
+    )  # TODO: Add logger import if needed
 
     if failed == 0:
-        logger.debug("🎉 所有测试通过！机器学习预测模型基础功能正常")  # TODO: Add logger import if needed
+        logger.debug(
+            "🎉 所有测试通过！机器学习预测模型基础功能正常"
+        )  # TODO: Add logger import if needed
         logger.debug("\n✅ 已实现功能:")  # TODO: Add logger import if needed
         logger.debug("   - 泊松分布预测模型")  # TODO: Add logger import if needed
         logger.debug("   - ELO评分预测模型")  # TODO: Add logger import if needed
@@ -369,7 +377,9 @@ def main():
         logger.debug("   - 批量预测支持")  # TODO: Add logger import if needed
         return True
     else:
-        logger.debug("⚠️  部分测试失败，请检查相关实现")  # TODO: Add logger import if needed
+        logger.debug(
+            "⚠️  部分测试失败，请检查相关实现"
+        )  # TODO: Add logger import if needed
         return False
 
 

@@ -7,8 +7,8 @@ GitHub Issues Best Practices Analysis and Breakdown Strategy
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
+
 
 class GitHubIssuesBestPracticesAnalyzer:
     """GitHub Issues最佳实践分析器"""
@@ -566,7 +566,7 @@ Issue的工作量应该在1-3天内完成
         for i, issue in enumerate(phase1_issues, 1):
             report += f"{i}. {issue['title']}\n"
 
-        report += f"""
+        report += """
 ### 阶段2：API层覆盖率提升 (目标25%)
 """
 
@@ -685,14 +685,14 @@ Issue的工作量应该在1-3天内完成
         with open("github_issues_best_practices_report.md", "w", encoding="utf-8") as f:
             f.write(report)
 
-        print(f"\\n🎉 GitHub Issues最佳实践分析完成!")
+        print("\\n🎉 GitHub Issues最佳实践分析完成!")
         print(f"   当前规划粒度: {current_analysis['granularity_assessment']}")
         print(f"   推荐Issue数量: {len(breakdown)}个")
         print(f"   最佳原则: {len(principles)}个")
-        print(f"   管理策略: 完整的Milestone和项目板设置")
-        print(f"\\n📄 分析报告已保存:")
-        print(f"   - github_issues_best_practices_analysis.json (详细数据)")
-        print(f"   - github_issues_best_practices_report.md (可读文档)")
+        print("   管理策略: 完整的Milestone和项目板设置")
+        print("\\n📄 分析报告已保存:")
+        print("   - github_issues_best_practices_analysis.json (详细数据)")
+        print("   - github_issues_best_practices_report.md (可读文档)")
 
         return self.analysis_results
 

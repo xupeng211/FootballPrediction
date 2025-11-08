@@ -5,14 +5,13 @@ Update GitHub Issue #210: P1-High Priority: Expand unit test coverage
 """
 
 import json
-import requests
-import os
 from datetime import datetime
+
 
 def load_github_token():
     """加载GitHub token"""
     try:
-        with open('.github_token', 'r') as f:
+        with open('.github_token') as f:
             return f.read().strip()
     except FileNotFoundError:
         print("⚠️  GitHub token文件未找到")
@@ -165,11 +164,11 @@ def update_github_issue():
     # 这里可以添加实际的GitHub API调用
     # 为了演示，我们保存更新内容到文件
 
-    print(f"📋 GitHub Issue #210 更新内容准备完成")
-    print(f"🎯 状态: ✅ 阶段完成 - 超额完成目标")
-    print(f"📊 成果: 87个测试通过（目标50个，174%完成率）")
-    print(f"🛠️ 工具: 7个智能测试工具")
-    print(f"📁 文件: 15+个测试文件")
+    print("📋 GitHub Issue #210 更新内容准备完成")
+    print("🎯 状态: ✅ 阶段完成 - 超额完成目标")
+    print("📊 成果: 87个测试通过（目标50个，174%完成率）")
+    print("🛠️ 工具: 7个智能测试工具")
+    print("📁 文件: 15+个测试文件")
 
     # 保存更新内容
     update_data = {
@@ -191,8 +190,8 @@ def update_github_issue():
     with open('github_issue_210_update.json', 'w', encoding='utf-8') as f:
         json.dump(update_data, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ 更新报告已保存: github_issue_210_update.json")
-    print(f"🎉 Issue #210 更新完成！")
+    print("✅ 更新报告已保存: github_issue_210_update.json")
+    print("🎉 Issue #210 更新完成！")
 
     return True
 

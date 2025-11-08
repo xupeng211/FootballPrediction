@@ -50,9 +50,11 @@ async def register_user(
         user = await user_service.create_user(request)
         return user
     except UserAlreadyExistsError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post("/login", response_model=UserAuthResponse)
@@ -67,7 +69,9 @@ async def login_user(
         )
         return auth_response
     except (UserNotFoundError, InvalidCredentialsError) as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e)
+        ) from e
 
 
 @router.get("/me", response_model=UserResponse)
@@ -80,7 +84,9 @@ async def get_current_user_info(
         user = await user_service.get_user_by_id(current_user["id"])
         return user
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -93,7 +99,7 @@ async def get_user(
         user = await user_service.get_user_by_id(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -108,14 +114,19 @@ async def update_user(
         # 检查权限：只能更新自己的信息
         if current_user["id"] != user_id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="只能更新自己的用户信息"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="只能更新自己的用户信息",
             )
         user = await user_service.update_user(user_id, request)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.delete("/{user_id}", status_code=204)
@@ -129,11 +140,14 @@ async def delete_user(
         # 检查权限：只能删除自己的账户
         if current_user["id"] != user_id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="只能删除自己的账户"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="只能删除自己的账户",
             )
         await user_service.delete_user(user_id)
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/", response_model=list[UserResponse])
@@ -148,7 +162,8 @@ async def get_users(
     # 检查权限：只有管理员可以查看所有用户
     if not current_user.get("is_admin", False):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以查看用户列表"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有管理员可以查看用户列表",
         )
     try:
         users = await user_service.get_users(
@@ -158,7 +173,7 @@ async def get_users(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        ) from e
 
 
 @router.get("/search/{query}", response_model=list[UserResponse])
@@ -172,15 +187,16 @@ async def search_users(
     # 检查权限
     if not current_user.get("is_admin", False):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以搜索用户"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有管理员可以搜索用户",
         )
     try:
         users = await user_service.search_users(query, limit)
         return users
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR_ERROR, detail=str(e)
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
 
 
 @router.post("/change-password", status_code=200)
@@ -198,9 +214,13 @@ async def change_password(
         )
         return {"message": "密码修改成功" if success else "密码修改失败"}
     except (UserNotFoundError, InvalidCredentialsError) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
 
 
 @router.post("/{user_id}/deactivate", response_model=UserResponse)
@@ -214,12 +234,15 @@ async def deactivate_user(
         # 检查权限：只有管理员可以停用用户
         if not current_user.get("is_admin", False):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以停用用户"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="只有管理员可以停用用户",
             )
         user = await user_service.deactivate_user(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post("/{user_id}/activate", response_model=UserResponse)
@@ -233,12 +256,15 @@ async def activate_user(
         # 检查权限：只有管理员可以激活用户
         if not current_user.get("is_admin", False):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以激活用户"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="只有管理员可以激活用户",
             )
         user = await user_service.activate_user(user_id)
         return user
     except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/stats", response_model=dict)
@@ -250,7 +276,8 @@ async def get_user_stats(
     # 检查权限：只有管理员可以查看统计
     if not current_user.get("is_admin", False):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="只有管理员可以查看用户统计"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有管理员可以查看用户统计",
         )
     try:
         stats = await user_service.get_user_stats()
@@ -258,4 +285,4 @@ async def get_user_stats(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        ) from e

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 #!/usr/bin/env python3
 """
 投注API模块
@@ -16,6 +14,7 @@ Betting API Module
 Issue: #116 EV计算和投注策略
 """
 
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException, Query
@@ -176,11 +175,12 @@ async def get_match_recommendations(
     except HTTPException:
         raise
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"获取投注建议失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
-            detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+            detail=f"内部服务器错误: {error_msg}",  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post(
@@ -212,12 +212,9 @@ async def get_portfolio_recommendations(
 
         # 异步记录分析日志
         background_tasks.add_task(
-            logger.info(
-                f"组合投注建议生成完成: {len(request.match_ids)}场比赛, "
-                f"建议投注: {recommendations.get('portfolio_optimization',
-    {}).get('number_of_bets',
-    0)}个"
-            ),
+            logger.info,
+            f"组合投注建议生成完成: {len(request.match_ids)}场比赛, "
+            f"建议投注: {recommendations.get('portfolio_optimization', {}).get('number_of_bets', 0)}个",
         )
 
         return PortfolioRecommendationResponse(
@@ -237,11 +234,12 @@ async def get_portfolio_recommendations(
     except HTTPException:
         raise
     except Exception as e:
+        str(e)  # Store error in larger scope
         logger.error(f"获取组合投注建议失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get(
@@ -289,11 +287,12 @@ async def get_performance_analysis(
     except HTTPException:
         raise
     except Exception as e:
+        str(e)  # Store error in larger scope
         logger.error(f"历史表现分析失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post(
@@ -337,11 +336,12 @@ async def update_match_odds(
     except HTTPException:
         raise
     except Exception as e:
+        str(e)  # Store error in larger scope
         logger.error(f"更新赔率失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get(
@@ -397,12 +397,15 @@ async def get_available_strategies(
             "timestamp": datetime.now().isoformat(),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
+        str(e)  # Store error in larger scope
         logger.error(f"获取策略列表失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get(
@@ -438,11 +441,12 @@ async def check_srs_compliance(
     except HTTPException:
         raise
     except Exception as e:
+        str(e)  # Store error in larger scope
         logger.error(f"SRS合规性检查失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/health", summary="投注服务健康检查", description="检查投注服务的运行状态")
@@ -474,10 +478,11 @@ async def health_check(betting_service: BettingService = Depends(get_betting_ser
         }
 
     except Exception as e:
+        error_msg = str(e)  # Store error in larger scope
         logger.error(f"健康检查失败: {e}")
         return {
             "status": "unhealthy",
-            "error": str(e),
+            "error": error_msg,
             "timestamp": datetime.now().isoformat(),
         }
 
@@ -517,11 +522,12 @@ async def get_metrics(betting_service: BettingService = Depends(get_betting_serv
         }
 
     except Exception as e:
+        str(e)  # Store error in larger scope
         logger.error(f"获取指标失败: {e}")
         raise HTTPException(
             status_code=500,  # TODO: 将魔法数字 500 提取为常量
             detail=f"内部服务器错误: {str(e)}",  # TODO: 将魔法数字 500 提取为常量
-        )  # TODO: 将魔法数字 500 提取为常量
+        ) from e  # TODO: B904 exception chaining
 
 
 # 错误处理器

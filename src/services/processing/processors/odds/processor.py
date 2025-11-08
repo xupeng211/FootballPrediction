@@ -15,7 +15,6 @@ class ExampleClass:
     """示例类"""
 
 
-
 def example_function():
     """函数文档字符串"""
     pass  # 添加pass语句

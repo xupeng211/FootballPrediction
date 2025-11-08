@@ -56,13 +56,13 @@ class League:
 
     def __init__(
         self,
-        id: int | None = None,
+        league_id: int | None = None,
         name: str = "",
         country: str = "",
         season: str = "",
         status: LeagueStatus = LeagueStatus.ACTIVE,
     ):
-        self.id = id
+        self.id = league_id
         self.name = name
         self.country = country
         self.season = season

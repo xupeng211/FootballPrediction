@@ -7,8 +7,8 @@ Simplified GitHub Issues Best Practices Analyzer
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
+
 
 def analyze_m2_planning():
     """分析M2规划"""
@@ -211,21 +211,21 @@ def generate_report():
     for i, issue in enumerate(analysis['issues'][0]['issues'], 1):
         report += f"{i}. {issue}\n"
 
-    report += f"""
+    report += """
 ### 阶段2: API层覆盖率提升 (目标25%)
 """
 
     for i, issue in enumerate(analysis['issues'][1]['issues'], 6):
         report += f"{i}. {issue}\n"
 
-    report += f"""
+    report += """
 ### 阶段3: 数据层覆盖率攻坚 (目标35%)
 """
 
     for i, issue in enumerate(analysis['issues'][2]['issues'], 11):
         report += f"{i}. {issue}\n"
 
-    report += f"""
+    report += """
 ### 阶段4: 业务逻辑层覆盖 (目标50%)
 """
 
@@ -347,14 +347,14 @@ def main():
     with open("github_issues_analysis_data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False, default=str)
 
-    print(f"\\n🎉 GitHub Issues最佳实践分析完成!")
+    print("\\n🎉 GitHub Issues最佳实践分析完成!")
     print(f"   当前规划: {analysis['phases']}个阶段")
     print(f"   任务数量: {analysis['total_current_tasks']}个")
     print(f"   粒度评估: {analysis['granularity']}")
     print(f"   推荐Issue: {sum(len(phase['issues']) for phase in analysis['issues'])}个")
-    print(f"\\n📄 报告已保存:")
-    print(f"   - github_issues_best_practices_report.md")
-    print(f"   - github_issues_analysis_data.json")
+    print("\\n📄 报告已保存:")
+    print("   - github_issues_best_practices_report.md")
+    print("   - github_issues_analysis_data.json")
 
 if __name__ == "__main__":
     main()

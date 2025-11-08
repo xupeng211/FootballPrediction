@@ -330,12 +330,14 @@ async def prometheus_metrics():
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取Prometheus指标失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取监控指标失败") from e
+
+
 @router.get("/collector/health")
 async def collector_health() -> dict[str, Any]:
     try:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
-        {
+        return {
             "status": "healthy",
             "timestamp": collector_status,
             "metrics_collector": collector_status,
@@ -354,7 +356,9 @@ async def manual_collect() -> dict[str, Any]:
         return result
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"手动指标收集失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"指标收集失败: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"指标收集失败: {str(e)}"
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.get("/collector/status")
@@ -365,15 +369,19 @@ async def collector_status() -> dict[str, Any]:
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取收集器状态失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取状态失败") from e
+
+
 @router.post("/collector/start")
 async def start_collector() -> dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.start()
-        {"message": "指标收集器启动成功"}
+        return {"message": "指标收集器启动成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"启动失败: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"启动失败: {str(e)}"
+        ) from e  # TODO: B904 exception chaining
 
 
 @router.post("/collector/stop")
@@ -381,7 +389,9 @@ async def stop_collector() -> dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.stop()
-        {"message": "指标收集器停止成功"}
+        return {"message": "指标收集器停止成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"停止失败: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"停止失败: {str(e)}"
+        ) from e  # TODO: B904 exception chaining

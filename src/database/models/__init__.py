@@ -10,7 +10,7 @@ from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
 from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLog
 from .features import Features, TeamType
 from .league import League
-from .match import Match, MatchStatus
+from .match import Match, MatchResult, MatchStatus
 from .odds import MarketType, Odds
 from .predictions import PredictedResult, Predictions
 from .raw_data import RawMatchData, RawOddsData, RawScoresData
@@ -60,6 +60,7 @@ __all__ = [
     "UserRoleAssignment",
     # 枚举类
     "MatchStatus",
+    "MatchResult",
     "MarketType",
     "TeamType",
     "PredictedResult",

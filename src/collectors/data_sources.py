@@ -74,8 +74,7 @@ class OddsData:
 class DataSourceAdapter(ABC):
     """数据源适配器基类"""
 
-    def __init__(self,
-    api_key: str | None = None):
+    def __init__(self, api_key: str | None = None):
         """函数文档字符串"""
         # 添加pass语句
         self.api_key = api_key
@@ -86,10 +85,9 @@ class DataSourceAdapter(ABC):
     @abstractmethod
     async def get_matches(
         self,
-    league_id: int | None = None,
-    date_from: datetime | None = None,
-    date_to: datetime | None = None,
-
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
     ) -> list[MatchData]:
         """获取比赛列表"""
 
@@ -115,10 +113,9 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
     async def get_matches(
         self,
-    league_id: int | None = None,
-    date_from: datetime | None = None,
-    date_to: datetime | None = None,
-
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
     ) -> list[MatchData]:
         """获取比赛列表"""
 
@@ -140,18 +137,14 @@ class FootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"获取比赛数据失败: {e}")
             return []
 
-    async def _fetch_matches_from_url(self,
-    url: str,
-    params: dict) -> list[MatchData]:
+    async def _fetch_matches_from_url(self, url: str, params: dict) -> list[MatchData]:
         """从URL获取比赛数据"""
         matches = []
 
         async with aiohttp.ClientSession(
-            headers=self.headers,
-    timeout=self.timeout
+            headers=self.headers, timeout=self.timeout
         ) as session:
-            async with session.get(url,
-    params=params) as response:
+            async with session.get(url, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
                     for match in data.get("matches", []):
@@ -189,20 +182,18 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
             return MatchData(
                 id=match["id"],
-    home_team=match["homeTeam"]["name"],
-    away_team=match["awayTeam"]["name"],
-    home_team_id=match["homeTeam"]["id"],
-
+                home_team=match["homeTeam"]["name"],
+                away_team=match["awayTeam"]["name"],
+                home_team_id=match["homeTeam"]["id"],
                 away_team_id=match["awayTeam"]["id"],
                 match_date=datetime.fromisoformat(
                     match["utcDate"].replace("Z", "+00:00")
                 ),
                 league=match.get("competition", {}).get("name", ""),
                 league_id=match.get("competition", {}).get("id"),
-    status=status,
-    home_score=home_score,
-    away_score=away_score,
-
+                status=status,
+                home_score=home_score,
+                away_score=away_score,
                 round=match.get("matchday"),
                 venue=match.get("venue"),
             )
@@ -238,20 +229,17 @@ class FootballDataOrgAdapter(DataSourceAdapter):
 
         return teams
 
-    def _parse_team_data(self,
-    team: dict) -> TeamData | None:
+    def _parse_team_data(self, team: dict) -> TeamData | None:
         """解析球队数据"""
         try:
             return TeamData(
                 id=team["id"],
-    name=team["name"],
-    short_name=team.get("shortName"),
-
+                name=team["name"],
+                short_name=team.get("shortName"),
                 crest=team.get("crest"),
-    founded=team.get("founded"),
-    venue=team.get("venue"),
-    website=team.get("website"),
-
+                founded=team.get("founded"),
+                venue=team.get("venue"),
+                website=team.get("website"),
             )
         except Exception as e:
             logger.error(f"解析球队数据失败: {e}")
@@ -289,10 +277,9 @@ class MockDataAdapter(DataSourceAdapter):
 
     async def get_matches(
         self,
-    league_id: int | None = None,
-    date_from: datetime | None = None,
-    date_to: datetime | None = None,
-
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
     ) -> list[MatchData]:
         """获取模拟比赛数据"""
         matches = []
@@ -304,9 +291,7 @@ class MockDataAdapter(DataSourceAdapter):
             match_date = base_date + timedelta(days=i)
 
             # 每天生成2-4场比赛
-            daily_matches = min(4,
-    max(2,
-    i % 3 + 2))
+            daily_matches = min(4, max(2, i % 3 + 2))
 
             for j in range(daily_matches):
                 # 随机选择两支球队
@@ -322,20 +307,11 @@ class MockDataAdapter(DataSourceAdapter):
                     home_team=team1["name"],
                     away_team=team2["name"],
                     home_team_id=team1["id"],
-
                     away_team_id=team2["id"],
-                    match_date=match_date.replace(
-                        hour=15 + i % 6,
-    minute=0
-                    ),
-    # 不同时间
+                    match_date=match_date.replace(hour=15 + i % 6, minute=0),
+                    # 不同时间
                     league=self._get_random_league(),
-    league_id=random.choice([39,
-    140,
-    135,
-    78,
-    61]),
-
+                    league_id=random.choice([39, 140, 135, 78, 61]),
                     status="upcoming",
                     venue=f"Stadium {match_id}",
                 )
@@ -347,38 +323,28 @@ class MockDataAdapter(DataSourceAdapter):
         """获取随机联赛名称"""
         import random
 
-        leagues = ["英超",
-    "西甲",
-    "意甲",
-    "德甲",
-    "法甲",
-    "欧冠"]
+        leagues = ["英超", "西甲", "意甲", "德甲", "法甲", "欧冠"]
         return random.choice(leagues)
 
-    async def get_teams(self,
-    league_id: int | None = None) -> list[TeamData]:
+    async def get_teams(self, league_id: int | None = None) -> list[TeamData]:
         """获取模拟球队数据"""
         return [
             TeamData(
                 id=team["id"],
-    name=team["name"],
-    short_name=team["short_name"],
-
+                name=team["name"],
+                short_name=team["short_name"],
                 venue=f"Stadium {team['id']}",
                 website=f"https://www.{team['short_name'].lower()}.com",
-    )
+            )
             for team in self.teams
         ]
 
-    async def get_odds(self,
-    match_id: int) -> list[OddsData]:
+    async def get_odds(self, match_id: int) -> list[OddsData]:
         """获取模拟赔率数据"""
         import random
 
         # 生成随机赔率
-        home_win = round(random.uniform(1.5,
-    3.5),
-    2)
+        home_win = round(random.uniform(1.5, 3.5), 2)
         draw = round(random.uniform(2.8, 4.2), 2)
         away_win = round(random.uniform(1.8, 4.0), 2)
 
@@ -388,27 +354,21 @@ class MockDataAdapter(DataSourceAdapter):
 
         if total < (1 - margin):
             # 调整赔率
-            home_win = round(1 / ((1 / home_win) * (1 - margin)),
-    2)
-            draw = round(1 / ((1 / draw) * (1 - margin)),
-    2)
-            away_win = round(1 / ((1 / away_win) * (1 - margin)),
-    2)
+            home_win = round(1 / ((1 / home_win) * (1 - margin)), 2)
+            draw = round(1 / ((1 / draw) * (1 - margin)), 2)
+            away_win = round(1 / ((1 / away_win) * (1 - margin)), 2)
 
         return [
             OddsData(
                 match_id=match_id,
-
                 home_win=home_win,
                 draw=draw,
                 away_win=away_win,
                 source="mock_adapter",
                 timestamp=datetime.now(),
                 over_under=round(random.uniform(2.2, 3.0), 2),
-                asian_handicap=round(random.uniform(-1.5,
-    1.5),
-    2),
-    )
+                asian_handicap=round(random.uniform(-1.5, 1.5), 2),
+            )
         ]
 
 
@@ -470,18 +430,15 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
                 self.request_count = 0
                 self.last_reset = datetime.now()
 
-    async def _make_request(self,
-    url: str,
-    params: dict | None = None) -> dict:
+    async def _make_request(self, url: str, params: dict | None = None) -> dict:
         """安全的API请求,
-    包含重试逻辑"""
+        包含重试逻辑"""
         self._check_rate_limit()
 
         for attempt in range(self.max_retries):
             try:
                 async with aiohttp.ClientSession(
-                    headers=self.headers,
-    timeout=self.timeout
+                    headers=self.headers, timeout=self.timeout
                 ) as session:
                     self.request_count += 1
 
@@ -534,10 +491,9 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
     async def get_matches(
         self,
-    league_id: int | None = None,
-    date_from: datetime | None = None,
-    date_to: datetime | None = None,
-
+        league_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         status: str | None = None,
     ) -> list[MatchData]:
         """获取比赛列表,支持多种筛选条件"""
@@ -616,42 +572,29 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
             logger.error(f"获取积分榜失败: {e}")
             return []
 
-    async def get_matches_by_date(self,
-    target_date: datetime) -> list[MatchData]:
+    async def get_matches_by_date(self, target_date: datetime) -> list[MatchData]:
         """获取指定日期的所有比赛"""
-        date_from = target_date.replace(hour=0,
-    minute=0,
-    second=0)
-        date_to = target_date.replace(hour=23,
-    minute=59,
-    second=59)
+        date_from = target_date.replace(hour=0, minute=0, second=0)
+        date_to = target_date.replace(hour=23, minute=59, second=59)
 
-        return await self.get_matches(date_from=date_from,
-    date_to=date_to)
+        return await self.get_matches(date_from=date_from, date_to=date_to)
 
-    async def get_upcoming_matches(self,
-    days: int = 7) -> list[MatchData]:
+    async def get_upcoming_matches(self, days: int = 7) -> list[MatchData]:
         """获取未来几天的比赛"""
         date_from = datetime.now()
         date_to = date_from + timedelta(days=days)
 
         return await self.get_matches(
-            date_from=date_from,
-    date_to=date_to,
-    status="SCHEDULED"
+            date_from=date_from, date_to=date_to, status="SCHEDULED"
         )
 
-    def _parse_match_data(self,
-    match: dict) -> MatchData | None:
+    def _parse_match_data(self, match: dict) -> MatchData | None:
         """解析比赛数据,
-    增强错误处理"""
+        增强错误处理"""
         try:
             # 验证必要字段
             if not all(
-                key in match for key in ["id",
-    "homeTeam",
-    "awayTeam",
-    "utcDate"]
+                key in match for key in ["id", "homeTeam", "awayTeam", "utcDate"]
             ):
                 logger.warning(f"比赛数据缺少必要字段: {match}")
                 return None
@@ -688,18 +631,15 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
             return MatchData(
                 id=match["id"],
-    home_team=match["homeTeam"]["name"],
-
+                home_team=match["homeTeam"]["name"],
                 away_team=match["awayTeam"]["name"],
                 home_team_id=match["homeTeam"]["id"],
                 away_team_id=match["awayTeam"]["id"],
                 match_date=datetime.fromisoformat(
-                    match["utcDate"].replace("Z",
-    "+00:00")
+                    match["utcDate"].replace("Z", "+00:00")
                 ),
-    league=league_name,
-    league_id=league_id,
-
+                league=league_name,
+                league_id=league_id,
                 status=status,
                 home_score=home_score,
                 away_score=away_score,
@@ -721,10 +661,9 @@ class EnhancedFootballDataOrgAdapter(DataSourceAdapter):
 
             return TeamData(
                 id=team["id"],
-    name=team["name"],
-    short_name=team.get("short_name"),
-    crest=team.get("crest"),
-
+                name=team["name"],
+                short_name=team.get("short_name"),
+                crest=team.get("crest"),
                 founded=team.get("founded"),
                 venue=team.get("venue"),
                 website=team.get("website"),

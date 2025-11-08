@@ -1,5 +1,6 @@
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.2
+aiosqlite>=0.17.0
 aiosignal==1.4.0
 alembic==1.14.0
 amqp==5.3.1

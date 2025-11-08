@@ -12,13 +12,11 @@ class OddsCollector:
     """桩 OddsCollector 类"""
 
 
-
 class OddsCollectorManager:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """桩 OddsCollectorManager 类"""
-
 
 
 class OddsSourceManager:
@@ -28,13 +26,11 @@ class OddsSourceManager:
     """桩 OddsSourceManager 类"""
 
 
-
 class OddsProcessor:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """桩 OddsProcessor 类"""
-
 
 
 class OddsAnalyzer:
@@ -44,13 +40,11 @@ class OddsAnalyzer:
     """桩 OddsAnalyzer 类"""
 
 
-
 class OddsStorage:
     """类文档字符串"""
 
     pass  # 添加pass语句
     """桩 OddsStorage 类"""
-
 
 
 def get_odds_manager():

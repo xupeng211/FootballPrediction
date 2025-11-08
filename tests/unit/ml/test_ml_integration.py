@@ -60,7 +60,7 @@ def create_comprehensive_training_data(num_matches: int = 1000) -> pd.DataFrame:
     ]
 
     data = []
-    for i in range(num_matches):
+    for _i in range(num_matches):
         home_team = np.random.choice(teams)
         away_team = np.random.choice([t for t in teams if t != home_team])
 
@@ -185,7 +185,9 @@ class TestMLWorkflowIntegration:
                 predictions.append(prediction)
             except Exception as e:
                 # 记录预测失败的情况
-                logger.error(f"Prediction failed for {request['match_id']}: {e}")  # TODO: Add logger import if needed
+                logger.error(
+                    f"Prediction failed for {request['match_id']}: {e}"
+                )  # TODO: Add logger import if needed
 
         # 6. 验证预测结果
         assert len(predictions) > 0
@@ -334,9 +336,7 @@ class TestMLWorkflowIntegration:
 
         # 至少应该有一些性能差异
         accuracies = list(version_metrics.values())
-        assert (
-            len(set(round(acc, 3) for acc in accuracies)) >= 1
-        )  # 可能相同，但至少要测试
+        assert len({round(acc, 3) for acc in accuracies}) >= 1  # 可能相同，但至少要测试
 
     def test_error_recovery_and_robustness(self):
         """测试错误恢复和鲁棒性"""
@@ -523,7 +523,7 @@ class TestMLModelDeployment:
         predictions = []
         prediction_times = []
 
-        for i in range(10):
+        for _i in range(10):
             start_time = datetime.now()
             test_data = create_batch_prediction_data(1)[0]
             prediction = model.predict(test_data)
