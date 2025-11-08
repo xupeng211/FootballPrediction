@@ -1,3 +1,9 @@
+from .features.feature_store_stores import (
+    FootballFeatureStore,
+    MockEntity,
+    MockFeatureStore,
+)  # TODO: Convert to explicit imports
+
 """
 feature_store 主模块
 
@@ -6,22 +12,8 @@ feature_store 主模块
 拆分策略: component_split
 """
 
-# 导入拆分的模块
-from .features.feature_store_stores import (
-    FootballFeatureStore,
-    MockEntity,
-    MockFeatureStore,
-)  # TODO: Convert to explicit imports
-
-# 导出所有公共接口
 __all__ = [
     "FootballFeatureStore",
     "MockFeatureStore",
     "MockEntity",
-    "MockFeatureView",
-    "MockField",
-    "MockFloat64",
-    "MockInt64",
-    "MockPostgreSQLSource",
-    "MockValueType",
 ]
